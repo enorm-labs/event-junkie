@@ -205,12 +205,23 @@ class MigasOverviewPageScraper {
          * migas' own two programme categories. Neither maps onto an existing [EventType]
          * synonym, and both describe the *format* of the night:
          *  - `playing` — a booked selector plays a record set, the closest thing this model
-         *    has to [EventType.CLUB_NIGHT]. Deliberately not `PARTY`: besides misdescribing a
-         *    seated listening bar, `PARTY` makes
-         *    [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType]-style
-         *    handling drop the lineup, and here the title *is* the artist.
+         *    has to [EventType.CLUB_NIGHT]. Deliberately not `PARTY`, which would describe a
+         *    seated listening bar as a dance floor: what a visitor comes here for is the act
+         *    on the decks, which is exactly the distinction `CLUB_NIGHT` draws
+         *    (EVENT_SCOPE.md §2).
          *  - `listening session` — a guest session or a full-album playback, neither a concert
          *    (nobody performs) nor a club night, so it stays [EventType.OTHER].
+         *
+         * **This choice costs no lineup either way, contrary to what this KDoc used to claim.**
+         * It said `PARTY` would make
+         * [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType] drop the
+         * artists — true of that function, but [artistsFor] never calls it; it goes straight to
+         * [headlinersFromTitle][de.norm.events.scraper.headlinersFromTitle], which ignores the
+         * event type. That early return is the only place in the importer where a type
+         * suppresses a lineup, so retyping these nights would leave their artists untouched.
+         * Measured 2026-08-08 while establishing what that rule actually costs; recorded here
+         * because a right decision resting on a wrong reason is one re-reading away from being
+         * reversed for the wrong reason too.
          */
         val EVENT_TYPE_SYNONYMS =
             mapOf(

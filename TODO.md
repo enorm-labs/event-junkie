@@ -342,9 +342,10 @@ importer PR.**
     - **Correction to the `CLUB_NIGHT` context.** Retiring `CLUB_NIGHT` into `PARTY` was rejected on 2026-08-08 because it "would silently delete the artist
       link from all 8 migas events". That reason does not hold: `MigasOverviewPageScraper` builds its lineup by calling `headlinersFromTitle` directly and never
       calls `buildArtistsForEventType`, and `ArtistNameMapping.kt:923` is the only place in the importer where an event type suppresses a lineup — so a migas
-      night typed `PARTY` would keep its artists. Whether to merge the two types is therefore back to a pure **semantics** question (`CLUB_NIGHT` = *a DJ set
-      where the booked act is the draw*, [docs/EVENT_SCOPE.md §2](docs/EVENT_SCOPE.md), and `PARTY` misdescribes migas' seated listening bar), not a data-loss
-      one. Not reopened here — it needs a decision, not a fix
+      night typed `PARTY` would keep its artists. That put the merge back to a pure **semantics** question — and on those terms it stays **rejected
+      (2026-08-08)**: `CLUB_NIGHT` means *a DJ set where the booked act is the draw* ([docs/EVENT_SCOPE.md §2](docs/EVENT_SCOPE.md)), which is precisely what
+      migas is, and `PARTY` would describe a seated listening bar as a dance floor. Same conclusion, sound reason. `MigasOverviewPageScraper`'s KDoc, which
+      carried the wrong one, is corrected — a right decision resting on a wrong reason is one re-reading away from being reversed for the wrong reason too
 - [ ] **Recover the act from a `"<night> curated by / invites / hosted by <act>"` title.** The one genuinely recoverable seam the investigation above found, and
   a different one from the rule it went looking at: `FOREVER 25 curated by Mila Stern & Esther Silex` and `FOREVER 25 curated by Enorm in Form` (Kater),
   `Sesh Clara Cuve invites` (Club OST), `Moritz Biebl Invites` (AMT), `Tresor New Faces hosted by Secret Keywords` (Tresor),
