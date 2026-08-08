@@ -906,13 +906,46 @@ fun buildArtistList(
  * venues that expose a clean `kind`/type label (the Kulturhäuser platform —
  * Astra, Lido). The strategy keys off [eventType]:
  * - **Festivals / parties** — the title is an event name, not an artist; no
- *   artists are extracted.
+ *   artists are extracted. See the trade below.
  * - **Concerts** — the type confirms the title is the headliner, so it is always
  *   added (plus any support acts), even without a support line.
  * - **Unknown / other** — fall back to the conservative [buildArtistList], which
  *   only treats the title as an artist when a "Support:" line is present.
  *
  * Support acts come from the subtitle's `"… + Support: A & B"` pattern.
+ *
+ * ### Why a party and a festival yield no artists at all
+ *
+ * The `FESTIVAL`/`PARTY` guard is unconditional, and that is deliberate rather than
+ * an oversight: a club night's title is the *night's* name, and running it through
+ * [headlinersFromTitle] does not produce a missing act, it produces a fictional one.
+ * The rule was measured against the whole seeded database (3166 events, 2026-08-08)
+ * before being kept:
+ *
+ * - 335 events are typed `PARTY` or `FESTIVAL` and carry no lineup, but only ~96 of
+ *   them (56 distinct titles) even reach this function — the rest come from scrapers
+ *   that never derive an artist from a title. A `PARTY` is not artist-less by nature:
+ *   302 of the 611 parties in the database *do* have a lineup, because their scraper
+ *   read one from a billing list rather than from the title.
+ * - Of those 56 titles, exactly **one** hides a recoverable act — Columbiahalle's
+ *   `Two Door Cinema Club`, which is a band wrongly typed `PARTY` because
+ *   `PARTY_TITLE_KEYWORDS` matches a bare `club` as a substring. The defect there is
+ *   the classification, not this rule; fixing the keyword fixes the lineup for free.
+ * - Every other title is the night's own name, and the failure is not merely cosmetic.
+ *   Most would store the party name verbatim as a 30–60 character "artist"
+ *   (`THE EARLY DAYS • LET'S DANCE TO JOY DIVISION` at Lido,
+ *   `Learn to Swing Dance mit Swing Patrol` at Frannz). Worse, a tribute night whose
+ *   title *names the act it covers* splits like a co-bill: Frannz's
+ *   `Friday I'm in Love – A Tribute to Post-Punk · Dark 80s + Nick Cave` cuts on the
+ *   `+` and yields `Nick Cave` — an artist row that resolves by slug onto the real
+ *   Nick Cave, so a visitor browsing him would find a Berlin DJ night in his gig list.
+ *
+ * So the trade is ~1 recoverable act against ~95 wrong ones, and it is the right way
+ * round. What the measurement *did* surface as genuinely recoverable is a different
+ * seam — the `"<night> curated by / invites / hosted by <act>"` idiom at Kater, Club
+ * OST, AMT, Tresor and Renate — and none of those venues route through this function
+ * at all, so narrowing this guard would not reach them. It is tracked separately in
+ * `TODO.md`.
  */
 @Suppress("ReturnCount") // Guard clauses for the event-type branches are clearer than nesting
 fun buildArtistsForEventType(

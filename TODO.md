@@ -265,6 +265,10 @@ Strategy & sequencing: [docs/DATA_QUALITY_STRATEGY.md](docs/DATA_QUALITY_STRATEG
   locally; fixing them centrally changes classification for every venue, so it needs a `--full` re-seed and a diff, not a drive-by edit.
     - `PARTY_TITLE_KEYWORDS` matches a bare `club` as a substring, so a tour named "… CLUB TOUR" is typed `PARTY` — and a party title mints no artists, so the
       headliner is lost too. Word-anchor it (as `\brave\b` and `\bkino\b` already are), or drop the bare entry and keep `club night` / `clubnight`.
+      **Note which of the two:** the worst case found so far is a *band whose name ends in the word* — Columbiahalle bills `Two Door Cinema Club`, which is
+      typed `PARTY` and consequently stores no artist at all. Word-anchoring does not help there (nor for `CLUB TOUR`); only dropping the bare entry does. It
+      is the single recoverable lineup the `PARTY`/`FESTIVAL` investigation above turned up across 3166 events, which is the measure of how much this one
+      keyword costs.
     - `ARTIST_SUFFIX_PATTERN` and `stripShoutedTourTail` only recognise the **ASCII hyphen** as the act/tour boundary, so an en- or em-dash tour tail ("Greg
       Mendez – BEAUTY LAND TOUR") survives into the artist name. Accept `[-–—]` in both.
     - `w/` is not treated as a co-bill separator, and a comma suppresses conjunction splitting, so LARK's `FEUCHT w/ BELLA, Agua con gas & SENERGI` is stored as
@@ -327,13 +331,27 @@ importer PR.**
 
 - [ ] Move the comedy and theatre venues currently sitting in [Blocked](docs/EVENT_DATA_SOURCES.md) on the scope question into Ready, and scaffold them like any
   other source — prioritised by programme richness as usual
-- [ ] **Investigate why `PARTY` and `FESTIVAL` discard artists.** `buildArtistsForEventType` early-returns `emptyList()` for both, so any event typed either way
-  contributes no lineup at all — no matter what its title says. That is presumably deliberate (a party's title is usually the night's name, not an act), but it
-  is unconditional, undocumented as a data-quality trade, and affects far more rows than the handful it was presumably written for. Establish how many events
-  are currently losing a recoverable lineup to it before deciding whether to narrow the rule.
-    - **Context:** this is the reason `CLUB_NIGHT` exists as a separate type. Retiring `CLUB_NIGHT` into `PARTY` was proposed on 2026-08-08 and **rejected** on
-      finding this: it would have silently deleted the artist link from all 8 migas events. `CLUB_NIGHT` means *a DJ set where the booked act is the draw* —
-      see [docs/EVENT_SCOPE.md §2](docs/EVENT_SCOPE.md). Fixing this rule is the prerequisite for reopening that merge, not the other way round
+- [x] **Investigated — `PARTY` and `FESTIVAL` discard artists on purpose, and the measurement says keep it (2026-08-08).** `buildArtistsForEventType`
+  early-returns `emptyList()` for both. Measured against the whole seeded database (3166 events): 335 events are typed `PARTY`/`FESTIVAL` with no lineup, but
+  only ~96 of them (56 distinct titles) reach this function at all — the rest come from scrapers that never derive an artist from a title, so the rule is not
+  their cause. A party is not artist-less by nature either: **302 of the 611 parties do have a lineup**, read from a billing list rather than from the title.
+  Of the 56 titles, exactly **one** hides a recoverable act, and it is a misclassification, not a lineup bug (see the `club` keyword item below). Against that,
+  removing the guard would mint ~95 fictional artists, several of them real: Frannz's `Friday I'm in Love – A Tribute to Post-Punk · Dark 80s + Nick Cave`
+  splits on the `+` and stores **Nick Cave** as a performer, on a row that resolves by slug onto the real artist. The trade is documented with the numbers in
+  `buildArtistsForEventType`'s KDoc and pinned by tests in `ArtistNameMappingTest`; **the rule stays unconditional.**
+    - **Correction to the `CLUB_NIGHT` context.** Retiring `CLUB_NIGHT` into `PARTY` was rejected on 2026-08-08 because it "would silently delete the artist
+      link from all 8 migas events". That reason does not hold: `MigasOverviewPageScraper` builds its lineup by calling `headlinersFromTitle` directly and never
+      calls `buildArtistsForEventType`, and `ArtistNameMapping.kt:923` is the only place in the importer where an event type suppresses a lineup — so a migas
+      night typed `PARTY` would keep its artists. Whether to merge the two types is therefore back to a pure **semantics** question (`CLUB_NIGHT` = *a DJ set
+      where the booked act is the draw*, [docs/EVENT_SCOPE.md §2](docs/EVENT_SCOPE.md), and `PARTY` misdescribes migas' seated listening bar), not a data-loss
+      one. Not reopened here — it needs a decision, not a fix
+- [ ] **Recover the act from a `"<night> curated by / invites / hosted by <act>"` title.** The one genuinely recoverable seam the investigation above found, and
+  a different one from the rule it went looking at: `FOREVER 25 curated by Mila Stern & Esther Silex` and `FOREVER 25 curated by Enorm in Form` (Kater),
+  `Sesh Clara Cuve invites` (Club OST), `Moritz Biebl Invites` (AMT), `Tresor New Faces hosted by Secret Keywords` (Tresor),
+  `Antina's Spookhouse by Antina Christ` (Renate) all name a booked DJ that is stored nowhere. Roughly 8 events at capture, so small — but unlike the party
+  titles around them these are unambiguous, and the marker words are a closed set. **None of those five venues route through `buildArtistsForEventType`**, so
+  this is a shared title-parsing rule (`ArtistNameMapping`) plus a call from each scraper, not a change to the `PARTY` guard. Needs the usual `--full` re-seed
+  and diff
 
 ## Operations & Hardening
 

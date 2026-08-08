@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -533,6 +534,65 @@ class ArtistNameMappingTest {
                 ScrapedArtist(name = "RUMKICKS", role = "HEADLINER"),
                 ScrapedArtist(name = "The Dollheads", role = "SUPPORT")
             )
+    }
+
+    // --- buildArtistsForEventType ---
+
+    @Test
+    fun `buildArtistsForEventType treats a concert title as the headliner without a support line`() {
+        buildArtistsForEventType("Green Lung", subtitle = null, eventType = "CONCERT") shouldContainExactly
+            listOf(ScrapedArtist(name = "Green Lung", role = "HEADLINER"))
+    }
+
+    @Test
+    fun `buildArtistsForEventType adds the subtitle's support acts after the headliners`() {
+        buildArtistsForEventType("TOTAL CHAOS", subtitle = "+ Support: The Dollheads", eventType = "CONCERT") shouldContainExactly
+            listOf(
+                ScrapedArtist(name = "TOTAL CHAOS", role = "HEADLINER"),
+                ScrapedArtist(name = "The Dollheads", role = "SUPPORT")
+            )
+    }
+
+    @Test
+    fun `buildArtistsForEventType stays conservative for an unclassified event`() {
+        // No type to confirm the title names an act, so only a support line unlocks it.
+        buildArtistsForEventType("Vinyl Thursdays", subtitle = null, eventType = null).shouldBeEmpty()
+        buildArtistsForEventType("Green Lung", subtitle = "Support: Kaos", eventType = "OTHER") shouldContainExactly
+            listOf(
+                ScrapedArtist(name = "Green Lung", role = "HEADLINER"),
+                ScrapedArtist(name = "Kaos", role = "SUPPORT")
+            )
+    }
+
+    @Test
+    fun `buildArtistsForEventType derives no lineup from a party or festival title`() {
+        // Real titles from the seeded database. A club night's title is the night's name,
+        // so deriving a headliner from it invents an act rather than recovering one — see
+        // the measurement in buildArtistsForEventType's KDoc.
+        buildArtistsForEventType("Vinyl Thursdays", subtitle = null, eventType = "PARTY").shouldBeEmpty()
+        buildArtistsForEventType(
+            "THE EARLY DAYS • LET'S DANCE TO JOY DIVISION",
+            subtitle = null,
+            eventType = "PARTY"
+        ).shouldBeEmpty()
+        buildArtistsForEventType("OUT OF LINE WEEKENDER 2027", subtitle = null, eventType = "FESTIVAL").shouldBeEmpty()
+    }
+
+    @Test
+    fun `buildArtistsForEventType keeps a tribute night from minting the act it covers`() {
+        // The worst shape the guard prevents: the `+` splits like a co-bill, so without it
+        // Frannz's post-punk tribute would store a Nick Cave artist row that resolves, by
+        // slug, onto the real Nick Cave.
+        val tribute = "Friday I'm in Love – A Tribute to Post-Punk · Dark 80s + Nick Cave"
+        headlinersFromTitle(tribute).map { it.name } shouldContain "Nick Cave"
+        buildArtistsForEventType(tribute, subtitle = null, eventType = "PARTY").shouldBeEmpty()
+    }
+
+    @Test
+    fun `buildArtistsForEventType ignores a support line on a party`() {
+        // The guard runs before the subtitle is read: a "Support:" line on a night typed
+        // PARTY does not reopen the title as a headliner, and drops the support act too.
+        buildArtistsForEventType("Soul Explosion", subtitle = "Support: Kaos", eventType = "PARTY").shouldBeEmpty()
     }
 
     // --- splitHeadlinerTitle ---
