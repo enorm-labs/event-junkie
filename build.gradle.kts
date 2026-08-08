@@ -1,3 +1,8 @@
+import com.github.jk1.license.filter.DependencyFilter
+import com.github.jk1.license.filter.LicenseBundleNormalizer
+import com.github.jk1.license.render.InventoryHtmlReportRenderer
+import com.github.jk1.license.render.JsonReportRenderer
+import com.github.jk1.license.render.ReportRenderer
 import dev.detekt.gradle.Detekt
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import org.springframework.boot.gradle.dsl.SpringBootExtension
@@ -333,22 +338,23 @@ licenseReport {
 
     projects = arrayOf(project) + subprojects.toTypedArray()
 
+    // The explicit `<ReportRenderer>` / `<DependencyFilter>` type arguments are load-bearing, not
+    // decoration. Both properties are Java arrays, so Kotlin infers the element type from the
+    // arguments rather than the target: every renderer and filter the plugin ships is a Groovy
+    // class, so `arrayOf(...)` alone infers the *intersection* `ReportRenderer & GroovyObject`
+    // and warns that reifying an intersection silently falls back to a common supertype. Naming
+    // the interface is the fix the compiler asks for, and it becomes an error in language
+    // version 2.3 (KTLC-13).
     renderers =
-        arrayOf(
-            com.github.jk1.license.render
-                .JsonReportRenderer("licenses.json", false),
-            com.github.jk1.license.render
-                .InventoryHtmlReportRenderer("licenses.html")
+        arrayOf<ReportRenderer>(
+            JsonReportRenderer("licenses.json", false),
+            InventoryHtmlReportRenderer("licenses.html")
         )
 
     // Normalises the many spellings of the same licence ("Apache 2", "The Apache Software
     // License, Version 2.0", …) into one bundle so the notices page groups correctly. Without it
     // Apache-2.0 alone appears under half a dozen names.
-    filters =
-        arrayOf(
-            com.github.jk1.license.filter
-                .LicenseBundleNormalizer()
-        )
+    filters = arrayOf<DependencyFilter>(LicenseBundleNormalizer())
 
     // Checked by `./gradlew checkLicense`. Deliberately an *allow*-list here, unlike the CI
     // deny-list in dependency-review.yml: this runs over the full resolved tree where we control

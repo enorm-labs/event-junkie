@@ -84,11 +84,13 @@ class InselApiScraperTest {
         // The description is nothing but the promoter, act, date, times and ticket call to action.
         polica.description.shouldBeNull()
 
-        val y2k = events.single { it.title == "Y2K Nostalgia Soundtrack" }
-        y2k.description!! shouldContain "BERLIN NU-WAVE"
-        y2k.description!! shouldNotContain "Einlass"
-        y2k.description!! shouldNotContain "TICKETS GIBT ES HIER"
-        y2k.description!! shouldNotContain "ATOK prs."
+        // Bound once: `shouldNotBeNull()` smart-casts, so repeating `!!` per assertion only earns
+        // an "unnecessary non-null assertion" warning.
+        val y2kDescription = events.single { it.title == "Y2K Nostalgia Soundtrack" }.description.shouldNotBeNull()
+        y2kDescription shouldContain "BERLIN NU-WAVE"
+        y2kDescription shouldNotContain "Einlass"
+        y2kDescription shouldNotContain "TICKETS GIBT ES HIER"
+        y2kDescription shouldNotContain "ATOK prs."
     }
 
     @Test
