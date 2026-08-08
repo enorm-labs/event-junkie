@@ -80,20 +80,26 @@ data class ScrapedEvent(
      * Converts this scraped event into an [EventEntity] for persistence.
      *
      * This is a pure mapping function with no I/O — the caller is responsible for persisting
-     * the returned entity. The slug is always regenerated from the event date, venue slug,
-     * and title to ensure uniqueness across venues.
+     * the returned entity. The slug is always regenerated from the event date, venue slug and
+     * title — plus [slugDiscriminator] when one is supplied — to ensure uniqueness across venues.
      * On updates, the [existing] entity's `id`, `sourceId`, and `createdAt` are preserved.
      *
      * @param venueId the database ID of the venue this event belongs to.
      * @param venueSlug the URL-friendly slug of the venue, included in the event slug for cross-venue uniqueness.
      * @param eventSourceId the database ID of the event source that imported this event.
      * @param existing the previously persisted entity for updates, or null for new events.
+     * @param slugDiscriminator appended to the slug source to separate two sittings of the same
+     *   production on the same day (a matinee and an evening show share date, venue and title).
+     *   Only the caller can know a collision exists — it takes the whole scrape to see one — so
+     *   [EventUpsertService][de.norm.events.scraper.EventUpsertService] computes it and passes it
+     *   in. Null for the overwhelming majority of events, which keeps their slug unchanged.
      */
     fun toEventEntity(
         venueId: Long,
         venueSlug: String,
         eventSourceId: Long,
-        existing: EventEntity? = null
+        existing: EventEntity? = null,
+        slugDiscriminator: String? = null
     ): EventEntity {
         // Guard the doors ≤ start invariant: a source that lists them the wrong way round
         // (e.g. SO36's "Einlass: 19:30, Beginn: 19:00") has transposed the labels — swap back.
@@ -119,7 +125,7 @@ data class ScrapedEvent(
             // reading/exhibition/screening a venue filed under the genre field.
             eventType = resolveEventType(eventType, title, genre).name,
             status = EventStatus.parseOrDefault(status).name,
-            slug = SlugGenerator.slugify("$eventDate-$venueSlug-$title"),
+            slug = SlugGenerator.slugify(listOfNotNull(eventDate, venueSlug, title, slugDiscriminator).joinToString("-")),
             eventDate = eventDate,
             doorsTime = doors,
             startTime = start,
