@@ -411,9 +411,9 @@ list: [docs/LEGAL.md §12](../docs/LEGAL.md).
   nothing the surrounding text does not already say.
 - **Every view renders exactly one `<main>`.** The detail views inherit theirs from `BaseDetailView` — do not add a second.
 - **A heading level belongs to the page, not to the component.** One `h1` per view, and no skipped levels below it. A shared component that renders a heading
-  takes it as a prop rather than hard-coding one: `SectionLabel` has `as` (default `h2`), `EventCard` and `VenueCard` have `headingAs` (default `h3`, right
-  under a `SectionLabel`). **Placing a card grid straight under the page `h1` means passing `heading-as="h2"`** — see the list pages, and the `heading-order`
-  gate in `e2e/a11y.spec.ts`.
+  takes it as a prop rather than hard-coding one, and the prop is spelled `as` in all of them: `SectionLabel` defaults to `h2`, `EventCard` and `VenueCard`
+  to `h3` (right, under a `SectionLabel`). On a card, `as` sets the *heading* element, not the card's root. **Placing a card grid straight under the page `h1`
+  means passing `as="h2"`** — see the list pages, and the `heading-order` gate in `e2e/a11y.spec.ts`.
 - **Do not remove a focus indicator.** `outline-none` is acceptable only when paired with a `focus-visible:` ring, as in `components/ui/button/index.ts`.
 - **Prefer a reka-ui / shadcn-vue primitive** over a hand-rolled interactive component. They handle focus management, keyboard interaction and ARIA that a
   bespoke `div` will not.
@@ -479,9 +479,9 @@ One is open today. Fixing it is welcome; **promoting the pass to a gate is not t
 | `empty-table-header` (7 nodes) | `/calendar` | FullCalendar's own weekday header cells. Third-party markup we do not write. |
 
 `heading-order` used to sit here too, on `/events` and `/venues`. It is fixed: **a card's heading level is a property of the page, not of the card**, so
-`EventCard` and `VenueCard` take a `headingAs` prop (`'h2' | 'h3' | 'h4'`, defaulting to `h3`) in the same shape as `SectionLabel`'s `as`. `h3` is right
+`EventCard` and `VenueCard` take an `as` prop (`'h2' | 'h3' | 'h4'`, defaulting to `h3`) — the same name and shape `SectionLabel` already uses. `h3` is right
 wherever a `SectionLabel` `h2` sits above the grid — the home page, the detail pages — and the two list pages, which have nothing between their `h1` and the
-grid, pass `h2`. **Reuse a card on a new page and you own its level**: if there is no section heading above the grid, pass `heading-as="h2"`.
+grid, pass `h2`. **Reuse a card on a new page and you own its level**: if there is no section heading above the grid, pass `as="h2"`.
 
 That fix is pinned by its own narrow gate — `heading-order` alone, on the four list routes — rather than by promoting this pass. The distinction is the point:
 a rule that was investigated, fixed, and can now only regress is a gate; a rule nobody has looked at yet is a report. Do the same with the next one, one rule

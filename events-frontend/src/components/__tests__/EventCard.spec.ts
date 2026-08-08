@@ -44,7 +44,7 @@ describe('EventCard', () => {
     expect(byDefault.get('h3').text()).toBe('Tonight Show')
 
     const onAListPage = mount(EventCard, {
-      props: { event, headingAs: 'h2' },
+      props: { event, as: 'h2' },
       global: { stubs },
     })
     expect(onAListPage.get('h2').text()).toBe('Tonight Show')

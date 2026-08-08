@@ -52,7 +52,7 @@ Rough priority: **Now** → **Next** → grouped backlog → **Someday / Vision*
 - [ ] Full frontend UX pass — what's missing / improvable? (cross-check the vision + branding docs)
 - [x] **Fixed `heading-order` on the list pages.** Of the two options, the `level` prop won over a visually-hidden `h2`: the level was always a property of the
   *page*, and a card hard-coding one is the actual defect — where a hidden heading would have added invisible markup to satisfy a rule. `EventCard` /
-  `VenueCard` now take `headingAs` (`'h2' | 'h3' | 'h4'`, default `h3`), the same shape as `SectionLabel`'s existing `as` prop; `/events` and `/venues` pass
+  `VenueCard` now take an `as` prop (`'h2' | 'h3' | 'h4'`, default `h3`), spelled and shaped like `SectionLabel`'s existing one; `/events` and `/venues` pass
   `h2`, and the home and detail pages keep `h3` under their section `h2`. Pinned by a narrow `heading-order`-only gate on the four list routes — the
   informational `best-practice` pass stays informational, per its own reasoning, and is now down to FullCalendar's `empty-table-header`
 - [ ] **Manual accessibility passes before go-live** — a keyboard-only walkthrough and a screen-reader pass. axe reliably finds roughly a third of WCAG issues,

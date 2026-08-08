@@ -44,7 +44,7 @@ describe('VenueCard', () => {
     expect(byDefault.get('h3').text()).toBe('Lido')
 
     const onAListPage = mount(VenueCard, {
-      props: { venue, headingAs: 'h2' },
+      props: { venue, as: 'h2' },
       global: { stubs },
     })
     expect(onAListPage.get('h2').text()).toBe('Lido')

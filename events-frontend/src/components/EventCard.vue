@@ -16,12 +16,12 @@ const props = withDefaults(
      * appears, but *which* level is a property of the page, not of the card: on the home page and
      * the detail pages a `SectionLabel` `h2` sits above the grid, so `h3` is correct; on `/events`
      * the cards hang directly off the page `h1`, so anything below `h2` skips a level and trips
-     * axe's `heading-order`. Same shape as `SectionLabel`'s `as`, narrowed to the levels a card
-     * can legitimately take.
+     * axe's `heading-order`. Named `as` to match `SectionLabel`, but narrowed to the levels a
+     * card can legitimately take — note that it sets the *heading* element, not the card's root.
      */
-    headingAs?: 'h2' | 'h3' | 'h4'
+    as?: 'h2' | 'h3' | 'h4'
   }>(),
-  { headingAs: 'h3' },
+  { as: 'h3' },
 )
 
 const { formatDate, formatEventType } = useFormat()
@@ -76,7 +76,7 @@ const { t } = useI18n()
             tooltip over information that is already fully visible.
           -->
           <component
-            :is="headingAs"
+            :is="as"
             :title="eventLabel(event.title, event.venue?.name)"
             class="truncate leading-tight font-semibold"
           >
