@@ -5,6 +5,7 @@ import de.norm.events.event.EventRepository
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.flow.asFlow
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneOffset
 
 /**
@@ -47,10 +49,12 @@ class EventUpsertServiceStaleCleanupTest {
     private fun scrapedEvent(
         title: String = "Test Event",
         eventDate: LocalDate,
-        sourceId: String
+        sourceId: String,
+        startTime: LocalTime? = null
     ) = ScrapedEvent(
         title = title,
         eventDate = eventDate,
+        startTime = startTime,
         sourceId = sourceId,
         sourceUrl = "https://example.com/event/test",
         eventType = "CONCERT",
@@ -364,6 +368,121 @@ class EventUpsertServiceStaleCleanupTest {
                 // No deletions should occur
                 coVerify(exactly = 0) {
                     eventRepository.deleteByIdIn(any())
+                }
+            }
+    }
+
+    /**
+     * Two sittings of one production on one day, and the same night published twice, arrive
+     * looking identical: same venue, same date, same title. The start time is what separates
+     * them, and both `event.slug` and `event.source_id` are `UNIQUE`, so getting it wrong either
+     * loses a real event or fails the whole import.
+     */
+    @Nested
+    inner class SameDayDuplicatesAndSittings {
+        @Test
+        fun `keeps both sittings of a production and gives each its own slug`() =
+            runTest {
+                // Theater im Delphi's Schwanensee: 15:00 matinee and 20:00 evening show.
+                val scrapedEvents =
+                    listOf(
+                        scrapedEvent("Schwanensee", tomorrow, "delphi:488/matinee", LocalTime.of(15, 0)),
+                        scrapedEvent("Schwanensee", tomorrow, "delphi:488/evening", LocalTime.of(20, 0))
+                    )
+                val saved = slot<Iterable<EventEntity>>()
+                coEvery { eventRepository.saveAll(capture(saved)) } answers { emptyFlow() }
+
+                service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
+
+                // Both survive, and *both* carry the time — not just the later one, so neither
+                // reads as the "real" event and page order cannot swap two public URLs.
+                saved.captured.map { it.slug } shouldBe
+                    listOf(
+                        "$tomorrow-test-venue-schwanensee-1500",
+                        "$tomorrow-test-venue-schwanensee-2000"
+                    )
+            }
+
+        @Test
+        fun `drops a night the venue published twice at the same time`() =
+            runTest {
+                // SO36's two-day festival: a combi ticket and a day-one ticket, same 19:30 start.
+                // Only one event is happening, and the first by page order wins.
+                val scrapedEvents =
+                    listOf(
+                        scrapedEvent("Female-Fronted", tomorrow, "so36:93090", LocalTime.of(19, 30)),
+                        scrapedEvent("Female-Fronted", tomorrow, "so36:90006", LocalTime.of(19, 30))
+                    )
+                val saved = slot<Iterable<EventEntity>>()
+                coEvery { eventRepository.saveAll(capture(saved)) } answers { emptyFlow() }
+
+                service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
+
+                saved.captured.map { it.sourceId } shouldBe listOf("so36:93090")
+                // No discriminator: an event with no same-slug sibling keeps its plain slug.
+                saved.captured.map { it.slug } shouldBe listOf("$tomorrow-test-venue-female-fronted")
+            }
+
+        @Test
+        fun `collapses same-day duplicates that carry no time at all`() =
+            runTest {
+                // Without times there is nothing to tell two sittings apart, and a venue that
+                // publishes none has far more likely listed one night twice.
+                val scrapedEvents =
+                    listOf(
+                        scrapedEvent("Untimed Show", tomorrow, "src:a"),
+                        scrapedEvent("Untimed Show", tomorrow, "src:b")
+                    )
+                val saved = slot<Iterable<EventEntity>>()
+                coEvery { eventRepository.saveAll(capture(saved)) } answers { emptyFlow() }
+
+                service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
+
+                saved.captured.map { it.sourceId } shouldBe listOf("src:a")
+            }
+
+        @Test
+        fun `collapses two sittings that share one sourceId, whatever their times`() =
+            runTest {
+                // Admiralspalast keys on the show and date, not the session, so its matinee and
+                // evening arrive under one id. `event.source_id` is UNIQUE, so they cannot both be
+                // stored: without this guard both entities carry the same database id and saveAll
+                // issues two UPDATEs to one row, whose slug then flips on every import.
+                val scrapedEvents =
+                    listOf(
+                        scrapedEvent("Mamma Mia", tomorrow, "admiralspalast:mamma-mia-2027-09-18", LocalTime.of(15, 0)),
+                        scrapedEvent("Mamma Mia", tomorrow, "admiralspalast:mamma-mia-2027-09-18", LocalTime.of(19, 30))
+                    )
+                val saved = slot<Iterable<EventEntity>>()
+                coEvery { eventRepository.saveAll(capture(saved)) } answers { emptyFlow() }
+
+                service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
+
+                // One row, and no discriminator — the surviving event has no same-slug sibling, so
+                // its slug must not churn just because the venue lists a second sitting.
+                saved.captured.map { it.slug } shouldBe listOf("$tomorrow-test-venue-mamma-mia")
+            }
+
+        @Test
+        fun `frees a stale row's slug before inserting the row that needs it`() =
+            runTest {
+                // The SO36 failure: a stale row holds the slug an incoming row is about to take.
+                // Deleting must happen first, or the INSERT collides and fails the whole batch.
+                val stale = existingEvent(id = 7L, eventDate = tomorrow, sourceId = "so36:90006")
+                coEvery {
+                    eventRepository.findByEventSourceIdAndEventDateBetween(eventSourceId, any(), any())
+                } returns listOf(stale).asFlow()
+
+                service.upsertAndCleanup(
+                    listOf(scrapedEvent("Female-Fronted", tomorrow, "so36:93090", LocalTime.of(19, 30))),
+                    venueId,
+                    venueSlug,
+                    eventSourceId
+                )
+
+                coVerifyOrder {
+                    eventRepository.deleteByIdIn(listOf(7L))
+                    eventRepository.saveAll(any<Iterable<EventEntity>>())
                 }
             }
     }

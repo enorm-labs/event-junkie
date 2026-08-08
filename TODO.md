@@ -116,13 +116,34 @@ scraper's own KDoc instead, so only what should actually be *repaired* is listed
   venue lists as `31/07 23:00` — which actually runs until ~06:00 the next morning — disappears from the app at 00:00, hours before it ends. It hits every
   late-opening club (OHM, Berghain, Tresor, Renate, …), and OHM feels it hardest because its whole horizon is one to three nights. Needs a cutoff that accounts
   for the start time (e.g. keep an event until `eventDate + 1 day 06:00` when it starts after ~22:00) rather than a per-importer workaround.
-- [ ] **A show cannot play twice in one day.** `ScrapedEvent.toEventEntity` builds the stored slug from date + venue slug + title, and `event.slug` is `UNIQUE`,
-  so two sessions of the same production on the same date collide on insert — a duplicate-key error that fails the *whole* import, not just that row. Velomax
-  hits this (Disney On Ice plays three sessions on one day, Berlin Tattoo two), and its importer works around it by collapsing same-day sessions to the
-  earliest; Uber Arena hits it too and simply loses the second session of a double bill (3 of 88 at capture — Feuerwerk der Turnkunst, CAVALLUNA twice), as does
-  the Uber Eats Music Hall on the same platform (the 23 December Nutcracker matinee and evening, 1 of 66); Theater im Delphi is the worst hit, losing 4 of 24 to
-  matinee/evening pairs; Tempodrom loses four a year to the same shape. Bar jeder Vernunft and Heimathafen sidestep it because their `sourceId`s carry a time.
-  Fix at the boundary — include the start time in the event slug when one is known — rather than per importer.
+- [x] **Fixed (2026-08-08) — a show can play twice in one day, and a duplicate listing no longer fails the import.** Two defects were filed here as one, and they
+  turned out to have different causes:
+    - **The whole-import failure was an ordering bug, not the slug format.** `upsertAndCleanup` upserted *before* removing stale rows, so a row still holding a
+      slug the incoming batch needed was deleted only after the `INSERT` that collided with it. SO36 hit it live: it listed its two-day festival's combi ticket
+      (`so36:90006`) on the opening date, then added a day-one ticket (`so36:93090`) with the same title and date — the stale combi row owned the slug, and the
+      failing `executeMany` took **all 111 SO36 events** with it. Cleanup now runs first; both steps are in the same transaction, so a later failure still rolls
+      the deletion back.
+    - **The lost sittings were the dedup key.** It was date + title, which cannot tell a matinee from an evening show. It is now date + title + start time, and
+      `EventUpsertService.slugDiscriminators` gives every member of a colliding group a time-suffixed slug (`…-schwanensee-jenseits-der-buhne-1500` /
+      `…-2000`) — every member, including the first, so neither reads as the "real" event and a venue reordering its listing cannot swap two public URLs.
+      **13 sittings recovered** across a full re-scrape: Theater im Delphi 4, Tempodrom 4, Uber Arena 3, the Uber Eats Music Hall's 23 December Nussknacker and
+      one Heimathafen double bill — matching this item's own predictions for Delphi, Tempodrom and Uber Arena almost exactly. A group with no start time still
+      collapses to one: a venue publishing no times has far more likely listed one night twice than scheduled two unlabelled sittings.
+    - **A third defect surfaced while measuring, and is fixed here too: a repeated `sourceId` was not deduplicated at all.** `event.source_id` is `UNIQUE`, so
+      two scraped events sharing one can never both be stored — but nothing dropped the second, so both entities were built carrying the *same* database id and
+      `saveAll` issued two UPDATEs to one row. No error, last write wins. It was invisible only because both sittings produced an identical slug; giving them
+      distinct slugs made 19 Admiralspalast rows start flipping between their matinee and evening on every import, which is how it was caught. Deduplicating on
+      `sourceId` restores those rows and closes the older, quieter bug underneath.
+- [ ] **Several venues still lose a same-day sitting, now for one shared reason: their `sourceId` keys the show and date, not the session.** With the slug
+  problem fixed, this is the only thing left in the way, and it is per scraper. **Admiralspalast** is the clearest case (19 shows with a second sitting —
+  Mamma Mia, Der Geist der Weihnacht, Disney's Glöckner, the Imperial Ballet nights); **Velomax** collapses its own explicitly (below). The fix in each is to
+  put the session start time in the `sourceId`, which re-keys that venue's whole history — so each is its own re-seed and diff, like the Neue Zukunft
+  recurrence change.
+- [ ] **Velomax still collapses its same-day sessions, and now for a different reason.** The slug blocker above is gone, but `event.source_id` is `UNIQUE` too
+  and `VelomaxOverviewPageScraper` derives it from the listing URL — one page per *show*, not per session — so dropping `collapseSameDaySessions` would trade a
+  duplicate-slug crash for a duplicate-`sourceId` one. Fix: put the session start time in the `sourceId`. That re-keys every existing Velomax event across all
+  three halls (Velodrom, Max-Schmeling-Halle, UFO im Velodrom), exactly like the Neue Zukunft recurrence change, so it wants its own re-seed and diff. Worth
+  roughly five events a year (Disney On Ice plays three sessions on 13 March, Berlin Tattoo two on 7 November).
 - [ ] **Derive the lineup after the event type is final, not before.** `ScrapedEvent.toEventEntity` promotes a `CONCERT`/`OTHER` title to `FESTIVAL`
   (`isFestivalTitle`), but every scraper has already built its artists from its *own* type inference, so a festival title still mints headliners — `ELLE & L's
   Festival` → `Elle` (Columbia Theater), plus the same shape at Clash and Gretchen. Fix once at the boundary (drop the artists when the resolved type is

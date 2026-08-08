@@ -82,13 +82,20 @@ class VelomaxOverviewPageScraper {
      * Keeps one event per show and day, dropping the later sessions of a run that plays more than
      * once in a day.
      *
-     * This is forced by the model, not by the source: an event's stored slug is built from its
-     * date, venue and title ([ScrapedEvent.toEventEntity]) and the column is `UNIQUE`, so a second
-     * session of the same show on the same date cannot be inserted at all — the run would fail the
-     * whole import with a duplicate-key error rather than lose one row. "Disney On Ice" plays three
-     * sessions on 13 March and "Berlin Tattoo" two on 7 November; each day keeps its **earliest**,
-     * since the listing is chronological. Representing every session needs the start time in the
-     * event slug, which is a cross-cutting change tracked in `TODO.md`.
+     * This is forced by the model, not by the source. "Disney On Ice" plays three sessions on 13
+     * March and "Berlin Tattoo" two on 7 November; each day keeps its **earliest**, since the
+     * listing is chronological.
+     *
+     * **The slug half of the blocker is gone** — `EventUpsertService` now gives each sitting of a
+     * same-day run its own slug, so Theater im Delphi and the Uber Eats Music Hall store both their
+     * matinee and their evening show. What still pins this workaround is the *other* unique column:
+     * `event.source_id` is `UNIQUE` too, and this scraper derives it from the listing's URL slug
+     * (`sourceId = "<prefix><slug>"`), which is one page per *show*, not per session. Dropping the
+     * collapse without changing that trades a duplicate-slug crash for a duplicate-`sourceId` one.
+     *
+     * Fixing it properly means putting the session's start time in the `sourceId` — which re-keys
+     * every existing Velomax event, exactly like the Neue Zukunft recurrence change. Tracked in
+     * `TODO.md` as its own item rather than smuggled in here.
      */
     private fun collapseSameDaySessions(events: List<ScrapedEvent>): List<ScrapedEvent> {
         val kept = events.distinctBy { it.eventDate to it.title }
