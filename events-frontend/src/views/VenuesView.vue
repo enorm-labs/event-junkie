@@ -104,7 +104,8 @@ const { t } = useI18n()
         {{ t('venues.resultCount', { count: page.totalElements }) }}
       </p>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <VenueCard v-for="venue in page.content" :key="venue.slug" :venue="venue" />
+        <!-- Second level of the outline: nothing sits between the page `h1` and this grid. -->
+        <VenueCard v-for="venue in page.content" :key="venue.slug" :venue="venue" heading-as="h2" />
       </div>
 
       <div v-if="totalPages > 1" class="flex items-center justify-between gap-3 pt-2">

@@ -37,6 +37,20 @@ describe('VenueCard', () => {
     expect(wrapper.get('a').attributes('href')).toBe('/en/venues/lido')
   })
 
+  it('titles the card h3 by default and honours an overridden level', () => {
+    // h3 suits a grid sitting under a section h2; /venues has no section heading, so it asks
+    // for h2 to keep the outline from skipping a level (axe `heading-order`).
+    const byDefault = mount(VenueCard, { props: { venue }, global: { stubs } })
+    expect(byDefault.get('h3').text()).toBe('Lido')
+
+    const onAListPage = mount(VenueCard, {
+      props: { venue, headingAs: 'h2' },
+      global: { stubs },
+    })
+    expect(onAListPage.get('h2').text()).toBe('Lido')
+    expect(onAListPage.find('h3').exists()).toBe(false)
+  })
+
   it('falls back to the city when address and district are missing', () => {
     const wrapper = mount(VenueCard, {
       props: { venue: { slug: 'x', name: 'Somewhere', city: 'Berlin' } },

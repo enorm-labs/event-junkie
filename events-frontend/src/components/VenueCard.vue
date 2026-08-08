@@ -5,7 +5,14 @@ import type { VenueSummary } from '@/api/types'
 import { districtLabel } from '@/lib/districts'
 import { useLocalePath } from '@/composables/useLocalePath'
 
-const props = defineProps<{ venue: VenueSummary }>()
+const props = withDefaults(
+  defineProps<{
+    venue: VenueSummary
+    /** Heading level for the card's name — see the same prop on `EventCard.vue` for why. */
+    headingAs?: 'h2' | 'h3' | 'h4'
+  }>(),
+  { headingAs: 'h3' },
+)
 
 // A single "where" line: street address then district, skipping whatever is missing.
 const location = computed(() =>
@@ -28,7 +35,9 @@ const localePath = useLocalePath()
       loading="lazy"
     />
     <div class="min-w-0 flex-1 space-y-1">
-      <h3 class="truncate leading-tight font-semibold">{{ venue.name }}</h3>
+      <component :is="headingAs" class="truncate leading-tight font-semibold">
+        {{ venue.name }}
+      </component>
       <p v-if="location" class="truncate text-sm text-muted-foreground">{{ location }}</p>
       <p v-else-if="venue.city" class="truncate text-sm text-muted-foreground">{{ venue.city }}</p>
     </div>

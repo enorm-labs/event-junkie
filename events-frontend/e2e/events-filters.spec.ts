@@ -9,8 +9,10 @@ import { expect, type Page, type Route, test } from '@playwright/test'
  * the rendered result and the resulting URL therefore proves the frontend
  * serialized and sent the right filter, end to end, without a real backend.
  *
- * Results render as an <h3> event title per card, so tests assert on those
- * headings; the empty state and pagination controls are asserted by their copy.
+ * Results render as an event title per card, so tests assert on those headings; the empty state
+ * and pagination controls are asserted by their copy. The level is `h2` here — `EventCard` titles
+ * itself `h3` by default, but this page has no section heading between its `h1` and the grid, so
+ * it overrides the level to keep the outline from skipping one (see `EventCard`'s `headingAs`).
  */
 
 function collectPageErrors(page: Page): string[] {
@@ -98,7 +100,7 @@ function selectWithOption(page: Page, optionName: string) {
   return page.locator('select', { has: page.getByRole('option', { name: optionName }) })
 }
 
-const eventHeading = (page: Page, name: string) => page.getByRole('heading', { level: 3, name })
+const eventHeading = (page: Page, name: string) => page.getByRole('heading', { level: 2, name })
 
 test('filters by search query', async ({ page }) => {
   const errors = collectPageErrors(page)

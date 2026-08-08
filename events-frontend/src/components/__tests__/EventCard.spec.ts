@@ -37,6 +37,20 @@ describe('EventCard', () => {
     expect(wrapper.get('a').attributes('href')).toBe('/en/events/tonight-show')
   })
 
+  it('titles the card h3 by default and honours an overridden level', () => {
+    // h3 suits a grid sitting under a section h2 (home, detail pages); /events has no section
+    // heading, so it asks for h2 to keep the outline from skipping a level (axe `heading-order`).
+    const byDefault = mount(EventCard, { props: { event }, global: { stubs } })
+    expect(byDefault.get('h3').text()).toBe('Tonight Show')
+
+    const onAListPage = mount(EventCard, {
+      props: { event, headingAs: 'h2' },
+      global: { stubs },
+    })
+    expect(onAListPage.get('h2').text()).toBe('Tonight Show')
+    expect(onAListPage.find('h3').exists()).toBe(false)
+  })
+
   it('shows a sold-out badge when the event is sold out', () => {
     const wrapper = mount(EventCard, { props: { event }, global: { stubs } })
     expect(wrapper.text()).toContain('Sold out')

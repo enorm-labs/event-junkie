@@ -240,6 +240,38 @@ for (const route of dataRoutes) {
 }
 
 /**
+ * One `best-practice` rule promoted to a gate on the routes it was actually failing on.
+ *
+ * This is the move the informational pass below prescribes — *"if a finding here turns out to
+ * matter, the right move is to fix it"* — carried through to the end. `heading-order` reported one
+ * node on each list page for as long as the pages existed: `EventCard` / `VenueCard` render an
+ * `h3`, which is right under the home page's section `h2` and skips a level under a list page's
+ * bare `h1`. The cards now take a `headingAs` prop and the two list pages pass `h2`.
+ *
+ * Pinned narrowly — one rule, the two routes it concerned — rather than by promoting the whole
+ * pass, because the argument against gating on `best-practice` wholesale still stands: the
+ * remaining finding is FullCalendar's `empty-table-header`, in third-party markup we do not write.
+ * A regression here is a real outline defect, not a recommendation, and it is invisible on screen,
+ * which is exactly the kind of thing that needs a test rather than a reviewer.
+ */
+for (const path of ['/en/events', '/en/venues', '/de/events', '/de/venues']) {
+  test(`${path} has a heading outline with no skipped levels`, async ({ page }) => {
+    await mockBff(page)
+    await page.goto(path)
+    // Wait on the cards by name, not by level: waiting on `level: 2` would make a regression
+    // time out here instead of failing with the violation axe found, which is the useful message.
+    await expect(page.getByRole('heading', { name: /Tonight Show|Mock Venue/ }).first()).toBeVisible()
+
+    const results = await new AxeBuilder({ page })
+      .exclude('#__vue-devtools-container__')
+      .withRules(['heading-order'])
+      .analyze()
+
+    expect(results.violations.flatMap((v) => v.nodes.map((n) => n.html))).toEqual([])
+  })
+}
+
+/**
  * Informational pass — axe's `best-practice` rules, which are **not** part of the WCAG 2.1 AA bar
  * the suite enforces above.
  *
