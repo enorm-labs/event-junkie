@@ -270,7 +270,8 @@ Strategy & sequencing: [docs/DATA_QUALITY_STRATEGY.md](docs/DATA_QUALITY_STRATEG
       `Two Door Cinema Club` and in `CLUB TOUR`, `club` is already a whole word. **Win:** Columbiahalle's `Two Door Cinema Club` is a `CONCERT` and has its
       artist. **Loss:** Huxleys' `Corrupted Blood Club Show` is now a `CONCERT` too, and stores its own name as a performer. **Neutral:** arkaoda's
       `DJ Fart in the Club b2b Cousin` moved `PARTY` → `OTHER`, which mints nothing. Nothing else moved, because every resident night ending in the word is at
-      a venue that types its own events (Soda, Kater, MAXXIM, OHM) or reads its own category (Privatclub).
+      a venue that types its own events (Soda, Kater, MAXXIM, OHM) or reads its own category (Privatclub). **The win/loss trade was put to the maintainer and
+      accepted**: the keyword was also mistyping a concert as a party at an arena-scale venue, and the loss has a named fix (below) while the win had none.
     - **`ARTIST_SUFFIX_PATTERN` and the shouted-tail split accept `[-–—]`.** No stored row changed: LARK, the only venue whose titles carry an en-dash tour
       tail, was already normalising dashes locally, and that workaround is now deleted in favour of the shared rule. The other en-dash titles in the corpus
       (Cosmic Comedy's `… – SHOWCASE FRIDAY`, `Lucas Lauriente – Stand Up 2026`) are at venues that derive no artist from a title at all.
