@@ -246,7 +246,7 @@ for (const route of dataRoutes) {
  * matter, the right move is to fix it"* — carried through to the end. `heading-order` reported one
  * node on each list page for as long as the pages existed: `EventCard` / `VenueCard` render an
  * `h3`, which is right under the home page's section `h2` and skips a level under a list page's
- * bare `h1`. The cards now take a `headingAs` prop and the two list pages pass `h2`.
+ * bare `h1`. The cards now take an `as` prop for their heading and the two list pages pass `h2`.
  *
  * Pinned narrowly — one rule, the two routes it concerned — rather than by promoting the whole
  * pass, because the argument against gating on `best-practice` wholesale still stands: the

@@ -12,7 +12,7 @@ import { expect, type Page, type Route, test } from '@playwright/test'
  * Results render as an event title per card, so tests assert on those headings; the empty state
  * and pagination controls are asserted by their copy. The level is `h2` here — `EventCard` titles
  * itself `h3` by default, but this page has no section heading between its `h1` and the grid, so
- * it overrides the level to keep the outline from skipping one (see `EventCard`'s `headingAs`).
+ * it overrides the level to keep the outline from skipping one (see `EventCard`'s `as`).
  */
 
 function collectPageErrors(page: Page): string[] {

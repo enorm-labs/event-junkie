@@ -67,7 +67,7 @@ const { t } = useI18n()
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <!-- No section heading sits between the page `h1` and the grid here (unlike the home and
              detail pages), so the cards are the second level of the outline. -->
-        <EventCard v-for="event in page.content" :key="event.slug" :event="event" heading-as="h2" />
+        <EventCard v-for="event in page.content" :key="event.slug" :event="event" as="h2" />
       </div>
 
       <div v-if="totalPages > 1" class="flex items-center justify-between gap-3 pt-2">
