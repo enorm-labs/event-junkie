@@ -3,6 +3,7 @@
   "title": "Events",
   "subtitle": "Browse and filter upcoming music events across Berlin.",
   "empty": "Nothing matches those filters. Ease up and try again.",
+  "resultCount": "{count} event found | {count} events found",
   "filters": {
     "searchPlaceholder": "Search events…",
     "earliestDate": "Earliest event date",

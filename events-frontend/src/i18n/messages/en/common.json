@@ -29,5 +29,8 @@
   "upcomingEvents": "Upcoming events",
   "locale": {
     "label": "Language"
+  },
+  "pagination": {
+    "pageOf": "Page {current} of {total}"
   }
 }

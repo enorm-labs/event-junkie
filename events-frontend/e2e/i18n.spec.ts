@@ -317,3 +317,61 @@ test('German detail pages label the entity kind in German', async ({ page }) => 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(`${kind} nicht gefunden`)
   }
 })
+
+/**
+ * The list pages' result count and pagination were hardcoded English — including an
+ * English plural rule (`n === 1 ? 'event' : 'events'`) that no other language shares.
+ * Both are message keys now, so this checks the German side, which is the half a
+ * pinned-to-`/en` suite can never see.
+ *
+ * The counts are deliberately 1 and 2: one exercises the singular form of the plural
+ * message, the other the plural, and getting them from the same mock keeps the two
+ * assertions honest about which branch rendered.
+ */
+const listPage = (content: unknown[], totalElements: number, totalPages: number) =>
+  JSON.stringify({ content, page: 0, size: 20, totalElements, totalPages })
+
+test('the events list counts its results in German, singular and plural', async ({ page }) => {
+  await page.route('**/api/events?*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: listPage([{ slug: 'a', title: 'Ein Konzert', eventDate: '2026-08-15' }], 1, 1),
+    }),
+  )
+  await page.goto('/de/events')
+  // Exact, not `toContainText`: an unpluralised render is the literal message with both branches
+  // ("1 Event gefunden | 1 Events gefunden"), which *contains* the singular and would pass.
+  await expect(page.getByText('1 Event gefunden', { exact: true })).toBeVisible()
+
+  await page.route('**/api/events?*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: listPage(
+        [
+          { slug: 'a', title: 'Ein Konzert', eventDate: '2026-08-15' },
+          { slug: 'b', title: 'Noch ein Konzert', eventDate: '2026-08-16' },
+        ],
+        2,
+        2,
+      ),
+    }),
+  )
+  await page.reload()
+  await expect(page.getByText('2 Events gefunden', { exact: true })).toBeVisible()
+  await expect(page.getByText('Seite 1 von 2', { exact: true })).toBeVisible()
+})
+
+test('the venues list counts its results in German', async ({ page }) => {
+  await page.route('**/api/venues?*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: listPage([{ slug: 'lido', name: 'Lido', city: 'Berlin' }], 1, 1),
+    }),
+  )
+  await page.goto('/de/venues')
+  // "Location", not "Venue" — the German catalogue calls a venue a Location throughout.
+  await expect(page.getByText('1 Location gefunden', { exact: true })).toBeVisible()
+})

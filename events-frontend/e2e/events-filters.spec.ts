@@ -294,7 +294,21 @@ test('paginates through results, preserving no filter', async ({ page }) => {
 
   await expect(page).toHaveURL(/[?&]page=1\b/)
   await expect(eventHeading(page, 'Second Page Event')).toBeVisible()
-  await expect(page.getByText('Page 2 of 2')).toBeVisible()
+  await expect(page.getByText('Page 2 of 2', { exact: true })).toBeVisible()
   await expect(nextButton).toBeDisabled()
   expect(errors, 'unexpected uncaught exceptions').toEqual([])
+})
+
+test('counts the results, with the plural agreeing with the count', async ({ page }) => {
+  // Exact matches throughout: an unpluralised message renders both branches separated by a pipe
+  // ("1 event found | 1 events found"), which contains the singular and would pass a substring
+  // assertion. The German side of the same two keys is covered in i18n.spec.ts.
+  // The unfiltered feed reports 21 across two pages; the `jazz` query returns exactly one.
+  await page.goto('/events')
+  await expect(page.getByText('21 events found', { exact: true })).toBeVisible()
+
+  await page.getByRole('searchbox').fill('jazz')
+  await page.getByRole('button', { name: 'Search' }).click()
+
+  await expect(page.getByText('1 event found', { exact: true })).toBeVisible()
 })

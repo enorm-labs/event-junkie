@@ -80,7 +80,9 @@ Rough priority: **Now** → **Next** → grouped backlog → **Someday / Vision*
 - [ ] Reduce or group the displayed genres — too many distinct tags; needs a grouping/taxonomy decision (UX + data)
 - [ ] Decide whether to display event **descriptions** and **source images** — copyright/licensing plus traffic to small sites; if images: store/cache/proxy vs.
   hotlink vs. omit (see the Legal/Compliance copyright item)
-- [ ] Always show the number of displayed / found events in list views (verify — may already be the case in places)
+- [ ] Always show the number of displayed / found events in list views. **Verified 2026-08-08:** `/events` and `/venues` do (and their count line is localised
+  now, with a real plural rule per language); the calendar and the "Upcoming events" feed on every detail page do **not**. So what is left is deciding whether
+  those two surfaces want one, not building the first
 - [ ] Make the home page a real entry point into the data — a prominent link to "Browse events", or filtering/searching directly from the home page
 - [ ] **BFF-served sitemap for detail routes** — events, venues, artists, promoters. Belongs in the BFF because it holds the data and can leave out events that
   have already happened; the frontend build cannot enumerate them without giving up its independence from the database. (The static-route sitemap, `robots.txt`,

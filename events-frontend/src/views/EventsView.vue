@@ -62,7 +62,7 @@ const { t } = useI18n()
     </p>
     <template v-else>
       <p class="text-sm text-muted-foreground">
-        {{ page.totalElements }} {{ page.totalElements === 1 ? 'event' : 'events' }} found
+        {{ t('events.resultCount', { count: page.totalElements }) }}
       </p>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <EventCard v-for="event in page.content" :key="event.slug" :event="event" />
@@ -73,7 +73,7 @@ const { t } = useI18n()
           {{ t('common.actions.previous') }}
         </Button>
         <span class="text-sm text-muted-foreground">
-          Page {{ currentPage + 1 }} of {{ totalPages }}
+          {{ t('common.pagination.pageOf', { current: currentPage + 1, total: totalPages }) }}
         </span>
         <Button
           :disabled="currentPage >= totalPages - 1"
