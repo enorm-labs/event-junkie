@@ -20,6 +20,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.net.URI
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 /**
  * Pure HTML parser for an Admiralspalast production page (`/veranstaltung/<slug>.html`).
@@ -116,19 +117,30 @@ class AdmiralspalastDetailPageScraper {
         val note = row.textAt(RESCHEDULE_NOTE)
         val eventType = mapEventType(category, GENRE_EVENT_TYPES) ?: EventType.SHOW.name
 
+        val startTime = parseTime(row.textAt(WEEKDAY_AND_TIME)?.substringAfter(',')?.trim())
+
         return ScrapedEvent(
             title = title,
             subtitle = note,
             eventType = eventType,
             eventDate = eventDate,
-            startTime = parseTime(row.textAt(WEEKDAY_AND_TIME)?.substringAfter(',')?.trim()),
+            startTime = startTime,
             imageUrl = row.attrAt("img", "src")?.let { resolveUrl(siteRoot(sourceUrl), it) },
             ticketUrl = row.hrefAt("$TICKET_CELL a"),
             soldOut = row.textAt(TICKET_CELL)?.let { SOLD_OUT.containsMatchIn(it) } == true,
             status = parseScheduleNote(note),
             sourceUrl = sourceUrl,
-            // One production, many nights — the date is what makes a performance its own event.
-            sourceId = "${EventSource.ADMIRALSPALAST.sourceIdPrefix}$slug-$eventDate",
+            // One production, many nights — and on a matinee day, two performances in one night's
+            // slot. The date alone is therefore not an identity: this house plays *Mamma Mia* at
+            // 14:30 and 19:30 on the same Saturday, each with its own ticket link, and both would
+            // arrive under one `sourceId`. `event.source_id` is `UNIQUE`, so the second is dropped
+            // before it reaches the database (EventUpsertService.deduplicateScrapedEvents) — the
+            // matinee simply never existed as far as the app was concerned. Appending the start
+            // time makes each performance its own event; the colon is left out so the id reads as
+            // one token, matching the Uber and Heimathafen scrapers.
+            sourceId =
+                "${EventSource.ADMIRALSPALAST.sourceIdPrefix}$slug-$eventDate" +
+                    (startTime?.format(SOURCE_ID_TIME)?.let { "-$it" } ?: ""),
             // The venue bills no lineup, so the act is whatever the production title names. The
             // subtitle is deliberately not offered as a support-act source: it only ever carries the
             // reschedule note, which would be minted as a performer.
@@ -175,6 +187,9 @@ class AdmiralspalastDetailPageScraper {
         }
 
     private companion object {
+        /** `19:30` → `1930`, the session marker appended to a performance's `sourceId`. */
+        val SOURCE_ID_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
+
         /** Path prefix of a production page, stripped to obtain its slug. */
         const val PRODUCTION_PATH_PREFIX = "/veranstaltung/"
 

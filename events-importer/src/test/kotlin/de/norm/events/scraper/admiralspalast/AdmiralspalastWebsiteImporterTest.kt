@@ -75,8 +75,8 @@ class AdmiralspalastWebsiteImporterTest {
             val result = importer.importEvents(listingUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
             // Two of the 100 productions are stubbed with a real page: a two-night run and a single night.
-            result.events.map { it.sourceId } shouldContain "admiralspalast:abba-gold-the-concert-show-emotion-2027-01-25"
-            result.events.map { it.sourceId } shouldContain "admiralspalast:abba-gold-the-concert-show-emotion-2027-01-26"
+            result.events.map { it.sourceId } shouldContain "admiralspalast:abba-gold-the-concert-show-emotion-2027-01-25-1930"
+            result.events.map { it.sourceId } shouldContain "admiralspalast:abba-gold-the-concert-show-emotion-2027-01-26-1930"
             result.events.count { it.sourceUrl == abbaUrl } shouldBe 2
             result.etag shouldBe "\"admiralspalast-etag\""
         }

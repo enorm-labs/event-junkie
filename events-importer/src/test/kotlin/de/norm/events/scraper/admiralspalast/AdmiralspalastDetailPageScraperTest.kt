@@ -40,12 +40,33 @@ class AdmiralspalastDetailPageScraperTest {
         val events = scrape("admiralspalast-detail-abba.html", "abba-gold-the-concert-show-emotion")
         events shouldHaveSize 2
         events.map { it.eventDate } shouldBe listOf(LocalDate.of(2027, 1, 25), LocalDate.of(2027, 1, 26))
-        // The date is what distinguishes two nights of one production.
+        // The date and the start time together distinguish one performance from another.
         events.map { it.sourceId } shouldBe
             listOf(
-                "admiralspalast:abba-gold-the-concert-show-emotion-2027-01-25",
-                "admiralspalast:abba-gold-the-concert-show-emotion-2027-01-26"
+                "admiralspalast:abba-gold-the-concert-show-emotion-2027-01-25-1930",
+                "admiralspalast:abba-gold-the-concert-show-emotion-2027-01-26-1930"
             )
+    }
+
+    @Test
+    fun `gives a matinee and its evening show separate identities`() {
+        // The house plays Mamma Mia twice on a Saturday and twice again on the Sunday, each
+        // performance with its own ticket link. Keyed on the date alone they collided on
+        // `event.source_id`, which is UNIQUE — so the matinee was dropped before it ever reached
+        // the database and the app showed one show a day where the venue sells two.
+        val events = scrape("admiralspalast-detail-matinee.html", "mamma-mia-das-original-musical")
+
+        val saturday = events.filter { it.eventDate == LocalDate.of(2027, 9, 18) }
+        saturday.map { it.startTime } shouldBe listOf(LocalTime.of(14, 30), LocalTime.of(19, 30))
+        saturday.map { it.sourceId } shouldBe
+            listOf(
+                "admiralspalast:mamma-mia-das-original-musical-2027-09-18-1430",
+                "admiralspalast:mamma-mia-das-original-musical-2027-09-18-1930"
+            )
+
+        // Every id in the run is distinct — the property that actually matters, since a repeat
+        // silently costs a performance rather than failing.
+        events.map { it.sourceId }.toSet() shouldHaveSize events.size
     }
 
     @Test

@@ -134,11 +134,15 @@ scraper's own KDoc instead, so only what should actually be *repaired* is listed
       `saveAll` issued two UPDATEs to one row. No error, last write wins. It was invisible only because both sittings produced an identical slug; giving them
       distinct slugs made 19 Admiralspalast rows start flipping between their matinee and evening on every import, which is how it was caught. Deduplicating on
       `sourceId` restores those rows and closes the older, quieter bug underneath.
-- [ ] **Several venues still lose a same-day sitting, now for one shared reason: their `sourceId` keys the show and date, not the session.** With the slug
-  problem fixed, this is the only thing left in the way, and it is per scraper. **Admiralspalast** is the clearest case (19 shows with a second sitting —
-  Mamma Mia, Der Geist der Weihnacht, Disney's Glöckner, the Imperial Ballet nights); **Velomax** collapses its own explicitly (below). The fix in each is to
-  put the session start time in the `sourceId`, which re-keys that venue's whole history — so each is its own re-seed and diff, like the Neue Zukunft
-  recurrence change.
+- [x] **Done for Admiralspalast (2026-08-08) — its `sourceId` now carries the session start time.** It keyed on the production and date
+  (`admiralspalast:mamma-mia-das-original-musical-2027-09-18`), so a matinee and its evening show arrived under one id; `event.source_id` is `UNIQUE`, so the
+  second was dropped before it reached the database and the app showed one performance a day where the venue sells two, each with its own ticket link.
+  **19 performances recovered, 0 lost** (208 → 227 rows): Mamma Mia ×4, Der Geist der Weihnacht ×5, Disney's Glöckner ×3, HELLO! AGAIN? ×2, the two Imperial
+  Ballet nights, Ólafur Arnalds, Breakin' Circus and This is THE GREATEST SHOW!.
+    - **Re-keying a live source has one trap worth knowing before the next one.** Every event gets a new `sourceId`, so the old rows go stale and the new ones
+      insert — but `removeStaleEvents` deliberately spares **today**, so a today-dated row keeps its old id *and* its slug while its replacement tries to take
+      the same slug, and the insert collides. Admiralspalast happened to have no event today, which is luck, not design. Re-key a venue on a day its programme
+      is dark, or clear that source's rows first.
 - [ ] **Velomax still collapses its same-day sessions, and now for a different reason.** The slug blocker above is gone, but `event.source_id` is `UNIQUE` too
   and `VelomaxOverviewPageScraper` derives it from the listing URL — one page per *show*, not per session — so dropping `collapseSameDaySessions` would trade a
   duplicate-slug crash for a duplicate-`sourceId` one. Fix: put the session start time in the `sourceId`. That re-keys every existing Velomax event across all
