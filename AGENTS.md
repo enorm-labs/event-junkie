@@ -345,6 +345,26 @@ claim). Neither `bootRun` nor this script hot-reloads Kotlin — restart (`down`
 When launching these from an agent shell, redirect the command's own output (`> file 2>&1 < /dev/null`) — the detached `bootRun`/`vite` process inherits the
 tool's stdout pipe and keeps the call hanging long after the script itself has exited.
 
+**Never run Gradle while an import is in flight.** The "does not hot-reload" note above is about *picking up* your changes; it is not the same as nothing
+happening. Both Boot modules carry `spring-boot-devtools` (`developmentOnly`), which watches the classpath — so **any** task that writes classes
+(`compileKotlin`, `classes`, `build`, even a single `--tests` run) restarts the running service and **kills every import mid-flight**. Those sources are then
+stuck in `RUNNING` forever, because the 30-minute staleness guard only runs under the scheduler and `dev-env.sh up` disables it. The tell in the log is
+`restartedMain` next to a suspiciously short `Started EventsImporterApplicationKt in 1.0 seconds (process running for 117.3)`. There is no reset endpoint;
+recovery is manual:
+
+```bash
+scripts/dev-env.sh psql "UPDATE events.event_source SET status='IDLE', retry_count=0, version=version+1 WHERE status='RUNNING'"
+```
+
+then re-trigger those slugs. On a long job — a `--full` re-seed, a before/after diff — compile everything first, restart once, *then* import, and leave the
+build alone until every source has left `RUNNING`.
+
+**Do not truncate `<service>.log` while the service is running.** `: > build/dev-env/importer.log` looks like the obvious way to get a clean log before a test
+import, and it silently breaks every later `grep`: the process keeps its file descriptor at the old offset, so new writes land far into the file and everything
+before them is NUL padding. `grep` then treats the file as binary and prints `Binary file … matches`, or **nothing at all with `-c`** — which reads exactly
+like "no matches" and is how a real finding gets reported as a clean result. Get a clean log by restarting the service instead (`down` then `up`, which reopens
+the file); if one has already been truncated, `grep -a` reads it. **A zero count from a log you truncated is not evidence.**
+
 **Working in a git worktree** (a session started with `claude --worktree`, or any `git worktree add` checkout — see
 [docs/WORKTREES.md](docs/WORKTREES.md)). Files and Gradle output are isolated; the local runtime is not.
 

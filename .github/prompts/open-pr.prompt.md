@@ -26,6 +26,10 @@ This is the standard "ship it" flow — the manual equivalent of
     - If currently on `main`: `git checkout -b <type>/<slug>`.
     - If already on a non-`main` feature branch: assume it's the intended branch and reuse it (mention this). Only ask if the branch name clearly doesn't match
       the current change.
+    - **If the change is a *new* one and you are still on the last one's branch, go back to `main` first.** `git checkout -b` from a feature branch stacks the
+      new branch on the old one, so the PR carries the parent's commits too and its diff is wider than the change — a reviewer approves files you never meant
+      to put in front of them. It is easy to miss precisely because the PR still says "into main" and merges cleanly. Recovery once the parent has merged is
+      `git rebase --onto origin/main <parent-head>`, then force-push. Happened on 2026-08-08: #249 carried #248's whole frontend i18n change.
 
 4. **Stage the changes.** Stage the files that belong in this PR (`git add …`; `git add -A` is fine when the whole tree is the change). Leave out anything you
    flagged in step 2 unless the user wants it in.
