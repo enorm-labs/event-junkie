@@ -263,18 +263,28 @@ Strategy & sequencing: [docs/DATA_QUALITY_STRATEGY.md](docs/DATA_QUALITY_STRATEG
   resident night uses; Neue Zukunft's recurring entries are monthly and are still imported once, at their start date only (4 of 44 entries). Fixing it also
   needs `NeueZukunftApiScraper`'s `sourceId` to carry the occurrence date (Humboldthain already does), which re-mints every existing Neue Zukunft event — so do
   it as one change, not two.
-- [ ] **Two shared title-parsing rules are too literal, and each currently needs a per-importer workaround.** Both surfaced at LARK, which works around them
-  locally; fixing them centrally changes classification for every venue, so it needs a `--full` re-seed and a diff, not a drive-by edit.
-    - `PARTY_TITLE_KEYWORDS` matches a bare `club` as a substring, so a tour named "… CLUB TOUR" is typed `PARTY` — and a party title mints no artists, so the
-      headliner is lost too. Word-anchor it (as `\brave\b` and `\bkino\b` already are), or drop the bare entry and keep `club night` / `clubnight`.
-      **Note which of the two:** the worst case found so far is a *band whose name ends in the word* — Columbiahalle bills `Two Door Cinema Club`, which is
-      typed `PARTY` and consequently stores no artist at all. Word-anchoring does not help there (nor for `CLUB TOUR`); only dropping the bare entry does. It
-      is the single recoverable lineup the `PARTY`/`FESTIVAL` investigation above turned up across 3166 events, which is the measure of how much this one
-      keyword costs.
-    - `ARTIST_SUFFIX_PATTERN` and `stripShoutedTourTail` only recognise the **ASCII hyphen** as the act/tour boundary, so an en- or em-dash tour tail ("Greg
-      Mendez – BEAUTY LAND TOUR") survives into the artist name. Accept `[-–—]` in both.
-    - `w/` is not treated as a co-bill separator, and a comma suppresses conjunction splitting, so LARK's `FEUCHT w/ BELLA, Agua con gas & SENERGI` is stored as
-      one long "artist". Add `w/` to the splitter.
+- [x] **Done (2026-08-08) — the three too-literal title-parsing rules, fixed centrally with a `--full` re-seed and a diff.** LARK's two local workarounds are
+  gone. Measured over a same-day re-scrape of all 86 sources (3262 → 3278 events, both captures taken hours apart on the same code path so venue-side drift
+  could be told apart from the rule change), **three events changed**: one clear win, one clear loss, one neutral. Each rule, and what it actually did:
+    - **The bare `club` keyword is dropped**, keeping `club night` / `clubnight`. Word-anchoring — the other option written here — would not have helped: in
+      `Two Door Cinema Club` and in `CLUB TOUR`, `club` is already a whole word. **Win:** Columbiahalle's `Two Door Cinema Club` is a `CONCERT` and has its
+      artist. **Loss:** Huxleys' `Corrupted Blood Club Show` is now a `CONCERT` too, and stores its own name as a performer. **Neutral:** arkaoda's
+      `DJ Fart in the Club b2b Cousin` moved `PARTY` → `OTHER`, which mints nothing. Nothing else moved, because every resident night ending in the word is at
+      a venue that types its own events (Soda, Kater, MAXXIM, OHM) or reads its own category (Privatclub).
+    - **`ARTIST_SUFFIX_PATTERN` and the shouted-tail split accept `[-–—]`.** No stored row changed: LARK, the only venue whose titles carry an en-dash tour
+      tail, was already normalising dashes locally, and that workaround is now deleted in favour of the shared rule. The other en-dash titles in the corpus
+      (Cosmic Comedy's `… – SHOWCASE FRIDAY`, `Lucas Lauriente – Stand Up 2026`) are at venues that derive no artist from a title at all.
+    - **`w/` is NOT a co-bill separator, and the suggestion above was wrong.** Splitting in place and keeping both halves would have minted the night's name as
+      a performer in all 16 titles that carry the marker (`RIPPLES W/ AMINE K`, `Stil vor Talent w/ Oliver Koletzki`, …) — the left side names the night, the
+      right side the acts. Insel already had that rule locally, so it moved into the shared `headlinersFromTitle` as **opt-in** (`unpackWithFrame`) rather than
+      becoming the default: Zenner bills `Analogue Foundation presents: David August w/ MFO`, where `w/` joins collaborators and unpacking deletes the
+      headliner. No lexical test separates the two, so the venue decides. No stored row changed — Insel already behaved this way.
+- [ ] **A label showcase stores the label's night as a performer.** Found by the re-seed above and the one thing it made worse: Huxleys bills
+  `Corrupted Blood Club Show` with the subtitle `Corrupted Blood Records presents`, so the title is a label's event name and `Corrupted Blood Club Show` is now
+  an artist row. `isLedByNonArtistLabel` already encodes exactly this idea but only sees the *title*, against a curated list — whereas the signal here is
+  structural and already in hand: **the subtitle says `<X> presents` and the title starts with `<X>`**. `buildArtistsForEventType` receives the subtitle
+  already, so the plumbing exists; `headlinersFromTitle` does not. Generalises beyond this one event (Zenner's `Analogue Foundation presents: …`, Loft's
+  `Loft presents: …`), so it wants its own measurement and re-seed rather than a patch.
 - [ ] **Cover venues that will never have an automatic import** — no website at all, or a programme published only via Instagram / Facebook / Resident Advisor.
   Needs three things: a recorded list of those venues (in EVENT_DATA_SOURCES.md, with a link to wherever their programme *is* visible), a low-friction way to
   enter their events by hand (see the admin frontend items below), and a reminder mechanism so checking them doesn't get forgotten.

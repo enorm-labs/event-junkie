@@ -8,8 +8,6 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.splitSupportActs
-import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
@@ -262,26 +260,21 @@ class InselApiScraper(
     }
 
     /**
-     * The headliners billed by a concert title, after unpacking the two frames the venue wraps an
-     * act in — a `… w/ <acts>` guest billing and a `•`-separated title whose first segment is the
-     * act. Origin tags are stripped and non-artists dropped.
+     * The headliners billed by a concert title, after unpacking the `•`-separated title frame
+     * whose first segment is the act. Origin tags are stripped and non-artists dropped.
+     *
+     * The venue's other frame — a `… w/ <acts>` guest billing — used to be unpacked here too.
+     * The rule now lives in the shared [headlinersFromTitle] and is requested with
+     * `unpackWithFrame`; it is opt-in because `w/` joins collaborators at some venues rather than
+     * framing a guest (see that parameter's KDoc). Insel is unambiguous — its `w/` titles always
+     * name the night first — so it asks for the unpacking. The bullet split stays local and runs
+     * first: `w/` never appears after a bullet in this feed.
      */
-    private fun headliners(title: String): List<ScrapedArtist> {
-        val withFrame = WITH_FRAME_PATTERN.find(title)
-        val billed = (withFrame?.let { title.substring(it.range.last + 1) } ?: title.substringBefore(BULLET_SEPARATOR)).trim()
-        // A `w/` billing is a plain act list, so it is split directly; a frame-less title goes
-        // through the shared title parser, which also strips series prefixes and framing phrases.
-        val acts =
-            if (withFrame != null) {
-                splitSupportActs(billed).map { ScrapedArtist(name = stripArtistSuffix(it.trim()), role = "HEADLINER") }
-            } else {
-                headlinersFromTitle(billed)
-            }
-        return acts
+    private fun headliners(title: String): List<ScrapedArtist> =
+        headlinersFromTitle(title.substringBefore(BULLET_SEPARATOR).trim(), unpackWithFrame = true)
             .map { it.copy(name = stripOriginTag(it.name)) }
             .filterNot { isNonArtistName(it.name) }
             .distinctBy { it.name.lowercase() }
-    }
 
     /** The event type — `CONCERT` for this concert house, unless the entry is a closed private function. */
     private fun resolveEventType(
@@ -417,13 +410,6 @@ private val SUPPORT_SEPARATOR = Regex("""\s*[,+&]\s*|\s+und\s+""", RegexOption.I
  */
 private val PROMOTER_PATTERN =
     Regex("""^(.{2,60}?)\s*(?:prs\.|pres\.|präsentiert)\s*:?(?:\s|$)""", RegexOption.IGNORE_CASE)
-
-/**
- * A `… w/ <acts>` guest-billing frame, up to and including the marker. Whatever follows names the
- * performers, so an event-named night ("RIOT ON THE ISLAND w/ Them Spirals, …") yields its acts
- * rather than its own name. Mirrors the frame Zenner's parser unpacks.
- */
-private val WITH_FRAME_PATTERN = Regex("""^.+?\bw/\s*""", RegexOption.IGNORE_CASE)
 
 /**
  * A trailing provenance tag on an act name — a two-or-three-letter country code or the venue's

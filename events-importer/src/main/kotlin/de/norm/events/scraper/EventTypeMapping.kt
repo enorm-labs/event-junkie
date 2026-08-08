@@ -141,9 +141,25 @@ private val NON_CONCERT_TITLE_KEYWORDS =
         "markt"
     )
 
-/** Title keywords marking a DJ/club night (mapped to [EventType.PARTY]). */
+/**
+ * Title keywords marking a DJ/club night (mapped to [EventType.PARTY]).
+ *
+ * **A bare `club` is deliberately absent**, and the compound spellings are what replaced it.
+ * As a substring it matched any title *ending* in the word, which is a shape a booked band
+ * shares with a resident night: Columbiahalle's `Two Door Cinema Club` was typed `PARTY` and
+ * consequently stored no artist at all — the single recoverable lineup in a 3262-event seed
+ * (see [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType]'s KDoc).
+ * Word-anchoring it would not have helped; `Club` is already a whole word in that name.
+ *
+ * Nothing replaces it, which was checked rather than assumed. The resident nights that end in
+ * the word — `Soda Social Club`, `The Funky Chicken Club`, `CLUB TROPICANA`, `MONDAY NITE CLUB`
+ * — are all at venues whose scraper types every event `PARTY` outright (Soda, Kater, MAXXIM,
+ * OHM) or reads the venue's own category (Privatclub), so their titles never reach this list.
+ * A `<weekday> club` pattern was written to cover them and deleted again on finding it fired on
+ * nothing: a rule with no live case is a rule nobody can tell is broken.
+ */
 private val PARTY_TITLE_KEYWORDS =
-    listOf("aftershow", "afterparty", "after-party", "after party", "party", "club night", "clubnight", "club", "karaoke")
+    listOf("aftershow", "afterparty", "after-party", "after party", "party", "club night", "clubnight", "karaoke")
 
 /**
  * Whole-word party keyword too short for a safe substring test: `rave` is a substring
