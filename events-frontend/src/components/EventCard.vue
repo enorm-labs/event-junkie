@@ -8,7 +8,21 @@ import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
 
-const props = defineProps<{ event: EventSummary }>()
+const props = withDefaults(
+  defineProps<{
+    event: EventSummary
+    /**
+     * Heading level for the card's title. The card is a heading in its own right wherever it
+     * appears, but *which* level is a property of the page, not of the card: on the home page and
+     * the detail pages a `SectionLabel` `h2` sits above the grid, so `h3` is correct; on `/events`
+     * the cards hang directly off the page `h1`, so anything below `h2` skips a level and trips
+     * axe's `heading-order`. Same shape as `SectionLabel`'s `as`, narrowed to the levels a card
+     * can legitimately take.
+     */
+    headingAs?: 'h2' | 'h3' | 'h4'
+  }>(),
+  { headingAs: 'h3' },
+)
 
 const { formatDate, formatEventType } = useFormat()
 
@@ -61,12 +75,13 @@ const { t } = useI18n()
             clipped elements rather than the whole card, so hovering the card doesn't pop a
             tooltip over information that is already fully visible.
           -->
-          <h3
+          <component
+            :is="headingAs"
             :title="eventLabel(event.title, event.venue?.name)"
             class="truncate leading-tight font-semibold"
           >
             {{ event.title }}
-          </h3>
+          </component>
         </div>
         <BaseBadge v-if="event.soldOut" class="shrink-0" variant="destructive">{{
           t('events.card.soldOut')
