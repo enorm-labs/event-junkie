@@ -4,6 +4,7 @@ import com.github.jk1.license.render.InventoryHtmlReportRenderer
 import com.github.jk1.license.render.JsonReportRenderer
 import com.github.jk1.license.render.ReportRenderer
 import dev.detekt.gradle.Detekt
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import org.springframework.boot.gradle.dsl.SpringBootExtension
 
@@ -66,6 +67,30 @@ fun koverVerificationFloor(module: String): Int? =
         "events-importer" -> 90
         else -> null
     }
+
+/**
+ * Whether a Kotlin compiler warning fails the build — off locally, on in CI (`-PwarningsAsErrors`,
+ * passed by `build-backend.yml`).
+ *
+ * The Kotlin warning set is empty, and the only thing that keeps it empty is somebody noticing a
+ * new line scroll past in a terminal. This makes CI notice instead. It is deliberately **not** on
+ * by default: the warnings that appear unbidden are the ones a Kotlin or Spring Boot upgrade
+ * introduces, and turning a dependency bump into a red local build punishes the person doing the
+ * bump at the moment they are least able to act on it. In CI the same failure is a PR check on a
+ * branch, which is where it belongs.
+ *
+ * Accepts a bare `-PwarningsAsErrors` (Gradle passes `""`) as well as an explicit `=true`/`=false`,
+ * so `-PwarningsAsErrors=false` genuinely turns it off rather than enabling it by being present.
+ *
+ * **This does not cover the build scripts themselves.** `build.gradle.kts` is compiled by Gradle's
+ * Kotlin DSL, not by these tasks, so a warning there — like the `arrayOf` intersection one below —
+ * still only ever prints. Nothing available today changes that.
+ */
+val warningsAsErrors: Provider<Boolean> =
+    providers
+        .gradleProperty("warningsAsErrors")
+        .map { it.isBlank() || it.toBooleanStrict() }
+        .orElse(false)
 
 subprojects {
     group = "de.norm"
@@ -174,6 +199,16 @@ subprojects {
                     additional.put("commit", gitCommit)
                 }
             }
+        }
+    }
+
+    // Applied to every Kotlin compilation, `main` and `test` alike — a warning in a test is the
+    // same signal, and two of the three this rule was introduced alongside were in test code.
+    // The per-module `kotlin { compilerOptions { … } }` blocks keep owning `-Xjsr305=strict` and
+    // friends; only the shared, environment-dependent switch lives here.
+    tasks.withType<KotlinCompile>().configureEach {
+        compilerOptions {
+            allWarningsAsErrors = warningsAsErrors
         }
     }
 

@@ -35,6 +35,15 @@ jobs:
     name: Build & Test
     runs-on: ubuntu-latest
 
+    # Kotlin warnings fail the build here, and only here — see `warningsAsErrors` in the root
+    # build.gradle.kts for why it is CI-only. Set as an environment variable rather than `-P` on
+    # each step for two reasons: every Gradle invocation in the job gets it without the flag being
+    # forgotten on a step added later, and the value stays identical across steps, so they keep
+    # sharing one configuration-cache entry (a project property is part of the cache key, so
+    # flagging some steps and not others would silently double the cache misses).
+    env:
+      ORG_GRADLE_PROJECT_warningsAsErrors: 'true'
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6

@@ -417,6 +417,15 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 - Use `val` for injected dependencies; constructor injection only (no field injection).
 - Application config files use **`.yaml`** extension (not `.yml`).
 - Kotlin compiler flags: `-Xjsr305=strict` (all modules) and `-Xannotation-default-target=param-property` (BFF + importer) are set in `compilerOptions`.
+- **A Kotlin warning fails the build in CI, not locally.** The warning set is empty and stays that way because `build-backend.yml` sets
+  `ORG_GRADLE_PROJECT_warningsAsErrors=true` for its whole job, which the root `build.gradle.kts` turns into `allWarningsAsErrors` on every `KotlinCompile`
+  task (`main` and `test` alike). Locally it is off by default, deliberately: the warnings that appear unbidden come from a Kotlin or Spring Boot upgrade, and a
+  red local build punishes whoever runs the bump at the moment they can least act on it — in CI the same failure is a PR check.
+    - **Reproduce a CI failure locally with `./gradlew build -PwarningsAsErrors`**, and turn it off again with `-PwarningsAsErrors=false` (an explicit `false`
+      really disables it; the switch is not merely presence-based).
+    - **It does not cover the build scripts.** `build.gradle.kts` is compiled by Gradle's Kotlin DSL, not by these tasks, so a warning there only ever prints —
+      and Gradle caches the compiled script by content hash, so it prints exactly once and then never again until the file changes. If you are hunting one, add
+      a throwaway comment to bust the cache.
 - **Kover** (`org.jetbrains.kotlinx.kover`) is configured for code coverage reports. Run `./gradlew koverLog` for a console summary or
   `./gradlew koverHtmlReport` for detailed HTML reports.
     - **Exclusions live in three places, and filters never propagate between them.** A class hidden from one report is still counted in the others unless it is
@@ -504,7 +513,8 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     - `build-backend.yml` — Lint (`ktlintCheck`), static analysis (`detekt`), build, test, and OWASP dependency CVE scan. Posts detekt markdown reports and
       Kover coverage to the job summary; on PRs, also posts Kover coverage as a sticky comment (via `mi-kas/kover-report`). Detekt SARIF reports are uploaded
       per module to GitHub Code Scanning. Triggers on `main` push/PR, skips
-      `events-frontend/**`, `*.md`, `docs/**`.
+      `events-frontend/**`, `*.md`, `docs/**`. Its build job also sets `ORG_GRADLE_PROJECT_warningsAsErrors=true`, so a Kotlin warning fails the build here and
+      nowhere else — see §Code Conventions.
     - `build-frontend.yml` — Install, lint, build, unit test, and Playwright e2e test. Triggers only when `events-frontend/**` changes. Uses Node 24.
     - Both build workflows also declare **`workflow_dispatch`**, so they can be run by hand —
       `gh workflow run build-backend.yml --ref <branch>` (or the Actions tab). This exists because the automatic triggers cannot always be relied on: during the
