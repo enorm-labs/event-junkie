@@ -199,7 +199,7 @@ internal class LarkApiScraper(
         val acf = post.path("acf")
         // Classify the act, not the tour it is touring: "LEILA – 20 SOMETHING CLUB TOUR" is a gig,
         // but the shared keyword classifier sees the "club" in its tour name and calls it a party.
-        val actTitle = stripArtistSuffix(title.replace(DASH_VARIANTS, "-"))
+        val actTitle = stripArtistSuffix(title)
         val eventType = refineConcertVenueType(mapEventType(acf.stringOrNull("event_type"), LARK_EVENT_TYPES), actTitle)
 
         return LarkEntry(
@@ -242,7 +242,7 @@ internal class LarkApiScraper(
         eventType: String
     ): List<ScrapedArtist> {
         if (eventType != EventType.CONCERT.name) return emptyList()
-        return splitHeadlinerTitle(title.replace(DASH_VARIANTS, "-"))
+        return splitHeadlinerTitle(title)
             .map { act ->
                 val support = SUPPORT_ACT_MARKER.containsMatchIn(act)
                 val name = stripArtistSuffix(act.replace(SUPPORT_ACT_MARKER, "").trim())
@@ -305,14 +305,6 @@ internal class LarkApiScraper(
 
         /** The venue's own support-act marker, trailing the act it belongs to. */
         val SUPPORT_ACT_MARKER = Regex("""\s*\(\s*supports?\s*\)\s*""", RegexOption.IGNORE_CASE)
-
-        /**
-         * En/em dashes, normalised to the ASCII hyphen before the title is handed to the shared
-         * [stripArtistSuffix] — LARK writes its tour tails with an en dash
-         * (`Greg Mendez – BEAUTY LAND TOUR`), which the shared pattern's ` - ` boundary misses.
-         * Applied to the artist-derivation input only; the stored title keeps the venue's spelling.
-         */
-        val DASH_VARIANTS = Regex("""[–—]""")
 
         val WHITESPACE = Regex("""\s+""")
     }

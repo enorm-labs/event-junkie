@@ -595,6 +595,66 @@ class ArtistNameMappingTest {
         buildArtistsForEventType("Soul Explosion", subtitle = "Support: Kaos", eventType = "PARTY").shouldBeEmpty()
     }
 
+    // --- dash variants on the act/tour boundary ---
+
+    @Test
+    fun `stripArtistSuffix cuts a tour tail on an en or em dash, not only a hyphen`() {
+        // LARK writes its tour tails with an en dash, so the ASCII-only boundary left the whole
+        // tail on the act — the workaround that used to live in LarkApiScraper.
+        stripArtistSuffix("Greg Mendez – BEAUTY LAND TOUR") shouldBe "Greg Mendez"
+        stripArtistSuffix("Hello Hannes – Sober doesnt save me tour Berlin") shouldBe "Hello Hannes"
+        stripArtistSuffix("Lucas Lauriente – Stand Up 2026") shouldBe "Lucas Lauriente"
+        stripArtistSuffix("TURBOPAOLO — IL POLIZIOTTO DEL FORMAGGIO 2026") shouldBe "TURBOPAOLO"
+        // The hyphen spelling keeps working.
+        stripArtistSuffix("DOMINIUM - NIGHT IS CALLING TOUR 2026") shouldBe "DOMINIUM"
+    }
+
+    @Test
+    fun `stripArtistSuffix keeps a dashed name whose tail is not a tour`() {
+        // The shouted-tail guards apply to every dash equally: a mixed-case tail is a name.
+        stripArtistSuffix("BAD COMPANY LEGACY – Dave Colwell") shouldBe "BAD COMPANY LEGACY – Dave Colwell"
+        stripArtistSuffix("Sinem – Hatun") shouldBe "Sinem – Hatun"
+        // An all-caps head means the dash is a co-bill, not an act/tour boundary.
+        stripArtistSuffix("DZ – DEATHRAY") shouldBe "DZ – DEATHRAY"
+    }
+
+    // --- the "<night> w/ <acts>" frame ---
+
+    @Test
+    fun `headlinersFromTitle leaves a w-slash title alone unless the venue asks`() {
+        // Off by default: `w/` joins collaborators at some venues (Zenner's "David August w/ MFO"),
+        // where unpacking would delete the headliner.
+        headlinersFromTitle("Analogue Foundation presents: David August w/ MFO") shouldContainExactly
+            listOf(ScrapedArtist(name = "Analogue Foundation presents: David August w/ MFO", role = "HEADLINER"))
+    }
+
+    @Test
+    fun `headlinersFromTitle unpacks a w-slash billing into its acts when asked`() {
+        // The tail is a lineup list, so a comma delimits acts there — unlike in a title.
+        headlinersFromTitle("RIOT ON THE ISLAND w/ Them Spirals, Painted Lox's & AK In Control", unpackWithFrame = true) shouldContainExactly
+            listOf(
+                ScrapedArtist(name = "Them Spirals", role = "HEADLINER"),
+                ScrapedArtist(name = "Painted Lox's", role = "HEADLINER"),
+                ScrapedArtist(name = "AK In Control", role = "HEADLINER")
+            )
+        // The night's own name never becomes a performer.
+        headlinersFromTitle("RIPPLES W/ AMINE K", unpackWithFrame = true) shouldContainExactly
+            listOf(ScrapedArtist(name = "AMINE K", role = "HEADLINER"))
+    }
+
+    @Test
+    fun `headlinersFromTitle drops an unfinished-billing tail from a w-slash lineup`() {
+        headlinersFromTitle("House of Rave w/ Maceo Plex, Mark Dekoda and many more", unpackWithFrame = true)
+            .map { it.name } shouldContainExactly listOf("Maceo Plex", "Mark Dekoda")
+    }
+
+    @Test
+    fun `headlinersFromTitle falls back to the whole title when a w-slash frame yields nothing`() {
+        // "w/ TBA" leaves no usable act, so the title is parsed normally rather than yielding none.
+        headlinersFromTitle("Green Lung w/ TBA", unpackWithFrame = true)
+            .map { it.name } shouldContainExactly listOf("Green Lung w/ TBA")
+    }
+
     // --- splitHeadlinerTitle ---
 
     @Test

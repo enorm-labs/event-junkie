@@ -130,8 +130,26 @@ class EventTypeMappingTest {
     @Test
     fun `inferConcertVenueType detects a party or club night`() {
         inferConcertVenueType("THE CURE AFTERSHOW PARTY") shouldBe "PARTY"
-        inferConcertVenueType("P ▲ R ▲ N ● I ► (PARANOID CLUB)") shouldBe "PARTY"
+        inferConcertVenueType("PARANOID CLUB NIGHT") shouldBe "PARTY"
         inferConcertVenueType("HARD TECHNO RAVE") shouldBe "PARTY"
+    }
+
+    @Test
+    fun `inferConcertVenueType keeps an act whose name merely ends in Club as a concert`() {
+        // The trade made when the bare `club` keyword was dropped, stated as a test so it is a
+        // decision rather than a drift. At a dedicated live-music venue a title ending in the word
+        // is overwhelmingly a band — and typing it PARTY cost it its lineup as well as its type.
+        inferConcertVenueType("Two Door Cinema Club") shouldBe "CONCERT"
+        inferConcertVenueType("Teenage Fanclub") shouldBe "CONCERT"
+        inferConcertVenueType("Savana Funk - Club Tour 2026") shouldBe "CONCERT"
+        // What it costs: a night named for its club, at a venue that supplies no category of its
+        // own, is now a CONCERT. No such title exists in the seed — every resident night ending in
+        // the word is at a venue that types its events itself — but the shape is real, so it is
+        // named here rather than discovered later.
+        inferConcertVenueType("P ▲ R ▲ N ● I ► (PARANOID CLUB)") shouldBe "CONCERT"
+        // A venue that marks its own concerts is unaffected in the way that matters: an unmarked
+        // title falls to OTHER, which mints no artists, rather than to CONCERT.
+        inferUnmarkedTitleType("Soda Social Club") shouldBe "OTHER"
     }
 
     @Test

@@ -83,18 +83,22 @@ private val PLACEHOLDER_NAMES =
 
 /**
  * A "more acts to come" lineup continuation — `+ more`, `& more`, `and more`, `+ more tba`,
- * `more tba`, `und mehr`. Venues close an unfinished billing with one of these, and a lineup parser
- * that splits on `+` hands it over as if it were the next act (Kater stored `+ more` and
- * `+ more Tba` as artists).
+ * `more tba`, `und mehr`, `many more`. Venues close an unfinished billing with one of these, and a
+ * lineup parser that splits on `+` hands it over as if it were the next act (Kater stored `+ more`
+ * and `+ more Tba` as artists).
  *
  * A **bare** "More" deliberately does not match: it is a real band name (the NWOBHM act). The
- * placeholder is only recognised with a lead-in (`+`/`&`/`and`/`und`) or a trailing
- * `tba`/`tbc`/`tbd`, either of which marks it as a continuation rather than a name.
+ * placeholder is only recognised with a lead-in (`+`/`&`/`and`/`und`), a `many`/`viele` quantifier,
+ * or a trailing `tba`/`tbc`/`tbd` — each of which marks it as a continuation rather than a name.
+ * The quantified form is what a comma-split lineup ends on, and it only became reachable once
+ * [headlinersFromTitle] learned to unpack a `w/` billing: Zenner's
+ * `House of Rave w/ Maceo Plex, …, Mark Dekoda and many more` previously stayed one blob.
  */
 private val MORE_TO_COME_PATTERN =
     Regex(
-        """^(?:[+&]|and|und)\s*(?:more|mehr)(?:\s+(?:tba|tbc|tbd))?\.*$""" +
-            """|^(?:more|mehr)\s+(?:tba|tbc|tbd)\.*$""",
+        """^(?:[+&]|and|und)\s*(?:many\s+|viele\s+)?(?:more|mehr)(?:\s+(?:tba|tbc|tbd))?\.*$""" +
+            """|^(?:more|mehr)\s+(?:tba|tbc|tbd)\.*$""" +
+            """|^(?:many|viele)\s+(?:more|mehr)\.*$""",
         RegexOption.IGNORE_CASE
     )
 
@@ -276,8 +280,8 @@ fun isNonArtistEvent(name: String): Boolean {
  */
 private val ARTIST_SUFFIX_PATTERN =
     Regex(
-        """\s+-\s+(?:\S.*\btour\b|\d+\s+(?:years?|jahre|sets?)\b).*$""" +
-            """|\s+-\s+\S.*\b(?:19|20)\d{2}\s*$""" +
+        """\s+[-–—]\s+(?:\S.*\btour\b|\d+\s+(?:years?|jahre|sets?)\b).*$""" +
+            """|\s+[-–—]\s+\S.*\b(?:19|20)\d{2}\s*$""" +
             """|\s+[-–—]\s*release\s?show\s*$""" +
             """|\s+live(?:\s+in\s+\S.*)?$""" +
             """|\s*\((?:dj[\s-]?set|live|acoustic|akustik|unplugged|solo)\)\s*$""" +
@@ -321,8 +325,13 @@ fun stripArtistSuffix(name: String): String {
 /** Minimum words in a shouted tail before it reads as a tour/album name rather than an act. */
 private const val MIN_SHOUTED_TAIL_WORDS = 2
 
-/** The ` - ` boundary a venue puts between an act and the tour/album name it is touring. */
-private const val HYPHEN_SEPARATOR = " - "
+/**
+ * The space-padded dash boundary a venue puts between an act and the tour/album name it is
+ * touring. All three dashes count: an en dash is the spelling LARK uses
+ * (`Greg Mendez – BEAUTY LAND TOUR`), and recognising only the ASCII hyphen let that tail
+ * survive into the artist name.
+ */
+private val DASH_SEPARATOR = Regex("""\s[-–—]\s""")
 
 /**
  * Strips a trailing `" - <SHOUTED TOUR/ALBUM NAME>"` from an act name, the spelling venues
@@ -343,10 +352,9 @@ private const val HYPHEN_SEPARATOR = " - "
  * casing heuristic.
  */
 private fun stripShoutedTourTail(name: String): String {
-    val index = name.lastIndexOf(HYPHEN_SEPARATOR)
-    if (index < 0) return name
-    val head = name.substring(0, index).trim()
-    val tail = name.substring(index + HYPHEN_SEPARATOR.length).trim()
+    val separator = DASH_SEPARATOR.findAll(name).lastOrNull() ?: return name
+    val head = name.substring(0, separator.range.first).trim()
+    val tail = name.substring(separator.range.last + 1).trim()
     val isShoutedTail =
         tail.split(WHITESPACE).size >= MIN_SHOUTED_TAIL_WORDS &&
             tail.any { it.isUpperCase() } &&
@@ -855,13 +863,18 @@ fun stripArtistPrefix(name: String): String {
  *
  * @param splitOnSlash forwarded to [splitHeadlinerTitle]: pass false for a venue that
  *   uses `/` inside a single act name (Madame Claude) so the name isn't torn apart.
+ * @param unpackWithFrame reads a `"<night> w/ <acts>"` title as its acts only — see
+ *   [withFrameActs] for why this is opt-in rather than the default.
  */
+@Suppress("ReturnCount") // Two guard clauses (label-led title, w/ frame) read better than nesting
 fun headlinersFromTitle(
     title: String,
-    splitOnSlash: Boolean = true
+    splitOnSlash: Boolean = true,
+    unpackWithFrame: Boolean = false
 ): List<ScrapedArtist> {
     // A title led by a label's own name announces that label's event; nothing in it is an act.
     if (isLedByNonArtistLabel(title)) return emptyList()
+    if (unpackWithFrame) withFrameActs(title)?.let { return it }
     return splitHeadlinerTitle(stripSeriesPrefix(title), splitOnSlash)
         .map { segment ->
             // The role is decided from the *raw* segment, before its label is stripped: a title
@@ -870,6 +883,48 @@ fun headlinersFromTitle(
             stripFramingPrefix(stripArtistPrefix(stripArtistSuffix(segment))) to role
         }.filterNot { (name, _) -> isNonArtistName(name) }
         .map { (name, role) -> ScrapedArtist(name = name, role = role) }
+}
+
+/**
+ * A `"<night> w/ <acts>"` guest-billing frame, up to and including the marker.
+ *
+ * The marker is certainly **not** a co-bill separator, which is the tempting reading: across a
+ * 3262-event seed, all 16 titles carrying it name a night, a series or a label on the left and
+ * the booked acts on the right — `RIPPLES W/ AMINE K`, `Stil vor Talent w/ Oliver Koletzki`,
+ * `House of Rave w/ Maceo Plex, Nicole Moudaber, …`. Splitting in place and keeping both halves
+ * would mint all 16 night names as performers.
+ *
+ * **But it is not universally a frame either, which is why unpacking is opt-in.** Zenner bills
+ * `Analogue Foundation presents: David August w/ MFO (live)`, where `w/` joins two collaborating
+ * artists and the left side is the headliner — applying the frame there deletes David August.
+ * That venue distinguishes the two by anchoring its own frame to a leading duration
+ * (`180 min w/ Barker`), a cue no other venue shares. So the shared rule exists, is correct where
+ * a venue says it applies, and defaults to off: `w/` means different things at different houses,
+ * and no lexical test found here separates them.
+ *
+ * The tail is split by [splitSupportActs] rather than [splitHeadlinerTitle], because after the
+ * marker the text *is* a lineup list: a comma delimits acts there (`w/ Them Spirals, Painted
+ * Lox's & AK In Control`), whereas in a title a comma usually sits inside one name and so
+ * suppresses splitting. Every act is billed as a headliner — the frame says who is playing, not
+ * in what order.
+ *
+ * Requires the marker to be preceded by something, so a lineup entry that *opens* with `w/`
+ * still goes to [ROLE_LABEL_PREFIX], which strips it as a role label.
+ *
+ * Returns `null`, not an empty list, when the frame yields nothing usable, so the caller falls
+ * back to parsing the whole title rather than storing no lineup at all.
+ */
+private val WITH_FRAME_PATTERN = Regex("""^.+?\bw/\s*""", RegexOption.IGNORE_CASE)
+
+/** The acts a [WITH_FRAME_PATTERN] title bills, or `null` when the title carries no such frame. */
+private fun withFrameActs(title: String): List<ScrapedArtist>? {
+    val frame = WITH_FRAME_PATTERN.find(title) ?: return null
+    val acts =
+        splitSupportActs(title.substring(frame.range.last + 1))
+            .map { stripFramingPrefix(stripArtistPrefix(stripArtistSuffix(it))) }
+            .filterNot { isNonArtistName(it) }
+            .map { ScrapedArtist(name = it, role = "HEADLINER") }
+    return acts.ifEmpty { null }
 }
 
 /**
