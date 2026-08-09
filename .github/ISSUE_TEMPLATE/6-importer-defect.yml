@@ -1,0 +1,94 @@
+name: 🔍 Importer / data defect
+description: An importer loses, mangles or misclassifies data the source actually published.
+type: Bug
+labels: [ 'importer' ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For maintainers. Spotted wrong details on an event as a visitor? The
+        **📅 Wrong or missing event data** form above is the right one — it asks for less and gets
+        it fixed just as fast.
+
+        **This form is only for defects with a known repair.** An accepted limitation — a field the
+        venue simply does not publish, or a trade-off a parser makes deliberately — belongs in that
+        scraper's own KDoc, next to the code it constrains, *not* in the tracker. See `AGENTS.md`.
+        The test: if the answer is "the source never said", it is a limitation; if the answer is
+        "the source said it and we dropped it", it is this form.
+
+  - type: input
+    id: venues
+    attributes:
+      label: Venue(s) and scraper(s) affected
+      description: All of them, not just the one that surfaced it — most of these defects are cross-cutting.
+      placeholder: OHM, Berghain, Tresor, Renate — every late-opening club
+    validations:
+      required: true
+
+  - type: textarea
+    id: source-says
+    attributes:
+      label: What the source publishes
+      description: Quote it. Real examples from the venue's page are what make the fix verifiable.
+      placeholder: |
+        silent green bills three autumn shows as `Current 93 – Sonic Morgue`,
+        `Current 93 – Sonic Morgue – Zusatzshow`, `Anja Huwe / Xmal Deutschland – Sonic Morgue`.
+    validations:
+      required: true
+
+  - type: textarea
+    id: we-store
+    attributes:
+      label: What we store today
+      description: And what it should have been.
+      placeholder: >-
+        `Sonic Morgue` is kept as part of the performer name, so these never resolve to the plain
+        `Current 93` / `Xmal Deutschland` rows imported from another house.
+    validations:
+      required: true
+
+  - type: textarea
+    id: code-path
+    attributes:
+      label: Where it happens
+      description: File and function. The point of this field is that the next person does not repeat the hunt.
+      placeholder: |
+        `splitHeadlinerTitle` in `events-importer/.../scraper/ArtistNameMapping.kt` — cuts only on
+        `/`, `+` and conjunctions; `stripArtistSuffix` recognises a ` - ` tail only for tours, years
+        and releases.
+    validations:
+      required: true
+
+  - type: textarea
+    id: fix
+    attributes:
+      label: Proposed fix
+      description: >-
+        Including what makes it *unsafe* if it is not straightforward. Several of these need a
+        curated vocabulary before any pattern is safe to apply — say so here rather than discovering
+        it mid-PR.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: reseed
+    attributes:
+      label: Does the fix need a `--full` re-seed and a diff?
+      description: >-
+        Anything touching shared normalization does. This is usually the difference between a
+        one-hour change and a one-day one, so it is worth answering before the work is picked up.
+      options:
+        - 'Yes — it changes shared normalization, so existing rows are wrong until re-imported'
+        - 'No — the change is local to one scraper and only affects future imports'
+        - 'Unsure'
+    validations:
+      required: true
+
+  - type: input
+    id: blast-radius
+    attributes:
+      label: Blast radius
+      description: How many events, artist rows or sources are affected at capture. Sizes the work and ranks it.
+      placeholder: 7 artist rows today, 5 of them VOID Club's
+    validations:
+      required: true

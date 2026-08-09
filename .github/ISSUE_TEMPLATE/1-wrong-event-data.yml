@@ -1,6 +1,7 @@
 name: 📅 Wrong or missing event data
 description: An event is wrong, out of date, duplicated, or missing entirely.
 title: 'fix(data): '
+type: Bug
 labels: [ 'bug', 'importer' ]
 body:
   - type: markdown

@@ -1,0 +1,56 @@
+name: 🧭 Epic
+description: A theme large enough to hold sub-issues — usually a whole phase of the roadmap.
+type: Feature
+labels: [ 'size:XL' ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For maintainers. An epic is a **parent**, not a big task: it exists so that a dozen related
+        issues have somewhere to hang, and it closes when its sub-issues do.
+
+        Attach children with GitHub's **sub-issues** (the *Create sub-issue* control on the issue
+        page) rather than a markdown checklist — sub-issues show progress, survive being reordered,
+        and can be worked on independently.
+
+        Two epics that are really one thing is a worse failure than one epic that is slightly too
+        big. If in doubt, keep it together.
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: The outcome
+      description: What becomes true when the whole theme is done, described from the outside.
+      placeholder: >-
+        Someone can follow an artist, a venue or a genre and be told — once, in time, and only about
+        Berlin — when something they follow is playing.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why-now
+    attributes:
+      label: Why now, and what it depends on
+      description: >-
+        Including the decisions that have to be settled first. Most epics here have one — filing
+        those as separate `needs-decision` issues is what keeps the epic from stalling silently.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dod
+    attributes:
+      label: Definition of done
+      description: The line that separates this epic from the next one. Where does it stop?
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: What it absorbs
+      description: >-
+        The ideas this epic is standing in for, before they become sub-issues. A rough list is fine
+        — it is the record of what was folded in, so nothing is quietly lost.
+    validations:
+      required: false

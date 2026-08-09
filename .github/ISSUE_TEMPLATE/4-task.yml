@@ -1,0 +1,66 @@
+name: 🛠 Task
+description: Maintainer work item — the default for anything that is not a user-facing feature or a defect.
+type: Task
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For maintainers. If you are reporting a problem with the site or with an event's details, one
+        of the forms above will get you a faster answer — they ask for the things we would otherwise
+        have to come back and ask for.
+
+        Most of this backlog is not a user story and should not be forced into one. Infrastructure,
+        parser repairs, docs and tooling all belong here.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: What needs doing
+      description: One or two sentences. The title carries the headline; this carries the shape.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+      description: >-
+        What is worse today because this is not done, or what it unblocks. An issue that cannot
+        answer this is usually one that should be closed rather than carried.
+    validations:
+      required: true
+
+  - type: textarea
+    id: done
+    attributes:
+      label: What "done" looks like
+      description: >-
+        The check that settles it. Concrete beats thorough — "a `--full` re-seed shows the artist
+        rows collapsing from 7 to 2" is a better acceptance criterion than "artist names are clean".
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Files, functions, ADRs, docs, related issues — whatever the next person would otherwise have to go find.
+      placeholder: |
+        - `events-importer/src/main/kotlin/de/norm/events/scraper/ArtistNameMapping.kt`
+        - docs/adr/ADR-012_CLOUD_PLATFORM.md
+        - #123
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Risks, trade-offs and things already decided
+      description: >-
+        Especially: anything deliberately *not* being done, and why. Recording a choice here is what
+        stops it being rediscovered later as an oversight and "fixed".
+    validations:
+      required: false
