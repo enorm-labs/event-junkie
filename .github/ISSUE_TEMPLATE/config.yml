@@ -1,5 +1,13 @@
 # Issue-template chooser configuration.
 # https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository
+#
+# The chooser lists forms in FILENAME order, which is why every form carries a numeric prefix.
+# 1-3 are for visitors and come first; 4-8 are maintainer forms. A visitor should never have to
+# scroll past an internal form to find the one that fits them.
+#
+# Every form also sets `type:`, which maps it to a GitHub issue type (Task / Bug / Feature, defined
+# on the enorm-labs org). Issue types ARE the type axis in this repo — there is deliberately no
+# `type:` label family to keep in sync with them.
 
 # Forms only. A blank issue is almost always missing the one thing needed to act on it — which
 # event, which venue, which URL — and asking for it afterwards costs a round trip and usually loses

@@ -1,0 +1,67 @@
+name: ✨ Feature
+description: Something a visitor or an operator will be able to do that they cannot do today.
+type: Feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For maintainers. Have an idea for the site? [Discussions → Ideas](https://github.com/enorm-labs/event-checker/discussions/new?category=ideas)
+        is the better place — it is a conversation rather than a unit of work, and it can be
+        converted into an issue once it is one.
+
+        **Use this form only where there is a user.** "As a user I want Terraform" is noise; that is
+        a Task. The story is worth writing when it forces you to name who benefits and why — and a
+        surprising number of features do not survive that question.
+
+  - type: textarea
+    id: story
+    attributes:
+      label: The story
+      description: Who wants this, what they want, and what it gets them.
+      value: |
+        **As** a
+        **I want**
+        **so that**
+    validations:
+      required: true
+
+  - type: textarea
+    id: why-now
+    attributes:
+      label: Why now
+      description: >-
+        What makes this worth building ahead of the rest of the backlog. "It is on the roadmap" is
+        not an answer — the roadmap is what this question decides.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Observable from the outside. What a person can do when this is finished.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Explicitly out of scope
+      description: >-
+        The neighbouring things this does *not* include. This is the field that keeps a feature from
+        quietly growing into a phase.
+    validations:
+      required: false
+
+  - type: textarea
+    id: depends
+    attributes:
+      label: Depends on
+      description: Issues, decisions or data that must land first. Add the `blocked` label if any of them are open.
+      placeholder: |
+        - #123 — venue coordinates must be trustworthy first
+    validations:
+      required: false

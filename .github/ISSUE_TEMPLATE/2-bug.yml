@@ -1,6 +1,7 @@
 name: 🐛 Bug in the site or the API
 description: Something is broken — a page, a filter, the calendar, an endpoint.
 title: 'fix: '
+type: Bug
 labels: [ 'bug' ]
 body:
   - type: markdown

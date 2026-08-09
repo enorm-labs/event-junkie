@@ -1,0 +1,68 @@
+name: ⚖️ Decision / ADR candidate
+description: A choice that has to be made before some piece of work can start.
+type: Task
+labels: [ 'needs-decision' ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For maintainers. A decision is not a task, and filing it as one is how it rots: a task with
+        no obvious first step gets skipped every time it is read, and the work behind it stays
+        blocked without anyone noticing why.
+
+        If the answer turns into an [ADR](https://github.com/enorm-labs/event-checker/tree/main/docs/adr),
+        this issue is where the thinking happens and the ADR is where it lands.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: The question
+      description: Stated so it can be answered yes/no or by picking one option. If it cannot be, it is more than one question.
+      placeholder: >-
+        Should the curated vocabularies (`NON_ARTIST_NAMES`, `NAME_CORRECTIONS`, genre synonyms,
+        `ACRONYMS`) move from hardcoded Kotlin into steward-editable DB tables?
+    validations:
+      required: true
+
+  - type: textarea
+    id: options
+    attributes:
+      label: Options on the table
+      description: With the trade-off that actually separates them, not a feature list.
+      placeholder: |
+        1. **Keep as code** — tested, reviewed, versioned; every fix needs a redeploy.
+        2. **Move to DB tables** — stewards fix without a release; loses test coverage and review.
+    validations:
+      required: true
+
+  - type: textarea
+    id: blocks
+    attributes:
+      label: What this blocks
+      description: >-
+        The issues that cannot start until it is answered. If nothing is blocked, this is worth
+        writing down but not worth deciding yet — say so.
+      placeholder: |
+        - #123 — Pillar 4 needs live editing for the human-in-the-loop step
+    validations:
+      required: true
+
+  - type: dropdown
+    id: adr
+    attributes:
+      label: Does this need an ADR?
+      options:
+        - 'Yes — it is architecturally significant and expensive to reverse'
+        - 'No — record the answer in this issue and close it'
+        - 'Unsure'
+    validations:
+      required: true
+
+  - type: input
+    id: trigger
+    attributes:
+      label: When it has to be answered
+      description: A date, a release, or the event that forces it. Prevents an open question from drifting indefinitely.
+      placeholder: Before Pillar 4 starts
+    validations:
+      required: false

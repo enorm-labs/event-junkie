@@ -1,6 +1,7 @@
 name: 🎪 Suggest a venue
 description: A Berlin venue whose events should be on Event Junkie.
 title: 'feat(importer): import events from '
+type: Feature
 labels: [ 'importer', 'enhancement' ]
 body:
   - type: markdown
