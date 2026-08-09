@@ -14,9 +14,12 @@ Slash commands available under `.claude/skills/`:
 - `/data-quality-audit` — read-only audit of the whole `events` database for data-quality issues
 - `/importer-smoke` — runtime smoke test of a single importer: seed, import, inspect the rows, check for regressions
 - `/improve-test-coverage` — find and fill coverage gaps
+- `/new-issue` — draft and file an issue on the tracker (duplicate check first, then the right form, labels, milestone and board fields)
 - `/next-importer` — take one venue from 🔨 Ready in `docs/EVENT_DATA_SOURCES.md` to an open PR (scaffold → smoke-test → fix → ship); repeat, or run under
   `/loop`, to work through the backlog
+- `/next-issue` — recommend what to work on next, and say why
 - `/open-pr` — branch, commit (Conventional Commits), push, and open a PR in one flow
+- `/start-issue <n>` — pick up an issue: claim it, move the board, cut the branch, read its dependencies, and plan before writing code
 - `/scaffold-importer` — scaffold a new venue event importer (scraper) end to end
 - `/security-report` — read-only report on the latest OWASP Dependency-Check findings and GitHub Dependabot alerts, reconciled and triaged
 - `/squash-commit-message` — write a squash commit message for the current branch

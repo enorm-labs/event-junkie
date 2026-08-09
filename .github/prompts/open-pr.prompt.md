@@ -45,6 +45,14 @@ This is the standard "ship it" flow — the manual equivalent of
    "not tested" if nothing was run — never claim tests that didn't run). Append any PR footer your harness requires. Pass the body via
    `--body "$(cat <<'EOF' … EOF)"` to preserve formatting.
 
+    - **If the change closes an issue, put `Closes #<n>` in the PR body** — on its own line, near the top of the Summary. This repo allows only
+      **Rebase and merge** (squash and merge commits are both disabled), so a closing keyword in a commit message would work too — but the PR body is one line
+      to fix when the number changes, whereas a commit means rewriting history, and it survives the amending a branch goes through during review. Use `Closes`
+      rather than `Fixes`/`Resolves`, one line per issue.
+    - **Set the milestone to the issue's own** (`gh pr edit <pr> --milestone '…'`). Every closed PR in this repo carries a milestone — the 255 that predate the
+      tracker were backfilled into `Phase 0 — Foundation` — and a PR without one is the exception that makes the milestone view stop meaning anything.
+    - **Move the issue on the board**: `scripts/issue-board.sh status <n> 'In review'`. Merging the PR closes the issue; the board follows from the close.
+
 8. **Report.** Print the branch name, commit subject, and the PR URL that `gh` returns.
 
 ## Notes

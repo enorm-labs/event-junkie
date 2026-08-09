@@ -1,7 +1,20 @@
 # Migration plan — TODO.md → GitHub Issues
 
-**Status:** in progress — **PR 1 done** (milestones, labels, project, templates, Phase 0 backfill), **PR 2 done** (146-issue manifest + sync script), **PRs 3-4 done** (issues #258-#403 created, linked and on the board), **PR 5 done** (TODO.md deleted, docs/BACKLOG.md generated, all references repointed) · **Decided:** 2026-08-09 ·
-**Delete this file when the migration is done.**
+**Status: complete.** Decided and executed 2026-08-09.
+
+| PR | | |
+|---|---|---|
+| 1 | ✅ | 7 milestones, 16 labels, the project, 5 issue templates, 255 closed PRs backfilled into `Phase 0` |
+| 2 | ✅ | the 146-issue manifest and `backlog-sync.sh` |
+| 3–4 | ✅ | issues **#258–#403** created, cross-linked, sub-issued, on the board |
+| 5 | ✅ | `TODO.md` deleted · `docs/BACKLOG.md` generated · all references repointed |
+| 6 | ✅ | `/new-issue`, `/next-issue`, `/start-issue`, `scripts/issue-board.sh`, `Closes #N` in `/open-pr` |
+
+**One cleanup deliberately left to a separate decision:** `.github/backlog/`, `scripts/backlog-sync.sh` and
+`.github/workflows/validate-backlog.yml` are migration scaffolding that has served its purpose. Deleting them removes a stale
+copy of the backlog that someone could edit expecting it to sync; keeping them preserves the pre-split record and the
+slug → issue mapping outside git history. **This document goes with them whenever that is decided** — though §§7–10 record
+things that cost real time to learn and are worth reading once first.
 
 Moves the backlog out of [TODO.md](../TODO.md) and into GitHub Issues, Milestones and one Project, without losing the thing that makes TODO.md valuable: each
 entry carries *why*, *what it costs*, and *what it is blocked on*. That prose is the asset — the migration is mostly a careful extraction of it, not a rewrite.
@@ -490,7 +503,7 @@ Deliberately not one PR. PR 3 creates 120 issues and is irreversible-ish; it sho
 | **3** ✅ | `chore(backlog): apply the manifest`                                   | `apply` → `link` → `project`. Issues **#258–#403**. Commits `.created.json` + one script fix.                                                                                                                                                | spot-check 10 issues                                                                    |
 | **4** ✅ | *(folded into PR 3)*           | `link` and `project` produce no file changes beyond the lockfile, so splitting them bought nothing.                                                                                                                                   | the issue graph in the UI                                                               |
 | **5** ✅ | `docs: retire TODO.md in favour of the issue tracker`             | **delete TODO.md** · `backlog-snapshot.yml` + first `docs/BACKLOG.md` · all 23 reference updates incl. the 5 Kotlin KDoc issue numbers · AGENTS.md tracker section · VISION_ROADMAP_IDEAS.md repointed at milestones | the big prose diff                                                                      |
-| **6** | `feat(agents): add issue workflow skills`                  | `/new-issue`, `/next-issue`, `/start-issue` · `/open-pr` gains `Closes #N`. **The 5 prompt rewrites moved into PR 5** — deleting TODO.md while prompts still told agents to append to it would have left a broken window for a whole PR                                                                                             | a dry run of each                                                                       |
+| **6** ✅ | `feat(agents): add issue workflow skills`                  | `/new-issue`, `/next-issue`, `/start-issue` · `/open-pr` gains `Closes #N`. **The 5 prompt rewrites moved into PR 5** — deleting TODO.md while prompts still told agents to append to it would have left a broken window for a whole PR                                                                                             | a dry run of each                                                                       |
 
 **Effort.** PR 2 is the bulk — ~120 issue bodies extracted from existing prose. It is mostly mechanical because the prose is already good, but it is a
 multi-session job, not an afternoon. PRs 1, 3, 4 are fast. PR 5 is a careful afternoon. PR 6 is a session.
