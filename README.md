@@ -54,7 +54,7 @@ which coverage questions are still open is in
 🚧 **In development — not deployed anywhere yet.**
 
 The product works end-to-end locally: 86 Berlin sources are imported on a schedule, and the frontend, BFF and importer all run. What is missing is a public
-deployment, and the hosting, domain, auth and legal work that goes with it — tracked in [TODO.md](./TODO.md).
+deployment, and the hosting, domain, auth and legal work that goes with it — tracked in the [`v0.2`, `v0.3` and `v1.0` milestones](https://github.com/enorm-labs/event-checker/milestones).
 
 One consequence worth knowing before you build on this: **the database schema is still evolving and offers no migration compatibility between versions.** All
 schema changes are consolidated into a single initial migration (`V001`) until the first production release.
@@ -153,7 +153,7 @@ The OpenAPI document is at `/v3/api-docs` on each port. Request files for both s
 | [docs/LEGAL.md](./docs/LEGAL.md)                                 | Licensing, privacy, accessibility, scraping obligations                                                                                                                 |
 | [docs/VISION_ROADMAP_IDEAS.md](./docs/VISION_ROADMAP_IDEAS.md)   | Where this is going                                                                                                                                                     |
 | [docs/adr/](./docs/adr)                                          | Architecture decisions, with the reasoning                                                                                                                              |
-| [TODO.md](./TODO.md)                                             | The actionable backlog                                                                                                                                                  |
+| [docs/BACKLOG.md](./docs/BACKLOG.md)                                             | A read-only snapshot of the open [issues](https://github.com/enorm-labs/event-checker/issues), which are the backlog                                                                                                                                                  |
 | [perf/README.md](./perf/README.md)                               | Performance testing with k6                                                                                                                                             |
 
 ## Contributing

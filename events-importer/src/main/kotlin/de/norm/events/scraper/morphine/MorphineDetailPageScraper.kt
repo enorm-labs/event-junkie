@@ -53,8 +53,8 @@ import java.math.BigDecimal
  * (`Kowa Axis/Aidan Baker/Tim Wyskida`), because
  * [splitHeadlinerTitle][de.norm.events.scraper.splitHeadlinerTitle] deliberately requires the
  * padding that protects `AC/DC`; and a `– <project>` or `– <member list>` tail stays attached,
- * because nothing separates it from a genuinely hyphenated act name. Both are on the **Bugs** list
- * in `TODO.md` — they need a curated vocabulary, not a Morphine-local rule.
+ * because nothing separates it from a genuinely hyphenated act name. Both are tracked in issue #302 —
+ * they need a curated vocabulary, not a Morphine-local rule.
  *
  * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
  * making it easy to test with a static fixture.

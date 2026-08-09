@@ -86,7 +86,7 @@ Considered, and deliberately not added. Three reasons, each of which is also the
    a workflow. → *Wire it into monitoring when monitoring exists.*
 
 Until then these run on demand, locally, against a real database. Tracked in
-[TODO.md](../TODO.md).
+[issues #297 and #298](https://github.com/enorm-labs/event-checker/issues/298).
 
 ## Adding a scenario
 

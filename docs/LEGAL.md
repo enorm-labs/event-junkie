@@ -7,7 +7,7 @@
 > treating anything here as final.
 >
 > Related: [ADR-012 (cloud platform)](adr/ADR-012_CLOUD_PLATFORM.md) · [ADR-013 (localisation)](adr/ADR-013_LOCALISATION.md) ·
-> [ADR-014 (rendering)](adr/ADR-014_RENDERING_STRATEGY.md) · [TODO.md §At go-live & after](../TODO.md) · [BRANDING.md](BRANDING.md)
+> [ADR-014 (rendering)](adr/ADR-014_RENDERING_STRATEGY.md) · [the `v1.0 — Go-live` milestone](https://github.com/enorm-labs/event-checker/milestones) · [BRANDING.md](BRANDING.md)
 
 ## 1. Scope and how to use this
 
@@ -271,7 +271,7 @@ editing a `.vue` file loads.
 
 ## 14. Open items — what is **not** signed off
 
-The site cannot go live until these are closed. They are tracked as tasks in [TODO.md §At go-live & after](../TODO.md); this section says what each one *means*.
+The site cannot go live until these are closed. They are tracked as issues in the `v0.3 — Launch-ready` and `v1.0 — Go-live` milestones, the deployment-blocked ones labelled `needs-deployment`; this section says what each one *means*.
 
 **Blocking, and dependent on infrastructure:**
 

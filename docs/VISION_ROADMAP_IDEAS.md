@@ -1,8 +1,8 @@
 # Vision, Roadmap & Ideas
 
-The longer-form product context: **what** Event Junkie is and **where** it's headed. The granular, actionable backlog lives in **[TODO.md](../TODO.md)** (the
-single source of truth for planned work); brand, voice and design live in **[BRANDING.md](BRANDING.md)**. This document stays at the level of _direction_ — it
-links down to TODO.md rather than duplicating tasks.
+The longer-form product context: **what** Event Junkie is and **where** it's headed. The granular, actionable backlog lives in the
+**[issue tracker](https://github.com/enorm-labs/event-checker/issues)** — mirrored read-only in **[BACKLOG.md](BACKLOG.md)** — and brand, voice and design
+live in **[BRANDING.md](BRANDING.md)**. This document stays at the level of _direction_: it links down to **milestones** rather than duplicating tasks.
 
 ---
 
@@ -55,8 +55,10 @@ search (Phase 2); the last two are the whole point of Phases 3 and 4.
 
 ## Roadmap
 
-High-level phases and the shape of the journey — **not** a checklist. The concrete tasks behind each phase live in [TODO.md](../TODO.md) under the referenced
-sections.
+High-level phases and the shape of the journey — **not** a checklist. The concrete tasks behind each phase are the issues in the linked **milestone**.
+
+**Phase 1 is split across three release milestones**, because it holds work ranging from "write the Helm chart" to "check a link preview in WhatsApp" and one
+progress bar over that mix says nothing about whether launch is reachable.
 
 ### Phase 0 — Foundation ✅ _(built)_
 
@@ -69,7 +71,7 @@ The core product exists end-to-end:
 
 ### Phase 1 — MVP / Go-live 🔴 _(in progress)_
 
-Turn the working prototype into a live public product. → TODO: **🔴 Now**, **🟠 Next**, **Legal / Compliance**.
+Turn the working prototype into a live public product. → **[v0.2 — Deployable](https://github.com/enorm-labs/event-checker/milestone/2)** · **[v0.3 — Launch-ready](https://github.com/enorm-labs/event-checker/milestone/3)** · **[v1.0 — Go-live](https://github.com/enorm-labs/event-checker/milestone/4)**
 
 - Cloud platform, domain (**event-junkie.de**), CI/CD, and a first deploy.
 - Hardening the path to production: auth & authorization, BFF caching, API protection, a reusable test/seed dataset, and the go-live checklist (security,
@@ -78,7 +80,7 @@ Turn the working prototype into a live public product. → TODO: **🔴 Now**, *
 
 ### Phase 2 — Coverage & polish 📈 _(post-launch)_
 
-Make it comprehensive, discoverable and pleasant. → TODO: **Importer / Data**, **Frontend & BFF**, **UI / UX / Branding**.
+Make it comprehensive, discoverable and pleasant. → **[Phase 2 — Coverage & polish](https://github.com/enorm-labs/event-checker/milestone/5)**
 
 - Scale importer coverage toward the full venue list in
   [EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md); enrich venue metadata.
@@ -98,7 +100,7 @@ Make it comprehensive, discoverable and pleasant. → TODO: **Importer / Data**,
 
 ### Phase 3 — Accounts & personalization 👤 _(Expansion stage 1)_
 
-Give people a reason to come back. → TODO: **🔵 Someday / Vision** (stage 1).
+Give people a reason to come back. → **[Phase 3 — Accounts & personalization](https://github.com/enorm-labs/event-checker/milestone/6)**
 
 - Login / profile with **follow/favourite** for artists, venues, districts, promoters and genres — used both to filter events and to drive **notifications**
   (two steps, YouTube-style: 1. follow,
@@ -114,7 +116,7 @@ Give people a reason to come back. → TODO: **🔵 Someday / Vision** (stage 1)
 
 ### Phase 4 — Social & ecosystem 🤝 _(Expansion stage 2)_
 
-Turn discovery into a network and open the data up. → TODO: **🔵 Someday / Vision** (stage 2).
+Turn discovery into a network and open the data up. → **[Phase 4 — Social & ecosystem](https://github.com/enorm-labs/event-checker/milestone/7)**
 
 - Social layer: connect with friends and see which events they're interested in or going to — plus following other users, an activity timeline, and **inviting
   friends to a specific event** (going together is the actual use case; seeing where they go is the weaker half of it).
@@ -129,7 +131,8 @@ Turn discovery into a network and open the data up. → TODO: **🔵 Someday / V
 
 ### Phase 5 — Beyond Berlin 🌍 _(bigger bets)_
 
-Expand to other cities and broaden scope once the Berlin experience is strong.
+Expand to other cities and broaden scope once the Berlin experience is strong. Deliberately has **no milestone** — it is the direction of travel, not scheduled
+work. Tracked as [issue #403](https://github.com/enorm-labs/event-checker/issues/403).
 
 ---
 

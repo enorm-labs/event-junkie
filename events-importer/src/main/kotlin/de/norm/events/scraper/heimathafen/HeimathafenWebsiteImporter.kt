@@ -36,7 +36,7 @@ import org.springframework.stereotype.Component
  * 560 terms mixing real genres (Soul, Cumbia) with formats and access notes (Konzert, Premiere,
  * Gebärdensprache), the payload carries only term *ids* (six more requests to resolve), and the
  * slugs `class_list` inlines are lossy (`rb` for R&B). Resolving and caching that taxonomy once per
- * import is what would unblock the field — tracked in `TODO.md`.
+ * import is what would unblock the field — tracked in issue #313.
  *
  * @see HeimathafenApiScraper for the JSON parsing logic.
  * @see <a href="https://heimathafen-neukoelln.de/programm/">Heimathafen Neukölln programme</a>

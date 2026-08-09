@@ -4,7 +4,7 @@
 
 Proposed (2026-08-03)
 
-> Resolves the first item of the **🔴 Now (path to go-live)** backlog in [TODO.md](../../TODO.md) — *"Choose a cloud platform / runtime environment"*. This ADR
+> Resolves [issue #258](https://github.com/enorm-labs/event-checker/issues/258) — *"Settle the cloud platform"*, the first item in the `v0.2 — Deployable` milestone. This ADR
 > picks
 > the **platform**; the Terraform/OpenTofu layout, the Helm chart, and the CI/CD workflows are follow-up items that depend on it. All prices in this document
 > were checked on **2026-08-03**, and the PaaS / Elastic Beanstalk / App Engine sections were added on **2026-08-05**. They must be re-verified before the money
@@ -658,4 +658,4 @@ Hetzner now does not close that door; the application is containers and Postgres
 - [Cloud market share 2026 (Synergy Research, via Statista)](https://www.statista.com/chart/18819/worldwide-market-share-of-leading-cloud-infrastructure-service-providers/)
 - [ADR-005 — Migrations owned by the importer](ADR-005_MIGRATIONS_OWNED_BY_IMPORTER.md)
 - [ADR-008 — Import job scheduling](ADR-008_IMPORT_JOB_SCHEDULING.md) — the single-instance / always-on constraint
-- [TODO.md](../../TODO.md) — 🔴 Now: path to go-live
+- [The `v0.2 — Deployable` milestone](https://github.com/enorm-labs/event-checker/milestones) — the path to go-live
