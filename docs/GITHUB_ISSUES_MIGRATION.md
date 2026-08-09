@@ -1,6 +1,6 @@
 # Migration plan — TODO.md → GitHub Issues
 
-**Status:** in progress — **PR 1 done** (milestones, labels, project, templates, Phase 0 backfill) · **Decided:** 2026-08-09 ·
+**Status:** in progress — **PR 1 done** (milestones, labels, project, templates, Phase 0 backfill), **PR 2 open** (146-issue manifest + sync script) · **Decided:** 2026-08-09 ·
 **Delete this file when the migration is done.**
 
 Moves the backlog out of [TODO.md](../TODO.md) and into GitHub Issues, Milestones and one Project, without losing the thing that makes TODO.md valuable: each
@@ -264,12 +264,12 @@ blocked-by: []
 **Related.** #NNN (no event end time) — the missing field is why this needs a start-time heuristic instead of simply asking whether the event has ended.
 ```
 
-`related` and `blocked-by` reference other manifest **keys**; the script resolves them to issue numbers on the linking pass, once every issue exists.
+`related` and `blocked-by` reference other manifest **slugs**; the script resolves them to issue numbers on the linking pass, once every issue exists.
 
 ### Why a manifest at all
 
 - **Reviewable** — the whole migration lands as a PR diff you can read, before a single issue is created.
-- **Idempotent** — `.created.json` means re-running never duplicates. A key that already has a number gets *updated*, not recreated.
+- **Idempotent** — `.created.json` means re-running never duplicates. A slug that already has a number gets *updated*, not recreated.
 - **Auditable** — the TODO.md → issue mapping is a committed artefact, not something reconstructed later from memory.
 - **Restartable** — a 120-issue run that dies at 70 resumes at 70.
 
@@ -312,10 +312,26 @@ Two safety properties worth building in deliberately:
 
 ---
 
-## 7. Scope of the curation — where the ~60 dropped items go
+## 7. Scope of the curation — what actually happened
 
-Starting point: 162 checkboxes + 17 Someday bullets = **179**. Target: **~110–120**. The exact number falls out of reviewing the manifest in PR 2 — that is what
-makes it worth reviewing.
+Starting point: 162 checkboxes + 17 Someday bullets = **179**. Target when this plan was written: **~110–120**.
+
+**Actual result: 146.**
+
+> **The estimate was wrong, and it is worth saying why rather than quietly restating it.** The
+> per-section arithmetic in the table below sums to roughly 149 — the "~119" total was a bad
+> addition on my part, not a plan that was then overshot. The section-level judgements held up
+> almost exactly; only the total was wrong.
+>
+> Reaching 110 from here would have meant merging work items that are genuinely separate — three
+> distinct parser bugs into one "artist name cleanup" issue, four legal blockers into "legal
+> readiness". That trades a reviewable, closable backlog for a smaller number, and the number was
+> never the goal. **146 issues that each map to a pull request beats 110 that do not.**
+>
+> If the tracker still reads as too large in review, the honest lever is dropping work, not merging
+> it — and that is a decision for the review, which is what the manifest is for.
+
+The table below is the plan as written; the "Becomes" column proved accurate per section.
 
 | Source                              | Raw     | Becomes     | How                                                                                                                                                       |
 |-------------------------------------|---------|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -336,7 +352,26 @@ makes it worth reviewing.
 | Tooling, AI Agents & Skills         | 14      | ~5          | the 8 nested skill items collapse to one checklist issue; Repomix / awesome-copilot / BACKLOG.md-approach fold into one "agent tooling exploration" issue |
 | Docs, Repo & Templates              | 10      | ~8          | template-repo children become a checklist                                                                                                                 |
 | 🔵 Someday / Vision                 | 17      | **6 epics** | see below                                                                                                                                                 |
-|                                     | **179** | **~119**    |                                                                                                                                                           |
+|                                     | **179** | **146**     | *(the "~119" originally printed here was an addition error; the column sums to ~149)*                                                                     |
+
+**How the 146 actually landed**
+
+| Milestone | Issues |
+|---|---:|
+| `v0.2 — Deployable` | 8 |
+| `v0.3 — Launch-ready` | 19 |
+| `v1.0 — Go-live` | 14 |
+| `Phase 2 — Coverage & polish` | 98 |
+| `Phase 3 — Accounts & personalization` | 3 |
+| `Phase 4 — Social & ecosystem` | 3 |
+| *(no milestone — unscheduled)* | 1 |
+
+By type: 89 Task, 34 Feature, 23 Bug. By priority: 24 P0, 65 P1, 57 P2.
+11 sub-issues under 2 epics; 40 `related` and 41 `blocked-by` cross-references.
+
+**Phase 2 holding 98 is the honest shape**, not a failure of curation — it is the whole post-launch
+backlog, and it is exactly what a milestone with no due date is for. The three release milestones
+carry 41 between them, which is the number that decides whether launch is reachable.
 
 ### The six Someday epics
 
@@ -441,7 +476,7 @@ Deliberately not one PR. PR 3 creates 120 issues and is irreversible-ish; it sho
 | #     | PR                                                         | Contains                                                                                                                                                                                                             | Reviewable by                                                                           |
 |-------|------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
 | **1** ✅ | `chore(github): set up milestones, labels and the project` | 7 milestones · 16 new labels · project + Status/Priority fields + 4 views · 255 closed PRs → Phase 0 → closed · 5 new issue templates, chooser reordered, `type:` added to all 8                                    | reading the diff and one look at the project                                            |
-| **2** | `docs(backlog): add the issue manifest`                    | `.github/backlog/` with ~120 files · `scripts/backlog-sync.sh` · `README.md` · CI job running `validate`                                                                                                             | **the substantive review** — this is the backlog, rewritten, before anything is created |
+| **2** ✅ | `docs(backlog): add the issue manifest`                    | `.github/backlog/` with **146** files · `scripts/backlog-sync.sh` · `README.md` · `validate-backlog.yml` CI job                                                                                                             | **the substantive review** — this is the backlog, rewritten, before anything is created |
 | **3** | *(no PR — a script run)*                                   | `backlog-sync.sh apply` then `project`. Commits only `.created.json`.                                                                                                                                                | spot-check 10 issues                                                                    |
 | **4** | `chore(backlog): link related and nested issues`           | `backlog-sync.sh link` · sub-issue attachment · commits nothing but the run record                                                                                                                                   | the issue graph in the UI                                                               |
 | **5** | `docs: replace TODO.md with the issue tracker`             | **delete TODO.md** · `backlog-snapshot.yml` + first `docs/BACKLOG.md` · all 23 reference updates incl. the 5 Kotlin KDoc issue numbers · AGENTS.md tracker section · VISION_ROADMAP_IDEAS.md repointed at milestones | the big prose diff                                                                      |

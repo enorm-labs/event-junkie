@@ -1,0 +1,68 @@
+# Validates the issue manifest in .github/backlog/ before it can be applied.
+#
+# The manifest is the reviewable form of the TODO.md -> GitHub Issues migration
+# (docs/GITHUB_ISSUES_MIGRATION.md). `backlog-sync.sh apply` creates or updates ~146 issues from
+# it, which is not an operation to discover a typo halfway through — a malformed file aborts the
+# run, and a wrong label or milestone name is applied to every issue that carries it.
+#
+# So this job runs the same `validate` the operator runs, on every change to the manifest or the
+# script. It checks structure (parseable YAML, required fields, unique kebab-case keys), vocabulary
+# (types, priorities, statuses), and cross-references (parent/related/blocked-by all resolve, no
+# self-reference, sub-issues nest one level only).
+#
+# It also checks labels and milestones against the real repository, which needs a token — hence the
+# GH_TOKEN below. Without one, `BACKLOG_OFFLINE=1` skips exactly those two checks and everything
+# else still runs.
+#
+# This whole workflow is deleted with the manifest when the migration is done.
+name: Validate Backlog Manifest
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/backlog/**'
+      - 'scripts/backlog-sync.sh'
+      - '.github/workflows/validate-backlog.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '.github/backlog/**'
+      - 'scripts/backlog-sync.sh'
+      - '.github/workflows/validate-backlog.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Read-only, and only so `validate` can list the repository's labels and milestones.
+  issues: read
+
+jobs:
+  validate:
+    name: Validate manifest
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # jq is present on the GitHub runners; yq is not. Pinned rather than `latest` so a yq
+      # release cannot change what this job accepts without a commit saying so — and pinned to
+      # the version the manifest was authored against.
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/download/v4.53.3/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+          yq --version
+
+      - name: Validate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: scripts/backlog-sync.sh validate
+
+      # A dry run is not a check, but its output is the most useful thing to have in the log when
+      # reviewing the PR that changes the manifest: it shows exactly what would be created.
+      - name: Plan (informational)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: scripts/backlog-sync.sh plan
