@@ -70,8 +70,8 @@ class VelomaxWebsiteImportersTest {
     @Test
     fun `each hall importer takes only its own share of the shared listing`() =
         runTest {
-            events(MaxSchmelingHalleWebsiteImporter(htmlFetcher).importEvents(overviewUrl)) shouldHaveSize 17
-            events(VelodromWebsiteImporter(htmlFetcher).importEvents(overviewUrl)) shouldHaveSize 22
+            events(MaxSchmelingHalleWebsiteImporter(htmlFetcher).importEvents(overviewUrl)) shouldHaveSize 18
+            events(VelodromWebsiteImporter(htmlFetcher).importEvents(overviewUrl)) shouldHaveSize 25
             events(UfoImVelodromWebsiteImporter(htmlFetcher).importEvents(overviewUrl)) shouldHaveSize 10
         }
 
@@ -117,13 +117,23 @@ class VelomaxWebsiteImportersTest {
         }
 
     @Test
-    fun `yields one event per show-day, so a run cannot collide on the unique event slug`() =
+    fun `keeps the listing's session-keyed sourceId, which the shared detail page cannot supply`() =
+        runTest {
+            // The detail page derives its id from a permalink that is one page per show, so letting
+            // it win would hand every session of a day the same id — and `event.source_id` is
+            // UNIQUE. The listing's id, with its start-time suffix, has to survive the merge.
+            val joji = events(VelodromWebsiteImporter(htmlFetcher).importEvents(overviewUrl)).first { it.title == "Joji" }
+            joji.sourceId shouldBe "velodrom:joji-velodrom-2026-08-29-2000"
+        }
+
+    @Test
+    fun `imports every session of a run that plays more than once in a day`() =
         runTest {
             val sessions =
                 events(VelodromWebsiteImporter(htmlFetcher).importEvents(overviewUrl))
                     .filter { it.title.startsWith("Disney On Ice") }
-            sessions shouldHaveSize 3
-            sessions.map { it.eventDate }.distinct() shouldHaveSize 3
+            sessions shouldHaveSize 6
+            sessions.map { it.sourceId }.distinct() shouldHaveSize 6
         }
 
     @Test

@@ -47,6 +47,11 @@ abstract class AbstractVelomaxHallImporter(
      * **listing's** value:
      * - **`startTime`**, because a run playing several sessions in one day links all of them to one
      *   detail page, which states a single start time for the lot;
+     * - **`sourceId`**, for that same reason and it is the load-bearing one: the detail page's id is
+     *   derived from a permalink that is one page per *show*, so every session of a day would come
+     *   back under the same id and `event.source_id`'s UNIQUE constraint would keep only one. The
+     *   listing is the sole per-session source, so its session-keyed id
+     *   ([VelomaxOverviewPageScraper]) is the identity that must survive the merge;
      * - the venue's own **`eventType`**, which the detail page does not restate and which is what
      *   separates a concert from a staged show here;
      * - the **sold-out** flag, which the listing carries as a ticket signal and the Microdata does
@@ -61,6 +66,7 @@ abstract class AbstractVelomaxHallImporter(
             subtitle = primary.subtitle ?: fallback.subtitle,
             eventType = fallback.eventType ?: primary.eventType,
             startTime = fallback.startTime ?: primary.startTime,
+            sourceId = fallback.sourceId,
             soldOut = primary.soldOut || fallback.soldOut,
             status = primary.status.takeIf { it != EventStatus.SCHEDULED.name } ?: fallback.status,
             artists = primary.artists.ifEmpty { fallback.artists }

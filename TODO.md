@@ -143,11 +143,18 @@ scraper's own KDoc instead, so only what should actually be *repaired* is listed
       insert — but `removeStaleEvents` deliberately spares **today**, so a today-dated row keeps its old id *and* its slug while its replacement tries to take
       the same slug, and the insert collides. Admiralspalast happened to have no event today, which is luck, not design. Re-key a venue on a day its programme
       is dark, or clear that source's rows first.
-- [ ] **Velomax still collapses its same-day sessions, and now for a different reason.** The slug blocker above is gone, but `event.source_id` is `UNIQUE` too
-  and `VelomaxOverviewPageScraper` derives it from the listing URL — one page per *show*, not per session — so dropping `collapseSameDaySessions` would trade a
-  duplicate-slug crash for a duplicate-`sourceId` one. Fix: put the session start time in the `sourceId`. That re-keys every existing Velomax event across all
-  three halls (Velodrom, Max-Schmeling-Halle, UFO im Velodrom), exactly like the Neue Zukunft recurrence change, so it wants its own re-seed and diff. Worth
-  roughly five events a year (Disney On Ice plays three sessions on 13 March, Berlin Tattoo two on 7 November).
+- [x] **Done (2026-08-09) — Velomax keys on the session, and `collapseSameDaySessions` is gone.** `VelomaxOverviewPageScraper` derived the `sourceId` from the
+  listing URL, which is one page per *show*, so the workaround could not simply be deleted: `event.source_id` is `UNIQUE` and dropping the collapse would have
+  traded a duplicate-slug crash for a duplicate-`sourceId` one. The start time now goes in the id (`…-2027-03-13-1030`), the Admiralspalast spelling.
+    - **The detail page had to be told to keep out of it.** Its `sourceId` comes from the same one-page-per-show permalink and the merge takes the detail page's
+      value for almost everything, so the listing's session-keyed id was being overwritten before it ever reached the database — the scraper change alone would
+      have fixed nothing. `AbstractVelomaxHallImporter.fillGapsFromOverview` now keeps `sourceId` from the listing, for the same reason it already kept
+      `startTime`: the listing is the only per-session source there is.
+    - **4 sittings recovered, 0 lost** on a re-import of all three halls: Velodrom 22 → 25 (Disney On Ice's 10:30 and 14:30 on 13 March, its 15:00 on the 14th),
+      Max-Schmeling-Halle 17 → 18 (Berlin Tattoo's 19:00 on 7 November), UFO im Velodrom unchanged. Distinct `(date, title)` groups after the re-import are
+      17 / 11 / 22 — exactly the old row counts — so every added row is a second sitting rather than anything new appearing.
+    - The re-key hazard recorded above did not bite: Velomax's programme was dark on the day (its next event was three weeks out), which was checked before
+      importing rather than assumed.
 - [ ] **Derive the lineup after the event type is final, not before.** `ScrapedEvent.toEventEntity` promotes a `CONCERT`/`OTHER` title to `FESTIVAL`
   (`isFestivalTitle`), but every scraper has already built its artists from its *own* type inference, so a festival title still mints headliners — `ELLE & L's
   Festival` → `Elle` (Columbia Theater), plus the same shape at Clash and Gretchen. Fix once at the boundary (drop the artists when the resolved type is

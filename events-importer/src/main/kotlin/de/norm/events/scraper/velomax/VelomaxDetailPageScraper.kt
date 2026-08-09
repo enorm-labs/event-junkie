@@ -80,6 +80,11 @@ class VelomaxDetailPageScraper {
             startTime = parseTime(startedAt?.clockTime()),
             imageUrl = parseImageUrl(document, sourceUrl),
             sourceUrl = sourceUrl,
+            // Show-level, and deliberately so: this permalink is one page per production, which is
+            // exactly why a same-day run of sessions cannot be keyed from here. The importer keeps
+            // the listing's session-keyed id instead (see
+            // `AbstractVelomaxHallImporter.fillGapsFromOverview`); this one only stands in when the
+            // page is parsed on its own.
             sourceId = "${hall.eventSource.sourceIdPrefix}$slug",
             ticketUrl = parseTicketUrl(document),
             status = parseSchemaEventStatus(event.attrAtProp("eventStatus", "content")),
