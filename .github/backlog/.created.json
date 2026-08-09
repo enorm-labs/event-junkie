@@ -2,6 +2,7 @@
   "accept-adr-012": 258,
   "containerise-frontend": 262,
   "helm-chart": 261,
+  "local-k3d-exercise": 263,
   "register-domain": 259,
   "terraform-iac": 260
 }
