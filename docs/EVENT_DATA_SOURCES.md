@@ -8,7 +8,7 @@ is deliberately excluded (sport, participation formats, trade fairs, classical) 
 on a scope decision rather than a technical one; that document is where those decisions are recorded. The **Comment** column records what matters for building
 or maintaining an importer — the platform, where the data lives, and the parsing quirks. For an implemented importer, its KDoc and scraper tests are the
 authoritative field mapping; defects worth repairing live in
-[BACKLOG.md](BACKLOG.md), the snapshot of the [issue tracker](https://github.com/enorm-labs/event-checker/issues).
+the [issue tracker](https://github.com/enorm-labs/event-checker/issues).
 
 | Status                              | Meaning                                                                              | Count |
 |-------------------------------------|--------------------------------------------------------------------------------------|------:|

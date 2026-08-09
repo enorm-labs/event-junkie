@@ -10,7 +10,7 @@ The data is scraped from Berlin venue websites by the importers in `events-impor
 **actionable** quality problems — parsing bugs, normalization gaps, and oddities worth a human's attention — and to distinguish them from limitations already
 documented and accepted.
 
-Before reporting anything, check whether the finding is already known. Two places record that: the open issues, mirrored in `docs/BACKLOG.md` (defects already
+Before reporting anything, check whether the finding is already known. Two places record that: the open issues, mirrored in `build/BACKLOG.md` (defects already
 queued for repair — `grep` it, or `gh issue list --label importer`) and the KDoc of the importer and scrapers under `scraper/<venue>/` (limitations the venue's parser accepts deliberately). A finding matching either —
 artist-less concerts at Badehaus/Privatclub, `eventType` defaulting to `OTHER`, first-page-only pagination — must be labelled **known/accepted** and separated
 from genuinely new ones. Don't re-litigate accepted trade-offs.

@@ -1,7 +1,7 @@
 # Importer — Data Quality Strategy
 
 How we fix the data-quality gaps we have and prevent new ones from accumulating. This is the **strategy / plan**; the actionable backlog lives in the
-[issue tracker](https://github.com/enorm-labs/event-checker/issues) (mirrored in [BACKLOG.md](BACKLOG.md)) and each importer's accepted limitations in its
+[issue tracker](https://github.com/enorm-labs/event-checker/issues) and each importer's accepted limitations in its
 own scraper KDoc. Where this doc names work to do, **the authoritative task is the issue** and this doc points at it — the two must not drift.
 
 Related: [ADR-007 Web Scraping Strategy](adr/ADR-007_WEB_SCRAPING_STRATEGY.md) ·

@@ -153,7 +153,7 @@ The OpenAPI document is at `/v3/api-docs` on each port. Request files for both s
 | [docs/LEGAL.md](./docs/LEGAL.md)                                 | Licensing, privacy, accessibility, scraping obligations                                                                                                                 |
 | [docs/VISION_ROADMAP_IDEAS.md](./docs/VISION_ROADMAP_IDEAS.md)   | Where this is going                                                                                                                                                     |
 | [docs/adr/](./docs/adr)                                          | Architecture decisions, with the reasoning                                                                                                                              |
-| [docs/BACKLOG.md](./docs/BACKLOG.md)                                             | A read-only snapshot of the open [issues](https://github.com/enorm-labs/event-checker/issues), which are the backlog                                                                                                                                                  |
+| [GitHub Issues](https://github.com/enorm-labs/event-checker/issues)              | The backlog. `scripts/generate-backlog-snapshot.sh` renders it to `build/BACKLOG.md` for grepping                                                                                                                                                                     |
 | [perf/README.md](./perf/README.md)                               | Performance testing with k6                                                                                                                                             |
 
 ## Contributing

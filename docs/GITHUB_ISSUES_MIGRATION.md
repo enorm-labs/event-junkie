@@ -7,7 +7,7 @@
 | 1 | ✅ | 7 milestones, 16 labels, the project, 5 issue templates, 255 closed PRs backfilled into `Phase 0` |
 | 2 | ✅ | the 146-issue manifest and `backlog-sync.sh` |
 | 3–4 | ✅ | issues **#258–#403** created, cross-linked, sub-issued, on the board |
-| 5 | ✅ | `TODO.md` deleted · `docs/BACKLOG.md` generated · all references repointed |
+| 5 | ✅ | `TODO.md` deleted · backlog snapshot generated · all references repointed |
 | 6 | ✅ | `/new-issue`, `/next-issue`, `/start-issue`, `scripts/issue-board.sh`, `Closes #N` in `/open-pr` |
 
 **One cleanup deliberately left to a separate decision:** `.github/backlog/`, `scripts/backlog-sync.sh` and
@@ -29,7 +29,7 @@ sections. Only the Someday/Vision *themes* become issues, as epics.
 | Question          | Decision                                                                                                                                                                    |
 |-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Granularity       | **Curated, ~110–120 issues** — not the raw 179 checkboxes. Trivial siblings merge, nested items become sub-issues, Someday/Vision becomes ~6 epics.                         |
-| TODO.md           | **Deleted**, replaced by a generated `docs/BACKLOG.md` snapshot so agents keep a grep-able, always-current view.                                                            |
+| TODO.md           | **Deleted**, replaced by a `build/BACKLOG.md` snapshot generated on demand, so agents keep a grep-able view.                                                            |
 | Milestones        | **Release-named near term** (`v0.2`, `v0.3`, `v1.0`), **phase-named far term** (Phase 2/3/4). Phase 1 is 38 mixed items and would burn down meaninglessly as one milestone. |
 | Existing PRs      | **All 255 closed PRs → `Phase 0 — Foundation`**, which is then closed. There are no open PRs.                                                                               |
 | Issue type axis   | **GitHub issue types** (`Task` / `Bug` / `Feature`, already defined on the `enorm-labs` org), not a `type:` label axis.                                                     |
@@ -425,25 +425,42 @@ Two things worth recording for anyone repeating this:
 
 ---
 
-## 9. Replacing TODO.md for agents — `docs/BACKLOG.md`
+## 9. Replacing TODO.md for agents — `build/BACKLOG.md`
 
-**This is the piece that decides whether the migration is a net win.** Twenty-three files reference `TODO.md`, and five prompt files (`importer-smoke`,
-`data-quality-audit`, `next-importer`, `security-report`, `codebase-audit`) *instruct agents to read and append to the Bugs list*. Replacing every one of those
-with a `gh issue list` call is slower, costs tokens, and fails when the network does.
+**This is the piece that decides whether the migration is a net win.** Twenty-three files referenced `TODO.md`, and five prompt files (`importer-smoke`,
+`data-quality-audit`, `next-importer`, `security-report`, `codebase-audit`) *instructed agents to read and append to the Bugs list*. Replacing every one of
+those with a `gh issue list` call is slower, costs tokens, and fails when the network does.
 
-So: a workflow regenerates a read-only snapshot.
+So `scripts/generate-backlog-snapshot.sh` renders every open issue into a grep-able local file: grouped by milestone, one row each with type, area, size and
+blocking state. **Reads stay a local file read; writes go to the API.**
 
-**`.github/workflows/backlog-snapshot.yml`**
+### The plan here was wrong, and the fix is worth recording
 
-- **Triggers:** `issues: [opened, closed, reopened]`, `schedule` (nightly), `workflow_dispatch`. Deliberately **not** `edited`/`labeled` — that would commit to
-  `main` a dozen times an afternoon for no gain.
-- **Does:** `gh issue list --state open --json number,title,labels,milestone,issueType` → renders grouped by milestone, then by area label, one line per issue
-  with number, title, size and state labels. Commits only if the file changed.
-- **Concurrency group** so overlapping issue events do not race a push.
-- **Header banner** on the generated file: `<!-- GENERATED — do not edit. Source of truth: GitHub Issues. -->`, plus the same warning in AGENTS.md.
+The plan said a **workflow** would regenerate the file and commit it on issue open/close/reopen and nightly, keeping a committed `docs/BACKLOG.md` always
+current. It was built that way in PR 5, and **it failed on its first real run.**
 
-Agents then read `docs/BACKLOG.md` to *find* work (cheap, grep-able, always in the repo) and use `gh` to *change* it. Reads stay local; writes go to the
-tracker. No drift, because nothing writes to the snapshot by hand.
+The `main` ruleset requires every change to arrive by pull request, and its only bypass actor is `OrganizationAdmin`. The workflow pushes directly to `main`, so
+the push was rejected: *"Changes must be made through a pull request."*
+
+The obvious fix — add `github-actions[bot]` to the bypass list — **is not available**. GitHub rejects it outright:
+
+> `Actor GitHub Actions integration must be part of the ruleset source or owner organization`
+
+That is a platform constraint, not a permissions problem: the API call had admin rights and failed validation, and the UI offers no such actor either.
+
+**So the snapshot became generate-on-demand**, written to `build/BACKLOG.md` (already gitignored) and never committed. The workflow was deleted.
+
+**This is arguably the better design anyway**, which is the part worth remembering:
+
+- A file regenerated before use **cannot be quietly stale**. The committed one silently was — it was frozen at 146 issues while the tracker had 148, and nothing
+  said so.
+- No bot commit stream on `main`, and no generated file that can ever appear in a diff or conflict during a rebase.
+- The header carries a generation timestamp, so staleness is visible rather than assumed.
+
+The cost is one `gh` call per session and that the file is absent from a fresh clone — so **human-facing docs link to the tracker**, and only agent-facing
+instructions (AGENTS.md and the prompts) mention the snapshot at all.
+
+**The lesson generalises:** check the branch protection rules before designing anything that writes to the default branch from CI.
 
 ---
 
@@ -463,15 +480,15 @@ The 23 files split into three kinds of work, in ascending difficulty:
 
 | Prompt               | Current instruction                                         | Becomes                                                                                      |
 |----------------------|-------------------------------------------------------------|----------------------------------------------------------------------------------------------|
-| `importer-smoke`     | "repairable defects in `TODO.md` (Bugs)"                    | open an issue from `6-importer-defect.yml`, after checking `docs/BACKLOG.md` for a duplicate |
+| `importer-smoke`     | "repairable defects in `TODO.md` (Bugs)"                    | open an issue from `6-importer-defect.yml`, after checking `build/BACKLOG.md` for a duplicate |
 | `next-importer`      | "record it in `TODO.md`"                                    | same                                                                                         |
-| `data-quality-audit` | "check the Bugs list in `TODO.md`" / "suggest a Bugs entry" | check `docs/BACKLOG.md`, then file                                                           |
-| `security-report`    | "check … the Bugs list in `TODO.md`"                        | check `docs/BACKLOG.md` + `gh issue list --label area:security`                              |
-| `codebase-audit`     | "Repairable defects are on the Bugs list in `TODO.md`"      | `docs/BACKLOG.md`                                                                            |
+| `data-quality-audit` | "check the Bugs list in `TODO.md`" / "suggest a Bugs entry" | check `build/BACKLOG.md`, then file                                                           |
+| `security-report`    | "check … the Bugs list in `TODO.md`"                        | check `build/BACKLOG.md` + `gh issue list --label area:security`                              |
+| `codebase-audit`     | "Repairable defects are on the Bugs list in `TODO.md`"      | `build/BACKLOG.md`                                                                            |
 | `scaffold-importer`  | accepted limitations go in KDoc, *not* TODO.md              | unchanged in substance; wording updated                                                      |
 
 **d) `AGENTS.md`** — two references (§247 the bugs-list rule, §388 the importer-PR checklist) plus a new section documenting the tracker:
-the label taxonomy, the milestone meanings, the `docs/BACKLOG.md` read/`gh` write split, and the three new skills.
+the label taxonomy, the milestone meanings, the snapshot read / `gh` write split, and the three new skills.
 
 `docs/DATA_QUALITY_STRATEGY.md` deserves care — it says *"the authoritative task lives in `TODO.md` and this doc points at it — the two must not drift"*. That
 contract survives the move intact; only the target changes.
@@ -484,7 +501,7 @@ Following the existing pattern: `.github/prompts/<name>.prompt.md` with a one-li
 
 | Skill                  | Does                                                                                                                                                                                                                                                                                          |
 |------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`/new-issue`**       | Takes a description. **Searches for a duplicate first** (`docs/BACKLOG.md` + `gh search issues`) and says so before creating anything. Picks the template, drafts the body in house style, sets type/labels/milestone/priority, adds to the project, and offers `related`/`blocked-by` links. |
+| **`/new-issue`**       | Takes a description. **Searches for a duplicate first** (`build/BACKLOG.md` + `gh search issues`) and says so before creating anything. Picks the template, drafts the body in house style, sets type/labels/milestone/priority, adds to the project, and offers `related`/`blocked-by` links. |
 | **`/next-issue`**      | Recommends what to work on next. Reads the *Ready to pick up* view, weighs priority, size, milestone urgency and unblocking value (an issue that unblocks three others outranks its own priority), and explains **why** — not just what.                                                      |
 | **`/start-issue <n>`** | Assigns you, moves the project status to In progress, creates `<type>/<n>-<slug>`, reads the issue plus everything it references (files, ADRs, related issues), and produces a plan before touching code. Hands off to `/open-pr`, which gains `Closes #<n>` in the PR body.                  |
 
@@ -502,7 +519,7 @@ Deliberately not one PR. PR 3 creates 120 issues and is irreversible-ish; it sho
 | **2** ✅ | `docs(backlog): add the issue manifest`                    | `.github/backlog/` with **146** files · `scripts/backlog-sync.sh` · `README.md` · `validate-backlog.yml` CI job                                                                                                             | **the substantive review** — this is the backlog, rewritten, before anything is created |
 | **3** ✅ | `chore(backlog): apply the manifest`                                   | `apply` → `link` → `project`. Issues **#258–#403**. Commits `.created.json` + one script fix.                                                                                                                                                | spot-check 10 issues                                                                    |
 | **4** ✅ | *(folded into PR 3)*           | `link` and `project` produce no file changes beyond the lockfile, so splitting them bought nothing.                                                                                                                                   | the issue graph in the UI                                                               |
-| **5** ✅ | `docs: retire TODO.md in favour of the issue tracker`             | **delete TODO.md** · `backlog-snapshot.yml` + first `docs/BACKLOG.md` · all 23 reference updates incl. the 5 Kotlin KDoc issue numbers · AGENTS.md tracker section · VISION_ROADMAP_IDEAS.md repointed at milestones | the big prose diff                                                                      |
+| **5** ✅ | `docs: retire TODO.md in favour of the issue tracker`             | **delete TODO.md** · the backlog snapshot · all 23 reference updates incl. the 5 Kotlin KDoc issue numbers · AGENTS.md tracker section · VISION_ROADMAP_IDEAS.md repointed at milestones | the big prose diff                                                                      |
 | **6** ✅ | `feat(agents): add issue workflow skills`                  | `/new-issue`, `/next-issue`, `/start-issue` · `/open-pr` gains `Closes #N`. **The 5 prompt rewrites moved into PR 5** — deleting TODO.md while prompts still told agents to append to it would have left a broken window for a whole PR                                                                                             | a dry run of each                                                                       |
 
 **Effort.** PR 2 is the bulk — ~120 issue bodies extracted from existing prose. It is mostly mechanical because the prose is already good, but it is a
@@ -517,7 +534,7 @@ sources of truth, so do not linger there).
 
 | Risk                                                                                                                                                                                                                      | Mitigation                                                                                                                                                                   |
 |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Agents lose the grep-able backlog** — the single biggest cost of this migration                                                                                                                                         | `docs/BACKLOG.md`, generated. Nothing else about the plan matters as much.                                                                                                   |
+| **Agents lose the grep-able backlog** — the single biggest cost of this migration                                                                                                                                         | `build/BACKLOG.md`, generated on demand. Nothing else about the plan matters as much.                                                                                                   |
 | **Cross-references dangle.** The Bugs list refers to itself constantly ("the same curated-vocabulary question as `NON_ARTIST_NAMES` below", "same place as the promoter fix above"). Split naively, those pointers break. | PR 4 is not polish, it is required. `validate` fails on a dangling key, so the manifest cannot ship half-linked.                                                             |
 | **Two sources of truth during the migration**                                                                                                                                                                             | PRs 3–5 land close together. TODO.md is not edited after PR 2 is opened.                                                                                                     |
 | **Prose gets flattened.** The value of TODO.md is that entries explain themselves; a terse issue title is a downgrade.                                                                                                    | The manifest is markdown files reviewed in a PR precisely so this is visible before it is permanent.                                                                         |

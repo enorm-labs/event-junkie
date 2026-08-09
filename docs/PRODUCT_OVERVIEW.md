@@ -9,7 +9,7 @@ and the ticketing sites live in the [README](../README.md#background) and on the
 slightly different pitches. What belongs here is the checklist of what actually exists.
 
 Elsewhere: which *kinds* of event are in scope — [EVENT_SCOPE.md](EVENT_SCOPE.md) · where the product is headed —
-[VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md) · the backlog — [BACKLOG.md](BACKLOG.md) · voice and visual direction — [BRANDING.md](BRANDING.md).
+[VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md) · the backlog — [GitHub Issues](https://github.com/enorm-labs/event-checker/issues) · voice and visual direction — [BRANDING.md](BRANDING.md).
 
 Public app name: **Event Junkie** (→ event-junkie.de). **Event Checker** is the internal/repo name.
 
@@ -79,7 +79,7 @@ is tracked in [the issue tracker](https://github.com/enorm-labs/event-checker/is
 
 User accounts & personalization, notifications, a venues map, broader venue coverage (beyond the current eight), and a public deployment. These are the
 roadmap — see
-[VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md) and [BACKLOG.md](BACKLOG.md).
+[VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md) and [the issue tracker](https://github.com/enorm-labs/event-checker/issues).
 
 ---
 

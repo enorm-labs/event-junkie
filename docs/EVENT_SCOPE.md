@@ -5,7 +5,7 @@ a stage in the evening, it is in scope.**
 
 This document is the standing reference for that question. Related, and deliberately not duplicated here:
 [EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md) tracks *which venues* are imported;
-[DATA_MODEL.md](DATA_MODEL.md) describes the schema; [BACKLOG.md](BACKLOG.md) mirrors the [issue tracker](https://github.com/enorm-labs/event-checker/issues), which holds the actionable backlog.
+[DATA_MODEL.md](DATA_MODEL.md) describes the schema; the [issue tracker](https://github.com/enorm-labs/event-checker/issues) holds the actionable backlog.
 
 ---
 
