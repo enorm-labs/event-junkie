@@ -450,6 +450,94 @@ private fun isLedByNonArtistLabel(title: String): Boolean {
     }
 }
 
+/**
+ * A subtitle that is **nothing but** a `"<X> presents"` / `"<X> präsentiert"` billing frame,
+ * capturing the presenter. The marker must end the line: a subtitle that names something *after* it
+ * ("Zeppelin Entertainment Presents - Joy of Little Things Tour") is billing a tour, not standing on
+ * its own as the presenter's credit, and the title beside it is still the act.
+ */
+private val PRESENTER_CREDIT_PATTERN =
+    Regex("""^(.+?)\s+(?:presents|pr(?:ä|ae)sentiert)\s*[-–—:|.]*\s*$""", RegexOption.IGNORE_CASE)
+
+/**
+ * The same marker anywhere in a **title**, which disqualifies the whole rule — see
+ * [isPresenterOwnEventTitle].
+ */
+private val PRESENTER_MARKER_IN_TITLE = Regex("""\b(?:presents|pr(?:ä|ae)sentiert)\b""", RegexOption.IGNORE_CASE)
+
+/**
+ * Trailing words that say what a presenter *is* rather than what it is called — a label, an agency,
+ * a promoter, a legal form. A venue writes the presenter's full business name in the credit line and
+ * its short name in the event title (`Corrupted Blood Records` presents `Corrupted Blood Club
+ * Show`), so the tail is dropped before the two are compared.
+ */
+private val PRESENTER_DESCRIPTOR_TAIL =
+    Regex(
+        """(?:\s+(?:records?|recordings?|rec\.?|music|musik|entertainment|productions?|bookings?""" +
+            """|agency|promotions?|events?|concerts?|konzerte|gmbh|ug|ltd\.?|inc\.?|e\.\s?v\.))+\s*$""",
+        RegexOption.IGNORE_CASE
+    )
+
+/** The separators a venue stacks independent subtitle lines with, split before matching a credit. */
+private val SUBTITLE_LINE_SEPARATOR = Regex("""\s*[\n|]\s*""")
+
+/**
+ * True when the [subtitle] credits a presenter whose own name **opens the [title]** — so the title
+ * names that presenter's event and no part of it is a performer.
+ *
+ * This is the structural counterpart of [isLedByNonArtistLabel], which encodes the same idea against
+ * a curated list of titles. Here nothing has to be curated: the venue states the label in one field
+ * and repeats it in the other, and the pair is the signal. Huxleys' `Corrupted Blood Club Show`,
+ * subtitled `Corrupted Blood Records presents`, is a label showcase — the title is the night's name,
+ * and reading it as an act mints a 25-character artist that plays nowhere else.
+ *
+ * Three fences keep it off the far more common billing where the presenter names a *real* act:
+ *  - the credit must be a **whole subtitle line** ([PRESENTER_CREDIT_PATTERN]) — a subtitle that
+ *    continues past the marker is naming the tour or the act, not standing alone as a credit;
+ *  - the **title must not carry the marker itself**. `<X> presents: <act>` in a title is the
+ *    opposite case, and a frequent one — Gretchen bills 20 shows that way and Zenner's
+ *    `Analogue Foundation presents: David August w/ MFO` would lose David August. Such a title
+ *    trivially starts with `<X>`, so without this fence the rule would fire on exactly the shows it
+ *    must leave alone;
+ *  - the title must **continue past** the presenter's name. A title that *is* the name is as likely
+ *    to be an act that runs its own label as it is to be a label night, and there is no structural
+ *    way to tell; a title that adds to it ("… Club Show") is naming an event.
+ *
+ * Measured over the whole seeded database (2026-08-09): nine events carry a `presents` /
+ * `präsentiert` subtitle and exactly one satisfies all three fences — the Huxleys row this exists
+ * for. The other eight are presenter credits for named acts (Colosseum's `CONTRA CREATE
+ * präsentiert` before `ÜBERDOSIS CRIME`, Wild at Heart's `Rudeboys Production presents` before
+ * `The Spitfires`) and are untouched.
+ */
+private fun isPresenterOwnEventTitle(
+    title: String,
+    subtitle: String?
+): Boolean {
+    if (subtitle.isNullOrBlank() || PRESENTER_MARKER_IN_TITLE.containsMatchIn(title)) return false
+    val normalizedTitle = title.trim().replace(WHITESPACE, " ")
+    return subtitle
+        .split(SUBTITLE_LINE_SEPARATOR)
+        .mapNotNull { line -> PRESENTER_CREDIT_PATTERN.find(line.trim())?.groupValues?.get(1) }
+        .any { presenter -> normalizedTitle.startsWithPresenter(presenter) }
+}
+
+/**
+ * True when this title opens with [presenter] — or with [presenter] stripped of its
+ * [descriptor tail][PRESENTER_DESCRIPTOR_TAIL] — and then continues. The match ends on a word
+ * boundary, so `Corrupted Bloodline` is not read as opening with `Corrupted Blood`.
+ */
+private fun String.startsWithPresenter(presenter: String): Boolean {
+    val candidates =
+        listOf(presenter, presenter.replace(PRESENTER_DESCRIPTOR_TAIL, ""))
+            .map { it.trim().replace(WHITESPACE, " ") }
+            .filter { it.isNotBlank() }
+    return candidates.any { name ->
+        length > name.length &&
+            startsWith(name, ignoreCase = true) &&
+            !this[name.length].isLetterOrDigit()
+    }
+}
+
 private fun isDenylistedNonArtist(name: String): Boolean =
     Normalizer
         .normalize(name.trim().replace(WHITESPACE, " ").lowercase(), Normalizer.Form.NFD)
@@ -865,15 +953,21 @@ fun stripArtistPrefix(name: String): String {
  *   uses `/` inside a single act name (Madame Claude) so the name isn't torn apart.
  * @param unpackWithFrame reads a `"<night> w/ <acts>"` title as its acts only — see
  *   [withFrameActs] for why this is opt-in rather than the default.
+ * @param subtitle the event's subtitle, when the caller has one. Used only to recognise a label
+ *   showcase — a `"<X> presents"` credit beside a title that opens with `<X>` — via
+ *   [isPresenterOwnEventTitle]; omitting it simply skips that check.
  */
-@Suppress("ReturnCount") // Two guard clauses (label-led title, w/ frame) read better than nesting
+@Suppress("ReturnCount") // Three guard clauses (label-led title, presenter credit, w/ frame) read better than nesting
 fun headlinersFromTitle(
     title: String,
     splitOnSlash: Boolean = true,
-    unpackWithFrame: Boolean = false
+    unpackWithFrame: Boolean = false,
+    subtitle: String? = null
 ): List<ScrapedArtist> {
     // A title led by a label's own name announces that label's event; nothing in it is an act.
     if (isLedByNonArtistLabel(title)) return emptyList()
+    // Same conclusion, reached structurally: the subtitle credits the label and the title repeats it.
+    if (isPresenterOwnEventTitle(title, subtitle)) return emptyList()
     if (unpackWithFrame) withFrameActs(title)?.let { return it }
     return splitHeadlinerTitle(stripSeriesPrefix(title), splitOnSlash)
         .map { segment ->
@@ -940,11 +1034,14 @@ private fun withFrameActs(title: String): List<ScrapedArtist>? {
  * @param title the event title, assumed to be one or more headliner names.
  * @param supportNames support act names extracted from the listing. If empty, returns
  *   an empty list (cannot confirm the title is an artist name).
+ * @param subtitle the event's subtitle, when the caller has one — forwarded to
+ *   [headlinersFromTitle] for the label-showcase check only.
  * @return ordered list: headliner(s) first, then support acts by appearance order.
  */
 fun buildArtistList(
     title: String,
-    supportNames: List<String>
+    supportNames: List<String>,
+    subtitle: String? = null
 ): List<ScrapedArtist> {
     if (supportNames.isEmpty()) return emptyList()
 
@@ -953,7 +1050,7 @@ fun buildArtistList(
             .filterNot { isNonArtistName(it) }
             .map { ScrapedArtist(name = it, role = "SUPPORT") }
 
-    return headlinersFromTitle(title) + supportActs
+    return headlinersFromTitle(title, subtitle = subtitle) + supportActs
 }
 
 /**
@@ -1011,12 +1108,14 @@ fun buildArtistsForEventType(
     if (eventType == EventType.FESTIVAL.name || eventType == EventType.PARTY.name) return emptyList()
 
     val supportNames = extractSupportFromSubtitle(subtitle)
-    if (eventType != EventType.CONCERT.name) return buildArtistList(title, supportNames)
+    if (eventType != EventType.CONCERT.name) return buildArtistList(title, supportNames, subtitle)
 
     // Concert: the title carries the headliner(s) (co-bills split out), then support acts in listing order.
     val supportActs =
         supportNames
             .filterNot { isNonArtistName(it) }
             .map { ScrapedArtist(name = it, role = "SUPPORT") }
-    return headlinersFromTitle(title) + supportActs
+    // The subtitle goes in as well as being read for support: a `"<X> presents"` credit beside a
+    // title that opens with `<X>` means the title is the label's night, not the act.
+    return headlinersFromTitle(title, subtitle = subtitle) + supportActs
 }

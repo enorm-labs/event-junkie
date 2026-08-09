@@ -6,6 +6,7 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -37,6 +38,20 @@ class HuxleysWebsiteImporterTest {
     private val kardUrl = "https://huxleysneuewelt.de/event/2026-09-01-kard"
     private val currentJoysUrl = "https://huxleysneuewelt.de/event/2026-08-18-current-joys"
     private val rockLegendsUrl = "https://huxleysneuewelt.de/event/2026-11-06-rock-legends"
+    private val corruptedBloodUrl = "https://huxleysneuewelt.de/event/2026-09-04-corrupted-blood-club-show"
+
+    /**
+     * The two elements that make a label showcase recognisable, written out rather than captured:
+     * the venue's real page carries them among 3000 lines of theme markup, and the point of the
+     * test is the `.tourtitel` credit beside a title that repeats the label's name.
+     */
+    private val labelShowcaseDetailPage =
+        """
+        <html><head><meta property="og:title" content="Corrupted Blood Club Show - Huxleys Neue Welt"></head>
+        <body><article class="event">
+          <div class="tourtitel"><span>Corrupted Blood Records presents</span></div>
+        </article></body></html>
+        """.trimIndent()
 
     private fun fixture(name: String): String =
         javaClass.classLoader
@@ -126,6 +141,22 @@ class HuxleysWebsiteImporterTest {
                     ScrapedArtist("Thievery Corporation", "HEADLINER"),
                     ScrapedArtist("PECES RAROS", "SUPPORT")
                 )
+        }
+
+    @Test
+    fun `stores no artist for a label showcase, whose credit only the detail page carries`() =
+        runTest {
+            // The listing shows a bare concert title and would mint the night's own name as a
+            // performer; only `.tourtitel` says the label is presenting. Neither page can reach that
+            // conclusion alone, which is why the merge rebuilds the lineup instead of picking one.
+            coEvery { htmlFetcher.fetchDocument(corruptedBloodUrl) } returns
+                Jsoup.parse(labelShowcaseDetailPage, corruptedBloodUrl)
+
+            val showcase = event(importer.importEvents(overviewUrl), "2026-09-04-corrupted-blood-club-show")
+            showcase.title shouldBe "Corrupted Blood Club Show"
+            showcase.subtitle shouldBe "Corrupted Blood Records presents"
+            showcase.eventType shouldBe "CONCERT"
+            showcase.artists.shouldBeEmpty()
         }
 
     @Test

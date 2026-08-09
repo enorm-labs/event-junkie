@@ -314,12 +314,25 @@ Strategy & sequencing: [docs/DATA_QUALITY_STRATEGY.md](docs/DATA_QUALITY_STRATEG
       right side the acts. Insel already had that rule locally, so it moved into the shared `headlinersFromTitle` as **opt-in** (`unpackWithFrame`) rather than
       becoming the default: Zenner bills `Analogue Foundation presents: David August w/ MFO`, where `w/` joins collaborators and unpacking deletes the
       headliner. No lexical test separates the two, so the venue decides. No stored row changed — Insel already behaved this way.
-- [ ] **A label showcase stores the label's night as a performer.** Found by the re-seed above and the one thing it made worse: Huxleys bills
-  `Corrupted Blood Club Show` with the subtitle `Corrupted Blood Records presents`, so the title is a label's event name and `Corrupted Blood Club Show` is now
-  an artist row. `isLedByNonArtistLabel` already encodes exactly this idea but only sees the *title*, against a curated list — whereas the signal here is
-  structural and already in hand: **the subtitle says `<X> presents` and the title starts with `<X>`**. `buildArtistsForEventType` receives the subtitle
-  already, so the plumbing exists; `headlinersFromTitle` does not. Generalises beyond this one event (Zenner's `Analogue Foundation presents: …`, Loft's
-  `Loft presents: …`), so it wants its own measurement and re-seed rather than a patch.
+- [x] **Fixed (2026-08-09) — a label showcase no longer stores the label's night as a performer.** Huxleys bills `Corrupted Blood Club Show` with the subtitle
+  `Corrupted Blood Records presents`, so the title is a label's event name; the `club` keyword change made it a `CONCERT` and it began minting itself as an
+  artist. `headlinersFromTitle` now takes the subtitle and returns nothing when `isPresenterOwnEventTitle` fires — the structural sibling of
+  `isLedByNonArtistLabel`, which encodes the same idea against a curated list of titles.
+    - **Three fences, and the middle one is the whole difficulty.** The credit must be a *whole subtitle line* (a subtitle continuing past the marker is billing
+      a tour); the **title must not carry `presents` itself**, because `<X> presents: <act>` is the opposite billing and the far more common one — Gretchen has
+      20 of them and Zenner's `Analogue Foundation presents: David August w/ MFO` would have lost David August, since such a title trivially "starts with `<X>`";
+      and the title must continue *past* the presenter's name, since a title that merely *is* the name is as likely an act that runs its own label. A
+      descriptor tail (`Records`, `Entertainment`, `GmbH`, …) is dropped before comparing, because a label writes its business name in the credit and its short
+      name in the title — without that, the one event this exists for does not match.
+    - **The Huxleys merge was the other half, and it was the part that would have made the fix do nothing.** Neither page holds both halves of the signal: the
+      act's name is the listing's `.eventname` and the credit is the detail page's `.tourtitel`, and `fillGapsFromOverview` picked one page's lineup — the
+      listing's, which is the one that saw a bare concert title and invented the artist. It now rebuilds the lineup from the merged title and subtitle it
+      actually stores. Measured over the whole 107-event source: **zero lineups changed**, so the rebuild is behaviour-preserving outside the case it exists for.
+    - **Measured, DB-wide.** Nine events carry a `presents`/`präsentiert` subtitle and only two of them a *terminal* credit; exactly one satisfies all three
+      fences — the Huxleys row. The other eight are promoters crediting a named act (Colosseum's `CONTRA CREATE präsentiert` before `ÜBERDOSIS CRIME`, Wild at
+      Heart's `Rudeboys Production presents` before `The Spitfires`) and are untouched. A re-import of every source that could be reached changed nothing else.
+    - The invented `Corrupted Blood Club Show` artist row from the 2026-08-08 re-scrape is still in the database with **0 event links** — nothing garbage-collects
+      an artist that loses its last association. It is one of 12 such orphans and wants the housekeeping policy below, not a one-off delete.
 - [ ] **Cover venues that will never have an automatic import** — no website at all, or a programme published only via Instagram / Facebook / Resident Advisor.
   Needs three things: a recorded list of those venues (in EVENT_DATA_SOURCES.md, with a link to wherever their programme *is* visible), a low-friction way to
   enter their events by hand (see the admin frontend items below), and a reminder mechanism so checking them doesn't get forgotten.
