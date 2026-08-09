@@ -624,8 +624,13 @@ neglected work** — it is work that cannot exist yet, and it is labelled so it 
 **Milestones.** `v0.2 — Deployable` → `v0.3 — Launch-ready` → `v1.0 — Go-live` are the path to launch; `Phase 2/3/4` are post-launch buckets with no due date.
 No milestone means unscheduled. Direction and the reasoning behind the phases stay in [docs/VISION_ROADMAP_IDEAS.md](docs/VISION_ROADMAP_IDEAS.md).
 
-**Closing.** Put `Closes #NNN` in the PR body, not in the commit message — the repo squashes, and a closing keyword in the squash body is what links the issue to
-the merge.
+**Closing.** Put `Closes #NNN` in the **PR body**, on its own line. This repo allows only **Rebase and merge** — squash and merge commits are both disabled — so
+commit messages are replayed onto `main` as written, and a closing keyword in one of them would work too. The PR body is still the right home: it is one line to
+fix when the issue number changes, whereas the same line in a commit means rewriting history, and it survives the amending and rebasing a branch goes through
+during review. Use `Closes` rather than `Fixes`/`Resolves`, one line per issue.
+
+Give the PR the issue's milestone as well. Every closed PR here carries one — the 255 that predate the tracker were backfilled into `Phase 0 — Foundation` — and
+a PR without one is the exception that makes the milestone view stop meaning anything.
 
 ## Key Files
 
