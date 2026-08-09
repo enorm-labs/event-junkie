@@ -50,11 +50,6 @@ Rough priority: **Now** → **Next** → grouped backlog → **Someday / Vision*
 ## UI / UX / Branding
 
 - [ ] Full frontend UX pass — what's missing / improvable? (cross-check the vision + branding docs)
-- [x] **Fixed `heading-order` on the list pages.** Of the two options, the `level` prop won over a visually-hidden `h2`: the level was always a property of the
-  *page*, and a card hard-coding one is the actual defect — where a hidden heading would have added invisible markup to satisfy a rule. `EventCard` /
-  `VenueCard` now take an `as` prop (`'h2' | 'h3' | 'h4'`, default `h3`), spelled and shaped like `SectionLabel`'s existing one; `/events` and `/venues` pass
-  `h2`, and the home and detail pages keep `h3` under their section `h2`. Pinned by a narrow `heading-order`-only gate on the four list routes — the
-  informational `best-practice` pass stays informational, per its own reasoning, and is now down to FullCalendar's `empty-table-header`
 - [ ] **Manual accessibility passes before go-live** — a keyboard-only walkthrough and a screen-reader pass. axe reliably finds roughly a third of WCAG issues,
   so the two automated checks cannot certify WCAG 2.1 AA no matter how thorough they get. Required if a conformance statement is ever wanted for the live site
   (LEGAL.md §12)
@@ -73,9 +68,8 @@ Rough priority: **Now** → **Next** → grouped backlog → **Someday / Vision*
 ## Frontend & BFF
 
 - [ ] Add map to venues overview page — and consider plotting **today's events** on it (pins showing what's on tonight, not just where the venues are)
-- [x] Add venue description to the venue detail page — `venue.description` column + full API/UI plumbing; seeded with hand-written blurbs in `dev-seed.http`.
-  **Follow-up:** scrape descriptions from each venue's own website (see "Enrich venues" under Importer / Data) and consider other detail-page metadata.
-- [ ] Add capacity / venue size to the venue detail page
+- [ ] Add capacity / venue size to the venue detail page, and decide what other metadata the page should carry. (The description itself is done — column, API,
+  UI and hand-written seed blurbs; scraping one per venue from its own website is part of "Enrich venues" under Importer / Data.)
 - [ ] Filter events by venue type
 - [ ] Filter venues by venue type and genre
 - [ ] Browse/see past events — an archive view (decide retention + UX; ties into the housekeeping delete policy under Importer / Data)
@@ -116,45 +110,6 @@ scraper's own KDoc instead, so only what should actually be *repaired* is listed
   venue lists as `31/07 23:00` — which actually runs until ~06:00 the next morning — disappears from the app at 00:00, hours before it ends. It hits every
   late-opening club (OHM, Berghain, Tresor, Renate, …), and OHM feels it hardest because its whole horizon is one to three nights. Needs a cutoff that accounts
   for the start time (e.g. keep an event until `eventDate + 1 day 06:00` when it starts after ~22:00) rather than a per-importer workaround.
-- [x] **Fixed (2026-08-08) — a show can play twice in one day, and a duplicate listing no longer fails the import.** Two defects were filed here as one, and they
-  turned out to have different causes:
-    - **The whole-import failure was an ordering bug, not the slug format.** `upsertAndCleanup` upserted *before* removing stale rows, so a row still holding a
-      slug the incoming batch needed was deleted only after the `INSERT` that collided with it. SO36 hit it live: it listed its two-day festival's combi ticket
-      (`so36:90006`) on the opening date, then added a day-one ticket (`so36:93090`) with the same title and date — the stale combi row owned the slug, and the
-      failing `executeMany` took **all 111 SO36 events** with it. Cleanup now runs first; both steps are in the same transaction, so a later failure still rolls
-      the deletion back.
-    - **The lost sittings were the dedup key.** It was date + title, which cannot tell a matinee from an evening show. It is now date + title + start time, and
-      `EventUpsertService.slugDiscriminators` gives every member of a colliding group a time-suffixed slug (`…-schwanensee-jenseits-der-buhne-1500` /
-      `…-2000`) — every member, including the first, so neither reads as the "real" event and a venue reordering its listing cannot swap two public URLs.
-      **13 sittings recovered** across a full re-scrape: Theater im Delphi 4, Tempodrom 4, Uber Arena 3, the Uber Eats Music Hall's 23 December Nussknacker and
-      one Heimathafen double bill — matching this item's own predictions for Delphi, Tempodrom and Uber Arena almost exactly. A group with no start time still
-      collapses to one: a venue publishing no times has far more likely listed one night twice than scheduled two unlabelled sittings.
-    - **A third defect surfaced while measuring, and is fixed here too: a repeated `sourceId` was not deduplicated at all.** `event.source_id` is `UNIQUE`, so
-      two scraped events sharing one can never both be stored — but nothing dropped the second, so both entities were built carrying the *same* database id and
-      `saveAll` issued two UPDATEs to one row. No error, last write wins. It was invisible only because both sittings produced an identical slug; giving them
-      distinct slugs made 19 Admiralspalast rows start flipping between their matinee and evening on every import, which is how it was caught. Deduplicating on
-      `sourceId` restores those rows and closes the older, quieter bug underneath.
-- [x] **Done for Admiralspalast (2026-08-08) — its `sourceId` now carries the session start time.** It keyed on the production and date
-  (`admiralspalast:mamma-mia-das-original-musical-2027-09-18`), so a matinee and its evening show arrived under one id; `event.source_id` is `UNIQUE`, so the
-  second was dropped before it reached the database and the app showed one performance a day where the venue sells two, each with its own ticket link.
-  **19 performances recovered, 0 lost** (208 → 227 rows): Mamma Mia ×4, Der Geist der Weihnacht ×5, Disney's Glöckner ×3, HELLO! AGAIN? ×2, the two Imperial
-  Ballet nights, Ólafur Arnalds, Breakin' Circus and This is THE GREATEST SHOW!.
-    - **Re-keying a live source has one trap worth knowing before the next one.** Every event gets a new `sourceId`, so the old rows go stale and the new ones
-      insert — but `removeStaleEvents` deliberately spares **today**, so a today-dated row keeps its old id *and* its slug while its replacement tries to take
-      the same slug, and the insert collides. Admiralspalast happened to have no event today, which is luck, not design. Re-key a venue on a day its programme
-      is dark, or clear that source's rows first.
-- [x] **Done (2026-08-09) — Velomax keys on the session, and `collapseSameDaySessions` is gone.** `VelomaxOverviewPageScraper` derived the `sourceId` from the
-  listing URL, which is one page per *show*, so the workaround could not simply be deleted: `event.source_id` is `UNIQUE` and dropping the collapse would have
-  traded a duplicate-slug crash for a duplicate-`sourceId` one. The start time now goes in the id (`…-2027-03-13-1030`), the Admiralspalast spelling.
-    - **The detail page had to be told to keep out of it.** Its `sourceId` comes from the same one-page-per-show permalink and the merge takes the detail page's
-      value for almost everything, so the listing's session-keyed id was being overwritten before it ever reached the database — the scraper change alone would
-      have fixed nothing. `AbstractVelomaxHallImporter.fillGapsFromOverview` now keeps `sourceId` from the listing, for the same reason it already kept
-      `startTime`: the listing is the only per-session source there is.
-    - **4 sittings recovered, 0 lost** on a re-import of all three halls: Velodrom 22 → 25 (Disney On Ice's 10:30 and 14:30 on 13 March, its 15:00 on the 14th),
-      Max-Schmeling-Halle 17 → 18 (Berlin Tattoo's 19:00 on 7 November), UFO im Velodrom unchanged. Distinct `(date, title)` groups after the re-import are
-      17 / 11 / 22 — exactly the old row counts — so every added row is a second sitting rather than anything new appearing.
-    - The re-key hazard recorded above did not bite: Velomax's programme was dark on the day (its next event was three weeks out), which was checked before
-      importing rather than assumed.
 - [ ] **Derive the lineup after the event type is final, not before.** `ScrapedEvent.toEventEntity` promotes a `CONCERT`/`OTHER` title to `FESTIVAL`
   (`isFestivalTitle`), but every scraper has already built its artists from its *own* type inference, so a festival title still mints headliners — `ELLE & L's
   Festival` → `Elle` (Columbia Theater), plus the same shape at Clash and Gretchen. Fix once at the boundary (drop the artists when the resolved type is
@@ -257,9 +212,10 @@ Strategy & sequencing: [docs/DATA_QUALITY_STRATEGY.md](docs/DATA_QUALITY_STRATEG
 - [ ] **(Pillar 2 — Prevent)** Golden fixture tests from real scraped HTML for all four normalizers, plus a boundary validation gate that flags obviously-bad
   output (empty artist after stripping, artist == non-artist pattern, genre == event title)
   into the curation queue instead of persisting it silently.
-- [x] **(Pillar 3 — Fix)** Title-as-headliner extraction for venues without a `Support:` signal (Privatclub, Cassiopeia, Badehaus) — recovers the ~40% of
-  concerts previously stored with no artist. Done via `buildArtistsForEventType` / `headlinersFromTitle`; Cassiopeia's ambiguous titles are guarded by a widened
-  `isNonArtistName` festival filter. **Still TODO: a one-off backfill re-scrape** — existing rows keep no artist until re-imported.
+- [ ] **(Pillar 3 — Fix) A one-off backfill re-scrape.** Title-as-headliner extraction is built and shipping (`buildArtistsForEventType` /
+  `headlinersFromTitle`, with Cassiopeia's ambiguous titles guarded by the widened `isNonArtistName` festival filter), but **existing rows keep no artist until
+  they are re-imported** — so the ~40% of concerts stored artist-less are only recovered for sources that have since been re-scraped. The extraction rules have
+  kept changing underneath it (the `club` keyword, the label showcase), each needing its own re-seed, which is why one deliberate pass has not happened yet.
 - [ ] **(Pillar 4 — Systematize)** AI-assisted data quality in the importer (one capability, several uses): detect/extract artist names from titles, validate
   event types, enrich missing fields (genres, event types), and fix bad values (artist names, promoter names, …) — cross-checking the event source page and the
   wider web where useful. Runs *after* the deterministic normalizers, human-in-the-loop via the admin review UI. **Needs an ADR — *AI-Assisted Data Quality***
@@ -292,47 +248,11 @@ Strategy & sequencing: [docs/DATA_QUALITY_STRATEGY.md](docs/DATA_QUALITY_STRATEG
   `HtmlFetcher` is GET-only and would need a form-POST fetch first. 10 of 12 upcoming events at capture.
 - [ ] Review events typed `OTHER` — should we add new values to the event-type enum? Four formats have no type of their own today and are filed under a
   neighbour: comedy (Cosmic Comedy's whole 57-event programme reads as `SHOW`), dance and theatre (Theater im Delphi's `Tanz`/`Theater`, the AEG venues'
-  ballet), lectures and panels (Urania's, filed `READING`), and sport (not imported at all — see the coverage question below).
+  ballet), lectures and panels (Urania's, filed `READING`), and sport (not imported at all — see the coverage-scope decision below).
 - [ ] Expand Elfsight **monthly** recurrence rules (`repeatPeriod: nthDayInMonth`, `repeatFrequency: monthly`). Humboldthain expands the weekly rules its
   resident night uses; Neue Zukunft's recurring entries are monthly and are still imported once, at their start date only (4 of 44 entries). Fixing it also
   needs `NeueZukunftApiScraper`'s `sourceId` to carry the occurrence date (Humboldthain already does), which re-mints every existing Neue Zukunft event — so do
   it as one change, not two.
-- [x] **Done (2026-08-08) — the three too-literal title-parsing rules, fixed centrally with a `--full` re-seed and a diff.** LARK's two local workarounds are
-  gone. Measured over a same-day re-scrape of all 86 sources (3262 → 3278 events, both captures taken hours apart on the same code path so venue-side drift
-  could be told apart from the rule change), **three events changed**: one clear win, one clear loss, one neutral. Each rule, and what it actually did:
-    - **The bare `club` keyword is dropped**, keeping `club night` / `clubnight`. Word-anchoring — the other option written here — would not have helped: in
-      `Two Door Cinema Club` and in `CLUB TOUR`, `club` is already a whole word. **Win:** Columbiahalle's `Two Door Cinema Club` is a `CONCERT` and has its
-      artist. **Loss:** Huxleys' `Corrupted Blood Club Show` is now a `CONCERT` too, and stores its own name as a performer. **Neutral:** arkaoda's
-      `DJ Fart in the Club b2b Cousin` moved `PARTY` → `OTHER`, which mints nothing. Nothing else moved, because every resident night ending in the word is at
-      a venue that types its own events (Soda, Kater, MAXXIM, OHM) or reads its own category (Privatclub). **The win/loss trade was put to the maintainer and
-      accepted**: the keyword was also mistyping a concert as a party at an arena-scale venue, and the loss has a named fix (below) while the win had none.
-    - **`ARTIST_SUFFIX_PATTERN` and the shouted-tail split accept `[-–—]`.** No stored row changed: LARK, the only venue whose titles carry an en-dash tour
-      tail, was already normalising dashes locally, and that workaround is now deleted in favour of the shared rule. The other en-dash titles in the corpus
-      (Cosmic Comedy's `… – SHOWCASE FRIDAY`, `Lucas Lauriente – Stand Up 2026`) are at venues that derive no artist from a title at all.
-    - **`w/` is NOT a co-bill separator, and the suggestion above was wrong.** Splitting in place and keeping both halves would have minted the night's name as
-      a performer in all 16 titles that carry the marker (`RIPPLES W/ AMINE K`, `Stil vor Talent w/ Oliver Koletzki`, …) — the left side names the night, the
-      right side the acts. Insel already had that rule locally, so it moved into the shared `headlinersFromTitle` as **opt-in** (`unpackWithFrame`) rather than
-      becoming the default: Zenner bills `Analogue Foundation presents: David August w/ MFO`, where `w/` joins collaborators and unpacking deletes the
-      headliner. No lexical test separates the two, so the venue decides. No stored row changed — Insel already behaved this way.
-- [x] **Fixed (2026-08-09) — a label showcase no longer stores the label's night as a performer.** Huxleys bills `Corrupted Blood Club Show` with the subtitle
-  `Corrupted Blood Records presents`, so the title is a label's event name; the `club` keyword change made it a `CONCERT` and it began minting itself as an
-  artist. `headlinersFromTitle` now takes the subtitle and returns nothing when `isPresenterOwnEventTitle` fires — the structural sibling of
-  `isLedByNonArtistLabel`, which encodes the same idea against a curated list of titles.
-    - **Three fences, and the middle one is the whole difficulty.** The credit must be a *whole subtitle line* (a subtitle continuing past the marker is billing
-      a tour); the **title must not carry `presents` itself**, because `<X> presents: <act>` is the opposite billing and the far more common one — Gretchen has
-      20 of them and Zenner's `Analogue Foundation presents: David August w/ MFO` would have lost David August, since such a title trivially "starts with `<X>`";
-      and the title must continue *past* the presenter's name, since a title that merely *is* the name is as likely an act that runs its own label. A
-      descriptor tail (`Records`, `Entertainment`, `GmbH`, …) is dropped before comparing, because a label writes its business name in the credit and its short
-      name in the title — without that, the one event this exists for does not match.
-    - **The Huxleys merge was the other half, and it was the part that would have made the fix do nothing.** Neither page holds both halves of the signal: the
-      act's name is the listing's `.eventname` and the credit is the detail page's `.tourtitel`, and `fillGapsFromOverview` picked one page's lineup — the
-      listing's, which is the one that saw a bare concert title and invented the artist. It now rebuilds the lineup from the merged title and subtitle it
-      actually stores. Measured over the whole 107-event source: **zero lineups changed**, so the rebuild is behaviour-preserving outside the case it exists for.
-    - **Measured, DB-wide.** Nine events carry a `presents`/`präsentiert` subtitle and only two of them a *terminal* credit; exactly one satisfies all three
-      fences — the Huxleys row. The other eight are promoters crediting a named act (Colosseum's `CONTRA CREATE präsentiert` before `ÜBERDOSIS CRIME`, Wild at
-      Heart's `Rudeboys Production presents` before `The Spitfires`) and are untouched. A re-import of every source that could be reached changed nothing else.
-    - The invented `Corrupted Blood Club Show` artist row from the 2026-08-08 re-scrape is still in the database with **0 event links** — nothing garbage-collects
-      an artist that loses its last association. It is one of 12 such orphans and wants the housekeeping policy below, not a one-off delete.
 - [ ] **Cover venues that will never have an automatic import** — no website at all, or a programme published only via Instagram / Facebook / Resident Advisor.
   Needs three things: a recorded list of those venues (in EVENT_DATA_SOURCES.md, with a link to wherever their programme *is* visible), a low-friction way to
   enter their events by hand (see the admin frontend items below), and a reminder mechanism so checking them doesn't get forgotten.
@@ -353,7 +273,10 @@ Strategy & sequencing: [docs/DATA_QUALITY_STRATEGY.md](docs/DATA_QUALITY_STRATEG
     - [ ] **Manual event entry** — a fast form for venues with no importer, plus reminders/nudges so those venues actually get checked (see the
       "venues that will never have an automatic import" item above)
 - [ ] Improve importer Swagger UI (match the BFF)
-- [ ] Housekeeping: policy for when to delete old events from the DB
+- [ ] Housekeeping: policy for when to delete old events from the DB — **and for artists that lose their last event**. Nothing garbage-collects those today, so
+  a name the importer stops deriving simply stays: 12 artist rows currently have zero event links, including `Corrupted Blood Club Show`, which a since-fixed
+  parsing rule invented and no longer mints. They are invisible in the UI (every list joins through `event_artist`) but they hold slugs, so a real act arriving
+  later under the same name collides with a ghost.
 
 **More importers:**
 
@@ -368,16 +291,11 @@ Strategy & sequencing: [docs/DATA_QUALITY_STRATEGY.md](docs/DATA_QUALITY_STRATEG
     - [ ] Radio-station event listings (RadioEins, FluxFM, StarFM, …)
     - [ ] Consider importing from Resident Advisor — confirm legality first (probably not allowed)
 
-**Coverage scope — decided 2026-08-08.** Full reasoning and cost in [docs/EVENT_SCOPE.md §5](docs/EVENT_SCOPE.md). **None of these may be reopened in an
-importer PR.**
+**Coverage scope — decided 2026-08-08.** Comedy clubs and theatres are **in**; sport is **out**. Full reasoning and cost in
+[docs/EVENT_SCOPE.md §5](docs/EVENT_SCOPE.md), which is the record — and note that sport's exclusion is *implemented*, in `AegOverviewPageScraper.isSport` and
+Velomax's type map, so reopening it means reopening that code and not just a doc (EVENT_SCOPE.md §3.1). **None of this may be reopened in an importer PR.** What
+is left undecided:
 
-- [x] **Decided — comedy clubs: yes.** Cosmic Comedy is already imported, so this is more venues in a category that exists (Comedy Café Berlin, Quatsch Comedy
-  Club, …). No model change, no ADR. → *actionable work below*
-- [x] **Decided — theatres: yes.** Theater im Delphi, Heimathafen and Bar jeder Vernunft are already imported; the remaining houses (Volksbühne, Schaubühne,
-  Berliner Ensemble, …) are coverage, not a new category. → *actionable work below*
-- [x] **Decided — sport: no.** Different venues, different audience, past the point where this is a music app. The exclusions already in
-  `AegOverviewPageScraper.isSport` and Velomax's type map **are** this decision's implementation — the Velomax halls drop 32 of 85 listed entries and Uber Arena
-  40 of 128 rather than burying their concerts under `OTHER`. Reopening this means reopening that code, not just a doc.
 - [ ] **Deferred — classical concerts / orchestras (wanted, blocked on the artist model).** Berliner Symphoniker, RBB Sendesaal, Konzerthaus, Philharmonie. Fits
   the existing `CONCERT` type, but the data shape differs — orchestra/ensemble + conductor + soloists rather than headliner + support — so **`ArtistRole` and
   the genre vocabulary must be extended first**, with an ADR. Do **not** import an orchestral house by flattening it into headliner-plus-support; the data would
@@ -391,23 +309,9 @@ importer PR.**
 
 - [ ] Move the comedy and theatre venues currently sitting in [Blocked](docs/EVENT_DATA_SOURCES.md) on the scope question into Ready, and scaffold them like any
   other source — prioritised by programme richness as usual
-- [x] **Investigated — `PARTY` and `FESTIVAL` discard artists on purpose, and the measurement says keep it (2026-08-08).** `buildArtistsForEventType`
-  early-returns `emptyList()` for both. Measured against the whole seeded database (3166 events): 335 events are typed `PARTY`/`FESTIVAL` with no lineup, but
-  only ~96 of them (56 distinct titles) reach this function at all — the rest come from scrapers that never derive an artist from a title, so the rule is not
-  their cause. A party is not artist-less by nature either: **302 of the 611 parties do have a lineup**, read from a billing list rather than from the title.
-  Of the 56 titles, exactly **one** hides a recoverable act, and it is a misclassification, not a lineup bug (see the `club` keyword item below). Against that,
-  removing the guard would mint ~95 fictional artists, several of them real: Frannz's `Friday I'm in Love – A Tribute to Post-Punk · Dark 80s + Nick Cave`
-  splits on the `+` and stores **Nick Cave** as a performer, on a row that resolves by slug onto the real artist. The trade is documented with the numbers in
-  `buildArtistsForEventType`'s KDoc and pinned by tests in `ArtistNameMappingTest`; **the rule stays unconditional.**
-    - **Correction to the `CLUB_NIGHT` context.** Retiring `CLUB_NIGHT` into `PARTY` was rejected on 2026-08-08 because it "would silently delete the artist
-      link from all 8 migas events". That reason does not hold: `MigasOverviewPageScraper` builds its lineup by calling `headlinersFromTitle` directly and never
-      calls `buildArtistsForEventType`, and `ArtistNameMapping.kt:923` is the only place in the importer where an event type suppresses a lineup — so a migas
-      night typed `PARTY` would keep its artists. That put the merge back to a pure **semantics** question — and on those terms it stays **rejected
-      (2026-08-08)**: `CLUB_NIGHT` means *a DJ set where the booked act is the draw* ([docs/EVENT_SCOPE.md §2](docs/EVENT_SCOPE.md)), which is precisely what
-      migas is, and `PARTY` would describe a seated listening bar as a dance floor. Same conclusion, sound reason. `MigasOverviewPageScraper`'s KDoc, which
-      carried the wrong one, is corrected — a right decision resting on a wrong reason is one re-reading away from being reversed for the wrong reason too
-- [ ] **Recover the act from a `"<night> curated by / invites / hosted by <act>"` title.** The one genuinely recoverable seam the investigation above found, and
-  a different one from the rule it went looking at: `FOREVER 25 curated by Mila Stern & Esther Silex` and `FOREVER 25 curated by Enorm in Form` (Kater),
+- [ ] **Recover the act from a `"<night> curated by / invites / hosted by <act>"` title.** The one genuinely recoverable seam found by the 2026-08-08
+  measurement of the `PARTY`/`FESTIVAL` artist guard (which the measurement itself said to keep — see `buildArtistsForEventType`'s KDoc), and a different one
+  from the rule it went looking at: `FOREVER 25 curated by Mila Stern & Esther Silex` and `FOREVER 25 curated by Enorm in Form` (Kater),
   `Sesh Clara Cuve invites` (Club OST), `Moritz Biebl Invites` (AMT), `Tresor New Faces hosted by Secret Keywords` (Tresor),
   `Antina's Spookhouse by Antina Christ` (Renate) all name a booked DJ that is stored nowhere. Roughly 8 events at capture, so small — but unlike the party
   titles around them these are unambiguous, and the marker words are a closed set. **None of those five venues route through `buildArtistsForEventType`**, so
@@ -423,7 +327,6 @@ importer PR.**
 - [ ] Exercise the Helm chart / container images locally before deploying (k3d or kind; LocalStack for cloud services?) — on the ADR-012 recommendation this
   local k3d work *is* the production deployment path, not a rehearsal for a different target
 - [ ] Maintenance mode — a downtime page for deploys and outages (frontend + BFF behaviour)
-- [x] Performance tests for the BFF read API — [k6](https://k6.io) scripts in [`perf/`](perf) (`smoke.js` · `load.js` · `spike.js`), run locally on demand
 - [ ] **Re-derive `perf/load.js`'s session weights from real traffic.** They are currently 55% events list / 25% calendar / 20% venues — a considered guess,
   labelled as one in the script. A load test's p95 only describes traffic that could actually occur, so a wrong mix produces a confident number about a session
   nobody has. Needs analytics or access logs, so it is blocked on a deployment
@@ -435,14 +338,11 @@ importer PR.**
 - [ ] Logging: always attach context (event id, artist id, …)
 - [ ] Checkov scan (if it makes sense)
 - [ ] Infra/tooling update checker beyond Dependabot (Renovate?)
-- [x] **`notices.json` was platform-dependent.** `license-checker --production` walks the *installed* tree, so a regeneration on macOS wrote
-  `@esbuild/darwin-arm64` and one on Linux CI would have written `@esbuild/linux-x64` — breaking the generator's own promise that unchanged dependencies produce
-  an identical file. Platform-specific optional binaries are now dropped by `PLATFORM_SPECIFIC` in `events-frontend/scripts/generate-notices.mjs`: they are
-  build-time binaries for one CPU architecture, never shipped to a browser, so never distributed and never needing attribution
 - [ ] **Nothing checks that `notices.json` is current**, which is how it came to be missing `vue-i18n` — a direct production dependency, shipped in the bundle,
   absent from the attribution page for as long as localisation has been in. Regenerating it is a manual step in the `/update-dependencies` skill and easy to
-  skip. **Now unblocked** by the fix above: a check can regenerate and fail on a non-empty diff without failing for the wrong reason. The one wrinkle left is
-  that the file merges *both* ecosystems, so the check needs Gradle (`generateLicenseReport`) as well as npm — it belongs in the backend workflow, or its own
+  skip. **Now unblocked**: the file used to be platform-dependent, so a check would have failed for the wrong reason — `PLATFORM_SPECIFIC` in
+  `events-frontend/scripts/generate-notices.mjs` fixed that, and a check can now regenerate and fail on a non-empty diff. The one wrinkle left is that the file
+  merges *both* ecosystems, so the check needs Gradle (`generateLicenseReport`) as well as npm — it belongs in the backend workflow, or its own
 - [ ] Review useful security workflows → https://github.com/enorm-labs/event-checker/actions/new?category=security
 - [ ] Dashboard for analysing the data (Superset, Kibana, Grafana, …?) — also the intended surface for the **data-quality metrics/trends** (Pillar 1 exposes
   them via a
@@ -581,9 +481,8 @@ Not blocking anything. Listed so they are not rediscovered as gaps and "fixed" b
   (§ "Naming rule"); if pursued, update BRANDING.md accordingly. Scope: repo name, Gradle modules, packages, DB schema, ADRs, docs.
 - [ ] Clean up KDoc comments across the codebase — drop boilerplate/irrelevant comments, keep the rest meaningful
 - [ ] Generate a Mermaid domain class diagram via Gradle
-- [x] Community/repo health files — `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 3.0), `SECURITY.md`, `SUPPORT.md`, issue templates and a PR
-  template all exist. Example: [gitfolio](https://github.com/github-samples/gitfolio)
-- [ ] **Still open from the above:** the contact addresses those files name are **not registered** — `security@event-junkie.de` and the removal-request address
+- [ ] **The contact addresses in the repo health files are not registered.** `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `SUPPORT.md`, the issue
+  templates and the PR template all exist — but `security@event-junkie.de` and the removal-request address
   are both promised as "once the domain is registered", and until then the private GitHub advisory form is the only confidential channel for *three* distinct
   purposes (security reports, name-removal requests, venue opt-outs). Registering the domain unblocks all three; see the go-live review item.
 - [ ] Repository best-practices pass (follow GitHub docs)

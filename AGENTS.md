@@ -359,6 +359,12 @@ scripts/dev-env.sh psql "UPDATE events.event_source SET status='IDLE', retry_cou
 then re-trigger those slugs. On a long job — a `--full` re-seed, a before/after diff — compile everything first, restart once, *then* import, and leave the
 build alone until every source has left `RUNNING`.
 
+**Re-keying a live source collides with its own today-dated rows.** Changing how a scraper builds its `sourceId` — adding the session start time, the
+occurrence date, anything — gives every event a new id, so the old rows go stale and the new ones insert. But `EventUpsertService.removeStaleEvents`
+deliberately spares **today**: a today-dated row therefore keeps its old id *and* its slug while its replacement tries to take the same slug, and the insert
+collides. **Re-key on a day the venue's programme is dark, or clear that source's rows first** — and check which it is before importing rather than after.
+Admiralspalast (2026-08-08) got away with it by luck; Velomax (2026-08-09) was checked and was genuinely dark three weeks out.
+
 **Do not truncate `<service>.log` while the service is running.** `: > build/dev-env/importer.log` looks like the obvious way to get a clean log before a test
 import, and it silently breaks every later `grep`: the process keeps its file descriptor at the old offset, so new writes land far into the file and everything
 before them is NUL padding. `grep` then treats the file as binary and prints `Binary file … matches`, or **nothing at all with `-c`** — which reads exactly
