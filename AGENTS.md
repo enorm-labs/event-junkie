@@ -585,6 +585,28 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
   message, push, and open the PR via `gh`. Invoking it is the explicit go-ahead for the commit/push that the "no unsolicited commits/pushes" rule above
   otherwise withholds.
 
+### Constraints on automating GitHub itself
+
+Learned the expensive way during the TODO.md → Issues migration (2026-08-09). Each of these looks like a bug in your script the first time you hit it.
+
+- **Nothing running in CI can push to `main`.** The `main` ruleset requires every change to arrive by pull request, and its **only** bypass actor is
+  `OrganizationAdmin`. The obvious workaround does not exist: GitHub refuses the Actions bot as a bypass actor with *"Actor GitHub Actions integration must be
+  part of the ruleset source or owner organization"* — a platform constraint, not a permissions problem, and the UI offers no such actor either. **Design any
+  workflow that wants to write to the repo as generate-on-demand or open-a-PR, never as push-to-main.** A whole snapshot workflow was written, merged and
+  deleted before this was discovered.
+- **Pace bulk mutations.** GitHub's *secondary* rate limit bites long before the documented hourly one. A `sleep 0.45` between calls carried 255 PR edits and
+  146 issue creations with zero failures; without it, a few hundred back-to-back writes reliably trip it.
+- **`gh issue create` and `gh issue edit` do not share a label flag.** Create takes `--label`; edit takes `--add-label` / `--remove-label`. One argument list
+  for both works perfectly on creates and dies on the first update — invisible until something already exists. And an update must reconcile labels in *both*
+  directions: `--add-label` alone lets a removed label survive forever with nothing reporting the drift.
+- **Project view grouping and sorting cannot be set through the API.** `ProjectV2ViewConfigurationInput` exposes only `visibleFieldIds`. Names, layouts and
+  filters are scriptable; the arrangement is a manual UI step. (Still outstanding for the Event Junkie board.)
+- **gitleaks fires on `key:` with a high-entropy value.** A YAML front-matter field named `key` tripped the `generic-api-key` rule on 1 file out of 146 —
+  intermittent by nature, since it depends on the value's entropy. Prefer `slug`, `id` or `name` for identifier fields. The existing `.gitleaks.toml` allowlist
+  is for the scraper fixture tree, and widening it costs real scanning coverage.
+- **A cautious first run pays for itself.** `--limit 5`, inspect, then continue. That is what turned the `gh issue edit` bug into a five-issue problem instead
+  of a 146-issue one.
+
 ## The Backlog — GitHub Issues
 
 **The backlog is [GitHub Issues](https://github.com/enorm-labs/event-checker/issues), not a file.** `TODO.md` no longer exists.
