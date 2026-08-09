@@ -10,8 +10,8 @@ The data is scraped from Berlin venue websites by the importers in `events-impor
 **actionable** quality problems — parsing bugs, normalization gaps, and oddities worth a human's attention — and to distinguish them from limitations already
 documented and accepted.
 
-Before reporting anything, check whether the finding is already known. Two places record that: the **Bugs** list in `TODO.md` (defects already queued for
-repair) and the KDoc of the importer and scrapers under `scraper/<venue>/` (limitations the venue's parser accepts deliberately). A finding matching either —
+Before reporting anything, check whether the finding is already known. Two places record that: the open issues, mirrored in `docs/BACKLOG.md` (defects already
+queued for repair — `grep` it, or `gh issue list --label importer`) and the KDoc of the importer and scrapers under `scraper/<venue>/` (limitations the venue's parser accepts deliberately). A finding matching either —
 artist-less concerts at Badehaus/Privatclub, `eventType` defaulting to `OTHER`, first-page-only pagination — must be labelled **known/accepted** and separated
 from genuinely new ones. Don't re-litigate accepted trade-offs.
 
@@ -126,11 +126,11 @@ Write the report to `docs/data-quality/audit-<YYYY-MM-DD>.md` (create the direct
 2. **Findings**, grouped by category and ordered by severity:
     - 🔴 **wrong or missing user-visible data** · 🟠 **data-quality / noise** · 🟢 **cosmetic / edge case**.
     - Each finding: what it is, the SQL that found it, the **count**, 3–5 **sample rows**, the likely **root cause** (which importer / normalizer), and whether
-      it's **NEW** or **KNOWN/accepted** (citing the `TODO.md` bug or the KDoc that records it).
+      it's **NEW** or **KNOWN/accepted** (citing the issue number or the KDoc that records it).
 3. **Recommended actions** — for NEW findings, point at the specific normalizer or scraper to fix (`canonicalArtistName`, `canonicalPromoterName`,
    `GenreNormalizer`, `isNonArtistName`,
    `stripArtistSuffix`, per-venue parser). If it is an accepted limitation to document rather than fix, suggest the KDoc it belongs in; if it is repairable,
-   suggest a **Bugs** entry in `TODO.md`.
+   suggest an issue using the 🔍 Importer / data defect form.
 
 Keep the report skimmable and every claim backed by a query result. Do not apply fixes, edit importer code, or modify the database as part of the audit —
 reporting is the deliverable. If the user wants a fix afterward, that's a separate, explicitly-requested step.

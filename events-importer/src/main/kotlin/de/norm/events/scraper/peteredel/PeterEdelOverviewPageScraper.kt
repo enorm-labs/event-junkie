@@ -75,7 +75,7 @@ import java.time.LocalTime
  *    "Tanztee im PETER EDEL" must not become an artist. Two of 39 events qualify at capture.
  *  - **The seating badges are dropped** ("Bestuhlt"/"Unbestuhlt"/"Teilbestuhlt" and "Freie
  *    Platzwahl"/"Keine Sitzplatzgarantie"/"Mit Sitzplatzreservierung"). The data model has no field
- *    for them; recorded on the Bugs list in `TODO.md`.
+ *    for them; tracked in issue #303.
  *  - **No genre and no per-event page.** The title links straight to the ticket shop, so every event
  *    points at the listing and takes its identity from its date plus its title.
  *

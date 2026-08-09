@@ -108,7 +108,7 @@ One worktree = one venue = one PR (that is exactly the `/next-importer` contract
 | `docs/EVENT_DATA_SOURCES.md`                 | the status **count** table plus the moved row — recount after rebasing; both sides bump the same numbers     |
 | `http/importer/dev-seed.http`                | the alphabetical header list and the venue block — "keep both" can silently fuse two blocks; rebuild by hand |
 | `events-importer/.../scraper/EventSource.kt` | one new enum entry each                                                                                      |
-| `TODO.md`                                    | the bugs list, when a smoke test found something                                                             |
+| *(none — file an issue)*                                    | a smoke-test finding goes to the tracker, not to a file                                                             |
 
 **Rebase feature branches onto `main`; don't merge `main` into them** — PRs here are merged with "Rebase and merge", which a merge commit blocks.
 

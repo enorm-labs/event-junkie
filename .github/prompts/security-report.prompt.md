@@ -116,7 +116,8 @@ For every unique CVE, in this order:
 
 1. **Is it already suppressed?** Check `owasp-suppressions.xml`. A suppressed CVE should not appear at all — if it does, the entry's `packageUrl` scope no
    longer matches and the entry needs revisiting.
-2. **Is it already being handled?** Check open PRs and the **Bugs** list in `TODO.md` before reporting it as new.
+2. **Is it already being handled?** Check open PRs and the open issues (`gh issue list --label area:security`, or `grep docs/BACKLOG.md`) before reporting it
+   as new.
 3. **Verify against the authoritative advisory — do not trust the artifact name.** This is the step that separates a useful report from a noisy one:
 
    ```bash
@@ -173,7 +174,7 @@ Follow with:
 - **Real but below the gate** — worth fixing, not urgent.
 - **Suggested suppressions** — false positives with the evidence for that verdict. Draft the reasoning; do not write the file.
 - **No stable fix** — flag explicitly as an accepted-risk decision for the user.
-- **Already known** — matching an existing suppression, open PR, or `TODO.md` entry.
+- **Already known** — matching an existing suppression, open PR, or open issue.
 - **Obsolete overrides** — BOM overrides and transitive pins the BOM has caught up with, which should now be deleted. Also flag any suppression whose
   `packageUrl` no longer matches anything, since it is dead weight hiding nothing.
 

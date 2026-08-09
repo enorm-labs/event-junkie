@@ -244,7 +244,7 @@ subprojects sharing a root `settings.gradle.kts`, plus a standalone frontend pro
       `*OverviewPageScraper.kt` / `*DetailPageScraper.kt`, while JSON/API importers use a single `*ApiScraper.kt` (see below). Use existing implementations as
       templates when adding new venue importers. **The sub-package's KDoc is the single home for everything about that source** — the platform, which pages or
       APIs are read and why, the traps the parser handles, and the limitations it accepts (a field the venue never publishes, a signal it cannot express).
-      Defects that could actually be repaired go on the **Bugs** list in `TODO.md` instead.
+      Defects that could actually be repaired become an **issue** instead — the 🔍 Importer / data defect form, or `/new-issue`.
     - **`AbstractTwoPageWebsiteImporter`** — base class for venues that use the overview → detail pattern, the most common shape in the `scraper/` package. The
       subclasses are deliberately not enumerated here (the list drifts with every new venue —
       `grep -rl 'AbstractTwoPageWebsiteImporter(' events-importer/src/main/kotlin/de/norm/events/scraper/` is authoritative). Owns the shared overview-fetch →
@@ -385,7 +385,8 @@ the file); if one has already been truncated, `grep -a` reads it. **A zero count
   other session's events land in this session's regression diff.
 - **Expect conflicts in the files every importer PR touches**: the count table and moved row in `docs/EVENT_DATA_SOURCES.md` (recount after rebasing rather than
   trusting either side), the alphabetical header list and venue block in `http/importer/dev-seed.http` (a "keep both" resolution silently fuses two blocks —
-  rebuild by hand), the new `EventSource.kt` enum entry, and the `TODO.md` bugs list. Rebase onto `main`; never merge `main` in.
+  rebuild by hand) and the new `EventSource.kt` enum entry. Rebase onto `main`; never merge `main` in. `docs/BACKLOG.md` is generated and pushed by a workflow,
+  so never edit it in a PR — a conflict there means rebasing, not resolving.
 
 The **configuration cache** is enabled (`org.gradle.configuration-cache=true` in `gradle.properties`), so repeat builds skip the configuration phase. Every task
 above benefits except `dependencyCheckAggregate` — the OWASP plugin's `Aggregate` task reaches for `project.rootProject` / `project.subprojects` at execution
@@ -585,6 +586,47 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
   message, push, and open the PR via `gh`. Invoking it is the explicit go-ahead for the commit/push that the "no unsolicited commits/pushes" rule above
   otherwise withholds.
 
+## The Backlog — GitHub Issues
+
+**The backlog is [GitHub Issues](https://github.com/enorm-labs/event-checker/issues), not a file.** `TODO.md` no longer exists.
+
+**Read `docs/BACKLOG.md`; write through `gh`.** The snapshot is a generated, read-only mirror of every open issue — grouped by milestone, with type, area, size
+and blocking state per row. Consulting it is a local file read: cheap, grep-able, and no network round trip. It is regenerated and pushed by
+`.github/workflows/backlog-snapshot.yml` on issue open/close/reopen and nightly, so **never edit it** — your edit is overwritten and a conflict in it means
+rebasing rather than resolving.
+
+```sh
+grep -i 'heimathafen' docs/BACKLOG.md              # is this already tracked?
+gh issue list --label importer --state open        # when you need live state
+gh issue view 313                                  # the full body, including its Links footer
+```
+
+**Filing something.** Use `/new-issue`, which checks for a duplicate first and picks the right form. By hand,
+`.github/ISSUE_TEMPLATE/` has 🛠 Task, ✨ Feature, 🔍 Importer / data defect, ⚖️ Decision and 🧭 Epic. The importer-defect form is the one to reach for after a
+smoke test or a data-quality audit — it asks the questions those findings need, including **whether the fix requires a `--full` re-seed**, which is usually the
+difference between a one-hour change and a one-day one.
+
+**Where a finding goes** — the same rule as before, with a new destination:
+
+| Finding | Goes to |
+|---|---|
+| A defect with a known repair — we lose or mangle data the source *did* publish | **An issue** (🔍 Importer / data defect) |
+| An accepted limitation — the venue never publishes it, or the parser makes a deliberate trade-off | **That scraper's KDoc**, next to the code it constrains |
+| A choice that must be made before work can start | **An issue** (⚖️ Decision), labelled `needs-decision` |
+
+**The label and field split.** Intrinsic properties of the work are **labels** — `area:*`, `size:*`, plus `importer` and `documentation`. Planning state lives in
+the **[project board](https://github.com/orgs/enorm-labs/projects/1)** as Status and Priority fields, because priority churns and label churn is noise. Issue
+*type* is a GitHub issue type (Task / Bug / Feature), not a label — do not add a `type:` label.
+
+Three labels name *why* something cannot start: `blocked` (another issue), `needs-decision` (a choice), `needs-deployment` (a live origin). **The last is not
+neglected work** — it is work that cannot exist yet, and it is labelled so it stops reading as neglect.
+
+**Milestones.** `v0.2 — Deployable` → `v0.3 — Launch-ready` → `v1.0 — Go-live` are the path to launch; `Phase 2/3/4` are post-launch buckets with no due date.
+No milestone means unscheduled. Direction and the reasoning behind the phases stay in [docs/VISION_ROADMAP_IDEAS.md](docs/VISION_ROADMAP_IDEAS.md).
+
+**Closing.** Put `Closes #NNN` in the PR body, not in the commit message — the repo squashes, and a closing keyword in the squash body is what links the issue to
+the merge.
+
 ## Key Files
 
 | Purpose                               | Path                                                                                                      |
@@ -644,6 +686,8 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 | ADR: Localisation (English + German)  | `docs/adr/ADR-013_LOCALISATION.md`                                                                        |
 | ADR: Rendering strategy (SPA/SSG/SSR) | `docs/adr/ADR-014_RENDERING_STRATEGY.md`                                                                  |
 | Plan: footer, legal pages, versioning | `docs/LEGAL.md`                                                                                           |
+| Backlog snapshot (GENERATED)           | `docs/BACKLOG.md`                                                                                        |
+| Backlog snapshot generator            | `scripts/generate-backlog-snapshot.sh` + `.github/workflows/backlog-snapshot.yml`                        |
 | Frontend entry point                  | `events-frontend/src/main.ts`                                                                             |
 | IntelliJ HTTP Client requests         | `http/importer/` (admin) and `http/bff/` (public read) `.http` files + shared `http/http-client.env.json` |
 | Local dev environment control script  | `scripts/dev-env.sh` (start/stop the stack, seed sources, trigger imports, inspect + diff the data)       |

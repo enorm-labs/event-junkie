@@ -100,7 +100,7 @@ Set `override val eventSource = EventSource.<VENUE>`.
 **The importer's and scrapers' KDoc is where the source gets documented** — the platform, which pages or APIs are read and why, the traps the parser handles,
 why a selector was chosen, and what the source *doesn't* carry (no door times, no prices, no poster, no per-event page). Accepted limitations live here too:
 the importer stored everything that was there, so there is nothing to action elsewhere. Only a defect we could actually repair goes in the **Bugs** list in
-`TODO.md`. Write it once, next to the code it constrains — not in `EventSource.kt` and not in `dev-seed.http`.
+an issue. Write it once, next to the code it constrains — not in `EventSource.kt` and not in `dev-seed.http`.
 
 ## 4. Reuse the shared scraper utilities
 

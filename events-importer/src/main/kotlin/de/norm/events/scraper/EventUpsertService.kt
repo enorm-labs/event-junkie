@@ -191,7 +191,9 @@ class EventUpsertService(
      * merely invisible while both sittings produced an identical slug.
      *
      * Recovering those sittings is a per-scraper change (put the session time in the `sourceId`),
-     * which re-keys that venue's whole history; Velomax is tracked in `TODO.md` for exactly this.
+     * which re-keys that venue's whole history. Velomax has since had exactly that change; Neue
+     * Zukunft still needs it, and it is why expanding its monthly recurrence rules re-mints every
+     * one of its events rather than adding to them — see issue #333.
      */
     private fun deduplicateScrapedEvents(events: List<ScrapedEvent>): List<ScrapedEvent> {
         val seenIds = mutableSetOf<String>()

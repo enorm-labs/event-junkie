@@ -73,7 +73,8 @@ After 3 rounds without a PASS, stop iterating and go to step 7. Repeated identic
 - [ ] `/verify` clean (ktlint, detekt, build, Kover, frontend checks)
 - [ ] Smoke test PASS: events > 0, dates and titles match the live listing, `source_id` correctly prefixed
 - [ ] `diff-snapshot` shows no other source losing events
-- [ ] Soft findings written down — a repairable defect on the **Bugs** list in `TODO.md`, an accepted limitation in the importer/scraper KDoc; a field the venue
+- [ ] Soft findings written down — a repairable defect as an issue (🔍 Importer / data defect, after a `docs/BACKLOG.md` duplicate check), an accepted
+  limitation in the importer/scraper KDoc; a field the venue
   doesn't publish is not a bug (see `/importer-smoke` step 6)
 
 Any unchecked box → step 7, no PR.
@@ -95,7 +96,7 @@ count, date range, what you compared against the live site). Then report the PR 
 **Blocked** (site unscrapable) → move the row to **⛔ Blocked / deferred** with the reason and what it would need (e.g. "Headless browser"), update the counts,
 and open a docs-only PR. Then stop.
 
-**Not fixable in 3 rounds** → revert nothing; explain precisely where it stands (what parses, what doesn't, what you tried), record it in `TODO.md`, leave the
+**Not fixable in 3 rounds** → revert nothing; explain precisely where it stands (what parses, what doesn't, what you tried), open an issue recording it, leave the
 branch uncommitted, and stop the loop so the user can look. Do not open a PR for a half-working importer.
 
 **Infrastructure broken** (docker won't start, port 8081 taken, build red on `main` before your change) → stop immediately and report. Don't try to work around

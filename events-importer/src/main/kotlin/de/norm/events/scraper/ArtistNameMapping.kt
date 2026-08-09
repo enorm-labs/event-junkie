@@ -1096,8 +1096,7 @@ fun buildArtistList(
  * round. What the measurement *did* surface as genuinely recoverable is a different
  * seam — the `"<night> curated by / invites / hosted by <act>"` idiom at Kater, Club
  * OST, AMT, Tresor and Renate — and none of those venues route through this function
- * at all, so narrowing this guard would not reach them. It is tracked separately in
- * `TODO.md`.
+ * at all, so narrowing this guard would not reach them. It is tracked separately in issue #339.
  */
 @Suppress("ReturnCount") // Guard clauses for the event-type branches are clearer than nesting
 fun buildArtistsForEventType(

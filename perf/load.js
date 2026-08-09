@@ -91,7 +91,7 @@ export default function (data) {
     // Weights approximate a session distribution: home is the entry point, the events list is the
     // main destination, the calendar and venues are secondary. **This is a considered guess, not a
     // measurement**, and the value of a "realistic" mix depends entirely on the mix being realistic —
-    // so it is tracked in TODO.md rather than left to be believed. Re-derive it from real traffic
+    // so it is tracked as issue #297 rather than left to be believed. Re-derive it from real traffic
     // once there is any.
     const roll = Math.random()
 

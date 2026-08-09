@@ -92,7 +92,8 @@ that parses *something* plausible from the wrong container passes every automate
 
 **Soft findings — ship, but write them down.** Where depends on what kind of finding it is:
 
-1. **A gap that is ours and worth repairing** → the **Bugs** list in `TODO.md`. We lose or mangle data the source *did* publish, or our model has nowhere to put
+1. **A gap that is ours and worth repairing** → **an issue**, using the 🔍 Importer / data defect form (or `/new-issue`). Check `docs/BACKLOG.md` for a
+   duplicate first — several of these defects are cross-cutting and already filed. We lose or mangle data the source *did* publish, or our model has nowhere to put
    it: a mis-split lineup, a field dropped because it has no column, an entity that won't merge with its counterpart from another venue. If it is a one-line
    fix, just make it instead.
 2. **A limitation we accept** → the importer's or scraper's KDoc, next to the code that causes it. This is also where a field the site simply doesn't publish
@@ -115,4 +116,4 @@ numbers and sample rows — never a bare "looks good". If you documented soft fi
 - [ ] `check <slug>` reviewed: dates, times, prices, types, artists, `source_id` prefix
 - [ ] Sample rows compared against the live listing page
 - [ ] `diff-snapshot` shows no other source losing events
-- [ ] Soft findings recorded — repairable defects in `TODO.md` (Bugs), accepted limitations in the importer/scraper KDoc
+- [ ] Soft findings recorded — repairable defects as issues (after a `docs/BACKLOG.md` duplicate check), accepted limitations in the importer/scraper KDoc

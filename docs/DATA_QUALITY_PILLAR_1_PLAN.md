@@ -2,7 +2,7 @@
 
 Concrete build plan for **Pillar 1** of the
 [Data Quality Strategy](DATA_QUALITY_STRATEGY.md): make quality *visible* so Pillars 2–4 can be judged by whether the numbers move. Backlog item:
-[../TODO.md](../TODO.md) → *Importer / Data → Data quality → (Pillar 1 — Measure)*.
+[issue #319](https://github.com/enorm-labs/event-checker/issues/319) — *Pillar 1 — Measure*.
 
 **Goal:** a per-source data-quality report (API + scheduled log + metrics), a queryable **curation worklist**, and **metric history** so trends are chartable in
 an external BI tool. No changes to scraper extraction or the normalizers — this pillar only observes.
@@ -206,7 +206,7 @@ Pillar 1's job is only to *expose* the metrics (§5.2) in a shape these tools co
 6. **Worklist endpoint** — `GET …/worklist?issue=&source=` returning offending events (§5.1); paginated, reuses `EventResponse`.
 7. **History + metrics** — `data_quality_snapshot` table (in `V001`), Micrometer gauges (§5.2), and the `@Scheduled` daily logger+snapshot writer (respect
    `app.scheduling.enabled: false` in tests).
-8. **Docs & wiring** — tick the TODO.md Pillar 1 item; add `http/importer/` `.http`
+8. **Docs & wiring** — close issue #319; add `http/importer/` `.http`
    requests for the new endpoints; note the endpoints in the importer Swagger set.
 9. **Verify** — `./gradlew ktlintCheck detekt build koverLog` (the `/verify`
    backend sequence). Backend-only change, so frontend steps don't apply.
