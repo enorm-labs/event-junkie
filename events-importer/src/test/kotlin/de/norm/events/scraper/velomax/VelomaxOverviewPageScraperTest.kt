@@ -14,10 +14,11 @@ import java.time.LocalTime
 /**
  * Unit tests for [VelomaxOverviewPageScraper].
  *
- * Uses a real snapshot of the shared `/events` listing, which interleaves all three halls. The two
- * behaviours worth pinning are the filters: each hall must see only its own entries, and the
- * arena's sport fixtures must be excluded entirely — the fixture holds 85 entries of which 32 are
- * sport.
+ * Uses a real snapshot of the shared `/events` listing, which interleaves all three halls. The
+ * behaviours worth pinning are the filters — each hall must see only its own entries, and the
+ * arena's sport fixtures must be excluded entirely (the fixture holds 85 entries of which 32 are
+ * sport) — and the session-keyed `sourceId`, which is what lets a run that plays twice in a day
+ * store both performances.
  */
 class VelomaxOverviewPageScraperTest {
     private val scraper = VelomaxOverviewPageScraper()
@@ -34,10 +35,10 @@ class VelomaxOverviewPageScraperTest {
 
     @Test
     fun `splits the shared listing across the three halls`() {
-        // 85 entries on the page: 43 Max-Schmeling-Halle, 32 Velodrom, 10 UFO — minus sport, then
-        // minus the later sessions of a show that plays twice in one day.
-        scrape(VelomaxHall.MAX_SCHMELING_HALLE) shouldHaveSize 17
-        scrape(VelomaxHall.VELODROM) shouldHaveSize 22
+        // 85 entries on the page: 43 Max-Schmeling-Halle, 32 Velodrom, 10 UFO — minus sport. Every
+        // remaining entry is kept, including each session of a run that plays more than once a day.
+        scrape(VelomaxHall.MAX_SCHMELING_HALLE) shouldHaveSize 18
+        scrape(VelomaxHall.VELODROM) shouldHaveSize 25
         scrape(VelomaxHall.UFO_IM_VELODROM) shouldHaveSize 10
     }
 
@@ -66,7 +67,7 @@ class VelomaxOverviewPageScraperTest {
         joji.startTime shouldBe LocalTime.of(20, 0)
         joji.subtitle.shouldNotBeNull()
         joji.sourceUrl shouldBe "https://www.velodrom.de/events/event/joji-velodrom-2026-08-29"
-        joji.sourceId shouldBe "velodrom:joji-velodrom-2026-08-29"
+        joji.sourceId shouldBe "velodrom:joji-velodrom-2026-08-29-2000"
         joji.soldOut shouldBe false
     }
 
@@ -77,15 +78,48 @@ class VelomaxOverviewPageScraperTest {
     }
 
     @Test
-    fun `collapses a run's same-day sessions into one event per day`() {
-        // "Disney on Ice" plays six sessions across three days (three of them on 13 March). The
-        // stored event slug is date + venue + title and is UNIQUE, so same-day sessions cannot be
-        // separate rows; each day keeps its earliest.
+    fun `keeps every session of a run that plays more than once in a day`() {
+        // "Disney On Ice" plays six sessions across three days — three of them on 13 March, all
+        // three behind the same detail permalink.
         val sessions = scrape(VelomaxHall.VELODROM).filter { it.title.startsWith("Disney On Ice") }
         sessions.map { it.eventDate } shouldContainExactly
-            listOf(LocalDate.of(2027, 3, 12), LocalDate.of(2027, 3, 13), LocalDate.of(2027, 3, 14))
-        sessions.map { it.startTime } shouldContainExactly
-            listOf(LocalTime.of(18, 30), LocalTime.of(10, 30), LocalTime.of(11, 0))
+            listOf(
+                LocalDate.of(2027, 3, 12),
+                LocalDate.of(2027, 3, 13),
+                LocalDate.of(2027, 3, 13),
+                LocalDate.of(2027, 3, 13),
+                LocalDate.of(2027, 3, 14),
+                LocalDate.of(2027, 3, 14)
+            )
+    }
+
+    @Test
+    fun `gives each session of a day its own sourceId`() {
+        // The permalink is one page per show, so without the start-time suffix the three 13 March
+        // sessions would share one id and `event.source_id`'s UNIQUE constraint would keep one.
+        val sameDay =
+            scrape(VelomaxHall.VELODROM)
+                .filter { it.title.startsWith("Disney On Ice") && it.eventDate == LocalDate.of(2027, 3, 13) }
+        sameDay.map { it.sourceUrl }.distinct() shouldHaveSize 1
+        sameDay.map { it.sourceId } shouldContainExactly
+            listOf(
+                "velodrom:disney-on-ice-praesentiert-mickys-magische-momente-velodrom-2027-03-13-1030",
+                "velodrom:disney-on-ice-praesentiert-mickys-magische-momente-velodrom-2027-03-13-1430",
+                "velodrom:disney-on-ice-praesentiert-mickys-magische-momente-velodrom-2027-03-13-1830"
+            )
+    }
+
+    @Test
+    fun `keeps both sittings of the arena's tattoo, whose permalinks already differ`() {
+        // The venue spells this run's sessions into the URL itself; the collapse dropped them
+        // anyway, because it keyed on date + title rather than on the id.
+        val tattoo = scrape(VelomaxHall.MAX_SCHMELING_HALLE).filter { it.title == "Berlin Tattoo" }
+        tattoo.map { it.eventDate to it.startTime } shouldContainExactly
+            listOf(
+                LocalDate.of(2026, 11, 7) to LocalTime.of(13, 30),
+                LocalDate.of(2026, 11, 7) to LocalTime.of(19, 0),
+                LocalDate.of(2026, 11, 8) to LocalTime.of(14, 30)
+            )
     }
 
     @Test

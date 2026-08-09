@@ -15,6 +15,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 /**
  * Pure HTML parser for the shared Velomax `/events` listing.
@@ -39,6 +40,13 @@ import java.time.LocalDate
  * biggest strand is handball, volleyball and basketball, and with no `SPORT` event type in the
  * model those fixtures are skipped rather than filed as `OTHER`, which would bury the concerts they
  * sit among. A hall's imported count is therefore well below what its programme page shows.
+ *
+ * **The listing is the only per-session source, which is why the `sourceId` is built here.** A run
+ * that plays more than once in a day lists each session separately but links them all to one detail
+ * page — `Disney On Ice` has three entries on 13 March 2027 behind a single
+ * `…-velodrom-2027-03-13` permalink — so the page slug identifies the *show*, not the performance.
+ * Appending the session's start time (`-1830`) is what makes each one its own event; without it
+ * `event.source_id`, which is `UNIQUE`, would keep only the first.
  *
  * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
  * easy to test with a static fixture.
@@ -66,42 +74,14 @@ class VelomaxOverviewPageScraper {
         logger.info { "Found ${entries.size} ${hall.name} entry/entries on the Velomax listing" }
 
         @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed entries without aborting the whole import
-        val parsed =
-            entries.mapNotNull { entry ->
-                try {
-                    parseEntry(entry, baseUrl, hall)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Velomax entry, skipping" }
-                    null
-                }
+        return entries.mapNotNull { entry ->
+            try {
+                parseEntry(entry, baseUrl, hall)
+            } catch (e: Exception) {
+                logger.warn(e) { "Failed to parse Velomax entry, skipping" }
+                null
             }
-        return collapseSameDaySessions(parsed)
-    }
-
-    /**
-     * Keeps one event per show and day, dropping the later sessions of a run that plays more than
-     * once in a day.
-     *
-     * This is forced by the model, not by the source. "Disney On Ice" plays three sessions on 13
-     * March and "Berlin Tattoo" two on 7 November; each day keeps its **earliest**, since the
-     * listing is chronological.
-     *
-     * **The slug half of the blocker is gone** — `EventUpsertService` now gives each sitting of a
-     * same-day run its own slug, so Theater im Delphi and the Uber Eats Music Hall store both their
-     * matinee and their evening show. What still pins this workaround is the *other* unique column:
-     * `event.source_id` is `UNIQUE` too, and this scraper derives it from the listing's URL slug
-     * (`sourceId = "<prefix><slug>"`), which is one page per *show*, not per session. Dropping the
-     * collapse without changing that trades a duplicate-slug crash for a duplicate-`sourceId` one.
-     *
-     * Fixing it properly means putting the session's start time in the `sourceId` — which re-keys
-     * every existing Velomax event, exactly like the Neue Zukunft recurrence change. Tracked in
-     * `TODO.md` as its own item rather than smuggled in here.
-     */
-    private fun collapseSameDaySessions(events: List<ScrapedEvent>): List<ScrapedEvent> {
-        val kept = events.distinctBy { it.eventDate to it.title }
-        val dropped = events.size - kept.size
-        if (dropped > 0) logger.info { "Collapsed $dropped later same-day session(s) into their show's first performance" }
-        return kept
+        }
     }
 
     /** Parses one `a.ticketWrap` entry, or `null` when it is a sport fixture or lacks a title. */
@@ -129,7 +109,14 @@ class VelomaxOverviewPageScraper {
             eventDate = parseListingDate(entry) ?: UNRESOLVED_EVENT_DATE,
             startTime = startTime,
             sourceUrl = sourceUrl,
-            sourceId = "${hall.eventSource.sourceIdPrefix}$slug",
+            // One permalink, many sessions — the page slug names the *show*, so the session's start
+            // time is what makes a performance its own event. `Disney On Ice` runs three sessions on
+            // 13 March 2027 and `Berlin Tattoo` two on 7 November, all behind one detail page per
+            // day; keyed on the slug alone, `event.source_id`'s UNIQUE constraint would keep the
+            // first of each and silently drop the rest. The colon is left out (`-1830`) so the id
+            // reads as one token, matching the Admiralspalast, Uber and Heimathafen scrapers. An
+            // entry with no published time keeps the bare slug — nothing to disambiguate it with.
+            sourceId = "${hall.eventSource.sourceIdPrefix}$slug" + (startTime?.format(SOURCE_ID_TIME)?.let { "-$it" } ?: ""),
             soldOut = signal.contains(SOLD_OUT_SIGNAL, ignoreCase = true),
             artists = buildArtistsForEventType(title, subtitle, eventType)
         )
@@ -153,6 +140,9 @@ class VelomaxOverviewPageScraper {
     }
 
     private companion object {
+        /** `18:30` → `1830`, the session marker appended to a performance's `sourceId`. */
+        val SOURCE_ID_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
+
         /** Path prefix of a hall's event permalink, stripped to obtain the slug identity. */
         const val EVENT_PATH_PREFIX = "/events/event/"
 
