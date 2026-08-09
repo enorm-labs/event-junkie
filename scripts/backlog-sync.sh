@@ -362,7 +362,7 @@ limited() {
 
 apply() {
     require_clean_lockfile
-    local file slug title type milestone number labels args i=0
+    local file slug title type milestone number label args i=0
 
     while IFS= read -r file; do
         slug="$(meta "$file" '.slug')"
@@ -371,17 +371,34 @@ apply() {
         milestone="$(meta "$file" '.milestone')"
         number="$(issue_for "$slug")"
 
+        # `gh issue create` and `gh issue edit` do NOT share a label flag: create takes
+        # --label, edit takes --add-label/--remove-label. Building one arg list for both
+        # fails on the first update, which is exactly how this was found.
         args=(--repo "$REPO" --title "$title" --body-file -)
         [[ -n "$type" ]] && args+=(--type "$type")
         [[ -n "$milestone" ]] && args+=(--milestone "$milestone")
-        while IFS= read -r labels; do
-            [[ -n "$labels" ]] && args+=(--label "$labels")
-        done < <(meta_list "$file" '.labels')
 
         if [[ -n "$number" ]]; then
+            # The manifest is authoritative, so an update has to reconcile labels in both
+            # directions. --add-label alone would let a label dropped from the manifest
+            # survive on the issue forever, and the drift would be invisible.
+            local current wanted
+            wanted="$(meta_list "$file" '.labels' | sort)"
+            current="$(gh issue view "$number" --repo "$REPO" --json labels --jq '.labels[].name' | sort)"
+            while IFS= read -r label; do
+                [[ -n "$label" ]] && args+=(--add-label "$label")
+            done < <(comm -23 <(printf '%s\n' "$wanted") <(printf '%s\n' "$current"))
+            while IFS= read -r label; do
+                [[ -n "$label" ]] && args+=(--remove-label "$label")
+            done < <(comm -13 <(printf '%s\n' "$wanted") <(printf '%s\n' "$current"))
+
             render_body "$file" | gh issue edit "$number" "${args[@]}" >/dev/null
             printf '  update #%-6s %s\n' "$number" "$slug"
         else
+            while IFS= read -r label; do
+                [[ -n "$label" ]] && args+=(--label "$label")
+            done < <(meta_list "$file" '.labels')
+
             local url
             url="$(render_body "$file" | gh issue create "${args[@]}")"
             number="${url##*/}"
