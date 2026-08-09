@@ -18,11 +18,11 @@ milestone and board fields.
 1. **Search for an existing issue.** Two cheap passes, both worth doing:
 
    ```sh
-   grep -in '<keyword>' docs/BACKLOG.md          # the local snapshot of every open issue
+   grep -in '<keyword>' build/BACKLOG.md          # the local snapshot of every open issue
    gh issue list --search '<keyword>' --state all --limit 20
    ```
 
-   `docs/BACKLOG.md` is a generated mirror — free to grep, no network. The `gh` search also finds *closed* issues, which matters: something closed as `wontfix`
+   `build/BACKLOG.md` is a generated mirror — free to grep, no network. The `gh` search also finds *closed* issues, which matters: something closed as `wontfix`
    or already fixed is an answer, not a gap. If you find a match, report it and stop unless the user wants a separate issue anyway.
 
 2. **Pick the form.** The template decides which questions the issue has to answer, so choose before drafting:
@@ -81,7 +81,7 @@ milestone and board fields.
 
 ## Notes
 
-- **`docs/BACKLOG.md` is generated.** Never edit it to add the new issue; the snapshot workflow rewrites it on issue open.
+- **`build/BACKLOG.md` is generated and not committed.** Never edit it to add the new issue — regenerate it instead.
 - **Several issues at once** (an audit or smoke test that found five things): file them individually, but check for duplicates in one pass first, and mention
   any that turned out to be the same underlying defect in different venues — that is usually one issue, not five.
 - **If it needs an ADR**, use the decision form and say so in it. The ADR is where the answer lands; the issue is where the thinking happens.

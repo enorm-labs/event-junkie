@@ -116,7 +116,7 @@ For every unique CVE, in this order:
 
 1. **Is it already suppressed?** Check `owasp-suppressions.xml`. A suppressed CVE should not appear at all — if it does, the entry's `packageUrl` scope no
    longer matches and the entry needs revisiting.
-2. **Is it already being handled?** Check open PRs and the open issues (`gh issue list --label area:security`, or `grep docs/BACKLOG.md`) before reporting it
+2. **Is it already being handled?** Check open PRs and the open issues (`gh issue list --label area:security`, or `grep build/BACKLOG.md`) before reporting it
    as new.
 3. **Verify against the authoritative advisory — do not trust the artifact name.** This is the step that separates a useful report from a noisy one:
 

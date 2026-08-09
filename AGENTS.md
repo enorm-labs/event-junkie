@@ -385,8 +385,7 @@ the file); if one has already been truncated, `grep -a` reads it. **A zero count
   other session's events land in this session's regression diff.
 - **Expect conflicts in the files every importer PR touches**: the count table and moved row in `docs/EVENT_DATA_SOURCES.md` (recount after rebasing rather than
   trusting either side), the alphabetical header list and venue block in `http/importer/dev-seed.http` (a "keep both" resolution silently fuses two blocks —
-  rebuild by hand) and the new `EventSource.kt` enum entry. Rebase onto `main`; never merge `main` in. `docs/BACKLOG.md` is generated and pushed by a workflow,
-  so never edit it in a PR — a conflict there means rebasing, not resolving.
+  rebuild by hand) and the new `EventSource.kt` enum entry. Rebase onto `main`; never merge `main` in. The backlog snapshot is generated into `build/` and is not committed, so it never appears in a diff at all.
 
 The **configuration cache** is enabled (`org.gradle.configuration-cache=true` in `gradle.properties`), so repeat builds skip the configuration phase. Every task
 above benefits except `dependencyCheckAggregate` — the OWASP plugin's `Aggregate` task reaches for `project.rootProject` / `project.subprojects` at execution
@@ -590,16 +589,22 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 
 **The backlog is [GitHub Issues](https://github.com/enorm-labs/event-checker/issues), not a file.** `TODO.md` no longer exists.
 
-**Read `docs/BACKLOG.md`; write through `gh`.** The snapshot is a generated, read-only mirror of every open issue — grouped by milestone, with type, area, size
-and blocking state per row. Consulting it is a local file read: cheap, grep-able, and no network round trip. It is regenerated and pushed by
-`.github/workflows/backlog-snapshot.yml` on issue open/close/reopen and nightly, so **never edit it** — your edit is overwritten and a conflict in it means
-rebasing rather than resolving.
+**Read a generated snapshot; write through `gh`.** `scripts/generate-backlog-snapshot.sh` renders every open issue into `build/BACKLOG.md` — grouped by
+milestone, with type, area, size and blocking state per row. Consulting it is then a local file read: cheap, grep-able, no network round trip per question.
+
+**Regenerate it before you rely on it**, and never edit it. It is written into `build/`, which is gitignored, so it is never committed and never appears in a
+diff — it is exactly as current as the last time someone ran the script, and its header carries the timestamp so you can tell.
 
 ```sh
-grep -i 'heimathafen' docs/BACKLOG.md              # is this already tracked?
-gh issue list --label importer --state open        # when you need live state
-gh issue view 313                                  # the full body, including its Links footer
+scripts/generate-backlog-snapshot.sh                # refresh it first — one gh call
+grep -i 'heimathafen' build/BACKLOG.md              # is this already tracked?
+gh issue list --label importer --state open         # when you need live state
+gh issue view 313                                   # the full body, including its Links footer
 ```
+
+*(This was briefly a committed file refreshed by a workflow. That cannot work here: the `main` ruleset requires every change to arrive by pull request, only an
+OrganizationAdmin may bypass it, and GitHub refuses the Actions bot as a bypass actor. The workflow failed on its first run and the committed copy went stale
+within the hour — so the file moved to `build/` and the workflow was deleted.)*
 
 **Filing something.** Use `/new-issue`, which checks for a duplicate first and picks the right form. By hand,
 `.github/ISSUE_TEMPLATE/` has 🛠 Task, ✨ Feature, 🔍 Importer / data defect, ⚖️ Decision and 🧭 Epic. The importer-defect form is the one to reach for after a
@@ -691,8 +696,8 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | ADR: Localisation (English + German)  | `docs/adr/ADR-013_LOCALISATION.md`                                                                        |
 | ADR: Rendering strategy (SPA/SSG/SSR) | `docs/adr/ADR-014_RENDERING_STRATEGY.md`                                                                  |
 | Plan: footer, legal pages, versioning | `docs/LEGAL.md`                                                                                           |
-| Backlog snapshot (GENERATED)           | `docs/BACKLOG.md`                                                                                        |
-| Backlog snapshot generator            | `scripts/generate-backlog-snapshot.sh` + `.github/workflows/backlog-snapshot.yml`                        |
+| Backlog snapshot generator            | `scripts/generate-backlog-snapshot.sh` → `build/BACKLOG.md` (generated, not committed)                  |
+| Issue board helper                    | `scripts/issue-board.sh` — Status and Priority are project fields, not labels                            |
 | Frontend entry point                  | `events-frontend/src/main.ts`                                                                             |
 | IntelliJ HTTP Client requests         | `http/importer/` (admin) and `http/bff/` (public read) `.http` files + shared `http/http-client.env.json` |
 | Local dev environment control script  | `scripts/dev-env.sh` (start/stop the stack, seed sources, trigger imports, inspect + diff the data)       |

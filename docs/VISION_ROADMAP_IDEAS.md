@@ -1,7 +1,7 @@
 # Vision, Roadmap & Ideas
 
 The longer-form product context: **what** Event Junkie is and **where** it's headed. The granular, actionable backlog lives in the
-**[issue tracker](https://github.com/enorm-labs/event-checker/issues)** — mirrored read-only in **[BACKLOG.md](BACKLOG.md)** — and brand, voice and design
+**[issue tracker](https://github.com/enorm-labs/event-checker/issues)** — and brand, voice and design
 live in **[BRANDING.md](BRANDING.md)**. This document stays at the level of _direction_: it links down to **milestones** rather than duplicating tasks.
 
 ---

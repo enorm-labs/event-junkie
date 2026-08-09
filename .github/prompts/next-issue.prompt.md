@@ -18,7 +18,7 @@ Recommend what to work on next, and explain **why** — not just what.
      --json number,title,labels,milestone,issueType,assignees
    ```
 
-   Cross-reference `docs/BACKLOG.md` for a fast grouped view — it's a generated mirror of every open issue with type, area, size and state per row, and reading
+   Cross-reference `build/BACKLOG.md` for a fast grouped view — it's a generated mirror of every open issue with type, area, size and state per row, and reading
    it costs nothing.
 
 2. **Rule out what isn't actually available.** An issue is not pickable if it carries:

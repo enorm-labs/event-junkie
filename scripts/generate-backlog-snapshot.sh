@@ -1,28 +1,37 @@
 #!/usr/bin/env bash
 #
-# generate-backlog-snapshot.sh — render open issues into docs/BACKLOG.md.
+# generate-backlog-snapshot.sh — render the open issues into build/BACKLOG.md.
 #
-# GitHub Issues is the backlog. This writes a read-only mirror of it into the repo so that
-# *finding* work stays a local file read: cheap, grep-able, offline, and available to an agent
-# without a network round trip per question. Changing work still goes through `gh`.
+# GitHub Issues is the backlog. This renders a local, grep-able mirror of it so that *finding*
+# work is a file read rather than a network round trip per question. Changing work still goes
+# through `gh`.
 #
-# That split is deliberate. Before the migration, TODO.md was one file that 23 other files
-# pointed at, and five agent prompts told agents to read *and append to* it. Replacing every one
-# of those reads with `gh issue list` would have made the tracker slower and less reliable to
-# consult than the file it replaced — so reads got a generated file instead, and only writes
-# moved to the API. Nothing writes to this snapshot by hand, so it cannot drift.
+# That split is deliberate. Before the migration, TODO.md was one file that 23 others pointed at,
+# and five agent prompts told agents to read *and append to* it. Replacing every one of those
+# reads with `gh issue list` would have made the tracker slower and less reliable to consult than
+# the file it replaced — so reads get this snapshot, and only writes moved to the API.
 #
 # Usage: scripts/generate-backlog-snapshot.sh [output-file]
 #
-# Run by .github/workflows/backlog-snapshot.yml on issue open/close/reopen, nightly, and on
-# demand. Deliberately NOT on `edited`/`labeled` — that would commit to main a dozen times an
-# afternoon to no benefit.
+# **Run it before you rely on it.** The output is generated on demand and is NOT committed — it
+# lives under build/, which is gitignored.
+#
+# This began as a workflow that committed the file on every issue event. That cannot work here:
+# the `main` ruleset requires every change to arrive by pull request and only an OrganizationAdmin
+# may bypass it, and GitHub rejects the Actions bot as a bypass actor outright ("must be part of
+# the ruleset source or owner organization"). The workflow failed on its first real run and the
+# committed copy was stale within the hour. Generating on demand has no such failure mode, and a
+# file regenerated before use cannot be quietly out of date — which a committed one silently was.
+#
+# The header carries a generation timestamp, so a stale local copy is visible rather than assumed.
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-OUT="${1:-$REPO_ROOT/docs/BACKLOG.md}"
+OUT="${1:-$REPO_ROOT/build/BACKLOG.md}"
 REPO="${BACKLOG_REPO:-enorm-labs/event-checker}"
+
+mkdir -p "$(dirname "$OUT")"
 
 command -v gh >/dev/null 2>&1 || {
     echo "gh is required" >&2
@@ -78,19 +87,22 @@ section() {
 
 {
     cat <<HEADER
-<!-- GENERATED FILE — DO NOT EDIT.
+<!-- GENERATED, NOT COMMITTED — DO NOT EDIT.
      Source of truth: https://github.com/$REPO/issues
-     Regenerate: scripts/generate-backlog-snapshot.sh
-     Written by .github/workflows/backlog-snapshot.yml -->
+     Regenerate: scripts/generate-backlog-snapshot.sh -->
 
 # Backlog
 
-A read-only snapshot of the **$total open issues** in
-[the tracker](https://github.com/$REPO/issues), grouped by milestone.
+A snapshot of the **$total open issues** in [the tracker](https://github.com/$REPO/issues),
+grouped by milestone.
 
-**This file is for finding work, not for recording it.** Edits here are overwritten. To add,
-change or close something, use the tracker — \`/new-issue\`, \`/next-issue\`, \`/start-issue\`, or
-\`gh\` directly.
+**Generated $(date -u '+%Y-%m-%d %H:%M UTC').** Regenerate before relying on it — this file is
+written on demand into \`build/\` and is not committed, so it is exactly as current as the last
+time someone ran the script.
+
+**It is for finding work, not for recording it.** Edits here are overwritten. To add, change or
+close something, use the tracker — \`/new-issue\`, \`/next-issue\`, \`/start-issue\`, or \`gh\`
+directly.
 
 - **Board** — <https://github.com/orgs/enorm-labs/projects/1> (Status and Priority live there, not
   in labels)
