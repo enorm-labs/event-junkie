@@ -25,6 +25,19 @@ Think Resident Advisor, Bandsintown, Eventbrite or Songkick — **but for all of
 - Closest existing references: [clubguideberlin.de](https://www.clubguideberlin.de/),
   [gaesteliste030.de](https://www.gaesteliste030.de/).
 
+### The questions it should answer
+
+A product test rather than a feature list — a plausible visitor question that cannot be answered by changing a filter is a gap:
+
+- What's on tonight / tomorrow / this weekend — and what's on **near me**?
+- What's happening in my favourite clubs this week?
+- When does artist X next play in Berlin, and at which venue?
+- When do the artists, venues and promoters **I follow** play here?
+- Where are my friends going, and can I bring them along?
+
+The first two are answerable today (date-range presets plus the venue, genre, district and free-text filters). "Near me" waits on the venues map and a radius
+search (Phase 2); the last two are the whole point of Phases 3 and 4.
+
 ### Scope
 
 - **In scope now:** music events across Berlin venues (clubs, concert halls, bars, …).
@@ -79,6 +92,8 @@ Make it comprehensive, discoverable and pleasant. → TODO: **Importer / Data**,
   splits in two: the shared module computing each page's head tags can be built now (it also closes the missing per-page `og:description`), while the transport
   that rewrites the response waits for ADR-012 to be executed. Full SSR is deferred behind a named trigger — Search Console showing detail pages indexed
   poorly — rather than anticipated.
+- **Related events** on detail pages (same venue, genre or artist) and a **"near me" radius search** driven by the browser's location — both work without accounts,
+  and both depend on venue coordinates being trustworthy first.
 - "Missing event / venue" and feedback forms.
 
 ### Phase 3 — Accounts & personalization 👤 _(Expansion stage 1)_
@@ -89,16 +104,28 @@ Give people a reason to come back. → TODO: **🔵 Someday / Vision** (stage 1)
   (two steps, YouTube-style: 1. follow,
     2. get notified).
 - Favourites (Merkliste), reminders, RSVP ("interested" / "going"), a customizable start page, recommendations.
-- User/venue-submitted events with review-before-publish — needs RBAC (Keycloak).
+- **Saved searches** — keep a filter combination and be told when new events match it; the same subscription mechanism as a follow, pointed at a query.
+- **Notifications that are scoped, not firehoses** — "notify me when this artist plays *in Berlin*", not "whenever this artist announces anything". The rule that
+  keeps a follow from becoming noise, and the one that matters most the day a second city exists.
+- **Does stage 1 need an account at all?** A decision to take before building it: follows and favourites could live on the device (localStorage/IndexedDB), with
+  a login only for syncing across devices and for notifications that must be delivered server-side. Account-first is the harder default to walk back.
+- User/venue-submitted events with review-before-publish — needs RBAC (Keycloak), plus automatic plausibility checks (near-duplicate search, source-URL check)
+  ahead of the human approve/decline.
 
 ### Phase 4 — Social & ecosystem 🤝 _(Expansion stage 2)_
 
 Turn discovery into a network and open the data up. → TODO: **🔵 Someday / Vision** (stage 2).
 
-- Social layer: connect with friends and see which events they're interested in or going to.
-- Ranking by popularity (RSVPs) and by artist popularity; richer venue & artist profiles.
-- Integrations with Spotify / Deezer / SoundCloud / Resident Advisor (notify when favourite artists play).
-- Club map (events nearby), iCal export & calendar sync, and a public API with API management.
+- Social layer: connect with friends and see which events they're interested in or going to — plus following other users, an activity timeline, and **inviting
+  friends to a specific event** (going together is the actual use case; seeing where they go is the weaker half of it).
+- Ranking by popularity (RSVPs) and by artist popularity; richer venue & artist profiles; **collaborative recommendations** ("people going to this also go to
+  that"), which only start working once RSVP volume exists.
+- **Ratings & reviews** for events and promoters — worth a *whether*, not just a *when*: it adds moderation duty, and a thin review count reads worse than none.
+- Integrations with Spotify / Deezer / SoundCloud / Resident Advisor (notify when favourite artists play), including **importing the artists someone already
+  follows there** in one step — the fastest way to make a new account useful. Facebook (Events and Pages) was in the original idea list from the era when the
+  Graph API was open; check what it still permits before planning anything on it.
+- Club map (events nearby), iCal export & **calendar subscriptions that stay in sync** — an ICS feed per follow or saved search, so new matching events land in
+  Google Calendar without a manual export — and a public API with API management.
 
 ### Phase 5 — Beyond Berlin 🌍 _(bigger bets)_
 

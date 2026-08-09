@@ -70,6 +70,15 @@ Rough priority: **Now** → **Next** → grouped backlog → **Someday / Vision*
 - [ ] Add map to venues overview page — and consider plotting **today's events** on it (pins showing what's on tonight, not just where the venues are)
 - [ ] Add capacity / venue size to the venue detail page, and decide what other metadata the page should carry. (The description itself is done — column, API,
   UI and hand-written seed blurbs; scraping one per venue from its own website is part of "Enrich venues" under Importer / Data.)
+- [ ] **"Near me" / radius search** — filter events by distance from where the user actually is, with the browser Geolocation API supplying coordinates (and the
+  timezone) and a manual location entry for when it is denied or unavailable. Depends on venue coordinates being right ("Check & fix venue districts, addresses,
+  and geo-coordinates" under Importer / Data) and pairs with the venues map above. Privacy note: geolocation is a consent prompt and a paragraph in the privacy
+  notice, so it is not a pure frontend change
+- [ ] **Related / similar events on detail pages** — "more like this": same venue, same genre, same artist, on event, artist, venue and promoter pages. Purely
+  content-based, so it needs no accounts and no RSVP data; the "people going to this also go to that" variant is stage 2 in Someday. Also the cheapest way to
+  give the detail pages internal links, which the SEO work wants anyway
+- [ ] Let list views be **sorted**, not only filtered — date is the only order today (the BFF already takes a `sort` on `GET /events`; nothing in the UI sets
+  it). Price and, later, popularity are the candidates; decide whether it earns the control before adding one
 - [ ] Filter events by venue type
 - [ ] Filter venues by venue type and genre
 - [ ] Browse/see past events — an archive view (decide retention + UX; ties into the housekeeping delete policy under Importer / Data)
@@ -234,6 +243,11 @@ Strategy & sequencing: [docs/DATA_QUALITY_STRATEGY.md](docs/DATA_QUALITY_STRATEG
   kind of source (cross-venue listings, no own house) and mixing them into the venue tables hides that. Same place to record the duplicate-events question: a
   promoter's listing largely repeats the shows the venues already publish, so importing one needs de-duplication against the venue-level sources (see the
   per-event venue resolution item above).
+- [ ] **(Decision) Should an event series be a first-class entity?** Series names are everywhere in the source data — silent green's `Sonic Morgue`, a club's
+  monthly resident night, a promoter's recurring party — and today they exist only as text fused onto an event title (see the en-dash bug above) or as a party
+  name repeated verbatim every month. A real `event_series` would give people something to browse, filter and follow, and give the parsers the curated
+  vocabulary they need to strip it off the act. Model + UI decision; closely related to the curated-vocabulary ADR candidate above, and worth deciding before
+  the follow/notification work in Someday picks its subscribable entities.
 - [ ] Enrich venues: type (club/bar/concert hall), description, image/photo, genres, event types
 - [ ] Enrich promoters: description, image, and corrected display names
 - [ ] Check & fix venue districts, addresses, and geo-coordinates
@@ -272,6 +286,10 @@ Strategy & sequencing: [docs/DATA_QUALITY_STRATEGY.md](docs/DATA_QUALITY_STRATEG
       Open question: local LLM vs. an API/subscription. Same capability as Pillar 4 above — decide it once, in ADR-013.
     - [ ] **Manual event entry** — a fast form for venues with no importer, plus reminders/nudges so those venues actually get checked (see the
       "venues that will never have an automatic import" item above)
+    - [ ] **Submission review queue with plausibility checks** — for anything entered by hand or sent in from outside: search for near-duplicates before
+      accepting (the same event usually already exists from the venue's own listing), check that the source URL resolves and belongs to the claimed venue, then
+      approve or decline. Machine checks first, human decision last. The public submission UI itself is stage 1 under Someday; the queue is what makes it safe
+      to open
 - [ ] Improve importer Swagger UI (match the BFF)
 - [ ] Housekeeping: policy for when to delete old events from the DB — **and for artists that lose their last event**. Nothing garbage-collects those today, so
   a name the importer stops deriving simply stays: 12 artist rows currently have zero event links, including `Corrupted Blood Club Show`, which a since-fixed
@@ -301,6 +319,10 @@ is left undecided:
   the genre vocabulary must be extended first**, with an ADR. Do **not** import an orchestral house by flattening it into headliner-plus-support; the data would
   be wrong in a way that is expensive to unpick. RBB Sendesaal's scraping is already solved (server-rendered ROC calendar, `.ConcertListItem-location` is the
   only filter needed) and it stays in Blocked purely on this.
+- [ ] **Undecided — streamed and broadcast events.** Two different things sit behind the old "Liveübertragungen" idea, and only one of them is handled: a
+  *public viewing* at a venue is already imported and typed `SCREENING` (Lido, Astra), but an **online-only livestream** has no venue in the sense the model
+  assumes and no place to put a stream URL. Probably a no for a Berlin-venue discovery app — but worth a line in
+  [docs/EVENT_SCOPE.md](docs/EVENT_SCOPE.md) either way, so it stops being rediscovered. Sport stays out regardless (§5).
 - [ ] **Deferred — exhibitions as first-class runs (blocked on the time model).** A run of weeks/months rather than a start time on one evening needs a date
   range in the schema plus a display decision. Note the related honesty gap: `EXHIBITION` today means an *opening* (a `vernissage` has a start time), not a
   run — see EVENT_SCOPE.md §2.
@@ -498,16 +520,34 @@ Not blocking anything. Listed so they are not rediscovered as gaps and "fixed" b
 
 Bigger bets and post-MVP features. Details in [docs/VISION_ROADMAP_IDEAS.md](docs/VISION_ROADMAP_IDEAS.md).
 
-- iCal support; export/import calendar to Google Calendar or file
+- iCal support; export/import calendar to Google Calendar or file — and beyond one-off export, **a calendar that stays in sync**: an ICS feed URL per follow or
+  saved search, so new matching events appear in Google Calendar or Apple Calendar without anyone exporting anything
 - Chatbot and/or MCP server to find events and answer questions about events, artists, venues, districts, promoters, genres, etc.
 - **Expansion stage 1 — Login / profile:** follow/favourite artists, venues, districts, promoters, genres (…) to filter events and drive notifications — two
   steps, YouTube-style: (1) follow, (2) get notified. Plus favourites (Merkliste), reminders, customizable start page, RSVP ("interested"/"going"),
   recommendations. (→ RBAC / Keycloak)
-- **Expansion stage 2 — Social layer:** connect with friends to see which events they're interested in or going to (interest/attendance).
-- User/venue-submitted events with review-before-publish (→ RBAC / Keycloak)
+- **Saved searches** — keep a filter combination ("free techno in Neukölln this weekend") and get notified when new events match it. Mechanically the same
+  subscription as a follow, pointed at a query instead of an entity, so build the two together rather than twice
+- **Scoped notification rules, not a firehose** — "tell me when this artist plays *in Berlin*", not "whenever this artist announces anything anywhere". A follow
+  should carry a location (city / district / venue) and ideally a lead time. Cheap while Berlin is the only city and load-bearing the day it isn't; deciding the
+  shape up front is what keeps notifications from being the reason people turn them off
+- **Decide whether stage 1 works without an account** — follows, favourites and saved searches can live on the device (localStorage/IndexedDB), with a login
+  only for cross-device sync and for notifications that must be delivered server-side. Worth settling *before* the login work starts: anonymous-first can grow an
+  account later, account-first cannot be made anonymous without a rebuild. Also the cheaper answer under GDPR — no account is no personal data
+- **Expansion stage 2 — Social layer:** connect with friends to see which events they're interested in or going to (interest/attendance); follow other users; an
+  activity timeline; and **invite friends to a specific event** — going together is the real use case, seeing where they went is the weaker half of it
+- User/venue-submitted events with review-before-publish (→ RBAC / Keycloak), with automatic plausibility checks ahead of the human decision — near-duplicate
+  search, source-URL validation (see the admin submission-queue item above)
+- **Ratings & reviews for events and promoters** — needs a *whether* before a *when*: it creates permanent moderation duty, and a handful of reviews reads worse
+  than none at all
 - Venue & artist profiles (with links); venues browsable by genre + location
 - Rank events by popularity (RSVPs) and by artist popularity
-- Integrate Spotify / Deezer / SoundCloud / Resident Advisor (notify when favourite artists play)
+- **Collaborative recommendations** — "people going to this also go to that", as opposed to the content-based related-events list under Frontend & BFF. Needs
+  RSVP volume before it says anything useful, so it follows the social layer rather than leading it
+- Integrate Spotify / Deezer / SoundCloud / Resident Advisor (notify when favourite artists play), including a one-step **import of the artists someone already
+  follows there** — the fastest way to make a fresh account useful instead of an empty one
+- Facebook integration (Events and Pages) — pull "interested"/"going" and follow artists/pages already liked there. From the original idea list, written when the
+  Graph API was open; **check what it still permits before planning anything on it**
 - Club map — events nearby
 - Public API for third-party apps → API management (subscriptions, keys)
 - Expand beyond Berlin to other cities
