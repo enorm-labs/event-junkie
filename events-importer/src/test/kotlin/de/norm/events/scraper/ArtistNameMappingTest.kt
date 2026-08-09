@@ -595,6 +595,28 @@ class ArtistNameMappingTest {
         buildArtistsForEventType("Soul Explosion", subtitle = "Support: Kaos", eventType = "PARTY").shouldBeEmpty()
     }
 
+    @Test
+    fun `buildArtistsForEventType drops a label showcase's title but keeps its support acts`() {
+        // The showcase rule answers "is the title an act", not "does this night have a lineup" —
+        // so a support act billed alongside the credit is still stored.
+        buildArtistsForEventType(
+            "Corrupted Blood Club Show",
+            subtitle = "Corrupted Blood Records presents | + Support: Kaos",
+            eventType = "CONCERT"
+        ) shouldContainExactly listOf(ScrapedArtist(name = "Kaos", role = "SUPPORT"))
+    }
+
+    @Test
+    fun `buildArtistsForEventType applies the label showcase rule outside CONCERT too`() {
+        // The conservative branch needs a support line to read the title as an act at all; the
+        // showcase rule must still veto the title when one is present.
+        buildArtistsForEventType(
+            "Corrupted Blood Club Show",
+            subtitle = "Corrupted Blood Records presents | Support: Kaos",
+            eventType = "OTHER"
+        ) shouldContainExactly listOf(ScrapedArtist(name = "Kaos", role = "SUPPORT"))
+    }
+
     // --- dash variants on the act/tour boundary ---
 
     @Test
@@ -749,6 +771,50 @@ class ArtistNameMappingTest {
         // The label's fifteen-year night: "Zweiter Akt" is a programme part, not a performer.
         headlinersFromTitle("aufnahme + wiedergabe - Fünfzehn Jahre + Zweiter Akt").shouldBeEmpty()
         headlinersFromTitle("Aufnahme + Wiedergabe").shouldBeEmpty()
+    }
+
+    @Test
+    fun `headlinersFromTitle extracts no act when the subtitle credits the label the title names`() {
+        // Huxleys' label showcase: the title is the night's name, so reading it as an act invents
+        // a performer. The label's business name is longer than the one it bills under, hence the
+        // descriptor tail ("Records") being dropped before the two are compared.
+        headlinersFromTitle("Corrupted Blood Club Show", subtitle = "Corrupted Blood Records presents").shouldBeEmpty()
+        headlinersFromTitle("Corrupted Blood Club Show", subtitle = "Corrupted Blood presents").shouldBeEmpty()
+        headlinersFromTitle("Corrupted Blood Club Show", subtitle = "Corrupted Blood Records präsentiert").shouldBeEmpty()
+        // The credit survives being stacked with a second subtitle line.
+        headlinersFromTitle("Corrupted Blood Club Show", subtitle = "Corrupted Blood Records presents | Doors 18:30").shouldBeEmpty()
+    }
+
+    @Test
+    fun `headlinersFromTitle keeps the act when a presenter credit does not name the title`() {
+        // Eight of the nine `presents` subtitles in the seed are this shape: the presenter is a
+        // promoter and the title is the booked act.
+        headlinersFromTitle("ÜBERDOSIS CRIME", subtitle = "CONTRA CREATE präsentiert").map { it.name } shouldContainExactly
+            listOf("ÜBERDOSIS CRIME")
+        headlinersFromTitle("The Spitfires", subtitle = "Rudeboys Production presents").map { it.name } shouldContainExactly
+            listOf("The Spitfires")
+        // A subtitle that continues past the marker is billing a tour, not standing as a credit.
+        headlinersFromTitle("Zeppelin Club Show", subtitle = "Zeppelin Entertainment Presents - Joy of Little Things Tour")
+            .map { it.name } shouldContainExactly listOf("Zeppelin Club Show")
+    }
+
+    @Test
+    fun `headlinersFromTitle keeps the act of a title that carries the presents marker itself`() {
+        // `<X> presents: <act>` is the opposite billing and the common one — Gretchen alone has 20.
+        // Such a title trivially starts with `<X>`, so the marker in the title must veto the rule.
+        headlinersFromTitle("Analogue Foundation presents: David August", subtitle = "Analogue Foundation presents")
+            .map { it.name } shouldContainExactly listOf("Analogue Foundation presents: David August")
+    }
+
+    @Test
+    fun `headlinersFromTitle keeps a title that is exactly the presenter's own name`() {
+        // An act that runs a label of its own name looks identical to a label night here, and the
+        // title adds nothing to tell them apart — so it is left as an act.
+        headlinersFromTitle("Corrupted Blood", subtitle = "Corrupted Blood Records presents").map { it.name } shouldContainExactly
+            listOf("Corrupted Blood")
+        // Nor may a longer name be truncated to a shorter presenter at a word's middle.
+        headlinersFromTitle("Corrupted Bloodline", subtitle = "Corrupted Blood presents").map { it.name } shouldContainExactly
+            listOf("Corrupted Bloodline")
     }
 
     @Test

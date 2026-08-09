@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.buildArtistsForEventType
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -58,9 +59,18 @@ class HuxleysWebsiteImporter(
      * - **`status`**, whenever the overview found a non-default one, because a relocation or a new
      *   date is announced solely in the listing's `.anderungen` note, which the detail page omits.
      *
-     * `subtitle` and `artists` combine both pages: the tour name comes from the detail page and the
-     * support acts from the listing, so a support line is never lost to a show that also has a tour
-     * title.
+     * `subtitle` combines both pages: the tour name comes from the detail page and the support acts
+     * from the listing, so a support line is never lost to a show that also has a tour title.
+     *
+     * **`artists` is then derived afresh from that merged pair, rather than picked from one page.**
+     * Neither page holds both halves of the signal: the act's name is the listing's `.eventname`,
+     * while the `.tourtitel` beside it is the detail page's alone — so each scraper builds its
+     * lineup from half the evidence, and picking a winner keeps whichever half is wrong. `Corrupted
+     * Blood Club Show` is the case that forced it: the listing sees a bare concert title and mints
+     * the night's own name as a performer, and only the detail page says `Corrupted Blood Records
+     * presents`, which is what identifies it as a label showcase with no act in the title
+     * (`headlinersFromTitle`). Rebuilding also drops the old rule's blind spot, where a support line
+     * on the listing could be overridden by the detail page's lineup or vice versa.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
@@ -75,7 +85,9 @@ class HuxleysWebsiteImporter(
             startTime = primary.startTime ?: fallback.startTime,
             soldOut = primary.soldOut || fallback.soldOut,
             status = fallback.status.takeIf { it != EventStatus.SCHEDULED.name } ?: primary.status,
-            artists = fallback.artists.ifEmpty { primary.artists }
+            // Built from the fields this merge actually stores — the listing's title and the joined
+            // subtitle — so the lineup can never describe a title or a type the row does not carry.
+            artists = buildArtistsForEventType(fallback.title, subtitle, primary.eventType)
         )
     }
 

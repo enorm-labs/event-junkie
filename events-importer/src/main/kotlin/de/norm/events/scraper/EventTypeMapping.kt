@@ -158,15 +158,16 @@ private val NON_CONCERT_TITLE_KEYWORDS =
  * A `<weekday> club` pattern was written to cover them and deleted again on finding it fired on
  * nothing: a rule with no live case is a rule nobody can tell is broken.
  *
- * **What it costs, accepted deliberately on 2026-08-08.** A full re-scrape of all 86 sources
- * moved three events, and one of them the wrong way: Huxleys' `Corrupted Blood Club Show` is now
- * a `CONCERT` and stores its own name as a performer. That is a label showcase — its subtitle
- * reads `Corrupted Blood Records presents` — so the title was never an act. One recovered band
- * against one invented artist is close to a wash on the count, and the tie-breakers were that
- * the keyword was *also* mistyping a concert as a party at an arena-scale venue, and that the
- * loss has a named structural fix (`<X> presents` in the subtitle + a title starting with `<X>`,
- * tracked in TODO) while the win had none. **Do not restore the bare keyword to fix the Huxleys
- * row** — that trades the defect back rather than fixing it.
+ * **What it cost, accepted deliberately on 2026-08-08 and since repaired.** A full re-scrape of
+ * all 86 sources moved three events, and one of them the wrong way: Huxleys' `Corrupted Blood
+ * Club Show` became a `CONCERT` and stored its own name as a performer. That is a label showcase
+ * — its subtitle reads `Corrupted Blood Records presents` — so the title was never an act. One
+ * recovered band against one invented artist was close to a wash on the count, and the
+ * tie-breakers were that the keyword was *also* mistyping a concert as a party at an arena-scale
+ * venue, and that the loss had a named structural fix while the win had none. That fix landed on
+ * 2026-08-09: a `<X> presents` subtitle beside a title opening with `<X>` now yields no artists
+ * (`isPresenterOwnEventTitle`), so the row keeps its `CONCERT` type and mints nobody. **Do not
+ * restore the bare keyword** — it would trade the recovered band back for nothing.
  */
 private val PARTY_TITLE_KEYWORDS =
     listOf("aftershow", "afterparty", "after-party", "after party", "party", "club night", "clubnight", "karaoke")
