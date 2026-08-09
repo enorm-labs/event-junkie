@@ -1,6 +1,6 @@
 # Migration plan — TODO.md → GitHub Issues
 
-**Status:** in progress — **PR 1 done** (milestones, labels, project, templates, Phase 0 backfill), **PR 2 open** (146-issue manifest + sync script) · **Decided:** 2026-08-09 ·
+**Status:** in progress — **PR 1 done** (milestones, labels, project, templates, Phase 0 backfill), **PR 2 done** (146-issue manifest + sync script), **PRs 3-4 done** (issues #258-#403 created, linked and on the board) · **Decided:** 2026-08-09 ·
 **Delete this file when the migration is done.**
 
 Moves the backlog out of [TODO.md](../TODO.md) and into GitHub Issues, Milestones and one Project, without losing the thing that makes TODO.md valuable: each
@@ -389,6 +389,16 @@ than the rest of that list.
 
 ---
 
+### What the apply run actually taught
+
+Recorded because both are the kind of thing that costs an hour twice.
+
+- **`gh issue create` and `gh issue edit` do not share a label flag.** Create takes `--label`; edit takes `--add-label` / `--remove-label`. One argument list for both aborts on the first *update* — which is invisible until something has already been created, since the create path works fine. Found after 5 issues existed and the 6th run tried to update them.
+- **An update has to reconcile labels in both directions.** `--add-label` alone lets a label dropped from the manifest survive on the issue forever, and nothing reports the drift. The script now diffs wanted against current and applies both.
+- **The cautious `--limit 5` run was worth it**, and is worth repeating for any future bulk change: it is what turned a 146-issue failure into a 5-issue one.
+
+---
+
 ## 8. Existing PRs → `Phase 0 — Foundation`
 
 **Done 2026-08-09.** All 255 closed PRs (0 open, 0 previously milestoned) patched into `Phase 0 — Foundation`, which now reads 255/255 and is **closed** so it
@@ -477,8 +487,8 @@ Deliberately not one PR. PR 3 creates 120 issues and is irreversible-ish; it sho
 |-------|------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
 | **1** ✅ | `chore(github): set up milestones, labels and the project` | 7 milestones · 16 new labels · project + Status/Priority fields + 4 views · 255 closed PRs → Phase 0 → closed · 5 new issue templates, chooser reordered, `type:` added to all 8                                    | reading the diff and one look at the project                                            |
 | **2** ✅ | `docs(backlog): add the issue manifest`                    | `.github/backlog/` with **146** files · `scripts/backlog-sync.sh` · `README.md` · `validate-backlog.yml` CI job                                                                                                             | **the substantive review** — this is the backlog, rewritten, before anything is created |
-| **3** | *(no PR — a script run)*                                   | `backlog-sync.sh apply` then `project`. Commits only `.created.json`.                                                                                                                                                | spot-check 10 issues                                                                    |
-| **4** | `chore(backlog): link related and nested issues`           | `backlog-sync.sh link` · sub-issue attachment · commits nothing but the run record                                                                                                                                   | the issue graph in the UI                                                               |
+| **3** ✅ | `chore(backlog): apply the manifest`                                   | `apply` → `link` → `project`. Issues **#258–#403**. Commits `.created.json` + one script fix.                                                                                                                                                | spot-check 10 issues                                                                    |
+| **4** ✅ | *(folded into PR 3)*           | `link` and `project` produce no file changes beyond the lockfile, so splitting them bought nothing.                                                                                                                                   | the issue graph in the UI                                                               |
 | **5** | `docs: replace TODO.md with the issue tracker`             | **delete TODO.md** · `backlog-snapshot.yml` + first `docs/BACKLOG.md` · all 23 reference updates incl. the 5 Kotlin KDoc issue numbers · AGENTS.md tracker section · VISION_ROADMAP_IDEAS.md repointed at milestones | the big prose diff                                                                      |
 | **6** | `feat(agents): add issue workflow skills`                  | `/new-issue`, `/next-issue`, `/start-issue` · rewrite the 5 prompts that wrote to TODO.md · `/open-pr` gains `Closes #N`                                                                                             | a dry run of each                                                                       |
 
