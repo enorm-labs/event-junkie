@@ -24,9 +24,13 @@ Slash commands available under `.claude/skills/`:
 - `/security-report` — read-only report on the latest OWASP Dependency-Check findings and GitHub Dependabot alerts, reconciled and triaged
 - `/squash-commit-message` — write a squash commit message for the current branch
 - `/update-dependencies` — bump backend and frontend dependencies safely
-- `/verify` — run the full pre-PR sequence: backend `ktlintCheck detekt build koverLog` + frontend `type-check`, `lint`, `test:unit`, `test:e2e` (chromium)
+- `/verify` — run the full pre-PR sequence: backend `ktlintCheck detekt build koverLog` + frontend `type-check`, `lint`, `test:unit`, `test:e2e` (chromium), and
+  `tofu fmt`/`validate` + ShellCheck when the diff touches `infra/`
 
 ## Multi-module note
 
-This is a Gradle multi-project build (`events-core`, `events-bff`, `events-importer`) plus a standalone frontend (`events-frontend/`). Per-module `CLAUDE.md`
-files can be added in any of those directories if module-specific guidance is needed — they're loaded automatically when working in that subtree.
+This is a Gradle multi-project build (`events-core`, `events-bff`, `events-importer`) plus a standalone frontend (`events-frontend/`) and the OpenTofu
+configuration in `infra/`. Per-module `CLAUDE.md` files can be added in any of those directories if module-specific guidance is needed — they're loaded
+automatically when working in that subtree.
+
+`infra/` already has one, and it is not optional reading: it opens with the OpenTofu commands that must never be run there.

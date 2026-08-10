@@ -1,0 +1,17 @@
+# Copy to terraform.tfvars and fill in. Real .tfvars files are gitignored.
+#
+# The Hetzner API token is NOT set here — export it instead, so it never reaches a file:
+#
+#     export HCLOUD_TOKEN=...
+#     export AWS_ACCESS_KEY_ID=...        # Object Storage credentials, for the state backend
+#     export AWS_SECRET_ACCESS_KEY=...
+
+ssh_public_keys = {
+  # The key name is what shows up in the Hetzner console. Use something that identifies the
+  # machine, because revoking one means knowing which one.
+  "norman-macbook" = "ssh-ed25519 AAAA... norman@macbook"
+}
+
+# primary_domain    = "event-junkie.de"
+# defensive_domains = ["event-junkie.com"]
+# dns_ttl           = 300

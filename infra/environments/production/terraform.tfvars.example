@@ -1,0 +1,44 @@
+# Copy to terraform.tfvars and fill in. Real .tfvars files are gitignored.
+#
+# Credentials are not set here — they come from direnv. See infra/.envrc.example.
+
+# From: tofu -chdir=../../bootstrap output -json ssh_key_ids
+ssh_key_ids = ["12345678"]
+
+# The same keys as OpenSSH authorized_keys lines. These reach the unprivileged `ops` user, which
+# is the only account that can log in once cloud-init disables root.
+ssh_public_keys = [
+  "ssh-ed25519 AAAA... you@laptop",
+]
+
+# WireGuard clients. **Public keys only** — a WireGuard key is base64, exactly 44 characters,
+# ending in `=`. An SSH public key is a different format entirely and is rejected at plan time,
+# because getting it wrong means a node that boots with no tunnel and no open port to reach it on.
+#
+#   umask 077 && mkdir -p ~/.wireguard
+#   wg genkey > ~/.wireguard/production.key    # private — stays on the device, never here
+#   wg pubkey < ~/.wireguard/production.key    # public  — paste below
+#
+# Use a *different* key from staging's. One compromised laptop key should not open both, and
+# `wg-quick` cannot bring up two tunnels holding the same key anyway. Addresses live in
+# 10.10.0.x here; staging uses 10.10.1.x, and both tunnels are routinely up at once.
+wireguard_peers = [
+  {
+    name       = "macbook"
+    public_key = "AAAA...="
+    address    = "10.10.0.2"
+  },
+]
+
+# Empty is the steady state: with no entry, 22 and 6443 are unreachable from the internet at any
+# address and the tunnel is the only way in. The *first* apply is the exception, because WireGuard
+# is not running yet — pass it on the command line for that one run rather than storing it here:
+#
+#   ADMIN="[\"$(curl -s https://ifconfig.me)/32\",\"$(dig +short myip.opendns.com @resolver1.opendns.com | tail -1)/32\"]"
+#   tofu apply -var "admin_cidrs=$ADMIN"
+#
+# Two addresses, not one, behind a corporate HTTP proxy: `ifconfig.me` reports the *proxy's*
+# egress, while SSH and WireGuard are not proxied and arrive from a different address. An
+# allowlist built from `ifconfig.me` alone then refuses the very connection it was meant to
+# admit, which looks exactly like a broken firewall. The `dig` goes over UDP/53, unproxied.
+admin_cidrs = []

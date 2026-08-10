@@ -6,3 +6,24 @@ repos:
     hooks:
       - id: gitleaks
 
+  # Local hooks rather than antonbabenko/pre-commit-terraform: that repo shells out to `terraform`
+  # and would need pinning and bumping, while these use the `tofu` already on the machine and are
+  # the same two commands .github/workflows/validate-infra.yml runs. Formatting is the one CI
+  # failure that is pure waste — it is deterministic, so catch it before the push, not after.
+  - repo: local
+    hooks:
+      - id: tofu-fmt
+        name: tofu fmt
+        entry: tofu fmt
+        language: system
+        # `.tftpl` is deliberately absent: `tofu fmt` rejects any extension it does not own, and
+        # the cloud-init template is YAML with interpolation, not HCL.
+        files: \.(tf|tfvars)$
+        pass_filenames: true
+
+      - id: shellcheck-cloud-init
+        name: shellcheck cloud-init
+        entry: shellcheck -x
+        language: system
+        files: ^infra/modules/environment/cloud-init/.*\.sh$
+        pass_filenames: true
