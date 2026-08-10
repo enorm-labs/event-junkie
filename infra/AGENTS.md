@@ -1,0 +1,150 @@
+# AGENTS.md — `infra/`
+
+OpenTofu for the Hetzner platform. The nearest `AGENTS.md` wins, so this file overrides the repository root's for anything under `infra/`. Read
+[`README.md`](README.md) next to it — that one is written for a human at a terminal, this one for an agent about to change something.
+
+## The one rule that matters
+
+**Never run `tofu plan`, `tofu apply`, `tofu destroy`, or `tofu import` on your own initiative.** They reach real infrastructure, they spend money, and two of
+them change things people depend on. If a task appears to require one, stop and say so — do not go looking for a token.
+
+**On an explicit, specific instruction — "apply staging", "destroy the staging stack" — you may.** The rule is against acting unasked, not against being
+useful. Two conditions, though, and they are not optional:
+
+- **Show the plan first and check it against what you expect.** `tofu plan -destroy` before a destroy, `plan` before an apply. State the resource count you
+  expect *before* running it, and stop if it differs. A destroy that touches `bootstrap/` or names a DNS zone is wrong no matter who asked for it.
+- **Never widen the instruction.** "Destroy staging" is not permission to destroy production, and an instruction given once does not carry to the next
+  environment or the next session.
+
+Everything below is safe and needs no credentials:
+
+```sh
+tofu fmt -recursive -check -diff infra
+tofu -chdir=infra/<stack> init -backend=false      # -backend=false is not optional
+tofu -chdir=infra/<stack> validate
+shellcheck -x infra/modules/environment/cloud-init/*.sh
+```
+
+`<stack>` is one of `bootstrap`, `environments/production`, `environments/staging`. Run all three: they share a module, so a change to it can break one and not
+the others. CI runs exactly these commands in `.github/workflows/validate-infra.yml`.
+
+**`validate` does not render `templatefile`.** A change to `cloud-init/node.yaml.tftpl` or to any of the `.sh` files can pass `validate` and still produce
+cloud-init that does not parse. To check it, render the template with sample data in a scratch directory and parse the result as YAML — the scripts should
+round-trip byte-identically through `indent()`. That check has caught real breakage; do not skip it after touching the templating.
+
+## What state this code is in
+
+**`bootstrap/` is applied and real, as of 2026-08-10.** Both DNS zones and their eight records exist on Hetzner and serve correctly; the SSH key is imported
+and managed. The S3 backend on Hetzner's Ceph works, including through a partial failure — that was the design's largest unknown and it is now closed.
+
+**`environments/` has never been applied.** No server, network, firewall or Primary IP described here exists. The firewall rules, the k3s flags, WireGuard and
+the PGDG install have never executed on a real machine, and `validate` cannot tell you they would. Do not describe any of that half as working, tested or
+verified; "declared" is the accurate word for it.
+
+## Layout, and why it is not by environment
+
+```
+bootstrap/            DNS zones · SSH keys        — long-lived, outside every destroy
+modules/environment/  servers · network · firewall · cloud-init
+environments/
+  production/         CAX21 k3s + CAX11 PostgreSQL · public · address records
+  staging/            one CAX11, all-in-one · not on the public internet
+```
+
+The split is **by lifetime, not by environment**, and it is load-bearing. `tofu destroy` on an environment is meant to be routine; a DNS zone caught in that
+blast radius is not. Delegation would survive — Hetzner's nameservers are fixed — but DNSSEC would not: a re-created zone has a new key, the DS record at INWX
+stops matching, and the domain becomes *unresolvable* rather than merely wrong.
+
+**So: never move a `hcloud_zone` into an environment stack**, and never manage the zone from anywhere but `bootstrap/`. Environments read it with
+`data "hcloud_zone"` and own only their own address records.
+
+## Conventions
+
+Beyond `tofu fmt`, this follows [terraform-best-practices.com](https://www.terraform-best-practices.com/):
+
+- **`_` in Terraform identifiers, `-` in values** that a human or a cloud API sees (`"${var.environment}-k3s"`).
+- **Never repeat the resource type in the resource name.** `hcloud_zone_rrset "defaults"`, not `"zone_defaults"`.
+- **`count` / `for_each` first in the block**, followed by a blank line.
+- **`labels` last among real arguments**, then a blank line, then blocks, `depends_on`, `lifecycle`.
+- **Plural variable names for `list`/`map` types**; singular resource names even when `for_each` makes several.
+- **Variable block order**: `description`, `type`, `default`, `nullable`, `validation`. Every variable has a description and `nullable = false` unless `null`
+  carries meaning — it does for exactly one, `postgres_server_type`, where `null` means "co-locate PostgreSQL on the k3s node".
+- **Every output has a description**, including the thin pass-through outputs in the environment stacks.
+- **Prefer a boolean in a `count` condition** over `length(...)`.
+
+Two deliberate deviations, so nobody "fixes" them: single resources are named `main` rather than `this`, because `main` reads better in a config this small; and
+outputs use short names (`k3s_ipv4`) rather than the book's `{name}_{type}_{attribute}`, which is a convention for public registry modules and pure noise here.
+
+**Everything here says `event-junkie`, not `event-checker`, and that is correct.** BRANDING.md's naming rule keeps the internal codename on surfaces read next
+to the source, and makes infrastructure the one exception: the Hetzner project, resource labels, node paths (`/opt/event-junkie/`, `/etc/event-junkie/`),
+config filenames and the object-storage buckets all use the public name, because they are read next to a *domain* during an incident rather than next to a
+module. The boundary is the repository edge — do not "correct" either side to match the other.
+
+## Comments
+
+Comments explain **why**, and specifically why an obvious alternative was not taken — `firewall.tf` opens on why Hetzner firewalls cannot secure the private
+network, `servers.tf` on why Primary IPs are separate resources. Match that. Do not add comments that restate the HCL.
+
+Cross-references point at `docs/PLATFORM_SETUP.md` sections (`§4a`, `§8a`) and ADR numbers. Keep them; they are how a reader gets from a line of config to the
+argument behind it. If you contradict one of those documents, change the document too, or say plainly that you have not.
+
+## Things that will bite
+
+- **`user_data` forces replacement.** Any edit under `cloud-init/` rebuilds the node, production included. It is also capped at **32 KiB**; the k3s node's
+  rendered cloud-init is about 11.6 KiB, so there is room, but adding scripts is not free forever. Measure it if you add one.
+- **`delete_protection` does not stop OpenTofu** — the provider lifts its own locks before destroying. Only `lifecycle { prevent_destroy = true }` does, and it
+  is used in exactly one place, on the DNS zones. Do not describe any other resource as protected from `destroy`.
+- **`ssh_keys` on a server is ignored after creation** (`lifecycle.ignore_changes`), because changing it would rebuild the node and the keys only ever reach
+  root, whose login harden.sh disables. Adding an admin key to a *running* node is a manual step, not a config change.
+- **Secrets never enter state.** The WireGuard server keypair is generated on the node at first boot; the Hetzner token and S3 credentials come from the
+  environment via direnv (`.envrc.example`). If a change would put a private key, password or token into a variable or an output, it is the wrong change —
+  find another way.
+- **Never read, print or `cat` `.envrc`, `.env` or `terraform.tfvars`.** The committed `.example` files carry everything needed to understand the shape; the
+  real ones are gitignored because of what they may contain. Edit `.envrc.example` if the *set* of variables changes, never the copy in use.
+- **Never echo a credential variable, not even to check it is set.** This one has already gone wrong once, on 2026-08-10, and cost a full rotation of the
+  Hetzner token and both S3 keys. `${VAR:+set}${VAR:-EMPTY}` looks like a boolean and is not — the second expansion prints the value whenever the first says
+  `set`. The only safe form prints a marker and never the variable:
+
+  ```sh
+  direnv exec infra bash -c 'echo "HCLOUD_TOKEN: ${HCLOUD_TOKEN:+set}"'
+  ```
+
+  A length is also safe (`${#VAR}`); a default-value expansion never is. If a check needs the value to be *correct* rather than merely present, use it — pass
+  it to a command — do not display it.
+- **`admin_cidrs` is a bootstrap value**, not an allowlist to maintain. Its steady state is `[]`. See §8a.
+- **Staging has no DNS records on purpose.** It is unreachable from the internet, not merely password-protected, which is also why its TLS needs DNS-01. Adding
+  an `A` record for it would quietly undo that.
+- **`.tftpl` is not HCL.** `tofu fmt` rejects the extension; the pre-commit hook excludes it for that reason.
+- **The cost boundary is the network zone, not the location.** Traffic inside `eu-central` is free, so `fsn1`/`nbg1`/`hel1` are interchangeable and the
+  Object Storage buckets — which live in `fsn1` and cannot be moved — do not pin the servers. `region` in `backend.tf` names the *bucket's* location; never
+  change it to follow a server move. Do **not** derive `location` from live capacity: it forces replacement on servers and Primary IPs, so a stock change
+  elsewhere would plan a rebuild during an unrelated apply. Decide with `check-capacity.sh`, then edit the one line.
+- **Locking is off.** `use_lockfile` is unverified on Hetzner's Ceph, so it sits commented out in all three `backend.tf` files. Do not turn it on speculatively
+  — test it, then write the answer into `README.md`.
+
+## If the PostgreSQL node's IPv6-only egress fails
+
+The fallback is a NAT gateway, and the reference is Hetzner's
+[Private Network with NAT Gateway and Load Balancer using OpenTofu](https://community.hetzner.com/tutorials/private-network-nat-lb-hetzner-opentofu/). Read it
+for the mechanism, not as a template — the cheaper fix is still `postgres_public_ipv4 = true`, and a NAT gateway is only worth building if keeping the node
+without a public address matters more than the ~€0.50/month.
+
+The mechanism is one `hcloud_network_route` (`destination = "0.0.0.0/0"`, `gateway` = the k3s node's private address) plus `MASQUERADE` on the k3s node. No
+separate NAT server: the k3s node already has both a public IPv4 and a private address, and `wireguard.sh` already enables IP forwarding.
+
+**Four things in that tutorial must not be copied here:**
+
+- **Its VPC is `10.42.0.0/16`, which is k3s's default pod CIDR.** Ours are `10.0.0.0/16` and `10.1.0.0/16` for exactly this reason. Copying its CIDR would
+  overlap the cluster network with the private network, and the symptom would be intermittent pod-to-database failures, not an obvious error.
+- It uses `network_id` in the server `network` block **while having two subnets** — the case the provider docs call unpredictable. Use `subnet_id`.
+- It omits `alias_ips = []`, so it detaches and reattaches the network on every apply.
+- Its Load Balancer half does not apply at all: k3s's bundled ServiceLB binds the node IP, which is why PLATFORM_SETUP.md §1 does not order one.
+
+## Two gaps, named rather than hidden
+
+**No `plan` in CI, and therefore no drift detection.** Both need a credential, and §4 of PLATFORM_SETUP.md says nothing outside the cluster holds one. That is a
+deliberate trade, not an oversight: the cost is that drift and plan review are manual, and that cost was accepted in exchange for CI holding no key to the
+infrastructure. If this ever changes, it needs an ADR, not a workflow edit.
+
+**No automated tests.** OpenTofu supports `.tftest.hcl`, but the meaningful assertions here are all about a running machine, and the unit-testable parts are
+thin. The rendering check described above is the substitute.

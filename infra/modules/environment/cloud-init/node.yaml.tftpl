@@ -1,0 +1,38 @@
+#cloud-config
+# Rendered by infra/modules/environment/cloudinit.tf. Do not edit on the node.
+hostname: ${hostname}
+fqdn: ${hostname}
+preserve_hostname: false
+
+package_update: true
+package_upgrade: true
+
+# Hetzner injects the project's SSH keys into root; harden.sh then disables root login, so this
+# account is the only way back in over SSH. No password is ever set - `lock_passwd` makes that
+# explicit rather than incidental.
+users:
+  - name: ops
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    lock_passwd: true
+    ssh_authorized_keys:
+%{~ for key in ssh_public_keys }
+      - "${key}"
+%{~ endfor }
+
+write_files:
+%{~ for file in files }
+  - path: ${file.path}
+    owner: root:root
+    permissions: "${file.permissions}"
+    content: |
+      ${indent(6, file.content)}
+%{~ endfor }
+
+runcmd:
+%{~ for command in runcmd }
+  - ${command}
+%{~ endfor }
+
+final_message: "cloud-init finished after $UPTIME seconds"

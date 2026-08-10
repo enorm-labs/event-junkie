@@ -9,13 +9,14 @@ here.
 ## Contents
 
 - [Prerequisites](#prerequisites)
-- [Git hooks (gitleaks)](#git-hooks-gitleaks)
+- [Git hooks (pre-commit)](#git-hooks-pre-commit)
 - [Build and run](#build-and-run)
 - [The local database](#the-local-database)
 - [The `local` profile — logging to a file](#the-local-profile--logging-to-a-file)
 - [Running the stack with `dev-env.sh`](#running-the-stack-with-dev-envsh)
 - [Calling the APIs](#calling-the-apis)
 - [Quality checks](#quality-checks)
+- [Infrastructure (OpenTofu)](#infrastructure-opentofu)
 - [Performance tests](#performance-tests)
 - [Dependencies](#dependencies)
 
@@ -26,16 +27,17 @@ here.
 | JDK          | see [`.sdkmanrc`](../.sdkmanrc)           | `sdk env` picks it up; install [SDKMAN](https://sdkman.io/) first |
 | Docker       | any recent                                | Postgres is started for you by `bootRun`                          |
 | Node.js      | see [`.nvmrc`](../events-frontend/.nvmrc) | frontend only; `nvm use`                                          |
-| `pre-commit` | any                                       | for the gitleaks hook — `brew install pre-commit`                 |
+| `pre-commit` | any                                       | for the commit hooks — `brew install pre-commit`                  |
 
 Optional, for specific jobs: [`ijhttp`](https://www.jetbrains.com/help/idea/http-client-cli.html) (running `.http`
-files from the CLI) and [`k6`](https://k6.io) (performance tests).
+files from the CLI), [`k6`](https://k6.io) (performance tests), and [`tofu`](https://opentofu.org/) with `shellcheck` (anything under `infra/` — the
+pre-commit hooks below need both).
 
 ```bash
 sdk env      # Java version from .sdkmanrc
 ```
 
-## Git hooks (gitleaks)
+## Git hooks (pre-commit)
 
 [Gitleaks](https://github.com/gitleaks/gitleaks) runs as a pre-commit hook via [pre-commit](https://pre-commit.com/)
 to keep secrets out of the history. **Install it before your first commit** — it is far cheaper than rewriting history afterwards.
@@ -52,7 +54,18 @@ pre-commit run gitleaks --all-files       # everything tracked by git
 gitleaks detect --source . --verbose      # the entire history (needs: brew install gitleaks)
 ```
 
-The hook lives in the shared `.git` directory, so it is already active in every worktree — no second
+Two more hooks run alongside it, both scoped to `infra/` and both `local` — they use the `tofu` and `shellcheck` already on your machine rather than pulling a
+third-party hook repository that would need its own pinning:
+
+| Hook | Runs on |
+|---|---|
+| `tofu-fmt` | any `.tf` / `.tfvars` file. It rewrites in place, so a failure means "re-stage and commit again", not "go and fix something" |
+| `shellcheck-cloud-init` | `infra/modules/environment/cloud-init/*.sh` |
+
+Both are also `validate-infra.yml`'s job in CI; the hooks just move the deterministic half of that feedback before the push. If you have neither tool
+installed, the hooks fail — install them (`brew install opentofu shellcheck`) or skip with `git commit --no-verify` on a change that touches neither.
+
+The hooks live in the shared `.git` directory, so they are already active in every worktree — no second
 `pre-commit install`.
 
 ## Build and run
@@ -205,6 +218,28 @@ about one.
 1. Request one at <https://nvd.nist.gov/developers/request-an-api-key>
 2. Locally: `export NVD_API_KEY=your-key-here`
 3. In CI: repository secret named `NVD_API_KEY`
+
+## Infrastructure (OpenTofu)
+
+The Hetzner platform is declared in [`infra/`](../infra). **Nothing in it has ever been applied**, and the plan behind it is
+[docs/PLATFORM_SETUP.md](./PLATFORM_SETUP.md).
+
+Before changing anything there, read [infra/AGENTS.md](../infra/AGENTS.md) — it opens with the commands that must not be run. These need no credentials and are
+exactly what `validate-infra.yml` runs in CI:
+
+```bash
+tofu fmt -recursive -check -diff infra
+tofu -chdir=infra/bootstrap init -backend=false && tofu -chdir=infra/bootstrap validate
+tofu -chdir=infra/environments/production init -backend=false && tofu -chdir=infra/environments/production validate
+tofu -chdir=infra/environments/staging  init -backend=false && tofu -chdir=infra/environments/staging  validate
+shellcheck -x infra/modules/environment/cloud-init/*.sh
+```
+
+Run all three stacks: they share a module, so a change to it can break one and leave the others green.
+
+**`tofu plan` and `tofu apply` are not part of local verification.** They need a Hetzner API token and they spend money — see
+[infra/README.md](../infra/README.md) for who runs them and in what order. One consequence worth knowing rather than discovering: `validate` does **not** render
+`templatefile`, so a change to the cloud-init template can pass every check here and still produce YAML that a booting server rejects.
 
 ## Performance tests
 

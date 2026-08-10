@@ -676,6 +676,10 @@ Hetzner now does not close that door; the application is containers and Postgres
   admin UI or the admin API publicly on the assumption that "nobody knows the URL".
 - **IaC**: use the `hetznercloud/hcloud` OpenTofu/Terraform provider for servers, networks, firewalls, and volumes; keep state in Hetzner Object Storage (S3
   API) or Terraform Cloud. This unblocks the "Infrastructure as code" backlog item.
+  > **Settled 2026-08-10.** State is in **Hetzner Object Storage**, not Terraform Cloud — one vendor, one jurisdiction, one AVV. The configuration now exists in
+  > [`infra/`](../../infra) and has not been applied. Two things the decision above did not anticipate: the state *bucket* has to be created by hand, because a
+  > backend cannot be managed by the state it holds and Hetzner has no Cloud API for buckets; and S3-native locking is unverified on Hetzner's Ceph, so applies
+  > are single-operator until someone tests it.
 - **CI/CD**: GitHub Actions cannot use OIDC against Hetzner, so deploys authenticate with a scoped kubeconfig or deploy key held as a repository secret, rotated
   deliberately. This is a genuine step down from AWS/GCP OIDC and should be treated as such.
 - **Observability is now our problem**: budget for either a self-hosted `kube-prometheus-stack` + Grafana (fits the "Dashboard for analysing the data" backlog
@@ -685,6 +689,10 @@ Hetzner now does not close that door; the application is containers and Postgres
 - **DNS and TLS are ours** (2026-08-10 amendment): DNS at the registrar or Hetzner DNS, and Traefik terminates TLS in the cluster via cert-manager or its ACME
   client. The Helm chart must provision the issuer and the certificate, and a certificate that fails to renew is now an outage nobody else notices first.
   Hetzner DNS has a community Terraform provider, so it can live alongside the rest of the IaC.
+  > **Corrected 2026-08-10.** It does not need one, and the community providers should not be used. DNS is in the **official** `hetznercloud/hcloud` provider —
+  > `hcloud_zone` and `hcloud_zone_rrset`, GA since v1.56.0 — so it is the same provider, token and state file as the servers. `timohirt/hetznerdns` and
+  > `germanbrew/hetznerdns` were both deprecated on 10 Nov 2025 and still rank well in search results, which is exactly how a deprecated provider ends up in a
+  > fresh configuration.
 - **Real client IPs reach the origin** (2026-08-10 amendment). With no proxy in front, Traefik and nginx see the actual address rather than an edge IP. That
   makes the four open logging decisions in [LEGAL.md](../LEGAL.md) §7.5 — whether to log IPs at all, truncation, retention, and where retention is enforced —
   load-bearing rather than a formality, and they must be settled before launch, not after.

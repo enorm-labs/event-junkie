@@ -1,6 +1,10 @@
 # Platform Setup — Hetzner + k3s, from nothing to go-live
 
-Status: **plan**, 2026-08-10. Nothing in here is built yet.
+Status: **plan**, 2026-08-10. Nothing in here is running yet.
+
+> **Phase B started, 2026-08-10.** All of it exists as code in [`infra/`](../infra), and its `bootstrap/` half is **applied**: both DNS zones, their records
+> and the SSH key are live, which also settled the design's biggest open question by proving the S3 backend works against Hetzner's Ceph. The servers, network,
+> firewalls and cloud-init are declared but **not applied** — nothing in §2's diagrams is running, and cloud-init has never executed on a real machine.
 
 This is the working plan behind the `v0.2 — Deployable` milestone and the operational half of `v1.0 — Go-live`. It answers the questions that came up while
 planning [#260](https://github.com/enorm-labs/event-checker/issues/260). **Every decision in it is now made** (§11); what remains is work and a few accounts.
@@ -63,8 +67,13 @@ philosophy, it was a close call about whether a JVM gets OOM-killed mid-deploy. 
 **Not ordered, and why:** Load Balancer (k3s ServiceLB binds to the node IP on one node) · Volumes (local NVMe is enough until the database outgrows 40 GB) ·
 Floating IPs (for failover between servers, which does not apply) · **Storage Box** (superseded — see below) · Storage Share.
 
-**Keep everything in one location** — Falkenstein or Nuremberg, both in the `eu-central` network zone. Traffic between servers and Object Storage inside that
-zone is free; splitting locations quietly makes it billable.
+**Keep everything in one network *zone*, and the two compute nodes in one *location*.** The distinction matters and this document previously blurred it.
+Hetzner charges nothing for "internal traffic within the network zone `eu-central`", so Falkenstein, Nuremberg and Helsinki are interchangeable as far as cost
+is concerned — a server in `nbg1` reaching a bucket in `fsn1` is free, and the buckets therefore do not pin the servers anywhere.
+
+What *does* have to stay together is the k3s node and the PostgreSQL node, because every query crosses that link and inter-location latency lands on every
+request. Beyond that, prefer a German location over Helsinki for a Berlin audience — about 25 ms of round trip, which is real but not disqualifying if it is
+the only ARM capacity available.
 
 #### The order, step by step
 
@@ -182,8 +191,19 @@ flowchart TB
 ```
 
 **There is no NAT gateway, deliberately.** The PostgreSQL node reaches the internet over **IPv6** for package updates and nothing else. Routing its egress
-through the k3s node as a NAT is possible and is the documented fallback if IPv6-only egress turns out not to work (§1) — but it is cloud-init work that should
-not be written speculatively.
+through the k3s node as a NAT is the documented fallback if IPv6-only egress turns out not to work (§1) — and it should still not be written speculatively,
+because the whole point is that it may never be needed.
+
+**It is cheaper than it sounds, though, and this document previously overstated it.** Hetzner's SDN does the routing declaratively: one
+[`hcloud_network_route`](https://registry.terraform.io/providers/hetznercloud/hcloud/latest/docs/resources/network_route) with `destination = "0.0.0.0/0"` and
+`gateway` set to the k3s node's private address, and nothing has to be configured on the PostgreSQL node at all. What remains on the k3s node is a `MASQUERADE`
+rule and IP forwarding — and forwarding is already enabled there for WireGuard. Hetzner's community tutorial
+[Private Network with NAT Gateway and Load Balancer using OpenTofu](https://community.hetzner.com/tutorials/private-network-nat-lb-hetzner-opentofu/) is the
+full recipe, with the caveats in `infra/AGENTS.md` about what not to copy from it.
+
+**No separate NAT server is needed** — the k3s node already has a public IPv4 and a private address, which is the whole requirement. The cost is a coupling
+worth stating: if the k3s node is down, the database node loses `apt`. For package updates that is acceptable; it would not be if anything in the request path
+depended on it, and nothing does.
 
 **Note which arrows do not exist.** Nothing reaches the PostgreSQL node from the internet, in either direction, at any port. Nothing reaches `6443` or `22`
 without the tunnel. And no arrow points *into* the cluster from GitHub — that is §2.3.
@@ -707,17 +727,88 @@ precisely when k3s is the problem.
 or a basic-auth middleware. Bind them to the tunnel interface and they are private by construction, with no credentials to manage and nothing exposed to guess
 at. That retires the awkward gap #412 left when Cloudflare Access disappeared.
 
-**`admin_cidr` still exists, with a narrower job.** The very first `apply` happens before WireGuard is running, so the firewall needs to admit *somewhere* long
-enough to bring the tunnel up:
+**`admin_cidrs` still exists, with a narrower job.** The very first `apply` happens before WireGuard is running, so the firewall needs to admit *somewhere*
+long enough to bring the tunnel up — and **two addresses, not one, behind a corporate HTTP proxy**, since `ifconfig.me` reports the proxy's egress while SSH
+and WireGuard arrive unproxied from another:
 
 ```sh
-tofu apply -var "admin_cidr=$(curl -s https://ifconfig.me)/32"
+ADMIN="[\"$(curl -s https://ifconfig.me)/32\",\"$(dig +short myip.opendns.com @resolver1.opendns.com | tail -1)/32\"]"
+tofu apply -var "admin_cidrs=$ADMIN"
 ```
 
 After that it is break-glass rather than daily-use, and it can be tightened or removed.
 
 **The fallback below the fallback is Hetzner's browser console** — VNC to the server regardless of firewall, WireGuard or SSH state. It is the reason none of
 this is unrecoverable, and it is worth logging into once *before* you need it, so the first time is not during an outage.
+
+---
+
+### 8b. Keeping the servers patched
+
+**You do not need to `apt update && apt upgrade` after logging in.** cloud-init runs both on first boot, so a node is current before it has ever been reached
+over SSH, and `unattended-upgrades` takes over from there — the daily timer applies security updates without anyone deciding to. Patching by hand on a
+schedule is strictly worse, because it depends on somebody remembering.
+
+Three things that are *not* automatic, and the reasoning for each:
+
+| | Why not | What covers it |
+|---|---|---|
+| **Reboots** | On a single-node cluster an unannounced 04:00 reboot is an outage nobody scheduled | A deliberate reboot, when `/var/run/reboot-required` exists |
+| **k3s** | Not apt-managed — installed pinned from `get.k3s.io`, and restarting it disrupts every workload | Bump `k3s_version` and let the node rebuild, or reboot |
+| **Container images** | The applications' libraries come from their images, not the host's apt | Rebuild in CI, with Trivy scanning the result — §8 item 11 |
+
+**The trap worth knowing about is `needrestart`.** It decides whether a service running an updated library actually gets restarted, and its default is
+interactive — which, run non-interactively from `unattended-upgrades`, silently falls back to *list only*. The result is a machine that reports itself fully
+patched while every running process still has the old library mapped. With automatic reboots off as well, nothing would ever pick the update up. `harden.sh`
+therefore sets `$nrconf{restart} = 'a'`, excluding k3s alone, so a patched library takes effect within the hour rather than at the next reboot.
+
+**The remaining gap, stated rather than hidden: nothing tells you a reboot is pending.** `/var/run/reboot-required` is written, and a login shows it — but the
+whole design is that nobody logs in for weeks at a time. That is [#419](https://github.com/enorm-labs/event-checker/issues/419), blocked on
+[#271](https://github.com/enorm-labs/event-checker/issues/271) for somewhere to send the alert. Until then this is a calendar reminder, not an engineering
+control. It is the least satisfying part of §8 and worth fixing early, because a kernel CVE with no reboot is
+indistinguishable from being patched.
+
+### 8c. What the hardening guides changed — and what they did not
+
+Three guides were worked through: [k3s CIS hardening](https://docs.k3s.io/security/hardening-guide),
+[k3s secrets encryption](https://docs.k3s.io/security/secrets-encryption), and Hetzner's
+[Ubuntu server security tutorial](https://community.hetzner.com/tutorials/security-ubuntu-settings-firewall-tools).
+
+**Taken, and now in `k3s.sh` and `harden.sh`:**
+
+| | |
+|---|---|
+| `protect-kernel-defaults: true` plus `/etc/sysctl.d/90-kubelet.conf` | The flag makes the kubelet **exit** if those four kernel parameters differ from its defaults, so the sysctls are a prerequisite rather than a companion |
+| `secrets-encryption-provider: secretbox` | We already had `secrets-encryption`. The default `aescbc` gives confidentiality with **no integrity**; secretbox is authenticated. Available since v1.33.0+k3s1, and we pin later |
+| `enable-admission-plugins=NodeRestriction` | Stops a compromised kubelet editing other nodes or claiming pods it does not run |
+| `streaming-connection-idle-timeout=5m`, restricted `tls-cipher-suites`, `terminated-pod-gc-threshold` | Cheap, no behavioural cost |
+| `PubkeyAuthentication yes` | Already the default; stating it means a future OS default change cannot quietly weaken it |
+
+k3s configuration moved from `INSTALL_K3S_EXEC` flags into `/etc/rancher/k3s/config.yaml`, because the hardening guide is written in terms of that file — a
+future item can be pasted in and diffed rather than translated.
+
+**Deferred to [#263](https://github.com/enorm-labs/event-checker/issues/263), where a k3d cluster can prove them before production sees them:** API server
+audit logging (needs an `audit.yaml` policy), `EventRateLimit` and PSA-by-default (both need an `admission-control-config-file`). Each adds a file whose typo
+prevents the API server from starting, and none of it has ever booted. PSA also arrives more simply as namespace labels — §8 item 5.
+
+**Rejected from the Hetzner guide, with reasons, so they are not proposed again.** It is a good tutorial for a server with SSH open to the internet. Ours is
+not that server:
+
+- **Moving SSH to port 2222** — it defends against bots scanning port 22. Ours does not answer on 22 *at all* from the internet; the tunnel is the only path
+  (§8a). Moving a closed port would trade a real property for the appearance of one, and break every runbook.
+- **`ufw`** — the Hetzner Cloud firewall already denies by default at the network edge, before packets reach the host. A host firewall would add value only
+  for private-network traffic, and k3s manages iptables extensively enough that layering `ufw` on top is a known way to break pod networking. The one place it
+  would help — a compromised k3s node reaching PostgreSQL — is the one case any rule set would have to allow anyway.
+- **fail2ban** — it bans repeated password failures. `PasswordAuthentication no` means there are none, and SSH is unreachable without the tunnel regardless.
+- **rkhunter / chkrootkit / AIDE** — the same argument §8 uses to reject Falco: a detection tool nobody has the capacity to respond to produces alert fatigue,
+  not security. Revisit when someone is on call.
+- **2FA via `libpam-google-authenticator`** — an SSH key held on a laptop *plus* a WireGuard key is already two independent factors, and an interactive prompt
+  would break `ssh` in scripts.
+- **`apt update && apt upgrade` as a routine** — §8b: cloud-init does it at build and `unattended-upgrades` does it daily. A manual habit is worse because it
+  depends on remembering.
+
+**Taken from it, though:** its incident-response section is right that the thing you lack at 02:00 is a written note of what the server *is*. That is the
+restore drill in [#270](https://github.com/enorm-labs/event-checker/issues/270) and the runbook this document is becoming.
 
 ---
 
@@ -751,9 +842,15 @@ Ordered by dependency. Each step names its issue.
 
 ### Phase B — infrastructure as code — [#260](https://github.com/enorm-labs/event-checker/issues/260)
 
+> **Steps 5–7 are written.** They live in [`infra/`](../infra); [`infra/README.md`](../infra/README.md) is the operator's guide and
+> [`infra/AGENTS.md`](../infra/AGENTS.md) the conventions. Step 8 is not done, so none of it is proven.
+
 5. **`infra/` split by lifetime, not environment.** `bootstrap/` holds the DNS zone, the Object Storage buckets' contents and the SSH key; `environments/{production,staging}/` hold servers,
    network, firewall and records. The zone being outside every environment's blast radius is what makes DNSSEC safe and the destroy/apply cycle honest.
-6. **`hcloud_primary_ip` with delete protection** so a rebuilt server keeps its address and DNS never churns.
+6. **`hcloud_primary_ip`, and `auto_delete = false`** so a rebuilt server keeps its address and DNS never churns. *Corrected 2026-08-10:* this step originally
+   said "with delete protection", which does not do that job — `delete_protection` guards against the console and other tools, but the provider lifts its own
+   locks before destroying, so it does not stop `tofu destroy`. `auto_delete = false` is what actually preserves the address. `lifecycle { prevent_destroy }`
+   is the only lock OpenTofu enforces, and it is used on the DNS zones alone.
 7. **cloud-init**: **WireGuard on the host** (§8a — before anything else, since it is how you get back in), k3s with `--tls-san`, `unattended-upgrades`, SSH
    hardening on the k3s node; PostgreSQL 18 bound to the private network on the DB node. Roles, credentials and `wal-g` are **not** here — they are #261 and
    #270.

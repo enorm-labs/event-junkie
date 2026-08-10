@@ -1,0 +1,73 @@
+# Credentials for the OpenTofu stacks, loaded by direnv.
+#
+#   cp .envrc.example .envrc && direnv allow
+#
+# `.envrc` rather than `.env`, for one reason that matters: direnv loads this on entering
+# `infra/` and *unloads it on leaving*. A `.env` has to be sourced by hand and then lingers for
+# the rest of the shell session, so a token with full read/write over the whole Hetzner project
+# ends up in the environment of every unrelated command you run afterwards. Neither file is read
+# by OpenTofu itself — both are just ways of getting variables into the environment — so the
+# scoping behaviour is the entire difference, and it is the one worth having.
+#
+# Nothing secret belongs in this file. The values come out of the macOS Keychain, so the copy you
+# actually use stays safe to read over your shoulder, safe in a backup, and harmless if it is ever
+# opened in a screen share. Store the three secrets once:
+#
+#   security add-generic-password -a "$USER" -s event-junkie-hcloud-token  -w
+#   security add-generic-password -a "$USER" -s event-junkie-s3-access-key -w
+#   security add-generic-password -a "$USER" -s event-junkie-s3-secret-key -w
+#
+# `-w` with no value prompts for it, so the secret never reaches your shell history.
+#
+# direnv evaluates this with bash regardless of your login shell — keep it bash-compatible.
+
+keychain() { security find-generic-password -a "$USER" -s "$1" -w 2>/dev/null || true; }
+
+# Hetzner Cloud API token: servers, networks, firewalls, Primary IPs and DNS.
+export HCLOUD_TOKEN="$(keychain event-junkie-hcloud-token)"
+
+# Object Storage (S3) credentials. Used by the OpenTofu state backend *and* by the `aws` CLI for
+# the versioning and lifecycle setup in README.md. They are project-scoped, not bucket-scoped —
+# one pair reaches the state, observability and backup buckets alike.
+export AWS_ACCESS_KEY_ID="$(keychain event-junkie-s3-access-key)"
+export AWS_SECRET_ACCESS_KEY="$(keychain event-junkie-s3-secret-key)"
+
+# Hetzner's S3 is not AWS: the "region" is the location, and the endpoint has to be stated.
+# Every `backend.tf` already carries both for OpenTofu; these two exist so that `aws s3api …`
+# works without `--endpoint-url` on every call. Change both together if you move location.
+export AWS_DEFAULT_REGION=fsn1
+export AWS_ENDPOINT_URL_S3=https://fsn1.your-objectstorage.com
+
+# Behind a TLS-intercepting corporate proxy, the AWS CLI fails every call with
+# `CERTIFICATE_VERIFY_FAILED … self-signed certificate in certificate chain`. It is not a
+# credentials problem and not a Hetzner problem: the CLI ships its own Python CA bundle and
+# never consults the macOS keychain, so it does not know the proxy's root. `curl` and OpenTofu
+# are unaffected — both trust the system store — which is exactly what makes this confusing.
+#
+# Build the bundle once (see README, "Behind a TLS-intercepting proxy"); this stays inert on a
+# machine that does not have one, so the file works on any network.
+if [ -f "$HOME/.certs/aws-ca-bundle.pem" ]; then
+    export AWS_CA_BUNDLE="$HOME/.certs/aws-ca-bundle.pem"
+fi
+
+# An empty variable produces an authentication error three commands later that looks like a
+# broken backend config. Say so now instead.
+for _var in HCLOUD_TOKEN AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+    if [ -z "${!_var}" ]; then
+        echo "envrc: ${_var} is empty — is it in the Keychain under the name above?" >&2
+    fi
+done
+unset _var
+
+# ---------------------------------------------------------------------------
+# Plaintext alternative, if you would rather not use the Keychain.
+#
+# Only ever in `.envrc`, never in `.envrc.example`, and note what you are accepting: a file
+# holding cloud-admin credentials inside a *public* repository's working tree. `.gitignore` and
+# the gitleaks pre-commit hook both stand in the way, but they are the second and third lines of
+# defence, not the first.
+#
+# export HCLOUD_TOKEN=...
+# export AWS_ACCESS_KEY_ID=...
+# export AWS_SECRET_ACCESS_KEY=...
+# ---------------------------------------------------------------------------

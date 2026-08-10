@@ -6,3 +6,10 @@ build
 temp
 # Worktrees created by `claude --worktree` (see README → Parallel work with Git worktrees)
 .claude/worktrees/
+
+# Local credentials. Only the committed templates are tracked — see infra/.envrc.example.
+.env
+.env.*
+.envrc
+!.env.example
+!.envrc.example

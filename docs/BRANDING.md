@@ -44,6 +44,16 @@ German has no zero relative pronoun, so *"die"* stays in either form. The two la
 - **Public / user-facing surfaces** (page titles, home hero, About copy, OG tags, the eventual domain and marketing) use **Event Junkie**.
 - **Internal / technical surfaces** (repository name `event-checker`, Gradle modules, package identifiers, DB schema, ADRs, developer docs) stay **Event
   Checker**. Keeping an internal codename distinct from the public brand is deliberate — don't "fix" these to Event Junkie.
+- **Infrastructure and hosting are the one exception, decided 2026-08-10**, and they use **`event-junkie`**: the Hetzner Cloud project, resource labels, server
+  and node paths (`/opt/event-junkie/`), config filenames, and the object-storage buckets.
+
+**Why infrastructure breaks the rule.** Every other internal surface is read next to the source — a package name sits beside a module, a schema beside a
+migration, and the repository's own name is right there. Infrastructure is read next to a *domain*: you reach it because `event-junkie.de` is misbehaving, and
+the console, the labels and the paths you land in should say the same word the browser does. A codename there adds a translation step at the one moment nobody
+has spare attention for it.
+
+The boundary is the repository edge. Anything checked into source keeps **Event Checker**; anything that exists in Hetzner, on a node's filesystem, or in a
+bucket takes **`event-junkie`**. The OpenTofu in `infra/` describes the second, so it uses the second throughout — see `infra/AGENTS.md`.
 
 ## 2. The concept — why "Junkie"
 

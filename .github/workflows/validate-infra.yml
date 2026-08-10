@@ -1,0 +1,74 @@
+name: Validate Infrastructure
+
+# `tofu fmt` and `tofu validate` are the only checks that can run against `infra/` without
+# credentials — `plan` needs a Hetzner token and CI does not have one, deliberately (see
+# docs/PLATFORM_SETUP.md §4: nothing outside the cluster holds a credential for it).
+#
+# That makes this a syntax and type gate, not a correctness one. It catches the failure mode that
+# actually happens to infrastructure code in a repository where nobody runs it daily: a config that
+# stopped parsing months ago and nobody noticed until the afternoon it was needed.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/validate-infra.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/validate-infra.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Format & Validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      fail-fast: false
+      matrix:
+        stack:
+          - infra/bootstrap
+          - infra/environments/production
+          - infra/environments/staging
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: '1.12.5'
+          # The wrapper rewrites stdout and buys nothing here.
+          tofu_wrapper: false
+
+      - name: Check formatting
+        run: tofu fmt -recursive -check -diff infra
+
+      # -backend=false so no state bucket, no credentials, and no lock is touched.
+      - name: Initialise ${{ matrix.stack }}
+        run: tofu -chdir=${{ matrix.stack }} init -backend=false -input=false
+
+      - name: Validate ${{ matrix.stack }}
+        run: tofu -chdir=${{ matrix.stack }} validate
+
+  shellcheck:
+    name: ShellCheck cloud-init
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      # These scripts run once, unattended, on a node nobody can log into until they succeed. A
+      # typo here is not a failed build, it is a server that boots into an unreachable state.
+      - name: Run ShellCheck
+        run: shellcheck -x infra/modules/environment/cloud-init/*.sh

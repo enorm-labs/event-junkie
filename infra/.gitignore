@@ -1,0 +1,18 @@
+# Local working directories and plan output — never committed.
+.terraform/
+*.tfplan
+
+# State must live in the S3 backend (see README). If any of these appear locally,
+# something has gone wrong: a `tofu` command ran before `init`, or against a
+# `backend.tf` that failed to load.
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+
+# Real variable values. Only the `.example` files are tracked.
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# The provider lock files ARE tracked — they are what makes a rebuild reproducible.
+!.terraform.lock.hcl

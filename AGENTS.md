@@ -319,6 +319,18 @@ k6 run perf/spike.js           # a sudden surge — the finding is whether it re
 
 See [perf/README.md](perf/README.md) for what each answers, the thresholds and how to re-baseline them, and why there is deliberately no CI workflow yet.
 
+Infrastructure ([`infra/`](infra), OpenTofu). **Read [infra/AGENTS.md](infra/AGENTS.md) before touching any of it** — it opens with the commands that must
+never be run there. These four are the safe ones, need no credentials, and are exactly what `validate-infra.yml` runs:
+
+```bash
+tofu fmt -recursive -check -diff infra
+tofu -chdir=infra/<stack> init -backend=false   # bootstrap · environments/production · environments/staging
+tofu -chdir=infra/<stack> validate
+shellcheck -x infra/modules/environment/cloud-init/*.sh
+```
+
+`tofu plan` and `tofu apply` are **not** on that list: they need a Hetzner API token and they spend money. Nothing in `infra/` has ever been applied.
+
 Local dev environment (used by `/importer-smoke` and `/next-importer`; run with no arguments for the full command list):
 
 ```bash
@@ -557,6 +569,9 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     - `label-pr.yml` — Derives labels from the Conventional Commits PR title (`feat(scraper): …` → `feat` + `importer`, `fix(api)!: …` → `fix` +
       `breaking-change`) via `actions/github-script`. Creates any missing label on demand and re-syncs when the title is edited. Uses `pull_request_target` so
       fork PRs get a writable token; safe because it never checks out or runs PR code.
+    - `validate-infra.yml` — `tofu fmt -check`, `tofu init -backend=false` + `validate` across all three stacks in a matrix, and ShellCheck on the cloud-init
+      scripts. Triggers only when `infra/**` changes. **It deliberately never runs `plan`**: that needs a Hetzner token, and per PLATFORM_SETUP.md §4 nothing
+      outside the cluster holds a cluster or cloud credential. So this is a syntax and type gate, not a correctness one, and there is no drift detection.
 - **When CI misbehaves, check [githubstatus.com](https://www.githubstatus.com/) before debugging this repo.** Scriptable as
   `https://www.githubstatus.com/api/v2/summary.json`. A GitHub-side incident mimics repo-level bugs closely enough to send you hunting through trigger and path
   filters that are perfectly fine. Symptoms seen during the 2026-08-06 Actions outage:
@@ -577,7 +592,9 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 - **Dependabot** (`.github/dependabot.yml`) checks for Gradle dependency updates weekly. Updates are grouped by ecosystem (e.g. `kotlin`, `spring-boot`,
   `spring-modulith`, `testcontainers`, `jackson`, `springdoc`, `kotest`, `postgresql`, `flyway`, `reactor`, `detekt`, `owasp`,
   `gradle-plugins`)
-  so that related dependencies are bundled into a single PR per group.
+  so that related dependencies are bundled into a single PR per group. **Gradle only** — npm, GitHub Actions and the `hetznercloud/hcloud` provider pin in
+  `infra/` are all outside its scope, so those are bumped by hand: `/update-dependencies` for the first two, and for `infra/` an edit to `versions.tf` followed
+  by `tofu init -upgrade` in each stack.
 - **Conventional Commits** — Commit messages follow the [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) spec. Reusable prompts are
   available at `.github/prompts/` for commit messages, squash commit messages, and code reviews.
 - **Release notes** (`.github/release.yml`) — GitHub's automatically generated release notes group merged PRs into categories (🎪 New Event Sources, ✨ Features,
@@ -677,6 +694,9 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | CI: dependency graph submission       | `.github/workflows/dependency-submission.yml`                                                             |
 | CI: nightly OWASP scan                | `.github/workflows/dependency-check-scheduled.yml`                                                        |
 | CI: PR labelling                      | `.github/workflows/label-pr.yml`                                                                          |
+| CI: OpenTofu fmt/validate + ShellCheck | `.github/workflows/validate-infra.yml`                                                                   |
+| Infrastructure as code (OpenTofu)     | `infra/` — read `infra/AGENTS.md` first; `bootstrap/` is applied, `environments/` is not                   |
+| Cloud-init for the Hetzner nodes      | `infra/modules/environment/cloud-init/`                                                                   |
 | Release notes categories              | `.github/release.yml`                                                                                     |
 | Dependabot config                     | `.github/dependabot.yml`                                                                                  |
 | Commit message prompt                 | `.github/prompts/commit-message.prompt.md`                                                                |
