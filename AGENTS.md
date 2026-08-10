@@ -42,8 +42,9 @@ update
 **Infrastructure and operations**
 
 - Choosing or changing a hosting provider, CDN, WAF, DNS, mail, backup, or object-storage provider — each is a processor that must be *named*, needs an Art. 28
-  DPA in place, and, if it is outside the EU/EEA, a transfer mechanism. This is a live question: [ADR-012](docs/adr/ADR-012_CLOUD_PLATFORM.md) is still
-  **Proposed**, and the privacy notice currently says so.
+  DPA in place, and, if it is outside the EU/EEA, a transfer mechanism. [ADR-012](docs/adr/ADR-012_CLOUD_PLATFORM.md) is **Accepted** as of 2026-08-10 and
+  amended the same day to remove Cloudflare, so the intended answer is now **one processor, Hetzner**, and the notice says so. Nothing is deployed yet, so
+  `INFRASTRUCTURE_IS_PROPOSED` stays `true` until it is — accepting an ADR is not the moment that changes.
 - Changing log content, log retention, or IP handling (truncation/anonymisation) — the notice states a retention period; it must be the real one.
 - Adding monitoring, error tracking, uptime checks, APM, or a metrics backend that receives request or user data.
 - Adding a staging or preview environment reachable from the internet. **Note the SEO hazard alongside the privacy one:** the build emits a `robots.txt` that
@@ -359,17 +360,17 @@ scripts/dev-env.sh psql "UPDATE events.event_source SET status='IDLE', retry_cou
 then re-trigger those slugs. On a long job — a `--full` re-seed, a before/after diff — compile everything first, restart once, *then* import, and leave the
 build alone until every source has left `RUNNING`.
 
-**Re-keying a live source collides with its own today-dated rows.** Changing how a scraper builds its `sourceId` — adding the session start time, the
-occurrence date, anything — gives every event a new id, so the old rows go stale and the new ones insert. But `EventUpsertService.removeStaleEvents`
+**Re-keying a live source collides with its own today-dated rows.** Changing how a scraper builds its `sourceId` — adding the session start time, the occurrence
+date, anything — gives every event a new id, so the old rows go stale and the new ones insert. But `EventUpsertService.removeStaleEvents`
 deliberately spares **today**: a today-dated row therefore keeps its old id *and* its slug while its replacement tries to take the same slug, and the insert
 collides. **Re-key on a day the venue's programme is dark, or clear that source's rows first** — and check which it is before importing rather than after.
 Admiralspalast (2026-08-08) got away with it by luck; Velomax (2026-08-09) was checked and was genuinely dark three weeks out.
 
 **Do not truncate `<service>.log` while the service is running.** `: > build/dev-env/importer.log` looks like the obvious way to get a clean log before a test
 import, and it silently breaks every later `grep`: the process keeps its file descriptor at the old offset, so new writes land far into the file and everything
-before them is NUL padding. `grep` then treats the file as binary and prints `Binary file … matches`, or **nothing at all with `-c`** — which reads exactly
-like "no matches" and is how a real finding gets reported as a clean result. Get a clean log by restarting the service instead (`down` then `up`, which reopens
-the file); if one has already been truncated, `grep -a` reads it. **A zero count from a log you truncated is not evidence.**
+before them is NUL padding. `grep` then treats the file as binary and prints `Binary file … matches`, or **nothing at all with `-c`** — which reads exactly like
+"no matches" and is how a real finding gets reported as a clean result. Get a clean log by restarting the service instead (`down` then `up`, which reopens the
+file); if one has already been truncated, `grep -a` reads it. **A zero count from a log you truncated is not evidence.**
 
 **Working in a git worktree** (a session started with `claude --worktree`, or any `git worktree add` checkout — see
 [docs/WORKTREES.md](docs/WORKTREES.md)). Files and Gradle output are isolated; the local runtime is not.
@@ -385,7 +386,8 @@ the file); if one has already been truncated, `grep -a` reads it. **A zero count
   other session's events land in this session's regression diff.
 - **Expect conflicts in the files every importer PR touches**: the count table and moved row in `docs/EVENT_DATA_SOURCES.md` (recount after rebasing rather than
   trusting either side), the alphabetical header list and venue block in `http/importer/dev-seed.http` (a "keep both" resolution silently fuses two blocks —
-  rebuild by hand) and the new `EventSource.kt` enum entry. Rebase onto `main`; never merge `main` in. The backlog snapshot is generated into `build/` and is not committed, so it never appears in a diff at all.
+  rebuild by hand) and the new `EventSource.kt` enum entry. Rebase onto `main`; never merge `main` in. The backlog snapshot is generated into `build/` and is
+  not committed, so it never appears in a diff at all.
 
 The **configuration cache** is enabled (`org.gradle.configuration-cache=true` in `gradle.properties`), so repeat builds skip the configuration phase. Every task
 above benefits except `dependencyCheckAggregate` — the OWASP plugin's `Aggregate` task reaches for `project.rootProject` / `project.subprojects` at execution
@@ -458,7 +460,7 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       excluded there too — this is the single thing to know before editing them.
 
       | Where | Scope | Holds |
-            |-------|-------|-------|
+                  |-------|-------|-------|
       | root `build.gradle.kts`, `subprojects { configure<KoverProjectExtension> … }` | every module's own report | `de.norm.events.*Module`, `de.norm.events.*Fixtures` |
       | root `build.gradle.kts`, top-level `kover { }` | the aggregated report | the shared patterns **again**, plus the events-core domain classes |
       | `events-core/build.gradle.kts`, `kover { }` | events-core's own report | its plain domain data classes, by exact name |
@@ -474,7 +476,7 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       `build.gradle.kts`, next to the number each module actually sits at.
 
       | Module | Actual | Floor |
-            |---|---:|---:|
+                  |---|---:|---:|
       | `events-core` | 100.0% | 95 |
       | `events-bff` | 98.6% | 92 |
       | `events-importer` | 95.4% | 90 |
@@ -635,14 +637,14 @@ difference between a one-hour change and a one-day one.
 
 **Where a finding goes** — the same rule as before, with a new destination:
 
-| Finding | Goes to |
-|---|---|
-| A defect with a known repair — we lose or mangle data the source *did* publish | **An issue** (🔍 Importer / data defect) |
+| Finding                                                                                           | Goes to                                                 |
+|---------------------------------------------------------------------------------------------------|---------------------------------------------------------|
+| A defect with a known repair — we lose or mangle data the source *did* publish                    | **An issue** (🔍 Importer / data defect)                |
 | An accepted limitation — the venue never publishes it, or the parser makes a deliberate trade-off | **That scraper's KDoc**, next to the code it constrains |
-| A choice that must be made before work can start | **An issue** (⚖️ Decision), labelled `needs-decision` |
+| A choice that must be made before work can start                                                  | **An issue** (⚖️ Decision), labelled `needs-decision`   |
 
-**The label and field split.** Intrinsic properties of the work are **labels** — `area:*`, `size:*`, plus `importer` and `documentation`. Planning state lives in
-the **[project board](https://github.com/orgs/enorm-labs/projects/1)** as Status and Priority fields, because priority churns and label churn is noise. Issue
+**The label and field split.** Intrinsic properties of the work are **labels** — `area:*`, `size:*`, plus `importer` and `documentation`. Planning state lives
+in the **[project board](https://github.com/orgs/enorm-labs/projects/1)** as Status and Priority fields, because priority churns and label churn is noise. Issue
 *type* is a GitHub issue type (Task / Bug / Feature), not a label — do not add a `type:` label.
 
 Three labels name *why* something cannot start: `blocked` (another issue), `needs-decision` (a choice), `needs-deployment` (a live origin). **The last is not
@@ -717,9 +719,11 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | ADR: Cloud platform & hosting         | `docs/adr/ADR-012_CLOUD_PLATFORM.md`                                                                      |
 | ADR: Localisation (English + German)  | `docs/adr/ADR-013_LOCALISATION.md`                                                                        |
 | ADR: Rendering strategy (SPA/SSG/SSR) | `docs/adr/ADR-014_RENDERING_STRATEGY.md`                                                                  |
+| ADR: Observability stack              | `docs/adr/ADR-015_OBSERVABILITY_STACK.md`                                                                 |
+| Plan: Hetzner + k3s setup, go-live    | `docs/PLATFORM_SETUP.md`                                                                                  |
 | Plan: footer, legal pages, versioning | `docs/LEGAL.md`                                                                                           |
-| Backlog snapshot generator            | `scripts/generate-backlog-snapshot.sh` → `build/BACKLOG.md` (generated, not committed)                  |
-| Issue board helper                    | `scripts/issue-board.sh` — Status and Priority are project fields, not labels                            |
+| Backlog snapshot generator            | `scripts/generate-backlog-snapshot.sh` → `build/BACKLOG.md` (generated, not committed)                    |
+| Issue board helper                    | `scripts/issue-board.sh` — Status and Priority are project fields, not labels                             |
 | Frontend entry point                  | `events-frontend/src/main.ts`                                                                             |
 | IntelliJ HTTP Client requests         | `http/importer/` (admin) and `http/bff/` (public read) `.http` files + shared `http/http-client.env.json` |
 | Local dev environment control script  | `scripts/dev-env.sh` (start/stop the stack, seed sources, trigger imports, inspect + diff the data)       |
