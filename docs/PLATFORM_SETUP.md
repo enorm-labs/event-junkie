@@ -66,6 +66,31 @@ Floating IPs (for failover between servers, which does not apply) · **Storage B
 **Keep everything in one location** — Falkenstein or Nuremberg, both in the `eu-central` network zone. Traffic between servers and Object Storage inside that
 zone is free; splitting locations quietly makes it billable.
 
+#### The order, step by step
+
+Only the first three steps are done by hand. Everything after them is declared in `infra/` and applied
+([#260](https://github.com/enorm-labs/event-checker/issues/260)) — so **do not create the servers in the console**, or the first `tofu apply` will either
+duplicate them or need an import.
+
+1. **Create a Cloud project.** Free, and it is the boundary the API token is scoped to.
+2. **Create an API token** with read *and* write. It is shown once.
+3. **Create the Object Storage subscription and the `…-tfstate` bucket**, plus its S3 credentials. This bucket is the one genuinely hand-made resource, because
+   a state backend cannot be managed by the state it holds (§10 step 4). The other two buckets can be declared.
+4. Everything else — servers, network, subnet, firewalls, backups, the remaining buckets — comes from `tofu apply`.
+
+#### The one unknown, and it is cheap to resolve
+
+**The PostgreSQL node is specified with no public IPv4, and it is not confirmed that this leaves it able to reach the internet for `apt`.** Hetzner's
+documentation says a server has no public interface unless a Primary IP is assigned, and that IPs are optional — but it does not state whether an IPv6-only
+server has working egress to IPv4-only destinations, and some package mirrors and extension repositories are IPv4-only.
+
+**This is reversible in seconds** — Primary IPs attach and detach at any time — so it is not worth resolving in advance. Bring the node up IPv6-only, run
+`apt update`, and if it fails, attach an IPv4 for ~€0.50/month and move on. The alternative, routing its egress through the k3s node as a NAT gateway, keeps the
+node fully private but is cloud-init work that should not be done speculatively.
+
+**Staging is the exception that does need IPv4**, even though it is otherwise the most private thing here: WireGuard's endpoint must be reachable from wherever
+you happen to be, and most networks you will connect from are IPv4-only.
+
 ### Why ARM, and the one thing to check first
 
 - **The development laptop is already arm64**, so local images and production images become the same architecture. That is better parity than the x86 plan, not
@@ -593,9 +618,10 @@ Ordered by dependency. Each step names its issue.
 
 1. ~~Decide ArgoCD vs Flux vs plain Helm~~ — **done 2026-08-10: Flux** (§4), after plain Helm proved unable to reach a firewalled API.
 2. ~~Accept or reject ADR-015~~ — **done 2026-08-10: OpenObserve, on trial** (§5).
-3. **Hetzner account**, project, API token with write scope.
-4. **Object Storage bucket for OpenTofu state**, by hand — the provider has no resource for it, and a backend cannot be managed by the state it holds. This is a
-   deliberate carve-out against "declared, not clicked" and `infra/README.md` will say so. Test whether `use_lockfile` works on Ceph and write down the answer.
+3. **Hetzner account**, project, API token with read *and* write scope — the click-by-click list is in §1, *The order, step by step*.
+4. **Object Storage subscription and the state bucket, by hand** — the provider has no resource for a bucket, and a backend cannot be managed by the state it
+   holds. This is a deliberate carve-out against "declared, not clicked" and `infra/README.md` will say so. Test whether `use_lockfile` works on Ceph and write
+   down the answer. **Create nothing else in the console** — servers, network and firewalls are all declared.
 
 *(GitHub Environments moved out of this phase. They are no longer a prerequisite for anything, because Flux — not CI — holds the cluster credential; see §4a.)*
 
