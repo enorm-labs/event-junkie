@@ -133,6 +133,130 @@ the design changes.
 
 ## 2. What actually runs — the full inventory
 
+### 2.1 The infrastructure, and what is reachable from where
+
+The boundaries are the point of this diagram. Almost everything is unreachable from the internet; the exceptions are deliberate and few.
+
+```mermaid
+flowchart TB
+    subgraph net["Public internet"]
+        vis["Visitors"]
+        dev["Laptop / phone<br/>any network, changing IP"]
+    end
+
+    subgraph hz["Hetzner Cloud · one project · fsn1 or nbg1, eu-central"]
+        subgraph n1["CAX21 — k3s node · public IPv4 + IPv6"]
+            f1{{"Firewall<br/>80, 443 → world<br/>51820/udp → world<br/>22, 6443 → tunnel only"}}
+            wg(["WireGuard<br/>host service, not a pod"])
+            k3s["k3s<br/>Traefik · cert-manager · Flux<br/>OpenObserve · signal-cli<br/>+ the app workloads"]
+        end
+        subgraph n2["CAX11 — PostgreSQL node · IPv6 only, no public IPv4"]
+            f2{{"Firewall<br/>no public ingress<br/>5432 ← private network only"}}
+            pg[("PostgreSQL 18")]
+        end
+        pn(["Private network<br/>10.0.0.0/16"])
+        os[("Object Storage · S3 · 1 TB<br/>tfstate · o2 · backups")]
+    end
+
+    subgraph ext["External, outbound only"]
+        ghcr["GHCR<br/>images + chart"]
+        le["Let's Encrypt"]
+        hc["healthchecks.io"]
+        sg["Signal"]
+    end
+
+    vis -->|"80 / 443"| f1
+    dev -->|"51820/udp"| f1
+    f1 --> wg
+    f1 --> k3s
+    wg -.->|"22, 6443"| k3s
+    k3s --- pn
+    pn --- f2
+    f2 --> pg
+    k3s -->|"logs, metrics"| os
+    pg -->|"wal-g WAL + base"| os
+    k3s -->|"pull"| ghcr
+    k3s -->|"ACME"| le
+    k3s -->|"conditional heartbeat"| hc
+    k3s -->|"alerts"| sg
+```
+
+**There is no NAT gateway, deliberately.** The PostgreSQL node reaches the internet over **IPv6** for package updates and nothing else. Routing its egress
+through the k3s node as a NAT is possible and is the documented fallback if IPv6-only egress turns out not to work (§1) — but it is cloud-init work that should
+not be written speculatively.
+
+**Note which arrows do not exist.** Nothing reaches the PostgreSQL node from the internet, in either direction, at any port. Nothing reaches `6443` or `22`
+without the tunnel. And no arrow points *into* the cluster from GitHub — that is §2.3.
+
+### 2.2 The access paths — how a request actually gets served
+
+```mermaid
+flowchart LR
+    subgraph public["Public — anyone"]
+        v["Visitor"]
+        dns["Public DNS<br/>event-junkie.de<br/>A/AAAA → node"]
+        v --> dns
+    end
+
+    tr["Traefik :443<br/>TLS terminates here<br/>rate-limit + security headers"]
+    dns --> tr
+
+    tr -->|"/"| web["events-frontend<br/>nginx serving dist/"]
+    tr -->|"/api/**"| bff["events-bff"]
+    tr -->|"detail routes"| seo["SEO sidecar<br/>rewrites head"]
+    seo --> web
+    bff --> db[("PostgreSQL 18<br/>over the private network")]
+
+    imp["events-importer<br/>replicas: 1, Recreate"]
+    imp --> db
+    imp -.->|"scrapes, outbound"| venues["Venue websites"]
+
+    subgraph tunnel["No Ingress route exists — WireGuard only"]
+        adminapi["importer admin API<br/>ClusterIP, no Ingress"]
+        adminui["admin frontend<br/>not deployed at launch"]
+        stg["staging.event-junkie.de<br/>no public DNS record at all"]
+        api6443["k8s API :6443"]
+        ssh["SSH :22"]
+    end
+
+    wgc["WireGuard client<br/>laptop or phone"] --> tunnel
+```
+
+**Same origin is the whole trick.** `/` and `/api` are served by one ingress on one hostname, so there is no CORS configuration anywhere and session cookies
+will be first-party when authentication lands. That property is why the frontend is a container rather than a CDN-hosted static site — ADR-012 §Frontend
+hosting.
+
+**The importer is not in the request path at all.** It is a scheduler that talks outbound to venue sites and inbound to the database; no visitor request ever
+reaches it. Its admin API is a `ClusterIP` service with no `Ingress` object — not merely firewalled, but never routed.
+
+### 2.3 The deploy path — pull, never push
+
+```mermaid
+flowchart LR
+    dev["Developer"] -->|"PR → merge"| gh["GitHub<br/>main"]
+    gh --> ci["Actions<br/>build · test · scan<br/>ubuntu-24.04-arm"]
+    ci -->|"push image + chart"| ghcr[("GHCR")]
+
+    subgraph cluster["Inside the cluster"]
+        flux["Flux<br/>OCIRepository + HelmRelease"]
+        rel["Workloads"]
+        test{{"Helm test hooks"}}
+    end
+
+    ghcr -.->|"Flux polls"| flux
+    gh -.->|"Flux polls"| flux
+    flux --> rel
+    rel --> test
+    test -->|"fail"| rb["Automatic rollback"]
+    flux -->|"commit status"| gh
+```
+
+**Every arrow crossing into the cluster is dashed, and they all start inside it.** That is the entire security argument for Flux: CI holds no cluster
+credential, because there is nothing for it to hold. A repository compromise does not imply a cluster compromise.
+
+It is also why the smoke tests are Helm test hooks rather than a job in Actions — CI cannot reach staging or production, by design, so verification has to run
+where the workloads do.
+
 ### Ours
 
 | Workload          | Shape                    | Replicas      | Notes                                              |
