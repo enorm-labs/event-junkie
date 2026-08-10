@@ -3,9 +3,9 @@
  * Says out loud that the legal pages are not final yet.
  *
  * The contact details are placeholders (§8.3) and the infrastructure the privacy notice describes
- * is proposed rather than built (ADR-012 is still `Proposed`). A legal page that presents either
- * as settled fact is inaccurate — and an inaccurate notice is the defect these pages exist to
- * avoid. Both flags must be `false` before go-live; a unit test keeps them honest.
+ * is decided rather than built (ADR-012 is `Accepted`, but nothing is deployed). A legal page that
+ * presents either as settled fact is inaccurate — and an inaccurate notice is the defect these
+ * pages exist to avoid. Both flags must be `false` before go-live; a unit test keeps them honest.
  *
  * Shared by both language versions of the pages, which is why its copy lives in the message
  * catalogue while the pages around it do not: these are two flat sentences with no inline markup,
