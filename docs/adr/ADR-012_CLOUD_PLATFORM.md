@@ -526,6 +526,11 @@ therefore **not optional** — they are the price of the decision.
 
 ### Deployment shape
 
+> The sketch below is the *platform* shape as decided here. It predates several decisions taken while planning
+> [#260](https://github.com/enorm-labs/event-checker/issues/260) — WireGuard for admin access, Flux for deploys, OpenObserve, and the move to the CAX line — so
+> **[PLATFORM_SETUP.md](../PLATFORM_SETUP.md) §2 is the current picture**, in rendered diagrams. This one is kept because it is what the decision was made
+> against.
+
 ```
            DNS only — registrar or Hetzner DNS. No proxy, no edge, no US processor.
                                         │
