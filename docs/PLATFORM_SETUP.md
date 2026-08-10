@@ -39,32 +39,70 @@ Realistic resident memory, measured in "what it actually uses", not "what the do
 | OTel collector / log shipper                     | ~200 MB     |                                                 |
 | **Total**                                        | **~4.5 GB** | Plus OS ≈ **5.0 GB**                            |
 
-On an 8 GB CX33 that leaves **~3.0 GB**, and the worst spike is a deploy running a second JVM alongside the one it is replacing — about 900 MB — so the floor
+On an 8 GB node that leaves **~3.0 GB**, and the worst spike is a deploy running a second JVM alongside the one it is replacing — about 900 MB — so the floor
 under pressure is still ~2.1 GB free. That is genuine headroom.
 
-**Had ArgoCD been taken instead of Flux, this would have been a CX43.** The margin was that thin, which is worth recording: it was not a close call about GitOps
+**Had ArgoCD been taken instead of Flux, this would have needed the next size up.** The margin was that thin, which is worth recording: it was not a close call about GitOps
 philosophy, it was a close call about whether a JVM gets OOM-killed mid-deploy. Flux does the same job for a quarter of the memory.
 
-### Recommendation
+### What to order
 
-|                            | Type     | vCPU / RAM | € / mo     |                                                                                 |
-|----------------------------|----------|------------|------------|---------------------------------------------------------------------------------|
-| **k3s node**               | **CX33** | 4 / 8 GB   | **8.49**   | As ADR-012 said. §4's decisions are what kept it here                           |
-| Postgres node              | CX23     | 2 / 4 GB   | 5.49       | Unchanged. No public IP.                                                        |
-| Primary IPv4               |          |            | ~1.70      | k3s node only                                                                   |
-| Snapshots                  |          |            | ~2.80      | 20 % of server price, both                                                      |
-| Storage Box BX11           | 1 TB     |            | ~3.81      | `wal-g` target ([#270](https://github.com/enorm-labs/event-checker/issues/270)) |
-| Object Storage             |          |            | ~1–3       | OpenTofu state + OpenObserve data — new since ADR-012                           |
-| **Production**             |          |            | **~23–25** | ADR-012 estimated ~22                                                           |
-| Staging (CX23, all-in-one) |          |            | ~7.20      | Unchanged                                                                       |
-| **Total**                  |          |            | **~31–33** | ADR-012 estimated ~30                                                           |
+> **Amended 2026-08-10: the CX line is unavailable.** ADR-012 and the table above are written against Hetzner's Cost-Optimized `CX` types, which are not
+> orderable at present. The replacement is the **`CAX` (Ampere ARM)** line, and it is an upgrade rather than a compromise — see below.
 
-**ADR-012's cost table holds.** The only line it did not anticipate is object storage, at €1–3, and that is now doing double duty for OpenTofu state and
-observability retention. **No amendment to ADR-012's costs is needed**, and that is entirely a consequence of rejecting ArgoCD.
+| Role | Type | vCPU / RAM / disk | Notes |
+|---------------------|-----------|-------------------|--------------------------------------------------------------|
+| **k3s node** | **CAX21** | 4 ARM / 8 GB / 80 GB | Direct CX33 equivalent. Primary IPv4 + IPv6 |
+| **PostgreSQL node** | **CAX11** | 2 ARM / 4 GB / 40 GB | Direct CX23 equivalent. **No public IPv4** |
+| **Staging** | **CAX11** | 2 ARM / 4 GB / 40 GB | All-in-one. Needs a public IPv4 for the WireGuard endpoint |
+| Private network | — | free | One `/16`, both production servers attached |
+| Firewalls | — | free | Two, one per role |
+| Backups | — | 20 % of server price | Hetzner's automated daily backups, both production servers |
+| **Object Storage** | — | 1 TB inc. | **One subscription, three buckets** — see below |
 
-**The CX43 remains the upgrade path**, not a rejected option: if OpenObserve is replaced by something heavier (ADR-015's trial tests), or if Grafana is added
-alongside it later,
-€7.50/month buys 8 more GB and the design does not otherwise change.
+**Not ordered, and why:** Load Balancer (k3s ServiceLB binds to the node IP on one node) · Volumes (local NVMe is enough until the database outgrows 40 GB) ·
+Floating IPs (for failover between servers, which does not apply) · **Storage Box** (superseded — see below) · Storage Share.
+
+**Keep everything in one location** — Falkenstein or Nuremberg, both in the `eu-central` network zone. Traffic between servers and Object Storage inside that
+zone is free; splitting locations quietly makes it billable.
+
+### Why ARM, and the one thing to check first
+
+- **The development laptop is already arm64**, so local images and production images become the same architecture. That is better parity than the x86 plan, not
+  worse.
+- **GitHub's arm64 runners are generally available and free for public repositories** (`ubuntu-24.04-arm`). That removes the only serious objection — building
+  arm64 images under QEMU emulation, which is punishing for JVM builds. This repository is public, so native builds cost nothing.
+- Every component has arm64 images: k3s, Temurin, PostgreSQL 18, nginx, Traefik, cert-manager, Flux, OpenObserve, `wal-g`.
+
+**Verify `signal-cli-rest-api` publishes an arm64 manifest before committing to it.** It is JVM-based and popular with Home Assistant users, who are
+overwhelmingly on ARM, so it is near-certain — but it is the one component on the list not confirmed.
+
+**The standing risk:** a future dependency that ships amd64-only images. Everything needed today is fine, and if it ever bites, moving to the `CPX` (shared AMD)
+line is a rebuild rather than a redesign — neither the Helm chart nor the OpenTofu changes.
+
+### Object Storage replaces the Storage Box
+
+Hetzner's own storage-selection guide recommends **Object Storage for database backups**, and `wal-g` speaks S3 natively. So one product covers all three
+storage needs rather than two:
+
+| Bucket | Holds |
+|-------------|--------------------------------------------|
+| `…-tfstate` | OpenTofu state |
+| `…-o2` | OpenObserve's Parquet data (ADR-015) |
+| `…-backups` | `wal-g` WAL and base backups ([#270](https://github.com/enorm-labs/event-checker/issues/270)) |
+
+**€4.99/month base, 1 TB storage and 1 TB egress included**, no per-bucket or per-request charge — buckets are free, so use three. That is more than the €1–3
+this document first estimated, but it **deletes the Storage Box line entirely**, so the total barely moves and there is one fewer product to operate.
+
+### On the prices in this document
+
+**Treat every euro figure here as indicative and re-check it in the console before ordering.** Hetzner raised cloud prices twice in 2026 — in April and again on
+15 June — and the withdrawal of the CX line moved the landscape again. The figures above and in ADR-012 were taken from public sources rather than from an
+account, and Hetzner's own pricing tables render client-side and could not be read directly. The *shape* of the decision is robust to a 30 % price move; the
+arithmetic is not.
+
+**The upgrade path remains a single step:** CAX31 (8 vCPU / 16 GB) if OpenObserve fails ADR-015's footprint test, or if Grafana joins it later. Nothing else in
+the design changes.
 
 ---
 
@@ -90,7 +128,7 @@ alongside it later,
 | GitOps / deploy | **Flux** (pull-based); CI builds and pushes only | Decided — §4, §4a                                              |
 | Observability   | **OpenObserve**                                  | ADR-015, *Accepted on trial* — §5                              |
 | Database        | PostgreSQL 18 on its own VM                      | ADR-012                                                        |
-| Backups         | `wal-g` → Storage Box                            | [#270](https://github.com/enorm-labs/event-checker/issues/270) |
+| Backups         | `wal-g` → Object Storage (S3)                    | [#270](https://github.com/enorm-labs/event-checker/issues/270) |
 | Secrets         | **SOPS + age**                                   | Decided — §8                                                   |
 
 ### Deferred, with reasons — §4
@@ -563,7 +601,7 @@ Ordered by dependency. Each step names its issue.
 
 ### Phase B — infrastructure as code — [#260](https://github.com/enorm-labs/event-checker/issues/260)
 
-5. **`infra/` split by lifetime, not environment.** `bootstrap/` holds the DNS zone, Storage Box and SSH key; `environments/{production,staging}/` hold servers,
+5. **`infra/` split by lifetime, not environment.** `bootstrap/` holds the DNS zone, the Object Storage buckets' contents and the SSH key; `environments/{production,staging}/` hold servers,
    network, firewall and records. The zone being outside every environment's blast radius is what makes DNSSEC safe and the destroy/apply cycle honest.
 6. **`hcloud_primary_ip` with delete protection** so a rebuilt server keeps its address and DNS never churns.
 7. **cloud-init**: **WireGuard on the host** (§8a — before anything else, since it is how you get back in), k3s with `--tls-san`, `unattended-upgrades`, SSH
