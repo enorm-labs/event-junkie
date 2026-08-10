@@ -17,11 +17,12 @@ export const BASE_URL = (__ENV.BFF_HOST || 'http://localhost:8080').replace(/\/$
 /**
  * Latency budgets, in milliseconds, for a **local** run against a laptop.
  *
- * These are deliberately not "production SLOs" — there is no production yet (ADR-012 is still
- * Proposed). They are regression detectors: numbers loose enough that an ordinary laptop under an
- * ordinary background load does not trip them, and tight enough that an accidental N+1 query or a
- * dropped index does. Re-baseline them against real infrastructure once something is deployed,
- * and treat that as a deliberate act rather than raising them whenever a run goes red.
+ * These are deliberately not "production SLOs" — there is no production yet (ADR-012 picked the
+ * platform, but nothing is provisioned). They are regression detectors: numbers loose enough that
+ * an ordinary laptop under an ordinary background load does not trip them, and tight enough that
+ * an accidental N+1 query or a dropped index does. Re-baseline them against real infrastructure
+ * once something is deployed, and treat that as a deliberate act rather than raising them whenever
+ * a run goes red.
  */
 export const THRESHOLD_MS = {
     /** Single-row lookups by slug. Indexed, small payload; anything else is a regression. */

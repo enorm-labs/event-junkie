@@ -2,14 +2,19 @@
 
 ## Status
 
-Proposed (2026-08-03)
+**Accepted (2026-08-10) — Option A: Hetzner Cloud (Nuremberg/Falkenstein), k3s + Helm, OpenTofu, PostgreSQL on a dedicated VM with `wal-g` PITR backups.**
+
+Proposed 2026-08-03 · revised 2026-08-05 · accepted 2026-08-10. The recommendation was accepted as written; no fallback was taken, so the frontend-hosting and
+CORS posture below stands unchanged (containerised SPA, same origin as the API). The only substantive edit made at acceptance was to add **Option G — Hetzner
+compute + managed EU Postgres** to the ranked fallbacks, where it had been named as a revisit trigger but omitted from the list.
 
 > Resolves [issue #258](https://github.com/enorm-labs/event-checker/issues/258) — *"Settle the cloud platform"*, the first item in the `v0.2 — Deployable` milestone. This ADR
 > picks
 > the **platform**; the Terraform/OpenTofu layout, the Helm chart, and the CI/CD workflows are follow-up items that depend on it. All prices in this document
 > were checked on **2026-08-03**, and the PaaS / Elastic Beanstalk / App Engine sections were added on **2026-08-05**. They must be re-verified before the money
 > is actually committed — cloud list prices moved twice in 2026 already (see
-> [Hetzner's 15 June 2026 adjustment](https://docs.hetzner.com/general/infrastructure-and-availability/price-adjustment/)).
+> [Hetzner's 15 June 2026 adjustment](https://docs.hetzner.com/general/infrastructure-and-availability/price-adjustment/)). Accepting this ADR commits nothing;
+> the re-check belongs to [#260](https://github.com/enorm-labs/event-checker/issues/260), where servers are actually provisioned.
 >
 > **2026-08-05 revision.** Managed-container platforms priced out at 4–6× the cheapest option, so the PaaS layer was evaluated properly rather than in one
 > paragraph: European PaaS providers are now first-class candidates (Option E1), AWS Elastic Beanstalk is costed separately from Fargate (Option H), and App
@@ -463,7 +468,7 @@ buy managed PostgreSQL.
 
 ## Decision
 
-**Proposed: Option A — Hetzner Cloud (Nuremberg/Falkenstein), k3s + Helm, provisioned with OpenTofu, PostgreSQL on a dedicated VM with `wal-g` PITR backups.**
+**Option A — Hetzner Cloud (Nuremberg/Falkenstein), k3s + Helm, provisioned with OpenTofu, PostgreSQL on a dedicated VM with `wal-g` PITR backups.**
 
 Rationale, against the weighted criteria:
 
@@ -553,28 +558,34 @@ This decision should be **reopened**, not defended, if any of these become true:
 
 - The project takes on **a team, paying customers, or a compliance obligation** (SOC 2, an enterprise customer's security review) — managed services and audit
   trails start earning their price.
-- **Database operations become a recurring source of pain or fear** — the first restore that does not work is the signal. Cheapest fix is Option G: keep Hetzner
-  compute, move Postgres to a managed EU provider (Aiven is EU-owned; Neon has EU regions). The next step up is fallback 2 above — Clever Cloud or Scalingo, and
-  hand over the compute as well.
+- **Database operations become a recurring source of pain or fear** — the first restore that does not work is the signal. That is fallback 1 below: keep Hetzner
+  compute, move Postgres to a managed EU provider. The next step up is fallback 3 — Clever Cloud or Scalingo, and hand over the compute as well.
 - **Evenings spent on the platform exceed evenings spent on the product for two months running.** That is the concrete trigger for the PaaS fallback; €40–90 a
   month is a fair price for that time, and the decision should be made on that evidence rather than pre-emptively either way.
 - **Uptime requirements harden** past what a single-region, single-node k3s cluster can honestly promise.
 - The roadmap pulls in **managed building blocks** — README lists Elasticsearch as "maybe later", and TODO lists Keycloak/auth. If we end up wanting managed
   search, managed identity, and managed queues, the hyperscaler discount on *integration effort* starts to outweigh the compute premium.
 
-**If the recommendation is rejected**, the ranked fallbacks are:
+**The ranked fallbacks**, in the order they should be reached for. This list is not dead prose: the decision was accepted knowing that its one serious risk is
+Postgres operations, and fallback 1 exists so that risk has a cheap answer that does not require reopening the ADR.
 
-1. **Sliplane, or Coolify/Dokku self-hosted on Hetzner** (Option E3) — if the objection is "I don't want to write a Helm chart", not "I don't want to run a
-   database". Same ~€25–35/month, push-to-deploy, German hardware, and it stays on the Hetzner escape path. It does **not** solve Postgres ops.
-2. **Clever Cloud, or Scalingo** (Option E1) — if the objection is ops time in general. French SAS, EU jurisdiction and EU data centres, managed PostgreSQL with
-   automated backups and PITR, native Spring Boot support. ~€60–120/month for production. Scalingo is the safer, more Heroku-like product and has a
-   SecNumCloud-qualified region; Clever Cloud is roughly a third cheaper. **This is the recommended alternative if the ADR's Postgres-ops risk is judged
-   unacceptable** — it is the only fallback that removes that risk without leaving EU jurisdiction.
-3. **GCP Cloud Run + Cloud SQL** (Option C) — the best hyperscaler fit for this shape: no load-balancer line item, free scale-to-zero staging, and worker pools
+1. **Keep Hetzner, move PostgreSQL to a managed EU provider** (Option G) — the *first* thing to try if the Postgres-ops risk materialises, because it is the only
+   fallback that addresses that risk without discarding anything: the Helm chart, the OpenTofu configuration, the containerised SPA and the same-origin `/api`
+   arrangement all survive, and the application changes by one connection string. **Aiven** is EU-owned (Finnish) and keeps the jurisdiction property intact at
+   ~€60–80/month; Neon and Supabase are cheaper but are US companies with EU regions, so they trade jurisdiction for price. The cost is a second vendor, a second
+   DPA, and cross-provider latency on every query — which matters more here than usual, because R2DBC upserts are chatty. Benchmark before committing.
+2. **Sliplane, or Coolify/Dokku self-hosted on Hetzner** (Option E3) — if the objection is "I don't want to write a Helm chart", not "I don't want to run a
+   database". Same ~€25–35/month, push-to-deploy, German hardware, and it stays on the Hetzner escape path. It does **not** solve Postgres ops, so it composes
+   with fallback 1 rather than replacing it.
+3. **Clever Cloud, or Scalingo** (Option E1) — if the objection is ops time in general, compute as well as database. French SAS, EU jurisdiction and EU data
+   centres, managed PostgreSQL with automated backups and PITR, native Spring Boot support. ~€60–120/month for production. Scalingo is the safer, more
+   Heroku-like product and has a SecNumCloud-qualified region; Clever Cloud is roughly a third cheaper. Taking this fallback **inverts the frontend-hosting
+   decision** — the SPA moves to a static host and the CORS cost comes back; see §Frontend hosting.
+4. **GCP Cloud Run + Cloud SQL** (Option C) — the best hyperscaler fit for this shape: no load-balancer line item, free scale-to-zero staging, and worker pools
    now match ADR-008's always-on single-instance scheduler natively. Deploy to `europe-west1`/`europe-west4` (Tier 1) unless German soil is worth ~$25/month.
-4. **AWS Elastic Beanstalk** (Option H) — if AWS is wanted for career or ecosystem reasons but Fargate's floor is not. Roughly half of Fargate at ~$80–100/month
+5. **AWS Elastic Beanstalk** (Option H) — if AWS is wanted for career or ecosystem reasons but Fargate's floor is not. Roughly half of Fargate at ~$80–100/month
    because a single-instance environment needs neither an ALB nor a NAT Gateway, and RDS is the best managed Postgres in this document.
-5. **AWS Fargate** (Option B) last for *this* stage of the project, but first the moment breadth of managed services or enterprise credibility becomes the
+6. **AWS Fargate** (Option B) last for *this* stage of the project, but first the moment breadth of managed services or enterprise credibility becomes the
    binding constraint.
 
 Explicitly **not** recommended at any position: **Heroku** (production sizing costs as much as Fargate for a fraction of the platform, and its EU region is
@@ -609,7 +620,8 @@ Hetzner now does not close that door; the application is containers and Postgres
 - **Negative**: **We own PostgreSQL.** Backups, PITR, restore verification, and minor-version upgrades are ours. We also own the k3s control plane, OS patching,
   and node upgrades. No managed observability. Single region and, initially, a single node — a node failure is an outage. Email-only support.
 - **Backups are the load-bearing mitigation** (`wal-g` or `pgBackRest` streaming to Hetzner Storage Box, plus Hetzner server snapshots). A **restore drill must
-  be part of the go-live checklist and repeated on a schedule** — an untested backup is not a backup. This is the single highest-risk item created by this ADR.
+  be part of the go-live checklist and repeated on a schedule** — an untested backup is not a backup. This is the single highest-risk item created by this ADR,
+  and the ADR was accepted on the understanding that a failed drill triggers fallback 1 (managed EU Postgres) rather than a round of heroics.
 - **Single-instance importer**: the Helm chart must set `replicas: 1` with `strategy: Recreate` for `events-importer` so a rolling deploy never runs two
   schedulers. Multi-replica operation stays blocked on the `SELECT … FOR UPDATE SKIP LOCKED` work noted in ADR-008.
 - **Admin API exposure**: `events-importer`'s admin endpoints must not be routed publicly by the ingress — cluster-internal service only, reachable via
@@ -626,12 +638,19 @@ Hetzner now does not close that door; the application is containers and Postgres
 - **Frontend**: adds a `Dockerfile` and an nginx config to `events-frontend/`, and the SPA must call the API via a relative `/api` path so one image serves
   every environment.
 - **Cost re-check**: Hetzner raised prices in 2026 and may again. Re-verify the numbers in this ADR at go-live and revisit annually.
-- **The PaaS exit is pre-decided, not pre-committed**: if ops time becomes the binding constraint, the move is Clever Cloud or Scalingo (EU jurisdiction,
-  managed Postgres with PITR), and the SPA moves to a static host at that point rather than staying a container — see the fallback ranking. Keeping the
-  application to "a Docker image plus a Postgres URL", with no Kubernetes-specific code, is what keeps that exit cheap; the Helm chart is the only artifact
-  thrown away.
-- **Follow-ups unblocked**: register `event-junkie.de`; write the OpenTofu configuration; write the Helm chart; add release/deploy workflows; build the go-live
-  checklist (legal, security, SEO, monitoring, alerting, dashboards, backups, recovery).
+- **Both exits are pre-decided, not pre-committed**, and they are different sizes. If *the database* is the problem, fallback 1 moves Postgres to a managed EU
+  provider and nothing else changes. If *ops time in general* is the problem, the move is Clever Cloud or Scalingo (EU jurisdiction, managed Postgres with PITR),
+  and the SPA moves to a static host at that point rather than staying a container — see the fallback ranking. Keeping the application to "a Docker image plus a
+  Postgres URL", with no Kubernetes-specific code, is what keeps both exits cheap; the Helm chart is the only artifact thrown away, and only by the second one.
+- **Follow-ups unblocked** — the rest of the `v0.2 — Deployable` milestone, which was blocked on this decision and is not any more:
+  [#259](https://github.com/enorm-labs/event-checker/issues/259) register `event-junkie.de` ·
+  [#260](https://github.com/enorm-labs/event-checker/issues/260) the OpenTofu configuration ·
+  [#261](https://github.com/enorm-labs/event-checker/issues/261) the Helm chart ·
+  [#262](https://github.com/enorm-labs/event-checker/issues/262) containerise the frontend ·
+  [#263](https://github.com/enorm-labs/event-checker/issues/263) exercise both on k3d ·
+  [#264](https://github.com/enorm-labs/event-checker/issues/264) the release and deploy workflows ·
+  [#265](https://github.com/enorm-labs/event-checker/issues/265) the staging stage. The go-live checklist (legal, security, SEO, monitoring, alerting,
+  dashboards, backups, recovery) follows in `v1.0`.
 
 ## References
 
