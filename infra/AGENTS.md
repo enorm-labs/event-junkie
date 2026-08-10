@@ -121,6 +121,9 @@ argument behind it. If you contradict one of those documents, change the documen
   elsewhere would plan a rebuild during an unrelated apply. Decide with `check-capacity.sh`, then edit the one line.
 - **Locking is off.** `use_lockfile` is unverified on Hetzner's Ceph, so it sits commented out in all three `backend.tf` files. Do not turn it on speculatively
   — test it, then write the answer into `README.md`.
+- **`.terraform.lock.hcl` is committed and Dependabot maintains it** (`opentofu` ecosystem, all four directories grouped into one PR). Do not delete a lock
+  file, and do not hand-edit one — regenerate with `tofu providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_arm64` so CI, the ARM
+  nodes and an arm64 laptop all stay covered.
 
 ## If the PostgreSQL node's IPv6-only egress fails
 

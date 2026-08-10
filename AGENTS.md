@@ -589,12 +589,22 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       "no runs were created".
     - With CI unavailable, the honest fallback is a local `/verify` against the merged commit — and say in the PR that CI never ran, rather than implying a
       green build.
-- **Dependabot** (`.github/dependabot.yml`) checks for Gradle dependency updates weekly. Updates are grouped by ecosystem (e.g. `kotlin`, `spring-boot`,
-  `spring-modulith`, `testcontainers`, `jackson`, `springdoc`, `kotest`, `postgresql`, `flyway`, `reactor`, `detekt`, `owasp`,
-  `gradle-plugins`)
-  so that related dependencies are bundled into a single PR per group. **Gradle only** — npm, GitHub Actions and the `hetznercloud/hcloud` provider pin in
-  `infra/` are all outside its scope, so those are bumped by hand: `/update-dependencies` for the first two, and for `infra/` an edit to `versions.tf` followed
-  by `tofu init -upgrade` in each stack.
+- **Dependabot** (`.github/dependabot.yml`) runs weekly across **four ecosystems**. Everything is grouped, because the alternative on a project this size is a
+  pull-request queue nobody reads.
+    - **`gradle`** (`/`) — grouped by library family: `kotlin`, `spring-boot`, `spring-modulith`, `testcontainers`, `jackson`, `springdoc`, `kotest`,
+      `postgresql`, `flyway`, `reactor`, `detekt`, `owasp`, `gradle-plugins`.
+    - **`npm`** (`/events-frontend`) — `versioning-strategy: increase`, which is what preserves the frontend's exact-pin convention: Dependabot rewrites the pin
+      rather than widening it into a `^` range. Five families (`vue`, `linting`, `testing`, `typescript`, `tailwind`) keep toolchains that must move together in
+      one PR, and `frontend-minor-patch` sweeps up the rest. **A dependency joins the first group it matches**, so the families must stay above the sweep in the
+      file. Majors outside a family stay ungrouped deliberately — a Vite or Vue major deserves its own PR.
+    - **`github-actions`** (`/`) — one group for all of them. `/` here does not mean the repository root in the usual sense; for this ecosystem Dependabot
+      always reads `.github/workflows/`.
+    - **`opentofu`** (`/infra/**`) — **not `terraform`**. They are separate ecosystems with separate registries, and the lock files there record providers as
+      `registry.opentofu.org/…`, which the `terraform` updater would rewrite to `registry.terraform.io`. All four directories are grouped into one PR, since a
+      single provider release otherwise opens four identical ones. Expect it to change **`.terraform.lock.hcl` and not `versions.tf`**: the `~> 1.68` constraint
+      already permits 1.69, so the constraint is left alone until 2.0 while the lock file — which decides the version actually used — moves.
+    - `/update-dependencies` still exists and is not redundant: Dependabot proposes one bump at a time, while that skill does a deliberate sweep across both
+      stacks and knows which Gradle versions are BOM-managed and must **not** be pinned.
 - **Conventional Commits** — Commit messages follow the [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) spec. Reusable prompts are
   available at `.github/prompts/` for commit messages, squash commit messages, and code reviews.
 - **Release notes** (`.github/release.yml`) — GitHub's automatically generated release notes group merged PRs into categories (🎪 New Event Sources, ✨ Features,
