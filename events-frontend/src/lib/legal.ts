@@ -34,11 +34,12 @@ export const CONTROLLER = {
 export const CONTACT_DETAILS_ARE_PROVISIONAL = true
 
 /**
- * The deployment the privacy notice describes (Cloudflare in front of Hetzner) is **decided but
- * not built** — ADR-012 was accepted on 2026-08-10, which settled the platform and changed nothing
- * about what is running. Nothing is deployed. Until it exists, the notice describes an intent, and
- * says so. Set to `false` when the platform is actually provisioned and the notice has been
- * re-checked against what runs — accepting the ADR is not that moment.
+ * The deployment the privacy notice describes (Hetzner in Germany, nothing in front of it) is
+ * **decided but not built** — ADR-012 was accepted on 2026-08-10 and amended the same day to drop
+ * Cloudflare, which settled the architecture and changed nothing about what is running. Nothing is
+ * deployed. Until it exists, the notice describes an intent, and says so. Set to `false` when the
+ * platform is actually provisioned and the notice has been re-checked against what runs — accepting
+ * the ADR is not that moment.
  */
 export const INFRASTRUCTURE_IS_PROPOSED = true
 

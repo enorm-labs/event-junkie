@@ -62,8 +62,8 @@ rendering; it is an argument *against* anything computed at build time.
 
 ### The deployment it has to fit
 
-[ADR-012](ADR-012_CLOUD_PLATFORM.md) puts the frontend in an nginx container serving a static `dist/`, behind Traefik on Hetzner k3s, behind Cloudflare, with
-processing in Germany. It explicitly assumed the frontend has "no server runtime of its own".
+[ADR-012](ADR-012_CLOUD_PLATFORM.md) puts the frontend in an nginx container serving a static `dist/`, behind Traefik on Hetzner k3s, with all processing in
+Germany and — since its 2026-08-10 amendment — nothing in front of the cluster at all. It explicitly assumed the frontend has "no server runtime of its own".
 
 ### Criteria
 
@@ -157,11 +157,15 @@ It is also worth doing on its own merits, independent of any injector: it closes
 today and the second finding of the Google SEO-guide review.
 
 **At launch — the transport.** The component that intercepts the response and rewrites the head. This genuinely depends on ADR-012 existing, and building it
-against a guessed deployment would be waste. Leading candidate is a **Cloudflare Worker using `HTMLRewriter`**: Cloudflare is already in the request path, the
-API streams rather than buffers, it needs nothing new in the cluster, and it fits the free plan. The alternative is a small sidecar in k3s, which costs a little
-more operationally and keeps all processing in Germany.
+against a guessed deployment would be waste.
 
-**Do not prototype the transport in Vite dev middleware.** The production shape is a Worker or a sidecar; a dev-server approximation would be thrown away.
+> **Settled 2026-08-10** ([#412](https://github.com/enorm-labs/event-checker/issues/412)). This was written as a choice between a **Cloudflare Worker using
+> `HTMLRewriter`** — then the leading candidate, because Cloudflare was already in the request path and it fit the free plan — and **a small sidecar in k3s**,
+> noted as costing "a little more operationally" while keeping "all processing in Germany". ADR-012's amendment removed Cloudflare from the architecture, so the
+> Worker is not available and **the transport is the sidecar**. The question closes in favour of the residency-clean option that this ADR had already
+> identified; the operational cost it named is now simply the price.
+
+**Do not prototype the transport in Vite dev middleware.** The production shape is the sidecar; a dev-server approximation would be thrown away.
 
 ### 4. Full SSR (Option D) is deferred, with a named trigger
 
@@ -184,8 +188,9 @@ exactly as they are.
   mechanism, and it needs a test asserting the two produce the same values for the same route.
 - **Detail routes gain a per-request BFF lookup** in front of the HTML response. It needs caching and a timeout, and it must fail open — a slow or failing BFF
   must yield the unmodified shell, never an error page.
-- **The transport is undecided until ADR-012 is executed.** If it lands on the Cloudflare Worker, that is HTML assembly by a processor already in the path
-  rather than a new one — no new data category — but §7.7 still requires it be raised as a change rather than assumed.
+- **The transport is a sidecar in the cluster** (settled 2026-08-10). The privacy consequence is the mild one: HTML assembly happens on the same German
+  infrastructure that already serves every request, so there is no new processor and no new data category. §7.7 still requires it be raised as a change rather
+  than assumed.
 
 **What stays as it is, deliberately:**
 
@@ -209,5 +214,6 @@ exactly as they are.
   currently works
 - [LEGAL.md](../LEGAL.md) §7.7 — the standing check any new processor or edge processing must clear
 - [Google's rendering delay](https://www.onely.com/blog/googles-rendering-delay-5-seconds/) · [JavaScript SEO in 2026](https://nadiamohamed.me/insights/javascript-seo/) · [crawl priority and render queue](https://seolinkscan.com/blog/javascript-seo-guide-2026)
-- [Cloudflare
-  `HTMLRewriter`](https://developers.cloudflare.com/workers/runtime-apis/html-rewriter/) · [Google Search Central — dynamic rendering](https://developers.google.com/search/docs/crawling-indexing/javascript/dynamic-rendering)
+- [Google Search Central — dynamic rendering](https://developers.google.com/search/docs/crawling-indexing/javascript/dynamic-rendering) · [Cloudflare
+  `HTMLRewriter`](https://developers.cloudflare.com/workers/runtime-apis/html-rewriter/) — kept as the reference implementation of streaming head rewriting; the
+  sidecar does the same job in the cluster

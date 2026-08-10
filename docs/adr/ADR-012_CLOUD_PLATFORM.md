@@ -4,9 +4,39 @@
 
 **Accepted (2026-08-10) — Option A: Hetzner Cloud (Nuremberg/Falkenstein), k3s + Helm, OpenTofu, PostgreSQL on a dedicated VM with `wal-g` PITR backups.**
 
-Proposed 2026-08-03 · revised 2026-08-05 · accepted 2026-08-10. The recommendation was accepted as written; no fallback was taken, so the frontend-hosting and
-CORS posture below stands unchanged (containerised SPA, same origin as the API). The only substantive edit made at acceptance was to add **Option G — Hetzner
-compute + managed EU Postgres** to the ranked fallbacks, where it had been named as a revisit trigger but omitted from the list.
+Proposed 2026-08-03 · revised 2026-08-05 · accepted 2026-08-10 · **amended 2026-08-10 (Cloudflare removed — see below)**. The recommendation was accepted as
+written; no fallback was taken, so the frontend-hosting and CORS posture below stands unchanged (containerised SPA, same origin as the API). The only
+substantive edit made at acceptance was to add **Option G — Hetzner compute + managed EU Postgres** to the ranked fallbacks, where it had been named as a revisit
+trigger but omitted from the list.
+
+> **Amendment, 2026-08-10 — no Cloudflare. DNS and TLS are in-house.**
+> ([#412](https://github.com/enorm-labs/event-checker/issues/412))
+>
+> As first written, this ADR put Cloudflare's free plan in front for DNS, TLS, CDN and rate limiting, and flagged one nuance: strictly German-only processing
+> would mean *"either dropping Cloudflare's proxy mode or buying its EU data-localisation add-on"*. **The second option does not exist at this tier.**
+> Cloudflare's Data Localization Suite is an **Enterprise-only add-on, custom-priced through direct sales** — not something a €30/month project buys. That left a
+> straight either/or, and the strict reading of criterion 5 won: no US processor in the request path at all.
+>
+> **The platform decision is untouched.** Hetzner, k3s, Helm and OpenTofu all stand. Only the edge changes: DNS is served by the registrar or Hetzner DNS, and
+> **Traefik terminates TLS in the cluster** via cert-manager or its built-in ACME client. Everything in this document about compute, database, cost and fallbacks
+> reads as before.
+>
+> **What it costs.** Three things Cloudflare was doing for free now need answers, and two of them are not free:
+>
+> - **Edge DDoS and rate limiting** — gone. What remains is the existing `PerHostThrottlingFilter`, a Traefik rate-limit middleware, and Hetzner's volumetric
+>   protection. This *removes* the progress this ADR claimed on
+>   [#268](https://github.com/enorm-labs/event-checker/issues/268) rather than making it; #268 grows accordingly.
+> - **Edge access control for the admin UI** — Cloudflare Access was named below as "the cheapest fit". It is no longer available, so the alternatives already
+>   listed there (an ingress IP allowlist, or a basic-auth middleware) become the answer.
+> - **CDN caching of the SPA assets** — no longer applies. At this scale it does not matter: one nginx, a few MB, and Hetzner includes 20 TB of egress.
+>
+> **What it buys.** One fewer processor, one fewer DPA, no SCCs and no transfer mechanism to name — [#275](https://github.com/enorm-labs/event-checker/issues/275)
+> drops to a single AVV with Hetzner. It also settles an open question in
+> [ADR-014](ADR-014_RENDERING_STRATEGY.md): the head-rewriting transport was undecided between a Cloudflare Worker and an in-cluster sidecar, and is now the
+> sidecar — the option ADR-014 itself noted "keeps all processing in Germany".
+>
+> **One thing it makes harder, not easier.** Behind Cloudflare the origin saw a proxy IP. Without it, **Traefik and nginx see real client IPs**, so log
+> truncation and retention become more load-bearing, not less. See [LEGAL.md](../LEGAL.md) §7.5, which was rewritten for this.
 
 > Resolves [issue #258](https://github.com/enorm-labs/event-checker/issues/258) — *"Settle the cloud platform"*, the first item in the `v0.2 — Deployable` milestone. This ADR
 > picks
@@ -49,8 +79,9 @@ manual event entry). It is not built yet, but it is close enough to change two t
 - **It forces the admin-API exposure question that would otherwise be deferred.** The importer's admin API must not be public (below), and the current answer is
   `kubectl port-forward`. A browser-based admin UI either runs locally against that port-forward — free, fine for one developer, and the launch answer — or it
   gets deployed, and then it needs an access-control mechanism *at the edge* before the planned authentication work lands. Platforms differ here: Cloud Run has
-  IAM/IAP for exactly this, Hetzner + Traefik needs Cloudflare Access (free for a handful of users), an IP allowlist, or a basic-auth middleware, and most PaaS
-  options offer nothing below the application layer. This is a small point in favour of the recommendation only insofar as Cloudflare is already in the design.
+  IAM/IAP for exactly this, Hetzner + Traefik needs an ingress IP allowlist or a basic-auth middleware, and most PaaS options offer nothing below the application
+  layer. *(As first drafted this paragraph named Cloudflare Access as the cheap fit for Hetzner. The 2026-08-10 amendment removed Cloudflare, so the two Traefik
+  alternatives are now the answer rather than the fallback.)*
 
 Three properties of `events-importer` constrain the platform choice more than anything else:
 
@@ -496,15 +527,16 @@ therefore **not optional** — they are the price of the decision.
 ### Deployment shape
 
 ```
-                     Cloudflare (DNS, TLS, CDN, WAF/rate limiting — free plan)
+           DNS only — registrar or Hetzner DNS. No proxy, no edge, no US processor.
                                         │
                             ┌───────────┴────────────┐
                             │   Hetzner CX33 (k3s)   │   Falkenstein / Nuremberg
                             │  ┌──────────────────┐  │
-                            │  │ Traefik ingress  │  │
+                            │  │ Traefik ingress  │  │   terminates TLS (cert-manager / ACME)
                             │  │   /      → web   │  │   nginx serving Vite dist/
                             │  │   /api   → bff   │  │   events-bff       (N replicas)
                             │  │  (admin: private)│  │   events-importer  (exactly 1)
+                            │  │  rate-limit mw   │  │   + PerHostThrottlingFilter in the BFF
                             │  └──────────────────┘  │
                             └───────────┬────────────┘
                                         │ private network (no public IP)
@@ -543,14 +575,22 @@ Three things to get right, because a containerised SPA is easy to ship subtly br
 
 **On a PaaS, invert this.** The reasoning above holds because a container on Hetzner costs cents. On a per-GB-RAM PaaS an nginx serving 3 MB of assets is billed
 like any other container — €28.80/month on Scalingo, $25 on Render — for work a CDN does for free. So if any Option E fallback is taken, host the SPA as a
-static site instead (Render, DigitalOcean and Northflank include static sites at no charge; Scalingo and Clever Cloud do not, so use Cloudflare Pages or a
-Hetzner Object Storage bucket + Cloudflare) and pay the CORS cost: an explicit `Access-Control-Allow-Origin` allowlist on the BFF per environment, plus
+static site instead (Render, DigitalOcean and Northflank include static sites at no charge; Scalingo and Clever Cloud do not, so use a Hetzner Object Storage
+bucket) and pay the CORS cost: an explicit `Access-Control-Allow-Origin` allowlist on the BFF per environment, plus
 `SameSite=None; Secure` cookies once authentication lands. That is a real but bounded amount of configuration, and it is the correct trade at PaaS prices —
 roughly €30/month of savings against an hour of CORS setup.
 
-Put **Cloudflare in front** (free plan, proxied DNS) for TLS, edge caching of the static assets, and rate limiting / DDoS protection — which also makes progress
-on the "Protect the public BFF API (rate limiting, DDoS)" backlog item. Note the residency nuance: Cloudflare terminates TLS at its edge, so if strictly
-German-only processing is ever required, either drop Cloudflare's proxy mode or buy its EU data-localisation add-on.
+**Nothing sits in front** (amended 2026-08-10, [#412](https://github.com/enorm-labs/event-checker/issues/412)). DNS is served by the registrar or Hetzner DNS and
+resolves straight to the k3s node; **Traefik terminates TLS** in the cluster, via cert-manager or Traefik's own ACME client. Every byte of every request is
+processed in Germany by a German controller and a German processor, which is the strongest reading of criterion 5 and the reason the option was taken.
+
+The cost is that the edge was doing three jobs and now nobody is:
+
+- **Rate limiting and DDoS** — a Traefik rate-limit middleware plus the BFF's existing `PerHostThrottlingFilter`, over Hetzner's volumetric protection. This is
+  now work rather than a free by-product, and it belongs to [#268](https://github.com/enorm-labs/event-checker/issues/268).
+- **TLS certificates** — cert-manager or Traefik ACME, which the Helm chart ([#261](https://github.com/enorm-labs/event-checker/issues/261)) must provision.
+- **CDN caching of the SPA bundle** — not replaced, and not worth replacing. One nginx serving a few content-hashed megabytes to Berlin-scale traffic, with 20 TB
+  of egress included, does not need a CDN. Revisit if the audience stops being local.
 
 ### When to revisit
 
@@ -626,9 +666,9 @@ Hetzner now does not close that door; the application is containers and Postgres
   schedulers. Multi-replica operation stays blocked on the `SELECT … FOR UPDATE SKIP LOCKED` work noted in ADR-008.
 - **Admin API exposure**: `events-importer`'s admin endpoints must not be routed publicly by the ingress — cluster-internal service only, reachable via
   `kubectl port-forward` or, later, behind the planned authentication. **The planned admin frontend inherits this**: at launch it runs locally against a
-  port-forwarded admin API and is not deployed at all; the moment it *is* deployed, it needs edge access control ahead of the application-level auth work —
-  Cloudflare Access on the free plan is the cheapest fit given Cloudflare is already in front, with an ingress IP allowlist or basic-auth middleware as
-  alternatives. Do not route either the admin UI or the admin API publicly on the assumption that "nobody knows the URL".
+  port-forwarded admin API and is not deployed at all; the moment it *is* deployed, it needs access control ahead of the application-level auth work — an
+  ingress IP allowlist or a Traefik basic-auth middleware, since the 2026-08-10 amendment removed Cloudflare Access from the options. Do not route either the
+  admin UI or the admin API publicly on the assumption that "nobody knows the URL".
 - **IaC**: use the `hetznercloud/hcloud` OpenTofu/Terraform provider for servers, networks, firewalls, and volumes; keep state in Hetzner Object Storage (S3
   API) or Terraform Cloud. This unblocks the "Infrastructure as code" backlog item.
 - **CI/CD**: GitHub Actions cannot use OIDC against Hetzner, so deploys authenticate with a scoped kubeconfig or deploy key held as a repository secret, rotated
@@ -637,6 +677,12 @@ Hetzner now does not close that door; the application is containers and Postgres
   item) or an external SaaS free tier. Alerting must exist before launch, not after the first outage.
 - **Frontend**: adds a `Dockerfile` and an nginx config to `events-frontend/`, and the SPA must call the API via a relative `/api` path so one image serves
   every environment.
+- **DNS and TLS are ours** (2026-08-10 amendment): DNS at the registrar or Hetzner DNS, and Traefik terminates TLS in the cluster via cert-manager or its ACME
+  client. The Helm chart must provision the issuer and the certificate, and a certificate that fails to renew is now an outage nobody else notices first.
+  Hetzner DNS has a community Terraform provider, so it can live alongside the rest of the IaC.
+- **Real client IPs reach the origin** (2026-08-10 amendment). With no proxy in front, Traefik and nginx see the actual address rather than an edge IP. That
+  makes the four open logging decisions in [LEGAL.md](../LEGAL.md) §7.5 — whether to log IPs at all, truncation, retention, and where retention is enforced —
+  load-bearing rather than a formality, and they must be settled before launch, not after.
 - **Cost re-check**: Hetzner raised prices in 2026 and may again. Re-verify the numbers in this ADR at go-live and revisit annually.
 - **Both exits are pre-decided, not pre-committed**, and they are different sizes. If *the database* is the problem, fallback 1 moves Postgres to a managed EU
   provider and nothing else changes. If *ops time in general* is the problem, the move is Clever Cloud or Scalingo (EU jurisdiction, managed Postgres with PITR),
