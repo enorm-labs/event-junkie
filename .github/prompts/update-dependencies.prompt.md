@@ -143,6 +143,13 @@ If the build fails:
 
 The frontend is a standalone npm project — not part of the Gradle build. Update it separately.
 
+> **Dependabot also watches this now** (`npm`, weekly, grouped — see `.github/dependabot.yml`), so many of these bumps will already be sitting in open PRs.
+> Check before starting: duplicating one means a conflict for whichever lands second. This skill stays useful for the sweep Dependabot cannot do — taking
+> everything at once, deciding a major deliberately, and verifying the whole frontend afterwards rather than per-package.
+>
+> Dependabot is configured with `versioning-strategy: increase` precisely so it keeps the exact pins described below. If you ever see a `^` or `~` appear in
+> `package.json`, that setting has been lost, not a convention that changed.
+
 ### Step 7: Check for Outdated Frontend Dependencies
 
 ```bash

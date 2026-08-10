@@ -50,3 +50,92 @@ updates:
       owasp:
         patterns:
           - "org.owasp*"
+
+  # The frontend pins every version exactly — no `^` or `~` anywhere in package.json, which is a
+  # deliberate convention (see .github/prompts/update-dependencies.prompt.md). `increase` is what
+  # preserves it: Dependabot rewrites the pin rather than widening it into a range.
+  #
+  # 45 exact pins would be 45 pull requests a week ungrouped, so the toolchains that have to move
+  # together are grouped by family, and everything else is swept up by `frontend-minor-patch`.
+  # A dependency lands in the *first* group it matches, so the families must stay above the sweep.
+  # Majors outside a family stay ungrouped on purpose: a Vite or Vue major deserves its own PR.
+  - package-ecosystem: "npm"
+    directory: "/events-frontend"
+    schedule:
+      interval: "weekly"
+    versioning-strategy: "increase"
+    groups:
+      vue:
+        patterns:
+          - "vue"
+          - "vue-router"
+          - "vue-i18n"
+          - "@vue/*"
+          - "@vitejs/plugin-vue"
+          - "@intlify/*"
+      linting:
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "@eslint/*"
+          - "oxlint"
+          - "oxfmt"
+          - "@vitest/eslint-plugin"
+      testing:
+        patterns:
+          - "vitest"
+          - "@vitest/coverage-v8"
+          - "@playwright/*"
+          - "@axe-core/*"
+          - "jsdom"
+      typescript:
+        patterns:
+          - "typescript"
+          - "vue-tsc"
+          - "@types/*"
+          - "@tsconfig/*"
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+          - "tailwind-merge"
+          - "tw-animate-css"
+      frontend-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Keeps the `uses:` pins in .github/workflows/ current. `/` is correct here and does not mean the
+  # repository root in the usual sense — for this ecosystem Dependabot always reads .github/workflows.
+  # One group, because an action bump is a one-line change and fourteen separate PRs for fourteen
+  # actions is how people learn to ignore Dependabot.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  # `opentofu`, not `terraform`. They are separate ecosystems with separate registries, and the
+  # lock files in infra/ record providers as `registry.opentofu.org/...` — the `terraform`
+  # updater would rewrite them to `registry.terraform.io` and churn every one of them.
+  #
+  # What this actually produces: `versions.tf` pins `~> 1.68`, which already permits 1.69, so
+  # Dependabot leaves the constraint alone until 2.0. It updates `.terraform.lock.hcl` instead,
+  # which is the file that decides the version actually used — and it preserves the platforms
+  # already recorded there (linux_amd64, linux_arm64, darwin_arm64). That is the useful half.
+  - package-ecosystem: "opentofu"
+    directories:
+      - "/infra/bootstrap"
+      - "/infra/environments/*"
+      - "/infra/modules/*"
+    schedule:
+      interval: "weekly"
+    groups:
+      # One PR for all four directories. Without this a single provider release opens four,
+      # each bumping the same version in a different lock file.
+      opentofu:
+        patterns:
+          - "*"
