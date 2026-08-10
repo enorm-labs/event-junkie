@@ -138,23 +138,20 @@ const { t } = useI18n()
     <section>
       <h2>5. Who else is involved</h2>
       <p>
-        We sell nothing, and we share nothing for advertising. Data is disclosed only to the service
-        providers needed to run the site, each of them a processor bound by a contract under Art. 28
-        GDPR:
+        We sell nothing, and we share nothing for advertising. Data is disclosed to exactly one
+        service provider, a processor bound by a contract under Art. 28 GDPR:
       </p>
       <ul>
         <li>
           <strong>Hosting</strong> — Hetzner Online GmbH, Gunzenhausen, Germany. Servers are located
           in Germany; no transfer outside the EU is involved.
         </li>
-        <li>
-          <strong>Content delivery and attack protection</strong> — Cloudflare. Traffic is routed
-          through Cloudflare so the site stays reachable and resists denial-of-service attacks,
-          which means Cloudflare processes your IP address. Cloudflare is a US company; the transfer
-          is covered by the safeguards Cloudflare offers for EU customers, and we will name the
-          specific mechanism in force here once the contract is concluded.
-        </li>
       </ul>
+      <p>
+        There is no content delivery network, no edge provider and no traffic proxy in front of the
+        site. Your request reaches our servers in Germany directly, so no third country is involved
+        in delivering this site to you and there is no transfer mechanism to disclose.
+      </p>
       <p>
         If you contact us by email, or open an issue on GitHub, that data is processed to handle
         your request (Art. 6 (1) (f), or Art. 6 (1) (b) where it concerns a contract). GitHub is

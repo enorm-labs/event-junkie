@@ -100,8 +100,14 @@ const PRIVACY_ELEMENTS: Element[] = [
     en: /legitimate interest is operating/i,
     de: /berechtigtes Interesse ist der Betrieb/i,
   },
-  { what: 'recipients', en: /Hetzner.*Cloudflare/s, de: /Hetzner.*Cloudflare/s },
-  { what: 'third-country transfer', en: /US company/, de: /US-Unternehmen/ },
+  // Hetzner is the only Art. 28 processor since ADR-012's 2026-08-10 amendment dropped Cloudflare.
+  // The second half asserts the *absence* deliberately: a CDN reappearing in front of the site is a
+  // new recipient and a new third country, and it must not be able to arrive without this failing.
+  { what: 'recipients', en: /Hetzner/, de: /Hetzner/ },
+  { what: 'no edge provider in front of the origin', en: /no content delivery network/i, de: /kein Content-Delivery-Netzwerk/i },
+  // GitHub, not a processor: the notice still has to address a third country, because choosing to
+  // open an issue rather than write an email sends data to a US company.
+  { what: 'third-country transfer — GitHub only', en: /US company/, de: /US-Unternehmen/ },
   {
     what: 'retention period',
     en: /deleted after seven days/i,

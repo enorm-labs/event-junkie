@@ -145,16 +145,22 @@ detail — escalate rather than implement.
 
 The notice must state truthfully which logs hold personal data, what is in them, and for how long. Four decisions remain — whether Traefik and the nginx
 container log real client IPs at all, whether any logged IP is truncated, the retention period per log stream, and where retention is actually enforced. They
-depend on infrastructure that does not exist yet; see §14.
+depend on infrastructure that does not exist yet; see §14. **They became more load-bearing on 2026-08-10**: with Cloudflare removed from the architecture there
+is no proxy between the visitor and the origin, so these four are the *only* thing standing between a request and a real IP address on disk.
 
 What is already settled and must not drift:
 
 - **The Spring applications log no IP addresses.** `RequestLoggingFilter` logs `METHOD /path -> status (Nms)`. **Never add the client IP to it.** It is IP-free
   today by design; this is exactly the class of change the `AGENTS.md` reminder exists to catch.
-- **"Do nothing" is not a neutral default.** Traefik's access log is *off* by default; nginx's is *on*. Behind Cloudflare the origin sees a proxy IP, not the
-  visitor's — but the innocuous "restore the real client IP so logs are useful" change silently flips that.
-- **Do not claim server logs contain no personal data.** Even without real IPs, a timestamp plus request line could be correlated with Cloudflare's records, and
-  Cloudflare is our own processor — "reasonably likely to be used" in the sense of *Breyer* (C-582/14).
+- **"Do nothing" is not a neutral default, and since 2026-08-10 it is the *unsafe* default.** Traefik's access log is *off* by default; nginx's is *on*. This
+  paragraph used to add that the origin only ever saw a Cloudflare proxy IP, so the exposure arrived by an explicit "restore the real client IP" change.
+  [ADR-012's amendment](adr/ADR-012_CLOUD_PLATFORM.md) removed Cloudflare, so **there is no proxy and the origin sees the visitor's real address**. nginx will
+  therefore write real client IPs to disk from the first request unless its access log is configured not to. Nobody has to change anything for that to happen —
+  which is the reverse of the situation this note was originally written for.
+- **Do not claim server logs contain no personal data.** A dynamic IP address held by the operator of an online service is personal data — *Breyer* (C-582/14) —
+  so a log line carrying one needs no correlation argument to qualify. The earlier version of this bullet reasoned that a timestamp plus request line could be
+  correlated with Cloudflare's own records; that route is gone with Cloudflare, and it has been replaced by the more direct problem of holding the address
+  itself. Truncation is now the lever that decides the answer, which is why it is one of the four open decisions rather than an implementation detail.
 - **The retention period in the notice must be the one actually configured.** A stated period that rotation does not enforce is a worse defect than a longer
   honest one.
 
@@ -280,8 +286,10 @@ The site cannot go live until these are closed. They are tracked as issues in th
 2. **`INFRASTRUCTURE_IS_PROPOSED = true`** — [ADR-012](adr/ADR-012_CLOUD_PLATFORM.md) is `Accepted` as of 2026-08-10, but accepting it deployed nothing, so the
    notice still describes an intended deployment. It must be re-checked against what actually runs once the platform is provisioned
    ([#260](https://github.com/enorm-labs/event-checker/issues/260)), and the flag cleared then — not now.
-3. **Art. 28 contracts** — Hetzner's AVV concluded and Cloudflare's DPA accepted, plus the specific transfer mechanism named in the notice rather than the
-   current placeholder sentence. *A notice naming processors without a DPA in place is worse than one naming none.*
+3. **Art. 28 contracts** — now a single one: **Hetzner's AVV**. The 2026-08-10 amendment to
+   [ADR-012](adr/ADR-012_CLOUD_PLATFORM.md) removed Cloudflare, so there is no second DPA to accept and **no third-country transfer to name at all** — the
+   placeholder sentence about a transfer mechanism comes out rather than getting filled in. *A notice naming processors without a DPA in place is worse than one
+   naming none.* Tracked as [#275](https://github.com/enorm-labs/event-checker/issues/275).
 4. **Backup retention** as its own line — it is a separate period from log retention, and if logs are captured by backups the effective retention is the backup
    window, not the rotation one. Check rather than assume.
 

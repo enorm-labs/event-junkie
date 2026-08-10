@@ -145,24 +145,21 @@ const { t } = useI18n()
     <section>
       <h2>5. Wer sonst beteiligt ist</h2>
       <p>
-        Wir verkaufen nichts und geben nichts zu Werbezwecken weiter. Daten werden nur an die
-        Dienstleister übermittelt, die für den Betrieb der Seite nötig sind — jeder von ihnen
-        Auftragsverarbeiter mit einem Vertrag nach Art. 28 DSGVO:
+        Wir verkaufen nichts und geben nichts zu Werbezwecken weiter. Daten werden an genau einen
+        Dienstleister übermittelt — Auftragsverarbeiter mit einem Vertrag nach Art. 28 DSGVO:
       </p>
       <ul>
         <li>
           <strong>Hosting</strong> — Hetzner Online GmbH, Gunzenhausen, Deutschland. Die Server
           stehen in Deutschland; eine Übermittlung außerhalb der EU findet dabei nicht statt.
         </li>
-        <li>
-          <strong>Content-Delivery und Angriffsschutz</strong> — Cloudflare. Der Datenverkehr läuft
-          über Cloudflare, damit die Seite erreichbar bleibt und Überlastungsangriffen standhält;
-          dabei verarbeitet Cloudflare deine IP-Adresse. Cloudflare ist ein US-Unternehmen; die
-          Übermittlung stützt sich auf die Garantien, die Cloudflare für Kundinnen und Kunden in der
-          EU anbietet. Den konkret geltenden Mechanismus nennen wir hier, sobald der Vertrag
-          geschlossen ist.
-        </li>
       </ul>
+      <p>
+        Es gibt kein Content-Delivery-Netzwerk, keinen Edge-Anbieter und keinen Proxy vor der Seite.
+        Deine Anfrage erreicht unsere Server in Deutschland direkt. An der Auslieferung dieser Seite
+        ist damit kein Drittland beteiligt, und es gibt keinen Übermittlungsmechanismus, den wir
+        offenlegen müssten.
+      </p>
       <p>
         Wenn du uns per E-Mail schreibst oder ein Issue auf GitHub eröffnest, werden diese Daten zur
         Bearbeitung deines Anliegens verarbeitet (Art. 6 Abs. 1 lit. f DSGVO, bei Vertragsbezug Art.
