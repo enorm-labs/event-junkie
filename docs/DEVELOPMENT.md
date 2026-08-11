@@ -87,7 +87,7 @@ Ports: importer `8081`, BFF `8080`, frontend `5173`, Postgres `56298`.
 
 PostgreSQL is exposed on host port **56298** (mapped from the container's 5432). Spring Boot discovers the port itself; you need it only to connect by hand —
 `localhost:56298`, credentials `admin` / `admin`, database
-`event_checker`.
+`event_junkie`.
 
 If that port is taken:
 

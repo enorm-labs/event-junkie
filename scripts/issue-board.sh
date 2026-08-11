@@ -20,7 +20,7 @@
 
 set -euo pipefail
 
-REPO="${BACKLOG_REPO:-enorm-labs/event-checker}"
+REPO="${BACKLOG_REPO:-enorm-labs/event-junkie}"
 PROJECT_OWNER="enorm-labs"
 PROJECT_NUMBER=1
 

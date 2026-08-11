@@ -10,7 +10,7 @@ body:
         no obvious first step gets skipped every time it is read, and the work behind it stays
         blocked without anyone noticing why.
 
-        If the answer turns into an [ADR](https://github.com/enorm-labs/event-checker/tree/main/docs/adr),
+        If the answer turns into an [ADR](https://github.com/enorm-labs/event-junkie/tree/main/docs/adr),
         this issue is where the thinking happens and the ADR is where it lands.
 
   - type: textarea

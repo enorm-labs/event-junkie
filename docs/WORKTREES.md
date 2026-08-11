@@ -32,8 +32,8 @@ Run it again with another name in a second terminal for a second isolated sessio
 `/open-pr` will push — it reuses the branch it finds rather than cutting a new one, so a `--worktree` session would open its PR from `worktree-tresor`:
 
 ```bash
-git worktree add ../event-checker-tresor -b feat/tresor origin/main
-cd ../event-checker-tresor
+git worktree add ../event-junkie-tresor -b feat/tresor origin/main
+cd ../event-junkie-tresor
 claude
 ```
 
@@ -43,7 +43,7 @@ IntelliJ can do the same from the UI ([JetBrains docs](https://www.jetbrains.com
 
 - **Create** — Git tool window (<kbd>⌘9</kbd>) → **Worktrees** → **New Worktree**, or **Git | New Worktree**. Pick the source branch (`origin/main`), a project
   name and a location *outside* this repository, e.g.
-  `../event-checker-tresor`. The worktree opens as its own project window. The same branch cannot be checked out in two worktrees, so give each one a new
+  `../event-junkie-tresor`. The worktree opens as its own project window. The same branch cannot be checked out in two worktrees, so give each one a new
   branch.
 - **Switch** — double-click a worktree in the **Worktrees** tab; or right-click a branch in **Log** → **Open Worktree**.
 - **Remove** — select it in **Worktrees** and click **Delete** (not possible for the main or currently open worktree, and commit first). A directory deleted by
@@ -78,9 +78,9 @@ report every existing source as `GONE`.
 Export the main checkout's project name in every worktree shell, and compose reuses the running container, its volume and its seeded data instead:
 
 ```bash
-export COMPOSE_PROJECT_NAME=event-checker
+export COMPOSE_PROJECT_NAME=event-junkie
 
-# with it     →  Container event-checker-postgres-1  Running        (reused, data intact)
+# with it     →  Container event-junkie-postgres-1  Running        (reused, data intact)
 # without it  →  Volume tresor_postgres-data  Creating              (empty DB, and port 56298 is already allocated)
 ```
 
@@ -116,7 +116,7 @@ One worktree = one venue = one PR (that is exactly the `/next-importer` contract
 
 ```bash
 git worktree list
-git worktree remove ../event-checker-tresor   # add --force if it still holds uncommitted work
+git worktree remove ../event-junkie-tresor   # add --force if it still holds uncommitted work
 git worktree prune                            # drop metadata for directories deleted by hand
 ```
 

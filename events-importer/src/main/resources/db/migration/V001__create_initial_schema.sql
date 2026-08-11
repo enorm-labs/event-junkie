@@ -1,4 +1,4 @@
--- V1: Initial data model for event-checker
+-- V1: Initial data model for event-junkie
 -- Designed to capture music event data from Berlin venue websites
 -- (e.g. Astra Kulturhaus, Badehaus Berlin, Cassiopeia, Privatclub).
 --

@@ -45,7 +45,7 @@ Before writing anything, learn how the site is built and whether you're allowed 
       scraping when there is no usable structured source.
 3. **Fetch the real listing HTML** (or the JSON payload) and save it — you'll need it as a test fixture anyway:
    ```bash
-   curl -sSL -A 'EventChecker/1.0 (+https://github.com/...)' '<listing-url>' \
+   curl -sSL -A 'EventJunkie/1.0 (+https://github.com/...)' '<listing-url>' \
      -o events-importer/src/test/resources/scraper/<venue>/<venue>-overview.html
    ```
    For list+detail sites, also fetch one or two representative detail pages (`<venue>-detail-<case>.html`), including edge cases you want regression coverage

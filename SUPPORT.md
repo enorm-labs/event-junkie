@@ -11,13 +11,13 @@ and voluntary — there is no paid tier and no support contract.
 
 | You want to…                                      | Go here                                                                                                                                                   |
 |---------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Report wrong or missing event data**            | [Wrong or missing event data](https://github.com/enorm-labs/event-checker/issues/new?template=wrong-event-data.yml)                                       |
-| **Suggest a venue we should be importing**        | [Suggest a venue](https://github.com/enorm-labs/event-checker/issues/new?template=new-venue.yml)                                                          |
-| **Report a bug in the site or API**               | [Bug report](https://github.com/enorm-labs/event-checker/issues/new?template=bug.yml)                                                                     |
-| **Ask a question** — using it, the data, the code | [Discussions → Q&A](https://github.com/enorm-labs/event-checker/discussions/new?category=q-a)                                                             |
-| **Suggest a feature or float an idea**            | [Discussions → Ideas](https://github.com/enorm-labs/event-checker/discussions/new?category=ideas)                                                         |
-| **Report a security vulnerability**               | [Private advisory form](https://github.com/enorm-labs/event-checker/security/advisories/new) — **never a public issue**. See [SECURITY.md](./SECURITY.md) |
-| **Ask for your name or details to be removed**    | [The same private form](https://github.com/enorm-labs/event-checker/security/advisories/new) — see [below](#artists-organisers-and-venues)                |
+| **Report wrong or missing event data**            | [Wrong or missing event data](https://github.com/enorm-labs/event-junkie/issues/new?template=wrong-event-data.yml)                                       |
+| **Suggest a venue we should be importing**        | [Suggest a venue](https://github.com/enorm-labs/event-junkie/issues/new?template=new-venue.yml)                                                          |
+| **Report a bug in the site or API**               | [Bug report](https://github.com/enorm-labs/event-junkie/issues/new?template=bug.yml)                                                                     |
+| **Ask a question** — using it, the data, the code | [Discussions → Q&A](https://github.com/enorm-labs/event-junkie/discussions/new?category=q-a)                                                             |
+| **Suggest a feature or float an idea**            | [Discussions → Ideas](https://github.com/enorm-labs/event-junkie/discussions/new?category=ideas)                                                         |
+| **Report a security vulnerability**               | [Private advisory form](https://github.com/enorm-labs/event-junkie/security/advisories/new) — **never a public issue**. See [SECURITY.md](./SECURITY.md) |
+| **Ask for your name or details to be removed**    | [The same private form](https://github.com/enorm-labs/event-junkie/security/advisories/new) — see [below](#artists-organisers-and-venues)                |
 | **Contribute code**                               | [CONTRIBUTING.md](./CONTRIBUTING.md)                                                                                                                      |
 
 **Questions go to Discussions, not the issue tracker.** Not to keep them at arm's length — a question is a conversation, whereas an issue is a unit of work that
@@ -51,7 +51,7 @@ Security reports run on their own track, described in [SECURITY.md](./SECURITY.m
 ## Artists, organisers and venues
 
 If you are named on this site and would rather not be, **you do not need a reason and you should not have to ask in public.** Use
-the [private form](https://github.com/enorm-labs/event-checker/security/advisories/new) — it is labelled for security reports because it is currently the only
+the [private form](https://github.com/enorm-labs/event-junkie/security/advisories/new) — it is labelled for security reports because it is currently the only
 confidential channel, and it reaches the maintainer directly.
 
 The same channel is the right one for a venue that would prefer we did not import its programme at all. That is a request, not an argument to win —
@@ -65,7 +65,7 @@ private route.
 
 Setup lives in the [README](./README.md) — JDK, Docker, `scripts/dev-env.sh`, and how to start each module. The frontend has its
 own [README](./events-frontend/README.md). If it does not work, that is a documentation bug worth a
-[Q&A discussion](https://github.com/enorm-labs/event-checker/discussions/new?category=q-a): the setup instructions are only as good as the last person who
+[Q&A discussion](https://github.com/enorm-labs/event-junkie/discussions/new?category=q-a): the setup instructions are only as good as the last person who
 followed them.
 
 ## Code of Conduct

@@ -4,7 +4,7 @@
 
 **Please do not open a public issue for a security problem.**
 
-Use [GitHub's private vulnerability reporting form](https://github.com/enorm-labs/event-checker/security/advisories/new). It is confidential, it reaches the
+Use [GitHub's private vulnerability reporting form](https://github.com/enorm-labs/event-junkie/security/advisories/new). It is confidential, it reaches the
 maintainer directly, and it gives us a private place to discuss and fix the issue before anything is disclosed.
 
 Once `event-junkie.de` is registered, **security@event-junkie.de** will work as an alternative. Until then, the form above is the only private channel.

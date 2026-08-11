@@ -124,7 +124,7 @@ const localePath = useLocalePath()
         Ganze ist
         <a
           class="text-foreground underline underline-offset-4"
-          href="https://github.com/enorm-labs/event-checker"
+          href="https://github.com/enorm-labs/event-junkie"
           rel="noopener"
           target="_blank"
         >
@@ -174,7 +174,7 @@ const localePath = useLocalePath()
         —
         <a
           class="text-foreground underline underline-offset-4"
-          href="https://github.com/enorm-labs/event-checker/issues/new/choose"
+          href="https://github.com/enorm-labs/event-junkie/issues/new/choose"
           rel="noopener"
           target="_blank"
         >
@@ -183,7 +183,7 @@ const localePath = useLocalePath()
         . Was sich zuletzt geändert hat, steht auf der
         <a
           class="text-foreground underline underline-offset-4"
-          href="https://github.com/enorm-labs/event-checker/releases"
+          href="https://github.com/enorm-labs/event-junkie/releases"
           rel="noopener"
           target="_blank"
         >

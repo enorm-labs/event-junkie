@@ -19,11 +19,11 @@ contact_links:
   # it is fixed, and nobody should have to ask for their own name to be removed in front of an
   # audience. See SECURITY.md and the privacy notice (§4, "Event, artist and venue information").
   - name: 🔒 Report a security vulnerability
-    url: https://github.com/enorm-labs/event-checker/security/advisories/new
+    url: https://github.com/enorm-labs/event-junkie/security/advisories/new
     about: Private disclosure, straight to the maintainer. Please do not open a public issue for this.
 
   - name: 🙋 Ask for your name or details to be removed
-    url: https://github.com/enorm-labs/event-checker/security/advisories/new
+    url: https://github.com/enorm-labs/event-junkie/security/advisories/new
     about: >-
       Artists and organisers — you do not need a reason and you do not have to ask in public.
       This form is private. (It is labelled for security reports; it is the confidential channel
@@ -34,9 +34,9 @@ contact_links:
   # A discussion that turns out to be actionable can be converted into an issue, so nothing is lost
   # by starting here.
   - name: 💬 Ask a question
-    url: https://github.com/enorm-labs/event-checker/discussions/new?category=q-a
+    url: https://github.com/enorm-labs/event-junkie/discussions/new?category=q-a
     about: Anything about using the site, the data, or the code.
 
   - name: 💡 Suggest a feature or an idea
-    url: https://github.com/enorm-labs/event-checker/discussions/new?category=ideas
+    url: https://github.com/enorm-labs/event-junkie/discussions/new?category=ideas
     about: For product ideas. To suggest a venue we should be importing, use the venue form instead.

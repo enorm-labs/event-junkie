@@ -10,7 +10,7 @@ substantive edit made at acceptance was to add **Option G — Hetzner compute + 
 trigger but omitted from the list.
 
 > **Amendment, 2026-08-10 — no Cloudflare. DNS and TLS are in-house.**
-> ([#412](https://github.com/enorm-labs/event-checker/issues/412))
+> ([#412](https://github.com/enorm-labs/event-junkie/issues/412))
 >
 > As first written, this ADR put Cloudflare's free plan in front for DNS, TLS, CDN and rate limiting, and flagged one nuance: strictly German-only processing
 > would mean *"either dropping Cloudflare's proxy mode or buying its EU data-localisation add-on"*. **The second option does not exist at this tier.**
@@ -25,12 +25,12 @@ trigger but omitted from the list.
 >
 > - **Edge DDoS and rate limiting** — gone. What remains is the existing `PerHostThrottlingFilter`, a Traefik rate-limit middleware, and Hetzner's volumetric
 >   protection. This *removes* the progress this ADR claimed on
->   [#268](https://github.com/enorm-labs/event-checker/issues/268) rather than making it; #268 grows accordingly.
+>   [#268](https://github.com/enorm-labs/event-junkie/issues/268) rather than making it; #268 grows accordingly.
 > - **Edge access control for the admin UI** — Cloudflare Access was named below as "the cheapest fit". It is no longer available, so the alternatives already
 >   listed there (an ingress IP allowlist, or a basic-auth middleware) become the answer.
 > - **CDN caching of the SPA assets** — no longer applies. At this scale it does not matter: one nginx, a few MB, and Hetzner includes 20 TB of egress.
 >
-> **What it buys.** One fewer processor, one fewer DPA, no SCCs and no transfer mechanism to name — [#275](https://github.com/enorm-labs/event-checker/issues/275)
+> **What it buys.** One fewer processor, one fewer DPA, no SCCs and no transfer mechanism to name — [#275](https://github.com/enorm-labs/event-junkie/issues/275)
 > drops to a single AVV with Hetzner. It also settles an open question in
 > [ADR-014](ADR-014_RENDERING_STRATEGY.md): the head-rewriting transport was undecided between a Cloudflare Worker and an in-cluster sidecar, and is now the
 > sidecar — the option ADR-014 itself noted "keeps all processing in Germany".
@@ -38,13 +38,13 @@ trigger but omitted from the list.
 > **One thing it makes harder, not easier.** Behind Cloudflare the origin saw a proxy IP. Without it, **Traefik and nginx see real client IPs**, so log
 > truncation and retention become more load-bearing, not less. See [LEGAL.md](../LEGAL.md) §7.5, which was rewritten for this.
 
-> Resolves [issue #258](https://github.com/enorm-labs/event-checker/issues/258) — *"Settle the cloud platform"*, the first item in the `v0.2 — Deployable` milestone. This ADR
+> Resolves [issue #258](https://github.com/enorm-labs/event-junkie/issues/258) — *"Settle the cloud platform"*, the first item in the `v0.2 — Deployable` milestone. This ADR
 > picks
 > the **platform**; the Terraform/OpenTofu layout, the Helm chart, and the CI/CD workflows are follow-up items that depend on it. All prices in this document
 > were checked on **2026-08-03**, and the PaaS / Elastic Beanstalk / App Engine sections were added on **2026-08-05**. They must be re-verified before the money
 > is actually committed — cloud list prices moved twice in 2026 already (see
 > [Hetzner's 15 June 2026 adjustment](https://docs.hetzner.com/general/infrastructure-and-availability/price-adjustment/)). Accepting this ADR commits nothing;
-> the re-check belongs to [#260](https://github.com/enorm-labs/event-checker/issues/260), where servers are actually provisioned.
+> the re-check belongs to [#260](https://github.com/enorm-labs/event-junkie/issues/260), where servers are actually provisioned.
 >
 > **2026-08-05 revision.** Managed-container platforms priced out at 4–6× the cheapest option, so the PaaS layer was evaluated properly rather than in one
 > paragraph: European PaaS providers are now first-class candidates (Option E1), AWS Elastic Beanstalk is costed separately from Fargate (Option H), and App
@@ -527,7 +527,7 @@ therefore **not optional** — they are the price of the decision.
 ### Deployment shape
 
 > The sketch below is the *platform* shape as decided here. It predates several decisions taken while planning
-> [#260](https://github.com/enorm-labs/event-checker/issues/260) — WireGuard for admin access, Flux for deploys, OpenObserve, and the move to the CAX line — so
+> [#260](https://github.com/enorm-labs/event-junkie/issues/260) — WireGuard for admin access, Flux for deploys, OpenObserve, and the move to the CAX line — so
 > **[PLATFORM_SETUP.md](../PLATFORM_SETUP.md) §2 is the current picture**, in rendered diagrams. This one is kept because it is what the decision was made
 > against.
 
@@ -585,15 +585,15 @@ bucket) and pay the CORS cost: an explicit `Access-Control-Allow-Origin` allowli
 `SameSite=None; Secure` cookies once authentication lands. That is a real but bounded amount of configuration, and it is the correct trade at PaaS prices —
 roughly €30/month of savings against an hour of CORS setup.
 
-**Nothing sits in front** (amended 2026-08-10, [#412](https://github.com/enorm-labs/event-checker/issues/412)). DNS is served by the registrar or Hetzner DNS and
+**Nothing sits in front** (amended 2026-08-10, [#412](https://github.com/enorm-labs/event-junkie/issues/412)). DNS is served by the registrar or Hetzner DNS and
 resolves straight to the k3s node; **Traefik terminates TLS** in the cluster, via cert-manager or Traefik's own ACME client. Every byte of every request is
 processed in Germany by a German controller and a German processor, which is the strongest reading of criterion 5 and the reason the option was taken.
 
 The cost is that the edge was doing three jobs and now nobody is:
 
 - **Rate limiting and DDoS** — a Traefik rate-limit middleware plus the BFF's existing `PerHostThrottlingFilter`, over Hetzner's volumetric protection. This is
-  now work rather than a free by-product, and it belongs to [#268](https://github.com/enorm-labs/event-checker/issues/268).
-- **TLS certificates** — cert-manager or Traefik ACME, which the Helm chart ([#261](https://github.com/enorm-labs/event-checker/issues/261)) must provision.
+  now work rather than a free by-product, and it belongs to [#268](https://github.com/enorm-labs/event-junkie/issues/268).
+- **TLS certificates** — cert-manager or Traefik ACME, which the Helm chart ([#261](https://github.com/enorm-labs/event-junkie/issues/261)) must provision.
 - **CDN caching of the SPA bundle** — not replaced, and not worth replacing. One nginx serving a few content-hashed megabytes to Berlin-scale traffic, with 20 TB
   of egress included, does not need a CDN. Revisit if the audience stops being local.
 
@@ -702,13 +702,13 @@ Hetzner now does not close that door; the application is containers and Postgres
   and the SPA moves to a static host at that point rather than staying a container — see the fallback ranking. Keeping the application to "a Docker image plus a
   Postgres URL", with no Kubernetes-specific code, is what keeps both exits cheap; the Helm chart is the only artifact thrown away, and only by the second one.
 - **Follow-ups unblocked** — the rest of the `v0.2 — Deployable` milestone, which was blocked on this decision and is not any more:
-  [#259](https://github.com/enorm-labs/event-checker/issues/259) register `event-junkie.de` ·
-  [#260](https://github.com/enorm-labs/event-checker/issues/260) the OpenTofu configuration ·
-  [#261](https://github.com/enorm-labs/event-checker/issues/261) the Helm chart ·
-  [#262](https://github.com/enorm-labs/event-checker/issues/262) containerise the frontend ·
-  [#263](https://github.com/enorm-labs/event-checker/issues/263) exercise both on k3d ·
-  [#264](https://github.com/enorm-labs/event-checker/issues/264) the release and deploy workflows ·
-  [#265](https://github.com/enorm-labs/event-checker/issues/265) the staging stage. The go-live checklist (legal, security, SEO, monitoring, alerting,
+  [#259](https://github.com/enorm-labs/event-junkie/issues/259) register `event-junkie.de` ·
+  [#260](https://github.com/enorm-labs/event-junkie/issues/260) the OpenTofu configuration ·
+  [#261](https://github.com/enorm-labs/event-junkie/issues/261) the Helm chart ·
+  [#262](https://github.com/enorm-labs/event-junkie/issues/262) containerise the frontend ·
+  [#263](https://github.com/enorm-labs/event-junkie/issues/263) exercise both on k3d ·
+  [#264](https://github.com/enorm-labs/event-junkie/issues/264) the release and deploy workflows ·
+  [#265](https://github.com/enorm-labs/event-junkie/issues/265) the staging stage. The go-live checklist (legal, security, SEO, monitoring, alerting,
   dashboards, backups, recovery) follows in `v1.0`.
 
 ## References
@@ -736,4 +736,4 @@ Hetzner now does not close that door; the application is containers and Postgres
 - [Cloud market share 2026 (Synergy Research, via Statista)](https://www.statista.com/chart/18819/worldwide-market-share-of-leading-cloud-infrastructure-service-providers/)
 - [ADR-005 — Migrations owned by the importer](ADR-005_MIGRATIONS_OWNED_BY_IMPORTER.md)
 - [ADR-008 — Import job scheduling](ADR-008_IMPORT_JOB_SCHEDULING.md) — the single-instance / always-on constraint
-- [The `v0.2 — Deployable` milestone](https://github.com/enorm-labs/event-checker/milestones) — the path to go-live
+- [The `v0.2 — Deployable` milestone](https://github.com/enorm-labs/event-junkie/milestones) — the path to go-live

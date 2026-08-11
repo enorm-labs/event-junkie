@@ -1,4 +1,4 @@
-# Event Checker Frontend
+# Event Junkie Frontend
 
 Displays events (today's event overview, week overview, month overview), provides an event calendar and allows to search
 for events.

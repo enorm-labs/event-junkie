@@ -32,7 +32,7 @@ test('links to the repository, the issue tracker and the releases', async ({ pag
 
   await expect(footer.getByRole('link', { name: 'Source on GitHub' })).toHaveAttribute(
     'href',
-    'https://github.com/enorm-labs/event-checker',
+    'https://github.com/enorm-labs/event-junkie',
   )
   await expect(footer.getByRole('link', { name: 'Report an issue' })).toHaveAttribute(
     'href',

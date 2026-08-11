@@ -56,10 +56,10 @@ describe('AppFooter version line', () => {
     })
 
     const hrefs = wrapper.findAll('a').map((a) => a.attributes('href'))
-    expect(hrefs).toContain('https://github.com/enorm-labs/event-checker/releases/tag/v0.1.0')
+    expect(hrefs).toContain('https://github.com/enorm-labs/event-junkie/releases/tag/v0.1.0')
     // The FULL sha, not the displayed short form — otherwise the link resolves by luck at best.
     expect(hrefs).toContain(
-      'https://github.com/enorm-labs/event-checker/commit/9f1a2b3c4d5e6f708192a3b4c5d6e7f809a1b2c3',
+      'https://github.com/enorm-labs/event-junkie/commit/9f1a2b3c4d5e6f708192a3b4c5d6e7f809a1b2c3',
     )
   })
 

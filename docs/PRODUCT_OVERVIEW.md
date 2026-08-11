@@ -9,9 +9,9 @@ and the ticketing sites live in the [README](../README.md#background) and on the
 slightly different pitches. What belongs here is the checklist of what actually exists.
 
 Elsewhere: which *kinds* of event are in scope — [EVENT_SCOPE.md](EVENT_SCOPE.md) · where the product is headed —
-[VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md) · the backlog — [GitHub Issues](https://github.com/enorm-labs/event-checker/issues) · voice and visual direction — [BRANDING.md](BRANDING.md).
+[VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md) · the backlog — [GitHub Issues](https://github.com/enorm-labs/event-junkie/issues) · voice and visual direction — [BRANDING.md](BRANDING.md).
 
-Public app name: **Event Junkie** (→ event-junkie.de). **Event Checker** is the internal/repo name.
+Public app name: **Event Junkie** (→ event-junkie.de). **Event Junkie** is the internal/repo name.
 
 ---
 
@@ -37,7 +37,7 @@ formats, trade fairs, and for now classical) is set out in [EVENT_SCOPE.md](EVEN
 ## Current Status
 
 **🚧 In active development — not yet publicly deployed.** The core product works end-to-end locally; the path to a public launch (hosting, domain, auth, legal)
-is tracked in [the issue tracker](https://github.com/enorm-labs/event-checker/issues).
+is tracked in [the issue tracker](https://github.com/enorm-labs/event-junkie/issues).
 
 ### Live features
 
@@ -79,7 +79,7 @@ is tracked in [the issue tracker](https://github.com/enorm-labs/event-checker/is
 
 User accounts & personalization, notifications, a venues map, broader venue coverage (beyond the current eight), and a public deployment. These are the
 roadmap — see
-[VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md) and [the issue tracker](https://github.com/enorm-labs/event-checker/issues).
+[VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md) and [the issue tracker](https://github.com/enorm-labs/event-junkie/issues).
 
 ---
 

@@ -6,7 +6,7 @@
  * See docs/LEGAL.md §3.
  */
 
-export const REPOSITORY_URL = 'https://github.com/enorm-labs/event-checker'
+export const REPOSITORY_URL = 'https://github.com/enorm-labs/event-junkie'
 
 /** The Apache-2.0 licence text this project is released under. */
 export const LICENSE_URL = `${REPOSITORY_URL}/blob/main/LICENSE`

@@ -44,7 +44,7 @@ class ScraperHttpClientConfig {
                 )
             ).defaultHeader(
                 "User-Agent",
-                "Mozilla/5.0 (compatible; EventChecker/1.0; +https://github.com/enorm-labs/event-checker)"
+                "Mozilla/5.0 (compatible; EventJunkie/1.0; +https://github.com/enorm-labs/event-junkie)"
             ).filter(
                 PerHostThrottlingFilter(scraperProperties.politeDelayMillis)
             ).build()

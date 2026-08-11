@@ -146,7 +146,7 @@ test('app shell links to the source repository on GitHub', async ({ page }) => {
     .getByRole('navigation', { name: 'Main' })
     .getByRole('link', { name: 'Source code on GitHub' })
   await expect(link).toBeVisible()
-  await expect(link).toHaveAttribute('href', 'https://github.com/enorm-labs/event-checker')
+  await expect(link).toHaveAttribute('href', 'https://github.com/enorm-labs/event-junkie')
   await expect(link).toHaveAttribute('title', 'Source code on GitHub')
 })
 

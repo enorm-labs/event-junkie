@@ -10,7 +10,7 @@ body:
         Coverage grows one venue at a time, so suggestions genuinely shape what gets built next.
 
         Before filing, a quick look at
-        [docs/EVENT_DATA_SOURCES.md](https://github.com/enorm-labs/event-checker/blob/main/docs/EVENT_DATA_SOURCES.md)
+        [docs/EVENT_DATA_SOURCES.md](https://github.com/enorm-labs/event-junkie/blob/main/docs/EVENT_DATA_SOURCES.md)
         is worth it — the venue may already be listed there as planned, in progress, or blocked.
 
   - type: input

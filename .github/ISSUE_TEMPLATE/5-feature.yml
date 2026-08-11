@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        For maintainers. Have an idea for the site? [Discussions → Ideas](https://github.com/enorm-labs/event-checker/discussions/new?category=ideas)
+        For maintainers. Have an idea for the site? [Discussions → Ideas](https://github.com/enorm-labs/event-junkie/discussions/new?category=ideas)
         is the better place — it is a conversation rather than a unit of work, and it can be
         converted into an issue once it is one.
 

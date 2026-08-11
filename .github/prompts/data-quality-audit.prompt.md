@@ -19,10 +19,10 @@ from genuinely new ones. Don't re-litigate accepted trade-offs.
 
 Dev PostgreSQL runs via Docker Compose (`compose.yaml`). The tables live in the `events` schema (not `public`). Default local connection:
 
-- host `localhost`, port `56298` (override: `POSTGRES_HOST_PORT`), database `event_checker`, user `admin`, password `admin`, schema `events`.
+- host `localhost`, port `56298` (override: `POSTGRES_HOST_PORT`), database `event_junkie`, user `admin`, password `admin`, schema `events`.
 
 ```bash
-PGPASSWORD=admin psql -h localhost -p 56298 -U admin -d event_checker \
+PGPASSWORD=admin psql -h localhost -p 56298 -U admin -d event_junkie \
   -c "SET search_path TO events; <QUERY>"
 ```
 

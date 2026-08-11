@@ -50,7 +50,7 @@ const { t } = useI18n()
       <p>
         Für alles, was die Seite selbst betrifft — falsche Event-Daten, ein Fehler, eine Location,
         die wir aufnehmen sollten — erreicht uns ein Issue auf
-        <a href="https://github.com/enorm-labs/event-checker/issues" rel="noopener" target="_blank">
+        <a href="https://github.com/enorm-labs/event-junkie/issues" rel="noopener" target="_blank">
           GitHub
         </a>
         am schnellsten. Es ist außerdem öffentlich, sodass andere sehen können, dass das Problem
@@ -110,7 +110,7 @@ const { t } = useI18n()
       <p>
         Der Quellcode dieses Projekts steht unter der Apache License 2.0 — siehe den
         <a
-          href="https://github.com/enorm-labs/event-checker/blob/main/LICENSE"
+          href="https://github.com/enorm-labs/event-junkie/blob/main/LICENSE"
           rel="noopener"
           target="_blank"
         >

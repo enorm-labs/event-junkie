@@ -46,7 +46,7 @@ const { t } = useI18n()
       <p>
         For anything about the site itself — wrong event data, a bug, a venue we should be importing
         — an issue on
-        <a href="https://github.com/enorm-labs/event-checker/issues" rel="noopener" target="_blank">
+        <a href="https://github.com/enorm-labs/event-junkie/issues" rel="noopener" target="_blank">
           GitHub
         </a>
         reaches us fastest and is public, so others can see it has been reported.
@@ -102,7 +102,7 @@ const { t } = useI18n()
       <p>
         The source code of this project is published under the Apache License 2.0 — see the
         <a
-          href="https://github.com/enorm-labs/event-checker/blob/main/LICENSE"
+          href="https://github.com/enorm-labs/event-junkie/blob/main/LICENSE"
           rel="noopener"
           target="_blank"
         >

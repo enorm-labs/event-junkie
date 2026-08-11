@@ -5,7 +5,7 @@ a stage in the evening, it is in scope.**
 
 This document is the standing reference for that question. Related, and deliberately not duplicated here:
 [EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md) tracks *which venues* are imported;
-[DATA_MODEL.md](DATA_MODEL.md) describes the schema; the [issue tracker](https://github.com/enorm-labs/event-checker/issues) holds the actionable backlog.
+[DATA_MODEL.md](DATA_MODEL.md) describes the schema; the [issue tracker](https://github.com/enorm-labs/event-junkie/issues) holds the actionable backlog.
 
 ---
 
@@ -60,7 +60,7 @@ So the definition to work from: **`CLUB_NIGHT` is a DJ set where the booked act 
 the event is the draw and no lineup is claimed. Map to whichever of those is true of the venue, and do not "tidy" one into the other.
 
 *(That `PARTY` and `FESTIVAL` discard artists at all is a separate and larger question — it affects far more than these 8 rows, and it is tracked
-in [issue #332](https://github.com/enorm-labs/event-checker/issues/332).)*
+in [issue #332](https://github.com/enorm-labs/event-junkie/issues/332).)*
 
 **`EXHIBITION` means an *opening*, not a *run*.** A `vernissage` has a start time on one evening and imports correctly; an exhibition that runs for six weeks
 does not fit the model at all, because an event carries a date, not a date range. The type name promises more than the data delivers, and that gap is the

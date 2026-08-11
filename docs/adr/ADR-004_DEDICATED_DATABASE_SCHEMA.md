@@ -25,7 +25,7 @@ This is configured in three places:
 ## Consequences
 
 - **Positive**: Clean separation from PostgreSQL system tables and any other applications sharing the same database; makes it obvious which tables belong to
-  Event Checker; easier to grant/revoke schema-level permissions; avoids conflicts if multiple apps share a database in development.
+  Event Junkie; easier to grant/revoke schema-level permissions; avoids conflicts if multiple apps share a database in development.
 - **Negative**: Requires consistent configuration across Flyway, R2DBC, and raw SQL; developers must remember the `events.` prefix in `@Query` annotations;
   slightly more setup than using `public`.
 

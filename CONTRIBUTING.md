@@ -1,4 +1,4 @@
-# Contributing to Event Checker
+# Contributing to Event Junkie
 
 Thanks for looking. This is a small project maintained by one person, so this file is short and tries to be honest about what contribution actually looks like
 here rather than describing a process that does not exist.
@@ -10,15 +10,15 @@ By taking part you agree to the [Code of Conduct](./CODE_OF_CONDUCT.md).
 **Tell us when the event data is wrong.** Events are read automatically from venue websites, so when a venue redesigns its programme page we can be quietly
 wrong for weeks without noticing. Nobody sees that faster than someone who went to the show.
 
-- [Wrong or missing event data](https://github.com/enorm-labs/event-checker/issues/new?template=wrong-event-data.yml) — include the venue's own page for the
+- [Wrong or missing event data](https://github.com/enorm-labs/event-junkie/issues/new?template=wrong-event-data.yml) — include the venue's own page for the
   event; that is what the importer reads.
-- [Suggest a venue](https://github.com/enorm-labs/event-checker/issues/new?template=new-venue.yml) — coverage grows one venue at a time.
-- [Bug in the site or API](https://github.com/enorm-labs/event-checker/issues/new?template=bug.yml)
+- [Suggest a venue](https://github.com/enorm-labs/event-junkie/issues/new?template=new-venue.yml) — coverage grows one venue at a time.
+- [Bug in the site or API](https://github.com/enorm-labs/event-junkie/issues/new?template=bug.yml)
 
 Two things go **privately** instead: [security problems](./SECURITY.md), and artists or organisers asking for their name or details to be removed — you do not
 need a reason and you should not have to ask in public.
 
-Questions and product ideas belong in [Discussions](https://github.com/enorm-labs/event-checker/discussions) rather than the issue tracker — they are
+Questions and product ideas belong in [Discussions](https://github.com/enorm-labs/event-junkie/discussions) rather than the issue tracker — they are
 conversations rather than units of work, and one that turns out to be actionable can be converted into an issue, so nothing is lost by starting there.
 
 ## Before you write code
