@@ -131,14 +131,14 @@ jobs:
         run: echo "value=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # Both platforms genuinely build, with no QEMU, because the Dockerfile contains no `RUN` —
       # `dist/` is identical on amd64 and arm64. `type=cacheonly` because a multi-platform image
       # cannot be loaded into the local daemon, and building one platform would leave arm64
       # unbuilt — the architecture the Hetzner nodes run (#424).
       - name: Build the frontend image (amd64 + arm64, no push)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: events-frontend
           file: events-frontend/Dockerfile
