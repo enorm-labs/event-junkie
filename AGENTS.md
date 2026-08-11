@@ -345,6 +345,32 @@ shellcheck -x deploy/scripts/*.sh
 context and talks to that cluster. Use `helm template`, or `--dry-run=client` when you specifically need `NOTES.txt`. The chart has never been installed
 anywhere: #263 is the first time it runs.
 
+Container images (`events-bff/Dockerfile`, `events-importer/Dockerfile`). The build context is each module's `build/docker`, not the module directory — it is
+exactly the extracted layers, which is why neither needs a `.dockerignore`:
+
+```bash
+./gradlew :events-bff:bootJarLayers                 # explode the fat jar into build/docker/
+docker buildx build -f events-bff/Dockerfile events-bff/build/docker \
+  --platform linux/amd64,linux/arm64 --output type=cacheonly          # both arches, no push
+docker buildx build -f events-bff/Dockerfile events-bff/build/docker -t event-junkie/bff:dev --load
+```
+
+Three rules these files exist under, each of which something else depends on:
+
+- **No `RUN`, and no builder stage.** A `RUN` executes target-architecture code, which is what would force QEMU or a runner per architecture. With none, one
+  runner emits both platforms. This is why the layer extraction lives in Gradle rather than in the Dockerfile, unlike Spring Boot's reference example — and it
+  is also why the **AOT cache** Spring Boot recommends for Java 25+ is deliberately not used: it needs a `RUN` and its output is architecture-specific.
+- **`USER 1000:1000`, numeric.** A named user would need `RUN useradd`. It must match `security.runAsUser` in the chart's `values.yaml`; a mismatch is a pod
+  that cannot read its own files, which does not look like a values problem from the logs.
+- **Nothing about the runtime is baked in.** Ports and `JAVA_TOOL_OPTIONS` come from the chart via `SERVER_PORT`, `MANAGEMENT_SERVER_PORT` and the environment.
+  A value fixed in the image either gets overridden confusingly or silently wins.
+
+**Verify a change by running the image the way the chart will**, which is the check that catches what `docker build` cannot:
+
+```bash
+docker run --rm --read-only --tmpfs /tmp --user 1000:1000 -e … event-junkie/bff:dev
+```
+
 Local dev environment (used by `/importer-smoke` and `/next-importer`; run with no arguments for the full command list):
 
 ```bash
@@ -586,6 +612,10 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     - `validate-infra.yml` — `tofu fmt -check`, `tofu init -backend=false` + `validate` across all three stacks in a matrix, and ShellCheck on the cloud-init
       scripts. Triggers only when `infra/**` changes. **It deliberately never runs `plan`**: that needs a Hetzner token, and per PLATFORM_SETUP.md §4 nothing
       outside the cluster holds a cluster or cloud credential. So this is a syntax and type gate, not a correctness one, and there is no drift detection.
+    - `build-backend.yml` also **builds both container images for `linux/amd64` and `linux/arm64` and deliberately does not push them.** It runs on every pull
+      request, including from forks, so publishing here would put an image built from unreviewed code into GHCR — that is the release workflow's job (#264).
+      `outputs: type=cacheonly` because a multi-platform image cannot be loaded into the local daemon, and dropping to one platform would leave arm64 — the
+      architecture the Hetzner nodes run — unbuilt.
     - `validate-chart.yml` — `helm lint --strict` and `helm template` | `kubeconform` across all three values files, plus `deploy/scripts/render-assertions.sh`
       and ShellCheck. Triggers only when `deploy/**` changes. **Pins a Helm 3 client** even though local binaries are Helm 4, because Flux's helm-controller
       embeds the Helm 3 SDK and a chart that renders only under Helm 4 is one Flux cannot install. Like `validate-infra.yml` it reaches no cluster, so it is a
@@ -621,6 +651,9 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       `registry.opentofu.org/…`, which the `terraform` updater would rewrite to `registry.terraform.io`. All four directories are grouped into one PR, since a
       single provider release otherwise opens four identical ones. Expect it to change **`.terraform.lock.hcl` and not `versions.tf`**: the `~> 1.68` constraint
       already permits 1.69, so the constraint is left alone until 2.0 while the lock file — which decides the version actually used — moves.
+    - **`docker`** (`/events-bff`, `/events-importer`) — the base image in both Dockerfiles is pinned by tag **and** digest, and this is what keeps the digest
+      from going stale. An unmaintained digest pin is a promise never to receive a security fix: the tag moves, the digest does not, and nothing says so. Both
+      directories are grouped into one PR because they pin the same base image.
     - `/update-dependencies` still exists and is not redundant: Dependabot proposes one bump at a time, while that skill does a deliberate sweep across both
       stacks and knows which Gradle versions are BOM-managed and must **not** be pinned.
 - **Conventional Commits** — Commit messages follow the [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) spec. Reusable prompts are
@@ -727,6 +760,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Infrastructure as code (OpenTofu)     | `infra/` — read `infra/AGENTS.md` first; `bootstrap/` is applied, `environments/` is not                   |
 | Cloud-init for the Hetzner nodes      | `infra/modules/environment/cloud-init/`                                                                   |
 | Helm chart (bff · importer · frontend) | `deploy/charts/event-junkie/` — read `deploy/AGENTS.md` first; written and rendered, never installed      |
+| Backend container images              | `events-bff/Dockerfile`, `events-importer/Dockerfile` — no `RUN`, context is each module's `build/docker` |
 | Chart render assertions               | `deploy/scripts/render-assertions.sh`                                                                     |
 | Release notes categories              | `.github/release.yml`                                                                                     |
 | Dependabot config                     | `.github/dependabot.yml`                                                                                  |

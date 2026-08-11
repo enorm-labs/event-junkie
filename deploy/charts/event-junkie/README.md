@@ -70,10 +70,20 @@ anywhere. ADR-012's portability argument is "a Docker image plus a Postgres URL"
 lives in one ingress controller's CRD is the first crack in that, whereas `base-path` travels with
 the image.
 
-One consequence to confirm rather than assume, on the list for #263: the generated OpenAPI is served
-at `/api/v3/api-docs` in a cluster, while `events-frontend`'s `schema.ts` is generated locally from
-the un-prefixed application. The paths in the generated client are relative and the client prepends
-`/api`, so they should agree.
+**Confirmed 2026-08-11**, running the image built in #426 with `SPRING_WEBFLUX_BASE_PATH=/api`, so
+this is no longer on #263's list to verify:
+
+| Path | Result |
+|---|---|
+| `/api/events`, `/api/meta` | `200` |
+| `/events` | `404` — nothing is served un-prefixed |
+| `/api/v3/api-docs` | `200` |
+| `/v3/api-docs` | `404` |
+
+So the generated OpenAPI moves with the base path, while `events-frontend`'s `schema.ts` is
+generated locally from the un-prefixed application. That is fine — the paths in the generated client
+are relative and the client prepends `/api` — but it does mean the two are produced from different
+URLs, which is worth knowing before someone "fixes" one of them.
 
 ### Actuator is private because of the port, not because of a rule
 
@@ -81,6 +91,12 @@ the un-prefixed application. The paths in the generated client are relative and 
 routes only the application one, and `/actuator/**` is therefore *unroutable* rather than merely
 unrouted. This is what the BFF's own `application.yaml` asked for. It is set here rather than in
 `application.yaml` so local development and the existing tests keep their single-port behaviour.
+
+**Confirmed 2026-08-11** against the real image: with `MANAGEMENT_SERVER_PORT=9001`,
+`/actuator/health` returns `404` on the application port and `200` on 9001 — and the webflux base
+path does **not** move it, so it stays at `/actuator/…` rather than `/api/actuator/…`. Both halves
+matter: the first is what makes it private, the second is what keeps the probe paths in
+`_helpers.tpl` correct.
 
 The same reasoning covers the importer: it has no Ingress backend anywhere in the chart, so
 `/api/admin/**` is unreachable from outside the cluster rather than merely undocumented.
