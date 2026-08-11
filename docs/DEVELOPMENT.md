@@ -17,6 +17,7 @@ here.
 - [Calling the APIs](#calling-the-apis)
 - [Quality checks](#quality-checks)
 - [Infrastructure (OpenTofu)](#infrastructure-opentofu)
+- [Container images](#container-images)
 - [Helm chart](#helm-chart)
 - [Performance tests](#performance-tests)
 - [Dependencies](#dependencies)
@@ -246,6 +247,43 @@ Run all three stacks: they share a module, so a change to it can break one and l
 **`tofu plan` and `tofu apply` are not part of local verification.** They need a Hetzner API token and they spend money — see
 [infra/README.md](../infra/README.md) for who runs them and in what order. One consequence worth knowing rather than discovering: `validate` does **not** render
 `templatefile`, so a change to the cloud-init template can pass every check here and still produce YAML that a booting server rejects.
+
+## Container images
+
+`events-bff` and `events-importer` each build to a container image. The Dockerfiles are runtime-only — the fat jar is exploded into its layers by Gradle first,
+and the **build context is that output directory**, not the module:
+
+```bash
+./gradlew :events-bff:bootJarLayers            # → events-bff/build/docker/{dependencies,application,…}
+docker buildx build -f events-bff/Dockerfile events-bff/build/docker -t event-junkie/bff:dev --load
+```
+
+Both architectures at once — this is what CI does, and it needs no QEMU because neither Dockerfile contains a `RUN`:
+
+```bash
+docker buildx build -f events-bff/Dockerfile events-bff/build/docker \
+  --platform linux/amd64,linux/arm64 --output type=cacheonly
+```
+
+`type=cacheonly` rather than `--load`, because a multi-platform image cannot be loaded into the local daemon.
+
+**Run it the way the cluster will**, which is the check that finds what `docker build` cannot — a missing writable path, or a UID that cannot read its own
+files. Start the database first (`docker compose up -d`), then attach to its network:
+
+```bash
+docker run --rm --network event-junkie_default \
+  --read-only --tmpfs /tmp --user 1000:1000 \
+  -e SPRING_R2DBC_URL='r2dbc:postgresql://postgres:5432/event_junkie' \
+  -e SPRING_R2DBC_USERNAME=admin -e SPRING_R2DBC_PASSWORD=admin \
+  -e MANAGEMENT_SERVER_PORT=9001 -e SPRING_WEBFLUX_BASE_PATH=/api \
+  -p 19002:9001 -p 18080:8080 event-junkie/bff:dev
+```
+
+The importer additionally needs the **JDBC** pair — `SPRING_FLYWAY_URL`, `SPRING_FLYWAY_USER` (not `_USERNAME`) and `SPRING_FLYWAY_PASSWORD` — because it owns
+the migrations and Flyway has no reactive driver. Locally under `bootRun` all of this is supplied by Spring Boot's Docker Compose support, which is
+`developmentOnly` and therefore absent from the image; in a container nothing sets a URL unless you do.
+
+The images are **not pushed by CI** — that is the release workflow's job (#264).
 
 ## Helm chart
 

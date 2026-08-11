@@ -140,6 +140,24 @@ updates:
         patterns:
           - "*"
 
+  # The base image in both Dockerfiles is pinned by tag *and* digest, and this is what keeps the
+  # digest from going stale. Without it a pinned digest is a promise never to get a security fix:
+  # `eclipse-temurin:25-jre` moves, the digest does not, and nothing says so.
+  #
+  # Two directories rather than `/`, because the ecosystem discovers Dockerfiles per directory and
+  # each module owns its own. They are grouped into one PR: both pin the same base image, so a
+  # single JRE release would otherwise open two identical PRs.
+  - package-ecosystem: "docker"
+    directories:
+      - "/events-bff"
+      - "/events-importer"
+    schedule:
+      interval: "weekly"
+    groups:
+      docker:
+        patterns:
+          - "*"
+
   # No entry for the Helm chart in deploy/, and that is a non-change worth recording so it is not
   # re-investigated: Dependabot has no Helm ecosystem, and the chart has no `dependencies:` block
   # for one to watch anyway — PostgreSQL runs on a VM per ADR-012, so there is no subchart. The

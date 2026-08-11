@@ -138,6 +138,57 @@ jobs:
           title: Code Coverage
           update-comment: true
           min-coverage-overall: 60
+
+      # Build the container images, and deliberately do not push them. This workflow runs on every
+      # pull request, including from forks — publishing from here would put an image built from
+      # unreviewed code into GHCR. Pushing belongs to the release workflow (#264).
+      #
+      # What this catches is the rot `validate-infra.yml` exists to catch, in a different medium: a
+      # Dockerfile that stopped building months ago and nobody noticed until the afternoon it was
+      # needed. It is not a correctness gate — a built image is not a started one.
+      - name: Extract the layered jars
+        run: ./gradlew :events-bff:bootJarLayers :events-importer:bootJarLayers
+
+      # `gradle.properties` is the single source of truth for the project version — it is what
+      # `bootBuildInfo` already stamps into build-info.properties and serves at /actuator/info, so
+      # taking it from anywhere else would let the image label and the running instance disagree.
+      # #264 decides how a *release* version is cut; this only labels the image with what built it.
+      - name: Read the project version
+        id: version
+        run: echo "value=$(grep '^version=' gradle.properties | cut -d= -f2-)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # No QEMU and no per-architecture runner, because neither Dockerfile contains a `RUN` — see
+      # the header comment in events-bff/Dockerfile. Both platforms genuinely build here.
+      #
+      # `type=cacheonly` because a multi-platform image cannot be loaded into the local daemon:
+      # `load: true` would fail, and dropping to a single platform would leave arm64 unbuilt, which
+      # is the architecture the Hetzner nodes actually run (#424).
+      - name: Build events-bff image (amd64 + arm64, no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: events-bff/build/docker
+          file: events-bff/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: false
+          outputs: type=cacheonly
+          build-args: |
+            VERSION=${{ steps.version.outputs.value }}
+            REVISION=${{ github.sha }}
+
+      - name: Build events-importer image (amd64 + arm64, no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: events-importer/build/docker
+          file: events-importer/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: false
+          outputs: type=cacheonly
+          build-args: |
+            VERSION=${{ steps.version.outputs.value }}
+            REVISION=${{ github.sha }}
           min-coverage-changed-files: 80
 
   # OWASP Dependency-Check runs as a separate job in parallel with the build to avoid

@@ -322,6 +322,28 @@ OpenSearch · Superset · local LLM.
 GitHub is already a named processor in both privacy notices for issue handling. Nothing to add to the notice. This is the AGENTS.md §Privacy re-check being
 done, not skipped.
 
+### The carve-out: packages are private on first publish, always
+
+**This is a click, not a declaration**, and it is the same species as the Object Storage bucket in §10 Phase A — so it is written down here rather than
+rediscovered. On its first publish every GHCR package is private regardless of the repository's visibility. The symptom is `ImagePullBackOff` on the first
+deploy, **with nothing in the logs naming visibility as the cause**.
+
+Flipping each package to public is one click in its package settings, once per package, and there are **four**: `bff`, `importer`, `frontend`, plus the chart.
+
+Once public they pull anonymously, so the cluster needs no `imagePullSecret` — which is why the chart's `imagePullSecrets` value defaults to empty. It stays in
+the chart for k3d and for the window before the flip.
+
+Three more things about GHCR that each cost an afternoon if learned the hard way:
+
+- **CI needs no credential to create.** `permissions: packages: write` plus `docker/login-action` with `${{ secrets.GITHUB_TOKEN }}`; the token gets `admin` on
+  packages published by its own repository.
+- **A local `docker push` or `helm push` needs a *classic* PAT** with `write:packages`. GitHub Packages does **not** support fine-grained tokens, and the error
+  it returns does not say so — reaching for a fine-grained token is the obvious wrong turn.
+- **`LABEL org.opencontainers.image.source` is what attaches the package to this repository**, and it is matched on the canonical name. A URL left pointing at a
+  renamed repository still resolves through GitHub's redirect, so the label looks fine and the package silently fails to attach.
+
+Storage and bandwidth are free for public packages, so untagged versions accumulating is clutter rather than cost — not worth a cleanup workflow yet.
+
 ---
 
 ## 4. How deploys happen

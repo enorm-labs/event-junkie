@@ -7,6 +7,7 @@ import dev.detekt.gradle.Detekt
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import org.springframework.boot.gradle.dsl.SpringBootExtension
+import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 // Centralized dependency versions live in `gradle.properties` – change them there to update
 // all subprojects at once.
@@ -199,6 +200,57 @@ subprojects {
                     additional.put("commit", gitCommit)
                 }
             }
+        }
+    }
+
+    // Explode the fat jar into the layered layout the Dockerfiles consume (#426). Registered for
+    // every Boot application, next to `buildInfo` above, for the same reason: one definition rather
+    // than one per module.
+    //
+    // Spring Boot's reference Dockerfile does this extraction *inside* a builder stage
+    // (`RUN java -Djarmode=tools …`). Doing it in Gradle instead is what makes the image build
+    // contain no `RUN` at all — and therefore no target-architecture execution — so one runner can
+    // emit a linux/amd64 + linux/arm64 manifest list with no QEMU and no build matrix. A JVM jar is
+    // architecture-independent; only the base image differs per platform.
+    //
+    // `--application-filename application.jar` pins the extracted jar's name, which otherwise
+    // defaults to the uber jar's — `events-bff-0.1.0-SNAPSHOT.jar`. Without it the Dockerfile's
+    // ENTRYPOINT would have to track the project version.
+    plugins.withId("org.springframework.boot") {
+        val layersDir = layout.buildDirectory.dir("docker")
+        val bootJarFile = tasks.named<BootJar>("bootJar").flatMap { it.archiveFile }
+        // Resolved out here, against the *project*. Inside the `register` block below the implicit
+        // receiver is the task, so a bare `the<JavaToolchainService>()` there looks the extension
+        // up on the task and fails with "Extension of type 'JavaToolchainService' does not exist
+        // … [ExtraPropertiesExtension]" — which reads like a plugin-ordering problem and is not one.
+        val launcher = the<JavaToolchainService>().launcherFor(the<JavaPluginExtension>().toolchain)
+
+        tasks.register<JavaExec>("bootJarLayers") {
+            group = "distribution"
+            description = "Extracts the Boot jar into build/docker/ as the layers the Dockerfile copies."
+
+            inputs.file(bootJarFile).withPropertyName("bootJar")
+            outputs.dir(layersDir).withPropertyName("layers")
+
+            javaLauncher = launcher
+            classpath = files(bootJarFile)
+            // `-Djarmode=tools` hands the jar's own launcher a tools sub-command instead of the
+            // application, so this runs Boot's extractor rather than the app. `mainClass` is
+            // unused in that mode, but Gradle requires one to be set.
+            mainClass = "org.springframework.boot.loader.launch.JarLauncher"
+            jvmArgs("-Djarmode=tools")
+            argumentProviders.add(
+                CommandLineArgumentProvider {
+                    listOf(
+                        "extract",
+                        "--layers",
+                        // Refuses a non-empty destination otherwise, so a rebuild would fail.
+                        "--force",
+                        "--application-filename", "application.jar",
+                        "--destination", layersDir.get().asFile.absolutePath
+                    )
+                }
+            )
         }
     }
 
