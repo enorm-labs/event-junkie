@@ -787,9 +787,10 @@ Three guides were worked through: [k3s CIS hardening](https://docs.k3s.io/securi
 k3s configuration moved from `INSTALL_K3S_EXEC` flags into `/etc/rancher/k3s/config.yaml`, because the hardening guide is written in terms of that file — a
 future item can be pasted in and diffed rather than translated.
 
-**Deferred to [#263](https://github.com/enorm-labs/event-checker/issues/263), where a k3d cluster can prove them before production sees them:** API server
-audit logging (needs an `audit.yaml` policy), `EventRateLimit` and PSA-by-default (both need an `admission-control-config-file`). Each adds a file whose typo
-prevents the API server from starting, and none of it has ever booted. PSA also arrives more simply as namespace labels — §8 item 5.
+**Deferred to [#416](https://github.com/enorm-labs/event-checker/issues/416), the cluster-hardening issue, and to be rehearsed on k3d
+([#263](https://github.com/enorm-labs/event-checker/issues/263)) before production sees them:** API server audit logging (needs an `audit.yaml` policy),
+`EventRateLimit` and PSA-by-default (both need an `admission-control-config-file`). Each adds a file whose typo prevents the API server from starting, and
+none of it has ever booted. PSA also arrives more simply as namespace labels — §8 item 5, which #416 already plans.
 
 **Rejected from the Hetzner guide, with reasons, so they are not proposed again.** It is a good tutorial for a server with SSH open to the internet. Ours is
 not that server:
