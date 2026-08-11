@@ -197,7 +197,10 @@ render_case() {
 
   current_case="$name"
   local manifest
-  manifest="$(mktemp -t event-junkie-render)"
+  # An explicit path with its own XXXXXX rather than `mktemp -t <prefix>`: BSD mktemp treats the
+  # argument as a prefix and appends the random part, while GNU coreutils requires the X's to be
+  # there already and fails with "too few X's in template". This form works on both.
+  manifest="$(mktemp "${TMPDIR:-/tmp}/event-junkie-render.XXXXXX")"
   # shellcheck disable=SC2064  # expand $manifest now, while it is still set
   trap "rm -f '$manifest'" RETURN
 
