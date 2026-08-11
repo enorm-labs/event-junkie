@@ -1,0 +1,23 @@
+{{- $args := dict "ctx" $ "component" "importer" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "event-junkie.componentName" $args }}
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+spec:
+  {{- /* ClusterIP, and there is no `type` value to change it. The importer's admin API has no
+         authentication of its own; what keeps it private is that nothing outside the cluster can
+         address it. A NodePort or LoadBalancer here would undo that in one word. */}}
+  type: ClusterIP
+  ports:
+    - name: http
+      port: {{ .Values.importer.service.port }}
+      targetPort: http
+      protocol: TCP
+    - name: management
+      port: {{ .Values.importer.service.managementPort }}
+      targetPort: management
+      protocol: TCP
+  selector:
+    {{- include "event-junkie.selectorLabels" $args | nindent 4 }}

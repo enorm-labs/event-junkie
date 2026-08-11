@@ -1,0 +1,90 @@
+{{- $args := dict "ctx" $ "component" "frontend" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "event-junkie.componentName" $args }}
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "event-junkie.selectorLabels" $args | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "event-junkie.labels" $args | nindent 8 }}
+      {{- with .Values.frontend.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "event-junkie.serviceAccountName" $args }}
+      automountServiceAccountToken: false
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "event-junkie.podSecurityContext" $args | nindent 8 }}
+      containers:
+        - name: frontend
+          image: {{ include "event-junkie.image" $args | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- include "event-junkie.containerSecurityContext" $args | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.frontend.service.port }}
+              protocol: TCP
+          {{- /* nginx serves a static bundle: there is no application health endpoint to ask, and
+                 `/` is the only thing that proves it is serving. A HEAD on the index is the whole
+                 contract. */}}
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 2
+            failureThreshold: 15
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.frontend.resources | nindent 12 }}
+          {{- /* `readOnlyRootFilesystem: true` is what makes these mounts necessary. nginx writes
+                 proxy/fastcgi temp files under /var/cache/nginx and its pid file under /var/run, and
+                 it fails at *startup* without both — not at first request, which would at least be
+                 obvious. If #262's image relocates either path, these move with it. */}}
+          volumeMounts:
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+      {{- with .Values.frontend.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.frontend.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.frontend.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,50 @@
+{{- if .Values.certManager.clusterIssuer.create }}
+{{- $issuer := .Values.certManager.clusterIssuer }}
+{{- $args := dict "ctx" $ "component" "certmanager" }}
+{{- /* Off by default, and the reason is not caution: a ClusterIssuer is cluster-scoped, so a chart
+       that owns one cannot be installed twice on the same cluster — which is exactly what the k3d
+       rehearsal (#263) wants to do. On staging and production the issuer is created once, out of
+       band, and `certManager.clusterIssuer.name` just points at it.
+
+       The chart ships no `crds/` directory either. cert-manager's CRDs belong to cert-manager: Helm
+       has no story for upgrading or deleting CRDs a chart installed, so owning somebody else's is
+       how a chart acquires a resource it can never safely change. cert-manager is installed
+       separately in #265; this chart renders only *instances* of its types. */}}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  {{- /* Deliberately not the release-scoped name: this is a cluster-scoped singleton that other
+         releases point at by name, so it takes the name they were told to use. */}}
+  name: {{ $issuer.name | quote }}
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+spec:
+  acme:
+    {{- /* Defaults to Let's Encrypt *staging*. Production allows 50 certificates per registered
+           domain per week and 5 duplicates, and it is very easy to burn that debugging an
+           annotation — after which the domain is locked out for seven days. */}}
+    server: {{ $issuer.server | quote }}
+    email: {{ required "certManager.clusterIssuer.email is required when clusterIssuer.create is true — Let's Encrypt sends expiry warnings there." $issuer.email | quote }}
+    privateKeySecretRef:
+      name: {{ printf "%s-account-key" $issuer.name | quote }}
+    solvers:
+      {{- if eq $issuer.solver "dns01" }}
+      {{- /* Staging has no public address for an HTTP-01 challenge to reach — it is unreachable
+             from the internet by design, not merely password-protected (PLATFORM_SETUP §4a). The
+             Hetzner DNS webhook this refers to is installed by #265; this chart does not depend on
+             it, and rendering a solver that names it is not the same as requiring it. */}}
+      - dns01:
+          webhook:
+            groupName: {{ $issuer.dns01.webhookGroupName | quote }}
+            solverName: hetzner
+            config:
+              secretName: {{ $issuer.dns01.secretName | quote }}
+              secretKey: {{ $issuer.dns01.secretKey | quote }}
+      {{- else }}
+      {{- /* HTTP-01 needs port 80 reachable and the A record already resolving, so the order is
+             DNS → deploy → certificate and it cannot be reordered. */}}
+      - http01:
+          ingress:
+            ingressClassName: {{ $.Values.ingress.className | quote }}
+      {{- end }}
+{{- end }}

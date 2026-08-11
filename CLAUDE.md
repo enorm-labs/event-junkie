@@ -25,12 +25,13 @@ Slash commands available under `.claude/skills/`:
 - `/squash-commit-message` — write a squash commit message for the current branch
 - `/update-dependencies` — bump backend and frontend dependencies safely
 - `/verify` — run the full pre-PR sequence: backend `ktlintCheck detekt build koverLog` + frontend `type-check`, `lint`, `test:unit`, `test:e2e` (chromium), and
-  `tofu fmt`/`validate` + ShellCheck when the diff touches `infra/`
+  `tofu fmt`/`validate` + ShellCheck when the diff touches `infra/`, and `helm lint` + the render assertions when it touches `deploy/`
 
 ## Multi-module note
 
-This is a Gradle multi-project build (`events-core`, `events-bff`, `events-importer`) plus a standalone frontend (`events-frontend/`) and the OpenTofu
-configuration in `infra/`. Per-module `CLAUDE.md` files can be added in any of those directories if module-specific guidance is needed — they're loaded
-automatically when working in that subtree.
+This is a Gradle multi-project build (`events-core`, `events-bff`, `events-importer`) plus a standalone frontend (`events-frontend/`), the OpenTofu
+configuration in `infra/` and the Helm chart in `deploy/`. Per-module `CLAUDE.md` files can be added in any of those directories if module-specific guidance is
+needed — they're loaded automatically when working in that subtree.
 
-`infra/` already has one, and it is not optional reading: it opens with the OpenTofu commands that must never be run there.
+`infra/` and `deploy/` already have one each, and neither is optional reading. `infra/` opens with the OpenTofu commands that must never be run there;
+`deploy/` opens with the distinction between rendering the chart (always safe) and installing it (never on your own initiative).

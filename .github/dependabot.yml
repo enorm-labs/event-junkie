@@ -139,3 +139,9 @@ updates:
       opentofu:
         patterns:
           - "*"
+
+  # No entry for the Helm chart in deploy/, and that is a non-change worth recording so it is not
+  # re-investigated: Dependabot has no Helm ecosystem, and the chart has no `dependencies:` block
+  # for one to watch anyway — PostgreSQL runs on a VM per ADR-012, so there is no subchart. The
+  # versions the chart does pin are container image tags, which #426 will bring under the `docker`
+  # ecosystem via the Dockerfiles rather than via the chart.

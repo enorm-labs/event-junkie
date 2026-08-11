@@ -1,0 +1,52 @@
+{{- if and .Values.ingress.enabled .Values.ingress.redirectHosts }}
+{{- $args := dict "ctx" $ "component" "redirect" }}
+{{- $frontend := include "event-junkie.componentName" (dict "ctx" $ "component" "frontend") }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ printf "%s-redirect" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+  annotations:
+    {{- if .Values.ingress.tls.enabled }}
+    {{- /* Its own certificate, listing the redirect hosts explicitly rather than a wildcard: a
+           wildcard would cover names nobody has decided to serve, and DNS-01 is the only challenge
+           that can issue one. Separate from the main Ingress's certificate so that a redirect
+           domain failing validation cannot take the primary certificate down with it. */}}
+    cert-manager.io/cluster-issuer: {{ .Values.certManager.clusterIssuer.name | quote }}
+    {{- end }}
+    {{- /* `<namespace>-<name>@kubernetescrd` is Traefik's cross-namespace reference format. The
+           namespace comes from `.Release.Namespace`, never from a hardcoded `metadata.namespace` —
+           Flux's HelmRelease sets `targetNamespace`, and this follows it. */}}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ printf "%s-%s-redirect@kubernetescrd" .Release.Namespace (include "event-junkie.fullname" $) | quote }}
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        {{- range .Values.ingress.redirectHosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ printf "%s-redirect" .Values.ingress.tls.secretName | quote }}
+  {{- end }}
+  rules:
+    {{- range .Values.ingress.redirectHosts }}
+    - host: {{ . | quote }}
+      http:
+        paths:
+          {{- /* A backend is required by the Ingress schema even though the middleware answers every
+                 request before it is reached. The frontend is the least surprising thing to name:
+                 if the middleware is ever removed, this degrades to serving the site on the second
+                 domain rather than to a 502. */}}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $frontend }}
+                port:
+                  name: http
+    {{- end }}
+{{- end }}

@@ -331,6 +331,20 @@ shellcheck -x infra/modules/environment/cloud-init/*.sh
 
 `tofu plan` and `tofu apply` are **not** on that list: they need a Hetzner API token and they spend money. Nothing in `infra/` has ever been applied.
 
+Helm chart ([`deploy/`](deploy)). **Read [deploy/AGENTS.md](deploy/AGENTS.md) before touching it.** Everything that renders the chart is safe — it reaches no
+cluster and needs no kubeconfig — and these are what `validate-chart.yml` runs:
+
+```bash
+helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-staging.yaml
+helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-staging.yaml
+deploy/scripts/render-assertions.sh          # asserts on the rendered output; the gate that matters
+shellcheck -x deploy/scripts/*.sh
+```
+
+`helm install`, `upgrade`, `uninstall` and `rollback` are **not** on that list — and neither is `helm install --dry-run`, which resolves the current kubeconfig
+context and talks to that cluster. Use `helm template`, or `--dry-run=client` when you specifically need `NOTES.txt`. The chart has never been installed
+anywhere: #263 is the first time it runs.
+
 Local dev environment (used by `/importer-smoke` and `/next-importer`; run with no arguments for the full command list):
 
 ```bash
@@ -572,6 +586,10 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     - `validate-infra.yml` — `tofu fmt -check`, `tofu init -backend=false` + `validate` across all three stacks in a matrix, and ShellCheck on the cloud-init
       scripts. Triggers only when `infra/**` changes. **It deliberately never runs `plan`**: that needs a Hetzner token, and per PLATFORM_SETUP.md §4 nothing
       outside the cluster holds a cluster or cloud credential. So this is a syntax and type gate, not a correctness one, and there is no drift detection.
+    - `validate-chart.yml` — `helm lint --strict` and `helm template` | `kubeconform` across all three values files, plus `deploy/scripts/render-assertions.sh`
+      and ShellCheck. Triggers only when `deploy/**` changes. **Pins a Helm 3 client** even though local binaries are Helm 4, because Flux's helm-controller
+      embeds the Helm 3 SDK and a chart that renders only under Helm 4 is one Flux cannot install. Like `validate-infra.yml` it reaches no cluster, so it is a
+      syntax and shape gate; the assertions are the part that catches a chart which is well-formed and wrong.
 - **When CI misbehaves, check [githubstatus.com](https://www.githubstatus.com/) before debugging this repo.** Scriptable as
   `https://www.githubstatus.com/api/v2/summary.json`. A GitHub-side incident mimics repo-level bugs closely enough to send you hunting through trigger and path
   filters that are perfectly fine. Symptoms seen during the 2026-08-06 Actions outage:
@@ -705,8 +723,11 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | CI: nightly OWASP scan                | `.github/workflows/dependency-check-scheduled.yml`                                                        |
 | CI: PR labelling                      | `.github/workflows/label-pr.yml`                                                                          |
 | CI: OpenTofu fmt/validate + ShellCheck | `.github/workflows/validate-infra.yml`                                                                   |
+| CI: Helm lint/render/assertions       | `.github/workflows/validate-chart.yml`                                                                    |
 | Infrastructure as code (OpenTofu)     | `infra/` — read `infra/AGENTS.md` first; `bootstrap/` is applied, `environments/` is not                   |
 | Cloud-init for the Hetzner nodes      | `infra/modules/environment/cloud-init/`                                                                   |
+| Helm chart (bff · importer · frontend) | `deploy/charts/event-junkie/` — read `deploy/AGENTS.md` first; written and rendered, never installed      |
+| Chart render assertions               | `deploy/scripts/render-assertions.sh`                                                                     |
 | Release notes categories              | `.github/release.yml`                                                                                     |
 | Dependabot config                     | `.github/dependabot.yml`                                                                                  |
 | Commit message prompt                 | `.github/prompts/commit-message.prompt.md`                                                                |

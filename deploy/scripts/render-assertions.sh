@@ -1,0 +1,231 @@
+#!/usr/bin/env bash
+#
+# render-assertions.sh — assert things about the *rendered* chart that lint cannot see.
+#
+# `helm lint` checks the chart is well-formed and `kubeconform` checks the output matches the
+# Kubernetes schemas. Both pass on a chart that quietly does the wrong thing: an Ingress that routes
+# /actuator, an importer scaled to two replicas, a Deployment whose immutable selector carries a
+# label that changes on every release. This script is the only gate that catches those, so it runs
+# in CI (.github/workflows/validate-chart.yml) and under /verify on any diff touching deploy/.
+#
+# Usage: deploy/scripts/render-assertions.sh [chart-dir]
+#
+# Renders the chart once per values file and runs every assertion against each result. Exits
+# non-zero on the first failing assertion in any render, printing the offending output.
+#
+# Requires: helm, yq. Reaches no cluster and needs no kubeconfig — `helm template` is a pure
+# function of the working tree, which is why this is safe to run constantly.
+
+set -euo pipefail
+
+CHART_DIR="${1:-deploy/charts/event-junkie}"
+
+# The base values.yaml deliberately cannot render on its own: database.host and
+# database.existingSecret have no safe default and the helpers `required` them. So the default case
+# supplies the two, and the environment cases get theirs from their own values file.
+BASE_OVERRIDES=(--set "database.host=10.0.1.2" --set "database.existingSecret=events-db")
+
+failures=0
+current_case=""
+
+fail() {
+  printf '  FAIL  [%s] %s\n' "$current_case" "$1" >&2
+  if [[ -n "${2:-}" ]]; then
+    printf '%s\n' "$2" | sed 's/^/          /' >&2
+  fi
+  failures=$((failures + 1))
+}
+
+pass() {
+  printf '  ok    [%s] %s\n' "$current_case" "$1"
+}
+
+# assert_empty <description> <output>
+#
+# The workhorse: every assertion here is phrased as a yq query that yields nothing when the chart is
+# correct and yields the offending values when it is not. Phrasing them that way means a query that
+# matches nothing because it was written wrong looks like a pass — so `assert_nonempty` exists too,
+# and the queries that can silently match nothing are paired with one.
+assert_empty() {
+  local description="$1" output="$2"
+  if [[ -z "$(printf '%s' "$output" | tr -d '[:space:]')" ]]; then
+    pass "$description"
+  else
+    fail "$description" "$output"
+  fi
+}
+
+assert_nonempty() {
+  local description="$1" output="$2"
+  if [[ -n "$(printf '%s' "$output" | tr -d '[:space:]')" ]]; then
+    pass "$description"
+  else
+    fail "$description" "(query returned nothing — the assertion below it is not actually checking anything)"
+  fi
+}
+
+# assert_equals <description> <expected> <actual>
+assert_equals() {
+  local description="$1" expected="$2" actual="$3"
+  if [[ "$actual" == "$expected" ]]; then
+    pass "$description"
+  else
+    fail "$description" "expected '$expected', got '$actual'"
+  fi
+}
+
+run_assertions() {
+  local manifest="$1"
+
+  # --- The ingress must not reach anything private -------------------------------------------
+  #
+  # The importer's /api/admin/** and every /actuator/** endpoint are unreachable from outside the
+  # cluster by construction: the importer has no Ingress backend at all, and actuator lives on its
+  # own port that no Ingress rule names. Both properties are one careless path entry away from
+  # being false, and neither failure is visible in a diff.
+
+  assert_nonempty "the ingress routes something (else the three checks below are vacuous)" \
+    "$(yq -N 'select(.kind == "Ingress") | .spec.rules[].http.paths[].path' "$manifest")"
+
+  assert_empty "no ingress backend names the importer service" \
+    "$(yq -N 'select(.kind == "Ingress") | .spec.rules[].http.paths[].backend.service.name' "$manifest" | grep -- '-importer$' || true)"
+
+  assert_empty "no ingress path contains /actuator" \
+    "$(yq -N 'select(.kind == "Ingress") | .spec.rules[].http.paths[].path' "$manifest" | grep -- 'actuator' || true)"
+
+  assert_empty "no ingress backend targets the management port" \
+    "$(yq -N 'select(.kind == "Ingress") | .spec.rules[].http.paths[].backend.service.port | [.name, .number] | .[]' "$manifest" |
+      grep -Ex 'management|9001' || true)"
+
+  # --- The importer's single replica is an ADR-008 correctness constraint ---------------------
+  #
+  # Two schedulers means two concurrent imports of the same source; the 60-second tick's RUNNING
+  # check is a read-then-write with no lock. A rolling update briefly runs two pods, which is the
+  # same failure by a different route — hence Recreate.
+
+  assert_equals "importer replicas is 1" "1" \
+    "$(yq -N 'select(.kind == "Deployment") | select(.metadata.name == "*-importer") | .spec.replicas' "$manifest")"
+
+  assert_equals "importer strategy is Recreate" "Recreate" \
+    "$(yq -N 'select(.kind == "Deployment") | select(.metadata.name == "*-importer") | .spec.strategy.type' "$manifest")"
+
+  # --- Flyway's JDBC connection ---------------------------------------------------------------
+  #
+  # The apps are R2DBC and Flyway is JDBC, so the importer needs two connection configurations for
+  # one database. Forgetting the JDBC half fails silently: migrations simply never run.
+
+  assert_nonempty "importer sets SPRING_FLYWAY_URL" \
+    "$(yq -N 'select(.kind == "Deployment") | select(.metadata.name == "*-importer") | .spec.template.spec.containers[].env[] | select(.name == "SPRING_FLYWAY_URL") | .value' "$manifest")"
+
+  assert_nonempty "importer sets SPRING_FLYWAY_USER (not _USERNAME, which binds to nothing)" \
+    "$(yq -N 'select(.kind == "Deployment") | select(.metadata.name == "*-importer") | .spec.template.spec.containers[].env[] | select(.name == "SPRING_FLYWAY_USER") | .name' "$manifest")"
+
+  assert_empty "nothing sets SPRING_FLYWAY_USERNAME" \
+    "$(yq -N '.. | select(has("name")) | select(.name == "SPRING_FLYWAY_USERNAME") | .name' "$manifest")"
+
+  # --- Selector labels must be the immutable subset -------------------------------------------
+  #
+  # spec.selector is immutable after creation, and helm.sh/chart and app.kubernetes.io/version both
+  # change on every release. A chart that mixes them installs perfectly and then fails every
+  # subsequent upgrade — a failure that does not appear until the *second* release, which is why
+  # nothing but this assertion would catch it before staging.
+
+  assert_nonempty "some workload declares a selector at all" \
+    "$(yq -N 'select(.kind == "Deployment") | .spec.selector.matchLabels | keys | .[]' "$manifest")"
+
+  assert_empty "no selector carries a label that changes between releases" \
+    "$({
+      yq -N 'select(.kind == "Deployment") | .spec.selector.matchLabels | keys | .[]' "$manifest"
+      yq -N 'select(.kind == "Service") | .spec.selector | keys | .[]' "$manifest"
+    } | grep -Ex 'helm.sh/chart|app.kubernetes.io/version' || true)"
+
+  # --- Workload hardening — PLATFORM_SETUP §8 items 5, 6, 7 and 12 ----------------------------
+  #
+  # Requests and limits are a security control on a single node, not a tuning preference: one
+  # workload without a memory limit can evict the other two.
+
+  assert_nonempty "some pod declares runAsNonRoot" \
+    "$(yq -N '.. | select(has("runAsNonRoot")) | .runAsNonRoot' "$manifest")"
+
+  assert_empty "no pod sets runAsNonRoot false" \
+    "$(yq -N '.. | select(has("runAsNonRoot")) | select(.runAsNonRoot == false) | .runAsNonRoot' "$manifest")"
+
+  assert_empty "every pod template sets runAsNonRoot" \
+    "$(yq -N 'select(.kind == "Deployment") | select(.spec.template.spec.securityContext.runAsNonRoot != true) | .metadata.name' "$manifest")"
+
+  assert_empty "every container sets a memory limit" \
+    "$(yq -N 'select(.kind == "Deployment") | .spec.template.spec.containers[] | select(.resources.limits.memory == null) | .name' "$manifest")"
+
+  assert_empty "every container sets a memory request" \
+    "$(yq -N 'select(.kind == "Deployment") | .spec.template.spec.containers[] | select(.resources.requests.memory == null) | .name' "$manifest")"
+
+  assert_empty "every container sets readOnlyRootFilesystem" \
+    "$(yq -N 'select(.kind == "Deployment") | .spec.template.spec.containers[] | select(.securityContext.readOnlyRootFilesystem != true) | .name' "$manifest")"
+
+  assert_empty "every container disables privilege escalation" \
+    "$(yq -N 'select(.kind == "Deployment") | .spec.template.spec.containers[] | select(.securityContext.allowPrivilegeEscalation != false) | .name' "$manifest")"
+
+  assert_empty "every container drops all capabilities" \
+    "$(yq -N 'select(.kind == "Deployment") | .spec.template.spec.containers[] | select(.securityContext.capabilities.drop[0] != "ALL") | .name' "$manifest")"
+
+  assert_empty "no pod mounts a ServiceAccount token" \
+    "$(yq -N 'select(.kind == "Deployment") | select(.spec.template.spec.automountServiceAccountToken != false) | .metadata.name' "$manifest")"
+
+  # --- Images ---------------------------------------------------------------------------------
+
+  assert_nonempty "some workload declares an image" \
+    "$(yq -N 'select(.kind == "Deployment") | .spec.template.spec.containers[].image' "$manifest")"
+
+  assert_empty "no image uses a floating tag" \
+    "$(yq -N '.. | select(has("image")) | .image' "$manifest" | grep -E ':(latest|head|canary|main|edge)$' || true)"
+
+  assert_empty "every image carries an explicit tag" \
+    "$(yq -N '.. | select(has("image")) | .image' "$manifest" | grep -Ev ':[^/:]+$' || true)"
+
+  # --- Namespaces belong to whoever installs the chart ----------------------------------------
+  #
+  # Flux's HelmRelease sets targetNamespace, and a hardcoded metadata.namespace would silently win
+  # over it (#414).
+
+  assert_empty "no template hardcodes metadata.namespace" \
+    "$(yq -N 'select(.metadata.namespace != null) | .kind + "/" + .metadata.name' "$manifest")"
+}
+
+render_case() {
+  local name="$1"
+  shift
+
+  current_case="$name"
+  local manifest
+  manifest="$(mktemp -t event-junkie-render)"
+  # shellcheck disable=SC2064  # expand $manifest now, while it is still set
+  trap "rm -f '$manifest'" RETURN
+
+  printf '\n== %s ==\n' "$name"
+  helm template "assert-$name" "$CHART_DIR" "$@" >"$manifest"
+  run_assertions "$manifest"
+}
+
+main() {
+  command -v helm >/dev/null || { echo "helm is not installed" >&2; exit 127; }
+  command -v yq >/dev/null || { echo "yq is not installed" >&2; exit 127; }
+
+  render_case "default" "${BASE_OVERRIDES[@]}"
+
+  local values_file name
+  for values_file in "$CHART_DIR"/values-*.yaml; do
+    [[ -e "$values_file" ]] || continue
+    name="$(basename "$values_file" .yaml)"
+    name="${name#values-}"
+    render_case "$name" --values "$values_file"
+  done
+
+  printf '\n'
+  if ((failures > 0)); then
+    printf '%d assertion(s) failed\n' "$failures" >&2
+    exit 1
+  fi
+  printf 'all assertions passed\n'
+}
+
+main "$@"

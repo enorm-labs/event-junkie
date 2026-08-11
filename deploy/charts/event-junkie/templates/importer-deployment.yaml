@@ -1,0 +1,95 @@
+{{- $args := dict "ctx" $ "component" "importer" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "event-junkie.componentName" $args }}
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+spec:
+  {{- /* One replica, and it is a correctness constraint from ADR-008 rather than a cost one: two
+         schedulers means two concurrent imports of the same source. The 60-second tick skips
+         sources already marked RUNNING, but that check is a read-then-write with no lock, so it
+         does not survive a second scheduler. `SELECT … FOR UPDATE SKIP LOCKED` is the prerequisite
+         for ever raising this, and values.schema.json pins it to 1 so the constraint fails at
+         install time rather than in a review comment. */}}
+  replicas: {{ .Values.importer.replicaCount }}
+  strategy:
+    {{- /* Recreate for the same reason: a rolling update briefly runs the old and new pods together,
+           which is two schedulers by another route. The cost is a gap in imports during a deploy,
+           which is invisible on a 60-second tick. */}}
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "event-junkie.selectorLabels" $args | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "event-junkie.labels" $args | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+        {{- with .Values.importer.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "event-junkie.serviceAccountName" $args }}
+      automountServiceAccountToken: false
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "event-junkie.podSecurityContext" $args | nindent 8 }}
+      containers:
+        - name: importer
+          image: {{ include "event-junkie.image" $args | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- include "event-junkie.containerSecurityContext" $args | nindent 12 }}
+          ports:
+            {{- /* Serves /api/admin/** and nothing else public-facing. No Ingress in this chart has
+                   a backend pointing here, and the render assertions fail the build if one ever
+                   does — the access path is `kubectl port-forward` over WireGuard (§8a). */}}
+            - name: http
+              containerPort: {{ .Values.importer.service.port }}
+              protocol: TCP
+            - name: management
+              containerPort: {{ .Values.importer.service.managementPort }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "event-junkie.fullname" $ }}
+          env:
+            - name: SERVER_PORT
+              value: {{ .Values.importer.service.port | quote }}
+            - name: MANAGEMENT_SERVER_PORT
+              value: {{ .Values.importer.service.managementPort | quote }}
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage={{ .Values.importer.maxRamPercentage }}"
+            {{- include "event-junkie.databaseEnv" $ | nindent 12 }}
+            {{- /* The importer owns the schema (ADR-005), and Flyway has no reactive driver — so
+                   this one workload holds two connection configurations for one database. Locally
+                   Spring Boot's Docker Compose support supplies both and nothing in application.yaml
+                   sets a URL; in a cluster there is no compose file, and the JDBC half is the one
+                   that gets forgotten. Its failure mode is a migration that never runs. */}}
+            {{- include "event-junkie.flywayEnv" $ | nindent 12 }}
+          {{- include "event-junkie.jvmProbes" $ | nindent 10 }}
+          resources:
+            {{- toYaml .Values.importer.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- with .Values.importer.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.importer.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.importer.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

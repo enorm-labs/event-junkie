@@ -1,0 +1,57 @@
+{{- if .Values.ingress.enabled }}
+{{- $args := dict "ctx" $ "component" "ingress" }}
+{{- $bff := include "event-junkie.componentName" (dict "ctx" $ "component" "bff") }}
+{{- $frontend := include "event-junkie.componentName" (dict "ctx" $ "component" "frontend") }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "event-junkie.fullname" $ }}
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+  annotations:
+    {{- if .Values.ingress.tls.enabled }}
+    {{- /* cert-manager's ingress-shim watches this annotation and creates the Certificate itself, so
+           the chart owns no Certificate resource. cert-manager must already be installed: the API
+           server rejects an unknown kind, so `helm install` fails outright rather than racing. */}}
+    cert-manager.io/cluster-issuer: {{ .Values.certManager.clusterIssuer.name | quote }}
+    {{- end }}
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host | quote }}
+      secretName: {{ .Values.ingress.tls.secretName | quote }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          {{- /* Two rules and no rewrite anywhere: the BFF serves under /api itself
+                 (`spring.webflux.base-path`), so the routing rule and the application agree on the
+                 path. Traefik prioritises the longer prefix, so /api wins over / regardless of the
+                 order here — but they are written most-specific-first anyway, because relying on a
+                 controller's tie-breaking is how this breaks on a different one.
+
+                 What is NOT here is as important: no path routes to the importer, and no path names
+                 the management port. /api/admin/** and /actuator/** are unreachable from outside
+                 the cluster because nothing addresses them, not because a rule excludes them.
+                 `deploy/scripts/render-assertions.sh` fails the build if that stops being true. */}}
+          - path: {{ .Values.bff.basePath | quote }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $bff }}
+                port:
+                  name: http
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $frontend }}
+                port:
+                  name: http
+{{- end }}

@@ -1,0 +1,61 @@
+{{- if .Values.tests.enabled }}
+{{- $args := dict "ctx" $ "component" "test" }}
+{{- $bff := include "event-junkie.componentName" (dict "ctx" $ "component" "bff") }}
+{{- $frontend := include "event-junkie.componentName" (dict "ctx" $ "component" "frontend") }}
+{{- /* `helm test` only. It reaches the two public workloads through their Services, which is the
+       cheapest thing that distinguishes "the pods are Running" from "the release actually serves".
+       #414 wires Flux's `test.enable` and its rollback behaviour to this hook; the chart's job is
+       to provide something worth calling.
+
+       Deliberately does NOT touch the importer: it has no readiness contract worth asserting from
+       outside, and a test pod that can reach /api/admin/** is a test pod that has just demonstrated
+       the admin API is reachable from an unprivileged pod. */}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ printf "%s-connection-test" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+  annotations:
+    helm.sh/hook: test
+    {{- /* Deleted before the next test run rather than after this one, so a failed test leaves its
+           pod behind for `kubectl logs`. A test whose evidence is deleted on failure is a test that
+           tells you only that something went wrong. */}}
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: connection-test
+      image: {{ printf "%s/%s:%s" .Values.tests.image.registry .Values.tests.image.repository .Values.tests.image.tag | quote }}
+      imagePullPolicy: {{ .Values.image.pullPolicy }}
+      securityContext:
+        {{- include "event-junkie.containerSecurityContext" $args | nindent 8 }}
+      command:
+        - /bin/sh
+        - -c
+        - |
+          set -eu
+          # The BFF's readiness endpoint, on the management port — reachable in-cluster, and
+          # unroutable from outside it. That asymmetry is the point of the split (§3.2).
+          curl --fail --silent --show-error --max-time 10 \
+            "http://{{ $bff }}:{{ .Values.bff.service.managementPort }}/actuator/health/readiness"
+          echo
+          # The frontend's index. A static bundle has no health endpoint; serving / is the contract.
+          curl --fail --silent --show-error --output /dev/null --max-time 10 \
+            "http://{{ $frontend }}:{{ .Values.frontend.service.port }}/"
+          echo "connection test passed"
+      resources:
+        requests:
+          cpu: "10m"
+          memory: "16Mi"
+        limits:
+          cpu: "100m"
+          memory: "64Mi"
+{{- end }}

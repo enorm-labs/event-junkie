@@ -1,0 +1,248 @@
+# Default values for the event-junkie chart — production-shaped, per the Helm guide's advice that
+# the defaults should be the ones you would actually run. Two exceptions, both deliberate:
+# `database.host` and `database.existingSecret` are empty because there is no safe default for
+# either, and `certManager.clusterIssuer.server` points at Let's Encrypt *staging* because the
+# default should never be the one that costs seven days when it is wrong (§3.6).
+#
+# Conventions: camelCase keys, no hyphens, strings quoted, every property carrying a comment that
+# starts with the property's own name. Maps rather than arrays wherever `--set` might touch a value.
+
+# nameOverride replaces the chart name in resource names and in `app.kubernetes.io/name`.
+nameOverride: ""
+# fullnameOverride replaces the whole generated `<release>-<chart>` prefix.
+fullnameOverride: ""
+
+image:
+  # image.registry is prepended to every component's `repository` unless that component overrides it.
+  registry: "ghcr.io"
+  # image.pullPolicy applies to all three workloads. Never `Always`: tags here are immutable (#264).
+  pullPolicy: "IfNotPresent"
+  # image.pullSecrets is empty because the GHCR packages are public and pull anonymously. It stays
+  # here for k3d (#263) and for the window before a package's visibility is flipped to public.
+  pullSecrets: []
+
+database:
+  # database.host is the address PostgreSQL listens on — `postgres_ip` from the matching OpenTofu
+  # environment stack (`tofu -chdir=infra/environments/<env> output postgres_ip`). Required.
+  host: ""
+  # database.port is PostgreSQL's port.
+  port: 5432
+  # database.name is the database, not the schema; the schema is `events` and is set in each app's
+  # own application.yaml.
+  name: "events"
+  # database.existingSecret names a Secret that already exists in the release namespace. Required,
+  # and the chart fails to render without it: there is no inline-password path, not even a guarded
+  # one, because a values key that *can* hold a password is one that eventually does, in a file that
+  # gets committed. SOPS-managed Secrets arrive in #416; until then create it out of band with
+  # `kubectl create secret generic <name> --from-literal=username=… --from-literal=password=…`.
+  existingSecret: ""
+  secretKeys:
+    # database.secretKeys.username is the key inside that Secret holding the role name.
+    username: "username"
+    # database.secretKeys.password is the key inside that Secret holding the password.
+    password: "password"
+
+security:
+  # security.runAsUser must match the UID the images actually run as (#426 builds them). A component
+  # may override it — the frontend's nginx base is the one most likely to differ.
+  runAsUser: 1000
+  # security.runAsGroup matches runAsUser for the same reason.
+  runAsGroup: 1000
+
+bff:
+  # bff.replicaCount is free to exceed 1: the BFF is stateless and read-only.
+  replicaCount: 2
+  image:
+    # bff.image.repository is the path under `image.registry`.
+    repository: "enorm-labs/event-junkie/bff"
+    # bff.image.tag falls back to `.Chart.AppVersion`, which #264 stamps from the build that pushed
+    # the image. Never `latest` — the render assertions fail the build on a floating tag.
+    tag: ""
+  # bff.basePath is served by Spring itself (`spring.webflux.base-path`), which is why the ingress
+  # needs no rewrite and the chart stays free of a Traefik-specific Middleware CRD (§3.1). The
+  # frontend's generated client prepends the same prefix.
+  basePath: "/api"
+  service:
+    # bff.service.port is the application port — the only one the ingress routes.
+    port: 8080
+    # bff.service.managementPort carries `/actuator/**` and is never routed by any Ingress. The
+    # split is enforced by the network rather than by an ingress rule that has to stay correct
+    # forever (§3.2).
+    managementPort: 9001
+  resources:
+    requests:
+      # bff.resources.requests.cpu is what the scheduler reserves.
+      cpu: "100m"
+      # bff.resources.requests.memory is what the scheduler reserves.
+      memory: "512Mi"
+    limits:
+      # bff.resources.limits.cpu caps burst usage.
+      cpu: "1000m"
+      # bff.resources.limits.memory is a security control on a single node, not a tuning knob
+      # (PLATFORM_SETUP §8 item 12). The JVM reads it and sizes its heap from `MaxRAMPercentage`.
+      memory: "768Mi"
+  # bff.maxRamPercentage is the JVM heap as a share of the container limit. Without it a JVM sizes
+  # its heap at 25% of the limit and then dies with three-quarters of its memory unused.
+  maxRamPercentage: 75
+  serviceAccount:
+    # bff.serviceAccount.create makes a dedicated ServiceAccount with no token mounted.
+    create: true
+    # bff.serviceAccount.name overrides the generated name, for a hand-made RBAC binding.
+    name: ""
+  # bff.podAnnotations is the hook #415 will hang a Prometheus scrape config from.
+  podAnnotations: {}
+  # bff.nodeSelector constrains scheduling. Empty on a single node.
+  nodeSelector: {}
+  # bff.tolerations constrains scheduling.
+  tolerations: []
+  # bff.affinity constrains scheduling.
+  affinity: {}
+
+importer:
+  # importer.replicaCount is pinned to 1 by values.schema.json, and that is an ADR-008 correctness
+  # constraint rather than a cost one: two schedulers means two concurrent imports of the same
+  # source, and the 60-second tick's `RUNNING` check is a read-then-write with no lock. Raising it
+  # needs `SELECT … FOR UPDATE SKIP LOCKED` first.
+  replicaCount: 1
+  image:
+    # importer.image.repository is the path under `image.registry`.
+    repository: "enorm-labs/event-junkie/importer"
+    # importer.image.tag falls back to `.Chart.AppVersion`.
+    tag: ""
+  service:
+    # importer.service.port is the application port. Reachable in-cluster only: the importer gets no
+    # Ingress anywhere in this chart, and `/api/admin/**` stays behind `kubectl port-forward` over
+    # the WireGuard tunnel (PLATFORM_SETUP §8a).
+    port: 8081
+    # importer.service.managementPort carries `/actuator/**`, as on the BFF.
+    managementPort: 9001
+  resources:
+    requests:
+      # importer.resources.requests.cpu is what the scheduler reserves.
+      cpu: "100m"
+      # importer.resources.requests.memory is what the scheduler reserves.
+      memory: "512Mi"
+    limits:
+      # importer.resources.limits.cpu caps burst usage. Scraping is bursty and IO-bound.
+      cpu: "1000m"
+      # importer.resources.limits.memory has to cover `max-in-memory-size: 8MB` × concurrency 4.
+      memory: "1Gi"
+  # importer.maxRamPercentage is the JVM heap as a share of the container limit.
+  maxRamPercentage: 75
+  serviceAccount:
+    # importer.serviceAccount.create makes a dedicated ServiceAccount with no token mounted.
+    create: true
+    # importer.serviceAccount.name overrides the generated name.
+    name: ""
+  # importer.podAnnotations is the hook #415 will hang a Prometheus scrape config from.
+  podAnnotations: {}
+  # importer.nodeSelector constrains scheduling.
+  nodeSelector: {}
+  # importer.tolerations constrains scheduling.
+  tolerations: []
+  # importer.affinity constrains scheduling.
+  affinity: {}
+
+frontend:
+  # frontend.replicaCount is free to exceed 1: it serves static files.
+  replicaCount: 2
+  image:
+    # frontend.image.repository is the path under `image.registry`. Built by #262.
+    repository: "enorm-labs/event-junkie/frontend"
+    # frontend.image.tag falls back to `.Chart.AppVersion`.
+    tag: ""
+  service:
+    # frontend.service.port must match what nginx listens on, and it cannot be 80: a non-root
+    # process cannot bind a privileged port, and `runAsNonRoot` is not negotiable (§3.5). This is a
+    # constraint the chart places on #262's image.
+    port: 8080
+  resources:
+    requests:
+      # frontend.resources.requests.cpu is what the scheduler reserves.
+      cpu: "10m"
+      # frontend.resources.requests.memory is what the scheduler reserves.
+      memory: "32Mi"
+    limits:
+      # frontend.resources.limits.cpu caps burst usage.
+      cpu: "200m"
+      # frontend.resources.limits.memory is generous for nginx serving a static bundle.
+      memory: "128Mi"
+  # frontend.runAsUser overrides security.runAsUser. Set it if #262 lands on an nginx base whose
+  # unprivileged user is not 1000 — nginxinc's is 101.
+  runAsUser: null
+  serviceAccount:
+    # frontend.serviceAccount.create makes a dedicated ServiceAccount with no token mounted.
+    create: true
+    # frontend.serviceAccount.name overrides the generated name.
+    name: ""
+  # frontend.podAnnotations is the hook #415 will hang a Prometheus scrape config from.
+  podAnnotations: {}
+  # frontend.nodeSelector constrains scheduling.
+  nodeSelector: {}
+  # frontend.tolerations constrains scheduling.
+  tolerations: []
+  # frontend.affinity constrains scheduling.
+  affinity: {}
+
+ingress:
+  # ingress.enabled turns the single Ingress object on. Off for k3d smoke tests that port-forward.
+  enabled: true
+  # ingress.className is k3s's bundled Traefik. The only Traefik-specific object in the chart is the
+  # redirect Middleware below, which has no portable equivalent; emptying `redirectHosts` leaves a
+  # chart that would run behind any ingress controller.
+  className: "traefik"
+  # ingress.host is the name the certificate is issued for and the only name routed to the apps.
+  host: "event-junkie.de"
+  # ingress.redirectHosts get a 301 to `ingress.host` and their own certificate — the .com is a
+  # redirect, not an alias, and not a wildcard entry.
+  redirectHosts:
+    - "event-junkie.com"
+  # ingress.annotations are merged in after the cert-manager annotation the chart adds itself.
+  annotations: {}
+  tls:
+    # ingress.tls.enabled asks cert-manager for a certificate via the ingress-shim annotation.
+    enabled: true
+    # ingress.tls.secretName is where cert-manager stores the issued certificate.
+    secretName: "event-junkie-tls"
+
+certManager:
+  clusterIssuer:
+    # certManager.clusterIssuer.name is the issuer the ingress annotation points at. It must already
+    # exist unless `create` is true.
+    name: "letsencrypt-staging"
+    # certManager.clusterIssuer.create renders the ClusterIssuer from this chart. Off by default,
+    # and that is not timidity: a ClusterIssuer is a cluster-scoped singleton, so a chart that owns
+    # one cannot be installed twice on the same cluster — which is exactly what the k3d rehearsal
+    # (#263) wants to do. cert-manager itself is installed separately (#265); this chart ships no
+    # `crds/` directory and `helm install` fails outright if cert-manager is not already present.
+    create: false
+    # certManager.clusterIssuer.email receives Let's Encrypt expiry warnings.
+    email: ""
+    # certManager.clusterIssuer.server defaults to the ACME *staging* endpoint. Production allows 50
+    # certificates per registered domain per week and 5 duplicates; burning that costs seven days.
+    server: "https://acme-staging-v02.api.letsencrypt.org/directory"
+    # certManager.clusterIssuer.solver is `http01` or `dns01`. Staging has no public address for
+    # HTTP-01 to reach (PLATFORM_SETUP §4a), so it uses dns01 against Hetzner DNS.
+    solver: "http01"
+    dns01:
+      # certManager.clusterIssuer.dns01.secretName holds the Hetzner DNS API token, read by the
+      # webhook that #265 installs. Not created by this chart.
+      secretName: "hetzner-dns-token"
+      # certManager.clusterIssuer.dns01.secretKey is the key inside that Secret.
+      secretKey: "api-token"
+      # certManager.clusterIssuer.dns01.webhookGroupName is the webhook's API group.
+      webhookGroupName: "acme.hetzner.cloud"
+
+# tests.enabled renders the `helm test` hook pod. #414 wires Flux's `test.enable` to it.
+tests:
+  # tests.enabled renders `templates/tests/connection-test.yaml`.
+  enabled: true
+  image:
+    # tests.image.registry is Docker Hub rather than `image.registry`: this is the one image in the
+    # chart that is not ours, and it does not live alongside the three that are.
+    registry: "docker.io"
+    # tests.image.repository is a curl image; the test pod is the one place a third-party image is
+    # acceptable, because nothing it does outlives the test.
+    repository: "curlimages/curl"
+    # tests.image.tag is pinned, like every other tag in this chart.
+    tag: "8.11.1"

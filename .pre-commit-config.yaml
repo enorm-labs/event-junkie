@@ -21,9 +21,31 @@ repos:
         files: \.(tf|tfvars)$
         pass_filenames: true
 
-      - id: shellcheck-cloud-init
-        name: shellcheck cloud-init
+      - id: shellcheck-scripts
+        name: shellcheck
         entry: shellcheck -x
         language: system
-        files: ^infra/modules/environment/cloud-init/.*\.sh$
+        files: ^(infra/modules/environment/cloud-init|deploy/scripts)/.*\.sh$
         pass_filenames: true
+
+      # `helm lint --strict` is a pure function of the working tree — no cluster, no kubeconfig, no
+      # credentials — which is what makes it safe as a commit hook at all. `pass_filenames: false`
+      # because helm lints a chart directory, not a list of files.
+      #
+      # The base values.yaml deliberately cannot render alone: database.host and
+      # database.existingSecret have no safe default, hence the two --set flags.
+      #
+      # Deliberately NOT the full CI gate: `deploy/scripts/render-assertions.sh` renders the chart
+      # three times and is a `/verify` step rather than a commit-time one.
+      #
+      # And deliberately no `check-yaml` hook, here or anywhere. Helm templates are Go templates
+      # that happen to look like YAML; a generic YAML parser rejects every one of them. If someone
+      # adds pre-commit-hooks' check-yaml later, it must exclude `deploy/charts/*/templates/`.
+      - id: helm-lint
+        name: helm lint
+        entry: >-
+          helm lint --strict deploy/charts/event-junkie
+          --set database.host=10.0.1.2 --set database.existingSecret=events-db
+        language: system
+        files: ^deploy/charts/
+        pass_filenames: false

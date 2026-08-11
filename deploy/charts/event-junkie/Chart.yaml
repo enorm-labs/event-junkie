@@ -1,0 +1,33 @@
+# apiVersion v2 is deliberate and must not be raised to v3. The local Helm binary is v4, but Flux's
+# helm-controller embeds the Helm 3 SDK — a v3-apiVersion chart would render fine here and then be
+# uninstallable by the thing that actually installs it (#414). `scripts/render-assertions.sh` and
+# the CI gate both render under a pinned Helm 3 client for exactly this reason.
+apiVersion: v2
+name: event-junkie
+description: The event-junkie stack — BFF, importer and frontend behind one Traefik ingress
+type: application
+
+# The chart's own version, moving independently of appVersion. Bumped by hand on every change to
+# the chart; #264 is what publishes it to oci://ghcr.io/enorm-labs/charts/event-junkie.
+version: 0.1.0
+
+# The default image tag for all three workloads (`image.tag` overrides per component). #264 stamps
+# this from the same build that pushes the images, so the chart version and the image tags move
+# together. Never `latest` — see the chart README.
+appVersion: "0.1.0"
+
+# No `dependencies:` block, and that is a decision rather than an omission: PostgreSQL runs on its
+# own VM per ADR-012, so the reflex of vendoring the Bitnami postgresql subchart is wrong here — it
+# would put the database inside the blast radius of a `helm uninstall`. cert-manager and Traefik are
+# installed on the cluster separately (#265); this chart renders only instances of their types and
+# ships no `crds/` directory. See docs/PLATFORM_SETUP.md §6.
+
+home: https://event-junkie.com
+sources:
+  - https://github.com/enorm-labs/event-junkie
+keywords:
+  - events
+  - berlin
+maintainers:
+  - name: enorm-labs
+    url: https://github.com/enorm-labs

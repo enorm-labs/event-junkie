@@ -1,0 +1,62 @@
+{{- $bff := include "event-junkie.componentName" (dict "ctx" $ "component" "bff") }}
+{{- $importer := include "event-junkie.componentName" (dict "ctx" $ "component" "importer") }}
+{{- $frontend := include "event-junkie.componentName" (dict "ctx" $ "component" "frontend") }}
+event-junkie {{ .Chart.Version }} is installed as "{{ .Release.Name }}" in namespace {{ .Release.Namespace }}.
+Images: {{ .Chart.AppVersion }} unless a component overrode its tag.
+
+{{ if .Values.ingress.enabled -}}
+The site:
+
+    http{{ if .Values.ingress.tls.enabled }}s{{ end }}://{{ .Values.ingress.host }}/          the frontend
+    http{{ if .Values.ingress.tls.enabled }}s{{ end }}://{{ .Values.ingress.host }}{{ .Values.bff.basePath }}/events   the API
+{{- if .Values.ingress.redirectHosts }}
+{{ range .Values.ingress.redirectHosts }}
+    https://{{ . }}/  301s to {{ $.Values.ingress.host }}
+{{- end }}
+{{- end }}
+{{- if not .Values.ingress.tls.enabled }}
+
+    TLS is off in this release. Nothing is encrypted in transit.
+{{- end }}
+{{- else -}}
+No Ingress was created. Reach the frontend with a port-forward:
+
+    kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ $frontend }} 8080:{{ .Values.frontend.service.port }}
+{{- end }}
+
+Two things are reachable only from inside the cluster, by design — there is no ingress path to
+either, so a port-forward is the access route:
+
+    # the importer's admin API
+    kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ $importer }} {{ .Values.importer.service.port }}:{{ .Values.importer.service.port }}
+
+    # actuator, on its own port, for either JVM service
+    kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ $bff }} {{ .Values.bff.service.managementPort }}:{{ .Values.bff.service.managementPort }}
+
+Check it started:
+
+    kubectl --namespace {{ .Release.Namespace }} get pods --selector app.kubernetes.io/instance={{ .Release.Name }}
+{{- if .Values.tests.enabled }}
+    helm test {{ .Release.Name }} --namespace {{ .Release.Namespace }}
+{{- end }}
+
+EXPECTED ON A FIRST INSTALL: the BFF restarts for up to a minute or two.
+
+The importer owns the Flyway migrations (ADR-005), so on an empty database the BFF starts before
+the schema exists and its readiness probe fails until the importer has finished migrating. There is
+no init container and no Helm hook ordering the two on purpose — Kubernetes already retries, and the
+alternative is a startup dependency that has to be maintained forever. It self-heals. Treat it as an
+incident only if it is still restarting after the importer's pod reports ready.
+{{- if .Values.certManager.clusterIssuer.create }}
+
+A ClusterIssuer named {{ .Values.certManager.clusterIssuer.name | quote }} was created by this release.
+It is cluster-scoped, so a second release of this chart on the same cluster must set
+certManager.clusterIssuer.create=false and point at this one by name.
+{{- end }}
+{{- if and .Values.ingress.tls.enabled (contains "acme-staging" .Values.certManager.clusterIssuer.server) }}
+
+The certificate comes from Let's Encrypt STAGING, so browsers will not trust it. That is the default
+and it is the right default: the production endpoint allows 50 certificates per registered domain
+per week, and burning that costs seven days. Switch certManager.clusterIssuer.server only once the
+staging certificate has issued cleanly.
+{{- end }}

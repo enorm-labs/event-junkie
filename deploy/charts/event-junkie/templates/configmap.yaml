@@ -1,0 +1,25 @@
+{{- $args := dict "ctx" $ "component" "config" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "event-junkie.fullname" $ }}
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+{{- /* Settings that belong to *running in a cluster* rather than to the application, which is why
+       they live here and not in each module's application.yaml: local development and the existing
+       tests keep their current single-port behaviour untouched.
+
+       Consumed with `envFrom`, so Spring's relaxed binding maps each key onto the property of the
+       same name. `MANAGEMENT_SERVER_PORT` is deliberately NOT here — it is per-component in values,
+       and setting it here as well would make two sources of truth for one number. */}}
+data:
+  # Spring Boot enables the liveness/readiness health groups on its own once it detects Kubernetes.
+  # Set explicitly because a probe path that exists only by autodetection is a probe path that
+  # disappears the day the detection stops working.
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+  # `health,info` matches each module's application.yaml. Restated here so that moving the
+  # management endpoints to their own port does not silently widen what they expose.
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info"
+  # The banner is six lines of ASCII art at the top of every container log, repeated on every
+  # restart. Harmless locally, pure noise in an aggregated log.
+  SPRING_MAIN_BANNER_MODE: "off"
