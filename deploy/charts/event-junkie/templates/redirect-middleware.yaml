@@ -1,0 +1,23 @@
+{{- if and .Values.ingress.enabled .Values.ingress.redirectHosts }}
+{{- $args := dict "ctx" $ "component" "redirect" }}
+{{- /* The one Traefik-specific object in the chart, and it is here because there is no portable
+       alternative: the Ingress API has no way to express a redirect, so every controller does it
+       through its own extension. The /api routing deliberately avoided a Traefik Middleware (§3.1)
+       because that rewrite *could* live in the application and therefore travel with the image; a
+       redirect from a domain the application never sees cannot. Gateway API's RequestRedirect filter
+       is the portable successor and is not enabled on k3s's bundled Traefik.
+
+       Isolated in its own file and gated on `ingress.redirectHosts` so that emptying that list
+       leaves a chart with nothing Traefik-specific in it at all. */}}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ printf "%s-redirect" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+spec:
+  redirectRegex:
+    regex: {{ printf "^https?://[^/]+/(.*)" | quote }}
+    replacement: {{ printf "https://%s/${1}" .Values.ingress.host | quote }}
+    permanent: true
+{{- end }}

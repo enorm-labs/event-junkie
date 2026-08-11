@@ -17,6 +17,7 @@ here.
 - [Calling the APIs](#calling-the-apis)
 - [Quality checks](#quality-checks)
 - [Infrastructure (OpenTofu)](#infrastructure-opentofu)
+- [Helm chart](#helm-chart)
 - [Performance tests](#performance-tests)
 - [Dependencies](#dependencies)
 
@@ -54,16 +55,21 @@ pre-commit run gitleaks --all-files       # everything tracked by git
 gitleaks detect --source . --verbose      # the entire history (needs: brew install gitleaks)
 ```
 
-Two more hooks run alongside it, both scoped to `infra/` and both `local` — they use the `tofu` and `shellcheck` already on your machine rather than pulling a
-third-party hook repository that would need its own pinning:
+Three more hooks run alongside it, all `local` — they use the `tofu`, `shellcheck` and `helm` already on your machine rather than pulling third-party hook
+repositories that would each need their own pinning:
 
 | Hook | Runs on |
 |---|---|
 | `tofu-fmt` | any `.tf` / `.tfvars` file. It rewrites in place, so a failure means "re-stage and commit again", not "go and fix something" |
-| `shellcheck-cloud-init` | `infra/modules/environment/cloud-init/*.sh` |
+| `shellcheck-scripts` | `infra/modules/environment/cloud-init/*.sh` and `deploy/scripts/*.sh` |
+| `helm-lint` | anything under `deploy/charts/`. Lints the chart directory, so it takes no filenames |
 
-Both are also `validate-infra.yml`'s job in CI; the hooks just move the deterministic half of that feedback before the push. If you have neither tool
-installed, the hooks fail — install them (`brew install opentofu shellcheck`) or skip with `git commit --no-verify` on a change that touches neither.
+All three are also CI's job (`validate-infra.yml`, `validate-chart.yml`); the hooks just move the deterministic half of that feedback before the push. If you do
+not have the tools installed, the hooks fail — install them (`brew install opentofu shellcheck helm`) or skip with `git commit --no-verify` on a change that
+touches none of those paths.
+
+**Do not add a `check-yaml` hook.** Helm templates are Go templates that happen to look like YAML, and a generic parser rejects every one of them. The
+`.pre-commit-config.yaml` comment says so next to the hook, because this is the kind of thing that gets "fixed" by adding a standard hook set.
 
 The hooks live in the shared `.git` directory, so they are already active in every worktree — no second
 `pre-commit install`.
@@ -240,6 +246,31 @@ Run all three stacks: they share a module, so a change to it can break one and l
 **`tofu plan` and `tofu apply` are not part of local verification.** They need a Hetzner API token and they spend money — see
 [infra/README.md](../infra/README.md) for who runs them and in what order. One consequence worth knowing rather than discovering: `validate` does **not** render
 `templatefile`, so a change to the cloud-init template can pass every check here and still produce YAML that a booting server rejects.
+
+## Helm chart
+
+The chart that deploys the three services onto that platform lives in [`deploy/charts/event-junkie/`](../deploy/charts/event-junkie). **It has never been
+installed anywhere** — the images it references do not exist yet (#426, #262) and the first install is the k3d rehearsal in #263. Read
+[deploy/AGENTS.md](../deploy/AGENTS.md) before changing it.
+
+Needs `helm`, `yq` and `kubeconform` (`brew install helm yq kubeconform`). Everything below reaches no cluster and needs no kubeconfig, and is what
+`validate-chart.yml` runs in CI:
+
+```bash
+helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-staging.yaml
+helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-staging.yaml
+deploy/scripts/render-assertions.sh
+shellcheck -x deploy/scripts/*.sh
+```
+
+`render-assertions.sh` is the one worth understanding: `helm lint` and `kubeconform` both pass on a chart that is well-formed, schema-valid and wrong — an
+ingress that routes `/actuator`, an importer scaled past one replica, a selector carrying a label that changes on every release. It renders the chart once per
+values file and asserts on the result.
+
+Two things to know before running anything else. **`helm install --dry-run` is not safe here**: it resolves your current kubeconfig context and talks to that
+cluster. Use `helm template`, or `--dry-run=client` if you need `NOTES.txt`. And **the base `values.yaml` cannot render on its own** — `database.host` and
+`database.existingSecret` have no safe default, so add `--set database.host=10.0.1.2 --set database.existingSecret=events-db` when not using an environment
+values file.
 
 ## Performance tests
 

@@ -8,9 +8,10 @@ spring:
 # `info` joins the default `health`, so operators can ask a running instance which build it is.
 # It must NOT be routed through the public ingress — the browser gets `GET /meta` instead, which
 # is a curated, OpenAPI-documented contract rather than a framework-shaped payload
-# (docs/LEGAL.md §4.4). Once the Helm chart exists, prefer moving the management
-# endpoints to their own port (management.server.port) so the split is enforced by the network
-# rather than by an ingress rule that has to stay correct forever.
+# (docs/LEGAL.md §4.4). That split now lives in the Helm chart: `deploy/charts/event-junkie` sets
+# MANAGEMENT_SERVER_PORT=9001 on both JVM services, so in a cluster the actuator endpoints are on a
+# port no ingress rule names — unroutable rather than merely unrouted. Deliberately not set here, so
+# local development and the tests keep their single-port behaviour.
 management:
   endpoints:
     web:

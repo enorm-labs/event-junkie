@@ -593,6 +593,27 @@ Practical notes that cost people a day each:
 - `event-junkie.com` needs its own certificate for the 301 redirect — one more entry, not a wildcard.
 - **Set the CAA record first** (`0 issue "letsencrypt.org"`), which is already in [#259's checklist](https://github.com/enorm-labs/event-junkie/issues/259).
 
+### How the chart splits it — as built (#261)
+
+The chart annotates its Ingress with `cert-manager.io/cluster-issuer` and lets cert-manager's ingress-shim create the `Certificate`; it owns no `Certificate`
+resource of its own. Three things about the split are decisions rather than defaults:
+
+- **The `ClusterIssuer` template is off by default.** A ClusterIssuer is cluster-scoped, so a chart that owns one cannot be installed twice on the same cluster
+  — which is exactly what the k3d rehearsal does. `values-staging.yaml` turns it on, because staging is its own cluster with one release on it; production
+  points at an issuer created out of band.
+- **The solver is a value**, `http01` or `dns01`, and staging sets `dns01` for the reason above: it has no public address for an HTTP-01 challenge to reach. The
+  chart renders the solver; the Hetzner DNS webhook it names is #265's installation, not the chart's dependency.
+- **The default ACME endpoint is Let's Encrypt *staging*, in every values file including staging's** — the rate limit is per *registered* domain, and
+  `event-junkie.de` is the same registered domain in both environments, so burning it from staging would lock production out too.
+
+**The chart ships no `crds/` directory and must not gain one.** Helm has no story for upgrading or deleting CRDs a chart installed, so owning cert-manager's is
+how a chart acquires a resource it can never safely change. The consequence is an ordering constraint worth stating plainly: **`helm install` fails outright if
+cert-manager is not already present**, because the API server rejects an unknown kind. It is not a race that resolves itself.
+
+The redirect from `event-junkie.com` is the one place the chart uses a Traefik-specific object — a `Middleware` doing `redirectRegex`, because the Ingress API
+has no way to express a redirect and every controller does it through its own extension. It is gated on a values list, so emptying that list leaves a chart
+with nothing Traefik-specific in it.
+
 ### MetalLB — no
 
 **Not needed, and probably never.** k3s ships **ServiceLB** (klipper-lb), which binds `LoadBalancer` services straight to the node's IP. On a single node that
@@ -818,6 +839,14 @@ restore drill in [#270](https://github.com/enorm-labs/event-junkie/issues/270) a
 Everything below the cloud layer can be exercised without spending money, which is [#263](https://github.com/enorm-labs/event-junkie/issues/263):
 
 - **k3d** — the chart, the images, ingress, cert-manager with a self-signed issuer, NetworkPolicies, and the observability stack all run locally.
+  `deploy/charts/event-junkie/values-k3d.yaml` exists for this and was written blind: it is there so #263 starts from something rather than a blank page, not
+  because it is known to be correct.
+- **What the chart's own gate does and does not prove.** `helm lint --strict`, `helm template`, `kubeconform` against the Kubernetes and CRD schemas, and
+  `deploy/scripts/render-assertions.sh` all run in CI on every change to `deploy/`, and all four are pure functions of the working tree. They prove the chart
+  parses, matches the API schemas, and does not do a specific list of wrong things — no ingress path reaching the importer or `/actuator`, no floating image
+  tag, no selector carrying a label that changes between releases, no hardcoded namespace. They prove **nothing** about whether a pod starts, a probe passes or
+  a connection string resolves. The assertions exist because `lint` and `kubeconform` both pass on a chart that is well-formed and wrong, and because the
+  selector-label failure they catch does not surface until the *second* release — which is to say, after the first one has already looked like a success.
 - **Flux runs on k3d too**, pointed at the same repository, and this is the part most worth rehearsing: reconciliation timing, what a failed `HelmRelease` looks
   like, and whether the test hooks actually roll back. Discovering that on production is discovering it during an incident.
 - **`tofu validate` and `tofu fmt`** run without credentials. `tofu plan` does not — it needs a token, so the OpenTofu is unproven until someone applies it.
@@ -861,10 +890,20 @@ Ordered by dependency. Each step names its issue.
 
 ### Phase C — the deployable artefact — [#261](https://github.com/enorm-labs/event-junkie/issues/261), [#262](https://github.com/enorm-labs/event-junkie/issues/262)
 
+> **Step 11 is written**, in the same register Phase B uses for steps 5–7: it lives in [`deploy/charts/event-junkie/`](../deploy/charts/event-junkie), it lints,
+> renders and passes its assertions, and it has never been installed anywhere. Steps 10 and 12–14 are not done, so none of it is proven. The images it
+> references do not exist yet either — that is #262 for the frontend and
+> [#426](https://github.com/enorm-labs/event-junkie/issues/426) for the two backends, and both must land before step 14.
+
 10. **Containerise the frontend** — multi-stage node → nginx, `try_files` for history mode, immutable cache headers on `/assets/`, `no-cache` on `index.html`,
-    and a **relative `/api`** so one image serves every environment (#262).
+    and a **relative `/api`** so one image serves every environment (#262). One constraint the chart places on it: **nginx must listen on 8080**, because the
+    pod runs as a non-root user and cannot bind a privileged port.
 11. **Helm chart** — `replicas: 1` + `strategy: Recreate` for the importer (ADR-008), the security context from §8, resource requests and limits everywhere,
-    cert-manager annotations, and the admin API deliberately unrouted (#261).
+    cert-manager annotations, and the admin API deliberately unrouted (#261). Three decisions inside it are worth carrying forward, because each replaces
+    something a reader would otherwise expect to find: **`/api` is `spring.webflux.base-path`**, so there is no ingress rewrite and no Traefik middleware for it;
+    **actuator moves to port 9001**, so `/actuator/**` is unroutable rather than merely unrouted; and **the database password only ever comes from an existing
+    Secret**, with no inline path in the values at all. The chart's own
+    [README](../deploy/charts/event-junkie/README.md) argues all three.
 12. **Push image and chart to GHCR** as OCI artifacts, versioned together (§3). This is where CI's involvement in deployment now *ends*.
 13. **`flux bootstrap github`** — commits Flux's manifests and creates its deploy key. Needs a PAT once, from a laptop; CI never holds it (§4a). Then declare
     the `HelmRelease` and `OCIRepository` that watch GHCR.

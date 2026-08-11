@@ -1,0 +1,12 @@
+# Without this file nothing is excluded from `helm package`, so a stray editor or OS artefact would
+# ship inside the published chart (#264). Everything else in this directory is chart content.
+.DS_Store
+.git/
+.gitignore
+*.swp
+*.bak
+*.tmp
+*.orig
+*~
+.idea/
+.vscode/

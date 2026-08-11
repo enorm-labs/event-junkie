@@ -1,0 +1,60 @@
+# k3d overrides, for the local rehearsal in #263.
+#
+# Written blind, on purpose. This file exists so that #263 starts from something rather than from a
+# blank page; it is not claimed to be correct. The first person to run `helm install` with it will
+# change it, and that is the expected outcome rather than a failure of this PR.
+
+image:
+  # Images are side-loaded into the k3d cluster (`k3d image import`), so there is no registry to
+  # pull from and the reference must not look like one.
+  registry: "localhost"
+  # IfNotPresent is what makes a side-loaded image win. `Always` would send k3d to a registry that
+  # does not have it and fail with ImagePullBackOff.
+  pullPolicy: "IfNotPresent"
+
+database:
+  # PostgreSQL runs on the host, in the same compose stack local development already uses.
+  # `host.k3d.internal` is k3d's built-in name for the host from inside the cluster.
+  host: "host.k3d.internal"
+  # Created before the first install:
+  #   kubectl create secret generic events-db \
+  #     --from-literal=username=events --from-literal=password=events
+  existingSecret: "events-db"
+
+bff:
+  replicaCount: 1
+  image:
+    repository: "event-junkie/bff"
+    # A tag that is not `.Chart.AppVersion`, because a locally-built image has no release version.
+    # Not `latest`: the render assertions reject floating tags, and the reason they exist applies to
+    # a laptop too — `latest` is how you spend an afternoon debugging yesterday's build.
+    tag: "dev"
+
+importer:
+  image:
+    repository: "event-junkie/importer"
+    tag: "dev"
+
+frontend:
+  replicaCount: 1
+  image:
+    repository: "event-junkie/frontend"
+    tag: "dev"
+
+ingress:
+  # k3d ships the same Traefik k3s does, so the ingress path is genuinely exercised. `.localhost`
+  # resolves to 127.0.0.1 without a hosts entry on every current browser and OS.
+  host: "event-junkie.localhost"
+  redirectHosts: []
+  tls:
+    # No TLS, and therefore no cert-manager: the rehearsal is about whether the workloads start,
+    # reach the database and route to each other. Adding certificate issuance to that would mean
+    # installing cert-manager into k3d and debugging ACME against a name that does not exist. Plain
+    # HTTP over a loopback address costs nothing and tests the same routing.
+    enabled: false
+
+certManager:
+  clusterIssuer:
+    # Nothing to create: with `tls.enabled: false` no annotation references an issuer, and k3d has
+    # no cert-manager installed — a ClusterIssuer here would fail the install on an unknown kind.
+    create: false

@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "event-junkie chart values",
+  "description": "Deliberately minimal: it constrains the values whose wrong setting is either unrecoverable or invisible, and nothing else. Documenting the whole value surface is values.yaml's job, and a schema that repeats it is a second thing to keep in step. Note that `database.host` and `database.existingSecret` are NOT required here even though the chart cannot render without them — the helpers reject them with a message that says what to do, which is more useful than a schema path.",
+  "type": "object",
+  "required": ["image", "database", "security", "bff", "importer", "frontend", "ingress", "certManager"],
+  "properties": {
+    "image": {
+      "type": "object",
+      "properties": {
+        "registry": { "type": "string", "minLength": 1 },
+        "pullPolicy": {
+          "description": "Never `Always`: every tag this chart references is immutable, so re-pulling can only find the same bytes or fail.",
+          "enum": ["IfNotPresent", "Never"]
+        },
+        "pullSecrets": { "type": "array" }
+      }
+    },
+    "database": {
+      "type": "object",
+      "properties": {
+        "host": { "type": "string" },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "name": { "type": "string", "minLength": 1 },
+        "existingSecret": {
+          "description": "The name of an existing Secret. There is deliberately no `password` property anywhere in this schema, and adding one is the change to refuse in review.",
+          "type": "string"
+        },
+        "secretKeys": {
+          "type": "object",
+          "required": ["username", "password"],
+          "properties": {
+            "username": { "type": "string", "minLength": 1 },
+            "password": { "type": "string", "minLength": 1 }
+          }
+        }
+      },
+      "not": { "required": ["password"] }
+    },
+    "security": {
+      "type": "object",
+      "required": ["runAsUser", "runAsGroup"],
+      "properties": {
+        "runAsUser": {
+          "description": "Must be non-zero: `runAsNonRoot: true` and `runAsUser: 0` is a pod that fails to start, which is the good case — the bad one is a UID that exists in the image and is not the one it runs as.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "runAsGroup": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "bff": {
+      "type": "object",
+      "required": ["replicaCount", "image", "basePath", "service", "resources"],
+      "properties": {
+        "replicaCount": { "type": "integer", "minimum": 0 },
+        "basePath": {
+          "description": "Served by Spring itself, so the ingress path and this must agree. A leading slash and no trailing one.",
+          "type": "string",
+          "pattern": "^/[^/].*[^/]$|^/[^/]*[^/]$"
+        },
+        "service": { "$ref": "#/definitions/jvmService" },
+        "maxRamPercentage": { "type": "integer", "minimum": 25, "maximum": 90 }
+      }
+    },
+    "importer": {
+      "type": "object",
+      "required": ["replicaCount", "image", "service", "resources"],
+      "properties": {
+        "replicaCount": {
+          "description": "Pinned to 1 by ADR-008, so that raising it fails at install time rather than in a review comment. Two schedulers means two concurrent imports of the same source: the 60-second tick skips sources marked RUNNING, but that check is a read-then-write with no lock. `SELECT … FOR UPDATE SKIP LOCKED` is the prerequisite for ever relaxing this, and relaxing it is an ADR change, not a values change.",
+          "const": 1
+        },
+        "service": { "$ref": "#/definitions/jvmService" },
+        "maxRamPercentage": { "type": "integer", "minimum": 25, "maximum": 90 }
+      }
+    },
+    "frontend": {
+      "type": "object",
+      "required": ["replicaCount", "image", "service", "resources"],
+      "properties": {
+        "replicaCount": { "type": "integer", "minimum": 0 },
+        "service": {
+          "type": "object",
+          "required": ["port"],
+          "properties": {
+            "port": {
+              "description": "Cannot be a privileged port: nginx runs as a non-root user here and cannot bind below 1024.",
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 65535
+            }
+          }
+        },
+        "runAsUser": { "type": ["integer", "null"], "minimum": 1 }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "required": ["enabled", "className", "host", "tls"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "className": { "type": "string", "minLength": 1 },
+        "host": { "type": "string", "minLength": 1 },
+        "redirectHosts": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "annotations": { "type": "object" },
+        "tls": {
+          "type": "object",
+          "required": ["enabled", "secretName"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "secretName": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "certManager": {
+      "type": "object",
+      "required": ["clusterIssuer"],
+      "properties": {
+        "clusterIssuer": {
+          "type": "object",
+          "required": ["name", "create", "server", "solver"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "create": { "type": "boolean" },
+            "email": { "type": "string" },
+            "server": { "type": "string", "format": "uri" },
+            "solver": {
+              "description": "http01 needs Let's Encrypt to reach the host; staging has no public address, so it uses dns01 (PLATFORM_SETUP §4a).",
+              "enum": ["http01", "dns01"]
+            }
+          }
+        }
+      }
+    },
+    "tests": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" }
+      }
+    }
+  },
+  "definitions": {
+    "jvmService": {
+      "type": "object",
+      "required": ["port", "managementPort"],
+      "properties": {
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "managementPort": {
+          "description": "Must differ from `port`. That the two are different is what makes /actuator/** unroutable rather than merely unrouted, since the ingress only ever names the application port.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      }
+    }
+  }
+}

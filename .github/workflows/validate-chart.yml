@@ -1,0 +1,109 @@
+name: Validate Helm Chart
+
+# `helm lint`, `helm template`, `kubeconform` and the render assertions are pure functions of the
+# working tree — they reach no cluster and need no kubeconfig, which is what makes them safe to run
+# in CI at all (docs/PLATFORM_SETUP.md §4: nothing outside the cluster holds a credential for it).
+#
+# So this is a syntax and shape gate, not a correctness one. It cannot tell you a pod starts, and
+# the chart has never been installed anywhere (#263 is the first time it will be). What it catches
+# is the failure mode that actually happens to deployment code nobody runs daily: a chart that
+# stopped rendering months ago and nobody noticed until the afternoon it was needed.
+#
+# The render assertions are the part that earns its keep. Lint and schema validation both pass on a
+# chart that quietly does the wrong thing — an ingress that routes /actuator, an importer scaled to
+# two replicas, a selector carrying a label that changes on every release.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'deploy/**'
+      - '.github/workflows/validate-chart.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'deploy/**'
+      - '.github/workflows/validate-chart.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CHART: deploy/charts/event-junkie
+  # Flux's helm-controller embeds the Helm 3 SDK, so the chart is gated against a Helm 3 client even
+  # though local binaries are Helm 4. A chart that only renders under Helm 4 is a chart Flux cannot
+  # install (#414), and that would not surface until the deployment pipeline itself was being built.
+  HELM_VERSION: v3.19.0
+  KUBECONFORM_VERSION: v0.8.0
+
+jobs:
+  lint:
+    name: Lint & render
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Install kubeconform
+        run: |
+          curl -fsSL \
+            "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
+            | tar -xz -C /usr/local/bin kubeconform
+          kubeconform -v
+
+      # --strict promotes the chart guide's own conventions — chart name, SemVer, unknown fields —
+      # from warnings to failures.
+      #
+      # The base values.yaml cannot render on its own: database.host and database.existingSecret
+      # have no safe default and the helpers `required` them, which is the point. So the default
+      # case gets the two on the command line and the environment cases get theirs from their file.
+      - name: Lint
+        run: |
+          helm lint --strict "$CHART" \
+            --set database.host=10.0.1.2 --set database.existingSecret=events-db
+          for values in "$CHART"/values-*.yaml; do
+            echo "== $values =="
+            helm lint --strict "$CHART" --values "$values"
+          done
+
+      # The CRD catalog is needed for cert-manager's ClusterIssuer and Traefik's Middleware. Neither
+      # CRD is shipped by this chart — they belong to the operators that own them — so their schemas
+      # have to come from somewhere, and `-ignore-missing-schemas` is deliberately NOT used: a
+      # resource kubeconform cannot check is a resource nothing checks.
+      - name: Validate rendered manifests
+        run: |
+          catalog='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
+          render() {
+            helm template validate "$CHART" "$@" \
+              | kubeconform -strict -summary -verbose \
+                  -schema-location default -schema-location "$catalog" -
+          }
+          render --set database.host=10.0.1.2 --set database.existingSecret=events-db
+          for values in "$CHART"/values-*.yaml; do
+            echo "== $values =="
+            render --values "$values"
+          done
+
+      # yq is preinstalled on ubuntu-latest runners.
+      - name: Assert on the rendered output
+        run: deploy/scripts/render-assertions.sh "$CHART"
+
+  shellcheck:
+    name: ShellCheck deploy scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Run ShellCheck
+        run: shellcheck -x deploy/scripts/*.sh
