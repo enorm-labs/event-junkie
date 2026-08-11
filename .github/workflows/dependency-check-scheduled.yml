@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Java 25 (Temurin)
         uses: actions/setup-java@v5
@@ -45,7 +45,7 @@ jobs:
       # Restore the most recent NVD cache so we only apply a small incremental update
       # instead of re-downloading the whole database every night.
       - name: Restore NVD database cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: ~/.gradle/dependency-check-data
           key: dependency-check-data-${{ github.run_id }}
@@ -66,7 +66,7 @@ jobs:
       # is never persisted and restored by later runs (here or in the PR job).
       - name: Save NVD database cache
         if: success()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: ~/.gradle/dependency-check-data
           key: dependency-check-data-${{ github.run_id }}
@@ -85,7 +85,7 @@ jobs:
 
       - name: Upload HTML report as artifact
         if: (success() || failure()) && hashFiles('build/reports/dependency-check/dependency-check-report.html') != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dependency-check-report
           path: build/reports/dependency-check/dependency-check-report.html

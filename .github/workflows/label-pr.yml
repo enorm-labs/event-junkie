@@ -35,7 +35,7 @@ jobs:
 
     steps:
       - name: Label from the PR title
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             // The labels this workflow owns. Anything not listed here (`dependencies`,
