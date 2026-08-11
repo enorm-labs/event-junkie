@@ -58,22 +58,23 @@ spec:
             periodSeconds: 10
           resources:
             {{- toYaml .Values.frontend.resources | nindent 12 }}
-          {{- /* `readOnlyRootFilesystem: true` is what makes these mounts necessary. nginx writes
-                 proxy/fastcgi temp files under /var/cache/nginx and its pid file under /var/run, and
-                 it fails at *startup* without both — not at first request, which would at least be
-                 obvious. If #262's image relocates either path, these move with it. */}}
+          {{- /* One writable path, and only one — verified against the real image in #262 by
+                 running it with `--read-only --tmpfs /tmp`.
+
+                 This block used to mount /var/cache/nginx and /var/run as well, on the reasoning
+                 that nginx writes its temp files and pid file there and fails at *startup*
+                 without them. That is true of the stock `nginx` image and false of the
+                 `nginxinc/nginx-unprivileged` one #262 chose: its own nginx.conf sets
+                 `pid /tmp/nginx.pid` and redirects every `*_temp_path` into /tmp, overriding the
+                 compiled /var/cache/nginx defaults, and it symlinks both logs to /dev/stdout and
+                 /dev/stderr. So nothing is written outside /tmp.
+
+                 If the base image ever changes, re-check this before assuming: the failure is at
+                 startup, not at first request. */}}
           volumeMounts:
-            - name: nginx-cache
-              mountPath: /var/cache/nginx
-            - name: nginx-run
-              mountPath: /var/run
             - name: tmp
               mountPath: /tmp
       volumes:
-        - name: nginx-cache
-          emptyDir: {}
-        - name: nginx-run
-          emptyDir: {}
         - name: tmp
           emptyDir: {}
       {{- with .Values.frontend.nodeSelector }}

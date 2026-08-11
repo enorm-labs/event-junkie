@@ -131,9 +131,16 @@ change rather than a values change.
 ### Read-only root filesystems need writable mounts
 
 `readOnlyRootFilesystem: true` everywhere, which means every path a process writes to has to be an
-explicit `emptyDir`. The JVM services get `/tmp` (hsperfdata, and anything a library assumes).
-nginx gets `/var/cache/nginx` and `/var/run`, and fails at *startup* without them. If #262's image
-relocates either path, these move with it.
+explicit `emptyDir`. All three workloads get exactly one: `/tmp`. The JVM services need it for
+hsperfdata and anything a library assumes; nginx needs it because #262's base image
+(`nginxinc/nginx-unprivileged`) puts its pid file and every temp path there rather than in
+`/var/cache/nginx`, and symlinks its logs to stdout and stderr.
+
+**Verified by running the images, not by reading their Dockerfiles** — all three start under
+`--read-only --tmpfs /tmp --user 1000:1000`. An earlier revision of this chart also mounted
+`/var/cache/nginx` and `/var/run`, which the stock `nginx` image would need and this one does not.
+If the base image changes, re-check before assuming: the failure is at startup, not at first
+request.
 
 ### The chart's labels are not `infra/`'s labels
 

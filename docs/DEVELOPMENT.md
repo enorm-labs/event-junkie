@@ -283,6 +283,30 @@ The importer additionally needs the **JDBC** pair — `SPRING_FLYWAY_URL`, `SPRI
 the migrations and Flyway has no reactive driver. Locally under `bootRun` all of this is supplied by Spring Boot's Docker Compose support, which is
 `developmentOnly` and therefore absent from the image; in a container nothing sets a URL unless you do.
 
+### The frontend image
+
+Same shape, different artefact: `npm run build` produces `dist/`, and the image is nginx plus that directory. The build context is the module, cut down to
+`dist/` and `docker/` by `.dockerignore`:
+
+```bash
+npm --prefix events-frontend run build
+docker buildx build events-frontend -t event-junkie/frontend:dev --load
+docker run --rm --read-only --tmpfs /tmp --user 1000:1000 -p 8080:8080 event-junkie/frontend:dev
+```
+
+It needs no database and no backend, so it runs on its own — but **its API calls will 404**, and that is correct rather than broken. In a cluster the ingress
+routes `/api` to the BFF and `/` to this container; nginx here proxies nothing.
+
+What the config guarantees, and what is worth re-checking after any change to it:
+
+| Request | Expected |
+|---|---|
+| `/` and any deep link (`/en/events/…`) | `200`, `index.html`, `Cache-Control: no-cache` |
+| `/assets/<hashed>` | `200`, `immutable`, one year |
+| `/assets/<missing>` | **`404`** — never the SPA fallback |
+| `/sitemap.xml`, `/robots.txt` | `200`, one hour |
+| `/.env` or any dotfile | `403` |
+
 The images are **not pushed by CI** — that is the release workflow's job (#264).
 
 ## Helm chart

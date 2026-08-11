@@ -118,3 +118,33 @@ jobs:
             events-frontend/playwright-report/
             events-frontend/test-results/
           retention-days: 7
+
+      # Build the container image, and deliberately do not push it. This workflow runs on every
+      # pull request, including from forks — publishing here would put an image built from
+      # unreviewed code into GHCR. Pushing belongs to the release workflow (#264).
+      #
+      # `npm run build` above has already produced events-frontend/dist, which is what the image
+      # copies: the Dockerfile has no builder stage, so there is no second, uncached build.
+      - name: Read the frontend version
+        id: version
+        working-directory: events-frontend
+        run: echo "value=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Both platforms genuinely build, with no QEMU, because the Dockerfile contains no `RUN` —
+      # `dist/` is identical on amd64 and arm64. `type=cacheonly` because a multi-platform image
+      # cannot be loaded into the local daemon, and building one platform would leave arm64
+      # unbuilt — the architecture the Hetzner nodes run (#424).
+      - name: Build the frontend image (amd64 + arm64, no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: events-frontend
+          file: events-frontend/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: false
+          outputs: type=cacheonly
+          build-args: |
+            VERSION=${{ steps.version.outputs.value }}
+            REVISION=${{ github.sha }}
