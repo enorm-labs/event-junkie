@@ -11,7 +11,7 @@ slightly different pitches. What belongs here is the checklist of what actually 
 Elsewhere: which *kinds* of event are in scope — [EVENT_SCOPE.md](EVENT_SCOPE.md) · where the product is headed —
 [VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md) · the backlog — [GitHub Issues](https://github.com/enorm-labs/event-junkie/issues) · voice and visual direction — [BRANDING.md](BRANDING.md).
 
-Public app name: **Event Junkie** (→ event-junkie.de). **Event Junkie** is the internal/repo name.
+App name: **Event Junkie** (→ event-junkie.de), and the same name internally in `event-junkie` identifier form.
 
 ---
 

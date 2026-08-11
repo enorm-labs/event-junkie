@@ -13,7 +13,7 @@ live in **[BRANDING.md](BRANDING.md)**. This document stays at the level of _dir
 Event Junkie is a discovery app for **music events in Berlin** — concerts, club nights, festivals — aggregated from venue and promoter websites into one fast,
 filterable place, always linking back to the original source.
 
-- Public app name: **Event Junkie** (→ event-junkie.de). **Event Junkie** stays the internal/repo name.
+- App name: **Event Junkie** (→ event-junkie.de), and the same name internally in `event-junkie` identifier form.
 - Tagline: _"Can't get enough of Berlin."_ (voice & branding: see [BRANDING.md](BRANDING.md))
 
 ### Who it's for & positioning
