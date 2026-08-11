@@ -46,7 +46,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Java 25 (Temurin)
         uses: actions/setup-java@v5
@@ -132,7 +132,7 @@ jobs:
 
       - name: Post coverage to Pull Request
         if: github.event_name == 'pull_request'
-        uses: mi-kas/kover-report@v1
+        uses: mi-kas/kover-report@v2
         with:
           path: build/reports/kover/report.xml
           title: Code Coverage
@@ -154,7 +154,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Java 25 (Temurin)
         uses: actions/setup-java@v5
@@ -171,7 +171,7 @@ jobs:
       # This job is read-only on the cache — the scheduled workflow owns seeding it.
       - name: Restore NVD database cache
         id: nvd-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: ~/.gradle/dependency-check-data
           key: dependency-check-data-${{ github.run_id }}
@@ -220,7 +220,7 @@ jobs:
 
       - name: Upload HTML report as artifact
         if: (success() || failure()) && hashFiles('build/reports/dependency-check/dependency-check-report.html') != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dependency-check-report
           path: build/reports/dependency-check/dependency-check-report.html
