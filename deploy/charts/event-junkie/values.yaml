@@ -167,8 +167,10 @@ frontend:
       cpu: "200m"
       # frontend.resources.limits.memory is generous for nginx serving a static bundle.
       memory: "128Mi"
-  # frontend.runAsUser overrides security.runAsUser. Set it if #262 lands on an nginx base whose
-  # unprivileged user is not 1000 — nginxinc's is 101.
+  # frontend.runAsUser overrides security.runAsUser, and is deliberately left unset: #262's image
+  # is `nginxinc/nginx-unprivileged`, whose own default user is 101, but it was verified to run
+  # correctly as 1000 — it writes only to /tmp and reads only world-readable files. So all three
+  # workloads share one UID. This exists for the case where a future base image cannot.
   runAsUser: null
   serviceAccount:
     # frontend.serviceAccount.create makes a dedicated ServiceAccount with no token mounted.

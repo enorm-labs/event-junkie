@@ -1,0 +1,9 @@
+# Deny everything, then re-admit the two directories the image actually needs. An allowlist rather
+# than a list of exclusions, because the expensive things here — node_modules, coverage,
+# playwright-report, test-results — are exactly the ones somebody forgets to add to a denylist.
+#
+# The image contains no build step, so the source tree is not part of the context at all: `dist/`
+# is produced by `npm run build` before the image is built. See the Dockerfile header.
+*
+!dist
+!docker

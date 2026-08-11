@@ -365,10 +365,28 @@ Three rules these files exist under, each of which something else depends on:
 - **Nothing about the runtime is baked in.** Ports and `JAVA_TOOL_OPTIONS` come from the chart via `SERVER_PORT`, `MANAGEMENT_SERVER_PORT` and the environment.
   A value fixed in the image either gets overridden confusingly or silently wins.
 
+The **frontend** image follows the same shape with a different artefact — `npm run build` produces `dist/`, and the image is nginx plus that directory:
+
+```bash
+npm --prefix events-frontend run build
+docker buildx build events-frontend -t event-junkie/frontend:dev --load
+```
+
+Three things about it that are decisions rather than defaults:
+
+- **`nginxinc/nginx-unprivileged`, not `nginx`.** It listens on 8080 (a non-root process cannot bind 80) and its `nginx.conf` already relocates the pid file
+  and every `*_temp_path` into `/tmp`, which is why the container needs exactly one writable path. Replace `conf.d/default.conf` only — rewriting the image's
+  `nginx.conf` is how those properties get lost.
+- **No `/api` proxy.** The ingress routes `/api` to the BFF and `/` here, so nginx never sees an API request. Running the image standalone therefore gives a
+  working site whose API calls 404, and that is expected.
+- **`index.html` is `no-cache`, `/assets/` is `immutable`, and a missing asset must 404** rather than fall back to `index.html` — otherwise a stale page asking
+  for a deleted bundle gets HTML with a 200 and fails to parse as JavaScript.
+
 **Verify a change by running the image the way the chart will**, which is the check that catches what `docker build` cannot:
 
 ```bash
 docker run --rm --read-only --tmpfs /tmp --user 1000:1000 -e … event-junkie/bff:dev
+docker run --rm --read-only --tmpfs /tmp --user 1000:1000 -p 8080:8080 event-junkie/frontend:dev
 ```
 
 Local dev environment (used by `/importer-smoke` and `/next-importer`; run with no arguments for the full command list):
@@ -612,6 +630,7 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     - `validate-infra.yml` — `tofu fmt -check`, `tofu init -backend=false` + `validate` across all three stacks in a matrix, and ShellCheck on the cloud-init
       scripts. Triggers only when `infra/**` changes. **It deliberately never runs `plan`**: that needs a Hetzner token, and per PLATFORM_SETUP.md §4 nothing
       outside the cluster holds a cluster or cloud credential. So this is a syntax and type gate, not a correctness one, and there is no drift detection.
+    - `build-frontend.yml` builds the frontend image the same way, from the `dist/` its own `npm run build` step already produced.
     - `build-backend.yml` also **builds both container images for `linux/amd64` and `linux/arm64` and deliberately does not push them.** It runs on every pull
       request, including from forks, so publishing here would put an image built from unreviewed code into GHCR — that is the release workflow's job (#264).
       `outputs: type=cacheonly` because a multi-platform image cannot be loaded into the local daemon, and dropping to one platform would leave arm64 — the
@@ -761,6 +780,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Cloud-init for the Hetzner nodes      | `infra/modules/environment/cloud-init/`                                                                   |
 | Helm chart (bff · importer · frontend) | `deploy/charts/event-junkie/` — read `deploy/AGENTS.md` first; written and rendered, never installed      |
 | Backend container images              | `events-bff/Dockerfile`, `events-importer/Dockerfile` — no `RUN`, context is each module's `build/docker` |
+| Frontend container image              | `events-frontend/Dockerfile` + `events-frontend/docker/nginx.conf` — nginx on 8080, context is the module |
 | Chart render assertions               | `deploy/scripts/render-assertions.sh`                                                                     |
 | Release notes categories              | `.github/release.yml`                                                                                     |
 | Dependabot config                     | `.github/dependabot.yml`                                                                                  |
