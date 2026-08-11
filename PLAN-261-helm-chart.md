@@ -11,11 +11,13 @@ Branch: `feat/261-helm-chart` · Milestone v0.2 · `area:infra`, `size:L`, P0
 
 ## The steps, in order
 
-**Step 0 is a decision, not work, and it is not mine to take** — everything below waits on it.
+**Step 0 is done.** #427 landed on 2026-08-11 (PR #428) and the repository is now
+`enorm-labs/event-junkie`, so §9's open question is settled and every name below is the final one.
+Start at step 1.
 
 | # | Step | § |
 |---|---|---|
-| **0** | **Agree the sequencing: #427 (rename) first, or chart first.** The branch carries nothing but this plan, which is the only reason this is cheap; it stops being true after step 2 | §9 |
+| ~~0~~ | ~~Agree the sequencing: #427 first, or chart first~~ — **done: #427 first, merged** | §9 |
 | 1 | **Prove the Helm 3 client renders the chart skeleton** — `Chart.yaml` with `apiVersion: v2` and nothing else. Flux embeds the Helm 3 SDK while the local binary is Helm 4 | §5 |
 | 2 | `Chart.yaml`, a skeleton `values.yaml`, and **`_helpers.tpl` first of all** — names, the two label templates, the shared securityContext, the database env block. Everything downstream consumes these, and the labels/selector split is the one mistake that survives to the second release | §3a |
 | 3 | ServiceAccounts and the ConfigMap — the objects the Deployments reference | §3a |
@@ -470,7 +472,7 @@ Dockerfile that stopped building is exactly the rot `validate-infra.yml` was wri
 
 ### 7.4 GHCR — what actually has to happen
 
-`enorm-labs/event-checker` is a **public repo in an organisation**, which makes most of this free
+`enorm-labs/event-junkie` is a **public repo in an organisation**, which makes most of this free
 and unauthenticated. Confirmed against the container-registry docs:
 
 - **No credential to create for CI.** `permissions: packages: write` plus
@@ -500,8 +502,8 @@ and unauthenticated. Confirmed against the container-registry docs:
   clutter rather than cost. Not worth a cleanup workflow now; worth a line in the issue.
 - Naming: **`ghcr.io/enorm-labs/event-junkie/{bff,importer,frontend}`**, parallel to the chart's
   `oci://ghcr.io/enorm-labs/charts/event-junkie` from §3. `event-junkie` rather than
-  `event-checker` for the same BRANDING reason `infra/` uses it — this is read next to a domain, not
-  next to a module. All lowercase, which both names already are.
+  the old codename — which since #427 is simply *the* name, with no rule to invoke. All lowercase,
+  which it already is.
 
 ### 7.5 Filed as #426
 
@@ -537,14 +539,18 @@ the management port, an existing-Secret-only credential path) are implementation
 that decision, and their home is the chart README and `deploy/AGENTS.md`. Saying so explicitly
 because "should this be an ADR?" is otherwise the question that gets asked in review.
 
-**One interaction to watch:** #427 renames every `event-checker` reference to `event-junkie` and
-rewrites BRANDING.md's naming rule — see §9, which concludes it should go first.
+**Resolved:** #427 renamed every `event-checker` reference and rewrote BRANDING.md's naming rule,
+and it landed first — so the docs listed above are already on the final name and this PR's edits sit
+on top of the sweep rather than under it. See §9.
 
 ---
 
 ## 9. Sequencing — #427 before this, not after
 
-**Recorded, not acted on.** Nothing here changes until it is agreed.
+**Settled: #427 went first and merged on 2026-08-11 as PR #428.** Kept below as the reasoning, not
+as an open question. Two consequences worth carrying into the chart work: the `deploy/AGENTS.md`
+naming paragraph described in §3b **is no longer needed at all** — there is no exception left to
+explain — and the GHCR label URL in §7.4 is now simply correct rather than conditional.
 
 The order that came out of it is **#427 → #261 → #426 → #263**, and the reason it is worth
 disturbing an in-progress issue for is that `feat/261-helm-chart` **carries no chart yet** — one
