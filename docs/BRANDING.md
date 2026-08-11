@@ -55,6 +55,32 @@ anywhere, it is a leftover rather than a deliberate survival.
 `de.norm.events`, and the `events` database schema ([ADR-004](adr/ADR-004_DEDICATED_DATABASE_SCHEMA.md)). Renaming those would be a different change with a real
 cost in history and migrations, and no benefit — none of them says either name.
 
+**A rename is not done when the tree is clean.** #427 swept 51 files the same day this rule was reversed, and left two kinds of thing behind. Both are worth
+knowing about, because neither is the kind of thing a `grep` for the old name will ever show you.
+
+**One: the issue tracker is a surface, and `grep` cannot reach it.** Eight issue bodies still carried the old name. Most were stale URLs, harmless because
+GitHub redirects them — but #426's checklist carried `LABEL org.opencontainers.image.source=…/event-checker`, and *that* one had teeth: a stale label still
+resolves through the redirect, while the package-to-repository link is matched on the **canonical** name, so the published container package would have silently
+failed to attach. One `good first issue` was worse than stale — the rename had inverted its premise, so it now instructed the next contributor to preserve a
+split that no longer existed.
+
+**Two: sentences whose meaning was the distinction.** A mechanical replace renames identifiers reliably and reads nothing. Three documents explained the old
+split in prose — *"Event Junkie is the public name; Event Checker is the internal name"* — and the sweep rewrote **both halves**, leaving a tautology that named
+the same thing twice and then claimed the two referred to the same thing. Grep cannot find these, because the old name is gone; they are only visible by reading.
+When a name is retired, the sentences that existed to *contrast* the two names have to be deleted or rewritten, not renamed.
+
+The check that covers the tracker:
+
+```sh
+gh issue list --state all --limit 600 --json number,title,state,body \
+  --jq '.[] | select(.body != null and (.body | test("event-checker"))) | "#\(.number)\t[\(.state)]\t\(.title)"'
+```
+
+Expect two survivors and leave them: [#392](https://github.com/enorm-labs/event-junkie/issues/392) decided the rename and
+[#427](https://github.com/enorm-labs/event-junkie/issues/427) carried it out, so both name the old codename because naming it is what they are for. Merged pull
+request bodies keep it too — they are an accurate record of what the repository was called at the time, and rewriting them would make the history less true,
+not more.
+
 ## 2. The concept — why "Junkie"
 
 The name works because a junkie's traits map cleanly onto what the product does:

@@ -13,7 +13,7 @@ Every music event in Berlin, in one filterable feed — collected automatically 
 
 > **The event app Berlin deserves.**
 
-**Event Junkie** is the public name of the app; **Event Junkie** is the internal and repository name. Both refer to the same thing — see the naming rule
+**Event Junkie** is the name everywhere — the app, the repository and the identifiers, which use the `event-junkie` form. See the naming rule
 in [BRANDING.md](./docs/BRANDING.md).
 
 ## Contents
