@@ -2,7 +2,7 @@
 
 Concrete build plan for **Pillar 1** of the
 [Data Quality Strategy](DATA_QUALITY_STRATEGY.md): make quality *visible* so Pillars 2–4 can be judged by whether the numbers move. Backlog item:
-[issue #319](https://github.com/enorm-labs/event-checker/issues/319) — *Pillar 1 — Measure*.
+[issue #319](https://github.com/enorm-labs/event-junkie/issues/319) — *Pillar 1 — Measure*.
 
 **Goal:** a per-source data-quality report (API + scheduled log + metrics), a queryable **curation worklist**, and **metric history** so trends are chartable in
 an external BI tool. No changes to scraper extraction or the normalizers — this pillar only observes.

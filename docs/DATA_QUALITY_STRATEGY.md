@@ -1,7 +1,7 @@
 # Importer — Data Quality Strategy
 
 How we fix the data-quality gaps we have and prevent new ones from accumulating. This is the **strategy / plan**; the actionable backlog lives in the
-[issue tracker](https://github.com/enorm-labs/event-checker/issues) and each importer's accepted limitations in its
+[issue tracker](https://github.com/enorm-labs/event-junkie/issues) and each importer's accepted limitations in its
 own scraper KDoc. Where this doc names work to do, **the authoritative task is the issue** and this doc points at it — the two must not drift.
 
 Related: [ADR-007 Web Scraping Strategy](adr/ADR-007_WEB_SCRAPING_STRATEGY.md) ·
@@ -117,7 +117,7 @@ the canonicalizers). Borrow three ideas:
 2. **DQ-dimensions taxonomy** (§2.1) — for categorizing and reporting.
 3. **Quality-as-observability** — track metrics *over time*, not just a snapshot.
 
-For **dashboards & trends**, reuse an external BI/observability tool rather than building a bespoke UI (this is [issue #386](https://github.com/enorm-labs/event-checker/issues/386), *"A dashboard for analysing
+For **dashboards & trends**, reuse an external BI/observability tool rather than building a bespoke UI (this is [issue #386](https://github.com/enorm-labs/event-junkie/issues/386), *"A dashboard for analysing
 the data"*):
 
 - **SQL-based BI** (Apache Superset / Metabase) pointed straight at the Postgres
@@ -159,7 +159,7 @@ move.
 ### Pillar 3 — Fix (recover missing / bad data) 🔴 highest user-visible payoff
 
 - **Title-as-headliner extraction** for Privatclub, Cassiopeia, and Badehaus — the
-  work in [issue #321](https://github.com/enorm-labs/event-checker/issues/321) that reclaims the ~40% of artist-less concerts. Now safe:
+  work in [issue #321](https://github.com/enorm-labs/event-junkie/issues/321) that reclaims the ~40% of artist-less concerts. Now safe:
   `isNonArtistName` + `stripArtistSuffix` guard against non-artist titles, and Astra/Lido already do exactly this via `buildArtistsForEventType`.
 - **One-off backfill pass** over existing rows for the same recoverable fields (artist from title, event type from title heuristics), run once after the
   extraction ships so historical rows benefit too.
@@ -212,8 +212,8 @@ Tracked via the Pillar 1 report, per source and overall, and charted over time i
 
 ## 9. How this maps to the backlog
 
-The four pillars are issues [#319](https://github.com/enorm-labs/event-checker/issues/319) (Measure),
-[#320](https://github.com/enorm-labs/event-checker/issues/320) (Prevent), [#321](https://github.com/enorm-labs/event-checker/issues/321) (Fix) and
-[#322](https://github.com/enorm-labs/event-checker/issues/322) (Systematize). The admin review frontend and imports-status dashboard are
-[#340](https://github.com/enorm-labs/event-checker/issues/340) and its sub-issues; the Superset/Grafana dashboard (§4) is
-[#386](https://github.com/enorm-labs/event-checker/issues/386). This doc is the *why and in what order*; the issues are the *what*.
+The four pillars are issues [#319](https://github.com/enorm-labs/event-junkie/issues/319) (Measure),
+[#320](https://github.com/enorm-labs/event-junkie/issues/320) (Prevent), [#321](https://github.com/enorm-labs/event-junkie/issues/321) (Fix) and
+[#322](https://github.com/enorm-labs/event-junkie/issues/322) (Systematize). The admin review frontend and imports-status dashboard are
+[#340](https://github.com/enorm-labs/event-junkie/issues/340) and its sub-issues; the Superset/Grafana dashboard (§4) is
+[#386](https://github.com/enorm-labs/event-junkie/issues/386). This doc is the *why and in what order*; the issues are the *what*.

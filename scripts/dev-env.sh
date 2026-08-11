@@ -34,7 +34,7 @@
 # Environment overrides:
 #   POSTGRES_HOST_PORT (56298) · IMPORTER_HOST (http://localhost:8081)
 #   BFF_HOST (http://localhost:8080) · FRONTEND_HOST (http://localhost:5173)
-#   PGUSER_LOCAL (admin) · PGPASSWORD_LOCAL (admin) · PGDATABASE_LOCAL (event_checker)
+#   PGUSER_LOCAL (admin) · PGPASSWORD_LOCAL (admin) · PGDATABASE_LOCAL (event_junkie)
 
 set -euo pipefail
 
@@ -44,7 +44,7 @@ RUN_DIR="$REPO_ROOT/build/dev-env"
 DB_PORT="${POSTGRES_HOST_PORT:-56298}"
 DB_USER="${PGUSER_LOCAL:-admin}"
 DB_PASS="${PGPASSWORD_LOCAL:-admin}"
-DB_NAME="${PGDATABASE_LOCAL:-event_checker}"
+DB_NAME="${PGDATABASE_LOCAL:-event_junkie}"
 # `HOST` stays the importer's for the many commands below that talk to its admin API.
 HOST="${IMPORTER_HOST:-http://localhost:8081}"
 BFF_HOST="${BFF_HOST:-http://localhost:8080}"

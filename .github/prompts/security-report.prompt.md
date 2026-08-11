@@ -51,7 +51,7 @@ gh run list --workflow=dependency-check-scheduled.yml --limit 5 \
 Download the HTML report and read the headline counts **before** anything else:
 
 ```bash
-gh run download <RUN_ID> -R enorm-labs/event-checker -n dependency-check-report -D <SCRATCH>/dcreport
+gh run download <RUN_ID> -R enorm-labs/event-junkie -n dependency-check-report -D <SCRATCH>/dcreport
 grep -oE "(Dependencies Scanned|Vulnerabilities Found)</i>:&nbsp;[^<]*" <SCRATCH>/dcreport/dependency-check-report.html
 ```
 
@@ -60,7 +60,7 @@ If the artifact is missing, the scan aborted (usually a cold NVD cache or an NVD
 For structured per-finding data, the SARIF that reached Code Scanning is easier to work with than the HTML:
 
 ```bash
-gh api "repos/enorm-labs/event-checker/code-scanning/alerts?tool_name=dependency-check&ref=refs/heads/main&state=open&per_page=100" --paginate \
+gh api "repos/enorm-labs/event-junkie/code-scanning/alerts?tool_name=dependency-check&ref=refs/heads/main&state=open&per_page=100" --paginate \
   --jq '.[] | [(.rule.security_severity_level // .rule.severity), .rule.id, (.most_recent_instance.location.path | split("/") | .[-1])] | @tsv'
 ```
 
@@ -70,14 +70,14 @@ the affected artifact families and an instance count** — never the raw alert t
 A useful cross-check on whether the scan is really working is the analysis history — a long run of `results=0` is the signature of the failure mode above:
 
 ```bash
-gh api "repos/enorm-labs/event-checker/code-scanning/analyses?per_page=50" \
+gh api "repos/enorm-labs/event-junkie/code-scanning/analyses?per_page=50" \
   --jq '.[] | select(.category=="owasp-dependency-check") | "\(.created_at)  \(.ref)  dc=\(.tool.version)  results=\(.results_count)"'
 ```
 
 ## Step 2 — Read the GitHub Dependabot alerts
 
 ```bash
-gh api repos/enorm-labs/event-checker/dependabot/alerts --paginate \
+gh api repos/enorm-labs/event-junkie/dependabot/alerts --paginate \
   --jq '.[] | select(.state=="open") | [.security_advisory.severity, .security_advisory.cve_id // .security_advisory.ghsa_id,
         .dependency.package.name, .dependency.scope, (.security_vulnerability.first_patched_version.identifier // "none")] | @tsv'
 ```

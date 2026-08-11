@@ -29,7 +29,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="${1:-$REPO_ROOT/build/BACKLOG.md}"
-REPO="${BACKLOG_REPO:-enorm-labs/event-checker}"
+REPO="${BACKLOG_REPO:-enorm-labs/event-junkie}"
 
 mkdir -p "$(dirname "$OUT")"
 

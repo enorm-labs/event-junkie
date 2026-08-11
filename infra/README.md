@@ -1,6 +1,6 @@
 # `infra/` — the Hetzner environment, declared
 
-OpenTofu configuration for [#260](https://github.com/enorm-labs/event-checker/issues/260). The reasoning behind every choice here — sizing, the ARM line, the
+OpenTofu configuration for [#260](https://github.com/enorm-labs/event-junkie/issues/260). The reasoning behind every choice here — sizing, the ARM line, the
 Cloudflare removal, why deploys are pull-based — is in [`docs/PLATFORM_SETUP.md`](../docs/PLATFORM_SETUP.md) and [ADR-012](../docs/adr/ADR-012_CLOUD_PLATFORM.md).
 This file covers only what an operator needs in front of them while running it; [`AGENTS.md`](AGENTS.md) next to it covers the conventions and the commands an
 agent must not run.
@@ -314,11 +314,11 @@ exist because the failure they prevent is a node reachable only through the brow
 
 | | Where it lives |
 |---|---|
-| Database roles, credentials, schema | [#261](https://github.com/enorm-labs/event-checker/issues/261) — application lifecycle, not machine lifecycle. Baking them in would mean a rebuild silently re-creates credentials |
-| `wal-g`, backups, the restore drill | [#270](https://github.com/enorm-labs/event-checker/issues/270) |
-| Helm chart, cert-manager, ingress, NetworkPolicies | [#261](https://github.com/enorm-labs/event-checker/issues/261) |
-| Flux | [#414](https://github.com/enorm-labs/event-checker/issues/414) |
-| Observability | [ADR-015](../docs/adr/ADR-015_OBSERVABILITY_STACK.md), [#271](https://github.com/enorm-labs/event-checker/issues/271) |
+| Database roles, credentials, schema | [#261](https://github.com/enorm-labs/event-junkie/issues/261) — application lifecycle, not machine lifecycle. Baking them in would mean a rebuild silently re-creates credentials |
+| `wal-g`, backups, the restore drill | [#270](https://github.com/enorm-labs/event-junkie/issues/270) |
+| Helm chart, cert-manager, ingress, NetworkPolicies | [#261](https://github.com/enorm-labs/event-junkie/issues/261) |
+| Flux | [#414](https://github.com/enorm-labs/event-junkie/issues/414) |
+| Observability | [ADR-015](../docs/adr/ADR-015_OBSERVABILITY_STACK.md), [#271](https://github.com/enorm-labs/event-junkie/issues/271) |
 | A `staging` address record | Nowhere. Staging does not resolve on the public internet — [PLATFORM_SETUP.md §4a](../docs/PLATFORM_SETUP.md) |
 | A 301 from `event-junkie.com` | Go-live. A redirect needs a certificate, which needs the name to resolve, which needs the site to be up |
 

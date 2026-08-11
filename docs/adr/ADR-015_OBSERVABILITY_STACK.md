@@ -26,7 +26,7 @@ change plus rebuilding dashboards.
 Proposed and accepted the same day, which is unusual and worth saying plainly: the comparison was requested, done, and the answer taken as a trial with a
 written exit, rather than left Proposed to rot.
 
-> Requested while planning [#260](https://github.com/enorm-labs/event-checker/issues/260) and the go-live sequence. This ADR picks **where logs, metrics and
+> Requested while planning [#260](https://github.com/enorm-labs/event-junkie/issues/260) and the go-live sequence. This ADR picks **where logs, metrics and
 > alerts live**; the instrumentation inside the applications (structured logging, Micrometer meters) is described in
 > [PLATFORM_SETUP.md](../PLATFORM_SETUP.md) §7 and does not depend on which backend wins — that is the point of choosing an OpenTelemetry-compatible one.
 >
@@ -204,7 +204,7 @@ which would add a processor that ADR-012's amendment just finished removing.
   but not Grafana — if a genuinely rich dashboard need appears, Grafana can be added later pointing at the same data, at ~200 MB.
 - **A second bucket is needed** in Hetzner Object Storage, separate from the OpenTofu state bucket, with its own credentials and its own lifecycle policy.
   **This is not a new processor** — same Hetzner GmbH, already named in both privacy notices and covered by the single AVV that
-  [#275](https://github.com/enorm-labs/event-checker/issues/275) tracks.
+  [#275](https://github.com/enorm-labs/event-junkie/issues/275) tracks.
 - **Log content is now a privacy decision with a place to be enforced.** [LEGAL.md](../LEGAL.md) §7.5's four open logging decisions — whether to log client IPs,
   truncation, retention, and *where retention is enforced* — get their answer to the last one here: OpenObserve's retention policy on the bucket. That closes a
   gap ADR-012's amendment widened, since without an edge proxy the origin now sees real client IPs.

@@ -554,7 +554,7 @@ web scraping pitfalls documented in industry literature (see References).
    servers negligible. Scraper implementations do not need to manage delays themselves.
 
 3. **Set a descriptive `User-Agent` header**: Configure WebClient to send a transparent, identifying
-   `User-Agent` string (e.g. `EventChecker/1.0 (+https://github.com/...)`) so that venue operators can identify the bot and reach out if needed. Do not
+   `User-Agent` string (e.g. `EventJunkie/1.0 (+https://github.com/...)`) so that venue operators can identify the bot and reach out if needed. Do not
    masquerade as a browser unless a venue specifically blocks non-browser agents and explicit permission has been obtained.
 
 4. **Handle pattern changes with regression tests**: Venue website redesigns are the most common cause of scraper breakage. Each `EventImporter` should have

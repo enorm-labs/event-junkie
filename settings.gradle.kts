@@ -1,4 +1,4 @@
-rootProject.name = "event-checker"
+rootProject.name = "event-junkie"
 
 dependencyResolutionManagement {
     repositories {

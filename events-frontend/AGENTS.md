@@ -12,7 +12,7 @@
 ## Project Overview
 
 `events-frontend` is a **Vue 3 SPA** for discovering music events in Berlin. It is the user-facing frontend of the
-Event Checker system. It communicates with the backend (`events-bff`) via REST API calls proxied through Vite's
+Event Junkie system. It communicates with the backend (`events-bff`) via REST API calls proxied through Vite's
 dev server (`/api` → `http://localhost:8080`).
 
 **Tech stack:**

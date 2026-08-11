@@ -159,7 +159,7 @@ today and the second finding of the Google SEO-guide review.
 **At launch — the transport.** The component that intercepts the response and rewrites the head. This genuinely depends on ADR-012 existing, and building it
 against a guessed deployment would be waste.
 
-> **Settled 2026-08-10** ([#412](https://github.com/enorm-labs/event-checker/issues/412)). This was written as a choice between a **Cloudflare Worker using
+> **Settled 2026-08-10** ([#412](https://github.com/enorm-labs/event-junkie/issues/412)). This was written as a choice between a **Cloudflare Worker using
 > `HTMLRewriter`** — then the leading candidate, because Cloudflare was already in the request path and it fit the free plan — and **a small sidecar in k3s**,
 > noted as costing "a little more operationally" while keeping "all processing in Germany". ADR-012's amendment removed Cloudflare from the architecture, so the
 > Worker is not available and **the transport is the sidecar**. The question closes in favour of the residency-clean option that this ADR had already

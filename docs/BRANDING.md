@@ -9,7 +9,7 @@
 |                          |                                                                                                                                                                           |
 |--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Public name**          | **Event Junkie** (domain: `event-junkie.de`)                                                                                                                              |
-| **Internal / repo name** | **Event Checker** (repo, modules, READMEs, ADRs — see the naming rule below)                                                                                              |
+| **Identifier form**      | **`event-junkie`** (repository, config, infrastructure — one name everywhere, see the naming rule below)                                                                                              |
 | **Tagline**              | *Can't get enough of Berlin* · DE: *Von Berlin kriegst du nie genug* — the German line is **shipping but not signed off**; see [§8](#8-localisation--the-german-register) |
 | **Positioning line**     | *The event app Berlin deserves* — **not the tagline**; see below                                                                                                     |
 | **One-liner**            | Your always-fresh feed of what's on across Berlin's venues — concerts, club nights, festivals, and the odd quiz night.                                                    |
@@ -41,19 +41,19 @@ German has no zero relative pronoun, so *"die"* stays in either form. The two la
 
 ### Naming rule
 
-- **Public / user-facing surfaces** (page titles, home hero, About copy, OG tags, the eventual domain and marketing) use **Event Junkie**.
-- **Internal / technical surfaces** (repository name `event-checker`, Gradle modules, package identifiers, DB schema, ADRs, developer docs) stay **Event
-  Checker**. Keeping an internal codename distinct from the public brand is deliberate — don't "fix" these to Event Junkie.
-- **Infrastructure and hosting are the one exception, decided 2026-08-10**, and they use **`event-junkie`**: the Hetzner Cloud project, resource labels, server
-  and node paths (`/opt/event-junkie/`), config filenames, and the object-storage buckets.
+**One name everywhere: Event Junkie.** User-facing surfaces (page titles, home hero, About copy, OG tags, the domain and marketing) use the display form **Event
+Junkie**; everything else — the repository, Gradle settings, READMEs, ADRs, developer docs, infrastructure, the scraper's User-Agent — uses **`event-junkie`** in
+identifier form.
 
-**Why infrastructure breaks the rule.** Every other internal surface is read next to the source — a package name sits beside a module, a schema beside a
-migration, and the repository's own name is right there. Infrastructure is read next to a *domain*: you reach it because `event-junkie.de` is misbehaving, and
-the console, the labels and the paths you land in should say the same word the browser does. A codename there adds a translation step at the one moment nobody
-has spare attention for it.
+**Reversed 2026-08-11 ([#427](https://github.com/enorm-labs/event-junkie/issues/427)).** Until then an internal codename, *Event Checker*, was kept deliberately
+distinct from the public brand, with infrastructure as a documented exception on the grounds that it is read next to a *domain* rather than next to the source.
+The exception turned out to be the rule. Once `infra/` landed, most internal surfaces sat beside an operational one, and carrying two names bought a distinction
+nobody had needed while charging a translation step every time the two met. **The codename is retired — don't reintroduce it**, and if you find *Event Checker*
+anywhere, it is a leftover rather than a deliberate survival.
 
-The boundary is the repository edge. Anything checked into source keeps **Event Checker**; anything that exists in Hetzner, on a node's filesystem, or in a
-bucket takes **`event-junkie`**. The OpenTofu in `infra/` describes the second, so it uses the second throughout — see `infra/AGENTS.md`.
+**What keeps its own name, because it never carried either one:** the Gradle modules (`events-core`, `events-bff`, `events-importer`), the Kotlin package
+`de.norm.events`, and the `events` database schema ([ADR-004](adr/ADR-004_DEDICATED_DATABASE_SCHEMA.md)). Renaming those would be a different change with a real
+cost in history and migrations, and no benefit — none of them says either name.
 
 ## 2. The concept — why "Junkie"
 

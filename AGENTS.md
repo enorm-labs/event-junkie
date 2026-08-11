@@ -73,7 +73,7 @@ When in doubt, flag it in the PR rather than deciding silently. The cost of rais
 
 ## Project Overview
 
-Event Checker is a multi-module Kotlin/Spring Boot application for discovering music events in Berlin. It uses a **Gradle multi-project build** with three
+Event Junkie is a multi-module Kotlin/Spring Boot application for discovering music events in Berlin. It uses a **Gradle multi-project build** with three
 subprojects sharing a root `settings.gradle.kts`, plus a standalone frontend project:
 
 - **`events-core`** – Shared domain model library (no Boot app); consumed via `project(":events-core")` dependency. Applies `java-library`, `maven-publish`, and
@@ -387,10 +387,10 @@ file); if one has already been truncated, `grep -a` reads it. **A zero count fro
 **Working in a git worktree** (a session started with `claude --worktree`, or any `git worktree add` checkout — see
 [docs/WORKTREES.md](docs/WORKTREES.md)). Files and Gradle output are isolated; the local runtime is not.
 
-- **Export `COMPOSE_PROJECT_NAME=event-checker` before any `bootRun` or `scripts/dev-env.sh up` in a worktree.** Docker Compose names the project after the
+- **Export `COMPOSE_PROJECT_NAME=event-junkie` before any `bootRun` or `scripts/dev-env.sh up` in a worktree.** Docker Compose names the project after the
   directory containing the `compose.yaml` it is given, and both paths pass the worktree's copy — so without the override the worktree starts a *second*
   Postgres on a new empty volume, which collides with the main checkout on host port `56298` and makes `diff-snapshot` report every existing source as `GONE`.
-  With it, the running `event-checker-postgres-1` container and its seeded data are reused.
+  With it, the running `event-junkie-postgres-1` container and its seeded data are reused.
 - **One stack at a time.** Ports `8081` / `8080` / `5173` are fixed in `application.yaml` and `dev-env.sh`; `IMPORTER_HOST` / `BFF_HOST` only change the URL the
   script polls, not the port the JVM binds. Run `scripts/dev-env.sh down` in the other checkout before `up` here, and remember `bootRun` does not hot-reload —
   whichever worktree started the JVM is the code under test.
@@ -638,7 +638,7 @@ Learned the expensive way during the TODO.md → Issues migration (2026-08-09). 
 
 ## The Backlog — GitHub Issues
 
-**The backlog is [GitHub Issues](https://github.com/enorm-labs/event-checker/issues), not a file.** `TODO.md` no longer exists.
+**The backlog is [GitHub Issues](https://github.com/enorm-labs/event-junkie/issues), not a file.** `TODO.md` no longer exists.
 
 **Read a generated snapshot; write through `gh`.** `scripts/generate-backlog-snapshot.sh` renders every open issue into `build/BACKLOG.md` — grouped by
 milestone, with type, area, size and blocking state per row. Consulting it is then a local file read: cheap, grep-able, no network round trip per question.

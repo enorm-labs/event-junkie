@@ -1,6 +1,6 @@
 # Data Model
 
-This document describes the domain model for the Event Checker application. The model is designed to capture music event data from Berlin venue websites
+This document describes the domain model for the Event Junkie application. The model is designed to capture music event data from Berlin venue websites
 (e.g. [Astra Kulturhaus](https://www.astra-berlin.de/),
 [Badehaus Berlin](https://badehaus-berlin.com/), [Cassiopeia](https://cassiopeia-berlin.de/),
 [Privatclub](https://privatclub-berlin.de/), [Bi Nuu](https://binuu.de/),

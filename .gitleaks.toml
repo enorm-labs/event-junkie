@@ -1,7 +1,7 @@
 # Gitleaks configuration
 # See https://github.com/gitleaks/gitleaks#configuration for full reference
 
-title = "Event Checker Gitleaks Config"
+title = "Event Junkie Gitleaks Config"
 
 # Extend the default gitleaks rules
 [extend]

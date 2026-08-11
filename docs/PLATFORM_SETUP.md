@@ -7,7 +7,7 @@ Status: **plan**, 2026-08-10. Nothing in here is running yet.
 > firewalls and cloud-init are declared but **not applied** — nothing in §2's diagrams is running, and cloud-init has never executed on a real machine.
 
 This is the working plan behind the `v0.2 — Deployable` milestone and the operational half of `v1.0 — Go-live`. It answers the questions that came up while
-planning [#260](https://github.com/enorm-labs/event-checker/issues/260). **Every decision in it is now made** (§11); what remains is work and a few accounts.
+planning [#260](https://github.com/enorm-labs/event-junkie/issues/260). **Every decision in it is now made** (§11); what remains is work and a few accounts.
 
 **The decisions it rests on:** [ADR-012](adr/ADR-012_CLOUD_PLATFORM.md) (Hetzner + k3s, and its 2026-08-10 amendment removing Cloudflare) ·
 [ADR-015](adr/ADR-015_OBSERVABILITY_STACK.md) (observability — OpenObserve, accepted on trial; §5 below is the summary) ·
@@ -78,7 +78,7 @@ the only ARM capacity available.
 #### The order, step by step
 
 Only the first three steps are done by hand. Everything after them is declared in `infra/` and applied
-([#260](https://github.com/enorm-labs/event-checker/issues/260)) — so **do not create the servers in the console**, or the first `tofu apply` will either
+([#260](https://github.com/enorm-labs/event-junkie/issues/260)) — so **do not create the servers in the console**, or the first `tofu apply` will either
 duplicate them or need an import.
 
 1. **Create a Cloud project.** Free, and it is the boundary the API token is scoped to.
@@ -123,7 +123,7 @@ storage needs rather than two:
 |-------------|--------------------------------------------|
 | `…-tfstate` | OpenTofu state |
 | `…-o2` | OpenObserve's Parquet data (ADR-015) |
-| `…-backups` | `wal-g` WAL and base backups ([#270](https://github.com/enorm-labs/event-checker/issues/270)) |
+| `…-backups` | `wal-g` WAL and base backups ([#270](https://github.com/enorm-labs/event-junkie/issues/270)) |
 
 **€4.99/month base, 1 TB storage and 1 TB egress included**, no per-bucket or per-request charge — buckets are free, so use three. That is more than the €1–3
 this document first estimated, but it **deletes the Storage Box line entirely**, so the total barely moves and there is one fewer product to operate.
@@ -297,7 +297,7 @@ where the workloads do.
 | GitOps / deploy | **Flux** (pull-based); CI builds and pushes only | Decided — §4, §4a                                              |
 | Observability   | **OpenObserve**                                  | ADR-015, *Accepted on trial* — §5                              |
 | Database        | PostgreSQL 18 on its own VM                      | ADR-012                                                        |
-| Backups         | `wal-g` → Object Storage (S3)                    | [#270](https://github.com/enorm-labs/event-checker/issues/270) |
+| Backups         | `wal-g` → Object Storage (S3)                    | [#270](https://github.com/enorm-labs/event-junkie/issues/270) |
 | Secrets         | **SOPS + age**                                   | Decided — §8                                                   |
 
 ### Deferred, with reasons — §4
@@ -347,7 +347,7 @@ The options as they were weighed:
 
 |                        | Cost    | What you get                                                                                                                                                                                                                       |
 |------------------------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Plain Helm from CI** | 0 MB    | `helm upgrade --install` in the deploy workflow ([#264](https://github.com/enorm-labs/event-checker/issues/264)). Simplest, and the cluster holds no deploy machinery at all. No drift detection, no self-healing, no rollback UI. |
+| **Plain Helm from CI** | 0 MB    | `helm upgrade --install` in the deploy workflow ([#264](https://github.com/enorm-labs/event-junkie/issues/264)). Simplest, and the cluster holds no deploy machinery at all. No drift detection, no self-healing, no rollback UI. |
 | **Flux**               | ~300 MB | Real GitOps — the cluster reconciles itself towards the repo, drift is corrected, and a rollback is a git revert. A quarter of ArgoCD's footprint, no UI.                                                                          |
 | **ArgoCD**             | ~1.2 GB | Same, plus the UI that is the actual reason people choose it.                                                                                                                                                                      |
 
@@ -591,7 +591,7 @@ Practical notes that cost people a day each:
 - **DNS-01 is required for staging**, which has no public address for HTTP-01 to reach (§4a). It needs a cert-manager webhook for Hetzner DNS and an API token
   in a secret. Production can stay on HTTP-01, but running one mechanism for both is simpler, and DNS-01 brings a wildcard within reach as a side effect.
 - `event-junkie.com` needs its own certificate for the 301 redirect — one more entry, not a wildcard.
-- **Set the CAA record first** (`0 issue "letsencrypt.org"`), which is already in [#259's checklist](https://github.com/enorm-labs/event-checker/issues/259).
+- **Set the CAA record first** (`0 issue "letsencrypt.org"`), which is already in [#259's checklist](https://github.com/enorm-labs/event-junkie/issues/259).
 
 ### MetalLB — no
 
@@ -693,7 +693,7 @@ What you have to add:
 | 6  | **Non-root, read-only rootfs, drop ALL capabilities**                    | In the Helm chart's `securityContext`. The JVM and nginx images both cope                                                                                                                  |
 | 7  | **A ServiceAccount per workload, `automountServiceAccountToken: false`** | Default is the namespace's SA with a mounted token — a container escape becomes an API credential                                                                                          |
 | 8  | **SOPS + age for secrets**                                               | Encrypted in git, decrypted at apply. Simpler than Sealed Secrets for one developer, and it survives a cluster rebuild — which Sealed Secrets does not, since the key lives in the cluster |
-| 9  | **Traefik security headers + rate limiting**                             | HSTS, `X-Content-Type-Options`, frame options; and this is the rate-limit half of [#268](https://github.com/enorm-labs/event-checker/issues/268), which lost its free Cloudflare answer    |
+| 9  | **Traefik security headers + rate limiting**                             | HSTS, `X-Content-Type-Options`, frame options; and this is the rate-limit half of [#268](https://github.com/enorm-labs/event-junkie/issues/268), which lost its free Cloudflare answer    |
 | 10 | **`unattended-upgrades` in cloud-init**                                  | Nobody patches the OS by hand on a Sunday                                                                                                                                                  |
 | 11 | **Trivy in CI on the built images**                                      | Dependabot and OWASP cover dependencies; neither looks at the base image                                                                                                                   |
 | 12 | **Resource requests *and* limits on every workload**                     | On a single node, one leak takes down everything. This is a security control, not a tuning one                                                                                             |
@@ -763,8 +763,8 @@ patched while every running process still has the old library mapped. With autom
 therefore sets `$nrconf{restart} = 'a'`, excluding k3s alone, so a patched library takes effect within the hour rather than at the next reboot.
 
 **The remaining gap, stated rather than hidden: nothing tells you a reboot is pending.** `/var/run/reboot-required` is written, and a login shows it — but the
-whole design is that nobody logs in for weeks at a time. That is [#419](https://github.com/enorm-labs/event-checker/issues/419), blocked on
-[#271](https://github.com/enorm-labs/event-checker/issues/271) for somewhere to send the alert. Until then this is a calendar reminder, not an engineering
+whole design is that nobody logs in for weeks at a time. That is [#419](https://github.com/enorm-labs/event-junkie/issues/419), blocked on
+[#271](https://github.com/enorm-labs/event-junkie/issues/271) for somewhere to send the alert. Until then this is a calendar reminder, not an engineering
 control. It is the least satisfying part of §8 and worth fixing early, because a kernel CVE with no reboot is
 indistinguishable from being patched.
 
@@ -787,8 +787,8 @@ Three guides were worked through: [k3s CIS hardening](https://docs.k3s.io/securi
 k3s configuration moved from `INSTALL_K3S_EXEC` flags into `/etc/rancher/k3s/config.yaml`, because the hardening guide is written in terms of that file — a
 future item can be pasted in and diffed rather than translated.
 
-**Deferred to [#416](https://github.com/enorm-labs/event-checker/issues/416), the cluster-hardening issue, and to be rehearsed on k3d
-([#263](https://github.com/enorm-labs/event-checker/issues/263)) before production sees them:** API server audit logging (needs an `audit.yaml` policy),
+**Deferred to [#416](https://github.com/enorm-labs/event-junkie/issues/416), the cluster-hardening issue, and to be rehearsed on k3d
+([#263](https://github.com/enorm-labs/event-junkie/issues/263)) before production sees them:** API server audit logging (needs an `audit.yaml` policy),
 `EventRateLimit` and PSA-by-default (both need an `admission-control-config-file`). Each adds a file whose typo prevents the API server from starting, and
 none of it has ever booted. PSA also arrives more simply as namespace labels — §8 item 5, which #416 already plans.
 
@@ -809,20 +809,20 @@ not that server:
   depends on remembering.
 
 **Taken from it, though:** its incident-response section is right that the thing you lack at 02:00 is a written note of what the server *is*. That is the
-restore drill in [#270](https://github.com/enorm-labs/event-checker/issues/270) and the runbook this document is becoming.
+restore drill in [#270](https://github.com/enorm-labs/event-junkie/issues/270) and the runbook this document is becoming.
 
 ---
 
 ## 9. Local testing
 
-Everything below the cloud layer can be exercised without spending money, which is [#263](https://github.com/enorm-labs/event-checker/issues/263):
+Everything below the cloud layer can be exercised without spending money, which is [#263](https://github.com/enorm-labs/event-junkie/issues/263):
 
 - **k3d** — the chart, the images, ingress, cert-manager with a self-signed issuer, NetworkPolicies, and the observability stack all run locally.
 - **Flux runs on k3d too**, pointed at the same repository, and this is the part most worth rehearsing: reconciliation timing, what a failed `HelmRelease` looks
   like, and whether the test hooks actually roll back. Discovering that on production is discovering it during an incident.
 - **`tofu validate` and `tofu fmt`** run without credentials. `tofu plan` does not — it needs a token, so the OpenTofu is unproven until someone applies it.
 - **What cannot be tested locally:** cloud-init, the firewall rules, real Let's Encrypt issuance, the Hetzner CCM, and DNS. Those are staging's job, which is
-  [#265](https://github.com/enorm-labs/event-checker/issues/265) — and the reason ADR-012 insisted staging was worth its ~€7.
+  [#265](https://github.com/enorm-labs/event-junkie/issues/265) — and the reason ADR-012 insisted staging was worth its ~€7.
 
 ---
 
@@ -841,7 +841,7 @@ Ordered by dependency. Each step names its issue.
 
 *(GitHub Environments moved out of this phase. They are no longer a prerequisite for anything, because Flux — not CI — holds the cluster credential; see §4a.)*
 
-### Phase B — infrastructure as code — [#260](https://github.com/enorm-labs/event-checker/issues/260)
+### Phase B — infrastructure as code — [#260](https://github.com/enorm-labs/event-junkie/issues/260)
 
 > **Steps 5–7 are written.** They live in [`infra/`](../infra); [`infra/README.md`](../infra/README.md) is the operator's guide and
 > [`infra/AGENTS.md`](../infra/AGENTS.md) the conventions. Step 8 is not done, so none of it is proven.
@@ -857,9 +857,9 @@ Ordered by dependency. Each step names its issue.
    #270.
 8. **Apply.** Requires a token and spends money; not something an agent should do.
 9. **Flip the nameservers at INWX** to Hetzner's, *after* the zone exists. DNSSEC is a separate, later step —
-   [#259](https://github.com/enorm-labs/event-checker/issues/259).
+   [#259](https://github.com/enorm-labs/event-junkie/issues/259).
 
-### Phase C — the deployable artefact — [#261](https://github.com/enorm-labs/event-checker/issues/261), [#262](https://github.com/enorm-labs/event-checker/issues/262)
+### Phase C — the deployable artefact — [#261](https://github.com/enorm-labs/event-junkie/issues/261), [#262](https://github.com/enorm-labs/event-junkie/issues/262)
 
 10. **Containerise the frontend** — multi-stage node → nginx, `try_files` for history mode, immutable cache headers on `/assets/`, `no-cache` on `index.html`,
     and a **relative `/api`** so one image serves every environment (#262).

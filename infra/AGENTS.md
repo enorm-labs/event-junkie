@@ -75,11 +75,6 @@ Beyond `tofu fmt`, this follows [terraform-best-practices.com](https://www.terra
 Two deliberate deviations, so nobody "fixes" them: single resources are named `main` rather than `this`, because `main` reads better in a config this small; and
 outputs use short names (`k3s_ipv4`) rather than the book's `{name}_{type}_{attribute}`, which is a convention for public registry modules and pure noise here.
 
-**Everything here says `event-junkie`, not `event-checker`, and that is correct.** BRANDING.md's naming rule keeps the internal codename on surfaces read next
-to the source, and makes infrastructure the one exception: the Hetzner project, resource labels, node paths (`/opt/event-junkie/`, `/etc/event-junkie/`),
-config filenames and the object-storage buckets all use the public name, because they are read next to a *domain* during an incident rather than next to a
-module. The boundary is the repository edge — do not "correct" either side to match the other.
-
 ## Comments
 
 Comments explain **why**, and specifically why an obvious alternative was not taken — `firewall.tf` opens on why Hetzner firewalls cannot secure the private

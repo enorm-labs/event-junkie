@@ -1,7 +1,7 @@
 # Vision, Roadmap & Ideas
 
 The longer-form product context: **what** Event Junkie is and **where** it's headed. The granular, actionable backlog lives in the
-**[issue tracker](https://github.com/enorm-labs/event-checker/issues)** — and brand, voice and design
+**[issue tracker](https://github.com/enorm-labs/event-junkie/issues)** — and brand, voice and design
 live in **[BRANDING.md](BRANDING.md)**. This document stays at the level of _direction_: it links down to **milestones** rather than duplicating tasks.
 
 ---
@@ -13,7 +13,7 @@ live in **[BRANDING.md](BRANDING.md)**. This document stays at the level of _dir
 Event Junkie is a discovery app for **music events in Berlin** — concerts, club nights, festivals — aggregated from venue and promoter websites into one fast,
 filterable place, always linking back to the original source.
 
-- Public app name: **Event Junkie** (→ event-junkie.de). **Event Checker** stays the internal/repo name.
+- Public app name: **Event Junkie** (→ event-junkie.de). **Event Junkie** stays the internal/repo name.
 - Tagline: _"Can't get enough of Berlin."_ (voice & branding: see [BRANDING.md](BRANDING.md))
 
 ### Who it's for & positioning
@@ -71,7 +71,7 @@ The core product exists end-to-end:
 
 ### Phase 1 — MVP / Go-live 🔴 _(in progress)_
 
-Turn the working prototype into a live public product. → **[v0.2 — Deployable](https://github.com/enorm-labs/event-checker/milestone/2)** · **[v0.3 — Launch-ready](https://github.com/enorm-labs/event-checker/milestone/3)** · **[v1.0 — Go-live](https://github.com/enorm-labs/event-checker/milestone/4)**
+Turn the working prototype into a live public product. → **[v0.2 — Deployable](https://github.com/enorm-labs/event-junkie/milestone/2)** · **[v0.3 — Launch-ready](https://github.com/enorm-labs/event-junkie/milestone/3)** · **[v1.0 — Go-live](https://github.com/enorm-labs/event-junkie/milestone/4)**
 
 - Cloud platform, domain (**event-junkie.de**), CI/CD, and a first deploy.
 - Hardening the path to production: auth & authorization, BFF caching, API protection, a reusable test/seed dataset, and the go-live checklist (security,
@@ -80,7 +80,7 @@ Turn the working prototype into a live public product. → **[v0.2 — Deployabl
 
 ### Phase 2 — Coverage & polish 📈 _(post-launch)_
 
-Make it comprehensive, discoverable and pleasant. → **[Phase 2 — Coverage & polish](https://github.com/enorm-labs/event-checker/milestone/5)**
+Make it comprehensive, discoverable and pleasant. → **[Phase 2 — Coverage & polish](https://github.com/enorm-labs/event-junkie/milestone/5)**
 
 - Scale importer coverage toward the full venue list in
   [EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md); enrich venue metadata.
@@ -100,7 +100,7 @@ Make it comprehensive, discoverable and pleasant. → **[Phase 2 — Coverage & 
 
 ### Phase 3 — Accounts & personalization 👤 _(Expansion stage 1)_
 
-Give people a reason to come back. → **[Phase 3 — Accounts & personalization](https://github.com/enorm-labs/event-checker/milestone/6)**
+Give people a reason to come back. → **[Phase 3 — Accounts & personalization](https://github.com/enorm-labs/event-junkie/milestone/6)**
 
 - Login / profile with **follow/favourite** for artists, venues, districts, promoters and genres — used both to filter events and to drive **notifications**
   (two steps, YouTube-style: 1. follow,
@@ -116,7 +116,7 @@ Give people a reason to come back. → **[Phase 3 — Accounts & personalization
 
 ### Phase 4 — Social & ecosystem 🤝 _(Expansion stage 2)_
 
-Turn discovery into a network and open the data up. → **[Phase 4 — Social & ecosystem](https://github.com/enorm-labs/event-checker/milestone/7)**
+Turn discovery into a network and open the data up. → **[Phase 4 — Social & ecosystem](https://github.com/enorm-labs/event-junkie/milestone/7)**
 
 - Social layer: connect with friends and see which events they're interested in or going to — plus following other users, an activity timeline, and **inviting
   friends to a specific event** (going together is the actual use case; seeing where they go is the weaker half of it).
@@ -132,7 +132,7 @@ Turn discovery into a network and open the data up. → **[Phase 4 — Social & 
 ### Phase 5 — Beyond Berlin 🌍 _(bigger bets)_
 
 Expand to other cities and broaden scope once the Berlin experience is strong. Deliberately has **no milestone** — it is the direction of travel, not scheduled
-work. Tracked as [issue #403](https://github.com/enorm-labs/event-checker/issues/403).
+work. Tracked as [issue #403](https://github.com/enorm-labs/event-junkie/issues/403).
 
 ---
 

@@ -7,7 +7,7 @@
 > treating anything here as final.
 >
 > Related: [ADR-012 (cloud platform)](adr/ADR-012_CLOUD_PLATFORM.md) · [ADR-013 (localisation)](adr/ADR-013_LOCALISATION.md) ·
-> [ADR-014 (rendering)](adr/ADR-014_RENDERING_STRATEGY.md) · [the `v1.0 — Go-live` milestone](https://github.com/enorm-labs/event-checker/milestones) · [BRANDING.md](BRANDING.md)
+> [ADR-014 (rendering)](adr/ADR-014_RENDERING_STRATEGY.md) · [the `v1.0 — Go-live` milestone](https://github.com/enorm-labs/event-junkie/milestones) · [BRANDING.md](BRANDING.md)
 
 ## 1. Scope and how to use this
 
@@ -285,11 +285,11 @@ The site cannot go live until these are closed. They are tracked as issues in th
    enforced. The notice currently states an *intended* seven days.
 2. **`INFRASTRUCTURE_IS_PROPOSED = true`** — [ADR-012](adr/ADR-012_CLOUD_PLATFORM.md) is `Accepted` as of 2026-08-10, but accepting it deployed nothing, so the
    notice still describes an intended deployment. It must be re-checked against what actually runs once the platform is provisioned
-   ([#260](https://github.com/enorm-labs/event-checker/issues/260)), and the flag cleared then — not now.
+   ([#260](https://github.com/enorm-labs/event-junkie/issues/260)), and the flag cleared then — not now.
 3. **Art. 28 contracts** — now a single one: **Hetzner's AVV**. The 2026-08-10 amendment to
    [ADR-012](adr/ADR-012_CLOUD_PLATFORM.md) removed Cloudflare, so there is no second DPA to accept and **no third-country transfer to name at all** — the
    placeholder sentence about a transfer mechanism comes out rather than getting filled in. *A notice naming processors without a DPA in place is worse than one
-   naming none.* Tracked as [#275](https://github.com/enorm-labs/event-checker/issues/275).
+   naming none.* Tracked as [#275](https://github.com/enorm-labs/event-junkie/issues/275).
 4. **Backup retention** as its own line — it is a separate period from log retention, and if logs are captured by backups the effective retention is the backup
    window, not the rotation one. Check rather than assume.
 

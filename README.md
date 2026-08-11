@@ -1,7 +1,7 @@
-# Event Checker
+# Event Junkie
 
-[![Build & Test Backend](https://github.com/enorm-labs/event-checker/actions/workflows/build-backend.yml/badge.svg)](https://github.com/enorm-labs/event-checker/actions/workflows/build-backend.yml)
-[![Build & Test Frontend](https://github.com/enorm-labs/event-checker/actions/workflows/build-frontend.yml/badge.svg)](https://github.com/enorm-labs/event-checker/actions/workflows/build-frontend.yml)
+[![Build & Test Backend](https://github.com/enorm-labs/event-junkie/actions/workflows/build-backend.yml/badge.svg)](https://github.com/enorm-labs/event-junkie/actions/workflows/build-backend.yml)
+[![Build & Test Frontend](https://github.com/enorm-labs/event-junkie/actions/workflows/build-frontend.yml/badge.svg)](https://github.com/enorm-labs/event-junkie/actions/workflows/build-frontend.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 [![Status](https://img.shields.io/badge/Status-In%20Development-orange.svg)](#status)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.4.10-7F52FF.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
@@ -13,7 +13,7 @@ Every music event in Berlin, in one filterable feed — collected automatically 
 
 > **The event app Berlin deserves.**
 
-**Event Junkie** is the public name of the app; **Event Checker** is the internal and repository name. Both refer to the same thing — see the naming rule
+**Event Junkie** is the public name of the app; **Event Junkie** is the internal and repository name. Both refer to the same thing — see the naming rule
 in [BRANDING.md](./docs/BRANDING.md).
 
 ## Contents
@@ -54,7 +54,7 @@ which coverage questions are still open is in
 🚧 **In development — not deployed anywhere yet.**
 
 The product works end-to-end locally: 86 Berlin sources are imported on a schedule, and the frontend, BFF and importer all run. What is missing is a public
-deployment, and the hosting, domain, auth and legal work that goes with it — tracked in the [`v0.2`, `v0.3` and `v1.0` milestones](https://github.com/enorm-labs/event-checker/milestones).
+deployment, and the hosting, domain, auth and legal work that goes with it — tracked in the [`v0.2`, `v0.3` and `v1.0` milestones](https://github.com/enorm-labs/event-junkie/milestones).
 
 One consequence worth knowing before you build on this: **the database schema is still evolving and offers no migration compatibility between versions.** All
 schema changes are consolidated into a single initial migration (`V001`) until the first production release.
@@ -77,8 +77,8 @@ Prerequisites: a JDK (see [`.sdkmanrc`](./.sdkmanrc), managed with [SDKMAN](http
 if you want the frontend.
 
 ```bash
-git clone git@github.com:enorm-labs/event-checker.git
-cd event-checker
+git clone git@github.com:enorm-labs/event-junkie.git
+cd event-junkie
 
 sdk env                                   # the right Java version
 brew install pre-commit && pre-commit install    # gitleaks hook — before your first commit
@@ -155,7 +155,7 @@ The OpenAPI document is at `/v3/api-docs` on each port. Request files for both s
 | [infra/README.md](./infra/README.md)                             | The OpenTofu that declares that platform. DNS is live; the servers are declared but not yet applied                                                                     |
 | [docs/VISION_ROADMAP_IDEAS.md](./docs/VISION_ROADMAP_IDEAS.md)   | Where this is going                                                                                                                                                     |
 | [docs/adr/](./docs/adr)                                          | Architecture decisions, with the reasoning                                                                                                                              |
-| [GitHub Issues](https://github.com/enorm-labs/event-checker/issues)              | The backlog. `scripts/generate-backlog-snapshot.sh` renders it to `build/BACKLOG.md` for grepping                                                                                                                                                                     |
+| [GitHub Issues](https://github.com/enorm-labs/event-junkie/issues)              | The backlog. `scripts/generate-backlog-snapshot.sh` renders it to `build/BACKLOG.md` for grepping                                                                                                                                                                     |
 | [perf/README.md](./perf/README.md)                               | Performance testing with k6                                                                                                                                             |
 
 ## Contributing
@@ -166,11 +166,11 @@ Contributions are welcome. Full guide: [CONTRIBUTING.md](./CONTRIBUTING.md). Tak
 **The most valuable contribution is not code.** Event data is read automatically from venue websites, so a redesigned programme page can leave us quietly wrong
 for weeks. Nobody notices that faster than somebody who went to the show.
 
-- [Wrong or missing event data](https://github.com/enorm-labs/event-checker/issues/new?template=wrong-event-data.yml)
-- [Suggest a venue](https://github.com/enorm-labs/event-checker/issues/new?template=new-venue.yml)
-- [Bug in the site or API](https://github.com/enorm-labs/event-checker/issues/new?template=bug.yml)
+- [Wrong or missing event data](https://github.com/enorm-labs/event-junkie/issues/new?template=wrong-event-data.yml)
+- [Suggest a venue](https://github.com/enorm-labs/event-junkie/issues/new?template=new-venue.yml)
+- [Bug in the site or API](https://github.com/enorm-labs/event-junkie/issues/new?template=bug.yml)
 
-Questions and product ideas go to [Discussions](https://github.com/enorm-labs/event-checker/discussions). Security problems go
+Questions and product ideas go to [Discussions](https://github.com/enorm-labs/event-junkie/discussions). Security problems go
 through [private disclosure](./SECURITY.md), never a public issue.
 
 ### Quick start: your first pull request

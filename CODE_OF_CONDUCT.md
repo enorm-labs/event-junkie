@@ -56,7 +56,7 @@ You will get an acknowledgement within a few days. If the report concerns the ma
 someone independent, and a neutral third party will be brought in.
 
 > **Note:** `event-junkie.de` is not registered yet, so that mailbox goes live with the site. Until it does,
-> use [GitHub's private report form](https://github.com/enorm-labs/event-checker/security/advisories/new) — it is confidential and reaches the maintainer
+> use [GitHub's private report form](https://github.com/enorm-labs/event-junkie/security/advisories/new) — it is confidential and reaches the maintainer
 > directly, even though it is nominally for security reports.
 
 Community Moderators take reports of violations seriously and will make every effort to respond in a timely manner. They will investigate all reports of code of
