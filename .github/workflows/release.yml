@@ -7,6 +7,9 @@ name: Release
 #
 # Two things about the trigger are deliberate:
 #
+# **A snapshot on every push to `main`; a release when a GitHub Release is published.** Tagging by
+# hand publishes nothing — see the `release` trigger below.
+#
 # **No path filters on the publishing trigger.** The other workflows have them and are right to; the
 # `push` trigger here must not. The chart's `appVersion` is the default image tag for all three
 # components, so every published chart version needs all three image tags to exist. Filter this on
@@ -22,7 +25,17 @@ name: Release
 on:
   push:
     branches: [ main ]
-    tags: [ 'v*' ]
+  # A release is published through GitHub's Releases feature, not by pushing a tag by hand — so the
+  # trigger is the publish event rather than the tag it creates. The two are not interchangeable:
+  # `push: tags` also fires for a tag pushed straight from a laptop, which would publish a release
+  # with no release notes and no entry on the Releases page, and it does *not* fire when a release
+  # is cut from a tag that already exists. Keying on `published` makes the Releases page the single
+  # record of what was released, and it fires exactly once whichever way the tag got there.
+  #
+  # `github.ref` is `refs/tags/<tag>` on this event, so `scripts/version.sh` reads it unchanged.
+  # Drafts create no tag and fire nothing until published.
+  release:
+    types: [ published ]
   # This workflow is the only one that cannot be tried before it is trusted: `workflow_dispatch` is
   # offered only for workflows already on the default branch, so a dispatch button added in a pull
   # request does not exist until that request merges — and merging is the thing that publishes. So
@@ -97,10 +110,10 @@ jobs:
           fi
 
           # An allowlist, not a denylist, and the difference is the whole safety property: written
-          # the other way round — "publish unless this is a dispatch dry run" — adding any new
-          # trigger silently makes it a publishing one. The pull_request trigger above would have
+          # the other way round — "publish unless this is a dispatch dry run" — every trigger added
+          # later becomes a publishing one by default. The pull_request trigger above would have
           # been exactly that, publishing from unreviewed code, including from a fork.
-          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+          if [[ "$GITHUB_EVENT_NAME" == "push" || "$GITHUB_EVENT_NAME" == "release" ]]; then
             echo "publish=true" >> "$GITHUB_OUTPUT"
           elif [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && "${{ inputs.publish }}" == "true" ]]; then
             echo "publish=true" >> "$GITHUB_OUTPUT"

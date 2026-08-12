@@ -223,6 +223,33 @@ in the README before the restructure, so look there if this section has moved ag
 the wrapper itself reads as neglect, so match it to `distributionUrl` in `gradle/wrapper/gradle-wrapper.properties` whenever you notice a gap. This prompt does
 not bump the wrapper itself; that is a separate manual step.
 
+## Step 12: The CI tool versions nothing else watches
+
+**These are the repository's blind spot.** Dependabot covers `gradle`, `npm`, `docker`, `github-actions` and `opentofu` — but a *tool version pinned as a plain
+string* belongs to none of those ecosystems. `github-actions` updates `uses: azure/setup-helm@v5`; it has nothing to say about the `version: v3.19.0` passed to
+it. So these rot silently, and a scanner or validator that is a year behind still reports success, which is the failure mode worth caring about: a green check
+that has stopped meaning anything.
+
+| Pin | Where | Check against |
+|---|---|---|
+| `HELM_VERSION` | `.github/workflows/validate-chart.yml` **and** `release.yml` — both must move together | `helm/helm` releases, **staying on 3.x** |
+| `KUBECONFORM_VERSION` | `.github/workflows/validate-chart.yml` | `yannh/kubeconform` releases |
+| `TRIVY_VERSION` | `.github/workflows/release.yml` | `aquasecurity/trivy` releases |
+| `gitleaks` `rev:` | `.pre-commit-config.yaml` | `gitleaks/gitleaks` releases |
+
+```sh
+for repo in helm/helm yannh/kubeconform aquasecurity/trivy gitleaks/gitleaks; do
+  printf '%-28s %s\n' "$repo" "$(gh api "repos/$repo/releases/latest" --jq .tag_name)"
+done
+```
+
+Two things to be careful of. **`HELM_VERSION` appears in two workflows** and they must not drift apart — the whole point of the pin is that the chart is gated
+against the same client everywhere. And **it must stay on Helm 3**, whatever `helm/helm` says is latest: Flux's helm-controller embeds the Helm 3 SDK, so
+raising it to 4.x would gate the chart against a client that cannot install it. That constraint is semantic, not a version-lag; do not "fix" it.
+
+A Trivy bump can turn a green scan red by adding advisories rather than by anything changing in the image. That is the tool working — treat the new findings on
+their merits, do not pin back.
+
 ## Output Summary
 
 After completing the update, provide a summary table:

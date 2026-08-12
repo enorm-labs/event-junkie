@@ -697,6 +697,11 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       a live vulnerability**, and nothing in its title distinguishes one from a routine version bump. `release.yml`'s image scan is what turns an unmerged one
       into a failing build. **When bumping a base image, check the branch is still being rebuilt**, not just that a newer tag exists: `nginx 1.29` was a
       superseded mainline branch and had been shipping three-month-old Alpine packages.
+    - **What no ecosystem covers: a tool version pinned as a plain string.** `HELM_VERSION` and `KUBECONFORM_VERSION` in `validate-chart.yml`, `HELM_VERSION`
+      and `TRIVY_VERSION` in `release.yml`, and gitleaks' `rev:` in `.pre-commit-config.yaml` belong to no Dependabot ecosystem — `github-actions` updates
+      `uses: azure/setup-helm@v5` and has nothing to say about the `version:` handed to it. They rot silently, and a scanner a year behind still reports
+      success. `/update-dependencies` step 12 sweeps them. **`HELM_VERSION` is deliberately held at 3.x** — Flux's helm-controller embeds the Helm 3 SDK, so
+      that pin is a constraint, not a lag.
     - `/update-dependencies` still exists and is not redundant: Dependabot proposes one bump at a time, while that skill does a deliberate sweep across both
       stacks and knows which Gradle versions are BOM-managed and must **not** be pinned.
 - **Conventional Commits** — Commit messages follow the [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) spec. Reusable prompts are

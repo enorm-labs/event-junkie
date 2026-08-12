@@ -412,7 +412,7 @@ not deploy: Flux pulls from GHCR on its own schedule (#414), so a green run mean
 | Trigger | Version | Published |
 |---|---|---|
 | every push to `main` | `0.1.0-snapshot.g<sha>` | images + chart |
-| a tag `v0.1.0` | `0.1.0` | images + chart, **and** `latest` on the images |
+| **publishing a GitHub Release** tagged `v0.1.0` | `0.1.0` | images + chart, **and** `latest` on the images |
 | a PR touching `release.yml` or `version.sh` | snapshot | **nothing** |
 | `workflow_dispatch` | as above | **nothing**, unless the `publish` input is ticked |
 
@@ -426,18 +426,28 @@ stamped, linted and packaged — and pushes none of it.
 
 ### Cutting a release
 
+**Releases are cut through [GitHub Releases](https://github.com/enorm-labs/event-junkie/releases), not by pushing a tag.** The workflow triggers on
+`release: published`, so a tag pushed from a laptop publishes nothing — deliberately. That keeps the Releases page the single record of what was released, with
+the notes `.github/release.yml` generates from the merged PRs' labels.
+
 ```bash
 # 1. main is at the version you intend to release — gradle.properties says 0.1.0-SNAPSHOT
 scripts/version.sh check
 
-# 2. tag it. The v prefix is required, and the number must match gradle.properties
-git tag v0.1.0 && git push origin v0.1.0
+# 2. publish the release, creating the tag from main. The v prefix is required, and the
+#    number must match gradle.properties. Or do the same in the UI: Releases → Draft a new
+#    release → choose a tag → Create new tag → Generate release notes → Publish.
+gh release create v0.1.0 --target main --generate-notes
 
 # 3. afterwards, open a PR bumping all four files to 0.1.1-SNAPSHOT / 0.1.1
 ```
 
 A release version is **never committed** — `release.yml` passes `-Pversion=` from the tag, so the tag and the built artifacts cannot disagree. Tagging `v0.2.0`
 on a tree that still says `0.1.0-SNAPSHOT` fails immediately in `scripts/version.sh compute`, before anything is built.
+
+Two consequences of triggering on `published` rather than on the tag: a **draft** release creates no tag and publishes nothing until you publish it, which makes
+drafting notes safe; and a release cut from a tag that already exists still triggers, which a tag-push trigger would not. **Pre-releases are not supported** by
+the version scheme — `v0.1.0-rc1` fails the match against `gradle.properties`, and snapshots already fill that role.
 
 **`latest` is publish-only.** It is a human pointer at the newest release; nothing in the deploy path may consume it. With `imagePullPolicy: IfNotPresent` a
 mutable tag lets two nodes run different code and neither is wrong — the chart's render assertions fail the build on a floating tag, which is that rule enforced
