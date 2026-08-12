@@ -1,0 +1,80 @@
+# Production's release of the event-junkie chart.
+#
+# **SUSPENDED, AND IT MUST STAY THAT WAY UNTIL PRODUCTION EXISTS.** #424 has not been applied: there
+# is no production cluster, no database, and therefore no address to point this at. The file is here
+# because production's *version policy* is half of what #414 is about, and because
+# `render-assertions.sh` should gate it from the day it is written rather than the day it is first
+# used. `suspend: true` is what makes that safe — Flux will not reconcile this object at all, so a
+# bootstrap against a real cluster cannot deploy a half-configured release by accident.
+#
+# To bring production up: apply #424, fill in the address below, and delete the `suspend` line in a
+# reviewed commit. Three steps, in that order, none of them silent.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: event-junkie
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      The BFF, importer and frontend on the production cluster. Suspended until #424 provisions it.
+spec:
+  suspend: true
+  releaseName: event-junkie
+  targetNamespace: event-junkie
+  interval: 10m
+  chartRef:
+    kind: OCIRepository
+    name: event-junkie
+    namespace: flux-system
+  install:
+    createNamespace: true
+    remediation:
+      retries: 2
+  upgrade:
+    remediation:
+      retries: 2
+      strategy: rollback
+      # Without this a bad deploy is retried and then simply left broken: `remediateLastFailure`
+      # defaults to false, so remediation runs *between* attempts and never after the final one.
+      # Found by the k3d rehearsal breaking a release on purpose (#414).
+      remediateLastFailure: true
+    cleanupOnFail: true
+  test:
+    enable: true
+    timeout: 3m
+  rollback:
+    cleanupOnFail: true
+    timeout: 5m
+  # `enabled` rather than staging's `warn`. On production a manual `kubectl edit` is an incident, not
+  # an experiment, and reverting it to what the chart says is the correct response. Staging is where
+  # you find out what that feels like first.
+  driftDetection:
+    mode: enabled
+  values:
+    database:
+      # DELIBERATELY NOT A PLAUSIBLE ADDRESS. #424 has not run, so the real value does not exist yet,
+      # and a realistic-looking IP here is exactly the failure #263 found in `values-k3d.yaml` —
+      # values that were perfectly valid and simply not what was listening, which no amount of
+      # rendering can catch. This one cannot be mistaken for configured.
+      #
+      # Replace with `tofu -chdir=infra/environments/production output postgres_ip`.
+      host: "REPLACE-ME-tofu-output-postgres-ip"
+      # Created out of band in the target namespace before the first reconcile; SOPS in #416.
+      existingSecret: "events-db"
+    # No replica counts, no resources, no ingress host: `values.yaml`'s defaults are already
+    # production-shaped by design, so overriding them here would create a second place to look with
+    # nothing to say. The chart's defaults are the production configuration — that is the whole
+    # reason they were written that way.
+    certManager:
+      clusterIssuer:
+        create: true
+        name: "letsencrypt-production"
+        email: "hello@event-junkie.de"
+        # HTTP-01 works here, unlike staging: production has a public address for Let's Encrypt to
+        # reach, so there is no need for the DNS-01 webhook and its API token.
+        solver: "http01"
+        # The real ACME endpoint, and the only place in this repository where it appears. 50
+        # certificates per registered domain per week, 5 duplicates — and `event-junkie.de` is the
+        # same registered domain staging uses, which is why staging stays on the ACME staging
+        # endpoint rather than "just testing" against this one.
+        server: "https://acme-v02.api.letsencrypt.org/directory"

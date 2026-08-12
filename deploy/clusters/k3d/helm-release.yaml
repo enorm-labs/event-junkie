@@ -1,0 +1,80 @@
+# The k3d rehearsal's release — the published chart, the published images, on a local cluster.
+#
+# **This is not the same thing as `values-k3d.yaml`, and both are worth having.** That file drives
+# `scripts/k3d-rehearsal.sh up`, which builds the working tree's images, side-loads them and installs
+# the chart from `deploy/charts/` — it answers *"does my change work?"*. This file answers a
+# different question — *"does the delivery mechanism work?"* — using artifacts that are already
+# published and a chart nobody can edit locally. Neither substitutes for the other, which is why
+# decision (a) in #414 removed `values-staging.yaml` and left `values-k3d.yaml` alone.
+#
+# No image overrides at all, deliberately: every tag falls back to the chart's `appVersion`, which
+# #264 stamps from the same build that pushed the images. If that fallback is broken, this release
+# fails to pull and the rehearsal says so — which is a test of #264 as much as of #414.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: event-junkie
+  namespace: flux-system
+spec:
+  releaseName: event-junkie
+  targetNamespace: event-junkie
+  interval: 5m
+  chartRef:
+    kind: OCIRepository
+    name: event-junkie
+    namespace: flux-system
+  install:
+    createNamespace: true
+    remediation:
+      retries: 1
+  upgrade:
+    remediation:
+      retries: 1
+      strategy: rollback
+      # Without this a bad deploy is retried and then simply left broken: `remediateLastFailure`
+      # defaults to false, so remediation runs *between* attempts and never after the final one.
+      # Found by the k3d rehearsal breaking a release on purpose (#414).
+      remediateLastFailure: true
+    cleanupOnFail: true
+  test:
+    enable: true
+    timeout: 3m
+  rollback:
+    cleanupOnFail: true
+    timeout: 5m
+  values:
+    database:
+      # k3d's built-in name for the host from inside the cluster, injected into CoreDNS at cluster
+      # creation. The rehearsal script forces a CoreDNS reload after creating the cluster, because
+      # the `reload` plugin can take 30s to notice and every pod started inside that window dies with
+      # UnknownHostException (#263).
+      host: "host.k3d.internal"
+      # The container listens on 5432; compose publishes it on the *host* as 56298, and the host is
+      # what `host.k3d.internal` resolves to. Written blind in #261, wrong, and found by #263 —
+      # neither this nor the database name below could have been caught by rendering the chart.
+      port: 56298
+      # A database of its own, never the `event_junkie` that `bootRun` and `dev-env.sh` use:
+      # installing this chart runs Flyway, and pointing that at the development database would have
+      # the in-cluster importer fighting a local one over a schema with ~86 sources behind it
+      # (ADR-007 on re-scraping). `events` is the *schema* inside it, which is a different thing.
+      name: "event_junkie_k3d"
+      # Created by the rehearsal script in the TARGET namespace, not in flux-system.
+      existingSecret: "events-db"
+    bff:
+      replicaCount: 1
+    frontend:
+      replicaCount: 1
+    ingress:
+      # `.localhost` resolves to 127.0.0.1 without a hosts entry on every current browser and OS.
+      host: "event-junkie.localhost"
+      redirectHosts: []
+      tls:
+        # No TLS and so no cert-manager: the rehearsal is about whether the workloads start, reach
+        # the database and route to each other. Adding certificate issuance would mean installing
+        # cert-manager into k3d and debugging ACME against a name that does not exist.
+        enabled: false
+    certManager:
+      clusterIssuer:
+        # Nothing to create — with `tls.enabled: false` no annotation references an issuer, and k3d
+        # has no cert-manager, so a ClusterIssuer here would fail the install on an unknown kind.
+        create: false

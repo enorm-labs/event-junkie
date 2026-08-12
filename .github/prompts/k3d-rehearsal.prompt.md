@@ -37,6 +37,30 @@ scripts/k3d-rehearsal.sh status
 scripts/k3d-rehearsal.sh down     # always, eventually
 ```
 
+## The other rehearsal — `flux-all` (#414)
+
+```bash
+scripts/k3d-rehearsal.sh flux-all   # flux-up → flux-verify → flux-trap → flux-break → down
+```
+
+**These two answer different questions and must not share a cluster.** `all` installs the *working
+tree's* chart with images built seconds ago — *"does my change work?"*. `flux-all` installs the chart
+already **published in GHCR**, through the same controllers that will run on Hetzner — *"does the
+delivery mechanism work?"*. Running both against one cluster would put two importers on one schema,
+which is the exact ADR-008 failure the chart pins replicas to prevent.
+
+| | |
+|---|---|
+| `flux-up` | cluster, `flux install`, apply `deploy/clusters/k3d`, wait for source **and** release |
+| `flux-verify` | a snapshot resolved, images from GHCR, one shared tag, `helm test` passed |
+| `flux-trap` | removes the `-0` from the semver range and watches it stop matching |
+| `flux-break` | breaks the release on purpose and watches it roll back |
+
+**`flux-break` is the one that earns its keep**, and it has already paid: it found that
+`remediateLastFailure` defaults to `false`, so a bad deploy was retried and then left running
+broken. Reading the manifest would never have shown it. Deliberately **not** `flux bootstrap` — that
+commits manifests to this repository and creates a deploy key, for a cluster that lives ten minutes.
+
 ## What "it worked" means
 
 The single acceptance criterion is the **chain**: an event scraped by the in-cluster importer comes back out of `/api/events` through Traefik. Everything else

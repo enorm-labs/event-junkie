@@ -15,8 +15,8 @@ not merged into one file.
 run them as often as you like:
 
 ```sh
-helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-staging.yaml
-helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-staging.yaml
+helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
+helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
 deploy/scripts/render-assertions.sh
 shellcheck -x deploy/scripts/*.sh
 ```
@@ -39,7 +39,12 @@ a `k3d-*` one. An instruction to install locally is not permission to touch stag
 ```sh
 helm --kube-context k3d-event-junkie install …
 kubectl --context k3d-event-junkie get pods
+flux --context k3d-event-junkie install
 ```
+
+**`flux` belongs in that list and it is easy to forget**, because most of its subcommands read rather than write. It resolves the current kubeconfig context
+exactly like `helm install --dry-run` does — running a bare `flux check --pre` while writing #414 reached an unrelated cluster and failed against it, which is the
+harmless version of the same mistake.
 
 This is not hypothetical. During #263 the active context on the developer machine belonged to an unrelated project, and several other clusters — production ones
 among them — were in the same kubeconfig. Assume that is the normal case rather than an unlucky one. `k3d cluster create` also switches the active context as a
@@ -74,16 +79,28 @@ deploy/
 ├── charts/event-junkie/
 │   ├── Chart.yaml            apiVersion v2 — see below
 │   ├── values.yaml           production-shaped; cannot render alone
-│   ├── values-staging.yaml   #265 · single node · DNS-01
-│   ├── values-k3d.yaml       #263 · run for real; two of its blind guesses were wrong
+│   ├── values-k3d.yaml       #263 · locally built images; two of its blind guesses were wrong
 │   ├── values.schema.json    required keys, enums, and the importer's replica pin
 │   └── templates/            flat, one resource per file, kind in the filename
+├── clusters/                 #414 · what Flux reconciles, one directory per cluster
+│   ├── staging/              the `flux bootstrap --path` target · snapshots · prereleases ADMITTED
+│   ├── production/           releases only · SUSPENDED until #424 provisions a cluster
+│   └── k3d/                  the rehearsal target · applied with `kubectl apply -k`, never bootstrapped
 └── scripts/
     └── render-assertions.sh  the only gate that catches a chart doing the wrong thing quietly
 ```
 
-`deploy/` rather than a top-level `charts/` because #414 adds `deploy/clusters/` for Flux and those two belong next to each other. The GHCR path
+`deploy/` rather than a top-level `charts/` because the chart and the Flux resources that deploy it belong next to each other. The GHCR path
 (`oci://ghcr.io/enorm-labs/charts/event-junkie`, #264) is independent of the repository path.
+
+**There is no `values-staging.yaml`, and that is deliberate (#414).** A `HelmRelease` cannot read a file from this repository, so staging's configuration lives
+in `deploy/clusters/staging/helm-release.yaml` under `spec.values` — the single place it exists. Keeping a values file *as well* would mean two copies that must
+agree with nothing checking that they do, which is how an environment drifts. `render-assertions.sh` extracts `spec.values` from every HelmRelease and renders
+the chart with it, so the assertions gate exactly what Flux deploys rather than a file nothing deploys.
+
+`values-k3d.yaml` survives because it is not a duplicate of anything: it drives `k3d-rehearsal.sh up`, which installs the *working tree's* chart with images
+built seconds ago. `deploy/clusters/k3d/` answers a different question with the *published* chart and images. Both are worth having; neither substitutes for the
+other.
 
 **One chart, not three.** The three workloads share an ingress, a hostname, a database and a release lifecycle; subcharts would buy independent versioning
 nobody wants. And three explicit Deployment templates rather than one generic loop over a `components` map: the frontend has no database and no JVM, the
@@ -180,6 +197,31 @@ conformance* (k3s owns it), and *PKI certificates* (k3s owns the cluster PKI; th
   would be 65532. A mismatch is a pod that cannot read its own files, which does not look like a values problem.
 - **No floating tags, anywhere.** `image.tag` defaults to `""` and falls back to `.Chart.AppVersion`. The assertions reject `latest`, `head`, `canary`, `main`
   and `edge`, and an image with no tag at all.
+
+## Flux: what the k3d rehearsal proved, and the two traps it found
+
+**Exercised on k3d as of 2026-08-12 (#414)** — `flux install`, the real chart pulled from GHCR, all three workloads on published images, `helm test` green, and a
+deliberately broken release rolled back. `flux bootstrap` has never run, because it needs a real cluster (#265) and it commits its own manifests plus a deploy key
+to this repository.
+
+**The version range lives on the `OCIRepository`, not the `HelmRelease`.** With `chartRef` the release carries no version at all — `spec.ref.semver` on the source
+decides everything. Staging uses `>=0.0.0-0`; the `-0` is what admits prereleases, and without it the range matches no snapshot at all. Observed rather than
+assumed: removing it gives `no match found for semver: >=0.0.0`. Production uses `semverFilter: '^[0-9]+\.[0-9]+\.[0-9]+$'` as well as a range, because excluding
+snapshots *by omission* is one careless `-0` away from being wrong.
+
+**`remediateLastFailure` defaults to false, so a bad deploy is retried and then left broken.** Remediation runs *between* attempts and never after the final one —
+exhaust the retries and the cluster keeps running the release that failed. Every `HelmRelease` here sets `remediateLastFailure: true` on `upgrade` for that reason.
+It is deliberately **not** set on `install`, where remediation is an uninstall and there is no previous version to return to: leaving a failed first install in
+place is what lets somebody look at why it failed. This was found by breaking a release on purpose and watching the workload stay broken — no amount of reading
+the manifest would have shown it.
+
+**Receivers are ruled out permanently**, so reconciliation is polled rather than pushed. A `Receiver` is an inbound HTTP endpoint and §8's firewall design exists
+to have nothing inbound. Deploys therefore land within about one `interval`, and Flux's own guidance is not to poll below 30s without webhooks — hence 1m on
+staging's source, 10m on production's.
+
+**The repository is now the control plane.** `kustomize-controller` and `helm-controller` are bound to `cluster-admin`, so anyone who can push to
+`deploy/clusters/**` on `main` can have the cluster apply anything. What Flux removes is CI holding a *credential*; it does not remove the power, it relocates it.
+Branch protection is the control that replaces the kubeconfig — see #443.
 
 ## Never hand-edit the chart version, and never pin an image tag
 

@@ -1,0 +1,58 @@
+# Reconciliation status, written back onto the commit that caused it.
+#
+# This is what makes a green CI run distinguishable from a live deploy (PLATFORM_SETUP §4a). Since
+# #264, a green Actions run means "the artifacts exist" — nothing more. Flux reconciles minutes
+# later, on its own schedule, and can fail long after the workflow went green. Without this, nothing
+# on GitHub ever says whether the cluster took the change.
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: github
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      Writes Flux reconciliation results back as GitHub commit statuses.
+spec:
+  type: github
+  address: https://github.com/enorm-labs/event-junkie
+  # THE ONE CREDENTIAL THIS CLUSTER HOLDS FOR GITHUB'S SAKE, and it is worth being explicit about
+  # because §4's argument rests on the cluster holding nothing.
+  #
+  # A **fine-grained** PAT scoped to this single repository with **commit statuses: write** and
+  # nothing else. Not a classic token: classic scopes cannot be narrowed to one repository, and we
+  # declined one for exactly that reason when deciding to keep the GHCR packages public (§3).
+  #
+  # Created out of band, once:
+  #   kubectl create secret generic github-status -n flux-system --from-literal=token=…
+  # Moves under SOPS in #416 — and per Flux's e2e guide, back the encrypted value up somewhere that
+  # is not this repository, because the repository is not a backup of the key that decrypts it.
+  secretRef:
+    name: github-status
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: github-status
+  namespace: flux-system
+spec:
+  providerRef:
+    name: github
+  # `info` does not mean "only info" — it means "do not filter". Errors are included, and they are
+  # the ones that matter; successes are what make the absence of a status meaningful rather than
+  # ambiguous.
+  eventSeverity: info
+  eventSources:
+    - kind: HelmRelease
+      name: event-junkie
+      namespace: flux-system
+    - kind: OCIRepository
+      name: event-junkie
+      namespace: flux-system
+  eventMetadata:
+    env: staging
+    cluster: staging
+  # What this does NOT cover, so nobody reads more into a green commit status than it says: it
+  # reports events *at reconcile time*. A release that reconciled fine and has been quietly stale
+  # for a week emits nothing at all, because nothing happened. Catching that needs the metrics half
+  # of Flux's monitoring story, which belongs with ADR-015's OpenObserve rather than here.

@@ -34,7 +34,7 @@ kubectl create secret generic events-db \
 
 helm install event-junkie deploy/charts/event-junkie \
   --namespace event-junkie --create-namespace \
-  --values deploy/charts/event-junkie/values-staging.yaml
+  --values deploy/charts/event-junkie/values-k3d.yaml
 ```
 
 There is no `namespace:` in any template. Flux's `HelmRelease` sets `targetNamespace` (#414), and a
@@ -75,9 +75,17 @@ Only the values worth a decision are listed. Every property is documented in
 | `certManager.clusterIssuer.server` | ACME **staging** | Deliberately not production. 50 certificates per registered domain per week, and burning it costs seven days |
 | `certManager.clusterIssuer.solver` | `http01` | `dns01` for staging, which has no public address for HTTP-01 to reach |
 
-Three values files ship with the chart: `values.yaml` (production-shaped, and it cannot render on
-its own — the two required keys have no safe default), `values-staging.yaml` (#265) and
-`values-k3d.yaml` — no longer written blind: #263 ran it, and two values it had guessed were wrong (the database port and the database name, neither catchable by rendering).
+**Two values files ship with the chart, and the environments are not among them.** `values.yaml` is
+production-shaped and cannot render on its own — the two required keys have no safe default.
+`values-k3d.yaml` drives the local rehearsal with working-tree images, and is no longer written
+blind: #263 ran it, and two values it had guessed were wrong (the database port and the database
+name, neither catchable by rendering).
+
+**Staging's and production's configuration lives in their `HelmRelease` under `spec.values`**
+(`deploy/clusters/<env>/helm-release.yaml`), not in a values file — a HelmRelease cannot read a file
+from the repository, and keeping both would mean two copies with nothing checking they agree (#414).
+`render-assertions.sh` renders the chart with those values, so the assertions gate what Flux
+actually deploys.
 
 ## The parts that are not obvious from the templates
 
@@ -94,7 +102,7 @@ step — and it is one line away from being defeated. A published values file th
 plausible tag on every image, while one workload is pinned to a version nobody chose. Only
 `values-k3d.yaml` sets tags (`dev`), and it never leaves a laptop;
 [`../../scripts/render-assertions.sh`](../../scripts/render-assertions.sh) fails the build if
-`values.yaml` or `values-staging.yaml` ever grows one.
+`values.yaml` or any cluster's `HelmRelease` ever grows one.
 
 The chart version does **not** move independently of the application. That would be right for a
 public chart with many consumers; here the chart has one consumer and ships from the same commit as
@@ -224,14 +232,14 @@ somebody else's is how a chart acquires a resource it can never safely change.
 
 `certManager.clusterIssuer.create` is off by default because a ClusterIssuer is cluster-scoped, and
 a chart that owns one cannot be installed twice on the same cluster — which is exactly what the k3d
-rehearsal needs to do. `values-staging.yaml` turns it on, because staging is its own cluster with
+rehearsal needs to do. Staging's HelmRelease turns it on, because staging is its own cluster with
 one release on it.
 
 ## Validating a change
 
 ```sh
-helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-staging.yaml
-helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-staging.yaml
+helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
+helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
 deploy/scripts/render-assertions.sh
 ```
 

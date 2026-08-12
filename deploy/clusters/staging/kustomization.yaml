@@ -1,0 +1,9 @@
+# What Flux syncs for the staging cluster. `flux bootstrap --path=deploy/clusters/staging` points
+# its own Kustomization at this directory, and bootstrap adds a generated `flux-system/` alongside
+# these files — that directory is machine-written, ~2 MB, and must never be hand-edited.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - oci-repository.yaml
+  - helm-release.yaml
+  - notification.yaml
