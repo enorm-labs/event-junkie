@@ -3,6 +3,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "event-junkie.componentName" $args }}
+  annotations:
+    kubernetes.io/description: >-
+      The web app, served as static files by nginx on 8080. Not 80: the pod runs non-root and cannot bind a privileged port.
   labels:
     {{- include "event-junkie.labels" $args | nindent 4 }}
 spec:
@@ -36,7 +39,6 @@ spec:
           ports:
             - name: http
               containerPort: {{ .Values.frontend.service.port }}
-              protocol: TCP
           {{- /* nginx serves a static bundle: there is no application health endpoint to ask, and
                  `/` is the only thing that proves it is serving. A HEAD on the index is the whole
                  contract. */}}

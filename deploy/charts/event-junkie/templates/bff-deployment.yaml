@@ -3,6 +3,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "event-junkie.componentName" $args }}
+  annotations:
+    kubernetes.io/description: >-
+      Public read API. Serves under /api via spring.webflux.base-path; actuator is on the management port, which no Ingress routes.
   labels:
     {{- include "event-junkie.labels" $args | nindent 4 }}
 spec:
@@ -40,14 +43,12 @@ spec:
           ports:
             - name: http
               containerPort: {{ .Values.bff.service.port }}
-              protocol: TCP
             {{- /* The management port is what keeps /actuator/** private. The Service publishes it
                    so a port-forward can reach it, the Ingress never names it, and so actuator is
                    *unroutable* rather than merely unrouted — which is the difference between a
                    network guarantee and an ingress rule that has to stay correct forever (§3.2). */}}
             - name: management
               containerPort: {{ .Values.bff.service.managementPort }}
-              protocol: TCP
           envFrom:
             - configMapRef:
                 name: {{ include "event-junkie.fullname" $ }}

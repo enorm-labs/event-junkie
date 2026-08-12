@@ -3,6 +3,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "event-junkie.componentName" $args }}
+  annotations:
+    kubernetes.io/description: >-
+      Scrapers and scheduler. One replica and strategy Recreate are an ADR-008 correctness constraint, not a cost one: two schedulers means two concurrent imports of the same source. Owns the Flyway migrations.
   labels:
     {{- include "event-junkie.labels" $args | nindent 4 }}
 spec:
@@ -51,10 +54,8 @@ spec:
                    does — the access path is `kubectl port-forward` over WireGuard (§8a). */}}
             - name: http
               containerPort: {{ .Values.importer.service.port }}
-              protocol: TCP
             - name: management
               containerPort: {{ .Values.importer.service.managementPort }}
-              protocol: TCP
           envFrom:
             - configMapRef:
                 name: {{ include "event-junkie.fullname" $ }}

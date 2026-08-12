@@ -3,6 +3,9 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ include "event-junkie.fullname" $ }}
+  annotations:
+    kubernetes.io/description: >-
+      Settings that belong to running in a cluster rather than to the application, so they are here and not in each module's application.yaml.
   labels:
     {{- include "event-junkie.labels" $args | nindent 4 }}
 {{- /* Settings that belong to *running in a cluster* rather than to the application, which is why

@@ -9,6 +9,8 @@ metadata:
   labels:
     {{- include "event-junkie.labels" $args | nindent 4 }}
   annotations:
+    kubernetes.io/description: >-
+      The only route into the release. /api reaches the BFF, / reaches the frontend, and nothing reaches the importer or actuator.
     {{- if .Values.ingress.tls.enabled }}
     {{- /* cert-manager's ingress-shim watches this annotation and creates the Certificate itself, so
            the chart owns no Certificate resource. cert-manager must already be installed: the API

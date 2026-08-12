@@ -25,7 +25,7 @@ repos:
         name: shellcheck
         entry: shellcheck -x
         language: system
-        files: ^(infra/modules/environment/cloud-init|deploy/scripts)/.*\.sh$
+        files: ^(infra/modules/environment/cloud-init|deploy/scripts|scripts)/.*\.sh$
         pass_filenames: true
 
       # `helm lint --strict` is a pure function of the working tree — no cluster, no kubeconfig, no

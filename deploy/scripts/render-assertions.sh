@@ -171,6 +171,34 @@ run_assertions() {
   assert_empty "no pod mounts a ServiceAccount token" \
     "$(yq -N 'select(.kind == "Deployment") | select(.spec.template.spec.automountServiceAccountToken != false) | .metadata.name' "$manifest")"
 
+  # --- Pod Security Standards, `restricted` profile --------------------------------------------
+  #
+  # The chart already satisfies every field of the `restricted` profile, and these assertions are
+  # what keep that true rather than incidental. #416 adds the namespace label that *enforces* it;
+  # until then nothing rejects a violation at admission, so a workload could drift into
+  # non-compliance and only fail on the day the label lands. The four container-level fields are
+  # asserted above; these are the pod-level ones.
+  #
+  # https://kubernetes.io/docs/concepts/security/pod-security-standards/
+
+  assert_empty "every pod sets seccompProfile RuntimeDefault" \
+    "$(yq -N 'select(.kind == "Deployment") | select(.spec.template.spec.securityContext.seccompProfile.type != "RuntimeDefault") | .metadata.name' "$manifest")"
+
+  assert_empty "no pod uses a host namespace" \
+    "$(yq -N '.. | select(has("hostNetwork") or has("hostPID") or has("hostIPC")) | [.hostNetwork, .hostPID, .hostIPC] | .[] | select(. == true)' "$manifest")"
+
+  assert_empty "no container requests a host port" \
+    "$(yq -N '.. | select(has("hostPort")) | .hostPort' "$manifest")"
+
+  assert_empty "no container is privileged" \
+    "$(yq -N '.. | select(has("privileged")) | select(.privileged == true) | .privileged' "$manifest")"
+
+  # `restricted` permits configMap, csi, downwardAPI, emptyDir, ephemeral, persistentVolumeClaim,
+  # projected and secret — and nothing else. hostPath is the one that matters: it is a mount of the
+  # node's filesystem, and it is how a pod escapes being a pod.
+  assert_empty "no pod mounts a volume type outside the restricted set" \
+    "$(yq -N 'select(.kind == "Deployment") | .spec.template.spec.volumes[] | keys | .[] | select(. != "name" and . != "configMap" and . != "csi" and . != "downwardAPI" and . != "emptyDir" and . != "ephemeral" and . != "persistentVolumeClaim" and . != "projected" and . != "secret")' "$manifest")"
+
   # --- Images ---------------------------------------------------------------------------------
 
   assert_nonempty "some workload declares an image" \

@@ -18,11 +18,13 @@ on:
     branches: [ main ]
     paths:
       - 'deploy/**'
+      - 'scripts/k3d-rehearsal.sh'
       - '.github/workflows/validate-chart.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'deploy/**'
+      - 'scripts/k3d-rehearsal.sh'
       - '.github/workflows/validate-chart.yml'
   workflow_dispatch:
 
@@ -105,5 +107,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      # `scripts/k3d-rehearsal.sh` is linted here rather than in a workflow of its own because it is
+      # part of the deploy story: it installs this chart. The other scripts/ files are covered by
+      # the pre-commit hook only — a gap, but a pre-existing one, not one this adds.
       - name: Run ShellCheck
-        run: shellcheck -x deploy/scripts/*.sh
+        run: shellcheck -x deploy/scripts/*.sh scripts/k3d-rehearsal.sh
