@@ -4,10 +4,22 @@ Deploys `events-bff`, `events-importer` and `events-frontend` behind one Traefik
 from cert-manager, and with the importer's admin API and every `/actuator/**` endpoint unreachable
 from outside the cluster.
 
-**Status: written, rendered, never installed.** `helm lint`, `helm template`, `kubeconform` and
-[`../../scripts/render-assertions.sh`](../../scripts/render-assertions.sh) all pass. None of that is
-evidence that a pod starts — the images do not exist yet (#426, #262), and the first actual install
-is the k3d rehearsal in #263. Read anything below in that register.
+**Status: installed and exercised on k3d, never on a real cluster.** As of #263 (2026-08-12) the
+chart has been installed, upgraded, tested and uninstalled on a local k3d cluster running **arm64**
+nodes — the same architecture the Hetzner nodes will use. What that run proved, and what it did not:
+
+| Proved | Still unproven |
+|---|---|
+| The full stack comes up: all three pods Ready, no restarts | Anything on a real cluster, or through a real ingress with TLS |
+| Ingress routing — `/` → frontend, `/api` → BFF | cert-manager, ACME, DNS-01 (#265) |
+| The importer's admin API and `/actuator` are unreachable through the ingress | NetworkPolicies and PSA (#416) |
+| A real scrape reaching `/api/events` through Traefik | Flux reconciliation and rollback (#414) |
+| **`helm upgrade` across a chart version bump** — the selector-immutability trap does not occur | Behaviour under load, or on a node with real resource pressure |
+| `helm test` passes | |
+
+`helm lint`, `helm template`, `kubeconform` and
+[`../../scripts/render-assertions.sh`](../../scripts/render-assertions.sh) all pass as before, but
+they are no longer the only evidence.
 
 ## Install
 
@@ -54,7 +66,7 @@ Only the values worth a decision are listed. Every property is documented in
 
 Three values files ship with the chart: `values.yaml` (production-shaped, and it cannot render on
 its own — the two required keys have no safe default), `values-staging.yaml` (#265) and
-`values-k3d.yaml` (#263, written blind and expected to change on first use).
+`values-k3d.yaml` — no longer written blind: #263 ran it, and two values it had guessed were wrong (the database port and the database name, neither catchable by rendering).
 
 ## The parts that are not obvious from the templates
 
@@ -112,12 +124,30 @@ The property is `spring.flyway.user` — so `SPRING_FLYWAY_USER`, **not** `SPRIN
 The wrong spelling binds to nothing and fails silently. Both are asserted in
 `render-assertions.sh` for that reason.
 
-### The BFF crash-loops on a first install, and that is expected
+### The BFF does *not* crash-loop on a first install — it does something worse
 
-The importer owns the migrations (ADR-005), so on an empty database the BFF starts before the schema
-exists. Its readiness probe fails until the importer finishes. No init container and no Helm hook
-orders the two: Kubernetes retries, and a startup dependency is a thing that has to stay correct
-forever. Ninety seconds of restarts on a first install is documented behaviour, not an incident.
+**Corrected 2026-08-12 by #263, the first time this chart was ever installed.** This section used to
+say the BFF crash-loops for up to ninety seconds on an empty database while the importer migrates,
+and that this was expected. Measured on k3d, that is simply not what happens:
+
+| Event | Time |
+|---|---|
+| BFF reports **Ready** | `07:55:59` |
+| Flyway creates the schema | `07:56:00.451` |
+
+The BFF was Ready **about 1.2 seconds before the schema existed**, with zero restarts. Its readiness
+group contains no database indicator — `/actuator/health/readiness` returns `{"status":"UP"}` with no
+components — so readiness reflects only that Spring started, not that the BFF can serve.
+
+That is worse than crash-looping, because a crash-looping pod receives no traffic while a Ready one
+does. The window is ~1 second here, with one migration against a local Postgres; on a cold database
+with more migrations it is longer, and during it Kubernetes will route requests to a BFF whose
+queries fail.
+
+The design decision stands — no init container and no Helm hook ordering the two, because a startup
+dependency has to stay correct forever and Kubernetes already retries. What was wrong was the
+description. Making readiness mean "can serve" is tracked separately; it is a probe-semantics change,
+not a chart fix.
 
 ### One replica for the importer is correctness, not cost
 

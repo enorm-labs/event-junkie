@@ -34,16 +34,32 @@ you specifically need `NOTES.txt` rendered, which `template` does not do.
 **On an explicit, specific instruction you may install — but only against k3d.** Check the context first (`kubectl config current-context`) and stop if it is not
 a `k3d-*` one. An instruction to install locally is not permission to touch staging, and an instruction given once does not carry to the next session.
 
+**Checking once is not enough — pass the context explicitly on every command**, including read-only ones:
+
+```sh
+helm --kube-context k3d-event-junkie install …
+kubectl --context k3d-event-junkie get pods
+```
+
+This is not hypothetical. During #263 the active context on the developer machine belonged to an unrelated project, and several other clusters — production ones
+among them — were in the same kubeconfig. Assume that is the normal case rather than an unlucky one. `k3d cluster create` also switches the active context as a
+side effect, so a bare `kubectl` inherits whatever is current at that moment rather than whatever you checked earlier.
+
 ## What state this is in
 
-**The chart has never been installed anywhere, as of 2026-08-11.** It lints, renders under both Helm 3 and Helm 4, passes `kubeconform` against the Kubernetes
-and CRD schemas, and satisfies every assertion in `render-assertions.sh`. None of that is evidence that a pod starts.
+**Installed and exercised on k3d as of 2026-08-12 (#263); never on a real cluster.** The chart was installed, upgraded across a version bump, `helm test`-ed and
+uninstalled on a local k3d cluster with **arm64** nodes — the same architecture the Hetzner nodes will run. The full stack came up, the ingress split routed
+correctly, and a real scrape reached `/api/events` through Traefik.
 
-Three things are still missing and each is somebody else's issue: **the images do not exist** (#426 for the two backends, #262 for the frontend), **cert-manager
-is not installed on any cluster** (#265), and **nothing has run `helm install`** (#263 is the k3d rehearsal, and it is the first time any of this executes).
+**"Runs on k3d" is not "runs on Hetzner", and the gap is specific**, not a formality: no TLS, no cert-manager, no DNS, no NetworkPolicies, no Flux, one node with
+no resource pressure, and a database on the developer's own machine rather than across a private network. Those are #265, #416 and #414.
 
-Do not describe the chart as working, tested or deployed. "Written and statically validated" is the accurate phrase, and the same honesty `infra/AGENTS.md`
-applies to `environments/` applies here.
+So: do not describe the chart as *deployed* or *production-ready*. **"Installed and exercised locally"** is the accurate phrase — the same register
+`infra/AGENTS.md` uses for `environments/`, and it is meant to be as load-bearing here as it is there.
+
+The runbook for re-running the rehearsal is in `docs/DEVELOPMENT.md`. Two things it will not let you skip: the rehearsal uses its **own database**
+(`event_junkie_k3d`), never the local development one, because installing the chart runs Flyway; and every cluster command carries an explicit
+`--kube-context k3d-…` (below).
 
 ## Layout
 
