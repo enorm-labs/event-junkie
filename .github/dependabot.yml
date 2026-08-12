@@ -140,14 +140,20 @@ updates:
         patterns:
           - "*"
 
-  # The base image in both Dockerfiles is pinned by tag *and* digest, and this is what keeps the
+  # The base image in every Dockerfile is pinned by tag *and* digest, and this is what keeps the
   # digest from going stale. Without it a pinned digest is a promise never to get a security fix:
   # `eclipse-temurin:25-jre` moves, the digest does not, and nothing says so.
   #
+  # It updates the tag too, not only the digest — and the limit is not what it notices but what it
+  # can do about it. In #264 the Trivy gate found 10 fixable HIGH Alpine advisories in the frontend
+  # image; Dependabot had already opened #437 proposing exactly that bump, and it was sitting open.
+  # **An open Dependabot PR is a live vulnerability**, and nothing in its title says which of the two
+  # it is. Merging these promptly is the control; the image scan in release.yml is what makes an
+  # unmerged one fail a build instead of waiting quietly.
+  #
   # A directory per Dockerfile, because the ecosystem discovers them per directory and each module
   # owns its own. All three are grouped into one PR: the two backends pin the same JRE, so a single
-  # release would otherwise open two identical PRs, and the frontend's nginx moves rarely enough
-  # that keeping it in the same group costs nothing.
+  # release would otherwise open two identical PRs, and the frontend's nginx is cheap to carry along.
   - package-ecosystem: "docker"
     directories:
       - "/events-bff"
