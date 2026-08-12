@@ -62,8 +62,11 @@ on; the only names that belong here are `k3d-*` ones this project created.
 uninstalled on a local k3d cluster with **arm64** nodes — the same architecture the Hetzner nodes will run. The full stack came up, the ingress split routed
 correctly, and a real scrape reached `/api/events` through Traefik.
 
-**"Runs on k3d" is not "runs on Hetzner", and the gap is specific**, not a formality: no TLS, no cert-manager, no DNS, no NetworkPolicies, no Flux, one node with
-no resource pressure, and a database on the developer's own machine rather than across a private network. Those are #265, #416 and #414.
+**Flux was added to that on 2026-08-12 (#414)** — the published chart reconciled from GHCR on k3d, `helm test` run in-cluster, and a deliberately broken release
+rolled back. `flux bootstrap` has still never run, because it needs a real cluster.
+
+**"Runs on k3d" is not "runs on Hetzner", and the gap is specific**, not a formality: no TLS, no cert-manager, no DNS, no NetworkPolicies, no git-sync, one node
+with no resource pressure, and a database on the developer's own machine rather than across a private network. Those are #265 and #416.
 
 So: do not describe the chart as *deployed* or *production-ready*. **"Installed and exercised locally"** is the accurate phrase — the same register
 `infra/AGENTS.md` uses for `environments/`, and it is meant to be as load-bearing here as it is there.
@@ -199,6 +202,9 @@ conformance* (k3s owns it), and *PKI certificates* (k3s owns the cluster PKI; th
   and `edge`, and an image with no tag at all.
 
 ## Flux: what the k3d rehearsal proved, and the two traps it found
+
+The decision and its consequences are [ADR-016](../docs/adr/ADR-016_GITOPS_DELIVERY.md); the end-to-end path is [docs/RELEASING.md](../docs/RELEASING.md). What
+follows is only what bites when changing these files.
 
 **Exercised on k3d as of 2026-08-12 (#414)** — `flux install`, the real chart pulled from GHCR, all three workloads on published images, `helm test` green, and a
 deliberately broken release rolled back. `flux bootstrap` has never run, because it needs a real cluster (#265) and it commits its own manifests plus a deploy key
