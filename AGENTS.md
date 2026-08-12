@@ -689,9 +689,14 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       `registry.opentofu.org/…`, which the `terraform` updater would rewrite to `registry.terraform.io`. All four directories are grouped into one PR, since a
       single provider release otherwise opens four identical ones. Expect it to change **`.terraform.lock.hcl` and not `versions.tf`**: the `~> 1.68` constraint
       already permits 1.69, so the constraint is left alone until 2.0 while the lock file — which decides the version actually used — moves.
-    - **`docker`** (`/events-bff`, `/events-importer`) — the base image in both Dockerfiles is pinned by tag **and** digest, and this is what keeps the digest
-      from going stale. An unmaintained digest pin is a promise never to receive a security fix: the tag moves, the digest does not, and nothing says so. Both
-      directories are grouped into one PR because they pin the same base image.
+    - **`docker`** (`/events-bff`, `/events-importer`, `/events-frontend`) — the base image in every Dockerfile is pinned by tag **and** digest, and this is
+      what keeps the digest from going stale. An unmaintained digest pin is a promise never to receive a security fix: the tag moves, the digest does not, and
+      nothing says so. The three directories are grouped into one PR because the two backends pin the same base image.
+      It updates the **tag** as well as the digest. The limit is not what it notices but what it can do: in #264 the Trivy gate found 10 fixable HIGH Alpine
+      advisories in the frontend image, and Dependabot had already opened #437 proposing that exact bump — it was simply still open. **An open Dependabot PR is
+      a live vulnerability**, and nothing in its title distinguishes one from a routine version bump. `release.yml`'s image scan is what turns an unmerged one
+      into a failing build. **When bumping a base image, check the branch is still being rebuilt**, not just that a newer tag exists: `nginx 1.29` was a
+      superseded mainline branch and had been shipping three-month-old Alpine packages.
     - `/update-dependencies` still exists and is not redundant: Dependabot proposes one bump at a time, while that skill does a deliberate sweep across both
       stacks and knows which Gradle versions are BOM-managed and must **not** be pinned.
 - **Conventional Commits** — Commit messages follow the [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) spec. Reusable prompts are

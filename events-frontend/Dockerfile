@@ -25,9 +25,26 @@
 # (a non-root process cannot bind a privileged port), and its nginx.conf already relocates the pid
 # file and every temp path into /tmp. See docker/nginx.conf for why that matters.
 
-# Pinned by tag *and* digest, per Docker's best-practices guide; Dependabot's `docker` ecosystem
-# keeps the digest current, which is the half that otherwise silently rots.
-FROM nginxinc/nginx-unprivileged:1.29-alpine@sha256:0c79d56aee561a1d81c63f00eee5fb5fe29279560cdc55e91425133104c7fbe6
+# Pinned by tag *and* digest, per Docker's best-practices guide. Dependabot's `docker` ecosystem
+# updates both halves — the digest within a tag, and the tag itself.
+#
+# **The pin has to be on a branch that is still being rebuilt.** This was `1.29-alpine` until #264's
+# Trivy gate reported 10 fixable HIGH advisories on its first run — openssl, curl, libxml2, libexpat,
+# c-ares, all in the Alpine base rather than in nginx. nginx 1.29 is a superseded *mainline* branch,
+# last rebuilt 2026-05-11, so it kept shipping Alpine 3.23.4 packages while 3.24 fixed them.
+#
+# **Dependabot had already noticed** — PR #437 proposed 1.29-alpine → 1.30-alpine on 2026-08-11 and
+# was sitting open when the scan ran. That is the useful part: an open Dependabot PR is a live
+# vulnerability until someone merges it, and nothing in its title distinguishes ten fixable HIGH
+# advisories from a routine version bump. The scan is what makes the difference blocking rather than
+# advisory. (It was also unwatched for the three months before that: the `docker` ecosystem only
+# started covering this directory on 2026-08-11.)
+#
+# 1.31 is the current mainline and is rebuilt within days (Alpine 3.24.1, Trivy-clean at the time of
+# the bump). 1.30-alpine — the stable branch, and what #437 proposed — was equally clean and is the
+# conservative alternative if mainline ever churns too fast. The reason to stay on mainline is that
+# it picks up refreshed Alpine packages sooner, which is exactly the failure above.
+FROM nginxinc/nginx-unprivileged:1.31-alpine@sha256:334d92979f15aaecd5dd50af5105e1230e2bb70765d45b1e2f964e7c5eda81c3
 
 ARG VERSION=unspecified
 ARG REVISION=unknown
