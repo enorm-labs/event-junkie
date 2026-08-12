@@ -3,6 +3,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "event-junkie.componentName" $args }}
+  annotations:
+    kubernetes.io/description: >-
+      ClusterIP with no Ingress anywhere in this chart. The admin API has no authentication of its own; what keeps it private is that nothing outside the cluster can address it.
   labels:
     {{- include "event-junkie.labels" $args | nindent 4 }}
 spec:
@@ -14,10 +17,8 @@ spec:
     - name: http
       port: {{ .Values.importer.service.port }}
       targetPort: http
-      protocol: TCP
     - name: management
       port: {{ .Values.importer.service.managementPort }}
       targetPort: management
-      protocol: TCP
   selector:
     {{- include "event-junkie.selectorLabels" $args | nindent 4 }}

@@ -45,6 +45,12 @@ This is not hypothetical. During #263 the active context on the developer machin
 among them — were in the same kubeconfig. Assume that is the normal case rather than an unlucky one. `k3d cluster create` also switches the active context as a
 side effect, so a bare `kubectl` inherits whatever is current at that moment rather than whatever you checked earlier.
 
+**And never write a context name you did not create into anything published.** Not into a commit message, an issue, a pull request, a code comment or a
+document. A kubeconfig on a working machine is a list of somebody's other clients and employers, and the cluster names in it are theirs, not this project's —
+`kubectl config get-contexts`, `current-context` and `cluster-info` all print them, and they read as harmless context until they are on a public repository. This
+rule exists because #263 put four of them in a commit message and they had to be rewritten out of the branch afterwards. Refer to "an unrelated context" and move
+on; the only names that belong here are `k3d-*` ones this project created.
+
 ## What state this is in
 
 **Installed and exercised on k3d as of 2026-08-12 (#263); never on a real cluster.** The chart was installed, upgraded across a version bump, `helm test`-ed and
@@ -69,7 +75,7 @@ deploy/
 │   ├── Chart.yaml            apiVersion v2 — see below
 │   ├── values.yaml           production-shaped; cannot render alone
 │   ├── values-staging.yaml   #265 · single node · DNS-01
-│   ├── values-k3d.yaml       #263 · written blind, expected to change on first use
+│   ├── values-k3d.yaml       #263 · run for real; two of its blind guesses were wrong
 │   ├── values.schema.json    required keys, enums, and the importer's replica pin
 │   └── templates/            flat, one resource per file, kind in the filename
 └── scripts/
@@ -100,6 +106,47 @@ Beyond the [Helm chart best practices guide](https://helm.sh/docs/chart_best_pra
 - **Comments explain why**, and specifically why an obvious alternative was not taken — why `/api` is not a Traefik middleware, why the ClusterIssuer is off by
   default, why there is no `crds/` directory. Match that. Do not add comments that restate the YAML.
 - Cross-references point at `docs/PLATFORM_SETUP.md` sections and ADR numbers, as in `infra/`. Keep them.
+
+## Kubernetes' own good practices, audited
+
+Worked through [Configuration Best Practices](https://kubernetes.io/docs/concepts/configuration/overview/) and its
+[2025 restatement](https://kubernetes.io/blog/2025/11/25/configuration-good-practices/), plus [Setup Best
+Practices](https://kubernetes.io/docs/setup/best-practices/). Most of it the chart already did; what is written down here is the part that **changed something**
+or that a future reader would otherwise "fix" back.
+
+**Applied:**
+
+- **Latest stable API versions** — `apps/v1`, `v1`, `networking.k8s.io/v1`. One exception, and it is not a stale pin: `traefik.io/v1alpha1` is what Traefik
+  publishes for `Middleware`; there is no v1. Alpha APIs carry no deprecation guarantee, so if Traefik moves it, the redirect middleware is the single object
+  affected — and it is already gated on `ingress.redirectHosts` being non-empty.
+- **No redundant defaults.** `protocol: TCP` was stated on all ten ports and is the API default; it is gone. Do not put it back.
+- **`kubernetes.io/description` on every object a human might have to reason about.** This one is worth understanding rather than copying: the Go-template
+  comments in `templates/` are extensive and **all of them vanish at render time**. An operator running `kubectl describe` on a live Deployment at 23:00 sees
+  none of it. The annotation persists into the API, which is the only place that reader is looking.
+- **The YAML boolean trap, already avoided — keep it that way.** `SPRING_MAIN_BANNER_MODE: "off"` in the ConfigMap is quoted deliberately. Unquoted, YAML reads
+  `off` as boolean `false`, and ConfigMap `data` values must be strings, so it does not merely change meaning — it fails to render. The same applies to any
+  future `yes`/`no`/`on`/`y`/`n` value.
+- **No naked Pods**, with one deliberate exception: `templates/tests/connection-test.yaml` is a bare Pod because that is Helm's documented test-hook shape. A
+  controller would actively defeat it — the hook's exit code *is* the test result, and something that restarts the pod would destroy the signal.
+
+**Two deliberate deviations, so nobody re-litigates them:**
+
+1. **One resource per file, not grouped manifests.** Kubernetes' guidance says to keep related Deployments, Services and ConfigMaps in a single file so they can
+   be applied as a unit; Helm's chart guide says one resource per file with the kind in the filename. **Helm wins here, because these are templates, not
+   manifests.** Nobody ever runs `kubectl apply -f` against them — Helm concatenates them at render — and "apply as a unit" is precisely what a release already
+   is. The grouping benefit is already provided by the thing that makes them a chart.
+2. **`type: ClusterIP` stated although it is the default.** On `importer-service.yaml` this is a security statement rather than configuration: the admin API has
+   no authentication of its own, and what keeps it private is that nothing outside the cluster can address it — one word changed to `NodePort` undoes that. It
+   is kept on all three Services so the three do not differ in shape for reasons a reader has to reconstruct.
+
+**Pod Security Standards: the chart satisfies `restricted` in full**, today, without the namespace label that would enforce it. `runAsNonRoot`,
+`allowPrivilegeEscalation: false`, `readOnlyRootFilesystem`, `capabilities.drop: [ALL]`, `seccompProfile: RuntimeDefault`, no host namespaces, no host ports, no
+privileged containers, and only `emptyDir`/`configMap`/`secret` volumes. `render-assertions.sh` asserts each of those, which is what keeps compliance
+deliberate rather than incidental — **until #416 adds the label, nothing rejects a violation at admission**, so a workload could drift and only fail on the day
+the label lands.
+
+**What does not apply**, recorded so the setup guide is not re-read from scratch: *large clusters* and *multiple zones* (one node, one zone — ADR-012), *node
+conformance* (k3s owns it), and *PKI certificates* (k3s owns the cluster PKI; the public certificate is cert-manager's, #265).
 
 ## Things that will bite
 

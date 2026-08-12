@@ -3,6 +3,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "event-junkie.componentName" $args }}
+  annotations:
+    kubernetes.io/description: >-
+      Publishes the application port, which the Ingress routes, and the management port, which it does not.
   labels:
     {{- include "event-junkie.labels" $args | nindent 4 }}
 spec:
@@ -11,7 +14,6 @@ spec:
     - name: http
       port: {{ .Values.bff.service.port }}
       targetPort: http
-      protocol: TCP
     {{- /* Published so `kubectl port-forward` over the WireGuard tunnel can reach actuator
            (PLATFORM_SETUP §8a). Publishing it on the Service does not expose it: nothing routes to
            this port from outside the cluster, and the render assertions fail the build if an
@@ -19,6 +21,5 @@ spec:
     - name: management
       port: {{ .Values.bff.service.managementPort }}
       targetPort: management
-      protocol: TCP
   selector:
     {{- include "event-junkie.selectorLabels" $args | nindent 4 }}

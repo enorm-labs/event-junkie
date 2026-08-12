@@ -345,6 +345,15 @@ shellcheck -x deploy/scripts/*.sh
 context and talks to that cluster. Use `helm template`, or `--dry-run=client` when you specifically need `NOTES.txt`. The chart has never been installed
 anywhere: #263 is the first time it runs.
 
+The whole stack on a local Kubernetes — the runtime counterpart to everything above, since `helm template` passing is not evidence that a pod starts:
+
+```bash
+scripts/k3d-rehearsal.sh all      # build, install on k3d, assert routing, run a real import, tear down
+```
+
+Driven by [`/k3d-rehearsal`](.github/prompts/k3d-rehearsal.prompt.md). It is the only thing here that talks to a Kubernetes cluster, and it passes
+`--context k3d-event-junkie` on every call rather than trusting the active one — read `deploy/AGENTS.md` before changing that.
+
 Container images (`events-bff/Dockerfile`, `events-importer/Dockerfile`). The build context is each module's `build/docker`, not the module directory — it is
 exactly the extracted layers, which is why neither needs a `.dockerignore`:
 

@@ -9,7 +9,7 @@ type: application
 
 # The chart's own version, moving independently of appVersion. Bumped by hand on every change to
 # the chart; #264 is what publishes it to oci://ghcr.io/enorm-labs/charts/event-junkie.
-version: 0.1.1
+version: 0.1.2
 
 # The default image tag for all three workloads (`image.tag` overrides per component). #264 stamps
 # this from the same build that pushes the images, so the chart version and the image tags move

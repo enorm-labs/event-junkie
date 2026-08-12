@@ -8,6 +8,9 @@ metadata:
   labels:
     {{- include "event-junkie.labels" $args | nindent 4 }}
   annotations:
+    kubernetes.io/description: >-
+      301s the redirect domains to ingress.host. Separate from the main Ingress so a redirect domain
+      failing certificate validation cannot take the primary certificate down with it.
     {{- if .Values.ingress.tls.enabled }}
     {{- /* Its own certificate, listing the redirect hosts explicitly rather than a wildcard: a
            wildcard would cover names nobody has decided to serve, and DNS-01 is the only challenge
