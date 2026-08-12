@@ -19,6 +19,11 @@
 set -euo pipefail
 
 CHART_DIR="${1:-deploy/charts/event-junkie}"
+# Since #414 the per-environment configuration lives in each cluster's HelmRelease rather than in a
+# values file, because a HelmRelease cannot read one from the repository and two copies would drift.
+# So this script renders the chart with the values Flux will actually apply — which is the whole
+# point: before, these assertions gated a file nothing deployed.
+CLUSTERS_DIR="${2:-deploy/clusters}"
 
 # The base values.yaml deliberately cannot render on its own: database.host and
 # database.existingSecret have no safe default and the helpers `required` them. So the default case
@@ -228,17 +233,23 @@ run_assertions() {
 # published values file silently opts that component out — the render still looks entirely correct,
 # with a plausible tag on every image, while one workload is pinned to a version nobody chose.
 #
-# values-k3d.yaml is deliberately exempt: it pins `dev`, and it never leaves a laptop.
+# values-k3d.yaml is deliberately exempt: it pins `dev` for locally built images, and it never
+# leaves a laptop. Every HelmRelease is checked, because those are what deploy.
 check_values_files() {
   current_case="values files"
   printf '\n== values files ==\n'
 
   local file component
-  for file in "$CHART_DIR"/values.yaml "$CHART_DIR"/values-staging.yaml; do
+  for component in bff importer frontend; do
+    assert_equals "values.yaml: $component.image.tag is empty, so it falls back to appVersion" \
+      "" "$(yq -N ".${component}.image.tag // \"\"" "$CHART_DIR/values.yaml")"
+  done
+
+  for file in "$CLUSTERS_DIR"/*/helm-release.yaml; do
     [[ -e "$file" ]] || continue
     for component in bff importer frontend; do
-      assert_equals "$(basename "$file"): $component.image.tag is empty, so it falls back to appVersion" \
-        "" "$(yq -N ".${component}.image.tag // \"\"" "$file")"
+      assert_equals "$(basename "$(dirname "$file")")/helm-release.yaml: $component.image.tag is empty" \
+        "" "$(yq -N ".spec.values.${component}.image.tag // \"\"" "$file")"
     done
   done
 }
@@ -257,8 +268,29 @@ render_case() {
   trap "rm -f '$manifest'" RETURN
 
   printf '\n== %s ==\n' "$name"
-  helm template "assert-$name" "$CHART_DIR" "$@" >"$manifest"
+  # The case name is a human-readable heading; the release name has to satisfy Helm's regex
+  # (lowercase alphanumeric and hyphens). Deriving one from the other rather than reusing it means a
+  # label like "k3d (HelmRelease)" cannot fail the render for a reason that has nothing to do with
+  # the chart — which it did, once.
+  local release
+  release="assert-$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/-*$//')"
+  helm template "$release" "$CHART_DIR" "$@" >"$manifest"
   run_assertions "$manifest"
+}
+
+# Renders the chart with a HelmRelease's own `spec.values`, so every assertion below applies to what
+# Flux will hand Helm — not to an approximation of it. `spec.values` is extracted rather than the
+# whole object because `helm template` wants a values document, and a HelmRelease is not one.
+render_helm_release() {
+  local file="$1" name values
+  # Suffixed, because `deploy/clusters/k3d` and `values-k3d.yaml` are two different configurations
+  # of the same cluster — published artifacts via Flux, versus locally built images via `helm
+  # install` — and an unlabelled duplicate heading in the output would read as a bug.
+  name="$(basename "$(dirname "$file")") (HelmRelease)"
+  values="$(mktemp "${TMPDIR:-/tmp}/event-junkie-values.XXXXXX")"
+  yq -N '.spec.values' "$file" >"$values"
+  render_case "$name" --values "$values"
+  rm -f "$values"
 }
 
 main() {
@@ -275,6 +307,12 @@ main() {
     name="$(basename "$values_file" .yaml)"
     name="${name#values-}"
     render_case "$name" --values "$values_file"
+  done
+
+  local release_file
+  for release_file in "$CLUSTERS_DIR"/*/helm-release.yaml; do
+    [[ -e "$release_file" ]] || continue
+    render_helm_release "$release_file"
   done
 
   printf '\n'

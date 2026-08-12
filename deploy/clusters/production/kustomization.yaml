@@ -1,0 +1,8 @@
+# What Flux syncs for the production cluster — `flux bootstrap --path=deploy/clusters/production`,
+# once #424 has provisioned one. Bootstrap adds a generated `flux-system/` alongside these files.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - oci-repository.yaml
+  - helm-release.yaml
+  - notification.yaml

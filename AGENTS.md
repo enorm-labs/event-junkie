@@ -335,8 +335,8 @@ Helm chart ([`deploy/`](deploy)). **Read [deploy/AGENTS.md](deploy/AGENTS.md) be
 cluster and needs no kubeconfig — and these are what `validate-chart.yml` runs:
 
 ```bash
-helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-staging.yaml
-helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-staging.yaml
+helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
+helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
 deploy/scripts/render-assertions.sh          # asserts on the rendered output; the gate that matters
 shellcheck -x deploy/scripts/*.sh
 ```

@@ -1,0 +1,26 @@
+# The chart source for the local k3d rehearsal.
+#
+# **This is the only one of the three that gets run**, so it is where the version policy is actually
+# observed rather than reviewed. It copies staging's range verbatim — including the `-0` — because
+# the point of exercising it here is to watch a prerelease resolve, and then to watch it stop
+# resolving when the `-0` is removed. A range that differed from staging's would prove nothing about
+# staging.
+#
+# Note what this does NOT do: side-load anything. #263's rehearsal built images locally and pushed
+# them into the cluster with `k3d image import`, which was the only option before #264 published
+# anything. This pulls the real chart and the real images from GHCR anonymously, so the registry path
+# — the one part of the deploy that a laptop could never test before — is genuinely exercised.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: event-junkie
+  namespace: flux-system
+spec:
+  # Faster than staging's, and only because a human is watching this one and waiting.
+  interval: 1m
+  url: oci://ghcr.io/enorm-labs/charts/event-junkie
+  ref:
+    semver: ">=0.0.0-0"
+  layerSelector:
+    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+    operation: copy

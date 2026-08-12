@@ -20,6 +20,17 @@
 #   down          Uninstall, delete the cluster, drop the database, restore the kube context
 #   all           up → verify → import → chain → test → down, stopping at the first failure
 #
+#   flux-up       Create the cluster, install the Flux controllers, apply deploy/clusters/k3d
+#   flux-verify   Assert what Flux pulled: a snapshot, from GHCR, one tag, tests passed
+#   flux-trap     Remove the `-0` from the semver range and watch it stop matching (#414)
+#   flux-break    Break the release on purpose and watch it roll back
+#   flux-all      flux-up → flux-verify → flux-trap → flux-break → down
+#
+# `all` and `flux-all` answer different questions and must not share a cluster. `all` installs the
+# working tree's chart with images built seconds ago — "does my change work?". `flux-all` installs
+# the chart already published in GHCR, through the controllers that run on Hetzner — "does the
+# delivery mechanism work?".
+#
 # THE SAFETY RULE, because this is the one script here that talks to a Kubernetes cluster:
 # every kubectl and helm call passes --context/--kube-context explicitly, and the value is a
 # constant defined below. `k3d cluster create` switches the *active* context as a side effect, and a
@@ -41,6 +52,9 @@ VALUES="${CHART}/values-k3d.yaml"
 # scraped rows behind it that ADR-007 says nobody should re-scrape casually.
 DB=event_junkie_k3d
 PG_CONTAINER=event-junkie-postgres-1
+# The Flux half (#414): the CRs applied to the cluster, and the namespace the HelmRelease targets.
+FLUX_DIR=deploy/clusters/k3d
+FLUX_NS=event-junkie
 HOST_HEADER='Host: event-junkie.localhost'
 BASE=localhost:8080
 STATE_DIR=build/k3d-rehearsal
@@ -69,13 +83,65 @@ guard_context() {
 
 k()  { kubectl --context "$CONTEXT" "$@"; }
 h()  { helm --kube-context "$CONTEXT" "$@"; }
+# `flux` resolves the current kubeconfig context exactly like `helm install --dry-run` does — running
+# `flux check --pre` with somebody else's context current is how that was noticed. Same rule as the
+# other two: never rely on what happens to be active.
+f()  { flux --context "$CONTEXT" "$@"; }
 psql_() { docker exec "$PG_CONTAINER" psql -U admin "$@"; }
 
-cmd_up() {
-  require k3d kubectl helm docker yq
+# Shared by `up` and `flux-up`, which need the same cluster and the same database but install the
+# chart in completely different ways — one from the working tree with locally built images, the other
+# from GHCR through Flux.
+create_cluster() {
   mkdir -p "$STATE_DIR"
   # Saved before k3d switches it, so `down` can put it back exactly.
   kubectl config current-context > "$STATE_DIR/previous-context" 2>/dev/null || true
+
+  log "Creating the cluster"
+  # 8080:80 publishes Traefik, which is what makes the ingress testable from the host at all.
+  k3d cluster create "$CLUSTER" --port "8080:80@loadbalancer" --agents 1 >/dev/null
+  info "cluster up ($(k get nodes -o jsonpath='{.items[0].status.nodeInfo.architecture}'))"
+
+  # k3d writes `host.k3d.internal` into the CoreDNS ConfigMap while creating the cluster, but
+  # CoreDNS only picks up a ConfigMap change when its `reload` plugin next polls — up to 30 seconds
+  # later. Installing inside that window gives every pod that resolves the database host a
+  # `java.net.UnknownHostException: host.k3d.internal`, and the importer crash-loops until DNS
+  # catches up. It self-heals, which is worse than failing: the install still succeeds and the only
+  # evidence is a restart count nobody reads.
+  #
+  # Restarting CoreDNS forces the reload immediately, so the wait is bounded and explicit rather
+  # than a race this script happens to win. Found by running this script — doing the same steps by
+  # hand was slow enough to never hit it.
+  k -n kube-system rollout restart deployment coredns >/dev/null
+  k -n kube-system rollout status deployment coredns --timeout=60s >/dev/null
+  info "CoreDNS reloaded — host.k3d.internal resolvable"
+}
+
+# Creates the rehearsal's own empty database and the credentials Secret. `namespace` decides where
+# the Secret lands: the helm path installs into `default`, the Flux path into the release's target
+# namespace, and a Secret in the wrong namespace fails the release for a reason that looks like Flux.
+prepare_database() {
+  local namespace="${1:-default}"
+  log "Database and secret"
+  docker compose up -d >/dev/null 2>&1
+  # `docker compose up -d` returns when the container is *started*, not when PostgreSQL is accepting
+  # connections — and the gap is long enough that the very next psql call fails with a socket error
+  # that reads like a misconfiguration. dev-env.sh has the same wait for the same reason.
+  local i
+  for i in $(seq 1 30); do
+    if docker exec "$PG_CONTAINER" pg_isready -U admin -d postgres >/dev/null 2>&1; then break; fi
+    [ "$i" = 30 ] && die "PostgreSQL did not become ready within 30s"
+    sleep 1
+  done
+  psql_ -d postgres -c "DROP DATABASE IF EXISTS $DB;" -c "CREATE DATABASE $DB OWNER admin;" >/dev/null
+  k create namespace "$namespace" >/dev/null 2>&1 || true
+  k -n "$namespace" create secret generic events-db \
+    --from-literal=username=admin --from-literal=password=admin >/dev/null
+  info "database $DB created empty; secret events-db created in namespace $namespace"
+}
+
+cmd_up() {
+  require k3d kubectl helm docker yq
 
   log "Building the three images"
   ./gradlew -q :events-bff:bootJarLayers :events-importer:bootJarLayers
@@ -92,41 +158,12 @@ cmd_up() {
     -t localhost/event-junkie/frontend:dev --load --quiet >/dev/null
   info "built localhost/event-junkie/frontend:dev"
 
-  log "Creating the cluster"
-  # 8080:80 publishes Traefik, which is what makes the ingress testable from the host at all.
-  k3d cluster create "$CLUSTER" --port "8080:80@loadbalancer" --agents 1 >/dev/null
+  create_cluster
   k3d image import -c "$CLUSTER" \
     localhost/event-junkie/bff:dev localhost/event-junkie/importer:dev localhost/event-junkie/frontend:dev >/dev/null
-  info "cluster up, images imported ($(k get nodes -o jsonpath='{.items[0].status.nodeInfo.architecture}'))"
+  info "images imported"
 
-  # k3d writes `host.k3d.internal` into the CoreDNS ConfigMap while creating the cluster, but
-  # CoreDNS only picks up a ConfigMap change when its `reload` plugin next polls — up to 30 seconds
-  # later. Installing inside that window gives every pod that resolves the database host a
-  # `java.net.UnknownHostException: host.k3d.internal`, and the importer crash-loops until DNS
-  # catches up. It self-heals, which is worse than failing: the install still succeeds and the only
-  # evidence is a restart count nobody reads.
-  #
-  # Restarting CoreDNS forces the reload immediately, so the wait is bounded and explicit rather
-  # than a race this script happens to win. Found by running this script — doing the same steps by
-  # hand was slow enough to never hit it.
-  k -n kube-system rollout restart deployment coredns >/dev/null
-  k -n kube-system rollout status deployment coredns --timeout=60s >/dev/null
-  info "CoreDNS reloaded — host.k3d.internal resolvable"
-
-  log "Database and secret"
-  docker compose up -d >/dev/null 2>&1
-  # `docker compose up -d` returns when the container is *started*, not when PostgreSQL is accepting
-  # connections — and the gap is long enough that the very next psql call fails with a socket error
-  # that reads like a misconfiguration. dev-env.sh has the same wait for the same reason.
-  local i
-  for i in $(seq 1 30); do
-    if docker exec "$PG_CONTAINER" pg_isready -U admin -d postgres >/dev/null 2>&1; then break; fi
-    [ "$i" = 30 ] && die "PostgreSQL did not become ready within 30s"
-    sleep 1
-  done
-  psql_ -d postgres -c "DROP DATABASE IF EXISTS $DB;" -c "CREATE DATABASE $DB OWNER admin;" >/dev/null
-  k create secret generic events-db --from-literal=username=admin --from-literal=password=admin >/dev/null
-  info "database $DB created empty; secret events-db created"
+  prepare_database default
 
   log "Installing the chart"
   h install "$RELEASE" "$CHART" --values "$VALUES" --wait --timeout 5m >/dev/null
@@ -239,6 +276,163 @@ cmd_chain() {
 
 cmd_test() { guard_context; log "helm test"; h test "$RELEASE" --timeout 3m | tail -4; }
 
+# --- The Flux half (#414) ------------------------------------------------------------------------
+#
+# A different question from `up`'s. That one installs the working tree's chart with images built
+# thirty seconds ago and answers "does my change work?". This installs the chart that is *published*
+# in GHCR, with the images that chart names, through the same controllers that will run on Hetzner —
+# and answers "does the delivery mechanism work?". Neither substitutes for the other.
+#
+# Deliberately NOT `flux bootstrap`: that commits Flux's manifests to this repository and creates a
+# deploy key on it, which is an outward-facing side effect in exchange for exercising git-sync — the
+# one part of Flux that genuinely needs a real cluster anyway. `flux install` gives the controllers;
+# the CRs are applied straight from the working tree.
+cmd_flux_up() {
+  require k3d kubectl flux docker yq
+  create_cluster
+  prepare_database "$FLUX_NS"
+
+  log "Installing the Flux controllers"
+  f install >/dev/null
+  info "$(k -n flux-system get deploy -o name | wc -l | tr -d ' ') controllers installed"
+
+  log "Applying deploy/clusters/k3d"
+  k apply -k "$FLUX_DIR" >/dev/null
+  # Bounded, and separately, so a failure names which half broke. A source that never becomes Ready
+  # is a registry or a semver-range problem; a release that never becomes Ready is a chart or a
+  # values problem, and they need entirely different investigations.
+  if k -n flux-system wait ocirepository/event-junkie --for=condition=Ready --timeout=2m >/dev/null 2>&1; then
+    ok "OCIRepository resolved $(k -n flux-system get ocirepository event-junkie -o jsonpath='{.status.artifact.revision}')"
+  else
+    bad "OCIRepository never became Ready"
+    k -n flux-system get ocirepository event-junkie -o jsonpath='{.status.conditions[*].message}' | sed 's/^/     /'
+    return 1
+  fi
+  if k -n flux-system wait helmrelease/event-junkie --for=condition=Ready --timeout=8m >/dev/null 2>&1; then
+    ok "HelmRelease reconciled"
+  else
+    bad "HelmRelease never became Ready"
+    k -n flux-system get helmrelease event-junkie -o jsonpath='{.status.conditions[*].message}' | sed 's/^/     /'
+    return 1
+  fi
+  k -n "$FLUX_NS" get pods --no-headers | sed 's/^/   /'
+}
+
+cmd_flux_verify() {
+  guard_context
+  log "What Flux actually pulled"
+
+  local revision
+  revision="$(k -n flux-system get ocirepository event-junkie -o jsonpath='{.status.artifact.revision}')"
+  # The whole point of the `-0` in the semver range. A snapshot is a SemVer prerelease, and a range
+  # without a prerelease comparator skips it silently — so resolving one is the evidence, and
+  # `flux-trap` below shows the failure mode by removing it.
+  case "$revision" in
+    *snapshot*) ok "resolved a snapshot: $revision" ;;
+    "")         bad "no artifact resolved at all" ;;
+    *)          bad "resolved '$revision', which is not a snapshot — is the -0 missing from the range?" ;;
+  esac
+
+  local images
+  images="$(k -n "$FLUX_NS" get deploy -o jsonpath='{range .items[*]}{.spec.template.spec.containers[*].image}{"\n"}{end}')"
+  if printf '%s' "$images" | grep -q '^ghcr.io/enorm-labs/event-junkie/'; then
+    ok "workloads run images pulled from GHCR, not side-loaded"
+    printf '%s\n' "$images" | sed 's/^/     /'
+  else
+    bad "expected ghcr.io images, got: $images"
+  fi
+
+  # Every image tag must equal the chart's appVersion, which is what #264's fallback promises. If
+  # that fallback ever breaks, this is where it shows up as three tags that disagree.
+  local distinct
+  distinct="$(printf '%s\n' "$images" | sed 's/.*://' | sort -u | wc -l | tr -d ' ')"
+  if [ "$distinct" = 1 ]; then
+    ok "all three images carry one tag — the appVersion fallback holds"
+  else
+    bad "$distinct distinct image tags; the chart and the images have drifted"
+  fi
+
+  # Flux runs the chart's own `helm test` hook as part of reconciliation and records the result as a
+  # condition. This is the in-cluster smoke test that replaces the external one CI cannot run (§4a).
+  if [ "$(k -n flux-system get helmrelease event-junkie -o jsonpath='{.status.conditions[?(@.type=="TestSuccess")].status}')" = "True" ]; then
+    ok "helm test ran in-cluster and passed"
+  else
+    bad "TestSuccess is not True — the chart's test hook did not pass"
+  fi
+}
+
+# Removes the `-0` and watches the range stop matching. The trap this issue exists to avoid is
+# silent, so the only way to trust the range is to see both states — matching, and not.
+cmd_flux_trap() {
+  guard_context
+  log "The prerelease trap, observed rather than trusted"
+  k -n flux-system patch ocirepository event-junkie --type=merge \
+    -p '{"spec":{"ref":{"semver":">=0.0.0"}}}' >/dev/null
+  f reconcile source oci event-junkie >/dev/null 2>&1 || true
+  sleep 5
+  local ready message
+  ready="$(k -n flux-system get ocirepository event-junkie -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')"
+  message="$(k -n flux-system get ocirepository event-junkie -o jsonpath='{.status.conditions[?(@.type=="Ready")].message}')"
+  if [ "$ready" = "False" ]; then
+    ok "without the -0 the range matches nothing: $message"
+  else
+    bad "expected the range to stop matching, but Ready=$ready ($message)"
+  fi
+
+  info "restoring the range"
+  k -n flux-system patch ocirepository event-junkie --type=merge \
+    -p '{"spec":{"ref":{"semver":">=0.0.0-0"}}}' >/dev/null
+  f reconcile source oci event-junkie >/dev/null 2>&1 || true
+  k -n flux-system wait ocirepository/event-junkie --for=condition=Ready --timeout=2m >/dev/null \
+    && ok "range restored, artifact resolves again"
+}
+
+# Breaks a release on purpose and watches the rollback. This is the single most valuable thing to see
+# outside an incident, and #263's rehearsal had no equivalent — it could prove the stack came up, but
+# never that a bad deploy is survivable.
+cmd_flux_break() {
+  guard_context
+  log "Breaking the release on purpose"
+  local before
+  before="$(k -n "$FLUX_NS" get deploy -o jsonpath='{.items[0].spec.template.spec.containers[0].image}')"
+  info "currently running $before"
+
+  # `timeout` and `retries: 0` are what keep this to about a minute. Left at the file's own values a
+  # failing upgrade would take 5m per attempt plus a retry, and a rehearsal nobody waits for is a
+  # rehearsal nobody runs.
+  k -n flux-system patch helmrelease event-junkie --type=merge -p '{
+    "spec": {"timeout": "60s",
+             "upgrade": {"remediation": {"retries": 0}},
+             "values": {"bff": {"image": {"tag": "no-such-tag-0000"}}}}}' >/dev/null
+  f reconcile helmrelease event-junkie >/dev/null 2>&1 || true
+
+  local i state
+  for i in $(seq 1 30); do
+    sleep 5
+    state="$(k -n flux-system get helmrelease event-junkie -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')"
+    [ "$state" = "False" ] && break
+  done
+  if [ "$state" = "False" ]; then
+    ok "the bad upgrade failed rather than being accepted"
+  else
+    bad "the release still reports Ready after a deliberately broken upgrade"
+  fi
+
+  # The property that actually matters: the site kept serving the last good version throughout.
+  local after
+  after="$(k -n "$FLUX_NS" get deploy -o jsonpath='{.items[0].spec.template.spec.containers[0].image}')"
+  if [ "$after" = "$before" ]; then
+    ok "rolled back — still running $after"
+  else
+    bad "workload image is now $after, expected the rollback to restore $before"
+  fi
+
+  info "restoring the release"
+  k -n flux-system patch helmrelease event-junkie --type=json \
+    -p '[{"op":"remove","path":"/spec/values/bff/image"}]' >/dev/null 2>&1 || true
+  f reconcile helmrelease event-junkie >/dev/null 2>&1 || true
+}
+
 cmd_status() {
   k3d cluster list 2>/dev/null | grep -E "NAME|$CLUSTER" | sed 's/^/   /' || info "no clusters"
   kubectl config get-contexts -o name 2>/dev/null | grep -qx "$CONTEXT" || { info "context absent"; return 0; }
@@ -276,11 +470,22 @@ main() {
     test)   cmd_test ;;
     status) cmd_status ;;
     down)   cmd_down ;;
+    flux-up)     cmd_flux_up ;;
+    flux-verify) cmd_flux_verify ;;
+    flux-trap)   cmd_flux_trap ;;
+    flux-break)  cmd_flux_break ;;
     all)
       # `down` runs even when something above fails, because a half-torn-down rehearsal leaves a
       # k3d context behind that somebody later mistakes for a live cluster.
       trap cmd_down EXIT
       cmd_up && cmd_verify && cmd_import && cmd_chain && cmd_test
+      ;;
+    # The Flux path is its own `all`, and must not share a cluster with the one above: both install a
+    # release called event-junkie against the same database, so running them together would put two
+    # importers on one schema — the exact ADR-008 failure the chart pins replicas to prevent.
+    flux-all)
+      trap cmd_down EXIT
+      cmd_flux_up && cmd_flux_verify && cmd_flux_trap && cmd_flux_break
       ;;
     ""|-h|--help) sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//' ;;
     *) die "unknown command '$1' — run '$0 --help'" ;;

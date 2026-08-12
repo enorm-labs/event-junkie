@@ -1,0 +1,44 @@
+# The chart source for staging. #264 publishes it here on every push to `main`.
+#
+# THE ONE FIELD THIS FILE EXISTS FOR IS `semver`, AND IT IS THE ONE THAT FAILS SILENTLY.
+#
+# Staging runs snapshots — `0.1.0-snapshot.g<sha>`, a SemVer *prerelease*. Helm's constraint syntax
+# (Masterminds) **skips prerelease versions unless the range says otherwise**, so `">=0.0.0"` here
+# would match nothing at all: the OCIRepository reconciles happily, reports Ready, and resolves the
+# last release — or nothing, if there has never been one. No error is logged anywhere. Staging simply
+# stops moving, and the first symptom is somebody noticing the site is a fortnight old.
+#
+# The `-0` suffix is what admits prereleases. It is two characters and it is the entire mechanism.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: event-junkie
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      The event-junkie Helm chart, pulled from GHCR. Tracks snapshots, so staging always runs
+      whatever is on main.
+spec:
+  # 1m rather than the tighter number a laptop reflex picks. Flux's own guidance is not to poll below
+  # 30s without webhooks, and we cannot use webhooks: a Receiver is an *inbound* endpoint and §8's
+  # firewall design exists to have nothing inbound. So a deploy lands within about a minute of the
+  # publish, and that latency is a consequence of the security posture rather than a tuning oversight.
+  interval: 1m
+  url: oci://ghcr.io/enorm-labs/charts/event-junkie
+  ref:
+    semver: ">=0.0.0-0"
+  # Set explicitly rather than left to the default "first layer found". A Helm chart pushed by
+  # `helm push` carries this media type; relying on layer ordering works until an artifact grows a
+  # second layer (a provenance or SBOM attestation, both of which #443 proposes adding).
+  layerSelector:
+    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+    operation: copy
+  # No secretRef: the GHCR packages are public and pull anonymously, which is why the chart's
+  # `image.pullSecrets` is empty too. Making them private would put a classic PAT in this cluster —
+  # GitHub Packages does not support fine-grained tokens — and that token cannot be scoped to one
+  # package. See docs/PLATFORM_SETUP.md §3.
+  #
+  # No `verify:` yet either, and that is the interesting gap: Flux can refuse to reconcile a chart
+  # that is not cosign-signed by our own workflow (`spec.verify.provider: cosign` plus
+  # `matchOIDCIdentity`). #443 proposes signing the artifacts; the day it lands, this is where the
+  # signature stops being decorative metadata and becomes a gate.

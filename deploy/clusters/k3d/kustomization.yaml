@@ -1,0 +1,16 @@
+# Applied by `scripts/k3d-rehearsal.sh flux-apply` with `kubectl apply -k`, NOT by a Flux
+# Kustomization and never by `flux bootstrap`.
+#
+# Bootstrap commits its own manifests to this repository and creates a deploy key on it. Doing that
+# for a cluster that exists for ten minutes would be an outward-facing side effect — a key on a
+# public repo — in exchange for exercising git-sync, which is the one mechanical part of Flux that
+# genuinely needs a real cluster anyway. So the rehearsal runs `flux install` (controllers only) and
+# applies this directly: source → chart → release → test → remediation, which is everything else.
+#
+# No notification.yaml here either: the `github` Provider would need a real token and would write
+# real commit statuses from a laptop's throwaway cluster.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - oci-repository.yaml
+  - helm-release.yaml

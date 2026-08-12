@@ -1,0 +1,47 @@
+# Reconciliation status for production, written back onto the commit that caused it.
+#
+# Identical in shape to staging's, and deliberately a separate file rather than a shared base: these
+# are two clusters that never see each other's objects, and a Kustomize base shared across clusters
+# would imply a relationship that does not exist. The duplication is four fields.
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: github
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      Writes Flux reconciliation results back as GitHub commit statuses.
+spec:
+  type: github
+  address: https://github.com/enorm-labs/event-junkie
+  # A **fine-grained** PAT scoped to this single repository with **commit statuses: write** and
+  # nothing else — not a classic token, whose scopes cannot be narrowed to one repository.
+  #
+  # A DIFFERENT TOKEN FROM STAGING'S, even though the permissions are identical. Two clusters
+  # sharing one credential means revoking it takes both down, and it makes "which cluster wrote
+  # this status" unanswerable at the API level. They cost nothing to separate.
+  #
+  #   kubectl create secret generic github-status -n flux-system --from-literal=token=…
+  secretRef:
+    name: github-status
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: github-status
+  namespace: flux-system
+spec:
+  providerRef:
+    name: github
+  eventSeverity: info
+  eventSources:
+    - kind: HelmRelease
+      name: event-junkie
+      namespace: flux-system
+    - kind: OCIRepository
+      name: event-junkie
+      namespace: flux-system
+  eventMetadata:
+    env: production
+    cluster: production

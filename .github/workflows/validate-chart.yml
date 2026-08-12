@@ -112,6 +112,18 @@ jobs:
             render --values "$values"
           done
 
+      # The Flux custom resources (#414). Same catalog, same reasoning as the CRDs above: these are
+      # the objects that decide which chart version each environment runs, and nothing else in this
+      # workflow can see them — `helm lint` does not know they exist and `render-assertions.sh` reads
+      # only their `spec.values`. A typo in `spec.ref.semver` is a staging environment that silently
+      # stops updating, so it is worth a schema check even though it is not worth a cluster.
+      - name: Validate the Flux manifests
+        run: |
+          catalog='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
+          kubeconform -strict -summary -verbose \
+            -schema-location default -schema-location "$catalog" \
+            $(find deploy/clusters -name '*.yaml' -not -name 'kustomization.yaml')
+
       # yq is preinstalled on ubuntu-latest runners.
       - name: Assert on the rendered output
         run: deploy/scripts/render-assertions.sh "$CHART"

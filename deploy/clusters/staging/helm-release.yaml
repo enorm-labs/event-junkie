@@ -1,0 +1,134 @@
+# Staging's release of the event-junkie chart.
+#
+# `spec.values` IS THE STAGING CONFIGURATION — there is no `values-staging.yaml` any more (#414).
+# A HelmRelease cannot read a file from the repository, so keeping both would mean two copies that
+# must agree with nothing checking that they do, which is how an environment quietly drifts.
+# `deploy/scripts/render-assertions.sh` now extracts these values and renders the chart with them, so
+# the assertions gate exactly what Flux deploys rather than a file nothing deploys.
+#
+# The chart's own `values.yaml` still holds every default and every comment; only the overrides live
+# here.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: event-junkie
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      The BFF, importer and frontend on the staging cluster, upgraded automatically to every
+      snapshot published from main.
+spec:
+  # Named explicitly. Left to Flux the release would be called `event-junkie-event-junkie`
+  # (targetNamespace + name), and the chart's fullname helper puts the release name into every
+  # resource — so this is what keeps object names readable and matching the k3d rehearsal's.
+  releaseName: event-junkie
+  targetNamespace: event-junkie
+  # Not the same clock as the OCIRepository's. That one asks "is there a new chart?"; this one asks
+  # "does the cluster still match the chart?" — the drift check, which is cheap and does not need to
+  # be fast. A new snapshot still triggers an immediate reconcile through the source, so this
+  # interval is not the deploy latency.
+  interval: 10m
+  chartRef:
+    kind: OCIRepository
+    name: event-junkie
+    namespace: flux-system
+  install:
+    createNamespace: true
+    remediation:
+      retries: 2
+      # Deliberately NOT `remediateLastFailure` here, unlike the upgrade below. Install remediation
+      # is an *uninstall*, and there is no previous version to return to — so leaving the failed
+      # release in place is what lets somebody look at why it failed. Rolling back to nothing is not
+      # a safer state, it is just an emptier one.
+  upgrade:
+    remediation:
+      retries: 2
+      # Roll back rather than uninstall. `uninstall` on a failed upgrade would take the site down to
+      # fix a deploy that was merely bad, which is strictly worse than continuing to serve the last
+      # version that worked.
+      strategy: rollback
+      # WITHOUT THIS, A BAD DEPLOY IS NEVER ROLLED BACK — it is only retried. `remediateLastFailure`
+      # defaults to **false**, so remediation happens *between* attempts and not after the final one:
+      # exhaust the retries and the broken release is simply left running. The k3d rehearsal found
+      # this by breaking a release on purpose and watching the workload stay broken, which is a
+      # failure mode no amount of reading the manifest would have shown.
+      remediateLastFailure: true
+    # Delete anything the failed upgrade created before rolling back, so a retry starts clean.
+    cleanupOnFail: true
+  # The chart's own `templates/tests/connection-test.yaml`, run in-cluster after every install and
+  # upgrade. This is the whole reason the test hook exists: CI cannot reach this cluster (§4a), so a
+  # smoke test has to run where the workloads do. `ignoreFailures` stays false — a failing test must
+  # trigger the remediation above, or the hook is decoration.
+  test:
+    enable: true
+    timeout: 3m
+  rollback:
+    cleanupOnFail: true
+    timeout: 5m
+  # Correct a manual `kubectl edit` back to what the chart says. `warn` rather than `enabled` to
+  # begin with: on a cluster nobody has operated yet, being told what drifts is more useful than
+  # having it silently reverted mid-investigation. Worth raising to `enabled` once staging is boring.
+  driftDetection:
+    mode: warn
+  values:
+    database:
+      # The k3s node's own private address — PostgreSQL is co-located on staging
+      # (`postgres_server_type = null`), but still reached over the network, so the connection path
+      # is the same shape as production's. Matches `k3s_private_ip` in
+      # infra/environments/staging/main.tf; confirm with
+      # `tofu -chdir=infra/environments/staging output postgres_ip`.
+      host: "10.1.1.10"
+      # Created out of band before the first reconcile, in the TARGET namespace (`event-junkie`),
+      # not in flux-system where this object lives:
+      #   kubectl create secret generic events-db -n event-junkie \
+      #     --from-literal=username=events --from-literal=password=…
+      # SOPS-managed Secrets arrive in #416.
+      existingSecret: "events-db"
+    # One node with 4 GB shared between k3s, PostgreSQL, Flux's four controllers and three
+    # workloads, so both stateless services drop to a single replica. This is the one place staging
+    # is not production-shaped, and it is a capacity fact rather than a preference. Flux itself is
+    # new here and costs ~300 MB — worth remembering if anything starts getting OOM-killed.
+    bff:
+      replicaCount: 1
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "384Mi"
+        limits:
+          cpu: "1000m"
+          memory: "640Mi"
+    importer:
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "384Mi"
+        limits:
+          cpu: "1000m"
+          memory: "768Mi"
+    frontend:
+      replicaCount: 1
+    ingress:
+      # Does not resolve on the public internet, and that is the design rather than an omission
+      # (PLATFORM_SETUP §4a): resolution happens over the WireGuard tunnel.
+      host: "staging.event-junkie.de"
+      # No redirect domain on staging — the .com 301 is a production concern, and emptying this list
+      # is also what leaves staging with nothing Traefik-specific in its rendered output.
+      redirectHosts: []
+      tls:
+        enabled: true
+        secretName: "event-junkie-staging-tls"
+    certManager:
+      clusterIssuer:
+        # Created here because staging is its own cluster with exactly one release on it, so the
+        # singleton problem that keeps `create` false by default does not arise.
+        create: true
+        name: "letsencrypt-staging-dns"
+        # A role mailbox, not a person (docs/LEGAL.md §6).
+        email: "hello@event-junkie.de"
+        # Not a preference: HTTP-01 needs Let's Encrypt to reach the host, and this environment
+        # exists to stop that. The TXT record is public; the A record never exists.
+        solver: "dns01"
+        # Still the ACME *staging* endpoint. Production's rate limits are per registered domain, and
+        # `event-junkie.de` is the same registered domain here as in production — so burning the
+        # limit from this environment would lock out the real one.
+        server: "https://acme-staging-v02.api.letsencrypt.org/directory"
