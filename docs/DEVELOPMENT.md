@@ -381,6 +381,9 @@ values file.
 
 ## Versions and cutting a release
 
+> The **end-to-end** picture — build, scan, publish, and how Flux reconciles it onto a cluster, with a diagram — is [RELEASING.md](RELEASING.md). This section is
+> the version scheme and the local commands.
+
 **One number reaches four artifacts, and only one file decides it.** [`gradle.properties`](../gradle.properties) carries `version=X.Y.Z-SNAPSHOT`; everything
 else derives from it. Three other files repeat the number and none is authoritative:
 

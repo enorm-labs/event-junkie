@@ -858,6 +858,8 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | ADR: Rendering strategy (SPA/SSG/SSR) | `docs/adr/ADR-014_RENDERING_STRATEGY.md`                                                                  |
 | ADR: Observability stack              | `docs/adr/ADR-015_OBSERVABILITY_STACK.md`                                                                 |
 | Plan: Hetzner + k3s setup, go-live    | `docs/PLATFORM_SETUP.md`                                                                                  |
+| Releasing & deploying, end to end     | `docs/RELEASING.md` — the diagram; ADR-016 has the reasoning                                              |
+| Flux resources (one dir per cluster)  | `deploy/clusters/` — read `deploy/AGENTS.md` first; the semver range is on the OCIRepository              |
 | Plan: footer, legal pages, versioning | `docs/LEGAL.md`                                                                                           |
 | Backlog snapshot generator            | `scripts/generate-backlog-snapshot.sh` → `build/BACKLOG.md` (generated, not committed)                    |
 | Issue board helper                    | `scripts/issue-board.sh` — Status and Priority are project fields, not labels                             |

@@ -10,6 +10,7 @@ This is the working plan behind the `v0.2 — Deployable` milestone and the oper
 planning [#260](https://github.com/enorm-labs/event-junkie/issues/260). **Every decision in it is now made** (§11); what remains is work and a few accounts.
 
 **The decisions it rests on:** [ADR-012](adr/ADR-012_CLOUD_PLATFORM.md) (Hetzner + k3s, and its 2026-08-10 amendment removing Cloudflare) ·
+[ADR-016](adr/ADR-016_GITOPS_DELIVERY.md) (pull-based delivery with Flux; the end-to-end path is [RELEASING.md](RELEASING.md)) ·
 [ADR-015](adr/ADR-015_OBSERVABILITY_STACK.md) (observability — OpenObserve, accepted on trial; §5 below is the summary) ·
 [ADR-014](adr/ADR-014_RENDERING_STRATEGY.md) (the SEO sidecar) · [ADR-008](adr/ADR-008_IMPORT_JOB_SCHEDULING.md) (the importer is always-on and
 single-instance).
@@ -371,6 +372,9 @@ is in [DEVELOPMENT.md](DEVELOPMENT.md#versions-and-cutting-a-release).
 ---
 
 ## 4. How deploys happen
+
+> **Now decided, implemented and recorded as [ADR-016](adr/ADR-016_GITOPS_DELIVERY.md).** The end-to-end path a commit takes to become a running deployment —
+> with a diagram — is [RELEASING.md](RELEASING.md). This section keeps the *reasoning*; that one has the mechanics.
 
 ### How deploys happen — **decided 2026-08-10: Flux. Not ArgoCD, and not plain Helm from CI.**
 
