@@ -20,6 +20,7 @@ here.
 - [Container images](#container-images)
 - [Running the whole stack on k3d](#running-the-whole-stack-on-k3d)
 - [Helm chart](#helm-chart)
+- [Versions and cutting a release](#versions-and-cutting-a-release)
 - [Performance tests](#performance-tests)
 - [Dependencies](#dependencies)
 
@@ -355,8 +356,8 @@ curl -s -o /dev/null -w '%{content_type}\n' -H 'Host: event-junkie.localhost' lo
 
 ## Helm chart
 
-The chart that deploys the three services onto that platform lives in [`deploy/charts/event-junkie/`](../deploy/charts/event-junkie). **It has never been
-installed anywhere** — the images it references do not exist yet (#426, #262) and the first install is the k3d rehearsal in #263. Read
+The chart that deploys the three services onto that platform lives in [`deploy/charts/event-junkie/`](../deploy/charts/event-junkie). It has been **installed
+and exercised on k3d** (#263) and **never on a real cluster** — those are different claims, and the section above is the one that keeps the first true. Read
 [deploy/AGENTS.md](../deploy/AGENTS.md) before changing it.
 
 Needs `helm`, `yq` and `kubeconform` (`brew install helm yq kubeconform`). Everything below reaches no cluster and needs no kubeconfig, and is what
@@ -377,6 +378,78 @@ Two things to know before running anything else. **`helm install --dry-run` is n
 cluster. Use `helm template`, or `--dry-run=client` if you need `NOTES.txt`. And **the base `values.yaml` cannot render on its own** — `database.host` and
 `database.existingSecret` have no safe default, so add `--set database.host=10.0.1.2 --set database.existingSecret=events-db` when not using an environment
 values file.
+
+## Versions and cutting a release
+
+**One number reaches four artifacts, and only one file decides it.** [`gradle.properties`](../gradle.properties) carries `version=X.Y.Z-SNAPSHOT`; everything
+else derives from it. Three other files repeat the number and none is authoritative:
+
+| File | Holds | Why it is not the source |
+|---|---|---|
+| `gradle.properties` | `0.1.0-SNAPSHOT` | **The source of truth.** `bootBuildInfo` stamps it, `/actuator/info` serves it |
+| `events-frontend/package.json` | `0.1.0` | npm has no `-SNAPSHOT` convention, so it mirrors the bare number |
+| `Chart.yaml` `version` | `0.1.0` | A placeholder — the release workflow stamps the computed version over it |
+| `Chart.yaml` `appVersion` | `0.1.0` | The same placeholder, and also the default image tag for all three components |
+
+[`scripts/version.sh`](../scripts/version.sh) is the only thing that knows the rules, so CI and a laptop always agree:
+
+```bash
+scripts/version.sh base       # 0.1.0 — the released number this tree is heading for
+scripts/version.sh compute    # 0.1.0-snapshot.g33fd32g on a branch; 0.1.0 from the tag v0.1.0
+scripts/version.sh check      # fails if the four files disagree — also a pre-commit hook
+```
+
+**Snapshots are prereleases *of the coming release*, not of the last one.** SemVer sorts `0.1.0-snapshot.g33fd32g` *before* `0.1.0`, so naming a snapshot after
+the released version would have it claim to be older than code it is newer than. Same semantics as Maven's `-SNAPSHOT`. The `g` before the sha is git-describe's
+convention and is load-bearing rather than decorative: a SemVer prerelease identifier made only of digits may not have a leading zero, so a short sha like
+`0031234` would produce a version `helm lint --strict` rejects — about one commit in four hundred.
+
+### What gets published, and when
+
+[`release.yml`](../.github/workflows/release.yml) builds, scans and pushes **four artifacts** — three images and the chart — from one computed version. It does
+not deploy: Flux pulls from GHCR on its own schedule (#414), so a green run means the artifacts exist, not that they are live.
+
+| Trigger | Version | Published |
+|---|---|---|
+| every push to `main` | `0.1.0-snapshot.g<sha>` | images + chart |
+| a tag `v0.1.0` | `0.1.0` | images + chart, **and** `latest` on the images |
+| a PR touching `release.yml` or `version.sh` | snapshot | **nothing** |
+| `workflow_dispatch` | as above | **nothing**, unless the `publish` input is ticked |
+
+Publishing is an allowlist — `push` events and a dispatch that explicitly asks for it — rather than "everything except the dry run", so a trigger added later
+cannot quietly become a publishing one.
+
+**The workflow tests itself, because it is the one workflow that cannot be tried before it is trusted.** `workflow_dispatch` is offered only for workflows
+already on the default branch, so a dispatch button added in a pull request does not exist until that request merges — and merging is exactly what publishes.
+Hence the `pull_request` trigger: a change to `release.yml` or `scripts/version.sh` runs the whole thing on the PR — three images built and scanned, the chart
+stamped, linted and packaged — and pushes none of it.
+
+### Cutting a release
+
+```bash
+# 1. main is at the version you intend to release — gradle.properties says 0.1.0-SNAPSHOT
+scripts/version.sh check
+
+# 2. tag it. The v prefix is required, and the number must match gradle.properties
+git tag v0.1.0 && git push origin v0.1.0
+
+# 3. afterwards, open a PR bumping all four files to 0.1.1-SNAPSHOT / 0.1.1
+```
+
+A release version is **never committed** — `release.yml` passes `-Pversion=` from the tag, so the tag and the built artifacts cannot disagree. Tagging `v0.2.0`
+on a tree that still says `0.1.0-SNAPSHOT` fails immediately in `scripts/version.sh compute`, before anything is built.
+
+**`latest` is publish-only.** It is a human pointer at the newest release; nothing in the deploy path may consume it. With `imagePullPolicy: IfNotPresent` a
+mutable tag lets two nodes run different code and neither is wrong — the chart's render assertions fail the build on a floating tag, which is that rule enforced
+from the consuming side.
+
+### Two things that are clicks, not code
+
+- **Every GHCR package is private on its first publish**, regardless of repository visibility. Four packages — `bff`, `importer`, `frontend` and the chart —
+  each needing one visibility flip in its package settings. The symptom of forgetting is `ImagePullBackOff` on the first deploy, with nothing in the logs
+  naming the cause. See [PLATFORM_SETUP §3](PLATFORM_SETUP.md#3-container-registry--ghcr-not-docker-hub).
+- **A local `docker push` or `helm push` needs a classic PAT** with `write:packages`; GitHub Packages does not support fine-grained tokens. CI needs no such
+  credential — `permissions: packages: write` and the run's own token are enough.
 
 ## Performance tests
 

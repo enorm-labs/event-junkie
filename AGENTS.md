@@ -641,9 +641,19 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       outside the cluster holds a cluster or cloud credential. So this is a syntax and type gate, not a correctness one, and there is no drift detection.
     - `build-frontend.yml` builds the frontend image the same way, from the `dist/` its own `npm run build` step already produced.
     - `build-backend.yml` also **builds both container images for `linux/amd64` and `linux/arm64` and deliberately does not push them.** It runs on every pull
-      request, including from forks, so publishing here would put an image built from unreviewed code into GHCR — that is the release workflow's job (#264).
+      request, including from forks, so publishing here would put an image built from unreviewed code into GHCR — that is `release.yml`'s job.
       `outputs: type=cacheonly` because a multi-platform image cannot be loaded into the local daemon, and dropping to one platform would leave arm64 — the
-      architecture the Hetzner nodes run — unbuilt.
+      architecture the Hetzner nodes run — unbuilt. **Both workflows build images on pull requests only**, since `release.yml` builds and pushes the same three
+      images on every push to `main` and doing it twice per merge buys nothing.
+    - `release.yml` — **the only workflow that publishes anything.** Builds the three images and packages the chart from one computed version, scans the images
+      with Trivy before pushing, and pushes to GHCR: a snapshot on every push to `main`, a release on a `v*` tag. **It does not deploy** — Flux pulls and
+      reconciles (#414), so a green run means the artifacts exist, not that they are live. Three things about it are deliberate and easy to "fix" wrongly:
+      **no path filters** (the chart's `appVersion` is the default image tag for all three components, so every published chart needs all three image tags to
+      exist — a path filter here publishes a chart referencing images that were never built); **no tests** (they gate the PR); and **two builds per image**,
+      because a multi-platform image cannot be loaded into the local daemon and therefore cannot be scanned before it exists in a registry. **It publishes on an
+      allowlist** — `push` events, or a `workflow_dispatch` whose `publish` input is ticked — never "everything except the dry run", so a trigger added later
+      cannot quietly become a publishing one. And it **tests itself on pull requests that change it**, because the `workflow_dispatch` caveat above applies to
+      it with teeth: the button does not exist until the change merges, and merging is what publishes.
     - `validate-chart.yml` — `helm lint --strict` and `helm template` | `kubeconform` across all three values files, plus `deploy/scripts/render-assertions.sh`
       and ShellCheck. Triggers only when `deploy/**` changes. **Pins a Helm 3 client** even though local binaries are Helm 4, because Flux's helm-controller
       embeds the Helm 3 SDK and a chart that renders only under Helm 4 is one Flux cannot install. Like `validate-infra.yml` it reaches no cluster, so it is a
@@ -785,9 +795,12 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | CI: PR labelling                      | `.github/workflows/label-pr.yml`                                                                          |
 | CI: OpenTofu fmt/validate + ShellCheck | `.github/workflows/validate-infra.yml`                                                                   |
 | CI: Helm lint/render/assertions       | `.github/workflows/validate-chart.yml`                                                                    |
+| CI: build, scan and publish to GHCR   | `.github/workflows/release.yml` — the only workflow that pushes anything; it does not deploy              |
+| Version scheme (one number, 4 files)  | `scripts/version.sh`; `gradle.properties` is the source of truth — docs/DEVELOPMENT.md §Versions          |
+| Trivy waivers                         | `.trivyignore` — empty on purpose; an entry needs a reason and a date                                     |
 | Infrastructure as code (OpenTofu)     | `infra/` — read `infra/AGENTS.md` first; `bootstrap/` is applied, `environments/` is not                   |
 | Cloud-init for the Hetzner nodes      | `infra/modules/environment/cloud-init/`                                                                   |
-| Helm chart (bff · importer · frontend) | `deploy/charts/event-junkie/` — read `deploy/AGENTS.md` first; written and rendered, never installed      |
+| Helm chart (bff · importer · frontend) | `deploy/charts/event-junkie/` — read `deploy/AGENTS.md` first; exercised on k3d, never on a real cluster  |
 | Backend container images              | `events-bff/Dockerfile`, `events-importer/Dockerfile` — no `RUN`, context is each module's `build/docker` |
 | Frontend container image              | `events-frontend/Dockerfile` + `events-frontend/docker/nginx.conf` — nginx on 8080, context is the module |
 | Chart render assertions               | `deploy/scripts/render-assertions.sh`                                                                     |

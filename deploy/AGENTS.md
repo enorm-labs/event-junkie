@@ -181,6 +181,18 @@ conformance* (k3s owns it), and *PKI certificates* (k3s owns the cluster PKI; th
 - **No floating tags, anywhere.** `image.tag` defaults to `""` and falls back to `.Chart.AppVersion`. The assertions reject `latest`, `head`, `canary`, `main`
   and `edge`, and an image with no tag at all.
 
+## Never hand-edit the chart version, and never pin an image tag
+
+`Chart.yaml`'s `version` and `appVersion` are **placeholders**. `.github/workflows/release.yml` computes one number from `gradle.properties` and stamps it into
+both before packaging, so bumping them by hand does not decide what gets published — it only creates drift, and `scripts/version.sh check` fails the build when
+it does. Both must equal the base version `gradle.properties` declares (`0.1.0-SNAPSHOT` → `0.1.0`). If a change genuinely needs a new version, the bump belongs
+in `gradle.properties`, `events-frontend/package.json` and both chart fields together.
+
+**And no published values file may set `<component>.image.tag`.** The default `""` falls back to `.Chart.AppVersion`, and that fallback is the whole mechanism
+keeping the chart and the images in step (#264). Pinning a tag opts one component out of it, and the render looks *more* correct afterwards, not less — every
+image carries a plausible tag, one of them just isn't the one this build produced. `values-k3d.yaml` is the sole exception (`dev`, never leaves a laptop) and
+`render-assertions.sh` enforces the rest.
+
 ## Never put a credential in a values file
 
 Not in `values.yaml`, not in an environment overlay, not guarded behind a conditional, not "temporarily". **There is no inline-password path in this chart and

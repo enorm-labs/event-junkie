@@ -219,6 +219,30 @@ run_assertions() {
     "$(yq -N 'select(.metadata.namespace != null) | .kind + "/" + .metadata.name' "$manifest")"
 }
 
+# --- Published values files must not pin an image tag ------------------------------------------
+#
+# Not a render assertion — this reads the values files themselves, because what it checks is exactly
+# what rendering destroys. Every component's `image.tag` defaults to "" and falls back to
+# `.Chart.AppVersion`, and that fallback is the whole mechanism keeping the chart and the images in
+# step (#264): one number stamped at build time reaches all four artifacts. An explicit tag in a
+# published values file silently opts that component out — the render still looks entirely correct,
+# with a plausible tag on every image, while one workload is pinned to a version nobody chose.
+#
+# values-k3d.yaml is deliberately exempt: it pins `dev`, and it never leaves a laptop.
+check_values_files() {
+  current_case="values files"
+  printf '\n== values files ==\n'
+
+  local file component
+  for file in "$CHART_DIR"/values.yaml "$CHART_DIR"/values-staging.yaml; do
+    [[ -e "$file" ]] || continue
+    for component in bff importer frontend; do
+      assert_equals "$(basename "$file"): $component.image.tag is empty, so it falls back to appVersion" \
+        "" "$(yq -N ".${component}.image.tag // \"\"" "$file")"
+    done
+  done
+}
+
 render_case() {
   local name="$1"
   shift
@@ -240,6 +264,8 @@ render_case() {
 main() {
   command -v helm >/dev/null || { echo "helm is not installed" >&2; exit 127; }
   command -v yq >/dev/null || { echo "yq is not installed" >&2; exit 127; }
+
+  check_values_files
 
   render_case "default" "${BASE_OVERRIDES[@]}"
 

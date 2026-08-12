@@ -7,13 +7,23 @@ name: event-junkie
 description: The event-junkie stack — BFF, importer and frontend behind one Traefik ingress
 type: application
 
-# The chart's own version, moving independently of appVersion. Bumped by hand on every change to
-# the chart; #264 is what publishes it to oci://ghcr.io/enorm-labs/charts/event-junkie.
-version: 0.1.2
+# version and appVersion are PLACEHOLDERS, and both are stamped by `.github/workflows/release.yml`
+# from one computed number before the chart is packaged — so editing them here does not decide what
+# gets published. They must equal the base version in `gradle.properties` (0.1.0-SNAPSHOT -> 0.1.0),
+# and `scripts/version.sh check` fails the build if they drift; a checkout is still installable, and
+# a chart that lies about its own version in a local `helm install` is worth nothing.
+#
+# They move in lockstep rather than independently, which is the unusual half of the decision (#264).
+# Versioning a chart separately from the application it deploys is right for a public chart with
+# many consumers; here the chart has exactly one consumer and ships from the same commit as the code
+# it deploys, so a second number would be pure bookkeeping. The cost — a template-only fix still
+# consumes a version number — is cheaper than the thing to reason about.
+version: 0.1.0
 
-# The default image tag for all three workloads (`image.tag` overrides per component). #264 stamps
-# this from the same build that pushes the images, so the chart version and the image tags move
-# together. Never `latest` — see the chart README.
+# appVersion is also the default image tag for all three workloads (`<component>.image.tag`
+# overrides it, and no published values file may). That fallback is what keeps the chart and the
+# images in step: one number, stamped once per build, reaches all four artifacts. Never `latest` —
+# see the chart README.
 appVersion: "0.1.0"
 
 # No `dependencies:` block, and that is a decision rather than an omission: PostgreSQL runs on its
