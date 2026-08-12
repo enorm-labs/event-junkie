@@ -1,11 +1,11 @@
 name: Validate Helm Chart
 
-# `helm lint`, `helm template`, `kubeconform` and the render assertions are pure functions of the
+# `helm lint`, `helm template`, `flux schema validate` and the render assertions are pure functions of the
 # working tree — they reach no cluster and need no kubeconfig, which is what makes them safe to run
 # in CI at all (docs/PLATFORM_SETUP.md §4: nothing outside the cluster holds a credential for it).
 #
-# So this is a syntax and shape gate, not a correctness one. It cannot tell you a pod starts, and
-# the chart has never been installed anywhere (#263 is the first time it will be). What it catches
+# So this is a syntax and shape gate, not a correctness one. It cannot tell you a pod starts — the
+# k3d rehearsal does that, and `scripts/k3d-rehearsal.sh` is where. What it catches
 # is the failure mode that actually happens to deployment code nobody runs daily: a chart that
 # stopped rendering months ago and nobody noticed until the afternoon it was needed.
 #
@@ -49,7 +49,10 @@ env:
   # though local binaries are Helm 4. A chart that only renders under Helm 4 is a chart Flux cannot
   # install (#414), and that would not surface until the deployment pipeline itself was being built.
   HELM_VERSION: v3.19.0
-  KUBECONFORM_VERSION: v0.8.0
+  # `flux schema validate` replaced kubeconform in #414. Both pinned, both invisible to Dependabot —
+  # they are strings in YAML, not a manifest — so /update-dependencies step 12 sweeps them.
+  FLUX_VERSION: 2.9.4
+  FLUX_SCHEMA_VERSION: 0.11.0
 
 jobs:
   lint:
@@ -72,12 +75,25 @@ jobs:
         with:
           version: ${{ env.HELM_VERSION }}
 
-      - name: Install kubeconform
+      # `flux schema validate` rather than kubeconform, since #414. It validates the same manifests
+      # against the same kind of JSON Schema, and then three things kubeconform cannot:
+      #
+      #   * **CEL rules, with the API server's own evaluation semantics** — so a manifest that passes
+      #     here is one the API server will accept, not merely one that is shaped correctly.
+      #   * **Duplicate YAML keys**, which parse silently and drop the earlier value. That is exactly
+      #     how the `annotations:` block in ingress.yaml lost `kubernetes.io/description` once.
+      #   * **SOPS-encrypted fields, without decrypting them** — which is what makes this still work
+      #     when #416 encrypts the Secrets.
+      #
+      # One tool covering the chart *and* the Flux resources, instead of two with different flags.
+      # The plugin is pinned and `flux plugin install` verifies its cosign signature.
+      - name: Install Flux and the schema plugin
         run: |
           curl -fsSL \
-            "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
-            | tar -xz -C /usr/local/bin kubeconform
-          kubeconform -v
+            "https://github.com/fluxcd/flux2/releases/download/v${FLUX_VERSION}/flux_${FLUX_VERSION}_linux_amd64.tar.gz" \
+            | tar -xz -C /usr/local/bin flux
+          flux plugin install "schema@${FLUX_SCHEMA_VERSION}"
+          flux schema --version
 
       # --strict promotes the chart guide's own conventions — chart name, SemVer, unknown fields —
       # from warnings to failures.
@@ -94,17 +110,15 @@ jobs:
             helm lint --strict "$CHART" --values "$values"
           done
 
-      # The CRD catalog is needed for cert-manager's ClusterIssuer and Traefik's Middleware. Neither
-      # CRD is shipped by this chart — they belong to the operators that own them — so their schemas
-      # have to come from somewhere, and `-ignore-missing-schemas` is deliberately NOT used: a
-      # resource kubeconform cannot check is a resource nothing checks.
+      # `ecosystem` is the catalog carrying the CRDs this chart renders instances of but does not
+      # ship — cert-manager's ClusterIssuer and Traefik's Middleware — plus Flux's own. Verified to
+      # cover all of them: every render below reports **Skipped: 0**, and that number is the one to
+      # watch. A resource nothing can check is a resource nothing checks, which is why
+      # `--skip-missing-schemas` is deliberately not used.
       - name: Validate rendered manifests
         run: |
-          catalog='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
           render() {
-            helm template validate "$CHART" "$@" \
-              | kubeconform -strict -summary -verbose \
-                  -schema-location default -schema-location "$catalog" -
+            helm template validate "$CHART" "$@" | flux schema validate - -s ecosystem --verbose
           }
           render --set database.host=10.0.1.2 --set database.existingSecret=events-db
           for values in "$CHART"/values-*.yaml; do
@@ -112,17 +126,19 @@ jobs:
             render --values "$values"
           done
 
-      # The Flux custom resources (#414). Same catalog, same reasoning as the CRDs above: these are
-      # the objects that decide which chart version each environment runs, and nothing else in this
-      # workflow can see them — `helm lint` does not know they exist and `render-assertions.sh` reads
-      # only their `spec.values`. A typo in `spec.ref.semver` is a staging environment that silently
-      # stops updating, so it is worth a schema check even though it is not worth a cluster.
+      # The Flux custom resources (#414) — the objects that decide which chart version each
+      # environment runs, and which nothing else here can see: `helm lint` does not know they exist
+      # and `render-assertions.sh` reads only their `spec.values`. A typo in `spec.ref.semver` is a
+      # staging environment that silently stops updating, so it is worth a schema check even though
+      # it is not worth a cluster.
+      #
+      # The `kustomization.yaml` files are skipped by kind rather than by filename: they are kustomize
+      # *build* files, not cluster resources, so they legitimately have no `metadata.name` and would
+      # otherwise be reported as three schema violations.
       - name: Validate the Flux manifests
         run: |
-          catalog='https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
-          kubeconform -strict -summary -verbose \
-            -schema-location default -schema-location "$catalog" \
-            $(find deploy/clusters -name '*.yaml' -not -name 'kustomization.yaml')
+          flux schema validate deploy/clusters -s ecosystem --verbose \
+            --skip-kind kustomize.config.k8s.io/v1beta1/Kustomization
 
       # yq is preinstalled on ubuntu-latest runners.
       - name: Assert on the rendered output

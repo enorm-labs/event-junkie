@@ -54,14 +54,21 @@ deploy/scripts/render-assertions.sh
 shellcheck -x deploy/scripts/*.sh
 ```
 
-`render-assertions.sh` renders the chart once per values file and asserts on the output, so it covers the `helm template` half as well. Add `kubeconform` if it
-is installed — CI always runs it:
+`render-assertions.sh` renders the chart once per values file **and once per cluster's `HelmRelease`**, asserting on each — so it covers the `helm template` half
+as well, and it covers what Flux will actually deploy rather than a file nothing deploys.
+
+Add the schema gate if `flux` is installed — CI always runs it. It replaced `kubeconform` in #414, because it also evaluates CEL rules with the API server's own
+semantics, catches duplicate YAML keys, and reads SOPS-encrypted fields without decrypting them:
 
 ```bash
-helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-staging.yaml \
-  | kubeconform -strict -summary -schema-location default \
-      -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' -
+helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml \
+  | flux schema validate - -s ecosystem --verbose
+flux schema validate deploy/clusters -s ecosystem --verbose \
+  --skip-kind kustomize.config.k8s.io/v1beta1/Kustomization
 ```
+
+**Watch the `Skipped:` count, not just `Invalid:`.** A resource whose schema is missing is skipped, not failed — so a green summary with a non-zero skip count
+means something went unchecked.
 
 **Never run `helm install`, `upgrade`, `uninstall` or `rollback`** — they reach a real cluster. Note that `helm install --dry-run` does too, for capability
 discovery; `helm template` and `--dry-run=client` do not. See [deploy/AGENTS.md](../../deploy/AGENTS.md).
@@ -102,6 +109,8 @@ default.
 - **`validate` does not render `templatefile`.** A change to `infra/modules/environment/cloud-init/` can pass every check above and still produce cloud-init
   that a booting server rejects. Say so in the report rather than implying the cloud-init is verified.
 - **`tofu` or `shellcheck` missing** — `brew install opentofu shellcheck`. Do not report the infra sequence as passed when it was skipped for a missing tool.
-- **`helm`, `yq` or `kubeconform` missing** — `brew install helm yq kubeconform`. Same rule: a skipped chart sequence is not a passed one.
-- **The chart gate proves nothing about a running cluster.** It is a syntax and shape gate: the chart has never been installed anywhere, and the images it
-  references do not exist yet. Report it as "renders and passes assertions", never as "the deployment works".
+- **`helm`, `yq` or `flux` missing** — `brew install helm yq fluxcd/tap/flux`, then `flux plugin install schema`. Same rule: a skipped chart sequence is not a
+  passed one.
+- **The chart gate proves nothing about a running cluster.** It is a syntax and shape gate. The runtime counterpart is
+  [`/k3d-rehearsal`](k3d-rehearsal.prompt.md) — `all` for the working tree, `flux-all` for the published artifacts through Flux. Report this sequence as
+  "renders and passes assertions", never as "the deployment works".

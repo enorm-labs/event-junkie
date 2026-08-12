@@ -654,7 +654,7 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       allowlist** — `push` events, or a `workflow_dispatch` whose `publish` input is ticked — never "everything except the dry run", so a trigger added later
       cannot quietly become a publishing one. And it **tests itself on pull requests that change it**, because the `workflow_dispatch` caveat above applies to
       it with teeth: the button does not exist until the change merges, and merging is what publishes.
-    - `validate-chart.yml` — `helm lint --strict` and `helm template` | `kubeconform` across all three values files, plus `deploy/scripts/render-assertions.sh`
+    - `validate-chart.yml` — `helm lint --strict` and `helm template` | `flux schema validate` across every values file and every cluster's Flux resources, plus `deploy/scripts/render-assertions.sh`
       and ShellCheck. Triggers only when `deploy/**` changes. **Pins a Helm 3 client** even though local binaries are Helm 4, because Flux's helm-controller
       embeds the Helm 3 SDK and a chart that renders only under Helm 4 is one Flux cannot install. Like `validate-infra.yml` it reaches no cluster, so it is a
       syntax and shape gate; the assertions are the part that catches a chart which is well-formed and wrong.

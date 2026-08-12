@@ -17,7 +17,7 @@ nodes — the same architecture the Hetzner nodes will use. What that run proved
 | **`helm upgrade` across a chart version bump** — the selector-immutability trap does not occur | Behaviour under load, or on a node with real resource pressure |
 | `helm test` passes | |
 
-`helm lint`, `helm template`, `kubeconform` and
+`helm lint`, `helm template`, `flux schema validate` and
 [`../../scripts/render-assertions.sh`](../../scripts/render-assertions.sh) all pass as before, but
 they are no longer the only evidence.
 
@@ -244,6 +244,6 @@ deploy/scripts/render-assertions.sh
 ```
 
 All three are pure functions of the working tree and reach no cluster. CI runs them plus
-`kubeconform` in [`validate-chart.yml`](../../../.github/workflows/validate-chart.yml), and `/verify`
+`flux schema validate` in [`validate-chart.yml`](../../../.github/workflows/validate-chart.yml), and `/verify`
 runs them on any diff touching `deploy/`. See [`../../AGENTS.md`](../../AGENTS.md) for what is safe
 to run and what is not.

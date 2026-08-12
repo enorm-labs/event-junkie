@@ -237,7 +237,7 @@ jobs:
             REVISION=${{ github.sha }}
 
       # Installed from the release archive rather than via an action, so the version is pinned in
-      # this file and visible — the same reason validate-chart.yml installs kubeconform this way.
+      # this file and visible — the same reason validate-chart.yml installs Flux and its schema plugin this way.
       - name: Install Trivy
         run: |
           curl -fsSL \

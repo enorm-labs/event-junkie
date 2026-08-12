@@ -360,7 +360,7 @@ The chart that deploys the three services onto that platform lives in [`deploy/c
 and exercised on k3d** (#263) and **never on a real cluster** — those are different claims, and the section above is the one that keeps the first true. Read
 [deploy/AGENTS.md](../deploy/AGENTS.md) before changing it.
 
-Needs `helm`, `yq` and `kubeconform` (`brew install helm yq kubeconform`). Everything below reaches no cluster and needs no kubeconfig, and is what
+Needs `helm`, `yq` and `flux` with its schema plugin (`brew install helm yq fluxcd/tap/flux && flux plugin install schema`). Everything below reaches no cluster and needs no kubeconfig, and is what
 `validate-chart.yml` runs in CI:
 
 ```bash
@@ -370,7 +370,7 @@ deploy/scripts/render-assertions.sh
 shellcheck -x deploy/scripts/*.sh
 ```
 
-`render-assertions.sh` is the one worth understanding: `helm lint` and `kubeconform` both pass on a chart that is well-formed, schema-valid and wrong — an
+`render-assertions.sh` is the one worth understanding: `helm lint` and schema validation both pass on a chart that is well-formed, schema-valid and wrong — an
 ingress that routes `/actuator`, an importer scaled past one replica, a selector carrying a label that changes on every release. It renders the chart once per
 values file and asserts on the result.
 
