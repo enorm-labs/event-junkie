@@ -11,7 +11,7 @@ not merged into one file.
 
 **Everything that renders the chart is safe. Everything that installs it is not.**
 
-`helm lint`, `helm template` and `kubeconform` are pure functions of the working tree. They reach no cluster, need no kubeconfig, and cannot break anything —
+`helm lint`, `helm template` and `flux schema validate` are pure functions of the working tree. They reach no cluster, need no kubeconfig, and cannot break anything —
 run them as often as you like:
 
 ```sh
@@ -253,7 +253,7 @@ The same applies to the Hetzner DNS token the DNS-01 solver needs: the chart nam
 
 ## The assertions are the point
 
-`deploy/scripts/render-assertions.sh` catches what `helm lint` and `kubeconform` structurally cannot: a chart that is well-formed, schema-valid and wrong. It
+`deploy/scripts/render-assertions.sh` catches what `helm lint` and `flux schema validate` structurally cannot: a chart that is well-formed, schema-valid and wrong. It
 runs in `.github/workflows/validate-chart.yml` and under `/verify` on any diff touching `deploy/`.
 
 **Add an assertion whenever you fix a bug in a template.** The failures worth guarding here mostly do not appear on first install — the selector-label trap

@@ -233,12 +233,13 @@ that has stopped meaning anything.
 | Pin | Where | Check against |
 |---|---|---|
 | `HELM_VERSION` | `.github/workflows/validate-chart.yml` **and** `release.yml` — both must move together | `helm/helm` releases, **staying on 3.x** |
-| `KUBECONFORM_VERSION` | `.github/workflows/validate-chart.yml` | `yannh/kubeconform` releases |
+| `FLUX_VERSION` | `.github/workflows/validate-chart.yml` | `fluxcd/flux2` releases |
+| `FLUX_SCHEMA_VERSION` | `.github/workflows/validate-chart.yml` | `fluxcd/flux-schema` releases — or `flux plugin list` locally |
 | `TRIVY_VERSION` | `.github/workflows/release.yml` | `aquasecurity/trivy` releases |
 | `gitleaks` `rev:` | `.pre-commit-config.yaml` | `gitleaks/gitleaks` releases |
 
 ```sh
-for repo in helm/helm yannh/kubeconform aquasecurity/trivy gitleaks/gitleaks; do
+for repo in helm/helm fluxcd/flux2 fluxcd/flux-schema aquasecurity/trivy gitleaks/gitleaks; do
   printf '%-28s %s\n' "$repo" "$(gh api "repos/$repo/releases/latest" --jq .tag_name)"
 done
 ```
