@@ -40,6 +40,17 @@ helm install event-junkie deploy/charts/event-junkie \
 There is no `namespace:` in any template. Flux's `HelmRelease` sets `targetNamespace` (#414), and a
 hardcoded namespace would silently win over it.
 
+Released versions are also published as an OCI artifact, which is what Flux will consume:
+
+```sh
+helm install event-junkie oci://ghcr.io/enorm-labs/charts/event-junkie --version 0.1.0 …
+```
+
+**A checkout and a published chart are not interchangeable.** The version in `Chart.yaml` is a
+placeholder that `release.yml` stamps over, so installing from a checkout gives you a chart claiming
+a version whose images may not exist. Install from the OCI reference unless you are deliberately
+testing local template changes — which is what `values-k3d.yaml` and its `dev` tags are for.
+
 ## Values
 
 Only the values worth a decision are listed. Every property is documented in
@@ -69,6 +80,27 @@ its own — the two required keys have no safe default), `values-staging.yaml` (
 `values-k3d.yaml` — no longer written blind: #263 ran it, and two values it had guessed were wrong (the database port and the database name, neither catchable by rendering).
 
 ## The parts that are not obvious from the templates
+
+### `version` and `appVersion` are stamped, and they are the same number
+
+Both are placeholders in the committed `Chart.yaml`. `.github/workflows/release.yml` computes one
+version from `gradle.properties` and writes it into both before packaging, so the chart version, the
+`appVersion` and all three image tags are the same string by construction rather than by discipline.
+
+**`appVersion` is also the default image tag.** Every component's `image.tag` defaults to `""` and
+falls back to `.Chart.AppVersion`, which is the entire mechanism keeping the chart and the images in
+step — and it is one line away from being defeated. A published values file that pins
+`<component>.image.tag` silently opts that component out: the render still looks correct, with a
+plausible tag on every image, while one workload is pinned to a version nobody chose. Only
+`values-k3d.yaml` sets tags (`dev`), and it never leaves a laptop;
+[`../../scripts/render-assertions.sh`](../../scripts/render-assertions.sh) fails the build if
+`values.yaml` or `values-staging.yaml` ever grows one.
+
+The chart version does **not** move independently of the application. That would be right for a
+public chart with many consumers; here the chart has one consumer and ships from the same commit as
+the code it deploys, so a second number would be bookkeeping. `scripts/version.sh check` fails the
+build if the two placeholders drift from `gradle.properties`. Full scheme in
+[DEVELOPMENT.md](../../../docs/DEVELOPMENT.md#versions-and-cutting-a-release).
 
 ### `/api` is Spring's, not the ingress's
 

@@ -138,26 +138,35 @@ jobs:
           title: Code Coverage
           update-comment: true
           min-coverage-overall: 60
+          min-coverage-changed-files: 80
 
       # Build the container images, and deliberately do not push them. This workflow runs on every
       # pull request, including from forks — publishing from here would put an image built from
-      # unreviewed code into GHCR. Pushing belongs to the release workflow (#264).
+      # unreviewed code into GHCR. Pushing belongs to release.yml.
       #
       # What this catches is the rot `validate-infra.yml` exists to catch, in a different medium: a
       # Dockerfile that stopped building months ago and nobody noticed until the afternoon it was
       # needed. It is not a correctness gate — a built image is not a started one.
+      #
+      # Pull requests only, since #264: on a push to `main` release.yml builds the same two images
+      # from the same Dockerfiles and then pushes them, so doing it here as well would be six
+      # multi-platform builds per merge instead of three, to learn the same thing twice.
       - name: Extract the layered jars
+        if: github.event_name == 'pull_request'
         run: ./gradlew :events-bff:bootJarLayers :events-importer:bootJarLayers
 
-      # `gradle.properties` is the single source of truth for the project version — it is what
-      # `bootBuildInfo` already stamps into build-info.properties and serves at /actuator/info, so
-      # taking it from anywhere else would let the image label and the running instance disagree.
-      # #264 decides how a *release* version is cut; this only labels the image with what built it.
+      # `scripts/version.sh` is the single place that knows what version a commit is, and it derives
+      # everything from `gradle.properties` — what `bootBuildInfo` stamps into build-info.properties
+      # and serves at /actuator/info. Taking the number from anywhere else would let the image label
+      # and the running instance disagree. On a pull request this yields the same snapshot string
+      # release.yml would compute, so the label matches what merging would publish.
       - name: Read the project version
         id: version
-        run: echo "value=$(grep '^version=' gradle.properties | cut -d= -f2-)" >> "$GITHUB_OUTPUT"
+        if: github.event_name == 'pull_request'
+        run: echo "value=$(scripts/version.sh compute)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
+        if: github.event_name == 'pull_request'
         uses: docker/setup-buildx-action@v3
 
       # No QEMU and no per-architecture runner, because neither Dockerfile contains a `RUN` — see
@@ -167,6 +176,7 @@ jobs:
       # `load: true` would fail, and dropping to a single platform would leave arm64 unbuilt, which
       # is the architecture the Hetzner nodes actually run (#424).
       - name: Build events-bff image (amd64 + arm64, no push)
+        if: github.event_name == 'pull_request'
         uses: docker/build-push-action@v6
         with:
           context: events-bff/build/docker
@@ -179,6 +189,7 @@ jobs:
             REVISION=${{ github.sha }}
 
       - name: Build events-importer image (amd64 + arm64, no push)
+        if: github.event_name == 'pull_request'
         uses: docker/build-push-action@v6
         with:
           context: events-importer/build/docker
@@ -189,7 +200,6 @@ jobs:
           build-args: |
             VERSION=${{ steps.version.outputs.value }}
             REVISION=${{ github.sha }}
-          min-coverage-changed-files: 80
 
   # OWASP Dependency-Check runs as a separate job in parallel with the build to avoid
   # slowing down the main feedback loop.

@@ -1,0 +1,20 @@
+# Vulnerabilities waived for the container image scan in .github/workflows/release.yml.
+#
+# The gate blocks a release on CRITICAL and HIGH findings **that have a fix available**; unfixed ones
+# are already excluded by `--ignore-unfixed` and do not belong here. So an entry in this file means
+# something narrower and more deliberate: *a fix exists and we are shipping without it anyway*.
+#
+# Every entry needs a reason and a date on the line above it, and the reason has to say why the fix
+# cannot be taken rather than that it is inconvenient — a waiver with no expiry is a gate that has
+# been quietly switched off. The usual right answer instead is to bump the base image digest in the
+# Dockerfile, which is one line and takes effect on the next build.
+#
+# Format: one CVE id per line, `#` comments. Trivy reads this file from the repository root.
+#
+# Example of the shape an entry must take:
+#
+#   # 2026-08-12 — CVE-2026-00000 in the JRE base layer. Fixed in temurin 25.0.4, which regresses
+#   # <thing>; revisit when 25.0.5 ships. Not reachable from our code path: <why>.
+#   CVE-2026-00000
+#
+# Empty on purpose. Nothing has been waived.

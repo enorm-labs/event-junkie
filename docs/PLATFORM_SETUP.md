@@ -344,6 +344,30 @@ Three more things about GHCR that each cost an afternoon if learned the hard way
 
 Storage and bandwidth are free for public packages, so untagged versions accumulating is clutter rather than cost — not worth a cleanup workflow yet.
 
+### What publishes them — `release.yml`, since #264
+
+**One workflow, one computed version, four artifacts, and no path filters.** `.github/workflows/release.yml` runs on every push to `main` (a snapshot) and on a
+`v*` tag (a release), builds the three images and packages the chart, scans the images with Trivy *before* pushing anything, and pushes images before the chart.
+
+Four decisions in it are worth not re-deriving:
+
+- **No path filters on the publishing trigger, unlike every other workflow here.** The chart's `appVersion` is the default image tag for all three components,
+  so a published chart version requires all three image tags to exist. Filtering the `push` trigger means a frontend-only commit publishes a chart pointing at
+  two backend tags that were never built — surfacing as `ImagePullBackOff` in staging hours later, with nothing naming the cause.
+- **It tests itself on pull requests that change it**, because `workflow_dispatch` is offered only for workflows already on the default branch — the dry-run
+  button does not exist until the change merges, and merging is what publishes. Publishing is decided by an allowlist (`push`, or a dispatch that asks for it),
+  so that self-test trigger cannot become a publishing one by accident.
+- **No tests.** They gate the pull request; re-running them on every push to `main` buys no new information. The accepted cost is that a direct push bypassing a
+  PR can publish an unbuilt-on snapshot, which is what branch protection is for.
+- **Scanning before publish costs a second build.** A multi-platform image cannot be loaded into the local daemon, so it cannot be scanned before it exists in a
+  registry. Each image is therefore built for amd64 and loaded, scanned, then rebuilt for both platforms and pushed — the second build reuses the first's cache.
+  The known gap: only the amd64 variant is scanned.
+- **The Trivy gate blocks on CRITICAL and HIGH *that have a fix*.** `--ignore-unfixed` is load-bearing: a base-image CVE with no upstream fix would otherwise
+  block every release until someone deleted the gate, which is how gates die. Waivers go in `.trivyignore` with a reason and a date.
+
+The versioning scheme — one number derived from `gradle.properties`, snapshots as prereleases *of the coming release*, `latest` published but never consumed —
+is in [DEVELOPMENT.md](DEVELOPMENT.md#versions-and-cutting-a-release).
+
 ---
 
 ## 4. How deploys happen

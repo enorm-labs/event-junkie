@@ -13,18 +13,30 @@ name: Validate Helm Chart
 # chart that quietly does the wrong thing — an ingress that routes /actuator, an importer scaled to
 # two replicas, a selector carrying a label that changes on every release.
 
+# `gradle.properties` and `events-frontend/package.json` are in the path filters because the chart's
+# `version` and `appVersion` must equal the base version they declare (#264). Editing one of them
+# without the chart is exactly how they drift, so a change to either has to reach this gate.
+
 on:
   push:
     branches: [ main ]
     paths:
       - 'deploy/**'
       - 'scripts/k3d-rehearsal.sh'
+      - 'scripts/version.sh'
+      - 'gradle.properties'
+      - 'events-frontend/package.json'
       - '.github/workflows/validate-chart.yml'
   pull_request:
     branches: [ main ]
+    # Duplicated rather than shared through a YAML anchor: GitHub Actions does not support anchors,
+    # and a workflow using one fails to parse.
     paths:
       - 'deploy/**'
       - 'scripts/k3d-rehearsal.sh'
+      - 'scripts/version.sh'
+      - 'gradle.properties'
+      - 'events-frontend/package.json'
       - '.github/workflows/validate-chart.yml'
   workflow_dispatch:
 
@@ -48,6 +60,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+
+      # First, because it is the cheapest gate here and the one whose failure invalidates the rest:
+      # a chart whose `appVersion` disagrees with `gradle.properties` renders and lints perfectly
+      # while naming image tags the release build will never produce (#264).
+      - name: Check the version is consistent across all four files
+        run: scripts/version.sh check
 
       - name: Set up Helm
         uses: azure/setup-helm@v5
@@ -107,8 +125,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      # `scripts/k3d-rehearsal.sh` is linted here rather than in a workflow of its own because it is
-      # part of the deploy story: it installs this chart. The other scripts/ files are covered by
-      # the pre-commit hook only — a gap, but a pre-existing one, not one this adds.
+      # `scripts/k3d-rehearsal.sh` and `scripts/version.sh` are linted here rather than in a workflow
+      # of its own because both are part of the deploy story: one installs this chart, the other
+      # decides what version gets published. The remaining scripts/ files are covered by the
+      # pre-commit hook only — a gap, but a pre-existing one, not one this adds.
       - name: Run ShellCheck
-        run: shellcheck -x deploy/scripts/*.sh scripts/k3d-rehearsal.sh
+        run: shellcheck -x deploy/scripts/*.sh scripts/k3d-rehearsal.sh scripts/version.sh

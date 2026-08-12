@@ -28,6 +28,17 @@ repos:
         files: ^(infra/modules/environment/cloud-init|deploy/scripts|scripts)/.*\.sh$
         pass_filenames: true
 
+      # One version reaches four files and only one of them is authoritative, so the drift this
+      # catches is the kind nobody notices: bump `gradle.properties` alone and everything still
+      # builds, lints and renders — the release just publishes a chart whose `appVersion` names image
+      # tags that were never pushed. Cheapest possible check, and the earliest place to run it.
+      - id: version-consistency
+        name: version consistency
+        entry: scripts/version.sh check
+        language: system
+        files: ^(gradle\.properties|events-frontend/package\.json|deploy/charts/event-junkie/Chart\.yaml)$
+        pass_filenames: false
+
       # `helm lint --strict` is a pure function of the working tree — no cluster, no kubeconfig, no
       # credentials — which is what makes it safe as a commit hook at all. `pass_filenames: false`
       # because helm lints a chart directory, not a list of files.
