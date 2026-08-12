@@ -636,6 +636,11 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     - `label-pr.yml` — Derives labels from the Conventional Commits PR title (`feat(scraper): …` → `feat` + `importer`, `fix(api)!: …` → `fix` +
       `breaking-change`) via `actions/github-script`. Creates any missing label on demand and re-syncs when the title is edited. Uses `pull_request_target` so
       fork PRs get a writable token; safe because it never checks out or runs PR code.
+    - `validate-workflows.yml` — **actionlint** (correctness) and **zizmor** (security) over `.github/workflows/`, since #383. It is the only gate that looks at
+      the workflows themselves, and on its first run zizmor found a template injection in `release.yml`, a cache-poisoning path into it, and two workflow-level
+      permission grants that belonged to a single job. zizmor blocks at `--min-severity medium`; suppressions live in `zizmor.yml` or as inline
+      `# zizmor: ignore[…]` comments, each with a reason and a date. **`unpinned-uses` is downgraded to `ref-pin` on purpose** — the 57 tag-pinned actions are
+      #443's work, and that suppression should be raised to `hash-pin` the day it lands.
     - `validate-infra.yml` — `tofu fmt -check`, `tofu init -backend=false` + `validate` across all three stacks in a matrix, and ShellCheck on the cloud-init
       scripts. Triggers only when `infra/**` changes. **It deliberately never runs `plan`**: that needs a Hetzner token, and per PLATFORM_SETUP.md §4 nothing
       outside the cluster holds a cluster or cloud credential. So this is a syntax and type gate, not a correctness one, and there is no drift detection.
@@ -804,6 +809,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | CI: nightly OWASP scan                | `.github/workflows/dependency-check-scheduled.yml`                                                        |
 | CI: PR labelling                      | `.github/workflows/label-pr.yml`                                                                          |
 | CI: OpenTofu fmt/validate + ShellCheck | `.github/workflows/validate-infra.yml`                                                                   |
+| CI: workflow lint + security audit    | `.github/workflows/validate-workflows.yml`; suppressions in `zizmor.yml`                                  |
 | CI: Helm lint/render/assertions       | `.github/workflows/validate-chart.yml`                                                                    |
 | CI: build, scan and publish to GHCR   | `.github/workflows/release.yml` — the only workflow that pushes anything; it does not deploy              |
 | Version scheme (one number, 4 files)  | `scripts/version.sh`; `gradle.properties` is the source of truth — docs/DEVELOPMENT.md §Versions          |

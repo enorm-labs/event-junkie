@@ -149,8 +149,17 @@ jobs:
           distribution: temurin
           java-version: '25'
 
+      # **Caching is disabled in this workflow, and only in this one.** zizmor flags the pairing of a
+      # restored cache with a job that publishes signed artifacts (`cache-poisoning`): a run from a
+      # pull request can write a cache entry that a later privileged run restores, which turns a PR
+      # into a way to influence a published artifact. `release.yml` is reachable from
+      # `pull_request` — that is how it self-tests — so the path is real rather than theoretical.
+      # The cost is a couple of minutes of re-downloading per release; the build workflows keep
+      # their caches, because they publish nothing.
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-disabled: true
 
       # `-Pversion=` overrides gradle.properties, which is how a release version is cut without ever
       # being committed. It reaches `bootBuildInfo`, so `/actuator/info` reports exactly the string
@@ -158,12 +167,15 @@ jobs:
       - name: Extract the layered jars
         run: ./gradlew -Pversion=${{ steps.version.outputs.value }} :events-bff:bootJarLayers :events-importer:bootJarLayers
 
+      # 2026-08-12 — the `ignore` below: flagged because `setup-node` *can* cache in a workflow that
+      # publishes, not because it does. `cache:` is deliberately absent, and setup-node caches
+      # nothing without it. The audit is conservative on purpose, which is the right default; this
+      # is the instance where it is wrong.
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v7 # zizmor: ignore[cache-poisoning]
         with:
           node-version: '24' # should match the version specified in .nvmrc
-          cache: 'npm'
-          cache-dependency-path: events-frontend/package-lock.json
+          # No `cache: 'npm'` here, for the same cache-poisoning reason as Gradle above.
 
       - name: Install frontend dependencies
         working-directory: events-frontend
@@ -382,9 +394,14 @@ jobs:
         if: steps.version.outputs.publish == 'true'
         env:
           VERSION: ${{ steps.version.outputs.value }}
+          # Through the environment rather than interpolated into the script. A username cannot
+          # contain shell metacharacters today, so this is not exploitable — but `${{ }}` expanding
+          # directly into a `run:` block is the shape of a template injection, and the whole point of
+          # a lint is that it does not have to reason about which instances are currently harmless.
+          ACTOR: ${{ github.actor }}
         run: |
           helm registry login ghcr.io \
-            --username "${{ github.actor }}" \
+            --username "$ACTOR" \
             --password "${{ secrets.GITHUB_TOKEN }}"
           helm push "build/chart/event-junkie-${VERSION}.tgz" "$CHART_REPO"
 

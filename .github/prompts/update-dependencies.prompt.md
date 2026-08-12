@@ -237,9 +237,12 @@ that has stopped meaning anything.
 | `FLUX_SCHEMA_VERSION` | `.github/workflows/validate-chart.yml` | `fluxcd/flux-schema` releases — or `flux plugin list` locally |
 | `TRIVY_VERSION` | `.github/workflows/release.yml` | `aquasecurity/trivy` releases |
 | `gitleaks` `rev:` | `.pre-commit-config.yaml` | `gitleaks/gitleaks` releases |
+| `ZIZMOR_VERSION` | `.github/workflows/validate-workflows.yml` | `zizmorcore/zizmor` releases — the image tag has **no** `v` prefix |
+| `ACTIONLINT_VERSION` | `.github/workflows/validate-workflows.yml` | `rhysd/actionlint` releases |
 
 ```sh
-for repo in helm/helm fluxcd/flux2 fluxcd/flux-schema aquasecurity/trivy gitleaks/gitleaks; do
+for repo in helm/helm fluxcd/flux2 fluxcd/flux-schema aquasecurity/trivy gitleaks/gitleaks \
+            zizmorcore/zizmor rhysd/actionlint; do
   printf '%-28s %s\n' "$repo" "$(gh api "repos/$repo/releases/latest" --jq .tag_name)"
 done
 ```

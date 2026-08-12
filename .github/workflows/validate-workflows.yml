@@ -1,0 +1,71 @@
+name: Validate Workflows
+
+# The one surface nothing else in this repository looks at.
+#
+# #383 evaluated four scanners against four surfaces by running them rather than by reading their
+# documentation, and this was the only genuinely additive result. Trivy and Checkov have nothing to
+# say about `infra/` — 153 rule evaluations there, every one of them AWS, GCP or Azure, all passing
+# vacuously against Hetzner resources. The chart is better served by `render-assertions.sh`, which
+# knows the project's own invariants. But **`.github/workflows/` had no gate at all**, and on its
+# first run zizmor found three real problems: a template injection in the publishing workflow, a
+# cache-poisoning path into it, and two workflow-level permission grants that belonged to one job.
+#
+# That matters more since ADR-016. Flux reconciles what lands on `main`, so a workflow compromise is
+# now a path to the cluster rather than only to a build.
+#
+# Two tools, deliberately: **actionlint** is the correctness half (it caught a `min-coverage`
+# input silently attached to the wrong action in #264) and **zizmor** is the security half.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/**'
+      - 'zizmor.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/**'
+      - 'zizmor.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Pinned and visible, like every other tool version here — and invisible to Dependabot for the same
+  # reason, so `/update-dependencies` step 12 sweeps them.
+  ZIZMOR_VERSION: 1.29.0
+  ACTIONLINT_VERSION: 1.7.12
+
+jobs:
+  validate:
+    name: Lint & audit workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # Correctness: undefined contexts, wrong action inputs, bad expressions, and shellcheck over
+      # every `run:` block. Its shellcheck findings are informational here — the repository's own
+      # scripts are linted properly in validate-chart.yml — so only actionlint's own rules gate.
+      - name: actionlint
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo \
+            "rhysd/actionlint:${ACTIONLINT_VERSION}" \
+            -color -ignore 'shellcheck reported issue'
+
+      # Security: template injection, cache poisoning, credential persistence, over-broad
+      # permissions, dangerous triggers.
+      #
+      # `--min-severity medium` rather than everything: the repository sits at 0 medium and 0 high
+      # today, so this blocks regressions without failing on the informational tail. Suppressions
+      # live in `zizmor.yml` and as inline `# zizmor: ignore[...]` comments, each with a reason and a
+      # date — the same bar `.trivyignore` and `owasp-suppressions.xml` are held to.
+      - name: zizmor
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src \
+            "ghcr.io/zizmorcore/zizmor:${ZIZMOR_VERSION}" \
+            --config zizmor.yml --min-severity medium --format plain .github/workflows/

@@ -22,18 +22,24 @@ on:
   # `gh workflow run build-backend.yml --ref <branch>`.
   workflow_dispatch:
 
+# Scoped per job rather than at workflow level, since #383: a workflow-level grant applies to every
+# job, including ones that have no use for it, and `pull-requests: write` is exactly the token an
+# attacker would want. Only `build` posts a coverage comment; only the two jobs that upload SARIF get
+# `security-events: write`.
 permissions:
   contents: read
-  pull-requests: write
-  # Required for uploading SARIF to GitHub Code Scanning
-  security-events: write
-  # Required for workflows in private repositories
-  actions: read
 
 jobs:
   build:
     name: Build & Test
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      # The sticky Kover coverage comment on pull requests.
+      pull-requests: write
+      # Uploading the three detekt SARIF reports to Code Scanning.
+      security-events: write
 
     # Kotlin warnings fail the build here, and only here — see `warningsAsErrors` in the root
     # build.gradle.kts for why it is CI-only. Set as an environment variable rather than `-P` on
@@ -212,6 +218,13 @@ jobs:
   dependency-check:
     name: OWASP Dependency-Check (informational)
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      # Uploading the Dependency-Check SARIF report to Code Scanning.
+      security-events: write
+      # Required for workflows in private repositories.
+      actions: read
 
     steps:
       - name: Checkout repository
