@@ -18,6 +18,7 @@ here.
 - [Quality checks](#quality-checks)
 - [Infrastructure (OpenTofu)](#infrastructure-opentofu)
 - [Container images](#container-images)
+- [Running the whole stack on k3d](#running-the-whole-stack-on-k3d)
 - [Helm chart](#helm-chart)
 - [Performance tests](#performance-tests)
 - [Dependencies](#dependencies)
@@ -308,6 +309,73 @@ What the config guarantees, and what is worth re-checking after any change to it
 | `/.env` or any dotfile | `403` |
 
 The images are **not pushed by CI** — that is the release workflow's job (#264).
+
+## Running the whole stack on k3d
+
+The chart, the three images and a real import, on a local Kubernetes. Per ADR-012 this is not an approximation of the production path — **it is the same chart
+and the same images that run on Hetzner k3s**, which is what makes it worth doing. Needs `k3d` (`brew install k3d`) on top of the tools above.
+
+> **Every command below names its context explicitly.** `k3d cluster create` switches the active context as a side effect, and most developer machines have
+> several real clusters in their kubeconfig. `helm install` against the wrong one does not announce itself. Do not shorten these.
+
+```bash
+# 1. Build all three images locally, tagged as values-k3d.yaml expects
+./gradlew :events-bff:bootJarLayers :events-importer:bootJarLayers
+npm --prefix events-frontend run build
+docker buildx build -f events-bff/Dockerfile        events-bff/build/docker        -t localhost/event-junkie/bff:dev --load
+docker buildx build -f events-importer/Dockerfile   events-importer/build/docker   -t localhost/event-junkie/importer:dev --load
+docker buildx build events-frontend                                                -t localhost/event-junkie/frontend:dev --load
+
+# 2. A cluster with the ingress published on 8080
+k3d cluster create event-junkie --port "8080:80@loadbalancer" --agents 1
+k3d image import localhost/event-junkie/{bff,importer,frontend}:dev -c event-junkie
+
+# 3. Postgres on the host, and a database of its own — NOT the development one, because
+#    installing the chart runs Flyway and the two would fight over the same schema
+docker compose up -d
+docker exec event-junkie-postgres-1 psql -U admin -d postgres -c 'CREATE DATABASE event_junkie_k3d OWNER admin'
+kubectl --context k3d-event-junkie create secret generic events-db \
+  --from-literal=username=admin --from-literal=password=admin
+
+# 4. Install
+helm --kube-context k3d-event-junkie install event-junkie deploy/charts/event-junkie \
+  --values deploy/charts/event-junkie/values-k3d.yaml
+kubectl --context k3d-event-junkie get pods -l app.kubernetes.io/instance=event-junkie
+helm --kube-context k3d-event-junkie test event-junkie
+```
+
+Then verify the routing from the host — through the ingress, not with `kubectl exec`, which would prove nothing about routing:
+
+```bash
+curl -H 'Host: event-junkie.localhost' localhost:8080/            # the SPA
+curl -H 'Host: event-junkie.localhost' localhost:8080/api/events  # the BFF
+```
+
+**Check the content type, not the status code**, when testing what should *not* be reachable. nginx serves the SPA for every unmatched path, so
+`/actuator/health` through the ingress returns **200** — and that 200 is `text/html`, the SPA fallback, not actuator. A negative test that only looks at the
+status code passes for the wrong reason:
+
+```bash
+curl -s -o /dev/null -w '%{content_type}\n' -H 'Host: event-junkie.localhost' localhost:8080/actuator/health
+# text/html  → the SPA. If this ever says application/json, actuator is exposed.
+```
+
+The importer's admin API is reachable only by port-forward, which is also how you seed and trigger an import:
+
+```bash
+kubectl --context k3d-event-junkie port-forward svc/event-junkie-importer 18081:8081
+# then POST a venue + event source to localhost:18081/api/admin/… and trigger it;
+# http/importer/dev-seed.http has the payload shapes. One small venue, once (ADR-007).
+```
+
+Tear down completely — a leftover cluster is a background process and, worse, a `k3d-…` context somebody later mistakes for a live one:
+
+```bash
+helm --kube-context k3d-event-junkie uninstall event-junkie
+k3d cluster delete event-junkie
+docker exec event-junkie-postgres-1 psql -U admin -d postgres -c 'DROP DATABASE IF EXISTS event_junkie_k3d'
+kubectl config use-context <whatever it was before>
+```
 
 ## Helm chart
 

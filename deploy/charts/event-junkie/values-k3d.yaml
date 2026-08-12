@@ -1,12 +1,20 @@
 # k3d overrides, for the local rehearsal in #263.
 #
-# Written blind, on purpose. This file exists so that #263 starts from something rather than from a
-# blank page; it is not claimed to be correct. The first person to run `helm install` with it will
-# change it, and that is the expected outcome rather than a failure of this PR.
+# Written blind in #261 and corrected in #263, which ran it. Two of its guesses were wrong — the
+# database port and the database name — and neither could have been caught by rendering the chart,
+# because both were valid values that simply did not match what was listening. See the comments on
+# each below; they are the record of what a blind file costs.
+#
+# The rehearsal it supports: k3d with `--port "8080:80@loadbalancer"`, images side-loaded with
+# `k3d image import`, PostgreSQL on the host in the repository's own compose stack. The full loop is
+# in docs/DEVELOPMENT.md.
 
 image:
-  # Images are side-loaded into the k3d cluster (`k3d image import`), so there is no registry to
-  # pull from and the reference must not look like one.
+  # Images are side-loaded into the k3d cluster with `k3d image import`, so there is no registry to
+  # pull from. #263 expected the `localhost/` prefix to be the problem — a registry-shaped prefix
+  # that containerd might try to resolve as a remote host — and it was not: with `IfNotPresent` the
+  # kubelet finds the imported image and never reaches out. Recorded because it is the obvious thing
+  # to suspect when a pod does go ImagePullBackOff here, and it is not the cause.
   registry: "localhost"
   # IfNotPresent is what makes a side-loaded image win. `Always` would send k3d to a registry that
   # does not have it and fail with ImagePullBackOff.
@@ -14,8 +22,29 @@ image:
 
 database:
   # PostgreSQL runs on the host, in the same compose stack local development already uses.
-  # `host.k3d.internal` is k3d's built-in name for the host from inside the cluster.
+  # `host.k3d.internal` is k3d's built-in name for the host from inside the cluster, injected into
+  # CoreDNS when the cluster is created.
   host: "host.k3d.internal"
+  # Both of these were wrong while this file was written blind, and neither could have been caught
+  # by rendering the chart — `5432` and `events` are perfectly valid values, and nothing in the
+  # chart knows what is actually listening. Found by comparing the rendered URL against
+  # `compose.yaml` before the first install (#263).
+  #
+  # The container listens on 5432; compose publishes it on the *host* as 56298, and the host is what
+  # `host.k3d.internal` resolves to.
+  port: 56298
+  # A database of its own, NOT the `event_junkie` that `bootRun` and `scripts/dev-env.sh` use.
+  # Installing this chart runs the importer's Flyway migrations, and pointing that at the local
+  # development database would have the in-cluster importer and a local one competing for the same
+  # schema — with ~86 sources and thousands of scraped rows behind it that nobody wants to re-scrape
+  # (ADR-007 on politeness). Create it once:
+  #
+  #     docker exec event-junkie-postgres-1 psql -U admin -d postgres -c 'CREATE DATABASE event_junkie_k3d OWNER admin'
+  #
+  # `events` is the *schema* inside it, which each app sets itself via
+  # `spring.r2dbc.properties.schema` — the two are different things and the chart's `database.name`
+  # is the database.
+  name: "event_junkie_k3d"
   # Created before the first install:
   #   kubectl create secret generic events-db \
   #     --from-literal=username=events --from-literal=password=events
