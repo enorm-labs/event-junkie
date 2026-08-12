@@ -1,0 +1,26 @@
+# zizmor — security lint for GitHub Actions workflows. Adopted by #383 after a real run, because it
+# is the only tool in this repository that looks at `.github/workflows/` at all, and on its first run
+# it found three genuine problems that nothing else here would have: a template injection, a
+# cache-poisoning path into the publishing workflow, and two workflow-level permission grants that
+# belonged to single jobs.
+#
+# `deploy/scripts/render-assertions.sh` is the model for what a gate here is worth: it fails the
+# build rather than posting an advisory. Everything below is a *suppression*, and each one carries a
+# reason and a date, the same rule `.trivyignore` and `owasp-suppressions.xml` are held to.
+
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        # 2026-08-12 — **57 findings, and every one of them is #443's work, not a defect in this
+        # config.** Every action here is pinned to a mutable major tag (`actions/checkout@v7`)
+        # rather than a commit SHA. zizmor is right that this is a real supply-chain gap: a tag is a
+        # pointer its owner can move. It is tracked as item 4 of #443, together with GitHub's own
+        # `sha_pinning_required` repository setting, which enforces it going forward rather than by
+        # review.
+        #
+        # Downgraded to `ref-pin` rather than ignored: this still requires a *tag or SHA* and fails
+        # on a floating `@main`, so the gate keeps its teeth on the worse version of the problem
+        # while #443 does the mechanical part. **Raise this to `hash-pin` the moment #443 lands** —
+        # a suppression that outlives its issue is a gate that has been quietly switched off.
+        "*": ref-pin
