@@ -24,7 +24,7 @@ pluginManagement {
         id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
         // check this compatibility table: https://detekt.dev/docs/introduction/compatibility/
         id("dev.detekt") version "2.0.0-alpha.6"
-        id("io.github.ben-manes.versions") version "0.60.0"
+        id("io.github.ben-manes.versions") version "0.61.0"
         id("org.owasp.dependencycheck") version "13.0.0"
         id("com.github.jk1.dependency-license-report") version "3.1.4"
     }
