@@ -70,6 +70,14 @@ All three are also CI's job (`validate-infra.yml`, `validate-chart.yml`); the ho
 not have the tools installed, the hooks fail — install them (`brew install opentofu shellcheck helm`) or skip with `git commit --no-verify` on a change that
 touches none of those paths.
 
+**A clean local ShellCheck is not proof CI will agree.** The hook and CI both use whatever `shellcheck` is on the machine they run on, and those differ — the
+Homebrew build is usually ahead of the GitHub runner's, and newer versions have *dropped* some checks. An `A && B || C` construct that 0.11.0 accepts is still
+`SC2015` on 0.9.0, which is how a locally green script arrives red in CI. To check against an older one without installing it:
+
+```bash
+docker run --rm -v "$PWD:/repo" -w /repo koalaman/shellcheck:v0.9.0 -x scripts/*.sh deploy/scripts/*.sh
+```
+
 **Do not add a `check-yaml` hook.** Helm templates are Go templates that happen to look like YAML, and a generic parser rejects every one of them. The
 `.pre-commit-config.yaml` comment says so next to the hook, because this is the kind of thing that gets "fixed" by adding a standard hook set.
 
