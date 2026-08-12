@@ -192,7 +192,7 @@ cmd_import() {
     "name":"AMT","address":"Dircksenstr. 114","city":"Berlin","postalCode":"10178","district":"mitte",
     "latitude":52.5137,"longitude":13.418,"websiteUrl":"https://www.club-amt.berlin",
     "description":"Small club under the S-Bahn arches at Alexanderplatz."}' | yq -p json '.id')"
-  [ -n "$vid" ] && [ "$vid" != "null" ] || die "venue POST failed"
+  if [ -z "$vid" ] || [ "$vid" = "null" ]; then die "venue POST failed"; fi
   info "venue id $vid"
 
   curl -sS -X POST "$api/event-sources" -H 'Content-Type: application/json' -d "{
@@ -259,8 +259,10 @@ cmd_down() {
     psql_ -d postgres -c "DROP DATABASE IF EXISTS $DB;" >/dev/null 2>&1 && info "database $DB dropped"
   fi
   if [ -s "$STATE_DIR/previous-context" ]; then
-    kubectl config use-context "$(cat "$STATE_DIR/previous-context")" >/dev/null 2>&1 \
-      && info "kube context restored to $(cat "$STATE_DIR/previous-context")" || true
+    local previous; previous="$(cat "$STATE_DIR/previous-context")"
+    if kubectl config use-context "$previous" >/dev/null 2>&1; then
+      info "kube context restored to $previous"
+    fi
     rm -f "$STATE_DIR/previous-context"
   fi
 }
