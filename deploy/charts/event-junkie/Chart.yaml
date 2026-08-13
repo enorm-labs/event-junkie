@@ -41,3 +41,6 @@ keywords:
 maintainers:
   - name: enorm-labs
     url: https://github.com/enorm-labs
+
+# deliberately invalid key to fail helm lint --strict
+notAValidChartKey: true
