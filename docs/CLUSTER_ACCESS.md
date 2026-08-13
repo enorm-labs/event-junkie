@@ -8,10 +8,12 @@ Setting a cluster up for the first time is [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTST
 ## The short version
 
 ```sh
-sudo wg-quick up ~/.wireguard/staging.conf     # 1. tunnel
+sudo wg-quick up ~/.wireguard/staging.conf         # 1. tunnel — nothing works without it
 kubectl --context event-junkie-staging get nodes   # 2. work
-sudo wg-quick down ~/.wireguard/staging.conf   # 3. done
+sudo wg-quick down ~/.wireguard/staging.conf       # 3. done
 ```
+
+For the database it is two hops rather than one — the tunnel, then an SSH forward, because `pg_hba` does not admit the tunnel address (§6).
 
 Everything below is that, with the parts that go wrong explained.
 
@@ -149,7 +151,86 @@ quit. `s` opens a shell in a container and `Ctrl-D` deletes a resource — both 
 
 k9s follows `KUBECONFIG` and the current context if you omit `--context`, which is precisely the thing worth being explicit about on a real cluster.
 
-## 6 · Close the tunnel
+## 6 · The PostgreSQL database
+
+**The WireGuard tunnel alone is not enough, and the reason is worth understanding before you try.** PostgreSQL listens on `localhost` and `10.1.1.10` — the
+private network — and `pg_hba.conf` admits exactly two ranges:
+
+```
+host  all  all  10.1.1.0/24     scram-sha-256      # the private network
+host  all  all  10.42.0.0/16    scram-sha-256      # pods
+```
+
+Your tunnel address is `10.10.1.2`, which is in **neither**. So widening `AllowedIPs` to route `10.1.1.0/24` does not help: you would reach port 5432 and then
+be refused with `no pg_hba.conf entry for host`, which reads like a firewall problem and is not one. Adding the tunnel range to `pg_hba` would work and is the
+wrong fix — it widens who may reach the database in order to save one flag.
+
+**So the connection has to originate on the node.** An SSH local forward does that, needs no change to anything, and stops when you close it.
+
+```sh
+ssh -f -N -i ~/.ssh/id_ed25519_hetzner -L 15432:localhost:5432 ops@10.10.1.1
+```
+
+`-f -N` background with no shell; `15432` locally so it cannot collide with a PostgreSQL you already run. The WireGuard tunnel must be up first — `10.10.1.1`
+is only reachable through it.
+
+### The password
+
+It lives in the Kubernetes Secret, which is the only copy:
+
+```sh
+kubectl --context event-junkie-staging get secret events-db -n event-junkie \
+  -o jsonpath='{.data.password}' | base64 -d
+```
+
+For `psql`, pipe it into the environment rather than printing it:
+
+```sh
+PGPASSWORD="$(kubectl --context event-junkie-staging get secret events-db -n event-junkie \
+  -o jsonpath='{.data.password}' | base64 -d)" \
+  psql -h 127.0.0.1 -p 15432 -U events -d events
+```
+
+```
+events=> \dt events.*
+  event · artist · promoter · genre_tag · event_artist · event_genre_tag
+  event_promoter · event_source · flyway_schema_history
+```
+
+The local client is PostgreSQL 17 (Homebrew) against a **18.6** server. That works; a few `\d`-family commands may warn about the version gap. `brew install
+postgresql@18` if it ever matters.
+
+### IntelliJ IDEA
+
+IntelliJ has its own SSH tunnel, so it does not need the `ssh -L` above — but it **does** still need WireGuard up.
+
+**Database** tool window → **+** → **Data Source** → **PostgreSQL**, then:
+
+| Tab | Field | Value |
+|---|---|---|
+| General | Host / Port | `localhost` / `5432` |
+| General | Database | `events` |
+| General | User / Password | `events` / from the Secret above |
+| **SSH/SSL** | **Use SSH tunnel** | ✔ |
+| SSH config | Host / Port | `10.10.1.1` / `22` |
+| SSH config | User | `ops` |
+| SSH config | Auth type | **Key pair**, `~/.ssh/id_ed25519_hetzner` |
+
+**`Host: localhost` is correct and is the part people get wrong.** With a tunnel configured, IntelliJ resolves the host *from the SSH endpoint* — so
+`localhost` means the node, which is exactly where PostgreSQL is listening. Putting `10.10.1.1` there sends it somewhere nothing is bound.
+
+**Test Connection** should report PostgreSQL 18.6. IntelliJ will offer to download the driver on first use.
+
+> **This is a real database.** It is staging, so there is no personal data and nothing irreplaceable — but the importer is writing to it, and a stray `UPDATE`
+> in a query console is not undone by a redeploy. IntelliJ's read-only checkbox on the data source is a cheap seatbelt.
+
+Close the forward when you are done — it does not close itself:
+
+```sh
+pkill -f '15432:localhost:5432'
+```
+
+## 7 · Close the tunnel
 
 ```sh
 sudo wg-quick down ~/.wireguard/staging.conf
@@ -170,3 +251,4 @@ seconds. If you merged the kubeconfig, this is the only thing standing between a
 | **Everything hangs** | The tunnel, not the cluster. `sudo wg show` — no `latest handshake` means no tunnel |
 | **`staging.event-junkie.de` does not resolve** | Correct — it has no public record. Map it to `10.10.1.1` in `/etc/hosts` |
 | **Certificate warning in the browser** | Also correct. Staging issues from Let's Encrypt's *staging* CA so the production rate limit is not burned — see CLUSTER_BOOTSTRAP §11 |
+| **`no pg_hba.conf entry for host`** | You reached PostgreSQL from the tunnel address. It only admits the private network and the pod range — connect through the SSH forward in §6, do not widen `pg_hba` |
