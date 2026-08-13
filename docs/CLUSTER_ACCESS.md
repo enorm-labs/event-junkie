@@ -242,6 +242,41 @@ seconds. If you merged the kubeconfig, this is the only thing standing between a
 
 ---
 
+## The local k3d cluster is none of the above
+
+`scripts/k3d-rehearsal.sh` creates a throwaway cluster for the rehearsal, and **everything on this page is the wrong instinct for it**. No tunnel, no fetching,
+no `sed`, nothing to keep:
+
+```sh
+scripts/k3d-rehearsal.sh up        # k3d writes the kubeconfig itself
+kubectl --context k3d-event-junkie get nodes
+scripts/k3d-rehearsal.sh down      # and takes it away again
+```
+
+`k3d cluster create` merges into `~/.kube/config` and switches the active context as a side effect. The cluster is named `event-junkie`, so the context is
+always **`k3d-event-junkie`** — and it only exists between `up` and `down`.
+
+**Do not save a copy of it.** Every recreate changes three things: the **API server port** (the script passes no `--api-port`, so Docker assigns a random one),
+the **cluster CA**, and the **client certificate**. A stale copy fails as a connection refused against a port nothing is listening on, which reads like a
+crashed cluster rather than a stale file.
+
+If `~/.kube/config` is ever rewritten while a cluster is running:
+
+```sh
+k3d kubeconfig merge event-junkie --kubeconfig-merge-default   # back into ~/.kube/config
+k3d kubeconfig get event-junkie                                 # or print it standalone
+```
+
+**The contrast with staging is the point, and it is a design difference rather than an accident.** Staging's kubeconfig is fetched once and stays valid because
+the cluster is long-lived — which is exactly why it lives in its own file and why losing it costs a rebuild. k3d's is disposable because the cluster is, so it
+belongs in `~/.kube/config` and nobody should care when it changes.
+
+**A rehearsal cannot touch staging, even with staging's context current.** `k3d-rehearsal.sh` never relies on the active context: every call goes through a
+wrapper that passes `--context`/`--kube-context` explicitly, `guard_context` refuses to act on anything not named `k3d-*`, and `down` restores whatever context
+was selected before. That mattered less when the only clusters were local; it matters now.
+
+---
+
 ## Traps
 
 | | |
@@ -252,3 +287,4 @@ seconds. If you merged the kubeconfig, this is the only thing standing between a
 | **`staging.event-junkie.de` does not resolve** | Correct — it has no public record. Map it to `10.10.1.1` in `/etc/hosts` |
 | **Certificate warning in the browser** | Also correct. Staging issues from Let's Encrypt's *staging* CA so the production rate limit is not burned — see CLUSTER_BOOTSTRAP §11 |
 | **`no pg_hba.conf entry for host`** | You reached PostgreSQL from the tunnel address. It only admits the private network and the pod range — connect through the SSH forward in §6, do not widen `pg_hba` |
+| **k3d: connection refused after a recreate** | A saved kubeconfig. k3d assigns a new API port, CA and client cert every time — re-merge rather than keeping a copy |
