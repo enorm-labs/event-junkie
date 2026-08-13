@@ -13,7 +13,7 @@ kubectl --context event-junkie-staging get nodes   # 2. work
 sudo wg-quick down ~/.wireguard/staging.conf       # 3. done
 ```
 
-For the database it is two hops rather than one — the tunnel, then an SSH forward, because `pg_hba` does not admit the tunnel address (§6).
+For the database it is two hops rather than one — the tunnel, then an SSH forward, because `pg_hba` does not admit the tunnel address (§7).
 
 Everything below is that, with the parts that go wrong explained.
 
@@ -151,7 +151,62 @@ quit. `s` opens a shell in a container and `Ctrl-D` deletes a resource — both 
 
 k9s follows `KUBECONFIG` and the current context if you omit `--context`, which is precisely the thing worth being explicit about on a real cluster.
 
-## 6 · The PostgreSQL database
+## 6 · The site itself
+
+**`staging.event-junkie.de` does not resolve, anywhere, on purpose.** There is no public `A` record and there never will be — that is the whole design
+(PLATFORM_SETUP §4a). So the name has to be mapped locally, to the node's *tunnel* address:
+
+```sh
+sudo sh -c 'echo "10.10.1.1  staging.event-junkie.de" >> /etc/hosts'
+```
+
+Then `https://staging.event-junkie.de/` in a browser, with the tunnel up.
+
+**Reaching it through Traefik is the point.** `kubectl port-forward` would also get you a page, and it would prove almost nothing: it skips TLS, the ingress
+rules, the `/api` split and the middlewares, so it tests a different topology than production. If the routing is broken, a port-forward hides it.
+
+### Expect a certificate warning, and do not fix it the easy way
+
+The certificate is real and correctly issued — for `staging.event-junkie.de`, via DNS-01, valid 90 days — but it comes from Let's Encrypt's **staging** CA,
+whose root no browser trusts. Click through it.
+
+**Do not install the Let's Encrypt staging root to silence the warning.** It issues to anyone who asks, so trusting it means trusting a CA that will happily
+vouch for any domain, for every site you visit. The real fix is switching `certManager.clusterIssuer.server` to the production ACME endpoint — one value, and
+the reason it has not happened yet is that the production rate limit is per *registered* domain and shared with production
+([#265](https://github.com/enorm-labs/event-junkie/issues/265)).
+
+### Without touching `/etc/hosts`
+
+`curl` can resolve a name for one request, which is also the quickest way to check the site is up from a script:
+
+```sh
+curl -I --resolve 'staging.event-junkie.de:443:10.10.1.1' https://staging.event-junkie.de/ -k
+```
+
+`-k` skips verification, for the staging-CA reason above. What a healthy response looks like:
+
+```
+HTTP/2 200
+server: nginx
+x-robots-tag: noindex, nofollow      <- the environment is un-indexable
+content-type: text/html
+```
+
+### What each path should do
+
+Worth knowing, because two of these look wrong and are not:
+
+| | |
+|---|---|
+| `/` | `200` — the frontend |
+| `/api/events` | `200` — the BFF, which serves under `/api` itself; there is no rewrite |
+| `/api/admin` | **`404`** — correct. The importer's admin API has no ingress backend at all |
+| `/actuator/health` | **`200`, but from nginx** — the SPA catch-all, *not* the actuator. Check `server:` and the body before concluding anything is exposed |
+
+That last row is the one that looks alarming. Actuator lives on its own port that no ingress rule names, so any unmatched path falls through to the frontend's
+SPA fallback and returns the index page with a `200`.
+
+## 7 · The PostgreSQL database
 
 **The WireGuard tunnel alone is not enough, and the reason is worth understanding before you try.** PostgreSQL listens on `localhost` and `10.1.1.10` — the
 private network — and `pg_hba.conf` admits exactly two ranges:
@@ -230,7 +285,7 @@ Close the forward when you are done — it does not close itself:
 pkill -f '15432:localhost:5432'
 ```
 
-## 7 · Close the tunnel
+## 8 · Close the tunnel
 
 ```sh
 sudo wg-quick down ~/.wireguard/staging.conf
@@ -286,5 +341,5 @@ was selected before. That mattered less when the only clusters were local; it ma
 | **Everything hangs** | The tunnel, not the cluster. `sudo wg show` — no `latest handshake` means no tunnel |
 | **`staging.event-junkie.de` does not resolve** | Correct — it has no public record. Map it to `10.10.1.1` in `/etc/hosts` |
 | **Certificate warning in the browser** | Also correct. Staging issues from Let's Encrypt's *staging* CA so the production rate limit is not burned — see CLUSTER_BOOTSTRAP §11 |
-| **`no pg_hba.conf entry for host`** | You reached PostgreSQL from the tunnel address. It only admits the private network and the pod range — connect through the SSH forward in §6, do not widen `pg_hba` |
+| **`no pg_hba.conf entry for host`** | You reached PostgreSQL from the tunnel address. It only admits the private network and the pod range — connect through the SSH forward in §7, do not widen `pg_hba` |
 | **k3d: connection refused after a recreate** | A saved kubeconfig. k3d assigns a new API port, CA and client cert every time — re-merge rather than keeping a copy |
