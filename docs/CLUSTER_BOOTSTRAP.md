@@ -222,6 +222,65 @@ kubectl --context event-junkie-staging get secret event-junkie-staging-tls -n ev
 
 ---
 
+## Rebuilding a node — including migrating to ARM
+
+**A rebuild is this runbook again from §3, and that is the whole point of writing it down.** What follows is only the deltas.
+
+You end up here for four reasons, and three of them are not optional:
+
+| | |
+|---|---|
+| Any edit under `cloud-init/` | `user_data` is a force-new attribute |
+| **Changing architecture** | `cpx*` ↔ `cax*` — see below |
+| The destroy/apply cycle | [#424](https://github.com/enorm-labs/event-junkie/issues/424)'s last box |
+| Something is broken past fixing | The reason a node is meant to be disposable |
+
+### Architecture is a rebuild, not a resize, and the plan will not say so
+
+Hetzner cannot rescale between architectures — [their FAQ](https://docs.hetzner.com/cloud/servers/faq/) lists rescale alongside snapshots and ISOs as places
+where "it is not possible to work with two different architecture types". Within one architecture (`cpx22` → `cx23`) it is an in-place resize and behaves as you
+would expect.
+
+**Between them, `tofu plan` renders a tidy in-place update and the *apply* fails against the API partway through.** So do not treat `k3s_server_type` as just
+another variable when the prefix changes.
+
+### What survives, and what does not
+
+| Survives | Does not |
+|---|---|
+| **Both Primary IPs** — `auto_delete = false`, so the public address and your WireGuard `Endpoint` are unchanged | **The database.** No volume, `PGDATA` on local disk — [#460](https://github.com/enorm-labs/event-junkie/issues/460) |
+| The network, subnet and firewall | **The k3s cluster** — new CA, new kubeconfig, new node identity |
+| Your WireGuard *client* keypair, and `wireguard_peers` | **The WireGuard server key** — regenerated at first boot |
+| The DNS zones (`bootstrap/`, outside every environment destroy) | **Flux, and both secrets** — the cluster is new, so its contents are gone |
+
+**The server key is the one that will look like a broken tunnel.** `wireguard.sh` generates a keypair only if none exists, so a fresh node has a fresh one and
+your `~/.wireguard/staging.conf` is pointing at a peer that no longer exists. The handshake simply never happens. Update the `PublicKey =` line from §4; your own
+key and the `wireguard_peers` entry stay valid.
+
+### The sequence
+
+```sh
+cd infra/environments/staging
+./check-capacity.sh staging          # advertised != orderable — see the script's header
+
+# 1. edit main.tf if the point is to change hardware
+tofu destroy                          # staging has ip_delete_protection = false for exactly this
+ADMIN="[\"$(curl -s https://ifconfig.me)/32\",\"$(dig +short myip.opendns.com @resolver1.opendns.com | tail -1)/32\"]"
+tofu apply -var "admin_cidrs=$ADMIN"  # admin_cidrs again — the tunnel does not exist yet either
+```
+
+Then **§3 onward**, in full: wait for cloud-init, collect the *new* server key and fix your client config, tunnel, close the door, kubeconfig, database, both
+secrets, `flux bootstrap`. Steps 1 and 2 are the only ones you skip — your keypair and `terraform.tfvars` are unchanged.
+
+Two things are cheaper the second time: nothing in `cloud-init/` is architecture-specific, and [#264](https://github.com/enorm-labs/event-junkie/issues/264)
+publishes **multi-arch** images, so the chart, its tags and its digests-per-platform need no attention at all. That is what makes the architecture reversible;
+it was not, before those images existed.
+
+**Production is different and this section does not cover it.** Its PostgreSQL is a dedicated node with no backups yet
+([#270](https://github.com/enorm-labs/event-junkie/issues/270)), so a rebuild there is data loss, not inconvenience. Do #460 and #270 first.
+
+---
+
 ## Traps, in the order they bite
 
 | | |
@@ -236,3 +295,5 @@ kubectl --context event-junkie-staging get secret event-junkie-staging-tls -n ev
 | **DNS-01 challenge stuck `pending`** | Read the *challenge's* `status.reason`. A `groupName` mismatch shows up as an RBAC error for an API group nothing serves |
 | **Fixing the issuer does not unstick it** | A challenge that failed at `Present` **cannot clean itself up** — its finalizer calls the same broken path forever, so it never finishes deleting and its order never progresses. The corrected config is simply never used. Clear it, then the new challenge starts within seconds |
 | **Staging deploys a stale chart** | [#455](https://github.com/enorm-labs/event-junkie/issues/455) — snapshot versions sort lexically, so the semver range picks a random sha. Staging is pinned to a tag until that lands |
+| **The tunnel stops working after a rebuild** | The node generated a new WireGuard server key. Your client config points at a peer that no longer exists, and a handshake simply never happens — update `PublicKey =`. See *Rebuilding a node* |
+| **`server_type` change fails during apply** | `cpx*` ↔ `cax*` cannot be rescaled. The plan renders an in-place update anyway; the API refuses. It is a rebuild |

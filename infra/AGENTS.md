@@ -93,6 +93,14 @@ argument behind it. If you contradict one of those documents, change the documen
 
 - **`user_data` forces replacement.** Any edit under `cloud-init/` rebuilds the node, production included. It is also capped at **32 KiB**; the k3s node's
   rendered cloud-init is about 11.6 KiB, so there is room, but adding scripts is not free forever. Measure it if you add one.
+- **`server_type` cannot cross architectures, and `tofu plan` will not warn you.** Within one architecture it is an in-place resize; between `cpx*` (x86) and
+  `cax*` (ARM) Hetzner refuses — [their FAQ](https://docs.hetzner.com/cloud/servers/faq/) lists rescale alongside snapshots and ISOs as places where "it is not
+  possible to work with two different architecture types". The plan renders a tidy in-place update and the **apply** fails against the API partway through. So
+  an architecture change is a *rebuild*, not a variable change: see [docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) §Rebuilding a node. Staging is on
+  `cpx22` only because ARM could not be bought (#424), so this is a live concern rather than a hypothetical.
+- **Rebuilding a node destroys its database.** There is no volume anywhere here and `postgres.sh` does not relocate `PGDATA`, so PostgreSQL lives on the local
+  disk and dies with the server. Survivable on staging, not on production — #460 puts it on a volume, and the timing matters: cheap before production is
+  applied, a live data migration afterwards.
 - **`delete_protection` does not stop OpenTofu** — the provider lifts its own locks before destroying. Only `lifecycle { prevent_destroy = true }` does, and it
   is used in exactly one place, on the DNS zones. Do not describe any other resource as protected from `destroy`.
 - **`ssh_keys` on a server is ignored after creation** (`lifecycle.ignore_changes`), because changing it would rebuild the node and the keys only ever reach
