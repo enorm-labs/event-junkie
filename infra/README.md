@@ -125,28 +125,21 @@ goes over UDP/53 rather than through the proxy, so it reports the direct one. Al
 
 ### Getting onto the tunnel
 
-**Already set up?** Bring the tunnel up first — **everything else needs it, and all of it runs on your laptop:**
+**Two runbooks, neither of them here:**
+
+| | |
+|---|---|
+| Setting a cluster up from scratch | [docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) — `tofu apply` through tunnel, kubeconfig, database and `flux bootstrap`, in order |
+| Connecting to one that exists | [docs/CLUSTER_ACCESS.md](../docs/CLUSTER_ACCESS.md) — tunnel up, kubeconfig, contexts, `k9s`, tunnel down |
 
 ```sh
-sudo wg-quick up ~/.wireguard/staging.conf     # then `sudo wg show` — look for `latest handshake`
+sudo wg-quick up ~/.wireguard/staging.conf          # the short version of the second one
+kubectl --context event-junkie-staging get nodes
+sudo wg-quick down ~/.wireguard/staging.conf
 ```
 
-Then, in any shell, pick **one** of these. They are alternatives, not a sequence:
-
-```sh
-ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1                      # a shell ON the node
-kubectl --context event-junkie-staging get nodes                    # the cluster, FROM here
-```
-
-**Do not run the `kubectl` line inside the `ssh` session.** It is the obvious mistake and it fails confusingly: the kubeconfig lives on your laptop, so on the
-node `kubectl` finds nothing, falls back to `localhost:8080`, and reports `connection refused` alongside `permission denied` warnings about
-`/etc/rancher/k3s/config.yaml.d`. Nothing is broken; you are just in the wrong place. On the node itself the equivalent is `sudo k3s kubectl get nodes`.
-
-`sudo wg-quick down ~/.wireguard/staging.conf` when you are done.
-
-**Setting a cluster up from scratch? [docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md)** — the ordered runbook, from `tofu apply` through the tunnel,
-the kubeconfig, the database and `flux bootstrap`, with the traps that actually cost time. It is deliberately the only copy of those steps; what follows here is
-the reasoning behind the ones that touch this directory, which a linear runbook has no room for.
+Those two are deliberately the only copies of their steps. What follows here is the reasoning behind the ones that touch *this* directory — the decisions a
+linear runbook has no room to justify.
 
 ### Why the tunnel takes two keypairs made in different places
 
@@ -173,9 +166,13 @@ k3s writes its kubeconfig for `127.0.0.1`, and the runbook rewrites that to the 
 server's certificate SANs**: `k3s_extra_tls_sans` plus the module contribute the public IPv4, the tunnel address, the private address and the hostname, so the
 same cluster answers on all four without a TLS complaint. Adding a fifth way in means adding it there first.
 
-Keep the file separate rather than merging it into `~/.kube/config`, and rename its context off k3s's `default`. A cluster reachable only through a tunnel is one
-you should have to name explicitly — every `helm`, `flux` and `kubectl` command in this repository's guidance passes `--kube-context`/`--context`, and that
-discipline buys nothing if the name it takes is the one every other cluster also uses.
+**Rename the context off k3s's `default` whichever way you store it.** A cluster reachable only through a tunnel is one you should have to name explicitly, and
+every `helm`, `flux` and `kubectl` command in this repository's guidance passes `--kube-context`/`--context` — a discipline that buys nothing if the name it
+takes is the one every other cluster also uses.
+
+Keeping the file separate or merging it into `~/.kube/config` is a genuine choice, and
+[CLUSTER_ACCESS.md §3](../docs/CLUSTER_ACCESS.md#3--point-kubectl-at-it) sets out both with what each costs. The short of it: separate means forgetting the
+export fails loudly, merged means the safety rests entirely on `--context`.
 
 ### Closing the door behind you
 
