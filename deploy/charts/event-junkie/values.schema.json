@@ -104,6 +104,10 @@
         "host": { "type": "string", "minLength": 1 },
         "redirectHosts": { "type": "array", "items": { "type": "string", "minLength": 1 } },
         "annotations": { "type": "object" },
+        "noindex": {
+          "description": "Adds X-Robots-Tag: noindex, nofollow via a Traefik Middleware. On outside production (#265, #286).",
+          "type": "boolean"
+        },
         "tls": {
           "type": "object",
           "required": ["enabled", "secretName"],
@@ -129,6 +133,23 @@
             "solver": {
               "description": "http01 needs Let's Encrypt to reach the host; staging has no public address, so it uses dns01 (PLATFORM_SETUP §4a).",
               "enum": ["http01", "dns01"]
+            },
+            "dns01": {
+              "description": "The official hetzner/cert-manager-webhook-hetzner solver. Speaks the Cloud API; the old dns.hetzner.com API was shut down in May 2026.",
+              "type": "object",
+              "required": ["tokenSecret", "webhookGroupName"],
+              "properties": {
+                "tokenSecret": {
+                  "description": "A Secret holding an hcloud API token, in cert-manager's namespace — a ClusterIssuer resolves references there, not in the release namespace.",
+                  "type": "object",
+                  "required": ["name", "key"],
+                  "properties": {
+                    "name": { "type": "string", "minLength": 1 },
+                    "key": { "type": "string", "minLength": 1 }
+                  }
+                },
+                "webhookGroupName": { "type": "string", "minLength": 1 }
+              }
             }
           }
         }

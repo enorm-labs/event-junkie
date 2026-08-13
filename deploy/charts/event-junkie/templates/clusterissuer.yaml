@@ -32,14 +32,26 @@ spec:
       {{- /* Staging has no public address for an HTTP-01 challenge to reach — it is unreachable
              from the internet by design, not merely password-protected (PLATFORM_SETUP §4a). The
              Hetzner DNS webhook this refers to is installed by #265; this chart does not depend on
-             it, and rendering a solver that names it is not the same as requiring it. */}}
+             it, and rendering a solver that names it is not the same as requiring it.
+
+             THE SHAPE OF THIS BLOCK IS THE OFFICIAL WEBHOOK'S, NOT A COMMUNITY FORK'S, AND THAT
+             DISTINCTION IS NOT COSMETIC. Hetzner shut the old dns.hetzner.com API down in May 2026
+             and every DNS token issued by the old console stopped working with it. The half-dozen
+             community webhooks that still come top in a search all speak that dead API. The
+             official one — hetzner/cert-manager-webhook-hetzner, chart `hcloud/…` — speaks the
+             Cloud API and takes an ordinary hcloud token, the same kind `infra/` authenticates with.
+
+             So: groupName `acme.hetzner.com` (not `.cloud`), and the token is named through
+             `tokenSecretKeyRef`, not the `secretName`/`secretKey` pair the community charts use.
+             Getting either wrong fails at challenge time, long after everything looks installed. */}}
       - dns01:
           webhook:
             groupName: {{ $issuer.dns01.webhookGroupName | quote }}
             solverName: hetzner
             config:
-              secretName: {{ $issuer.dns01.secretName | quote }}
-              secretKey: {{ $issuer.dns01.secretKey | quote }}
+              tokenSecretKeyRef:
+                name: {{ $issuer.dns01.tokenSecret.name | quote }}
+                key: {{ $issuer.dns01.tokenSecret.key | quote }}
       {{- else }}
       {{- /* HTTP-01 needs port 80 reachable and the A record already resolving, so the order is
              DNS → deploy → certificate and it cannot be reordered. */}}

@@ -1,0 +1,17 @@
+# cert-manager's chart repository. The staging copy of this file is identical.
+#
+# Duplicated rather than shared, which ADR-016 accepted knowingly: without a `base/` overlay a change
+# to a component's version has to be made in each cluster directory. That is the cost of the flat
+# layout, and it is now paid by two files instead of one. The ADR's "when to revisit" names exactly
+# this — the first time these drift, a `base/` has earned its keep.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: jetstack
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      The upstream cert-manager chart repository, maintained by Venafi/CyberArk.
+spec:
+  interval: 1h
+  url: https://charts.jetstack.io

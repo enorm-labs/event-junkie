@@ -201,6 +201,15 @@ ingress:
     - "event-junkie.com"
   # ingress.annotations are merged in after the cert-manager annotation the chart adds itself.
   annotations: {}
+  # ingress.noindex adds `X-Robots-Tag: noindex, nofollow` to every response, through a Traefik
+  # Middleware. Off here because this file is the production configuration, and production is the
+  # one environment that must be indexed. Staging turns it on (#265, #286).
+  #
+  # Defence in depth rather than the control: staging has no public address at all, and a crawler
+  # cannot reach what does not resolve. This exists for the day somebody adds an A record "just to
+  # check something" — the cost is one header and the failure mode is a staging site in Google's
+  # index for months.
+  noindex: false
   tls:
     # ingress.tls.enabled asks cert-manager for a certificate via the ingress-shim annotation.
     enabled: true
@@ -227,13 +236,21 @@ certManager:
     # HTTP-01 to reach (PLATFORM_SETUP §4a), so it uses dns01 against Hetzner DNS.
     solver: "http01"
     dns01:
-      # certManager.clusterIssuer.dns01.secretName holds the Hetzner DNS API token, read by the
-      # webhook that #265 installs. Not created by this chart.
-      secretName: "hetzner-dns-token"
-      # certManager.clusterIssuer.dns01.secretKey is the key inside that Secret.
-      secretKey: "api-token"
-      # certManager.clusterIssuer.dns01.webhookGroupName is the webhook's API group.
-      webhookGroupName: "acme.hetzner.cloud"
+      tokenSecret:
+        # certManager.clusterIssuer.dns01.tokenSecret.name holds a **Hetzner Cloud** API token with
+        # read+write, read by the webhook #265 installs. Not created by this chart, and — because
+        # this is a ClusterIssuer — it must live in cert-manager's own namespace rather than the
+        # release's. A ClusterIssuer resolves secret references against the cluster resource
+        # namespace, so a token sitting next to the workloads is simply not found.
+        #
+        # Not a `dns.hetzner.com` token: that API and its console were shut down in May 2026 and
+        # those tokens no longer work anywhere. Issue this one in the Hetzner Console.
+        name: "hetzner"
+        # certManager.clusterIssuer.dns01.tokenSecret.key is the key inside that Secret.
+        key: "token"
+      # certManager.clusterIssuer.dns01.webhookGroupName is the webhook's API group. `.com`, which
+      # is the official webhook's; the community forks use `.cloud` and speak the dead API.
+      webhookGroupName: "acme.hetzner.com"
 
 # tests.enabled renders the `helm test` hook pod. #414 wires Flux's `test.enable` to it.
 tests:

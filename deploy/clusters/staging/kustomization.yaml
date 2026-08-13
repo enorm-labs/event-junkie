@@ -1,9 +1,17 @@
 # What Flux syncs for the staging cluster. `flux bootstrap --path=deploy/clusters/staging` points
 # its own Kustomization at this directory, and bootstrap adds a generated `flux-system/` alongside
 # these files — that directory is machine-written, ~2 MB, and must never be hand-edited.
+#
+# Order here is presentational only. Kustomize applies these as one set and Flux does not read the
+# list as a sequence: what actually orders the installs is `dependsOn` inside the HelmReleases —
+# cert-manager, then the webhook, then the application.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - helm-repository-jetstack.yaml
+  - helm-repository-hetzner.yaml
+  - cert-manager.yaml
+  - cert-manager-webhook.yaml
   - oci-repository.yaml
   - helm-release.yaml
   - notification.yaml

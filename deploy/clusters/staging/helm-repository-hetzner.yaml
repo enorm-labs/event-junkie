@@ -1,0 +1,18 @@
+# Hetzner's own chart repository, for the DNS-01 webhook.
+#
+# STAGING ONLY. Production solves ACME over HTTP-01, because it has a public address for Let's
+# Encrypt to reach; staging deliberately has none, which is the entire reason this component exists
+# (PLATFORM_SETUP §4a). So this file has no production counterpart, and that asymmetry is the design
+# rather than an oversight.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: hetzner
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      Hetzner's official chart repository. Also carries the CCM and CSI charts, neither of which
+      this cluster uses.
+spec:
+  interval: 1h
+  url: https://charts.hetzner.cloud

@@ -274,6 +274,17 @@ Nuremberg.
 > If capacity returns to `nbg1`/`hel1` but not `fsn1`, moving is two variables (`location`, and the `*_server_type` values) plus destroying the `fsn1` Primary
 > IPs, which are location-bound.
 
+> **Update, 2026-08-13: half of it came back, and staging took it.** `check-capacity.sh` now reports `cax11` orderable in `nbg1` and `cax21` still unavailable
+> everywhere in `eu-central`. Staging is a single `cax11`, so `infra/environments/staging` moved to `nbg1` and can be applied; production still needs a `cax21`
+> and still waits, pinned to `fsn1`.
+>
+> **The Primary IP caveat above did not apply, and that was checked rather than assumed.** The Hetzner project was queried directly first — no servers,
+> networks, firewalls, volumes or Primary IPs existed, so the failed 2026-08-11 apply left nothing location-bound behind and the move was one variable.
+>
+> The re-platforming decision is therefore **not** taken and the `cpx*` paragraph above stands unused. Note that it has also got cheaper to defer in one respect
+> and more expensive in another: #264 now publishes **multi-arch** images, so architecture is no longer a one-way door — but production has been waiting since
+> 2026-08-11, and "wait rather than re-platform" is a decision worth re-taking rather than inheriting.
+
 ## Things that will surprise you
 
 **`delete_protection` does not stop OpenTofu.** The provider lifts its own locks before destroying, which its documentation says plainly — so a `tofu destroy`

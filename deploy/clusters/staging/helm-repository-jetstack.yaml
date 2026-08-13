@@ -1,0 +1,21 @@
+# cert-manager's chart repository.
+#
+# The first non-application source in this repository, and it is what ADR-016 said would not exist:
+# "cert-manager and Traefik are installed out of band". Traefik still is — k3s ships it. cert-manager
+# is not, and #265 had to decide how it arrives. See ADR-016's amendment for why this is Flux's job
+# rather than a script's: the alternative was an install nothing versions, nothing upgrades and
+# nothing notices drifting.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: jetstack
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      The upstream cert-manager chart repository, maintained by Venafi/CyberArk.
+spec:
+  # An hour, not a minute. This only asks "what versions exist?" — the version actually installed is
+  # pinned in the HelmRelease, so polling faster would find news nothing acts on. Contrast the
+  # OCIRepository's 1m, which is the deploy latency for our own chart.
+  interval: 1h
+  url: https://charts.jetstack.io

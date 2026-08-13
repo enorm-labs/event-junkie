@@ -5,7 +5,19 @@ module "environment" {
   # fsn1, nbg1 and hel1 are interchangeable on cost (free traffic within the eu-central zone) and
   # all three offer ARM, so this is the line to change when capacity moves — see check-capacity.sh.
   # Staging is a single node, so nothing here has to stay co-located; production does.
-  location = "fsn1"
+  #
+  # nbg1 rather than fsn1 since 2026-08-13, and this is the capacity move that line predicted. The
+  # 2026-08-11 apply died at the last resource with `resource_unavailable` because the whole CAX
+  # line was sold out across eu-central; `./check-capacity.sh` now reports cax11 orderable in nbg1
+  # and cax21 still gone everywhere. So staging moves and production stays pinned to fsn1, waiting.
+  #
+  # Free to move because the Hetzner project was verified empty first — no servers, networks,
+  # firewalls, volumes or Primary IPs survived the failed apply, and a Primary IP is location-bound
+  # and would otherwise have had to be destroyed before this line could change.
+  #
+  # Nothing in the design wanted the two environments co-located: staging has its own network
+  # (10.1.0.0/16), its own firewall and its own database, and reaches production over nothing at all.
+  location = "nbg1"
 
   # One CAX11 running everything. PostgreSQL is co-located rather than given its own node, but it
   # is still reached over the network at a private address, so the connection path the applications
@@ -49,5 +61,13 @@ module "environment" {
 # challenge, because HTTP-01 requires Let's Encrypt to reach the host and this design exists to
 # stop that. cert-manager uses DNS-01 against the Hetzner DNS API instead, which needs no inbound
 # access at all — so staging gets a genuine, publicly-trusted certificate for a hostname that has
-# no public address. The TXT record is public; the A record never exists. That is #261's work.
+# no public address. The TXT record is public; the A record never exists.
+#
+# The chart renders that solver (#261); #265 installs cert-manager and the Hetzner webhook that
+# answers it, both as Flux HelmReleases in deploy/clusters/staging/.
+#
+# The token it needs is an **hcloud** token — the same kind this stack authenticates with, from the
+# Hetzner Console. The old dns.hetzner.com API and its separate DNS tokens were shut down in May
+# 2026, which is also why `hcloud_zone` in bootstrap/ is the official provider's resource rather
+# than a community DNS provider's.
 # ---------------------------------------------------------------------------

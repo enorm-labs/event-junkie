@@ -1,0 +1,86 @@
+# cert-manager on production.
+#
+# Nearly staging's file, with one deliberate difference and one deliberate sameness.
+#
+# The difference: **no DNS-01 webhook here.** Production has a public address, so it solves ACME over
+# HTTP-01 and needs no Hetzner API token in the cluster at all. That is one fewer credential and one
+# fewer component on the environment that matters most, and it is why `helm-release.yaml` depends on
+# this release directly rather than on a webhook.
+#
+# The sameness: identical versions and identical resource requests. cert-manager's footprint tracks
+# the size of the cluster, not the traffic through it, so there is nothing here to scale up — and
+# keeping the two environments on one version is what makes staging's rehearsal mean anything.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cert-manager
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      cert-manager, issuing the production certificate over HTTP-01 against the real Let's Encrypt
+      endpoint. Installed by Flux so its version is reviewable and its drift is corrected.
+spec:
+  releaseName: cert-manager
+  targetNamespace: cert-manager
+  storageNamespace: cert-manager
+  interval: 1h
+  chart:
+    spec:
+      chart: cert-manager
+      # Pinned exactly, never a range — bumping it is a pull request. Keep in step with
+      # deploy/clusters/staging/cert-manager.yaml, and bump staging first: an untested certificate
+      # controller on production is how a site stops serving TLS sixty days later.
+      version: "v1.21.1"
+      sourceRef:
+        kind: HelmRepository
+        name: jetstack
+        namespace: flux-system
+      interval: 1h
+  install:
+    createNamespace: true
+    remediation:
+      retries: 2
+  upgrade:
+    remediation:
+      retries: 2
+      strategy: rollback
+      remediateLastFailure: true
+    cleanupOnFail: true
+  values:
+    crds:
+      # Off by default in this chart, and the failure lands downstream: the application release is
+      # what fails, on an unknown kind, which reads like a problem with our chart rather than a
+      # missing flag here.
+      enabled: true
+      keep: true
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: "10m"
+        memory: "48Mi"
+      limits:
+        memory: "128Mi"
+    webhook:
+      replicaCount: 1
+      resources:
+        requests:
+          cpu: "10m"
+          memory: "32Mi"
+        limits:
+          memory: "64Mi"
+    cainjector:
+      replicaCount: 1
+      resources:
+        requests:
+          cpu: "10m"
+          memory: "96Mi"
+        limits:
+          memory: "256Mi"
+    startupapicheck:
+      enabled: true
+      resources:
+        requests:
+          cpu: "10m"
+          memory: "32Mi"
+        limits:
+          memory: "64Mi"

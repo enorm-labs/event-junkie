@@ -102,6 +102,23 @@ run_assertions() {
     "$(yq -N 'select(.kind == "Ingress") | .spec.rules[].http.paths[].backend.service.port | [.name, .number] | .[]' "$manifest" |
       grep -Ex 'management|9001' || true)"
 
+  # --- noindex is a two-part mechanism, and half of it is silent ------------------------------
+  #
+  # The header needs both a Middleware and an Ingress annotation naming it. Render only the
+  # Middleware and every response is missing the header while the manifest looks entirely correct;
+  # render only the annotation and Traefik drops the route with a middleware-not-found error. The
+  # first failure mode is the dangerous one — a staging environment that believes it is noindexed.
+  #
+  # Asserted as an equality between the two halves rather than as their presence, because this must
+  # hold in *both* directions: production renders neither, and that is also correct.
+
+  assert_equals "the noindex middleware and the annotation naming it agree" \
+    "$(yq -N 'select(.kind == "Middleware") | select(.metadata.name == "*-noindex") | .metadata.name' "$manifest" | wc -l | tr -d ' ')" \
+    "$(yq -N 'select(.kind == "Ingress") | .metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"] // ""' "$manifest" | grep -c -- '-noindex@kubernetescrd' || true)"
+
+  assert_empty "no noindex middleware sets an empty X-Robots-Tag" \
+    "$(yq -N 'select(.kind == "Middleware") | .spec.headers.customResponseHeaders["X-Robots-Tag"] // "" | select(. == "")' "$manifest")"
+
   # --- The importer's single replica is an ADR-008 correctness constraint ---------------------
   #
   # Two schedulers means two concurrent imports of the same source; the 60-second tick's RUNNING
@@ -254,6 +271,58 @@ check_values_files() {
   done
 }
 
+# --- A ClusterIssuer needs cert-manager to already be there ------------------------------------
+#
+# Also not a render assertion: what it checks is a relationship *between* files, which no single
+# render can see. The chart's ClusterIssuer template renders a `cert-manager.io/v1` object, and the
+# API server rejects an unknown kind — so a cluster whose application HelmRelease sets
+# `certManager.clusterIssuer.create: true` without a `dependsOn` installs nothing at all. Not the
+# issuer: the whole release, workloads included.
+#
+# It fails on the very first bootstrap of a new cluster and looks like a chart bug, which is the
+# expensive kind of failure. #265 added the dependency; this is what keeps it.
+check_cluster_dependencies() {
+  current_case="cluster dependencies"
+  printf '\n== cluster dependencies ==\n'
+
+  local file cluster creates depends
+  for file in "$CLUSTERS_DIR"/*/helm-release.yaml; do
+    [[ -e "$file" ]] || continue
+    cluster="$(basename "$(dirname "$file")")"
+
+    creates="$(yq -N '.spec.values.certManager.clusterIssuer.create // false' "$file")"
+    [[ "$creates" == "true" ]] || continue
+
+    depends="$(yq -N '.spec.dependsOn[].name // ""' "$file")"
+    if [[ -n "$(printf '%s' "$depends" | tr -d '[:space:]')" ]]; then
+      pass "$cluster: creates a ClusterIssuer and declares dependsOn ($(printf '%s' "$depends" | tr '\n' ' '))"
+    else
+      fail "$cluster: creates a ClusterIssuer but declares no dependsOn" \
+        "the release renders a cert-manager.io/v1 kind; without cert-manager installed first the
+whole release fails on an unknown kind, not just the issuer"
+    fi
+  done
+
+  # Every chart this repository installs from a HelmRepository must name one version, not a range.
+  # A range lets a new upstream release reach the cluster with no diff, no review and no commit —
+  # which is the property GitOps exists to remove, and it would be silent.
+  local release version
+  for release in "$CLUSTERS_DIR"/*/*.yaml; do
+    [[ -e "$release" ]] || continue
+    [[ "$(yq -N '.kind // ""' "$release")" == "HelmRelease" ]] || continue
+    version="$(yq -N '.spec.chart.spec.version // ""' "$release")"
+    [[ -n "$version" ]] || continue
+
+    cluster="$(basename "$(dirname "$release")")/$(basename "$release")"
+    if [[ "$version" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      pass "$cluster: chart version is pinned exactly ($version)"
+    else
+      fail "$cluster: chart version '$version' is a range, not a pin" \
+        "an upstream release could then reach the cluster with no commit and no review"
+    fi
+  done
+}
+
 render_case() {
   local name="$1"
   shift
@@ -298,6 +367,7 @@ main() {
   command -v yq >/dev/null || { echo "yq is not installed" >&2; exit 127; }
 
   check_values_files
+  check_cluster_dependencies
 
   render_case "default" "${BASE_OVERRIDES[@]}"
 

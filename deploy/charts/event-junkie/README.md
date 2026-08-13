@@ -74,6 +74,8 @@ Only the values worth a decision are listed. Every property is documented in
 | `certManager.clusterIssuer.create` | `false` | A ClusterIssuer is a cluster-scoped singleton — see below |
 | `certManager.clusterIssuer.server` | ACME **staging** | Deliberately not production. 50 certificates per registered domain per week, and burning it costs seven days |
 | `certManager.clusterIssuer.solver` | `http01` | `dns01` for staging, which has no public address for HTTP-01 to reach |
+| `certManager.clusterIssuer.dns01.*` | official webhook | `groupName: acme.hetzner.com` and a `tokenSecretKeyRef` — see below, the community forks differ on both |
+| `ingress.noindex` | `false` | Adds `X-Robots-Tag: noindex, nofollow` via a Middleware. On outside production (#265, #286) |
 
 **Two values files ship with the chart, and the environments are not among them.** `values.yaml` is
 production-shaped and cannot render on its own — the two required keys have no safe default.
@@ -234,6 +236,34 @@ somebody else's is how a chart acquires a resource it can never safely change.
 a chart that owns one cannot be installed twice on the same cluster — which is exactly what the k3d
 rehearsal needs to do. Staging's HelmRelease turns it on, because staging is its own cluster with
 one release on it.
+
+Since #265 cert-manager itself is a `HelmRelease` in each cluster directory rather than a manual
+install, and every release that sets `create: true` declares `dependsOn` so the CRDs exist first.
+`deploy/scripts/render-assertions.sh` fails the build if one stops doing so — without the dependency
+the *whole* release fails on the unknown kind, workloads included, on the first bootstrap of a new
+cluster, and it reads like a bug in this chart.
+
+### The DNS-01 solver names Hetzner's own webhook, not a fork
+
+`solver: dns01` renders a webhook solver, and the shape of it is version-specific in a way that
+fails late. Hetzner shut the old `dns.hetzner.com` API down in **May 2026**; the community webhooks
+that still dominate search results speak it, install cleanly, report Ready and then fail at
+challenge time. This chart renders the official one:
+
+- `groupName: acme.hetzner.com` — the forks use `.cloud`
+- `config.tokenSecretKeyRef: {name, key}` — the forks take `secretName`/`secretKey`
+- the token is an ordinary **hcloud** token, and the Secret must live in **cert-manager's**
+  namespace, because that is where a ClusterIssuer resolves secret references
+
+The chart renders the solver; it does not install the webhook, and rendering a solver that names one
+is not the same as depending on it.
+
+### `ingress.noindex` is two halves that must agree
+
+A Traefik `Middleware` carrying the header, and an annotation on the Ingress naming it. Render only
+the middleware and every response silently lacks the header while the manifest looks right; render
+only the annotation and Traefik drops the route entirely. The render assertions check the two
+against each other in both directions — production correctly renders neither.
 
 ## Validating a change
 

@@ -71,6 +71,23 @@ infrastructure before applications and to share a base across many apps, and we 
 Traefik are installed out of band (#265), and Traefik ships with k3s. An `infrastructure/` tree would be empty and a `base/` would have exactly one member. So
 `deploy/clusters/<env>/` holds the resources directly. See *Consequences* for what this costs.
 
+> **Amended 2026-08-13 (#265). Half of that paragraph is now wrong: there IS Flux-managed infrastructure.**
+>
+> When #265 came to install cert-manager, "out of band" turned out to mean "typed into a terminal once and never versioned again" — for a component whose
+> silent failure is that certificates stop renewing and nobody finds out for sixty days. That is precisely the argument `infra/` exists to make about servers,
+> and it does not stop being true one layer up. So cert-manager is a `HelmRelease` on both clusters, and the Hetzner DNS-01 webhook is another on staging.
+>
+> **The flat layout survives the change, but for a weaker reason than before.** The guide's split buys two things: ordering, and sharing. Ordering is bought
+> here for free — `dependsOn` on a `HelmRelease` orders installs without any directory structure, and it is *required* rather than decorative, because the
+> application chart renders a `cert-manager.io/v1` ClusterIssuer and the API server rejects an unknown kind. Sharing is what we still do not buy: with two
+> clusters, a `base/` would have two members and cost an indirection to save one file.
+>
+> **What did change is the distance to that line.** `helm-repository-jetstack.yaml` and `cert-manager.yaml` are now duplicated between staging and production,
+> byte-for-byte apart from their comments, and a version bump has to be made twice. The *"when to revisit"* entry below was written expecting this. It is now
+> one component away rather than hypothetical, and the third copy — or the first drift between the two — is the trigger.
+>
+> Traefik is genuinely still out of band, because k3s installs it. That half of the sentence stands.
+
 ## Consequences
 
 **Good:**
@@ -102,6 +119,10 @@ willingly. What Flux removes is the *stored credential*. **Branch protection is 
 - **The cluster gains one GitHub credential after all** — a fine-grained PAT with *commit statuses: write* on this repository only, so the notification
   controller can report reconciliation back onto the commit. Narrow, single-purpose, and a deliberate exception to "the cluster holds nothing" rather than an
   erosion of it.
+- **Staging gains a second credential, and it is a broad one** (#265). DNS-01 needs an hcloud API token in the cluster, and hcloud tokens are project-scoped
+  with no way to narrow them to "write TXT records under one zone" — the same token could delete the servers. It is confined to staging, which is the
+  environment that can be rebuilt from `infra/` in an afternoon, and production avoids it entirely by solving HTTP-01 against an address the internet can
+  reach. Worth restating as a rule: **production must not acquire this token to gain a wildcard certificate.** That trade is not worth it.
 - **Three cluster directories duplicate their remediation policy.** Without a `base/`, a change to the release policy has to be made three times — which has
   already cost something: the `remediateLastFailure` fix below was applied three times by a script. Worth revisiting if a fourth environment appears, or if the
   duplicated blocks drift.
@@ -115,8 +136,10 @@ previous version to return to.
 
 ### When to revisit
 
-- **A second application**, or infrastructure that Flux manages, makes the guide's `apps/` + `infrastructure/` split earn its keep.
-- **A fourth environment**, or the first time the three duplicated policy blocks drift, justifies a `base/` overlay.
+- **A second application** makes the guide's `apps/` + `infrastructure/` split earn its keep. *Infrastructure that Flux manages* also used to appear on this
+  line, and as of #265 it has arrived — see the amendment above for why the layout survived it anyway.
+- **A fourth environment**, or the first time the three duplicated policy blocks drift, justifies a `base/` overlay. Since #265 the duplication is wider than
+  the policy blocks: cert-manager's `HelmRepository` and `HelmRelease` exist twice, so a version bump is two commits or it is a divergence.
 - **ArgoCD** becomes worth reconsidering only if a UI becomes a requirement *and* the node grows for another reason.
 
 ## References
