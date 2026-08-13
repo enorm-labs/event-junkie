@@ -513,9 +513,14 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       parse the Go-templated YAML** under `deploy/charts/*/templates/` at all — it errors and exits 2 on all 16 of them, the same reason
       `.pre-commit-config.yaml` refuses a `check-yaml` hook. Scope is pinned in two independent places (the script's arguments and `ignorePatterns`); a change
       that loosens either is a change that breaks the chart build.
-    - **Use the pinned binary**, `events-frontend/node_modules/.bin/oxfmt`, never one on `$PATH` — a Homebrew 0.63.0 and the pinned 0.62.0 produce different
-      output for `AGENTS.md`. The script already does this; do not "simplify" it to `oxfmt`.
-    - **Write mode runs it twice**, because a table nested under a list item is skipped on the first pass. This file is the one that exhibits it.
+    - **Use the pinned binary**, `events-frontend/node_modules/.bin/oxfmt`, never one on `$PATH`. oxfmt is pre-1.0 and its Markdown output is not stable across
+      versions, so the hook, CI and every contributor have to be on one version; `package-lock.json` is what makes that reproducible. The script already does
+      this — do not "simplify" it to `oxfmt`.
+    - **oxfmt reads `.editorconfig`.** The `[*] indent_size = 4` is what gives nested list items their four-space indent; without that file oxfmt uses its own
+      default and produces different output. So a scratch directory does not reproduce this repository's formatting unless `.editorconfig` is copied into it —
+      worth knowing before concluding that two oxfmt versions disagree, which is exactly how a scratch-directory measurement misled once already.
+    - **Write mode runs it twice**, because a table nested under a list item is skipped on the first pass. This file is the one that exhibits it, on 0.62.0 and
+      0.63.0 alike.
 - Centralized library versions in **`gradle.properties`** (`java.version`, `jsoup.version`, `kotest.version`,
   `kotlin-logging.version`, `mockk.version`, `mockwebserver.version`, `slugify.version`, `spring-modulith.version`,
   `springdoc.version`), read in the module build scripts via `property("…")`; plugin versions in `settings.gradle.kts`
