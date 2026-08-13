@@ -47,12 +47,12 @@ jobs:
         uses: actions/checkout@v7
 
       # oxfmt is a devDependency of events-frontend rather than a standalone tool, and that is the
-      # point: `package-lock.json` pins the exact version, and versions disagree about Markdown.
-      # 0.62.0 and 0.63.0 format tables nested under list items differently, so a check run against
-      # "whatever oxfmt is newest" would fail on files a contributor's pinned copy had just written.
-      # `events-frontend/package-lock.json` is in the path filters above for the same reason: a bump
-      # to oxfmt can reformat every document in the repository, and that should be caught here rather
-      # than on the next unrelated docs pull request.
+      # point: `package-lock.json` pins the exact version. oxfmt is pre-1.0 and its Markdown output
+      # is not stable across versions, so a check run against "whatever oxfmt is newest" could fail
+      # on files a contributor's pinned copy had just written. `events-frontend/package-lock.json` is
+      # in the path filters above for the same reason: a bump to oxfmt can reformat every document in
+      # the repository, and that should be caught on the bump rather than on the next unrelated docs
+      # pull request.
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:

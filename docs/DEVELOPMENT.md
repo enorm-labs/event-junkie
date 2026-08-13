@@ -242,10 +242,13 @@ Four things about this are deliberate and easy to undo by accident:
 - **It is Markdown-only, enforced twice.** oxfmt also formats YAML, JSON, CSS and TypeScript. The script never passes it anything else, _and_ `.oxfmtrc.json`
   carries an `ignorePatterns` deny-list for those extensions, so even a bare `oxfmt` run at the repository root cannot touch them. Do not widen either one —
   [AGENTS.md](../AGENTS.md) §Code Conventions records what was measured and why the answer was no.
-- **It uses the pinned oxfmt, never `$PATH`.** A Homebrew oxfmt 0.63.0 and the pinned 0.62.0 disagree about tables nested under list items, so the binary is
-  locked by `package-lock.json` like everything else. This is why the hook needs `npm ci` in `events-frontend/` rather than a `brew install`.
-- **Write mode runs oxfmt twice.** A table indented under a list item is skipped on the first pass and only formatted on the second (both versions do this). One
-  pass would leave the file off its own fixpoint and `check` would then fail on a file the formatter had just written.
+- **It uses the pinned oxfmt, never `$PATH`.** oxfmt is pre-1.0 and its Markdown output is not stable across versions, so the binary is locked by
+  `package-lock.json` like everything else and the hook needs `npm ci` in `events-frontend/` rather than a `brew install`. 0.62.0 and 0.63.0 happen to agree
+  here — verified byte-for-byte on every tracked file — so this is insurance, not a workaround for a known disagreement.
+- **oxfmt reads `.editorconfig`.** The `[*] indent_size = 4` is what gives nested list items their four-space indent. Copy `.editorconfig` alongside if you ever
+  reproduce oxfmt's behaviour in a scratch directory; without it the output differs, and it differs in a way that looks exactly like a version disagreement.
+- **Write mode runs oxfmt twice.** A table indented under a list item is skipped on the first pass and only formatted on the second (0.62.0 and 0.63.0 both do
+  this). One pass would leave the file off its own fixpoint and `check` would then fail on a file the formatter had just written.
 - **`--disable-nested-config`**, because oxfmt's nested configs _replace_ rather than merge. Without it, `events-frontend/.oxfmtrc.json` shadows the root config
   wholesale for the two `.md` files under `events-frontend/`.
 
