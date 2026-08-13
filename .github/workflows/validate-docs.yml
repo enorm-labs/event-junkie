@@ -1,0 +1,86 @@
+name: Validate Docs
+
+# The CI half of `scripts/format-markdown.sh`. The pre-commit hook formats Markdown on the way in,
+# but a hook is advisory by construction — `git commit --no-verify` skips it, and so does anything
+# committed through the GitHub web UI or by an agent that never installed pre-commit. This is the
+# gate that makes the formatting actually hold on `main`.
+#
+# It checks; it never writes. A CI job that pushes a formatting commit back to a contributor's branch
+# needs write permissions on every pull request including forks, which is a far larger grant than a
+# formatter is worth. The failure names the files and the fix is one command.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**.md'
+      - '.oxfmtrc.json'
+      - 'scripts/format-markdown.sh'
+      - 'events-frontend/package-lock.json'
+      - '.github/workflows/validate-docs.yml'
+  pull_request:
+    branches: [ main ]
+    # `paths:` is present here, unlike validate-infra.yml and validate-workflows.yml, because this
+    # check is **not** on the `main` ruleset's required list. Those two dropped their filters after
+    # #443: a required check that never runs stays Pending forever and deadlocks the pull request.
+    # **If this one is ever made required, delete this filter in the same change** — otherwise every
+    # pull request that touches no Markdown blocks on a check that will never report.
+    paths:
+      - '**.md'
+      - '.oxfmtrc.json'
+      - 'scripts/format-markdown.sh'
+      - 'events-frontend/package-lock.json'
+      - '.github/workflows/validate-docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    name: Check Markdown formatting
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # oxfmt is a devDependency of events-frontend rather than a standalone tool, and that is the
+      # point: `package-lock.json` pins the exact version, and versions disagree about Markdown.
+      # 0.62.0 and 0.63.0 format tables nested under list items differently, so a check run against
+      # "whatever oxfmt is newest" would fail on files a contributor's pinned copy had just written.
+      # `events-frontend/package-lock.json` is in the path filters above for the same reason: a bump
+      # to oxfmt can reformat every document in the repository, and that should be caught here rather
+      # than on the next unrelated docs pull request.
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24' # should match the version specified in .nvmrc
+          cache: 'npm'
+          cache-dependency-path: events-frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: events-frontend
+        run: npm ci
+
+      # Writes nothing, exits 1 listing every unformatted file. Run from the repository root: oxfmt
+      # rejects any path containing '..', so the script's paths are all relative to the root.
+      - name: Check Markdown formatting
+        run: scripts/format-markdown.sh check
+
+      - name: Explain the fix
+        if: failure()
+        run: |
+          {
+            echo "## Markdown formatting"
+            echo
+            echo "The files listed above are not formatted. To fix:"
+            echo
+            echo '```bash'
+            echo "scripts/format-markdown.sh"
+            echo '```'
+            echo
+            echo "It rewrites in place — commit the result. Installing the pre-commit hooks"
+            echo "(\`pre-commit install\`) does this on every commit, which is why this rarely fires."
+          } >> "$GITHUB_STEP_SUMMARY"
