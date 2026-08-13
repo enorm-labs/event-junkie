@@ -120,77 +120,71 @@ proxied. SSH and WireGuard are not, so they reach Hetzner from a different addre
 connection it was meant to admit — which looks exactly like a broken firewall or a failed cloud-init. `dig +short myip.opendns.com @resolver1.opendns.com`
 goes over UDP/53 rather than through the proxy, so it reports the direct one. Allow both; it is a bootstrap value that goes back to `[]` shortly anyway.
 
-`tofu output next_steps` then prints the rest — collecting the WireGuard public key, building the client config, and repointing the kubeconfig at the tunnel.
+**From here on the apply is only the first of eleven steps**, and the rest — tunnel, kubeconfig, database, secrets, `flux bootstrap` — are in
+[docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md), in order. `tofu output next_steps` prints an abridged version with the real addresses filled in.
 
 ### Getting onto the tunnel
 
-WireGuard is a two-key handshake and the halves are generated in different places, which is the part worth getting straight before you start: **your** keypair
-is made on your laptop *before* the apply, because the public half is an input to it; the **server's** keypair is made on the node at first boot and never
-enters the state file, which is why its public half has to be collected by hand afterwards.
-
-**1. Before the apply — your keypair.** `brew install wireguard-tools` if `wg` is missing.
+**Already set up?** Bring the tunnel up first — **everything else needs it, and all of it runs on your laptop:**
 
 ```sh
-umask 077 && mkdir -p ~/.wireguard
-wg genkey > ~/.wireguard/staging.key    # private — stays here, never in this repo
-wg pubkey < ~/.wireguard/staging.key    # public  — goes in terraform.tfvars
+sudo wg-quick up ~/.wireguard/staging.conf     # then `sudo wg show` — look for `latest handshake`
 ```
+
+Then, in any shell, pick **one** of these. They are alternatives, not a sequence:
+
+```sh
+ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1                      # a shell ON the node
+kubectl --context event-junkie-staging get nodes                    # the cluster, FROM here
+```
+
+**Do not run the `kubectl` line inside the `ssh` session.** It is the obvious mistake and it fails confusingly: the kubeconfig lives on your laptop, so on the
+node `kubectl` finds nothing, falls back to `localhost:8080`, and reports `connection refused` alongside `permission denied` warnings about
+`/etc/rancher/k3s/config.yaml.d`. Nothing is broken; you are just in the wrong place. On the node itself the equivalent is `sudo k3s kubectl get nodes`.
+
+`sudo wg-quick down ~/.wireguard/staging.conf` when you are done.
+
+**Setting a cluster up from scratch? [docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md)** — the ordered runbook, from `tofu apply` through the tunnel,
+the kubeconfig, the database and `flux bootstrap`, with the traps that actually cost time. It is deliberately the only copy of those steps; what follows here is
+the reasoning behind the ones that touch this directory, which a linear runbook has no room for.
+
+### Why the tunnel takes two keypairs made in different places
+
+**Your** keypair is generated on your laptop *before* the apply, because its public half is an input to it. The **server's** is generated on the node at first
+boot and never enters the state file — which is why its public half has to be collected by hand afterwards, and why there is no way to write your client config
+before the machine exists.
 
 Use a different keypair per environment. A WireGuard key is base64, exactly 44 characters, ending in `=`; **an SSH public key is a different format and will
 not work.** That mistake is rejected at plan time, along with a peer address outside `wireguard_subnet` and two peers sharing an address — all three otherwise
 fail late, after a node has booted with no working tunnel and no open port to reach it on.
 
-**2. Apply**, with `admin_cidrs` on the command line for this run only, since the tunnel does not exist yet:
+### `AllowedIPs`, and why the narrow value is the right one
 
-```sh
-ADMIN="[\"$(curl -s https://ifconfig.me)/32\",\"$(dig +short myip.opendns.com @resolver1.opendns.com | tail -1)/32\"]"
-tofu apply -var "admin_cidrs=$ADMIN"
-```
+`10.10.1.0/24` is the tunnel and nothing else, and it is **enough for everything this environment needs**: SSH, the Kubernetes API and the ingress all answer on
+`10.10.1.1`. It also keeps the tunnel a *split* tunnel — the rest of your traffic keeps going out your own connection.
 
-**3. After the apply — the server's public key.** `tofu output next_steps` prints this with the real addresses filled in:
+Widening it to `10.1.1.0/24` (the private network) or `10.42.0.0/16`/`10.43.0.0/16` (pods and services) does work — `wireguard.sh` enables IPv4 and IPv6
+forwarding on the node for exactly that — but you rarely want to: `10.1.1.10` *is* the node, which you can already reach, and talking to pod IPs directly is a
+debugging habit that hides broken Service routing.
 
-```sh
-ssh -i ~/.ssh/id_ed25519_hetzner ops@<node-ipv4> sudo cat /etc/wireguard/public.key
-```
+### Why repointing the kubeconfig at `10.10.1.1` does not break TLS
 
-**The `-i` is not optional unless that key is in your agent**, and `next_steps` omits it because the output has no way to know which key you used. If the agent
-holds a different key — a stray `id_rsa` is enough — this fails with `Permission denied (publickey)`, which reads like the `ops` user does not exist yet. Check
-with `ssh-add -l` before believing that. The key to offer is whichever one's public half is in `ssh_public_keys` in `terraform.tfvars`.
+k3s writes its kubeconfig for `127.0.0.1`, and the runbook rewrites that to the tunnel address. That works because **the tunnel address is one of the API
+server's certificate SANs**: `k3s_extra_tls_sans` plus the module contribute the public IPv4, the tunnel address, the private address and the hostname, so the
+same cluster answers on all four without a TLS complaint. Adding a fifth way in means adding it there first.
 
-**Give it two or three minutes first.** Port 22 is not open the instant `tofu apply` returns, and while the node is still booting the connection *times out*
-rather than being refused — which looks exactly like the firewall dropping you. It is not; wait and retry before going after `admin_cidrs`. `ping` answers much
-earlier, since ICMP is open to the world, so a successful ping and a hanging SSH together are the normal picture at ninety seconds in.
-
-**4. Your client config**, at `~/.wireguard/staging.conf` — or paste the same values into the WireGuard app:
-
-```ini
-[Interface]
-PrivateKey = <contents of ~/.wireguard/staging.key>
-Address    = 10.10.1.2/32        # the address you declared for this peer
-
-[Peer]
-PublicKey  = <the key from step 3>
-Endpoint   = <node-ipv4>:51820
-AllowedIPs = 10.10.1.0/24        # the tunnel subnet; widen only if you need the private network
-PersistentKeepalive = 25         # keeps NAT mappings alive from a laptop behind one
-```
-
-```sh
-sudo wg-quick up ~/.wireguard/staging.conf
-ssh ops@10.10.1.1                # the node's address inside the tunnel
-```
-
-**5. Name resolution for staging.** `staging.event-junkie.de` deliberately has no public record, so map it in `/etc/hosts` to the node's tunnel address —
-`10.10.1.1`. Reaching it through Traefik rather than `kubectl port-forward` is the point: a port-forward skips TLS and the whole routing path, and so tests a
-different topology than production.
-
-**6. Then close the door** — below.
+Keep the file separate rather than merging it into `~/.kube/config`, and rename its context off k3s's `default`. A cluster reachable only through a tunnel is one
+you should have to name explicitly — every `helm`, `flux` and `kubectl` command in this repository's guidance passes `--kube-context`/`--context`, and that
+discipline buys nothing if the name it takes is the one every other cluster also uses.
 
 ### Closing the door behind you
 
 Once the tunnel works, re-apply with `admin_cidrs = []`. Both rules disappear and **22 and 6443 become unreachable from the internet at any address**. Only
 `51820/udp` stays open, and WireGuard does not answer a packet without a valid key — to a scanner that port is indistinguishable from a closed one, which is a
 far better public surface than SSH, a service that announces itself and its version to anyone who connects.
+
+Verify it from outside the tunnel rather than from the plan — `nc -z <public-ipv4> 22` and `6443` should both fail while `ping` still answers, since ICMP stays
+open deliberately for Path MTU Discovery.
 
 **The fallback below the fallback is Hetzner's browser console** — VNC to the server regardless of firewall, WireGuard or SSH state. It is the reason none of
 this is unrecoverable. Log into it once *before* you need it, so the first time is not during an outage.

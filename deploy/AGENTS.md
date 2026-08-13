@@ -68,13 +68,20 @@ uninstalled on a local k3d cluster with **arm64** nodes — the same architectur
 correctly, and a real scrape reached `/api/events` through Traefik.
 
 **Flux was added to that on 2026-08-12 (#414)** — the published chart reconciled from GHCR on k3d, `helm test` run in-cluster, and a deliberately broken release
-rolled back. `flux bootstrap` has still never run, because it needs a real cluster.
+rolled back.
 
-**"Runs on k3d" is not "runs on Hetzner", and the gap is specific**, not a formality: no TLS, no cert-manager, no DNS, no NetworkPolicies, no git-sync, one node
-with no resource pressure, and a database on the developer's own machine rather than across a private network. Those are #265 and #416.
+**Deployed to the real staging cluster on 2026-08-13 (#424, #265).** `flux bootstrap` has now run against Hetzner: the Flux manifests are committed to
+`deploy/clusters/staging/flux-system/`, cert-manager and the DNS-01 webhook installed ahead of the application through `dependsOn`, all three workloads came up,
+Flyway applied its migrations against PostgreSQL over the private network, and the chart's `helm test` hook passed in-cluster. The runbook is
+[docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md).
 
-So: do not describe the chart as *deployed* or *production-ready*. **"Installed and exercised locally"** is the accurate phrase — the same register
-`infra/AGENTS.md` uses for `environments/`, and it is meant to be as load-bearing here as it is there.
+**Most of the k3d gap is now closed — but say which parts.** TLS, cert-manager, DNS, git-sync, a real private-network database and genuine resource pressure are
+all exercised on staging. Still not: **NetworkPolicies** (#416), **production** (no cluster exists), and **a certificate that has actually issued** — DNS-01 was
+still resolving when this was written. Two things are also true only of staging: it is x86 where production is meant to be arm64 (#424), and its chart is
+temporarily pinned to a tag rather than following `main` (#455).
+
+So: the chart may now be described as **deployed to staging**. It is still not *production-ready*, and "installed and exercised locally" remains the accurate
+phrase for anything that has only met k3d.
 
 The runbook for re-running the rehearsal is in `docs/DEVELOPMENT.md`. Two things it will not let you skip: the rehearsal uses its **own database**
 (`event_junkie_k3d`), never the local development one, because installing the chart runs Flyway; and every cluster command carries an explicit
@@ -215,8 +222,13 @@ The decision and its consequences are [ADR-016](../docs/adr/ADR-016_GITOPS_DELIV
 follows is only what bites when changing these files.
 
 **Exercised on k3d as of 2026-08-12 (#414)** — `flux install`, the real chart pulled from GHCR, all three workloads on published images, `helm test` green, and a
-deliberately broken release rolled back. `flux bootstrap` has never run, because it needs a real cluster (#265) and it commits its own manifests plus a deploy key
-to this repository.
+deliberately broken release rolled back.
+
+**`flux bootstrap` ran for real on 2026-08-13**, against staging, and added a `flux-system/` directory to `deploy/clusters/staging/` — machine-written, ~2 MB,
+never hand-edited. Three things it taught that no amount of reading would have: the org must have **deploy keys enabled** (a policy, not a token scope, and it
+fails at `422`); bootstrap **pushes directly to `main`**, which the branch ruleset forbids, so the ruleset has to be off for two pushes and back on immediately
+after; and the whole flow wants the database and both secrets to exist **first**, or the first reconcile installs a crash-looping importer.
+[docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) has the order.
 
 **The version range lives on the `OCIRepository`, not the `HelmRelease`.** With `chartRef` the release carries no version at all — `spec.ref.semver` on the source
 decides everything. Staging uses `>=0.0.0-0`; the `-0` is what admits prereleases, and without it the range matches no snapshot at all. Observed rather than

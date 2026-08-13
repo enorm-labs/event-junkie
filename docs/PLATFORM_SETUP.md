@@ -497,6 +497,15 @@ Two notes that survive the rewrite:
 `flux bootstrap github` commits Flux's own manifests to the repository and creates a deploy key. It needs a GitHub PAT **once, from your laptop** — not a stored
 secret, and not something CI ever holds.
 
+**Two repository settings block it, and neither is a token scope** (found on the first real run, 2026-08-13):
+
+- **Deploy keys must be enabled for the organisation** — `deploy_keys_enabled_for_repositories`. Disabled, bootstrap fails at `422 Deploy keys are disabled for
+  this repository`, and no PAT of any shape helps
+- **Bootstrap pushes directly to `main`**, which the branch ruleset forbids. It has to be disabled for two pushes and re-enabled immediately — and that window
+  matters more than it sounds, because with Flux live, branch protection *is* the control that replaces the kubeconfig (ADR-016)
+
+The ordered runbook, with the rest of the bring-up around it, is [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md).
+
 ### Making staging invisible from the internet
 
 > **Superseded 2026-08-10.** This section originally recommended a Traefik `basicAuth` middleware, because at that point there was no VPN in the design and an
