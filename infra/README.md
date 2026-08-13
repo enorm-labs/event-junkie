@@ -245,23 +245,38 @@ credentials that own your infrastructure.
 ### Check capacity before you apply
 
 ```sh
-cd infra && ./check-capacity.sh          # or --all to see everything orderable in eu-central
+cd infra && ./check-capacity.sh              # every environment
+cd infra && ./check-capacity.sh staging      # one — exits 0 when it can be applied
+cd infra && ./check-capacity.sh --all        # inventory of everything available in eu-central
 ```
 
-**Hetzner sells out of server types**, and when it does `tofu apply` fails at the very last step with `error during placement (resource_unavailable)` — after
-the network, firewall and Primary IPs already exist. The script asks first, in about a second, and exits non-zero while anything is missing, so it doubles as a
-waiter:
+**Hetzner sells out of server types**, and when it does `tofu apply` fails at the very last step — after the network, firewall and Primary IPs already exist.
+The script asks first, in about a second, and exits non-zero while anything is missing, so it doubles as a waiter. **Wait on one environment, not on all of
+them:** staging and production no longer want the same location or the same hardware, so the unqualified form stays red for production long after staging could
+have been applied.
 
 ```sh
-until ./check-capacity.sh; do sleep 1800; done && say "capacity is back"
+until ./check-capacity.sh staging; do sleep 1800; done && say "staging can be applied"
 ```
 
-That script reads Hetzner's own API, so it reports exactly what an apply will hit — but only for *right now*. For the shape of the problem over time,
-**[Server Radar](https://radar.iodev.org/cloud-status?arch=arm)** polls every minute and keeps the history, which answers the question this script cannot: has
-the type been gone for an hour or a fortnight, and does it flicker back at a predictable time of day. It is community-run
-([elsbrock/hetzner-radar](https://github.com/elsbrock/hetzner-radar)), not Hetzner, so treat it as the trend and `check-capacity.sh` as the fact. The `arch=arm`
-filter is the relevant view here, and it also confirms the constraint the CAX line carries anyway: ARM is only ever offered in Falkenstein, Helsinki and
-Nuremberg.
+**A green result means "worth trying", not "will work", and that distinction cost a failed apply on 2026-08-13.** The script reports what Hetzner *advertises*.
+There is no dry-run for a server order, so nothing can report what an order will do:
+
+| | |
+|---|---|
+| **2026-08-11** | Script said unavailable; the order agreed — `error during placement (resource_unavailable)`. |
+| **2026-08-13** | Script said `cax11` available in `nbg1`. So did the `datacenters` endpoint, and `cax11`'s own pricing lists `nbg1` as a location it is sold in. The order was refused: **`unsupported location for server type (invalid_input)`**. |
+
+That second error is the dangerous one, because it does not look like a capacity error — it reads as though the configuration names a location the type does not
+exist in. It does not: nothing about `nbg1` or `cax11` is invalid. Treat it as capacity wearing the wrong error code.
+
+A **red** result is still reliable in the other direction: if Hetzner does not advertise it, you certainly cannot order it.
+
+For the shape of the problem over time, **[Server Radar](https://radar.iodev.org/cloud-status?arch=arm)** polls every minute and keeps the history, which
+answers the question this script cannot: has the type been gone for an hour or a fortnight, and does it flicker back at a predictable time of day. It is
+community-run ([elsbrock/hetzner-radar](https://github.com/elsbrock/hetzner-radar)), not Hetzner. So: Server Radar is the trend, `check-capacity.sh` is the
+current advertisement, and **neither is the order path**. The `arch=arm` filter is the relevant view here, and it also confirms the constraint the CAX line
+carries anyway: ARM is only ever offered in Falkenstein, Helsinki and Nuremberg.
 
 > **Status, 2026-08-11: the entire CAX (ARM) line is unavailable across all of `eu-central`, and `fsn1` has nothing at all.** The staging apply failed on
 > exactly this. Nothing is wrong with the configuration — there are simply no machines, and the same request would fail for anyone.
@@ -274,16 +289,25 @@ Nuremberg.
 > If capacity returns to `nbg1`/`hel1` but not `fsn1`, moving is two variables (`location`, and the `*_server_type` values) plus destroying the `fsn1` Primary
 > IPs, which are location-bound.
 
-> **Update, 2026-08-13: half of it came back, and staging took it.** `check-capacity.sh` now reports `cax11` orderable in `nbg1` and `cax21` still unavailable
-> everywhere in `eu-central`. Staging is a single `cax11`, so `infra/environments/staging` moved to `nbg1` and can be applied; production still needs a `cax21`
-> and still waits, pinned to `fsn1`.
+> **Update, 2026-08-13: `nbg1` advertised a `cax11`, staging moved there, and Hetzner refused the order anyway.**
 >
-> **The Primary IP caveat above did not apply, and that was checked rather than assumed.** The Hetzner project was queried directly first — no servers,
-> networks, firewalls, volumes or Primary IPs existed, so the failed 2026-08-11 apply left nothing location-bound behind and the move was one variable.
+> `check-capacity.sh` reported `cax11` available in `nbg1` and `cax21` unavailable everywhere. Staging is a single `cax11`, so
+> `infra/environments/staging` moved to `nbg1`; production still needs a `cax21` and still waits, pinned to `fsn1`.
 >
-> The re-platforming decision is therefore **not** taken and the `cpx*` paragraph above stands unused. Note that it has also got cheaper to defer in one respect
-> and more expensive in another: #264 now publishes **multi-arch** images, so architecture is no longer a one-way door — but production has been waiting since
-> 2026-08-11, and "wait rather than re-platform" is a decision worth re-taking rather than inheriting.
+> **The apply then failed on the server, with `unsupported location for server type (invalid_input)`** — not the sold-out error, and not true either: `cax11`'s
+> own pricing lists `nbg1`, and the `datacenters` endpoint listed it as available at that moment. See *Check capacity before you apply* for why a green result
+> is now only "worth trying".
+>
+> **Five of the six resources exist**: the network, the subnet, the firewall and both Primary IPs, in `nbg1`. So the Primary IP caveat above — which did *not*
+> apply when the project was empty, checked rather than assumed — **applies from now on**: moving staging to another location means destroying those two first.
+>
+> The apply also ran without `-var "admin_cidrs=…"`, so the firewall was created with **no SSH and no 6443 rule at all**. Harmless only because the server never
+> came up; on a retry the variable has to be passed or the node boots with the tunnel as its single point of failure.
+>
+> The re-platforming decision is therefore **not** taken and the `cpx*` paragraph above stands unused. It has got cheaper to defer in one respect and more
+> expensive in another: #264 now publishes **multi-arch** images, so architecture is no longer a one-way door — but production has been waiting since
+> 2026-08-11, staging has now failed once on hardware that was advertised as present, and "wait rather than re-platform" is a decision worth re-taking rather
+> than inheriting.
 
 ## Things that will surprise you
 
