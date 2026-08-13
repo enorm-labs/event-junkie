@@ -13,7 +13,7 @@ trigger but omitted from the list.
 > ([#412](https://github.com/enorm-labs/event-junkie/issues/412))
 >
 > As first written, this ADR put Cloudflare's free plan in front for DNS, TLS, CDN and rate limiting, and flagged one nuance: strictly German-only processing
-> would mean *"either dropping Cloudflare's proxy mode or buying its EU data-localisation add-on"*. **The second option does not exist at this tier.**
+> would mean _"either dropping Cloudflare's proxy mode or buying its EU data-localisation add-on"_. **The second option does not exist at this tier.**
 > Cloudflare's Data Localization Suite is an **Enterprise-only add-on, custom-priced through direct sales** — not something a €30/month project buys. That left a
 > straight either/or, and the strict reading of criterion 5 won: no US processor in the request path at all.
 >
@@ -24,7 +24,7 @@ trigger but omitted from the list.
 > **What it costs.** Three things Cloudflare was doing for free now need answers, and two of them are not free:
 >
 > - **Edge DDoS and rate limiting** — gone. What remains is the existing `PerHostThrottlingFilter`, a Traefik rate-limit middleware, and Hetzner's volumetric
->   protection. This *removes* the progress this ADR claimed on
+>   protection. This _removes_ the progress this ADR claimed on
 >   [#268](https://github.com/enorm-labs/event-junkie/issues/268) rather than making it; #268 grows accordingly.
 > - **Edge access control for the admin UI** — Cloudflare Access was named below as "the cheapest fit". It is no longer available, so the alternatives already
 >   listed there (an ingress IP allowlist, or a basic-auth middleware) become the answer.
@@ -38,7 +38,7 @@ trigger but omitted from the list.
 > **One thing it makes harder, not easier.** Behind Cloudflare the origin saw a proxy IP. Without it, **Traefik and nginx see real client IPs**, so log
 > truncation and retention become more load-bearing, not less. See [LEGAL.md](../LEGAL.md) §7.5, which was rewritten for this.
 
-> Resolves [issue #258](https://github.com/enorm-labs/event-junkie/issues/258) — *"Settle the cloud platform"*, the first item in the `v0.2 — Deployable` milestone. This ADR
+> Resolves [issue #258](https://github.com/enorm-labs/event-junkie/issues/258) — _"Settle the cloud platform"_, the first item in the `v0.2 — Deployable` milestone. This ADR
 > picks
 > the **platform**; the Terraform/OpenTofu layout, the Helm chart, and the CI/CD workflows are follow-up items that depend on it. All prices in this document
 > were checked on **2026-08-03**, and the PaaS / Elastic Beanstalk / App Engine sections were added on **2026-08-05**. They must be re-verified before the money
@@ -48,13 +48,13 @@ trigger but omitted from the list.
 >
 > **2026-08-05 revision.** Managed-container platforms priced out at 4–6× the cheapest option, so the PaaS layer was evaluated properly rather than in one
 > paragraph: European PaaS providers are now first-class candidates (Option E1), AWS Elastic Beanstalk is costed separately from Fargate (Option H), and App
-> Engine is costed alongside Cloud Run (Option C). The recommendation is unchanged; the *fallback* ranking changed materially — it is now European PaaS first,
+> Engine is costed alongside Cloud Run (Option C). The recommendation is unchanged; the _fallback_ ranking changed materially — it is now European PaaS first,
 > not US PaaS.
 
 ## Context
 
 Event Junkie is a Berlin music-events guide, **not yet deployed anywhere** (see [README §Status](../../README.md#status)). The decision is being made before the
-first deploy, which means we are choosing the platform we will write Terraform and a Helm chart *against* — switching later costs real work, so it is worth
+first deploy, which means we are choosing the platform we will write Terraform and a Helm chart _against_ — switching later costs real work, so it is worth
 recording why.
 
 ### What actually has to run
@@ -62,12 +62,12 @@ recording why.
 Four deployables today, derived from the modules in this repo, plus one more that the backlog makes near-certain:
 
 | Component         | Shape                                                             | Runtime demand                                                     |
-|-------------------|-------------------------------------------------------------------|--------------------------------------------------------------------|
+| ----------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------ |
 | `events-bff`      | Spring Boot 4 / WebFlux / R2DBC, read-only public API (port 8080) | Stateless, horizontally scalable, JVM ≈ 512 MB–1 GB heap           |
 | `events-importer` | Spring Boot 4 / WebFlux / R2DBC + admin API (port 8081)           | **Always-on, effectively single-instance** — see below             |
 | `events-frontend` | Vue 3 + Vite **SPA** — `npm run build` emits a static `dist/`     | No server runtime of its own; static files + a router fallback     |
 | PostgreSQL 18     | The only stateful component; owns all event/venue/artist data     | ~2 vCPU / 4 GB, tens of GB, needs backups + point-in-time recovery |
-| *admin frontend*  | **Planned** (TODO 🟠) — a second static SPA over the admin API    | Static files, one user, **must not be publicly reachable**         |
+| _admin frontend_  | **Planned** (TODO 🟠) — a second static SPA over the admin API    | Static files, one user, **must not be publicly reachable**         |
 
 **On the planned admin frontend.** TODO lists an admin UI to operate the importers and curate data (imports status, import configuration, data-quality overview,
 manual event entry). It is not built yet, but it is close enough to change two things here, so it is priced and designed for rather than discovered later:
@@ -78,10 +78,10 @@ manual event entry). It is not built yet, but it is close enough to change two t
   scale to zero.
 - **It forces the admin-API exposure question that would otherwise be deferred.** The importer's admin API must not be public (below), and the current answer is
   `kubectl port-forward`. A browser-based admin UI either runs locally against that port-forward — free, fine for one developer, and the launch answer — or it
-  gets deployed, and then it needs an access-control mechanism *at the edge* before the planned authentication work lands. Platforms differ here: Cloud Run has
+  gets deployed, and then it needs an access-control mechanism _at the edge_ before the planned authentication work lands. Platforms differ here: Cloud Run has
   IAM/IAP for exactly this, Hetzner + Traefik needs an ingress IP allowlist or a basic-auth middleware, and most PaaS options offer nothing below the application
-  layer. *(As first drafted this paragraph named Cloudflare Access as the cheap fit for Hetzner. The 2026-08-10 amendment removed Cloudflare, so the two Traefik
-  alternatives are now the answer rather than the fallback.)*
+  layer. _(As first drafted this paragraph named Cloudflare Access as the cheap fit for Hetzner. The 2026-08-10 amendment removed Cloudflare, so the two Traefik
+  alternatives are now the answer rather than the fallback.)_
 
 Three properties of `events-importer` constrain the platform choice more than anything else:
 
@@ -113,22 +113,22 @@ traffic, and the importer's admin API **must not be publicly reachable**.
 
 ### Criteria
 
-| #  | Criterion                           | Weight | Why it matters here                                                                                         |
-|----|-------------------------------------|--------|-------------------------------------------------------------------------------------------------------------|
-| 1  | Fit for always-on JVM + scheduler   | High   | ADR-008's tick rules out scale-to-zero for the importer; JVM cold starts (2–5 s) hurt request-billed models |
-| 2  | Managed PostgreSQL (backup/PITR)    | High   | The only stateful thing we own; losing it loses everything. Self-managing it is the main hidden cost        |
-| 3  | Total cost at *this* scale          | High   | Pre-revenue. Per-hour floors (LB, NAT, DB) dominate — not per-request pricing                               |
-| 4  | Cost of a second (staging) stage    | High   | Explicitly required; on hyperscalers it is nearly a second full bill                                        |
-| 5  | EU / German data residency          | High   | GDPR, German users, German domain; DPA/AVV and jurisdiction matter                                          |
-| 6  | Ops burden                          | High   | Who patches the OS, the DB, the K8s control plane — paid in evenings, not invoices                          |
-| 7  | Reuse of Docker/K8s/Helm/Terraform  | Med    | Skills already held; a Helm chart is already on the backlog                                                 |
-| 8  | Terraform/OpenTofu provider quality | Med    | IaC is the next backlog item after this one                                                                 |
-| 9  | CI/CD integration (GitHub Actions)  | Med    | Build workflows already exist; want OIDC over long-lived keys                                               |
-| 10 | Egress predictability               | Med    | Metered egress is the classic source of bill shock                                                          |
-| 11 | Observability included              | Med    | TODO wants monitoring/alerting/dashboards; "included" beats "assemble"                                      |
-| 12 | Lock-in / exit cost                 | Med    | A managed-container + managed-Postgres app is portable; proprietary glue is not                             |
-| 13 | Scaling headroom                    | Low    | Nothing here needs to scale for a long time, but the door shouldn't be nailed shut                          |
-| 14 | Career / CV signal                  | Low    | Real, but it is a tie-breaker, not a driver                                                                 |
+| #   | Criterion                           | Weight | Why it matters here                                                                                         |
+| --- | ----------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------- |
+| 1   | Fit for always-on JVM + scheduler   | High   | ADR-008's tick rules out scale-to-zero for the importer; JVM cold starts (2–5 s) hurt request-billed models |
+| 2   | Managed PostgreSQL (backup/PITR)    | High   | The only stateful thing we own; losing it loses everything. Self-managing it is the main hidden cost        |
+| 3   | Total cost at _this_ scale          | High   | Pre-revenue. Per-hour floors (LB, NAT, DB) dominate — not per-request pricing                               |
+| 4   | Cost of a second (staging) stage    | High   | Explicitly required; on hyperscalers it is nearly a second full bill                                        |
+| 5   | EU / German data residency          | High   | GDPR, German users, German domain; DPA/AVV and jurisdiction matter                                          |
+| 6   | Ops burden                          | High   | Who patches the OS, the DB, the K8s control plane — paid in evenings, not invoices                          |
+| 7   | Reuse of Docker/K8s/Helm/Terraform  | Med    | Skills already held; a Helm chart is already on the backlog                                                 |
+| 8   | Terraform/OpenTofu provider quality | Med    | IaC is the next backlog item after this one                                                                 |
+| 9   | CI/CD integration (GitHub Actions)  | Med    | Build workflows already exist; want OIDC over long-lived keys                                               |
+| 10  | Egress predictability               | Med    | Metered egress is the classic source of bill shock                                                          |
+| 11  | Observability included              | Med    | TODO wants monitoring/alerting/dashboards; "included" beats "assemble"                                      |
+| 12  | Lock-in / exit cost                 | Med    | A managed-container + managed-Postgres app is portable; proprietary glue is not                             |
+| 13  | Scaling headroom                    | Low    | Nothing here needs to scale for a long time, but the door shouldn't be nailed shut                          |
+| 14  | Career / CV signal                  | Low    | Real, but it is a tie-breaker, not a driver                                                                 |
 
 On criterion #5, two things are being asked for and they are not the same: **data residency** (the bytes sit in the EU — satisfied by an EU region at any US
 provider, under SCCs) and **jurisdiction** (the contracting entity is European, so no CLOUD Act analysis is needed — satisfied only by Hetzner, Scalingo, Clever
@@ -166,8 +166,8 @@ PostgreSQL runs on its **own VM** (not inside the cluster) with `wal-g`/`pgBackR
 
 ### Option B — AWS (ECS Fargate + RDS + ALB + CloudFront/S3), `eu-central-1`
 
-The market-leading, maximal-optionality choice. *(AWS's own PaaS — Elastic Beanstalk — is a materially different cost and ops profile and is evaluated
-separately as **Option H**.)*
+The market-leading, maximal-optionality choice. _(AWS's own PaaS — Elastic Beanstalk — is a materially different cost and ops profile and is evaluated
+separately as **Option H**.)_
 
 - **Pros**: Largest service catalogue by far; if we later want managed Elasticsearch/OpenSearch (README lists it as "maybe later"), SQS, EventBridge, or Cognito
   for the planned auth, it is all one `terraform apply` away. Best-in-class Terraform provider and by far the most documentation, examples, and hiring signal.
@@ -183,19 +183,19 @@ separately as **Option H**.)*
 
 ### Option C — Google Cloud (Cloud Run or App Engine + Cloud SQL), `europe-west3` (Frankfurt)
 
-The best hyperscaler *ergonomics* for exactly this workload shape.
+The best hyperscaler _ergonomics_ for exactly this workload shape.
 
 - **Pros**: Cloud Run is the nicest managed-container experience of the three — you push an image, you get an HTTPS endpoint with a managed certificate, and
   **there is no load-balancer line item**, which removes ~$24/month of AWS's floor outright. Scale-to-zero makes the **staging** environment nearly free, which
   directly serves criterion #4. Cloud SQL is a solid managed Postgres. Cloud Build/Artifact Registry and GitHub OIDC integrate cleanly.
-- **Cloud Run *worker pools* (GA in 2026) close the ADR-008 gap.** A worker pool is a non-HTTP, always-on, **manually scaled** Cloud Run deployment built for
+- **Cloud Run _worker pools_ (GA in 2026) close the ADR-008 gap.** A worker pool is a non-HTTP, always-on, **manually scaled** Cloud Run deployment built for
   pull/background work — instances run continuously, there is no request-based billing and no per-request fee, and Google prices always-allocated CPU ~25 % and
   memory ~20 % below the request-billed rates. `events-importer` fits this primitive exactly: `@Scheduled` ticks fire because the instance never stops, and
   "manually scaled to 1" is the platform-native expression of ADR-008's single-instance constraint. This is a real improvement over `min-instances: 1` on a
   service, which was the awkward part of this option when the ADR was first drafted. The BFF stays an ordinary Cloud Run service.
 - **Cons**: **Frankfurt is a Tier 2 Cloud Run region** — CPU $0.0000336/vCPU-s and memory $0.0000035/GiB-s versus $0.000024 / $0.0000025 in Tier 1 — so
   `europe-west3` costs roughly a third more than `europe-west1` (Belgium) or `europe-west4` (Netherlands) for identical containers. Both Tier 1 alternatives are
-  still EU territory, so the German *preference* costs
+  still EU territory, so the German _preference_ costs
   about $30/month here; the EU *requirement* costs nothing. Cloud SQL has awkward small-instance economics (a public IPv4 alone is ~$9.57/month idle; private IP
   needs Direct VPC egress or a connector). Google's product-deprecation reputation is a real, if often overstated, planning risk. Same CLOUD Act posture as AWS,
   and no German-jurisdiction sovereign offering equivalent to AWS's ESC.
@@ -205,7 +205,7 @@ The best hyperscaler *ergonomics* for exactly this workload shape.
 App Engine is Google's original PaaS and can run a Spring Boot fat JAR, so it belongs in a PaaS evaluation. It loses to Cloud Run on every axis that matters
 here:
 
-- **Standard environment** bills per *resident instance-hour* by instance class: F1/B1 $0.05, F2/B2 $0.10, F4/B4 $0.20, F4_1G $0.30 per hour (US rates;
+- **Standard environment** bills per _resident instance-hour_ by instance class: F1/B1 $0.05, F2/B2 $0.10, F4/B4 $0.20, F4_1G $0.30 per hour (US rates;
   `europe-west3` carries a regional premium on top). Our JVMs need ≥512 MB, and the scheduler needs a resident instance — which means `basic`/`manual` scaling,
   i.e. **no scale-to-zero and no free-quota relief** (the free tier is 28 instance-hours/day, enough for one tiny instance). F2 ≈
   **$73/month** per always-on service and F4 ≈ **$146/month**. That is 2–5× Cloud Run for the same container.
@@ -238,7 +238,7 @@ carry over past the Dockerfile** — hiding that layer is the entire product —
 #### E1 — European PaaS (preferred family if a PaaS is chosen)
 
 | Provider         | Jurisdiction       | Regions                              | Managed Postgres              | Notes                                                            |
-|------------------|--------------------|--------------------------------------|-------------------------------|------------------------------------------------------------------|
+| ---------------- | ------------------ | ------------------------------------ | ----------------------------- | ---------------------------------------------------------------- |
 | **Scalingo**     | 🇫🇷 SAS, Strasbourg | `osc-fr1`, `osc-secnum-fr1` (France) | ✅ Starter/Business, **PITR** | "Heroku, but European". ISO 27001, HDS, SecNumCloud region       |
 | **Clever Cloud** | 🇫🇷 SAS, Nantes     | Paris, Gravelines + EU partners      | ✅ PostgreSQL add-on          | Native Spring Boot build pack, per-second billing, ISO 27001     |
 | **Upsun**        | 🇫🇷 Platform.sh SAS | Multiple EU regions                  | ✅ as a project "service"     | Git-branch-per-environment; best staging story, worst price/perf |
@@ -252,14 +252,14 @@ carry over past the Dockerfile** — hiding that layer is the entire product —
   below the hyperscalers.
 - **Cons**: Roughly **3–5× Hetzner** (see pricing below) — per-GB-RAM container pricing is how PaaS makes money, and two always-on JVMs at 1 GB each is exactly
   the shape it charges most for. Small ecosystems: fewer StackOverflow answers, thinner Terraform providers, and a bus factor question a hyperscaler does not
-  have. Sliplane is the odd one out — German, cheapest, but it gives you PaaS *ergonomics* without a managed database, so it does not actually retire the
+  have. Sliplane is the odd one out — German, cheapest, but it gives you PaaS _ergonomics_ without a managed database, so it does not actually retire the
   Postgres-ops risk that motivates looking at PaaS at all.
 
 #### E2 — US PaaS with EU regions: Heroku / Fly.io / Render / Railway / DigitalOcean App Platform
 
 - **Pros**: The most mature developer experience of the lot, Heroku especially — it is the platform every other one on this page imitates. Render has Frankfurt,
   Fly has `fra`, Railway has EU West (Amsterdam), DigitalOcean App Platform has `fra1`, Heroku's Common Runtime has an EU region (Ireland, on AWS).
-- **Cons**: All are **US companies**, so EU *residency* is satisfiable but EU *jurisdiction* is not — acceptable under SCCs, weaker than a German or French
+- **Cons**: All are **US companies**, so EU _residency_ is satisfiable but EU _jurisdiction_ is not — acceptable under SCCs, weaker than a German or French
   provider against the stated preference, and one more processor in the GDPR record. **Heroku is also the most expensive PaaS here** once you need production
   dynos (Standard-2X at 1 GB is $50/month *each*) and a Standard-tier Postgres ($50/month) — it prices out near AWS Fargate while offering less. Fly, Render and
   Railway are cheaper but their managed Postgres offerings are the least battle-tested part of each product, and the database is the thing we least want to be
@@ -280,13 +280,13 @@ month to run that layer for you on the same German hardware.
 
 Evaluated and **rejected on price alone**: EKS and GKE both charge roughly **$0.10 per cluster-hour ≈ $73/month for the control plane before a single pod runs**
 (GKE waives one zonal cluster; AKS's free tier has no uptime SLA). Add nodes, a load balancer, NAT, and a managed database and the floor is $150–250/month per
-environment. That is the correct answer for a team running many services; it is indefensible for two containers. Note that this rejection is about *managed K8s
-at hyperscaler prices*, not about Kubernetes — Option A uses Kubernetes, just with a control plane we run ourselves for ~€0.
+environment. That is the correct answer for a team running many services; it is indefensible for two containers. Note that this rejection is about _managed K8s
+at hyperscaler prices_, not about Kubernetes — Option A uses Kubernetes, just with a control plane we run ourselves for ~€0.
 
 ### Option G — Hybrid: cheap EU compute + specialist managed Postgres
 
-Hetzner (or a PaaS) for compute, paired with **Neon** (~$0.106/CU-hour on Launch, EU regions available), **Aiven** (Finnish/EU company, ~$60–80/month for a
-production-grade small plan), or **Supabase Pro** (~$25/month) for the database.
+Hetzner (or a PaaS) for compute, paired with **Neon** (~~$0.106/CU-hour on Launch, EU regions available), **Aiven** (Finnish/EU company, ~$60–80/month for a
+production-grade small plan), or **Supabase Pro** (~~$25/month) for the database.
 
 - **Pros**: Removes the single biggest drawback of Option A — we stop owning Postgres backups and PITR — while keeping cheap compute. Neon's branching is a
   genuinely nice fit for a staging stage.
@@ -295,12 +295,12 @@ production-grade small plan), or **Supabase Pro** (~$25/month) for the database.
 
 ### Option H — AWS Elastic Beanstalk (`eu-central-1`)
 
-AWS's own PaaS, and the cheapest way to run this application *on AWS*. Beanstalk provisions plain EC2 instances (Amazon Linux 2023, Corretto or Docker
+AWS's own PaaS, and the cheapest way to run this application _on AWS_. Beanstalk provisions plain EC2 instances (Amazon Linux 2023, Corretto or Docker
 platform), an optional load balancer, auto-scaling group, and CloudWatch wiring from a single `eb deploy` — and **Beanstalk itself is free**; you pay only for
 the resources underneath. It is actively maintained: platform updates shipped roughly monthly through 2026, and the AL2-based branches retire on 30 June 2026 in
 favour of AL2023.
 
-- **Pros**: Removes the two line items that make Option B expensive. A **single-instance environment** has *no load balancer*
+- **Pros**: Removes the two line items that make Option B expensive. A **single-instance environment** has _no load balancer_
   (~−$24/month) and sits in a public subnet, so there is **no NAT Gateway** (~−$40/month) — that is $64/month of Option B's floor deleted, which is why
   Beanstalk lands at roughly half of Fargate. EC2 is cheaper per GB of RAM than Fargate, and Graviton (`t4g`) is cheaper again. RDS is still available as the
   managed Postgres, which is the best in this comparison. **Beanstalk's single-instance deploy model — terminate, then start — is exactly the `Recreate`
@@ -320,7 +320,7 @@ Columns: **A** Hetzner + k3s · **B** AWS Fargate · **H** AWS Beanstalk · **C*
 (Fly/Render/Heroku).
 
 | Criterion (weight)               | A                    | B                  | H                  | C                 | E1                | E2             |
-|----------------------------------|----------------------|--------------------|--------------------|-------------------|-------------------|----------------|
+| -------------------------------- | -------------------- | ------------------ | ------------------ | ----------------- | ----------------- | -------------- |
 | Always-on JVM + scheduler (High) | ✅ Native            | ✅ Native          | ✅ + `Recreate`    | ✅ Worker pool    | ✅ Native         | ✅ Native      |
 | Managed PostgreSQL (High)        | ❌ Self-managed      | ✅ RDS             | ✅ RDS             | ✅ Cloud SQL      | ✅ + PITR         | 🟡 Less proven |
 | Cost at this scale (High)        | ✅ ~€22/mo           | ❌ ~$150/mo        | 🟡 ~$80–100/mo     | 🟡 ~$110–135/mo   | 🟡 ~€70–105/mo    | 🟡 ~$50–150/mo |
@@ -353,7 +353,7 @@ list price, excl. VAT/credits.
 ### Option A — Hetzner Cloud (recommended)
 
 | Item                                                 | Plan                         | € / month  |
-|------------------------------------------------------|------------------------------|------------|
+| ---------------------------------------------------- | ---------------------------- | ---------- |
 | k3s node — bff + importer + frontend + ingress       | CX33 (4 vCPU / 8 GB / 80 GB) | 8.49       |
 | PostgreSQL VM (private network only, no public IPv4) | CX23 (2 vCPU / 4 GB / 40 GB) | 5.49       |
 | Public IPv4 (k3s node only)                          | 1 ×                          | ~1.70      |
@@ -368,7 +368,7 @@ Add a Hetzner Load Balancer (LB11, ~€7.49/month) only when a second k3s node a
 ### Option B — AWS `eu-central-1`
 
 | Item                                                              | $ / month     |
-|-------------------------------------------------------------------|---------------|
+| ----------------------------------------------------------------- | ------------- |
 | Fargate — 2 tasks × (0.5 vCPU + 1 GB), x86 (ARM/Graviton ≈ −20 %) | ~40 (~32 ARM) |
 | Application Load Balancer (hourly + minimum LCUs)                 | ~24           |
 | RDS `db.t4g.small` Single-AZ + 40 GB gp3 + backups                | ~32           |
@@ -387,7 +387,7 @@ Note how the shape differs from Hetzner: **~$64 of that is load balancer + NAT G
 Each always-on container is 0.5 vCPU / 1 GiB with instance-based (always-allocated CPU) billing, ≈ 730 h/month.
 
 | Item                                                                        | Tier 1 (`europe-west1`, BE) | Tier 2 (`europe-west3`, DE) |
-|-----------------------------------------------------------------------------|-----------------------------|-----------------------------|
+| --------------------------------------------------------------------------- | --------------------------- | --------------------------- |
 | Cloud Run **worker pool** — importer, 1 instance, always on                 | ~29                         | ~40                         |
 | Cloud Run **service** — BFF, `min-instances: 1` (JVM cold starts otherwise) | ~29                         | ~40                         |
 | Cloud SQL — smallest shared-core + 40 GB SSD + public IPv4                  | ~45                         | ~45                         |
@@ -397,12 +397,12 @@ Each always-on container is 0.5 vCPU / 1 GiB with instance-based (always-allocat
 | Staging (BFF scales to zero; smallest Cloud SQL)                            | ~30                         | ~35                         |
 | **Total (prod + staging, $)**                                               | **~140**                    | **~165**                    |
 
-The Frankfurt column is the price of the German *preference*; Belgium and the Netherlands are Tier 1 and satisfy the EU *requirement* for ~$25/month less.
+The Frankfurt column is the price of the German _preference_; Belgium and the Netherlands are Tier 1 and satisfy the EU _requirement_ for ~$25/month less.
 
 ### Option C2 — Google App Engine (for comparison only)
 
 | Item                                                                  | $ / month |
-|-----------------------------------------------------------------------|-----------|
+| --------------------------------------------------------------------- | --------- |
 | Flexible — importer, 1 vCPU / 1 GB, cannot scale below 1 instance     | ~48       |
 | Flexible — BFF, 1 vCPU / 1 GB                                         | ~48       |
 | Cloud SQL + registry + logging (as above)                             | ~50       |
@@ -413,7 +413,7 @@ The Frankfurt column is the price of the German *preference*; Belgium and the Ne
 ### Option H — AWS Elastic Beanstalk `eu-central-1`
 
 | Item                                                                           | $ / month    |
-|--------------------------------------------------------------------------------|--------------|
+| ------------------------------------------------------------------------------ | ------------ |
 | 2 × single-instance environments, `t4g.small` (2 vCPU / 2 GB, Graviton)        | ~28          |
 | Public IPv4 × 2 ($0.005/h each — billed since 2024)                            | ~7           |
 | EBS gp3, 2 × 15 GB                                                             | ~3           |
@@ -436,7 +436,7 @@ differently, so these are **estimates from vendor calculators and public price l
 #### E1 — European providers
 
 | Provider                 | Configuration                                                                           | Prod / month | + staging |
-|--------------------------|-----------------------------------------------------------------------------------------|--------------|-----------|
+| ------------------------ | --------------------------------------------------------------------------------------- | ------------ | --------- |
 | **Sliplane** 🇩🇪          | 1 × Medium server (3 vCPU / 4 GB) runs everything incl. a Postgres container            | €24          | €33       |
 | **Clever Cloud** 🇫🇷      | 2 × S instances (1 GB) ≈ €40–60 + managed PostgreSQL ≈ €20–30                           | €60–90       | €95–130   |
 | **Koyeb** 🇫🇷 (Frankfurt) | Pro $29 (incl. $10 compute) + 2 always-on small instances + Serverless Postgres ~$21    | ~$75         | ~$100     |
@@ -450,7 +450,7 @@ that nobody has to be awake for it.
 #### E2 — US providers with EU regions
 
 | Provider                  | Configuration                                                                           | Prod / month |
-|---------------------------|-----------------------------------------------------------------------------------------|--------------|
+| ------------------------- | --------------------------------------------------------------------------------------- | ------------ |
 | Fly.io (`fra`)            | 2 × shared-cpu-1x / 1 GB + Managed Postgres + volumes                                   | ~$50         |
 | DigitalOcean App (`fra1`) | 2 × Basic (1 GB) + Managed Postgres 1 GB; static site free                              | ~$45–60      |
 | Railway (EU West)         | 2 svc × (0.5 vCPU + 1 GB) @ $20/vCPU + $10/GB + Postgres + $20 Pro seat                 | ~$65         |
@@ -464,7 +464,7 @@ the value option, and its EU region is Ireland (on AWS), so it is a US processor
 ### Summary — what this application costs per month
 
 | Platform                                 | Type      | Managed PG | EU jurisdiction | Production | Prod + staging | Multiple of cheapest |
-|------------------------------------------|-----------|------------|-----------------|------------|----------------|----------------------|
+| ---------------------------------------- | --------- | ---------- | --------------- | ---------- | -------------- | -------------------- |
 | **Hetzner Cloud + k3s** 🇩🇪               | IaaS      | ❌         | ✅              | **~€22**   | **~€30**       | 1×                   |
 | Hetzner + Coolify/Dokku 🇩🇪 (E3)          | self-PaaS | ❌         | ✅              | ~€22       | ~€30           | 1×                   |
 | Sliplane 🇩🇪                              | PaaS      | ❌         | ✅              | ~€24       | ~€33           | ~1.1×                |
@@ -487,12 +487,12 @@ the value option, and its EU region is Ireland (on AWS), so it is a US processor
 Three honest caveats on this table. First, hyperscaler **free credits** distort year one — AWS and GCP both hand new accounts a few hundred dollars, which can
 make the first 6–12 months look free and the thirteenth month look alarming; the table is steady-state. Second, the Hetzner number **excludes the labour** of
 running PostgreSQL and k3s ourselves. If that is valued at even two hours a month, the gap to a PaaS narrows considerably — which is precisely the trade-off the
-decision below turns on. Third, the PaaS rows are the *published* prices for a sizing we have not yet load-tested; every one of them bills per GB of RAM, so if
+decision below turns on. Third, the PaaS rows are the _published_ prices for a sizing we have not yet load-tested; every one of them bills per GB of RAM, so if
 the JVMs need 2 GB rather than 1 GB the PaaS rows roughly double while the Hetzner row does not move at all.
 
 **The shape of the answer to "is PaaS cheaper than CaaS?"**: yes, meaningfully — a European PaaS with managed Postgres lands at **€60–120/month** against **$
 110–150** for Cloud Run or Fargate, and it deletes the ops burden rather than merely the YAML. But it is still **3–5× Hetzner**, and the cheapest way to get
-PaaS *ergonomics* is not to buy a PaaS at all — it is Sliplane or Coolify on German hardware at ~€25/month, which buys push-to-deploy but explicitly does *not*
+PaaS _ergonomics_ is not to buy a PaaS at all — it is Sliplane or Coolify on German hardware at ~€25/month, which buys push-to-deploy but explicitly does _not_
 buy managed PostgreSQL.
 
 ---
@@ -514,7 +514,7 @@ Rationale, against the weighted criteria:
 - **The existing skills apply in full, and the Helm chart is on the backlog anyway.** Options B, C, and E all discard the Kubernetes/Helm layer; Option A is the
   only one where the planned "exercise the Helm chart on k3d/kind" work (TODO → Operations & Hardening) becomes the actual production deployment path.
 - **Egress is included (20 TB/server).** For a public, image-heavy events site, metered egress is the most likely source of a surprise bill on any other option.
-- **The PaaS layer was re-examined on its merits and does not beat this at *this* moment.** European PaaS is genuinely cheaper than the container platforms —
+- **The PaaS layer was re-examined on its merits and does not beat this at _this_ moment.** European PaaS is genuinely cheaper than the container platforms —
   Clever Cloud at ~€60–90/month is well under Cloud Run or Fargate, and Scalingo is the only non-Hetzner candidate that pairs EU jurisdiction with a managed
   Postgres that has PITR. But it is still 3–5× Hetzner, it discards the Helm work, and its Terraform story is thin-to-absent, which conflicts with the very next
   backlog item. The honest summary: **PaaS is what we buy when ops time becomes the binding constraint, not when euros are.** That trade is written into the
@@ -526,7 +526,7 @@ therefore **not optional** — they are the price of the decision.
 
 ### Deployment shape
 
-> The sketch below is the *platform* shape as decided here. It predates several decisions taken while planning
+> The sketch below is the _platform_ shape as decided here. It predates several decisions taken while planning
 > [#260](https://github.com/enorm-labs/event-junkie/issues/260) — WireGuard for admin access, Flux for deploys, OpenObserve, and the move to the CAX line — so
 > **[PLATFORM_SETUP.md](../PLATFORM_SETUP.md) §2 is the current picture**, in rendered diagrams. This one is kept because it is what the decision was made
 > against.
@@ -553,8 +553,8 @@ therefore **not optional** — they are the price of the decision.
 
 ### Frontend hosting — containerise it, same origin as the API
 
-`events-frontend` is a plain Vite SPA: `npm run build` produces a static `dist/`, and there is no SSR, no Nuxt, no server runtime. That means the *industry
-default* would be a static host + CDN (Cloudflare Pages, Netlify, Vercel, S3+CloudFront) — for a generic SPA that is the right answer, and it is usually free.
+`events-frontend` is a plain Vite SPA: `npm run build` produces a static `dist/`, and there is no SSR, no Nuxt, no server runtime. That means the _industry
+default_ would be a static host + CDN (Cloudflare Pages, Netlify, Vercel, S3+CloudFront) — for a generic SPA that is the right answer, and it is usually free.
 
 **For this project we should still ship it as a Docker image** (multi-stage: `node` builds, `nginx`/`Caddy` serves `dist/`), deployed by the same Helm chart
 behind the same ingress. The reasons are specific rather than dogmatic:
@@ -612,12 +612,12 @@ This decision should be **reopened**, not defended, if any of these become true:
   month is a fair price for that time, and the decision should be made on that evidence rather than pre-emptively either way.
 - **Uptime requirements harden** past what a single-region, single-node k3s cluster can honestly promise.
 - The roadmap pulls in **managed building blocks** — README lists Elasticsearch as "maybe later", and TODO lists Keycloak/auth. If we end up wanting managed
-  search, managed identity, and managed queues, the hyperscaler discount on *integration effort* starts to outweigh the compute premium.
+  search, managed identity, and managed queues, the hyperscaler discount on _integration effort_ starts to outweigh the compute premium.
 
 **The ranked fallbacks**, in the order they should be reached for. This list is not dead prose: the decision was accepted knowing that its one serious risk is
 Postgres operations, and fallback 1 exists so that risk has a cheap answer that does not require reopening the ADR.
 
-1. **Keep Hetzner, move PostgreSQL to a managed EU provider** (Option G) — the *first* thing to try if the Postgres-ops risk materialises, because it is the only
+1. **Keep Hetzner, move PostgreSQL to a managed EU provider** (Option G) — the _first_ thing to try if the Postgres-ops risk materialises, because it is the only
    fallback that addresses that risk without discarding anything: the Helm chart, the OpenTofu configuration, the containerised SPA and the same-origin `/api`
    arrangement all survive, and the application changes by one connection string. **Aiven** is EU-owned (Finnish) and keeps the jurisdiction property intact at
    ~€60–80/month; Neon and Supabase are cheaper but are US companies with EU regions, so they trade jurisdiction for price. The cost is a second vendor, a second
@@ -633,7 +633,7 @@ Postgres operations, and fallback 1 exists so that risk has a cheap answer that 
    now match ADR-008's always-on single-instance scheduler natively. Deploy to `europe-west1`/`europe-west4` (Tier 1) unless German soil is worth ~$25/month.
 5. **AWS Elastic Beanstalk** (Option H) — if AWS is wanted for career or ecosystem reasons but Fargate's floor is not. Roughly half of Fargate at ~$80–100/month
    because a single-instance environment needs neither an ALB nor a NAT Gateway, and RDS is the best managed Postgres in this document.
-6. **AWS Fargate** (Option B) last for *this* stage of the project, but first the moment breadth of managed services or enterprise credibility becomes the
+6. **AWS Fargate** (Option B) last for _this_ stage of the project, but first the moment breadth of managed services or enterprise credibility becomes the
    binding constraint.
 
 Explicitly **not** recommended at any position: **Heroku** (production sizing costs as much as Fargate for a fraction of the platform, and its EU region is
@@ -643,14 +643,14 @@ Ireland on AWS) and **App Engine** (more expensive than Cloud Run, region-locked
 
 Both halves are true, and neither is decisive here.
 
-**"The standard"** — yes, by market share (~28–31 %) and by enterprise default. That is a strong reason to *know* AWS and a weak reason to *host on it*. Nothing
+**"The standard"** — yes, by market share (~28–31 %) and by enterprise default. That is a strong reason to _know_ AWS and a weak reason to _host on it_. Nothing
 in this application needs a service that only AWS has.
 
-**"The most flexible"** — yes, in breadth of catalogue. But flexibility at AWS is sold as *provisioned capacity with an hourly floor*. An ALB, a NAT Gateway,
+**"The most flexible"** — yes, in breadth of catalogue. But flexibility at AWS is sold as _provisioned capacity with an hourly floor_. An ALB, a NAT Gateway,
 and an RDS instance bill ~$96/month combined before the application does anything; that is the price of options we would not exercise. Flexibility we pay for
 monthly and never use is not flexibility, it is overhead.
 
-There is also a quieter point: for a two-service application, ECS+Fargate is the *least* ergonomic of the managed-container platforms compared here. Cloud Run
+There is also a quieter point: for a two-service application, ECS+Fargate is the _least_ ergonomic of the managed-container platforms compared here. Cloud Run
 and Container Apps give an HTTPS endpoint from an image; ECS wants task definitions, target groups, listener rules, execution roles, and log groups — all of
 which we would author and maintain in Terraform. AWS's flexibility is real, but at this size it is charged in both euros and YAML.
 
@@ -661,7 +661,7 @@ Hetzner now does not close that door; the application is containers and Postgres
 
 ## Consequences
 
-- **Positive**: Lowest total cost by a wide margin (~€30/month for production *and* staging), so the required staging stage is affordable. Strongest GDPR/data
+- **Positive**: Lowest total cost by a wide margin (~€30/month for production _and_ staging), so the required staging stage is affordable. Strongest GDPR/data
   residency position of any candidate. Docker, Kubernetes, Helm, and Terraform skills apply directly, and the planned Helm chart becomes the production
   deployment path. Egress is included, removing the most common bill-shock vector. Always-on containers suit ADR-008's scheduler without workarounds. Low
   lock-in — the workload is containers, Kubernetes manifests, and Postgres.
@@ -674,15 +674,15 @@ Hetzner now does not close that door; the application is containers and Postgres
   schedulers. Multi-replica operation stays blocked on the `SELECT … FOR UPDATE SKIP LOCKED` work noted in ADR-008.
 - **Admin API exposure**: `events-importer`'s admin endpoints must not be routed publicly by the ingress — cluster-internal service only, reachable via
   `kubectl port-forward` or, later, behind the planned authentication. **The planned admin frontend inherits this**: at launch it runs locally against a
-  port-forwarded admin API and is not deployed at all; the moment it *is* deployed, it needs access control ahead of the application-level auth work — an
+  port-forwarded admin API and is not deployed at all; the moment it _is_ deployed, it needs access control ahead of the application-level auth work — an
   ingress IP allowlist or a Traefik basic-auth middleware, since the 2026-08-10 amendment removed Cloudflare Access from the options. Do not route either the
   admin UI or the admin API publicly on the assumption that "nobody knows the URL".
 - **IaC**: use the `hetznercloud/hcloud` OpenTofu/Terraform provider for servers, networks, firewalls, and volumes; keep state in Hetzner Object Storage (S3
   API) or Terraform Cloud. This unblocks the "Infrastructure as code" backlog item.
-  > **Settled 2026-08-10.** State is in **Hetzner Object Storage**, not Terraform Cloud — one vendor, one jurisdiction, one AVV. The configuration now exists in
-  > [`infra/`](../../infra) and has not been applied. Two things the decision above did not anticipate: the state *bucket* has to be created by hand, because a
-  > backend cannot be managed by the state it holds and Hetzner has no Cloud API for buckets; and S3-native locking is unverified on Hetzner's Ceph, so applies
-  > are single-operator until someone tests it.
+    > **Settled 2026-08-10.** State is in **Hetzner Object Storage**, not Terraform Cloud — one vendor, one jurisdiction, one AVV. The configuration now exists in
+    > [`infra/`](../../infra) and has not been applied. Two things the decision above did not anticipate: the state _bucket_ has to be created by hand, because a
+    > backend cannot be managed by the state it holds and Hetzner has no Cloud API for buckets; and S3-native locking is unverified on Hetzner's Ceph, so applies
+    > are single-operator until someone tests it.
 - **CI/CD**: GitHub Actions cannot use OIDC against Hetzner, so deploys authenticate with a scoped kubeconfig or deploy key held as a repository secret, rotated
   deliberately. This is a genuine step down from AWS/GCP OIDC and should be treated as such.
 - **Observability is now our problem**: budget for either a self-hosted `kube-prometheus-stack` + Grafana (fits the "Dashboard for analysing the data" backlog
@@ -692,16 +692,16 @@ Hetzner now does not close that door; the application is containers and Postgres
 - **DNS and TLS are ours** (2026-08-10 amendment): DNS at the registrar or Hetzner DNS, and Traefik terminates TLS in the cluster via cert-manager or its ACME
   client. The Helm chart must provision the issuer and the certificate, and a certificate that fails to renew is now an outage nobody else notices first.
   Hetzner DNS has a community Terraform provider, so it can live alongside the rest of the IaC.
-  > **Corrected 2026-08-10.** It does not need one, and the community providers should not be used. DNS is in the **official** `hetznercloud/hcloud` provider —
-  > `hcloud_zone` and `hcloud_zone_rrset`, GA since v1.56.0 — so it is the same provider, token and state file as the servers. `timohirt/hetznerdns` and
-  > `germanbrew/hetznerdns` were both deprecated on 10 Nov 2025 and still rank well in search results, which is exactly how a deprecated provider ends up in a
-  > fresh configuration.
+    > **Corrected 2026-08-10.** It does not need one, and the community providers should not be used. DNS is in the **official** `hetznercloud/hcloud` provider —
+    > `hcloud_zone` and `hcloud_zone_rrset`, GA since v1.56.0 — so it is the same provider, token and state file as the servers. `timohirt/hetznerdns` and
+    > `germanbrew/hetznerdns` were both deprecated on 10 Nov 2025 and still rank well in search results, which is exactly how a deprecated provider ends up in a
+    > fresh configuration.
 - **Real client IPs reach the origin** (2026-08-10 amendment). With no proxy in front, Traefik and nginx see the actual address rather than an edge IP. That
   makes the four open logging decisions in [LEGAL.md](../LEGAL.md) §7.5 — whether to log IPs at all, truncation, retention, and where retention is enforced —
   load-bearing rather than a formality, and they must be settled before launch, not after.
 - **Cost re-check**: Hetzner raised prices in 2026 and may again. Re-verify the numbers in this ADR at go-live and revisit annually.
-- **Both exits are pre-decided, not pre-committed**, and they are different sizes. If *the database* is the problem, fallback 1 moves Postgres to a managed EU
-  provider and nothing else changes. If *ops time in general* is the problem, the move is Clever Cloud or Scalingo (EU jurisdiction, managed Postgres with PITR),
+- **Both exits are pre-decided, not pre-committed**, and they are different sizes. If _the database_ is the problem, fallback 1 moves Postgres to a managed EU
+  provider and nothing else changes. If _ops time in general_ is the problem, the move is Clever Cloud or Scalingo (EU jurisdiction, managed Postgres with PITR),
   and the SPA moves to a static host at that point rather than staying a container — see the fallback ranking. Keeping the application to "a Docker image plus a
   Postgres URL", with no Kubernetes-specific code, is what keeps both exits cheap; the Helm chart is the only artifact thrown away, and only by the second one.
 - **Follow-ups unblocked** — the rest of the `v0.2 — Deployable` milestone, which was blocked on this decision and is not any more:

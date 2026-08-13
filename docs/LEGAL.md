@@ -1,7 +1,7 @@
 # Legal, compliance and site-chrome policy
 
 > **Status: current state, not a plan.** This replaces `FOOTER_AND_LEGAL_PLAN.md`, whose implementation is complete — every phase shipped between 2026-08-07 and
-> 2026-08-08. What is written here is what the site *does*, and what future changes must keep true.
+> 2026-08-08. What is written here is what the site _does_, and what future changes must keep true.
 >
 > **It is not signed off.** Several decisions this document records are provisional, and the site cannot go live until §14 is closed. Read that section before
 > treating anything here as final.
@@ -15,13 +15,13 @@ This covers the site's legal surface and the chrome around it: the footer, the i
 version is exposed, the beta marker, and the accessibility target.
 
 **Section numbers are inherited deliberately.** Around fifty references across the codebase cite sections of the document this replaces (`§9.2`, `§6.1`, `§4.4`
-…), and keeping them valid was worth more than a tidy sequence. §10 and §11 are absent because they described *work to do* rather than policy; §2 has been
+…), and keeping them valid was worth more than a tidy sequence. §10 and §11 are absent because they described _work to do_ rather than policy; §2 has been
 rewritten from a proposal into a description.
 
 **Operational rules are not repeated here.** They live where the person changing the code will actually see them:
 
 | Rule                                                  | Where it lives                                                                                        |
-|-------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | Privacy/GDPR re-check triggers                        | [`AGENTS.md` §Privacy & GDPR](../AGENTS.md)                                                           |
 | Version in `gradle.properties`, `package.json` mirror | [`AGENTS.md` §Versioning](../AGENTS.md) · [`events-frontend/AGENTS.md`](../events-frontend/AGENTS.md) |
 | Accessibility rules                                   | [`events-frontend/AGENTS.md` §Accessibility](../events-frontend/AGENTS.md)                            |
@@ -36,7 +36,7 @@ contributing, changelog), a **Legal** column (imprint, privacy, open-source noti
 Legal content lives under `/{locale}/legal/*` — `imprint`, `privacy`, `notices` — nested so later additions (an accessibility statement, a data-sources page)
 have an obvious home. Each of the four long-form pages, including About, is a **separate component per language** rather than translated strings: a legal page
 is a document, reviewed as a document, possibly by someone who does not read Vue. The reasoning is recorded in `views/localisedView.ts`, and the rule that
-follows from it — *edit both language versions or neither* — in `events-frontend/AGENTS.md`.
+follows from it — _edit both language versions or neither_ — in `events-frontend/AGENTS.md`.
 
 German practice expects the imprint within a couple of clicks from any page, which the footer satisfies; an e2e test holds that property.
 
@@ -57,7 +57,7 @@ people's material.
 
 The obvious implementation — fetch the latest release from `api.github.com` — was rejected. It sends every visitor's IP address to GitHub, which makes GitHub a
 recipient in the privacy notice and adds a third-party request to a page that otherwise makes none (see the standing reminder in `AGENTS.md`). It also reports
-what was *released*, not what is *running*, which is the question a version in the footer exists to answer.
+what was _released_, not what is _running_, which is the question a version in the footer exists to answer.
 
 ### 4.2 Single source of truth
 
@@ -86,7 +86,7 @@ First public version **`0.1.0`**; `main` carries `0.1.0-SNAPSHOT`, which renders
 ## 5. The beta marker
 
 The header carries a `beta` badge linking to `/{locale}/about#beta`, where the page explains what beta does and does not mean — incomplete coverage, possibly
-stale details, and explicitly *not* "a trial you get charged for" or "we sell your data". The anchor id stays `beta` in both languages.
+stale details, and explicitly _not_ "a trial you get charged for" or "we sell your data". The anchor id stays `beta` in both languages.
 
 It comes off with `1.0.0` (§4.7).
 
@@ -97,8 +97,8 @@ It comes off with `1.0.0` (§4.7).
 The site publishes English and German. **The German versions of the imprint and privacy notice are authoritative**, stated on each page in both languages via a
 `LegalPage` prop so it cannot be forgotten on one of the four.
 
-The history is worth keeping, because it constrains future changes: the legal pages shipped English-only first, on the explicit condition that German ship *in
-the same release as the German UI*. An English-only imprint on a site presenting itself in German is the configuration where the Art. 12 GDPR "clear and plain
+The history is worth keeping, because it constrains future changes: the legal pages shipped English-only first, on the explicit condition that German ship _in
+the same release as the German UI_. An English-only imprint on a site presenting itself in German is the configuration where the Art. 12 GDPR "clear and plain
 language" argument turns against us. That condition was met on 2026-08-08 — and it applies again to **any third locale**: publishing a locale means publishing
 its legal pages in the same release.
 
@@ -133,7 +133,7 @@ one asserts that a named individual is a natural person.
 
 ### 7.4 Device storage — `localStorage`, not just cookies
 
-The site sets **no cookies**. It stores a `theme` key and a locale hint. § 25 TDDDG covers *storage on terminal equipment*, not cookies specifically — both
+The site sets **no cookies**. It stores a `theme` key and a locale hint. § 25 TDDDG covers _storage on terminal equipment_, not cookies specifically — both
 items are strictly necessary for a setting the visitor chose, so § 25 (2) 2 applies and **no consent banner is required**.
 
 That is a property worth defending deliberately: the first non-essential stored item makes a banner mandatory. It is a product decision, not an implementation
@@ -146,18 +146,18 @@ detail — escalate rather than implement.
 The notice must state truthfully which logs hold personal data, what is in them, and for how long. Four decisions remain — whether Traefik and the nginx
 container log real client IPs at all, whether any logged IP is truncated, the retention period per log stream, and where retention is actually enforced. They
 depend on infrastructure that does not exist yet; see §14. **They became more load-bearing on 2026-08-10**: with Cloudflare removed from the architecture there
-is no proxy between the visitor and the origin, so these four are the *only* thing standing between a request and a real IP address on disk.
+is no proxy between the visitor and the origin, so these four are the _only_ thing standing between a request and a real IP address on disk.
 
 What is already settled and must not drift:
 
 - **The Spring applications log no IP addresses.** `RequestLoggingFilter` logs `METHOD /path -> status (Nms)`. **Never add the client IP to it.** It is IP-free
   today by design; this is exactly the class of change the `AGENTS.md` reminder exists to catch.
-- **"Do nothing" is not a neutral default, and since 2026-08-10 it is the *unsafe* default.** Traefik's access log is *off* by default; nginx's is *on*. This
+- **"Do nothing" is not a neutral default, and since 2026-08-10 it is the _unsafe_ default.** Traefik's access log is _off_ by default; nginx's is _on_. This
   paragraph used to add that the origin only ever saw a Cloudflare proxy IP, so the exposure arrived by an explicit "restore the real client IP" change.
   [ADR-012's amendment](adr/ADR-012_CLOUD_PLATFORM.md) removed Cloudflare, so **there is no proxy and the origin sees the visitor's real address**. nginx will
   therefore write real client IPs to disk from the first request unless its access log is configured not to. Nobody has to change anything for that to happen —
   which is the reverse of the situation this note was originally written for.
-- **Do not claim server logs contain no personal data.** A dynamic IP address held by the operator of an online service is personal data — *Breyer* (C-582/14) —
+- **Do not claim server logs contain no personal data.** A dynamic IP address held by the operator of an online service is personal data — _Breyer_ (C-582/14) —
   so a log line carrying one needs no correlation argument to qualify. The earlier version of this bullet reasoned that a timestamp plus request line could be
   correlated with Cloudflare's own records; that route is gone with Cloudflare, and it has been replaced by the more direct problem of holding the address
   itself. Truncation is now the lever that decides the answer, which is why it is one of the four open decisions rather than an implementation detail.
@@ -168,16 +168,16 @@ What is already settled and must not drift:
 
 Two registers, deliberately not literal translations of each other:
 
-- **Footer** (brand voice): *"Event data is aggregated from public sources and provided without warranty — always check with the venue before you go."* / *"Die
-  Event-Daten stammen aus öffentlichen Quellen — alle Angaben ohne Gewähr. Frag im Zweifel bei der Location nach, bevor du losziehst."*
-- **Imprint** (formal): *"…provided without warranty as to accuracy, completeness or timeliness."* / *"Alle Angaben erfolgen ohne Gewähr für Richtigkeit,
-  Vollständigkeit und Aktualität."*
+- **Footer** (brand voice): _"Event data is aggregated from public sources and provided without warranty — always check with the venue before you go."_ / _"Die
+  Event-Daten stammen aus öffentlichen Quellen — alle Angaben ohne Gewähr. Frag im Zweifel bei der Location nach, bevor du losziehst."_
+- **Imprint** (formal): _"…provided without warranty as to accuracy, completeness or timeliness."_ / _"Alle Angaben erfolgen ohne Gewähr für Richtigkeit,
+  Vollständigkeit und Aktualität."_
 
 Treat these as a translation unit, not a legal constant: translate from intent, never word for word.
 
 ### 7.7 Keeping the notice true
 
-A privacy notice describes what the system *actually does*, so it becomes false the moment the system changes — and the change that breaks it is rarely labelled
+A privacy notice describes what the system _actually does_, so it becomes false the moment the system changes — and the change that breaks it is rarely labelled
 "privacy work". The standing list of triggers lives in **[`AGENTS.md`](../AGENTS.md)**, with a checkbox in the PR template. Both are part of the mechanism, not
 documentation about it.
 
@@ -185,7 +185,7 @@ The review date on the privacy page (`LAST_REVIEWED` in `lib/legal.ts`) is the v
 
 ### 7.8 DSGVO generator — as a cross-check, not a source
 
-Running the German notice past a generator such as [datenschutz-generator.de](https://datenschutz-generator.de/) is worthwhile *as a second opinion*, because
+Running the German notice past a generator such as [datenschutz-generator.de](https://datenschutz-generator.de/) is worthwhile _as a second opinion_, because
 the German it produces is the idiom a German reader expects. It is **not** a substitute for the notice being written from what the system does — generators emit
 boilerplate for processing you do not perform, which §7.2 rules out. Not yet done (§14).
 
@@ -195,12 +195,12 @@ The imprint names the provider, a reachable postal address, an email address, an
 because an events guide that curates third-party content can fall under the journalistic-editorial test, and naming someone costs one line and removes the
 question.
 
-It states explicitly what does *not* apply: no commercial register entry, no VAT ID under § 27a UStG, no supervisory authority, no regulated professional title,
+It states explicitly what does _not_ apply: no commercial register entry, no VAT ID under § 27a UStG, no supervisory authority, no regulated professional title,
 and no participation in consumer arbitration.
 
 ### 8.3 The address
 
-§ 5 DDG requires a *ladungsfähige Anschrift*, and a private individual has no company address to use. The decision: **rent one from
+§ 5 DDG requires a _ladungsfähige Anschrift_, and a private individual has no company address to use. The decision: **rent one from
 [Postflex](https://www.postflex.de/)**, ordered once `event-junkie.de` is registered.
 
 There is no way around this by omitting the imprint — Art. 13 GDPR requires the controller's identity and contact details in the privacy notice regardless.
@@ -234,11 +234,11 @@ The question is not "compatible with Apache-2.0" in the abstract, but **"compati
 Apache-2.0"**.
 
 | Category                   | Examples                                         | Verdict                                                                                                                                                  |
-|----------------------------|--------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| -------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Permissive                 | MIT, BSD-2/3, Apache-2.0, ISC, Unlicense, Zlib   | ✅ Use freely. Attribution only — the notices page satisfies it.                                                                                         |
 | Weak copyleft              | MPL-2.0, EPL-2.0, CDDL, LGPL                     | ⚠️ Acceptable for unmodified library use; file-level or relinking obligations. Prefer an alternative; record why if used.                                |
 | Strong copyleft            | GPL-2.0, GPL-3.0                                 | ❌ Avoid. GPL-2.0-only is outright incompatible with Apache-2.0.                                                                                         |
-| **Network copyleft**       | **AGPL-3.0**                                     | ❌ **The one to watch.** § 13 fires on *network interaction*, not distribution — this project is the trigger case. It would relicense the combined work. |
+| **Network copyleft**       | **AGPL-3.0**                                     | ❌ **The one to watch.** § 13 fires on _network interaction_, not distribution — this project is the trigger case. It would relicense the combined work. |
 | Source-available           | BUSL/BSL, SSPL, Elastic 2.0, FSL, Commons Clause | ❌ Not OSI-approved; several forbid exactly "offer this as a service".                                                                                   |
 | Unknown / missing / custom | no metadata, bespoke terms                       | ❌ Treat as a build failure until resolved. The largest real category in npm trees.                                                                      |
 
@@ -254,42 +254,42 @@ themes**. German is reliably longer than English, so it is where an overflow or 
 contrast failures, which were fixed at the design tokens rather than at the call sites.
 
 **Do not claim conformance publicly** until something has measured it end to end; axe finds roughly a third of WCAG issues. An accessibility statement is a
-*claim*, so it can only be published once the target is actually met.
+_claim_, so it can only be published once the target is actually met.
 
 The rules themselves are in [`events-frontend/AGENTS.md` §Accessibility](../events-frontend/AGENTS.md) — the frontend file, because that is what an agent
 editing a `.vue` file loads.
 
 ## 13. Decision log
 
-| #  | Question               | Decision                                                                                                     | Where                |
-|----|------------------------|--------------------------------------------------------------------------------------------------------------|----------------------|
-| 1  | Imprint address        | Rent a *ladungsfähige Anschrift* from Postflex after domain registration; guarded placeholder until then     | §8.3                 |
-| 2  | Legal-page language    | English first, German in the same release as the German UI and authoritative from then — **done 2026-08-08** | §6.1                 |
-| 3  | First public version   | `0.1.0`; `main` carries `0.1.0-SNAPSHOT`; `-SNAPSHOT` renders unlinked                                       | §4.7                 |
-| 4  | `package.json` version | Mirrors the Gradle version, kept in step by hand, without `-SNAPSHOT`                                        | §4.6                 |
-| 5  | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                    | §4.4                 |
-| 6  | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                            | `CODE_OF_CONDUCT.md` |
-| 7  | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                       | §8.4                 |
-| 8  | Localisation           | English + German — **done**, see [ADR-013](adr/ADR-013_LOCALISATION.md)                                      | §6.2                 |
-| 9  | Accessibility          | Target **WCAG 2.1 AA**, with linting and an axe sweep enforcing it                                           | §12                  |
-| 10 | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                      | §9.1                 |
-| 11 | Version source         | Build-stamped from `gradle.properties`, never the GitHub API                                                 | §4.1                 |
+| #   | Question               | Decision                                                                                                     | Where                |
+| --- | ---------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------- |
+| 1   | Imprint address        | Rent a _ladungsfähige Anschrift_ from Postflex after domain registration; guarded placeholder until then     | §8.3                 |
+| 2   | Legal-page language    | English first, German in the same release as the German UI and authoritative from then — **done 2026-08-08** | §6.1                 |
+| 3   | First public version   | `0.1.0`; `main` carries `0.1.0-SNAPSHOT`; `-SNAPSHOT` renders unlinked                                       | §4.7                 |
+| 4   | `package.json` version | Mirrors the Gradle version, kept in step by hand, without `-SNAPSHOT`                                        | §4.6                 |
+| 5   | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                    | §4.4                 |
+| 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                            | `CODE_OF_CONDUCT.md` |
+| 7   | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                       | §8.4                 |
+| 8   | Localisation           | English + German — **done**, see [ADR-013](adr/ADR-013_LOCALISATION.md)                                      | §6.2                 |
+| 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting and an axe sweep enforcing it                                           | §12                  |
+| 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                      | §9.1                 |
+| 11  | Version source         | Build-stamped from `gradle.properties`, never the GitHub API                                                 | §4.1                 |
 
 ## 14. Open items — what is **not** signed off
 
-The site cannot go live until these are closed. They are tracked as issues in the `v0.3 — Launch-ready` and `v1.0 — Go-live` milestones, the deployment-blocked ones labelled `needs-deployment`; this section says what each one *means*.
+The site cannot go live until these are closed. They are tracked as issues in the `v0.3 — Launch-ready` and `v1.0 — Go-live` milestones, the deployment-blocked ones labelled `needs-deployment`; this section says what each one _means_.
 
 **Blocking, and dependent on infrastructure:**
 
 1. **The four logging decisions** (§7.5) — whether Traefik and the nginx container log real client IPs, truncation, retention period, and where retention is
-   enforced. The notice currently states an *intended* seven days.
+   enforced. The notice currently states an _intended_ seven days.
 2. **`INFRASTRUCTURE_IS_PROPOSED = true`** — [ADR-012](adr/ADR-012_CLOUD_PLATFORM.md) is `Accepted` as of 2026-08-10, but accepting it deployed nothing, so the
    notice still describes an intended deployment. It must be re-checked against what actually runs once the platform is provisioned
    ([#260](https://github.com/enorm-labs/event-junkie/issues/260)), and the flag cleared then — not now.
 3. **Art. 28 contracts** — now a single one: **Hetzner's AVV**. The 2026-08-10 amendment to
    [ADR-012](adr/ADR-012_CLOUD_PLATFORM.md) removed Cloudflare, so there is no second DPA to accept and **no third-country transfer to name at all** — the
-   placeholder sentence about a transfer mechanism comes out rather than getting filled in. *A notice naming processors without a DPA in place is worse than one
-   naming none.* Tracked as [#275](https://github.com/enorm-labs/event-junkie/issues/275).
+   placeholder sentence about a transfer mechanism comes out rather than getting filled in. _A notice naming processors without a DPA in place is worse than one
+   naming none._ Tracked as [#275](https://github.com/enorm-labs/event-junkie/issues/275).
 4. **Backup retention** as its own line — it is a separate period from log retention, and if logs are captured by backups the effective retention is the backup
    window, not the rotation one. Check rather than assume.
 
@@ -301,7 +301,7 @@ The site cannot go live until these are closed. They are tracked as issues in th
 
 **Blocking, and dependent on a person:**
 
-7. **A qualified review of the German privacy notice.** The drafts are careful and test-covered; neither makes them *reviewed*. This is the item no amount of
+7. **A qualified review of the German privacy notice.** The drafts are careful and test-covered; neither makes them _reviewed_. This is the item no amount of
    engineering substitutes for.
 8. **The DSGVO-generator cross-check** (§7.8) as a second opinion.
 

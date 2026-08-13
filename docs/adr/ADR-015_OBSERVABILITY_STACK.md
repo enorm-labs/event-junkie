@@ -4,21 +4,21 @@
 
 **Accepted (2026-08-10) — OpenObserve, single-node, backed by Hetzner Object Storage.**
 
-**Accepted on trial, deliberately.** This is the youngest product in the comparison and the only one carrying a copyleft licence, so it is adopted to be *used
-and judged*, not to be settled forever. What makes that safe rather than woolly is that both applications emit vendor-neutral OpenTelemetry and
+**Accepted on trial, deliberately.** This is the youngest product in the comparison and the only one carrying a copyleft licence, so it is adopted to be _used
+and judged_, not to be settled forever. What makes that safe rather than woolly is that both applications emit vendor-neutral OpenTelemetry and
 Prometheus-format metrics regardless of backend — so replacing it is a Helm release and a datasource, **not** a re-instrumentation. The exit was designed in
 before the entry.
 
 **Judged against these, at the point staging has been running it for a fortnight and again before go-live** — vague trials never conclude, so this is what
 "does it work for us" means:
 
-|   | Test                                    | Fails if                                                                                                                                                |
-|---|-----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1 | **The zero-events alert fires**         | A source that silently stops importing does not page anyone. This is the requirement the whole ADR turns on — if it cannot do this, nothing else counts |
-| 2 | **Footprint is roughly as claimed**     | Sustained resident memory over ~1.5 GB, which eats the CX33 headroom that [PLATFORM_SETUP.md](../PLATFORM_SETUP.md) §1 depends on                       |
-| 3 | **Log search is usable under pressure** | Answering "what happened to venue X on run Y at 23:00" takes longer than reading the raw pod logs would have                                            |
-| 4 | **Dashboards carry business metrics**   | The importer meters in PLATFORM_SETUP.md §7 cannot be charted the way they need to be                                                                   |
-| 5 | **Upgrades are uneventful**             | A minor version bump loses data or needs manual migration                                                                                               |
+|     | Test                                    | Fails if                                                                                                                                                |
+| --- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **The zero-events alert fires**         | A source that silently stops importing does not page anyone. This is the requirement the whole ADR turns on — if it cannot do this, nothing else counts |
+| 2   | **Footprint is roughly as claimed**     | Sustained resident memory over ~1.5 GB, which eats the CX33 headroom that [PLATFORM_SETUP.md](../PLATFORM_SETUP.md) §1 depends on                       |
+| 3   | **Log search is usable under pressure** | Answering "what happened to venue X on run Y at 23:00" takes longer than reading the raw pod logs would have                                            |
+| 4   | **Dashboards carry business metrics**   | The importer meters in PLATFORM_SETUP.md §7 cannot be charted the way they need to be                                                                   |
+| 5   | **Upgrades are uneventful**             | A minor version bump loses data or needs manual migration                                                                                               |
 
 **If it fails, take fallback 1 — VictoriaMetrics + VictoriaLogs + Grafana.** That is a decision already made below, not one to re-open, and it costs a Helm
 change plus rebuilding dashboards.
@@ -36,17 +36,17 @@ written exit, rather than left Proposed to rot.
 
 ## Context
 
-[ADR-012](ADR-012_CLOUD_PLATFORM.md) chose Hetzner + k3s and recorded, in its own Consequences, that *"observability is now our problem"* — there is no
+[ADR-012](ADR-012_CLOUD_PLATFORM.md) chose Hetzner + k3s and recorded, in its own Consequences, that _"observability is now our problem"_ — there is no
 CloudWatch, no Cloud Operations, no included anything. Its amendment then removed Cloudflare, which also removed the free edge-level traffic analytics that
 would have covered part of this by accident.
 
 So this is not an optional enhancement. It is the difference between "the site is down and I found out from a friend" and "the site is down and I was paged".
-ADR-012 is explicit: *"Alerting must exist before launch, not after the first outage."*
+ADR-012 is explicit: _"Alerting must exist before launch, not after the first outage."_
 
 ### What has to be observed
 
 | Source            | What it produces                                 | Why it matters here                                                 |
-|-------------------|--------------------------------------------------|---------------------------------------------------------------------|
+| ----------------- | ------------------------------------------------ | ------------------------------------------------------------------- |
 | `events-importer` | Scheduled job outcomes, per-venue scrape results | **The most important signal in the system** — see below             |
 | `events-bff`      | HTTP request rate, latency, error rate           | The public surface; the thing users notice                          |
 | `events-frontend` | nginx access logs                                | Low value on its own, high value correlated with BFF errors         |
@@ -55,27 +55,27 @@ ADR-012 is explicit: *"Alerting must exist before launch, not after the first ou
 
 **The importer is the unusual requirement, and it drives the choice more than the others.** A scraper does not fail loudly. When a venue redesigns its site, the
 importer keeps running, reports success, and silently writes zero events — and nobody notices for a fortnight because the site still shows last month's
-listings. HTTP-level monitoring cannot see this. What catches it is a **business metric with an alert**: *"source X has imported 0 events for 3 consecutive
-runs"*. Any candidate that cannot express that is disqualified regardless of how good its infrastructure dashboards look.
+listings. HTTP-level monitoring cannot see this. What catches it is a **business metric with an alert**: _"source X has imported 0 events for 3 consecutive
+runs"_. Any candidate that cannot express that is disqualified regardless of how good its infrastructure dashboards look.
 
 ### Criteria
 
 Weights reflect the single-node constraint more than anything else:
 
-| #  | Criterion                                                              | Weight | Note                                                                   |
-|----|------------------------------------------------------------------------|--------|------------------------------------------------------------------------|
-| 1  | Free and genuinely open source                                         | High   | Including: the features listed below are not behind an enterprise wall |
-| 2  | Resource footprint                                                     | High   | Every GB competes with two JVMs on one node                            |
-| 3  | Logs — view, filter, analyse                                           | High   |                                                                        |
-| 4  | Metrics — Kubernetes *and* application, including **business** metrics | High   | The importer requirement above                                         |
-| 5  | Dashboards                                                             | High   |                                                                        |
-| 6  | Alerting                                                               | High   | ADR-012 requires it before launch                                      |
-| 7  | Easy to install as IaC on k3s                                          | Med    | A Helm chart in the same GitOps flow as everything else                |
-| 8  | Easy to operate and use                                                | Med    | One developer, evenings                                                |
-| 9  | Actively maintained, real community, good docs                         | Med    |                                                                        |
-| 10 | Number of moving parts                                                 | Med    | Each component is a thing to upgrade, patch and debug                  |
+| #   | Criterion                                                              | Weight | Note                                                                   |
+| --- | ---------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------- |
+| 1   | Free and genuinely open source                                         | High   | Including: the features listed below are not behind an enterprise wall |
+| 2   | Resource footprint                                                     | High   | Every GB competes with two JVMs on one node                            |
+| 3   | Logs — view, filter, analyse                                           | High   |                                                                        |
+| 4   | Metrics — Kubernetes _and_ application, including **business** metrics | High   | The importer requirement above                                         |
+| 5   | Dashboards                                                             | High   |                                                                        |
+| 6   | Alerting                                                               | High   | ADR-012 requires it before launch                                      |
+| 7   | Easy to install as IaC on k3s                                          | Med    | A Helm chart in the same GitOps flow as everything else                |
+| 8   | Easy to operate and use                                                | Med    | One developer, evenings                                                |
+| 9   | Actively maintained, real community, good docs                         | Med    |                                                                        |
+| 10  | Number of moving parts                                                 | Med    | Each component is a thing to upgrade, patch and debug                  |
 
-**On criterion 1, "open source" needs splitting.** All five candidates are open source by licence. They differ in whether the *edition you can run for free*
+**On criterion 1, "open source" needs splitting.** All five candidates are open source by licence. They differ in whether the _edition you can run for free_
 carries the features above — SigNoz and VictoriaMetrics both ship Community and Enterprise editions, and OpenObserve likewise. What matters is whether anything
 in criteria 3–6 sits on the far side of that line. For the features this project needs, none of them do — but it is worth checking again before committing,
 because that line moves.
@@ -113,7 +113,7 @@ OpenTelemetry-native, single-pane traces/metrics/logs on a **ClickHouse** backen
 - **Pros**: Apache 2.0 core. The best trace exploration of the five by some margin, and genuinely one product rather than an assembly. Excellent if distributed
   tracing is the primary need.
 - **Cons**: **ClickHouse is the problem on this hardware.** SigNoz's own production examples request 1 CPU / 4 GiB for ClickHouse alone with limits at 2 CPU / 8
-  GiB — before the collector, query service, Alertmanager and frontend. That is the whole node. Tracing is also the signal this project needs *least*: two
+  GiB — before the collector, query service, Alertmanager and frontend. That is the whole node. Tracing is also the signal this project needs _least_: two
   services and one database, where the interesting failures are "a scraper silently returned nothing", not "which of forty microservices added 200 ms".
 
 ### Option D — kube-prometheus-stack (+ Loki)
@@ -123,7 +123,7 @@ The industry default: Prometheus, Alertmanager, Grafana, node-exporter, kube-sta
 - **Pros**: The most documented, most examples, most community answers, most transferable skill. Every Kubernetes question on the internet assumes it. Apache
   2.0.
 - **Cons**: The heaviest total once logs are included — Prometheus alone commonly sits at 1–2 GB for a modest cluster, and Loki adds its own stack. It is the
-  correct answer on a machine with room; it is the wrong answer as the *first* thing installed on a node that also has to run two JVMs. Note that Option B is
+  correct answer on a machine with room; it is the wrong answer as the _first_ thing installed on a node that also has to run two JVMs. Note that Option B is
   PromQL-compatible, so choosing it keeps essentially all of this option's ecosystem benefit.
 
 ### Option E — Netdata
@@ -132,15 +132,15 @@ Per-second infrastructure monitoring with automatic discovery of everything.
 
 - **Pros**: GPL-3.0. The lowest-effort install of the five and genuinely excellent, zero-configuration infrastructure and container metrics — it will tell you
   more about the node in five minutes than any other option here.
-- **Cons**: **It is an infrastructure monitor, not an observability platform.** Log analytics is not its strength, long-term storage and querying of *custom
-  application* metrics is secondary, and the business-metric requirement above — the one that catches a silently-broken scraper — is not what it is built for.
+- **Cons**: **It is an infrastructure monitor, not an observability platform.** Log analytics is not its strength, long-term storage and querying of _custom
+  application_ metrics is secondary, and the business-metric requirement above — the one that catches a silently-broken scraper — is not what it is built for.
   Its best UI experience is Netdata Cloud, which is a hosted third party and therefore a processor, which cuts against
-  [ADR-012's amendment](ADR-012_CLOUD_PLATFORM.md). Strong as a *complement*, weak as the answer.
+  [ADR-012's amendment](ADR-012_CLOUD_PLATFORM.md). Strong as a _complement_, weak as the answer.
 
 ## Comparison
 
 | Criterion (weight)                  | A OpenObserve  | B VM + VictoriaLogs | C SigNoz       | D kube-prom + Loki   | E Netdata        |
-|-------------------------------------|----------------|---------------------|----------------|----------------------|------------------|
+| ----------------------------------- | -------------- | ------------------- | -------------- | -------------------- | ---------------- |
 | Free & OSS (High)                   | 🟡 AGPL-3.0    | ✅ Apache 2.0       | ✅ Apache 2.0  | ✅ Apache 2.0        | ✅ GPL-3.0       |
 | Footprint (High)                    | ✅ ~0.6–1 GB   | ✅ ~0.8–1.2 GB      | ❌ ~4–6 GB     | ❌ ~3–4 GB           | ✅ ~0.2 GB       |
 | Logs (High)                         | ✅ First-class | ✅ VictoriaLogs     | ✅ First-class | 🟡 Loki, extra stack | ❌ Weak          |
@@ -206,7 +206,7 @@ which would add a processor that ADR-012's amendment just finished removing.
   **This is not a new processor** — same Hetzner GmbH, already named in both privacy notices and covered by the single AVV that
   [#275](https://github.com/enorm-labs/event-junkie/issues/275) tracks.
 - **Log content is now a privacy decision with a place to be enforced.** [LEGAL.md](../LEGAL.md) §7.5's four open logging decisions — whether to log client IPs,
-  truncation, retention, and *where retention is enforced* — get their answer to the last one here: OpenObserve's retention policy on the bucket. That closes a
+  truncation, retention, and _where retention is enforced_ — get their answer to the last one here: OpenObserve's retention policy on the bucket. That closes a
   gap ADR-012's amendment widened, since without an edge proxy the origin now sees real client IPs.
 - **Superset is not needed** (PLATFORM_SETUP.md §4). If business dashboards outgrow OpenObserve's, the next step is Grafana with a PostgreSQL datasource, not a
   separate BI platform with its own Python stack and metadata database.
@@ -225,6 +225,6 @@ which would add a processor that ADR-012's amendment just finished removing.
 - [VictoriaMetrics](https://github.com/VictoriaMetrics/VictoriaMetrics) · [VictoriaLogs](https://docs.victoriametrics.com/victorialogs/) — Apache 2.0, Community
   and Enterprise editions
 - [Netdata](https://github.com/netdata/netdata) — GPL-3.0
-- [ADR-012 — Cloud platform](ADR-012_CLOUD_PLATFORM.md), especially *"observability is now our problem"* and the 2026-08-10 amendment
+- [ADR-012 — Cloud platform](ADR-012_CLOUD_PLATFORM.md), especially _"observability is now our problem"_ and the 2026-08-10 amendment
 - [PLATFORM_SETUP.md](../PLATFORM_SETUP.md) — sizing, the instrumentation work, and the go-live sequence
 - [LEGAL.md](../LEGAL.md) §7.5 — the four logging decisions this stack has to enforce

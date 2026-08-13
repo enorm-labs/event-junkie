@@ -57,7 +57,7 @@ useful — a problem concentrated at one venue usually points at that importer.
 - `NULL`/empty `title`, `slug`, `source_id`, `event_date`, `venue_id`.
 - Events with no genre at all: both `event.genre IS NULL` and no `event_genre_tag` rows.
 - Missing `event_type` signal: rows defaulting to `OTHER` (per venue — which sources never set a type?).
-- Missing structured fields that are usually recoverable: no `start_time`/`doors_time`, no price fields *and* no `price_note`, no `image_url`, no `ticket_url`/
+- Missing structured fields that are usually recoverable: no `start_time`/`doors_time`, no price fields _and_ no `price_note`, no `image_url`, no `ticket_url`/
   `source_url`.
 - `venue` rows missing `district`, `latitude`/`longitude`, or `website_url`.
 - Whitespace-only or placeholder text values (e.g. `''`, `'-'`, `'TBA'`, `'N/A'`, `'null'`) in name/title fields.
@@ -66,7 +66,7 @@ useful — a problem concentrated at one venue usually points at that importer.
 
 - Artists / promoters / genre_tags that are almost certainly the same entity under different names:
   same `slug` prefix, case-only differences, punctuation/spacing variants, trailing `Live`/tour suffixes, ALL-CAPS vs mixed case. (Slugs are case-insensitive so
-  exact-slug dupes shouldn't exist, but *near*-duplicate slugs do — that's fragmentation.)
+  exact-slug dupes shouldn't exist, but _near_-duplicate slugs do — that's fragmentation.)
 - Group by `lower(regexp_replace(name, '[^a-z0-9]', '', 'gi'))` to surface names that normalize to the same token but have distinct rows.
 - Events that look like the same real-world event under different `source_id`s (same venue + date + similar title) — the importers dedupe by `source_id`, so
   cross-source or re-listed duplicates slip through.

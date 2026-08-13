@@ -133,10 +133,10 @@ type-stripping, so do not switch the default until the engine floor moves.
 
 - **SFC structure order**: `<script setup>` → `<template>` → `<style scoped>`.
 - **Component naming**: PascalCase for filenames (`HelloWorld.vue`, `TheWelcome.vue`).
-  - Prefix `The` for singleton layout components (e.g. `TheNavbar.vue`, `TheFooter.vue`).
-  - Prefix `Base` for presentational/dumb components that wrap HTML elements (e.g. `BaseButton.vue`, `BaseInput.vue`).
-  - Views (page-level route components) go in `src/views/` with `*View.vue` suffix.
-  - Reusable components go in `src/components/`.
+    - Prefix `The` for singleton layout components (e.g. `TheNavbar.vue`, `TheFooter.vue`).
+    - Prefix `Base` for presentational/dumb components that wrap HTML elements (e.g. `BaseButton.vue`, `BaseInput.vue`).
+    - Views (page-level route components) go in `src/views/` with `*View.vue` suffix.
+    - Reusable components go in `src/components/`.
 - **Multi-word names** — component names must always be multi-word (`TodoItem`, not `Item`) to avoid conflicts with
   HTML elements. Only the root `App.vue` is exempt.
 - **Full words over abbreviations** — prefer `UserProfileOptions.vue` over `UProfOpts.vue`.
@@ -165,13 +165,13 @@ Reference: [Styling with utility classes](https://tailwindcss.com/docs/styling-w
   no references in `src/`. They are shadcn registry defaults, kept so a future `chart`/`sidebar` component
   themes correctly on arrival. Don't "clean them up"; do keep an eye on tokens we added ourselves going unused.
 - **Arbitrary values (`[…]`) are a last resort** — in order of preference:
-  1. a built-in utility — `grayscale-50`, not `grayscale-[0.5]`; check the docs before bracketing;
-  2. a `@theme` token when the value recurs or carries brand meaning — a second sighting of
-     `tracking-[0.18em]`/`tracking-[0.2em]` means it should have been `--tracking-eyebrow`;
-  3. an arbitrary value, for genuinely one-off values (a decorative blur radius, a hero glow's dimensions).
+    1. a built-in utility — `grayscale-50`, not `grayscale-[0.5]`; check the docs before bracketing;
+    2. a `@theme` token when the value recurs or carries brand meaning — a second sighting of
+       `tracking-[0.18em]`/`tracking-[0.2em]` means it should have been `--tracking-eyebrow`;
+    3. an arbitrary value, for genuinely one-off values (a decorative blur radius, a hero glow's dimensions).
 
-  Arbitrary **variants** (`[&.router-link-exact-active]:…`, `dark:[color-scheme:dark]`) are fine — the rule is
-  about magic _values_.
+    Arbitrary **variants** (`[&.router-link-exact-active]:…`, `dark:[color-scheme:dark]`) are fine — the rule is
+    about magic _values_.
 
 - **Inline `style` is allowed only** for values utilities can't express: dynamic values from data, or setting a
   CSS variable that utilities then read (`class="bg-(--glow)"`). Not as an escape hatch from writing classes.
@@ -205,15 +205,15 @@ Reference: [Styling with utility classes](https://tailwindcss.com/docs/styling-w
 - **Updating a `ui/` component to a newer registry version** — there is no automatic upgrade (we own the
   code). `--overwrite` **replaces the file wholesale; it does not merge**, so use git as the reconciliation
   tool:
-  1. `npx shadcn-vue@latest diff <name>` — check whether the registry version differs from ours.
-  2. Ensure the component has **no uncommitted changes**, then
-     `npx shadcn-vue@latest add <name> --overwrite` to pull the latest.
-  3. Review `git diff` to see both the upstream change and anything it clobbered, then reconcile
-     (keep upstream, re-apply our customizations, or `git checkout` to revert).
+    1. `npx shadcn-vue@latest diff <name>` — check whether the registry version differs from ours.
+    2. Ensure the component has **no uncommitted changes**, then
+       `npx shadcn-vue@latest add <name> --overwrite` to pull the latest.
+    3. Review `git diff` to see both the upstream change and anything it clobbered, then reconcile
+       (keep upstream, re-apply our customizations, or `git checkout` to revert).
 
-  For a component we have customized, prefer hand-porting the change shown by `diff` instead of overwriting.
-  This applies **only** to vendored `src/components/ui/**` components — our own components (e.g.
-  `EventCalendar.vue`) are not registry-managed.
+    For a component we have customized, prefer hand-porting the change shown by `diff` instead of overwriting.
+    This applies **only** to vendored `src/components/ui/**` components — our own components (e.g.
+    `EventCalendar.vue`) are not registry-managed.
 
 - **Vendored `ui/` components: reach for a variant, not a one-off `class`** — they accept a `class` prop (that's
   the shadcn pattern, merged via `cn()`), but using it to invent per-call-site colours or sizes erodes the
@@ -412,7 +412,7 @@ list: [docs/LEGAL.md §12](../docs/LEGAL.md).
 - **Every view renders exactly one `<main>`.** The detail views inherit theirs from `BaseDetailView` — do not add a second.
 - **A heading level belongs to the page, not to the component.** One `h1` per view, and no skipped levels below it. A shared component that renders a heading
   takes it as a prop rather than hard-coding one, and the prop is spelled `as` in all of them: `SectionLabel` defaults to `h2`, `EventCard` and `VenueCard`
-  to `h3` (right, under a `SectionLabel`). On a card, `as` sets the *heading* element, not the card's root. **Placing a card grid straight under the page `h1`
+  to `h3` (right, under a `SectionLabel`). On a card, `as` sets the _heading_ element, not the card's root. **Placing a card grid straight under the page `h1`
   means passing `as="h2"`** — see the list pages, and the `heading-order` gate in `e2e/a11y.spec.ts`.
 - **Do not remove a focus indicator.** `outline-none` is acceptable only when paired with a `focus-visible:` ring, as in `components/ui/button/index.ts`.
 - **Prefer a reka-ui / shadcn-vue primitive** over a hand-rolled interactive component. They handle focus management, keyboard interaction and ARIA that a
@@ -533,9 +533,9 @@ The project uses a two-tier linting strategy:
   English accessible names as stable handles; re-running them in German would double an already five-project matrix to re-assert the same behaviour. So put
   anything that only exists in a second language — the URL contract, the switcher, date formats, the per-locale pages — in `i18n.spec.ts`, and leave the rest
   in English.
-  - **Two exceptions, both deliberate.** The **axe sweep runs both locales**, because German is reliably longer and that is where a layout overflow or a
-    contrast regression actually appears. And **landmark names are translated**, so a selector like `getByRole('navigation', { name: 'Main' })` becomes
-    `'Haupt'` under `/de` — which is the concrete reason the other suites stay on `/en` rather than a stylistic one.
+    - **Two exceptions, both deliberate.** The **axe sweep runs both locales**, because German is reliably longer and that is where a layout overflow or a
+      contrast regression actually appears. And **landmark names are translated**, so a selector like `getByRole('navigation', { name: 'Main' })` becomes
+      `'Haupt'` under `/de` — which is the concrete reason the other suites stay on `/en` rather than a stylistic one.
 - **Layout/responsive gotcha:** because `/verify` is chromium-only (desktop viewport), it will not catch
   regressions that only appear on the mobile projects — e.g. a wider header nav overflowing a ~390px screen
   and pushing a control off-screen (a real failure we hit). When touching the **app shell, header/nav, or any

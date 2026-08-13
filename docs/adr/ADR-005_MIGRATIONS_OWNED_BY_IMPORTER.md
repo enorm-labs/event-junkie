@@ -33,4 +33,3 @@ Both could theoretically run Flyway migrations at startup. The question is which
 
 - [Flyway documentation](https://documentation.red-gate.com/flyway)
 - [events-importer/src/main/resources/db/migration/](../../events-importer/src/main/resources/db/migration/)
-

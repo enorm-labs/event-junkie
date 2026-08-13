@@ -21,11 +21,11 @@ widget, an analytics snippet, or anything newly stored on the visitor's device.
 -->
 
 - [ ] This change does **not** affect data processing, third-party requests, or storage on the visitor's device — **or** it does, and the privacy notice and
-  `docs/LEGAL.md` §7 are updated in this PR.
+      `docs/LEGAL.md` §7 are updated in this PR.
 
 ## Accessibility
 
 <!-- Only relevant for frontend changes. See "Accessibility" in events-frontend/AGENTS.md. -->
 
 - [ ] New interactive elements have accessible names; `npm run lint` and the axe sweep in
-  `e2e/a11y.spec.ts` pass without rules being disabled.
+      `e2e/a11y.spec.ts` pass without rules being disabled.

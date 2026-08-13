@@ -39,13 +39,13 @@ The import run's opening RUNNING transition returns the claimed entity so that s
 
 **Optimistic locking does not, and cannot, prevent two runs importing the same source.** Two writers each calling `save()` to mark a source RUNNING produce a
 version conflict that the retry-on-conflict strategy below resolves by re-fetching and retrying — so the second write succeeds and the duplicate run proceeds.
-Mutual exclusion needs a *conditional* write, which the database decides: `EventSourceRepository.claimForImport` issues
+Mutual exclusion needs a _conditional_ write, which the database decides: `EventSourceRepository.claimForImport` issues
 `UPDATE … SET status = 'RUNNING' … WHERE id = :id AND version = :expectedVersion AND status <> 'RUNNING'` and returns the affected row count, so exactly one
 caller claims a source and the loser (seeing `0`) skips its run. Optimistic locking remains for its actual purpose — protecting an in-flight import's metadata
 from concurrent admin edits.
 
 The `version = :expectedVersion` half of that guard is what makes the claim a **compare-and-swap against the exact row the caller read**, and it is not
-redundant with the status check. A status-only guard excludes runs that *overlap*; it does not exclude one that starts the instant another finishes. Imports
+redundant with the status check. A status-only guard excludes runs that _overlap_; it does not exclude one that starts the instant another finishes. Imports
 queue on a bounded semaphore (`app.import.max-concurrency`), so a source can sit between "read" and "claimed" for a long time — long enough to still look IDLE
 with `last_import_at IS NULL` to a scheduler tick, be imported by a manual trigger, and then be re-claimed by that tick because the status has already returned
 to SUCCESS. The result is a second full scrape of the same venue, which is exactly what ADR-007's politeness constraints are meant to avoid. Any completed run
@@ -86,4 +86,3 @@ is retried once. If the retry also fails, the exception propagates — the sched
 
 - [Spring Data R2DBC Optimistic Locking](https://docs.spring.io/spring-data/relational/reference/r2dbc/entity-persistence.html#r2dbc.optimistic-locking)
 - ADR-008: Import Job Scheduling (describes the concurrent access patterns)
-

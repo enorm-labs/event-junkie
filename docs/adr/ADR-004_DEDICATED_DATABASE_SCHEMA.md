@@ -33,5 +33,3 @@ This is configured in three places:
 
 - [`V001__create_initial_schema.sql`](../../events-importer/src/main/resources/db/migration/V001__create_initial_schema.sql)
 - [PostgreSQL Schemas documentation](https://www.postgresql.org/docs/current/ddl-schemas.html)
-
-

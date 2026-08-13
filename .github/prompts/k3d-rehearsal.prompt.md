@@ -43,18 +43,18 @@ scripts/k3d-rehearsal.sh down     # always, eventually
 scripts/k3d-rehearsal.sh flux-all   # flux-up → flux-verify → flux-trap → flux-break → down
 ```
 
-**These two answer different questions and must not share a cluster.** `all` installs the *working
-tree's* chart with images built seconds ago — *"does my change work?"*. `flux-all` installs the chart
-already **published in GHCR**, through the same controllers that will run on Hetzner — *"does the
-delivery mechanism work?"*. Running both against one cluster would put two importers on one schema,
+**These two answer different questions and must not share a cluster.** `all` installs the _working
+tree's_ chart with images built seconds ago — _"does my change work?"_. `flux-all` installs the chart
+already **published in GHCR**, through the same controllers that will run on Hetzner — _"does the
+delivery mechanism work?"_. Running both against one cluster would put two importers on one schema,
 which is the exact ADR-008 failure the chart pins replicas to prevent.
 
-| | |
-|---|---|
-| `flux-up` | cluster, `flux install`, apply `deploy/clusters/k3d`, wait for source **and** release |
-| `flux-verify` | a snapshot resolved, images from GHCR, one shared tag, `helm test` passed |
-| `flux-trap` | removes the `-0` from the semver range and watches it stop matching |
-| `flux-break` | breaks the release on purpose and watches it roll back |
+|               |                                                                                       |
+| ------------- | ------------------------------------------------------------------------------------- |
+| `flux-up`     | cluster, `flux install`, apply `deploy/clusters/k3d`, wait for source **and** release |
+| `flux-verify` | a snapshot resolved, images from GHCR, one shared tag, `helm test` passed             |
+| `flux-trap`   | removes the `-0` from the semver range and watches it stop matching                   |
+| `flux-break`  | breaks the release on purpose and watches it roll back                                |
 
 **`flux-break` is the one that earns its keep**, and it has already paid: it found that
 `remediateLastFailure` defaults to `false`, so a bad deploy was retried and then left running
@@ -68,14 +68,14 @@ can pass with the pieces working only in isolation. If `chain` fails, the rehear
 
 Beyond that, six things are worth confirming rather than assuming:
 
-| | |
-|---|---|
-| All three pods Ready | and **with no restarts** — a pod that recovered after crashing is a different result from one that started |
-| `/` and `/api/events` | 200, and the right content types |
-| `/actuator/**` via ingress | **the SPA fallback**, not actuator |
-| `/api/admin/**` via ingress | a 404 from the BFF, never the importer |
-| `helm test` | passes |
-| The node architecture | on Apple Silicon this is `arm64`, so the rehearsal exercises the architecture Hetzner runs |
+|                             |                                                                                                            |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| All three pods Ready        | and **with no restarts** — a pod that recovered after crashing is a different result from one that started |
+| `/` and `/api/events`       | 200, and the right content types                                                                           |
+| `/actuator/**` via ingress  | **the SPA fallback**, not actuator                                                                         |
+| `/api/admin/**` via ingress | a 404 from the BFF, never the importer                                                                     |
+| `helm test`                 | passes                                                                                                     |
+| The node architecture       | on Apple Silicon this is `arm64`, so the rehearsal exercises the architecture Hetzner runs                 |
 
 ## The trap that has already caught someone
 
@@ -97,7 +97,7 @@ It is supposed to. #263 found two values bugs, a wrong prediction and a document
 - **`k3d` missing** — `brew install k3d`. `kubectl`, `helm`, `docker` and `yq` are assumed.
 - **CoreDNS needs a nudge, and the script gives it one.** k3d writes `host.k3d.internal` into the CoreDNS ConfigMap during cluster creation, but the `reload`
   plugin only picks it up on its next poll — up to 30 seconds later. Installing inside that window gives every pod `UnknownHostException: host.k3d.internal`,
-  and the importer crash-loops until DNS catches up. It self-heals, which is *worse* than failing: the install still succeeds and the only evidence is a restart
+  and the importer crash-loops until DNS catches up. It self-heals, which is _worse_ than failing: the install still succeeds and the only evidence is a restart
   count nobody reads. The script forces the reload and waits for it. This was found by running the script rather than the same steps by hand — doing it manually
   was slow enough to never hit the race, which is a good reminder that a scripted sequence is not just a faster human.
 - **The rehearsal uses its own database** (`event_junkie_k3d`), never the development one. Installing the chart runs Flyway; pointing that at `event_junkie`

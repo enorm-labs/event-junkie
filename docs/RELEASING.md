@@ -61,12 +61,12 @@ there is nothing for it to hold.
 
 ## What triggers what
 
-| Trigger | Version | Published | Reconciled onto |
-|---|---|---|---|
-| push to `main` | `0.1.0-snapshot.g<sha>` | images + chart | **staging** |
-| **publish a GitHub Release** tagged `v0.1.0` | `0.1.0` | images + chart, **and** `latest` on the images | **production** |
-| PR touching `release.yml` or `version.sh` | snapshot | **nothing** — dry run | — |
-| `workflow_dispatch` | as above | nothing, unless `publish` is ticked | — |
+| Trigger                                      | Version                 | Published                                      | Reconciled onto |
+| -------------------------------------------- | ----------------------- | ---------------------------------------------- | --------------- |
+| push to `main`                               | `0.1.0-snapshot.g<sha>` | images + chart                                 | **staging**     |
+| **publish a GitHub Release** tagged `v0.1.0` | `0.1.0`                 | images + chart, **and** `latest` on the images | **production**  |
+| PR touching `release.yml` or `version.sh`    | snapshot                | **nothing** — dry run                          | —               |
+| `workflow_dispatch`                          | as above                | nothing, unless `publish` is ticked            | —               |
 
 Publishing is decided by an **allowlist** (`push`, `release`, or a dispatch that asks), so a trigger added later cannot silently become a publishing one.
 
@@ -123,11 +123,11 @@ semver: ">=0.0.0"    ->  no match found for semver: >=0.0.0
 Flux runs the chart's own `helm test` hook as part of reconciliation — the smoke test CI cannot run, because CI cannot reach the cluster. A failure triggers
 remediation:
 
-| | |
-|---|---|
-| Upgrade fails or the test fails | Retry up to `retries`, rolling back between attempts |
-| Retries exhausted | **Roll back** — `remediateLastFailure: true`, without which the broken release is simply left running |
-| First install fails | Retried, and the last failure is **left in place** on purpose: there is no previous version to return to, and a failed install is worth looking at |
+|                                 |                                                                                                                                                    |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Upgrade fails or the test fails | Retry up to `retries`, rolling back between attempts                                                                                               |
+| Retries exhausted               | **Roll back** — `remediateLastFailure: true`, without which the broken release is simply left running                                              |
+| First install fails             | Retried, and the last failure is **left in place** on purpose: there is no previous version to return to, and a failed install is worth looking at |
 
 Rollback is also `git revert` on the manifests, and drift from a manual `kubectl edit` is reported on staging (`driftDetection: warn`) and corrected on
 production (`enabled`).
@@ -154,7 +154,7 @@ scripts/k3d-rehearsal.sh flux-all   # the published chart, through Flux, on k3d
 scripts/k3d-rehearsal.sh all        # the working tree's chart, with locally built images
 ```
 
-The first answers *"does the delivery mechanism work?"*, the second *"does my change work?"*. They must not share a cluster. See
+The first answers _"does the delivery mechanism work?"_, the second _"does my change work?"_. They must not share a cluster. See
 [the k3d rehearsal prompt](../.github/prompts/k3d-rehearsal.prompt.md).
 
 ## Bringing up a new cluster

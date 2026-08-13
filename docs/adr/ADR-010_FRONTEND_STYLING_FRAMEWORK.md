@@ -64,7 +64,7 @@ Two largely orthogonal decisions are bundled here:
 ### Comparison summary
 
 | Criterion             | A: Tailwind + shadcn-vue | B: Tailwind + PrimeVue  | C: Vuetify      | D: Tailwind only |
-|-----------------------|--------------------------|-------------------------|-----------------|------------------|
+| --------------------- | ------------------------ | ----------------------- | --------------- | ---------------- |
 | Re-theming ease       | Excellent (CSS vars)     | Good (presets/designer) | Good (Material) | Excellent        |
 | Out-of-box components | Medium (own/extend)      | High                    | High            | None             |
 | Control / ownership   | High (we own code)       | Medium                  | Low             | Highest          |
@@ -83,7 +83,7 @@ see [VISION_ROADMAP_IDEAS.md](../VISION_ROADMAP_IDEAS.md)). Prioritised criteria
 4. **Customizable** — easy re-theming (colours, radius, typography, dark mode) without fighting the library.
 5. **Calendar page is central** — a month/week **event calendar** (events shown on days) is a key screen, not just a date-picker. iCal/Google Calendar export is
    a later goal.
-6. **Public listing app** — needs cards/lists, filters, dialogs/modals, forms; rich data grids and heavy admin widgets are *not* a priority for the public site.
+6. **Public listing app** — needs cards/lists, filters, dialogs/modals, forms; rich data grids and heavy admin widgets are _not_ a priority for the public site.
 7. **Popularity** — a widely-adopted option (lower risk of abandonment, more examples, easier hiring/AI help).
 8. **Community & support** — active maintenance, responsive issues, large user base.
 9. **Documentation** — thorough, well-organised docs with examples.
@@ -94,7 +94,7 @@ see [VISION_ROADMAP_IDEAS.md](../VISION_ROADMAP_IDEAS.md)). Prioritised criteria
 Weekly npm downloads and bundle characteristics, used to score criteria 7–10:
 
 | Library              | Weekly npm downloads | Footprint notes                                             |
-|----------------------|----------------------|-------------------------------------------------------------|
+| -------------------- | -------------------- | ----------------------------------------------------------- |
 | Tailwind CSS         | ~121 M               | Compiles to only the utility classes used — minimal CSS.    |
 | reka-ui (shadcn-vue) | ~1.33 M              | Tree-shaken per primitive; ship only imported components.   |
 | Vuetify              | ~975 K               | Tree-shakeable, but heavier baseline than the alternatives. |
@@ -111,7 +111,7 @@ has a notably larger community than vue-cal (~39 K) — popularity favours FullC
 
 ### Note: the event-calendar component is a separate sub-decision
 
-None of the component libraries below ship a full **event calendar** (month grid with events on days); they provide date *pickers*. The calendar page will need
+None of the component libraries below ship a full **event calendar** (month grid with events on days); they provide date _pickers_. The calendar page will need
 a dedicated library or a custom build, evaluated independently of the component-library choice:
 
 - **FullCalendar** (Vue 3 wrapper) — feature-rich (month/week/list views, drag, recurring), themeable via CSS variables; brings its own styling that must be
@@ -129,7 +129,7 @@ we need week/recurring views) for the calendar page — the calendar library its
 Rationale, scored against the requirements:
 
 | Requirement        | Weight | A: shadcn-vue   | B: PrimeVue  | C: Vuetify        | D: Tailwind only  |
-|--------------------|--------|-----------------|--------------|-------------------|-------------------|
+| ------------------ | ------ | --------------- | ------------ | ----------------- | ----------------- |
 | Simple & clean     | High   | ✅ Excellent    | 🟡 Good      | 🟡 Material-heavy | ✅ Excellent      |
 | Accessible         | High   | ✅ Reka UI      | 🟡 Good      | 🟡 Good           | ❌ DIY (risky)    |
 | Customizable       | High   | ✅ CSS vars     | 🟡 Presets   | ❌ Material       | ✅ Full           |

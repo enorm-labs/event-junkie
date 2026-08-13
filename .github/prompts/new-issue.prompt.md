@@ -17,36 +17,36 @@ milestone and board fields.
 
 1. **Search for an existing issue.** Two cheap passes, both worth doing:
 
-   ```sh
-   grep -in '<keyword>' build/BACKLOG.md          # the local snapshot of every open issue
-   gh issue list --search '<keyword>' --state all --limit 20
-   ```
+    ```sh
+    grep -in '<keyword>' build/BACKLOG.md          # the local snapshot of every open issue
+    gh issue list --search '<keyword>' --state all --limit 20
+    ```
 
-   `build/BACKLOG.md` is a generated mirror — free to grep, no network. The `gh` search also finds *closed* issues, which matters: something closed as `wontfix`
-   or already fixed is an answer, not a gap. If you find a match, report it and stop unless the user wants a separate issue anyway.
+    `build/BACKLOG.md` is a generated mirror — free to grep, no network. The `gh` search also finds _closed_ issues, which matters: something closed as `wontfix`
+    or already fixed is an answer, not a gap. If you find a match, report it and stop unless the user wants a separate issue anyway.
 
 2. **Pick the form.** The template decides which questions the issue has to answer, so choose before drafting:
 
-   | Form | For |
-   |---|---|
-   | `4-task.yml` 🛠 | The default. Infrastructure, docs, tooling, parser repairs — anything that isn't a user-facing feature or a decision. |
-   | `5-feature.yml` ✨ | Something a visitor or operator will be able to *do*. Story format, and **only where there is a user** — "As a user I want Terraform" is a Task. |
-   | `6-importer-defect.yml` 🔍 | We lose or mangle data the source *did* publish. Asks for the scraper, the source text, what we store, the code path, and **whether the fix needs a `--full` re-seed**. |
-   | `7-decision.yml` ⚖️ | A choice that has to be made before work can start. Gets `needs-decision`. |
-   | `8-epic.yml` 🧭 | A theme large enough to hold sub-issues. |
+    | Form                       | For                                                                                                                                                                     |
+    | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | `4-task.yml` 🛠             | The default. Infrastructure, docs, tooling, parser repairs — anything that isn't a user-facing feature or a decision.                                                   |
+    | `5-feature.yml` ✨         | Something a visitor or operator will be able to _do_. Story format, and **only where there is a user** — "As a user I want Terraform" is a Task.                        |
+    | `6-importer-defect.yml` 🔍 | We lose or mangle data the source _did_ publish. Asks for the scraper, the source text, what we store, the code path, and **whether the fix needs a `--full` re-seed**. |
+    | `7-decision.yml` ⚖️        | A choice that has to be made before work can start. Gets `needs-decision`.                                                                                              |
+    | `8-epic.yml` 🧭            | A theme large enough to hold sub-issues.                                                                                                                                |
 
-   **A finding that is *not* an issue:** an accepted limitation — a field the venue never publishes, a trade-off a parser makes deliberately — belongs in that
-   scraper's KDoc, next to the code it constrains. See AGENTS.md.
+    **A finding that is _not_ an issue:** an accepted limitation — a field the venue never publishes, a trade-off a parser makes deliberately — belongs in that
+    scraper's KDoc, next to the code it constrains. See AGENTS.md.
 
 3. **Draft the body.** Match the house style of the existing issues (`gh issue view 302` is a good example):
-    - **Keep the specifics.** File and function names, real example strings from the source, the blast radius as a number. *"7 artist rows today, 5 of them VOID
-      Club's"* is worth more than "several".
+    - **Keep the specifics.** File and function names, real example strings from the source, the blast radius as a number. _"7 artist rows today, 5 of them VOID
+      Club's"_ is worth more than "several".
     - **Say what it costs and what it is blocked on**, not just what it is.
     - **Record what was decided against, and why.** A choice that isn't written down gets rediscovered as an oversight and "fixed".
     - Add a **Done when** checklist where the finish line isn't obvious.
 
 4. **Choose type, labels and milestone.** All three vocabularies are closed:
-    - **Type** (a GitHub issue type, *not* a label): `Task` · `Bug` · `Feature`. Never add a `type:` label.
+    - **Type** (a GitHub issue type, _not_ a label): `Task` · `Bug` · `Feature`. Never add a `type:` label.
     - **Area** (pick one or more): `area:data-quality` `area:bff` `area:frontend` `area:infra` `area:ci` `area:legal` `area:seo` `area:security` `area:agents` —
       plus `importer` and `documentation`, which double as area labels because release-note grouping already depends on them.
     - **Size** (exactly one): `size:S` under half a day · `size:M` one to two days · `size:L` about a week · `size:XL` too big, split it.
@@ -56,23 +56,23 @@ milestone and board fields.
 
 5. **Create it.**
 
-   ```sh
-   gh issue create --title '…' --body-file - --type Task \
-     --milestone 'Phase 2 — Coverage & polish' \
-     --label importer --label 'area:data-quality' --label 'size:M' <<'EOF'
-   …body…
-   EOF
-   ```
+    ```sh
+    gh issue create --title '…' --body-file - --type Task \
+      --milestone 'Phase 2 — Coverage & polish' \
+      --label importer --label 'area:data-quality' --label 'size:M' <<'EOF'
+    …body…
+    EOF
+    ```
 
 6. **Set the board fields.** Status and Priority are project fields, not labels:
 
-   ```sh
-   scripts/issue-board.sh status <n> Ready      # Backlog | Ready | In progress | In review | Blocked | Done
-   scripts/issue-board.sh priority <n> P1       # P0 now · P1 next · P2 later
-   ```
+    ```sh
+    scripts/issue-board.sh status <n> Ready      # Backlog | Ready | In progress | In review | Blocked | Done
+    scripts/issue-board.sh priority <n> P1       # P0 now · P1 next · P2 later
+    ```
 
-   `Ready` means understood and unblocked. Anything with a `blocked` / `needs-decision` / `needs-deployment` label should be `Blocked`, not `Backlog` — that is
-   what the board's Blocked view filters on.
+    `Ready` means understood and unblocked. Anything with a `blocked` / `needs-decision` / `needs-deployment` label should be `Blocked`, not `Backlog` — that is
+    what the board's Blocked view filters on.
 
 7. **Link it.** If it relates to, blocks or is blocked by an existing issue, say so in the body (`Related: #NNN`, `Blocked by: #NNN`). For a child of an epic,
    use a real sub-issue rather than a checklist item — sub-issues show progress and can be worked independently.

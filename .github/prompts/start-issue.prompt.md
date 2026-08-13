@@ -9,23 +9,23 @@ Usage: `/start-issue 313`
 - **Plan, don't implement.** This skill ends with a plan the user approves. It is the deliberate pause between "which issue" and "here is a diff".
 - **Never start from another feature branch.** `git checkout -b` from one stacks the new branch on the old, so the PR carries the parent's commits and its diff
   is wider than the change. It merges cleanly and still says "into main", which is exactly why it gets missed. Always `git checkout main` first.
-- Claiming an issue and moving it to *In progress* is visible on a public board. That's fine and expected — but don't do it for an issue the user is only asking
+- Claiming an issue and moving it to _In progress_ is visible on a public board. That's fine and expected — but don't do it for an issue the user is only asking
   about.
 
 ## Steps
 
 1. **Read the issue properly.**
 
-   ```sh
-   scripts/issue-board.sh show <n>     # type, labels, milestone, assignee, Status, Priority
-   gh issue view <n>                   # the full body, including its Links footer
-   ```
+    ```sh
+    scripts/issue-board.sh show <n>     # type, labels, milestone, assignee, Status, Priority
+    gh issue view <n>                   # the full body, including its Links footer
+    ```
 
 2. **Check it is actually startable.** Stop and say so if:
     - it's `blocked` and the blocker is still open — offer the blocker instead
     - it's `needs-decision` and the decision is unmade — the decision is the work; offer to do that
     - it's `needs-deployment` — it is not blocked on effort and cannot be finished locally
-    - it's `size:XL` — that label is a *defect flag*, not an estimate. Split it into sub-issues first.
+    - it's `size:XL` — that label is a _defect flag_, not an estimate. Split it into sub-issues first.
     - it's already assigned to someone else
 
 3. **Read what it depends on.** This is the step that earns the skill its place, and the one most worth not rushing:
@@ -38,20 +38,20 @@ Usage: `/start-issue 313`
 
 4. **Claim it.**
 
-   ```sh
-   gh issue edit <n> --add-assignee @me
-   scripts/issue-board.sh status <n> 'In progress'
-   ```
+    ```sh
+    gh issue edit <n> --add-assignee @me
+    scripts/issue-board.sh status <n> 'In progress'
+    ```
 
 5. **Cut the branch from `main`.**
 
-   ```sh
-   git checkout main && git pull
-   git checkout -b <type>/<n>-<slug>     # fix/313-heimathafen-genre-taxonomy
-   ```
+    ```sh
+    git checkout main && git pull
+    git checkout -b <type>/<n>-<slug>     # fix/313-heimathafen-genre-taxonomy
+    ```
 
-   The type comes from the issue's own type and area: `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`. Including the issue number makes the branch
-   self-documenting in `git branch` and in the PR list.
+    The type comes from the issue's own type and area: `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`. Including the issue number makes the branch
+    self-documenting in `git branch` and in the PR list.
 
 6. **Write the plan.** Cover:
     - **What changes** — the files, and what happens in each

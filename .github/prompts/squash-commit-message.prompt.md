@@ -13,13 +13,13 @@ for readability, not at a fixed column width.
 ## Instructions
 
 1. **Identify the branch commits** — list all commits on the current branch that are not on `main`:
-   ```bash
-   git --no-pager log --oneline --no-merges main..HEAD
-   ```
-   If `main..HEAD` produces no output, find the merge base first:
-   ```bash
-   git --no-pager log --oneline --no-merges $(git merge-base main HEAD)..HEAD
-   ```
+    ```bash
+    git --no-pager log --oneline --no-merges main..HEAD
+    ```
+    If `main..HEAD` produces no output, find the merge base first:
+    ```bash
+    git --no-pager log --oneline --no-merges $(git merge-base main HEAD)..HEAD
+    ```
 2. **Read every commit message** — use `git --no-pager log --format='%B' main..HEAD` (or equivalent) to get the full messages including bodies, not just the
    subject lines.
 3. **Analyze the combined changeset** — consider all commits together to determine the single most appropriate Conventional Commits _type_ and optional _scope_:
@@ -29,11 +29,11 @@ for readability, not at a fixed column width.
     - Choose a _scope_ that reflects the primary area of change (e.g., `importer`, `bff`, `frontend`). Omit the scope if changes span the entire project
       broadly.
 4. **Write the squash commit message** with this structure:
-   ```
-   <type>[optional scope]: <concise summary of the entire branch>
+    ```
+    <type>[optional scope]: <concise summary of the entire branch>
 
-   <body: organized summary of all changes, grouped logically>
-   ```
+    <body: organized summary of all changes, grouped logically>
+    ```
 5. **Body guidelines**:
     - Group related changes under logical themes (e.g., "Feature implementation", "CI/CD", "Documentation").
     - Use bullet points (`-`) for individual items within each group.

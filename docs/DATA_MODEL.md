@@ -150,7 +150,7 @@ de.norm.events
 Represents a physical venue where music events take place (e.g. Astra Kulturhaus, Badehaus Berlin, SO36).
 
 | Field         | Type           | Nullable | Description                                      | Example                                           |
-|---------------|----------------|----------|--------------------------------------------------|---------------------------------------------------|
+| ------------- | -------------- | -------- | ------------------------------------------------ | ------------------------------------------------- |
 | `id`          | `BIGINT`       | No       | Auto-generated primary key                       | `42`                                              |
 | `name`        | `TEXT`         | No       | Display name of the venue                        | `Astra Kulturhaus`                                |
 | `slug`        | `TEXT` (UQ)    | No       | URL-friendly identifier                          | `astra-kulturhaus`                                |
@@ -170,7 +170,7 @@ Represents a physical venue where music events take place (e.g. Astra Kulturhaus
 Core entity representing a single music event at a venue on a specific date.
 
 | Field                | Type            | Nullable | Description                                                     | Example                                                    |
-|----------------------|-----------------|----------|-----------------------------------------------------------------|------------------------------------------------------------|
+| -------------------- | --------------- | -------- | --------------------------------------------------------------- | ---------------------------------------------------------- |
 | `id`                 | `BIGINT`        | No       | Auto-generated primary key                                      | `101`                                                      |
 | `venue_id`           | `BIGINT` FK     | No       | References `venue.id`                                           | `42`                                                       |
 | `title`              | `TEXT`          | No       | Event headline                                                  | `THE ADICTS`                                               |
@@ -201,7 +201,7 @@ Core entity representing a single music event at a venue on a specific date.
 Represents a musical artist or band. Normalized separately so artists can appear in multiple events.
 
 | Field           | Type          | Nullable | Description                 | Example                                        |
-|-----------------|---------------|----------|-----------------------------|------------------------------------------------|
+| --------------- | ------------- | -------- | --------------------------- | ---------------------------------------------- |
 | `id`            | `BIGINT`      | No       | Auto-generated primary key  | `7`                                            |
 | `name`          | `TEXT`        | No       | Stage or band name          | `The Adicts`                                   |
 | `slug`          | `TEXT` (UQ)   | No       | URL-friendly identifier     | `the-adicts`                                   |
@@ -219,7 +219,7 @@ Represents a musical artist or band. Normalized separately so artists can appear
 Represents an event promoter or presenter. Shared across events and venues.
 
 | Field         | Type          | Nullable | Description                 | Example                                |
-|---------------|---------------|----------|-----------------------------|----------------------------------------|
+| ------------- | ------------- | -------- | --------------------------- | -------------------------------------- |
 | `id`          | `BIGINT`      | No       | Auto-generated primary key  | `3`                                    |
 | `name`        | `TEXT`        | No       | Promoter name               | `36 Concerts`                          |
 | `slug`        | `TEXT` (UQ)   | No       | URL-friendly identifier     | `36-concerts`                          |
@@ -234,7 +234,7 @@ Links events to artists with role and billing order to model the lineup. In the 
 `Artist` object; the persistence layer (`EventArtistEntity`) maps to this join table using foreign keys.
 
 | Field           | Type        | Nullable | Description                         | Example     |
-|-----------------|-------------|----------|-------------------------------------|-------------|
+| --------------- | ----------- | -------- | ----------------------------------- | ----------- |
 | `id`            | `BIGINT`    | No       | Auto-generated primary key          | `12`        |
 | `event_id`      | `BIGINT` FK | No       | References `event.id`               | `101`       |
 | `artist_id`     | `BIGINT` FK | No       | References `artist.id`              | `7`         |
@@ -248,7 +248,7 @@ Unique constraint on `(event_id, artist_id)` prevents duplicate artist-event ass
 Links events to their promoters/presenters.
 
 | Field         | Type        | Nullable | Description              | Example |
-|---------------|-------------|----------|--------------------------|---------|
+| ------------- | ----------- | -------- | ------------------------ | ------- |
 | `event_id`    | `BIGINT` FK | No       | References `event.id`    | `101`   |
 | `promoter_id` | `BIGINT` FK | No       | References `promoter.id` | `3`     |
 
@@ -260,7 +260,7 @@ Represents a normalized music genre label used for structured filtering. Genre t
 raw text is preserved for display; these tags enable frontend filtering.
 
 | Field        | Type          | Nullable | Description                 | Example   |
-|--------------|---------------|----------|-----------------------------|-----------|
+| ------------ | ------------- | -------- | --------------------------- | --------- |
 | `id`         | `BIGINT`      | No       | Auto-generated primary key  | `1`       |
 | `name`       | `TEXT`        | No       | Canonical display name      | `Hip Hop` |
 | `slug`       | `TEXT` (UQ)   | No       | URL-friendly identifier     | `hip-hop` |
@@ -272,7 +272,7 @@ raw text is preserved for display; these tags enable frontend filtering.
 Links events to their normalized genre tags (many-to-many).
 
 | Field          | Type        | Nullable | Description                | Example |
-|----------------|-------------|----------|----------------------------|---------|
+| -------------- | ----------- | -------- | -------------------------- | ------- |
 | `id`           | `BIGINT`    | No       | Auto-generated primary key | `5`     |
 | `event_id`     | `BIGINT` FK | No       | References `event.id`      | `101`   |
 | `genre_tag_id` | `BIGINT` FK | No       | References `genre_tag.id`  | `1`     |

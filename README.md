@@ -34,9 +34,9 @@ in [BRANDING.md](./docs/BRANDING.md).
 ## Background
 
 Berlin's scene is enormous and completely scattered. What's on lives across dozens of venue and promoter websites, each with its own layout and its own gaps, so
-answering something as ordinary as *what's on near me this weekend, in my genre, that I can afford?* means a dozen browser tabs and a lot of guessing.
+answering something as ordinary as _what's on near me this weekend, in my genre, that I can afford?_ means a dozen browser tabs and a lot of guessing.
 
-The existing options each solve a slice of it. Resident Advisor is excellent at electronic music and only that. Bandsintown and Songkick follow *artists* — no
+The existing options each solve a slice of it. Resident Advisor is excellent at electronic music and only that. Bandsintown and Songkick follow _artists_ — no
 help when you want to know what is happening on Thursday. Ticketing sites list what they sell, which quietly excludes free entry, door-only nights and the small
 rooms.
 
@@ -68,7 +68,7 @@ Most of the code in this repository was written by AI coding agents (primarily
 The vision, the product ideas, the architecture decisions and the priorities are mine. The agents implement against them; every change goes through review
 before it lands.
 
-This is also *why* the project exists. It is a real application with real constraints, which turns out to be the only honest way to find out what this way of
+This is also _why_ the project exists. It is a real application with real constraints, which turns out to be the only honest way to find out what this way of
 working is genuinely good at and where it still needs a human paying attention.
 
 ## Install
@@ -116,14 +116,14 @@ scripts/dev-env.sh import <slug>    # import one source, polling until it settle
 ## Architecture
 
 | Component                              | What it is                                                                                                                      |
-|----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | [`events-frontend`](./events-frontend) | Vue 3 SPA — the public site                                                                                                     |
 | [`events-bff`](./events-bff)           | Backend-for-frontend: Kotlin, Spring Boot, WebFlux, R2DBC. Public **read** API                                                  |
 | [`events-importer`](./events-importer) | Scrapers and scheduling: Kotlin, Spring Boot, Spring Modulith. **Write** side, plus an admin API that is never exposed publicly |
 | [`events-core`](./events-core)         | Shared domain model consumed by both services                                                                                   |
 | PostgreSQL                             | The database. Flyway migrations are owned by the importer                                                                       |
 
-Considered and not adopted yet: Elasticsearch, a management frontend, an Android app, an MCP server. The reasoning behind the choices that *were* made lives in
+Considered and not adopted yet: Elasticsearch, a management frontend, an Android app, an MCP server. The reasoning behind the choices that _were_ made lives in
 the [ADRs](./docs/adr).
 
 ## API
@@ -139,28 +139,28 @@ The OpenAPI document is at `/v3/api-docs` on each port. Request files for both s
 
 ## Documentation
 
-| Document                                                         | What it covers                                                                                                                                                          |
-|------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [AGENTS.md](./AGENTS.md)                                         | **The conventions every change is held to.** Written for AI agents, but it is simply this project's conventions written down, and it is the most complete document here |
-| [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)                     | Building, running, quality checks, dependencies                                                                                                                         |
-| [docs/WORKTREES.md](./docs/WORKTREES.md)                         | Running two sessions or two agents in parallel                                                                                                                          |
-| [docs/PRODUCT_OVERVIEW.md](./docs/PRODUCT_OVERVIEW.md)           | What Event Junkie is and does today                                                                                                                                     |
-| [docs/EVENT_SCOPE.md](./docs/EVENT_SCOPE.md)                     | Which kinds of event belong here, and which don't                                                                                                                       |
-| [docs/EVENT_DATA_SOURCES.md](./docs/EVENT_DATA_SOURCES.md)       | Every venue source and its import status                                                                                                                                |
-| [docs/DATA_MODEL.md](./docs/DATA_MODEL.md)                       | The domain model and schema                                                                                                                                             |
-| [docs/DATA_QUALITY_STRATEGY.md](./docs/DATA_QUALITY_STRATEGY.md) | How the data is kept honest                                                                                                                                             |
-| [docs/BRANDING.md](./docs/BRANDING.md)                           | Name, voice, visual direction                                                                                                                                           |
-| [docs/LEGAL.md](./docs/LEGAL.md)                                 | Licensing, privacy, accessibility, scraping obligations                                                                                                                 |
-| [docs/PLATFORM_SETUP.md](./docs/PLATFORM_SETUP.md)               | The plan for running this in production: Hetzner, k3s, TLS, observability, go-live                                                                                      |
-| [docs/CLUSTER_BOOTSTRAP.md](./docs/CLUSTER_BOOTSTRAP.md)         | Nothing to a reconciling cluster, in order — the once-per-cluster runbook, with the traps that actually cost time                                                        |
-| [docs/RELEASING.md](./docs/RELEASING.md)                         | What happens on every commit afterwards: build, publish, and Flux pulling it onto the cluster                                                                            |
-| [docs/CLUSTER_ACCESS.md](./docs/CLUSTER_ACCESS.md)               | Day-to-day access to a running cluster: tunnel, kubeconfig, contexts, k9s                                                                                               |
-| [infra/README.md](./infra/README.md)                             | The OpenTofu that declares that platform. DNS is live; the servers are declared but not yet applied                                                                     |
-| [deploy/charts/event-junkie/README.md](./deploy/charts/event-junkie/README.md) | The Helm chart that deploys the three services onto it. Written and statically validated; never installed                                                 |
-| [docs/VISION_ROADMAP_IDEAS.md](./docs/VISION_ROADMAP_IDEAS.md)   | Where this is going                                                                                                                                                     |
-| [docs/adr/](./docs/adr)                                          | Architecture decisions, with the reasoning                                                                                                                              |
-| [GitHub Issues](https://github.com/enorm-labs/event-junkie/issues)              | The backlog. `scripts/generate-backlog-snapshot.sh` renders it to `build/BACKLOG.md` for grepping                                                                                                                                                                     |
-| [perf/README.md](./perf/README.md)                               | Performance testing with k6                                                                                                                                             |
+| Document                                                                       | What it covers                                                                                                                                                          |
+| ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [AGENTS.md](./AGENTS.md)                                                       | **The conventions every change is held to.** Written for AI agents, but it is simply this project's conventions written down, and it is the most complete document here |
+| [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)                                   | Building, running, quality checks, dependencies                                                                                                                         |
+| [docs/WORKTREES.md](./docs/WORKTREES.md)                                       | Running two sessions or two agents in parallel                                                                                                                          |
+| [docs/PRODUCT_OVERVIEW.md](./docs/PRODUCT_OVERVIEW.md)                         | What Event Junkie is and does today                                                                                                                                     |
+| [docs/EVENT_SCOPE.md](./docs/EVENT_SCOPE.md)                                   | Which kinds of event belong here, and which don't                                                                                                                       |
+| [docs/EVENT_DATA_SOURCES.md](./docs/EVENT_DATA_SOURCES.md)                     | Every venue source and its import status                                                                                                                                |
+| [docs/DATA_MODEL.md](./docs/DATA_MODEL.md)                                     | The domain model and schema                                                                                                                                             |
+| [docs/DATA_QUALITY_STRATEGY.md](./docs/DATA_QUALITY_STRATEGY.md)               | How the data is kept honest                                                                                                                                             |
+| [docs/BRANDING.md](./docs/BRANDING.md)                                         | Name, voice, visual direction                                                                                                                                           |
+| [docs/LEGAL.md](./docs/LEGAL.md)                                               | Licensing, privacy, accessibility, scraping obligations                                                                                                                 |
+| [docs/PLATFORM_SETUP.md](./docs/PLATFORM_SETUP.md)                             | The plan for running this in production: Hetzner, k3s, TLS, observability, go-live                                                                                      |
+| [docs/CLUSTER_BOOTSTRAP.md](./docs/CLUSTER_BOOTSTRAP.md)                       | Nothing to a reconciling cluster, in order — the once-per-cluster runbook, with the traps that actually cost time                                                       |
+| [docs/RELEASING.md](./docs/RELEASING.md)                                       | What happens on every commit afterwards: build, publish, and Flux pulling it onto the cluster                                                                           |
+| [docs/CLUSTER_ACCESS.md](./docs/CLUSTER_ACCESS.md)                             | Day-to-day access to a running cluster: tunnel, kubeconfig, contexts, k9s                                                                                               |
+| [infra/README.md](./infra/README.md)                                           | The OpenTofu that declares that platform. DNS is live; the servers are declared but not yet applied                                                                     |
+| [deploy/charts/event-junkie/README.md](./deploy/charts/event-junkie/README.md) | The Helm chart that deploys the three services onto it. Written and statically validated; never installed                                                               |
+| [docs/VISION_ROADMAP_IDEAS.md](./docs/VISION_ROADMAP_IDEAS.md)                 | Where this is going                                                                                                                                                     |
+| [docs/adr/](./docs/adr)                                                        | Architecture decisions, with the reasoning                                                                                                                              |
+| [GitHub Issues](https://github.com/enorm-labs/event-junkie/issues)             | The backlog. `scripts/generate-backlog-snapshot.sh` renders it to `build/BACKLOG.md` for grepping                                                                       |
+| [perf/README.md](./perf/README.md)                                             | Performance testing with k6                                                                                                                                             |
 
 ## Contributing
 

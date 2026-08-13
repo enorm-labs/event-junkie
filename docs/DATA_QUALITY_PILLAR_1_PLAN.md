@@ -1,8 +1,8 @@
 # Implementation Plan — Data Quality Pillar 1 (Measure)
 
 Concrete build plan for **Pillar 1** of the
-[Data Quality Strategy](DATA_QUALITY_STRATEGY.md): make quality *visible* so Pillars 2–4 can be judged by whether the numbers move. Backlog item:
-[issue #319](https://github.com/enorm-labs/event-junkie/issues/319) — *Pillar 1 — Measure*.
+[Data Quality Strategy](DATA_QUALITY_STRATEGY.md): make quality _visible_ so Pillars 2–4 can be judged by whether the numbers move. Backlog item:
+[issue #319](https://github.com/enorm-labs/event-junkie/issues/319) — _Pillar 1 — Measure_.
 
 **Goal:** a per-source data-quality report (API + scheduled log + metrics), a queryable **curation worklist**, and **metric history** so trends are chartable in
 an external BI tool. No changes to scraper extraction or the normalizers — this pillar only observes.
@@ -21,7 +21,7 @@ are reported under a synthetic `manual` bucket so nothing is silently excluded. 
 reporting.
 
 | Metric                   | Dimension    | Definition (per source)                                                                  | Signal                     |
-|--------------------------|--------------|------------------------------------------------------------------------------------------|----------------------------|
+| ------------------------ | ------------ | ---------------------------------------------------------------------------------------- | -------------------------- |
 | `totalEvents`            | —            | `COUNT(*)`                                                                               | denominator                |
 | `concertsWithoutArtist`  | Completeness | `event_type = 'CONCERT'` AND no `event_artist` row                                       | 🔴 the ~40% gap            |
 | `eventsTypedOther`       | Validity     | `event_type = 'OTHER'`                                                                   | 🟠 classification gap      |
@@ -35,7 +35,7 @@ Each headline metric is reported as a **count and a rounded percentage** of
 `totalEvents` (the percentage is what a human scans; the count is what a test asserts).
 
 > **Open decision A — `missingPrice` definition.** Recommendation: the row above
-> (treat `free` events and events with a free-form `price_note` as *not* missing).
+> (treat `free` events and events with a free-form `price_note` as _not_ missing).
 > Flag if you'd rather count `price_note`-only events as missing structured price.
 
 ## 2. Module & placement
@@ -126,14 +126,15 @@ The report is not just a number to read once; it feeds fixing and trend-charting
 ### 5.1 Report + curation worklist endpoints
 
 - `GET /api/admin/data-quality` → the per-source + `overall` metrics snapshot (payload in §5.4).
-- `GET /api/admin/data-quality/worklist?issue=<metric>&source=<slug>` → the **curation worklist**: the paginated *list of offending events* for one metric (e.g.
+- `GET /api/admin/data-quality/worklist?issue=<metric>&source=<slug>` → the **curation worklist**: the paginated _list of offending events_ for one metric (e.g.
   `concertsWithoutArtist`), so a steward can open each and fix it via the existing `PUT /api/admin/events/{id}`. This is the "close the loop" surface, API-only
   for now.
 
 > **Open decision B — worklist depth.** Pillar 1 minimum surfaces the
-> *state-derived* worklists above (events failing a metric — pure queries, no new
+> _state-derived_ worklists above (events failing a metric — pure queries, no new
 > signal storage). The strategy also wants the `Dropping non-genre token '…'`
 > signal surfaced, which is currently **only logged** and not persisted. Options:
+>
 > - **B1 (recommended, in-scope):** ship the state-derived worklists now; expose
 >   the dropped-token queue as a follow-up (`Pillar 1b`) since persisting it means
 >   giving the stateless `GenreNormalizer` a side-effect or a structured-log sink.
@@ -144,7 +145,7 @@ The report is not just a number to read once; it feeds fixing and trend-charting
 
 ### 5.2 Metric history (for trends)
 
-A point-in-time report can't show whether Pillar 3/4 *moved* the numbers. Persist a daily snapshot so trends are chartable:
+A point-in-time report can't show whether Pillar 3/4 _moved_ the numbers. Persist a daily snapshot so trends are chartable:
 
 - **`data_quality_snapshot`** table — one row per `(source, metric, date)` with the count and total. Written by the scheduled logger (§6 Phase B). Added to
   `V001__create_initial_schema.sql` (single-migration policy, ADR-005).
@@ -153,13 +154,13 @@ A point-in-time report can't show whether Pillar 3/4 *moved* the numbers. Persis
 
 ### 5.3 Dashboards via an external BI tool (not a hand-built UI)
 
-Reuse the backlogged *"Dashboard for analysing the data (Superset / Kibana / Grafana)"* item rather than building a frontend — two clean paths, pick per taste:
+Reuse the backlogged _"Dashboard for analysing the data (Superset / Kibana / Grafana)"_ item rather than building a frontend — two clean paths, pick per taste:
 
 - **Apache Superset / Metabase** pointed at the `events` schema + the
   `data_quality_snapshot` table → SQL-driven data-quality dashboards and trend charts. Best fit for data-level reporting; no app code.
 - **Micrometer → Prometheus → Grafana** via the importer's Actuator → operational trend lines + alerting (e.g. alert if `concertsWithoutArtist` regresses).
 
-Pillar 1's job is only to *expose* the metrics (§5.2) in a shape these tools consume; standing up the tool itself is the separate backlog item.
+Pillar 1's job is only to _expose_ the metrics (§5.2) in a shape these tools consume; standing up the tool itself is the separate backlog item.
 
 ### 5.4 Report payload
 
@@ -198,7 +199,7 @@ Pillar 1's job is only to *expose* the metrics (§5.2) in a shape these tools co
 
 1. **Module skeleton** — `DataQualityModule.kt` + empty controller/service/repo; confirm `ModularityTests` passes with the declared dependencies.
 2. **Aggregate query + projection** — `DataQualityRepository.aggregatePerSource()`
-    + `SourceQualityRow`; prove column mapping with a thin integration test.
+    - `SourceQualityRow`; prove column mapping with a thin integration test.
 3. **Service roll-up** — per-source → response, `overall` sum, percentages,
    `manual` bucket. Unit tests.
 4. **`suspectNonArtistTitles`** — Kotlin-side metric (§4).

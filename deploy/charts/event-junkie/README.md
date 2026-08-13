@@ -8,14 +8,14 @@ from outside the cluster.
 chart has been installed, upgraded, tested and uninstalled on a local k3d cluster running **arm64**
 nodes — the same architecture the Hetzner nodes will use. What that run proved, and what it did not:
 
-| Proved | Still unproven |
-|---|---|
-| The full stack comes up: all three pods Ready, no restarts | Anything on a real cluster, or through a real ingress with TLS |
-| Ingress routing — `/` → frontend, `/api` → BFF | cert-manager, ACME, DNS-01 (#265) |
-| The importer's admin API and `/actuator` are unreachable through the ingress | NetworkPolicies and PSA (#416) |
-| A real scrape reaching `/api/events` through Traefik | Flux reconciliation and rollback (#414) |
+| Proved                                                                                         | Still unproven                                                 |
+| ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| The full stack comes up: all three pods Ready, no restarts                                     | Anything on a real cluster, or through a real ingress with TLS |
+| Ingress routing — `/` → frontend, `/api` → BFF                                                 | cert-manager, ACME, DNS-01 (#265)                              |
+| The importer's admin API and `/actuator` are unreachable through the ingress                   | NetworkPolicies and PSA (#416)                                 |
+| A real scrape reaching `/api/events` through Traefik                                           | Flux reconciliation and rollback (#414)                        |
 | **`helm upgrade` across a chart version bump** — the selector-immutability trap does not occur | Behaviour under load, or on a node with real resource pressure |
-| `helm test` passes | |
+| `helm test` passes                                                                             |                                                                |
 
 `helm lint`, `helm template`, `flux schema validate` and
 [`../../scripts/render-assertions.sh`](../../scripts/render-assertions.sh) all pass as before, but
@@ -56,26 +56,26 @@ testing local template changes — which is what `values-k3d.yaml` and its `dev`
 Only the values worth a decision are listed. Every property is documented in
 [`values.yaml`](values.yaml) itself, next to its default.
 
-| Key | Default | Notes |
-|---|---|---|
-| `database.host` | `""` | **Required.** `postgres_ip` from the matching `infra/environments/<env>` stack |
-| `database.existingSecret` | `""` | **Required.** Name of a Secret that already exists. There is no inline-password path, guarded or otherwise |
-| `database.secretKeys.username` / `.password` | `username` / `password` | Keys inside that Secret |
-| `image.registry` | `ghcr.io` | Per component: `<component>.image.repository` and `.tag` |
-| `<component>.image.tag` | `""` | Falls back to `.Chart.AppVersion`. Never `latest` — the render assertions fail the build on a floating tag |
-| `bff.replicaCount` | `2` | Stateless and read-only |
-| `bff.basePath` | `/api` | Served by Spring, not rewritten by the ingress — see below |
-| `bff.service.managementPort` | `9001` | `/actuator/**`. No ingress rule names it |
-| `importer.replicaCount` | `1` | **Pinned to 1 by `values.schema.json`.** ADR-008; see below |
-| `frontend.service.port` | `8080` | Cannot be 80: nginx runs non-root and cannot bind a privileged port |
-| `security.runAsUser` | `1000` | Must match the UID the images actually run as (#426) |
-| `ingress.host` | `event-junkie.de` | The only name routed to the applications |
-| `ingress.redirectHosts` | `[event-junkie.com]` | 301 to `ingress.host`, with its own certificate. Empty means nothing Traefik-specific renders at all |
-| `certManager.clusterIssuer.create` | `false` | A ClusterIssuer is a cluster-scoped singleton — see below |
-| `certManager.clusterIssuer.server` | ACME **staging** | Deliberately not production. 50 certificates per registered domain per week, and burning it costs seven days |
-| `certManager.clusterIssuer.solver` | `http01` | `dns01` for staging, which has no public address for HTTP-01 to reach |
-| `certManager.clusterIssuer.dns01.*` | official webhook | `groupName: acme.hetzner.com` and a `tokenSecretKeyRef` — see below, the community forks differ on both |
-| `ingress.noindex` | `false` | Adds `X-Robots-Tag: noindex, nofollow` via a Middleware. On outside production (#265, #286) |
+| Key                                          | Default                 | Notes                                                                                                        |
+| -------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `database.host`                              | `""`                    | **Required.** `postgres_ip` from the matching `infra/environments/<env>` stack                               |
+| `database.existingSecret`                    | `""`                    | **Required.** Name of a Secret that already exists. There is no inline-password path, guarded or otherwise   |
+| `database.secretKeys.username` / `.password` | `username` / `password` | Keys inside that Secret                                                                                      |
+| `image.registry`                             | `ghcr.io`               | Per component: `<component>.image.repository` and `.tag`                                                     |
+| `<component>.image.tag`                      | `""`                    | Falls back to `.Chart.AppVersion`. Never `latest` — the render assertions fail the build on a floating tag   |
+| `bff.replicaCount`                           | `2`                     | Stateless and read-only                                                                                      |
+| `bff.basePath`                               | `/api`                  | Served by Spring, not rewritten by the ingress — see below                                                   |
+| `bff.service.managementPort`                 | `9001`                  | `/actuator/**`. No ingress rule names it                                                                     |
+| `importer.replicaCount`                      | `1`                     | **Pinned to 1 by `values.schema.json`.** ADR-008; see below                                                  |
+| `frontend.service.port`                      | `8080`                  | Cannot be 80: nginx runs non-root and cannot bind a privileged port                                          |
+| `security.runAsUser`                         | `1000`                  | Must match the UID the images actually run as (#426)                                                         |
+| `ingress.host`                               | `event-junkie.de`       | The only name routed to the applications                                                                     |
+| `ingress.redirectHosts`                      | `[event-junkie.com]`    | 301 to `ingress.host`, with its own certificate. Empty means nothing Traefik-specific renders at all         |
+| `certManager.clusterIssuer.create`           | `false`                 | A ClusterIssuer is a cluster-scoped singleton — see below                                                    |
+| `certManager.clusterIssuer.server`           | ACME **staging**        | Deliberately not production. 50 certificates per registered domain per week, and burning it costs seven days |
+| `certManager.clusterIssuer.solver`           | `http01`                | `dns01` for staging, which has no public address for HTTP-01 to reach                                        |
+| `certManager.clusterIssuer.dns01.*`          | official webhook        | `groupName: acme.hetzner.com` and a `tokenSecretKeyRef` — see below, the community forks differ on both      |
+| `ingress.noindex`                            | `false`                 | Adds `X-Robots-Tag: noindex, nofollow` via a Middleware. On outside production (#265, #286)                  |
 
 **Two values files ship with the chart, and the environments are not among them.** `values.yaml` is
 production-shaped and cannot render on its own — the two required keys have no safe default.
@@ -127,12 +127,12 @@ the image.
 **Confirmed 2026-08-11**, running the image built in #426 with `SPRING_WEBFLUX_BASE_PATH=/api`, so
 this is no longer on #263's list to verify:
 
-| Path | Result |
-|---|---|
-| `/api/events`, `/api/meta` | `200` |
-| `/events` | `404` — nothing is served un-prefixed |
-| `/api/v3/api-docs` | `200` |
-| `/v3/api-docs` | `404` |
+| Path                       | Result                                |
+| -------------------------- | ------------------------------------- |
+| `/api/events`, `/api/meta` | `200`                                 |
+| `/events`                  | `404` — nothing is served un-prefixed |
+| `/api/v3/api-docs`         | `200`                                 |
+| `/v3/api-docs`             | `404`                                 |
 
 So the generated OpenAPI moves with the base path, while `events-frontend`'s `schema.ts` is
 generated locally from the un-prefixed application. That is fine — the paths in the generated client
@@ -142,7 +142,7 @@ URLs, which is worth knowing before someone "fixes" one of them.
 ### Actuator is private because of the port, not because of a rule
 
 `management.server.port: 9001` on both JVM services. The Service publishes both ports, the Ingress
-routes only the application one, and `/actuator/**` is therefore *unroutable* rather than merely
+routes only the application one, and `/actuator/**` is therefore _unroutable_ rather than merely
 unrouted. This is what the BFF's own `application.yaml` asked for. It is set here rather than in
 `application.yaml` so local development and the existing tests keep their single-port behaviour.
 
@@ -166,15 +166,15 @@ The property is `spring.flyway.user` — so `SPRING_FLYWAY_USER`, **not** `SPRIN
 The wrong spelling binds to nothing and fails silently. Both are asserted in
 `render-assertions.sh` for that reason.
 
-### The BFF does *not* crash-loop on a first install — it does something worse
+### The BFF does _not_ crash-loop on a first install — it does something worse
 
 **Corrected 2026-08-12 by #263, the first time this chart was ever installed.** This section used to
 say the BFF crash-loops for up to ninety seconds on an empty database while the importer migrates,
 and that this was expected. Measured on k3d, that is simply not what happens:
 
-| Event | Time |
-|---|---|
-| BFF reports **Ready** | `07:55:59` |
+| Event                     | Time           |
+| ------------------------- | -------------- |
+| BFF reports **Ready**     | `07:55:59`     |
 | Flyway creates the schema | `07:56:00.451` |
 
 The BFF was Ready **about 1.2 seconds before the schema existed**, with zero restarts. Its readiness
@@ -224,7 +224,7 @@ try to unify them.
 `spec.selector` carries only the subset that never changes: `name`, `instance` and `component`.
 `helm.sh/chart` and `app.kubernetes.io/version` change on every release, and `spec.selector` is
 immutable after creation — mixing them produces a chart that installs perfectly and then fails every
-subsequent upgrade with an immutable-field error, which nobody sees until the *second* release.
+subsequent upgrade with an immutable-field error, which nobody sees until the _second_ release.
 
 ### cert-manager's CRDs are cert-manager's
 
@@ -240,7 +240,7 @@ one release on it.
 Since #265 cert-manager itself is a `HelmRelease` in each cluster directory rather than a manual
 install, and every release that sets `create: true` declares `dependsOn` so the CRDs exist first.
 `deploy/scripts/render-assertions.sh` fails the build if one stops doing so — without the dependency
-the *whole* release fails on the unknown kind, workloads included, on the first bootstrap of a new
+the _whole_ release fails on the unknown kind, workloads included, on the first bootstrap of a new
 cluster, and it reads like a bug in this chart.
 
 ### The DNS-01 solver names Hetzner's own webhook, not a fork

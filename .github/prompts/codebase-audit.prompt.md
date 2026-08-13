@@ -18,8 +18,8 @@ genuinely worthwhile changes from stylistic preference, and don't invent problem
 Before reporting, read the ground truth for this project:
 
 - **`AGENTS.md`** — the architecture decisions, module boundaries, and Kotlin/Spring/Vue conventions the code is meant to follow. Findings should be measured
-  against *these* conventions, not generic advice.
-- **`docs/adr/`** — the ADRs record *why* things are the way they are (reactive stack, entity/domain separation, Modulith, scraping strategy, etc.). Do not flag
+  against _these_ conventions, not generic advice.
+- **`docs/adr/`** — the ADRs record _why_ things are the way they are (reactive stack, entity/domain separation, Modulith, scraping strategy, etc.). Do not flag
   a deliberate, documented decision as a defect; if you think an ADR itself is worth revisiting, say so explicitly and separately.
 - **the importers' and scrapers' KDoc** in `events-importer/src/main/kotlin/de/norm/events/scraper/<venue>/` — each venue's accepted limitations and the
   reasoning behind its selectors; don't re-litigate them. Repairable defects are already filed as issues — check `build/BACKLOG.md`.
@@ -39,7 +39,7 @@ find . -name '*.kt' -not -path '*/build/*' -not -path '*/node_modules/*' | xargs
 find events-frontend/src -name '*.vue' -o -name '*.ts' | xargs wc -l | sort -rn | head -20
 ```
 
-Treat size as a *smell, not a verdict*: open the large files and judge whether they hold one cohesive responsibility (fine) or several that should be split
+Treat size as a _smell, not a verdict_: open the large files and judge whether they hold one cohesive responsibility (fine) or several that should be split
 (e.g. a scraper that also does normalization, a service doing HTTP + parsing + persistence, a Vue view that mixes fetching, formatting, and layout). Flag
 classes/files that mix concerns, have very long functions, deep nesting, or a large public surface. The recent split of `EventMappingExtensions` into three
 cohesive files (see git log) is the model to hold others against.
@@ -81,7 +81,7 @@ or propose a new one. Distinguish incidental similarity from true duplication wo
 
 ### 3. Readability & maintainability
 
-Is the code still easy to follow? Unclear names, comments that explain *what* instead of *why*, dead/commented-out code, leftover TODOs, inconsistent patterns
+Is the code still easy to follow? Unclear names, comments that explain _what_ instead of _why_, dead/commented-out code, leftover TODOs, inconsistent patterns
 between sibling modules, magic numbers/strings that should be named constants or config. Note where a newcomer would struggle.
 
 ### 4. Convention adherence (per `AGENTS.md` + code-review rubric)

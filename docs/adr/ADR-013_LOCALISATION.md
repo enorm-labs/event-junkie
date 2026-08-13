@@ -19,8 +19,8 @@ The site is English-only today. It targets Berlin — an audience that is heavil
 under German law. Two forces make German non-optional rather than a nice-to-have:
 
 1. **Audience.** A Berlin events guide that cannot be read in German excludes a large part of the city it is about.
-2. **Law.** [LEGAL.md §6.1](../LEGAL.md) chose English-only legal pages on the explicit condition that *German legal pages ship in the same release as German
-   UI*. An English-only imprint and privacy notice on a site presenting itself in German to a German visitor is the configuration where the Art. 12 GDPR "clear
+2. **Law.** [LEGAL.md §6.1](../LEGAL.md) chose English-only legal pages on the explicit condition that _German legal pages ship in the same release as German
+   UI_. An English-only imprint and privacy notice on a site presenting itself in German to a German visitor is the configuration where the Art. 12 GDPR "clear
    and plain language" argument turns against us.
 
 The scale is what makes this ADR worth writing: 20 of 29 `.vue` files carry user-facing text (~145 literal strings), 7 TypeScript modules do too, and ~82 e2e
@@ -73,12 +73,12 @@ decision:
 ### URL strategy
 
 | Option                 | Example                    | Crawlable | Shareable | Notes                                                                                                                                     |
-|------------------------|----------------------------|-----------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| ---------------------- | -------------------------- | --------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | **Path prefix**        | `/de/events`               | ✅        | ✅        | One deployment, one origin. Google's own guidance prefers distinct URLs per language.                                                     |
 | Subdomain              | `de.event-junkie.de`       | ✅        | ✅        | Extra DNS and TLS setup; splits the origin, which complicates the same-origin `/api` arrangement in [ADR-012](ADR-012_CLOUD_PLATFORM.md). |
 | ccTLD                  | `event-junkie.de` / `.com` | ✅        | ✅        | A second domain to buy and run. Language and country are not the same axis — a German speaker abroad wants German, not `.de`.             |
 | Query parameter        | `/events?lang=de`          | ⚠️        | ✅        | Works, but reads as an afterthought and is weaker for SEO.                                                                                |
-| Stored preference only | `/events`                  | ❌        | ❌        | Every shared link becomes a coin flip: the recipient gets whatever *their* storage says. Invisible to crawlers.                           |
+| Stored preference only | `/events`                  | ❌        | ❌        | Every shared link becomes a coin flip: the recipient gets whatever _their_ storage says. Invisible to crawlers.                           |
 
 ## Decision
 
@@ -101,15 +101,15 @@ preserve. Every month this waits, the cost rises.
 
 A stored locale preference (`localStorage`) is permitted **only** as a hint for resolving bare `/`. The URL is always the source of truth. This keeps the § 25
 TDDDG posture from [LEGAL.md §7.4](../LEGAL.md) intact: a preference the user set themselves is strictly necessary, so no consent banner — but it must not
-become the *only* record of the choice.
+become the _only_ record of the choice.
 
 ### 3. Translate the chrome, not the data
 
 |                                                          | Translate?                           |
-|----------------------------------------------------------|--------------------------------------|
+| -------------------------------------------------------- | ------------------------------------ |
 | UI labels, headings, empty and error states, legal pages | ✅                                   |
 | Event titles, venue names, artist names, line-ups        | ❌ third-party content               |
-| Berlin district names (`lib/districts.ts`)               | ❌ proper nouns — *Mitte* is *Mitte* |
+| Berlin district names (`lib/districts.ts`)               | ❌ proper nouns — _Mitte_ is _Mitte_ |
 | Event types (`CONCERT`, `CLUB_NIGHT`, …)                 | ✅ enum-backed, so ours              |
 | Genre tags                                               | ❌ they behave like data             |
 
@@ -118,18 +118,18 @@ them as data avoids a translation table that would be wrong as often as right.
 
 ### 4. Formatting
 
-- **`formatDate`** becomes locale-aware — the most visible change in the whole phase (*Fri, 12 Jun 2026* → *Fr., 12. Juni 2026*).
+- **`formatDate`** becomes locale-aware — the most visible change in the whole phase (_Fri, 12 Jun 2026_ → _Fr., 12. Juni 2026_).
 - **`formatEventType`** stops deriving labels by string manipulation (`CLUB_NIGHT` → `Club night`) and becomes a message lookup keyed by the enum, with a
   fallback for `OTHER` and for values the frontend has not seen. **No amount of locale plumbing can translate the current implementation** — this is a rewrite,
   not a wiring change.
 - **`formatPrice` stays `de-DE` in both locales** (`38,00 €`). That is the price written on the door in Berlin; `€38.00` would be a worse answer for an
   English-speaking user standing in front of that door.
-- **`todayIso` must NOT become locale-aware.** It uses `Intl.DateTimeFormat('en-CA')` as a trick to obtain `YYYY-MM-DD` — a *format*, not a language. Changing
+- **`todayIso` must NOT become locale-aware.** It uses `Intl.DateTimeFormat('en-CA')` as a trick to obtain `YYYY-MM-DD` — a _format_, not a language. Changing
   it breaks every date filter in the app **silently**, because the output remains a plausible date.
 
 ### 5. German becomes the authoritative version of the legal pages
 
-Stated on each page once both exist: *Maßgeblich ist die deutsche Fassung.* The controller, the venue and the supervisory authority are all German.
+Stated on each page once both exist: _Maßgeblich ist die deutsche Fassung._ The controller, the venue and the supervisory authority are all German.
 
 ## Consequences
 
@@ -149,10 +149,10 @@ Stated on each page once both exist: *Maßgeblich ist die deutsche Fassung.* The
 - **More than two languages.** The structure supports it; nothing here assumes it.
 - **Backend localisation.** The BFF returns data and RFC 9457 problem details; the frontend owns all user-facing language. If that changes, `Accept-Language`
   handling in the BFF is a separate decision.
-- **SSR / prerendering.** Wanted for SEO and tracked separately, but not a prerequisite: `hreflang` and per-locale `og:locale` are worth adding regardless. *(
+- **SSR / prerendering.** Wanted for SEO and tracked separately, but not a prerequisite: `hreflang` and per-locale `og:locale` are worth adding regardless. _(
   Decided in [ADR-014](ADR-014_RENDERING_STRATEGY.md), 2026-08-08. The "not a prerequisite" judgement held for `hreflang` — the sitemap carries it — but only
-  partly: page-level `og:` tags do need server-side rendering, because the scrapers that consume them do not run JavaScript.)*
-- **A German tagline.** *"Can't get enough of Berlin"* is a pun on the brand premise ([BRANDING.md](../BRANDING.md) §2) and a literal rendering loses it.
+  partly: page-level `og:` tags do need server-side rendering, because the scrapers that consume them do not run JavaScript.)_
+- **A German tagline.** _"Can't get enough of Berlin"_ is a pun on the brand premise ([BRANDING.md](../BRANDING.md) §2) and a literal rendering loses it.
   Whether the brand line stays English on the German site is a **brand decision, not an architectural one** — it belongs in BRANDING.md, and many Berlin brands
   do keep an English tagline.
 

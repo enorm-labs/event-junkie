@@ -3,15 +3,15 @@
 Overview of all venues, clubs, and promoters whose websites are potential sources for importing event data. Sources are grouped by **import status** so the
 remaining work is visible at a glance.
 
-**This document answers *which venues*. For *which kinds of event*, see [EVENT_SCOPE.md](EVENT_SCOPE.md)** — the standing reference for what is in scope, what
-is deliberately excluded (sport, participation formats, trade fairs, classical) and which coverage questions are still open. Several rows below sit in *Blocked*
+**This document answers _which venues_. For _which kinds of event_, see [EVENT_SCOPE.md](EVENT_SCOPE.md)** — the standing reference for what is in scope, what
+is deliberately excluded (sport, participation formats, trade fairs, classical) and which coverage questions are still open. Several rows below sit in _Blocked_
 on a scope decision rather than a technical one; that document is where those decisions are recorded. The **Comment** column records what matters for building
 or maintaining an importer — the platform, where the data lives, and the parsing quirks. For an implemented importer, its KDoc and scraper tests are the
 authoritative field mapping; defects worth repairing live in
 the [issue tracker](https://github.com/enorm-labs/event-junkie/issues).
 
 | Status                              | Meaning                                                                              | Count |
-|-------------------------------------|--------------------------------------------------------------------------------------|------:|
+| ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    86 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     3 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |    87 |
@@ -22,7 +22,7 @@ the [issue tracker](https://github.com/enorm-labs/event-junkie/issues).
 ## ✅ Imported
 
 | Name                             | URL                                                         | Type         | Comment                                               |
-|----------------------------------|-------------------------------------------------------------|--------------|-------------------------------------------------------|
+| -------------------------------- | ----------------------------------------------------------- | ------------ | ----------------------------------------------------- |
 | ÆDEN                             | https://aedenberlin.com/                                    | Techno Club  | WordPress; /events → month pages; no prices           |
 | Admiralspalast                   | https://www.admiralspalast.theater/                         | Theater      | Contao; one event per performance row; no prices      |
 | Alte Kantine Kulturbrauerei      | https://alte-kantine.eu/                                    | Concert Hall |                                                       |
@@ -111,7 +111,7 @@ the [issue tracker](https://github.com/enorm-labs/event-junkie/issues).
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only       |
 
 85 importer classes cover 86 sources: only Kantine am Berghain has no class of its own, sharing the Berghain importer outright. Three other groups share a
-*listing and parser* while keeping one thin `@Component` per venue, so they do not reduce the count — Club der Visionäre, Sonnenraum and MS Hoppetosse; the
+_listing and parser_ while keeping one thin `@Component` per venue, so they do not reduce the count — Club der Visionäre, Sonnenraum and MS Hoppetosse; the
 three Velomax halls; and Uber Arena with the Uber Eats Music Hall.
 
 ## 🔨 Ready to implement
@@ -133,7 +133,7 @@ Konzerte. In the other direction, DNA. CLUB's 23 RA events appear nowhere in the
 count when the next batch is prioritised.
 
 | Name               | URL                                    | Type        | Priority | Comment                                                     |
-|--------------------|----------------------------------------|-------------|----------|-------------------------------------------------------------|
+| ------------------ | -------------------------------------- | ----------- | -------- | ----------------------------------------------------------- |
 | Fitzroy            | https://fitzroy-berlin.de/events/      | Club        | Medium   | WP REST `event` + ACF — the Madame Claude / LARK codebase   |
 | KAOS Berlin        | https://kaosberlin.de/veranstaltungen/ | Techno Club | Low      | The Events Calendar REST API, as Cosmic Comedy; 4 upcoming  |
 | DSTRKT Club Berlin | https://www.dstrkt.de/                 | Club        | Low      | Wix one-pager; 2 dated events, which is the whole programme |
@@ -147,11 +147,11 @@ campus-like source: the row's category decides whether it is programme at all. I
 41 upcoming rows — are park activities rather than a stage programme, so they are excluded and the remaining 13 are imported. The rule lives in one predicate,
 `isProgrammeCategory`, which is where to revisit it.
 
-*A theater, comedy or arena-scale room is in scope, not just live-music clubs. Bar jeder Vernunft set that precedent — its programme is imported, with the
+_A theater, comedy or arena-scale room is in scope, not just live-music clubs. Bar jeder Vernunft set that precedent — its programme is imported, with the
 venue's own genre deciding whether a night is a concert or a staged show. **Comedy clubs and theatres were confirmed in scope on 2026-08-08**
 ([EVENT_SCOPE.md §5](EVENT_SCOPE.md)), so a venue of either kind sitting in [Blocked](#-blocked--deferred) on that question can be moved here and scaffolded
 like any other source. That precedent still does **not** extend to classical concerts and orchestras: those are **deferred, not rejected** — the data shape
-differs (orchestra plus conductor plus soloists rather than a headliner with support), so `ArtistRole` and the genre vocabulary must be extended first.*
+differs (orchestra plus conductor plus soloists rather than a headliner with support), so `ArtistRole` and the genre vocabulary must be extended first._
 
 ## ⛔ Blocked / deferred
 
@@ -161,11 +161,11 @@ per [ADR-007](adr/ADR-007_WEB_SCRAPING_STRATEGY.md)), or applying the Havanna-st
 **Last re-checked 3 August 2026**, every entry. Two came out of it: Panke Culture, which now publishes a dated programme and has since been
 [imported](#-imported), and the RBB Sendesaal, whose concerts sit in a ROC calendar that turned out to be server-rendered and venue-attributed. The Sendesaal is
 back here as of 4 August — **not on scraping, which works, but on scope**: it is an orchestral house. As of 2026-08-08 that question has an answer, and the
-answer is *not yet*: classical is **wanted but deferred** until `ArtistRole` and the genre vocabulary can represent an orchestra with a conductor and soloists
+answer is _not yet_: classical is **wanted but deferred** until `ArtistRole` and the genre vocabulary can represent an orchestra with a conductor and soloists
 ([EVENT_SCOPE.md §5](EVENT_SCOPE.md)). Importing it before then would mean flattening its programme into headliner-plus-support, which is wrong in a way that is
 expensive to unpick later — so it stays here on purpose, not through neglect. Answer that question and the importer is a short job; the ROC calendar is
 server-rendered and attributes each concert to a venue, so
-`.ConcertListItem-location` is the only filter needed. Five entries had their blocker *change* without unblocking, which is worth knowing before anyone spends
+`.ConcertListItem-location` is the only filter needed. Five entries had their blocker _change_ without unblocking, which is worth knowing before anyone spends
 effort on them:
 
 - **Fluxbau** and **The Pearl** are no longer JS-only — both render their programmes server-side now. Adopting a headless browser would not help either: Fluxbau
@@ -182,7 +182,7 @@ they answer only over `http://`.
 **Promoter sources are deferred on a model limitation, not a scraping one.** Puschen, Trinity Music, Landstreicher Booking, Landstreicher Konzerte and — since
 its 2026 redesign — Loft all publish clean, well-structured listings that name the venue per event: Puschen's 35 upcoming shows are spread over ~20 houses,
 Loft's 135 over about the same. But an event's venue comes from its `event_source` row (`EventUpsertService.upsertAndCleanup(events, venueId, …)`), one venue
-per source, so a promoter's events cannot be attached to the houses they actually play. Importing one today would file every show under a pseudo-venue *and*
+per source, so a promoter's events cannot be attached to the houses they actually play. Importing one today would file every show under a pseudo-venue _and_
 duplicate what the venues' own importers already hold — ~30 of Puschen's 35 are at venues already imported. Unblocking them means resolving a venue per event
 and de-duplicating against the venue-level sources; until then the promoter data reaches us anyway, as the `promoter` field on the venues' own events.
 
@@ -201,7 +201,7 @@ because the failure modes repeat and none of them is "the venue is too small":
 - **Squarespace accounts for three of the thirteen.** Bar Neun, Unkompress and Weekend all serve a large page whose event content is client-side only — Bar
   Neun's 1.1 MB of HTML yields no event text at all. Prachtwerk above is the same story.
 - **Two sites hand the programme back to RA.** Bulbul Berlin's "Program" button links to `ra.co/clubs/175191`, and its own page carries opening hours plus
-  "Special dates (Check: RA)". VOID Club, by contrast, links to RA *for tickets* while still listing the events itself — which is why it is now
+  "Special dates (Check: RA)". VOID Club, by contrast, links to RA _for tickets_ while still listing the events itself — which is why it is now
   [imported](#-imported).
 - **A blog of past parties is not a programme.** Hafenbar Berlin server-renders 61 dated items, all of them write-ups of events that already happened (June,
   May, April 2026); `/events/` and `/veranstaltungen/` both 404.
@@ -233,7 +233,7 @@ Two side findings. **Minimal Bar** — the venue this document called the sharpe
 page to other clients, so its blocker is the empty Next.js payload rather than the WAF; a 403 is still not evidence that a site is unscrapable.
 
 | Name                             | URL                                            | Type         | Blocker                                                   | Unblocked by               |
-|----------------------------------|------------------------------------------------|--------------|-----------------------------------------------------------|----------------------------|
+| -------------------------------- | ---------------------------------------------- | ------------ | --------------------------------------------------------- | -------------------------- |
 | DNA. CLUB — urban Space          | https://www.dna-artclub.com/events             | Club         | Elfsight calendar is cross-location classes and workshops | RA as a source             |
 | Giri                             | https://giri.berlin/                           | Bar          | Programme calendar is empty in HTML; RSVP goes to RA      | RA as a source             |
 | Birgit (Birgit & Bier)           | https://www.birgit.club/                       | Techno Club  | Wix one-pager; only undated weekly series                 | Havanna-style occurrences  |
@@ -275,7 +275,7 @@ page to other clients, so its blocker is the empty Next.js payload rather than t
 | Minimal Bar                      | https://minimal-berlin.geo.io/                 | Techno Club  | No own site; redirects to a geo.io business page          | RA as a source             |
 | Sensorium                        | http://www.sensorium-club.com                  | Techno Club  | Domain serves a 229-byte stub page                        | Site change / RA           |
 | Insomnia                         | http://www.insomnia-berlin.de                  | Club         | WAF returns 403 with an empty body to scripts             | Request headers / RA       |
-| Hafenbar Berlin                  | https://www.hafenbar-berlin.de                 | Bar          | WordPress blog of *past* parties; no programme            | Site change                |
+| Hafenbar Berlin                  | https://www.hafenbar-berlin.de                 | Bar          | WordPress blog of _past_ parties; no programme            | Site change                |
 | Bulbul Berlin                    | https://www.bulbulberlin.de                    | Club         | Own site links out to RA for the programme                | RA as a source             |
 | Bar Neun                         | http://barneun.de                              | Bar          | Squarespace; 1.1 MB of HTML, no event text                | Headless browser           |
 | Unkompress                       | https://www.unkompress.berlin/                 | Club         | Squarespace; event content is client-side only            | Headless browser           |

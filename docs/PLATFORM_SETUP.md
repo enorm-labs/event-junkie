@@ -19,7 +19,7 @@ single-instance).
 
 ## 1. Sizing — and why ADR-012's number survived
 
-ADR-012 sized a **CX33** (4 vCPU / 8 GB, €8.49) for the k3s node, doing that arithmetic against *two JVMs, an nginx and an ingress*. The tool list originally on
+ADR-012 sized a **CX33** (4 vCPU / 8 GB, €8.49) for the k3s node, doing that arithmetic against _two JVMs, an nginx and an ingress_. The tool list originally on
 the table — ArgoCD, a full APM stack, OpenSearch, Superset, a local LLM — was a different machine class, and would have forced a **CX43** at €15.99.
 
 **It does not, because of the decisions in §4.** ArgoCD is out in favour of Flux at a quarter the memory, and OpenSearch, Superset and the local LLM are all
@@ -28,7 +28,7 @@ deferred with named triggers. What remains fits, with room.
 Realistic resident memory, measured in "what it actually uses", not "what the docs say it can survive on":
 
 | Component                                        | RAM         | Note                                            |
-|--------------------------------------------------|-------------|-------------------------------------------------|
+| ------------------------------------------------ | ----------- | ----------------------------------------------- |
 | k3s server + CoreDNS, metrics-server, local-path | ~800 MB     | The floor                                       |
 | Traefik (bundled with k3s)                       | ~100 MB     |                                                 |
 | cert-manager                                     | ~150 MB     | §6                                              |
@@ -56,38 +56,38 @@ philosophy, it was a close call about whether a JVM gets OOM-killed mid-deploy. 
 > orderable at present. The replacement is the **`CAX` (Ampere ARM)** line, and it is an upgrade rather than a compromise — see below.
 >
 > **Amended 2026-08-13: staging is on `CPX22` (x86), because the CAX line could not be bought either.** Three orders for a `cax11` were refused with
-> `unsupported location for server type` *while Hetzner's API advertised it as available* — including a probe for a bare server with no IPs, no network and no
+> `unsupported location for server type` _while Hetzner's API advertised it as available_ — including a probe for a bare server with no IPs, no network and no
 > firewall, which rules out anything in `infra/`. Production keeps `CAX21` and keeps waiting; staging could not, because a cluster existing is what unblocks
 > #265, #286, #270 and #416.
 >
 > **This is a shortage, not an architecture problem.** Only `cpx22`+ and the dedicated `ccx` line are orderable in `eu-central` at all:
 >
-> | | | | |
-> |---|---|---|---|
-> | `cx23` | x86 | €6.53 | **unavailable** — and cheaper than the ARM plan ever was |
-> | `cax11` | ARM | €7.13 | **unavailable** — advertised in `nbg1`, refused three times |
-> | `cpx22` | x86 | **€23.19** | **orderable** — what staging now runs |
+> |         |     |            |                                                             |
+> | ------- | --- | ---------- | ----------------------------------------------------------- |
+> | `cx23`  | x86 | €6.53      | **unavailable** — and cheaper than the ARM plan ever was    |
+> | `cax11` | ARM | €7.13      | **unavailable** — advertised in `nbg1`, refused three times |
+> | `cpx22` | x86 | **€23.19** | **orderable** — what staging now runs                       |
 >
 > Either of the first two returning is worth moving back to. `./check-capacity.sh --all` is the way to watch.
 
-| Role | Type | vCPU / RAM / disk | Notes |
-|---------------------|-----------|-------------------|--------------------------------------------------------------|
-| **k3s node** | **CAX21** | 4 ARM / 8 GB / 80 GB | Direct CX33 equivalent. Primary IPv4 + IPv6 |
-| **PostgreSQL node** | **CAX11** | 2 ARM / 4 GB / 40 GB | Direct CX23 equivalent. **No public IPv4** |
-| **Staging** | ~~CAX11~~ **CPX22** | 2 x86 / 4 GB / 40 GB | All-in-one. Needs a public IPv4 for the WireGuard endpoint. **x86 since 2026-08-13 — see below** |
-| Private network | — | free | One `/16`, both production servers attached |
-| Firewalls | — | free | Two, one per role |
-| Backups | — | 20 % of server price | Hetzner's automated daily backups, both production servers |
-| **Object Storage** | — | 1 TB inc. | **One subscription, three buckets** — see below |
+| Role                | Type                | vCPU / RAM / disk    | Notes                                                                                            |
+| ------------------- | ------------------- | -------------------- | ------------------------------------------------------------------------------------------------ |
+| **k3s node**        | **CAX21**           | 4 ARM / 8 GB / 80 GB | Direct CX33 equivalent. Primary IPv4 + IPv6                                                      |
+| **PostgreSQL node** | **CAX11**           | 2 ARM / 4 GB / 40 GB | Direct CX23 equivalent. **No public IPv4**                                                       |
+| **Staging**         | ~~CAX11~~ **CPX22** | 2 x86 / 4 GB / 40 GB | All-in-one. Needs a public IPv4 for the WireGuard endpoint. **x86 since 2026-08-13 — see below** |
+| Private network     | —                   | free                 | One `/16`, both production servers attached                                                      |
+| Firewalls           | —                   | free                 | Two, one per role                                                                                |
+| Backups             | —                   | 20 % of server price | Hetzner's automated daily backups, both production servers                                       |
+| **Object Storage**  | —                   | 1 TB inc.            | **One subscription, three buckets** — see below                                                  |
 
 **Not ordered, and why:** Load Balancer (k3s ServiceLB binds to the node IP on one node) · Volumes (local NVMe is enough until the database outgrows 40 GB) ·
 Floating IPs (for failover between servers, which does not apply) · **Storage Box** (superseded — see below) · Storage Share.
 
-**Keep everything in one network *zone*, and the two compute nodes in one *location*.** The distinction matters and this document previously blurred it.
+**Keep everything in one network _zone_, and the two compute nodes in one _location_.** The distinction matters and this document previously blurred it.
 Hetzner charges nothing for "internal traffic within the network zone `eu-central`", so Falkenstein, Nuremberg and Helsinki are interchangeable as far as cost
 is concerned — a server in `nbg1` reaching a bucket in `fsn1` is free, and the buckets therefore do not pin the servers anywhere.
 
-What *does* have to stay together is the k3s node and the PostgreSQL node, because every query crosses that link and inter-location latency lands on every
+What _does_ have to stay together is the k3s node and the PostgreSQL node, because every query crosses that link and inter-location latency lands on every
 request. Beyond that, prefer a German location over Helsinki for a Berlin audience — about 25 ms of round trip, which is real but not disqualifying if it is
 the only ARM capacity available.
 
@@ -98,7 +98,7 @@ Only the first three steps are done by hand. Everything after them is declared i
 duplicate them or need an import.
 
 1. **Create a Cloud project.** Free, and it is the boundary the API token is scoped to.
-2. **Create an API token** with read *and* write. It is shown once.
+2. **Create an API token** with read _and_ write. It is shown once.
 3. **Create the Object Storage subscription and the `…-tfstate` bucket**, plus its S3 credentials. This bucket is the one genuinely hand-made resource, because
    a state backend cannot be managed by the state it holds (§10 step 4). The other two buckets can be declared.
 4. Everything else — servers, network, subnet, firewalls, backups, the remaining buckets — comes from `tofu apply`.
@@ -127,7 +127,7 @@ you happen to be, and most networks you will connect from are IPv4-only.
 **Verify `signal-cli-rest-api` publishes an arm64 manifest before committing to it.** It is JVM-based and popular with Home Assistant users, who are
 overwhelmingly on ARM, so it is near-certain — but it is the one component on the list not confirmed.
 
-**The first bullet is now two-thirds true (2026-08-13).** The laptop is arm64 and production is *intended* to be, but staging runs x86 because ARM could not be
+**The first bullet is now two-thirds true (2026-08-13).** The laptop is arm64 and production is _intended_ to be, but staging runs x86 because ARM could not be
 bought. What keeps that from mattering much is that [#264](https://github.com/enorm-labs/event-junkie/issues/264) publishes **multi-arch** images: the same
 chart, the same tags and the same digests-per-platform run on either, so nothing had to be rebuilt or branched to move staging.
 
@@ -144,10 +144,10 @@ line is a rebuild rather than a redesign — neither the Helm chart nor the Open
 Hetzner's own storage-selection guide recommends **Object Storage for database backups**, and `wal-g` speaks S3 natively. So one product covers all three
 storage needs rather than two:
 
-| Bucket | Holds |
-|-------------|--------------------------------------------|
-| `…-tfstate` | OpenTofu state |
-| `…-o2` | OpenObserve's Parquet data (ADR-015) |
+| Bucket      | Holds                                                                                        |
+| ----------- | -------------------------------------------------------------------------------------------- |
+| `…-tfstate` | OpenTofu state                                                                               |
+| `…-o2`      | OpenObserve's Parquet data (ADR-015)                                                         |
 | `…-backups` | `wal-g` WAL and base backups ([#270](https://github.com/enorm-labs/event-junkie/issues/270)) |
 
 **€4.99/month base, 1 TB storage and 1 TB egress included**, no per-bucket or per-request charge — buckets are free, so use three. That is more than the €1–3
@@ -157,7 +157,7 @@ this document first estimated, but it **deletes the Storage Box line entirely**,
 
 **Treat every euro figure here as indicative and re-check it in the console before ordering.** Hetzner raised cloud prices twice in 2026 — in April and again on
 15 June — and the withdrawal of the CX line moved the landscape again. The figures above and in ADR-012 were taken from public sources rather than from an
-account, and Hetzner's own pricing tables render client-side and could not be read directly. The *shape* of the decision is robust to a 30 % price move; the
+account, and Hetzner's own pricing tables render client-side and could not be read directly. The _shape_ of the decision is robust to a 30 % price move; the
 arithmetic is not.
 
 **The upgrade path remains a single step:** CAX31 (8 vCPU / 16 GB) if OpenObserve fails ADR-015's footprint test, or if Grafana joins it later. Nothing else in
@@ -231,7 +231,7 @@ worth stating: if the k3s node is down, the database node loses `apt`. For packa
 depended on it, and nothing does.
 
 **Note which arrows do not exist.** Nothing reaches the PostgreSQL node from the internet, in either direction, at any port. Nothing reaches `6443` or `22`
-without the tunnel. And no arrow points *into* the cluster from GitHub — that is §2.3.
+without the tunnel. And no arrow points _into_ the cluster from GitHub — that is §2.3.
 
 ### 2.2 The access paths — how a request actually gets served
 
@@ -305,7 +305,7 @@ where the workloads do.
 ### Ours
 
 | Workload          | Shape                    | Replicas      | Notes                                              |
-|-------------------|--------------------------|---------------|----------------------------------------------------|
+| ----------------- | ------------------------ | ------------- | -------------------------------------------------- |
 | `events-importer` | JVM, always-on scheduler | **exactly 1** | ADR-008. `strategy: Recreate`, never rolling       |
 | `events-bff`      | JVM, stateless HTTP      | 1–N           | The only genuinely scalable thing here             |
 | `events-frontend` | nginx serving `dist/`    | 1–N           | Same origin as the API — ADR-012 §Frontend hosting |
@@ -314,16 +314,16 @@ where the workloads do.
 
 ### Infrastructure
 
-| Thing           | Choice                                           | Confidence                                                     |
-|-----------------|--------------------------------------------------|----------------------------------------------------------------|
-| Ingress + TLS   | **Traefik** (ships with k3s) + **cert-manager**  | Decided — §6                                                   |
-| Load balancer   | **None.** k3s ServiceLB binds to the node IP     | Decided — §6                                                   |
-| Registry        | **GHCR**, not Docker Hub                         | Decided — §3                                                   |
-| GitOps / deploy | **Flux** (pull-based); CI builds and pushes only | Decided — §4, §4a                                              |
-| Observability   | **OpenObserve**                                  | ADR-015, *Accepted on trial* — §5                              |
-| Database        | PostgreSQL 18 on its own VM                      | ADR-012                                                        |
+| Thing           | Choice                                           | Confidence                                                    |
+| --------------- | ------------------------------------------------ | ------------------------------------------------------------- |
+| Ingress + TLS   | **Traefik** (ships with k3s) + **cert-manager**  | Decided — §6                                                  |
+| Load balancer   | **None.** k3s ServiceLB binds to the node IP     | Decided — §6                                                  |
+| Registry        | **GHCR**, not Docker Hub                         | Decided — §3                                                  |
+| GitOps / deploy | **Flux** (pull-based); CI builds and pushes only | Decided — §4, §4a                                             |
+| Observability   | **OpenObserve**                                  | ADR-015, _Accepted on trial_ — §5                             |
+| Database        | PostgreSQL 18 on its own VM                      | ADR-012                                                       |
 | Backups         | `wal-g` → Object Storage (S3)                    | [#270](https://github.com/enorm-labs/event-junkie/issues/270) |
-| Secrets         | **SOPS + age**                                   | Decided — §8                                                   |
+| Secrets         | **SOPS + age**                                   | Decided — §8                                                  |
 
 ### Deferred, with reasons — §4
 
@@ -343,7 +343,7 @@ OpenSearch · Superset · local LLM.
   to `oci://ghcr.io/enorm-labs/charts/event-junkie` works, and the chart version and image tag can be stamped from the same build.
 - Free for public images, and these are public.
 
-**Privacy check:** GHCR is GitHub, a US company — but it sits in the *build and deploy* path, not the visitor request path, contains no personal data, and
+**Privacy check:** GHCR is GitHub, a US company — but it sits in the _build and deploy_ path, not the visitor request path, contains no personal data, and
 GitHub is already a named processor in both privacy notices for issue handling. Nothing to add to the notice. This is the AGENTS.md §Privacy re-check being
 done, not skipped.
 
@@ -362,7 +362,7 @@ Three more things about GHCR that each cost an afternoon if learned the hard way
 
 - **CI needs no credential to create.** `permissions: packages: write` plus `docker/login-action` with `${{ secrets.GITHUB_TOKEN }}`; the token gets `admin` on
   packages published by its own repository.
-- **A local `docker push` or `helm push` needs a *classic* PAT** with `write:packages`. GitHub Packages does **not** support fine-grained tokens, and the error
+- **A local `docker push` or `helm push` needs a _classic_ PAT** with `write:packages`. GitHub Packages does **not** support fine-grained tokens, and the error
   it returns does not say so — reaching for a fine-grained token is the obvious wrong turn.
 - **`LABEL org.opencontainers.image.source` is what attaches the package to this repository**, and it is matched on the canonical name. A URL left pointing at a
   renamed repository still resolves through GitHub's redirect, so the label looks fine and the package silently fails to attach.
@@ -372,7 +372,7 @@ Storage and bandwidth are free for public packages, so untagged versions accumul
 ### What publishes them — `release.yml`, since #264
 
 **One workflow, one computed version, four artifacts, and no path filters.** `.github/workflows/release.yml` runs on every push to `main` (a snapshot) and on a
-`v*` tag (a release), builds the three images and packages the chart, scans the images with Trivy *before* pushing anything, and pushes images before the chart.
+`v*` tag (a release), builds the three images and packages the chart, scans the images with Trivy _before_ pushing anything, and pushes images before the chart.
 
 Four decisions in it are worth not re-deriving:
 
@@ -387,10 +387,10 @@ Four decisions in it are worth not re-deriving:
 - **Scanning before publish costs a second build.** A multi-platform image cannot be loaded into the local daemon, so it cannot be scanned before it exists in a
   registry. Each image is therefore built for amd64 and loaded, scanned, then rebuilt for both platforms and pushed — the second build reuses the first's cache.
   The known gap: only the amd64 variant is scanned.
-- **The Trivy gate blocks on CRITICAL and HIGH *that have a fix*.** `--ignore-unfixed` is load-bearing: a base-image CVE with no upstream fix would otherwise
+- **The Trivy gate blocks on CRITICAL and HIGH _that have a fix_.** `--ignore-unfixed` is load-bearing: a base-image CVE with no upstream fix would otherwise
   block every release until someone deleted the gate, which is how gates die. Waivers go in `.trivyignore` with a reason and a date.
 
-The versioning scheme — one number derived from `gradle.properties`, snapshots as prereleases *of the coming release*, `latest` published but never consumed —
+The versioning scheme — one number derived from `gradle.properties`, snapshots as prereleases _of the coming release_, `latest` published but never consumed —
 is in [DEVELOPMENT.md](DEVELOPMENT.md#versions-and-cutting-a-release).
 
 ---
@@ -398,7 +398,7 @@ is in [DEVELOPMENT.md](DEVELOPMENT.md#versions-and-cutting-a-release).
 ## 4. How deploys happen
 
 > **Now decided, implemented and recorded as [ADR-016](adr/ADR-016_GITOPS_DELIVERY.md).** The end-to-end path a commit takes to become a running deployment —
-> with a diagram — is [RELEASING.md](RELEASING.md). This section keeps the *reasoning*; that one has the mechanics.
+> with a diagram — is [RELEASING.md](RELEASING.md). This section keeps the _reasoning_; that one has the mechanics.
 
 ### How deploys happen — **decided 2026-08-10: Flux. Not ArgoCD, and not plain Helm from CI.**
 
@@ -419,21 +419,21 @@ it is not about GitOps philosophy at all:
 
 The options as they were weighed:
 
-|                        | Cost    | What you get                                                                                                                                                                                                                       |
-|------------------------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|                        | Cost    | What you get                                                                                                                                                                                                                      |
+| ---------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Plain Helm from CI** | 0 MB    | `helm upgrade --install` in the deploy workflow ([#264](https://github.com/enorm-labs/event-junkie/issues/264)). Simplest, and the cluster holds no deploy machinery at all. No drift detection, no self-healing, no rollback UI. |
-| **Flux**               | ~300 MB | Real GitOps — the cluster reconciles itself towards the repo, drift is corrected, and a rollback is a git revert. A quarter of ArgoCD's footprint, no UI.                                                                          |
-| **ArgoCD**             | ~1.2 GB | Same, plus the UI that is the actual reason people choose it.                                                                                                                                                                      |
+| **Flux**               | ~300 MB | Real GitOps — the cluster reconciles itself towards the repo, drift is corrected, and a rollback is a git revert. A quarter of ArgoCD's footprint, no UI.                                                                         |
+| **ArgoCD**             | ~1.2 GB | Same, plus the UI that is the actual reason people choose it.                                                                                                                                                                     |
 
-**Decision: Flux.** It is **pull-based**, which dissolves the problem rather than working around it: the cluster reaches *out* to GitHub and GHCR, so nothing
+**Decision: Flux.** It is **pull-based**, which dissolves the problem rather than working around it: the cluster reaches _out_ to GitHub and GHCR, so nothing
 inbound is required and **6443 need never be publicly reachable at all** — §8a later closes it completely, behind WireGuard. ~300 MB, still comfortable on the
 CX33.
 
 Two consequences beyond the firewall, both good, and the second one matters more than the first:
 
 - **CI no longer holds a cluster credential — because there is no longer one to hold.** ADR-012 called this out as a known weakness of choosing Hetzner:
-  *"GitHub Actions cannot use OIDC against Hetzner, so deploys authenticate with a scoped kubeconfig or deploy key held as a repository secret, rotated
-  deliberately. This is a genuine step down from AWS/GCP OIDC and should be treated as such."* **Flux removes that credential entirely.** A repository
+  _"GitHub Actions cannot use OIDC against Hetzner, so deploys authenticate with a scoped kubeconfig or deploy key held as a repository secret, rotated
+  deliberately. This is a genuine step down from AWS/GCP OIDC and should be treated as such."_ **Flux removes that credential entirely.** A repository
   compromise no longer implies a cluster compromise. That is a straight improvement on the platform decision, arrived at sideways.
 - **Rollback becomes `git revert`**, and drift is corrected rather than merely detected.
 
@@ -447,7 +447,7 @@ Two consequences beyond the firewall, both good, and the second one matters more
 ## 4a. Deployment visibility on GitHub
 
 > **This section was rewritten when §4 landed on Flux, and the earlier answer is now wrong in an instructive way.** Under push-based deploys the advice was: add
-> `environment:` to the deploy job, GitHub creates the deployment record for free, and *"the REST Deployments API is not needed"*. **With pull-based deploys
+> `environment:` to the deploy job, GitHub creates the deployment record for free, and _"the REST Deployments API is not needed"_. **With pull-based deploys
 > none of that holds** — no Actions job deploys anything, so no deployment record is created, and the API turns out to be exactly the right tool after all. It
 > is a good illustration of why the deploy mechanism had to be settled before the reporting around it.
 
@@ -461,12 +461,12 @@ indefinitely if reconciliation fails. Nothing tells GitHub what happened.
 Flux's **notification-controller** has two GitHub providers, and they do different jobs:
 
 | Provider         | What it does                                                      | Use it for                                                        |
-|------------------|-------------------------------------------------------------------|-------------------------------------------------------------------|
+| ---------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------- |
 | `github`         | Posts **commit statuses** from `Kustomization` events             | The baseline. Every commit gets ✅/❌ for "Flux reconciled this"  |
 | `githubdispatch` | Fires a `repository_dispatch` event carrying Flux's event payload | Triggering a workflow that then writes a proper Deployment record |
 
 **Start with `github` alone.** A commit status showing reconciliation succeeded or failed, right next to the CI checks, is most of the value for none of the
-work — and it is truthful in a way a push-time deployment record is not, because it is written *after* the cluster converged.
+work — and it is truthful in a way a push-time deployment record is not, because it is written _after_ the cluster converged.
 
 **Add `githubdispatch` → a small workflow → the Deployments REST API** only if the Deployments view specifically is wanted. That workflow creates the deployment
 and immediately sets its status from the Flux payload, so the entry reflects reality rather than intent.
@@ -487,7 +487,7 @@ see "what is on what" — declare them on the dispatch-triggered workflow, with 
 
 Two notes that survive the rewrite:
 
-- **Do not enable *prevent self-review*** if you do use protection rules. As sole maintainer it locks the environment permanently, and the failure is confusing
+- **Do not enable _prevent self-review_** if you do use protection rules. As sole maintainer it locks the environment permanently, and the failure is confusing
   because the approval UI appears and then refuses.
 - **Environment secrets and protection rules are public-repo-only on Free/Pro/Team plans.** This repository is public, so they are free; going private would
   need a paid plan.
@@ -500,9 +500,9 @@ secret, and not something CI ever holds.
 **Two repository settings block it, and neither is a token scope** (found on the first real run, 2026-08-13):
 
 - **Deploy keys must be enabled for the organisation** — `deploy_keys_enabled_for_repositories`. Disabled, bootstrap fails at `422 Deploy keys are disabled for
-  this repository`, and no PAT of any shape helps
+this repository`, and no PAT of any shape helps
 - **Bootstrap pushes directly to `main`**, which the branch ruleset forbids. It has to be disabled for two pushes and re-enabled immediately — and that window
-  matters more than it sounds, because with Flux live, branch protection *is* the control that replaces the kubeconfig (ADR-016)
+  matters more than it sounds, because with Flux live, branch protection _is_ the control that replaces the kubeconfig (ADR-016)
 
 The ordered runbook, with the rest of the bring-up around it, is [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md).
 
@@ -512,20 +512,20 @@ The ordered runbook, with the rest of the bring-up around it, is [CLUSTER_BOOTST
 > IP allowlist could not follow you between networks. §8a's WireGuard changes the answer: staging can be made **unreachable** rather than merely
 > password-protected, which is strictly better and, as it turns out, removes three separate problems the basic-auth design had to work around.
 
-**Yes — staging can be entirely absent from the public internet, while still being a real environment.** The important thing is that this does *not* mean
+**Yes — staging can be entirely absent from the public internet, while still being a real environment.** The important thing is that this does _not_ mean
 falling back to `kubectl port-forward`: a port-forward skips Traefik, TLS and the whole routing path, so it tests a different topology than production, which is
 most of what staging exists to check.
 
 The design:
 
-| | |
-|---|---|
-| **No public `A`/`AAAA` record** | `staging.event-junkie.de` simply does not resolve on the public internet |
-| **Firewall: no public 80/443 on the staging node** | Only `51820/udp` for WireGuard is exposed, and that is silent to scanners |
-| **Ingress listens on the tunnel** | Traefik, routing, middlewares and TLS all behave exactly as production |
-| **Name resolution over WireGuard** | The tunnel's DNS (or a `hosts` entry) maps the hostname to the tunnel address |
+|                                                    |                                                                               |
+| -------------------------------------------------- | ----------------------------------------------------------------------------- |
+| **No public `A`/`AAAA` record**                    | `staging.event-junkie.de` simply does not resolve on the public internet      |
+| **Firewall: no public 80/443 on the staging node** | Only `51820/udp` for WireGuard is exposed, and that is silent to scanners     |
+| **Ingress listens on the tunnel**                  | Traefik, routing, middlewares and TLS all behave exactly as production        |
+| **Name resolution over WireGuard**                 | The tunnel's DNS (or a `hosts` entry) maps the hostname to the tunnel address |
 
-**The one real consequence: TLS must switch to DNS-01.** Let's Encrypt's HTTP-01 challenge requires Let's Encrypt to *reach* the host, which is precisely what
+**The one real consequence: TLS must switch to DNS-01.** Let's Encrypt's HTTP-01 challenge requires Let's Encrypt to _reach_ the host, which is precisely what
 this design prevents. **DNS-01 works** — cert-manager proves control by writing a TXT record via the Hetzner DNS API, which needs no inbound access at all. So
 staging still gets a genuine, publicly-trusted certificate for a hostname that has no public address. Worth noting the shape of that: **the TXT record is
 public, the `A` record never exists.**
@@ -541,12 +541,12 @@ HTTP-01 — staging is what justifies it, and a wildcard comes within reach as a
   override `robots.txt` per environment — belt and braces, because the cost is one header and the failure mode is a staging site in Google's index — but it is
   now genuinely defence-in-depth rather than the actual control.
 
-  **The header half is built (#265):** `ingress.noindex` renders a Traefik `Middleware` and the annotation naming it, and staging turns it on. The `robots.txt`
-  half is [#286](https://github.com/enorm-labs/event-junkie/issues/286) and cannot be done the same way — a header cannot rewrite a response body, and the
-  frontend build emits one `robots.txt` without knowing which environment will serve it.
+    **The header half is built (#265):** `ingress.noindex` renders a Traefik `Middleware` and the annotation naming it, and staging turns it on. The `robots.txt`
+    half is [#286](https://github.com/enorm-labs/event-junkie/issues/286) and cannot be done the same way — a header cannot rewrite a response body, and the
+    frontend build emits one `robots.txt` without knowing which environment will serve it.
 
 **And one thing it breaks, which needs an answer:** CI cannot reach staging either, so **post-deploy smoke tests cannot run from GitHub Actions**. This is the
-same shape as the problem that killed push-based Helm in §4, and it has the same resolution: run the checks *inside* the cluster. Flux's `HelmRelease` supports
+same shape as the problem that killed push-based Helm in §4, and it has the same resolution: run the checks _inside_ the cluster. Flux's `HelmRelease` supports
 Helm test hooks with `test.enable`, and can roll back automatically when they fail — which is a better arrangement than an external smoke test anyway, because
 the rollback is automatic rather than a human noticing a red build.
 
@@ -587,7 +587,7 @@ Three separate reasons, any one of which is sufficient:
 - **It would need its own ADR and its own privacy analysis** before it touched anything, per AGENTS.md §Privacy.
 
 **Revisit when** a specific problem appears that deterministic code demonstrably cannot solve — and then evaluate a small purpose-built model or a metered API
-call *first*, because both are likely cheaper than a GPU server. Self-hosting is the answer to a privacy question, and there is no personal data in a genre
+call _first_, because both are likely cheaper than a GPU server. Self-hosting is the answer to a privacy question, and there is no personal data in a genre
 string.
 
 ---
@@ -606,7 +606,7 @@ exit is fallback 1 — VictoriaMetrics + VictoriaLogs + Grafana** — and it cos
 instrumentation is vendor-neutral OpenTelemetry either way. That property is what makes trialling the youngest product a reasonable thing to do rather than a
 gamble.
 
-**Ranked alternatives:** VictoriaMetrics + VictoriaLogs + Grafana (Apache 2.0, same footprint, five components instead of one — the *safest* choice) ·
+**Ranked alternatives:** VictoriaMetrics + VictoriaLogs + Grafana (Apache 2.0, same footprint, five components instead of one — the _safest_ choice) ·
 kube-prometheus-stack + Loki (the standard, but 3–4 GB) · SigNoz (best tracing, but ClickHouse wants the whole node).
 
 **Netdata as a complement**, self-hosted only — ~200 MB for zero-configuration per-second node visibility. Not connected to Netdata Cloud, which would
@@ -623,7 +623,7 @@ cluster. OpenObserve supports custom webhook templates, so the alert payload is 
 
 **Signal is the right choice for a better reason than convenience: it is end-to-end encrypted.** Alert bodies will carry venue names, error strings, query
 fragments and possibly IP addresses — and with Signal the carrier cannot read any of it. Telegram's Bot API, the obvious easy alternative, is plaintext to
-Telegram's servers. Same effort, materially worse posture, and this project just spent a day removing a US company that *could* read request data.
+Telegram's servers. Same effort, materially worse posture, and this project just spent a day removing a US company that _could_ read request data.
 
 **The trap, and it is the one that actually matters:**
 
@@ -634,12 +634,12 @@ Telegram's servers. Same effort, materially worse posture, and this project just
 So alerting is **two layers, and the second is not optional**:
 
 | Layer                                           | Runs            | Catches                                                                          | Cannot catch                   |
-|-------------------------------------------------|-----------------|----------------------------------------------------------------------------------|--------------------------------|
+| ----------------------------------------------- | --------------- | -------------------------------------------------------------------------------- | ------------------------------ |
 | OpenObserve → Signal                            | In the cluster  | The app misbehaving: zero-event imports, error rates, disk filling, pod restarts | The cluster being gone         |
 | **External uptime monitor + dead-man's switch** | **Off Hetzner** | The node, k3s, or the whole site being down; alerting itself having died         | Nuance — it only knows up/down |
 
 The dead-man's switch is the part people skip: a heartbeat the cluster must send on a schedule, where **absence** raises the alarm. Without it, "no alerts for
-three weeks" reads as good news whether it is or not. ADR-012 anticipated exactly this — it budgeted for *"an external uptime/monitoring service"* out of the
+three weeks" reads as good news whether it is or not. ADR-012 anticipated exactly this — it budgeted for _"an external uptime/monitoring service"_ out of the
 Hetzner savings. An uptime monitor only makes requests to public URLs and receives our own responses, so no visitor data reaches it and the residency question
 does not arise.
 
@@ -649,7 +649,7 @@ does not arise.
    This is a knowing trade, not an oversight.
 2. **It needs its own phone number** — a cheap prepaid SIM. Do not use your personal number: the account becomes a bot, and Signal blocks most VoIP providers
    for registration.
-3. **Registration state must persist on a PVC.** Lose it and alerts stop *silently* — which is the same failure the dead-man's switch exists to catch, and the
+3. **Registration state must persist on a PVC.** Lose it and alerts stop _silently_ — which is the same failure the dead-man's switch exists to catch, and the
    second reason it is not optional.
 4. **~150–250 MB**, because signal-cli is a JVM. It fits in the CX33's ~3 GB headroom but it is not free; the GraalVM-native mode is lighter if it becomes
    tight.
@@ -672,29 +672,30 @@ the "exit is cheap" property in ADR-012 is to mean anything.
 
 Practical notes that cost people a day each:
 
-- **Use the Let's Encrypt *staging* issuer while testing.** Production has a limit of 50 certificates per registered domain per week and 5 duplicates per week.
+- **Use the Let's Encrypt _staging_ issuer while testing.** Production has a limit of 50 certificates per registered domain per week and 5 duplicates per week.
   It is very easy to burn that debugging an Ingress annotation, and then you are locked out for seven days.
 - **HTTP-01 needs port 80 reachable and the A record already resolving.** So the order is DNS → deploy → certificate, and it cannot be reordered.
 - **DNS-01 is required for staging**, which has no public address for HTTP-01 to reach (§4a). It needs a cert-manager webhook for Hetzner DNS and an API token
   in a secret. Production can stay on HTTP-01, but running one mechanism for both is simpler, and DNS-01 brings a wildcard within reach as a side effect.
 
-  **Built in #265, and the last sentence there did not survive contact.** Production stays on HTTP-01 deliberately rather than for simplicity, because the
-  token DNS-01 needs is project-wide: hcloud tokens cannot be scoped to a zone, let alone to TXT records, so the credential that issues a certificate could
-  also delete the servers. Staging accepts that — it is rebuildable — and production declines the wildcard rather than hold it. See ADR-016's costs.
+    **Built in #265, and the last sentence there did not survive contact.** Production stays on HTTP-01 deliberately rather than for simplicity, because the
+    token DNS-01 needs is project-wide: hcloud tokens cannot be scoped to a zone, let alone to TXT records, so the credential that issues a certificate could
+    also delete the servers. Staging accepts that — it is rebuildable — and production declines the wildcard rather than hold it. See ADR-016's costs.
 
-  **Use the official webhook, and check which one you are looking at.** Hetzner shut down the old `dns.hetzner.com` API and console in **May 2026**, and every
-  token the old console issued stopped working with it. Six or so community webhooks — `vadimkim`, `mecodia`, `fionera` and forks — still rank at the top of a
-  search and all speak that dead API; they install cleanly, report Ready, and fail at challenge time. The one to use is Hetzner's own:
+    **Use the official webhook, and check which one you are looking at.** Hetzner shut down the old `dns.hetzner.com` API and console in **May 2026**, and every
+    token the old console issued stopped working with it. Six or so community webhooks — `vadimkim`, `mecodia`, `fionera` and forks — still rank at the top of a
+    search and all speak that dead API; they install cleanly, report Ready, and fail at challenge time. The one to use is Hetzner's own:
 
-  | | |
-  |---|---|
-  | Chart | `cert-manager-webhook-hetzner` from `https://charts.hetzner.cloud` |
-  | `groupName` | `acme.hetzner.com` — the community forks use `.cloud` |
-  | Solver config | `tokenSecretKeyRef: {name, key}`, **not** the `secretName`/`secretKey` pair the forks take |
-  | Token | An ordinary hcloud API token with read+write, the same kind `infra/` uses |
-  | Secret namespace | `cert-manager`, **not** the release namespace — a ClusterIssuer resolves secret references against cert-manager's own namespace |
+    |                  |                                                                                                                                 |
+    | ---------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+    | Chart            | `cert-manager-webhook-hetzner` from `https://charts.hetzner.cloud`                                                              |
+    | `groupName`      | `acme.hetzner.com` — the community forks use `.cloud`                                                                           |
+    | Solver config    | `tokenSecretKeyRef: {name, key}`, **not** the `secretName`/`secretKey` pair the forks take                                      |
+    | Token            | An ordinary hcloud API token with read+write, the same kind `infra/` uses                                                       |
+    | Secret namespace | `cert-manager`, **not** the release namespace — a ClusterIssuer resolves secret references against cert-manager's own namespace |
 
-  The same shutdown is why `infra/bootstrap` manages DNS through the official provider's `hcloud_zone` rather than a community DNS provider (#260).
+    The same shutdown is why `infra/bootstrap` manages DNS through the official provider's `hcloud_zone` rather than a community DNS provider (#260).
+
 - `event-junkie.com` needs its own certificate for the 301 redirect — one more entry, not a wildcard.
 - **Set the CAA record first** (`0 issue "letsencrypt.org"`), which is already in [#259's checklist](https://github.com/enorm-labs/event-junkie/issues/259).
 
@@ -708,7 +709,7 @@ resource of its own. Three things about the split are decisions rather than defa
   points at an issuer created out of band.
 - **The solver is a value**, `http01` or `dns01`, and staging sets `dns01` for the reason above: it has no public address for an HTTP-01 challenge to reach. The
   chart renders the solver; the Hetzner DNS webhook it names is #265's installation, not the chart's dependency.
-- **The default ACME endpoint is Let's Encrypt *staging*, in every values file including staging's** — the rate limit is per *registered* domain, and
+- **The default ACME endpoint is Let's Encrypt _staging_, in every values file including staging's** — the rate limit is per _registered_ domain, and
   `event-junkie.de` is the same registered domain in both environments, so burning it from staging would lock production out too.
 
 **The chart ships no `crds/` directory and must not gain one.** Helm has no story for upgrading or deleting CRDs a chart installed, so owning cert-manager's is
@@ -731,7 +732,7 @@ If a second node ever arrives, the answer is not MetalLB either — it is the **
 
 [`vitobotta/hetzner-k3s`](https://github.com/vitobotta/hetzner-k3s) is a good tool and does HA control planes and autoscaling well. **It is deliberately not
 used here**, because it owns the cluster lifecycle: adopting it means adopting its abstractions rather than OpenTofu's. ADR-012's portability argument —
-*"keeping the application to a Docker image plus a Postgres URL is what keeps the exit cheap"* — applies to the infrastructure layer too. Same reasoning rules
+_"keeping the application to a Docker image plus a Postgres URL is what keeps the exit cheap"_ — applies to the infrastructure layer too. Same reasoning rules
 out the community tutorial's `cluster-autoscaler`: there is nothing to autoscale on a fixed single node.
 
 Do borrow their k3s flags and firewall rules. Do not adopt their control plane.
@@ -764,7 +765,7 @@ looks like a configuration problem rather than a threading one. The fix is `Hook
 `ContextRegistry`; both apps are WebFlux, so both need it, and it needs a test that asserts a `traceId` actually appears.
 
 **What every log line should carry:** `traceId`, `spanId`, service name, version (already stamped from `gradle.properties`), and — for the importer —
-`sourceId` / `venueSlug` / `importRunId`, because the question asked of importer logs is always "what happened to *this venue* on *this run*".
+`sourceId` / `venueSlug` / `importRunId`, because the question asked of importer logs is always "what happened to _this venue_ on _this run_".
 
 **Do not log client IPs without deciding to.** [LEGAL.md](LEGAL.md) §7.5 — since #412 removed the proxy, the origin now sees real addresses, and nginx's access
 log is on by default. `RequestLoggingFilter` is IP-free today by design; keep it that way.
@@ -783,10 +784,10 @@ management:
 
 Free from the framework: JVM memory and GC, HTTP server request rate/latency/status, R2DBC pool utilisation, Flyway migration state.
 
-**The ones that have to be written, because they are the ones that matter.** Infrastructure metrics tell you the pod is alive; these tell you it is *working*:
+**The ones that have to be written, because they are the ones that matter.** Infrastructure metrics tell you the pod is alive; these tell you it is _working_:
 
 | Metric                                       | Type                                  | Why                                                                                 |
-|----------------------------------------------|---------------------------------------|-------------------------------------------------------------------------------------|
+| -------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------- |
 | `importer.run.duration`                      | Timer, tagged `source`                | Detects a venue that got slow before it gets fatal                                  |
 | `importer.run.outcome`                       | Counter, tagged `source`, `outcome`   | success / failure / partial                                                         |
 | `importer.events.written`                    | Counter, tagged `source`, `operation` | inserted / updated / skipped                                                        |
@@ -797,7 +798,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `bff.events.served`                          | Counter, tagged endpoint              | Is anyone actually using it                                                         |
 | `db.events.total` / `db.events.future`       | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end        |
 
-That last group is what makes the dashboards *business* dashboards and not CPU graphs — and, per §4b, it is why Superset is unnecessary.
+That last group is what makes the dashboards _business_ dashboards and not CPU graphs — and, per §4b, it is why Superset is unnecessary.
 
 ---
 
@@ -809,20 +810,20 @@ What you get free: NetworkPolicy enforcement is on (kube-router, unless `--disab
 
 What you have to add:
 
-|    | What                                                                     | Why                                                                                                                                                                                        |
-|----|--------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1  | **WireGuard on the host; SSH and 6443 reachable only through it**        | The Kubernetes API on the public internet is the whole game. See §8a — an IP allowlist alone does not survive changing networks                                                            |
-| 2  | **Default-deny NetworkPolicies per namespace**                           | Enforcement being *on* means nothing while every pod may talk to every pod. Deny, then allow                                                                                               |
-| 3  | **The importer's admin API is cluster-internal only**                    | ADR-012 is explicit. No Ingress rule, ever. `kubectl port-forward` is the launch answer                                                                                                    |
-| 4  | **The admin frontend is not deployed at launch**                         | Runs locally against the port-forward. When it *is* deployed, §8a's WireGuard is its access control — bind its Ingress to the tunnel and it is private without basic auth or an allowlist  |
-| 5  | **Pod Security Admission `restricted`**                                  | One namespace label. Blocks privileged pods, host mounts, root                                                                                                                             |
-| 6  | **Non-root, read-only rootfs, drop ALL capabilities**                    | In the Helm chart's `securityContext`. The JVM and nginx images both cope                                                                                                                  |
-| 7  | **A ServiceAccount per workload, `automountServiceAccountToken: false`** | Default is the namespace's SA with a mounted token — a container escape becomes an API credential                                                                                          |
-| 8  | **SOPS + age for secrets**                                               | Encrypted in git, decrypted at apply. Simpler than Sealed Secrets for one developer, and it survives a cluster rebuild — which Sealed Secrets does not, since the key lives in the cluster |
-| 9  | **Traefik security headers + rate limiting**                             | HSTS, `X-Content-Type-Options`, frame options; and this is the rate-limit half of [#268](https://github.com/enorm-labs/event-junkie/issues/268), which lost its free Cloudflare answer    |
-| 10 | **`unattended-upgrades` in cloud-init**                                  | Nobody patches the OS by hand on a Sunday                                                                                                                                                  |
-| 11 | **Trivy in CI on the built images**                                      | Dependabot and OWASP cover dependencies; neither looks at the base image                                                                                                                   |
-| 12 | **Resource requests *and* limits on every workload**                     | On a single node, one leak takes down everything. This is a security control, not a tuning one                                                                                             |
+|     | What                                                                     | Why                                                                                                                                                                                        |
+| --- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | **WireGuard on the host; SSH and 6443 reachable only through it**        | The Kubernetes API on the public internet is the whole game. See §8a — an IP allowlist alone does not survive changing networks                                                            |
+| 2   | **Default-deny NetworkPolicies per namespace**                           | Enforcement being _on_ means nothing while every pod may talk to every pod. Deny, then allow                                                                                               |
+| 3   | **The importer's admin API is cluster-internal only**                    | ADR-012 is explicit. No Ingress rule, ever. `kubectl port-forward` is the launch answer                                                                                                    |
+| 4   | **The admin frontend is not deployed at launch**                         | Runs locally against the port-forward. When it _is_ deployed, §8a's WireGuard is its access control — bind its Ingress to the tunnel and it is private without basic auth or an allowlist  |
+| 5   | **Pod Security Admission `restricted`**                                  | One namespace label. Blocks privileged pods, host mounts, root                                                                                                                             |
+| 6   | **Non-root, read-only rootfs, drop ALL capabilities**                    | In the Helm chart's `securityContext`. The JVM and nginx images both cope                                                                                                                  |
+| 7   | **A ServiceAccount per workload, `automountServiceAccountToken: false`** | Default is the namespace's SA with a mounted token — a container escape becomes an API credential                                                                                          |
+| 8   | **SOPS + age for secrets**                                               | Encrypted in git, decrypted at apply. Simpler than Sealed Secrets for one developer, and it survives a cluster rebuild — which Sealed Secrets does not, since the key lives in the cluster |
+| 9   | **Traefik security headers + rate limiting**                             | HSTS, `X-Content-Type-Options`, frame options; and this is the rate-limit half of [#268](https://github.com/enorm-labs/event-junkie/issues/268), which lost its free Cloudflare answer     |
+| 10  | **`unattended-upgrades` in cloud-init**                                  | Nobody patches the OS by hand on a Sunday                                                                                                                                                  |
+| 11  | **Trivy in CI on the built images**                                      | Dependabot and OWASP cover dependencies; neither looks at the base image                                                                                                                   |
+| 12  | **Resource requests _and_ limits on every workload**                     | On a single node, one leak takes down everything. This is a security control, not a tuning one                                                                                             |
 
 **Not needed here:** a service mesh (two services), Falco (no capacity to respond to its findings), OPA/Kyverno (PSA covers the realistic cases at a fraction of
 the effort).
@@ -836,13 +837,13 @@ unplanned, including the places where emergency access is most likely to be need
 **So WireGuard on the node, and `admin_cidr` demoted to a bootstrap value.**
 
 |                         | Firewall              | Reachable by                                           |
-|-------------------------|-----------------------|--------------------------------------------------------|
+| ----------------------- | --------------------- | ------------------------------------------------------ |
 | `80`, `443`             | Open to the world     | Everyone. It is a public website                       |
 | `51820/udp` (WireGuard) | **Open to the world** | Anyone may send packets; only a valid key gets a reply |
 | `22` (SSH)              | **Tunnel only**       | You, from any network, at a fixed VPN address          |
 | `6443` (k8s API)        | **Tunnel only**       | Same                                                   |
 
-**Opening the WireGuard port to the world is not a weakening — it is the point.** WireGuard does not reply to unauthenticated packets *at all*: without a valid
+**Opening the WireGuard port to the world is not a weakening — it is the point.** WireGuard does not reply to unauthenticated packets _at all_: without a valid
 key, the port is indistinguishable from a closed one to any scanner. It is a far better public-facing surface than SSH, which announces itself, its version and
 its willingness to negotiate to anyone who connects.
 
@@ -853,7 +854,7 @@ precisely when k3s is the problem.
 or a basic-auth middleware. Bind them to the tunnel interface and they are private by construction, with no credentials to manage and nothing exposed to guess
 at. That retires the awkward gap #412 left when Cloudflare Access disappeared.
 
-**`admin_cidrs` still exists, with a narrower job.** The very first `apply` happens before WireGuard is running, so the firewall needs to admit *somewhere*
+**`admin_cidrs` still exists, with a narrower job.** The very first `apply` happens before WireGuard is running, so the firewall needs to admit _somewhere_
 long enough to bring the tunnel up — and **two addresses, not one, behind a corporate HTTP proxy**, since `ifconfig.me` reports the proxy's egress while SSH
 and WireGuard arrive unproxied from another:
 
@@ -865,7 +866,7 @@ tofu apply -var "admin_cidrs=$ADMIN"
 After that it is break-glass rather than daily-use, and it can be tightened or removed.
 
 **The fallback below the fallback is Hetzner's browser console** — VNC to the server regardless of firewall, WireGuard or SSH state. It is the reason none of
-this is unrecoverable, and it is worth logging into once *before* you need it, so the first time is not during an outage.
+this is unrecoverable, and it is worth logging into once _before_ you need it, so the first time is not during an outage.
 
 ---
 
@@ -875,16 +876,16 @@ this is unrecoverable, and it is worth logging into once *before* you need it, s
 over SSH, and `unattended-upgrades` takes over from there — the daily timer applies security updates without anyone deciding to. Patching by hand on a
 schedule is strictly worse, because it depends on somebody remembering.
 
-Three things that are *not* automatic, and the reasoning for each:
+Three things that are _not_ automatic, and the reasoning for each:
 
-| | Why not | What covers it |
-|---|---|---|
-| **Reboots** | On a single-node cluster an unannounced 04:00 reboot is an outage nobody scheduled | A deliberate reboot, when `/var/run/reboot-required` exists |
-| **k3s** | Not apt-managed — installed pinned from `get.k3s.io`, and restarting it disrupts every workload | Bump `k3s_version` and let the node rebuild, or reboot |
-| **Container images** | The applications' libraries come from their images, not the host's apt | Rebuild in CI, with Trivy scanning the result — §8 item 11 |
+|                      | Why not                                                                                         | What covers it                                              |
+| -------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| **Reboots**          | On a single-node cluster an unannounced 04:00 reboot is an outage nobody scheduled              | A deliberate reboot, when `/var/run/reboot-required` exists |
+| **k3s**              | Not apt-managed — installed pinned from `get.k3s.io`, and restarting it disrupts every workload | Bump `k3s_version` and let the node rebuild, or reboot      |
+| **Container images** | The applications' libraries come from their images, not the host's apt                          | Rebuild in CI, with Trivy scanning the result — §8 item 11  |
 
 **The trap worth knowing about is `needrestart`.** It decides whether a service running an updated library actually gets restarted, and its default is
-interactive — which, run non-interactively from `unattended-upgrades`, silently falls back to *list only*. The result is a machine that reports itself fully
+interactive — which, run non-interactively from `unattended-upgrades`, silently falls back to _list only_. The result is a machine that reports itself fully
 patched while every running process still has the old library mapped. With automatic reboots off as well, nothing would ever pick the update up. `harden.sh`
 therefore sets `$nrconf{restart} = 'a'`, excluding k3s alone, so a patched library takes effect within the hour rather than at the next reboot.
 
@@ -902,13 +903,13 @@ Three guides were worked through: [k3s CIS hardening](https://docs.k3s.io/securi
 
 **Taken, and now in `k3s.sh` and `harden.sh`:**
 
-| | |
-|---|---|
-| `protect-kernel-defaults: true` plus `/etc/sysctl.d/90-kubelet.conf` | The flag makes the kubelet **exit** if those four kernel parameters differ from its defaults, so the sysctls are a prerequisite rather than a companion |
-| `secrets-encryption-provider: secretbox` | We already had `secrets-encryption`. The default `aescbc` gives confidentiality with **no integrity**; secretbox is authenticated. Available since v1.33.0+k3s1, and we pin later |
-| `enable-admission-plugins=NodeRestriction` | Stops a compromised kubelet editing other nodes or claiming pods it does not run |
-| `streaming-connection-idle-timeout=5m`, restricted `tls-cipher-suites`, `terminated-pod-gc-threshold` | Cheap, no behavioural cost |
-| `PubkeyAuthentication yes` | Already the default; stating it means a future OS default change cannot quietly weaken it |
+|                                                                                                       |                                                                                                                                                                                   |
+| ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `protect-kernel-defaults: true` plus `/etc/sysctl.d/90-kubelet.conf`                                  | The flag makes the kubelet **exit** if those four kernel parameters differ from its defaults, so the sysctls are a prerequisite rather than a companion                           |
+| `secrets-encryption-provider: secretbox`                                                              | We already had `secrets-encryption`. The default `aescbc` gives confidentiality with **no integrity**; secretbox is authenticated. Available since v1.33.0+k3s1, and we pin later |
+| `enable-admission-plugins=NodeRestriction`                                                            | Stops a compromised kubelet editing other nodes or claiming pods it does not run                                                                                                  |
+| `streaming-connection-idle-timeout=5m`, restricted `tls-cipher-suites`, `terminated-pod-gc-threshold` | Cheap, no behavioural cost                                                                                                                                                        |
+| `PubkeyAuthentication yes`                                                                            | Already the default; stating it means a future OS default change cannot quietly weaken it                                                                                         |
 
 k3s configuration moved from `INSTALL_K3S_EXEC` flags into `/etc/rancher/k3s/config.yaml`, because the hardening guide is written in terms of that file — a
 future item can be pasted in and diffed rather than translated.
@@ -921,7 +922,7 @@ none of it has ever booted. PSA also arrives more simply as namespace labels —
 **Rejected from the Hetzner guide, with reasons, so they are not proposed again.** It is a good tutorial for a server with SSH open to the internet. Ours is
 not that server:
 
-- **Moving SSH to port 2222** — it defends against bots scanning port 22. Ours does not answer on 22 *at all* from the internet; the tunnel is the only path
+- **Moving SSH to port 2222** — it defends against bots scanning port 22. Ours does not answer on 22 _at all_ from the internet; the tunnel is the only path
   (§8a). Moving a closed port would trade a real property for the appearance of one, and break every runbook.
 - **`ufw`** — the Hetzner Cloud firewall already denies by default at the network edge, before packets reach the host. A host firewall would add value only
   for private-network traffic, and k3s manages iptables extensively enough that layering `ufw` on top is a known way to break pod networking. The one place it
@@ -929,12 +930,12 @@ not that server:
 - **fail2ban** — it bans repeated password failures. `PasswordAuthentication no` means there are none, and SSH is unreachable without the tunnel regardless.
 - **rkhunter / chkrootkit / AIDE** — the same argument §8 uses to reject Falco: a detection tool nobody has the capacity to respond to produces alert fatigue,
   not security. Revisit when someone is on call.
-- **2FA via `libpam-google-authenticator`** — an SSH key held on a laptop *plus* a WireGuard key is already two independent factors, and an interactive prompt
+- **2FA via `libpam-google-authenticator`** — an SSH key held on a laptop _plus_ a WireGuard key is already two independent factors, and an interactive prompt
   would break `ssh` in scripts.
 - **`apt update && apt upgrade` as a routine** — §8b: cloud-init does it at build and `unattended-upgrades` does it daily. A manual habit is worse because it
   depends on remembering.
 
-**Taken from it, though:** its incident-response section is right that the thing you lack at 02:00 is a written note of what the server *is*. That is the
+**Taken from it, though:** its incident-response section is right that the thing you lack at 02:00 is a written note of what the server _is_. That is the
 restore drill in [#270](https://github.com/enorm-labs/event-junkie/issues/270) and the runbook this document is becoming.
 
 ---
@@ -951,7 +952,7 @@ Everything below the cloud layer can be exercised without spending money, which 
   parses, matches the API schemas, and does not do a specific list of wrong things — no ingress path reaching the importer or `/actuator`, no floating image
   tag, no selector carrying a label that changes between releases, no hardcoded namespace. They prove **nothing** about whether a pod starts, a probe passes or
   a connection string resolves. The assertions exist because `lint` and schema validation both pass on a chart that is well-formed and wrong, and because the
-  selector-label failure they catch does not surface until the *second* release — which is to say, after the first one has already looked like a success.
+  selector-label failure they catch does not surface until the _second_ release — which is to say, after the first one has already looked like a success.
 - **Flux runs on k3d too**, pointed at the same repository, and this is the part most worth rehearsing: reconciliation timing, what a failed `HelmRelease` looks
   like, and whether the test hooks actually roll back. Discovering that on production is discovering it during an incident.
 - **`tofu validate` and `tofu fmt`** run without credentials. `tofu plan` does not — it needs a token, so the OpenTofu is unproven until someone applies it.
@@ -968,12 +969,12 @@ Ordered by dependency. Each step names its issue.
 
 1. ~~Decide ArgoCD vs Flux vs plain Helm~~ — **done 2026-08-10: Flux** (§4), after plain Helm proved unable to reach a firewalled API.
 2. ~~Accept or reject ADR-015~~ — **done 2026-08-10: OpenObserve, on trial** (§5).
-3. **Hetzner account**, project, API token with read *and* write scope — the click-by-click list is in §1, *The order, step by step*.
+3. **Hetzner account**, project, API token with read _and_ write scope — the click-by-click list is in §1, _The order, step by step_.
 4. **Object Storage subscription and the state bucket, by hand** — the provider has no resource for a bucket, and a backend cannot be managed by the state it
    holds. This is a deliberate carve-out against "declared, not clicked" and `infra/README.md` will say so. Test whether `use_lockfile` works on Ceph and write
    down the answer. **Create nothing else in the console** — servers, network and firewalls are all declared.
 
-*(GitHub Environments moved out of this phase. They are no longer a prerequisite for anything, because Flux — not CI — holds the cluster credential; see §4a.)*
+_(GitHub Environments moved out of this phase. They are no longer a prerequisite for anything, because Flux — not CI — holds the cluster credential; see §4a.)_
 
 ### Phase B — infrastructure as code — [#260](https://github.com/enorm-labs/event-junkie/issues/260)
 
@@ -982,7 +983,7 @@ Ordered by dependency. Each step names its issue.
 
 5. **`infra/` split by lifetime, not environment.** `bootstrap/` holds the DNS zone, the Object Storage buckets' contents and the SSH key; `environments/{production,staging}/` hold servers,
    network, firewall and records. The zone being outside every environment's blast radius is what makes DNSSEC safe and the destroy/apply cycle honest.
-6. **`hcloud_primary_ip`, and `auto_delete = false`** so a rebuilt server keeps its address and DNS never churns. *Corrected 2026-08-10:* this step originally
+6. **`hcloud_primary_ip`, and `auto_delete = false`** so a rebuilt server keeps its address and DNS never churns. _Corrected 2026-08-10:_ this step originally
    said "with delete protection", which does not do that job — `delete_protection` guards against the console and other tools, but the provider lifts its own
    locks before destroying, so it does not stop `tofu destroy`. `auto_delete = false` is what actually preserves the address. `lifecycle { prevent_destroy }`
    is the only lock OpenTofu enforces, and it is used on the DNS zones alone.
@@ -990,7 +991,7 @@ Ordered by dependency. Each step names its issue.
    hardening on the k3s node; PostgreSQL 18 bound to the private network on the DB node. Roles, credentials and `wal-g` are **not** here — they are #261 and
    #270.
 8. **Apply.** Requires a token and spends money; not something an agent should do.
-9. **Flip the nameservers at INWX** to Hetzner's, *after* the zone exists. DNSSEC is a separate, later step —
+9. **Flip the nameservers at INWX** to Hetzner's, _after_ the zone exists. DNSSEC is a separate, later step —
    [#259](https://github.com/enorm-labs/event-junkie/issues/259).
 
 ### Phase C — the deployable artefact — [#261](https://github.com/enorm-labs/event-junkie/issues/261), [#262](https://github.com/enorm-labs/event-junkie/issues/262)
@@ -1009,7 +1010,7 @@ Ordered by dependency. Each step names its issue.
     **actuator moves to port 9001**, so `/actuator/**` is unroutable rather than merely unrouted; and **the database password only ever comes from an existing
     Secret**, with no inline path in the values at all. The chart's own
     [README](../deploy/charts/event-junkie/README.md) argues all three.
-12. **Push image and chart to GHCR** as OCI artifacts, versioned together (§3). This is where CI's involvement in deployment now *ends*.
+12. **Push image and chart to GHCR** as OCI artifacts, versioned together (§3). This is where CI's involvement in deployment now _ends_.
 13. **`flux bootstrap github`** — commits Flux's manifests and creates its deploy key. Needs a PAT once, from a laptop; CI never holds it (§4a). Then declare
     the `HelmRelease` and `OCIRepository` that watch GHCR.
 14. **Rehearse on k3d** (#263) — including Flux, since reconciliation behaviour is the part most worth seeing before it matters.
@@ -1043,7 +1044,7 @@ Ordered by dependency. Each step names its issue.
 ### Settled 2026-08-10
 
 | Decision                             | Outcome                                                                                                                                                  |
-|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ArgoCD, Flux, or plain Helm?         | **Flux.** Plain Helm was chosen first and withdrawn — CI cannot reach a firewalled API, and GitHub's 7,297 runner CIDRs are 14× Hetzner's 500-rule limit |
 | ADR-015 — which observability stack? | **OpenObserve, accepted on trial** — five written tests and a pre-decided exit to VictoriaMetrics                                                        |
 | CX33 or CX43?                        | **CX33.** Flux's ~300 MB fits; ArgoCD's 1.2 GB would not have                                                                                            |
@@ -1093,5 +1094,5 @@ clean.
 ---
 
 **ADR-012's cost table no longer needs amending.** Dropping ArgoCD brought the total back to ~€31–33 against its ~€30 estimate, the only gap being an
-object-storage line it did not anticipate. That was *not* true partway through this section's history — the plan briefly required a CX43 and ~€40 — which is
+object-storage line it did not anticipate. That was _not_ true partway through this section's history — the plan briefly required a CX43 and ~€40 — which is
 worth recording, because the ArgoCD decision was the difference.

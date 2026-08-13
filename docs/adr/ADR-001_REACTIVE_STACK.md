@@ -38,4 +38,3 @@ Use the **reactive stack throughout**: Spring WebFlux for HTTP, R2DBC for databa
 - [Spring WebFlux documentation](https://docs.spring.io/spring-framework/reference/web/webflux.html)
 - [Spring Data R2DBC documentation](https://docs.spring.io/spring-data/relational/reference/r2dbc.html)
 - [Kotlin Coroutines with Spring](https://docs.spring.io/spring-framework/reference/languages/kotlin/coroutines.html)
-

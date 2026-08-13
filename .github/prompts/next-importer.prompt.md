@@ -74,8 +74,8 @@ After 3 rounds without a PASS, stop iterating and go to step 7. Repeated identic
 - [ ] Smoke test PASS: events > 0, dates and titles match the live listing, `source_id` correctly prefixed
 - [ ] `diff-snapshot` shows no other source losing events
 - [ ] Soft findings written down — a repairable defect as an issue (🔍 Importer / data defect, after a `build/BACKLOG.md` duplicate check), an accepted
-  limitation in the importer/scraper KDoc; a field the venue
-  doesn't publish is not a bug (see `/importer-smoke` step 6)
+      limitation in the importer/scraper KDoc; a field the venue
+      doesn't publish is not a bug (see `/importer-smoke` step 6)
 
 Any unchecked box → step 7, no PR.
 
@@ -84,7 +84,7 @@ Any unchecked box → step 7, no PR.
 In `docs/EVENT_DATA_SOURCES.md`:
 
 - Move the venue's row (both rows, for a shared importer) from **🔨 Ready to implement** to **✅ Imported**, keeping alphabetical order, and rewrite the last
-  column as the *Comment* the Imported table uses: platform + parsing quirks, ≤ 50 chars, not the "why/what it needs" phrasing.
+  column as the _Comment_ the Imported table uses: platform + parsing quirks, ≤ 50 chars, not the "why/what it needs" phrasing.
 - Update the counts in the status table at the top (Imported +1, Ready −1) **and** the "N importer classes cover M sources" line under the Imported table.
 - Check the `dev-seed.http` header comment lists the new source alphabetically (`/scaffold-importer` step 7 covers this — verify it happened).
 

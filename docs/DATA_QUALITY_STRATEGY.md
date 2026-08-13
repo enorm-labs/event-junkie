@@ -15,18 +15,18 @@ Related: [ADR-007 Web Scraping Strategy](adr/ADR-007_WEB_SCRAPING_STRATEGY.md) �
 Data quality is enforced by **deterministic, curated-list normalizers applied at the scrape → domain mapping boundary**. The building blocks:
 
 | Concern             | Mechanism                                                                               | Location                         |
-|---------------------|-----------------------------------------------------------------------------------------|----------------------------------|
+| ------------------- | --------------------------------------------------------------------------------------- | -------------------------------- |
 | Artist display name | `canonicalArtistName` — de-shout, casing-only                                           | `artist/ArtistNormalizer.kt`     |
 | Promoter identity   | `canonicalPromoterName` — strip trailing descriptors, fold typos via `NAME_CORRECTIONS` | `promoter/PromoterNormalizer.kt` |
 | Non-artist titles   | `isNonArtistName` (`NON_ARTIST_NAMES` denylist), `stripArtistSuffix`                    | `scraper/ArtistNameMapping.kt`   |
 | Title-as-headliner  | `buildArtistsForEventType` / `buildArtistList`                                          | `scraper/ArtistNameMapping.kt`   |
 | Genre tags          | `GenreNormalizer` — synonym map + `NON_GENRE_TOKENS` stop-list + `looksLikeGenre` gate  | `genretag/GenreNormalizer.kt`    |
 
-This is sound, cheap, and fast — and it should stay the first pass. But it has three *structural* weaknesses that adding more curated entries will never
+This is sound, cheap, and fast — and it should stay the first pass. But it has three _structural_ weaknesses that adding more curated entries will never
 resolve:
 
 1. **It is reactive.** Every mechanism ("handled case-by-case as they surface",
-   "new ones need an entry", "slip through until denylisted") only catches values we have *already seen*. Newly-seen bad data always lands in the DB first and
+   "new ones need an entry", "slip through until denylisted") only catches values we have _already seen_. Newly-seen bad data always lands in the DB first and
    is corrected later, if ever.
 2. **The feedback loop is open.** The curation signal already exists — the
    `Dropping non-genre token '…'` logs (`GenreNormalizer.kt`), artist-less concerts, `OTHER`-typed events — but nothing routes it back to a human. The curation
@@ -34,32 +34,32 @@ resolve:
 3. **There is no measurement and no gate.** We have no number for "% of concerts with a headliner" or "% of events typed `OTHER`", and nothing fails when a
    change regresses them. Quality is asserted in prose, not observed.
 
-The single largest *fix* opportunity is already identified: **~40% of `CONCERT`
+The single largest _fix_ opportunity is already identified: **~40% of `CONCERT`
 events carry no artist** because title-as-headliner extraction is deliberately disabled for Privatclub, Cassiopeia, and Badehaus.
 
-## 2. What data-quality issues *are* — a shared taxonomy
+## 2. What data-quality issues _are_ — a shared taxonomy
 
-Before fixing anything we need a shared vocabulary for *what kind* of wrong a value is and *where* it was introduced. Two axes.
+Before fixing anything we need a shared vocabulary for _what kind_ of wrong a value is and _where_ it was introduced. Two axes.
 
 ### 2.1 By quality dimension (DAMA-DMBOK)
 
 The industry-standard dimensions, mapped to our data. This vocabulary is the backbone of the Pillar 1 metrics.
 
 | Dimension                 | Meaning                                       | In our data                                                                        |
-|---------------------------|-----------------------------------------------|------------------------------------------------------------------------------------|
+| ------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------- |
 | **Completeness**          | expected value is present                     | missing headliner, genre, promoter, price, start time                              |
 | **Validity / Conformity** | value matches the expected type/format/domain | `eventType = OTHER`, malformed date/time, price-parse failure, URL double-encoding |
-| **Accuracy**              | value is the *correct* real-world fact        | non-artist title stored as an artist, wrong promoter, festival-day mislabel        |
+| **Accuracy**              | value is the _correct_ real-world fact        | non-artist title stored as an artist, wrong promoter, festival-day mislabel        |
 | **Consistency**           | the same fact is represented one way          | one act/promoter spelled many ways (ALL-CAPS vs mixed case)                        |
 | **Uniqueness**            | no unintended duplicates                      | duplicate events, fragmented artist/promoter rows                                  |
 | **Timeliness**            | data reflects the current world               | stale past events, first-page-only, year inferred from weekday                     |
 
 ### 2.2 By stage introduced
 
-*Where* a defect enters decides *where* it can be fixed — and whether it's even fixable on our side.
+_Where_ a defect enters decides _where_ it can be fixed — and whether it's even fixable on our side.
 
 | Stage                 | Failure mode                                    | Example                                                            |
-|-----------------------|-------------------------------------------------|--------------------------------------------------------------------|
+| --------------------- | ----------------------------------------------- | ------------------------------------------------------------------ |
 | **Source**            | site is ambiguous / incomplete / stale          | Badehaus exposes no artist field; Roadrunner leaves past events up |
 | **Fetch**             | 404, JS-rendered, cookie-wall, dead link        | `%`-encoded Arabic-slug 404; JS-only venues unimportable           |
 | **Parse / extract**   | wrong or fragile selector, positional fallback  | Cassiopeia `._5` / `._8` positional fallbacks                      |
@@ -71,21 +71,21 @@ The industry-standard dimensions, mapped to our data. This vocabulary is the bac
 Not every issue is worth chasing. Rank by three factors:
 
 - **Impact** — 🔴 user-visible wrong/missing · 🟠 data-quality noise · 🟢 cosmetic/edge case.
-- **Prevalence** — how many rows are affected. *This is exactly what Pillar 1 measures* — which is why we measure before we fix.
+- **Prevalence** — how many rows are affected. _This is exactly what Pillar 1 measures_ — which is why we measure before we fix.
 - **Fixability** — deterministic rule (cheap) · curated entry (human) · needs a classifier (AI) · source-limited (accept & document). **Fixability sequences the
   pillars.**
 
 Applied to the current catalogue:
 
 | Rank | Issue                             | Dimension    | Impact | Prevalence   | Fix path                                |
-|------|-----------------------------------|--------------|--------|--------------|-----------------------------------------|
+| ---- | --------------------------------- | ------------ | ------ | ------------ | --------------------------------------- |
 | 1    | Missing headliner                 | Completeness | 🔴     | ~40%         | Deterministic — **Pillar 3, ready now** |
 | 2    | `eventType = OTHER`               | Validity     | 🟠     | high         | Measure → heuristic / AI (Pillar 4)     |
 | 3    | Non-artist title as artist        | Accuracy     | 🟠     | low          | Classifier (Pillar 4) + curation queue  |
 | 4    | Promoter/artist residual variants | Consistency  | 🟠     | low          | Curated map via curation queue          |
-| 5    | Missing price / time / promoter   | Completeness | 🟠🟢   | source-bound | Mostly *accept & document* — low ROI    |
+| 5    | Missing price / time / promoter   | Completeness | 🟠🟢   | source-bound | Mostly _accept & document_ — low ROI    |
 
-The lesson: deterministic-and-ready work goes first (headliner); classifier-needed work waits for Pillar 4; source-limited items get *accepted*, not chased.
+The lesson: deterministic-and-ready work goes first (headliner); classifier-needed work waits for Pillar 4; source-limited items get _accepted_, not chased.
 
 ## 3. Principles
 
@@ -99,12 +99,12 @@ The lesson: deterministic-and-ready work goes first (headliner); classifier-need
 
 ## 4. Tooling: patterns, not platforms
 
-Our problem is **ingestion / extraction quality plus entity resolution** (an MDM / data-stewardship shape), *not* warehouse analytics DQ. That rules out most of
+Our problem is **ingestion / extraction quality plus entity resolution** (an MDM / data-stewardship shape), _not_ warehouse analytics DQ. That rules out most of
 the well-known tooling at our scale (~hundreds of events) and stack (reactive Kotlin, operational Postgres):
 
 | Tool                                  | What it is                                    | Verdict                                                                     |
-|---------------------------------------|-----------------------------------------------|-----------------------------------------------------------------------------|
-| Great Expectations / Soda             | Python declarative "expectations" + data docs | Great *pattern*, wrong runtime (Python, batch)                              |
+| ------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------- |
+| Great Expectations / Soda             | Python declarative "expectations" + data docs | Great _pattern_, wrong runtime (Python, batch)                              |
 | dbt tests                             | SQL tests in a warehouse                      | Wrong shape — we have operational Postgres, not a warehouse                 |
 | AWS Deequ / PyDeequ                   | JVM "unit tests for data"                     | Closest JVM fit, but a Spark dependency is massive overkill here            |
 | Apache Griffin / Monte Carlo / Bigeye | Big-data DQ / observability SaaS              | Enterprise overkill                                                         |
@@ -115,10 +115,10 @@ the canonicalizers). Borrow three ideas:
 
 1. **Declarative expectations** — express quality rules as data/config, not scattered `if`s.
 2. **DQ-dimensions taxonomy** (§2.1) — for categorizing and reporting.
-3. **Quality-as-observability** — track metrics *over time*, not just a snapshot.
+3. **Quality-as-observability** — track metrics _over time_, not just a snapshot.
 
-For **dashboards & trends**, reuse an external BI/observability tool rather than building a bespoke UI (this is [issue #386](https://github.com/enorm-labs/event-junkie/issues/386), *"A dashboard for analysing
-the data"*):
+For **dashboards & trends**, reuse an external BI/observability tool rather than building a bespoke UI (this is [issue #386](https://github.com/enorm-labs/event-junkie/issues/386), _"A dashboard for analysing
+the data"_):
 
 - **SQL-based BI** (Apache Superset / Metabase) pointed straight at the Postgres
   `events` schema and a metrics-snapshot table — best for data-level dashboards.
@@ -128,7 +128,7 @@ See the Pillar 1 plan for how the metrics are exposed to feed these.
 
 ## 5. The four pillars
 
-Ordered deliberately: get a baseline and a safety net *before* changing extraction.
+Ordered deliberately: get a baseline and a safety net _before_ changing extraction.
 
 ### Pillar 1 — Measure (make quality visible) 🟢 low effort, unblocks the rest
 
@@ -142,10 +142,10 @@ The keystone. Everything else is judged against these numbers.
   `NON_ARTIST_NAMES`, `NAME_CORRECTIONS`, and the genre synonym map. No bespoke frontend yet (see §7): stewards act on the worklist via the existing
   `PUT /api/admin/events/{id}` API / Swagger / `.http` files.
 
-*Exit criterion:* a per-source number for each headline metric, chartable in an external BI tool (§4), so Pillars 3–4 can be judged by whether those numbers
+_Exit criterion:_ a per-source number for each headline metric, chartable in an external BI tool (§4), so Pillars 3–4 can be judged by whether those numbers
 move.
 
-*Implementation plan:* [DATA_QUALITY_PILLAR_1_PLAN.md](DATA_QUALITY_PILLAR_1_PLAN.md).
+_Implementation plan:_ [DATA_QUALITY_PILLAR_1_PLAN.md](DATA_QUALITY_PILLAR_1_PLAN.md).
 
 ### Pillar 2 — Prevent (stop regressions) 🟠 medium effort, low risk
 
@@ -166,13 +166,13 @@ move.
 
 ### Pillar 4 — Systematize (escape the curated-list treadmill) 🔵 biggest lever
 
-The general answer to weakness #1. An **LLM-assisted enrichment stage that runs *after* the deterministic normalizers**, handling only the long tail they can't:
+The general answer to weakness #1. An **LLM-assisted enrichment stage that runs _after_ the deterministic normalizers**, handling only the long tail they can't:
 title → artist extraction, event-type validation, genre / missing-field enrichment, and bad-value correction (artist and promoter names).
 
 - Deterministic rules stay the fast, free, first pass; the model is the fallback, not the front door.
 - Human-in-the-loop: a steward confirms/corrects model output (via the API now, a frontend later — §7); confirmed corrections feed back into the curated
-  vocabulary — closing the loop Pillar 1 opened. This is where the *curated-vocab storage* decision (§6) bites: live steward fixes need the vocab to be data.
-- **Requires its own ADR — *AI-Assisted Data Quality*** (unnumbered until written; see the numbering note in [AGENTS.md](../AGENTS.md)): it introduces a new
+  vocabulary — closing the loop Pillar 1 opened. This is where the _curated-vocab storage_ decision (§6) bites: live steward fixes need the vocab to be data.
+- **Requires its own ADR — _AI-Assisted Data Quality_** (unnumbered until written; see the numbering note in [AGENTS.md](../AGENTS.md)): it introduces a new
   external dependency, per-import cost and latency, and non-deterministic output, all of which interact with the scraping-pipeline decisions in ADR-007. Scope
   for the ADR: model/provider choice, where the stage sits in the pipeline, caching/idempotency, cost controls, and how model output is reconciled with the
   deterministic layer and the human review step.
@@ -183,13 +183,13 @@ These are recorded, not yet resolved — settle them before the pillar that need
 
 - **Curated-vocabulary storage — code vs. data (ADR candidate).** Today the denylists / synonym maps / corrections (`NON_ARTIST_NAMES`, `NAME_CORRECTIONS`,
   genre synonyms, `ACRONYMS`) are hardcoded Kotlin `Set`/`Map`s. A steward fixing an issue therefore means a code edit + PR + redeploy.
-    - *Keep as code:* versioned, unit-tested, PR-reviewed — but every fix is a deploy.
-    - *Promote to DB tables (steward-editable):* fixes land instantly and close the loop — but loses PR review/testing of vocab changes and adds
+    - _Keep as code:_ versioned, unit-tested, PR-reviewed — but every fix is a deploy.
+    - _Promote to DB tables (steward-editable):_ fixes land instantly and close the loop — but loses PR review/testing of vocab changes and adds
       cache-invalidation.
-    - *Direction:* undecided; spike + ADR before Pillar 4's human-in-the-loop needs live editing. Blocks nothing in Pillars 1–3.
+    - _Direction:_ undecided; spike + ADR before Pillar 4's human-in-the-loop needs live editing. Blocks nothing in Pillars 1–3.
 - **Fix / curation surface — API-only for now.** Ship the DQ report + worklist endpoints; stewards fix via the existing `PUT /api/admin/events/{id}` API,
-  Swagger, and `.http` files. A dedicated review frontend is deferred to the backlogged *"Admin frontend to review, enrich & fix event data"* item — the DQ work
-  provides the *signal*, that frontend will provide the *fix surface*. Avoid building a second admin app.
+  Swagger, and `.http` files. A dedicated review frontend is deferred to the backlogged _"Admin frontend to review, enrich & fix event data"_ item — the DQ work
+  provides the _signal_, that frontend will provide the _fix surface_. Avoid building a second admin app.
 - **Dashboard — external BI tool, not a bespoke UI** (§4). Reuse the backlogged Superset/Grafana/Kibana item; Pillar 1 exposes metrics in a shape those tools
   consume.
 
@@ -198,7 +198,7 @@ These are recorded, not yet resolved — settle them before the pillar that need
 1. **Pillar 1** — data-quality report + worklist endpoints. Fast, low-risk, and it baselines everything after it.
 2. **Pillar 2** — golden fixture tests + boundary validation gate. The safety net that de-risks touching the normalizers.
 3. **Pillar 3** — title-as-headliner extraction + backfill. Highest immediate user-visible gain; safe once Pillar 2 exists.
-4. **Pillar 4** — AI-assisted enrichment + steward review. Largest lever and most effort; gated on the *AI-Assisted Data Quality* ADR (§5) and the §6
+4. **Pillar 4** — AI-assisted enrichment + steward review. Largest lever and most effort; gated on the _AI-Assisted Data Quality_ ADR (§5) and the §6
    vocab-storage decision.
 
 ## 8. Success metrics
@@ -206,7 +206,7 @@ These are recorded, not yet resolved — settle them before the pillar that need
 Tracked via the Pillar 1 report, per source and overall, and charted over time in an external BI tool (§4):
 
 - **Concert headliner coverage** — % of `CONCERT` events with ≥1 artist (baseline ~60%; target the Privatclub/Cassiopeia/Badehaus recovery).
-- **Event-type classification** — % of events *not* typed `OTHER`.
+- **Event-type classification** — % of events _not_ typed `OTHER`.
 - **Field completeness** — % with genre / promoter / price where the source exposes them.
 - **Curation-queue burn-down** — dropped/flagged items reviewed vs. outstanding.
 
@@ -216,4 +216,4 @@ The four pillars are issues [#319](https://github.com/enorm-labs/event-junkie/is
 [#320](https://github.com/enorm-labs/event-junkie/issues/320) (Prevent), [#321](https://github.com/enorm-labs/event-junkie/issues/321) (Fix) and
 [#322](https://github.com/enorm-labs/event-junkie/issues/322) (Systematize). The admin review frontend and imports-status dashboard are
 [#340](https://github.com/enorm-labs/event-junkie/issues/340) and its sub-issues; the Superset/Grafana dashboard (§4) is
-[#386](https://github.com/enorm-labs/event-junkie/issues/386). This doc is the *why and in what order*; the issues are the *what*.
+[#386](https://github.com/enorm-labs/event-junkie/issues/386). This doc is the _why and in what order_; the issues are the _what_.
