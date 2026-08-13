@@ -28,7 +28,7 @@
 # Pinned by tag *and* digest, per Docker's best-practices guide: the tag says what it is, the digest
 # says which one. Dependabot's `docker` ecosystem tracks both. This digest is the multi-arch
 # manifest list, so it resolves per platform.
-FROM eclipse-temurin:25-jre@sha256:f19dbf0a22d0b3658fda48ce7d7181df05ad14bda151dd5ad12cc09d1451c70e
+FROM eclipse-temurin:25-jre@sha256:a214efa3200af4b657e41935799aa12d7aee3336fdb42eb505a0948f6ecdd983
 
 # Supplied by the build; both default to something obviously wrong rather than to a plausible lie.
 ARG VERSION=unspecified
