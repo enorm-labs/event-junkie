@@ -8,12 +8,18 @@ module "environment" {
   #
   # nbg1 rather than fsn1 since 2026-08-13, and this is the capacity move that line predicted. The
   # 2026-08-11 apply died at the last resource with `resource_unavailable` because the whole CAX
-  # line was sold out across eu-central; `./check-capacity.sh` now reports cax11 orderable in nbg1
+  # line was sold out across eu-central; `./check-capacity.sh` then reported cax11 available in nbg1
   # and cax21 still gone everywhere. So staging moves and production stays pinned to fsn1, waiting.
   #
-  # Free to move because the Hetzner project was verified empty first — no servers, networks,
-  # firewalls, volumes or Primary IPs survived the failed apply, and a Primary IP is location-bound
-  # and would otherwise have had to be destroyed before this line could change.
+  # BEING ADVERTISED IS NOT BEING ORDERABLE. The apply from nbg1 was refused at the server with
+  # `unsupported location for server type (invalid_input)` — while cax11's own pricing listed nbg1
+  # and the datacenters endpoint listed it as available. That error reads like this line is wrong.
+  # It is not; it is capacity wearing the wrong error code. check-capacity.sh's header records both
+  # observations, and no longer claims to predict an apply.
+  #
+  # Changing this line is no longer free. It was on 2026-08-13 — the project was verified empty
+  # first — but both Primary IPs now exist in nbg1, and a Primary IP is location-bound, so they have
+  # to be destroyed before this can move again.
   #
   # Nothing in the design wanted the two environments co-located: staging has its own network
   # (10.1.0.0/16), its own firewall and its own database, and reaches production over nothing at all.
