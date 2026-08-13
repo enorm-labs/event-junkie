@@ -508,6 +508,10 @@ HTTP-01 — staging is what justifies it, and a wildcard comes within reach as a
   override `robots.txt` per environment — belt and braces, because the cost is one header and the failure mode is a staging site in Google's index — but it is
   now genuinely defence-in-depth rather than the actual control.
 
+  **The header half is built (#265):** `ingress.noindex` renders a Traefik `Middleware` and the annotation naming it, and staging turns it on. The `robots.txt`
+  half is [#286](https://github.com/enorm-labs/event-junkie/issues/286) and cannot be done the same way — a header cannot rewrite a response body, and the
+  frontend build emits one `robots.txt` without knowing which environment will serve it.
+
 **And one thing it breaks, which needs an answer:** CI cannot reach staging either, so **post-deploy smoke tests cannot run from GitHub Actions**. This is the
 same shape as the problem that killed push-based Helm in §4, and it has the same resolution: run the checks *inside* the cluster. Flux's `HelmRelease` supports
 Helm test hooks with `test.enable`, and can roll back automatically when they fail — which is a better arrangement than an external smoke test anyway, because
@@ -640,6 +644,24 @@ Practical notes that cost people a day each:
 - **HTTP-01 needs port 80 reachable and the A record already resolving.** So the order is DNS → deploy → certificate, and it cannot be reordered.
 - **DNS-01 is required for staging**, which has no public address for HTTP-01 to reach (§4a). It needs a cert-manager webhook for Hetzner DNS and an API token
   in a secret. Production can stay on HTTP-01, but running one mechanism for both is simpler, and DNS-01 brings a wildcard within reach as a side effect.
+
+  **Built in #265, and the last sentence there did not survive contact.** Production stays on HTTP-01 deliberately rather than for simplicity, because the
+  token DNS-01 needs is project-wide: hcloud tokens cannot be scoped to a zone, let alone to TXT records, so the credential that issues a certificate could
+  also delete the servers. Staging accepts that — it is rebuildable — and production declines the wildcard rather than hold it. See ADR-016's costs.
+
+  **Use the official webhook, and check which one you are looking at.** Hetzner shut down the old `dns.hetzner.com` API and console in **May 2026**, and every
+  token the old console issued stopped working with it. Six or so community webhooks — `vadimkim`, `mecodia`, `fionera` and forks — still rank at the top of a
+  search and all speak that dead API; they install cleanly, report Ready, and fail at challenge time. The one to use is Hetzner's own:
+
+  | | |
+  |---|---|
+  | Chart | `cert-manager-webhook-hetzner` from `https://charts.hetzner.cloud` |
+  | `groupName` | `acme.hetzner.com` — the community forks use `.cloud` |
+  | Solver config | `tokenSecretKeyRef: {name, key}`, **not** the `secretName`/`secretKey` pair the forks take |
+  | Token | An ordinary hcloud API token with read+write, the same kind `infra/` uses |
+  | Secret namespace | `cert-manager`, **not** the release namespace — a ClusterIssuer resolves secret references against cert-manager's own namespace |
+
+  The same shutdown is why `infra/bootstrap` manages DNS through the official provider's `hcloud_zone` rather than a community DNS provider (#260).
 - `event-junkie.com` needs its own certificate for the 301 redirect — one more entry, not a wildcard.
 - **Set the CAA record first** (`0 issue "letsencrypt.org"`), which is already in [#259's checklist](https://github.com/enorm-labs/event-junkie/issues/259).
 

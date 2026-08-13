@@ -1,0 +1,103 @@
+# cert-manager on staging.
+#
+# The chart's Ingress carries a `cert-manager.io/cluster-issuer` annotation and its ClusterIssuer
+# template renders a `cert-manager.io/v1` object, so **cert-manager must already be installed or the
+# application release fails outright** — the API server rejects an unknown kind. That is not a race
+# that settles itself, which is why `helm-release.yaml` declares `dependsOn` rather than trusting
+# reconciliation order.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cert-manager
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      cert-manager, which issues the staging certificate over DNS-01. Installed by Flux rather than
+      by hand so its version is reviewable and its drift is corrected.
+spec:
+  releaseName: cert-manager
+  targetNamespace: cert-manager
+  # Where Helm keeps its release secret. Left to itself Flux would store it in `flux-system` while
+  # the objects live in `cert-manager`, which works but puts `helm list -n cert-manager` at odds with
+  # reality for anyone debugging.
+  storageNamespace: cert-manager
+  interval: 1h
+  chart:
+    spec:
+      chart: cert-manager
+      # Pinned exactly, never a range. A range like ">=1.21 <1.22" would let a patch release land on
+      # the cluster with no diff, no review and no commit — which is the property GitOps exists to
+      # remove. Bumping this is a pull request, the same as any other dependency.
+      version: "v1.21.1"
+      sourceRef:
+        kind: HelmRepository
+        name: jetstack
+        namespace: flux-system
+      interval: 1h
+  install:
+    createNamespace: true
+    remediation:
+      retries: 2
+  upgrade:
+    remediation:
+      retries: 2
+      strategy: rollback
+      # As in the application release: without this, remediation runs only *between* attempts and a
+      # failed final upgrade is left running. Losing cert-manager quietly means certificates stop
+      # renewing, and nothing notices for sixty days.
+      remediateLastFailure: true
+    cleanupOnFail: true
+  values:
+    crds:
+      # OFF BY DEFAULT IN THIS CHART, and the failure is downstream and confusing: without CRDs the
+      # cert-manager pods run happily, and it is the *application* release that fails on an unknown
+      # kind — which reads like a problem with our chart.
+      #
+      # Note this is a values flag, not Flux's `install.crds` policy: cert-manager templates its CRDs
+      # from `templates/crds.yaml` rather than shipping a `crds/` directory, so Flux's policy would
+      # have nothing to act on.
+      enabled: true
+      # `helm.sh/resource-policy: keep`, so uninstalling cert-manager does not garbage-collect every
+      # Certificate and Issuer in the cluster along with it. Upstream's default; stated because the
+      # consequence of flipping it is not recoverable.
+      keep: true
+    # One of everything. Staging is a single cax11 sharing 4 GB between k3s, PostgreSQL, Flux's four
+    # controllers and three application workloads, and cert-manager's replicas exist for availability
+    # rather than throughput — it issues a handful of certificates a quarter.
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: "10m"
+        memory: "48Mi"
+      limits:
+        memory: "128Mi"
+    webhook:
+      replicaCount: 1
+      resources:
+        requests:
+          cpu: "10m"
+          memory: "32Mi"
+        limits:
+          memory: "64Mi"
+    cainjector:
+      replicaCount: 1
+      resources:
+        requests:
+          cpu: "10m"
+          # The memory-hungry one: cainjector caches cluster-wide Secrets and CustomResourceDefinition
+          # objects, so its footprint tracks the size of the cluster rather than the number of
+          # certificates. It is the component to look at first if anything here is OOM-killed.
+          memory: "96Mi"
+        limits:
+          memory: "256Mi"
+    startupapicheck:
+      # Kept on. It is a Job that proves the webhook actually answers before the release reports
+      # Ready — which is precisely the failure this whole dependency chain exists to order correctly.
+      # If it times out on a slow first boot, that is information, not noise.
+      enabled: true
+      resources:
+        requests:
+          cpu: "10m"
+          memory: "32Mi"
+        limits:
+          memory: "64Mi"

@@ -92,8 +92,11 @@ deploy/
 │   └── templates/            flat, one resource per file, kind in the filename
 ├── clusters/                 #414 · what Flux reconciles, one directory per cluster
 │   ├── staging/              the `flux bootstrap --path` target · snapshots · prereleases ADMITTED
+│   │                         + cert-manager and the Hetzner DNS-01 webhook (#265)
 │   ├── production/           releases only · SUSPENDED until #424 provisions a cluster
+│   │                         + cert-manager, HTTP-01, no webhook and no Hetzner token
 │   └── k3d/                  the rehearsal target · applied with `kubectl apply -k`, never bootstrapped
+│                             no cert-manager: `tls.enabled: false`, so nothing references an issuer
 └── scripts/
     └── render-assertions.sh  the only gate that catches a chart doing the wrong thing quietly
 ```
@@ -233,6 +236,25 @@ staging's source, 10m on production's.
 **The repository is now the control plane.** `kustomize-controller` and `helm-controller` are bound to `cluster-admin`, so anyone who can push to
 `deploy/clusters/**` on `main` can have the cluster apply anything. What Flux removes is CI holding a *credential*; it does not remove the power, it relocates it.
 Branch protection is the control that replaces the kubeconfig — see #443.
+
+## Third-party HelmReleases (#265)
+
+Since #265 the cluster directories carry components this repository does not build: cert-manager on both clusters, and Hetzner's DNS-01 webhook on staging. Four
+rules, all of them things that fail quietly rather than loudly.
+
+- **Pin the version exactly; never a range.** `>=1.21 <1.22` lets an upstream release reach the cluster with no diff, no review and no commit — the property
+  GitOps exists to remove. `render-assertions.sh` rejects anything that is not `X.Y.Z` or `vX.Y.Z`.
+- **A release that renders a ClusterIssuer must declare `dependsOn`.** The chart's ClusterIssuer is a `cert-manager.io/v1` kind and the API server rejects
+  unknown kinds, so without cert-manager the *whole* application release fails — workloads included, on the first bootstrap of a new cluster, looking exactly
+  like a bug in our chart. Asserted, so it cannot be dropped silently.
+- **Use Hetzner's own DNS webhook, never a community fork.** The old `dns.hetzner.com` API was shut down in May 2026 and the forks still speak it; they install
+  cleanly, report Ready, and fail at challenge time. Official chart: `cert-manager-webhook-hetzner` from `charts.hetzner.cloud`, `groupName`
+  `acme.hetzner.com`, solver config `tokenSecretKeyRef`.
+- **Bump staging before production, and expect to edit two files.** There is no `base/`, so cert-manager's `HelmRepository` and `HelmRelease` exist once per
+  cluster. ADR-016 accepted that duplication and named the drift between these two copies as the trigger for revisiting it.
+
+**The hcloud token DNS-01 needs is project-wide** — it cannot be scoped to a zone, so it could delete the servers. It exists on staging only, and production
+must not acquire one to gain a wildcard certificate.
 
 ## Never hand-edit the chart version, and never pin an image tag
 

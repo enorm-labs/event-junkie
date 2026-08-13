@@ -1,0 +1,36 @@
+{{- if and .Values.ingress.enabled .Values.ingress.noindex }}
+{{- $args := dict "ctx" $ "component" "noindex" }}
+{{- /* `X-Robots-Tag: noindex, nofollow` on every response from a non-production environment.
+
+       The second Traefik-specific object in the chart, and it is here for the same reason as the
+       redirect Middleware: the Ingress API cannot express a response header, so every controller
+       does it through its own extension. Gated on `ingress.noindex`, so leaving that off — as
+       production does — keeps the "empty redirectHosts leaves nothing Traefik-specific" property
+       intact for the environment that actually matters portability-wise.
+
+       WHY A HEADER AND NOT THE BUILD. The frontend emits `robots.txt` and `sitemap.xml` at build
+       time (`events-frontend/scripts/seoFiles.ts`), and the build has exactly one output that does
+       not know which environment will serve it — the same image runs in both. So this cannot be
+       fixed upstream of the deployment; it is a deployment concern by construction. #286 covers the
+       other half, the `robots.txt` body itself, which a header cannot rewrite.
+
+       This is defence in depth and not the control. The control is that staging has no public
+       address, and a crawler cannot reach what does not resolve (PLATFORM_SETUP §4a). This is what
+       stands between us and the afternoon somebody adds an A record to check something. */}}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ printf "%s-noindex" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      Adds X-Robots-Tag to every response so a non-production environment cannot be indexed. Gated
+      on ingress.noindex, which is off in production.
+spec:
+  headers:
+    customResponseHeaders:
+      {{- /* Both directives: `noindex` keeps the page out of the index, `nofollow` stops the
+             crawler walking from here into the rest of the environment. */}}
+      X-Robots-Tag: "noindex, nofollow"
+{{- end }}

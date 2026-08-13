@@ -113,6 +113,13 @@ jobs:
       # cover all of them: every render below reports **Skipped: 0**, and that number is the one to
       # watch. A resource nothing can check is a resource nothing checks, which is why
       # `--skip-missing-schemas` is deliberately not used.
+      #
+      # The HelmRelease loop was added in #265, and it closed a gap #414 had opened without anyone
+      # noticing: once per-environment configuration moved out of `values-staging.yaml` and into each
+      # cluster's `spec.values`, this step stopped covering staging and production altogether. Only
+      # `values-k3d.yaml` was left, so the two configurations that actually deploy were the two
+      # nothing schema-checked. `render-assertions.sh` reads those values, but it asserts about
+      # content and cannot tell you a Middleware is malformed.
       - name: Validate rendered manifests
         run: |
           render() {
@@ -122,6 +129,14 @@ jobs:
           for values in "$CHART"/values-*.yaml; do
             echo "== $values =="
             render --values "$values"
+          done
+          # A HelmRelease is not a values document, so `spec.values` is extracted the same way
+          # render-assertions.sh does it.
+          for release in deploy/clusters/*/helm-release.yaml; do
+            echo "== $release =="
+            yq -N '.spec.values' "$release" > /tmp/release-values.yaml
+            helm lint --strict "$CHART" --values /tmp/release-values.yaml
+            render --values /tmp/release-values.yaml
           done
 
       # The Flux custom resources (#414) — the objects that decide which chart version each

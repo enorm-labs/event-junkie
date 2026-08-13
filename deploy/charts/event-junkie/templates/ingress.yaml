@@ -17,6 +17,18 @@ metadata:
            server rejects an unknown kind, so `helm install` fails outright rather than racing. */}}
     cert-manager.io/cluster-issuer: {{ .Values.certManager.clusterIssuer.name | quote }}
     {{- end }}
+    {{- if .Values.ingress.noindex }}
+    {{- /* `<namespace>-<name>@kubernetescrd` is Traefik's cross-namespace reference format, and the
+           namespace comes from `.Release.Namespace` rather than a hardcoded value because Flux sets
+           `targetNamespace` — the same rule the redirect Ingress follows.
+
+           Deliberately only on this Ingress and not on the redirect one. The redirect answers every
+           request with a 301 to the canonical host, so a crawler that arrives there is sent to the
+           page that carries the header anyway; and a second middleware reference would have to be
+           comma-joined with the redirect's, which is a list this chart would then have to build
+           correctly in two places. */}}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ printf "%s-%s-noindex@kubernetescrd" .Release.Namespace (include "event-junkie.fullname" $) | quote }}
+    {{- end }}
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}

@@ -157,10 +157,40 @@ scripts/k3d-rehearsal.sh all        # the working tree's chart, with locally bui
 The first answers *"does the delivery mechanism work?"*, the second *"does my change work?"*. They must not share a cluster. See
 [the k3d rehearsal prompt](../.github/prompts/k3d-rehearsal.prompt.md).
 
+## Bringing up a new cluster
+
+Three steps, once per cluster, and only the first two are manual. Everything after that is a pull request.
+
+```bash
+# 1. Flux itself. Commits its own manifests here and creates a deploy key; needs a GitHub PAT once,
+#    which CI never holds.
+flux bootstrap github --owner=enorm-labs --repository=event-junkie \
+  --branch=main --path=deploy/clusters/staging
+
+# 2. The two credentials Flux cannot fetch for itself.
+kubectl create secret generic events-db -n event-junkie \
+  --from-literal=username=events --from-literal=password="$(…)"
+
+#    Staging only — production solves HTTP-01 and needs no Hetzner token at all.
+#    In `cert-manager`, NOT the release namespace: a ClusterIssuer resolves secret references
+#    against cert-manager's own namespace, and a token beside the workloads is simply never found.
+kubectl create secret generic hetzner -n cert-manager \
+  --from-literal=token="<an hcloud API token with read+write>"
+
+# 3. Nothing. cert-manager, the DNS-01 webhook and the application all reconcile from
+#    deploy/clusters/<env>/, in that order, because each declares dependsOn.
+```
+
+Both secrets are the last hand-made objects in the system, and [#416](https://github.com/enorm-labs/event-junkie/issues/416) removes them with SOPS.
+
+**Order matters and is enforced, not assumed.** The chart renders a `cert-manager.io/v1` ClusterIssuer, and the API server rejects unknown kinds — so without
+cert-manager the whole application release fails, workloads included. `dependsOn` is what orders it; `render-assertions.sh` fails the build if a release that
+creates an issuer stops declaring one.
+
 ## What is not automated, and why
 
-- **`flux bootstrap` runs once per cluster, from a laptop.** It commits Flux's manifests to this repository and creates a deploy key; it needs a GitHub PAT once,
-  which CI never holds. Blocked on a cluster existing ([#265](https://github.com/enorm-labs/event-junkie/issues/265)).
+- **`flux bootstrap` runs once per cluster, from a laptop**, as above. Blocked on a cluster existing
+  ([#265](https://github.com/enorm-labs/event-junkie/issues/265) · [#424](https://github.com/enorm-labs/event-junkie/issues/424)).
 - **Production is `suspend: true`** until [#424](https://github.com/enorm-labs/event-junkie/issues/424) provisions it, and its `database.host` is an
   unmistakable placeholder rather than a plausible address.
 - **GHCR package visibility** is a click, once per package, and every package is private on first publish regardless of repository visibility.

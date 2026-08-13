@@ -21,6 +21,12 @@ spec:
   suspend: true
   releaseName: event-junkie
   targetNamespace: event-junkie
+  # This release renders a ClusterIssuer, a `cert-manager.io/v1` kind, so it cannot install onto a
+  # cluster without cert-manager: the API server rejects the unknown kind and the whole release
+  # fails. Production names cert-manager directly, where staging names the DNS-01 webhook — there is
+  # no webhook here, because HTTP-01 works against an address the internet can reach.
+  dependsOn:
+    - name: cert-manager
   interval: 10m
   chartRef:
     kind: OCIRepository

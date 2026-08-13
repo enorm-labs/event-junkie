@@ -23,6 +23,13 @@ spec:
   # resource — so this is what keeps object names readable and matching the k3d rehearsal's.
   releaseName: event-junkie
   targetNamespace: event-junkie
+  # This release renders a ClusterIssuer, which is a `cert-manager.io/v1` kind, so it cannot install
+  # onto a cluster that has no cert-manager — the API server rejects an unknown kind and the whole
+  # release fails, not just the issuer. Naming the webhook rather than cert-manager itself gets both,
+  # since the webhook already depends on cert-manager; and it is the webhook that has to be answering
+  # before the DNS-01 solver below means anything.
+  dependsOn:
+    - name: cert-manager-webhook-hetzner
   # Not the same clock as the OCIRepository's. That one asks "is there a new chart?"; this one asks
   # "does the cluster still match the chart?" — the drift check, which is cheap and does not need to
   # be fast. A new snapshot still triggers an immediate reconcile through the source, so this
@@ -111,9 +118,16 @@ spec:
       # Does not resolve on the public internet, and that is the design rather than an omission
       # (PLATFORM_SETUP §4a): resolution happens over the WireGuard tunnel.
       host: "staging.event-junkie.de"
-      # No redirect domain on staging — the .com 301 is a production concern, and emptying this list
-      # is also what leaves staging with nothing Traefik-specific in its rendered output.
+      # No redirect domain on staging — the .com 301 is a production concern.
       redirectHosts: []
+      # `X-Robots-Tag: noindex, nofollow` on every response (#286). Defence in depth only: the real
+      # control is that this host has no public address record at all, so no crawler can reach it.
+      # This is what covers the afternoon somebody adds one to check something.
+      #
+      # It costs staging the property that an empty `redirectHosts` leaves nothing Traefik-specific
+      # rendered — the header needs a Traefik Middleware, because the Ingress API cannot express a
+      # response header. Production keeps that property; staging trades it for not being indexed.
+      noindex: true
       tls:
         enabled: true
         secretName: "event-junkie-staging-tls"
@@ -127,6 +141,18 @@ spec:
         email: "hello@event-junkie.de"
         # Not a preference: HTTP-01 needs Let's Encrypt to reach the host, and this environment
         # exists to stop that. The TXT record is public; the A record never exists.
+        #
+        # The webhook that answers this is `cert-manager-webhook.yaml`, and the chart's defaults for
+        # `dns01.tokenSecret` and `dns01.webhookGroupName` already match it, so nothing is repeated
+        # here. The one thing that is NOT automated is the token itself, created once per cluster:
+        #
+        #   kubectl create secret generic hetzner -n cert-manager \
+        #     --from-literal=token=<an hcloud API token with read+write>
+        #
+        # In `cert-manager`, not `event-junkie`: a ClusterIssuer resolves secret references against
+        # cert-manager's own namespace, so a token next to the workloads is simply never found and
+        # the challenge fails with a message about the token rather than about the namespace.
+        # SOPS-managed Secrets in #416 remove this step.
         solver: "dns01"
         # Still the ACME *staging* endpoint. Production's rate limits are per registered domain, and
         # `event-junkie.de` is the same registered domain here as in production — so burning the
