@@ -30,6 +30,17 @@ npm run test:e2e -- --project=chromium
   server (`webServer` in `playwright.config.ts`), so **no backend or database is required**. Chromium-only keeps the pre-PR gate fast; CI (`build-frontend.yml`)
   runs the full browser + mobile matrix.
 
+### Markdown (from repo root, only when the diff touches any `.md` file)
+
+```bash
+scripts/format-markdown.sh check
+```
+
+Writes nothing; exits 1 listing every file that is not formatted. The fix is `scripts/format-markdown.sh` with no argument — it rewrites in place, so this is
+never a "go and work out what is wrong" failure. The `pre-commit` hook runs the same script, so a clean local commit history means this passes; it is here for
+the case where hooks were skipped with `--no-verify`. Do not reach for `oxfmt` directly — the script pins the version and the scope, both of which matter
+(AGENTS.md §Code Conventions).
+
 ### Infrastructure (from repo root, only when the diff touches `infra/`)
 
 ```bash
@@ -86,21 +97,22 @@ default.
 4. If `lint` fails on the frontend, note that both oxlint and eslint already pass `--fix`, so remaining failures are genuine issues that need manual edits.
 5. Report at the end with a compact summary:
 
-   ```
-   Backend:  ktlintCheck ✓  detekt ✓  build ✓  koverLog ✓
-   Frontend: type-check ✓  lint ✓  test:unit ✓  e2e ✓
-   Infra:    fmt ✓  validate ×3 ✓  shellcheck ✓        (omit this line when the diff does not touch infra/)
-   Chart:    lint ×3 ✓  assertions ✓  shellcheck ✓     (omit this line when the diff does not touch deploy/)
-   ```
+    ```
+    Backend:  ktlintCheck ✓  detekt ✓  build ✓  koverLog ✓
+    Frontend: type-check ✓  lint ✓  test:unit ✓  e2e ✓
+    Markdown: format ✓                                  (omit this line when the diff touches no .md file)
+    Infra:    fmt ✓  validate ×3 ✓  shellcheck ✓        (omit this line when the diff does not touch infra/)
+    Chart:    lint ×3 ✓  assertions ✓  shellcheck ✓     (omit this line when the diff does not touch deploy/)
+    ```
 
-   On failure, replace the ✓ with ✗ for the failing step, list the others as skipped if you stopped early, and quote the first useful error line below the
-   summary.
+    On failure, replace the ✓ with ✗ for the failing step, list the others as skipped if you stopped early, and quote the first useful error line below the
+    summary.
 
 ## Gotchas
 
 - **Java 25 required** — if `./gradlew` fails with an unsupported class file version, run `sdk env` to pick up the pinned JDK from `.sdkmanrc`.
 - **Database isn't required** for this skill — the build uses Testcontainers for tests; the dev `compose.yaml` Postgres is only needed for `bootRun`.
-- **NVD_API_KEY** is *not* needed here — `dependencyCheckAggregate` is not part of `build`.
+- **NVD_API_KEY** is _not_ needed here — `dependencyCheckAggregate` is not part of `build`.
 - **Playwright browser missing** — the first `test:e2e` run needs the chromium binary. If it fails with
   `Executable doesn't exist`, run `npx playwright install chromium` once (from `events-frontend/`) and re-run.
 - **Scoping by diff**: if the diff touches only `events-frontend/`, skip the backend sequence; if it touches only backend modules, skip the frontend sequence;

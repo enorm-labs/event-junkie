@@ -9,21 +9,22 @@
   for issues that ktlint cannot auto-fix.
 - **Reformatting is intentional — keep it**: Files in the working tree are routinely reformatted on purpose (IDE reformat-on-save, `./gradlew ktlintFormat`,
   `npm run format`). Treat that as deliberate and leave it in place. Never revert, re-fetch, re-download, or otherwise "restore" a file to an earlier shape
-  because its indentation, tabs/spaces, line wrapping, attribute order, or trailing whitespace changed — and don't reformat *back* to a previous style either.
+  because its indentation, tabs/spaces, line wrapping, attribute order, or trailing whitespace changed — and don't reformat _back_ to a previous style either.
   Review the content instead: `git --no-pager diff -w` (or `-b`) hides whitespace-only churn. Whitespace-only changes need no report, no explanation, and no
   action; they are not a signal that something went wrong.
     - This includes **test fixtures**, notably the scraper HTML snapshots under `events-importer/src/test/resources/scraper/`. A reformatted snapshot is still a
       valid fixture — Jsoup ignores indentation and attribute order — so a reformat is never on its own a reason to re-capture a page from the live site.
-    - The one real caveat: in HTML, whitespace *between inline elements* affects the text Jsoup returns (`<b>a</b><b>b</b>` yields `ab`, but with a newline
+    - The one real caveat: in HTML, whitespace _between inline elements_ affects the text Jsoup returns (`<b>a</b><b>b</b>` yields `ab`, but with a newline
       between them it yields `a b`). So if a reformat makes a scraper test fail, that is a genuine finding — **raise it with the user**. Do not silently revert
       the file, and do not loosen the assertion to make it pass.
 - **Build verification**: Always run `./gradlew clean build` after finishing an implementation to verify that all modules compile, tests pass, ktlint and detekt
   checks succeed, and Kover coverage thresholds are met. **Skip this step** when only Markdown documentation (`.md` files) or frontend files
-  (`events-frontend/`) were changed — the Gradle build covers the backend modules only.
+  (`events-frontend/`) were changed — the Gradle build covers the backend modules only. A Markdown-only change is not check-free, though: run
+  `scripts/format-markdown.sh` (see §Code Conventions), which the commit hook runs anyway.
 - **No unsolicited git commits/pushes**: Never run `git commit`, `git push`, or `git rebase` (squash) unless explicitly asked to by the user.
-- **ADR numbers are claimed by writing the ADR, never by planning one.** A document that says *"needs ADR-0NN"* for an ADR nobody has written yet is a
+- **ADR numbers are claimed by writing the ADR, never by planning one.** A document that says _"needs ADR-0NN"_ for an ADR nobody has written yet is a
   reservation the numbering scheme does not honour: the next ADR actually written takes that number, and the reference silently starts pointing at an unrelated
-  decision. This has already happened twice to the same planned ADR. **Refer to a future ADR by its title only** — *"needs an ADR: AI-Assisted Data Quality"* —
+  decision. This has already happened twice to the same planned ADR. **Refer to a future ADR by its title only** — _"needs an ADR: AI-Assisted Data Quality"_ —
   and assign the next free number from `docs/adr/` at the moment you create the file.
 - **GitHub CLI (`gh`)**: The `gh` CLI is installed (Homebrew) and authenticated for GitHub.com and enterprise instances. Use it for GitHub interactions such as
   creating/viewing PRs, managing issues, checking CI status, and browsing repositories.
@@ -41,7 +42,7 @@ update
 
 **Infrastructure and operations**
 
-- Choosing or changing a hosting provider, CDN, WAF, DNS, mail, backup, or object-storage provider — each is a processor that must be *named*, needs an Art. 28
+- Choosing or changing a hosting provider, CDN, WAF, DNS, mail, backup, or object-storage provider — each is a processor that must be _named_, needs an Art. 28
   DPA in place, and, if it is outside the EU/EEA, a transfer mechanism. [ADR-012](docs/adr/ADR-012_CLOUD_PLATFORM.md) is **Accepted** as of 2026-08-10 and
   amended the same day to remove Cloudflare, so the intended answer is now **one processor, Hetzner**, and the notice says so. Nothing is deployed yet, so
   `INFRASTRUCTURE_IS_PROPOSED` stays `true` until it is — accepting an ADR is not the moment that changes.
@@ -52,8 +53,8 @@ update
 
 **Features**
 
-- **Anything stored on the visitor's device** — a cookie, `localStorage`, `sessionStorage`, IndexedDB, or the Cache API. § 25 TDDDG covers *storage on terminal
-  equipment*, not cookies specifically. Today every stored item is strictly necessary, so **no consent banner is required** — that is a property worth
+- **Anything stored on the visitor's device** — a cookie, `localStorage`, `sessionStorage`, IndexedDB, or the Cache API. § 25 TDDDG covers _storage on terminal
+  equipment_, not cookies specifically. Today every stored item is strictly necessary, so **no consent banner is required** — that is a property worth
   protecting deliberately. The first non-essential item (analytics ID, A/B bucket, recommendation history) makes a consent banner mandatory and is a product
   decision, not an implementation detail. **Escalate rather than implement.**
 - **Any third-party resource loaded by the browser** — a font, script, iframe, map, embed, social widget, or image hotlinked from another host. Each one
@@ -162,7 +163,7 @@ subprojects sharing a root `settings.gradle.kts`, plus a standalone frontend pro
     - **`StableSortPageableArgumentResolver`** extends Spring Data's `ReactivePageableHandlerMethodArgumentResolver` and appends `id` as the final sort key.
       Every list endpoint sorts by a **non-unique** column (`name`, `eventDate`), and `LIMIT`/`OFFSET` gives PostgreSQL no obligation to order tied rows the
       same way across two queries — so a client paging through could see one row twice and never see another. The tiebreaker is always ascending (within a tie
-      group only the order's *stability* matters) and is skipped when the caller already sorts by `id` or the request is unpaged. **Do not move this to
+      group only the order's _stability_ matters) and is skipped when the caller already sorts by `id` or the request is unpaged. **Do not move this to
       `@PageableDefault`**: that only applies when the request carries no `sort` parameter, and the SPA sends one, so a default-only tiebreaker leaves the real
       paging path unstable. The resolver and its test are duplicated per module because `events-core` is deliberately free of web dependencies.
     - The BFF's `EventSearchRepository` builds its `ORDER BY` by hand (filtered event search) and ends it with `e.id ASC` for the same reason; it allowlists
@@ -178,12 +179,12 @@ subprojects sharing a root `settings.gradle.kts`, plus a standalone frontend pro
   DTOs — they are a server-side concern computed by the service layer. The slug logic is encapsulated in a dedicated `slug` Spring Modulith module
   (`de.norm.events.slug`) with a `SlugGenerator`
   object singleton (see `SlugGenerator.kt`, `SlugModule.kt`). All feature modules declare `"slug"` in their `allowedDependencies`.
-    - **Transliteration**: Slugify strips accents by normalizing to NFD and dropping non-ASCII, which only works for letters that *decompose* into a base letter
+    - **Transliteration**: Slugify strips accents by normalizing to NFD and dropping non-ASCII, which only works for letters that _decompose_ into a base letter
       plus a combining mark (`ö`→`o`, `å`, `é`, `ñ`, `ğ`, `ş`). A letter that is a single indivisible code point has nothing to strip down to and would be
       **silently deleted**, so `SlugGenerator` supplies a `NON_DECOMPOSING_LATIN` map of explicit `customReplacements` for `ø æ ð þ ł đ ı ß œ` (both cases).
       Without it, `Kėkė Søl` → `keke-sl` and `Revaler Straße` → `revaler-strae`, and distinct names collide (`Søl`/`Sæl` → `sl`).
     - Entries map to the letter's **base form**, not its national expansion, so a slug stays internally consistent with the NFD stripping applied to its other
-      letters: `ø`→`o` beside `ö`→`o`, giving `Ørlög` → `orlog`. **Do not switch to slugify's `locale()` bundles** — `no`/`da` would expand `ø`→`oe` *and*
+      letters: `ø`→`o` beside `ö`→`o`, giving `Ørlög` → `orlog`. **Do not switch to slugify's `locale()` bundles** — `no`/`da` would expand `ø`→`oe` _and_
       silently rewrite existing `å`→`aa`, and `de` would turn `ö`→`oe`, changing slugs that are already correct. `æ`, `œ`, `ß`, `þ` have no single base letter
       and take their standard two-letter romanisation. Extend the map as new letters surface.
     - **Changing the map is a data migration in disguise.** Event slugs self-heal (regenerated on every upsert, matched by `sourceId`), but
@@ -197,7 +198,7 @@ subprojects sharing a root `settings.gradle.kts`, plus a standalone frontend pro
 - **Genre tags**: The `genre` column on events stores raw free-text from venue websites for display. A separate `genre_tag`
   table and `event_genre_tag` join table provide normalized many-to-many genre tags for structured filtering. Genre tags are auto-created during event imports
   and admin API calls — there is no manual CRUD API. The `GenreNormalizer` utility in the
-  `genretag` module parses raw genre strings by splitting on common delimiters (`,`, `//`, ` & `, ` / `), stripping noise suffixes ("Floor", "etc."), and
+  `genretag` module parses raw genre strings by splitting on common delimiters (`,`, `//`, `&`, `/`), stripping noise suffixes ("Floor", "etc."), and
   mapping known synonyms to canonical names (e.g. "Hip-Hop"/"Rap" → "Hip Hop"). Unknown genres are kept with title case and auto-created as new tags. The
   normalizer is shared between the admin API (`EventService`) and the scraper pipeline (`AssociationSyncService`). The `GET /api/admin/genre-tags` endpoint
   provides the tag list for frontend filter dropdowns.
@@ -259,7 +260,7 @@ subprojects sharing a root `settings.gradle.kts`, plus a standalone frontend pro
       same `@Qualifier(SCRAPER_WEB_CLIENT)` throttled `WebClient` (so the same per-host politeness and User-Agent apply). Each has a single pure
       `*ApiScraper.kt` that parses the raw JSON body into `List<ScrapedEvent>` — no Overview/Detail split. **Prefer a JSON/API source over HTML whenever one
       exists** (ADR-007 §"Prefer a JSON / API Source").
-    - **List + *shared* detail page** — a venue whose calendar lists performance *dates* of a production run (currently Bar jeder Vernunft: 28 calendar cards
+    - **List + _shared_ detail page** — a venue whose calendar lists performance _dates_ of a production run (currently Bar jeder Vernunft: 28 calendar cards
       resolving to 2 show pages) points many events at the same detail URL. Such an importer implements `EventImporter` directly and fetches each **distinct**
       detail URL once per run, applying the result to every date of that show — rather than extending `AbstractTwoPageWebsiteImporter`, whose per-event fetch
       would re-request one page 20+ times and be serialised by `PerHostThrottlingFilter`. See ADR-007 §"Shared Detail Pages".
@@ -280,7 +281,7 @@ subprojects sharing a root `settings.gradle.kts`, plus a standalone frontend pro
   Configured at the root level with `dependencyCheckAggregate` to produce a single report. Fails the build on CVSS ≥ 7 (HIGH). False positives can be suppressed
   via `owasp-suppressions.xml`. SARIF output is uploaded to GitHub Code Scanning; the HTML report is uploaded as a CI artifact.
     - **`scanProjects` is intentionally unset.** Empty means "scan every project", which is what the aggregate report wants. The plugin matches a configured
-      entry against `project.path` (`:events-core`), *not* `project.name` (`events-core`) — a name list matches nothing, so every project is skipped and the
+      entry against `project.path` (`:events-core`), _not_ `project.name` (`events-core`) — a name list matches nothing, so every project is skipped and the
       report reads `Dependencies Scanned: 0` while the build passes the CVSS gate trivially. That was live in this repo until 2026-08-05 and nothing failed; **a
       green OWASP run is not evidence the scan looked at anything.** When changing this config, read `Dependencies Scanned` in the HTML report, not the exit
       code. The healthy baseline is ~208 dependencies scanned.
@@ -420,12 +421,12 @@ with `--strictPort` — a busy port fails loudly instead of Vite quietly moving 
 `up` starts the importer with `app.scheduling.enabled=false` so a smoke test scrapes only the source under test rather than every source whose 24h interval
 happens to be due. Pass `--scheduling` to leave it on (that is the configuration in which the scheduler races manual triggers — see ADR-009 on the import
 claim). Neither `bootRun` nor this script hot-reloads Kotlin — restart (`down` then `up`) after changing code, or the smoke test runs the previous build. Vite
-*does* hot-reload, so the frontend needs no restart. Runtime artefacts land in `build/dev-env/` (gitignored): `<service>.log`, `<service>.pid`, snapshots.
+_does_ hot-reload, so the frontend needs no restart. Runtime artefacts land in `build/dev-env/` (gitignored): `<service>.log`, `<service>.pid`, snapshots.
 
 When launching these from an agent shell, redirect the command's own output (`> file 2>&1 < /dev/null`) — the detached `bootRun`/`vite` process inherits the
 tool's stdout pipe and keeps the call hanging long after the script itself has exited.
 
-**Never run Gradle while an import is in flight.** The "does not hot-reload" note above is about *picking up* your changes; it is not the same as nothing
+**Never run Gradle while an import is in flight.** The "does not hot-reload" note above is about _picking up_ your changes; it is not the same as nothing
 happening. Both Boot modules carry `spring-boot-devtools` (`developmentOnly`), which watches the classpath — so **any** task that writes classes
 (`compileKotlin`, `classes`, `build`, even a single `--tests` run) restarts the running service and **kills every import mid-flight**. Those sources are then
 stuck in `RUNNING` forever, because the 30-minute staleness guard only runs under the scheduler and `dev-env.sh up` disables it. The tell in the log is
@@ -436,12 +437,12 @@ recovery is manual:
 scripts/dev-env.sh psql "UPDATE events.event_source SET status='IDLE', retry_count=0, version=version+1 WHERE status='RUNNING'"
 ```
 
-then re-trigger those slugs. On a long job — a `--full` re-seed, a before/after diff — compile everything first, restart once, *then* import, and leave the
+then re-trigger those slugs. On a long job — a `--full` re-seed, a before/after diff — compile everything first, restart once, _then_ import, and leave the
 build alone until every source has left `RUNNING`.
 
 **Re-keying a live source collides with its own today-dated rows.** Changing how a scraper builds its `sourceId` — adding the session start time, the occurrence
 date, anything — gives every event a new id, so the old rows go stale and the new ones insert. But `EventUpsertService.removeStaleEvents`
-deliberately spares **today**: a today-dated row therefore keeps its old id *and* its slug while its replacement tries to take the same slug, and the insert
+deliberately spares **today**: a today-dated row therefore keeps its old id _and_ its slug while its replacement tries to take the same slug, and the insert
 collides. **Re-key on a day the venue's programme is dark, or clear that source's rows first** — and check which it is before importing rather than after.
 Admiralspalast (2026-08-08) got away with it by luck; Velomax (2026-08-09) was checked and was genuinely dark three weeks out.
 
@@ -455,7 +456,7 @@ file); if one has already been truncated, `grep -a` reads it. **A zero count fro
 [docs/WORKTREES.md](docs/WORKTREES.md)). Files and Gradle output are isolated; the local runtime is not.
 
 - **Export `COMPOSE_PROJECT_NAME=event-junkie` before any `bootRun` or `scripts/dev-env.sh up` in a worktree.** Docker Compose names the project after the
-  directory containing the `compose.yaml` it is given, and both paths pass the worktree's copy — so without the override the worktree starts a *second*
+  directory containing the `compose.yaml` it is given, and both paths pass the worktree's copy — so without the override the worktree starts a _second_
   Postgres on a new empty volume, which collides with the main checkout on host port `56298` and makes `diff-snapshot` report every existing source as `GONE`.
   With it, the running `event-junkie-postgres-1` container and its seeded data are reused.
 - **One stack at a time.** Ports `8081` / `8080` / `5173` are fixed in `application.yaml` and `dev-env.sh`; `IMPORTER_HOST` / `BFF_HOST` only change the URL the
@@ -503,6 +504,18 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
   is tracked deliberately because it is what supports current Kotlin (see the compatibility-table link in `settings.gradle.kts`). Builds upon default config
   with overrides in root `detekt.yml` (currently only `MaxLineLength: 160`). Run `./gradlew detekt` to analyze all modules.
 - **Max line length**: 160 characters (enforced by both `.editorconfig` and `detekt.yml`).
+- **Markdown is formatted by oxfmt**, via `scripts/format-markdown.sh` (config: root `.oxfmtrc.json`, hook: `format-markdown`). Tables aligned, `_emphasis_`,
+  `-` bullets, and **prose left exactly where it was wrapped** — `proseWrap: preserve`, so hard wrapping is still yours to place and a prose edit stays a
+  one-line diff. Full rationale in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) §Markdown formatting; the parts that matter when editing:
+    - **Never widen it past Markdown.** oxfmt also formats YAML, JSON, CSS and TS. Running it across this repository's YAML and JSON was measured and rejected:
+      105,005 lines of churn, of which 94,336 were captured scraper fixtures (which must stay faithful to what the venue actually returned) and 10,298 were
+      Flux-generated `gotk-components.yaml`. The genuinely useful remainder was 371 lines of single-to-double quote churn in workflows. Worse, oxfmt **cannot
+      parse the Go-templated YAML** under `deploy/charts/*/templates/` at all — it errors and exits 2 on all 16 of them, the same reason
+      `.pre-commit-config.yaml` refuses a `check-yaml` hook. Scope is pinned in two independent places (the script's arguments and `ignorePatterns`); a change
+      that loosens either is a change that breaks the chart build.
+    - **Use the pinned binary**, `events-frontend/node_modules/.bin/oxfmt`, never one on `$PATH` — a Homebrew 0.63.0 and the pinned 0.62.0 produce different
+      output for `AGENTS.md`. The script already does this; do not "simplify" it to `oxfmt`.
+    - **Write mode runs it twice**, because a table nested under a list item is skipped on the first pass. This file is the one that exhibits it.
 - Centralized library versions in **`gradle.properties`** (`java.version`, `jsoup.version`, `kotest.version`,
   `kotlin-logging.version`, `mockk.version`, `mockwebserver.version`, `slugify.version`, `spring-modulith.version`,
   `springdoc.version`), read in the module build scripts via `property("…")`; plugin versions in `settings.gradle.kts`
@@ -514,7 +527,7 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       known CVE. `io.spring.dependency-management` resolves BOM properties from Gradle project properties, so naming the BOM's own property here is enough to
       reach every module that applies the Boot plugin.
     - **They are temporary by design: delete each one once a Spring Boot release ships an equal or newer version.** An override kept past its purpose pins the
-      project *behind* the BOM, so later Boot upgrades stop raising that dependency and the staleness is invisible. `/update-dependencies` checks this on every
+      project _behind_ the BOM, so later Boot upgrades stop raising that dependency and the staleness is invisible. `/update-dependencies` checks this on every
       run.
     - Two dependencies are not BOM-managed at all and are pinned by `constraints` blocks instead: **`scram.version`** (a transitive of `r2dbc-postgresql`, which
       pins the vulnerable version in every release) in both Boot modules, and **`log4j2.version`** reused in `events-core`. That last one matters —
@@ -538,31 +551,31 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     - **Exclusions live in three places, and filters never propagate between them.** A class hidden from one report is still counted in the others unless it is
       excluded there too — this is the single thing to know before editing them.
 
-      | Where | Scope | Holds |
-                  |-------|-------|-------|
-      | root `build.gradle.kts`, `subprojects { configure<KoverProjectExtension> … }` | every module's own report | `de.norm.events.*Module`, `de.norm.events.*Fixtures` |
-      | root `build.gradle.kts`, top-level `kover { }` | the aggregated report | the shared patterns **again**, plus the events-core domain classes |
-      | `events-core/build.gradle.kts`, `kover { }` | events-core's own report | its plain domain data classes, by exact name |
+        | Where                                                                         | Scope                     | Holds                                                              |
+        | ----------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------ |
+        | root `build.gradle.kts`, `subprojects { configure<KoverProjectExtension> … }` | every module's own report | `de.norm.events.*Module`, `de.norm.events.*Fixtures`               |
+        | root `build.gradle.kts`, top-level `kover { }`                                | the aggregated report     | the shared patterns **again**, plus the events-core domain classes |
+        | `events-core/build.gradle.kts`, `kover { }`                                   | events-core's own report  | its plain domain data classes, by exact name                       |
 
     - **What gets excluded, and why**: classes with no executable logic, whose synthetic members Kover would otherwise count as uncovered — Spring Modulith
       `@ApplicationModule` markers (`*Module`), published `java-test-fixtures` factories (`*Fixtures`), and events-core's plain domain data classes. Everything
       that carries logic stays measured.
     - `*` **spans package segments** in a Kover class pattern, so `de.norm.events.*Module` matches `de.norm.events.meta.MetaModule`. That is why the domain data
       classes are listed by exact name instead: a `de.norm.events.*Entity`-style pattern would silently swallow the BFF/importer persistence classes, which
-      *should* be measured.
+      _should_ be measured.
     - Adding a new `*Module` marker or `*Fixtures` factory therefore needs no config change. Anything else does — in all three places.
     - **`koverVerify` enforces a line-coverage floor per module**, and `check` (so `build`) runs it. Floors are set in `koverVerificationFloor(...)` in the root
       `build.gradle.kts`, next to the number each module actually sits at.
 
-      | Module | Actual | Floor |
-                  |---|---:|---:|
-      | `events-core` | 100.0% | 95 |
-      | `events-bff` | 98.6% | 92 |
-      | `events-importer` | 95.4% | 90 |
-      | aggregate | 95.6% | 90 |
+        | Module            | Actual | Floor |
+        | ----------------- | -----: | ----: |
+        | `events-core`     | 100.0% |    95 |
+        | `events-bff`      |  98.6% |    92 |
+        | `events-importer` |  95.4% |    90 |
+        | aggregate         |  95.6% |    90 |
 
     - **They are floors, not targets, and the gap is deliberate.** A floor pinned to today's number fails the build for one uncovered line, which teaches people
-      to lower it — and a threshold that gets lowered on contact is worse than no threshold. These catch a *material* regression: a feature landing untested, or
+      to lower it — and a threshold that gets lowered on contact is worse than no threshold. These catch a _material_ regression: a feature landing untested, or
       a test class quietly ceasing to run. **Do not raise a floor in the same PR that pushes the number up**; raise it when a module has held comfortably above
       the next step for a while.
     - **If `koverVerify` fails, write the test.** Lowering the floor is a decision to be argued for in the PR description, not a way to go green.
@@ -583,12 +596,12 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 ## Testing Patterns
 
 - **JUnit 5** + **WebTestClient** for reactive endpoint tests (see `BaseControllerTest.kt`). Create the client via lazy delegate with `@LocalServerPort`:
-  ```kotlin
-  @LocalServerPort private var port: Int = 0
-  private val webTestClient: WebTestClient by lazy {
-      WebTestClient.bindToServer().baseUrl("http://localhost:$port").build()
-  }
-  ```
+    ```kotlin
+    @LocalServerPort private var port: Int = 0
+    private val webTestClient: WebTestClient by lazy {
+        WebTestClient.bindToServer().baseUrl("http://localhost:$port").build()
+    }
+    ```
 - **Spring Boot 4 test starters**: Each runtime starter has a `*-test` companion (e.g. `spring-boot-starter-webflux-test`,
   `spring-boot-starter-data-r2dbc-test`). Always add the `-test` variant alongside the main starter.
 - Tests requiring PostgreSQL import `PostgresTestcontainersConfiguration` via `@Import` — this provides a reusable Testcontainers `@ServiceConnection` bean.
@@ -602,7 +615,7 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 - **Kotest assertions**: The importer uses `io.kotest:kotest-assertions-core` for expressive test matchers (e.g. `shouldBe`, `shouldContain`).
 - **MockK**: The importer uses `io.mockk:mockk` for mocking in Kotlin tests (preferred over Mockito). Used for unit-testing services with injected dependencies.
 - **MockWebServer**: `ApiClientTest` and `HtmlFetcherTest` drive the real `WebClient` pipeline against a local server rather than mocking HTTP. Use the **
-  `com.squareup.okhttp3:mockwebserver3`** artifact (package `mockwebserver3`), *not* the legacy `com.squareup.okhttp3:mockwebserver` — the latter still ships at
+  `com.squareup.okhttp3:mockwebserver3`** artifact (package `mockwebserver3`), _not_ the legacy `com.squareup.okhttp3:mockwebserver` — the latter still ships at
   5.x purely as a deprecation bridge whose `MockWebServer` extends JUnit 4's `ExternalResource`, which would put `junit:junit` back on the classpath of this
   JUnit 5-only project. API notes: `MockResponse` is immutable (`MockResponse.Builder().code(…).body(…).build()`), the server is closed with `close()` rather
   than `shutdown()`, and the recorded request line is `RecordedRequest.target` (the okhttp 4 `path` property is gone; `target` includes the query string, so it
@@ -625,7 +638,7 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     - `build-frontend.yml` — Install, lint, build, unit test, and Playwright e2e test. Triggers only when `events-frontend/**` changes. Uses Node 24.
     - Both build workflows also declare **`workflow_dispatch`**, so they can be run by hand —
       `gh workflow run build-backend.yml --ref <branch>` (or the Actions tab). This exists because the automatic triggers cannot always be relied on: during the
-      2026-08-06 Actions outage GitHub throttled webhooks to ~15%, so four PRs merged without a run ever being *created*, and `gh run rerun` cannot help when
+      2026-08-06 Actions outage GitHub throttled webhooks to ~15%, so four PRs merged without a run ever being _created_, and `gh run rerun` cannot help when
       there is no run to re-run. A manual run ignores the path filters, so it also answers "build this ref anyway". **Caveat:** GitHub only offers a manual
       trigger for workflows present on the **default branch**, so a `workflow_dispatch` added in a PR is not usable until that PR merges.
     - `dependency-review.yml` — Runs on PRs to diff dependency changes between base and head. Flags newly introduced vulnerabilities (high+ severity) and
@@ -664,8 +677,8 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       embeds the Helm 3 SDK and a chart that renders only under Helm 4 is one Flux cannot install. Like `validate-infra.yml` it reaches no cluster, so it is a
       syntax and shape gate; the assertions are the part that catches a chart which is well-formed and wrong.
 - **Nine checks are REQUIRED on `main` and a pull request cannot merge without them** (#443, applied 2026-08-13). They were chosen for a specific reason: each
-  runs on *every* pull request, because GitHub keeps a required-but-skipped check `Pending` forever — *"a pull request that requires those checks to be
-  successful will be blocked from merging"* — so requiring a path-filtered check deadlocks every PR that does not touch its paths. #447 was a live example: it
+  runs on _every_ pull request, because GitHub keeps a required-but-skipped check `Pending` forever — _"a pull request that requires those checks to be
+  successful will be blocked from merging"_ — so requiring a path-filtered check deadlocks every PR that does not touch its paths. #447 was a live example: it
   never ran `Lint & render` at all. The `pull_request` path filters on `validate-chart`, `validate-infra` and `validate-workflows` were removed so their checks
   always report; their combined cost is **54 seconds**.
 
@@ -679,24 +692,25 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     CodeQL · Dependency Review                       always run, unfiltered
     ```
 
-  Two consequences worth knowing before changing any of this. **Adding a stack to `validate-infra`'s matrix creates a context that is not required** — the rule
-  names each one exactly, so the matrix growing silently weakens the gate; add it to the ruleset in the same change. And **never add a `paths:` filter to the
-  `pull_request` trigger of those three workflows** — it would block every unrelated pull request, and the failure looks like a hung check rather than a
-  misconfiguration.
+    Two consequences worth knowing before changing any of this. **Adding a stack to `validate-infra`'s matrix creates a context that is not required** — the rule
+    names each one exactly, so the matrix growing silently weakens the gate; add it to the ruleset in the same change. And **never add a `paths:` filter to the
+    `pull_request` trigger of those three workflows** — it would block every unrelated pull request, and the failure looks like a hung check rather than a
+    misconfiguration.
 
     **`Build & Test` is deliberately NOT required**, for both backend and frontend. They cost 382s and 597s, so requiring them means either +16½ minutes on
     every pull request including documentation-only ones, or a change-detection job whose semantics were unverified at the time. A red `Build & Test` is
     visible but not blocking. Revisit deliberately rather than by drift.
+
 - **When CI misbehaves, check [githubstatus.com](https://www.githubstatus.com/) before debugging this repo.** Scriptable as
   `https://www.githubstatus.com/api/v2/summary.json`. A GitHub-side incident mimics repo-level bugs closely enough to send you hunting through trigger and path
   filters that are perfectly fine. Symptoms seen during the 2026-08-06 Actions outage:
     - **No run is created at all** for a PR — nothing to re-run, and `gh run rerun` cannot help. Trigger webhooks were throttled to ~15%. The tell-tale: a PR
       that gets no label either, since `label-pr.yml` was dropped by the same throttle.
     - **A run "fails" with zero steps executed**, annotated `The job was not acquired by Runner of type hosted even after multiple attempts`. That is runner
-      starvation, *not* a test failure — read the annotation before concluding the code is broken, and never merge past a red check without checking which of
+      starvation, _not_ a test failure — read the annotation before concluding the code is broken, and never merge past a red check without checking which of
       the two it is.
     - **Runs appear for branches deleted hours ago** as the throttled backlog replays. They are noise about the past, not signal about `main`.
-    - Do not trust the **Webhooks** component on the status page: it read *Operational* throughout, while the Actions incident text was the thing saying
+    - Do not trust the **Webhooks** component on the status page: it read _Operational_ throughout, while the Actions incident text was the thing saying
       workflow-triggering webhooks were being dropped. Read the incident, not the component grid.
     - `gh run list --branch <name>` can look empty while `gh pr view --json statusCheckRollup` still shows CodeQL "Analyze" checks — CodeQL is GitHub's
       **default setup** (`event: dynamic`), which runs on a separate path from the workflow files here and so survives outages that stop everything else.
@@ -747,14 +761,14 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 Learned the expensive way during the TODO.md → Issues migration (2026-08-09). Each of these looks like a bug in your script the first time you hit it.
 
 - **Nothing running in CI can push to `main`.** The `main` ruleset requires every change to arrive by pull request, and its **only** bypass actor is
-  `OrganizationAdmin`. The obvious workaround does not exist: GitHub refuses the Actions bot as a bypass actor with *"Actor GitHub Actions integration must be
-  part of the ruleset source or owner organization"* — a platform constraint, not a permissions problem, and the UI offers no such actor either. **Design any
+  `OrganizationAdmin`. The obvious workaround does not exist: GitHub refuses the Actions bot as a bypass actor with _"Actor GitHub Actions integration must be
+  part of the ruleset source or owner organization"_ — a platform constraint, not a permissions problem, and the UI offers no such actor either. **Design any
   workflow that wants to write to the repo as generate-on-demand or open-a-PR, never as push-to-main.** A whole snapshot workflow was written, merged and
   deleted before this was discovered.
-- **Pace bulk mutations.** GitHub's *secondary* rate limit bites long before the documented hourly one. A `sleep 0.45` between calls carried 255 PR edits and
+- **Pace bulk mutations.** GitHub's _secondary_ rate limit bites long before the documented hourly one. A `sleep 0.45` between calls carried 255 PR edits and
   146 issue creations with zero failures; without it, a few hundred back-to-back writes reliably trip it.
 - **`gh issue create` and `gh issue edit` do not share a label flag.** Create takes `--label`; edit takes `--add-label` / `--remove-label`. One argument list
-  for both works perfectly on creates and dies on the first update — invisible until something already exists. And an update must reconcile labels in *both*
+  for both works perfectly on creates and dies on the first update — invisible until something already exists. And an update must reconcile labels in _both_
   directions: `--add-label` alone lets a removed label survive forever with nothing reporting the drift.
 - **Project view grouping and sorting cannot be set through the API.** `ProjectV2ViewConfigurationInput` exposes only `visibleFieldIds`. Names, layouts and
   filters are scriptable; the arrangement is a manual UI step. (Still outstanding for the Event Junkie board.)
@@ -781,9 +795,9 @@ gh issue list --label importer --state open         # when you need live state
 gh issue view 313                                   # the full body, including its Links footer
 ```
 
-*(This was briefly a committed file refreshed by a workflow. That cannot work here: the `main` ruleset requires every change to arrive by pull request, only an
+_(This was briefly a committed file refreshed by a workflow. That cannot work here: the `main` ruleset requires every change to arrive by pull request, only an
 OrganizationAdmin may bypass it, and GitHub refuses the Actions bot as a bypass actor. The workflow failed on its first run and the committed copy went stale
-within the hour — so the file moved to `build/` and the workflow was deleted.)*
+within the hour — so the file moved to `build/` and the workflow was deleted.)_
 
 **Filing something.** Use `/new-issue`, which checks for a duplicate first and picks the right form. By hand,
 `.github/ISSUE_TEMPLATE/` has 🛠 Task, ✨ Feature, 🔍 Importer / data defect, ⚖️ Decision and 🧭 Epic. The importer-defect form is the one to reach for after a
@@ -793,16 +807,16 @@ difference between a one-hour change and a one-day one.
 **Where a finding goes** — the same rule as before, with a new destination:
 
 | Finding                                                                                           | Goes to                                                 |
-|---------------------------------------------------------------------------------------------------|---------------------------------------------------------|
-| A defect with a known repair — we lose or mangle data the source *did* publish                    | **An issue** (🔍 Importer / data defect)                |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| A defect with a known repair — we lose or mangle data the source _did_ publish                    | **An issue** (🔍 Importer / data defect)                |
 | An accepted limitation — the venue never publishes it, or the parser makes a deliberate trade-off | **That scraper's KDoc**, next to the code it constrains |
 | A choice that must be made before work can start                                                  | **An issue** (⚖️ Decision), labelled `needs-decision`   |
 
 **The label and field split.** Intrinsic properties of the work are **labels** — `area:*`, `size:*`, plus `importer` and `documentation`. Planning state lives
 in the **[project board](https://github.com/orgs/enorm-labs/projects/1)** as Status and Priority fields, because priority churns and label churn is noise. Issue
-*type* is a GitHub issue type (Task / Bug / Feature), not a label — do not add a `type:` label.
+_type_ is a GitHub issue type (Task / Bug / Feature), not a label — do not add a `type:` label.
 
-Three labels name *why* something cannot start: `blocked` (another issue), `needs-decision` (a choice), `needs-deployment` (a live origin). **The last is not
+Three labels name _why_ something cannot start: `blocked` (another issue), `needs-decision` (a choice), `needs-deployment` (a live origin). **The last is not
 neglected work** — it is work that cannot exist yet, and it is labelled so it stops reading as neglect.
 
 **Milestones.** `v0.2 — Deployable` → `v0.3 — Launch-ready` → `v1.0 — Go-live` are the path to launch; `Phase 2/3/4` are post-launch buckets with no due date.
@@ -818,84 +832,85 @@ a PR without one is the exception that makes the milestone view stop meaning any
 
 ## Key Files
 
-| Purpose                               | Path                                                                                                      |
-|---------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| Root build config & shared versions   | `build.gradle.kts`                                                                                        |
-| Plugin versions & module includes     | `settings.gradle.kts`                                                                                     |
-| Gradle daemon JVM args                | `gradle.properties`                                                                                       |
-| Dev database (Postgres)               | `compose.yaml`                                                                                            |
-| Detekt rule overrides                 | `detekt.yml`                                                                                              |
-| OWASP CVE false-positive suppressions | `owasp-suppressions.xml`                                                                                  |
-| CI: backend build & test              | `.github/workflows/build-backend.yml`                                                                     |
-| CI: frontend build & test             | `.github/workflows/build-frontend.yml`                                                                    |
-| CI: dependency review (PR)            | `.github/workflows/dependency-review.yml`                                                                 |
-| CI: dependency graph submission       | `.github/workflows/dependency-submission.yml`                                                             |
-| CI: nightly OWASP scan                | `.github/workflows/dependency-check-scheduled.yml`                                                        |
-| CI: PR labelling                      | `.github/workflows/label-pr.yml`                                                                          |
-| CI: OpenTofu fmt/validate + ShellCheck | `.github/workflows/validate-infra.yml`                                                                   |
-| CI: workflow lint + security audit    | `.github/workflows/validate-workflows.yml`; suppressions in `zizmor.yml`                                  |
-| CI: Helm lint/render/assertions       | `.github/workflows/validate-chart.yml`                                                                    |
-| CI: build, scan and publish to GHCR   | `.github/workflows/release.yml` — the only workflow that pushes anything; it does not deploy              |
-| Version scheme (one number, 4 files)  | `scripts/version.sh`; `gradle.properties` is the source of truth — docs/DEVELOPMENT.md §Versions          |
-| Trivy waivers                         | `.trivyignore` — empty on purpose; an entry needs a reason and a date                                     |
-| Infrastructure as code (OpenTofu)     | `infra/` — read `infra/AGENTS.md` first; `bootstrap/` is applied, `environments/` is not                   |
-| Cloud-init for the Hetzner nodes      | `infra/modules/environment/cloud-init/`                                                                   |
+| Purpose                                | Path                                                                                                      |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Root build config & shared versions    | `build.gradle.kts`                                                                                        |
+| Plugin versions & module includes      | `settings.gradle.kts`                                                                                     |
+| Gradle daemon JVM args                 | `gradle.properties`                                                                                       |
+| Dev database (Postgres)                | `compose.yaml`                                                                                            |
+| Detekt rule overrides                  | `detekt.yml`                                                                                              |
+| OWASP CVE false-positive suppressions  | `owasp-suppressions.xml`                                                                                  |
+| CI: backend build & test               | `.github/workflows/build-backend.yml`                                                                     |
+| CI: frontend build & test              | `.github/workflows/build-frontend.yml`                                                                    |
+| CI: dependency review (PR)             | `.github/workflows/dependency-review.yml`                                                                 |
+| CI: dependency graph submission        | `.github/workflows/dependency-submission.yml`                                                             |
+| CI: nightly OWASP scan                 | `.github/workflows/dependency-check-scheduled.yml`                                                        |
+| CI: PR labelling                       | `.github/workflows/label-pr.yml`                                                                          |
+| CI: OpenTofu fmt/validate + ShellCheck | `.github/workflows/validate-infra.yml`                                                                    |
+| CI: workflow lint + security audit     | `.github/workflows/validate-workflows.yml`; suppressions in `zizmor.yml`                                  |
+| CI: Helm lint/render/assertions        | `.github/workflows/validate-chart.yml`                                                                    |
+| CI: build, scan and publish to GHCR    | `.github/workflows/release.yml` — the only workflow that pushes anything; it does not deploy              |
+| Version scheme (one number, 4 files)   | `scripts/version.sh`; `gradle.properties` is the source of truth — docs/DEVELOPMENT.md §Versions          |
+| Markdown formatting                    | `scripts/format-markdown.sh` + `.oxfmtrc.json` — Markdown only, and the scope is load-bearing             |
+| Trivy waivers                          | `.trivyignore` — empty on purpose; an entry needs a reason and a date                                     |
+| Infrastructure as code (OpenTofu)      | `infra/` — read `infra/AGENTS.md` first; `bootstrap/` is applied, `environments/` is not                  |
+| Cloud-init for the Hetzner nodes       | `infra/modules/environment/cloud-init/`                                                                   |
 | Helm chart (bff · importer · frontend) | `deploy/charts/event-junkie/` — read `deploy/AGENTS.md` first; exercised on k3d, never on a real cluster  |
-| Backend container images              | `events-bff/Dockerfile`, `events-importer/Dockerfile` — no `RUN`, context is each module's `build/docker` |
-| Frontend container image              | `events-frontend/Dockerfile` + `events-frontend/docker/nginx.conf` — nginx on 8080, context is the module |
-| Chart render assertions               | `deploy/scripts/render-assertions.sh`                                                                     |
-| Release notes categories              | `.github/release.yml`                                                                                     |
-| Dependabot config                     | `.github/dependabot.yml`                                                                                  |
-| Commit message prompt                 | `.github/prompts/commit-message.prompt.md`                                                                |
-| Squash commit message prompt          | `.github/prompts/squash-commit-message.prompt.md`                                                         |
-| Open PR prompt                        | `.github/prompts/open-pr.prompt.md`                                                                       |
-| Code review prompt                    | `.github/prompts/code-review.prompt.md`                                                                   |
-| Security report prompt                | `.github/prompts/security-report.prompt.md`                                                               |
-| Shared domain module marker           | `events-core/src/.../EventsCoreModule.kt`                                                                 |
-| Domain data classes                   | `events-core/src/.../artist/`, `event/`, `genretag/`, `promoter/`, `venue/`                               |
-| Price normalization utility           | `events-core/src/.../event/MoneyExtensions.kt`                                                            |
-| Initial DB migration                  | `events-importer/src/main/resources/db/migration/V001__create_initial_schema.sql`                         |
-| Global exception handler              | `events-importer/src/.../GlobalExceptionHandler.kt`                                                       |
-| Slug generator utility                | `events-importer/src/.../slug/SlugGenerator.kt`                                                           |
-| Genre normalizer utility              | `events-importer/src/.../genretag/GenreNormalizer.kt`                                                     |
-| Shared scraping utilities             | `events-importer/src/.../scraper/ScrapingExtensions.kt`                                                   |
-| Shared date/time parsing              | `events-importer/src/.../scraper/DateParsingExtensions.kt`                                                |
-| Event-type classification             | `events-importer/src/.../scraper/EventTypeMapping.kt`                                                     |
-| Artist-name resolution                | `events-importer/src/.../scraper/ArtistNameMapping.kt`                                                    |
-| Event field-level mapping             | `events-importer/src/.../scraper/EventFieldMapping.kt`                                                    |
-| WebFlux Pageable resolver config      | `events-importer/src/.../WebFluxConfiguration.kt`                                                         |
-| Stable-sort Pageable resolver         | `events-importer/src/.../StableSortPageableArgumentResolver.kt` (duplicated in `events-bff`)              |
-| Base integration test class           | `events-importer/src/test/.../BaseControllerTest.kt`                                                      |
-| Full lifecycle integration test       | `events-importer/src/test/.../event/FullLifecycleIntegrationTest.kt`                                      |
-| Testcontainers setup (BFF)            | `events-bff/src/test/.../PostgresTestcontainersConfiguration.kt`                                          |
-| Testcontainers setup (importer)       | `events-importer/src/test/.../PostgresTestcontainersConfiguration.kt`                                     |
-| Modularity verification (BFF)         | `events-bff/src/test/.../ModularityTests.kt`                                                              |
-| Modularity verification (importer)    | `events-importer/src/test/.../ModularityTests.kt`                                                         |
-| Modularity verification (core)        | `events-core/src/test/.../ModularityTests.kt`                                                             |
-| ADR: Reactive stack                   | `docs/adr/ADR-001_REACTIVE_STACK.md`                                                                      |
-| ADR: R2DBC query derivation limits    | `docs/adr/ADR-002_R2DBC_QUERY_DERIVATION.md`                                                              |
-| ADR: Entity/domain separation         | `docs/adr/ADR-003_ENTITY_DOMAIN_SEPARATION.md`                                                            |
-| ADR: Dedicated database schema        | `docs/adr/ADR-004_DEDICATED_DATABASE_SCHEMA.md`                                                           |
-| ADR: Migrations owned by importer     | `docs/adr/ADR-005_MIGRATIONS_OWNED_BY_IMPORTER.md`                                                        |
-| ADR: Spring Modulith                  | `docs/adr/ADR-006_SPRING_MODULITH.md`                                                                     |
-| ADR: Web scraping strategy            | `docs/adr/ADR-007_WEB_SCRAPING_STRATEGY.md`                                                               |
-| ADR: Import job scheduling            | `docs/adr/ADR-008_IMPORT_JOB_SCHEDULING.md`                                                               |
-| ADR: Optimistic locking (event src)   | `docs/adr/ADR-009_OPTIMISTIC_LOCKING_EVENT_SOURCE.md`                                                     |
-| ADR: Frontend styling framework       | `docs/adr/ADR-010_FRONTEND_STYLING_FRAMEWORK.md`                                                          |
-| ADR: Event-calendar library           | `docs/adr/ADR-011_CALENDAR_LIBRARY.md`                                                                    |
-| ADR: Cloud platform & hosting         | `docs/adr/ADR-012_CLOUD_PLATFORM.md`                                                                      |
-| ADR: Localisation (English + German)  | `docs/adr/ADR-013_LOCALISATION.md`                                                                        |
-| ADR: Rendering strategy (SPA/SSG/SSR) | `docs/adr/ADR-014_RENDERING_STRATEGY.md`                                                                  |
-| ADR: Observability stack              | `docs/adr/ADR-015_OBSERVABILITY_STACK.md`                                                                 |
-| Plan: Hetzner + k3s setup, go-live    | `docs/PLATFORM_SETUP.md`                                                                                  |
-| Releasing & deploying, end to end     | `docs/RELEASING.md` — the diagram; ADR-016 has the reasoning                                              |
-| Bootstrapping a cluster, once         | `docs/CLUSTER_BOOTSTRAP.md` — ordered runbook, first run 2026-08-13; traps table at the bottom            |
-| Connecting to a running cluster       | `docs/CLUSTER_ACCESS.md` — tunnel, kubeconfig, contexts, k9s. Read-only; nothing in it changes anything   |
-| Flux resources (one dir per cluster)  | `deploy/clusters/` — read `deploy/AGENTS.md` first; the semver range is on the OCIRepository              |
-| Plan: footer, legal pages, versioning | `docs/LEGAL.md`                                                                                           |
-| Backlog snapshot generator            | `scripts/generate-backlog-snapshot.sh` → `build/BACKLOG.md` (generated, not committed)                    |
-| Issue board helper                    | `scripts/issue-board.sh` — Status and Priority are project fields, not labels                             |
-| Frontend entry point                  | `events-frontend/src/main.ts`                                                                             |
-| IntelliJ HTTP Client requests         | `http/importer/` (admin) and `http/bff/` (public read) `.http` files + shared `http/http-client.env.json` |
-| Local dev environment control script  | `scripts/dev-env.sh` (start/stop the stack, seed sources, trigger imports, inspect + diff the data)       |
-| Performance tests (k6)                | `perf/` — `smoke.js` · `load.js` · `spike.js`, endpoints in `perf/lib/api.js`                             |
+| Backend container images               | `events-bff/Dockerfile`, `events-importer/Dockerfile` — no `RUN`, context is each module's `build/docker` |
+| Frontend container image               | `events-frontend/Dockerfile` + `events-frontend/docker/nginx.conf` — nginx on 8080, context is the module |
+| Chart render assertions                | `deploy/scripts/render-assertions.sh`                                                                     |
+| Release notes categories               | `.github/release.yml`                                                                                     |
+| Dependabot config                      | `.github/dependabot.yml`                                                                                  |
+| Commit message prompt                  | `.github/prompts/commit-message.prompt.md`                                                                |
+| Squash commit message prompt           | `.github/prompts/squash-commit-message.prompt.md`                                                         |
+| Open PR prompt                         | `.github/prompts/open-pr.prompt.md`                                                                       |
+| Code review prompt                     | `.github/prompts/code-review.prompt.md`                                                                   |
+| Security report prompt                 | `.github/prompts/security-report.prompt.md`                                                               |
+| Shared domain module marker            | `events-core/src/.../EventsCoreModule.kt`                                                                 |
+| Domain data classes                    | `events-core/src/.../artist/`, `event/`, `genretag/`, `promoter/`, `venue/`                               |
+| Price normalization utility            | `events-core/src/.../event/MoneyExtensions.kt`                                                            |
+| Initial DB migration                   | `events-importer/src/main/resources/db/migration/V001__create_initial_schema.sql`                         |
+| Global exception handler               | `events-importer/src/.../GlobalExceptionHandler.kt`                                                       |
+| Slug generator utility                 | `events-importer/src/.../slug/SlugGenerator.kt`                                                           |
+| Genre normalizer utility               | `events-importer/src/.../genretag/GenreNormalizer.kt`                                                     |
+| Shared scraping utilities              | `events-importer/src/.../scraper/ScrapingExtensions.kt`                                                   |
+| Shared date/time parsing               | `events-importer/src/.../scraper/DateParsingExtensions.kt`                                                |
+| Event-type classification              | `events-importer/src/.../scraper/EventTypeMapping.kt`                                                     |
+| Artist-name resolution                 | `events-importer/src/.../scraper/ArtistNameMapping.kt`                                                    |
+| Event field-level mapping              | `events-importer/src/.../scraper/EventFieldMapping.kt`                                                    |
+| WebFlux Pageable resolver config       | `events-importer/src/.../WebFluxConfiguration.kt`                                                         |
+| Stable-sort Pageable resolver          | `events-importer/src/.../StableSortPageableArgumentResolver.kt` (duplicated in `events-bff`)              |
+| Base integration test class            | `events-importer/src/test/.../BaseControllerTest.kt`                                                      |
+| Full lifecycle integration test        | `events-importer/src/test/.../event/FullLifecycleIntegrationTest.kt`                                      |
+| Testcontainers setup (BFF)             | `events-bff/src/test/.../PostgresTestcontainersConfiguration.kt`                                          |
+| Testcontainers setup (importer)        | `events-importer/src/test/.../PostgresTestcontainersConfiguration.kt`                                     |
+| Modularity verification (BFF)          | `events-bff/src/test/.../ModularityTests.kt`                                                              |
+| Modularity verification (importer)     | `events-importer/src/test/.../ModularityTests.kt`                                                         |
+| Modularity verification (core)         | `events-core/src/test/.../ModularityTests.kt`                                                             |
+| ADR: Reactive stack                    | `docs/adr/ADR-001_REACTIVE_STACK.md`                                                                      |
+| ADR: R2DBC query derivation limits     | `docs/adr/ADR-002_R2DBC_QUERY_DERIVATION.md`                                                              |
+| ADR: Entity/domain separation          | `docs/adr/ADR-003_ENTITY_DOMAIN_SEPARATION.md`                                                            |
+| ADR: Dedicated database schema         | `docs/adr/ADR-004_DEDICATED_DATABASE_SCHEMA.md`                                                           |
+| ADR: Migrations owned by importer      | `docs/adr/ADR-005_MIGRATIONS_OWNED_BY_IMPORTER.md`                                                        |
+| ADR: Spring Modulith                   | `docs/adr/ADR-006_SPRING_MODULITH.md`                                                                     |
+| ADR: Web scraping strategy             | `docs/adr/ADR-007_WEB_SCRAPING_STRATEGY.md`                                                               |
+| ADR: Import job scheduling             | `docs/adr/ADR-008_IMPORT_JOB_SCHEDULING.md`                                                               |
+| ADR: Optimistic locking (event src)    | `docs/adr/ADR-009_OPTIMISTIC_LOCKING_EVENT_SOURCE.md`                                                     |
+| ADR: Frontend styling framework        | `docs/adr/ADR-010_FRONTEND_STYLING_FRAMEWORK.md`                                                          |
+| ADR: Event-calendar library            | `docs/adr/ADR-011_CALENDAR_LIBRARY.md`                                                                    |
+| ADR: Cloud platform & hosting          | `docs/adr/ADR-012_CLOUD_PLATFORM.md`                                                                      |
+| ADR: Localisation (English + German)   | `docs/adr/ADR-013_LOCALISATION.md`                                                                        |
+| ADR: Rendering strategy (SPA/SSG/SSR)  | `docs/adr/ADR-014_RENDERING_STRATEGY.md`                                                                  |
+| ADR: Observability stack               | `docs/adr/ADR-015_OBSERVABILITY_STACK.md`                                                                 |
+| Plan: Hetzner + k3s setup, go-live     | `docs/PLATFORM_SETUP.md`                                                                                  |
+| Releasing & deploying, end to end      | `docs/RELEASING.md` — the diagram; ADR-016 has the reasoning                                              |
+| Bootstrapping a cluster, once          | `docs/CLUSTER_BOOTSTRAP.md` — ordered runbook, first run 2026-08-13; traps table at the bottom            |
+| Connecting to a running cluster        | `docs/CLUSTER_ACCESS.md` — tunnel, kubeconfig, contexts, k9s. Read-only; nothing in it changes anything   |
+| Flux resources (one dir per cluster)   | `deploy/clusters/` — read `deploy/AGENTS.md` first; the semver range is on the OCIRepository              |
+| Plan: footer, legal pages, versioning  | `docs/LEGAL.md`                                                                                           |
+| Backlog snapshot generator             | `scripts/generate-backlog-snapshot.sh` → `build/BACKLOG.md` (generated, not committed)                    |
+| Issue board helper                     | `scripts/issue-board.sh` — Status and Priority are project fields, not labels                             |
+| Frontend entry point                   | `events-frontend/src/main.ts`                                                                             |
+| IntelliJ HTTP Client requests          | `http/importer/` (admin) and `http/bff/` (public read) `.http` files + shared `http/http-client.env.json` |
+| Local dev environment control script   | `scripts/dev-env.sh` (start/stop the stack, seed sources, trigger imports, inspect + diff the data)       |
+| Performance tests (k6)                 | `perf/` — `smoke.js` · `load.js` · `spike.js`, endpoints in `perf/lib/api.js`                             |

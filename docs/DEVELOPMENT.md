@@ -27,7 +27,7 @@ here.
 ## Prerequisites
 
 | Tool         | Version                                   | Notes                                                             |
-|--------------|-------------------------------------------|-------------------------------------------------------------------|
+| ------------ | ----------------------------------------- | ----------------------------------------------------------------- |
 | JDK          | see [`.sdkmanrc`](../.sdkmanrc)           | `sdk env` picks it up; install [SDKMAN](https://sdkman.io/) first |
 | Docker       | any recent                                | Postgres is started for you by `bootRun`                          |
 | Node.js      | see [`.nvmrc`](../events-frontend/.nvmrc) | frontend only; `nvm use`                                          |
@@ -58,21 +58,26 @@ pre-commit run gitleaks --all-files       # everything tracked by git
 gitleaks detect --source . --verbose      # the entire history (needs: brew install gitleaks)
 ```
 
-Three more hooks run alongside it, all `local` — they use the `tofu`, `shellcheck` and `helm` already on your machine rather than pulling third-party hook
+Four more hooks run alongside it, all `local` — they use the `tofu`, `shellcheck` and `helm` already on your machine rather than pulling third-party hook
 repositories that would each need their own pinning:
 
-| Hook | Runs on |
-|---|---|
-| `tofu-fmt` | any `.tf` / `.tfvars` file. It rewrites in place, so a failure means "re-stage and commit again", not "go and fix something" |
-| `shellcheck-scripts` | `infra/modules/environment/cloud-init/*.sh` and `deploy/scripts/*.sh` |
-| `helm-lint` | anything under `deploy/charts/`. Lints the chart directory, so it takes no filenames |
+| Hook                 | Runs on                                                                                                                      |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `tofu-fmt`           | any `.tf` / `.tfvars` file. It rewrites in place, so a failure means "re-stage and commit again", not "go and fix something" |
+| `shellcheck-scripts` | `infra/modules/environment/cloud-init/*.sh` and `deploy/scripts/*.sh`                                                        |
+| `format-markdown`    | any `.md` file. Also rewrites in place, so the same "re-stage and commit again" applies                                      |
+| `helm-lint`          | anything under `deploy/charts/`. Lints the chart directory, so it takes no filenames                                         |
 
-All three are also CI's job (`validate-infra.yml`, `validate-chart.yml`); the hooks just move the deterministic half of that feedback before the push. If you do
-not have the tools installed, the hooks fail — install them (`brew install opentofu shellcheck helm`) or skip with `git commit --no-verify` on a change that
-touches none of those paths.
+`tofu-fmt`, `shellcheck-scripts` and `helm-lint` are also CI's job (`validate-infra.yml`, `validate-chart.yml`); those hooks just move the deterministic half of
+that feedback before the push. `format-markdown` has no CI counterpart yet — the hook is currently the only thing enforcing it. If you do not have the tools
+installed, the hooks fail — install them (`brew install opentofu shellcheck helm`) or skip with `git commit --no-verify` on a change that touches none of those
+paths.
+
+`format-markdown` is the exception to "uses what is already on your machine": it deliberately calls the oxfmt pinned in `events-frontend/package.json`, not one
+on `$PATH`, so it needs `npm ci` in `events-frontend/` rather than a `brew install`. See [Markdown formatting](#markdown-formatting).
 
 **A clean local ShellCheck is not proof CI will agree.** The hook and CI both use whatever `shellcheck` is on the machine they run on, and those differ — the
-Homebrew build is usually ahead of the GitHub runner's, and newer versions have *dropped* some checks. An `A && B || C` construct that 0.11.0 accepts is still
+Homebrew build is usually ahead of the GitHub runner's, and newer versions have _dropped_ some checks. An `A && B || C` construct that 0.11.0 accepts is still
 `SC2015` on 0.9.0, which is how a locally green script arrives red in CI. To check against an older one without installing it:
 
 ```bash
@@ -128,7 +133,7 @@ Both services define a `local` Spring profile whose only effect is to mirror con
 instead of scrolled in the IDE console.
 
 | Service           | Log file                                     |
-|-------------------|----------------------------------------------|
+| ----------------- | -------------------------------------------- |
 | `events-importer` | `events-importer/build/dev-env/importer.log` |
 | `events-bff`      | `events-bff/build/dev-env/bff.log`           |
 
@@ -216,6 +221,34 @@ Frontend checks are `npm run type-check`, `npm run lint`, `npm run test:unit`, `
 `npm run test:a11y` — see [events-frontend/README.md](../events-frontend/README.md).
 
 The full pre-PR sequence is a single skill: [`/verify`](../.github/prompts/verify.prompt.md).
+
+### Markdown formatting
+
+Every `.md` file in the repository is formatted by [oxfmt](https://oxc.rs/docs/guide/usage/formatter.html), through one script:
+
+```bash
+scripts/format-markdown.sh          # format in place
+scripts/format-markdown.sh check    # report drift, write nothing; exits 1 if anything is unformatted
+```
+
+Configuration is the root [`.oxfmtrc.json`](../.oxfmtrc.json): tables aligned, `_emphasis_` over `*emphasis*`, `-` bullets, and prose left exactly where the
+author wrapped it (`proseWrap: preserve`) — reflowing 150-column paragraphs would turn every prose edit into a whole-paragraph diff.
+
+Four things about this are deliberate and easy to undo by accident:
+
+- **It is Markdown-only, enforced twice.** oxfmt also formats YAML, JSON, CSS and TypeScript. The script never passes it anything else, _and_ `.oxfmtrc.json`
+  carries an `ignorePatterns` deny-list for those extensions, so even a bare `oxfmt` run at the repository root cannot touch them. Do not widen either one —
+  [AGENTS.md](../AGENTS.md) §Code Conventions records what was measured and why the answer was no.
+- **It uses the pinned oxfmt, never `$PATH`.** A Homebrew oxfmt 0.63.0 and the pinned 0.62.0 disagree about tables nested under list items, so the binary is
+  locked by `package-lock.json` like everything else. This is why the hook needs `npm ci` in `events-frontend/` rather than a `brew install`.
+- **Write mode runs oxfmt twice.** A table indented under a list item is skipped on the first pass and only formatted on the second (both versions do this). One
+  pass would leave the file off its own fixpoint and `check` would then fail on a file the formatter had just written.
+- **`--disable-nested-config`**, because oxfmt's nested configs _replace_ rather than merge. Without it, `events-frontend/.oxfmtrc.json` shadows the root config
+  wholesale for the two `.md` files under `events-frontend/`.
+
+IntelliJ has its own Markdown formatter and it does not agree with oxfmt about table padding. The conflicting `ij_markdown_*` keys were removed from
+`.editorconfig`, but that unpins IntelliJ's settings rather than disabling its formatter — Reformat Code on a `.md` file will still reflow it. The commit hook
+runs oxfmt last and normalises the result, so commits stay consistent either way; the tidy habit is to leave Markdown to the script.
 
 ### Dependency CVE scanning (OWASP Dependency-Check)
 
@@ -309,13 +342,13 @@ routes `/api` to the BFF and `/` to this container; nginx here proxies nothing.
 
 What the config guarantees, and what is worth re-checking after any change to it:
 
-| Request | Expected |
-|---|---|
+| Request                                | Expected                                       |
+| -------------------------------------- | ---------------------------------------------- |
 | `/` and any deep link (`/en/events/…`) | `200`, `index.html`, `Cache-Control: no-cache` |
-| `/assets/<hashed>` | `200`, `immutable`, one year |
-| `/assets/<missing>` | **`404`** — never the SPA fallback |
-| `/sitemap.xml`, `/robots.txt` | `200`, one hour |
-| `/.env` or any dotfile | `403` |
+| `/assets/<hashed>`                     | `200`, `immutable`, one year                   |
+| `/assets/<missing>`                    | **`404`** — never the SPA fallback             |
+| `/sitemap.xml`, `/robots.txt`          | `200`, one hour                                |
+| `/.env` or any dotfile                 | `403`                                          |
 
 The images are **not pushed by CI** — that is the release workflow's job (#264).
 
@@ -345,7 +378,7 @@ knowing before you read it:
   DNS catches up — self-healing, which is worse than failing, because the install still succeeds and the only evidence is a restart count. The script forces the
   reload with a CoreDNS rollout restart. If you do this by hand, do the same.
 
-**Check the content type, not the status code**, when testing what should *not* be reachable. nginx serves the SPA for every unmatched path, so
+**Check the content type, not the status code**, when testing what should _not_ be reachable. nginx serves the SPA for every unmatched path, so
 `/actuator/health` through the ingress returns **200** — and that 200 is `text/html`, the SPA fallback, not actuator. A negative test that only looks at the
 status code passes for the wrong reason:
 
@@ -387,12 +420,12 @@ values file.
 **One number reaches four artifacts, and only one file decides it.** [`gradle.properties`](../gradle.properties) carries `version=X.Y.Z-SNAPSHOT`; everything
 else derives from it. Three other files repeat the number and none is authoritative:
 
-| File | Holds | Why it is not the source |
-|---|---|---|
-| `gradle.properties` | `0.1.0-SNAPSHOT` | **The source of truth.** `bootBuildInfo` stamps it, `/actuator/info` serves it |
-| `events-frontend/package.json` | `0.1.0` | npm has no `-SNAPSHOT` convention, so it mirrors the bare number |
-| `Chart.yaml` `version` | `0.1.0` | A placeholder — the release workflow stamps the computed version over it |
-| `Chart.yaml` `appVersion` | `0.1.0` | The same placeholder, and also the default image tag for all three components |
+| File                           | Holds            | Why it is not the source                                                       |
+| ------------------------------ | ---------------- | ------------------------------------------------------------------------------ |
+| `gradle.properties`            | `0.1.0-SNAPSHOT` | **The source of truth.** `bootBuildInfo` stamps it, `/actuator/info` serves it |
+| `events-frontend/package.json` | `0.1.0`          | npm has no `-SNAPSHOT` convention, so it mirrors the bare number               |
+| `Chart.yaml` `version`         | `0.1.0`          | A placeholder — the release workflow stamps the computed version over it       |
+| `Chart.yaml` `appVersion`      | `0.1.0`          | The same placeholder, and also the default image tag for all three components  |
 
 [`scripts/version.sh`](../scripts/version.sh) is the only thing that knows the rules, so CI and a laptop always agree:
 
@@ -402,7 +435,7 @@ scripts/version.sh compute    # 0.1.0-snapshot.g33fd32g on a branch; 0.1.0 from 
 scripts/version.sh check      # fails if the four files disagree — also a pre-commit hook
 ```
 
-**Snapshots are prereleases *of the coming release*, not of the last one.** SemVer sorts `0.1.0-snapshot.g33fd32g` *before* `0.1.0`, so naming a snapshot after
+**Snapshots are prereleases _of the coming release_, not of the last one.** SemVer sorts `0.1.0-snapshot.g33fd32g` _before_ `0.1.0`, so naming a snapshot after
 the released version would have it claim to be older than code it is newer than. Same semantics as Maven's `-SNAPSHOT`. The `g` before the sha is git-describe's
 convention and is load-bearing rather than decorative: a SemVer prerelease identifier made only of digits may not have a leading zero, so a short sha like
 `0031234` would produce a version `helm lint --strict` rejects — about one commit in four hundred.
@@ -412,12 +445,12 @@ convention and is load-bearing rather than decorative: a SemVer prerelease ident
 [`release.yml`](../.github/workflows/release.yml) builds, scans and pushes **four artifacts** — three images and the chart — from one computed version. It does
 not deploy: Flux pulls from GHCR on its own schedule (#414), so a green run means the artifacts exist, not that they are live.
 
-| Trigger | Version | Published |
-|---|---|---|
-| every push to `main` | `0.1.0-snapshot.g<sha>` | images + chart |
-| **publishing a GitHub Release** tagged `v0.1.0` | `0.1.0` | images + chart, **and** `latest` on the images |
-| a PR touching `release.yml` or `version.sh` | snapshot | **nothing** |
-| `workflow_dispatch` | as above | **nothing**, unless the `publish` input is ticked |
+| Trigger                                         | Version                 | Published                                         |
+| ----------------------------------------------- | ----------------------- | ------------------------------------------------- |
+| every push to `main`                            | `0.1.0-snapshot.g<sha>` | images + chart                                    |
+| **publishing a GitHub Release** tagged `v0.1.0` | `0.1.0`                 | images + chart, **and** `latest` on the images    |
+| a PR touching `release.yml` or `version.sh`     | snapshot                | **nothing**                                       |
+| `workflow_dispatch`                             | as above                | **nothing**, unless the `publish` input is ticked |
 
 Publishing is an allowlist — `push` events and a dispatch that explicitly asks for it — rather than "everything except the dry run", so a trigger added later
 cannot quietly become a publishing one.
@@ -515,11 +548,11 @@ cd events-frontend && npm run check:licenses         # frontend production depen
 
 Policies: [`config/allowed-licenses-jvm.json`](../config/allowed-licenses-jvm.json) and
 [`config/allowed-licenses-npm.json`](../config/allowed-licenses-npm.json). A third gate,
-[`dependency-review.yml`](../.github/workflows/dependency-review.yml), carries a deny-list applied to *newly introduced* dependencies at PR time.
+[`dependency-review.yml`](../.github/workflows/dependency-review.yml), carries a deny-list applied to _newly introduced_ dependencies at PR time.
 
 > **Do not widen an allow-list to make a build pass.** AGPL, GPL without the Classpath Exception, and
 > source-available licences (SSPL, BUSL, Elastic-2.0) are not acceptable for a public network service whose own
-> source is Apache-2.0. **AGPL is the one to watch**: its § 13 obligation fires on *network interaction*, not
+> source is Apache-2.0. **AGPL is the one to watch**: its § 13 obligation fires on _network interaction_, not
 > distribution. See [LEGAL.md §9.2](LEGAL.md).
 
 **Regenerating the notices page.** `events-frontend/src/assets/notices.json` is generated and committed — never hand-edited. Regenerate it whenever dependencies

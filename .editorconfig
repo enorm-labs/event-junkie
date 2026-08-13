@@ -584,23 +584,18 @@ ij_kotlin_wrap_elvis_expressions = 1
 ij_kotlin_wrap_expression_body_functions = 1
 ij_kotlin_wrap_first_method_in_call_chain = false
 
-[{*.markdown,*.md}]
-ij_markdown_force_one_space_after_blockquote_symbol = true
-ij_markdown_force_one_space_after_header_symbol = true
-ij_markdown_force_one_space_after_list_bullet = true
-ij_markdown_force_one_space_between_words = true
-ij_markdown_format_tables = true
-ij_markdown_insert_quote_arrows_on_wrap = true
-ij_markdown_keep_indents_on_empty_lines = false
-ij_markdown_keep_line_breaks_inside_text_blocks = true
-ij_markdown_max_lines_around_block_elements = 1
-ij_markdown_max_lines_around_header = 1
-ij_markdown_max_lines_between_paragraphs = 1
-ij_markdown_min_lines_around_block_elements = 1
-ij_markdown_min_lines_around_header = 1
-ij_markdown_min_lines_between_paragraphs = 1
-ij_markdown_wrap_text_if_long = true
-ij_markdown_wrap_text_inside_blockquotes = true
+# Markdown belongs to oxfmt — `scripts/format-markdown.sh`, configured in `.oxfmtrc.json`.
+#
+# The `ij_markdown_*` keys that used to live here were removed because they lost a fight they could
+# only ever draw: `ij_markdown_format_tables` pads table cells to different widths than oxfmt does,
+# and `ij_markdown_wrap_text_if_long` reflows prose at 160 that oxfmt is configured to leave exactly
+# where the author put it (`proseWrap: preserve`). Two formatters, one file type, opposite opinions —
+# every Reformat Code undid the last commit hook and vice versa.
+#
+# Removing the keys unpins IntelliJ's Markdown settings; it does not disable its formatter. Reformat
+# Code on a .md file will still reflow it using IDE defaults. The pre-commit hook runs oxfmt last and
+# normalises whatever the IDE did, so commits stay consistent either way — but the tidy habit is to
+# leave Markdown to the script rather than to Cmd+Alt+L.
 
 # `tofu fmt` is deliberately non-configurable and indents with two spaces. Without this, the `[*]`
 # default of four puts every editor in direct conflict with the CI format check.

@@ -65,7 +65,9 @@ cd events-frontend
 npm run type-check && npm run lint && npm run test:unit && npm run test:e2e
 ```
 
-Skip the Gradle build for documentation-only or frontend-only changes — it covers the backend modules only.
+Skip the Gradle build for documentation-only or frontend-only changes — it covers the backend modules only. Documentation is not check-free, though: `.md`
+files are formatted by `scripts/format-markdown.sh`, which the `pre-commit` hook runs for you (see
+[docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md#markdown-formatting)).
 
 The pull request template asks two questions that are easy to skip and expensive to miss:
 
