@@ -68,10 +68,9 @@ repositories that would each need their own pinning:
 | `format-markdown`    | any `.md` file. Also rewrites in place, so the same "re-stage and commit again" applies                                      |
 | `helm-lint`          | anything under `deploy/charts/`. Lints the chart directory, so it takes no filenames                                         |
 
-`tofu-fmt`, `shellcheck-scripts` and `helm-lint` are also CI's job (`validate-infra.yml`, `validate-chart.yml`); those hooks just move the deterministic half of
-that feedback before the push. `format-markdown` has no CI counterpart yet — the hook is currently the only thing enforcing it. If you do not have the tools
-installed, the hooks fail — install them (`brew install opentofu shellcheck helm`) or skip with `git commit --no-verify` on a change that touches none of those
-paths.
+All four are also CI's job (`validate-infra.yml`, `validate-chart.yml`, `validate-docs.yml`); the hooks just move the deterministic half of that feedback before
+the push. If you do not have the tools installed, the hooks fail — install them (`brew install opentofu shellcheck helm`) or skip with `git commit --no-verify`
+on a change that touches none of those paths.
 
 `format-markdown` is the exception to "uses what is already on your machine": it deliberately calls the oxfmt pinned in `events-frontend/package.json`, not one
 on `$PATH`, so it needs `npm ci` in `events-frontend/` rather than a `brew install`. See [Markdown formatting](#markdown-formatting).
@@ -230,6 +229,10 @@ Every `.md` file in the repository is formatted by [oxfmt](https://oxc.rs/docs/g
 scripts/format-markdown.sh          # format in place
 scripts/format-markdown.sh check    # report drift, write nothing; exits 1 if anything is unformatted
 ```
+
+Enforced in two places: the `format-markdown` pre-commit hook, which formats on the way in, and `validate-docs.yml`, which runs `check` in CI. The hook is
+advisory by construction — `--no-verify` skips it, as does anything committed through the web UI — so CI is what makes it hold on `main`. CI checks and never
+writes: a job that pushes a formatting commit back would need write access on every pull request including forks, which is more than a formatter is worth.
 
 Configuration is the root [`.oxfmtrc.json`](../.oxfmtrc.json): tables aligned, `_emphasis_` over `*emphasis*`, `-` bullets, and prose left exactly where the
 author wrapped it (`proseWrap: preserve`) — reflowing 150-column paragraphs would turn every prose edit into a whole-paragraph diff.

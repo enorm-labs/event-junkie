@@ -654,6 +654,12 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       permission grants that belonged to a single job. zizmor blocks at `--min-severity medium`; suppressions live in `zizmor.yml` or as inline
       `# zizmor: ignore[…]` comments, each with a reason and a date. **`unpinned-uses` is downgraded to `ref-pin` on purpose** — the 57 tag-pinned actions are
       #443's work, and that suppression should be raised to `hash-pin` the day it lands.
+    - `validate-docs.yml` — `scripts/format-markdown.sh check` over every `.md` file. It **checks and never writes**: a job that pushed a formatting commit back
+      would need write access on every pull request including forks, which is far more than a formatter is worth, so a failure names the files and leaves the
+      one-command fix to the author. It installs `events-frontend`'s dependencies for the pinned oxfmt rather than fetching a released one — versions disagree
+      about Markdown, and a check run against "whatever is newest" would fail on files a contributor's pinned copy had just written. `package-lock.json` is in
+      its path filters for that reason: an oxfmt bump can reformat every document here. **It is the one `validate-*` workflow that keeps a `paths:` filter on
+      `pull_request`**, because it is not on the required list — see the note in the file, and delete the filter if it is ever made required.
     - `validate-infra.yml` — `tofu fmt -check`, `tofu init -backend=false` + `validate` across all three stacks in a matrix, and ShellCheck on the cloud-init
       scripts. Triggers only when `infra/**` changes. **It deliberately never runs `plan`**: that needs a Hetzner token, and per PLATFORM_SETUP.md §4 nothing
       outside the cluster holds a cluster or cloud credential. So this is a syntax and type gate, not a correctness one, and there is no drift detection.
@@ -849,6 +855,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | CI: OpenTofu fmt/validate + ShellCheck | `.github/workflows/validate-infra.yml`                                                                    |
 | CI: workflow lint + security audit     | `.github/workflows/validate-workflows.yml`; suppressions in `zizmor.yml`                                  |
 | CI: Helm lint/render/assertions        | `.github/workflows/validate-chart.yml`                                                                    |
+| CI: Markdown formatting                | `.github/workflows/validate-docs.yml`                                                                     |
 | CI: build, scan and publish to GHCR    | `.github/workflows/release.yml` — the only workflow that pushes anything; it does not deploy              |
 | Version scheme (one number, 4 files)   | `scripts/version.sh`; `gradle.properties` is the source of truth — docs/DEVELOPMENT.md §Versions          |
 | Markdown formatting                    | `scripts/format-markdown.sh` + `.oxfmtrc.json` — Markdown only, and the scope is load-bearing             |

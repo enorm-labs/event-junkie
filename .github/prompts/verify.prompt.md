@@ -37,9 +37,9 @@ scripts/format-markdown.sh check
 ```
 
 Writes nothing; exits 1 listing every file that is not formatted. The fix is `scripts/format-markdown.sh` with no argument — it rewrites in place, so this is
-never a "go and work out what is wrong" failure. The `pre-commit` hook runs the same script, so a clean local commit history means this passes; it is here for
-the case where hooks were skipped with `--no-verify`. Do not reach for `oxfmt` directly — the script pins the version and the scope, both of which matter
-(AGENTS.md §Code Conventions).
+never a "go and work out what is wrong" failure. The `pre-commit` hook runs the same script and `validate-docs.yml` runs this exact command in CI, so a clean
+local commit history means both pass; this step is here for the case where hooks were skipped with `--no-verify`. Do not reach for `oxfmt` directly — the script
+pins the version and the scope, both of which matter (AGENTS.md §Code Conventions).
 
 ### Infrastructure (from repo root, only when the diff touches `infra/`)
 
