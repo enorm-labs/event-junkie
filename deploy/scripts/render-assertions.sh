@@ -324,3 +324,7 @@ main() {
 }
 
 main "$@"
+
+# deliberate shellcheck violation for the #443 probe
+probe_var=$UNQUOTED_AND_UNDEFINED
+echo $probe_var
