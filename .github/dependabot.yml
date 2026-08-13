@@ -64,6 +64,33 @@ updates:
     schedule:
       interval: "weekly"
     versioning-strategy: "increase"
+    # The only suppression in this file, and it carries a reason and a date like every other one in
+    # the repository (`.trivyignore`, `zizmor.yml`, `owasp-suppressions.xml`).
+    #
+    # 2026-08-13 — **TypeScript 7 is blocked by two things, neither of them ours** (#371, #420):
+    #
+    #   1. `vue-tsc@3.3.9` requires `typescript/lib/tsc`, which the TS 7 native port no longer
+    #      exports. `npm run type-check` and `npm run build` both die with
+    #      `ERR_PACKAGE_PATH_NOT_EXPORTED`. 3.3.9 is the latest vue-tsc, and its peer range
+    #      (`typescript >=5.0.0`) is stale — npm installs the combination happily and it fails at
+    #      run time, which is what makes this worth writing down rather than rediscovering.
+    #   2. typescript-eslint cannot support TS 7 until TS 7 exposes an API at all
+    #      (typescript-eslint#10940, labelled "blocked by external API"; 8.67.0 still declares
+    #      `typescript >=4.8.4 <6.1.0`).
+    #
+    # Without this entry Dependabot re-opens the same unmergeable pull request every week, and a
+    # weekly PR that is always closed unread is how people learn to ignore Dependabot.
+    #
+    # Deliberately `semver-major` rather than `versions: ["7.x"]`: the whole 7-and-later line is the
+    # restructured Go port, so 8.x would be blocked for the same reason. Minor and patch updates on
+    # 6.x still come through. **`vue-tsc` is deliberately NOT ignored** — a vue-tsc release is the
+    # thing that unblocks this, so we want to be told about it.
+    #
+    # **Remove this the moment #371 closes.** A suppression that outlives its issue is an upgrade
+    # that has been quietly switched off.
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     groups:
       vue:
         patterns:
