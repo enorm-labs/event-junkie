@@ -87,6 +87,12 @@ Traefik are installed out of band (#265), and Traefik ships with k3s. An `infras
 willingly. What Flux removes is the *stored credential*. **Branch protection is the control that replaces the kubeconfig**, which is why
 [#443](https://github.com/enorm-labs/event-junkie/issues/443)'s missing required status checks matter more after this decision than before it.
 
+> **Corrected 2026-08-13.** When this was written that sentence was aspirational rather than true, and the gap was worth more than the sentence. The `main`
+> ruleset required no status checks at all *and* carried `bypass_actors: [{OrganizationAdmin, always}]` — so every rule in it, including the pull-request
+> requirement, was advisory for the only account that merges anything here. #443 fixed both: nine checks are now required, the admin bypass is removed, and the
+> combination was verified by observing a pull request with a failing check be refused (`the base branch policy prohibits the merge`) rather than by reading the
+> configuration back. The claim above is now accurate; it was not when first made.
+
 **Costs accepted:**
 
 - **Deploys become eventually-consistent.** A green Actions run means "the artifacts exist", not "it is live". Reconciliation lands within about one polling
