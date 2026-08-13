@@ -150,8 +150,16 @@ tofu apply -var "admin_cidrs=$ADMIN"
 **3. After the apply — the server's public key.** `tofu output next_steps` prints this with the real addresses filled in:
 
 ```sh
-ssh ops@<node-ipv4> sudo cat /etc/wireguard/public.key
+ssh -i ~/.ssh/id_ed25519_hetzner ops@<node-ipv4> sudo cat /etc/wireguard/public.key
 ```
+
+**The `-i` is not optional unless that key is in your agent**, and `next_steps` omits it because the output has no way to know which key you used. If the agent
+holds a different key — a stray `id_rsa` is enough — this fails with `Permission denied (publickey)`, which reads like the `ops` user does not exist yet. Check
+with `ssh-add -l` before believing that. The key to offer is whichever one's public half is in `ssh_public_keys` in `terraform.tfvars`.
+
+**Give it two or three minutes first.** Port 22 is not open the instant `tofu apply` returns, and while the node is still booting the connection *times out*
+rather than being refused — which looks exactly like the firewall dropping you. It is not; wait and retry before going after `admin_cidrs`. `ping` answers much
+earlier, since ICMP is open to the world, so a successful ping and a hanging SSH together are the normal picture at ninety seconds in.
 
 **4. Your client config**, at `~/.wireguard/staging.conf` — or paste the same values into the WireGuard app:
 
@@ -304,10 +312,33 @@ carries anyway: ARM is only ever offered in Falkenstein, Helsinki and Nuremberg.
 > The apply also ran without `-var "admin_cidrs=…"`, so the firewall was created with **no SSH and no 6443 rule at all**. Harmless only because the server never
 > came up; on a retry the variable has to be passed or the node boots with the tunnel as its single point of failure.
 >
-> The re-platforming decision is therefore **not** taken and the `cpx*` paragraph above stands unused. It has got cheaper to defer in one respect and more
-> expensive in another: #264 now publishes **multi-arch** images, so architecture is no longer a one-way door — but production has been waiting since
-> 2026-08-11, staging has now failed once on hardware that was advertised as present, and "wait rather than re-platform" is a decision worth re-taking rather
-> than inheriting.
+> **Resolved the same day: staging is on `cpx22` (x86); production stays ARM and keeps waiting.**
+>
+> The refusal repeated on a second apply 20 minutes later, so it was settled by ordering a **bare `cax11` in `nbg1` through the API** — no Primary IPs, no
+> network, no firewall, `start_after_create: false`. Same refusal. That clears everything in this directory: Hetzner will not sell a `cax11` in `nbg1` while
+> advertising that it will, three refusals deep. Worth a support ticket, since their own API contradicts their order path.
+>
+> **It is a shortage, not an ARM problem.** The entire `cx` line is gone too — including `cx23` at €6.53, which is *cheaper than the ARM plan ever was*. Only
+> `cpx22` and above, plus the dedicated `ccx` line, can be bought in `eu-central` at all.
+>
+> | | | | |
+> |---|---|---|---|
+> | `cx23` | x86 | €6.53 | unavailable — the cheapest target to watch |
+> | `cax11` | ARM | €7.13 | unavailable — restores full parity |
+> | `cpx22` | x86 | **€23.19** | **orderable — what staging runs now** |
+>
+> **Staging moved and production did not**, because the asymmetry is real: everything downstream of a cluster existing (#265, #286, #270, #416) was blocked
+> behind staging, and nothing is blocked behind production. That defers the €62/month all-x86 decision rather than taking it — the full comparison is €26.74
+> for the ARM plan against €88.62 for all-x86.
+>
+> **Only one line changed**, `k3s_server_type`, and it does not touch the Primary IPs: they are location-bound, not type-bound, and the location did not move.
+> Nothing in `cloud-init/` is architecture-specific — checked, not assumed — and `image` resolves `ubuntu-24.04` against the server type's own architecture.
+>
+> **It worked.** The apply completed in 27 seconds and cloud-init in 207, on the first attempt, with no change to any script. `staging-k3s` is `Ready` on
+> k3s v1.36.3, with Traefik, CoreDNS, metrics-server and local-path-provisioner running, PostgreSQL listening on `10.1.1.10:5432`, and WireGuard up with the
+> declared peer. 2.6 GB of the node's 3.7 GB is free before any workload — enough headroom for Flux's ~300 MB and the three services.
+>
+> **`environments/` has now been applied.** Everything above this line was written while it never had been.
 
 ## Things that will surprise you
 
@@ -323,6 +354,25 @@ domain off the internet entirely.
 
 **Editing anything under `cloud-init/` replaces the node.** `user_data` is a force-new attribute. Correct for disposable nodes, and worth knowing before a
 one-word comment fix rebuilds production. `tofu plan` says so in red.
+
+**`cloud-init status` reports `error` on a perfectly good node, and it is not ours.** Observed on the first real boot, 2026-08-13:
+
+```
+status: error
+detail: DataSourceHetzner
+errors:
+    - can only concatenate str (not "NoneType") to str        (×4, stage init-local)
+WARNING:
+    - network-config-v1 failed schema validation!             (×4)
+```
+
+That is a bug in cloud-init's **Hetzner datasource**, in the stage that builds network configuration — before any of our scripts run. Networking works anyway,
+and so does everything downstream: the same boot logged `wireguard: server public key is …`, `postgres: listening on 10.1.1.10:5432`, `k3s: API is ready`, and
+`cloud-init finished after 207.70 seconds`, with k3s, PostgreSQL and `wg-quick@wg0` all active.
+
+**So do not read `cloud-init status` as the health check** — read `/var/log/cloud-init-output.log` and the service states, which is what
+[#424](https://github.com/enorm-labs/event-junkie/issues/424) means by cloud-init completing. Our four scripts each announce themselves in that log with a
+`<name>:` prefix, so a missing line is the real signal.
 
 **The PostgreSQL node has no public IPv4, and it is not confirmed that `apt` survives that.** Everything it fetches goes over IPv6, and some mirrors are
 IPv4-only. This is not resolved in advance because it is reversible in seconds: if the first boot fails, set `postgres_public_ipv4 = true`, re-apply, and the

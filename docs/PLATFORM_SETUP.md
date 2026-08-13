@@ -54,12 +54,27 @@ philosophy, it was a close call about whether a JVM gets OOM-killed mid-deploy. 
 
 > **Amended 2026-08-10: the CX line is unavailable.** ADR-012 and the table above are written against Hetzner's Cost-Optimized `CX` types, which are not
 > orderable at present. The replacement is the **`CAX` (Ampere ARM)** line, and it is an upgrade rather than a compromise — see below.
+>
+> **Amended 2026-08-13: staging is on `CPX22` (x86), because the CAX line could not be bought either.** Three orders for a `cax11` were refused with
+> `unsupported location for server type` *while Hetzner's API advertised it as available* — including a probe for a bare server with no IPs, no network and no
+> firewall, which rules out anything in `infra/`. Production keeps `CAX21` and keeps waiting; staging could not, because a cluster existing is what unblocks
+> #265, #286, #270 and #416.
+>
+> **This is a shortage, not an architecture problem.** Only `cpx22`+ and the dedicated `ccx` line are orderable in `eu-central` at all:
+>
+> | | | | |
+> |---|---|---|---|
+> | `cx23` | x86 | €6.53 | **unavailable** — and cheaper than the ARM plan ever was |
+> | `cax11` | ARM | €7.13 | **unavailable** — advertised in `nbg1`, refused three times |
+> | `cpx22` | x86 | **€23.19** | **orderable** — what staging now runs |
+>
+> Either of the first two returning is worth moving back to. `./check-capacity.sh --all` is the way to watch.
 
 | Role | Type | vCPU / RAM / disk | Notes |
 |---------------------|-----------|-------------------|--------------------------------------------------------------|
 | **k3s node** | **CAX21** | 4 ARM / 8 GB / 80 GB | Direct CX33 equivalent. Primary IPv4 + IPv6 |
 | **PostgreSQL node** | **CAX11** | 2 ARM / 4 GB / 40 GB | Direct CX23 equivalent. **No public IPv4** |
-| **Staging** | **CAX11** | 2 ARM / 4 GB / 40 GB | All-in-one. Needs a public IPv4 for the WireGuard endpoint |
+| **Staging** | ~~CAX11~~ **CPX22** | 2 x86 / 4 GB / 40 GB | All-in-one. Needs a public IPv4 for the WireGuard endpoint. **x86 since 2026-08-13 — see below** |
 | Private network | — | free | One `/16`, both production servers attached |
 | Firewalls | — | free | Two, one per role |
 | Backups | — | 20 % of server price | Hetzner's automated daily backups, both production servers |
@@ -111,6 +126,15 @@ you happen to be, and most networks you will connect from are IPv4-only.
 
 **Verify `signal-cli-rest-api` publishes an arm64 manifest before committing to it.** It is JVM-based and popular with Home Assistant users, who are
 overwhelmingly on ARM, so it is near-certain — but it is the one component on the list not confirmed.
+
+**The first bullet is now two-thirds true (2026-08-13).** The laptop is arm64 and production is *intended* to be, but staging runs x86 because ARM could not be
+bought. What keeps that from mattering much is that [#264](https://github.com/enorm-labs/event-junkie/issues/264) publishes **multi-arch** images: the same
+chart, the same tags and the same digests-per-platform run on either, so nothing had to be rebuilt or branched to move staging.
+
+Worth being honest about what parity was lost, though, because "staging is production-shaped" is most of what staging is for. Identical across the two: the
+chart, the database engine and version, the ingress path, TLS, Flux, and every workload's configuration. Different: the CPU architecture — so staging cannot
+catch an arm64-only regression, and a JVM performance characteristic measured there is not production's. Neither is what staging is currently being used to
+find. If production is eventually built on x86 too, this stops being a gap at all and the parity argument simply reads differently.
 
 **The standing risk:** a future dependency that ships amd64-only images. Everything needed today is fine, and if it ever bites, moving to the `CPX` (shared AMD)
 line is a rebuild rather than a redesign — neither the Helm chart nor the OpenTofu changes.

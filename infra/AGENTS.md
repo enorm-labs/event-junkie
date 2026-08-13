@@ -37,9 +37,15 @@ round-trip byte-identically through `indent()`. That check has caught real break
 **`bootstrap/` is applied and real, as of 2026-08-10.** Both DNS zones and their eight records exist on Hetzner and serve correctly; the SSH key is imported
 and managed. The S3 backend on Hetzner's Ceph works, including through a partial failure — that was the design's largest unknown and it is now closed.
 
-**`environments/` has never been applied.** No server, network, firewall or Primary IP described here exists. The firewall rules, the k3s flags, WireGuard and
-the PGDG install have never executed on a real machine, and `validate` cannot tell you they would. Do not describe any of that half as working, tested or
-verified; "declared" is the accurate word for it.
+**`environments/staging` is applied and real, as of 2026-08-13.** One `cpx22` in `nbg1` — x86, not ARM, and that is forced rather than chosen; `main.tf`
+explains it. The firewall rules, the k3s flags, WireGuard and the PGDG install have now executed on a real machine and worked on the first boot: k3s `Ready`,
+Traefik up, PostgreSQL listening on the private address, tunnel established with the declared peer.
+
+**Two things it is still fair to call unproven**, so do not describe them as verified: the destroy/apply cycle has not been run, and `admin_cidrs` has not yet
+gone back to `[]` — until it does, 22 and 6443 are reachable from one allowlisted address rather than from nowhere.
+
+**`environments/production` has never been applied.** No server, network, firewall or Primary IP described there exists, and `cax21` cannot currently be bought
+anywhere in `eu-central`. "Declared" is still the accurate word for that half.
 
 ## Layout, and why it is not by environment
 

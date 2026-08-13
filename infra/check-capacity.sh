@@ -35,6 +35,17 @@
 #               configuration fault rather than a capacity one. It is not: nothing about nbg1 or
 #               cax11 is invalid. Treat it as capacity wearing the wrong error code.
 #
+#               Settled by ordering a bare cax11 in nbg1 through the API — no Primary IPs, no
+#               network, no firewall, `start_after_create: false`. Same refusal. So it is Hetzner's
+#               side and not our configuration, three refusals deep, with the type still advertised
+#               as available at the moment of each one.
+#
+#               Staging moved to cpx22 (x86) as a result. It is the cheapest thing in eu-central
+#               that can actually be bought with 2 vCPU and 4 GB — €23.19 against cax11's €7.13 —
+#               and the shortage is not an ARM shortage: the whole cx line is gone too, including
+#               cx23 at €6.53, which is cheaper than the ARM plan ever was. Both are worth watching
+#               with `--all`; whichever returns first is worth moving back to.
+#
 # So: a green result means "worth trying", not "will work". A red result is reliable — if Hetzner
 # does not advertise it, you certainly cannot order it.
 #
@@ -56,7 +67,7 @@ readonly API=https://api.hetzner.cloud/v1
 # are the truth and this is a copy. They diverged once already: staging moved to nbg1 on 2026-08-13
 # while this script still called fsn1 "the preferred location" for everything, so its output
 # answered a question nobody was asking.
-export ENVIRONMENTS="staging=nbg1:cax11;production=fsn1:cax21,cax11"
+export ENVIRONMENTS="staging=nbg1:cpx22;production=fsn1:cax21,cax11"
 export NETWORK_ZONE=eu-central
 export TARGET="${1:-}"
 
