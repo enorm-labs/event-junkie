@@ -25,7 +25,10 @@ repos:
         name: shellcheck
         entry: shellcheck -x
         language: system
-        files: ^(infra/modules/environment/cloud-init|deploy/scripts|scripts)/.*\.sh$
+        # `infra` rather than `infra/modules/environment/cloud-init`: the narrower pattern needed a
+        # directory prefix, so `infra/check-capacity.sh` — which sits directly in `infra/` — was
+        # linted by nothing at all, here or in CI. Found when rewriting it (#424).
+        files: ^(infra|deploy/scripts|scripts)/.*\.sh$
         pass_filenames: true
 
       # One version reaches four files and only one of them is authoritative, so the drift this

@@ -63,6 +63,10 @@ jobs:
         run: tofu -chdir=${{ matrix.stack }} validate
 
   shellcheck:
+    # NAME IS LOAD-BEARING — "ShellCheck cloud-init" is a required status check on the `main`
+    # ruleset (#443). Renaming this job retires that context and creates a new one, and the required
+    # check then sits Pending forever on every pull request. So the name stays even though the job
+    # now covers more than cloud-init; the scope is described here instead.
     name: ShellCheck cloud-init
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -71,7 +75,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      # These scripts run once, unattended, on a node nobody can log into until they succeed. A
-      # typo here is not a failed build, it is a server that boots into an unreachable state.
+      # The cloud-init scripts run once, unattended, on a node nobody can log into until they
+      # succeed. A typo there is not a failed build, it is a server that boots into an unreachable
+      # state.
+      #
+      # `infra/*.sh` was added in #424: the top-level scripts sit directly in `infra/` and so matched
+      # neither this glob nor the pre-commit hook's pattern, which both wanted a directory prefix.
+      # `check-capacity.sh` had been linted by nothing since it was written.
       - name: Run ShellCheck
-        run: shellcheck -x infra/modules/environment/cloud-init/*.sh
+        run: shellcheck -x infra/*.sh infra/modules/environment/cloud-init/*.sh
