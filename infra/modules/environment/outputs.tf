@@ -44,24 +44,30 @@ output "wireguard_server_address" {
 }
 
 output "next_steps" {
-  description = "The parts of bring-up that cannot be declared, in the order they have to happen."
-  value       = <<-EOT
-    1. Collect the WireGuard server public key, which is generated on the node and never enters the
-       state file:
+  description = "This apply's addresses, and the one command that must come next. The runbook is docs/CLUSTER_BOOTSTRAP.md."
+  # Deliberately short. The full ordered runbook is docs/CLUSTER_BOOTSTRAP.md and there is exactly
+  # one copy of it; this output exists to supply the two things that document cannot know -- the
+  # addresses this apply just created -- plus the single command that has to happen next.
+  value = <<-EOT
+    Addresses from this apply:
 
-           ssh ops@${hcloud_server.k3s.ipv4_address} sudo cat /etc/wireguard/public.key
+        node (public)     ${hcloud_server.k3s.ipv4_address}
+        node (tunnel)     ${cidrhost(var.wireguard_subnet, 1)}
+        WireGuard         ${hcloud_server.k3s.ipv4_address}:${var.wireguard_port}
+        AllowedIPs        ${var.wireguard_subnet}
+        kubeconfig name   ~/.kube/event-junkie-${var.environment}
 
-    2. Put it in your local WireGuard config, with:
+    Next: collect the WireGuard server public key, which is generated on the node and never enters
+    the state file, so nothing but the node can tell you it:
 
-           Endpoint   = ${hcloud_server.k3s.ipv4_address}:${var.wireguard_port}
-           AllowedIPs = ${var.wireguard_subnet}
+        ssh -i <key> ops@${hcloud_server.k3s.ipv4_address} sudo cat /etc/wireguard/public.key
 
-    3. Bring the tunnel up, confirm ssh ops@${cidrhost(var.wireguard_subnet, 1)} works, then set
-       `admin_cidrs = []` and re-apply. 22 and 6443 are then unreachable from the internet.
+    Two things that waste an hour if unsaid: the -i is required unless that key is in your agent
+    (otherwise "Permission denied (publickey)", which reads as though the ops user is missing), and
+    port 22 is not open for the first couple of minutes -- while the node boots the connection times
+    out rather than being refused, which looks exactly like the firewall dropping you.
 
-    4. Fetch the kubeconfig and repoint it at the tunnel address:
-
-           ssh ops@${cidrhost(var.wireguard_subnet, 1)} sudo cat /etc/rancher/k3s/k3s.yaml \
-             | sed 's|127.0.0.1|${cidrhost(var.wireguard_subnet, 1)}|' > ~/.kube/event-junkie-${var.environment}
+    Then follow docs/CLUSTER_BOOTSTRAP.md from step 4. It covers the tunnel, the kubeconfig, the
+    database, both secrets and flux bootstrap, in the order that avoids the failures we hit.
   EOT
 }

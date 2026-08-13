@@ -146,6 +146,7 @@ previous version to return to.
 
 - [PLATFORM_SETUP §4, §4a](../PLATFORM_SETUP.md#4-how-deploys-happen) — the setup-level detail and the deployment-visibility design
 - [RELEASING.md](../RELEASING.md) — the end-to-end path a commit takes to become a running deployment
+- [CLUSTER_BOOTSTRAP.md](../CLUSTER_BOOTSTRAP.md) — the once-per-cluster bring-up this decision implies, and what it cost to run the first time
 - [ADR-012](ADR-012_CLOUD_PLATFORM.md) — the platform, and the credential weakness this supersedes
 - [deploy/AGENTS.md](../../deploy/AGENTS.md) — the traps, and the rules for touching any of this
 - Flux: [repository structure](https://fluxcd.io/flux/guides/repository-structure/) · [security](https://fluxcd.io/flux/security/) ·
