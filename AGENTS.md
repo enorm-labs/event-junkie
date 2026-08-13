@@ -663,6 +663,30 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       and ShellCheck. Triggers only when `deploy/**` changes. **Pins a Helm 3 client** even though local binaries are Helm 4, because Flux's helm-controller
       embeds the Helm 3 SDK and a chart that renders only under Helm 4 is one Flux cannot install. Like `validate-infra.yml` it reaches no cluster, so it is a
       syntax and shape gate; the assertions are the part that catches a chart which is well-formed and wrong.
+- **Nine checks are REQUIRED on `main` and a pull request cannot merge without them** (#443, applied 2026-08-13). They were chosen for a specific reason: each
+  runs on *every* pull request, because GitHub keeps a required-but-skipped check `Pending` forever — *"a pull request that requires those checks to be
+  successful will be blocked from merging"* — so requiring a path-filtered check deadlocks every PR that does not touch its paths. #447 was a live example: it
+  never ran `Lint & render` at all. The `pull_request` path filters on `validate-chart`, `validate-infra` and `validate-workflows` were removed so their checks
+  always report; their combined cost is **54 seconds**.
+
+    ```
+    Lint & render · ShellCheck deploy scripts        validate-chart.yml
+    Lint & audit workflows                           validate-workflows.yml
+    Format & Validate (infra/bootstrap)              validate-infra.yml — a MATRIX, so one context per stack
+    Format & Validate (infra/environments/staging)
+    Format & Validate (infra/environments/production)
+    ShellCheck cloud-init                            validate-infra.yml
+    CodeQL · Dependency Review                       always run, unfiltered
+    ```
+
+  Two consequences worth knowing before changing any of this. **Adding a stack to `validate-infra`'s matrix creates a context that is not required** — the rule
+  names each one exactly, so the matrix growing silently weakens the gate; add it to the ruleset in the same change. And **never add a `paths:` filter to the
+  `pull_request` trigger of those three workflows** — it would block every unrelated pull request, and the failure looks like a hung check rather than a
+  misconfiguration.
+
+    **`Build & Test` is deliberately NOT required**, for both backend and frontend. They cost 382s and 597s, so requiring them means either +16½ minutes on
+    every pull request including documentation-only ones, or a change-detection job whose semantics were unverified at the time. A red `Build & Test` is
+    visible but not blocking. Revisit deliberately rather than by drift.
 - **When CI misbehaves, check [githubstatus.com](https://www.githubstatus.com/) before debugging this repo.** Scriptable as
   `https://www.githubstatus.com/api/v2/summary.json`. A GitHub-side incident mimics repo-level bugs closely enough to send you hunting through trigger and path
   filters that are perfectly fine. Symptoms seen during the 2026-08-06 Actions outage:
