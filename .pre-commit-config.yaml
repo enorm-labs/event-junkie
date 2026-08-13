@@ -42,6 +42,20 @@ repos:
         files: ^(gradle\.properties|events-frontend/package\.json|deploy/charts/event-junkie/Chart\.yaml)$
         pass_filenames: false
 
+      # Markdown formatting, via the oxfmt pinned in events-frontend/package.json rather than
+      # whatever is on $PATH — a Homebrew oxfmt and the pinned one disagree about tables nested
+      # under list items, and a hook that formats differently than CI checks is worse than no hook.
+      # The script explains the rest; it is the only thing in this repository allowed to run oxfmt
+      # outside events-frontend/, and it is scoped to Markdown at two independent levels.
+      #
+      # This one writes rather than just checking, so a reformatted file lands in the same commit.
+      - id: format-markdown
+        name: format markdown
+        entry: scripts/format-markdown.sh
+        language: system
+        files: \.md$
+        pass_filenames: true
+
       # `helm lint --strict` is a pure function of the working tree — no cluster, no kubeconfig, no
       # credentials — which is what makes it safe as a commit hook at all. `pass_filenames: false`
       # because helm lints a chart directory, not a list of files.
