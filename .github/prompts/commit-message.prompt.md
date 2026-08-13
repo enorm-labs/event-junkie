@@ -155,7 +155,7 @@ interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
 ## Why Use Conventional Commits
 
-* Automatically generating CHANGELOGs.
-* Automatically determining a semantic version bump (based on the types of commits landed).
-* Communicating the nature of changes to teammates, the public, and other stakeholders.
-* Triggering build and publish processes.
+- Automatically generating CHANGELOGs.
+- Automatically determining a semantic version bump (based on the types of commits landed).
+- Communicating the nature of changes to teammates, the public, and other stakeholders.
+- Triggering build and publish processes.

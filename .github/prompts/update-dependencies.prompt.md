@@ -28,7 +28,7 @@ Versions explicitly pinned in **`settings.gradle.kts`** (plugin versions) and **
 **`gradle.properties` — library versions:**
 
 | Property                  | Dependency                             |
-|---------------------------|----------------------------------------|
+| ------------------------- | -------------------------------------- |
 | `jsoup.version`           | `org.jsoup:jsoup`                      |
 | `kotest.version`          | `io.kotest:kotest-assertions-core`     |
 | `kotlin-logging.version`  | `io.github.oshai:kotlin-logging-jvm`   |
@@ -40,7 +40,7 @@ Versions explicitly pinned in **`settings.gradle.kts`** (plugin versions) and **
 **`settings.gradle.kts` — plugin versions:**
 
 | Plugin ID                                   | Dependency                          |
-|---------------------------------------------|-------------------------------------|
+| ------------------------------------------- | ----------------------------------- |
 | `kotlin("jvm")` / `kotlin("plugin.spring")` | Kotlin compiler & plugins           |
 | `org.springframework.boot`                  | Spring Boot Gradle plugin           |
 | `io.spring.dependency-management`           | Spring Dependency Management plugin |
@@ -75,7 +75,7 @@ and must NOT be overridden.
 #### ⚠️ Exception: existing CVE-remediation overrides
 
 `gradle.properties` has a block headed **"Spring Boot BOM overrides (CVE remediation)"** holding properties such as `netty.version` and `postgresql.version`.
-These deliberately *do* override BOM-managed versions, because the BOM's own version carried a known CVE. There may also be `constraints` blocks in module build
+These deliberately _do_ override BOM-managed versions, because the BOM's own version carried a known CVE. There may also be `constraints` blocks in module build
 scripts pinning a transitive for the same reason (e.g. `com.ongres.scram`).
 
 Do not treat these as ordinary version properties, and do not bump them just because a newer release exists — but **do check on every run whether they have
@@ -110,7 +110,7 @@ Edit the version strings in the appropriate files:
 ### Prune obsolete CVE-remediation overrides
 
 Whenever this run bumps **Spring Boot** or **Spring Modulith**, the new BOM may already supply a version equal to or newer than one we are pinning. Any override
-that has been overtaken must be **deleted**, not left in place: it no longer protects against anything, and it silently holds us *behind* the BOM, so future
+that has been overtaken must be **deleted**, not left in place: it no longer protects against anything, and it silently holds us _behind_ the BOM, so future
 Spring Boot upgrades stop raising that dependency and the staleness is invisible. An override kept past its purpose is a slow-acting downgrade.
 
 For each entry in the "Spring Boot BOM overrides (CVE remediation)" block in `gradle.properties`, and each `constraints` block in the module build scripts,
@@ -121,7 +121,7 @@ compare the pinned version against what the BOM now supplies on its own — comm
 ```
 
 Delete the override when the BOM's version is greater than or equal to the pin. Keep it otherwise, and say which CVE still justifies it. Note that these are
-*upper*-bound removals, not bumps: raising a pinned override to a newer version than the CVE fix requires is out of scope here — that belongs to
+_upper_-bound removals, not bumps: raising a pinned override to a newer version than the CVE fix requires is out of scope here — that belongs to
 [`/security-report`](security-report.prompt.md) and its triage.
 
 ## Step 6: Verify the Build
@@ -208,7 +208,7 @@ The badge row at the top of [`README.md`](../../README.md) hardcodes versions th
 nothing in the build fails when they go stale — so update them here, in the same commit as the bump that made them wrong.
 
 | Badge         | Source of truth                                                         | Update when                                    |
-|---------------|-------------------------------------------------------------------------|------------------------------------------------|
+| ------------- | ----------------------------------------------------------------------- | ---------------------------------------------- |
 | `Kotlin`      | `kotlin("jvm") version "..."` in `settings.gradle.kts`                  | always, to the exact version                   |
 | `Spring Boot` | `id("org.springframework.boot") version "..."` in `settings.gradle.kts` | always, to the exact version                   |
 | `Java`        | `java.version` in `gradle.properties`                                   | major only — the badge carries no minor/patch  |
@@ -225,20 +225,20 @@ not bump the wrapper itself; that is a separate manual step.
 
 ## Step 12: The CI tool versions nothing else watches
 
-**These are the repository's blind spot.** Dependabot covers `gradle`, `npm`, `docker`, `github-actions` and `opentofu` — but a *tool version pinned as a plain
-string* belongs to none of those ecosystems. `github-actions` updates `uses: azure/setup-helm@v5`; it has nothing to say about the `version: v3.19.0` passed to
+**These are the repository's blind spot.** Dependabot covers `gradle`, `npm`, `docker`, `github-actions` and `opentofu` — but a _tool version pinned as a plain
+string_ belongs to none of those ecosystems. `github-actions` updates `uses: azure/setup-helm@v5`; it has nothing to say about the `version: v3.19.0` passed to
 it. So these rot silently, and a scanner or validator that is a year behind still reports success, which is the failure mode worth caring about: a green check
 that has stopped meaning anything.
 
-| Pin | Where | Check against |
-|---|---|---|
-| `HELM_VERSION` | `.github/workflows/validate-chart.yml` **and** `release.yml` — both must move together | `helm/helm` releases, **staying on 3.x** |
-| `FLUX_VERSION` | `.github/workflows/validate-chart.yml` | `fluxcd/flux2` releases |
-| `FLUX_SCHEMA_VERSION` | `.github/workflows/validate-chart.yml` | `fluxcd/flux-schema` releases — or `flux plugin list` locally |
-| `TRIVY_VERSION` | `.github/workflows/release.yml` | `aquasecurity/trivy` releases |
-| `gitleaks` `rev:` | `.pre-commit-config.yaml` | `gitleaks/gitleaks` releases |
-| `ZIZMOR_VERSION` | `.github/workflows/validate-workflows.yml` | `zizmorcore/zizmor` releases — the image tag has **no** `v` prefix |
-| `ACTIONLINT_VERSION` | `.github/workflows/validate-workflows.yml` | `rhysd/actionlint` releases |
+| Pin                   | Where                                                                                  | Check against                                                      |
+| --------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `HELM_VERSION`        | `.github/workflows/validate-chart.yml` **and** `release.yml` — both must move together | `helm/helm` releases, **staying on 3.x**                           |
+| `FLUX_VERSION`        | `.github/workflows/validate-chart.yml`                                                 | `fluxcd/flux2` releases                                            |
+| `FLUX_SCHEMA_VERSION` | `.github/workflows/validate-chart.yml`                                                 | `fluxcd/flux-schema` releases — or `flux plugin list` locally      |
+| `TRIVY_VERSION`       | `.github/workflows/release.yml`                                                        | `aquasecurity/trivy` releases                                      |
+| `gitleaks` `rev:`     | `.pre-commit-config.yaml`                                                              | `gitleaks/gitleaks` releases                                       |
+| `ZIZMOR_VERSION`      | `.github/workflows/validate-workflows.yml`                                             | `zizmorcore/zizmor` releases — the image tag has **no** `v` prefix |
+| `ACTIONLINT_VERSION`  | `.github/workflows/validate-workflows.yml`                                             | `rhysd/actionlint` releases                                        |
 
 ```sh
 for repo in helm/helm fluxcd/flux2 fluxcd/flux-schema aquasecurity/trivy gitleaks/gitleaks \
@@ -259,7 +259,7 @@ their merits, do not pin back.
 After completing the update, provide a summary table:
 
 | Dependency | Previous Version | New Version | Location                                   |
-|------------|------------------|-------------|--------------------------------------------|
+| ---------- | ---------------- | ----------- | ------------------------------------------ |
 | ...        | ...              | ...         | `build.gradle.kts` / `settings.gradle.kts` |
 | ...        | ...              | ...         | `events-frontend/package.json`             |
 

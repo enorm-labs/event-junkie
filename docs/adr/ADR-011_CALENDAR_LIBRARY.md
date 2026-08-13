@@ -54,7 +54,7 @@ CSS-variable tokens), popular, well-supported, well-documented, lightweight** �
 ### Comparison
 
 | Criterion                   | Weight | A: FullCalendar       | B: vue-cal        | C: Custom             |
-|-----------------------------|--------|-----------------------|-------------------|-----------------------|
+| --------------------------- | ------ | --------------------- | ----------------- | --------------------- |
 | Event month/week/list views | High   | ✅ All, mature        | ✅ Month/week/day | 🟡 We build each      |
 | Simple & clean              | Med    | 🟡 Own DOM/CSS        | ✅ Native/simple  | ✅ Exactly as we want |
 | Accessible                  | High   | 🟡 Decent (own)       | 🟡 Less proven    | ✅ Reka-aligned (DIY) |

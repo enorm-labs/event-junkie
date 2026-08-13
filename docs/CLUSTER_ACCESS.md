@@ -41,7 +41,7 @@ peer: xFfuj…
 **No handshake almost always means outbound UDP/51820 is blocked** — corporate and hotel networks do this silently. Test from a phone hotspot before suspecting
 the node. WireGuard never replies to an unauthenticated packet, so there is nothing to see from either side.
 
-The tunnel is a *split* tunnel: `AllowedIPs = 10.10.1.0/24` covers the cluster and nothing else, so the rest of your traffic keeps going out your own
+The tunnel is a _split_ tunnel: `AllowedIPs = 10.10.1.0/24` covers the cluster and nothing else, so the rest of your traffic keeps going out your own
 connection.
 
 ## 2 · Get the kubeconfig — once
@@ -92,7 +92,7 @@ kubectl config get-contexts | grep event-junkie-staging       # confirm it arriv
 
 `--flatten` inlines the certificates and token, so the merged file stands alone and `~/.kube/event-junkie-staging` becomes redundant.
 
-> **What merging costs, so it is a choice rather than a surprise.** Every `kubectl`, `helm` and `flux` command now defaults to *whatever context is current*,
+> **What merging costs, so it is a choice rather than a surprise.** Every `kubectl`, `helm` and `flux` command now defaults to _whatever context is current_,
 > and one of them is a real cluster running the real database. [`deploy/AGENTS.md`](../deploy/AGENTS.md) forbids running `helm install/upgrade/uninstall` or
 > Flux commands against anything but `k3d-*` without being asked — merging makes that rule depend entirely on `--context` discipline rather than on the shell
 > you happen to be in. **Pass `--context` explicitly for anything that writes.**
@@ -154,7 +154,7 @@ k9s follows `KUBECONFIG` and the current context if you omit `--context`, which 
 ## 6 · The site itself
 
 **`staging.event-junkie.de` does not resolve, anywhere, on purpose.** There is no public `A` record and there never will be — that is the whole design
-(PLATFORM_SETUP §4a). So the name has to be mapped locally, to the node's *tunnel* address:
+(PLATFORM_SETUP §4a). So the name has to be mapped locally, to the node's _tunnel_ address:
 
 ```sh
 sudo sh -c 'echo "10.10.1.1  staging.event-junkie.de" >> /etc/hosts'
@@ -172,7 +172,7 @@ whose root no browser trusts. Click through it.
 
 **Do not install the Let's Encrypt staging root to silence the warning.** It issues to anyone who asks, so trusting it means trusting a CA that will happily
 vouch for any domain, for every site you visit. The real fix is switching `certManager.clusterIssuer.server` to the production ACME endpoint — one value, and
-the reason it has not happened yet is that the production rate limit is per *registered* domain and shared with production
+the reason it has not happened yet is that the production rate limit is per _registered_ domain and shared with production
 ([#265](https://github.com/enorm-labs/event-junkie/issues/265)).
 
 ### Without touching `/etc/hosts`
@@ -196,12 +196,12 @@ content-type: text/html
 
 Worth knowing, because two of these look wrong and are not:
 
-| | |
-|---|---|
-| `/` | `200` — the frontend |
-| `/api/events` | `200` — the BFF, which serves under `/api` itself; there is no rewrite |
-| `/api/admin` | **`404`** — correct. The importer's admin API has no ingress backend at all |
-| `/actuator/health` | **`200`, but from nginx** — the SPA catch-all, *not* the actuator. Check `server:` and the body before concluding anything is exposed |
+|                    |                                                                                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                | `200` — the frontend                                                                                                                  |
+| `/api/events`      | `200` — the BFF, which serves under `/api` itself; there is no rewrite                                                                |
+| `/api/admin`       | **`404`** — correct. The importer's admin API has no ingress backend at all                                                           |
+| `/actuator/health` | **`200`, but from nginx** — the SPA catch-all, _not_ the actuator. Check `server:` and the body before concluding anything is exposed |
 
 That last row is the one that looks alarming. Actuator lives on its own port that no ingress rule names, so any unmatched path falls through to the frontend's
 SPA fallback and returns the index page with a `200`.
@@ -261,17 +261,17 @@ IntelliJ has its own SSH tunnel, so it does not need the `ssh -L` above — but 
 
 **Database** tool window → **+** → **Data Source** → **PostgreSQL**, then:
 
-| Tab | Field | Value |
-|---|---|---|
-| General | Host / Port | `localhost` / `5432` |
-| General | Database | `events` |
-| General | User / Password | `events` / from the Secret above |
-| **SSH/SSL** | **Use SSH tunnel** | ✔ |
-| SSH config | Host / Port | `10.10.1.1` / `22` |
-| SSH config | User | `ops` |
-| SSH config | Auth type | **Key pair**, `~/.ssh/id_ed25519_hetzner` |
+| Tab         | Field              | Value                                     |
+| ----------- | ------------------ | ----------------------------------------- |
+| General     | Host / Port        | `localhost` / `5432`                      |
+| General     | Database           | `events`                                  |
+| General     | User / Password    | `events` / from the Secret above          |
+| **SSH/SSL** | **Use SSH tunnel** | ✔                                         |
+| SSH config  | Host / Port        | `10.10.1.1` / `22`                        |
+| SSH config  | User               | `ops`                                     |
+| SSH config  | Auth type          | **Key pair**, `~/.ssh/id_ed25519_hetzner` |
 
-**`Host: localhost` is correct and is the part people get wrong.** With a tunnel configured, IntelliJ resolves the host *from the SSH endpoint* — so
+**`Host: localhost` is correct and is the part people get wrong.** With a tunnel configured, IntelliJ resolves the host _from the SSH endpoint_ — so
 `localhost` means the node, which is exactly where PostgreSQL is listening. Putting `10.10.1.1` there sends it somewhere nothing is bound.
 
 **Test Connection** should report PostgreSQL 18.6. IntelliJ will offer to download the driver on first use.
@@ -334,12 +334,12 @@ was selected before. That mattered less when the only clusters were local; it ma
 
 ## Traps
 
-| | |
-|---|---|
-| **`kubectl` fails right after `ssh`** | You are in the ssh session on the node. The kubeconfig is on your laptop. Symptom is `localhost:8080 connection refused` plus `permission denied` on `config.yaml.d`. On the node itself it is `sudo k3s kubectl` |
-| **`Permission denied (publickey)`** | ssh is offering the wrong key. Needs `-i`; check with `ssh-add -l` |
-| **Everything hangs** | The tunnel, not the cluster. `sudo wg show` — no `latest handshake` means no tunnel |
-| **`staging.event-junkie.de` does not resolve** | Correct — it has no public record. Map it to `10.10.1.1` in `/etc/hosts` |
-| **Certificate warning in the browser** | Also correct. Staging issues from Let's Encrypt's *staging* CA so the production rate limit is not burned — see CLUSTER_BOOTSTRAP §11 |
-| **`no pg_hba.conf entry for host`** | You reached PostgreSQL from the tunnel address. It only admits the private network and the pod range — connect through the SSH forward in §7, do not widen `pg_hba` |
-| **k3d: connection refused after a recreate** | A saved kubeconfig. k3d assigns a new API port, CA and client cert every time — re-merge rather than keeping a copy |
+|                                                |                                                                                                                                                                                                                   |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`kubectl` fails right after `ssh`**          | You are in the ssh session on the node. The kubeconfig is on your laptop. Symptom is `localhost:8080 connection refused` plus `permission denied` on `config.yaml.d`. On the node itself it is `sudo k3s kubectl` |
+| **`Permission denied (publickey)`**            | ssh is offering the wrong key. Needs `-i`; check with `ssh-add -l`                                                                                                                                                |
+| **Everything hangs**                           | The tunnel, not the cluster. `sudo wg show` — no `latest handshake` means no tunnel                                                                                                                               |
+| **`staging.event-junkie.de` does not resolve** | Correct — it has no public record. Map it to `10.10.1.1` in `/etc/hosts`                                                                                                                                          |
+| **Certificate warning in the browser**         | Also correct. Staging issues from Let's Encrypt's _staging_ CA so the production rate limit is not burned — see CLUSTER_BOOTSTRAP §11                                                                             |
+| **`no pg_hba.conf entry for host`**            | You reached PostgreSQL from the tunnel address. It only admits the private network and the pod range — connect through the SSH forward in §7, do not widen `pg_hba`                                               |
+| **k3d: connection refused after a recreate**   | A saved kubeconfig. k3d assigns a new API port, CA and client cert every time — re-merge rather than keeping a copy                                                                                               |

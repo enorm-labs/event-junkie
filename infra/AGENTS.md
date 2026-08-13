@@ -12,7 +12,7 @@ them change things people depend on. If a task appears to require one, stop and 
 useful. Two conditions, though, and they are not optional:
 
 - **Show the plan first and check it against what you expect.** `tofu plan -destroy` before a destroy, `plan` before an apply. State the resource count you
-  expect *before* running it, and stop if it differs. A destroy that touches `bootstrap/` or names a DNS zone is wrong no matter who asked for it.
+  expect _before_ running it, and stop if it differs. A destroy that touches `bootstrap/` or names a DNS zone is wrong no matter who asked for it.
 - **Never widen the instruction.** "Destroy staging" is not permission to destroy production, and an instruction given once does not carry to the next
   environment or the next session.
 
@@ -59,7 +59,7 @@ environments/
 
 The split is **by lifetime, not by environment**, and it is load-bearing. `tofu destroy` on an environment is meant to be routine; a DNS zone caught in that
 blast radius is not. Delegation would survive — Hetzner's nameservers are fixed — but DNSSEC would not: a re-created zone has a new key, the DS record at INWX
-stops matching, and the domain becomes *unresolvable* rather than merely wrong.
+stops matching, and the domain becomes _unresolvable_ rather than merely wrong.
 
 **So: never move a `hcloud_zone` into an environment stack**, and never manage the zone from anywhere but `bootstrap/`. Environments read it with
 `data "hcloud_zone"` and own only their own address records.
@@ -96,7 +96,7 @@ argument behind it. If you contradict one of those documents, change the documen
 - **`server_type` cannot cross architectures, and `tofu plan` will not warn you.** Within one architecture it is an in-place resize; between `cpx*` (x86) and
   `cax*` (ARM) Hetzner refuses — [their FAQ](https://docs.hetzner.com/cloud/servers/faq/) lists rescale alongside snapshots and ISOs as places where "it is not
   possible to work with two different architecture types". The plan renders a tidy in-place update and the **apply** fails against the API partway through. So
-  an architecture change is a *rebuild*, not a variable change: see [docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) §Rebuilding a node. Staging is on
+  an architecture change is a _rebuild_, not a variable change: see [docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) §Rebuilding a node. Staging is on
   `cpx22` only because ARM could not be bought (#424), so this is a live concern rather than a hypothetical.
 - **Rebuilding a node destroys its database.** There is no volume anywhere here and `postgres.sh` does not relocate `PGDATA`, so PostgreSQL lives on the local
   disk and dies with the server. Survivable on staging, not on production — #460 puts it on a volume, and the timing matters: cheap before production is
@@ -104,28 +104,29 @@ argument behind it. If you contradict one of those documents, change the documen
 - **`delete_protection` does not stop OpenTofu** — the provider lifts its own locks before destroying. Only `lifecycle { prevent_destroy = true }` does, and it
   is used in exactly one place, on the DNS zones. Do not describe any other resource as protected from `destroy`.
 - **`ssh_keys` on a server is ignored after creation** (`lifecycle.ignore_changes`), because changing it would rebuild the node and the keys only ever reach
-  root, whose login harden.sh disables. Adding an admin key to a *running* node is a manual step, not a config change.
+  root, whose login harden.sh disables. Adding an admin key to a _running_ node is a manual step, not a config change.
 - **Secrets never enter state.** The WireGuard server keypair is generated on the node at first boot; the Hetzner token and S3 credentials come from the
   environment via direnv (`.envrc.example`). If a change would put a private key, password or token into a variable or an output, it is the wrong change —
   find another way.
 - **Never read, print or `cat` `.envrc`, `.env` or `terraform.tfvars`.** The committed `.example` files carry everything needed to understand the shape; the
-  real ones are gitignored because of what they may contain. Edit `.envrc.example` if the *set* of variables changes, never the copy in use.
+  real ones are gitignored because of what they may contain. Edit `.envrc.example` if the _set_ of variables changes, never the copy in use.
 - **Never echo a credential variable, not even to check it is set.** This one has already gone wrong once, on 2026-08-10, and cost a full rotation of the
   Hetzner token and both S3 keys. `${VAR:+set}${VAR:-EMPTY}` looks like a boolean and is not — the second expansion prints the value whenever the first says
   `set`. The only safe form prints a marker and never the variable:
 
-  ```sh
-  direnv exec infra bash -c 'echo "HCLOUD_TOKEN: ${HCLOUD_TOKEN:+set}"'
-  ```
+    ```sh
+    direnv exec infra bash -c 'echo "HCLOUD_TOKEN: ${HCLOUD_TOKEN:+set}"'
+    ```
 
-  A length is also safe (`${#VAR}`); a default-value expansion never is. If a check needs the value to be *correct* rather than merely present, use it — pass
-  it to a command — do not display it.
+    A length is also safe (`${#VAR}`); a default-value expansion never is. If a check needs the value to be _correct_ rather than merely present, use it — pass
+    it to a command — do not display it.
+
 - **`admin_cidrs` is a bootstrap value**, not an allowlist to maintain. Its steady state is `[]`. See §8a.
 - **Staging has no DNS records on purpose.** It is unreachable from the internet, not merely password-protected, which is also why its TLS needs DNS-01. Adding
   an `A` record for it would quietly undo that.
 - **`.tftpl` is not HCL.** `tofu fmt` rejects the extension; the pre-commit hook excludes it for that reason.
 - **The cost boundary is the network zone, not the location.** Traffic inside `eu-central` is free, so `fsn1`/`nbg1`/`hel1` are interchangeable and the
-  Object Storage buckets — which live in `fsn1` and cannot be moved — do not pin the servers. `region` in `backend.tf` names the *bucket's* location; never
+  Object Storage buckets — which live in `fsn1` and cannot be moved — do not pin the servers. `region` in `backend.tf` names the _bucket's_ location; never
   change it to follow a server move. Do **not** derive `location` from live capacity: it forces replacement on servers and Primary IPs, so a stock change
   elsewhere would plan a rebuild during an unrelated apply. Decide with `check-capacity.sh`, then edit the one line.
 - **Locking is off.** `use_lockfile` is unverified on Hetzner's Ceph, so it sits commented out in all three `backend.tf` files. Do not turn it on speculatively

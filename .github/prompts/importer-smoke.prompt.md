@@ -79,7 +79,7 @@ count that happens to differ because a venue published a new programme.)
 ### 6. Judge the data — this is the part that matters
 
 `check` output is evidence, not a verdict. **Open the live listing page and compare the first ~3 events by title and date against the sample rows.** A scraper
-that parses *something* plausible from the wrong container passes every automated check and is still wrong.
+that parses _something_ plausible from the wrong container passes every automated check and is still wrong.
 
 **Hard fails — do not ship:**
 
@@ -93,7 +93,7 @@ that parses *something* plausible from the wrong container passes every automate
 **Soft findings — ship, but write them down.** Where depends on what kind of finding it is:
 
 1. **A gap that is ours and worth repairing** → **an issue**, using the 🔍 Importer / data defect form (or `/new-issue`). Check `build/BACKLOG.md` for a
-   duplicate first — several of these defects are cross-cutting and already filed. We lose or mangle data the source *did* publish, or our model has nowhere to put
+   duplicate first — several of these defects are cross-cutting and already filed. We lose or mangle data the source _did_ publish, or our model has nowhere to put
    it: a mis-split lineup, a field dropped because it has no column, an entity that won't merge with its counterpart from another venue. If it is a one-line
    fix, just make it instead.
 2. **A limitation we accept** → the importer's or scraper's KDoc, next to the code that causes it. This is also where a field the site simply doesn't publish

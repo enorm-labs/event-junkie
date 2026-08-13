@@ -44,12 +44,12 @@ Before writing anything, learn how the site is built and whether you're allowed 
     - **If a clean JSON/API source exists, prefer it** and follow the JSON-source path in step 3 (`ApiClient` + a pure JSON parser). Only fall back to HTML
       scraping when there is no usable structured source.
 3. **Fetch the real listing HTML** (or the JSON payload) and save it — you'll need it as a test fixture anyway:
-   ```bash
-   curl -sSL -A 'EventJunkie/1.0 (+https://github.com/...)' '<listing-url>' \
-     -o events-importer/src/test/resources/scraper/<venue>/<venue>-overview.html
-   ```
-   For list+detail sites, also fetch one or two representative detail pages (`<venue>-detail-<case>.html`), including edge cases you want regression coverage
-   for (cancelled event, sold-out, free entry, missing date).
+    ```bash
+    curl -sSL -A 'EventJunkie/1.0 (+https://github.com/...)' '<listing-url>' \
+      -o events-importer/src/test/resources/scraper/<venue>/<venue>-overview.html
+    ```
+    For list+detail sites, also fetch one or two representative detail pages (`<venue>-detail-<case>.html`), including edge cases you want regression coverage
+    for (cancelled event, sold-out, free entry, missing date).
 4. **Classify the source** and pick a strategy (ADR-007 §Decision), in preference order:
     - **JSON / API source** (from step 2): fetch the raw body with `ApiClient.fetchJson(url)` and parse it in a pure JSON scraper. Templates:
       `FestsaalWebsiteImporter` / `NeueZukunftWebsiteImporter`. No Jsoup, no CSS selectors — the most durable option.
@@ -57,7 +57,7 @@ Before writing anything, learn how the site is built and whether you're allowed 
       JSON-LD, not the markup. See
       `PrivatclubOverviewPageScraper`'s JSON-LD handling and `AstraWebsiteImporter`.
     - **Server-rendered HTML** (~80%): Jsoup parsing works directly. This is the happy path.
-    - **JS-rendered SPA / cookie wall with no API**: Playwright is **not** in the project yet (ADR-007 §3). If the content isn't in the raw HTML *and* there's
+    - **JS-rendered SPA / cookie wall with no API**: Playwright is **not** in the project yet (ADR-007 §3). If the content isn't in the raw HTML _and_ there's
       no JSON/API source, stop and flag it — this needs the Playwright dependency added first, which is a separate decision.
 5. **Decide the page pattern**: single-page vs. list+detail vs. paginated. ADR-007 §"Single Entry URL"
    and §"Pagination — First Page Only" govern this. Import the **first page only**; if the venue truly needs multi-page crawling, loop inside `importEvents()`
@@ -81,7 +81,7 @@ New importers live in their own sub-package: `scraper/<venue>/`. Create:
 - **`<Venue>OverviewPageScraper.kt`** — a pure parser (no I/O). For HTML sources it takes a Jsoup
   `Document` + base URL; for JSON/API sources it takes the raw JSON `String`. Either way it returns
   `List<ScrapedEvent>` and is where all parsing (CSS selectors or JSON traversal) lives. Keep it I/O-free so it's trivially testable against a saved snapshot.
-- **`<Venue>DetailPageScraper.kt`** — *(list+detail sites only)* pure parser returning `ScrapedEvent?`
+- **`<Venue>DetailPageScraper.kt`** — _(list+detail sites only)_ pure parser returning `ScrapedEvent?`
   for a single detail page.
 - **`<Venue>WebsiteImporter.kt`** — the `@Component` that owns HTTP fetching and wires the scrapers.
     - **JSON / API source**: implement `EventImporter` directly (templates: `FestsaalWebsiteImporter`,
@@ -98,7 +98,7 @@ New importers live in their own sub-package: `scraper/<venue>/`. Create:
 Set `override val eventSource = EventSource.<VENUE>`.
 
 **The importer's and scrapers' KDoc is where the source gets documented** — the platform, which pages or APIs are read and why, the traps the parser handles,
-why a selector was chosen, and what the source *doesn't* carry (no door times, no prices, no poster, no per-event page). Accepted limitations live here too:
+why a selector was chosen, and what the source _doesn't_ carry (no door times, no prices, no poster, no per-event page). Accepted limitations live here too:
 the importer stored everything that was there, so there is nothing to action elsewhere. Only a defect we could actually repair goes in the **Bugs** list in
 an issue. Write it once, next to the code it constrains — not in `EventSource.kt` and not in `dev-seed.http`.
 
@@ -189,7 +189,7 @@ imported events look sane. Be polite — the per-host throttle (200ms) applies a
 ## Checklist
 
 - [ ] `robots.txt` checked; **checked for a JSON/API source first** — using `ApiClient` if one exists, HTML scraping only as a fallback; not a JS SPA without an
-  API
+      API
 - [ ] `EventSource` enum value added with a one-line venue description (no site/parsing detail)
 - [ ] `<venue>/` package: overview scraper (+ detail scraper if list+detail) + `@Component` importer
 - [ ] Shared extension helpers reused; selectors are semantic/structured, not positional

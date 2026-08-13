@@ -16,7 +16,7 @@ k6 run perf/spike.js                  # a sudden surge — does it recover?
 They answer different questions, and reading one's output as if it were another's is the main way to draw a wrong conclusion from them.
 
 | Script     | Shape                 | Question it answers                                                                  |
-|------------|-----------------------|--------------------------------------------------------------------------------------|
+| ---------- | --------------------- | ------------------------------------------------------------------------------------ |
 | `smoke.js` | 1 VU, 1 iteration     | Does every endpoint still work, and is anything catastrophically slow?               |
 | `load.js`  | ramp to N VUs, hold   | Does latency stay flat as concurrency rises, or does something serialise?            |
 | `spike.js` | quiet → surge → quiet | Does it survive a sudden crowd, and — more importantly — does it recover afterwards? |
@@ -28,8 +28,8 @@ safe to run anywhere at any time. Use it after a dependency bump, after a query 
 rises means something is serialising: an exhausted R2DBC connection pool, a blocking call on the event loop, a query without an index. WebFlux hides all three
 well until it doesn't, which is precisely why this test exists.
 
-**`spike.js` matches how traffic to an events site actually arrives.** A lineup announcement or a festival going on sale sends a lot of people to the *same* few
-pages within minutes, then it stops. Errors *during* the spike are survivable; errors that continue *after* it are the real finding — that is a pool that never
+**`spike.js` matches how traffic to an events site actually arrives.** A lineup announcement or a festival going on sale sends a lot of people to the _same_ few
+pages within minutes, then it stops. Errors _during_ the spike are survivable; errors that continue _after_ it are the real finding — that is a pool that never
 drained or a queue that never emptied. Its thresholds are off by default for that reason: a red threshold would only tell you that a spike is hard, which was
 never in question. `-e STRICT=true` turns them on.
 
@@ -38,7 +38,7 @@ never in question. `-e STRICT=true` turns them on.
 Everything is an environment variable with a working default:
 
 | Variable                | Default                 | Notes                                                                                                                                                        |
-|-------------------------|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ----------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `BFF_HOST`              | `http://localhost:8080` | **No `/api` prefix.** That prefix is a frontend concern — the Vite dev server strips it before proxying. The BFF serves `/events`, `/venues`, … at the root. |
 | `VUS`                   | `20`                    | `load.js` — peak virtual users                                                                                                                               |
 | `DURATION`              | `2m`                    | `load.js` — how long to hold the peak                                                                                                                        |
@@ -76,14 +76,14 @@ something is deployed**, and treat that as a deliberate act. Raising a threshold
 Considered, and deliberately not added. Three reasons, each of which is also the condition under which the answer changes:
 
 1. **There is nothing representative to run it against.** Nothing is deployed. Numbers from a shared GitHub runner — noisy neighbours, no dedicated CPU,
-   variance of several hundred percent between runs — are not a baseline, and a threshold set loosely enough to survive them catches nothing. → *Add it once a
-   staging environment exists (ADR-012), pointed at that.*
+   variance of several hundred percent between runs — are not a baseline, and a threshold set loosely enough to survive them catches nothing. → _Add it once a
+   staging environment exists (ADR-012), pointed at that._
 2. **The functional coverage is already there and is better.** A CI run would need Postgres, then the importer to apply the Flyway migrations (the BFF owns
    none), then the BFF — and would end up asserting that every endpoint returns 200 against an **empty** database. The Testcontainers integration tests already
-   do that with real data, in-process, on every build. → *A perf workflow should measure, not duplicate.*
+   do that with real data, in-process, on every build. → _A perf workflow should measure, not duplicate._
 3. **Trend matters more than a pass/fail gate.** A single red build tells you almost nothing about performance; a p95 that has drifted 40% over two months tells
    you a lot. That wants results stored over time (k6 Cloud, or Prometheus remote-write into the monitoring stack ADR-012 already calls for), not a threshold in
-   a workflow. → *Wire it into monitoring when monitoring exists.*
+   a workflow. → _Wire it into monitoring when monitoring exists._
 
 Until then these run on demand, locally, against a real database. Tracked in
 [issues #297 and #298](https://github.com/enorm-labs/event-junkie/issues/298).

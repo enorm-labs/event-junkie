@@ -64,4 +64,3 @@ data class VenueEntity(
 
 - [`Venue.kt`](../../events-core/src/main/kotlin/de/norm/events/venue/Venue.kt) (domain class)
 - [`VenueEntity.kt`](../../events-importer/src/main/kotlin/de/norm/events/venue/VenueEntity.kt) (persistence entity)
-

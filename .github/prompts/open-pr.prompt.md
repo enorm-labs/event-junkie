@@ -15,7 +15,7 @@ This is the standard "ship it" flow — the manual equivalent of
 ## Steps
 
 1. **Inspect the state.** Run `git status` and `git --no-pager diff` (plus `git --no-pager diff --staged` if anything is already staged) to see what changed. If
-   the tree is clean with nothing to commit, stop and say so. Use the conversation history for the *why* behind the change — it usually carries motivation the
+   the tree is clean with nothing to commit, stop and say so. Use the conversation history for the _why_ behind the change — it usually carries motivation the
    diff alone doesn't.
 
 2. **Sanity-check the changes.** Skim the diff for anything that shouldn't ship: stray debug output, secrets, commented-out code, unrelated edits, leftover
@@ -26,7 +26,7 @@ This is the standard "ship it" flow — the manual equivalent of
     - If currently on `main`: `git checkout -b <type>/<slug>`.
     - If already on a non-`main` feature branch: assume it's the intended branch and reuse it (mention this). Only ask if the branch name clearly doesn't match
       the current change.
-    - **If the change is a *new* one and you are still on the last one's branch, go back to `main` first.** `git checkout -b` from a feature branch stacks the
+    - **If the change is a _new_ one and you are still on the last one's branch, go back to `main` first.** `git checkout -b` from a feature branch stacks the
       new branch on the old one, so the PR carries the parent's commits too and its diff is wider than the change — a reviewer approves files you never meant
       to put in front of them. It is easy to miss precisely because the PR still says "into main" and merges cleanly. Recovery once the parent has merged is
       `git rebase --onto origin/main <parent-head>`, then force-push. Happened on 2026-08-08: #249 carried #248's whole frontend i18n change.
@@ -35,7 +35,7 @@ This is the standard "ship it" flow — the manual equivalent of
    flagged in step 2 unless the user wants it in.
 
 5. **Write the commit message.** Follow the [commit message prompt](commit-message.prompt.md): Conventional Commits 1.0.0, an imperative subject under the
-   type/scope, and a body explaining the *what* and *why* (body lines are not capped at 72 chars in this repo). Commit via `git commit -F -` with a heredoc so
+   type/scope, and a body explaining the _what_ and _why_ (body lines are not capped at 72 chars in this repo). Commit via `git commit -F -` with a heredoc so
    the multi-line message and trailers stay intact. Include any commit trailers your harness requires (e.g. a `Co-Authored-By:` line).
 
 6. **Push.** `git push -u origin <branch>` to set upstream on first push.

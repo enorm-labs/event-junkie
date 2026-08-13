@@ -25,7 +25,7 @@ PAT for step 9.
 > **A green capacity check means "worth trying", not "will work".** Hetzner has refused orders for hardware it was advertising at that moment. See
 > `check-capacity.sh`'s header.
 
-## 1 · Your WireGuard keypair — *before* the apply
+## 1 · Your WireGuard keypair — _before_ the apply
 
 The public half is an input to the apply; the server's half is generated on the node at first boot.
 
@@ -119,7 +119,7 @@ kubectl --context event-junkie-staging get nodes                     # Ready
 
 Add `10.10.1.1  staging.event-junkie.de` to `/etc/hosts` — the name has no public record by design.
 
-## 8 · The database, and the two secrets — *before* Flux
+## 8 · The database, and the two secrets — _before_ Flux
 
 Nothing creates these: `postgres.sh` stops at "a server is running", and the chart never templates a password. Do them now, or the first reconcile installs a
 crash-looping importer.
@@ -212,7 +212,7 @@ kubectl --context event-junkie-staging get secret event-junkie-staging-tls -n ev
 ```
 
 > **The issuer will say `(STAGING)`, and that is deliberate — the certificate is not browser-trusted.**
-> `certManager.clusterIssuer.server` points at Let's Encrypt's *staging* ACME endpoint, because the production rate limit is **per registered domain** and
+> `certManager.clusterIssuer.server` points at Let's Encrypt's _staging_ ACME endpoint, because the production rate limit is **per registered domain** and
 > `event-junkie.de` is the same registered domain production uses. Burning it here would lock production out for a week.
 >
 > So `https://staging.event-junkie.de` shows a certificate warning, by choice. What is proven is the **mechanism** — DNS-01 through the Hetzner webhook, for a
@@ -228,12 +228,12 @@ kubectl --context event-junkie-staging get secret event-junkie-staging-tls -n ev
 
 You end up here for four reasons, and three of them are not optional:
 
-| | |
-|---|---|
-| Any edit under `cloud-init/` | `user_data` is a force-new attribute |
-| **Changing architecture** | `cpx*` ↔ `cax*` — see below |
-| The destroy/apply cycle | [#424](https://github.com/enorm-labs/event-junkie/issues/424)'s last box |
-| Something is broken past fixing | The reason a node is meant to be disposable |
+|                                 |                                                                          |
+| ------------------------------- | ------------------------------------------------------------------------ |
+| Any edit under `cloud-init/`    | `user_data` is a force-new attribute                                     |
+| **Changing architecture**       | `cpx*` ↔ `cax*` — see below                                              |
+| The destroy/apply cycle         | [#424](https://github.com/enorm-labs/event-junkie/issues/424)'s last box |
+| Something is broken past fixing | The reason a node is meant to be disposable                              |
 
 ### Architecture is a rebuild, not a resize, and the plan will not say so
 
@@ -241,17 +241,17 @@ Hetzner cannot rescale between architectures — [their FAQ](https://docs.hetzne
 where "it is not possible to work with two different architecture types". Within one architecture (`cpx22` → `cx23`) it is an in-place resize and behaves as you
 would expect.
 
-**Between them, `tofu plan` renders a tidy in-place update and the *apply* fails against the API partway through.** So do not treat `k3s_server_type` as just
+**Between them, `tofu plan` renders a tidy in-place update and the _apply_ fails against the API partway through.** So do not treat `k3s_server_type` as just
 another variable when the prefix changes.
 
 ### What survives, and what does not
 
-| Survives | Does not |
-|---|---|
+| Survives                                                                                                        | Does not                                                                                                            |
+| --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | **Both Primary IPs** — `auto_delete = false`, so the public address and your WireGuard `Endpoint` are unchanged | **The database.** No volume, `PGDATA` on local disk — [#460](https://github.com/enorm-labs/event-junkie/issues/460) |
-| The network, subnet and firewall | **The k3s cluster** — new CA, new kubeconfig, new node identity |
-| Your WireGuard *client* keypair, and `wireguard_peers` | **The WireGuard server key** — regenerated at first boot |
-| The DNS zones (`bootstrap/`, outside every environment destroy) | **Flux, and both secrets** — the cluster is new, so its contents are gone |
+| The network, subnet and firewall                                                                                | **The k3s cluster** — new CA, new kubeconfig, new node identity                                                     |
+| Your WireGuard _client_ keypair, and `wireguard_peers`                                                          | **The WireGuard server key** — regenerated at first boot                                                            |
+| The DNS zones (`bootstrap/`, outside every environment destroy)                                                 | **Flux, and both secrets** — the cluster is new, so its contents are gone                                           |
 
 **The server key is the one that will look like a broken tunnel.** `wireguard.sh` generates a keypair only if none exists, so a fresh node has a fresh one and
 your `~/.wireguard/staging.conf` is pointing at a peer that no longer exists. The handshake simply never happens. Update the `PublicKey =` line from §4; your own
@@ -269,7 +269,7 @@ ADMIN="[\"$(curl -s https://ifconfig.me)/32\",\"$(dig +short myip.opendns.com @r
 tofu apply -var "admin_cidrs=$ADMIN"  # admin_cidrs again — the tunnel does not exist yet either
 ```
 
-Then **§3 onward**, in full: wait for cloud-init, collect the *new* server key and fix your client config, tunnel, close the door, kubeconfig, database, both
+Then **§3 onward**, in full: wait for cloud-init, collect the _new_ server key and fix your client config, tunnel, close the door, kubeconfig, database, both
 secrets, `flux bootstrap`. Steps 1 and 2 are the only ones you skip — your keypair and `terraform.tfvars` are unchanged.
 
 Two things are cheaper the second time: nothing in `cloud-init/` is architecture-specific, and [#264](https://github.com/enorm-labs/event-junkie/issues/264)
@@ -283,17 +283,17 @@ it was not, before those images existed.
 
 ## Traps, in the order they bite
 
-| | |
-|---|---|
-| **Port 22 times out for the first ~2 min** | The node is booting. A timeout looks exactly like the firewall dropping you; `ping` answers much earlier. Wait and retry |
-| **`ssh ops@…` → `Permission denied (publickey)`** | Your agent is offering the wrong key. Needs `-i`. It reads as though the `ops` user does not exist yet |
-| **`cloud-init status` says `error` on a healthy node** | A bug in cloud-init's *Hetzner datasource*, in `init-local`, before our scripts run. Read `/var/log/cloud-init-output.log` and the service states instead |
-| **`kubectl` fails on the node** | You are inside the `ssh` session. The kubeconfig is on your laptop. On the node it is `sudo k3s kubectl` |
-| **`password authentication failed for user "events"`** | PostgreSQL reports a **missing role** identically to a wrong password. Check the role exists before assuming the Secret is wrong |
-| **`422 Deploy keys are disabled`** | Org-level setting, not a token scope. No PAT fixes it |
-| **Bootstrap's push rejected** | The `main` ruleset. Disable it for the two pushes, re-enable immediately |
-| **DNS-01 challenge stuck `pending`** | Read the *challenge's* `status.reason`. A `groupName` mismatch shows up as an RBAC error for an API group nothing serves |
-| **Fixing the issuer does not unstick it** | A challenge that failed at `Present` **cannot clean itself up** — its finalizer calls the same broken path forever, so it never finishes deleting and its order never progresses. The corrected config is simply never used. Clear it, then the new challenge starts within seconds |
-| **Staging deploys a stale chart** | [#455](https://github.com/enorm-labs/event-junkie/issues/455) — snapshot versions sort lexically, so the semver range picks a random sha. Staging is pinned to a tag until that lands |
-| **The tunnel stops working after a rebuild** | The node generated a new WireGuard server key. Your client config points at a peer that no longer exists, and a handshake simply never happens — update `PublicKey =`. See *Rebuilding a node* |
-| **`server_type` change fails during apply** | `cpx*` ↔ `cax*` cannot be rescaled. The plan renders an in-place update anyway; the API refuses. It is a rebuild |
+|                                                        |                                                                                                                                                                                                                                                                                     |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Port 22 times out for the first ~2 min**             | The node is booting. A timeout looks exactly like the firewall dropping you; `ping` answers much earlier. Wait and retry                                                                                                                                                            |
+| **`ssh ops@…` → `Permission denied (publickey)`**      | Your agent is offering the wrong key. Needs `-i`. It reads as though the `ops` user does not exist yet                                                                                                                                                                              |
+| **`cloud-init status` says `error` on a healthy node** | A bug in cloud-init's _Hetzner datasource_, in `init-local`, before our scripts run. Read `/var/log/cloud-init-output.log` and the service states instead                                                                                                                           |
+| **`kubectl` fails on the node**                        | You are inside the `ssh` session. The kubeconfig is on your laptop. On the node it is `sudo k3s kubectl`                                                                                                                                                                            |
+| **`password authentication failed for user "events"`** | PostgreSQL reports a **missing role** identically to a wrong password. Check the role exists before assuming the Secret is wrong                                                                                                                                                    |
+| **`422 Deploy keys are disabled`**                     | Org-level setting, not a token scope. No PAT fixes it                                                                                                                                                                                                                               |
+| **Bootstrap's push rejected**                          | The `main` ruleset. Disable it for the two pushes, re-enable immediately                                                                                                                                                                                                            |
+| **DNS-01 challenge stuck `pending`**                   | Read the _challenge's_ `status.reason`. A `groupName` mismatch shows up as an RBAC error for an API group nothing serves                                                                                                                                                            |
+| **Fixing the issuer does not unstick it**              | A challenge that failed at `Present` **cannot clean itself up** — its finalizer calls the same broken path forever, so it never finishes deleting and its order never progresses. The corrected config is simply never used. Clear it, then the new challenge starts within seconds |
+| **Staging deploys a stale chart**                      | [#455](https://github.com/enorm-labs/event-junkie/issues/455) — snapshot versions sort lexically, so the semver range picks a random sha. Staging is pinned to a tag until that lands                                                                                               |
+| **The tunnel stops working after a rebuild**           | The node generated a new WireGuard server key. Your client config points at a peer that no longer exists, and a handshake simply never happens — update `PublicKey =`. See _Rebuilding a node_                                                                                      |
+| **`server_type` change fails during apply**            | `cpx*` ↔ `cax*` cannot be rescaled. The plan renders an in-place update anyway; the API refuses. It is a rebuild                                                                                                                                                                    |

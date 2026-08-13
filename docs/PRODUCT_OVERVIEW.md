@@ -4,11 +4,11 @@
 
 **A feature inventory: what Event Junkie does today, in present tense.**
 
-This document deliberately does **not** argue the *why*. The motivation, the problem it answers and how it differs from Resident Advisor, Bandsintown/Songkick
+This document deliberately does **not** argue the _why_. The motivation, the problem it answers and how it differs from Resident Advisor, Bandsintown/Songkick
 and the ticketing sites live in the [README](../README.md#background) and on the site's own About page — one place each, so they cannot drift into three
 slightly different pitches. What belongs here is the checklist of what actually exists.
 
-Elsewhere: which *kinds* of event are in scope — [EVENT_SCOPE.md](EVENT_SCOPE.md) · where the product is headed —
+Elsewhere: which _kinds_ of event are in scope — [EVENT_SCOPE.md](EVENT_SCOPE.md) · where the product is headed —
 [VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md) · the backlog — [GitHub Issues](https://github.com/enorm-labs/event-junkie/issues) · voice and visual direction — [BRANDING.md](BRANDING.md).
 
 App name: **Event Junkie** (→ event-junkie.de), and the same name internally in `event-junkie` identifier form.
@@ -89,5 +89,5 @@ Everything above is a claim about what exists **now**, so it goes stale in exact
 already gone stale here and are worth not repeating:
 
 - **Counts.** This document said "eight venues live" long after there were 86. Numbers that change belong in the source that owns them —
-  [EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md) for coverage — and should be *linked* from here, not copied.
-- **The pitch.** The *why* used to live here as well as in the README. It now lives in the README and the About page only.
+  [EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md) for coverage — and should be _linked_ from here, not copied.
+- **The pitch.** The _why_ used to live here as well as in the README. It now lives in the README and the About page only.

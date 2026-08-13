@@ -90,15 +90,15 @@ Follow these patterns — they are established in the codebase and must be respe
 
 - Extend `BaseControllerTest` — it provides Testcontainers PostgreSQL, `WebTestClient`, and `@BeforeEach` table truncation.
 - Use `WebTestClient` for HTTP assertions:
-  ```kotlin
-  webTestClient.post().uri("/api/admin/venues")
-      .contentType(MediaType.APPLICATION_JSON)
-      .bodyValue(request)
-      .exchange()
-      .expectStatus().isCreated
-      .expectBody<VenueResponse>()
-      .returnResult().responseBody!!
-  ```
+    ```kotlin
+    webTestClient.post().uri("/api/admin/venues")
+        .contentType(MediaType.APPLICATION_JSON)
+        .bodyValue(request)
+        .exchange()
+        .expectStatus().isCreated
+        .expectBody<VenueResponse>()
+        .returnResult().responseBody!!
+    ```
 - Test the full HTTP request/response cycle: correct status codes, response bodies, validation errors, and error responses.
 
 ### Unit Tests

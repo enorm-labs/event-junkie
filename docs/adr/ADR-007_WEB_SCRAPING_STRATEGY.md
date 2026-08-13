@@ -291,7 +291,7 @@ both of these scenarios.
 Event sources are managed across three layers, each handling a different kind of change:
 
 | What changes                                       | Where                                                         | When                               |
-|----------------------------------------------------|---------------------------------------------------------------|------------------------------------| 
+| -------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------- |
 | HTML parsing logic (CSS selectors, data mapping)   | `EventImporter` class (code)                                  | Website structure changes → deploy |
 | Source registration (URL, venue, event source key) | REST API (`POST /event-sources`) or Flyway migration          | New venue added                    |
 | Operational config (enabled, interval, retries)    | REST API (`PATCH /event-sources/{slug}`)                      | Anytime, no deploy needed          |
@@ -353,7 +353,7 @@ a per-importer concern without changing the `EventImporter` interface or the fra
 ### Shared Detail Pages — Fetch Once Per Distinct URL
 
 The list+detail pattern above assumes a one-to-one mapping: one listing entry, one detail page. A venue that programmes **runs** rather than one-off nights
-breaks that assumption. Bar jeder Vernunft's calendar lists one card per *performance date*, but every date of a production links to the same
+breaks that assumption. Bar jeder Vernunft's calendar lists one card per _performance date_, but every date of a production links to the same
 `/programmuebersicht/<show>.html` page — at the time of writing 28 calendar cards resolve to 2 show pages.
 
 `AbstractTwoPageWebsiteImporter` fetches a detail page per event, so it would re-request one page 20+ times per import. With
@@ -363,7 +363,7 @@ the fetch itself — group the scraped events by their detail URL, fetch each di
 
 Two consequences follow for the parser split:
 
-1. **The detail scraper does not return a `ScrapedEvent`.** It parses *show-level* data (genre, price range, blurb) with no date of its own, so it returns a
+1. **The detail scraper does not return a `ScrapedEvent`.** It parses _show-level_ data (genre, price range, blurb) with no date of its own, so it returns a
    small venue model (`BarJederVernunftShow`) that knows how to enrich an occurrence — the same modelling choice as `HavannaWeeklyNight` below.
 2. **`sourceId` cannot be the URL slug**, which is shared by the whole run. It combines the date with the show slug (`bar_jeder_vernunft:<date>-<show-slug>`),
    keeping upserts idempotent per performance.
@@ -425,7 +425,7 @@ Loge detail pages:        ──▶ req1 ──[200ms]──▶ req2 ──[200m
 **Alternatives considered:**
 
 | Approach                           | Verdict                                                                                                                                                                                           |
-|------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Per-scraper `delay()` calls        | Requires every `EventImporter` to remember adding delays. Easy to forget, no enforcement. Rejected.                                                                                               |
 | Resilience4j `RateLimiter`         | Standard library, but semantics ("N permits per time window") don't naturally map to "minimum delay between requests." Would still need per-host instances + registry. Adds dependency. Rejected. |
 | Guava `RateLimiter`                | Blocking API — doesn't fit the reactive/coroutine stack without `withContext(Dispatchers.IO)`. Rejected.                                                                                          |
@@ -449,7 +449,7 @@ cohesive responsibility, keeping the codebase organized as the number of utiliti
 **`ScrapingExtensions.kt`** — Jsoup HTML element extraction helpers and URL resolution:
 
 | Extension / Function                            | Purpose                                                               |
-|-------------------------------------------------|-----------------------------------------------------------------------|
+| ----------------------------------------------- | --------------------------------------------------------------------- |
 | `Element.textAt(cssQuery)`                      | Select first match → `.text()` → trim → null if blank                 |
 | `Element.attrAt(cssQuery, attr)`                | Select first match → attribute value → null if blank                  |
 | `Element.imgSrcAt(cssQuery)`                    | Select `<img>` → `src` attribute → null if not an absolute HTTP URL   |
@@ -462,7 +462,7 @@ cohesive responsibility, keeping the codebase organized as the number of utiliti
 **`DateParsingExtensions.kt`** — date and time parsing for the two common formats on venue websites:
 
 | Extension / Function                            | Purpose                                                                           |
-|-------------------------------------------------|-----------------------------------------------------------------------------------|
+| ----------------------------------------------- | --------------------------------------------------------------------------------- |
 | `HH_MM_FORMATTER`                               | Shared `DateTimeFormatter` for 24-hour time (`HH:mm`)                             |
 | `parseTime(text, formatter = HH_MM_FORMATTER)`  | Null-safe `LocalTime` parsing — returns null instead of throwing                  |
 | `parseIsoDate(dateTimeStr)`                     | Extract date from ISO 8601 datetime (e.g. `"2026-05-16T20:00"`)                   |
@@ -473,7 +473,7 @@ cohesive responsibility, keeping the codebase organized as the number of utiliti
 **`EventTypeMapping.kt` / `ArtistNameMapping.kt` / `EventFieldMapping.kt`** — domain-level mapping of scraped text to model constants:
 
 | Extension / Function                   | Purpose                                                                             |
-|----------------------------------------|-------------------------------------------------------------------------------------|
+| -------------------------------------- | ----------------------------------------------------------------------------------- |
 | `mapGermanCategory(category)`          | Maps German category labels ("Konzert", "Party", "Sonstiges") to `EventType` values |
 | `isPlaceholderName(name)`              | Detects placeholder artist names ("TBA", "N.N.") that should not be persisted       |
 | `buildArtistList(title, supportNames)` | Constructs headliner + support artist list from the common title/subtitle pattern   |
@@ -487,7 +487,7 @@ Wix server-side-injects the full event data as strict JSON in a `<script type="a
 stays in its own scraper.
 
 | Extension / Function                      | Purpose                                                                                        |
-|-------------------------------------------|------------------------------------------------------------------------------------------------|
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | `WixEventsWarmupData.events(doc, source)` | Locates the `events.events` array under the global Wix Events appDefId and the per-page widget |
 | `JsonNode.stringOrNull(field)`            | Trimmed string field → null when missing, JSON `null`, or blank                                |
 | `parseWixSchedule(config)`                | UTC `startDate` + `timeZoneId` → Berlin-local `(LocalDate, LocalTime)`                         |
@@ -508,7 +508,7 @@ meaning of the content rarely changes even when styling does.
 **Selector preference order** (most to least stable):
 
 | Priority | Selector type                        | Example                                                        | Why stable                                              |
-|----------|--------------------------------------|----------------------------------------------------------------|---------------------------------------------------------|
+| -------- | ------------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------- |
 | 1        | JSON / API source or structured data | REST/GraphQL/widget API; `<script type="application/ld+json">` | Explicit machine-readable contract; rarely changed      |
 | 2        | Semantic HTML5 elements              | `article`, `time[datetime]`, `h2`, `address`                   | Reflects content meaning, not layout                    |
 | 3        | ARIA roles & landmarks               | `[role="listitem"]`, `[aria-label="Event date"]`               | Accessibility attributes tied to purpose, not design    |
@@ -584,7 +584,7 @@ web scraping pitfalls documented in industry literature (see References).
 ### Alternatives Considered
 
 | Library            | Verdict                                                                                                                                     |
-|--------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | Selenium           | Outdated, flaky, slower than Playwright. Rejected.                                                                                          |
 | HtmlUnit           | Incomplete JS engine, unreliable for modern SPAs. Rejected.                                                                                 |
 | Skrape{it}         | Kotlin-native but small community, limited maintenance. Rejected.                                                                           |

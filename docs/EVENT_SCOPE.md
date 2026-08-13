@@ -4,7 +4,7 @@ What kinds of event this app carries, what it deliberately leaves out, and which
 a stage in the evening, it is in scope.**
 
 This document is the standing reference for that question. Related, and deliberately not duplicated here:
-[EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md) tracks *which venues* are imported;
+[EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md) tracks _which venues_ are imported;
 [DATA_MODEL.md](DATA_MODEL.md) describes the schema; the [issue tracker](https://github.com/enorm-labs/event-junkie/issues) holds the actionable backlog.
 
 ---
@@ -27,10 +27,10 @@ than polluting the shared table.
 ## 2. Event types in the model
 
 Ten values on [`EventType`](../events-core/src/main/kotlin/de/norm/events/event/Event.kt). Every one is in real use — this is not an aspirational list. Counts
-are from the development database (3166 events across 86 sources) and are illustrative of the *mix*, not of coverage:
+are from the development database (3166 events across 86 sources) and are illustrative of the _mix_, not of coverage:
 
 | Type         | Share | What it covers                                                     | Where it comes from                             |
-|--------------|------:|--------------------------------------------------------------------|-------------------------------------------------|
+| ------------ | ----: | ------------------------------------------------------------------ | ----------------------------------------------- |
 | `CONCERT`    |  ~62% | Live music with a billed lineup, from back rooms to arenas         | `konzert` / `concert`, and most venues' default |
 | `PARTY`      |  ~19% | DJ nights, one-off parties                                         | `party`                                         |
 | `SHOW`       |  ~11% | Staged performance — cabaret, burlesque, comedy, musicals, variety | `show`                                          |
@@ -53,16 +53,16 @@ for merging into `PARTY`. It is not, and the reason is in the code rather than i
 if (eventType == EventType.FESTIVAL.name || eventType == EventType.PARTY.name) return emptyList()
 ```
 
-**Typing a night as `PARTY` discards its lineup.** migas maps its `playing` category to `CLUB_NIGHT` deliberately for exactly this reason: there the *title is
-the artist*, so all 8 of its events would lose their artist link on a merge. `PARTY` would also misdescribe the venue, which is a seated listening bar.
+**Typing a night as `PARTY` discards its lineup.** migas maps its `playing` category to `CLUB_NIGHT` deliberately for exactly this reason: there the _title is
+the artist_, so all 8 of its events would lose their artist link on a merge. `PARTY` would also misdescribe the venue, which is a seated listening bar.
 
 So the definition to work from: **`CLUB_NIGHT` is a DJ set where the booked act is the draw** — the artist matters and is extracted. `PARTY` is a night where
 the event is the draw and no lineup is claimed. Map to whichever of those is true of the venue, and do not "tidy" one into the other.
 
-*(That `PARTY` and `FESTIVAL` discard artists at all is a separate and larger question — it affects far more than these 8 rows, and it is tracked
-in [issue #332](https://github.com/enorm-labs/event-junkie/issues/332).)*
+_(That `PARTY` and `FESTIVAL` discard artists at all is a separate and larger question — it affects far more than these 8 rows, and it is tracked
+in [issue #332](https://github.com/enorm-labs/event-junkie/issues/332).)_
 
-**`EXHIBITION` means an *opening*, not a *run*.** A `vernissage` has a start time on one evening and imports correctly; an exhibition that runs for six weeks
+**`EXHIBITION` means an _opening_, not a _run_.** A `vernissage` has a start time on one evening and imports correctly; an exhibition that runs for six weeks
 does not fit the model at all, because an event carries a date, not a date range. The type name promises more than the data delivers, and that gap is the
 subject of the deferred decision in §5 — not something to work around in a scraper.
 
@@ -85,8 +85,8 @@ bug.
 
 ### 3.2 Participation formats
 
-Guided tours, workshops, yoga and qigong sessions, environmental-education slots, drop-in handicraft afternoons. These are things you *take part in*, not things
-you *go and see*.
+Guided tours, workshops, yoga and qigong sessions, environmental-education slots, drop-in handicraft afternoons. These are things you _take part in_, not things
+you _go and see_.
 
 The precedent was set by **Gärten der Welt**: 28 of its 41 upcoming rows were park activities. Importing them would have swamped the actual programme — the
 Arena concerts, the open-air cinema, the park festivals — and presented a concert venue as a tour operator. One predicate,
@@ -99,7 +99,7 @@ category at all, and dropping uncategorised rows would lose them.
 ### 3.3 Trade fairs and conferences
 
 Not modelled and not imported. Arena Berlin is the clearest case — all five of its upcoming entries were trade fairs (deGUT, BUCHBERLIN, Einstieg Berlin), which
-is why it sits in *Blocked* despite being trivially scrapable. The blocker there was never the markup.
+is why it sits in _Blocked_ despite being trivially scrapable. The blocker there was never the markup.
 
 ### 3.4 Classical concerts and orchestras
 
@@ -108,7 +108,7 @@ ensemble plus a conductor plus soloists, rather than a headliner with support. T
 orchestral house can be imported honestly.
 
 **RBB Sendesaal is the live example.** Its scraping was solved in the 3 August re-check — the ROC calendar is server-rendered and attributes each concert to a
-venue, so `.ConcertListItem-location` is the only filter needed — and it went back to *Blocked* on **scope, not on scraping**. Answer §5's first question and
+venue, so `.ConcertListItem-location` is the only filter needed — and it went back to _Blocked_ on **scope, not on scraping**. Answer §5's first question and
 the importer is a short job.
 
 ## 4. What is in scope, and sometimes surprises people
@@ -124,11 +124,11 @@ the importer is a short job.
 
 ## 5. Coverage decisions
 
-Each of these changes what the app *is*, so **none may be settled by an importer PR.** All five were decided on 2026-08-08; the two that are still open are open
-on *sequencing*, not on principle.
+Each of these changes what the app _is_, so **none may be settled by an importer PR.** All five were decided on 2026-08-08; the two that are still open are open
+on _sequencing_, not on principle.
 
 | Question                                                                                     | Decision                      | Blocked on       | What it costs                                                                                                            |
-|----------------------------------------------------------------------------------------------|-------------------------------|------------------|--------------------------------------------------------------------------------------------------------------------------|
+| -------------------------------------------------------------------------------------------- | ----------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | **Comedy clubs?** (Comedy Café Berlin, Quatsch Comedy Club, …)                               | ✅ **Yes**                    | nothing          | Cheapest of the five. Cosmic Comedy is already imported, so this is more venues in a category that exists                |
 | **Theatres?** (Volksbühne, Schaubühne, Berliner Ensemble, …)                                 | ✅ **Yes**                    | nothing          | Low. Theater im Delphi, Heimathafen and Bar jeder Vernunft are already imported — coverage, not a new category           |
 | **Classical / orchestras?** (Konzerthaus, Philharmonie, RBB Sendesaal, Berliner Symphoniker) | ⏸ **Deferred** — not rejected | the artist model | Medium. `ArtistRole` and the genre vocabulary need extending **first**; the scraping is already solved for RBB Sendesaal |
@@ -140,7 +140,7 @@ and scaffolded like any other source — no ADR, no model change, no further dis
 
 **What the two deferrals mean in practice.** Deferred is not rejected: both are wanted, and both are blocked on a model change that has to land first. Do not
 import an orchestral house by flattening its programme into headliner-plus-support — the resulting data would be wrong in a way that is expensive to unpick
-later. RBB Sendesaal stays in *Blocked* until `ArtistRole` grows a conductor and a soloist.
+later. RBB Sendesaal stays in _Blocked_ until `ArtistRole` grows a conductor and a soloist.
 
 **Sport is settled, and the exclusions in §3.1 are its implementation.** Reopening it means reopening `isSport` and the Velomax type map, not just a
 documentation edit.
@@ -150,7 +150,7 @@ documentation edit.
 If you are adding an importer and the venue's programme does not obviously fit:
 
 1. **Check this document first.** If the answer is here, follow it.
-2. **If it is a listed open question, do not settle it in an importer PR.** Say so in the PR and leave the venue in *Blocked* with the reason. That is exactly
+2. **If it is a listed open question, do not settle it in an importer PR.** Say so in the PR and leave the venue in _Blocked_ with the reason. That is exactly
    what RBB Sendesaal is doing.
 3. **If it is genuinely new**, add a row here with the reasoning, and put the implementation behind one named predicate — `isSport`, `isProgrammeCategory` —
    rather than scattering conditions through a parser. Every exclusion above is one line to find and one line to change, and that property is worth protecting.

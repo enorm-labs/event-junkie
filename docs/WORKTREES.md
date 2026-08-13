@@ -42,12 +42,12 @@ claude
 IntelliJ can do the same from the UI ([JetBrains docs](https://www.jetbrains.com/help/idea/use-git-worktrees.html)):
 
 - **Create** — Git tool window (<kbd>⌘9</kbd>) → **Worktrees** → **New Worktree**, or **Git | New Worktree**. Pick the source branch (`origin/main`), a project
-  name and a location *outside* this repository, e.g.
+  name and a location _outside_ this repository, e.g.
   `../event-junkie-tresor`. The worktree opens as its own project window. The same branch cannot be checked out in two worktrees, so give each one a new
   branch.
 - **Switch** — double-click a worktree in the **Worktrees** tab; or right-click a branch in **Log** → **Open Worktree**.
 - **Remove** — select it in **Worktrees** and click **Delete** (not possible for the main or currently open worktree, and commit first). A directory deleted by
-  hand shows as *Prunable* — **Prune** clears them.
+  hand shows as _Prunable_ — **Prune** clears them.
 
 The usual caveat about `.idea/workspace.xml` making IntelliJ treat every worktree as one project does not apply here: all of `.idea` is gitignored. Each
 worktree window therefore needs its own SDK and run configurations — see the next two steps.
@@ -71,7 +71,7 @@ cd events-frontend && npm ci             # only if you need the frontend; dev-en
 **This is the one step that bites.**
 
 Docker Compose derives its project name from the directory holding `compose.yaml`, and both `bootRun` and
-`scripts/dev-env.sh` pass the *worktree's* copy. So a worktree at `.claude/worktrees/tresor` would come up as compose project `tresor` — a second Postgres
+`scripts/dev-env.sh` pass the _worktree's_ copy. So a worktree at `.claude/worktrees/tresor` would come up as compose project `tresor` — a second Postgres
 container on a brand-new empty `tresor_postgres-data` volume, clashing with the main checkout on host port `56298`. An empty database also makes `diff-snapshot`
 report every existing source as `GONE`.
 
@@ -104,11 +104,11 @@ One worktree = one venue = one PR (that is exactly the `/next-importer` contract
 **deliberately** rather than accepting either side:
 
 | File                                         | What conflicts                                                                                               |
-|----------------------------------------------|--------------------------------------------------------------------------------------------------------------|
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `docs/EVENT_DATA_SOURCES.md`                 | the status **count** table plus the moved row — recount after rebasing; both sides bump the same numbers     |
 | `http/importer/dev-seed.http`                | the alphabetical header list and the venue block — "keep both" can silently fuse two blocks; rebuild by hand |
 | `events-importer/.../scraper/EventSource.kt` | one new enum entry each                                                                                      |
-| *(none — file an issue)*                                    | a smoke-test finding goes to the tracker, not to a file                                                             |
+| _(none — file an issue)_                     | a smoke-test finding goes to the tracker, not to a file                                                      |
 
 **Rebase feature branches onto `main`; don't merge `main` into them** — PRs here are merged with "Rebase and merge", which a merge commit blocks.
 

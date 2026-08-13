@@ -71,4 +71,3 @@ The decision to keep all modules as **direct sub-packages** of `de.norm.events` 
 - [Spring Modulith documentation](https://docs.spring.io/spring-modulith/reference/)
 - [`VenueModule.kt`](../../events-importer/src/main/kotlin/de/norm/events/venue/VenueModule.kt) (example marker)
 - [`ModularityTests.kt`](../../events-importer/src/test/kotlin/de/norm/events/ModularityTests.kt)
-

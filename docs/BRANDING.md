@@ -1,26 +1,26 @@
 # Branding — Event Junkie
 
 > Status: **living document** (started 2026-07-02). The brand foundation (name, tagline, voice) is
-> decided; the **logo** and **visual-design** sections are *ideas to explore*, not committed decisions.
+> decided; the **logo** and **visual-design** sections are _ideas to explore_, not committed decisions.
 > Related: [VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md) · [ADR-010 (styling framework)](adr/ADR-010_FRONTEND_STYLING_FRAMEWORK.md).
 
 ## 1. Brand foundation
 
-|                          |                                                                                                                                                                           |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Public name**          | **Event Junkie** (domain: `event-junkie.de`)                                                                                                                              |
-| **Identifier form**      | **`event-junkie`** (repository, config, infrastructure — one name everywhere, see the naming rule below)                                                                                              |
-| **Tagline**              | *Can't get enough of Berlin* · DE: *Von Berlin kriegst du nie genug* — the German line is **shipping but not signed off**; see [§8](#8-localisation--the-german-register) |
-| **Positioning line**     | *The event app Berlin deserves* — **not the tagline**; see below                                                                                                     |
-| **One-liner**            | Your always-fresh feed of what's on across Berlin's venues — concerts, club nights, festivals, and the odd quiz night.                                                    |
-| **Scope**                | All music, every genre and room size — not just techno. Berlin-only for now. Which *kinds* of event: [EVENT_SCOPE.md](EVENT_SCOPE.md)                                     |
+|                      |                                                                                                                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Public name**      | **Event Junkie** (domain: `event-junkie.de`)                                                                                                                              |
+| **Identifier form**  | **`event-junkie`** (repository, config, infrastructure — one name everywhere, see the naming rule below)                                                                  |
+| **Tagline**          | _Can't get enough of Berlin_ · DE: _Von Berlin kriegst du nie genug_ — the German line is **shipping but not signed off**; see [§8](#8-localisation--the-german-register) |
+| **Positioning line** | _The event app Berlin deserves_ — **not the tagline**; see below                                                                                                          |
+| **One-liner**        | Your always-fresh feed of what's on across Berlin's venues — concerts, club nights, festivals, and the odd quiz night.                                                    |
+| **Scope**            | All music, every genre and room size — not just techno. Berlin-only for now. Which _kinds_ of event: [EVENT_SCOPE.md](EVENT_SCOPE.md)                                     |
 
 ### Tagline vs. positioning line
 
 Two lines exist and they do different jobs. Keeping them apart is deliberate — using either in the other's place is how the voice goes muddy.
 
-|                   | *Can't get enough of Berlin*          | *The event app Berlin deserves*           |
-|-------------------|---------------------------------------|-------------------------------------------|
+|                   | _Can't get enough of Berlin_          | _The event app Berlin deserves_           |
+| ----------------- | ------------------------------------- | ----------------------------------------- |
 | **Role**          | Tagline                               | Positioning line                          |
 | **Speaks about**  | the **user** — it flatters them (§3)  | the **product** — what it is trying to be |
 | **Where it goes** | hero, page titles, OG tags, marketing | About page, README, a pitch               |
@@ -29,15 +29,15 @@ Two lines exist and they do different jobs. Keeping them apart is deliberate —
 The positioning line is **not a second tagline**, and should not appear in the hero, the page title or the OG tags. It reads as a claim rather than a wink, and
 the brand's whole premise (§2) is that the app flatters the user rather than itself — a claim in the hero would undercut the tagline sitting next to it.
 
-**No "that" (decided 2026-08-08).** The line is *"The event app Berlin deserves"*, not *"…the event app **that** Berlin deserves"*. The relative pronoun is
+**No "that" (decided 2026-08-08).** The line is _"The event app Berlin deserves"_, not _"…the event app **that** Berlin deserves"_. The relative pronoun is
 optional in English when the relative clause relativises the object, and dropping it is what makes the line scan as a claim rather than as a sentence someone
-started. It also lets the Batman cadence it borrows land unaltered — *"the hero Gotham deserves"* has no *that* either, and the half-echo is doing work the
-extra syllable would blunt. **Do not add it back.** (It was written with *that* until this date; if you find that spelling anywhere, it is a leftover.)
+started. It also lets the Batman cadence it borrows land unaltered — _"the hero Gotham deserves"_ has no _that_ either, and the half-echo is doing work the
+extra syllable would blunt. **Do not add it back.** (It was written with _that_ until this date; if you find that spelling anywhere, it is a leftover.)
 
-**German:** the About page already ships it inside a sentence — *"Weil ich die Event-App bauen wollte, die Berlin verdient."* That works because the line sits
-in prose there. A standalone German form (*"Die Event-App, die Berlin verdient"*) is **not signed off**, and would need the same written-not-translated
+**German:** the About page already ships it inside a sentence — _"Weil ich die Event-App bauen wollte, die Berlin verdient."_ That works because the line sits
+in prose there. A standalone German form (_"Die Event-App, die Berlin verdient"_) is **not signed off**, and would need the same written-not-translated
 treatment as everything else in [§8](#8-localisation--the-german-register) before it goes anywhere on its own. Note that the omission above does not transfer:
-German has no zero relative pronoun, so *"die"* stays in either form. The two languages simply differ here — that is not a drift between them to be "fixed".
+German has no zero relative pronoun, so _"die"_ stays in either form. The two languages simply differ here — that is not a drift between them to be "fixed".
 
 ### Naming rule
 
@@ -45,10 +45,10 @@ German has no zero relative pronoun, so *"die"* stays in either form. The two la
 Junkie**; everything else — the repository, Gradle settings, READMEs, ADRs, developer docs, infrastructure, the scraper's User-Agent — uses **`event-junkie`** in
 identifier form.
 
-**Reversed 2026-08-11 ([#427](https://github.com/enorm-labs/event-junkie/issues/427)).** Until then an internal codename, *Event Checker*, was kept deliberately
-distinct from the public brand, with infrastructure as a documented exception on the grounds that it is read next to a *domain* rather than next to the source.
+**Reversed 2026-08-11 ([#427](https://github.com/enorm-labs/event-junkie/issues/427)).** Until then an internal codename, _Event Checker_, was kept deliberately
+distinct from the public brand, with infrastructure as a documented exception on the grounds that it is read next to a _domain_ rather than next to the source.
 The exception turned out to be the rule. Once `infra/` landed, most internal surfaces sat beside an operational one, and carrying two names bought a distinction
-nobody had needed while charging a translation step every time the two met. **The codename is retired — don't reintroduce it**, and if you find *Event Checker*
+nobody had needed while charging a translation step every time the two met. **The codename is retired — don't reintroduce it**, and if you find _Event Checker_
 anywhere, it is a leftover rather than a deliberate survival.
 
 **What keeps its own name, because it never carried either one:** the Gradle modules (`events-core`, `events-bff`, `events-importer`), the Kotlin package
@@ -59,15 +59,15 @@ cost in history and migrations, and no benefit — none of them says either name
 knowing about, because neither is the kind of thing a `grep` for the old name will ever show you.
 
 **One: the issue tracker is a surface, and `grep` cannot reach it.** Eight issue bodies still carried the old name. Most were stale URLs, harmless because
-GitHub redirects them — but #426's checklist carried `LABEL org.opencontainers.image.source=…/event-checker`, and *that* one had teeth: a stale label still
+GitHub redirects them — but #426's checklist carried `LABEL org.opencontainers.image.source=…/event-checker`, and _that_ one had teeth: a stale label still
 resolves through the redirect, while the package-to-repository link is matched on the **canonical** name, so the published container package would have silently
 failed to attach. One `good first issue` was worse than stale — the rename had inverted its premise, so it now instructed the next contributor to preserve a
 split that no longer existed.
 
 **Two: sentences whose meaning was the distinction.** A mechanical replace renames identifiers reliably and reads nothing. Three documents explained the old
-split in prose — *"Event Junkie is the public name; Event Checker is the internal name"* — and the sweep rewrote **both halves**, leaving a tautology that named
+split in prose — _"Event Junkie is the public name; Event Checker is the internal name"_ — and the sweep rewrote **both halves**, leaving a tautology that named
 the same thing twice and then claimed the two referred to the same thing. Grep cannot find these, because the old name is gone; they are only visible by reading.
-When a name is retired, the sentences that existed to *contrast* the two names have to be deleted or rewritten, not renamed.
+When a name is retired, the sentences that existed to _contrast_ the two names have to be deleted or rewritten, not renamed.
 
 The check that covers the tracker:
 
@@ -86,14 +86,14 @@ not more.
 The name works because a junkie's traits map cleanly onto what the product does:
 
 | Junkie trait                             | Product truth                                                               |
-|------------------------------------------|-----------------------------------------------------------------------------|
-| Always chasing the next **hit**          | A "hit" is both a drug hit *and* a music hit — every event is the next one. |
-| Always knows where to **score**          | The app *is* the source: the one place that always knows what's on.         |
+| ---------------------------------------- | --------------------------------------------------------------------------- |
+| Always chasing the next **hit**          | A "hit" is both a drug hit _and_ a music hit — every event is the next one. |
+| Always knows where to **score**          | The app _is_ the source: the one place that always knows what's on.         |
 | Wired into the scene, ahead of the crowd | An always-fresh feed so you know before it sells out.                       |
 | Feeds a **habit**, comes back nightly    | Discovery you return to; you never come up dry.                             |
 
-**Metaphor to lean on:** the user is the *junkie*; the app is quietly the *dealer/source*. Name the audience (Junkie); let "source / score / hit / fix / feed
-the habit" show up in the *copy*. Words that carry the double meaning — **hit**, **score** — are the strongest.
+**Metaphor to lean on:** the user is the _junkie_; the app is quietly the _dealer/source_. Name the audience (Junkie); let "source / score / hit / fix / feed
+the habit" show up in the _copy_. Words that carry the double meaning — **hit**, **score** — are the strongest.
 
 ## 3. Voice & tone
 
@@ -105,13 +105,13 @@ it PG-13 and inclusive.
 
 Great places to let the voice show — **microcopy**:
 
-- Empty state: *"Nothing on tonight? In Berlin? Unlikely — try a wider date range."*
-- End of list: *"That's the lot. Go touch some grass (or don't)."*
-- 404 / not found: *"This one's gone. Like last call — you snooze, you lose."*
-- Loading: *"Scoring the latest…"*
+- Empty state: _"Nothing on tonight? In Berlin? Unlikely — try a wider date range."_
+- End of list: _"That's the lot. Go touch some grass (or don't)."_
+- 404 / not found: _"This one's gone. Like last call — you snooze, you lose."_
+- Loading: _"Scoring the latest…"_
 
-Tagline alternatives explored (kept for reference / A-B testing): *Never miss a hit* · *Highly addictive* · *Feed the habit* · *Your dealer for Berlin
-nightlife* · *Know before the crowd*.
+Tagline alternatives explored (kept for reference / A-B testing): _Never miss a hit_ · _Highly addictive_ · _Feed the habit_ · _Your dealer for Berlin
+nightlife_ · _Know before the crowd_.
 
 ## 4. Logo — directions to explore
 
@@ -124,9 +124,9 @@ alternatives. The principles that guided it:
 - **Favicon-legible.** It has to survive at 16–32 px and as an emoji-style tab/app icon. Favour one strong silhouette.
 - **Ship as SVG**, inline-able (the artifact/title system and CSP prefer self-contained assets).
 
-Candidate directions (ordered by how well they fuse *music + the "junkie" concept*):
+Candidate directions (ordered by how well they fuse _music + the "junkie" concept_):
 
-1. **Pulse / waveform wordmark** *(recommended lead).* "Event Junkie" set in the site font, with a small ECG-heartbeat / audio-waveform line replacing the
+1. **Pulse / waveform wordmark** _(recommended lead)._ "Event Junkie" set in the site font, with a small ECG-heartbeat / audio-waveform line replacing the
    crossbar of a letter or underlining the word. Fuses **heartbeat + music waveform + "never miss a beat" + addiction**. The waveform alone becomes the favicon.
 2. **"EJ" monogram.** A tight ligature of E + J for the app icon / favicon; pairs with the wordmark for full-lockup use.
 3. **Pin + play.** A Berlin map-pin whose "hole" is a play triangle or a music note — literally "events at venues." Very legible small; a touch more literal /
@@ -148,13 +148,13 @@ via the `.dark` class (see ADR-010). Re-theming is a token edit, so most of the 
 the accent reads like a spotlight in a dark room — AA-verified in both modes. The other rows are kept as alternatives. Candidate accents (drop-in oklch):
 
 | Direction              | Vibe                         | Light `--primary`      | Dark `--primary`       |
-|------------------------|------------------------------|------------------------|------------------------|
-| **UV violet** *(rec.)* | Club blacklight, after-hours | `oklch(0.55 0.24 295)` | `oklch(0.72 0.20 295)` |
+| ---------------------- | ---------------------------- | ---------------------- | ---------------------- |
+| **UV violet** _(rec.)_ | Club blacklight, after-hours | `oklch(0.55 0.24 295)` | `oklch(0.72 0.20 295)` |
 | Electric magenta       | Neon, flyer-pink             | `oklch(0.60 0.25 350)` | `oklch(0.72 0.21 350)` |
 | Acid green             | Rave, high-energy            | `oklch(0.72 0.22 150)` | `oklch(0.80 0.20 150)` |
 | Berlin red             | Bold, editorial              | `oklch(0.58 0.22 25)`  | `oklch(0.70 0.19 25)`  |
 
-Notes: keep `--background`, `--card`, `--muted`, borders neutral. Verify **WCAG AA** contrast for text on accent and accent on background in *both* modes
+Notes: keep `--background`, `--card`, `--muted`, borders neutral. Verify **WCAG AA** contrast for text on accent and accent on background in _both_ modes
 (accessibility is a first-class project value). The existing red `--destructive` must stay visually distinct from any red-ish accent — favours violet/magenta.
 
 ### 5.2 Dark-mode-first
@@ -169,7 +169,7 @@ explicit light choice is remembered in
 - **Body / UI:** **Geist** — now actually rendering and **self-hosted** via `@fontsource-variable/geist`
   (imported in `main.ts`); the render-blocking Google Fonts request is gone. (A shadcn-scaffold name mismatch had it silently falling back to a system font
   until that was fixed.)
-- **Display / hero:** *(open)* consider a characterful face for big headings (a tight grotesque, or a mono for a "listings/terminal" edge) to add nightlife
+- **Display / hero:** _(open)_ consider a characterful face for big headings (a tight grotesque, or a mono for a "listings/terminal" edge) to add nightlife
   personality; keep Geist for everything functional.
 
 ### 5.4 Imagery
@@ -184,7 +184,7 @@ the brand accent on cards, revealing full colour on hover / detail pages. Cohesi
 
 ### 5.6 Page-level notes
 
-- **Home:** lead with *tonight / this week* — the "next fix." Hero = wordmark + tagline (already the title).
+- **Home:** lead with _tonight / this week_ — the "next fix." Hero = wordmark + tagline (already the title).
 - **Events:** filter-forward (genre/type already exist); make "what's on this weekend" a one-tap default.
 - **Calendar:** the signature screen (ADR-011) — brand the "has events" day markers with the accent.
 - **Detail pages:** editorial layout; big image, lineup, venue — the place to reveal full-colour imagery.
@@ -215,11 +215,11 @@ the brand accent on cards, revealing full colour on hover / detail pages. Cohesi
 A sequence that also captures the §3–§5 design ideas not tracked in the checklist above.
 
 - [x] Home hero — ambient violet glow, animated pulse mark, wordmark + tagline — and mono eyebrow section labels (`PulseMark`, `SectionLabel`, motion keyframes
-  in `main.css`). *(§5.5, §5.6)*
-- [x] Refined event cards + a pulsing "live tonight" dot + hover-lift, gated by reduced-motion. *(§5.5)*
-- [x] Events & Calendar: eyebrow headers, filter-forward polish, accent-branded day markers. *(§5.6)*
-- [x] Detail pages: editorial layout + eyebrow section labels; desaturate-on-rest image treatment. *(§4, §5.4)*
-- [x] Empty / 404 / loading microcopy in the brand voice. *(§3)*
+      in `main.css`). _(§5.5, §5.6)_
+- [x] Refined event cards + a pulsing "live tonight" dot + hover-lift, gated by reduced-motion. _(§5.5)_
+- [x] Events & Calendar: eyebrow headers, filter-forward polish, accent-branded day markers. _(§5.6)_
+- [x] Detail pages: editorial layout + eyebrow section labels; desaturate-on-rest image treatment. _(§4, §5.4)_
+- [x] Empty / 404 / loading microcopy in the brand voice. _(§3)_
 
 ## 8. Localisation — the German register
 
@@ -229,40 +229,40 @@ speaking, and the pieces below are written from the concept rather than rendered
 ### Register: `du`, everywhere
 
 Informal throughout, **including the imprint and the privacy notice**. Two pages in `Sie` on a site that says `du` everywhere else read as boilerplate copied
-from a generator, which is the impression a legal page can least afford. Nothing requires the formal register — Art. 12 (1) DSGVO asks for *klare und einfache
-Sprache*, and `du` is that. If this ever changes it changes on every page at once.
+from a generator, which is the impression a legal page can least afford. Nothing requires the formal register — Art. 12 (1) DSGVO asks for _klare und einfache
+Sprache_, and `du` is that. If this ever changes it changes on every page at once.
 
 ### The tagline — shipping, not signed off
 
-*Can't get enough of Berlin* is a pun on the brand premise (§2), and a literal German rendering loses it. Three options were considered:
+_Can't get enough of Berlin_ is a pun on the brand premise (§2), and a literal German rendering loses it. Three options were considered:
 
 | Option                                | Reading                                                                                                                    |
-|---------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| ***Von Berlin kriegst du nie genug*** | **Currently shipping.** Keeps the "you can't get enough" flattery and the `du` register; idiomatic rather than translated. |
-| *Berlin macht süchtig*                | Closer to the junkie metaphor, further from flattering the user — it praises the city, not the reader.                     |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| _**Von Berlin kriegst du nie genug**_ | **Currently shipping.** Keeps the "you can't get enough" flattery and the `du` register; idiomatic rather than translated. |
+| _Berlin macht süchtig_                | Closer to the junkie metaphor, further from flattering the user — it praises the city, not the reader.                     |
 | Keep the English line on `/de` too    | Legitimate, and common for Berlin brands. Costs the German reader the joke.                                                |
 
-**Still the owner's call.** It ships because a German page needs *a* tagline, not because the question is closed — changing it is one line in
+**Still the owner's call.** It ships because a German page needs _a_ tagline, not because the question is closed — changing it is one line in
 `src/i18n/messages/de/footer.json` plus one e2e assertion.
 
 ### What stays in English
 
-The brand name **Event Junkie** (never *Veranstaltungs-Junkie*), the **beta** marker, and everything sourced from third parties: event titles, venue and
-promoter names, artist names, line-ups, genre tags, and Berlin district names. *Mitte* is *Mitte* in every language — see
+The brand name **Event Junkie** (never _Veranstaltungs-Junkie_), the **beta** marker, and everything sourced from third parties: event titles, venue and
+promoter names, artist names, line-ups, genre tags, and Berlin district names. _Mitte_ is _Mitte_ in every language — see
 [ADR-013 §3](adr/ADR-013_LOCALISATION.md), which flags `src/lib/districts.ts` as the file that looks translatable and is not.
 
 ### Microcopy in voice, not in translation
 
 The English examples in §3 have German counterparts written the same way — for the joke, not for the words. Shipping today:
 
-- Disclaimer: *"Die Event-Daten stammen aus öffentlichen Quellen — alle Angaben ohne Gewähr. Frag im Zweifel bei der Location nach, bevor du losziehst."*
-- Beta explanation: *"Warum da beta steht"* — the section heading on the About page, phrased as the reader's question rather than as a status label.
+- Disclaimer: _"Die Event-Daten stammen aus öffentlichen Quellen — alle Angaben ohne Gewähr. Frag im Zweifel bei der Location nach, bevor du losziehst."_
+- Beta explanation: _"Warum da beta steht"_ — the section heading on the About page, phrased as the reader's question rather than as a status label.
 
-**Note the vocabulary choice:** *Location*, not *Veranstaltungsort*. It is what Berlin actually says, and the nav label uses it too.
+**Note the vocabulary choice:** _Location_, not _Veranstaltungsort_. It is what Berlin actually says, and the nav label uses it too.
 
 ## Glossary
 
-Shorthand used across this doc, the code, and PR descriptions. *(planned)* marks a term whose implementation is still on the backlog above.
+Shorthand used across this doc, the code, and PR descriptions. _(planned)_ marks a term whose implementation is still on the backlog above.
 
 - **Accent** — the single brand hue (UV violet) applied to the `--primary` / `--accent` / `--ring`
   tokens; everything else stays neutral so it reads like a spotlight. See §5.1.

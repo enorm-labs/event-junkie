@@ -21,7 +21,7 @@ Seven candidates were evaluated:
 ### Alternatives Considered
 
 | Option                      | Verdict      | Key Issue                                                                                                                                                                                                                                                    |
-|-----------------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| --------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **`@Scheduled` alone**      | ⚠️ Too bare  | Only supports global cron expressions, no per-source schedules, no persistence.                                                                                                                                                                              |
 | **JobRunr**                 | ⚠️ Viable    | Requires a JDBC `DataSource` — incompatible with the R2DBC-only stack without adding `spring-jdbc`. Adds its own job tables that duplicate `event_source` metadata. A dual-DataSource workaround is feasible (see below) but not justified at current scale. |
 | **Quartz**                  | ⚠️ Heavy     | Same JDBC requirement. Massive API surface for ~40 cron triggers. XML-heavy configuration heritage.                                                                                                                                                          |
@@ -99,8 +99,8 @@ Concurrent execution is safe because:
 - **One run per source** is guaranteed by an atomic claim: a run opens by issuing
   `UPDATE … SET status = 'RUNNING' … WHERE id = :id AND version = :expectedVersion AND status <> 'RUNNING'` (`EventSourceRepository.claimForImport`) and imports
   only when it updated the row. This matters because `status = 'RUNNING'` is not yet set while a request waits for a concurrency permit, so a source can be
-  requested by a manual trigger and *still* look due to a scheduler tick; without the claim both runs scrape and upsert the same events and collide on the
-  `event_slug_key` unique index. The `version` half of the guard extends that from overlapping runs to *consecutive* ones: a tick that waited out the whole of
+  requested by a manual trigger and _still_ look due to a scheduler tick; without the claim both runs scrape and upsert the same events and collide on the
+  `event_slug_key` unique index. The `version` half of the guard extends that from overlapping runs to _consecutive_ ones: a tick that waited out the whole of
   another run's import would otherwise find the status back at SUCCESS and re-scrape the venue. A source another run holds, or that has been imported since this
   run read it, is skipped, not failed. See ADR-009 for why optimistic locking cannot serve this purpose on its own.
 
@@ -147,7 +147,7 @@ A formal circuit breaker (e.g. Resilience4J) was considered for handling unavail
 provides equivalent protection at the scheduling layer:
 
 | Circuit breaker concept | Existing equivalent                                                                      |
-|-------------------------|------------------------------------------------------------------------------------------|
+| ----------------------- | ---------------------------------------------------------------------------------------- |
 | CLOSED (normal)         | `status = SUCCESS`, `retryCount = 0` — imports proceed normally                          |
 | OPEN (blocked)          | `retryCount >= maxRetries` — source is skipped by the scheduler                          |
 | HALF-OPEN (probe)       | Manual `POST /event-sources/{slug}/retry` resets the source for re-test                  |
@@ -180,7 +180,7 @@ specific named `DataSource` bean.
 This was evaluated and **deferred** because the costs outweigh the benefits at current scale:
 
 | Cost                       | Detail                                                                                                   |
-|----------------------------|----------------------------------------------------------------------------------------------------------|
+| -------------------------- | -------------------------------------------------------------------------------------------------------- |
 | New dependencies           | `spring-boot-starter-jdbc`, PostgreSQL JDBC driver, `jobrunr-spring-boot-4-starter`                      |
 | Duplicate connection pools | HikariCP (JDBC) + R2DBC pool to the same database — doubles connection resource usage                    |
 | Duplicate job metadata     | JobRunr creates its own tables (`jobrunr_jobs`, `jobrunr_recurring_jobs`, etc.) alongside `event_source` |

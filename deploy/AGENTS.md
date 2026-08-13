@@ -80,7 +80,7 @@ all exercised on staging. Still not: **NetworkPolicies** (#416), **production** 
 still resolving when this was written. Two things are also true only of staging: it is x86 where production is meant to be arm64 (#424), and its chart is
 temporarily pinned to a tag rather than following `main` (#455).
 
-So: the chart may now be described as **deployed to staging**. It is still not *production-ready*, and "installed and exercised locally" remains the accurate
+So: the chart may now be described as **deployed to staging**. It is still not _production-ready_, and "installed and exercised locally" remains the accurate
 phrase for anything that has only met k3d.
 
 The runbook for re-running the rehearsal is in `docs/DEVELOPMENT.md`. Two things it will not let you skip: the rehearsal uses its **own database**
@@ -112,12 +112,12 @@ deploy/
 (`oci://ghcr.io/enorm-labs/charts/event-junkie`, #264) is independent of the repository path.
 
 **There is no `values-staging.yaml`, and that is deliberate (#414).** A `HelmRelease` cannot read a file from this repository, so staging's configuration lives
-in `deploy/clusters/staging/helm-release.yaml` under `spec.values` — the single place it exists. Keeping a values file *as well* would mean two copies that must
+in `deploy/clusters/staging/helm-release.yaml` under `spec.values` — the single place it exists. Keeping a values file _as well_ would mean two copies that must
 agree with nothing checking that they do, which is how an environment drifts. `render-assertions.sh` extracts `spec.values` from every HelmRelease and renders
 the chart with it, so the assertions gate exactly what Flux deploys rather than a file nothing deploys.
 
-`values-k3d.yaml` survives because it is not a duplicate of anything: it drives `k3d-rehearsal.sh up`, which installs the *working tree's* chart with images
-built seconds ago. `deploy/clusters/k3d/` answers a different question with the *published* chart and images. Both are worth having; neither substitutes for the
+`values-k3d.yaml` survives because it is not a duplicate of anything: it drives `k3d-rehearsal.sh up`, which installs the _working tree's_ chart with images
+built seconds ago. `deploy/clusters/k3d/` answers a different question with the _published_ chart and images. Both are worth having; neither substitutes for the
 other.
 
 **One chart, not three.** The three workloads share an ingress, a hostname, a database and a release lifecycle; subcharts would buy independent versioning
@@ -162,7 +162,7 @@ or that a future reader would otherwise "fix" back.
   `off` as boolean `false`, and ConfigMap `data` values must be strings, so it does not merely change meaning — it fails to render. The same applies to any
   future `yes`/`no`/`on`/`y`/`n` value.
 - **No naked Pods**, with one deliberate exception: `templates/tests/connection-test.yaml` is a bare Pod because that is Helm's documented test-hook shape. A
-  controller would actively defeat it — the hook's exit code *is* the test result, and something that restarts the pod would destroy the signal.
+  controller would actively defeat it — the hook's exit code _is_ the test result, and something that restarts the pod would destroy the signal.
 
 **Two deliberate deviations, so nobody re-litigates them:**
 
@@ -180,8 +180,8 @@ privileged containers, and only `emptyDir`/`configMap`/`secret` volumes. `render
 deliberate rather than incidental — **until #416 adds the label, nothing rejects a violation at admission**, so a workload could drift and only fail on the day
 the label lands.
 
-**What does not apply**, recorded so the setup guide is not re-read from scratch: *large clusters* and *multiple zones* (one node, one zone — ADR-012), *node
-conformance* (k3s owns it), and *PKI certificates* (k3s owns the cluster PKI; the public certificate is cert-manager's, #265).
+**What does not apply**, recorded so the setup guide is not re-read from scratch: _large clusters_ and _multiple zones_ (one node, one zone — ADR-012), _node
+conformance_ (k3s owns it), and _PKI certificates_ (k3s owns the cluster PKI; the public certificate is cert-manager's, #265).
 
 ## Things that will bite
 
@@ -189,7 +189,7 @@ conformance* (k3s owns it), and *PKI certificates* (k3s owns the cluster PKI; th
   would render fine locally and produce a chart Flux cannot install — and that would not surface until #414. CI pins a Helm 3 client for this reason.
 - **Selector labels are the immutable subset.** `spec.selector` is immutable after creation, and `helm.sh/chart` and `app.kubernetes.io/version` change on every
   release. Use `event-junkie.selectorLabels` for any selector and `event-junkie.labels` only for `metadata.labels`. Mixing them installs perfectly and then
-  fails every subsequent upgrade — a failure nobody sees until the *second* release, which is why an assertion exists for it rather than a comment.
+  fails every subsequent upgrade — a failure nobody sees until the _second_ release, which is why an assertion exists for it rather than a comment.
   `app.kubernetes.io/component` **is** in the selector and must stay: without it all three Deployments select each other's pods.
 - **`SPRING_FLYWAY_USER`, not `SPRING_FLYWAY_USERNAME`.** The Spring property is `spring.flyway.user`. The wrong spelling binds to nothing and fails silently.
 - **The importer holds two connection configurations for one database** — R2DBC for the application, JDBC for Flyway. Locally Spring Boot's Docker Compose
@@ -201,15 +201,15 @@ conformance* (k3s owns it), and *PKI certificates* (k3s owns the cluster PKI; th
 - **Actuator is private because it is on its own port**, not because an ingress rule excludes it. Never add an ingress path for `/actuator`, never route the
   `management` port, and never change the importer's Service to `NodePort` or `LoadBalancer` — its admin API has no authentication of its own, and what keeps
   it private is that nothing outside the cluster can address it.
-- **`readOnlyRootFilesystem: true` needs writable mounts.** The JVM services need `/tmp`; nginx needs `/var/cache/nginx` and `/var/run` and fails at *startup*
+- **`readOnlyRootFilesystem: true` needs writable mounts.** The JVM services need `/tmp`; nginx needs `/var/cache/nginx` and `/var/run` and fails at _startup_
   without them. Adding a workload means adding its mounts.
 - **`importer.replicaCount: 1` is an ADR-008 correctness constraint, not a cost one**, and so is `strategy: Recreate`. Two schedulers means two concurrent
   imports of the same source; the `RUNNING` check is a read-then-write with no lock. `values.schema.json` pins the replica count with `const: 1`. Raising it
   needs `SELECT … FOR UPDATE SKIP LOCKED` first, which is an ADR change rather than a values change.
 - **No `namespace:` in any template's metadata.** Flux's `HelmRelease` sets `targetNamespace` and a hardcoded namespace would silently win over it.
-  `.Release.Namespace` in a *reference* — the Traefik middleware annotation needs one — is fine and follows `targetNamespace` correctly.
+  `.Release.Namespace` in a _reference_ — the Traefik middleware annotation needs one — is fine and follows `targetNamespace` correctly.
 - **The chart ships no `crds/` directory and must not gain one.** Helm has no story for upgrading or deleting CRDs a chart installed, so owning cert-manager's
-  or Traefik's is how a chart acquires a resource it can never safely change. The chart renders only *instances* of their types, and `helm install` failing on
+  or Traefik's is how a chart acquires a resource it can never safely change. The chart renders only _instances_ of their types, and `helm install` failing on
   an unknown kind when cert-manager is absent is the correct behaviour, not a bug to work around.
 - **`security.runAsUser` must match the UID the images actually run as.** It is 1000 today because #426 will build them that way; a distroless `nonroot` base
   would be 65532. A mismatch is a pod that cannot read its own files, which does not look like a values problem.
@@ -233,9 +233,9 @@ after; and the whole flow wants the database and both secrets to exist **first**
 **The version range lives on the `OCIRepository`, not the `HelmRelease`.** With `chartRef` the release carries no version at all — `spec.ref.semver` on the source
 decides everything. Staging uses `>=0.0.0-0`; the `-0` is what admits prereleases, and without it the range matches no snapshot at all. Observed rather than
 assumed: removing it gives `no match found for semver: >=0.0.0`. Production uses `semverFilter: '^[0-9]+\.[0-9]+\.[0-9]+$'` as well as a range, because excluding
-snapshots *by omission* is one careless `-0` away from being wrong.
+snapshots _by omission_ is one careless `-0` away from being wrong.
 
-**`remediateLastFailure` defaults to false, so a bad deploy is retried and then left broken.** Remediation runs *between* attempts and never after the final one —
+**`remediateLastFailure` defaults to false, so a bad deploy is retried and then left broken.** Remediation runs _between_ attempts and never after the final one —
 exhaust the retries and the cluster keeps running the release that failed. Every `HelmRelease` here sets `remediateLastFailure: true` on `upgrade` for that reason.
 It is deliberately **not** set on `install`, where remediation is an uninstall and there is no previous version to return to: leaving a failed first install in
 place is what lets somebody look at why it failed. This was found by breaking a release on purpose and watching the workload stay broken — no amount of reading
@@ -246,7 +246,7 @@ to have nothing inbound. Deploys therefore land within about one `interval`, and
 staging's source, 10m on production's.
 
 **The repository is now the control plane.** `kustomize-controller` and `helm-controller` are bound to `cluster-admin`, so anyone who can push to
-`deploy/clusters/**` on `main` can have the cluster apply anything. What Flux removes is CI holding a *credential*; it does not remove the power, it relocates it.
+`deploy/clusters/**` on `main` can have the cluster apply anything. What Flux removes is CI holding a _credential_; it does not remove the power, it relocates it.
 Branch protection is the control that replaces the kubeconfig — see #443.
 
 ## Third-party HelmReleases (#265)
@@ -257,7 +257,7 @@ rules, all of them things that fail quietly rather than loudly.
 - **Pin the version exactly; never a range.** `>=1.21 <1.22` lets an upstream release reach the cluster with no diff, no review and no commit — the property
   GitOps exists to remove. `render-assertions.sh` rejects anything that is not `X.Y.Z` or `vX.Y.Z`.
 - **A release that renders a ClusterIssuer must declare `dependsOn`.** The chart's ClusterIssuer is a `cert-manager.io/v1` kind and the API server rejects
-  unknown kinds, so without cert-manager the *whole* application release fails — workloads included, on the first bootstrap of a new cluster, looking exactly
+  unknown kinds, so without cert-manager the _whole_ application release fails — workloads included, on the first bootstrap of a new cluster, looking exactly
   like a bug in our chart. Asserted, so it cannot be dropped silently.
 - **Use Hetzner's own DNS webhook, never a community fork.** The old `dns.hetzner.com` API was shut down in May 2026 and the forks still speak it; they install
   cleanly, report Ready, and fail at challenge time. Official chart: `cert-manager-webhook-hetzner` from `charts.hetzner.cloud`, `groupName`
@@ -276,14 +276,14 @@ it does. Both must equal the base version `gradle.properties` declares (`0.1.0-S
 in `gradle.properties`, `events-frontend/package.json` and both chart fields together.
 
 **And no published values file may set `<component>.image.tag`.** The default `""` falls back to `.Chart.AppVersion`, and that fallback is the whole mechanism
-keeping the chart and the images in step (#264). Pinning a tag opts one component out of it, and the render looks *more* correct afterwards, not less — every
+keeping the chart and the images in step (#264). Pinning a tag opts one component out of it, and the render looks _more_ correct afterwards, not less — every
 image carries a plausible tag, one of them just isn't the one this build produced. `values-k3d.yaml` is the sole exception (`dev`, never leaves a laptop) and
 `render-assertions.sh` enforces the rest.
 
 ## Never put a credential in a values file
 
 Not in `values.yaml`, not in an environment overlay, not guarded behind a conditional, not "temporarily". **There is no inline-password path in this chart and
-adding one is the change to refuse in review** — a values key that *can* hold a password is a key that eventually does, in a file that gets committed.
+adding one is the change to refuse in review** — a values key that _can_ hold a password is a key that eventually does, in a file that gets committed.
 
 `database.existingSecret` names a Secret created out of band. SOPS-managed Secrets arrive in #416. `values.schema.json` carries a `not: {required: [password]}`
 on the `database` object so the wrong shape fails at install time rather than in review.

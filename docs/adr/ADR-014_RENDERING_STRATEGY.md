@@ -4,7 +4,7 @@
 
 Proposed (2026-08-08)
 
-> Closes the question [ADR-013](ADR-013_LOCALISATION.md) §Consequences deferred (*"SSR / prerendering — wanted for SEO and tracked separately"*) and that the
+> Closes the question [ADR-013](ADR-013_LOCALISATION.md) §Consequences deferred (_"SSR / prerendering — wanted for SEO and tracked separately"_) and that the
 > SEO work then ran into: `hreflang` had to be carried by the sitemap, because script-injected annotations are unreliable for crawlers (§Context).
 >
 > **Part of the delivery depends on [ADR-012](ADR-012_CLOUD_PLATFORM.md) being executed; the decision does not.** See §Decision 3, which splits the work by that
@@ -23,7 +23,7 @@ Slack, WhatsApp, iMessage, Discord, LinkedIn and Facebook scrapers do not execut
 client-side, so every shared link previews as the generic site title — and **`og:description` is not updated per page at all**, so the description is site-level
 on every route. A specific Friday line-up and the imprint produce identical preview cards.
 
-For a nightlife product this is not cosmetic. Sharing a specific event with friends *is* a primary distribution channel, and it is the moment where the preview
+For a nightlife product this is not cosmetic. Sharing a specific event with friends _is_ a primary distribution channel, and it is the moment where the preview
 does the selling. This problem is permanent, unaffected by search-engine improvements, and untouched by any of the sitemap or structured-data work already
 shipped.
 
@@ -44,7 +44,7 @@ reason to watch Search Console, not a reason to build a rendering architecture u
 ### What is already mitigated
 
 | Surface                                    | State                                                                                                 |
-|--------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
 | `hreflang` alternates                      | Carried by `sitemap.xml`, a static file needing no rendering — the primary annotation today           |
 | `canonical`, `og:url`, `og:locale`         | JS-injected; reach Googlebot, reach no non-JS consumer                                                |
 | `schema.org` JSON-LD                       | JS-injected; reaches Googlebot, which is enough — there is no non-JS consumer of structured data      |
@@ -57,8 +57,8 @@ not the static pages.
 
 Data-driven pages must always be up to date — events are imported daily, change daily, and expire.
 
-Worth noting what that implies: **the SPA already satisfies this**, because it fetches at view time. Freshness is therefore not an argument *for* server
-rendering; it is an argument *against* anything computed at build time.
+Worth noting what that implies: **the SPA already satisfies this**, because it fetches at view time. Freshness is therefore not an argument _for_ server
+rendering; it is an argument _against_ anything computed at build time.
 
 ### The deployment it has to fit
 
@@ -178,7 +178,7 @@ Option E rejected.
 
 ## Consequences
 
-**What this decision buys by *not* doing things.** Against the earlier draft, dropping Option B removes the whole restructuring programme: no `ViteSSG` entry
+**What this decision buys by _not_ doing things.** Against the earlier draft, dropping Option B removes the whole restructuring programme: no `ViteSSG` entry
 point, no `@unhead/vue` migration, no SSR guards across five modules, no `import.meta.env.SSR` branching. The existing `seoTags.ts` and `structuredData.ts` stay
 exactly as they are.
 

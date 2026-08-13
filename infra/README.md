@@ -22,7 +22,7 @@ infra/
 
 **The split is the design, not tidiness.** `tofu destroy` on an environment is meant to be routine — it is how the "a destroy/apply cycle produces a working
 environment" promise gets tested. A DNS zone caught in that blast radius is not routine at all: delegation would survive, because Hetzner's nameservers are
-fixed, but **DNSSEC would not**. A re-created zone has a new key, the DS record at INWX stops matching, and the domain becomes *unresolvable* rather than merely
+fixed, but **DNSSEC would not**. A re-created zone has a new key, the DS record at INWX stops matching, and the domain becomes _unresolvable_ rather than merely
 wrong. Keeping the zone in a stack that `destroy` never reaches makes that impossible rather than something to remember at the wrong moment. `delete_protection`
 on the zone is the second lock.
 
@@ -31,7 +31,7 @@ the zone, its delegation and its key untouched.
 
 ## Before the first apply — three things only a human can do
 
-1. **A Hetzner Cloud project and an API token** with read *and* write. Shown once.
+1. **A Hetzner Cloud project and an API token** with read _and_ write. Shown once.
 2. **The Object Storage subscription and the `event-junkie-tfstate` bucket, created by hand**, plus its S3 credentials. **Bucket names are unique
    Hetzner-wide, across every customer and location** — if that one is taken, pick another and change `bucket` in all three `backend.tf` files together.
    The subscription is billed per account regardless of how many buckets, projects or locations you use, up to 100 buckets, so creating `event-junkie-o2`
@@ -41,28 +41,29 @@ the zone, its delegation and its key untouched.
    Choose **Falkenstein (fsn1)** and **Private**. The location has to match `region` and the `endpoints.s3` URL in all three `backend.tf` files — but it does
    **not** have to match where the servers run. Hetzner charges nothing for "internal traffic within the network zone `eu-central`", so a server in `nbg1`
    reading a bucket in `fsn1` is free, and since buckets cannot be moved afterwards, that is a useful thing not to be constrained by. Private is not a
-   preference: a public bucket needs no S3 key to *read*, and the state file describes the whole network.
+   preference: a public bucket needs no S3 key to _read_, and the state file describes the whole network.
    **Then turn versioning on — it is not in the creation dialog.** The console offers only location, name and visibility; versioning is an S3 API call
    afterwards, and it matters because locking is unavailable (see below), which makes a bad concurrent write a live risk with nothing else standing between it
    and a hand-rebuilt state file:
 
-   ```sh
-   export AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... AWS_DEFAULT_REGION=fsn1
-   ENDPOINT=https://fsn1.your-objectstorage.com
+    ```sh
+    export AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... AWS_DEFAULT_REGION=fsn1
+    ENDPOINT=https://fsn1.your-objectstorage.com
 
-   aws s3api put-bucket-versioning --endpoint-url $ENDPOINT \
-     --bucket event-junkie-tfstate --versioning-configuration Status=Enabled
+    aws s3api put-bucket-versioning --endpoint-url $ENDPOINT \
+      --bucket event-junkie-tfstate --versioning-configuration Status=Enabled
 
-   aws s3api get-bucket-versioning --endpoint-url $ENDPOINT --bucket event-junkie-tfstate   # expect: Enabled
-   ```
+    aws s3api get-bucket-versioning --endpoint-url $ENDPOINT --bucket event-junkie-tfstate   # expect: Enabled
+    ```
 
-   Then cap the history, because Hetzner's own guide warns that versioning grows storage silently. State files are small, so 90 days is generous:
+    Then cap the history, because Hetzner's own guide warns that versioning grows storage silently. State files are small, so 90 days is generous:
 
-   ```sh
-   aws s3api put-bucket-lifecycle-configuration --endpoint-url $ENDPOINT --bucket event-junkie-tfstate \
-     --lifecycle-configuration '{"Rules":[{"ID":"expire-old-state","Status":"Enabled","Filter":{"Prefix":""},
-       "NoncurrentVersionExpiration":{"NoncurrentDays":90}}]}'
-   ```
+    ```sh
+    aws s3api put-bucket-lifecycle-configuration --endpoint-url $ENDPOINT --bucket event-junkie-tfstate \
+      --lifecycle-configuration '{"Rules":[{"ID":"expire-old-state","Status":"Enabled","Filter":{"Prefix":""},
+        "NoncurrentVersionExpiration":{"NoncurrentDays":90}}]}'
+    ```
+
 3. **Nothing else in the console.** Servers, networks, firewalls, IPs and DNS are all declared here; creating one by hand means the first apply either duplicates
    it or needs a `tofu import`.
 
@@ -73,7 +74,7 @@ it holds.**
 
 The provider constraint is real but narrower than it first looks. Hetzner's own [S3 guide](https://registry.terraform.io/providers/hetznercloud/hcloud/latest/docs/guides/s3-object-storage)
 says there is no Cloud API for buckets and that third-party providers are "the only supported method" — but it then links a documented workflow using the
-**MinIO** provider. So the other two buckets (`-o2` for OpenObserve, `-backups` for `wal-g`) *could* be declared that way when their issues land, at the cost of
+**MinIO** provider. So the other two buckets (`-o2` for OpenObserve, `-backups` for `wal-g`) _could_ be declared that way when their issues land, at the cost of
 a second provider and a second credential in this configuration. Only `-tfstate` is genuinely unavoidable by hand, and it is unavoidable for the
 chicken-and-egg reason rather than the provider one.
 
@@ -115,7 +116,7 @@ ADMIN="[\"$(curl -s https://ifconfig.me)/32\",\"$(dig +short myip.opendns.com @r
 tofu apply -var "admin_cidrs=$ADMIN"
 ```
 
-**Two addresses, not one, if you are behind a corporate HTTP proxy.** `ifconfig.me` reports the address the *proxy* egresses from, because that request was
+**Two addresses, not one, if you are behind a corporate HTTP proxy.** `ifconfig.me` reports the address the _proxy_ egresses from, because that request was
 proxied. SSH and WireGuard are not, so they reach Hetzner from a different address, and an allowlist built from `ifconfig.me` alone silently refuses the very
 connection it was meant to admit — which looks exactly like a broken firewall or a failed cloud-init. `dig +short myip.opendns.com @resolver1.opendns.com`
 goes over UDP/53 rather than through the proxy, so it reports the direct one. Allow both; it is a bootstrap value that goes back to `[]` shortly anyway.
@@ -127,10 +128,10 @@ goes over UDP/53 rather than through the proxy, so it reports the direct one. Al
 
 **Two runbooks, neither of them here:**
 
-| | |
-|---|---|
+|                                   |                                                                                                                                              |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | Setting a cluster up from scratch | [docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) — `tofu apply` through tunnel, kubeconfig, database and `flux bootstrap`, in order |
-| Connecting to one that exists | [docs/CLUSTER_ACCESS.md](../docs/CLUSTER_ACCESS.md) — tunnel up, kubeconfig, contexts, `k9s`, tunnel down |
+| Connecting to one that exists     | [docs/CLUSTER_ACCESS.md](../docs/CLUSTER_ACCESS.md) — tunnel up, kubeconfig, contexts, `k9s`, tunnel down                                    |
 
 ```sh
 sudo wg-quick up ~/.wireguard/staging.conf          # the short version of the second one
@@ -138,12 +139,12 @@ kubectl --context event-junkie-staging get nodes
 sudo wg-quick down ~/.wireguard/staging.conf
 ```
 
-Those two are deliberately the only copies of their steps. What follows here is the reasoning behind the ones that touch *this* directory — the decisions a
+Those two are deliberately the only copies of their steps. What follows here is the reasoning behind the ones that touch _this_ directory — the decisions a
 linear runbook has no room to justify.
 
 ### Why the tunnel takes two keypairs made in different places
 
-**Your** keypair is generated on your laptop *before* the apply, because its public half is an input to it. The **server's** is generated on the node at first
+**Your** keypair is generated on your laptop _before_ the apply, because its public half is an input to it. The **server's** is generated on the node at first
 boot and never enters the state file — which is why its public half has to be collected by hand afterwards, and why there is no way to write your client config
 before the machine exists.
 
@@ -154,10 +155,10 @@ fail late, after a node has booted with no working tunnel and no open port to re
 ### `AllowedIPs`, and why the narrow value is the right one
 
 `10.10.1.0/24` is the tunnel and nothing else, and it is **enough for everything this environment needs**: SSH, the Kubernetes API and the ingress all answer on
-`10.10.1.1`. It also keeps the tunnel a *split* tunnel — the rest of your traffic keeps going out your own connection.
+`10.10.1.1`. It also keeps the tunnel a _split_ tunnel — the rest of your traffic keeps going out your own connection.
 
 Widening it to `10.1.1.0/24` (the private network) or `10.42.0.0/16`/`10.43.0.0/16` (pods and services) does work — `wireguard.sh` enables IPv4 and IPv6
-forwarding on the node for exactly that — but you rarely want to: `10.1.1.10` *is* the node, which you can already reach, and talking to pod IPs directly is a
+forwarding on the node for exactly that — but you rarely want to: `10.1.1.10` _is_ the node, which you can already reach, and talking to pod IPs directly is a
 debugging habit that hides broken Service routing.
 
 ### Why repointing the kubeconfig at `10.10.1.1` does not break TLS
@@ -184,7 +185,7 @@ Verify it from outside the tunnel rather than from the plan — `nc -z <public-i
 open deliberately for Path MTU Discovery.
 
 **The fallback below the fallback is Hetzner's browser console** — VNC to the server regardless of firewall, WireGuard or SSH state. It is the reason none of
-this is unrecoverable. Log into it once *before* you need it, so the first time is not during an outage.
+this is unrecoverable. Log into it once _before_ you need it, so the first time is not during an outage.
 
 ### `uniqueness_error` on the SSH key, first apply
 
@@ -220,7 +221,7 @@ SSL validation failed … [SSL: CERTIFICATE_VERIFY_FAILED] self-signed certifica
 
 **This is neither a credentials problem nor a Hetzner problem**, and it is worth knowing because it reads like both. The AWS CLI bundles its own Python CA
 file and never consults the macOS keychain, so it cannot see the proxy's root certificate. `curl` and OpenTofu both use the system trust store and keep
-working, which makes the failure look specific to Hetzner when it is specific to the *tool*. Confirm what you are dealing with by looking at who signed the
+working, which makes the failure look specific to Hetzner when it is specific to the _tool_. Confirm what you are dealing with by looking at who signed the
 certificate:
 
 ```sh
@@ -258,12 +259,12 @@ have been applied.
 until ./check-capacity.sh staging; do sleep 1800; done && say "staging can be applied"
 ```
 
-**A green result means "worth trying", not "will work", and that distinction cost a failed apply on 2026-08-13.** The script reports what Hetzner *advertises*.
+**A green result means "worth trying", not "will work", and that distinction cost a failed apply on 2026-08-13.** The script reports what Hetzner _advertises_.
 There is no dry-run for a server order, so nothing can report what an order will do:
 
-| | |
-|---|---|
-| **2026-08-11** | Script said unavailable; the order agreed — `error during placement (resource_unavailable)`. |
+|                |                                                                                                                                                                                                                                    |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **2026-08-11** | Script said unavailable; the order agreed — `error during placement (resource_unavailable)`.                                                                                                                                       |
 | **2026-08-13** | Script said `cax11` available in `nbg1`. So did the `datacenters` endpoint, and `cax11`'s own pricing lists `nbg1` as a location it is sold in. The order was refused: **`unsupported location for server type (invalid_input)`**. |
 
 That second error is the dangerous one, because it does not look like a capacity error — it reads as though the configuration names a location the type does not
@@ -282,7 +283,7 @@ carries anyway: ARM is only ever offered in Falkenstein, Helsinki and Nuremberg.
 >
 > The decision was to **wait rather than re-platform**. The alternative is the newer `cpx*` generation in `nbg1`/`hel1` at roughly 2.8× the cost — `cpx22`
 > (2 vCPU/4 GB) at €23.19 against `cax11` at €7.13 — which would also move the design from arm64 to x86 and retire the parity argument in
-> PLATFORM_SETUP.md §1. That trade is cheap to make *now*, while no container images exist, and expensive later; it is written down here so the option is not
+> PLATFORM_SETUP.md §1. That trade is cheap to make _now_, while no container images exist, and expensive later; it is written down here so the option is not
 > rediscovered from scratch. Nothing downstream is blocked meanwhile: the Helm chart (#261) and the frontend container (#262) are developed against k3d.
 >
 > If capacity returns to `nbg1`/`hel1` but not `fsn1`, moving is two variables (`location`, and the `*_server_type` values) plus destroying the `fsn1` Primary
@@ -294,10 +295,10 @@ carries anyway: ARM is only ever offered in Falkenstein, Helsinki and Nuremberg.
 > `infra/environments/staging` moved to `nbg1`; production still needs a `cax21` and still waits, pinned to `fsn1`.
 >
 > **The apply then failed on the server, with `unsupported location for server type (invalid_input)`** — not the sold-out error, and not true either: `cax11`'s
-> own pricing lists `nbg1`, and the `datacenters` endpoint listed it as available at that moment. See *Check capacity before you apply* for why a green result
+> own pricing lists `nbg1`, and the `datacenters` endpoint listed it as available at that moment. See _Check capacity before you apply_ for why a green result
 > is now only "worth trying".
 >
-> **Five of the six resources exist**: the network, the subnet, the firewall and both Primary IPs, in `nbg1`. So the Primary IP caveat above — which did *not*
+> **Five of the six resources exist**: the network, the subnet, the firewall and both Primary IPs, in `nbg1`. So the Primary IP caveat above — which did _not_
 > apply when the project was empty, checked rather than assumed — **applies from now on**: moving staging to another location means destroying those two first.
 >
 > The apply also ran without `-var "admin_cidrs=…"`, so the firewall was created with **no SSH and no 6443 rule at all**. Harmless only because the server never
@@ -309,14 +310,14 @@ carries anyway: ARM is only ever offered in Falkenstein, Helsinki and Nuremberg.
 > network, no firewall, `start_after_create: false`. Same refusal. That clears everything in this directory: Hetzner will not sell a `cax11` in `nbg1` while
 > advertising that it will, three refusals deep. Worth a support ticket, since their own API contradicts their order path.
 >
-> **It is a shortage, not an ARM problem.** The entire `cx` line is gone too — including `cx23` at €6.53, which is *cheaper than the ARM plan ever was*. Only
+> **It is a shortage, not an ARM problem.** The entire `cx` line is gone too — including `cx23` at €6.53, which is _cheaper than the ARM plan ever was_. Only
 > `cpx22` and above, plus the dedicated `ccx` line, can be bought in `eu-central` at all.
 >
-> | | | | |
-> |---|---|---|---|
-> | `cx23` | x86 | €6.53 | unavailable — the cheapest target to watch |
-> | `cax11` | ARM | €7.13 | unavailable — restores full parity |
-> | `cpx22` | x86 | **€23.19** | **orderable — what staging runs now** |
+> |         |     |            |                                            |
+> | ------- | --- | ---------- | ------------------------------------------ |
+> | `cx23`  | x86 | €6.53      | unavailable — the cheapest target to watch |
+> | `cax11` | ARM | €7.13      | unavailable — restores full parity         |
+> | `cpx22` | x86 | **€23.19** | **orderable — what staging runs now**      |
 >
 > **Staging moved and production did not**, because the asymmetry is real: everything downstream of a cluster existing (#265, #286, #270, #416) was blocked
 > behind staging, and nothing is blocked behind production. That defers the €62/month all-x86 decision rather than taking it — the full comparison is €26.74
@@ -338,7 +339,7 @@ in `environments/production` will delete the Primary IPs and everything else, pr
 it is not a safety rail against this repository. What actually keeps a rebuilt server on the same address is `auto_delete = false`, set unconditionally, so
 deleting a server never takes its address with it.
 
-**The DNS zones are the exception, and they carry `prevent_destroy`.** That one *is* enforced by OpenTofu, which refuses to plan a destroy at all. It is
+**The DNS zones are the exception, and they carry `prevent_destroy`.** That one _is_ enforced by OpenTofu, which refuses to plan a destroy at all. It is
 deliberately the only such lock in the repository: `prevent_destroy` cannot be made conditional, so using it freely would make routine work require editing the
 config, and a safety rail people routinely edit around is worse than none. The zone earns it because destroying it is the one action here that can take the
 domain off the internet entirely.
@@ -382,21 +383,21 @@ ssh ops@<node-ip> sudo cat /etc/wireguard/public.key
 
 A private key passed in as a variable would end up in state, and state lives in a bucket.
 
-**Root SSH is disabled during boot, and the `ops` user is the only way in.** Hetzner injects the project's keys into *root*; `harden.sh` then turns root login
+**Root SSH is disabled during boot, and the `ops` user is the only way in.** Hetzner injects the project's keys into _root_; `harden.sh` then turns root login
 off. It refuses to do so if `/home/ops/.ssh/authorized_keys` is missing or empty, and the module refuses to build with an empty `ssh_public_keys` — both guards
 exist because the failure they prevent is a node reachable only through the browser console.
 
 ## What is deliberately not here
 
-| | Where it lives |
-|---|---|
-| Database roles, credentials, schema | [#261](https://github.com/enorm-labs/event-junkie/issues/261) — application lifecycle, not machine lifecycle. Baking them in would mean a rebuild silently re-creates credentials |
-| `wal-g`, backups, the restore drill | [#270](https://github.com/enorm-labs/event-junkie/issues/270) |
-| Helm chart, cert-manager, ingress, NetworkPolicies | [#261](https://github.com/enorm-labs/event-junkie/issues/261) |
-| Flux | [#414](https://github.com/enorm-labs/event-junkie/issues/414) |
-| Observability | [ADR-015](../docs/adr/ADR-015_OBSERVABILITY_STACK.md), [#271](https://github.com/enorm-labs/event-junkie/issues/271) |
-| A `staging` address record | Nowhere. Staging does not resolve on the public internet — [PLATFORM_SETUP.md §4a](../docs/PLATFORM_SETUP.md) |
-| A 301 from `event-junkie.com` | Go-live. A redirect needs a certificate, which needs the name to resolve, which needs the site to be up |
+|                                                    | Where it lives                                                                                                                                                                    |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Database roles, credentials, schema                | [#261](https://github.com/enorm-labs/event-junkie/issues/261) — application lifecycle, not machine lifecycle. Baking them in would mean a rebuild silently re-creates credentials |
+| `wal-g`, backups, the restore drill                | [#270](https://github.com/enorm-labs/event-junkie/issues/270)                                                                                                                     |
+| Helm chart, cert-manager, ingress, NetworkPolicies | [#261](https://github.com/enorm-labs/event-junkie/issues/261)                                                                                                                     |
+| Flux                                               | [#414](https://github.com/enorm-labs/event-junkie/issues/414)                                                                                                                     |
+| Observability                                      | [ADR-015](../docs/adr/ADR-015_OBSERVABILITY_STACK.md), [#271](https://github.com/enorm-labs/event-junkie/issues/271)                                                              |
+| A `staging` address record                         | Nowhere. Staging does not resolve on the public internet — [PLATFORM_SETUP.md §4a](../docs/PLATFORM_SETUP.md)                                                                     |
+| A 301 from `event-junkie.com`                      | Go-live. A redirect needs a certificate, which needs the name to resolve, which needs the site to be up                                                                           |
 
 ## Local checks
 

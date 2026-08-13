@@ -9,8 +9,8 @@ and voluntary — there is no paid tier and no support contract.
 
 ## Where to go
 
-| You want to…                                      | Go here                                                                                                                                                   |
-|---------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| You want to…                                      | Go here                                                                                                                                                  |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Report wrong or missing event data**            | [Wrong or missing event data](https://github.com/enorm-labs/event-junkie/issues/new?template=wrong-event-data.yml)                                       |
 | **Suggest a venue we should be importing**        | [Suggest a venue](https://github.com/enorm-labs/event-junkie/issues/new?template=new-venue.yml)                                                          |
 | **Report a bug in the site or API**               | [Bug report](https://github.com/enorm-labs/event-junkie/issues/new?template=bug.yml)                                                                     |
@@ -18,7 +18,7 @@ and voluntary — there is no paid tier and no support contract.
 | **Suggest a feature or float an idea**            | [Discussions → Ideas](https://github.com/enorm-labs/event-junkie/discussions/new?category=ideas)                                                         |
 | **Report a security vulnerability**               | [Private advisory form](https://github.com/enorm-labs/event-junkie/security/advisories/new) — **never a public issue**. See [SECURITY.md](./SECURITY.md) |
 | **Ask for your name or details to be removed**    | [The same private form](https://github.com/enorm-labs/event-junkie/security/advisories/new) — see [below](#artists-organisers-and-venues)                |
-| **Contribute code**                               | [CONTRIBUTING.md](./CONTRIBUTING.md)                                                                                                                      |
+| **Contribute code**                               | [CONTRIBUTING.md](./CONTRIBUTING.md)                                                                                                                     |
 
 **Questions go to Discussions, not the issue tracker.** Not to keep them at arm's length — a question is a conversation, whereas an issue is a unit of work that
 can be closed. A discussion that turns out to be actionable gets converted into an issue, so nothing is lost by starting there. Blank issues are disabled for

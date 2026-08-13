@@ -16,10 +16,10 @@ mutate. Propose fixes; do not apply them unless the user explicitly asks.
 Three workflows touch this area, and they fail in three different ways. Getting this wrong makes the whole report misleading:
 
 | Workflow                                   | Trigger            | Fails the run?                             | Notes                                                             |
-|--------------------------------------------|--------------------|--------------------------------------------|-------------------------------------------------------------------|
+| ------------------------------------------ | ------------------ | ------------------------------------------ | ----------------------------------------------------------------- |
 | `build-backend.yml` (dependency-check job) | PR / push to main  | **No** — step is `continue-on-error: true` | Informational only. Uploads SARIF + HTML artifact.                |
 | `dependency-check-scheduled.yml`           | Nightly + dispatch | **Yes** — this is the enforced scan        | Fails on CVSS ≥ 7 (`failBuildOnCVSS`). Owns the shared NVD cache. |
-| `dependency-review.yml`                    | PR                 | **Yes** — `fail-on-severity: high`         | Only diffs *newly introduced* deps; uses the GitHub Advisory DB.  |
+| `dependency-review.yml`                    | PR                 | **Yes** — `fail-on-severity: high`         | Only diffs _newly introduced_ deps; uses the GitHub Advisory DB.  |
 
 So a red nightly run blocks nothing and merges keep working — it only shows up as a failed scheduled run, which is easy to miss. That is the main reason to run
 this command by hand.
@@ -28,12 +28,12 @@ this command by hand.
 
 Three failure modes have all actually occurred in this repo. Check for each before believing a clean result:
 
-1. **`Dependencies Scanned: 0`.** In August 2026 the scan reported zero findings for months because `scanProjects` was configured with project *names* while the
-   plugin matches project *paths* — every project was skipped and the CVSS gate passed trivially. **Always read `Dependencies Scanned` out of the HTML report
+1. **`Dependencies Scanned: 0`.** In August 2026 the scan reported zero findings for months because `scanProjects` was configured with project _names_ while the
+   plugin matches project _paths_ — every project was skipped and the CVSS gate passed trivially. **Always read `Dependencies Scanned` out of the HTML report
    first.** If it is 0, the scan is broken: report that as the finding and stop. Do not report "no vulnerabilities found".
 2. **A skipped upload that looks like a pass.** Both workflows guard their report uploads with `hashFiles('<path>') != ''`. If the plugin's output path changes
    (it did in Dependency-Check 13.0.0), the guard matches nothing, the step is silently skipped, and the job stays green while findings stop reaching Code
-   Scanning. Confirm the upload steps *ran*.
+   Scanning. Confirm the upload steps _ran_.
 3. **`continue-on-error` disguises a failed step.** For the PR job, the REST API reports a failed-but-continued step's `conclusion` as `success`; only `outcome`
    holds the truth, and it is not exposed in the step listing. Never conclude "the scan passed" from the PR job's step status — use the scheduled run, the job
    summary, or the log.
@@ -92,7 +92,7 @@ submission**
 - `.dependency.scope` is `null` for every alert here (the Gradle submission does not populate it), so you cannot use it to separate runtime from test/dev
   dependencies. Determine that from the `dependencies` task instead, or from where the artifact is declared.
 - Alerts can be **stale in both directions**: an alert may name a version already upgraded on `main`, and a fresh local change is invisible until the next
-  submission. Always compare an alert's `first_patched_version` against the *currently resolved* version before reporting it as outstanding.
+  submission. Always compare an alert's `first_patched_version` against the _currently resolved_ version before reporting it as outstanding.
 
 ## Step 3 — Reconcile the two sources
 
@@ -120,24 +120,25 @@ For every unique CVE, in this order:
    as new.
 3. **Verify against the authoritative advisory — do not trust the artifact name.** This is the step that separates a useful report from a noisy one:
 
-   ```bash
-   gh api "/advisories?cve_id=CVE-YYYY-NNNNN" \
-     --jq '.[] | "\(.severity)  pkgs=\([.vulnerabilities[].package.name]|unique|join(","))  vuln=\([.vulnerabilities[].vulnerable_version_range]|unique|join(" | "))  fixed=\([.vulnerabilities[].first_patched_version]|unique|join(","))"'
-   ```
+    ```bash
+    gh api "/advisories?cve_id=CVE-YYYY-NNNNN" \
+      --jq '.[] | "\(.severity)  pkgs=\([.vulnerabilities[].package.name]|unique|join(","))  vuln=\([.vulnerabilities[].vulnerable_version_range]|unique|join(" | "))  fixed=\([.vulnerabilities[].first_patched_version]|unique|join(","))"'
+    ```
 
-   Then compare against the **resolved** version, not the requested one — Gradle prints `1.0 -> 2.0` and a careless grep reads the wrong side:
+    Then compare against the **resolved** version, not the requested one — Gradle prints `1.0 -> 2.0` and a careless grep reads the wrong side:
 
-   ```bash
-   ./gradlew -q :events-importer:dependencies --configuration runtimeClasspath | grep -E "<artifact>" | sed 's/^[| +\\-]*//' | sort -u
-   ```
+    ```bash
+    ./gradlew -q :events-importer:dependencies --configuration runtimeClasspath | grep -E "<artifact>" | sed 's/^[| +\\-]*//' | sort -u
+    ```
 
-   Classify as **real and fixable** / **real with no stable fix** / **false positive** (wrong product, wrong artifact, or version out of range).
+    Classify as **real and fixable** / **real with no stable fix** / **false positive** (wrong product, wrong artifact, or version out of range).
+
 4. **Work out how it would be fixed**, because that determines who can act:
     - **Project-managed** (a `*.version` property in `gradle.properties`, or a plugin version in `settings.gradle.kts`) — an ordinary bump.
     - **BOM-managed** (Spring Boot / Spring Modulith) — cannot be bumped as a normal dependency. Overriding means setting the BOM's own property name in
       `gradle.properties`; `io.spring.dependency-management` resolves BOM properties from Gradle project properties, and it reaches every module.
     - **Transitive only, with no BOM entry** — neither of the above applies; it needs a `constraints` block in each module that pulls it in. Check first whether
-      upgrading the *direct* dependency carries the fix, and only pin the transitive if it does not.
+      upgrading the _direct_ dependency carries the fix, and only pin the transitive if it does not.
     - **No stable fix available** — say so plainly; the only options are an accepted-risk suppression or relaxing the gate, both of which are the user's call.
 
 ## Step 5 — Check whether existing overrides have become obsolete
@@ -166,7 +167,7 @@ vulnerabilities" when the scanner examined nothing is worse than no report.
 Then a prioritized table of unique findings:
 
 | CVE | Severity (NVD / GH) | Package | Resolved | Fixed in | Sources | Verdict |
-|-----|---------------------|---------|----------|----------|---------|---------|
+| --- | ------------------- | ------- | -------- | -------- | ------- | ------- |
 
 Follow with:
 
