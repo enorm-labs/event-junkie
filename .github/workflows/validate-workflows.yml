@@ -24,9 +24,12 @@ on:
       - 'zizmor.yml'
   pull_request:
     branches: [ main ]
-    paths:
-      - '.github/workflows/**'
-      - 'zizmor.yml'
+    # No `paths:` here, deliberately, since #443. These checks are **required** on the `main`
+    # ruleset, and a required check that never runs stays Pending forever — GitHub's own words:
+    # "A pull request that requires those checks to be successful will be blocked from merging."
+    # So a filter here would deadlock every pull request that happens not to touch these paths.
+    # Affordable because the whole workflow is seconds: actionlint and zizmor.
+    # The `push:` filter above keeps its paths — nothing requires those runs.
   workflow_dispatch:
 
 permissions:

@@ -13,9 +13,10 @@ name: Validate Helm Chart
 # chart that quietly does the wrong thing — an ingress that routes /actuator, an importer scaled to
 # two replicas, a selector carrying a label that changes on every release.
 
-# `gradle.properties` and `events-frontend/package.json` are in the path filters because the chart's
+# `gradle.properties` and `events-frontend/package.json` are in the `push:` filter because the chart's
 # `version` and `appVersion` must equal the base version they declare (#264). Editing one of them
-# without the chart is exactly how they drift, so a change to either has to reach this gate.
+# without the chart is exactly how they drift. On pull requests the question is moot — since #443
+# this workflow runs on every one of them.
 
 on:
   push:
@@ -29,15 +30,12 @@ on:
       - '.github/workflows/validate-chart.yml'
   pull_request:
     branches: [ main ]
-    # Duplicated rather than shared through a YAML anchor: GitHub Actions does not support anchors,
-    # and a workflow using one fails to parse.
-    paths:
-      - 'deploy/**'
-      - 'scripts/k3d-rehearsal.sh'
-      - 'scripts/version.sh'
-      - 'gradle.properties'
-      - 'events-frontend/package.json'
-      - '.github/workflows/validate-chart.yml'
+    # No `paths:` here, deliberately, since #443. These checks are **required** on the `main`
+    # ruleset, and a required check that never runs stays Pending forever — GitHub's own words:
+    # "A pull request that requires those checks to be successful will be blocked from merging."
+    # So a filter here would deadlock every pull request that happens not to touch these paths.
+    # Affordable because the whole workflow is seconds: the chart, the Flux resources and the version consistency check.
+    # The `push:` filter above keeps its paths — nothing requires those runs.
   workflow_dispatch:
 
 permissions:
