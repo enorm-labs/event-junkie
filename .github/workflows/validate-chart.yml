@@ -166,9 +166,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      # `scripts/k3d-rehearsal.sh` and `scripts/version.sh` are linted here rather than in a workflow
-      # of its own because both are part of the deploy story: one installs this chart, the other
-      # decides what version gets published. The remaining scripts/ files are covered by the
-      # pre-commit hook only — a gap, but a pre-existing one, not one this adds.
+      # `scripts/k3d-rehearsal.sh` and `scripts/version.sh` are linted here because both are part of
+      # the deploy story: one installs this chart, the other decides what version gets published. So
+      # a chart change lints them even when nothing under `scripts/` was touched.
+      #
+      # They are now *also* linted by validate-scripts.yml, which covers `scripts/*.sh` and closed
+      # the gap this comment used to record (the rest of `scripts/` having no CI coverage at all).
+      # The overlap is deliberate: both jobs take seconds, and narrowing either side trades that for
+      # a hole that only opens when the other workflow's path filter misses.
       - name: Run ShellCheck
         run: shellcheck -x deploy/scripts/*.sh scripts/k3d-rehearsal.sh scripts/version.sh

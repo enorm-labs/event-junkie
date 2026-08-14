@@ -74,6 +74,23 @@ milestone and board fields.
     `Ready` means understood and unblocked. Anything with a `blocked` / `needs-decision` / `needs-deployment` label should be `Blocked`, not `Backlog` — that is
     what the board's Blocked view filters on.
 
+    **Filing more than two or three at once? Use `batch` instead.** Each single-issue call re-resolves the project, the field, the option and the whole item
+    list — four to five GraphQL requests every time. A run of sixteen back-to-back calls trips GitHub's **secondary** rate limiter, the one that governs writes,
+    and it does not look like a rate limit when it does: `gh` reports "API rate limit exceeded" while `gh api rate_limit` still shows thousands of points
+    remaining, because the two budgets are counted separately. The limiter then blocks further writes for the better part of an hour.
+
+    ```sh
+    scripts/issue-board.sh batch <<'EOF'
+    467 Ready   P2
+    469 Blocked P1
+    476 In progress        # status only — a two-word status is fine
+    480 -       P2         # priority only
+    EOF
+    ```
+
+    One issue per line, `<issue> [status] [priority]`; `-` skips a field, `#` starts a comment. Every line is validated before anything is written, so a typo
+    fails the run with nothing applied rather than half of it.
+
 7. **Link it.** If it relates to, blocks or is blocked by an existing issue, say so in the body (`Related: #NNN`, `Blocked by: #NNN`). For a child of an epic,
    use a real sub-issue rather than a checklist item — sub-issues show progress and can be worked independently.
 
@@ -83,5 +100,6 @@ milestone and board fields.
 
 - **`build/BACKLOG.md` is generated and not committed.** Never edit it to add the new issue — regenerate it instead.
 - **Several issues at once** (an audit or smoke test that found five things): file them individually, but check for duplicates in one pass first, and mention
-  any that turned out to be the same underlying defect in different venues — that is usually one issue, not five.
+  any that turned out to be the same underlying defect in different venues — that is usually one issue, not five. Set the board fields for the whole set with
+  `scripts/issue-board.sh batch` (step 6) rather than one call per issue — that is the path that trips the write limiter.
 - **If it needs an ADR**, use the decision form and say so in it. The ADR is where the answer lands; the issue is where the thinking happens.

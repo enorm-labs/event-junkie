@@ -53,7 +53,8 @@ jobs:
 
       # Correctness: undefined contexts, wrong action inputs, bad expressions, and shellcheck over
       # every `run:` block. Its shellcheck findings are informational here — the repository's own
-      # scripts are linted properly in validate-chart.yml — so only actionlint's own rules gate.
+      # scripts are linted properly in validate-scripts.yml, validate-chart.yml and
+      # validate-infra.yml — so only actionlint's own rules gate.
       - name: actionlint
         run: |
           docker run --rm -v "$PWD:/repo" -w /repo \
