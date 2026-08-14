@@ -184,8 +184,8 @@ far better public surface than SSH, a service that announces itself and its vers
 Verify it from outside the tunnel rather than from the plan — `nc -z <public-ipv4> 22` and `6443` should both fail while `ping` still answers, since ICMP stays
 open deliberately for Path MTU Discovery.
 
-**The fallback below the fallback is Hetzner's browser console** — VNC to the server regardless of firewall, WireGuard or SSH state. It is the reason none of
-this is unrecoverable. Log into it once _before_ you need it, so the first time is not during an outage.
+**The fallback below the fallback is [Hetzner's browser console](https://console.hetzner.com)** — VNC to the server regardless of firewall, WireGuard or SSH
+state. It is the reason none of this is unrecoverable. Log into it once _before_ you need it, so the first time is not during an outage.
 
 ### `uniqueness_error` on the SSH key, first apply
 
