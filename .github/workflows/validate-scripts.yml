@@ -38,6 +38,19 @@ on:
 permissions:
   contents: read
 
+env:
+  # Pinned, and not optional. `ubuntu-latest` preinstalls ShellCheck, and the version it ships is
+  # older than what a contributor has locally — old enough to disagree. v0.9.0 reports SC2015
+  # ("A && B || C is not if-then-else") for `[[ -n "$pids" ]] && kill $pids || true`; v0.11.0
+  # correctly does not, because `|| true` cannot be a mistaken else-branch. Three such lines in
+  # `scripts/dev-env.sh` failed this job on its first run while passing locally and in pre-commit.
+  #
+  # Same trap validate-docs.yml records for oxfmt: a gate run against "whatever the runner ships"
+  # fails on files the author's own copy had just passed, and the fix is not to edit the files.
+  # Invisible to Dependabot — a string in YAML, not a manifest — so /update-dependencies step 12
+  # sweeps it alongside HELM_VERSION, FLUX_VERSION, ACTIONLINT_VERSION and ZIZMOR_VERSION.
+  SHELLCHECK_VERSION: v0.11.0
+
 jobs:
   shellcheck:
     name: ShellCheck repo scripts
@@ -48,11 +61,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      # ShellCheck is preinstalled on ubuntu-latest, which is why neither this job nor the two
-      # existing ones install it. `-x` follows `source`d files, matching the pre-commit hook's
-      # invocation so the two cannot disagree about a finding.
+      # Run from the pinned image rather than the runner's preinstalled binary, for the version
+      # reason above — the same way validate-workflows.yml runs actionlint and zizmor. `-x` follows
+      # `source`d files, matching the pre-commit hook's invocation so the two cannot disagree about
+      # a finding.
       - name: Run ShellCheck
-        run: shellcheck -x scripts/*.sh
+        run: |
+          docker run --rm -v "$PWD:/mnt" -w /mnt \
+            "koalaman/shellcheck:${SHELLCHECK_VERSION}" -x scripts/*.sh
 
       - name: Explain the fix
         if: failure()
@@ -60,12 +76,14 @@ jobs:
           {
             echo "## ShellCheck"
             echo
-            echo "The findings above are in \`scripts/\`. To reproduce locally:"
+            echo "The findings above are in \`scripts/\`. To reproduce locally with the same"
+            echo "ShellCheck this job pins — your installed version may differ and disagree:"
             echo
             echo '```bash'
-            echo "shellcheck -x scripts/*.sh"
+            echo "docker run --rm -v \"\$PWD:/mnt\" -w /mnt \\"
+            echo "  koalaman/shellcheck:${SHELLCHECK_VERSION} -x scripts/*.sh"
             echo '```'
             echo
-            echo "Installing the pre-commit hooks (\`pre-commit install\`) runs this on every"
-            echo "commit, which is why this rarely fires."
+            echo "Installing the pre-commit hooks (\`pre-commit install\`) runs ShellCheck on every"
+            echo "commit, which is why this rarely fires — though the hook uses your local binary."
           } >> "$GITHUB_STEP_SUMMARY"
