@@ -519,8 +519,9 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     - **oxfmt reads `.editorconfig`.** The `[*] indent_size = 4` is what gives nested list items their four-space indent; without that file oxfmt uses its own
       default and produces different output. So a scratch directory does not reproduce this repository's formatting unless `.editorconfig` is copied into it —
       worth knowing before concluding that two oxfmt versions disagree, which is exactly how a scratch-directory measurement misled once already.
-    - **Write mode runs it twice**, because a table nested under a list item is skipped on the first pass. This file is the one that exhibits it, on 0.62.0 and
-      0.63.0 alike.
+    - **Write mode runs it twice**, because a table nested under a list item is skipped on the first pass. This file is the one that exhibits it. **Permanent
+      and intended** — Prettier behaves identically and oxfmt tracks Prettier, so upstream closed it as _not planned_; do not try to drop the second run on a
+      version bump. See [DEVELOPMENT.md](docs/DEVELOPMENT.md) §Markdown formatting.
 - Centralized library versions in **`gradle.properties`** (`java.version`, `jsoup.version`, `kotest.version`,
   `kotlin-logging.version`, `mockk.version`, `mockwebserver.version`, `slugify.version`, `spring-modulith.version`,
   `springdoc.version`), read in the module build scripts via `property("…")`; plugin versions in `settings.gradle.kts`

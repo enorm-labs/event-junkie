@@ -64,23 +64,28 @@ repositories that would each need their own pinning:
 | Hook                 | Runs on                                                                                                                      |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `tofu-fmt`           | any `.tf` / `.tfvars` file. It rewrites in place, so a failure means "re-stage and commit again", not "go and fix something" |
-| `shellcheck-scripts` | `infra/modules/environment/cloud-init/*.sh` and `deploy/scripts/*.sh`                                                        |
+| `shellcheck-scripts` | any `.sh` under `infra/`, `deploy/scripts/` or `scripts/`                                                                    |
 | `format-markdown`    | any `.md` file. Also rewrites in place, so the same "re-stage and commit again" applies                                      |
 | `helm-lint`          | anything under `deploy/charts/`. Lints the chart directory, so it takes no filenames                                         |
 
-All four are also CI's job (`validate-infra.yml`, `validate-chart.yml`, `validate-docs.yml`); the hooks just move the deterministic half of that feedback before
-the push. If you do not have the tools installed, the hooks fail — install them (`brew install opentofu shellcheck helm`) or skip with `git commit --no-verify`
+All four are also CI's job (`validate-infra.yml`, `validate-chart.yml`, `validate-scripts.yml`, `validate-docs.yml`); the hooks just move the deterministic half
+of that feedback before the push. If you do not have the tools installed, the hooks fail — install them (`brew install opentofu shellcheck helm`) or skip with `git commit --no-verify`
 on a change that touches none of those paths.
 
 `format-markdown` is the exception to "uses what is already on your machine": it deliberately calls the oxfmt pinned in `events-frontend/package.json`, not one
 on `$PATH`, so it needs `npm ci` in `events-frontend/` rather than a `brew install`. See [Markdown formatting](#markdown-formatting).
 
-**A clean local ShellCheck is not proof CI will agree.** The hook and CI both use whatever `shellcheck` is on the machine they run on, and those differ — the
-Homebrew build is usually ahead of the GitHub runner's, and newer versions have _dropped_ some checks. An `A && B || C` construct that 0.11.0 accepts is still
-`SC2015` on 0.9.0, which is how a locally green script arrives red in CI. To check against an older one without installing it:
+**CI's ShellCheck is pinned; your local one is not.** All three CI jobs (`validate-scripts.yml`, `validate-chart.yml`, `validate-infra.yml`) run
+`koalaman/shellcheck:v0.11.0` from Docker rather than the runner's preinstalled binary, and the pin is swept by
+[`/update-dependencies`](../.github/prompts/update-dependencies.prompt.md) step 12. The pre-commit hook still uses whatever `shellcheck` is on your `$PATH`, so
+the two can still disagree — but only in the direction of the hook being noisier or quieter than the gate, never a false green on `main`.
+
+The disagreement is real and worth knowing about: versions differ in which checks they even have. An `A && B || C` construct that 0.11.0 accepts is still
+`SC2015` on 0.9.0. That is why CI is pinned at all — before it was, a script the author's Homebrew build had just cleared arrived red on the runner, and the
+temptation is to contort the source until the older analyser is happy rather than to fix the version skew. To reproduce a CI result exactly:
 
 ```bash
-docker run --rm -v "$PWD:/repo" -w /repo koalaman/shellcheck:v0.9.0 -x scripts/*.sh deploy/scripts/*.sh
+docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:v0.11.0 -x scripts/*.sh
 ```
 
 **Do not add a `check-yaml` hook.** Helm templates are Go templates that happen to look like YAML, and a generic parser rejects every one of them. The
@@ -247,8 +252,15 @@ Four things about this are deliberate and easy to undo by accident:
   here — verified byte-for-byte on every tracked file — so this is insurance, not a workaround for a known disagreement.
 - **oxfmt reads `.editorconfig`.** The `[*] indent_size = 4` is what gives nested list items their four-space indent. Copy `.editorconfig` alongside if you ever
   reproduce oxfmt's behaviour in a scratch directory; without it the output differs, and it differs in a way that looks exactly like a version disagreement.
-- **Write mode runs oxfmt twice.** A table indented under a list item is skipped on the first pass and only formatted on the second (0.62.0 and 0.63.0 both do
-  this). One pass would leave the file off its own fixpoint and `check` would then fail on a file the formatter had just written.
+- **Write mode runs oxfmt twice, permanently.** A table indented under a list item is skipped on the first pass and only formatted on the second. One pass would
+  leave the file off its own fixpoint, and `check` would then fail on a file the formatter had just written.
+
+    **This is intended behaviour, not a version bug — do not go looking for the release that fixes it.** Prettier does exactly the same thing, same two passes
+    and same intermediate output, and oxfmt targets Prettier compatibility; upstream closed
+    [oxc-project/oxc#25612](https://github.com/oxc-project/oxc/issues/25612) as _not planned_ on that basis. So the second run is a permanent part of how this
+    script works, and the cost is a few hundred milliseconds on a ~100-file tree. Removing it breaks `check` on `AGENTS.md`, which is the file in this
+    repository that exhibits the shape.
+
 - **`--disable-nested-config`**, because oxfmt's nested configs _replace_ rather than merge. Without it, `events-frontend/.oxfmtrc.json` shadows the root config
   wholesale for the two `.md` files under `events-frontend/`.
 

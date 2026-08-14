@@ -30,10 +30,15 @@
 #    because this script never formats anything but Markdown — the frontend's JS/TS settings are
 #    untouched either way, since nothing here ever passes it a .ts file.
 #
-# 3. Write mode runs oxfmt twice. A table indented under a list item is skipped on the first pass and
-#    only formatted on the second (reproduced on both 0.62.0 and 0.63.0; it converges at pass two and
-#    stays there). One pass would leave such a file off its own fixpoint, and `check` would then fail
-#    on a file the formatter had just written.
+# 3. Write mode runs oxfmt twice, and always will. A table indented under a list item is skipped on
+#    the first pass and only formatted on the second; it converges at pass two and stays there. One
+#    pass would leave such a file off its own fixpoint, and `check` would then fail on a file the
+#    formatter had just written.
+#
+#    Do not remove the second run on a version bump. This is intended Prettier-compatible behaviour,
+#    not a bug being waited out: Prettier needs the same two passes, oxfmt targets Prettier, and
+#    upstream closed oxc-project/oxc#25612 as `not planned` on exactly that basis. `AGENTS.md` is the
+#    file here that exhibits the shape, so dropping the second run fails `check` immediately.
 #
 # Scope is enforced twice over, here and in .oxfmtrc.json's ignorePatterns. oxfmt also claims YAML,
 # JSON, CSS and TS, and the Go-templated YAML under deploy/charts/ is exactly what it cannot parse —
