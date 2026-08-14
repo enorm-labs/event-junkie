@@ -206,6 +206,33 @@ Worth knowing, because two of these look wrong and are not:
 That last row is the one that looks alarming. Actuator lives on its own port that no ingress rule names, so any unmatched path falls through to the frontend's
 SPA fallback and returns the index page with a `200`.
 
+## 6a · The importer's admin API, and seeding staging
+
+**The importer has no ingress backend on any cluster** (§6's table, and `deploy/charts/event-junkie/templates/ingress.yaml` says so in a comment). That is the
+design from PLATFORM_SETUP §8a: rather than defend `/api/admin/**` with an allowlist or basic-auth middleware, it is simply not routed, and the tunnel is the
+only way to it. So this is the one place where a `kubectl port-forward` is the right tool rather than the lazy one — §6's warning about port-forwards hiding
+routing bugs is about the _site_, which does have an ingress to test.
+
+```sh
+kubectl --context event-junkie-staging port-forward -n event-junkie svc/event-junkie-importer 18081:8081
+```
+
+**`18081`, not `8081`.** The local importer from `scripts/dev-env.sh` owns `8081`, and a forward that silently lands on a local stack is how you seed the wrong
+database and believe you seeded staging.
+
+That port is what the `staging` environment in `http/http-client.env.json` points `importer-host` at, so every `.http` file under `http/importer/` works against
+staging unchanged:
+
+```sh
+cd http && ijhttp --env-file http-client.env.json --env staging importer/dev-seed.http
+```
+
+`bff-host` in the same environment is the real `https://staging.event-junkie.de`, through Traefik — the read path _does_ have an ingress, so there is no reason
+to bypass it. It needs `/etc/hosts` (§6) and **`ijhttp --insecure`**, because the certificate comes from Let's Encrypt's staging CA.
+
+`scripts/dev-env.sh seed-all` is deliberately not the way to do this: it hardcodes `--env local` and health-checks a local importer first, which is what keeps
+it from ever reaching a real cluster.
+
 ## 7 · The PostgreSQL database
 
 **The WireGuard tunnel alone is not enough, and the reason is worth understanding before you try.** PostgreSQL listens on `localhost` and `10.1.1.10` — the
