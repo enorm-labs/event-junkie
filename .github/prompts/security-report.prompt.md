@@ -4,6 +4,10 @@ Pull the project's current dependency-vulnerability position into one prioritize
 Dependabot alerts**, reconciled against each other and against what we have already triaged. This is a **read-only investigation** — inspect and report, never
 mutate. Propose fixes; do not apply them unless the user explicitly asks.
 
+**To act on what this finds, use [`/security-triage`](security-triage.prompt.md)** — the mutating counterpart, which fixes what is cheap, files what is not, and
+dismisses what does not apply, across Dependabot _and_ code scanning. The split is deliberate: this command can be run at any time without consequence, which is
+what makes it safe to reach for when you only want to know where things stand.
+
 ## Important
 
 - Run git and `gh` non-interactively (`git --no-pager …`); see AGENTS.md.
