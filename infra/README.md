@@ -31,7 +31,7 @@ the zone, its delegation and its key untouched.
 
 ## Before the first apply — three things only a human can do
 
-1. **A Hetzner Cloud project and an API token** with read _and_ write. Shown once.
+1. **A Hetzner Cloud project and an API token** with read _and_ write, both created in the [Hetzner Cloud Console](https://console.hetzner.com). Shown once.
 2. **The Object Storage subscription and the `event-junkie-tfstate` bucket, created by hand**, plus its S3 credentials. **Bucket names are unique
    Hetzner-wide, across every customer and location** — if that one is taken, pick another and change `bucket` in all three `backend.tf` files together.
    The subscription is billed per account regardless of how many buckets, projects or locations you use, up to 100 buckets, so creating `event-junkie-o2`
