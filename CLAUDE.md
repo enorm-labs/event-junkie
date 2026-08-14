@@ -23,6 +23,8 @@ Slash commands available under `.claude/skills/`:
 - `/start-issue <n>` — pick up an issue: claim it, move the board, cut the branch, read its dependencies, and plan before writing code
 - `/scaffold-importer` — scaffold a new venue event importer (scraper) end to end
 - `/security-report` — read-only report on the latest OWASP Dependency-Check findings and GitHub Dependabot alerts, reconciled and triaged
+- `/security-triage` — work the Security tab down to zero: fix what is cheap, file what is not, dismiss what does not apply (Dependabot + code scanning). The
+  mutating counterpart to `/security-report`
 - `/squash-commit-message` — write a squash commit message for the current branch
 - `/update-dependencies` — bump backend and frontend dependencies safely
 - `/verify` — run the full pre-PR sequence: backend `ktlintCheck detekt build koverLog` + frontend `type-check`, `lint`, `test:unit`, `test:e2e` (chromium),

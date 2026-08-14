@@ -7,6 +7,10 @@ Boot or Spring Dependency Management BOMs.
 
 Always run git commands with the pager disabled (`git --no-pager ...`) to prevent hanging on interactive output.
 
+**This is the routine sweep, not the security one.** A bump driven by a CVE belongs to [`/security-triage`](security-triage.prompt.md), which starts from the
+alert and stops when the alert is gone. This command starts from "what is out of date" and applies only to versions we manage. They overlap on the same files, so
+running both at once produces two half-finished bumps of the same property — do one, ship it, then the other.
+
 ## Step 1: Generate the Dependency Update Report
 
 Run the Gradle Versions Plugin to detect available updates:
@@ -122,7 +126,7 @@ compare the pinned version against what the BOM now supplies on its own — comm
 
 Delete the override when the BOM's version is greater than or equal to the pin. Keep it otherwise, and say which CVE still justifies it. Note that these are
 _upper_-bound removals, not bumps: raising a pinned override to a newer version than the CVE fix requires is out of scope here — that belongs to
-[`/security-report`](security-report.prompt.md) and its triage.
+[`/security-report`](security-report.prompt.md) for the diagnosis and [`/security-triage`](security-triage.prompt.md) for the change.
 
 ## Step 6: Verify the Build
 
