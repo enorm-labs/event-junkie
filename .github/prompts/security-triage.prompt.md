@@ -97,6 +97,23 @@ Then by class:
 
 After fixing, **prove the finding is gone** rather than assuming: re-resolve and compare against the advisory's `first_patched_version`.
 
+### Resolve across _all_ configurations, not just `runtimeClasspath`
+
+This is the step that decides whether an alert is real, and the obvious command gets it wrong. `--configuration runtimeClasspath` answers "does this ship",
+which is the right question for a fix — but an alert can be raised against a configuration that never ships, and then `runtimeClasspath` looks clean while the
+alert stays open and inexplicable. Drop the flag to see every configuration, and find the one that holds the old version:
+
+```sh
+./gradlew -q :events-core:dependencies | awk '/^[a-zA-Z].*- / { cfg=$0 } /<artifact>:<old-version>/ { print cfg " ||| " $0 }'
+```
+
+On the first real run (2026-08-14) this is what separated five alerts from two. Every runtime classpath was clean, and the old versions lived in exactly two
+non-shipping places: **`logback-core:1.3.16` on the `ktlint` tool classpath** and **`log4j-api:2.25.4` on `testFixturesCompileClasspath`**, both in
+`events-core`. Without naming the configuration, the only honest verdicts available are "stale alert" (wrong) or "still vulnerable" (also wrong).
+
+Note which classpaths a tool plugin drags in: ktlint, detekt and the Dependency-Check plugin each resolve their own tool dependencies, entirely outside the
+Spring BOM's reach, so a `gradle.properties` override does not touch them.
+
 ## Step 4 — Dismissing
 
 Code scanning:
@@ -119,6 +136,10 @@ gh api -X PATCH repos/enorm-labs/event-junkie/dependabot/alerts/<number> \
 
 `dismissed_reason` is one of `fix_started`, `inaccurate`, `no_bandwidth`, `not_used`, `tolerable_risk` — a **different vocabulary** from code scanning's, and
 the API rejects the wrong one.
+
+**`dismissed_comment` is capped at 280 characters on Dependabot alerts**, and the API rejects the whole request with a 422 rather than truncating. Draft to fit:
+artifact, resolved version, where the vulnerable version does still appear, and the date. Code scanning's comment has no such limit, so do not copy a long one
+across. (Found the hard way on the first real run, 2026-08-14 — four dismissals failed after the first succeeded.)
 
 **The comment is the whole value of the dismissal.** It is the only thing a future reader has when the same alert reappears on a new version. Name the artifact,
 the version compared and the reason it cannot reach us. "Not applicable" is not a comment.
