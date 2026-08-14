@@ -24,6 +24,11 @@ import java.time.LocalTime
  * sold-out event, two cancelled ones, support billings, and a middle column whose `Tickets:` line
  * holds a sale-start date rather than a price. Hand-built documents cover what the live page does not
  * currently show.
+ *
+ * The snapshot opens with a month heading, which the live page stopped doing once August wound down
+ * (#498). That shape is pinned by hand-built documents rather than a second snapshot: the page swaps
+ * between the two every month, so a capture would only record whichever side of the switch it was
+ * taken on, while these state the rule.
  */
 class PeterEdelOverviewPageScraperTest {
     private val scraper = PeterEdelOverviewPageScraper()
@@ -40,6 +45,18 @@ class PeterEdelOverviewPageScraperTest {
         events = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
     }
 
+    /** One event box's markup — the unit both grid builders compose. */
+    private fun box(
+        dateLine: String,
+        main: String,
+        ticketColumn: String = "<h3>Tickets: 10,00€</h3>"
+    ) = """<div class="box-rc-dark-grey"><div class="container"><div class="row clearfix">
+           |<div class="col-md-2 column"><div><div><h3>$dateLine</h3></div><p><img src="/media/1/f.jpg"></p></div></div>
+           |<div class="col-md-8 column"><div>$main</div></div>
+           |<div class="col-md-2 column"><div>$ticketColumn</div></div>
+           |</div></div></div>
+        """.trimMargin()
+
     /** Builds a grid holding one month heading and one event box with the given main-column markup. */
     private fun grid(
         heading: String?,
@@ -49,11 +66,27 @@ class PeterEdelOverviewPageScraperTest {
     ) = Jsoup.parse(
         """<div class="grid-section">
            |${heading?.let { """<div><h1>$it</h1></div>""" }.orEmpty()}
-           |<div class="box-rc-dark-grey"><div class="container"><div class="row clearfix">
-           |<div class="col-md-2 column"><div><div><h3>$dateLine</h3></div><p><img src="/media/1/f.jpg"></p></div></div>
-           |<div class="col-md-8 column"><div>$main</div></div>
-           |<div class="col-md-2 column"><div>$ticketColumn</div></div>
-           |</div></div></div></div>
+           |${box(dateLine, main, ticketColumn)}
+           |</div>
+        """.trimMargin(),
+        baseUrl
+    )
+
+    /**
+     * Builds the shape the live page took on 2026-08-14 (#498): an event box above the first month
+     * heading, and one below it. Each box is titled after its date line so the two stay tellable
+     * apart.
+     */
+    private fun gridWithLeadingBox(
+        leadingDateLine: String,
+        heading: String,
+        followingDateLine: String
+    ) = Jsoup.parse(
+        """<div class="grid-section">
+           |${box(leadingDateLine, "<h3>Above</h3>")}
+           |<div><h1>$heading</h1></div>
+           |${box(followingDateLine, "<h3>Below</h3>")}
+           |</div>
         """.trimMargin(),
         baseUrl
     )
@@ -204,7 +237,37 @@ class PeterEdelOverviewPageScraperTest {
     }
 
     @Test
-    fun `skips a box that has no month heading above it`() {
+    fun `dates a box above the first month heading from the heading below it`() {
+        // The venue retires the current month's heading while its remaining dates stay listed (#498).
+        val parsed = scraper.scrape(gridWithLeadingBox("DO | 20.08.", "SEPTEMBER 2026", "DI | 15.09."), baseUrl)
+        parsed.map { it.title } shouldContainExactly listOf("Above", "Below")
+        parsed.map { it.eventDate } shouldContainExactly listOf(LocalDate.of(2026, 8, 20), LocalDate.of(2026, 9, 15))
+    }
+
+    @Test
+    fun `puts a box above a January heading in the year before it`() {
+        // The listing runs chronologically, so a December row above JANUAR 2027 is 2026 — not 2027.
+        val parsed = scraper.scrape(gridWithLeadingBox("DI | 29.12.", "JANUAR 2027", "FR | 08.01."), baseUrl)
+        parsed.map { it.eventDate } shouldContainExactly listOf(LocalDate.of(2026, 12, 29), LocalDate.of(2027, 1, 8))
+    }
+
+    @Test
+    fun `keeps a box above a heading whose own month matches it in that heading's year`() {
+        // A row on the heading's own month is not a wrap — MÄRZ exercises the one month German does not abbreviate.
+        val parsed = scraper.scrape(gridWithLeadingBox("MO | 02.03.", "MÄRZ 2027", "MO | 08.03."), baseUrl)
+        parsed.map { it.eventDate } shouldContainExactly listOf(LocalDate.of(2027, 3, 2), LocalDate.of(2027, 3, 8))
+    }
+
+    @Test
+    fun `skips a box above a heading whose month does not parse, and keeps the one below`() {
+        // The year alone cannot place the row, and guessing is worse than the omission.
+        val parsed = scraper.scrape(gridWithLeadingBox("DO | 20.08.", "SOMMER 2026", "DI | 15.09."), baseUrl)
+        parsed.map { it.title } shouldContainExactly listOf("Below")
+        parsed.single().eventDate shouldBe LocalDate.of(2026, 9, 15)
+    }
+
+    @Test
+    fun `skips a box that has no month heading anywhere below it`() {
         scraper.scrape(grid(heading = null, dateLine = "DO | 20.08.", main = "<h3>Something</h3>"), baseUrl).shouldBeEmpty()
     }
 
