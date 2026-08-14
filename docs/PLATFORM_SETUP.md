@@ -666,9 +666,9 @@ does not arise.
 
 ### Let's Encrypt via cert-manager — decided
 
-**cert-manager** with a Let's Encrypt `ClusterIssuer`, HTTP-01 challenge. Traefik has its own ACME client and it works, but cert-manager wins on three points:
-it stores certificates as Kubernetes Secrets rather than a file on a PVC, it survives Traefik being replaced, and it is what the Helm chart should depend on if
-the "exit is cheap" property in ADR-012 is to mean anything.
+**[cert-manager](https://cert-manager.io/docs/)** with a Let's Encrypt `ClusterIssuer`, HTTP-01 challenge. Traefik has its own ACME client and it works, but
+cert-manager wins on three points: it stores certificates as Kubernetes Secrets rather than a file on a PVC, it survives Traefik being replaced, and it is what
+the Helm chart should depend on if the "exit is cheap" property in ADR-012 is to mean anything.
 
 Practical notes that cost people a day each:
 
