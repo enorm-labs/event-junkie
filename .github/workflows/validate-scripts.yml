@@ -1,0 +1,71 @@
+name: Validate Scripts
+
+# ShellCheck over `scripts/`. The pre-commit hook already matches this directory
+# (`.pre-commit-config.yaml`, `^(infra|deploy/scripts|scripts)/.*\.sh$`), but a hook is advisory by
+# construction — `git commit --no-verify` skips it, and so does anything committed through the
+# GitHub web UI or by an agent that never installed pre-commit. This is the gate that makes it hold
+# on `main`, exactly as validate-docs.yml is for the Markdown formatter.
+#
+# It closes a gap the chart workflow names in its own comment: "The remaining scripts/ files are
+# covered by the pre-commit hook only — a gap, but a pre-existing one." `scripts/issue-board.sh`
+# grew a batch mode with real parsing in it, which is the point at which "linted only if the author
+# happened to have the hook installed" stopped being comfortable.
+#
+# **`scripts/k3d-rehearsal.sh` and `scripts/version.sh` are linted twice** — here, and in
+# validate-chart.yml's "ShellCheck deploy scripts" job. That is deliberate rather than an oversight
+# to tidy up. They belong to the deploy story, so a chart change should lint them; they also live in
+# `scripts/`, so a scripts change should. Both jobs take seconds, and the alternative — narrowing one
+# side — trades a duplicated second for a coverage hole that only appears when the other workflow's
+# path filter misses.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'scripts/**.sh'
+      - '.github/workflows/validate-scripts.yml'
+  pull_request:
+    branches: [ main ]
+    # `paths:` is present here, like validate-docs.yml and unlike validate-infra.yml, because this
+    # check is **not** on the `main` ruleset's required list. Those workflows dropped their filters
+    # after #443: a required check that never runs stays Pending forever and deadlocks the pull
+    # request. **If this one is ever made required, delete this filter in the same change.**
+    paths:
+      - 'scripts/**.sh'
+      - '.github/workflows/validate-scripts.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    name: ShellCheck repo scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # ShellCheck is preinstalled on ubuntu-latest, which is why neither this job nor the two
+      # existing ones install it. `-x` follows `source`d files, matching the pre-commit hook's
+      # invocation so the two cannot disagree about a finding.
+      - name: Run ShellCheck
+        run: shellcheck -x scripts/*.sh
+
+      - name: Explain the fix
+        if: failure()
+        run: |
+          {
+            echo "## ShellCheck"
+            echo
+            echo "The findings above are in \`scripts/\`. To reproduce locally:"
+            echo
+            echo '```bash'
+            echo "shellcheck -x scripts/*.sh"
+            echo '```'
+            echo
+            echo "Installing the pre-commit hooks (\`pre-commit install\`) runs this on every"
+            echo "commit, which is why this rarely fires."
+          } >> "$GITHUB_STEP_SUMMARY"
