@@ -27,6 +27,14 @@ on:
 permissions:
   contents: read
 
+env:
+  # Pinned for the reason validate-scripts.yml sets out at length: `ubuntu-latest` preinstalls an
+  # older ShellCheck than a current local install, old enough to disagree about SC2015. **This pin
+  # appears in three workflows** — here, validate-chart.yml and validate-scripts.yml — and they must
+  # move together, the same rule HELM_VERSION carries. Three pins that can drift are a weaker
+  # version of the problem pinning was meant to remove.
+  SHELLCHECK_VERSION: v0.11.0
+
 jobs:
   validate:
     name: Format & Validate
@@ -82,5 +90,13 @@ jobs:
       # `infra/*.sh` was added in #424: the top-level scripts sit directly in `infra/` and so matched
       # neither this glob nor the pre-commit hook's pattern, which both wanted a directory prefix.
       # `check-capacity.sh` had been linted by nothing since it was written.
+      #
+      # Runs from the pinned image rather than the runner's preinstalled binary. It matters more here
+      # than anywhere else: these scripts run once, unattended, on a host nobody can log into, so the
+      # analyser that clears them should be the one the author ran, not whatever the runner image
+      # happened to ship that month.
       - name: Run ShellCheck
-        run: shellcheck -x infra/*.sh infra/modules/environment/cloud-init/*.sh
+        run: |
+          docker run --rm -v "$PWD:/mnt" -w /mnt \
+            "koalaman/shellcheck:${SHELLCHECK_VERSION}" \
+            -x infra/*.sh infra/modules/environment/cloud-init/*.sh

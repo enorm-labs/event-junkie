@@ -49,6 +49,11 @@ env:
   # fails on files the author's own copy had just passed, and the fix is not to edit the files.
   # Invisible to Dependabot — a string in YAML, not a manifest — so /update-dependencies step 12
   # sweeps it alongside HELM_VERSION, FLUX_VERSION, ACTIONLINT_VERSION and ZIZMOR_VERSION.
+  #
+  # **This pin appears in three workflows** — here, validate-chart.yml and validate-infra.yml — and
+  # they must move together, the same rule HELM_VERSION carries. `k3d-rehearsal.sh` and `version.sh`
+  # are linted by two of them, so a drifted pin would show up as two jobs disagreeing about the same
+  # file: three pins that can diverge are a weaker version of the problem pinning was meant to fix.
   SHELLCHECK_VERSION: v0.11.0
 
 jobs:
