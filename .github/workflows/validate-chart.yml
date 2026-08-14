@@ -46,7 +46,7 @@ env:
   # Flux's helm-controller embeds the Helm 3 SDK, so the chart is gated against a Helm 3 client even
   # though local binaries are Helm 4. A chart that only renders under Helm 4 is a chart Flux cannot
   # install (#414), and that would not surface until the deployment pipeline itself was being built.
-  HELM_VERSION: v3.19.0
+  HELM_VERSION: v3.21.3
   # `flux schema validate` replaced kubeconform in #414. Both pinned, both invisible to Dependabot —
   # they are strings in YAML, not a manifest — so /update-dependencies step 12 sweeps them.
   FLUX_VERSION: 2.9.4
