@@ -51,6 +51,12 @@ env:
   # they are strings in YAML, not a manifest — so /update-dependencies step 12 sweeps them.
   FLUX_VERSION: 2.9.4
   FLUX_SCHEMA_VERSION: 0.11.0
+  # Pinned for the reason validate-scripts.yml sets out at length: `ubuntu-latest` preinstalls an
+  # older ShellCheck than a current local install, old enough to disagree about SC2015. **This pin
+  # appears in three workflows** — here, validate-infra.yml and validate-scripts.yml — and they must
+  # move together, the same rule HELM_VERSION carries. Three pins that can drift are a weaker
+  # version of the problem pinning was meant to remove.
+  SHELLCHECK_VERSION: v0.11.0
 
 jobs:
   lint:
@@ -174,5 +180,12 @@ jobs:
       # the gap this comment used to record (the rest of `scripts/` having no CI coverage at all).
       # The overlap is deliberate: both jobs take seconds, and narrowing either side trades that for
       # a hole that only opens when the other workflow's path filter misses.
+      #
+      # Runs from the pinned image rather than the runner's preinstalled binary, so this job and
+      # validate-scripts.yml cannot reach different verdicts about the two files they both lint —
+      # which is exactly what the version skew would produce.
       - name: Run ShellCheck
-        run: shellcheck -x deploy/scripts/*.sh scripts/k3d-rehearsal.sh scripts/version.sh
+        run: |
+          docker run --rm -v "$PWD:/mnt" -w /mnt \
+            "koalaman/shellcheck:${SHELLCHECK_VERSION}" \
+            -x deploy/scripts/*.sh scripts/k3d-rehearsal.sh scripts/version.sh
