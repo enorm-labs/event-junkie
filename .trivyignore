@@ -17,4 +17,18 @@
 #   # <thing>; revisit when 25.0.5 ships. Not reachable from our code path: <why>.
 #   CVE-2026-00000
 #
-# Empty on purpose. Nothing has been waived.
+# 2026-08-14 — CVE-2026-39821 and CVE-2026-46600 in the Go standard library (stdlib v1.26.5) as
+# compiled into /usr/bin/pebble, which ships inside eclipse-temurin:25-jre. Fixed in Go 1.26.6, and
+# **the base-image bump was tried**: #483 raised the temurin digest to sha256:a214efa3… and the scan
+# on that merge still reported Total: 2 (HIGH: 2). Temurin has not rebuilt against a patched Go, so
+# the one-line fix this file's header recommends does not exist yet.
+#
+# Not reachable from our code path: pebble is Canonical's service manager, present in the base layer
+# and never executed. Both backend Dockerfiles set ENTRYPOINT ["java", "-jar", "application.jar"] and
+# run as USER 1000:1000; neither the Punycode nor the DNS-parsing path can be entered without pebble
+# running and parsing hostile input, and it does not run.
+#
+# Revisit on every base-image bump, and delete both lines the moment Temurin ships a Go >= 1.26.6
+# build — tracked in #492, which also holds the alternative of a base image without pebble.
+CVE-2026-39821
+CVE-2026-46600
