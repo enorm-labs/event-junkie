@@ -8,6 +8,7 @@ import de.norm.events.scraper.buildArtistList
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.inferUnmarkedTitleType
+import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.peteredel.PeterEdelOverviewPageScraper.Companion.VENUE_FORMAT_KEYWORDS
 import de.norm.events.scraper.resolveUrl
@@ -43,8 +44,19 @@ import java.time.LocalTime
  * **The dates carry no year, so the month headings supply it.** The parser walks the grid children in
  * order, remembering the year of the most recent heading and applying it to every box beneath it. The
  * day and month come from the box itself, so a row filed under the wrong heading still keeps its own
- * date. A box with no heading above it is skipped rather than guessed at — the page has always opened
- * with one, and inventing a year is worse than dropping a row visibly.
+ * date.
+ *
+ * **The page does not always open with a heading, and the boxes above the first one are still real
+ * events** (#498). The venue retires the current month's heading as the month winds down while its
+ * remaining dates stay listed, so on 2026-08-14 three August events sat above `SEPTEMBER 2026` with
+ * no heading of their own. Those take their year from the first heading *below* them instead: the
+ * listing runs chronologically month by month, so a box whose month is at or before the heading's
+ * shares its year, and one after it belongs to the year before — which is what keeps a December box
+ * above a `JANUAR 2027` heading in 2026. Only the month is compared, which is what makes this robust
+ * to the venue's occasional out-of-order pair inside a month (17.10. is listed before 16.10. at
+ * capture). The year is still read off the page rather than inferred from the clock; a box with no
+ * heading anywhere below it, or under a heading whose month will not parse, is skipped rather than
+ * guessed at, because inventing a year is worse than dropping a row visibly.
  *
  * Parsing decisions worth knowing:
  *  - **Prices are read from the third column, not the prose.** The middle column's `Tickets:` line is
@@ -105,16 +117,60 @@ class PeterEdelOverviewPageScraper {
         val children = document.select(".grid-section:has(> div.$EVENT_BOX_CLASS) > div")
         logger.info { "Found ${children.count { it.hasClass(EVENT_BOX_CLASS) }} event box(es) on the Peter Edel programme" }
 
+        // The boxes above this are dated from it rather than from the heading they do not have; -1
+        // when the page carries no heading at all, which leaves every box undated as before.
+        val firstHeading = children.indexOfFirst { !it.hasClass(EVENT_BOX_CLASS) && headingYear(it) != null }
+
         var year: Int? = null
         val events = mutableListOf<ScrapedEvent>()
-        for (child in children) {
+        for ((index, child) in children.withIndex()) {
             if (!child.hasClass(EVENT_BOX_CLASS)) {
                 year = headingYear(child) ?: year
-                continue
+            } else {
+                val boxYear = if (index < firstHeading) yearAboveFirstHeading(children[firstHeading], child) else year
+                parseBoxSafely(child, boxYear, baseUrl)?.let(events::add)
             }
-            parseBoxSafely(child, year, baseUrl)?.let(events::add)
         }
         return events
+    }
+
+    /**
+     * The year for a box sitting above the page's first month heading, read off that heading: its own
+     * year when the box's month is at or before the heading's, the year before when it is after —
+     * the listing runs chronologically month by month, so a December box above `JANUAR 2027` is 2026.
+     *
+     * `null` when either month is unreadable, which leaves the box to be dropped with the same
+     * warning as any other undatable row rather than dated by a guess.
+     */
+    private fun yearAboveFirstHeading(
+        heading: Element,
+        box: Element
+    ): Int? {
+        val year = headingYear(heading)
+        // The headings spell the month out, so the first three letters are what
+        // parseGermanMonthAbbreviation recognises — true for all twelve, `MÄRZ` included.
+        val headingMonth =
+            heading
+                .textAt("h1")
+                ?.trimStart()
+                ?.take(GERMAN_MONTH_PREFIX)
+                ?.let(::parseGermanMonthAbbreviation)
+                ?.value
+        val boxMonth =
+            box
+                .select(".row > .column")
+                .getOrNull(DATE_COLUMN)
+                ?.let { DAY_MONTH.find(it.textAt("h3").orEmpty()) }
+                ?.groupValues
+                ?.get(2)
+                ?.toInt()
+        return if (year == null || headingMonth == null || boxMonth == null) {
+            null
+        } else if (boxMonth <= headingMonth) {
+            year
+        } else {
+            year - 1
+        }
     }
 
     /** The year of a `AUGUST 2026` month heading, or `null` when this child carries no heading. */
@@ -312,8 +368,11 @@ class PeterEdelOverviewPageScraper {
         private const val MAIN_COLUMN = 1
         private const val TICKET_COLUMN = 2
 
-        /** The four-digit year in a `AUGUST 2026` month heading; the month itself is redundant with the row's own. */
+        /** The four-digit year in a `AUGUST 2026` month heading; the row under it carries its own day and month. */
         private val HEADING_YEAR = Regex("""\b(20\d{2})\b""")
+
+        /** How much of a spelled-out `SEPTEMBER` heading [parseGermanMonthAbbreviation] needs. */
+        private const val GERMAN_MONTH_PREFIX = 3
 
         /** The `DO | 20.08.` row date, capturing day (group 1) and month (group 2); the weekday is redundant. */
         private val DAY_MONTH = Regex("""(\d{1,2})\.(\d{1,2})\.""")
