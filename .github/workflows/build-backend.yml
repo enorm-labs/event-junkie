@@ -82,27 +82,12 @@ jobs:
             echo "---" >> $GITHUB_STEP_SUMMARY
           done
 
-      # Upload each module's SARIF report separately with a unique category.
-      # GitHub Code Scanning supports multiple SARIF uploads per commit when each
-      # has a distinct category. See: https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github
-      - name: Upload detekt SARIF (events-core)
-        if: success() || failure()
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: events-core/build/reports/detekt/detekt.sarif
-          category: detekt-events-core
-      - name: Upload detekt SARIF (events-bff)
-        if: success() || failure()
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: events-bff/build/reports/detekt/detekt.sarif
-          category: detekt-events-bff
-      - name: Upload detekt SARIF (events-importer)
-        if: success() || failure()
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: events-importer/build/reports/detekt/detekt.sarif
-          category: detekt-events-importer
+      # The SARIF uploads used to sit here, between detekt and the build. They have moved to the end
+      # of the job with everything else that talks to the GitHub API (#507) — `success() || failure()`
+      # keeps them running whether or not something above went wrong, and the reports detekt wrote
+      # are still on disk, so nothing about their behaviour changes. What changes is that an upload
+      # failing can no longer skip the compilation, the tests or the image build that used to follow
+      # it.
 
       # `-x koverVerify` alongside `-x test`: `koverVerify` is attached to `check` (so a local
       # `./gradlew build` enforces the coverage floors), but skipping tests means there is no
@@ -136,16 +121,6 @@ jobs:
           cat build/kover/coverage.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
-      - name: Post coverage to Pull Request
-        if: github.event_name == 'pull_request'
-        uses: mi-kas/kover-report@v2
-        with:
-          path: build/reports/kover/report.xml
-          title: Code Coverage
-          update-comment: true
-          min-coverage-overall: 60
-          min-coverage-changed-files: 80
-
       # Build the container images, and deliberately do not push them. This workflow runs on every
       # pull request, including from forks — publishing from here would put an image built from
       # unreviewed code into GHCR. Pushing belongs to release.yml.
@@ -157,6 +132,18 @@ jobs:
       # Pull requests only, since #264: on a push to `main` release.yml builds the same two images
       # from the same Dockerfiles and then pushes them, so doing it here as well would be six
       # multi-platform builds per merge instead of three, to learn the same thing twice.
+      #
+      # **These five steps run BEFORE anything that posts to the pull request, and the order is
+      # load-bearing (#507).** `if: github.event_name == 'pull_request'` carries an implicit
+      # `success()`, so a failure anywhere above skips every step below it. With the coverage
+      # comment ahead of these, a GitHub API error — a 404 from the compare endpoint, a 503 during
+      # an incident — turned the job red for a cosmetic reason *and* silently dropped the image
+      # build. Silently, because a skipped step produces no annotation: the job is red for the
+      # comment, nobody reads further, and the missing build leaves no trace.
+      #
+      # It happened on #506, which changed the JRE base image in both Dockerfiles — the one pull
+      # request where "do these still build, on both architectures" mattered most was the one where
+      # it did not run. Verification first, reporting last.
       - name: Extract the layered jars
         if: github.event_name == 'pull_request'
         run: ./gradlew :events-bff:bootJarLayers :events-importer:bootJarLayers
@@ -206,6 +193,80 @@ jobs:
           build-args: |
             VERSION=${{ steps.version.outputs.value }}
             REVISION=${{ github.sha }}
+
+      # LAST ON PURPOSE — it reaches the GitHub API, so it is the step most likely to fail for a
+      # reason that has nothing to do with the code (#507). Nothing runs after it, so when it does,
+      # it takes nothing down with it.
+      #
+      # It is not merely cosmetic, which is why it is not `continue-on-error`. It carries one gate
+      # nothing else does:
+      #
+      #   * `min-coverage-overall: 60`      — redundant. `koverVerify` above already enforces an
+      #                                       aggregate floor of 90 and per-module floors, and it
+      #                                       runs earlier, so a real shortfall fails before here.
+      #   * `min-coverage-changed-files: 80` — UNIQUE. Gradle has per-module and aggregate rules and
+      #                                       nothing per-changed-file. Removing this loses it.
+      - name: Post coverage to Pull Request
+        id: coverage
+        if: github.event_name == 'pull_request'
+        uses: mi-kas/kover-report@v2
+        with:
+          path: build/reports/kover/report.xml
+          title: Code Coverage
+          update-comment: true
+          min-coverage-overall: 60
+          min-coverage-changed-files: 80
+
+      # The step above fails the same way for two very different reasons — coverage on changed files
+      # below 80%, or GitHub being unable to serve an API call — and its error message is the only
+      # thing that distinguishes them. This says so in the job summary, so the next person does not
+      # re-derive it from the log. Same shape as validate-scripts.yml's "Explain the fix".
+      - name: Say which kind of coverage failure this was
+        if: always() && steps.coverage.outcome == 'failure'
+        run: |
+          {
+            echo "## Coverage comment failed"
+            echo
+            echo "**The build itself passed.** ktlint, detekt, compilation, tests, the licence check,"
+            echo "the Kover floors and both container images all ran and succeeded before this step —"
+            echo "that is why it is last."
+            echo
+            echo "Two things fail here, and the error message above is what tells them apart:"
+            echo
+            echo "| Message | Meaning |"
+            echo "| --- | --- |"
+            echo "| Coverage below \`min-coverage-changed-files\` | **Real.** Files changed by this PR are under 80% covered. Add tests |"
+            echo "| \`Not Found\`, \`503\`, \`No server is currently available\` | **Not yours.** A GitHub API error. Check githubstatus.com, then re-run |"
+            echo
+            echo "\`min-coverage-overall: 60\` is not the cause: \`koverVerify\` enforces 90 aggregate"
+            echo "plus per-module floors and runs earlier, so it would have failed first."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Upload each module's SARIF report separately with a unique category. GitHub Code Scanning
+      # supports multiple SARIF uploads per commit when each has a distinct category. See:
+      # https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github
+      #
+      # Last, with the other GitHub-API steps (#507), and `success() || failure()` on each so they
+      # run regardless of what failed above — including each other. detekt wrote these files near the
+      # top of the job; nothing since then removes them.
+      - name: Upload detekt SARIF (events-core)
+        if: success() || failure()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: events-core/build/reports/detekt/detekt.sarif
+          category: detekt-events-core
+      - name: Upload detekt SARIF (events-bff)
+        if: success() || failure()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: events-bff/build/reports/detekt/detekt.sarif
+          category: detekt-events-bff
+      - name: Upload detekt SARIF (events-importer)
+        if: success() || failure()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: events-importer/build/reports/detekt/detekt.sarif
+          category: detekt-events-importer
 
   # OWASP Dependency-Check runs as a separate job in parallel with the build to avoid
   # slowing down the main feedback loop.
