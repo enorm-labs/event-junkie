@@ -32,3 +32,46 @@
 # build — tracked in #492, which also holds the alternative of a base image without pebble.
 CVE-2026-39821
 CVE-2026-46600
+
+# 2026-08-17 — SIX MORE OF EXACTLY THE SAME THING, and the count is the point (#492).
+#
+# Same binary, same frozen toolchain: /usr/bin/pebble in eclipse-temurin:25-jre is built from Go
+# stdlib v1.26.5, so every Go stdlib CVE published from now on lands here. Three days after the two
+# above were waived, six more had accumulated:
+#
+#   CVE-2026-33818  encoding/asn1    DoS — excessive recursion in Unmarshal
+#   CVE-2026-56853  net/http         DoS — unencrypted HTTP/2 connections
+#   CVE-2026-56858  html/template    XSS — pathological input
+#   CVE-2026-56859  encoding/xml     DoS — decoding recursion depth
+#   CVE-2026-56860  net/url          DoS — quadratic complexity in path handling
+#   CVE-2026-56862  crypto/tls       DoS — indefinite KeyUpdate messages
+#
+# **The base-image bump was checked again first, as this file's header requires, and there is
+# nothing to bump to.** `docker buildx imagetools inspect eclipse-temurin:25-jre` resolves to
+# sha256:a214efa3… — byte for byte the digest both Dockerfiles already pin. Temurin still has not
+# rebuilt against Go >= 1.26.6, so the one-line fix remains unavailable rather than merely untried.
+#
+# Verified locally rather than read off a CI log, against the pinned digest with the release
+# workflow's own flags:
+#
+#   trivy image eclipse-temurin:25-jre@sha256:a214efa3… --severity CRITICAL,HIGH --ignore-unfixed
+#
+# All eight findings are in `usr/bin/pebble`, all `stdlib v1.26.5`. **Nothing outside pebble** — that
+# is what makes one reachability argument cover the whole set rather than eight separate ones.
+#
+# Not reachable, for the same structural reason as above and not a per-CVE judgement: pebble is
+# Canonical's service manager, it is present in the base layer, and it never runs. Both backend
+# Dockerfiles set ENTRYPOINT ["java", "-jar", "application.jar"] and run as USER 1000:1000. Nothing
+# starts pebble, so no ASN.1, XML, URL, TLS or template input ever reaches this code. An unreachable
+# parser cannot be fed hostile input.
+#
+# **Do not extend this block a third time without doing #492's second option instead.** Waiving a
+# growing list one batch at a time is how a gate dies quietly: the argument stays true while the
+# habit rots, and the real fix — a base image with no pebble in it — keeps being deferred because
+# each individual batch is cheap. Two entries was a waiver; eight is a base-image problem.
+CVE-2026-33818
+CVE-2026-56853
+CVE-2026-56858
+CVE-2026-56859
+CVE-2026-56860
+CVE-2026-56862
