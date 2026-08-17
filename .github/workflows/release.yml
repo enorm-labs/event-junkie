@@ -296,26 +296,18 @@ jobs:
           done
           exit $status
 
-      # One upload per image with its own category, as with the three detekt reports — Code Scanning
-      # keys on the category, so a single category would have each upload overwrite the last.
-      - name: Upload Trivy SARIF (bff)
-        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('trivy-bff.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: trivy-bff.sarif
-          category: trivy-bff
-      - name: Upload Trivy SARIF (importer)
-        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('trivy-importer.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: trivy-importer.sarif
-          category: trivy-importer
-      - name: Upload Trivy SARIF (frontend)
-        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('trivy-frontend.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: trivy-frontend.sarif
-          category: trivy-frontend
+      # The three Trivy SARIF uploads used to sit here, between the scan and the publish. They have
+      # moved to the end of the job (#507), and in this workflow that ordering is worth more than it
+      # is in build-backend.yml.
+      #
+      # `upload-sarif` talks to the Code Scanning API. Its own `success() || failure()` guard kept it
+      # running when the scan failed — but every publish step below is guarded on
+      # `steps.version.outputs.publish == 'true'`, which carries an implicit `success()`. So an
+      # upload failing meant **nothing was published**: images built, images scanned clean, chart
+      # packaged, and then all six push steps skipped because a report could not be filed.
+      #
+      # On a push to `main` that is staging silently not receiving the chart — the same shape of
+      # invisible failure as #455, arrived at from a different direction.
 
       # --- Publish the images ---------------------------------------------------------------------
       #
@@ -433,3 +425,30 @@ jobs:
               echo "Dry run — built, scanned, linted and packaged. Nothing was pushed."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # Last in the job, and after the publish steps rather than before them (#507). One upload per
+      # image with its own category, as with the three detekt reports — Code Scanning keys on the
+      # category, so a single category would have each upload overwrite the last.
+      #
+      # `success() || failure()` on each, so the findings are filed whether the scan passed, the scan
+      # failed, or a publish failed — and so that one upload failing cannot take the other two with
+      # it. The `hashFiles` guard skips an upload whose report was never produced, which is what
+      # happens when the scan itself died rather than found something.
+      - name: Upload Trivy SARIF (bff)
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('trivy-bff.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-bff.sarif
+          category: trivy-bff
+      - name: Upload Trivy SARIF (importer)
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('trivy-importer.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-importer.sarif
+          category: trivy-importer
+      - name: Upload Trivy SARIF (frontend)
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('trivy-frontend.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-frontend.sarif
+          category: trivy-frontend

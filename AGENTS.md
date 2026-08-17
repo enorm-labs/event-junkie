@@ -713,6 +713,19 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     every pull request including documentation-only ones, or a change-detection job whose semantics were unverified at the time. A red `Build & Test` is
     visible but not blocking. Revisit deliberately rather than by drift.
 
+- **Steps that verify come first; steps that report to GitHub come last. Never the other way round** (#507). `if:` on a step carries an implicit `success()`,
+  so a failing step skips every step below it — and a _skipped_ step produces no annotation and no summary line, so the loss is invisible. Put anything that
+  calls the GitHub API (`upload-sarif`, a PR comment, `github-script`) after everything that builds, tests or scans, and give each one `success() || failure()`
+  so it still runs when something above failed and cannot take its siblings down with it.
+
+    This has now bitten twice, both found during a GitHub incident and neither visible as what it was:
+
+    - `build-backend.yml` posted the coverage comment **before** building the container images. An API error turned the job red for a cosmetic reason and
+      silently dropped the multi-arch image build — on the one pull request (#506) that changed the JRE base image in both Dockerfiles.
+    - `release.yml` uploaded the Trivy SARIF reports **before** publishing. Every publish step is guarded on `publish == 'true'`, which carries that implicit
+      `success()`, so a Code Scanning hiccup meant images built, images scanned clean, chart packaged — and nothing pushed. On a push to `main` that is staging
+      silently not receiving the chart, which is #455's failure mode reached from a different direction.
+
 - **When CI misbehaves, check [githubstatus.com](https://www.githubstatus.com/) before debugging this repo.** Scriptable as
   `https://www.githubstatus.com/api/v2/summary.json`. A GitHub-side incident mimics repo-level bugs closely enough to send you hunting through trigger and path
   filters that are perfectly fine. Symptoms seen during the 2026-08-06 Actions outage:
