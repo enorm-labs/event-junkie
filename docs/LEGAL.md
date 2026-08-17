@@ -80,8 +80,14 @@ than the problem deserves; the convention is recorded in both `AGENTS.md` files,
 
 ### 4.7 Versioning scheme
 
-First public version **`0.1.1`**; `main` carries `0.1.1-SNAPSHOT`, which renders unlinked in the footer because there is no release to link to. Reaching
-`1.0.0` and dropping the beta badge (§5) are **one decision, not two**.
+First public version **`0.1.1`**; `main` carries `0.1.1-SNAPSHOT`. Reaching `1.0.0` and dropping the beta badge (§5) are **one decision, not two**.
+
+**The footer links a version to its release page only when it is a released `X.Y.Z` triple**, and shows every other version as plain text — the number is always
+displayed, only the link is withheld. That is stated positively on purpose, matching the `semverFilter` production's `OCIRepository` uses to answer the same
+question, because the alternative was wrong for months: the guard tested for `-SNAPSHOT`, a spelling that exists only in `gradle.properties`. Deployed builds
+report the computed version (`0.1.1-snapshot.20260817180146.g787d7d0`), so every one of them linked to a tag that does not exist —
+[#502](https://github.com/enorm-labs/event-junkie/issues/502). Snapshots are published to GHCR and never tagged in git, so there is nothing for those links to
+point at.
 
 `0.1.0` was skipped and never published. It was spent on snapshots, and the base version had to move past them for ordering reasons rather than for anything
 user-visible — [#455](https://github.com/enorm-labs/event-junkie/issues/455), and docs/DEVELOPMENT.md §Versions has the SemVer rule. Nothing here depends on the
@@ -269,7 +275,7 @@ editing a `.vue` file loads.
 | --- | ---------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------- |
 | 1   | Imprint address        | Rent a _ladungsfähige Anschrift_ from Postflex after domain registration; guarded placeholder until then     | §8.3                 |
 | 2   | Legal-page language    | English first, German in the same release as the German UI and authoritative from then — **done 2026-08-08** | §6.1                 |
-| 3   | First public version   | `0.1.1`; `main` carries `0.1.1-SNAPSHOT`; `-SNAPSHOT` renders unlinked; `0.1.0` skipped (#455)               | §4.7                 |
+| 3   | First public version   | `0.1.1`; `main` carries `0.1.1-SNAPSHOT`; only a released `X.Y.Z` links (#502); `0.1.0` skipped (#455)       | §4.7                 |
 | 4   | `package.json` version | Mirrors the Gradle version, kept in step by hand, without `-SNAPSHOT`                                        | §4.6                 |
 | 5   | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                    | §4.4                 |
 | 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                            | `CODE_OF_CONDUCT.md` |

@@ -36,15 +36,19 @@ const linkClass = 'text-muted-foreground hover:text-foreground'
 const { meta } = useAppMeta()
 
 /**
- * A release tag only exists for a clean version. `dev` (no build info — the IDE and `bootRun`) and
- * `-SNAPSHOT` (every build until a release workflow exists, §4.7) render as plain text, because a
- * link to `/releases/tag/v0.1.0-SNAPSHOT` would 404.
+ * A release tag exists only for a released version, so only those are linked. Everything else —
+ * `dev` (no build info: the IDE and `bootRun`), `0.1.1-SNAPSHOT` (a local build), and
+ * `0.1.1-snapshot.20260817180146.g787d7d0` (what every deployed build actually reports) — renders as
+ * plain text.
+ *
+ * **The version is still displayed in all of those cases; only the link is withheld.** Which build
+ * staging is running is the whole reason this line exists.
+ *
+ * `releaseTagUrl` decides, by testing for a `major.minor.patch` triple. This used to ask "does it
+ * contain `-SNAPSHOT`?" and got it wrong for three months, because that spelling lives only in
+ * `gradle.properties` and never reaches a browser (#502).
  */
-const releaseUrl = computed(() => {
-  const version = meta.value?.version
-  if (!version || version === 'dev' || version.includes('-SNAPSHOT')) return null
-  return releaseTagUrl(version)
-})
+const releaseUrl = computed(() => releaseTagUrl(meta.value?.version))
 
 const localePath = useLocalePath()
 </script>
