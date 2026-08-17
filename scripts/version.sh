@@ -9,12 +9,13 @@
 # version over them before packaging).
 #
 # Usage:
-#   scripts/version.sh base                  # 0.1.0             — the released number this tree is heading for
-#   scripts/version.sh compute [ref] [sha]   # 0.1.0-snapshot.g33fd32g, or 0.1.0 from refs/tags/v0.1.0
-#   scripts/version.sh check                 # fails if the four places disagree
+#   scripts/version.sh base                              # 0.1.1 — the released number this tree is heading for
+#   scripts/version.sh compute [ref] [sha] [timestamp]   # 0.1.1-snapshot.20260814122042.g33fd32g, or 0.1.1 from refs/tags/v0.1.1
+#   scripts/version.sh check                             # fails if the four places disagree
 #
 # `compute` defaults to $GITHUB_REF / $GITHUB_SHA and falls back to the working tree, so it produces
-# the same answer in CI and on a laptop.
+# the same answer in CI and on a laptop. The third argument exists for `scripts/version-test.sh`,
+# which needs to drive the timestamp rather than read it from a commit.
 #
 # Requires: yq (for Chart.yaml). Reaches no network and writes nothing.
 
@@ -30,7 +31,7 @@ die() {
   exit 1
 }
 
-# The declared version, suffix and all: `0.1.0-SNAPSHOT`.
+# The declared version, suffix and all: `0.1.1-SNAPSHOT`.
 declared_version() {
   local value
   value="$(sed -n 's/^version=//p' "$GRADLE_PROPERTIES" | head -1)"
@@ -38,7 +39,7 @@ declared_version() {
   printf '%s\n' "$value"
 }
 
-# The released number this tree is heading for: `0.1.0`.
+# The released number this tree is heading for: `0.1.1`.
 #
 # `main` always carries -SNAPSHOT — a release version is never committed, it is supplied by the tag
 # via `-Pversion=`. So the suffix being missing means someone hand-edited a release number into the
@@ -64,12 +65,34 @@ package_json_version() {
   printf '%s\n' "$value"
 }
 
+# The commit's own committer date, in UTC, as `YYYYMMDDHHMMSS`: `20260814122042`.
+#
+# The committer date rather than the author date, because that is when the commit landed on `main` —
+# a squash or rebase merge stamps it at merge time, so it increases in the order snapshots are
+# published. The author date is when the branch was written, which can be weeks earlier and is not
+# ordered by anything.
+#
+# The commit's date rather than `date -u`, because `compute` has to stay a pure function of the
+# commit. Re-running release.yml on the same sha must produce the same version — otherwise a re-run
+# publishes a second, differently-named copy of identical artifacts — and CI and a laptop must agree
+# about the same commit, which `date -u` cannot do by construction.
+commit_timestamp() {
+  local sha="$1" stamp
+  stamp="$(TZ=UTC0 git -C "$REPO_ROOT" show -s --format=%cd --date=format-local:%Y%m%d%H%M%S "$sha" 2>/dev/null)" ||
+    die "cannot read the committer date of '$sha' — it is not a commit in this repository"
+  # Fourteen digits, and the first one is not a zero: a SemVer numeric identifier must not carry a
+  # leading zero, and the whole point of this identifier is that it compares numerically.
+  [[ "$stamp" =~ ^[1-9][0-9]{13}$ ]] ||
+    die "committer date of '$sha' produced '$stamp', which is not a 14-digit timestamp"
+  printf '%s\n' "$stamp"
+}
+
 cmd_base() {
   base_version
 }
 
 cmd_compute() {
-  local ref="${1:-${GITHUB_REF:-}}" sha="${2:-${GITHUB_SHA:-}}"
+  local ref="${1:-${GITHUB_REF:-}}" sha="${2:-${GITHUB_SHA:-}}" stamp="${3:-}"
   [[ -n "$ref" ]] || ref="$(git -C "$REPO_ROOT" rev-parse --symbolic-full-name HEAD)"
   [[ -n "$sha" ]] || sha="$(git -C "$REPO_ROOT" rev-parse HEAD)"
 
@@ -81,7 +104,7 @@ cmd_compute() {
     [[ "$tag" == v* ]] || die "release tag '$tag' must be of the form v<major>.<minor>.<patch>"
     local tagged="${tag#v}"
     # The guard that stops a tag inventing a version. Cutting v0.2.0 from a tree whose
-    # gradle.properties still says 0.1.0-SNAPSHOT would publish images whose /actuator/info
+    # gradle.properties still says 0.1.1-SNAPSHOT would publish images whose /actuator/info
     # disagrees with their own tag, and there is no later step that would notice.
     [[ "$tagged" == "$base" ]] ||
       die "tag '$tag' does not match gradle.properties ($base-SNAPSHOT); bump the file first, then tag"
@@ -90,15 +113,39 @@ cmd_compute() {
   fi
 
   # A prerelease *of* the coming release, never of the last one: SemVer sorts
-  # 0.1.0-snapshot.g33fd32g before 0.1.0, so naming a snapshot after the released version would have
-  # it claim to be older than code it is newer than. Same semantics as Maven's -SNAPSHOT.
+  # 0.1.1-snapshot.20260814122042.g33fd32g before 0.1.1, so naming a snapshot after the released
+  # version would have it claim to be older than code it is newer than. Maven's -SNAPSHOT semantics.
   #
-  # The `g` prefix is git-describe's convention and it is load-bearing here rather than cosmetic: a
-  # SemVer prerelease identifier made only of digits must not carry a leading zero, so a short sha
-  # like `0031234` would produce a version string that `helm lint --strict` rejects. Roughly one
-  # commit in four hundred. Starting the identifier with a letter makes it alphanumeric, which has
-  # no such rule.
-  printf '%s-snapshot.g%s\n' "$base" "${sha:0:7}"
+  # THE TIMESTAMP IS THE ORDERING, AND IT IS THE WHOLE REASON THIS IDENTIFIER EXISTS (#455).
+  #
+  # SemVer §11 compares prerelease identifiers field by field, and an identifier made only of digits
+  # is compared *numerically* while one containing a letter is compared lexically in ASCII. A short
+  # sha is effectively random, so the scheme this replaced — `0.1.0-snapshot.g<sha>` — gave staging's
+  # `semver: ">=0.0.0-0"` range no way to mean "the newest chart". It meant "whichever sha sorts
+  # highest", which is a different chart on most days and can move backwards. Observed on staging:
+  # ten snapshots published, and Flux resolved the sixth-oldest because `f` > `d`.
+  #
+  # A 14-digit UTC timestamp is a numeric identifier, so it orders. It is also legible in a `helm
+  # list`, which `github.run_number` — the strictly-monotonic alternative — is not; the tie it
+  # avoids needs two merges to `main` inside the same second, and the sha below breaks that tie
+  # arbitrarily but harmlessly.
+  #
+  # The `g` prefix is git-describe's convention and it is load-bearing rather than cosmetic, for one
+  # reason only: a numeric SemVer identifier must not carry a leading zero, so a short sha like
+  # `0031234` — seven characters that all happen to be digits, starting with one — produces a version
+  # string `helm lint --strict` rejects outright. About one commit in 270: (10/16)^6 / 16, since a
+  # sha is uniform over hex. Starting the identifier with a letter makes it alphanumeric, and the
+  # leading-zero rule does not apply to those.
+  #
+  # It does NOT help the ordering, and it is worth being exact about that because the opposite is
+  # easy to assume. Identifiers are compared left to right and the comparison stops at the first
+  # difference, so the timestamp decides everything and the sha is reached only when two timestamps
+  # are equal — the same-second tie. There, `g` does buy one small thing: every sha is alphanumeric,
+  # so ties break by plain ASCII. Bare shas would be a mix of numeric and alphanumeric, and SemVer
+  # ranks every numeric identifier below every non-numeric one, so an all-digit sha would always
+  # lose a tie regardless of its value. Both are arbitrary; consistently arbitrary is better.
+  [[ -n "$stamp" ]] || stamp="$(commit_timestamp "$sha")"
+  printf '%s-snapshot.%s.g%s\n' "$base" "$stamp" "${sha:0:7}"
 }
 
 cmd_check() {

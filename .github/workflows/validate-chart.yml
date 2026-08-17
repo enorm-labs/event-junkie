@@ -25,6 +25,7 @@ on:
       - 'deploy/**'
       - 'scripts/k3d-rehearsal.sh'
       - 'scripts/version.sh'
+      - 'scripts/version-test.sh'
       - 'gradle.properties'
       - 'events-frontend/package.json'
       - '.github/workflows/validate-chart.yml'
@@ -78,6 +79,20 @@ jobs:
         uses: azure/setup-helm@v5
         with:
           version: ${{ env.HELM_VERSION }}
+
+      # The step above asks whether the four files agree; this one asks whether the versions they
+      # produce **order**, which is a different question and the one that went unasked for three
+      # days (#455). `0.1.0-snapshot.g<sha>` agreed with everything, lint-passed, published fine —
+      # and gave staging's `>=0.0.0-0` no way to mean "newest", so Flux resolved whichever short sha
+      # sorted highest in ASCII while reporting Ready throughout.
+      #
+      # It resolves fabricated version sets through Helm's own Masterminds constraint solver, which
+      # is the library Flux's source-controller embeds, so this is the same comparison the cluster
+      # makes. Runs here rather than in validate-scripts.yml purely because that is where Helm is —
+      # and it is pinned to the Helm 3 the helm-controller uses, which is the version whose verdict
+      # actually matters.
+      - name: Assert snapshot versions order
+        run: scripts/version-test.sh "$CHART"
 
       # `flux schema validate` rather than kubeconform, since #414. It validates the same manifests
       # against the same kind of JSON Schema, and then three things kubeconform cannot:
@@ -172,9 +187,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      # `scripts/k3d-rehearsal.sh` and `scripts/version.sh` are linted here because both are part of
-      # the deploy story: one installs this chart, the other decides what version gets published. So
-      # a chart change lints them even when nothing under `scripts/` was touched.
+      # `scripts/k3d-rehearsal.sh`, `scripts/version.sh` and `scripts/version-test.sh` are linted
+      # here because all three are part of the deploy story: one installs this chart, one decides
+      # what version gets published, and one proves those versions order (#455). So a chart change
+      # lints them even when nothing under `scripts/` was touched.
       #
       # They are now *also* linted by validate-scripts.yml, which covers `scripts/*.sh` and closed
       # the gap this comment used to record (the rest of `scripts/` having no CI coverage at all).
@@ -188,4 +204,4 @@ jobs:
         run: |
           docker run --rm -v "$PWD:/mnt" -w /mnt \
             "koalaman/shellcheck:${SHELLCHECK_VERSION}" \
-            -x deploy/scripts/*.sh scripts/k3d-rehearsal.sh scripts/version.sh
+            -x deploy/scripts/*.sh scripts/k3d-rehearsal.sh scripts/version.sh scripts/version-test.sh

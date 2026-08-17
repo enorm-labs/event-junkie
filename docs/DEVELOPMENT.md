@@ -440,35 +440,53 @@ else derives from it. Three other files repeat the number and none is authoritat
 
 | File                           | Holds            | Why it is not the source                                                       |
 | ------------------------------ | ---------------- | ------------------------------------------------------------------------------ |
-| `gradle.properties`            | `0.1.0-SNAPSHOT` | **The source of truth.** `bootBuildInfo` stamps it, `/actuator/info` serves it |
-| `events-frontend/package.json` | `0.1.0`          | npm has no `-SNAPSHOT` convention, so it mirrors the bare number               |
-| `Chart.yaml` `version`         | `0.1.0`          | A placeholder — the release workflow stamps the computed version over it       |
-| `Chart.yaml` `appVersion`      | `0.1.0`          | The same placeholder, and also the default image tag for all three components  |
+| `gradle.properties`            | `0.1.1-SNAPSHOT` | **The source of truth.** `bootBuildInfo` stamps it, `/actuator/info` serves it |
+| `events-frontend/package.json` | `0.1.1`          | npm has no `-SNAPSHOT` convention, so it mirrors the bare number               |
+| `Chart.yaml` `version`         | `0.1.1`          | A placeholder — the release workflow stamps the computed version over it       |
+| `Chart.yaml` `appVersion`      | `0.1.1`          | The same placeholder, and also the default image tag for all three components  |
 
 [`scripts/version.sh`](../scripts/version.sh) is the only thing that knows the rules, so CI and a laptop always agree:
 
 ```bash
-scripts/version.sh base       # 0.1.0 — the released number this tree is heading for
-scripts/version.sh compute    # 0.1.0-snapshot.g33fd32g on a branch; 0.1.0 from the tag v0.1.0
+scripts/version.sh base       # 0.1.1 — the released number this tree is heading for
+scripts/version.sh compute    # 0.1.1-snapshot.20260814122042.g33fd32g on a branch; 0.1.1 from the tag v0.1.1
 scripts/version.sh check      # fails if the four files disagree — also a pre-commit hook
+scripts/version-test.sh       # fails if snapshot versions stop ordering — needs helm
 ```
 
-**Snapshots are prereleases _of the coming release_, not of the last one.** SemVer sorts `0.1.0-snapshot.g33fd32g` _before_ `0.1.0`, so naming a snapshot after
-the released version would have it claim to be older than code it is newer than. Same semantics as Maven's `-SNAPSHOT`. The `g` before the sha is git-describe's
-convention and is load-bearing rather than decorative: a SemVer prerelease identifier made only of digits may not have a leading zero, so a short sha like
-`0031234` would produce a version `helm lint --strict` rejects — about one commit in four hundred.
+**Snapshots are prereleases _of the coming release_, not of the last one.** SemVer sorts `0.1.1-snapshot.20260814122042.g33fd32g` _before_ `0.1.1`, so naming a
+snapshot after the released version would have it claim to be older than code it is newer than. Same semantics as Maven's `-SNAPSHOT`.
+
+**The timestamp is there so that snapshots _order_, and that is not a detail** ([#455](https://github.com/enorm-labs/event-junkie/issues/455)). SemVer §11
+compares digits-only identifiers numerically and identifiers containing a letter lexically in ASCII, so the previous scheme — `0.1.0-snapshot.g<sha>` — sorted by
+short sha, which is random. Staging's `semver: ">=0.0.0-0"` range therefore resolved whichever sha sorted highest rather than the newest chart, silently, while
+reporting `Ready`. It ran a three-day-old chart until the symptom turned up somewhere unrelated. The timestamp is `YYYYMMDDHHMMSS` in UTC, taken from the
+commit's **committer date** rather than the clock so that `compute` stays a pure function of the commit and a workflow re-run cannot produce a second name for
+identical artifacts.
+
+The same §11 rule is why the base version moved `0.1.0` → `0.1.1` without `0.1.0` ever shipping: numeric identifiers rank **below** alphanumeric ones, so a
+timestamped snapshot of `0.1.0` would have sorted under every legacy `0.1.0-snapshot.g…` tag already in GHCR. Those tags are immutable and were not deleted.
+
+The `g` before the sha is git-describe's convention and is load-bearing rather than decorative: a SemVer identifier made only of digits may not have a leading
+zero, so a short sha like `0031234` would produce a version `helm lint --strict` rejects outright — about one commit in 270, being `(10/16)^6 / 16` for a sha
+uniform over hex.
+
+**It does not help the ordering**, which is worth stating because the opposite is easy to assume. Prerelease identifiers are compared left to right and the
+comparison stops at the first difference, so the timestamp decides and the sha is reached only when two timestamps are equal. In that same-second tie the `g`
+buys one small thing: every sha is alphanumeric, so ties break by plain ASCII, where bare shas would be a mix and SemVer ranks every numeric identifier below
+every non-numeric one — an all-digit sha would lose every tie regardless of its value.
 
 ### What gets published, and when
 
 [`release.yml`](../.github/workflows/release.yml) builds, scans and pushes **four artifacts** — three images and the chart — from one computed version. It does
 not deploy: Flux pulls from GHCR on its own schedule (#414), so a green run means the artifacts exist, not that they are live.
 
-| Trigger                                         | Version                 | Published                                         |
-| ----------------------------------------------- | ----------------------- | ------------------------------------------------- |
-| every push to `main`                            | `0.1.0-snapshot.g<sha>` | images + chart                                    |
-| **publishing a GitHub Release** tagged `v0.1.0` | `0.1.0`                 | images + chart, **and** `latest` on the images    |
-| a PR touching `release.yml` or `version.sh`     | snapshot                | **nothing**                                       |
-| `workflow_dispatch`                             | as above                | **nothing**, unless the `publish` input is ticked |
+| Trigger                                         | Version                                 | Published                                         |
+| ----------------------------------------------- | --------------------------------------- | ------------------------------------------------- |
+| every push to `main`                            | `0.1.1-snapshot.<utc-timestamp>.g<sha>` | images + chart                                    |
+| **publishing a GitHub Release** tagged `v0.1.1` | `0.1.1`                                 | images + chart, **and** `latest` on the images    |
+| a PR touching `release.yml` or `version.sh`     | snapshot                                | **nothing**                                       |
+| `workflow_dispatch`                             | as above                                | **nothing**, unless the `publish` input is ticked |
 
 Publishing is an allowlist — `push` events and a dispatch that explicitly asks for it — rather than "everything except the dry run", so a trigger added later
 cannot quietly become a publishing one.
@@ -485,19 +503,19 @@ stamped, linted and packaged — and pushes none of it.
 the notes `.github/release.yml` generates from the merged PRs' labels.
 
 ```bash
-# 1. main is at the version you intend to release — gradle.properties says 0.1.0-SNAPSHOT
+# 1. main is at the version you intend to release — gradle.properties says 0.1.1-SNAPSHOT
 scripts/version.sh check
 
 # 2. publish the release, creating the tag from main. The v prefix is required, and the
 #    number must match gradle.properties. Or do the same in the UI: Releases → Draft a new
 #    release → choose a tag → Create new tag → Generate release notes → Publish.
-gh release create v0.1.0 --target main --generate-notes
+gh release create v0.1.1 --target main --generate-notes
 
-# 3. afterwards, open a PR bumping all four files to 0.1.1-SNAPSHOT / 0.1.1
+# 3. afterwards, open a PR bumping all four files to 0.1.2-SNAPSHOT / 0.1.2
 ```
 
 A release version is **never committed** — `release.yml` passes `-Pversion=` from the tag, so the tag and the built artifacts cannot disagree. Tagging `v0.2.0`
-on a tree that still says `0.1.0-SNAPSHOT` fails immediately in `scripts/version.sh compute`, before anything is built.
+on a tree that still says `0.1.1-SNAPSHOT` fails immediately in `scripts/version.sh compute`, before anything is built.
 
 Two consequences of triggering on `published` rather than on the tag: a **draft** release creates no tag and publishes nothing until you publish it, which makes
 drafting notes safe; and a release cut from a tag that already exists still triggers, which a tag-push trigger would not. **Pre-releases are not supported** by

@@ -1,40 +1,40 @@
 # The chart source for staging. #264 publishes it here on every push to `main`.
 #
-# THE ONE FIELD THIS FILE EXISTS FOR IS `semver`, AND IT IS THE ONE THAT FAILS SILENTLY.
+# THE ONE FIELD THIS FILE EXISTS FOR IS `semver`, AND IT IS THE ONE THAT FAILS SILENTLY. It has done
+# so twice, for two independent reasons, and both are worth keeping written down because neither
+# produced an error message.
 #
-# Staging runs snapshots — `0.1.0-snapshot.g<sha>`, a SemVer *prerelease*. Helm's constraint syntax
-# (Masterminds) **skips prerelease versions unless the range says otherwise**, so `">=0.0.0"` here
-# would match nothing at all: the OCIRepository reconciles happily, reports Ready, and resolves the
-# last release — or nothing, if there has never been one. No error is logged anywhere. Staging simply
-# stops moving, and the first symptom is somebody noticing the site is a fortnight old.
+# **One: the range has to admit prereleases.** Staging runs snapshots — a SemVer *prerelease* — and
+# Helm's constraint syntax (Masterminds) skips prereleases unless the range says otherwise. So
+# `">=0.0.0"` here would match nothing at all: the OCIRepository reconciles happily, reports Ready,
+# and resolves the last release — or nothing, if there has never been one. Nothing is logged. Staging
+# simply stops moving, and the first symptom is somebody noticing the site is a fortnight old. The
+# `-0` is what admits them. Two characters, and the entire mechanism.
 #
-# The `-0` suffix is what admits prereleases. It is two characters and it is the entire mechanism.
-#
-# ---------------------------------------------------------------------------------------------
-# TEMPORARILY PINNED TO A TAG (2026-08-13) — #455. `semver` IS COMING BACK; DO NOT TIDY THIS AWAY.
-#
-# The range above is correct and still does not work, for a second reason nobody looked for. SemVer
-# compares alphanumeric prerelease identifiers **lexically**, and `g<sha>` is effectively random —
-# so `">=0.0.0-0"` resolves whichever short sha sorts highest in ASCII, not the newest chart.
-#
-# Observed on this cluster: ten snapshots published, and Flux selected the sixth-oldest.
+# **Two: the versions have to order.** A correct range still resolves nothing useful if the thing it
+# is ranking is unordered, and until #455 it was. Snapshots were `0.1.0-snapshot.g<sha>`, SemVer
+# compares alphanumeric prerelease identifiers **lexically**, and a short sha is effectively random —
+# so this range meant "whichever sha sorts highest in ASCII", not "the newest chart". Observed here:
+# ten snapshots published, and Flux selected the sixth-oldest.
 #
 #     g21cfd20  g69bea59  g8955528  g9c64e89  gaeb1985
 #     gc14ccfb  gcc52b77  gdf18a02  gf3c1146  gf6407e3   <- resolved, because f > d
 #
-# Staging had been three days stale and would not have moved again until a merge produced a sha
-# sorting above `f6407e3` — about a 1-in-16 chance per commit, and it can go backwards too. It
-# surfaced as a certificate that would not issue, because the stale chart still rendered
-# `groupName: acme.hetzner.cloud` against a webhook serving `acme.hetzner.com` (#452 fixed that
-# weeks of reading would not have found it; only the cluster did).
+# Staging was three days stale and would not have moved again until a merge produced a sha sorting
+# above `f6407e3` — about a 1-in-16 chance per commit, and it could go backwards. It surfaced as a
+# certificate that would not issue, because the stale chart still rendered
+# `groupName: acme.hetzner.cloud` against a webhook serving `acme.hetzner.com` (#452 had fixed that
+# and the fix was published but never deployed).
 #
-# So this is a **stopgap**: an explicit tag is deterministic and gets the fixed chart deployed. It
-# also defeats the whole point of staging — it no longer follows `main`. #455 makes the snapshot
-# identifier monotonic; the moment it lands, this reverts to `semver: ">=0.0.0-0"`.
+# Snapshots are now `0.1.1-snapshot.<utc-timestamp>.g<sha>`. A digits-only SemVer identifier compares
+# **numerically**, so the timestamp orders and the sha is only a tie-break and a traceability aid.
+# The base version moved 0.1.0 -> 0.1.1 in the same change and had to: a numeric identifier ranks
+# BELOW an alphanumeric one, so `0.1.0-snapshot.2026…` would have sorted under all ten legacy tags.
+# `scripts/version-test.sh` asserts the ordering against Helm's own solver; it is the test that would
+# have caught this, and it fails if the scheme is reverted.
 #
-# Production is untouched and does not need to be: its range is `>=0.1.0` with a numeric-triple
+# Production is untouched and never needed to be: its range is `>=0.1.0` with a numeric-triple
 # filter, and release versions order correctly.
-# ---------------------------------------------------------------------------------------------
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
 metadata:
@@ -42,8 +42,7 @@ metadata:
   namespace: flux-system
   annotations:
     kubernetes.io/description: >-
-      The event-junkie Helm chart, pulled from GHCR. TEMPORARILY pinned to one tag (#455) rather
-      than tracking snapshots — staging does not follow main until that lands.
+      The event-junkie Helm chart, pulled from GHCR. Tracks every snapshot published from main.
 spec:
   # 1m rather than the tighter number a laptop reflex picks. Flux's own guidance is not to poll below
   # 30s without webhooks, and we cannot use webhooks: a Receiver is an *inbound* endpoint and §8's
@@ -52,11 +51,7 @@ spec:
   interval: 1m
   url: oci://ghcr.io/enorm-labs/charts/event-junkie
   ref:
-    # Reverts to `semver: ">=0.0.0-0"` when #455 lands. This is the newest published snapshot as of
-    # 2026-08-13, and the oldest one carrying #452's cert-manager fixes — verified by reading the
-    # published artifact's values rather than by trusting the git history:
-    #   helm show values oci://ghcr.io/enorm-labs/charts/event-junkie --version 0.1.0-snapshot.gdf18a02
-    tag: "0.1.0-snapshot.gdf18a02"
+    semver: ">=0.0.0-0"
   # Set explicitly rather than left to the default "first layer found". A Helm chart pushed by
   # `helm push` carries this media type; relying on layer ordering works until an artifact grows a
   # second layer (a provenance or SBOM attestation, both of which #443 proposes adding).

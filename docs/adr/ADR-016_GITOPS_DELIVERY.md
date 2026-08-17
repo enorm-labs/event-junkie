@@ -64,6 +64,22 @@ repository layout and lose the property that a released chart cannot be edited a
 staging range without it matches no snapshot at all and the environment simply stops moving. Production carries a regex filter _as well as_ a range because
 excluding snapshots by omission is one careless `-0` away from being wrong.
 
+> **Amended 2026-08-17 ([#455](https://github.com/enorm-labs/event-junkie/issues/455)). The paragraph above states half the requirement.**
+>
+> The `-0` decides which versions are _candidates_. It does not decide which candidate _wins_ — the version scheme does, and a range ranking unordered versions
+> resolves a chart at random. That is the same silent shape as the missing `-0` and it is arguably worse, because the `OCIRepository` reports `Ready` with a
+> plausible version rather than not matching at all.
+>
+> **So the snapshot identifier must be monotonic, and that is a constraint this ADR places on the version scheme.** SemVer §11: identifiers made only of digits
+> compare numerically, identifiers containing a letter compare lexically in ASCII, and numeric identifiers rank _below_ alphanumeric ones. `0.1.0-snapshot.g<sha>`
+> fell on the wrong side of the first rule — a short sha is effectively random — so staging resolved whichever sha sorted highest, ran a three-day-old chart, and
+> surfaced it as a certificate that would not issue (#452's fix was published and never deployed). Snapshots are now
+> `0.1.1-snapshot.<utc-timestamp>.g<sha>`; the base version moved because of the third rule, since a timestamped snapshot of `0.1.0` would have sorted under all
+> ten legacy tags.
+>
+> The ordering is asserted rather than assumed: `scripts/version-test.sh` resolves fabricated version sets through the same Masterminds solver the
+> source-controller embeds, and demands the newest win. A format assertion is precisely the test that would not have caught this.
+
 **Repository structure: cluster directories only, no `apps/` + `infrastructure/` split.** Flux's [repository structure
 guide](https://fluxcd.io/flux/guides/repository-structure/) recommends a monorepo layout of `apps/{base,staging,production}`,
 `infrastructure/{base,staging,production}` and `clusters/*` wired together with `Kustomization` objects and `dependsOn`. **That structure exists to order

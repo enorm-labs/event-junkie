@@ -13,7 +13,7 @@ The version scheme itself is in [DEVELOPMENT.md §Versions](DEVELOPMENT.md#versi
 flowchart TB
     subgraph dev["Development"]
         pr["Pull request"] -->|"checks: build · test · lint · render assertions"| main["merge to main"]
-        rel["GitHub Release<br/>tag v0.1.0"]
+        rel["GitHub Release<br/>tag v0.1.1"]
     end
 
     subgraph ci["GitHub Actions — release.yml"]
@@ -61,12 +61,12 @@ there is nothing for it to hold.
 
 ## What triggers what
 
-| Trigger                                      | Version                 | Published                                      | Reconciled onto |
-| -------------------------------------------- | ----------------------- | ---------------------------------------------- | --------------- |
-| push to `main`                               | `0.1.0-snapshot.g<sha>` | images + chart                                 | **staging**     |
-| **publish a GitHub Release** tagged `v0.1.0` | `0.1.0`                 | images + chart, **and** `latest` on the images | **production**  |
-| PR touching `release.yml` or `version.sh`    | snapshot                | **nothing** — dry run                          | —               |
-| `workflow_dispatch`                          | as above                | nothing, unless `publish` is ticked            | —               |
+| Trigger                                      | Version                                 | Published                                      | Reconciled onto |
+| -------------------------------------------- | --------------------------------------- | ---------------------------------------------- | --------------- |
+| push to `main`                               | `0.1.1-snapshot.<utc-timestamp>.g<sha>` | images + chart                                 | **staging**     |
+| **publish a GitHub Release** tagged `v0.1.1` | `0.1.1`                                 | images + chart, **and** `latest` on the images | **production**  |
+| PR touching `release.yml` or `version.sh`    | snapshot                                | **nothing** — dry run                          | —               |
+| `workflow_dispatch`                          | as above                                | nothing, unless `publish` is ticked            | —               |
 
 Publishing is decided by an **allowlist** (`push`, `release`, or a dispatch that asks), so a trigger added later cannot silently become a publishing one.
 
@@ -78,11 +78,11 @@ keeps the Releases page the single record of what shipped.
 `gradle.properties` is the source of truth; everything derives from it via [`scripts/version.sh`](../scripts/version.sh).
 
 ```
-gradle.properties  0.1.0-SNAPSHOT
+gradle.properties  0.1.1-SNAPSHOT
         │
-        └── scripts/version.sh compute ──► 0.1.0-snapshot.gf6407e3
+        └── scripts/version.sh compute ──► 0.1.1-snapshot.20260814122042.gdf18a02
                      │
-                     ├── docker build -t ghcr.io/…/bff:0.1.0-snapshot.gf6407e3
+                     ├── docker build -t ghcr.io/…/bff:0.1.1-snapshot.20260814122042.gdf18a02
                      ├── docker build -t ghcr.io/…/importer:…
                      ├── docker build -t ghcr.io/…/frontend:…
                      └── Chart.yaml  version: … / appVersion: …
@@ -114,9 +114,27 @@ ref:
 Observed on k3d rather than reasoned about:
 
 ```
-semver: ">=0.0.0-0"  ->  resolved 0.1.0-snapshot.gf6407e3@sha256:0a9239c280ab…
+semver: ">=0.0.0-0"  ->  resolved 0.1.1-snapshot.20260814122042.gdf18a02@sha256:0a9239c280ab…
 semver: ">=0.0.0"    ->  no match found for semver: >=0.0.0
 ```
+
+### The range only means "newest" if the versions order
+
+Two independent things have to be true, and only the first is famous. The `-0` decides **which versions are candidates**; the version scheme decides **which
+candidate wins**. A correct range ranking unordered versions resolves a chart at random, reports `Ready`, and logs nothing — the same silent shape as the missing
+`-0`, and it cost three days ([#455](https://github.com/enorm-labs/event-junkie/issues/455)).
+
+SemVer §11: identifiers made only of digits compare **numerically**; identifiers containing a letter compare **lexically in ASCII**. The old
+`0.1.0-snapshot.g<sha>` therefore sorted by short sha, which is random — so staging ran whichever sha happened to sort highest until a merge produced one higher
+still, roughly a 1-in-16 chance per commit, and it could move backwards. The timestamp is digits-only and fixes it; the `g<sha>` stays as a tie-break and for
+traceability.
+
+The same rule is why the base version moved `0.1.0` → `0.1.1` without `0.1.0` ever being released: **numeric identifiers rank below alphanumeric ones**, so
+`0.1.0-snapshot.2026…` would have sorted _under_ all ten legacy `0.1.0-snapshot.g…` tags. Those are immutable published artifacts and were not deleted; the patch
+bump puts every new snapshot above them on the `major.minor.patch` comparison, before any prerelease identifier is looked at.
+
+[`scripts/version-test.sh`](../scripts/version-test.sh) is the gate. It resolves fabricated version sets through Helm's own Masterminds solver — the library
+Flux's source-controller embeds — and asserts the newest wins. Asserting the _format_ would not have caught this; the format was always valid.
 
 ## When a deploy goes wrong
 
@@ -139,13 +157,13 @@ production (`enabled`).
 scripts/version.sh check
 
 # 2. publish the release — this is what triggers the workflow
-gh release create v0.1.0 --target main --generate-notes
+gh release create v0.1.1 --target main --generate-notes
 
-# 3. afterwards, bump all four files to 0.1.1-SNAPSHOT / 0.1.1 in a PR
+# 3. afterwards, bump all four files to 0.1.2-SNAPSHOT / 0.1.2 in a PR
 ```
 
 A release version is **never committed**: `release.yml` passes `-Pversion=` from the tag, so the tag and the artifacts cannot disagree. Tagging `v0.2.0` on a tree
-that says `0.1.0-SNAPSHOT` fails before anything is built.
+that says `0.1.1-SNAPSHOT` fails before anything is built.
 
 ## Rehearsing the whole thing locally
 

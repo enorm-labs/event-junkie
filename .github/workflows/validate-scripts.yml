@@ -11,12 +11,12 @@ name: Validate Scripts
 # grew a batch mode with real parsing in it, which is the point at which "linted only if the author
 # happened to have the hook installed" stopped being comfortable.
 #
-# **`scripts/k3d-rehearsal.sh` and `scripts/version.sh` are linted twice** — here, and in
-# validate-chart.yml's "ShellCheck deploy scripts" job. That is deliberate rather than an oversight
-# to tidy up. They belong to the deploy story, so a chart change should lint them; they also live in
-# `scripts/`, so a scripts change should. Both jobs take seconds, and the alternative — narrowing one
-# side — trades a duplicated second for a coverage hole that only appears when the other workflow's
-# path filter misses.
+# **`scripts/k3d-rehearsal.sh`, `scripts/version.sh` and `scripts/version-test.sh` are linted
+# twice** — here, and in validate-chart.yml's "ShellCheck deploy scripts" job. That is deliberate
+# rather than an oversight to tidy up. They belong to the deploy story, so a chart change should lint
+# them; they also live in `scripts/`, so a scripts change should. Both jobs take seconds, and the
+# alternative — narrowing one side — trades a duplicated second for a coverage hole that only appears
+# when the other workflow's path filter misses.
 
 on:
   push:
@@ -51,9 +51,10 @@ env:
   # sweeps it alongside HELM_VERSION, FLUX_VERSION, ACTIONLINT_VERSION and ZIZMOR_VERSION.
   #
   # **This pin appears in three workflows** — here, validate-chart.yml and validate-infra.yml — and
-  # they must move together, the same rule HELM_VERSION carries. `k3d-rehearsal.sh` and `version.sh`
-  # are linted by two of them, so a drifted pin would show up as two jobs disagreeing about the same
-  # file: three pins that can diverge are a weaker version of the problem pinning was meant to fix.
+  # they must move together, the same rule HELM_VERSION carries. `k3d-rehearsal.sh`, `version.sh` and
+  # `version-test.sh` are linted by two of them, so a drifted pin would show up as two jobs
+  # disagreeing about the same file: three pins that can diverge are a weaker version of the problem
+  # pinning was meant to fix.
   SHELLCHECK_VERSION: v0.11.0
 
 jobs:
