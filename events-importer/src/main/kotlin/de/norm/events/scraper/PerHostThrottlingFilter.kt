@@ -11,8 +11,37 @@ import org.springframework.web.reactive.function.client.ExchangeFilterFunction
 import org.springframework.web.reactive.function.client.ExchangeFunction
 import reactor.core.publisher.Mono
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeMark
 import kotlin.time.TimeSource
+
+/**
+ * The passage of time, as this filter needs it: read the clock, and wait.
+ *
+ * **A seam for tests, and one abstraction rather than two on purpose (#408.)** Throttling is a
+ * statement about time, so a test for it either virtualises time or measures the wall clock — and
+ * measuring the wall clock is what made [PerHostThrottlingFilterTest] flaky on a loaded CI runner.
+ * Reading the clock and waiting have to move together: two independent seams would let a test
+ * advance the clock without waiting, or wait without advancing, and neither resembles reality.
+ * Implementing both here means a test double where `wait` advances its own clock is automatically
+ * consistent.
+ */
+internal interface ThrottleClock {
+    fun markNow(): TimeMark
+
+    suspend fun wait(duration: Duration)
+
+    companion object {
+        /** Real monotonic time and a real suspension — what production uses. */
+        val SYSTEM: ThrottleClock =
+            object : ThrottleClock {
+                override fun markNow(): TimeMark = TimeSource.Monotonic.markNow()
+
+                override suspend fun wait(duration: Duration) = delay(duration)
+            }
+    }
+}
 
 /**
  * WebClient [ExchangeFilterFunction] that enforces a politeness delay between
@@ -30,10 +59,16 @@ import kotlin.time.TimeSource
  * @param politeDelayMillis minimum time (in milliseconds) between consecutive
  *   requests to the same host. Requests arriving sooner will suspend until the
  *   delay has elapsed.
+ * @param clock where time comes from. Defaults to real monotonic time; tests substitute a virtual
+ *   one so they assert what this filter *decided* rather than how long they happened to take.
  */
-class PerHostThrottlingFilter(
-    private val politeDelayMillis: Long
+class PerHostThrottlingFilter internal constructor(
+    private val politeDelayMillis: Long,
+    private val clock: ThrottleClock
 ) : ExchangeFilterFunction {
+    /** The production constructor. `ThrottleClock` is internal, so this is what callers outside the module see. */
+    constructor(politeDelayMillis: Long) : this(politeDelayMillis, ThrottleClock.SYSTEM)
+
     private val logger = KotlinLogging.logger {}
 
     /**
@@ -69,19 +104,21 @@ class PerHostThrottlingFilter(
                 val remaining = politeDelayMillis.milliseconds - mark.elapsedNow()
                 if (remaining.isPositive()) {
                     logger.debug { "Throttling $host: waiting $remaining before next request" }
-                    delay(remaining)
+                    clock.wait(remaining)
                 }
             }
-            throttle.lastRequestMark = TimeSource.Monotonic.markNow()
+            // Re-read the clock after waiting rather than reusing the pre-wait mark: the baseline
+            // for the next caller is when THIS request went out, not when it started queueing.
+            throttle.lastRequestMark = clock.markNow()
         }
     }
 }
 
 /**
  * Per-host throttle state holding a [Mutex] to serialize requests and
- * the [TimeSource.Monotonic.ValueTimeMark] of the most recent request.
+ * the [TimeMark] of the most recent request, read from the injected [ThrottleClock].
  */
 private class HostThrottle {
     val mutex = Mutex()
-    var lastRequestMark: TimeSource.Monotonic.ValueTimeMark? = null
+    var lastRequestMark: TimeMark? = null
 }
