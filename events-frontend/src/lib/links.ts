@@ -26,9 +26,35 @@ export const RELEASES_URL = `${REPOSITORY_URL}/releases`
 /** Contribution guide. GitHub renders the Markdown, so this needs no page of our own. */
 export const CONTRIBUTING_URL = `${REPOSITORY_URL}/blob/main/CONTRIBUTING.md`
 
-/** Permalink to a single release, for the footer's version line (Phase 3). */
-export function releaseTagUrl(version: string): string {
-  return `${RELEASES_URL}/tag/v${version}`
+/**
+ * A released version: a plain `major.minor.patch` triple and nothing else.
+ *
+ * **Stated positively on purpose (#502).** The footer used to ask the opposite question — "is this
+ * a snapshot?" — by testing `version.includes('-SNAPSHOT')`, and that spelling never reaches a
+ * browser. `gradle.properties` carries `0.1.1-SNAPSHOT`, but `release.yml` builds every artifact
+ * with `-Pversion=` set to what `scripts/version.sh compute` produces, so a deployed build reports
+ * `0.1.1-snapshot.20260817180146.g787d7d0` — lowercase, dot-separated, and no match. The guard was
+ * exercised only by a local `bootRun`, and every deployed build linked to a tag that 404s.
+ *
+ * The same shape as production's `semverFilter` in `deploy/clusters/production/oci-repository.yaml`,
+ * and deliberately so: that regex is already this project's definition of "a release", and two
+ * definitions would drift. A release tag is the only thing `RELEASES_URL` has a page for — snapshots
+ * are published to GHCR and never tagged in git.
+ */
+const RELEASE_VERSION = /^\d+\.\d+\.\d+$/
+
+export function isReleaseVersion(version: string | null | undefined): boolean {
+  return typeof version === 'string' && RELEASE_VERSION.test(version)
+}
+
+/**
+ * Permalink to a single release, or `null` when this version was never released.
+ *
+ * Returning `null` rather than an unusable URL keeps the decision here, next to the rule that
+ * defines it, instead of in the template.
+ */
+export function releaseTagUrl(version: string | null | undefined): string | null {
+  return isReleaseVersion(version) ? `${RELEASES_URL}/tag/v${version}` : null
 }
 
 /** Permalink to a single commit. Takes the full SHA; the footer displays a short form. */

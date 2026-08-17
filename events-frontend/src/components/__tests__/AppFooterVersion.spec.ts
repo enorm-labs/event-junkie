@@ -63,14 +63,48 @@ describe('AppFooter version line', () => {
     )
   })
 
-  it('does not link a -SNAPSHOT version, because no such release tag exists', async () => {
+  // THE REGRESSION TEST FOR #502, and the fixture is the point of it.
+  //
+  // This suite already covered "does not link a snapshot" — using `'0.1.0-SNAPSHOT'`, a string that
+  // lives only in `gradle.properties` and never reaches a browser. `release.yml` builds every
+  // artifact with `-Pversion=` set to what `scripts/version.sh compute` produces, so what `/meta`
+  // actually serves is the lowercase, dot-separated form below. The old guard tested `.includes
+  // ('-SNAPSHOT')`, so it passed this suite and linked every deployed build to a 404 for months.
+  //
+  // A test is only as good as its fixture being something the system produces.
+  it('does not link the snapshot format a deployed build actually reports', async () => {
     const wrapper = await mountWithMeta({
-      version: '0.1.0-SNAPSHOT',
+      version: '0.1.1-snapshot.20260817180146.g787d7d0',
       commit: null,
       commitShort: null,
     })
 
-    expect(version(wrapper).text()).toContain('v0.1.0-SNAPSHOT')
+    // Still displayed — knowing which build is running is why the line exists.
+    expect(version(wrapper).text()).toContain('v0.1.1-snapshot.20260817180146.g787d7d0')
+    const hrefs = wrapper.findAll('a').map((a) => a.attributes('href') ?? '')
+    expect(hrefs.some((href) => href.includes('/releases/tag/'))).toBe(false)
+  })
+
+  it('does not link the legacy snapshot format either, which is still published in GHCR', async () => {
+    const wrapper = await mountWithMeta({
+      version: '0.1.0-snapshot.gf6407e3',
+      commit: null,
+      commitShort: null,
+    })
+
+    expect(version(wrapper).text()).toContain('v0.1.0-snapshot.gf6407e3')
+    const hrefs = wrapper.findAll('a').map((a) => a.attributes('href') ?? '')
+    expect(hrefs.some((href) => href.includes('/releases/tag/'))).toBe(false)
+  })
+
+  it('does not link a local -SNAPSHOT build, which is what gradle.properties carries', async () => {
+    const wrapper = await mountWithMeta({
+      version: '0.1.1-SNAPSHOT',
+      commit: null,
+      commitShort: null,
+    })
+
+    expect(version(wrapper).text()).toContain('v0.1.1-SNAPSHOT')
     const hrefs = wrapper.findAll('a').map((a) => a.attributes('href') ?? '')
     expect(hrefs.some((href) => href.includes('/releases/tag/'))).toBe(false)
   })
