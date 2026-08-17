@@ -4,8 +4,15 @@
 
 **Accepted (2026-08-17) — `bellsoft/liberica-openjre-alpine:25` as the runtime base for both backend images. Temurin remains the build JDK.**
 
-Implementation is tracked in [#492](https://github.com/enorm-labs/event-junkie/issues/492); this ADR records the decision, not its completion. It exists
+**Implemented in [#492](https://github.com/enorm-labs/event-junkie/issues/492) on 2026-08-17**, in the same change that emptied `.trivyignore`. This ADR exists
 because the reasoning generalises past this one image: it is really about **what an unfixable finding in a base layer costs**, and that will come up again.
+
+Two things the implementation settled that this document could only flag as risks:
+
+- **Netty's native transports are not used** — nothing in the build depends on `netty-transport-native-*`, so the NIO transport runs on musl unchanged. The
+  largest musl risk was therefore not a risk at all.
+- **The images halved.** `events-bff` went 658 MB → 332 MB and `events-importer` 665 MB → 339 MB (183 MB → 111 MB and 186 MB → 115 MB compressed), which was
+  not a goal and is not the justification, but is the largest single measured effect.
 
 Does not supersede anything. [ADR-012](ADR-012_CLOUD_PLATFORM.md) chose the platform and [ADR-016](ADR-016_GITOPS_DELIVERY.md) the delivery mechanism; neither
 said anything about what the images are built on.

@@ -15,7 +15,14 @@
 # labels and the exposed port, a template would need parameters for both, and a reviewer expects to
 # find a service's Dockerfile next to its source.
 
-FROM eclipse-temurin:25-jre@sha256:a214efa3200af4b657e41935799aa12d7aee3336fdb42eb505a0948f6ecdd983
+# Liberica rather than Temurin — ADR-017, and the reasoning is set out at length in
+# `events-bff/Dockerfile`. In short: Temurin's Ubuntu-based JRE carries `/usr/bin/pebble`, whose Go
+# stdlib only moves when Temurin rebuilds, so every Go CVE arrived as a finding marked fixable that
+# we could not fix (#492). The build JDK stays Temurin; only the runtime moved.
+#
+# **The two backend images must pin the same base**, which is also why Dependabot groups all three
+# Dockerfiles into one PR — see `.github/dependabot.yml`.
+FROM bellsoft/liberica-openjre-alpine:25@sha256:2f5382a899d9d218183d43e3a081ed73ad29567dd711f886e8772ba2975127ad
 
 ARG VERSION=unspecified
 ARG REVISION=unknown

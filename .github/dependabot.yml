@@ -169,7 +169,12 @@ updates:
 
   # The base image in every Dockerfile is pinned by tag *and* digest, and this is what keeps the
   # digest from going stale. Without it a pinned digest is a promise never to get a security fix:
-  # `eclipse-temurin:25-jre` moves, the digest does not, and nothing says so.
+  # `bellsoft/liberica-openjre-alpine:25` moves, the digest does not, and nothing says so.
+  #
+  # That matters more since #492 than it did before. The backends used to run on Temurin, whose
+  # pebble findings were unfixable by any digest bump — so a stale digest and a fresh one looked the
+  # same. On Alpine they do not: its advisories are fixed by rebuilds, so merging these PRs is now
+  # the actual remediation path rather than housekeeping. ADR-017 records the trade.
   #
   # It updates the tag too, not only the digest — and the limit is not what it notices but what it
   # can do about it. In #264 the Trivy gate found 10 fixable HIGH Alpine advisories in the frontend

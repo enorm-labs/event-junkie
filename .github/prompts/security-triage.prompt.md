@@ -93,7 +93,13 @@ Then by class:
 - **A webjar or other bundled asset** — the vulnerable file is inside a jar (the `swagger-ui` bundled JS is the live example). Bump the webjar; there is nothing
   to patch in our tree.
 - **Base image / GitHub Action** — Dependabot's `docker` and `github-actions` ecosystems own these; prefer its PR. Trivy's findings land here: a path like
-  `usr/bin/pebble` is a binary _inside the image_, not code we wrote, and the only lever is the base image tag or waiting for upstream.
+  `usr/bin/pebble` is a binary _inside the image_, not code we wrote, so there is nothing in this tree to patch.
+    - **There are three levers, not two, and the third is the one that gets forgotten**: bump the base image tag, wait for upstream — or _change the base image_.
+      `usr/bin/pebble` was the live example here for exactly as long as it took to notice that the first two had no end state: it is a Go binary in Temurin's
+      Ubuntu JRE whose stdlib only moves when Temurin rebuilds, so the waiver list grew on the Go release cadence. #492 removed it by moving to
+      [Liberica on Alpine](../../docs/adr/ADR-017_JRE_BASE_IMAGE.md), and `.trivyignore` went back to empty.
+    - **A second waiver sharing a root cause with the first is the signal.** Not the tenth. Two entries with one cause means the cause is structural, and the
+      question changes from "is this reachable?" to "why are we still shipping the thing that generates them?". `.trivyignore`'s header carries this rule.
 
 After fixing, **prove the finding is gone** rather than assuming: re-resolve and compare against the advisory's `first_patched_version`.
 

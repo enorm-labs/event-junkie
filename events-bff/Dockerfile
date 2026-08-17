@@ -28,7 +28,23 @@
 # Pinned by tag *and* digest, per Docker's best-practices guide: the tag says what it is, the digest
 # says which one. Dependabot's `docker` ecosystem tracks both. This digest is the multi-arch
 # manifest list, so it resolves per platform.
-FROM eclipse-temurin:25-jre@sha256:a214efa3200af4b657e41935799aa12d7aee3336fdb42eb505a0948f6ecdd983
+#
+# **Liberica rather than Temurin, and this is a decision — ADR-017.** Temurin's JRE images are
+# Ubuntu-based and carry `/usr/bin/pebble`, Canonical's service manager, as a Go binary compiled
+# against a stdlib version that only moves when Temurin rebuilds. Every Go standard-library CVE
+# therefore lands on us as a "fixable" finding we cannot fix, and `.trivyignore` grew from two
+# entries to eight in three days waiving them (#492, #503). Nothing here runs pebble — but a waiver
+# that grows on someone else's release cadence is a subscription, not a waiver.
+#
+# **The build JDK is still Temurin** (`.sdkmanrc`, `actions/setup-java`) and that split is
+# deliberate: bytecode is vendor-neutral, both are OpenJDK builds, and the two choices answer
+# different questions — reproducibility for the build, attack surface for the runtime.
+#
+# Alpine, so **musl rather than glibc**. Checked rather than assumed: nothing here depends on
+# `netty-transport-native-*`, so Netty runs its NIO transport on both. The remaining musl difference
+# that matters is DNS resolution, and the database is reached by hostname over the private network —
+# which the k3d rehearsal and the chart's in-cluster `helm test` are what actually exercise.
+FROM bellsoft/liberica-openjre-alpine:25@sha256:2f5382a899d9d218183d43e3a081ed73ad29567dd711f886e8772ba2975127ad
 
 # Supplied by the build; both default to something obviously wrong rather than to a plausible lie.
 ARG VERSION=unspecified

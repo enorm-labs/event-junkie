@@ -214,6 +214,14 @@ hsperfdata and anything a library assumes; nginx needs it because #262's base im
 If the base image changes, re-check before assuming: the failure is at startup, not at first
 request.
 
+**Re-checked on 2026-08-17**, when the JVM base moved from Temurin to
+[Liberica on Alpine](../../../docs/adr/ADR-017_JRE_BASE_IMAGE.md) (#492). Both backends still start
+under those exact flags, and `/tmp` is still the only writable path either needs. One cosmetic
+difference, noted so it is not mistaken for a fault: the startup line now reads
+`started by ? in /application` rather than a username, because UID 1000 has no `/etc/passwd` entry
+on the Alpine base. That is the same property `USER 1000:1000` was chosen for — numeric UIDs need no
+passwd entry — and Kubernetes' `runAsNonRoot` check reads the number, not the name.
+
 ### The chart's labels are not `infra/`'s labels
 
 Kubernetes objects here carry `app.kubernetes.io/{name,instance,component,version,part-of}`,
