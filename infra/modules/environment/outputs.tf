@@ -23,6 +23,11 @@ output "postgres_ip" {
   value       = local.postgres_ip
 }
 
+output "postgres_data_device" {
+  description = "Device PGDATA lives on. What `findmnt /var/lib/postgresql` on the node should be reporting, and the one value that makes a rebuild verifiable without opening the console."
+  value       = hcloud_volume.postgres.linux_device
+}
+
 output "postgres_ipv6" {
   description = "Public IPv6 of the dedicated PostgreSQL node, or null when it is co-located. Egress only; nothing answers on it."
   value       = local.dedicated_postgres ? hcloud_server.postgres[0].ipv6_address : null

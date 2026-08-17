@@ -89,6 +89,7 @@ locals {
     K3S_TLS_SANS="${join(" ", local.k3s_tls_sans)}"
     POSTGRES_VERSION=${var.postgres_version}
     POSTGRES_LISTEN_IP=${local.postgres_ip}
+    POSTGRES_DATA_DEVICE=${hcloud_volume.postgres.linux_device}
   EOT
 
   k3s_user_data = templatefile("${local.cloud_init_dir}/node.yaml.tftpl", {
@@ -132,6 +133,7 @@ locals {
     POD_CIDR=${local.pod_cidr}
     POSTGRES_VERSION=${var.postgres_version}
     POSTGRES_LISTEN_IP=${var.postgres_private_ip}
+    POSTGRES_DATA_DEVICE=${hcloud_volume.postgres.linux_device}
   EOT
 
   # No WireGuard here. The node has no public IPv4 to run an endpoint on, and it does not need one:

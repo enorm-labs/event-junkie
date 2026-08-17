@@ -21,6 +21,9 @@ module "environment" {
   # first — but both Primary IPs now exist in nbg1, and a Primary IP is location-bound, so they have
   # to be destroyed before this can move again. Changing the server type below does not touch them.
   #
+  # The PGDATA volume is location-bound in the same way and now carries the database (#460), so
+  # moving location is no longer only an addressing problem — the data has to be got off it first.
+  #
   # Nothing in the design wanted the two environments co-located: staging has its own network
   # (10.1.0.0/16), its own firewall and its own database, and reaches production over nothing at all.
   location = "nbg1"
@@ -71,9 +74,16 @@ module "environment" {
   public_web = false
 
   # No lock and no backups: this is the environment where the destroy/apply cycle actually gets
-  # exercised, and there is nothing here worth paying 20% to keep.
-  ip_delete_protection = false
-  enable_backups       = false
+  # exercised, and there is nothing here worth paying 20% to keep. The volume is unprotected for the
+  # same reason — a locked one would survive `tofu destroy` anyway (the provider lifts its own
+  # locks), so the flag would buy nothing here and cost the one thing staging is for.
+  #
+  # It still gets a volume, and that is deliberate: this is the *only* environment where the rebuild
+  # can actually be proven, because production has never been applied and must not be destroyed to
+  # find out. ~€0.44/month to not be guessing.
+  ip_delete_protection              = false
+  postgres_volume_delete_protection = false
+  enable_backups                    = false
 
   ssh_key_ids     = var.ssh_key_ids
   ssh_public_keys = var.ssh_public_keys
@@ -93,8 +103,15 @@ module "environment" {
 # The consequence, worth stating where someone will look for it: TLS here cannot use the HTTP-01
 # challenge, because HTTP-01 requires Let's Encrypt to reach the host and this design exists to
 # stop that. cert-manager uses DNS-01 against the Hetzner DNS API instead, which needs no inbound
-# access at all — so staging gets a genuine, publicly-trusted certificate for a hostname that has
-# no public address. The TXT record is public; the A record never exists.
+# access at all — so a hostname with no public address still gets a real ACME certificate. The TXT
+# record is public; the A record never exists.
+#
+# **That certificate is not publicly trusted, and that is separate from the above.** DNS-01 solves
+# reachability; it says nothing about which CA signs. deploy/clusters/staging/helm-release.yaml
+# points at `acme-staging-v02` — Let's Encrypt's *staging* CA, whose root is in no trust store — so
+# browsers and `curl` warn, by design, and the production cluster uses `acme-v02` instead. This
+# comment previously claimed "a genuine, publicly-trusted certificate", which conflated the two;
+# corrected 2026-08-17 after watching an issued certificate still fail `curl` without `-k`.
 #
 # The chart renders that solver (#261); #265 installs cert-manager and the Hetzner webhook that
 # answers it, both as Flux HelmReleases in deploy/clusters/staging/.

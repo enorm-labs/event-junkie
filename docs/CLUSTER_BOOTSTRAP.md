@@ -42,7 +42,7 @@ wg pubkey < ~/.wireguard/staging.key     # public  — paste into terraform.tfva
 ```sh
 cd infra/environments/staging
 ADMIN="[\"$(curl -s https://ifconfig.me)/32\",\"$(dig +short myip.opendns.com @resolver1.opendns.com | tail -1)/32\"]"
-tofu apply -var "admin_cidrs=$ADMIN"     # 6 resources: network, subnet, firewall, 2 Primary IPs, server
+tofu apply -var "admin_cidrs=$ADMIN"     # 8: network, subnet, firewall, 2 Primary IPs, server, PGDATA volume, its attachment
 ```
 
 Two addresses, not one: behind an HTTP proxy `ifconfig.me` reports the proxy's egress while SSH and WireGuard arrive from elsewhere. The `dig` goes over
@@ -246,12 +246,18 @@ another variable when the prefix changes.
 
 ### What survives, and what does not
 
-| Survives                                                                                                        | Does not                                                                                                            |
-| --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| **Both Primary IPs** — `auto_delete = false`, so the public address and your WireGuard `Endpoint` are unchanged | **The database.** No volume, `PGDATA` on local disk — [#460](https://github.com/enorm-labs/event-junkie/issues/460) |
-| The network, subnet and firewall                                                                                | **The k3s cluster** — new CA, new kubeconfig, new node identity                                                     |
-| Your WireGuard _client_ keypair, and `wireguard_peers`                                                          | **The WireGuard server key** — regenerated at first boot                                                            |
-| The DNS zones (`bootstrap/`, outside every environment destroy)                                                 | **Flux, and both secrets** — the cluster is new, so its contents are gone                                           |
+| Survives                                                                                                                                             | Does not                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **The database** — `PGDATA` is on a volume, and the volume is not part of the server ([#460](https://github.com/enorm-labs/event-junkie/issues/460)) | **The k3s cluster** — new CA, new kubeconfig, new node identity           |
+| **Both Primary IPs** — `auto_delete = false`, so the public address and your WireGuard `Endpoint` are unchanged                                      | **The WireGuard server key** — regenerated at first boot                  |
+| The network, subnet and firewall                                                                                                                     | **Flux, and both secrets** — the cluster is new, so its contents are gone |
+| Your WireGuard _client_ keypair, and `wireguard_peers`                                                                                               | Anything on the node's own disk outside `/var/lib/postgresql`             |
+| The DNS zones (`bootstrap/`, outside every environment destroy)                                                                                      |                                                                           |
+
+**The database survives a _rebuild_, not a `destroy`.** The distinction is the whole of it. Replacing the server — which is what a `cloud-init/` edit or an
+architecture change does — leaves the volume attached to whatever replaces it, and `postgres.sh` adopts the cluster already on it. A `tofu destroy` in the
+environment directory deletes the volume along with everything else, because `delete_protection` does not stop OpenTofu. If you are about to destroy rather than
+rebuild, the volume is not your safety net; [#270](https://github.com/enorm-labs/event-junkie/issues/270) is, and it is not done yet.
 
 **The server key is the one that will look like a broken tunnel.** `wireguard.sh` generates a keypair only if none exists, so a fresh node has a fresh one and
 your `~/.wireguard/staging.conf` is pointing at a peer that no longer exists. The handshake simply never happens. Update the `PublicKey =` line from §4; your own
@@ -276,8 +282,72 @@ Two things are cheaper the second time: nothing in `cloud-init/` is architecture
 publishes **multi-arch** images, so the chart, its tags and its digests-per-platform need no attention at all. That is what makes the architecture reversible;
 it was not, before those images existed.
 
-**Production is different and this section does not cover it.** Its PostgreSQL is a dedicated node with no backups yet
-([#270](https://github.com/enorm-labs/event-junkie/issues/270)), so a rebuild there is data loss, not inconvenience. Do #460 and #270 first.
+**Production is different and this section does not cover it.** Its PostgreSQL is a dedicated node, and a _rebuild_ there now keeps its data — that is #460,
+and it is why the volume was declared before production was ever applied rather than migrated onto one afterwards. A **destroy** is still data loss, because
+nothing off the volume exists yet: backups and a rehearsed restore are [#270](https://github.com/enorm-labs/event-junkie/issues/270). Do that one first.
+
+### Proving the volume actually survives — the drill
+
+**First run: 2026-08-17, staging — passed.** A sentinel row written at 20:11:27 was read back on a node that booted at 20:14:41, `postgres.sh` logged
+`adopting the existing cluster on the volume`, and every table matched a `pg_dump` taken beforehand exactly — 3,310 events, 3,953 artists, zero rows lost. A
+reboot afterwards confirmed the fstab entry and the `RequiresMountsFor` drop-in hold when the script does not run at all. Repeat it whenever `postgres.sh` or
+`volume.tf` changes.
+
+**That the volume is declared is not evidence that the data comes back**; the only evidence is having read a row that was written before the node was replaced.
+Everything below is a _rebuild_, never a `destroy`.
+
+```sh
+# 1. Write a sentinel through the tunnel, from the k3s node.
+ssh ops@<tunnel-address> "sudo -u postgres psql -c \
+  \"create table if not exists rebuild_drill(at timestamptz default now()); insert into rebuild_drill default values;\" \
+  -c 'select * from rebuild_drill;'"
+
+# 2. Note what the volume is and where it is mounted, so step 5 compares against something.
+ssh ops@<tunnel-address> "findmnt /var/lib/postgresql; ls /var/lib/postgresql/18/main/PG_VERSION"
+
+# 3. Force a replacement of the server, and nothing else. Any cloud-init edit does it; so does
+#    -replace, which is the honest way to do it without a spurious diff.
+cd infra/environments/staging
+ADMIN="[\"$(curl -s https://ifconfig.me)/32\",\"$(dig +short myip.opendns.com @resolver1.opendns.com | tail -1)/32\"]"
+tofu plan -replace='module.environment.hcloud_server.k3s' -var "admin_cidrs=$ADMIN"
+```
+
+**Read that plan before applying it.** Expect exactly one `-/+` on the server and one `-/+` on `hcloud_volume_attachment.postgres`, which follows the server it
+points at. **`hcloud_volume.postgres` must not appear in the plan at all.** If it does, stop — that is the failure this whole issue exists to prevent, and
+applying would destroy the thing you are trying to prove survives.
+
+Then apply, wait for cloud-init, fix your client config with the node's **new** WireGuard server key (§4 — this trap bites here too), and:
+
+```sh
+# 5. The proof. Same row, new machine.
+ssh ops@<tunnel-address> "findmnt /var/lib/postgresql; sudo -u postgres psql -c 'select * from rebuild_drill;'"
+```
+
+`postgres.sh` logs which path it took — `adopting the existing cluster on the volume` on a successful rebuild, `seeding the volume` only ever on the first
+boot of a fresh volume. Seeing `seeding` on a rebuild means the data was not found, and the row will confirm it.
+
+Afterwards: `drop table rebuild_drill`, and put `admin_cidrs` back to `[]`.
+
+#### The first time, the drill does not work as written — and why
+
+**On an environment that has no volume yet, the first apply _seeds_ rather than adopts**, so a sentinel written beforehand is on the local disk and dies with the
+node. Proving adoption needs the volume populated first. Two ways:
+
+- **Two rebuilds.** Apply once to create and seed the volume (today's data is lost — `pg_dump` first), write the sentinel, then `-replace` the server to prove
+  adoption. Simple, and it throws away a working database.
+- **One rebuild, keeping the data**, which is what was actually done on 2026-08-17. Create the volume alone with
+  `tofu apply -target=module.environment.hcloud_volume.postgres`, attach it out-of-band, run the new `postgres.sh` by hand on the live node so it seeds from the
+  running cluster, write the sentinel, detach, then apply normally. The node is replaced once and adopts a volume that already holds the real dataset — a
+  stronger proof than a sentinel alone, and a rehearsal of the live migration production would have needed had this been left until later.
+
+**Do not try to `-target` the attachment.** `hcloud_volume_attachment` references `hcloud_server.k3s.id`, so targeting it pulls the server in as a dependency —
+and the server's planned action is _replace_, which is the thing you were trying to avoid. Target the volume only; the attachment is what the out-of-band step
+stands in for.
+
+**`admin_cidrs` is not optional for any of this.** Its steady state is `[]`, and a replaced node generates a new WireGuard server key — so the tunnel stops
+handshaking at exactly the moment SSH is closed, leaving Hetzner's browser console as the only way in. Pass `-var "admin_cidrs=…"` on every apply in the
+sequence and close it again at the end. Note the recipe in §2 assumes both lookups return **IPv4**: `dig myip.opendns.com` can return an IPv6 address, which
+needs `/128` rather than `/32` and otherwise fails at plan time with `is not the start of the cidr block`.
 
 ---
 
@@ -297,3 +367,4 @@ it was not, before those images existed.
 | **Staging deploys a stale chart**                      | Fixed in [#455](https://github.com/enorm-labs/event-junkie/issues/455): versions sorted by short sha, so the range picked one at random while `Ready`. If it recurs, compare `status.artifact.revision` with the newest published tag                                               |
 | **The tunnel stops working after a rebuild**           | The node generated a new WireGuard server key. Your client config points at a peer that no longer exists, and a handshake simply never happens — update `PublicKey =`. See _Rebuilding a node_                                                                                      |
 | **`server_type` change fails during apply**            | `cpx*` ↔ `cax*` cannot be rescaled. The plan renders an in-place update anyway; the API refuses. It is a rebuild                                                                                                                                                                    |
+| **PostgreSQL will not start after a rebuild**          | Deliberate. `postgres.sh` writes a `RequiresMountsFor=/var/lib/postgresql` drop-in, so if the volume did not attach, the service refuses rather than starting on the local disk and serving an empty database. `findmnt /var/lib/postgresql` and the cloud-init log say which       |

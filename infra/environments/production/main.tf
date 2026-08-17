@@ -16,11 +16,14 @@ module "environment" {
   postgres_server_type = "cax11"
   postgres_public_ipv4 = false
 
-  # Locks the addresses against a console mis-click. It does *not* stop `tofu destroy` — the
-  # provider lifts its own locks — so treat a destroy in this directory as unguarded and mean it.
-  ip_delete_protection = true
-  enable_backups       = true
-  public_web           = true
+  # Locks the addresses and the database volume against a console mis-click. Neither stops
+  # `tofu destroy` — the provider lifts its own locks — so treat a destroy in this directory as
+  # unguarded and mean it. What a rebuild *does* survive is the volume, which is a resource of its
+  # own that no server references (#460).
+  ip_delete_protection              = true
+  postgres_volume_delete_protection = true
+  enable_backups                    = true
+  public_web                        = true
 
   ssh_key_ids     = var.ssh_key_ids
   ssh_public_keys = var.ssh_public_keys
