@@ -400,6 +400,29 @@ knowing before you read it:
   next poll, up to 30 seconds later. Installing inside that window gives every pod `UnknownHostException: host.k3d.internal` and the importer crash-loops until
   DNS catches up — self-healing, which is worse than failing, because the install still succeeds and the only evidence is a restart count. The script forces the
   reload with a CoreDNS rollout restart. If you do this by hand, do the same.
+- **A TLS-inspecting proxy breaks the cluster before any of our code runs, and it does not look like a proxy problem.** The node pulls images with its own
+  containerd, which has its own CA trust store — so a corporate MITM proxy whose root CA is installed in macOS and Docker Desktop is still unknown inside the
+  k3d node. `docker pull` from your shell succeeds; the node's pull of the same image fails.
+
+    The symptom is **every pod stuck in `ContainerCreating`**, including `coredns`, `metrics-server`, `local-path-provisioner` and the Traefik installers. That
+    reads like resource exhaustion, so the reflex is to go looking at Docker's memory and disk — where there is nothing to find. The cause is only visible in a
+    `describe`:
+
+    ```bash
+    kubectl --context k3d-event-junkie describe pod -n kube-system -l k8s-app=kube-dns | grep -A3 FailedCreatePodSandBox
+    # failed to pull image "rancher/mirrored-pause:3.6": … x509: certificate signed by unknown authority
+    ```
+
+    `rancher/mirrored-pause` is the infrastructure container Kubernetes puts in **every** pod, which is why nothing at all starts rather than just our three
+    workloads. Confirm it in one line before suspecting anything else — TLS from inside a container is the same path the node takes:
+
+    ```bash
+    docker run --rm alpine wget -q -O- 'https://auth.docker.io/token?service=registry.docker.io&scope=repository:rancher/mirrored-pause:pull'
+    # a JSON token → fine. An SSL/x509 error → this is the problem.
+    ```
+
+    Turning the proxy off is the fix; trusting its CA inside the node would also work and is more work than it is worth for a throwaway cluster. **Cost when it
+    bit: the chart install timed out after five minutes and every routing assertion failed**, which looks exactly like a broken change and is not one.
 
 **Check the content type, not the status code**, when testing what should _not_ be reachable. nginx serves the SPA for every unmatched path, so
 `/actuator/health` through the ingress returns **200** — and that 200 is `text/html`, the SPA fallback, not actuator. A negative test that only looks at the
