@@ -41,8 +41,24 @@ and managed. The S3 backend on Hetzner's Ceph works, including through a partial
 explains it. The firewall rules, the k3s flags, WireGuard and the PGDG install have now executed on a real machine and worked on the first boot: k3s `Ready`,
 Traefik up, PostgreSQL listening on the private address, tunnel established with the declared peer.
 
-**Two things it is still fair to call unproven**, so do not describe them as verified: the destroy/apply cycle has not been run, and `admin_cidrs` has not yet
-gone back to `[]` — until it does, 22 and 6443 are reachable from one allowlisted address rather than from nowhere.
+**The PGDATA volume is applied and proven on staging, as of 2026-08-17 (#460).** The node was replaced and the database came back: a sentinel row written at
+20:11:27 was read back on a machine that booted at 20:14:41, and every table matched a dump taken beforehand exactly — zero rows lost. `postgres.sh` logged
+`adopting the existing cluster on the volume`, and `hcloud_volume.postgres` did not appear in the plan at all, which is the check that matters. A subsequent
+reboot confirmed the fstab entry and the `RequiresMountsFor` drop-in hold when the script does not run. Production still has no volume, because production has
+never been applied.
+
+**One thing it is still fair to call unproven**, so do not describe it as verified: the destroy/apply cycle has not been run. The 2026-08-17 rebuild was a server
+_replacement_, which is a different thing and does not tick #424's box — a `destroy` would take the volume with it, which is exactly what a replacement does not.
+
+**Staging was rebuilt from scratch on 2026-08-17 and is fully back**: `admin_cidrs` is `[]` again, Flux is reconciling, cert-manager has issued, and the
+workloads serve the database that survived the node. Two things about that bring-up are worth carrying forward:
+
+- **The database survived; its credential did not.** The `events` role came through on the volume, but the password lived only in the `events-db` Secret, which
+  died with the cluster — and a SCRAM hash is not reversible. So a rebuild needs `ALTER ROLE events PASSWORD …` and a fresh Secret, not `CREATE ROLE`. §8 of
+  `docs/CLUSTER_BOOTSTRAP.md` reads as though the database step is all-or-nothing; after a rebuild it is half redundant and half mandatory.
+- **The `hetzner` Secret now holds the same token this stack authenticates with**, chosen deliberately on 2026-08-17 over minting a second one. Hetzner tokens
+  are project-scoped with no finer grain, so it is the same power either way — but revoking that token now breaks `tofu apply` _and_ DNS-01 together, which is
+  the cost of the choice and the thing to remember when rotating.
 
 **`environments/production` has never been applied.** No server, network, firewall or Primary IP described there exists, and `cax21` cannot currently be bought
 anywhere in `eu-central`. "Declared" is still the accurate word for that half.
@@ -51,7 +67,7 @@ anywhere in `eu-central`. "Declared" is still the accurate word for that half.
 
 ```
 bootstrap/            DNS zones · SSH keys        — long-lived, outside every destroy
-modules/environment/  servers · network · firewall · cloud-init
+modules/environment/  servers · network · firewall · PGDATA volume · cloud-init
 environments/
   production/         CAX21 k3s + CAX11 PostgreSQL · public · address records
   staging/            one CAX11, all-in-one · not on the public internet
@@ -91,16 +107,24 @@ argument behind it. If you contradict one of those documents, change the documen
 
 ## Things that will bite
 
-- **`user_data` forces replacement.** Any edit under `cloud-init/` rebuilds the node, production included. It is also capped at **32 KiB**; the k3s node's
-  rendered cloud-init is about 11.6 KiB, so there is room, but adding scripts is not free forever. Measure it if you add one.
+- **`user_data` forces replacement.** Any edit under `cloud-init/` rebuilds the node, production included. It is also capped at **32 KiB**. Measured on this
+  tree: **22.1 KiB on the k3s node and 15.1 KiB on the PostgreSQL node — 67% and 46% of the cap.** That is one more script's worth of headroom, not an open
+  budget, so measure after adding one rather than assuming. (`postgres.sh` alone is 8.8 KiB of it, and it is included on both.)
 - **`server_type` cannot cross architectures, and `tofu plan` will not warn you.** Within one architecture it is an in-place resize; between `cpx*` (x86) and
   `cax*` (ARM) Hetzner refuses — [their FAQ](https://docs.hetzner.com/cloud/servers/faq/) lists rescale alongside snapshots and ISOs as places where "it is not
   possible to work with two different architecture types". The plan renders a tidy in-place update and the **apply** fails against the API partway through. So
   an architecture change is a _rebuild_, not a variable change: see [docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) §Rebuilding a node. Staging is on
   `cpx22` only because ARM could not be bought (#424), so this is a live concern rather than a hypothetical.
-- **Rebuilding a node destroys its database.** There is no volume anywhere here and `postgres.sh` does not relocate `PGDATA`, so PostgreSQL lives on the local
-  disk and dies with the server. Survivable on staging, not on production — #460 puts it on a volume, and the timing matters: cheap before production is
-  applied, a live data migration afterwards.
+- **Rebuilding a node keeps its database; destroying an environment does not.** `PGDATA` is on an `hcloud_volume` mounted at `/var/lib/postgresql` (#460), and
+  the volume is declared standalone — `location`, never `server_id` — so nothing about it references a server and no server edit can plan to replace it.
+  Replacing the node therefore leaves the data alone, and `postgres.sh` adopts the cluster already on the volume. **`tofu destroy` still takes it**, because
+  `delete_protection` does not stop OpenTofu (see below). Off-server backups are #270 and are not done.
+- **`postgres.sh` contains no `mkfs`, and must not grow one.** The volume is formatted once by the provider at creation (`format = "ext4"` in `volume.tf`).
+  That is deliberate: the script runs on every boot against a volume that already holds a cluster, so the one genuinely destructive command is kept out of the
+  file rather than wrapped in a condition somebody can get wrong later. Its seed step copies only into a volume with no cluster on it, and a cluster of an
+  unexpected major version aborts the boot instead of being worked around.
+- **Volumes are location-bound, like the Primary IPs.** Moving an environment to another location means dealing with the volume — and the data on it — first.
+  `location` on the volume does not migrate anything.
 - **`delete_protection` does not stop OpenTofu** — the provider lifts its own locks before destroying. Only `lifecycle { prevent_destroy = true }` does, and it
   is used in exactly one place, on the DNS zones. Do not describe any other resource as protected from `destroy`.
 - **`ssh_keys` on a server is ignored after creation** (`lifecycle.ignore_changes`), because changing it would rebuild the node and the keys only ever reach

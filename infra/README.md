@@ -14,7 +14,7 @@ a real machine, so treat that first apply as an experiment rather than a formali
 ```
 infra/
 ├── bootstrap/                 DNS zones · SSH keys        — long-lived, outside every destroy
-├── modules/environment/       one environment's servers, network, firewall, cloud-init
+├── modules/environment/       one environment's servers, network, firewall, PGDATA volume, cloud-init
 └── environments/
     ├── production/            CAX21 k3s + CAX11 PostgreSQL · public · address records
     └── staging/               one CAX11, all-in-one · not on the public internet at all
@@ -174,6 +174,28 @@ takes is the one every other cluster also uses.
 Keeping the file separate or merging it into `~/.kube/config` is a genuine choice, and
 [CLUSTER_ACCESS.md §3](../docs/CLUSTER_ACCESS.md#3--point-kubectl-at-it) sets out both with what each costs. The short of it: separate means forgetting the
 export fails loudly, merged means the safety rests entirely on `--context`.
+
+### Why the database is on a volume, and what that does and does not buy
+
+The nodes here are meant to be disposable, and the configuration makes them so: `user_data` is a force-new attribute, so **every** edit under `cloud-init/`
+replaces the node. That is the property the design wants. It is also, until #460, the property that destroyed the database each time it was exercised.
+
+So `PGDATA` sits on an `hcloud_volume` mounted at `/var/lib/postgresql`, and the volume is declared **standalone** — `location`, never `server_id` — with a
+separate `hcloud_volume_attachment`. Both forms create the same two objects; this one states the lifetimes. Nothing about the volume references a server, so no
+edit to a server can plan to replace it, and reading a plan is how you find that out rather than an apply.
+
+`postgres.sh` therefore has to cope with the volume already holding a cluster, which on any rebuild it does. It **adopts** it — the log line is
+`postgres: adopting the existing cluster on the volume` — and the seed path runs only against a volume with no cluster on it at all. There is no `mkfs` in the
+script: the provider formats the volume once, at creation. Keeping the destructive command out of the file entirely is more durable than guarding it, because a
+guard is something a later edit can get wrong.
+
+**What it does not buy.** `delete_protection` stops the console and the API; it does not stop OpenTofu, which lifts its own locks before destroying. A
+`tofu destroy` in the production directory removes the volume with everything else, and there is nothing off-server yet — `wal-g` and a rehearsed restore are
+[#270](https://github.com/enorm-labs/event-junkie/issues/270). **A volume is not a backup, and a backup is not a volume**: one survives the node, the other
+survives a bad migration. You need both, and only one of them exists.
+
+The drill that proves the first half — write a row, replace the node, read the row — is in
+[docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) § _Proving the volume actually survives_.
 
 ### Closing the door behind you
 

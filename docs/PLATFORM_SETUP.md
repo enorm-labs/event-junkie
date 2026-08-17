@@ -78,10 +78,11 @@ philosophy, it was a close call about whether a JVM gets OOM-killed mid-deploy. 
 | Private network     | —                   | free                 | One `/16`, both production servers attached                                                      |
 | Firewalls           | —                   | free                 | Two, one per role                                                                                |
 | Backups             | —                   | 20 % of server price | Hetzner's automated daily backups, both production servers                                       |
+| **Volume**          | —                   | 10 GB · ~€0.44/mo    | **`PGDATA`.** One per environment, staging included — see below                                  |
 | **Object Storage**  | —                   | 1 TB inc.            | **One subscription, three buckets** — see below                                                  |
 
-**Not ordered, and why:** Load Balancer (k3s ServiceLB binds to the node IP on one node) · Volumes (local NVMe is enough until the database outgrows 40 GB) ·
-Floating IPs (for failover between servers, which does not apply) · **Storage Box** (superseded — see below) · Storage Share.
+**Not ordered, and why:** Load Balancer (k3s ServiceLB binds to the node IP on one node) · Floating IPs (for failover between servers, which does not apply) ·
+**Storage Box** (superseded — see below) · Storage Share.
 
 **Keep everything in one network _zone_, and the two compute nodes in one _location_.** The distinction matters and this document previously blurred it.
 Hetzner charges nothing for "internal traffic within the network zone `eu-central`", so Falkenstein, Nuremberg and Helsinki are interchangeable as far as cost
@@ -90,6 +91,30 @@ is concerned — a server in `nbg1` reaching a bucket in `fsn1` is free, and the
 What _does_ have to stay together is the k3s node and the PostgreSQL node, because every query crosses that link and inter-location latency lands on every
 request. Beyond that, prefer a German location over Helsinki for a Berlin audience — about 25 ms of round trip, which is real but not disqualifying if it is
 the only ARM capacity available.
+
+#### The volume is about durability, not capacity
+
+This document used to list Volumes among the things _not_ ordered, on the grounds that "local NVMe is enough until the database outgrows 40 GB". That reasoning
+was sound and answered the wrong question. Capacity was never the problem; **the node being replaced was**
+([#460](https://github.com/enorm-labs/event-junkie/issues/460)).
+
+`user_data` is a force-new attribute, so any edit under `infra/modules/environment/cloud-init/` replaces the node. So does a `server_type` change across
+architectures, which Hetzner cannot rescale, and so does the destroy/apply cycle. Each of those is correct behaviour for a node meant to be disposable — and
+each of them used to take the database with it. With `PGDATA` on a volume mounted at `/var/lib/postgresql`, the node stays disposable and the data does not.
+
+10 GB is Hetzner's minimum and deliberately the floor: growing a volume is online (`hcloud volume resize` plus `resize2fs`), shrinking one is impossible, so
+there is nothing to buy in advance. **Volumes are location-bound, exactly like the Primary IPs** — moving an environment to another location means dealing with
+the volume first.
+
+**Staging gets one too**, for ~€0.44/month, because it is the only environment where the rebuild can actually be proven: production has never been applied and
+must not be destroyed to find out.
+
+**A volume is not a backup, and a backup is not a volume.** They fail differently and neither substitutes for the other. A volume survives the node; it does not
+survive `DROP TABLE`, a bad migration, corruption written faithfully to disk, or the loss of the Hetzner project — and it is not off-site. Backups and a
+rehearsed restore are [#270](https://github.com/enorm-labs/event-junkie/issues/270), which this does not close and does not defer.
+
+One thing the volume does **not** give you on its own: `delete_protection` stops the console and the API, not OpenTofu. The provider lifts its own locks, so a
+`tofu destroy` in the production directory still removes it. §10 says the same of the Primary IPs, for the same reason.
 
 #### The order, step by step
 

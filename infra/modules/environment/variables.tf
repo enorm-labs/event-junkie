@@ -119,6 +119,27 @@ variable "postgres_public_ipv4" {
   nullable    = false
 }
 
+variable "postgres_volume_size" {
+  description = <<-EOT
+    Size in GB of the volume PGDATA lives on.
+
+    10 is Hetzner's minimum and about €0.44/month. Deliberately the floor: growing a volume is an
+    online operation (`hcloud volume resize` plus `resize2fs`), shrinking one is not possible at
+    all, so the cheap direction is the only one available and there is nothing to buy in advance.
+
+    This is a durability decision, not a capacity one — see PLATFORM_SETUP.md §1. The database
+    outgrowing the node's local disk was never the problem; the node being replaced was.
+  EOT
+  type        = number
+  default     = 10
+  nullable    = false
+
+  validation {
+    condition     = var.postgres_volume_size >= 10
+    error_message = "Hetzner's minimum volume size is 10 GB."
+  }
+}
+
 variable "postgres_version" {
   description = "PostgreSQL major version, installed from the PGDG apt repository."
   type        = number
@@ -287,6 +308,25 @@ variable "ip_delete_protection" {
 
     True in production, false in staging, because the value of the lock is proportional to how much
     a mis-click costs.
+  EOT
+  type        = bool
+  default     = false
+  nullable    = false
+}
+
+variable "postgres_volume_delete_protection" {
+  description = <<-EOT
+    Delete protection on the PGDATA volume — against the console, the API and any other tool.
+
+    **It does not stop OpenTofu**, for exactly the reason `ip_delete_protection` does not: the
+    provider lifts its own locks before destroying. A `tofu destroy` in the production directory
+    takes the database with it, and nothing here prevents that. `lifecycle { prevent_destroy }`
+    would, but it needs a literal and so cannot differ between environments while the volume lives
+    in this shared module — and staging has to stay destroyable (#424).
+
+    True in production, false in staging. What actually keeps the data across a *node rebuild* is
+    that the volume is a resource in its own right, referenced by no server — and that is
+    unconditional.
   EOT
   type        = bool
   default     = false
