@@ -193,6 +193,29 @@ updates:
       - "/events-frontend"
     schedule:
       interval: "weekly"
+    ignore:
+      # **The JRE major follows the toolchain, not the registry.** ADR-017 chose Liberica partly for
+      # offering a version-pinned tag, and rejected Chainguard for the opposite: its free tier
+      # publishes only `latest`, so "the runtime's major version would track Chainguard's release
+      # schedule rather than ours". A major bump merged here reintroduces exactly that drift with a
+      # different vendor — #509 proposed 25 -> 26 and would have passed CI, because bytecode built
+      # for 25 runs happily on a 26 JRE. Nothing would have failed; the runtime would simply have
+      # stopped matching `java.version` without anyone deciding it should.
+      #
+      # It is also the wrong direction on support. **25 is an LTS; 26 is not** — released 2026-03-17,
+      # with updates ending when 27 ships in September 2026. Merging it would have moved production
+      # onto a JRE going EOL within the month, in the same repository that empties `.trivyignore` and
+      # gates releases on `trivy --severity CRITICAL,HIGH`.
+      #
+      # Patch bumps still come through, and they are the ones that matter: `25.0.4` -> `25.0.5` is
+      # how a pinned digest gets its security fixes, which is the whole reason this ecosystem is
+      # configured at all. Only the major is held.
+      #
+      # Lift this at the Java upgrade — 25 -> 29 (LTS, September 2027), or 27 if something in it
+      # earns the move. ADR-017's own consequences name "the Java 26 upgrade" as the moment to
+      # re-draw the base-image comparison, so this is a deferral to that decision, not a veto.
+      - dependency-name: "bellsoft/liberica-openjre-alpine"
+        update-types: ["version-update:semver-major"]
     groups:
       docker:
         patterns:
