@@ -93,6 +93,10 @@ jobs:
       # One number, computed once, stamped onto all four artifacts. `scripts/version.sh` owns the
       # rules — including the guard that a tag cannot invent a version `gradle.properties` has not
       # been bumped to.
+      #
+      # A snapshot version now embeds the commit's own committer date (#455), so `compute` needs the
+      # commit to be present locally — which is why it runs after the checkout rather than from the
+      # `github` context. The default `fetch-depth: 1` is enough: it is HEAD's own date, not history.
       - name: Check that every file agrees about the version
         run: scripts/version.sh check
 

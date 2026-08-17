@@ -493,7 +493,7 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 - **Application version**: lives in `version` in the root `gradle.properties` — the single source of truth. Gradle applies it to every project, so
   `build.gradle.kts` must **not** assign `version` in its `subprojects` block; a leftover assignment silently wins while the build stays green.
   `events-frontend/package.json` mirrors it **by hand**, deliberately without the `-SNAPSHOT` suffix (npm SemVer has no such convention), so the two files are
-  intentionally not byte-identical — both move in one commit. A release build overrides the version from the tag (`-Pversion=0.1.0`) rather than editing the
+  intentionally not byte-identical — both move in one commit. A release build overrides the version from the tag (`-Pversion=0.1.1`) rather than editing the
   file. The version the site displays always comes from `GET /meta`, which is stamped from the build — never from `package.json`. See
   [docs/LEGAL.md](docs/LEGAL.md) §4.
 - **Package structure**: `de.norm.events.<module-name>` — organize by feature/domain, not layer.
@@ -864,6 +864,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | CI: Markdown formatting                | `.github/workflows/validate-docs.yml`                                                                     |
 | CI: build, scan and publish to GHCR    | `.github/workflows/release.yml` — the only workflow that pushes anything; it does not deploy              |
 | Version scheme (one number, 4 files)   | `scripts/version.sh`; `gradle.properties` is the source of truth — docs/DEVELOPMENT.md §Versions          |
+| Snapshot versions must ORDER (#455)    | `scripts/version-test.sh` — asserted against Helm's own solver; a format check would not catch it         |
 | Markdown formatting                    | `scripts/format-markdown.sh` + `.oxfmtrc.json` — Markdown only, and the scope is load-bearing             |
 | Trivy waivers                          | `.trivyignore` — empty on purpose; an entry needs a reason and a date                                     |
 | Infrastructure as code (OpenTofu)      | `infra/` — read `infra/AGENTS.md` first; `bootstrap/` is applied, `environments/` is not                  |

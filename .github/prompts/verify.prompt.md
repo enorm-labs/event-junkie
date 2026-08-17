@@ -65,6 +65,17 @@ deploy/scripts/render-assertions.sh
 shellcheck -x deploy/scripts/*.sh
 ```
 
+Also when the diff touches `scripts/version.sh`, `gradle.properties` or either `Chart.yaml` version field:
+
+```bash
+scripts/version.sh check        # the four files agree
+scripts/version-test.sh         # snapshot versions still ORDER
+```
+
+`version-test.sh` is the ordering gate, and it is a different question from `check` (#455). It resolves fabricated version sets through Helm's own Masterminds
+constraint solver and asserts the newest wins — because a snapshot version that parses, lints and publishes can still leave staging pinned to last week's chart,
+silently, which is exactly what happened.
+
 `render-assertions.sh` renders the chart once per values file **and once per cluster's `HelmRelease`**, asserting on each — so it covers the `helm template` half
 as well, and it covers what Flux will actually deploy rather than a file nothing deploys.
 

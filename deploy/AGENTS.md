@@ -77,8 +77,11 @@ Flyway applied its migrations against PostgreSQL over the private network, and t
 
 **Most of the k3d gap is now closed — but say which parts.** TLS, cert-manager, DNS, git-sync, a real private-network database and genuine resource pressure are
 all exercised on staging. Still not: **NetworkPolicies** (#416), **production** (no cluster exists), and **a certificate that has actually issued** — DNS-01 was
-still resolving when this was written. Two things are also true only of staging: it is x86 where production is meant to be arm64 (#424), and its chart is
-temporarily pinned to a tag rather than following `main` (#455).
+still resolving when this was written. One thing is also true only of staging: it is x86 where production is meant to be arm64 (#424).
+
+**Staging follows `main` again as of #455**, having been pinned to a fixed tag while snapshot versions were unordered. The `OCIRepository` is back on
+`semver: ">=0.0.0-0"`. That it _does_ move is the part still to be confirmed on the cluster after the first post-#455 merge publishes a chart — the ordering
+itself is asserted in CI by `scripts/version-test.sh`.
 
 So: the chart may now be described as **deployed to staging**. It is still not _production-ready_, and "installed and exercised locally" remains the accurate
 phrase for anything that has only met k3d.
@@ -235,6 +238,11 @@ decides everything. Staging uses `>=0.0.0-0`; the `-0` is what admits prerelease
 assumed: removing it gives `no match found for semver: >=0.0.0`. Production uses `semverFilter: '^[0-9]+\.[0-9]+\.[0-9]+$'` as well as a range, because excluding
 snapshots _by omission_ is one careless `-0` away from being wrong.
 
+**And the range only means "newest" if the versions order** (#455). The `-0` picks the candidates; the version scheme picks the winner. Snapshots are
+`0.1.1-snapshot.<utc-timestamp>.g<sha>` because SemVer compares a digits-only identifier numerically and a letter-bearing one lexically in ASCII — the previous
+`g<sha>` scheme sorted by short sha, so staging silently ran whichever sha sorted highest for three days while reporting `Ready`. Do not "simplify" the timestamp
+out. `scripts/version-test.sh` fails if you do.
+
 **`remediateLastFailure` defaults to false, so a bad deploy is retried and then left broken.** Remediation runs _between_ attempts and never after the final one —
 exhaust the retries and the cluster keeps running the release that failed. Every `HelmRelease` here sets `remediateLastFailure: true` on `upgrade` for that reason.
 It is deliberately **not** set on `install`, where remediation is an uninstall and there is no previous version to return to: leaving a failed first install in
@@ -272,7 +280,7 @@ must not acquire one to gain a wildcard certificate.
 
 `Chart.yaml`'s `version` and `appVersion` are **placeholders**. `.github/workflows/release.yml` computes one number from `gradle.properties` and stamps it into
 both before packaging, so bumping them by hand does not decide what gets published — it only creates drift, and `scripts/version.sh check` fails the build when
-it does. Both must equal the base version `gradle.properties` declares (`0.1.0-SNAPSHOT` → `0.1.0`). If a change genuinely needs a new version, the bump belongs
+it does. Both must equal the base version `gradle.properties` declares (`0.1.1-SNAPSHOT` → `0.1.1`). If a change genuinely needs a new version, the bump belongs
 in `gradle.properties`, `events-frontend/package.json` and both chart fields together.
 
 **And no published values file may set `<component>.image.tag`.** The default `""` falls back to `.Chart.AppVersion`, and that fallback is the whole mechanism

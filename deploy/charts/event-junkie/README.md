@@ -43,7 +43,7 @@ hardcoded namespace would silently win over it.
 Released versions are also published as an OCI artifact, which is what Flux will consume:
 
 ```sh
-helm install event-junkie oci://ghcr.io/enorm-labs/charts/event-junkie --version 0.1.0 …
+helm install event-junkie oci://ghcr.io/enorm-labs/charts/event-junkie --version 0.1.1 …
 ```
 
 **A checkout and a published chart are not interchangeable.** The version in `Chart.yaml` is a
