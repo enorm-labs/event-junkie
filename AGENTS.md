@@ -916,6 +916,8 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | ADR: Localisation (English + German)   | `docs/adr/ADR-013_LOCALISATION.md`                                                                        |
 | ADR: Rendering strategy (SPA/SSG/SSR)  | `docs/adr/ADR-014_RENDERING_STRATEGY.md`                                                                  |
 | ADR: Observability stack               | `docs/adr/ADR-015_OBSERVABILITY_STACK.md`                                                                 |
+| ADR: GitOps delivery (Flux, pull)      | `docs/adr/ADR-016_GITOPS_DELIVERY.md`                                                                     |
+| ADR: JRE base image (Liberica/Alpine)  | `docs/adr/ADR-017_JRE_BASE_IMAGE.md`                                                                      |
 | Plan: Hetzner + k3s setup, go-live     | `docs/PLATFORM_SETUP.md`                                                                                  |
 | Releasing & deploying, end to end      | `docs/RELEASING.md` — the diagram; ADR-016 has the reasoning                                              |
 | Bootstrapping a cluster, once          | `docs/CLUSTER_BOOTSTRAP.md` — ordered runbook, first run 2026-08-13; traps table at the bottom            |
