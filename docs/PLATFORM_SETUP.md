@@ -122,7 +122,8 @@ you happen to be, and most networks you will connect from are IPv4-only.
   worse.
 - **GitHub's arm64 runners are generally available and free for public repositories** (`ubuntu-24.04-arm`). That removes the only serious objection — building
   arm64 images under QEMU emulation, which is punishing for JVM builds. This repository is public, so native builds cost nothing.
-- Every component has arm64 images: k3s, Temurin, PostgreSQL 18, nginx, Traefik, cert-manager, Flux, OpenObserve, `wal-g`.
+- Every component has arm64 images: k3s, the JRE base ([Liberica on Alpine](adr/ADR-017_JRE_BASE_IMAGE.md), and Temurin before it — both publish arm64),
+  PostgreSQL 18, nginx, Traefik, cert-manager, Flux, OpenObserve, `wal-g`.
 
 **Verify `signal-cli-rest-api` publishes an arm64 manifest before committing to it.** It is JVM-based and popular with Home Assistant users, who are
 overwhelmingly on ARM, so it is near-certain — but it is the one component on the list not confirmed.

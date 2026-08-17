@@ -314,6 +314,11 @@ Run all three stacks: they share a module, so a change to it can break one and l
 `events-bff` and `events-importer` each build to a container image. The Dockerfiles are runtime-only — the fat jar is exploded into its layers by Gradle first,
 and the **build context is that output directory**, not the module:
 
+> **The runtime base is `bellsoft/liberica-openjre-alpine`, not Temurin, and the build JDK is still Temurin** —
+> [ADR-017](adr/ADR-017_JRE_BASE_IMAGE.md) has the reasoning. Nothing about your local workflow changes: `.sdkmanrc` is unchanged and you compile with what you
+> always did. It matters in one place — the image runs on **musl**, so a JVM-level difference would appear only in a container, never in `bootRun` or a unit
+> test. The read-only run below is the cheapest way to catch that, and the k3d rehearsal is the thorough one.
+
 ```bash
 ./gradlew :events-bff:bootJarLayers            # → events-bff/build/docker/{dependencies,application,…}
 docker buildx build -f events-bff/Dockerfile events-bff/build/docker -t event-junkie/bff:dev --load
