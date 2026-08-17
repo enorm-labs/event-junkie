@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
-    "@intlify/unplugin-vue-i18n": "11.2.4",
+    "@intlify/unplugin-vue-i18n": "11.2.5",
     "@playwright/test": "1.62.1",
     "@tsconfig/node24": "24.0.4",
     "@types/jsdom": "30.0.0",
