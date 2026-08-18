@@ -53,7 +53,7 @@ spec:
                  What is NOT here is as important: no path routes to the importer, and no path names
                  the management port. /api/admin/** and /actuator/** are unreachable from outside
                  the cluster because nothing addresses them, not because a rule excludes them.
-                 `deploy/scripts/render-assertions.sh` fails the build if that stops being true. */}}
+                 `tests/ingress_test.yaml` fails the build if that stops being true. */}}
           - path: {{ .Values.bff.basePath | quote }}
             pathType: Prefix
             backend:

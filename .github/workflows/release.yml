@@ -375,11 +375,20 @@ jobs:
       # Re-run the gates on the *stamped* chart rather than trusting the PR run on the unstamped one.
       # `helm lint --strict` is what rejects a version string that is not SemVer, which is the failure
       # mode a computed version introduces and a hand-written one never had.
+      #
+      # The plugin is installed here as well as in validate-chart.yml, and pinned to the same
+      # version, because this job runs on a fresh runner and `azure/setup-helm` brings no plugins
+      # with it. Both pins move together (#430).
       - name: Lint and assert on the stamped chart
+        env:
+          HELM_UNITTEST_VERSION: v1.1.2
         run: |
           helm lint --strict "$CHART" \
             --set database.host=10.0.1.2 --set database.existingSecret=events-db
-          deploy/scripts/render-assertions.sh "$CHART"
+          helm plugin install https://github.com/helm-unittest/helm-unittest \
+            --version "$HELM_UNITTEST_VERSION"
+          helm unittest --strict "$CHART"
+          scripts/cluster-assertions.sh "$CHART"
 
       - name: Package the chart
         run: helm package "$CHART" --destination build/chart

@@ -56,7 +56,7 @@ The full label set, for `metadata.labels` only.
 NEVER use this for a Deployment's `spec.selector.matchLabels`. `spec.selector` is immutable after
 creation, and both `helm.sh/chart` and `app.kubernetes.io/version` change on every release — a chart
 that mixes them installs perfectly and then fails every subsequent upgrade with an immutable-field
-error, which is a failure nobody sees until the *second* release. `scripts/render-assertions.sh`
+error, which is a failure nobody sees until the *second* release. `tests/invariants_test.yaml`
 fails the build if either label reaches a selector.
 */}}
 {{- define "event-junkie.labels" -}}

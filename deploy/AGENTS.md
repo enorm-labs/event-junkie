@@ -12,7 +12,7 @@ not merged into one file.
 **Everything that renders the chart is safe. Everything that installs it is not.**
 
 **The pre-commit `helm lint` is stricter than CI's, and the difference is deliberate rather than a bug.** Local hooks run whatever `helm` is installed —
-currently v4 — while `validate-chart.yml` pins **v3.19.0**, because Flux's helm-controller embeds the Helm 3 SDK. Helm 4's `--strict` rejects an unknown
+currently v4 — while `validate-chart.yml` pins **v3.21.3**, because Flux's helm-controller embeds the Helm 3 SDK. Helm 4's `--strict` rejects an unknown
 `Chart.yaml` key; Helm 3's does not, so a malformed `Chart.yaml` can fail locally and pass CI. Found while probing #443's required checks with a deliberately
 invalid key, which CI accepted. Trust the local failure when they disagree.
 
@@ -22,9 +22,21 @@ run them as often as you like:
 ```sh
 helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
 helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
-deploy/scripts/render-assertions.sh
-shellcheck -x deploy/scripts/*.sh
+helm unittest --strict deploy/charts/event-junkie
+scripts/cluster-assertions.sh
 ```
+
+**`helm unittest` belongs in that safe list and needs saying explicitly**, because a plugin that runs under a `helm` subcommand looks like it might reach a
+cluster and does not: it renders the chart in-process and asserts on the result. No kubeconfig, no context, nothing to get wrong. It is not installed by
+default:
+
+```sh
+helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.1.2 --verify=false
+```
+
+`--verify=false` is Helm 4's doing — it refuses an unverifiable plugin source without it, and the local binary is v4. CI pins Helm 3 and installs the same
+version without the flag. Pin whatever `HELM_UNITTEST_VERSION` in `.github/workflows/validate-chart.yml` pins; a plugin whose version floats is a gate whose
+verdict floats.
 
 The base `values.yaml` cannot render on its own — `database.host` and `database.existingSecret` have no safe default and the helpers `required` them. Add
 `--set database.host=10.0.1.2 --set database.existingSecret=events-db` when rendering without an environment values file.
@@ -107,17 +119,23 @@ deploy/
 │   │                         + cert-manager, HTTP-01, no webhook and no Hetzner token
 │   └── k3d/                  the rehearsal target · applied with `kubectl apply -k`, never bootstrapped
 │                             no cert-manager: `tls.enabled: false`, so nothing references an issuer
-└── scripts/
-    └── render-assertions.sh  the only gate that catches a chart doing the wrong thing quietly
+└── charts/event-junkie/tests/   #430 · helm-unittest suites — the only gate that catches a chart
+                                 doing the wrong thing quietly. `/tests/`, anchored, in .helmignore
 ```
+
+There is no `deploy/scripts/` any more. `render-assertions.sh` became the suites above in #430, and the two things it checked that a chart test suite
+structurally cannot — relationships between the files under `clusters/`, and rendering the chart with each `HelmRelease`'s `spec.values` — moved to
+`scripts/cluster-assertions.sh` at the repository root.
 
 `deploy/` rather than a top-level `charts/` because the chart and the Flux resources that deploy it belong next to each other. The GHCR path
 (`oci://ghcr.io/enorm-labs/charts/event-junkie`, #264) is independent of the repository path.
 
 **There is no `values-staging.yaml`, and that is deliberate (#414).** A `HelmRelease` cannot read a file from this repository, so staging's configuration lives
 in `deploy/clusters/staging/helm-release.yaml` under `spec.values` — the single place it exists. Keeping a values file _as well_ would mean two copies that must
-agree with nothing checking that they do, which is how an environment drifts. `render-assertions.sh` extracts `spec.values` from every HelmRelease and renders
-the chart with it, so the assertions gate exactly what Flux deploys rather than a file nothing deploys.
+agree with nothing checking that they do, which is how an environment drifts. `scripts/cluster-assertions.sh` extracts `spec.values` from every HelmRelease and
+re-runs the chart's invariant suites against it, so the assertions gate exactly what Flux deploys rather than a file nothing deploys. It is why every assertion
+in `invariants_test.yaml`, `hardening_test.yaml`, `ingress_test.yaml` and `importer_test.yaml` must hold under _any_ values file — an assertion that hardcodes a
+host or a port belongs in a test that names its own values, not in those four.
 
 `values-k3d.yaml` survives because it is not a duplicate of anything: it drives `k3d-rehearsal.sh up`, which installs the _working tree's_ chart with images
 built seconds ago. `deploy/clusters/k3d/` answers a different question with the _published_ chart and images. Both are worth having; neither substitutes for the
@@ -179,7 +197,7 @@ or that a future reader would otherwise "fix" back.
 
 **Pod Security Standards: the chart satisfies `restricted` in full**, today, without the namespace label that would enforce it. `runAsNonRoot`,
 `allowPrivilegeEscalation: false`, `readOnlyRootFilesystem`, `capabilities.drop: [ALL]`, `seccompProfile: RuntimeDefault`, no host namespaces, no host ports, no
-privileged containers, and only `emptyDir`/`configMap`/`secret` volumes. `render-assertions.sh` asserts each of those, which is what keeps compliance
+privileged containers, and only `emptyDir`/`configMap`/`secret` volumes. `tests/invariants_test.yaml` and `tests/hardening_test.yaml` assert each of those, which is what keeps compliance
 deliberate rather than incidental — **until #416 adds the label, nothing rejects a violation at admission**, so a workload could drift and only fail on the day
 the label lands.
 
@@ -263,7 +281,7 @@ Since #265 the cluster directories carry components this repository does not bui
 rules, all of them things that fail quietly rather than loudly.
 
 - **Pin the version exactly; never a range.** `>=1.21 <1.22` lets an upstream release reach the cluster with no diff, no review and no commit — the property
-  GitOps exists to remove. `render-assertions.sh` rejects anything that is not `X.Y.Z` or `vX.Y.Z`.
+  GitOps exists to remove. `scripts/cluster-assertions.sh` rejects anything that is not `X.Y.Z` or `vX.Y.Z`.
 - **A release that renders a ClusterIssuer must declare `dependsOn`.** The chart's ClusterIssuer is a `cert-manager.io/v1` kind and the API server rejects
   unknown kinds, so without cert-manager the _whole_ application release fails — workloads included, on the first bootstrap of a new cluster, looking exactly
   like a bug in our chart. Asserted, so it cannot be dropped silently.
@@ -285,8 +303,8 @@ in `gradle.properties`, `events-frontend/package.json` and both chart fields tog
 
 **And no published values file may set `<component>.image.tag`.** The default `""` falls back to `.Chart.AppVersion`, and that fallback is the whole mechanism
 keeping the chart and the images in step (#264). Pinning a tag opts one component out of it, and the render looks _more_ correct afterwards, not less — every
-image carries a plausible tag, one of them just isn't the one this build produced. `values-k3d.yaml` is the sole exception (`dev`, never leaves a laptop) and
-`render-assertions.sh` enforces the rest.
+image carries a plausible tag, one of them just isn't the one this build produced. `values-k3d.yaml` is the sole exception (`dev`, never leaves a laptop);
+`tests/invariants_test.yaml` enforces the chart's own default and `scripts/cluster-assertions.sh` enforces every HelmRelease.
 
 ## Never put a credential in a values file
 
@@ -300,11 +318,27 @@ The same applies to the Hetzner DNS token the DNS-01 solver needs: the chart nam
 
 ## The assertions are the point
 
-`deploy/scripts/render-assertions.sh` catches what `helm lint` and `flux schema validate` structurally cannot: a chart that is well-formed, schema-valid and wrong. It
-runs in `.github/workflows/validate-chart.yml` and under `/verify` on any diff touching `deploy/`.
+`charts/event-junkie/tests/` catches what `helm lint` and `flux schema validate` structurally cannot: a chart that is well-formed, schema-valid and wrong. It runs
+in `.github/workflows/validate-chart.yml` and under `/verify` on any diff touching `deploy/`. Five suites, twenty-three tests, five renders. They were
+`deploy/scripts/render-assertions.sh` until #430.
 
 **Add an assertion whenever you fix a bug in a template.** The failures worth guarding here mostly do not appear on first install — the selector-label trap
 surfaces on the second release, a missing Flyway URL surfaces as absent data rather than an error.
 
-Assertions are phrased as queries that return nothing when the chart is correct. That means a query broken by a rename looks like a pass, so the ones that could
-silently match nothing are paired with an `assert_nonempty` guard. Keep that pairing when adding one.
+**Four things to know before writing one**, all of which cost time to find:
+
+- **`checksum/config` breaks a suite that does not list the ConfigMap.** `bff-deployment.yaml` and `importer-deployment.yaml` both do
+  `include (print $.Template.BasePath "/configmap.yaml")`, and helm-unittest renders _only_ the templates a suite lists. Omit it and you get
+  `no template "…/configmap.yaml" associated with template "gotpl"`, which points nowhere useful.
+- **An assertion applies to every document from every listed template**, so anything per-resource needs `documentSelector` or a per-test `templates:` — and a
+  per-test `templates:` must be a subset of the suite's. A `template:` key _inside_ an assert is not a scoping mechanism and is silently ignored; that one
+  looked like it worked twice.
+- **`failedTemplate` needs no `templates:` at all.** Helm attributes a `required` failure to whichever template it reached first, so a scoped suite asserts on
+  where Helm happened to blame rather than on whether the chart refused. `required_values_test.yaml` deliberately has no `templates:` key anywhere.
+- **Positive assertions over `**/*.yaml` fail on every document that legitimately lacks the path.** That is why `invariants_test.yaml` is entirely negative, and
+  why it ends in a block of scoped positive controls. Negatives pass when their path expression breaks — the controls are what notice. Do not delete one, and
+  add one alongside any new negative. Where a JSONPath filter will do the job (`env[?(@.name=="…")]`) prefer it: a filter that matches nothing is reported as an
+  unknown path rather than as a pass, which is the vacuity problem solved rather than guarded against.
+
+**And the suites in `charts/event-junkie/tests/` must hold under every values file**, because `scripts/cluster-assertions.sh` re-runs four of the five against
+each cluster's `spec.values`. An assertion that names a host, a port or a database name belongs in a test that supplies its own `values:`.

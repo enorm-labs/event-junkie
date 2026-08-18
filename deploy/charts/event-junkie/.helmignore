@@ -10,3 +10,9 @@
 *~
 .idea/
 .vscode/
+
+# The helm-unittest suites (#430). Anchored with a leading slash, and that is load-bearing: a bare
+# `tests/` matches at any depth, so it would also exclude `templates/tests/connection-test.yaml` —
+# the `helm test` hook — from the published chart. Two different things called tests, one directory
+# name apart.
+/tests/

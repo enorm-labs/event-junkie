@@ -64,7 +64,7 @@ repositories that would each need their own pinning:
 | Hook                 | Runs on                                                                                                                      |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `tofu-fmt`           | any `.tf` / `.tfvars` file. It rewrites in place, so a failure means "re-stage and commit again", not "go and fix something" |
-| `shellcheck-scripts` | any `.sh` under `infra/`, `deploy/scripts/` or `scripts/`                                                                    |
+| `shellcheck-scripts` | any `.sh` under `infra/` or `scripts/`                                                                                       |
 | `format-markdown`    | any `.md` file. Also rewrites in place, so the same "re-stage and commit again" applies                                      |
 | `helm-lint`          | anything under `deploy/charts/`. Lints the chart directory, so it takes no filenames                                         |
 
@@ -439,19 +439,34 @@ The chart that deploys the three services onto that platform lives in [`deploy/c
 and exercised on k3d** (#263) and **never on a real cluster** — those are different claims, and the section above is the one that keeps the first true. Read
 [deploy/AGENTS.md](../deploy/AGENTS.md) before changing it.
 
-Needs `helm`, `yq` and `flux` with its schema plugin (`brew install helm yq fluxcd/tap/flux && flux plugin install schema`). Everything below reaches no cluster and needs no kubeconfig, and is what
-`validate-chart.yml` runs in CI:
+Needs `helm`, `yq` and `flux` with its schema plugin, plus the helm-unittest plugin:
 
 ```bash
-helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-staging.yaml
-helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-staging.yaml
-deploy/scripts/render-assertions.sh
-shellcheck -x deploy/scripts/*.sh
+brew install helm yq fluxcd/tap/flux && flux plugin install schema
+helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.1.2 --verify=false
 ```
 
-`render-assertions.sh` is the one worth understanding: `helm lint` and schema validation both pass on a chart that is well-formed, schema-valid and wrong — an
-ingress that routes `/actuator`, an importer scaled past one replica, a selector carrying a label that changes on every release. It renders the chart once per
-values file and asserts on the result.
+`--verify=false` is a Helm 4 requirement: it refuses an unverifiable plugin source without it, and the local binary is v4. CI pins Helm 3 and installs the same
+version without the flag — pin whatever `HELM_UNITTEST_VERSION` in `validate-chart.yml` pins, because a gate whose plugin version floats is a gate whose verdict
+floats.
+
+Everything below reaches no cluster and needs no kubeconfig, and is what `validate-chart.yml` runs in CI:
+
+```bash
+helm lint --strict deploy/charts/event-junkie --set database.host=10.0.1.2 --set database.existingSecret=events-db
+helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
+helm unittest --strict deploy/charts/event-junkie
+scripts/cluster-assertions.sh
+```
+
+There is no `values-staging.yaml`: since #414 staging's and production's configuration lives in each cluster's `HelmRelease` under `spec.values`, because a
+HelmRelease cannot read a file from this repository and two copies would drift.
+
+`helm unittest` is the pair worth understanding, with `scripts/cluster-assertions.sh`. `helm lint` and schema validation both pass on a chart that is
+well-formed, schema-valid and wrong — an ingress that routes `/actuator`, an importer scaled past one replica, a selector carrying a label that changes on every
+release. The suites in `deploy/charts/event-junkie/tests/` assert against those, and the script re-runs them against the `spec.values` of every cluster's
+`HelmRelease` so they gate what Flux actually deploys. Five renders in total. They also assert that the chart _refuses_ to render without `database.host` or
+`database.existingSecret` and says what to do about it, which is the interface a first-time installer meets.
 
 Two things to know before running anything else. **`helm install --dry-run` is not safe here**: it resolves your current kubeconfig context and talks to that
 cluster. Use `helm template`, or `--dry-run=client` if you need `NOTES.txt`. And **the base `values.yaml` cannot render on its own** — `database.host` and
@@ -550,7 +565,7 @@ drafting notes safe; and a release cut from a tag that already exists still trig
 the version scheme — `v0.1.0-rc1` fails the match against `gradle.properties`, and snapshots already fill that role.
 
 **`latest` is publish-only.** It is a human pointer at the newest release; nothing in the deploy path may consume it. With `imagePullPolicy: IfNotPresent` a
-mutable tag lets two nodes run different code and neither is wrong — the chart's render assertions fail the build on a floating tag, which is that rule enforced
+mutable tag lets two nodes run different code and neither is wrong — the chart's helm-unittest suites fail the build on a floating tag, which is that rule enforced
 from the consuming side.
 
 ### Two things that are clicks, not code

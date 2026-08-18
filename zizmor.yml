@@ -4,7 +4,7 @@
 # cache-poisoning path into the publishing workflow, and two workflow-level permission grants that
 # belonged to single jobs.
 #
-# `deploy/scripts/render-assertions.sh` is the model for what a gate here is worth: it fails the
+# The chart's `helm unittest` suites are the model for what a gate here is worth: they fail the
 # build rather than posting an advisory. Everything below is a *suppression*, and each one carries a
 # reason and a date, the same rule `.trivyignore` and `owasp-suppressions.xml` are held to.
 
