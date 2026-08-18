@@ -826,6 +826,19 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 
 Learned the expensive way during the TODO.md → Issues migration (2026-08-09). Each of these looks like a bug in your script the first time you hit it.
 
+- **Fork pull requests work, and the property that makes them work is fragile** (#479, reviewed 2026-08-19). All nine required checks declare only
+  `contents: read` and consume no secret, so a fork's read-only `GITHUB_TOKEN` runs every one of them — there is no required-but-skipped check, which is the
+  failure mode that would make a pull request unmergeable forever and look like a broken repository to a first-time contributor. **Adding a secret or a
+  `write` permission to any of those nine breaks the fork path**, and it breaks it invisibly, because nobody here opens pull requests from forks.
+
+    Two steps are guarded on `github.event.pull_request.head.repo.fork != true` rather than left to fail: `release.yml`'s SARIF uploads, and
+    `build-backend.yml`'s coverage comment. The comment cannot work with a read-only token however it is written, and the cost of skipping it is named in the
+    file — its `min-coverage-changed-files` gate is unique to that step and does not run on the fork path.
+
+    `label-pr.yml` is the one workflow using `pull_request_target`, and it is safe **only** because it never checks out or runs pull-request code. The file
+    opens with a banner saying so, because that property is one innocuous-looking `actions/checkout` away from being an arbitrary-code-execution path holding
+    `pull-requests: write`.
+
 - **Nothing running in CI can push to `main`.** The `main` ruleset requires every change to arrive by pull request, and its **only** bypass actor is
   `OrganizationAdmin`. The obvious workaround does not exist: GitHub refuses the Actions bot as a bypass actor with _"Actor GitHub Actions integration must be
   part of the ruleset source or owner organization"_ — a platform constraint, not a permissions problem, and the UI offers no such actor either. **Design any
