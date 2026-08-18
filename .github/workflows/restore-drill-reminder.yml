@@ -67,7 +67,7 @@ jobs:
 
     steps:
       - name: Open the drill issue, unless it is already open
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           # One place to change the owner. It is an assignee rather than a mention because an
           # unassigned issue on a board is nobody's, and this drill has a named owner by design.
