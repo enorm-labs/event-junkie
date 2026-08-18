@@ -1,0 +1,190 @@
+# Opens the restore drill as an issue, so the obligation stops depending on anyone remembering it.
+#
+# #270 rehearsed the restore and wrote the numbers down; its "done when" also asked that the drill
+# repeat on a schedule with a named owner, and that was satisfied by writing *"Owner: @enorm.
+# Quarterly"* into the documentation. **Documented as quarterly is not a schedule** — this is the
+# class of task that stops happening without anyone deciding to stop it, and its failure mode is
+# invisible until the day it matters.
+#
+# **Why an issue rather than a calendar reminder.** It lands on the board, it is assignable, and a
+# skipped quarter is visible as an open issue rather than as nothing at all. A calendar entry is
+# invisible to the project, which would make the drill the only operational commitment with no trace
+# on the tracker. It also gives each run somewhere to record its measured timings before they reach
+# BACKUPS.md §9.
+#
+# **Two triggers, and they are genuinely different obligations** (#519):
+#
+#   - **Time.** Quarterly, regardless of whether anything changed. The point is that the procedure
+#     still works and that the recorded numbers are still true.
+#   - **Change.** Whenever the scripts the drill exercises move. `backups.sh` is what archives and
+#     `postgres.sh` is what a restored cluster has to come back under; a change to either invalidates
+#     the last run's evidence, and waiting up to three months to find that out is the gap.
+#
+# **The third documented trigger — a PostgreSQL major version bump — is deliberately not wired up.**
+# It lives in `var.postgres_version` (`infra/modules/environment/variables.tf`), a file that moves for
+# a dozen unrelated reasons, so a path filter there would open a drill issue on every unrelated
+# variable edit and teach everyone to close them unread. It stays a documented obligation in
+# `infra/AGENTS.md`. Naming the limit is the point; a gate that cries wolf is worse than a note.
+#
+# **This workflow is the only thing that opens these issues, so it must be idempotent.** A manual
+# dispatch, a re-run, and a schedule that fires late all have to converge on one issue rather than a
+# pile of them — hence the search-before-create below, keyed on the exact title.
+name: Restore Drill Reminder
+
+on:
+  schedule:
+    # 07:23 UTC on the first of January, April, July and October. Off-the-hour for the same reason
+    # dependency-check-scheduled.yml is: the top of the hour is a stampede on shared runners.
+    #
+    # A calendar quarter rather than "90 days since the last run": it needs no stored state, and a
+    # human can tell at a glance whether the current quarter's drill has happened.
+    - cron: '23 7 1 1,4,7,10 *'
+  push:
+    branches: [ main ]
+    paths:
+      - 'infra/modules/environment/cloud-init/backups.sh'
+      - 'infra/modules/environment/cloud-init/postgres.sh'
+  # Also the only way to produce the first issue: GitHub offers a manual trigger only for workflows
+  # already on the default branch, so this button does not exist until this file merges.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Creating an issue, and searching for one that already exists.
+  issues: write
+
+# Two pushes to `main` in quick succession must not race into two issues. `cancel-in-progress: false`
+# because the second run still has to check whether the first one created the issue.
+concurrency:
+  group: restore-drill-reminder
+  cancel-in-progress: false
+
+jobs:
+  remind:
+    name: Open the restore drill issue
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Open the drill issue, unless it is already open
+        uses: actions/github-script@v9
+        env:
+          # One place to change the owner. It is an assignee rather than a mention because an
+          # unassigned issue on a board is nobody's, and this drill has a named owner by design.
+          DRILL_OWNER: enorm
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // The schedule fires on the first day of a quarter, so "the quarter we are in" is the
+            // one to drill. A dispatch mid-quarter names that same quarter, which is what makes a
+            // hand-run and a scheduled run converge on one issue instead of two.
+            const now = new Date();
+            const year = now.getUTCFullYear();
+            const quarter = Math.floor(now.getUTCMonth() / 3) + 1;
+
+            // A push to one of the two scripts is a *different* obligation from the quarterly one —
+            // re-prove the procedure against the change — so it gets its own title. Keyed on the
+            // commit, because two separate changes to `backups.sh` each deserve their own drill.
+            const changeTriggered = context.eventName === 'push';
+            const sha = context.sha.slice(0, 7);
+
+            const title = changeTriggered
+              ? `Restore drill — after a backup/postgres script change (${sha})`
+              : `Restore drill — ${year} Q${quarter}`;
+
+            // Idempotency, and deliberately **not** through the search API. Search is an index and
+            // the index is eventually consistent, so an issue created seconds ago can be absent from
+            // it — which is exactly the case this guard exists for (a re-run, a dispatch racing the
+            // schedule). Listing is authoritative.
+            //
+            // Open issues only: a *closed* drill issue for this quarter means the drill was done,
+            // and a re-run must not reopen the obligation.
+            const open = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+            // `listForRepo` returns pull requests as well — they are issues to the API, and a PR
+            // titled after the drill would otherwise suppress the issue.
+            const existing = open.find((issue) => !issue.pull_request && issue.title === title);
+
+            if (existing) {
+              core.notice(`Already open: #${existing.number} "${title}" — nothing to do.`);
+              await core.summary
+                .addHeading('🗄️ Restore drill', 2)
+                .addRaw(`Already open: [#${existing.number}](${existing.html_url}) — <em>${title}</em>.`)
+                .write();
+              return;
+            }
+
+            const why = changeTriggered
+              ? `[\`${sha}\`](${context.payload.compare ?? `https://github.com/${owner}/${repo}/commit/${context.sha}`}) changed ` +
+                '`backups.sh` or `postgres.sh`. The last drill proved the *previous* version of those scripts, ' +
+                'so its evidence no longer covers what runs now.'
+              : `The quarterly drill for **${year} Q${quarter}**. Nothing is known to be wrong — that is the point. ` +
+                'This proves the procedure still works and that the recorded numbers are still true.';
+
+            // Absolute URLs throughout: a relative link is resolved against the *rendered page* in an
+            // issue body, not against the repository root, so `../blob/main/…` lands somewhere else.
+            const blob = `https://github.com/${owner}/${repo}/blob/main`;
+
+            const body = [
+              `> Opened automatically by [\`restore-drill-reminder.yml\`](${blob}/.github/workflows/restore-drill-reminder.yml) ` +
+                '([#519](https://github.com/enorm-labs/event-junkie/issues/519)). A backup nobody has restored is a belief about a backup.',
+              '',
+              why,
+              '',
+              '## Run it',
+              '',
+              `The procedure is [\`docs/ops/RESTORE_RUNBOOK.md\`](${blob}/docs/ops/RESTORE_RUNBOOK.md) §4 and §5 — full replay, then ` +
+                'point-in-time recovery past a destructive statement. It restores into a **scratch cluster on port 5433** and never into live `PGDATA`.',
+              '',
+              '## Record the numbers here first',
+              '',
+              `Fill this in as you go, then copy it over the table in [\`docs/ops/BACKUPS.md\`](${blob}/docs/ops/BACKUPS.md) §9 — ` +
+                '**overwrite it, do not append**. The recorded figure should always be the one from the database\'s current size, ' +
+                'not the day it was first small. An RTO derived from 39 MB is not an RTO.',
+              '',
+              '| Step | Time |',
+              '| --- | --- |',
+              '| Base backup | |',
+              '| `backup-fetch` | |',
+              '| Replay and promote | |',
+              '| **Restore to serving, end to end** | |',
+              '',
+              '**Database size at the time of the run:**',
+              '',
+              '## Done when',
+              '',
+              '- [ ] §4 passed — a full replay from the bucket alone, including a row written **after** the base backup was taken',
+              '- [ ] §5 passed — PITR recovered something dropped after the backup, and the live database is unchanged',
+              '- [ ] The table above is filled in and copied over `BACKUPS.md` §9, with the new database size',
+              '- [ ] Anything the runbook got wrong is fixed in the runbook, in the same pass',
+            ].join('\n');
+
+            const { data: issue } = await github.rest.issues.create({
+              owner,
+              repo,
+              title,
+              body,
+              // `area:infra` and `size:S` are intrinsic properties of the work, which is what labels
+              // carry here. Status and Priority are project fields and are set on the board.
+              labels: ['area:infra', 'size:S'],
+              assignees: [process.env.DRILL_OWNER],
+              // Deliberately **no milestone**. Milestones here are release gates (v0.3, v1.0); a
+              // recurring operational obligation outlives all of them and belongs to none.
+              type: 'Task',
+            });
+
+            // Deliberately not added to the project board from here: the board's own "Auto-add to
+            // project" workflow already picks up every new issue in this repository, and the
+            // `GITHUB_TOKEN` cannot write to an *organisation* project anyway — that needs a PAT.
+            // Verified 2026-08-18: every open issue is on the board.
+            core.notice(`Opened #${issue.number} — ${title}`);
+            await core.summary
+              .addHeading('🗄️ Restore drill', 2)
+              .addRaw(`Opened [#${issue.number}](${issue.html_url}) — <em>${title}</em>, assigned to @${process.env.DRILL_OWNER}.`)
+              .write();

@@ -208,7 +208,18 @@ and the moment you find out is the moment you are already restoring. Re-read thi
 a schedule is what keeps it true.
 
 **Owner: @enorm. Quarterly**, and additionally whenever `backups.sh`, `postgres.sh` or the PostgreSQL major version changes.
-[#519](https://github.com/enorm-labs/event-junkie/issues/519) is about making that recurrence mechanical rather than remembered.
+
+**What nags you: [`.github/workflows/restore-drill-reminder.yml`](../../.github/workflows/restore-drill-reminder.yml)** ([#519](https://github.com/enorm-labs/event-junkie/issues/519)).
+It opens the drill as an assigned issue on the first of January, April, July and October, and again on any push to `main` that touches `backups.sh` or
+`postgres.sh` — because a change to either means the last run proved a version that no longer runs. A skipped quarter is therefore an open issue on the board
+rather than nothing at all, which is the whole reason it is an issue and not a calendar entry. It is idempotent: a dispatch, a re-run and a late schedule all
+converge on one issue, and a _closed_ one is never reopened.
+
+**The PostgreSQL major version is the one trigger that stays a note rather than a gate.** It lives in `var.postgres_version`, in a variables file that moves for
+a dozen unrelated reasons, so a path filter there would open a drill issue on every unrelated edit and teach everyone to close them unread.
+
+**Each run records its timings in its own issue first**, in the table the workflow puts there, and then overwrites the table below. That ordering matters: the
+numbers exist somewhere durable before anyone has to remember to update a document.
 
 ### Recorded runs
 
@@ -232,7 +243,8 @@ always reflects the database's current size rather than the day it was first sma
 ## 10. Known gaps, named rather than hidden
 
 - **No alerting yet.** §6 — [#518](https://github.com/enorm-labs/event-junkie/issues/518).
-- **The recurrence is documented, not scheduled.** §9 — [#519](https://github.com/enorm-labs/event-junkie/issues/519).
+- **The drill recurs, but only one has ever run.** §9 — the reminder workflow exists and is idempotent; what it cannot prove is that a quarter's issue gets
+  worked rather than closed. That is what the open-issue-on-the-board visibility is for.
 - **Production has none of this running**, because production has never been applied ([#285](https://github.com/enorm-labs/event-junkie/issues/285)). Everything
   above is declared for it and proven only on staging.
 - **The cloud-init delivery path is unproven.** `backups.sh` was installed and run by hand on the live staging node rather than through a node replacement,

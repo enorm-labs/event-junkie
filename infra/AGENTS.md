@@ -205,6 +205,10 @@ IPv6, so the older worry in `PLATFORM_SETUP.md` §1 resolves the other way.
 **A backup nobody has restored is a belief about a backup.** The drill is `docs/ops/RESTORE_RUNBOOK.md` §4 and §5, it restores into a scratch cluster on port 5433
 and never into live `PGDATA`, and it is not optional before go-live.
 
+**Changing `backups.sh` or `postgres.sh` now opens a drill issue by itself** — `.github/workflows/restore-drill-reminder.yml` watches both paths on `main`, so
+this is a gate rather than the note it used to be. The quarterly reminder comes from the same workflow. A **PostgreSQL major version** bump is the one that is
+still only a note: `var.postgres_version` lives in a file that moves for unrelated reasons, so it is on you to run the drill after one.
+
 **It has been run once: 2026-08-18, staging, both halves passed.** 3,310 events and 3,953 artists came back from the bucket alone, including a marker row
 written _after_ the base backup was taken — which is what proves WAL archiving rather than file copying — and a PITR restore recovered a table dropped
 afterwards. **Restore to serving: ~12 seconds on a 39 MB cluster.** That number does not extrapolate; re-measure when the database is meaningfully larger.
