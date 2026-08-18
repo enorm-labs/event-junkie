@@ -124,6 +124,18 @@ compare the pinned version against what the BOM now supplies on its own — comm
 ./gradlew -q :events-importer:dependencies --configuration runtimeClasspath | grep -E "<artifact>" | sed 's/^[| +\\-]*//' | sort -u
 ```
 
+**Not every override is overtaken by the Boot BOM, and the one that is not is easy to miss.** `swagger-ui.version` in `gradle.properties` holds
+`org.webjars:swagger-ui` ahead of the version **springdoc** pins, not ahead of the Boot BOM — so the trigger for re-checking it is a `springdoc.version` bump,
+which is a routine bump in this very step and not a Boot upgrade at all. After raising springdoc, check what its starter now brings on its own:
+
+```bash
+./gradlew -q :events-bff:dependencyInsight --dependency swagger-ui --configuration runtimeClasspath
+```
+
+If the resolved version without the constraint is greater than or equal to the pin, delete the pin and both modules' `constraints` blocks for it. The tests in
+`SwaggerUiWebjarTest` (one per module) keep asserting the shipped bundle's DOMPurify version either way, so removing the pin is safe to attempt — the build says
+whether it was premature.
+
 Delete the override when the BOM's version is greater than or equal to the pin. Keep it otherwise, and say which CVE still justifies it. Note that these are
 _upper_-bound removals, not bumps: raising a pinned override to a newer version than the CVE fix requires is out of scope here — that belongs to
 [`/security-report`](security-report.prompt.md) for the diagnosis and [`/security-triage`](security-triage.prompt.md) for the change.
