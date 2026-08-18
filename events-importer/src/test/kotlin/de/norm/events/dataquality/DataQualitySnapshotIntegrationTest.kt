@@ -51,7 +51,7 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
                 .sql(
                     "INSERT INTO events.venue (name, slug, address, city, postal_code) " +
                         "VALUES ('V', 'v', 'A 1', 'Berlin', '10999') RETURNING id"
-                ).map { row, _ -> row.get("id", java.lang.Long::class.java)!!.toLong() }
+                ).map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
                 .awaitSingle()
         databaseClient
             .sql(
