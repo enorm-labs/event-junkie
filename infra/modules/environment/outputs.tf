@@ -49,8 +49,8 @@ output "wireguard_server_address" {
 }
 
 output "next_steps" {
-  description = "This apply's addresses, and the one command that must come next. The runbook is docs/CLUSTER_BOOTSTRAP.md."
-  # Deliberately short. The full ordered runbook is docs/CLUSTER_BOOTSTRAP.md and there is exactly
+  description = "This apply's addresses, and the one command that must come next. The runbook is docs/ops/CLUSTER_BOOTSTRAP.md."
+  # Deliberately short. The full ordered runbook is docs/ops/CLUSTER_BOOTSTRAP.md and there is exactly
   # one copy of it; this output exists to supply the two things that document cannot know -- the
   # addresses this apply just created -- plus the single command that has to happen next.
   value = <<-EOT
@@ -72,7 +72,7 @@ output "next_steps" {
     port 22 is not open for the first couple of minutes -- while the node boots the connection times
     out rather than being refused, which looks exactly like the firewall dropping you.
 
-    Then follow docs/CLUSTER_BOOTSTRAP.md from step 4. It covers the tunnel, the kubeconfig, the
+    Then follow docs/ops/CLUSTER_BOOTSTRAP.md from step 4. It covers the tunnel, the kubeconfig, the
     database, both secrets and flux bootstrap, in the order that avoids the failures we hit.
   EOT
 }

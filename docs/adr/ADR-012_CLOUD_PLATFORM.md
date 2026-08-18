@@ -528,7 +528,7 @@ therefore **not optional** — they are the price of the decision.
 
 > The sketch below is the _platform_ shape as decided here. It predates several decisions taken while planning
 > [#260](https://github.com/enorm-labs/event-junkie/issues/260) — WireGuard for admin access, Flux for deploys, OpenObserve, and the move to the CAX line — so
-> **[PLATFORM_SETUP.md](../PLATFORM_SETUP.md) §2 is the current picture**, in rendered diagrams. This one is kept because it is what the decision was made
+> **[PLATFORM_SETUP.md](../ops/PLATFORM_SETUP.md) §2 is the current picture**, in rendered diagrams. This one is kept because it is what the decision was made
 > against.
 
 ```
@@ -596,7 +596,7 @@ The cost is that the edge was doing three jobs and now nobody is:
 - **TLS certificates** — cert-manager, and the Helm chart now provisions it: `deploy/charts/event-junkie` sets the `cert-manager.io/cluster-issuer` annotation
   on the Ingress and ships an optional `ClusterIssuer` (off by default, since it is a cluster-scoped singleton). It deliberately does **not** install
   cert-manager itself or own its CRDs — that is [#265](https://github.com/enorm-labs/event-junkie/issues/265). Traefik's own ACME client was not taken, for the
-  reasons in [docs/PLATFORM_SETUP.md](../PLATFORM_SETUP.md) §6.
+  reasons in [docs/ops/PLATFORM_SETUP.md](../ops/PLATFORM_SETUP.md) §6.
 - **CDN caching of the SPA bundle** — not replaced, and not worth replacing. One nginx serving a few content-hashed megabytes to Berlin-scale traffic, with 20 TB
   of egress included, does not need a CDN. Revisit if the audience stops being local.
 

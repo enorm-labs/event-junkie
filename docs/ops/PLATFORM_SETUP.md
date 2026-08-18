@@ -2,17 +2,17 @@
 
 Status: **plan**, 2026-08-10. Nothing in here is running yet.
 
-> **Phase B started, 2026-08-10.** All of it exists as code in [`infra/`](../infra), and its `bootstrap/` half is **applied**: both DNS zones, their records
+> **Phase B started, 2026-08-10.** All of it exists as code in [`infra/`](../../infra), and its `bootstrap/` half is **applied**: both DNS zones, their records
 > and the SSH key are live, which also settled the design's biggest open question by proving the S3 backend works against Hetzner's Ceph. The servers, network,
 > firewalls and cloud-init are declared but **not applied** — nothing in §2's diagrams is running, and cloud-init has never executed on a real machine.
 
 This is the working plan behind the `v0.2 — Deployable` milestone and the operational half of `v1.0 — Go-live`. It answers the questions that came up while
 planning [#260](https://github.com/enorm-labs/event-junkie/issues/260). **Every decision in it is now made** (§11); what remains is work and a few accounts.
 
-**The decisions it rests on:** [ADR-012](adr/ADR-012_CLOUD_PLATFORM.md) (Hetzner + k3s, and its 2026-08-10 amendment removing Cloudflare) ·
-[ADR-016](adr/ADR-016_GITOPS_DELIVERY.md) (pull-based delivery with Flux; the end-to-end path is [RELEASING.md](RELEASING.md)) ·
-[ADR-015](adr/ADR-015_OBSERVABILITY_STACK.md) (observability — OpenObserve, accepted on trial; §5 below is the summary) ·
-[ADR-014](adr/ADR-014_RENDERING_STRATEGY.md) (the SEO sidecar) · [ADR-008](adr/ADR-008_IMPORT_JOB_SCHEDULING.md) (the importer is always-on and
+**The decisions it rests on:** [ADR-012](../adr/ADR-012_CLOUD_PLATFORM.md) (Hetzner + k3s, and its 2026-08-10 amendment removing Cloudflare) ·
+[ADR-016](../adr/ADR-016_GITOPS_DELIVERY.md) (pull-based delivery with Flux; the end-to-end path is [RELEASING.md](RELEASING.md)) ·
+[ADR-015](../adr/ADR-015_OBSERVABILITY_STACK.md) (observability — OpenObserve, accepted on trial; §5 below is the summary) ·
+[ADR-014](../adr/ADR-014_RENDERING_STRATEGY.md) (the SEO sidecar) · [ADR-008](../adr/ADR-008_IMPORT_JOB_SCHEDULING.md) (the importer is always-on and
 single-instance).
 
 ---
@@ -150,7 +150,7 @@ you happen to be, and most networks you will connect from are IPv4-only.
   worse.
 - **GitHub's arm64 runners are generally available and free for public repositories** (`ubuntu-24.04-arm`). That removes the only serious objection — building
   arm64 images under QEMU emulation, which is punishing for JVM builds. This repository is public, so native builds cost nothing.
-- Every component has arm64 images: k3s, the JRE base ([Liberica on Alpine](adr/ADR-017_JRE_BASE_IMAGE.md), and Temurin before it — both publish arm64),
+- Every component has arm64 images: k3s, the JRE base ([Liberica on Alpine](../adr/ADR-017_JRE_BASE_IMAGE.md), and Temurin before it — both publish arm64),
   PostgreSQL 18, nginx, Traefik, cert-manager, Flux, OpenObserve, `wal-g`.
 
 **Verify `signal-cli-rest-api` publishes an arm64 manifest before committing to it.** It is JVM-based and popular with Home Assistant users, who are
@@ -420,13 +420,13 @@ Four decisions in it are worth not re-deriving:
   block every release until someone deleted the gate, which is how gates die. Waivers go in `.trivyignore` with a reason and a date.
 
 The versioning scheme — one number derived from `gradle.properties`, snapshots as prereleases _of the coming release_, `latest` published but never consumed —
-is in [DEVELOPMENT.md](DEVELOPMENT.md#versions-and-cutting-a-release).
+is in [DEVELOPMENT.md](../DEVELOPMENT.md#versions-and-cutting-a-release).
 
 ---
 
 ## 4. How deploys happen
 
-> **Now decided, implemented and recorded as [ADR-016](adr/ADR-016_GITOPS_DELIVERY.md).** The end-to-end path a commit takes to become a running deployment —
+> **Now decided, implemented and recorded as [ADR-016](../adr/ADR-016_GITOPS_DELIVERY.md).** The end-to-end path a commit takes to become a running deployment —
 > with a diagram — is [RELEASING.md](RELEASING.md). This section keeps the _reasoning_; that one has the mechanics.
 
 ### How deploys happen — **decided 2026-08-10: Flux. Not ArgoCD, and not plain Helm from CI.**
@@ -623,7 +623,7 @@ string.
 
 ## 5. Observability — see ADR-015
 
-The full comparison is [ADR-015](adr/ADR-015_OBSERVABILITY_STACK.md), **accepted on trial 2026-08-10**. The short version:
+The full comparison is [ADR-015](../adr/ADR-015_OBSERVABILITY_STACK.md), **accepted on trial 2026-08-10**. The short version:
 
 **OpenObserve** — one Rust binary covering logs, metrics, dashboards and alerting, storing Parquet in Hetzner Object Storage. ~1 GB against SigNoz's ~5 GB, and
 its object-storage backend means log retention stops competing with the node's disk. Licence is AGPL-3.0, which is fine for unmodified self-hosting and is
@@ -796,7 +796,7 @@ looks like a configuration problem rather than a threading one. The fix is `Hook
 **What every log line should carry:** `traceId`, `spanId`, service name, version (already stamped from `gradle.properties`), and — for the importer —
 `sourceId` / `venueSlug` / `importRunId`, because the question asked of importer logs is always "what happened to _this venue_ on _this run_".
 
-**Do not log client IPs without deciding to.** [LEGAL.md](LEGAL.md) §7.5 — since #412 removed the proxy, the origin now sees real addresses, and nginx's access
+**Do not log client IPs without deciding to.** [LEGAL.md](../LEGAL.md) §7.5 — since #412 removed the proxy, the origin now sees real addresses, and nginx's access
 log is on by default. `RequestLoggingFilter` is IP-free today by design; keep it that way.
 
 ### Metrics via Micrometer
@@ -1007,8 +1007,8 @@ _(GitHub Environments moved out of this phase. They are no longer a prerequisite
 
 ### Phase B — infrastructure as code — [#260](https://github.com/enorm-labs/event-junkie/issues/260)
 
-> **Steps 5–7 are written.** They live in [`infra/`](../infra); [`infra/README.md`](../infra/README.md) is the operator's guide and
-> [`infra/AGENTS.md`](../infra/AGENTS.md) the conventions. Step 8 is not done, so none of it is proven.
+> **Steps 5–7 are written.** They live in [`infra/`](../../infra); [`infra/README.md`](../../infra/README.md) is the operator's guide and
+> [`infra/AGENTS.md`](../../infra/AGENTS.md) the conventions. Step 8 is not done, so none of it is proven.
 
 5. **`infra/` split by lifetime, not environment.** `bootstrap/` holds the DNS zone, the Object Storage buckets' contents and the SSH key; `environments/{production,staging}/` hold servers,
    network, firewall and records. The zone being outside every environment's blast radius is what makes DNSSEC safe and the destroy/apply cycle honest.
@@ -1026,7 +1026,7 @@ _(GitHub Environments moved out of this phase. They are no longer a prerequisite
 
 ### Phase C — the deployable artefact — [#261](https://github.com/enorm-labs/event-junkie/issues/261), [#262](https://github.com/enorm-labs/event-junkie/issues/262)
 
-> **Step 11 is written**, in the same register Phase B uses for steps 5–7: it lives in [`deploy/charts/event-junkie/`](../deploy/charts/event-junkie), it lints,
+> **Step 11 is written**, in the same register Phase B uses for steps 5–7: it lives in [`deploy/charts/event-junkie/`](../../deploy/charts/event-junkie), it lints,
 > renders and passes its assertions, and it has never been installed anywhere. Steps 10 and 12–14 are not done, so none of it is proven. The images it
 > references do not exist yet either — that is #262 for the frontend and
 > [#426](https://github.com/enorm-labs/event-junkie/issues/426) for the two backends, and both must land before step 14.
@@ -1039,7 +1039,7 @@ _(GitHub Environments moved out of this phase. They are no longer a prerequisite
     something a reader would otherwise expect to find: **`/api` is `spring.webflux.base-path`**, so there is no ingress rewrite and no Traefik middleware for it;
     **actuator moves to port 9001**, so `/actuator/**` is unroutable rather than merely unrouted; and **the database password only ever comes from an existing
     Secret**, with no inline path in the values at all. The chart's own
-    [README](../deploy/charts/event-junkie/README.md) argues all three.
+    [README](../../deploy/charts/event-junkie/README.md) argues all three.
 12. **Push image and chart to GHCR** as OCI artifacts, versioned together (§3). This is where CI's involvement in deployment now _ends_.
 13. **`flux bootstrap github`** — commits Flux's manifests and creates its deploy key. Needs a PAT once, from a laptop; CI never holds it (§4a). Then declare
     the `HelmRelease` and `OCIRepository` that watch GHCR.

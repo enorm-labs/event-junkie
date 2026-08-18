@@ -30,7 +30,7 @@ appVersion: "0.1.1"
 # own VM per ADR-012, so the reflex of vendoring the Bitnami postgresql subchart is wrong here — it
 # would put the database inside the blast radius of a `helm uninstall`. cert-manager and Traefik are
 # installed on the cluster separately (#265); this chart renders only instances of their types and
-# ships no `crds/` directory. See docs/PLATFORM_SETUP.md §6.
+# ships no `crds/` directory. See docs/ops/PLATFORM_SETUP.md §6.
 
 home: https://event-junkie.com
 sources:

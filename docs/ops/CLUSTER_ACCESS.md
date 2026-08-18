@@ -93,7 +93,7 @@ kubectl config get-contexts | grep event-junkie-staging       # confirm it arriv
 `--flatten` inlines the certificates and token, so the merged file stands alone and `~/.kube/event-junkie-staging` becomes redundant.
 
 > **What merging costs, so it is a choice rather than a surprise.** Every `kubectl`, `helm` and `flux` command now defaults to _whatever context is current_,
-> and one of them is a real cluster running the real database. [`deploy/AGENTS.md`](../deploy/AGENTS.md) forbids running `helm install/upgrade/uninstall` or
+> and one of them is a real cluster running the real database. [`deploy/AGENTS.md`](../../deploy/AGENTS.md) forbids running `helm install/upgrade/uninstall` or
 > Flux commands against anything but `k3d-*` without being asked — merging makes that rule depend entirely on `--context` discipline rather than on the shell
 > you happen to be in. **Pass `--context` explicitly for anything that writes.**
 

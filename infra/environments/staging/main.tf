@@ -57,7 +57,7 @@ module "environment" {
   # rescale between architectures; within x86 (cpx22 -> cx23) it is an in-place resize, but x86 ->
   # ARM is refused by the API *during apply*, after the plan has rendered a tidy in-place update.
   # It is a node rebuild, which destroys the co-located database (#460) and the k3s cluster with it.
-  # docs/CLUSTER_BOOTSTRAP.md §Rebuilding a node has the sequence and what has to be redone.
+  # docs/ops/CLUSTER_BOOTSTRAP.md §Rebuilding a node has the sequence and what has to be redone.
   k3s_server_type      = "cpx22"
   postgres_server_type = null
 

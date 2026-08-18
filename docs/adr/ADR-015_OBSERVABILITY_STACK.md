@@ -15,7 +15,7 @@ before the entry.
 |     | Test                                    | Fails if                                                                                                                                                |
 | --- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | **The zero-events alert fires**         | A source that silently stops importing does not page anyone. This is the requirement the whole ADR turns on — if it cannot do this, nothing else counts |
-| 2   | **Footprint is roughly as claimed**     | Sustained resident memory over ~1.5 GB, which eats the CX33 headroom that [PLATFORM_SETUP.md](../PLATFORM_SETUP.md) §1 depends on                       |
+| 2   | **Footprint is roughly as claimed**     | Sustained resident memory over ~1.5 GB, which eats the CX33 headroom that [PLATFORM_SETUP.md](../ops/PLATFORM_SETUP.md) §1 depends on                   |
 | 3   | **Log search is usable under pressure** | Answering "what happened to venue X on run Y at 23:00" takes longer than reading the raw pod logs would have                                            |
 | 4   | **Dashboards carry business metrics**   | The importer meters in PLATFORM_SETUP.md §7 cannot be charted the way they need to be                                                                   |
 | 5   | **Upgrades are uneventful**             | A minor version bump loses data or needs manual migration                                                                                               |
@@ -28,7 +28,7 @@ written exit, rather than left Proposed to rot.
 
 > Requested while planning [#260](https://github.com/enorm-labs/event-junkie/issues/260) and the go-live sequence. This ADR picks **where logs, metrics and
 > alerts live**; the instrumentation inside the applications (structured logging, Micrometer meters) is described in
-> [PLATFORM_SETUP.md](../PLATFORM_SETUP.md) §7 and does not depend on which backend wins — that is the point of choosing an OpenTelemetry-compatible one.
+> [PLATFORM_SETUP.md](../ops/PLATFORM_SETUP.md) §7 and does not depend on which backend wins — that is the point of choosing an OpenTelemetry-compatible one.
 >
 > **This decision is constrained by a box, not by taste.** [ADR-012](ADR-012_CLOUD_PLATFORM.md) put everything on one Hetzner node. Every gigabyte the
 > observability stack takes is a gigabyte the application cannot have, and the difference between the candidates here is a factor of six. That is the whole
@@ -211,7 +211,7 @@ which would add a processor that ADR-012's amendment just finished removing.
 - **Superset is not needed** (PLATFORM_SETUP.md §4). If business dashboards outgrow OpenObserve's, the next step is Grafana with a PostgreSQL datasource, not a
   separate BI platform with its own Python stack and metadata database.
 - **Alert routing is Signal**, via a webhook destination into `signal-cli-rest-api` in the cluster — picked because it is end-to-end encrypted, so alert bodies
-  carrying venue data, error strings and possibly IPs are unreadable by the carrier. See [PLATFORM_SETUP.md](../PLATFORM_SETUP.md) §5a, which also records the
+  carrying venue data, error strings and possibly IPs are unreadable by the carrier. See [PLATFORM_SETUP.md](../ops/PLATFORM_SETUP.md) §5a, which also records the
   thing this ADR cannot solve on its own: **alerting that runs on the monitored node cannot report that node's death**, so an external uptime monitor and a
   dead-man's-switch heartbeat are required alongside it. An alert nobody sees at 23:00 is not alerting.
 - **The importer must emit per-source business metrics** for any of this to catch the failure that actually matters. That work is in PLATFORM_SETUP.md §7 and is
@@ -226,5 +226,5 @@ which would add a processor that ADR-012's amendment just finished removing.
   and Enterprise editions
 - [Netdata](https://github.com/netdata/netdata) — GPL-3.0
 - [ADR-012 — Cloud platform](ADR-012_CLOUD_PLATFORM.md), especially _"observability is now our problem"_ and the 2026-08-10 amendment
-- [PLATFORM_SETUP.md](../PLATFORM_SETUP.md) — sizing, the instrumentation work, and the go-live sequence
+- [PLATFORM_SETUP.md](../ops/PLATFORM_SETUP.md) — sizing, the instrumentation work, and the go-live sequence
 - [LEGAL.md](../LEGAL.md) §7.5 — the four logging decisions this stack has to enforce

@@ -2,7 +2,7 @@ name: Validate Infrastructure
 
 # `tofu fmt` and `tofu validate` are the only checks that can run against `infra/` without
 # credentials — `plan` needs a Hetzner token and CI does not have one, deliberately (see
-# docs/PLATFORM_SETUP.md §4: nothing outside the cluster holds a credential for it).
+# docs/ops/PLATFORM_SETUP.md §4: nothing outside the cluster holds a credential for it).
 #
 # That makes this a syntax and type gate, not a correctness one. It catches the failure mode that
 # actually happens to infrastructure code in a repository where nobody runs it daily: a config that

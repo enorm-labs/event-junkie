@@ -3,8 +3,8 @@
 From nothing to a reconciling environment. **Once per cluster**, from a laptop, in this order.
 
 This is the one-time bring-up. **Connecting to a cluster that already exists is [CLUSTER_ACCESS.md](CLUSTER_ACCESS.md)** — that is the one you want most days.
-What happens on every commit afterwards is [RELEASING.md](RELEASING.md); why it is shaped this way is [ADR-016](adr/ADR-016_GITOPS_DELIVERY.md) and
-[PLATFORM_SETUP](PLATFORM_SETUP.md); the long-form detail behind steps 1–8 is [infra/README.md](../infra/README.md).
+What happens on every commit afterwards is [RELEASING.md](RELEASING.md); why it is shaped this way is [ADR-016](../adr/ADR-016_GITOPS_DELIVERY.md) and
+[PLATFORM_SETUP](PLATFORM_SETUP.md); the long-form detail behind steps 1–8 is [infra/README.md](../../infra/README.md).
 
 **First run: 2026-08-13, staging — carried all the way through to an issued certificate.** Every command below has been executed against a real cluster, and the
 traps at the bottom are the ones that actually cost time rather than the ones worth imagining. Where a step says "verify", it is because that verification

@@ -73,7 +73,7 @@ rolled back.
 **Deployed to the real staging cluster on 2026-08-13 (#424, #265).** `flux bootstrap` has now run against Hetzner: the Flux manifests are committed to
 `deploy/clusters/staging/flux-system/`, cert-manager and the DNS-01 webhook installed ahead of the application through `dependsOn`, all three workloads came up,
 Flyway applied its migrations against PostgreSQL over the private network, and the chart's `helm test` hook passed in-cluster. The runbook is
-[docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md).
+[docs/ops/CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md).
 
 **Most of the k3d gap is now closed — but say which parts.** TLS, cert-manager, DNS, git-sync, a real private-network database and genuine resource pressure are
 all exercised on staging. Still not: **NetworkPolicies** (#416), **production** (no cluster exists), and **a certificate that has actually issued** — DNS-01 was
@@ -143,7 +143,7 @@ Beyond the [Helm chart best practices guide](https://helm.sh/docs/chart_best_pra
   number of related variables, at least one non-optional".
 - **Comments explain why**, and specifically why an obvious alternative was not taken — why `/api` is not a Traefik middleware, why the ClusterIssuer is off by
   default, why there is no `crds/` directory. Match that. Do not add comments that restate the YAML.
-- Cross-references point at `docs/PLATFORM_SETUP.md` sections and ADR numbers, as in `infra/`. Keep them.
+- Cross-references point at `docs/ops/PLATFORM_SETUP.md` sections and ADR numbers, as in `infra/`. Keep them.
 
 ## Kubernetes' own good practices, audited
 
@@ -221,7 +221,7 @@ conformance_ (k3s owns it), and _PKI certificates_ (k3s owns the cluster PKI; th
 
 ## Flux: what the k3d rehearsal proved, and the two traps it found
 
-The decision and its consequences are [ADR-016](../docs/adr/ADR-016_GITOPS_DELIVERY.md); the end-to-end path is [docs/RELEASING.md](../docs/RELEASING.md). What
+The decision and its consequences are [ADR-016](../docs/adr/ADR-016_GITOPS_DELIVERY.md); the end-to-end path is [docs/ops/RELEASING.md](../docs/ops/RELEASING.md). What
 follows is only what bites when changing these files.
 
 **Exercised on k3d as of 2026-08-12 (#414)** — `flux install`, the real chart pulled from GHCR, all three workloads on published images, `helm test` green, and a
@@ -231,7 +231,7 @@ deliberately broken release rolled back.
 never hand-edited. Three things it taught that no amount of reading would have: the org must have **deploy keys enabled** (a policy, not a token scope, and it
 fails at `422`); bootstrap **pushes directly to `main`**, which the branch ruleset forbids, so the ruleset has to be off for two pushes and back on immediately
 after; and the whole flow wants the database and both secrets to exist **first**, or the first reconcile installs a crash-looping importer.
-[docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) has the order.
+[docs/ops/CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) has the order.
 
 **The version range lives on the `OCIRepository`, not the `HelmRelease`.** With `chartRef` the release carries no version at all — `spec.ref.semver` on the source
 decides everything. Staging uses `>=0.0.0-0`; the `-0` is what admits prereleases, and without it the range matches no snapshot at all. Observed rather than
