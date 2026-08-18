@@ -230,30 +230,52 @@ prepare_database() {
 cmd_up() {
   require k3d kubectl helm docker yq
 
+  # EVERY FALLIBLE STEP BELOW CARRIES AN EXPLICIT `|| die`, AND THAT IS NOT BELT-AND-BRACES OVER
+  # `set -euo pipefail` — it is the only thing standing in for it here. `main` runs this function on
+  # the left of an `&&` chain, and a command in an AND-list is exempt from errexit for the whole
+  # function, recursively. So without these the build could fail, the cluster could fail, the release
+  # could fail to install, and this function would still run to its last line and return that line's
+  # status. It did exactly that (#525): a release that installed nothing was reported as success and
+  # the run carried on into four assertions that measured an empty cluster.
+  #
+  # `up` builds a precondition, so it fails fast. `verify` measures, so it accumulates into FAILURES
+  # and reports at the end — those are different jobs and deliberately behave differently.
   log "Building the three images"
-  ./gradlew -q :events-bff:bootJarLayers :events-importer:bootJarLayers
-  npm --prefix events-frontend run build >/dev/null
+  ./gradlew -q :events-bff:bootJarLayers :events-importer:bootJarLayers \
+    || die "the Gradle build failed — there is no jar to put in an image"
+  npm --prefix events-frontend run build >/dev/null \
+    || die "the frontend build failed — there is no bundle to serve"
   local rev; rev="$(git rev-parse HEAD)"
   local ver; ver="$(grep '^version=' gradle.properties | cut -d= -f2-)"
   for m in bff importer; do
     docker buildx build -f "events-$m/Dockerfile" "events-$m/build/docker" \
       --build-arg "VERSION=$ver" --build-arg "REVISION=$rev" \
-      -t "localhost/event-junkie/$m:dev" --load --quiet >/dev/null
+      -t "localhost/event-junkie/$m:dev" --load --quiet >/dev/null \
+      || die "could not build the $m image"
     info "built localhost/event-junkie/$m:dev"
   done
   docker buildx build events-frontend --build-arg "VERSION=$ver" --build-arg "REVISION=$rev" \
-    -t localhost/event-junkie/frontend:dev --load --quiet >/dev/null
+    -t localhost/event-junkie/frontend:dev --load --quiet >/dev/null \
+    || die "could not build the frontend image"
   info "built localhost/event-junkie/frontend:dev"
 
   create_cluster
   k3d image import -c "$CLUSTER" \
-    localhost/event-junkie/bff:dev localhost/event-junkie/importer:dev localhost/event-junkie/frontend:dev >/dev/null
+    localhost/event-junkie/bff:dev localhost/event-junkie/importer:dev localhost/event-junkie/frontend:dev >/dev/null \
+    || die "could not import the images into the cluster — every pod would then try to pull them from a registry that does not have them"
   info "images imported"
 
   prepare_database default
 
+  # THE ONE THAT MATTERS. Helm resolves every kind up front, so an unknown one fails the entire
+  # release rather than a single object — nothing is installed at all, and the message says so in a
+  # sentence that scrolls away behind whatever ran next.
   log "Installing the chart"
-  h install "$RELEASE" "$CHART" --values "$VALUES" --wait --timeout 5m >/dev/null
+  h install "$RELEASE" "$CHART" --values "$VALUES" --wait --timeout 5m >/dev/null \
+    || die "the release did not install — nothing below this point would be measuring the chart"
+  # Informational, and deliberately the last thing: it succeeds whether or not anything is running,
+  # so its status must never be what this function returns. Every step above exits on failure, so by
+  # the time control reaches here the install has genuinely succeeded.
   k get pods -l "app.kubernetes.io/instance=$RELEASE" --no-headers | sed 's/^/   /'
 }
 
@@ -621,6 +643,21 @@ main() {
       # `down` runs even when something above fails, because a half-torn-down rehearsal leaves a
       # k3d context behind that somebody later mistakes for a live cluster.
       trap cmd_down EXIT
+      # READ THIS BEFORE ADDING A STEP. `set -euo pipefail` at the top of this file does NOT apply
+      # inside any function on the left of this chain: a command in an AND-list is exempt from
+      # errexit, and the exemption is inherited into functions and even into subshells that set -e
+      # again. So every step here runs to completion on failure unless it guards itself, and the
+      # chain only short-circuits on what the function happens to RETURN — which is the status of
+      # its last line.
+      #
+      # That combination is what #525 was: cmd_up's last line was an informational `kubectl get
+      # pods`, so a release that installed nothing returned 0 and cmd_verify then measured an empty
+      # cluster. cmd_up now carries an explicit `|| die` on every fallible step.
+      #
+      # Keep the chain rather than plain sequencing, because the two kinds of step are not alike:
+      # `up` builds a precondition and must stop the run, while `verify` and friends measure and are
+      # MEANT to keep going and report at the end through FAILURES. Real errexit here would abort
+      # `verify` on its first failed curl, which is the opposite of what it is for.
       cmd_up && cmd_verify && cmd_import && cmd_chain && cmd_test
       ;;
     # The Flux path is its own `all`, and must not share a cluster with the one above: both install a
