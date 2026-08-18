@@ -1,7 +1,7 @@
 # `infra/` — the Hetzner environment, declared
 
 OpenTofu configuration for [#260](https://github.com/enorm-labs/event-junkie/issues/260). The reasoning behind every choice here — sizing, the ARM line, the
-Cloudflare removal, why deploys are pull-based — is in [`docs/PLATFORM_SETUP.md`](../docs/PLATFORM_SETUP.md) and [ADR-012](../docs/adr/ADR-012_CLOUD_PLATFORM.md).
+Cloudflare removal, why deploys are pull-based — is in [`docs/ops/PLATFORM_SETUP.md`](../docs/ops/PLATFORM_SETUP.md) and [ADR-012](../docs/adr/ADR-012_CLOUD_PLATFORM.md).
 This file covers only what an operator needs in front of them while running it; [`AGENTS.md`](AGENTS.md) next to it covers the conventions and the commands an
 agent must not run.
 
@@ -66,7 +66,7 @@ the zone, its delegation and its key untouched.
 
     **Versioning is for `-tfstate` only. Do not turn it on for `-backups`.** There it would keep a copy of everything `wal-g` deletes, so the retention window
     the privacy notice states would become decorative and the storage would grow without bound. That bucket gets a plain expiry rule instead —
-    [CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) §8b.
+    [CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) §8b.
 
 3. **Nothing else in the console.** Servers, networks, firewalls, IPs and DNS are all declared here; creating one by hand means the first apply either duplicates
    it or needs a `tofu import`.
@@ -126,16 +126,16 @@ connection it was meant to admit — which looks exactly like a broken firewall 
 goes over UDP/53 rather than through the proxy, so it reports the direct one. Allow both; it is a bootstrap value that goes back to `[]` shortly anyway.
 
 **From here on the apply is only the first of eleven steps**, and the rest — tunnel, kubeconfig, database, secrets, `flux bootstrap` — are in
-[docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md), in order. `tofu output next_steps` prints an abridged version with the real addresses filled in.
+[docs/ops/CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md), in order. `tofu output next_steps` prints an abridged version with the real addresses filled in.
 
 ### Getting onto the tunnel
 
 **Two runbooks, neither of them here:**
 
-|                                   |                                                                                                                                              |
-| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Setting a cluster up from scratch | [docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) — `tofu apply` through tunnel, kubeconfig, database and `flux bootstrap`, in order |
-| Connecting to one that exists     | [docs/CLUSTER_ACCESS.md](../docs/CLUSTER_ACCESS.md) — tunnel up, kubeconfig, contexts, `k9s`, tunnel down                                    |
+|                                   |                                                                                                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setting a cluster up from scratch | [docs/ops/CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) — `tofu apply` through tunnel, kubeconfig, database and `flux bootstrap`, in order |
+| Connecting to one that exists     | [docs/ops/CLUSTER_ACCESS.md](../docs/ops/CLUSTER_ACCESS.md) — tunnel up, kubeconfig, contexts, `k9s`, tunnel down                                    |
 
 ```sh
 sudo wg-quick up ~/.wireguard/staging.conf          # the short version of the second one
@@ -176,7 +176,7 @@ every `helm`, `flux` and `kubectl` command in this repository's guidance passes 
 takes is the one every other cluster also uses.
 
 Keeping the file separate or merging it into `~/.kube/config` is a genuine choice, and
-[CLUSTER_ACCESS.md §3](../docs/CLUSTER_ACCESS.md#3--point-kubectl-at-it) sets out both with what each costs. The short of it: separate means forgetting the
+[CLUSTER_ACCESS.md §3](../docs/ops/CLUSTER_ACCESS.md#3--point-kubectl-at-it) sets out both with what each costs. The short of it: separate means forgetting the
 export fails loudly, merged means the safety rests entirely on `--context`.
 
 ### Why the database is on a volume, and what that does and does not buy
@@ -200,10 +200,10 @@ the node, the other survives a bad migration. You need both — and since
 30-day window. What does not exist yet is a **rehearsed restore**, which is the only thing that turns the second one from a belief into a fact.
 
 Two drills, and they prove different halves. Write a row, replace the node, read the row is
-[docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) § _Proving the volume actually survives_ — done, 2026-08-17. Restore from the bucket alone into a
-scratch cluster is [docs/RESTORE_RUNBOOK.md](../docs/RESTORE_RUNBOOK.md) — done, 2026-08-18, both halves including point-in-time recovery past a `DROP TABLE`.
+[docs/ops/CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) § _Proving the volume actually survives_ — done, 2026-08-17. Restore from the bucket alone into a
+scratch cluster is [docs/ops/RESTORE_RUNBOOK.md](../docs/ops/RESTORE_RUNBOOK.md) — done, 2026-08-18, both halves including point-in-time recovery past a `DROP TABLE`.
 Restore to serving took ~12 seconds on a 39 MB cluster, which is a number to re-measure rather than to trust as the database grows.
-[docs/BACKUPS.md](../docs/BACKUPS.md) is the whole picture.
+[docs/ops/BACKUPS.md](../docs/ops/BACKUPS.md) is the whole picture.
 
 ### Closing the door behind you
 
@@ -422,12 +422,12 @@ exist because the failure they prevent is a node reachable only through the brow
 |                                                    | Where it lives                                                                                                                                                                    |
 | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Database roles, credentials, schema                | [#261](https://github.com/enorm-labs/event-junkie/issues/261) — application lifecycle, not machine lifecycle. Baking them in would mean a rebuild silently re-creates credentials |
-| The S3 key `wal-g` archives with                   | Written by hand into `/etc/wal-g/credentials.env` — [CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) §8b. It cannot live here: `user_data` is state                           |
-| The bucket lifecycle rule, and the restore drill   | [CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) §8b, [BACKUPS.md](../docs/BACKUPS.md) and [RESTORE_RUNBOOK.md](../docs/RESTORE_RUNBOOK.md)                                   |
+| The S3 key `wal-g` archives with                   | Written by hand into `/etc/wal-g/credentials.env` — [CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) §8b. It cannot live here: `user_data` is state                       |
+| The bucket lifecycle rule, and the restore drill   | [CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) §8b, [BACKUPS.md](../docs/ops/BACKUPS.md) and [RESTORE_RUNBOOK.md](../docs/ops/RESTORE_RUNBOOK.md)                       |
 | Helm chart, cert-manager, ingress, NetworkPolicies | [#261](https://github.com/enorm-labs/event-junkie/issues/261)                                                                                                                     |
 | Flux                                               | [#414](https://github.com/enorm-labs/event-junkie/issues/414)                                                                                                                     |
 | Observability                                      | [ADR-015](../docs/adr/ADR-015_OBSERVABILITY_STACK.md), [#271](https://github.com/enorm-labs/event-junkie/issues/271)                                                              |
-| A `staging` address record                         | Nowhere. Staging does not resolve on the public internet — [PLATFORM_SETUP.md §4a](../docs/PLATFORM_SETUP.md)                                                                     |
+| A `staging` address record                         | Nowhere. Staging does not resolve on the public internet — [PLATFORM_SETUP.md §4a](../docs/ops/PLATFORM_SETUP.md)                                                                 |
 | A 301 from `event-junkie.com`                      | Go-live. A redirect needs a certificate, which needs the name to resolve, which needs the site to be up                                                                           |
 
 ## Local checks

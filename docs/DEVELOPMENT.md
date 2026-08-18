@@ -290,7 +290,7 @@ about one.
 ## Infrastructure (OpenTofu)
 
 The Hetzner platform is declared in [`infra/`](../infra). **Nothing in it has ever been applied**, and the plan behind it is
-[docs/PLATFORM_SETUP.md](./PLATFORM_SETUP.md).
+[docs/ops/PLATFORM_SETUP.md](./ops/PLATFORM_SETUP.md).
 
 Before changing anything there, read [infra/AGENTS.md](../infra/AGENTS.md) — it opens with the commands that must not be run. These need no credentials and are
 exactly what `validate-infra.yml` runs in CI:
@@ -460,7 +460,7 @@ values file.
 
 ## Versions and cutting a release
 
-> The **end-to-end** picture — build, scan, publish, and how Flux reconciles it onto a cluster, with a diagram — is [RELEASING.md](RELEASING.md). This section is
+> The **end-to-end** picture — build, scan, publish, and how Flux reconciles it onto a cluster, with a diagram — is [RELEASING.md](ops/RELEASING.md). This section is
 > the version scheme and the local commands.
 
 **One number reaches four artifacts, and only one file decides it.** [`gradle.properties`](../gradle.properties) carries `version=X.Y.Z-SNAPSHOT`; everything
@@ -557,7 +557,7 @@ from the consuming side.
 
 - **Every GHCR package is private on its first publish**, regardless of repository visibility. Four packages — `bff`, `importer`, `frontend` and the chart —
   each needing one visibility flip in its package settings. The symptom of forgetting is `ImagePullBackOff` on the first deploy, with nothing in the logs
-  naming the cause. See [PLATFORM_SETUP §3](PLATFORM_SETUP.md#3-container-registry--ghcr-not-docker-hub).
+  naming the cause. See [PLATFORM_SETUP §3](ops/PLATFORM_SETUP.md#3-container-registry--ghcr-not-docker-hub).
 - **A local `docker push` or `helm push` needs a classic PAT** with `write:packages`; GitHub Packages does not support fine-grained tokens. CI needs no such
   credential — `permissions: packages: write` and the run's own token are enough.
 

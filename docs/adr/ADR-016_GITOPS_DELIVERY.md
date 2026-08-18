@@ -4,7 +4,7 @@
 
 **Accepted (2026-08-12) — Flux, reconciling a Helm chart published to GHCR. CI builds and publishes; it never deploys.**
 
-Decided on 2026-08-10 in [PLATFORM_SETUP §4](../PLATFORM_SETUP.md#4-how-deploys-happen) and implemented in
+Decided on 2026-08-10 in [PLATFORM_SETUP §4](../ops/PLATFORM_SETUP.md#4-how-deploys-happen) and implemented in
 [#264](https://github.com/enorm-labs/event-junkie/issues/264) and [#414](https://github.com/enorm-labs/event-junkie/issues/414). This ADR records it properly,
 because the reasoning is load-bearing, it was arrived at by _reversing_ an earlier decision, and one of its consequences is easy to state backwards.
 
@@ -160,9 +160,9 @@ previous version to return to.
 
 ## References
 
-- [PLATFORM_SETUP §4, §4a](../PLATFORM_SETUP.md#4-how-deploys-happen) — the setup-level detail and the deployment-visibility design
-- [RELEASING.md](../RELEASING.md) — the end-to-end path a commit takes to become a running deployment
-- [CLUSTER_BOOTSTRAP.md](../CLUSTER_BOOTSTRAP.md) — the once-per-cluster bring-up this decision implies, and what it cost to run the first time
+- [PLATFORM_SETUP §4, §4a](../ops/PLATFORM_SETUP.md#4-how-deploys-happen) — the setup-level detail and the deployment-visibility design
+- [RELEASING.md](../ops/RELEASING.md) — the end-to-end path a commit takes to become a running deployment
+- [CLUSTER_BOOTSTRAP.md](../ops/CLUSTER_BOOTSTRAP.md) — the once-per-cluster bring-up this decision implies, and what it cost to run the first time
 - [ADR-012](ADR-012_CLOUD_PLATFORM.md) — the platform, and the credential weakness this supersedes
 - [deploy/AGENTS.md](../../deploy/AGENTS.md) — the traps, and the rules for touching any of this
 - Flux: [repository structure](https://fluxcd.io/flux/guides/repository-structure/) · [security](https://fluxcd.io/flux/security/) ·

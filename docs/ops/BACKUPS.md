@@ -5,21 +5,21 @@ What protects the database, what each layer actually survives, and how you know 
 **If something has already gone wrong, you want [RESTORE_RUNBOOK.md](RESTORE_RUNBOOK.md), not this.** This document is the design and the reasoning; that one is
 the procedure, written for someone who is under pressure.
 
-[ADR-012](adr/ADR-012_CLOUD_PLATFORM.md) chose to own PostgreSQL rather than rent a managed one, and named this **the load-bearing mitigation of that trade and
+[ADR-012](../adr/ADR-012_CLOUD_PLATFORM.md) chose to own PostgreSQL rather than rent a managed one, and named this **the load-bearing mitigation of that trade and
 the single highest-risk item the decision creates**. Everything here exists because of that sentence.
 
 ## The short version
 
-|                 |                                                                                                                |
-| --------------- | -------------------------------------------------------------------------------------------------------------- |
-| **What**        | PostgreSQL only — WAL streamed continuously, plus a base backup nightly at 02:30                               |
-| **With**        | `wal-g` v3.0.8, installed by `infra/modules/environment/cloud-init/backups.sh`                                 |
-| **Where**       | `s3://event-junkie-backups/<environment>/`, Hetzner Object Storage, `fsn1`                                     |
-| **Window**      | 30 days of point-in-time recovery                                                                              |
-| **RPO**         | ≤ 5 minutes (`archive_timeout = 300`), lower under load                                                        |
-| **RTO**         | ~12 s measured on a 39 MB cluster — see §8, and do not trust that number as it grows                           |
-| **Verified by** | `walg check`, hourly: a backup exists, is younger than 26 hours, and the volume is under 85%                   |
-| **Rehearsed**   | 2026-08-18, staging, both full replay and PITR — [#270](https://github.com/enorm-labs/event-junkie/issues/270) |
+|                 |                                                                                                                            |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **What**        | PostgreSQL only — WAL streamed continuously, plus a base backup nightly at 02:30                                           |
+| **With**        | [`wal-g`](https://wal-g.readthedocs.io/PostgreSQL/) v3.0.8, installed by `infra/modules/environment/cloud-init/backups.sh` |
+| **Where**       | `s3://event-junkie-backups/<environment>/`, Hetzner Object Storage, `fsn1`                                                 |
+| **Window**      | 30 days of point-in-time recovery                                                                                          |
+| **RPO**         | ≤ 5 minutes (`archive_timeout = 300`), lower under load                                                                    |
+| **RTO**         | ~12 s measured on a 39 MB cluster — see §8, and do not trust that number as it grows                                       |
+| **Verified by** | `walg check`, hourly: a backup exists, is younger than 26 hours, and the volume is under 85%                               |
+| **Rehearsed**   | 2026-08-18, staging, both full replay and PITR — [#270](https://github.com/enorm-labs/event-junkie/issues/270)             |
 
 ## 1. What is backed up, and what is not
 
@@ -166,7 +166,7 @@ variable "walg_version"   { default = "v3.0.8" }
 variable "walg_checksums" { default = { amd64 = "ce3825…", arm64 = "6789fc…" } }
 ```
 
-It is listed in [`update-dependencies.prompt.md`](../.github/prompts/update-dependencies.prompt.md) § _The CI tool versions nothing else watches_, which is the
+It is listed in [`update-dependencies.prompt.md`](../../.github/prompts/update-dependencies.prompt.md) § _The CI tool versions nothing else watches_, which is the
 routine sweep that catches it. Check the current release with:
 
 ```sh
@@ -192,7 +192,7 @@ than fetching it beside the tarball is the point — a checksum fetched from the
 that runs PostgreSQL, production included. So:
 
 - **Do not sweep it up with the routine dependency run.** Bump it when there is a reason — a fix you need, an advisory — and take the rebuild deliberately, with
-  `docs/CLUSTER_BOOTSTRAP.md` § _Rebuilding a node_ open.
+  `docs/ops/CLUSTER_BOOTSTRAP.md` § _Rebuilding a node_ open.
 - **Or install ahead of the rebuild.** `backups.sh` is idempotent and only downloads when the installed version differs, so you can bump the variable, run the
   script by hand on the node, and let the next natural rebuild find the work already done. The plan will still show a replacement; that is honest, because
   `user_data` genuinely differs.
@@ -244,4 +244,5 @@ always reflects the database's current size rather than the day it was first sma
 ---
 
 **See also** — [RESTORE_RUNBOOK.md](RESTORE_RUNBOOK.md) · [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8b ·
-[ADR-012](adr/ADR-012_CLOUD_PLATFORM.md) · [infra/AGENTS.md](../infra/AGENTS.md) § Backups
+[ADR-012](../adr/ADR-012_CLOUD_PLATFORM.md) · [infra/AGENTS.md](../../infra/AGENTS.md) § Backups ·
+[wal-g PostgreSQL documentation](https://wal-g.readthedocs.io/PostgreSQL/) — upstream reference for every `wal-g` command and environment variable used here

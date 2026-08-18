@@ -271,7 +271,7 @@ their merits, do not pin back.
 `user_data` — **a force-new attribute.** Bumping either one plans a _node replacement_, production included, where bumping Trivy edits a workflow. So:
 
 - **Do not sweep them up with the routine run.** Move them when there is a reason, and take the rebuild deliberately with
-  [docs/CLUSTER_BOOTSTRAP.md](../../docs/CLUSTER_BOOTSTRAP.md) § _Rebuilding a node_ open.
+  [docs/ops/CLUSTER_BOOTSTRAP.md](../../docs/ops/CLUSTER_BOOTSTRAP.md) § _Rebuilding a node_ open.
 - **`wal-g` also carries two checksums**, one per architecture, because production is ARM and staging is x86. Both move with the version, and they come from the
   release's own `.sha256` files — never from the tarball's host, which would verify only that the download completed:
 
@@ -287,7 +287,7 @@ their merits, do not pin back.
 
 - **`wal-g` is on the recovery path, not the request path.** Nothing about a stale version shows up in monitoring, and the moment you find out is the moment you
   are already restoring — so the natural time to review it is the quarterly restore drill, not this sweep.
-  [docs/BACKUPS.md](../../docs/BACKUPS.md) §8 has the whole argument.
+  [docs/ops/BACKUPS.md](../../docs/ops/BACKUPS.md) §8 has the whole argument.
 
 ## Output Summary
 

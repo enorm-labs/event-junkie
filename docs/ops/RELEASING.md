@@ -1,10 +1,10 @@
 # Releasing and deploying
 
 How a commit becomes a running deployment. Two halves that meet at a registry and never talk to each other directly:
-[`release.yml`](../.github/workflows/release.yml) **builds and publishes**, and Flux **pulls and reconciles**. Nothing in CI can reach a cluster, by design —
-[ADR-016](adr/ADR-016_GITOPS_DELIVERY.md).
+[`release.yml`](../../.github/workflows/release.yml) **builds and publishes**, and Flux **pulls and reconciles**. Nothing in CI can reach a cluster, by design —
+[ADR-016](../adr/ADR-016_GITOPS_DELIVERY.md).
 
-The version scheme itself is in [DEVELOPMENT.md §Versions](DEVELOPMENT.md#versions-and-cutting-a-release); the platform reasoning is in
+The version scheme itself is in [DEVELOPMENT.md §Versions](../DEVELOPMENT.md#versions-and-cutting-a-release); the platform reasoning is in
 [PLATFORM_SETUP §3–4a](PLATFORM_SETUP.md#3-container-registry--ghcr-not-docker-hub).
 
 ## The whole path
@@ -75,7 +75,7 @@ keeps the Releases page the single record of what shipped.
 
 ## One version, four artifacts
 
-`gradle.properties` is the source of truth; everything derives from it via [`scripts/version.sh`](../scripts/version.sh).
+`gradle.properties` is the source of truth; everything derives from it via [`scripts/version.sh`](../../scripts/version.sh).
 
 ```
 gradle.properties  0.1.1-SNAPSHOT
@@ -133,7 +133,7 @@ The same rule is why the base version moved `0.1.0` → `0.1.1` without `0.1.0` 
 `0.1.0-snapshot.2026…` would have sorted _under_ all ten legacy `0.1.0-snapshot.g…` tags. Those are immutable published artifacts and were not deleted; the patch
 bump puts every new snapshot above them on the `major.minor.patch` comparison, before any prerelease identifier is looked at.
 
-[`scripts/version-test.sh`](../scripts/version-test.sh) is the gate. It resolves fabricated version sets through Helm's own Masterminds solver — the library
+[`scripts/version-test.sh`](../../scripts/version-test.sh) is the gate. It resolves fabricated version sets through Helm's own Masterminds solver — the library
 Flux's source-controller embeds — and asserts the newest wins. Asserting the _format_ would not have caught this; the format was always valid.
 
 ## When a deploy goes wrong
@@ -173,7 +173,7 @@ scripts/k3d-rehearsal.sh all        # the working tree's chart, with locally bui
 ```
 
 The first answers _"does the delivery mechanism work?"_, the second _"does my change work?"_. They must not share a cluster. See
-[the k3d rehearsal prompt](../.github/prompts/k3d-rehearsal.prompt.md).
+[the k3d rehearsal prompt](../../.github/prompts/k3d-rehearsal.prompt.md).
 
 ## Bringing up a new cluster
 

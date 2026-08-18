@@ -55,7 +55,7 @@ workloads serve the database that survived the node. Two things about that bring
 
 - **The database survived; its credential did not.** The `events` role came through on the volume, but the password lived only in the `events-db` Secret, which
   died with the cluster — and a SCRAM hash is not reversible. So a rebuild needs `ALTER ROLE events PASSWORD …` and a fresh Secret, not `CREATE ROLE`. §8 of
-  `docs/CLUSTER_BOOTSTRAP.md` reads as though the database step is all-or-nothing; after a rebuild it is half redundant and half mandatory.
+  `docs/ops/CLUSTER_BOOTSTRAP.md` reads as though the database step is all-or-nothing; after a rebuild it is half redundant and half mandatory.
 - **The `hetzner` Secret now holds the same token this stack authenticates with**, chosen deliberately on 2026-08-17 over minting a second one. Hetzner tokens
   are project-scoped with no finer grain, so it is the same power either way — but revoking that token now breaks `tofu apply` _and_ DNS-01 together, which is
   the cost of the choice and the thing to remember when rotating.
@@ -102,7 +102,7 @@ outputs use short names (`k3s_ipv4`) rather than the book's `{name}_{type}_{attr
 Comments explain **why**, and specifically why an obvious alternative was not taken — `firewall.tf` opens on why Hetzner firewalls cannot secure the private
 network, `servers.tf` on why Primary IPs are separate resources. Match that. Do not add comments that restate the HCL.
 
-Cross-references point at `docs/PLATFORM_SETUP.md` sections (`§4a`, `§8a`) and ADR numbers. Keep them; they are how a reader gets from a line of config to the
+Cross-references point at `docs/ops/PLATFORM_SETUP.md` sections (`§4a`, `§8a`) and ADR numbers. Keep them; they are how a reader gets from a line of config to the
 argument behind it. If you contradict one of those documents, change the document too, or say plainly that you have not.
 
 ## Things that will bite
@@ -124,7 +124,7 @@ argument behind it. If you contradict one of those documents, change the documen
 - **`server_type` cannot cross architectures, and `tofu plan` will not warn you.** Within one architecture it is an in-place resize; between `cpx*` (x86) and
   `cax*` (ARM) Hetzner refuses — [their FAQ](https://docs.hetzner.com/cloud/servers/faq/) lists rescale alongside snapshots and ISOs as places where "it is not
   possible to work with two different architecture types". The plan renders a tidy in-place update and the **apply** fails against the API partway through. So
-  an architecture change is a _rebuild_, not a variable change: see [docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) §Rebuilding a node. Staging is on
+  an architecture change is a _rebuild_, not a variable change: see [docs/ops/CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) §Rebuilding a node. Staging is on
   `cpx22` only because ARM could not be bought (#424), so this is a live concern rather than a hypothetical.
 - **Rebuilding a node keeps its database; destroying an environment does not.** `PGDATA` is on an `hcloud_volume` mounted at `/var/lib/postgresql` (#460), and
   the volume is declared standalone — `location`, never `server_id` — so nothing about it references a server and no server edit can plan to replace it.
@@ -174,12 +174,12 @@ argument behind it. If you contradict one of those documents, change the documen
 ## Backups
 
 `backups.sh` is commented far more thinly than anything else here, because it is rendered into a `user_data` that is 92% full. The operational picture — what
-each layer survives, retention, costs, how `wal-g` is kept current — is [docs/BACKUPS.md](../docs/BACKUPS.md), and restoring is
-[docs/RESTORE_RUNBOOK.md](../docs/RESTORE_RUNBOOK.md). What follows is what an agent about to change `backups.sh` needs, and nothing else.
+each layer survives, retention, costs, how `wal-g` is kept current — is [docs/ops/BACKUPS.md](../docs/ops/BACKUPS.md), and restoring is
+[docs/ops/RESTORE_RUNBOOK.md](../docs/ops/RESTORE_RUNBOOK.md). What follows is what an agent about to change `backups.sh` needs, and nothing else.
 
 **The credential is not in this configuration and must not be put there.** wal-g needs an S3 access key and secret; they would reach the node through
 `user_data`, which is state. So the split is: the machine installs the mechanism, the operator writes `/etc/wal-g/credentials.env` by hand
-(`docs/CLUSTER_BOOTSTRAP.md` §8b). The honest cost is that **a rebuilt node comes back with the timers and no credential** — the same shape as the `events`
+(`docs/ops/CLUSTER_BOOTSTRAP.md` §8b). The honest cost is that **a rebuilt node comes back with the timers and no credential** — the same shape as the `events`
 role's password, which already dies with a rebuild. That is not mitigated by care; it is mitigated by `walg check`, below.
 
 **`walg check` is the point, not the backups themselves.** A backup job that exits 0 having uploaded nothing is the failure mode this whole issue exists to
@@ -202,7 +202,7 @@ pointed at production's prefix would delete real backups on its next sweep.
 production sets `postgres_public_ipv4 = true` and why `backups.sh` stops the boot rather than coming up without backups. `apt.postgresql.org` _does_ answer on
 IPv6, so the older worry in `PLATFORM_SETUP.md` §1 resolves the other way.
 
-**A backup nobody has restored is a belief about a backup.** The drill is `docs/RESTORE_RUNBOOK.md` §4 and §5, it restores into a scratch cluster on port 5433
+**A backup nobody has restored is a belief about a backup.** The drill is `docs/ops/RESTORE_RUNBOOK.md` §4 and §5, it restores into a scratch cluster on port 5433
 and never into live `PGDATA`, and it is not optional before go-live.
 
 **It has been run once: 2026-08-18, staging, both halves passed.** 3,310 events and 3,953 artists came back from the bucket alone, including a marker row

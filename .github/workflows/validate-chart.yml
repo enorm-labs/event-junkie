@@ -2,7 +2,7 @@ name: Validate Helm Chart
 
 # `helm lint`, `helm template`, `flux schema validate` and the render assertions are pure functions of the
 # working tree — they reach no cluster and need no kubeconfig, which is what makes them safe to run
-# in CI at all (docs/PLATFORM_SETUP.md §4: nothing outside the cluster holds a credential for it).
+# in CI at all (docs/ops/PLATFORM_SETUP.md §4: nothing outside the cluster holds a credential for it).
 #
 # So this is a syntax and shape gate, not a correctness one. It cannot tell you a pod starts — the
 # k3d rehearsal does that, and `scripts/k3d-rehearsal.sh` is where. What it catches
