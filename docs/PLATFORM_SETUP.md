@@ -111,7 +111,9 @@ must not be destroyed to find out.
 
 **A volume is not a backup, and a backup is not a volume.** They fail differently and neither substitutes for the other. A volume survives the node; it does not
 survive `DROP TABLE`, a bad migration, corruption written faithfully to disk, or the loss of the Hetzner project — and it is not off-site. Backups and a
-rehearsed restore are [#270](https://github.com/enorm-labs/event-junkie/issues/270), which this does not close and does not defer.
+rehearsed restore are [#270](https://github.com/enorm-labs/event-junkie/issues/270), which this does not close and does not defer. Since #270 the backups exist
+— `wal-g` streaming WAL and a nightly base backup to the `…-backups` bucket, 30-day window — but **the restore has not been rehearsed**, and until it has, the
+sentence above still stands in full.
 
 One thing the volume does **not** give you on its own: `delete_protection` stops the console and the API, not OpenTofu. The provider lifts its own locks, so a
 `tofu destroy` in the production directory still removes it. §10 says the same of the Primary IPs, for the same reason.
@@ -340,16 +342,16 @@ where the workloads do.
 
 ### Infrastructure
 
-| Thing           | Choice                                           | Confidence                                                    |
-| --------------- | ------------------------------------------------ | ------------------------------------------------------------- |
-| Ingress + TLS   | **Traefik** (ships with k3s) + **cert-manager**  | Decided — §6                                                  |
-| Load balancer   | **None.** k3s ServiceLB binds to the node IP     | Decided — §6                                                  |
-| Registry        | **GHCR**, not Docker Hub                         | Decided — §3                                                  |
-| GitOps / deploy | **Flux** (pull-based); CI builds and pushes only | Decided — §4, §4a                                             |
-| Observability   | **OpenObserve**                                  | ADR-015, _Accepted on trial_ — §5                             |
-| Database        | PostgreSQL 18 on its own VM                      | ADR-012                                                       |
-| Backups         | `wal-g` → Object Storage (S3)                    | [#270](https://github.com/enorm-labs/event-junkie/issues/270) |
-| Secrets         | **SOPS + age**                                   | Decided — §8                                                  |
+| Thing           | Choice                                           | Confidence                              |
+| --------------- | ------------------------------------------------ | --------------------------------------- |
+| Ingress + TLS   | **Traefik** (ships with k3s) + **cert-manager**  | Decided — §6                            |
+| Load balancer   | **None.** k3s ServiceLB binds to the node IP     | Decided — §6                            |
+| Registry        | **GHCR**, not Docker Hub                         | Decided — §3                            |
+| GitOps / deploy | **Flux** (pull-based); CI builds and pushes only | Decided — §4, §4a                       |
+| Observability   | **OpenObserve**                                  | ADR-015, _Accepted on trial_ — §5       |
+| Database        | PostgreSQL 18 on its own VM                      | ADR-012                                 |
+| Backups         | `wal-g` → Object Storage (S3), 30-day PITR       | Built — #270; restore drill outstanding |
+| Secrets         | **SOPS + age**                                   | Decided — §8                            |
 
 ### Deferred, with reasons — §4
 
@@ -1014,8 +1016,9 @@ _(GitHub Environments moved out of this phase. They are no longer a prerequisite
    locks before destroying, so it does not stop `tofu destroy`. `auto_delete = false` is what actually preserves the address. `lifecycle { prevent_destroy }`
    is the only lock OpenTofu enforces, and it is used on the DNS zones alone.
 7. **cloud-init**: **WireGuard on the host** (§8a — before anything else, since it is how you get back in), k3s with `--tls-san`, `unattended-upgrades`, SSH
-   hardening on the k3s node; PostgreSQL 18 bound to the private network on the DB node. Roles, credentials and `wal-g` are **not** here — they are #261 and
-   #270.
+   hardening on the k3s node; PostgreSQL 18 bound to the private network on the DB node. Roles and credentials are **not** here — they are #261. `wal-g`
+   **is**, since #270: `backups.sh` installs it and turns on `archive_mode`, but the S3 key it archives with is written by hand afterwards, because `user_data`
+   is state.
 8. **Apply.** Requires a token and spends money; not something an agent should do.
 9. **Flip the nameservers at INWX** to Hetzner's, _after_ the zone exists. DNSSEC is a separate, later step —
    [#259](https://github.com/enorm-labs/event-junkie/issues/259).
@@ -1052,7 +1055,10 @@ _(GitHub Environments moved out of this phase. They are no longer a prerequisite
 18. **Staging** (#265) — **not on the public internet at all** (§4a): no public `A` record, no public 80/443, Ingress on the WireGuard tunnel, and a real
     certificate via DNS-01. Smoke tests move into the cluster as Helm test hooks, since CI cannot reach it. `X-Robots-Tag: noindex` and a per-environment
     `robots.txt` stay as defence-in-depth.
-19. **Backups and a rehearsed restore** (#270). ADR-012 calls this the single highest-risk item it creates. An untested backup is not a backup.
+19. **Backups and a rehearsed restore** (#270). ADR-012 calls this the single highest-risk item it creates. An untested backup is not a backup. The mechanism
+    landed 2026-08-18 — `wal-g` to Object Storage, a **30-day** window enforced by both a nightly sweep and a bucket lifecycle rule, and an hourly `walg check`
+    that asserts a backup exists and is fresh before it pings healthchecks.io. **The restore drill itself is still outstanding**, and it is the half that closes
+    the issue: `docs/CLUSTER_BOOTSTRAP.md` § Proving a restore actually works.
 20. **Monitoring and alerting** (#271), with a route that reaches a human at 23:00.
 
 ### Phase E — go-live

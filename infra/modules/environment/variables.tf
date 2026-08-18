@@ -109,10 +109,18 @@ variable "postgres_public_ipv4" {
   description = <<-EOT
     Whether the dedicated PostgreSQL node gets a public IPv4.
 
-    Defaults to false: the node is IPv6-only and reaches the internet over IPv6 for `apt` and
-    nothing else. **This is the one unresolved assumption in the design** (PLATFORM_SETUP.md §1) —
-    if `apt update` fails on first boot because a mirror is IPv4-only, flip this to true, re-apply,
-    and the address attaches in seconds. Do not pre-emptively route egress through the k3s node.
+    Defaults to false: the node is IPv6-only and reaches the internet over IPv6 for `apt` and for
+    the wal-g release. Flip this to true and re-apply if either fetch fails; the address attaches in
+    seconds. Do not pre-emptively route egress through the k3s node.
+
+    **The apt half of this is settled and the GitHub half is not, in opposite directions.**
+    `apt.postgresql.org` answers on IPv6 (via Fastly), so PLATFORM_SETUP.md §1's "one unresolved
+    assumption" resolves in the design's favour. But **github.com publishes no AAAA record at all**
+    — checked 2026-08-18 — and wal-g ships only as a GitHub release, so on a node with no public
+    IPv4 `backups.sh` cannot fetch its binary and stops the boot saying so (#270). Production
+    therefore has to set this true, buy egress another way, or accept a node without backups, and
+    the third is not an option. ~€0.50/month is the cheap answer; the NAT-gateway alternative is in
+    AGENTS.md and is only worth building if the address itself is the problem.
   EOT
   type        = bool
   default     = false
@@ -331,4 +339,94 @@ variable "postgres_volume_delete_protection" {
   type        = bool
   default     = false
   nullable    = false
+}
+
+# ---------------------------------------------------------------------------
+# Off-server backups — wal-g to Hetzner Object Storage (#270)
+# ---------------------------------------------------------------------------
+#
+# The S3 access key and secret are deliberately absent from this file and from every other. They
+# would reach the node through `user_data`, which is state, and nothing secret goes into state. The
+# operator writes them to /etc/wal-g/credentials.env by hand — CLUSTER_BOOTSTRAP.md §8b.
+
+variable "backup_bucket" {
+  description = <<-EOT
+    Object Storage bucket holding wal-g's WAL and base backups.
+
+    Created by hand alongside the state bucket (infra/README.md), because Hetzner has no Cloud API
+    for buckets. Shared by both environments and separated by a prefix derived from `environment`,
+    since the subscription is billed per account and a second bucket would buy nothing.
+  EOT
+  type        = string
+  default     = "event-junkie-backups"
+  nullable    = false
+}
+
+variable "backup_endpoint" {
+  description = <<-EOT
+    S3 endpoint wal-g pushes to.
+
+    `fsn1` regardless of where the servers run: traffic inside the `eu-central` network zone is
+    free, and buckets cannot be moved afterwards. It answers on IPv6, so the dedicated PostgreSQL
+    node can reach it without a public IPv4 — unlike GitHub, see `postgres_public_ipv4`.
+  EOT
+  type        = string
+  default     = "https://fsn1.your-objectstorage.com"
+  nullable    = false
+}
+
+variable "backup_region" {
+  description = "Region wal-g signs S3 requests for. Must match the bucket's location, like `region` in backend.tf."
+  type        = string
+  default     = "fsn1"
+  nullable    = false
+}
+
+variable "backup_retention_days" {
+  description = <<-EOT
+    How far back point-in-time recovery reaches, in days.
+
+    **This is a number the privacy notice has to state** (#277), not only an ops setting, so it is
+    enforced twice: by the nightly `wal-g delete` sweep and by a lifecycle rule on the bucket. The
+    sweep alone would let the window quietly become "forever" whenever the node was down.
+
+    30 days, decided 2026-08-18: long enough that corruption noticed weeks later is still
+    recoverable, and a defensible figure to put in front of a data subject.
+  EOT
+  type        = number
+  default     = 30
+  nullable    = false
+
+  validation {
+    condition     = var.backup_retention_days >= 7
+    error_message = "A retention window under a week cannot survive a quiet holiday, which is when it would matter."
+  }
+}
+
+variable "walg_version" {
+  description = "wal-g release tag. Pinned rather than tracking latest, because an unattended boot is a poor place to meet a new major."
+  type        = string
+  default     = "v3.0.8"
+  nullable    = false
+}
+
+variable "walg_checksums" {
+  description = <<-EOT
+    SHA-256 of the `wal-g-pg-24.04-*.tar.gz` release assets, keyed by dpkg architecture.
+
+    Pinned here rather than fetched from the host that served the tarball, which would verify only
+    that the download completed. Both architectures are carried because production is ARM and
+    staging is x86 (#424), and the node picks its own at boot.
+  EOT
+  type        = map(string)
+  default = {
+    amd64 = "ce382535fb3a59f07fd3ae02e96a039764ac490de49abfb3564fec36d65fafbc"
+    arm64 = "6789fcaecef1b3e0bfdf9d494460fa301f9c9afcf055d25ecc73a769d87dc156"
+  }
+  nullable = false
+
+  validation {
+    condition     = alltrue([for arch in ["amd64", "arm64"] : can(var.walg_checksums[arch])])
+    error_message = "Both amd64 and arm64 checksums are required; the node picks one at boot and neither environment may be the odd one out."
+  }
 }

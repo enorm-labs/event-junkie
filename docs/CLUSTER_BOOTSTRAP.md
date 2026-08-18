@@ -152,6 +152,54 @@ unset PGPASS                                                          # expect: 
 
 Both secrets are the last hand-made objects in the system; [#416](https://github.com/enorm-labs/event-junkie/issues/416) replaces them with SOPS.
 
+## 8b · The backup credential — _the node is not backing anything up until you do this_
+
+`backups.sh` installed wal-g, turned on `archive_mode` and started two timers, and every one of them is failing right now. It could not do otherwise: the S3
+access key would have had to travel through `user_data`, which is state, so the machine gets the mechanism and you get to supply the authority
+([#270](https://github.com/enorm-labs/event-junkie/issues/270)).
+
+**This is the step a node rebuild silently undoes**, exactly like the `events` password. Put it in the rebuild checklist, not in your memory.
+
+```sh
+# The same project-scoped S3 key pair the state bucket uses — Hetzner has no finer grain.
+# HEALTHCHECK_URL is optional but is what turns "the timers are failing" into an alert rather
+# than a silence; make a check at healthchecks.io with a 26-hour period and a 2-hour grace.
+ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 'sudo install -d -m 0750 -o root -g postgres /etc/wal-g && \
+  sudo tee /etc/wal-g/credentials.env >/dev/null && sudo chmod 0640 /etc/wal-g/credentials.env && \
+  sudo chgrp postgres /etc/wal-g/credentials.env' <<'EOF'
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+HEALTHCHECK_URL=https://hc-ping.com/...
+EOF
+```
+
+Then take the first base backup by hand rather than waiting for 02:30, because the failure you want to find is this one and you want to find it now:
+
+```sh
+ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 'sudo systemctl start walg-basebackup && sudo -u postgres walg check'
+# expect: ok: newest <timestamp>, disk NN%
+```
+
+**`walg check` failing is the whole design working.** It exits non-zero — and suppresses the healthchecks ping — when there is no base backup, when the newest
+is older than 26 hours, or when `/var/lib/postgresql` passes 85%. A green `systemctl status` on the timer means the timer ran, which is not the same claim.
+
+One thing to do once per bucket, from your laptop, and only once — it is the second half of the retention promise the privacy notice makes
+([#277](https://github.com/enorm-labs/event-junkie/issues/277)), and it exists because the nightly sweep only runs while the node is alive:
+
+```sh
+cd infra && direnv exec . aws s3api put-bucket-lifecycle-configuration \
+  --endpoint-url https://fsn1.your-objectstorage.com --bucket event-junkie-backups \
+  --lifecycle-configuration '{"Rules":[{"ID":"retain-30-days","Status":"Enabled",
+    "Filter":{"Prefix":""},"Expiration":{"Days":35}}]}'
+```
+
+**35, not 30, and the gap is deliberate.** wal-g's own sweep is the mechanism that understands backup chains; this rule is a backstop that does not. Expiring at
+exactly 30 would let S3 delete a WAL segment a still-valid 30-day-old base backup depends on. Give the sweep five days of room to do the job properly, and let
+the lifecycle rule only catch what it never got to.
+
+**Do not enable versioning on this bucket**, unlike `-tfstate`. Versioning would keep a copy of everything wal-g deletes, so the retention window would become
+decorative and the storage would grow without bound.
+
 ## 9 · Flux
 
 Two repository settings have to be right first, and neither is a token scope:
@@ -246,18 +294,24 @@ another variable when the prefix changes.
 
 ### What survives, and what does not
 
-| Survives                                                                                                                                             | Does not                                                                  |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| **The database** — `PGDATA` is on a volume, and the volume is not part of the server ([#460](https://github.com/enorm-labs/event-junkie/issues/460)) | **The k3s cluster** — new CA, new kubeconfig, new node identity           |
-| **Both Primary IPs** — `auto_delete = false`, so the public address and your WireGuard `Endpoint` are unchanged                                      | **The WireGuard server key** — regenerated at first boot                  |
-| The network, subnet and firewall                                                                                                                     | **Flux, and both secrets** — the cluster is new, so its contents are gone |
-| Your WireGuard _client_ keypair, and `wireguard_peers`                                                                                               | Anything on the node's own disk outside `/var/lib/postgresql`             |
-| The DNS zones (`bootstrap/`, outside every environment destroy)                                                                                      |                                                                           |
+| Survives                                                                                                                                             | Does not                                                                   |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **The database** — `PGDATA` is on a volume, and the volume is not part of the server ([#460](https://github.com/enorm-labs/event-junkie/issues/460)) | **The k3s cluster** — new CA, new kubeconfig, new node identity            |
+| **Both Primary IPs** — `auto_delete = false`, so the public address and your WireGuard `Endpoint` are unchanged                                      | **The WireGuard server key** — regenerated at first boot                   |
+| The network, subnet and firewall                                                                                                                     | **Flux, and both secrets** — the cluster is new, so its contents are gone  |
+| Your WireGuard _client_ keypair, and `wireguard_peers`                                                                                               | Anything on the node's own disk outside `/var/lib/postgresql`              |
+| The backups already in the bucket — they are off-server, which is the point                                                                          | **`/etc/wal-g/credentials.env`**, so the node comes back archiving nothing |
+| The DNS zones (`bootstrap/`, outside every environment destroy)                                                                                      |                                                                            |
 
 **The database survives a _rebuild_, not a `destroy`.** The distinction is the whole of it. Replacing the server — which is what a `cloud-init/` edit or an
 architecture change does — leaves the volume attached to whatever replaces it, and `postgres.sh` adopts the cluster already on it. A `tofu destroy` in the
 environment directory deletes the volume along with everything else, because `delete_protection` does not stop OpenTofu. If you are about to destroy rather than
-rebuild, the volume is not your safety net; [#270](https://github.com/enorm-labs/event-junkie/issues/270) is, and it is not done yet.
+rebuild, the volume is not your safety net; the backups in the bucket are — see §8b, and note that a restore has not yet been rehearsed
+([#270](https://github.com/enorm-labs/event-junkie/issues/270)).
+
+**The backup credential is the second thing that will look fine and not be.** `backups.sh` runs on the new node, installs wal-g and starts the timers, and every
+one of them fails because `/etc/wal-g/credentials.env` died with the old disk. Nothing about the node looks wrong. Re-do §8b as part of every rebuild, and let
+`walg check` — not `systemctl status` — be what tells you it worked.
 
 **The server key is the one that will look like a broken tunnel.** `wireguard.sh` generates a keypair only if none exists, so a fresh node has a fresh one and
 your `~/.wireguard/staging.conf` is pointing at a peer that no longer exists. The handshake simply never happens. Update the `PublicKey =` line from §4; your own
@@ -351,6 +405,71 @@ needs `/128` rather than `/32` and otherwise fails at plan time with `is not the
 
 ---
 
+## Proving a restore actually works — the drill
+
+**First run: not yet performed.** [#270](https://github.com/enorm-labs/event-junkie/issues/270) is not closed until this section names a date and a duration,
+because an untested backup is not a backup — it is a belief about a backup. Record both here when it is done, the way the volume drill above does.
+
+**Owner: @enorm. Repeats quarterly**, and additionally whenever `backups.sh`, `postgres.sh` or the PostgreSQL major version changes.
+
+Two things this drill does not do, and both are the point. **It never touches live `PGDATA`** — it restores into a scratch cluster on port 5433, so a drill that
+goes wrong costs a directory rather than the database. And **it never reads the volume**, only the bucket; a restore that quietly fell back to local data would
+prove nothing at all.
+
+```sh
+# 0. Something to compare against, and a marker with a known time.
+ssh ops@<tunnel-address> "sudo -u postgres psql -c \
+  \"create table if not exists restore_drill(at timestamptz default now()); insert into restore_drill default values;\" \
+  -c 'select count(*) from events; select count(*) from artists; select * from restore_drill;'"
+BEFORE_DROP=$(date -u +%Y-%m-%dT%H:%M:%SZ)      # the PITR target for step 4
+```
+
+```sh
+# 1. What is actually in the bucket. If this list is empty or stale, stop here — that is the finding.
+ssh ops@<tunnel-address> 'sudo -u postgres walg check && sudo -u postgres bash -lc "set -a; . /etc/wal-g/wal-g.env; . /etc/wal-g/credentials.env; set +a; wal-g backup-list"'
+```
+
+```sh
+# 2. Restore the newest base backup into a scratch directory. Time it — the number goes in this doc.
+ssh ops@<tunnel-address> 'sudo -u postgres bash -lc "
+  set -a; . /etc/wal-g/wal-g.env; . /etc/wal-g/credentials.env; set +a
+  rm -rf /var/lib/postgresql/drill && time wal-g backup-fetch /var/lib/postgresql/drill LATEST"'
+```
+
+```sh
+# 3. Bring it up on 5433, replaying WAL from the archive. `restore_command` is what makes this a
+#    restore rather than a file copy: without it the cluster starts at the base backup and stops.
+ssh ops@<tunnel-address> 'sudo -u postgres bash -lc "
+  cat > /var/lib/postgresql/drill/postgresql.auto.conf <<EOF
+port = 5433
+restore_command = \"/usr/local/bin/walg fetch %f %p\"
+EOF
+  touch /var/lib/postgresql/drill/recovery.signal
+  /usr/lib/postgresql/18/bin/pg_ctl -D /var/lib/postgresql/drill -l /tmp/drill.log start"'
+
+# The proof. Same counts, same marker row, on data that came from S3 and nowhere else.
+ssh ops@<tunnel-address> "sudo -u postgres psql -p 5433 -c 'select count(*) from events; select count(*) from artists; select * from restore_drill;'"
+```
+
+```sh
+# 4. The half that matters more, and the half most drills skip: recovery to a *point in time*,
+#    because the disaster this protects against is usually a bad migration rather than a dead disk.
+ssh ops@<tunnel-address> "sudo -u postgres psql -c 'drop table restore_drill;'"
+#    ...then repeat steps 2-3 with recovery_target_time = '$BEFORE_DROP' and
+#    recovery_target_action = 'promote' in postgresql.auto.conf. The table must come back.
+```
+
+```sh
+# 5. Clean up. The scratch cluster is 5433 and shares nothing with the live one, but it is also
+#    sitting on the same 10 GB volume, which walg-check will start complaining about at 85%.
+ssh ops@<tunnel-address> 'sudo -u postgres pg_ctl -D /var/lib/postgresql/drill stop; sudo rm -rf /var/lib/postgresql/drill'
+ssh ops@<tunnel-address> "sudo -u postgres psql -c 'drop table if exists restore_drill;'"
+```
+
+**What "passed" means**, and all four are required: `wal-g backup-list` showed a backup younger than 26 hours; the row counts matched what step 0 recorded; the
+PITR restore brought back a table that had been dropped afterwards; and the wall-clock from step 2 is written down. A restore that works but takes four hours is
+a different fact about this system than one that takes ten minutes, and only one of them is compatible with the RTO nobody has written down yet.
+
 ## Traps, in the order they bite
 
 |                                                        |                                                                                                                                                                                                                                                                                     |
@@ -368,3 +487,6 @@ needs `/128` rather than `/32` and otherwise fails at plan time with `is not the
 | **The tunnel stops working after a rebuild**           | The node generated a new WireGuard server key. Your client config points at a peer that no longer exists, and a handshake simply never happens — update `PublicKey =`. See _Rebuilding a node_                                                                                      |
 | **`server_type` change fails during apply**            | `cpx*` ↔ `cax*` cannot be rescaled. The plan renders an in-place update anyway; the API refuses. It is a rebuild                                                                                                                                                                    |
 | **PostgreSQL will not start after a rebuild**          | Deliberate. `postgres.sh` writes a `RequiresMountsFor=/var/lib/postgresql` drop-in, so if the volume did not attach, the service refuses rather than starting on the local disk and serving an empty database. `findmnt /var/lib/postgresql` and the cloud-init log say which       |
+| **`walg-basebackup` fails, or `walg check` exits 1**   | Almost always `/etc/wal-g/credentials.env` — absent on a fresh node and destroyed by a rebuild, because it is deliberately not in `user_data`. §8b. `sudo -u postgres walg check` says which of the three assertions failed                                                         |
+| **The database stops accepting writes, disk full**     | A failing `archive_command` does not block writes, it accumulates WAL — and `PGDATA` is a 10 GB volume. `walg check` warns at 85% for this reason. Fix the archive, then `pg_archivecleanup` or let the backlog drain; do **not** delete from `pg_wal` by hand                      |
+| **A restore lists fine and will not replay**           | A base backup was removed while a later delta still needed it — `wal-g delete before` run without `FIND_FULL`, or a bucket lifecycle rule expiring at exactly the retention window rather than five days past it. §8b                                                               |

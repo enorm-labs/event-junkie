@@ -2,9 +2,12 @@
 # lives in real `.sh` files that shellcheck can read and a human can run by hand on the node. The
 # templates carry no logic beyond "which scripts, in what order".
 #
-# Everything variable is passed through a single sourced env file. Nothing secret goes in it: the
-# WireGuard *server* key is generated on the node (see wireguard.sh), and database credentials
-# belong to #261.
+# Everything variable is passed through a single sourced env file. Nothing secret goes in it, and
+# that is a hard line rather than a habit — `user_data` is state. The WireGuard *server* key is
+# generated on the node (see wireguard.sh), database credentials belong to #261, and the S3 key
+# wal-g archives with is written by hand into /etc/wal-g/credentials.env (#270). What is here is
+# the bucket, the endpoint and a pinned version: public facts about where backups go, not the
+# authority to write them.
 
 locals {
   cloud_init_dir = "${path.module}/cloud-init"
@@ -14,7 +17,13 @@ locals {
     wireguard = file("${local.cloud_init_dir}/wireguard.sh")
     k3s       = file("${local.cloud_init_dir}/k3s.sh")
     postgres  = file("${local.cloud_init_dir}/postgres.sh")
+    backups   = file("${local.cloud_init_dir}/backups.sh")
   }
+
+  # Both environments push to one bucket, told apart by this. It is derived rather than a variable
+  # so that the two can never be given the same value by hand — a retention sweep run under
+  # production's prefix from staging would delete real backups (#270).
+  backup_prefix = var.environment
 
   # k3s's default `--cluster-cidr`. Not a variable, because k3s.sh does not override the flag —
   # if it ever does, both have to move together, and a local keeps them in one file.
@@ -90,7 +99,24 @@ locals {
     POSTGRES_VERSION=${var.postgres_version}
     POSTGRES_LISTEN_IP=${local.postgres_ip}
     POSTGRES_DATA_DEVICE=${hcloud_volume.postgres.linux_device}
+    WALG_VERSION=${var.walg_version}
+    WALG_SHA256_AMD64=${var.walg_checksums.amd64}
+    WALG_SHA256_ARM64=${var.walg_checksums.arm64}
+    BACKUP_BUCKET=${var.backup_bucket}
+    BACKUP_PREFIX=${local.backup_prefix}
+    BACKUP_ENDPOINT=${var.backup_endpoint}
+    BACKUP_REGION=${var.backup_region}
+    BACKUP_RETENTION_DAYS=${var.backup_retention_days}
   EOT
+
+  # Only shipped to the k3s node when the database is on it. `user_data` is capped at 32 KiB and
+  # these two are more than half of what this node renders, so sending them to a k3s node that has
+  # a database next door is not merely untidy — it spends most of the headroom on files nothing
+  # runs, and the co-located node is where the cap actually binds.
+  colocated_postgres_files = local.dedicated_postgres ? [] : [
+    local.script_file.postgres,
+    local.script_file.backups,
+  ]
 
   k3s_user_data = templatefile("${local.cloud_init_dir}/node.yaml.tftpl", {
     hostname        = "${var.environment}-k3s"
@@ -109,13 +135,15 @@ locals {
       local.script_file.harden,
       local.script_file.wireguard,
       local.script_file.k3s,
-      local.script_file.postgres,
-    ])
+    ], local.colocated_postgres_files)
     runcmd = concat(
       local.base_runcmd,
       # WireGuard before k3s, deliberately: it is how you get back in if anything after it fails.
       ["/opt/event-junkie/wireguard.sh"],
-      local.dedicated_postgres ? [] : ["/opt/event-junkie/postgres.sh"],
+      # backups.sh immediately after postgres.sh, and only where PostgreSQL actually runs: it turns
+      # on `archive_mode`, which needs a restart rather than a reload, so it has to come after the
+      # cluster exists and before anything else settles around it.
+      local.dedicated_postgres ? [] : ["/opt/event-junkie/postgres.sh", "/opt/event-junkie/backups.sh"],
       ["/opt/event-junkie/k3s.sh"],
     )
   })
@@ -134,6 +162,14 @@ locals {
     POSTGRES_VERSION=${var.postgres_version}
     POSTGRES_LISTEN_IP=${var.postgres_private_ip}
     POSTGRES_DATA_DEVICE=${hcloud_volume.postgres.linux_device}
+    WALG_VERSION=${var.walg_version}
+    WALG_SHA256_AMD64=${var.walg_checksums.amd64}
+    WALG_SHA256_ARM64=${var.walg_checksums.arm64}
+    BACKUP_BUCKET=${var.backup_bucket}
+    BACKUP_PREFIX=${local.backup_prefix}
+    BACKUP_ENDPOINT=${var.backup_endpoint}
+    BACKUP_REGION=${var.backup_region}
+    BACKUP_RETENTION_DAYS=${var.backup_retention_days}
   EOT
 
   # No WireGuard here. The node has no public IPv4 to run an endpoint on, and it does not need one:
@@ -149,9 +185,11 @@ locals {
       },
       local.script_file.harden,
       local.script_file.postgres,
+      local.script_file.backups,
     ])
     runcmd = concat(local.base_runcmd, [
       "/opt/event-junkie/postgres.sh",
+      "/opt/event-junkie/backups.sh",
     ])
   })
 }

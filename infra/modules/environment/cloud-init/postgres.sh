@@ -3,10 +3,13 @@
 # PostgreSQL from the PGDG apt repository, listening on the private network, with PGDATA on a
 # Hetzner volume that outlives the node.
 #
-# Scope stops at "a server is running and reachable from the k3s node". Roles, databases, extensions
-# and `wal-g` are deliberately elsewhere — #261 and #270 — because they belong to the application's
-# lifecycle, not the machine's, and baking them in here would mean a rebuild silently re-creates
-# credentials.
+# Scope stops at "a server is running and reachable from the k3s node". Roles, databases and
+# extensions are deliberately elsewhere — #261 — because they belong to the application's lifecycle,
+# not the machine's, and baking them in here would mean a rebuild silently re-creates credentials.
+#
+# `wal-g` is next door in backups.sh (#270) rather than here, and the split is not cosmetic: it
+# turns on `archive_mode`, which needs a *restart* and therefore a cluster that already exists. It
+# runs immediately after this script wherever PostgreSQL runs.
 #
 # THE VOLUME IS THE POINT (#460). `user_data` is a force-new attribute, so any edit under
 # cloud-init/ rebuilds the node — and before the volume existed, that destroyed the database. This

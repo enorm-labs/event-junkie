@@ -11,10 +11,17 @@ module "environment" {
   # ArgoCD is what keeps this on an 8 GB node — is PLATFORM_SETUP.md §1.
   k3s_server_type = "cax21"
 
-  # CAX11: 2 ARM vCPU / 4 GB, IPv6-only. `postgres_public_ipv4` stays false until `apt` proves it
-  # cannot work that way; flipping it is seconds of work and needs no redesign.
+  # CAX11: 2 ARM vCPU / 4 GB. IPv6-only was the intent, and #270 settled that it cannot be — not on
+  # a guess about `apt`, which turns out to be fine (apt.postgresql.org answers on IPv6), but on
+  # **github.com publishing no AAAA record at all**, checked 2026-08-18. wal-g ships only as a
+  # GitHub release, so an IPv6-only node cannot install the one thing standing between us and losing
+  # the database, and `backups.sh` stops the boot rather than coming up without it.
+  #
+  # ~€0.50/month for the address, against a NAT gateway (infra/AGENTS.md) that is only worth
+  # building if the address itself is the objection. It is not: the firewall still admits nothing
+  # inbound, so this buys egress and not exposure.
   postgres_server_type = "cax11"
-  postgres_public_ipv4 = false
+  postgres_public_ipv4 = true
 
   # Locks the addresses and the database volume against a console mis-click. Neither stops
   # `tofu destroy` — the provider lifts its own locks — so treat a destroy in this directory as
