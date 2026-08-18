@@ -1,5 +1,6 @@
 package de.norm.events.promoter
 
+import de.norm.events.EVENTS_SCHEMA
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.domain.Pageable
 import org.springframework.data.r2dbc.repository.Modifying
@@ -27,7 +28,7 @@ interface PromoterRepository : CoroutineCrudRepository<PromoterEntity, Long> {
      * `created_at`/`updated_at` fall back to their `DEFAULT now()`.
      */
     @Modifying
-    @Query("INSERT INTO events.promoter (name, slug) VALUES (:name, :slug) ON CONFLICT (slug) DO NOTHING")
+    @Query("INSERT INTO $EVENTS_SCHEMA.promoter (name, slug) VALUES (:name, :slug) ON CONFLICT (slug) DO NOTHING")
     suspend fun insertIfAbsent(
         name: String,
         slug: String

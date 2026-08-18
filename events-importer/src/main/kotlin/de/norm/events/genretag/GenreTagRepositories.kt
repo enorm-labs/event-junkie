@@ -1,5 +1,6 @@
 package de.norm.events.genretag
 
+import de.norm.events.EVENTS_SCHEMA
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.domain.Pageable
 import org.springframework.data.r2dbc.repository.Modifying
@@ -28,7 +29,7 @@ interface GenreTagRepository : CoroutineCrudRepository<GenreTagEntity, Long> {
      * `created_at`/`updated_at` fall back to their `DEFAULT now()`.
      */
     @Modifying
-    @Query("INSERT INTO events.genre_tag (name, slug) VALUES (:name, :slug) ON CONFLICT (slug) DO NOTHING")
+    @Query("INSERT INTO $EVENTS_SCHEMA.genre_tag (name, slug) VALUES (:name, :slug) ON CONFLICT (slug) DO NOTHING")
     suspend fun insertIfAbsent(
         name: String,
         slug: String

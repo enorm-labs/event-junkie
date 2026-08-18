@@ -5,10 +5,14 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
+import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.test.web.server.LocalServerPort
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection
 import org.springframework.context.ApplicationContext
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.testcontainers.postgresql.PostgreSQLContainer
 import java.time.Duration
 
 /**
@@ -22,10 +26,17 @@ import java.time.Duration
  * is why the stock `r2dbc` indicator would have reported `UP` for the entire window and closed
  * nothing. This test asserts that directly: `r2dbc` is `UP` and the group is still `DOWN`.
  *
- * The state is produced by pointing `spring.r2dbc.properties.schema` at a schema that was never
- * created, rather than by racing a real migration. That is deterministic, it needs no cluster, and it
- * is the same thing the indicator sees — a query against a relation that does not exist. Flyway is
- * off for the same reason: this context is a BFF that started before anything migrated.
+ * The state is produced by starting this context against **its own PostgreSQL, with Flyway off**,
+ * rather than by racing a real migration. That is deterministic, it needs no cluster, and it is
+ * exactly what the indicator sees during the real window — a query against a relation that does not
+ * exist yet, on a database that is perfectly healthy.
+ *
+ * **It used to fake the state by pointing `spring.r2dbc.properties.schema` at a schema nobody
+ * created, and #540 took that lever away** — the probe now resolves `EVENTS_SCHEMA` like every other
+ * statement does, precisely so it cannot be aimed somewhere the queries are not. A dedicated
+ * container is the honest replacement: `withDatabaseName` and `withReuse(false)` guarantee the
+ * `events` schema is absent no matter what any other test in this JVM has migrated, which the shared
+ * `PostgresTestcontainersConfiguration` cannot promise.
  *
  * **The k3d rehearsal confirmed the fix once; this is the half that keeps confirming it.** On
  * 2026-08-18 the BFF reported Ready about four seconds *after* Flyway completed, with zero restarts —
@@ -33,13 +44,29 @@ import java.time.Duration
  */
 @SpringBootTest(
     webEnvironment = WebEnvironment.RANDOM_PORT,
-    properties = [
-        "spring.r2dbc.properties.schema=not_migrated_yet",
-        "spring.flyway.enabled=false"
-    ]
+    properties = ["spring.flyway.enabled=false"]
 )
-@Import(PostgresTestcontainersConfiguration::class)
+@Import(ReadinessWithoutSchemaTest.UnmigratedPostgres::class)
 class ReadinessWithoutSchemaTest {
+    /**
+     * A PostgreSQL nothing has ever migrated.
+     *
+     * Deliberately **not** the shared [PostgresTestcontainersConfiguration]: that one carries
+     * `withReuse(true)`, so whether it hands back a container some other context already ran Flyway
+     * against depends on `testcontainers.reuse.enable` in the developer's environment. This test's
+     * whole premise is that `events.event` does not exist, and a premise that holds on one machine
+     * and not another is not a premise — it is a flake waiting for CI.
+     */
+    @TestConfiguration(proxyBeanMethods = false)
+    class UnmigratedPostgres {
+        @Bean
+        @ServiceConnection(name = "postgres")
+        fun unmigratedPostgres(): PostgreSQLContainer =
+            PostgreSQLContainer("postgres:18.3-alpine")
+                .withDatabaseName("never_migrated")
+                .withReuse(false)
+    }
+
     @LocalServerPort
     private var port: Int = 0
 

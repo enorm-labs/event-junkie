@@ -93,7 +93,9 @@ subprojects sharing a root `settings.gradle.kts`, plus a standalone frontend pro
   `CoroutineCrudRepository` so all operations are suspending functions.
 - **Spring Data R2DBC query derivation limitations**: Unlike Spring Data JPA, R2DBC has more limited query derivation. Derived `findBy*`, `countBy*`,
   `existsBy*`, and `deleteBy*` methods are supported. However, derived `updateBy*` methods are **not supported** — use `@Modifying` + `@Query` with raw SQL
-  instead. Custom `@Query` SQL must include the schema prefix (e.g. `events.event_artist`) because raw queries bypass the `@Table(schema = ...)` metadata.
+  instead. Custom `@Query` SQL must include the schema prefix because raw queries bypass the `@Table` and `NamingStrategy` metadata — **interpolate the
+  constant, never a literal**: `@Query("SELECT * FROM $EVENTS_SCHEMA.event_source …")`. A Kotlin `const val` is usable inside an annotation argument, which is
+  what lets one source of truth reach even a `@Query` (#540). `SchemaConfigurationTest` fails the build on a literal.
   See [Spring Data R2DBC query methods reference](https://docs.spring.io/spring-data/relational/reference/r2dbc/query-methods.html).
 - **Domain model** lives in `events-core` as plain Kotlin data classes (no Spring Data annotations). Tables: `venue`, `artist`, `promoter`, `event`,
   `event_artist` (join), `event_promoter` (join), `genre_tag`, `event_genre_tag` (join), `event_source` (import metadata). Events reference venues via FK;
@@ -104,10 +106,11 @@ subprojects sharing a root `settings.gradle.kts`, plus a standalone frontend pro
   three modules) to verify structure.
 - **Database schema**: All tables live in a dedicated `events` schema (not `public`). Both apps configure this via `spring.r2dbc.properties.schema: events`;
   importer also sets `spring.flyway.schemas: events`, which tells Flyway to auto-create the schema and set `search_path` before running migrations. A custom
-  `NamingStrategy` bean in `R2dbcConfiguration` reads the schema from `spring.r2dbc.properties.schema` and applies it globally to all derived query methods
-  (`findBy*`, `save`, `delete`, etc.), so `@Table` annotations don't need to repeat
-  `schema = "events"`. Without this `NamingStrategy`, Spring Data R2DBC generates unqualified table references (e.g. `INSERT INTO "venue"`) that fail because
-  the tables don't exist in the `public` schema. Raw `@Query` SQL must still include the schema prefix manually (e.g. `events.event_source`) since custom
+  `NamingStrategy` bean in `R2dbcConfiguration` applies the schema globally to all derived query methods (`findBy*`, `save`, `delete`, etc.), so `@Table`
+  annotations don't need to repeat it. **The name itself comes from `EVENTS_SCHEMA` in `events-core`, not from the property** — the two YAML declarations remain
+  because only they can create the schema and set the connection's `search_path`, but they are checked against the constant rather than being its source, and
+  the context fails to start on divergence (#540, ADR-004). Without this `NamingStrategy`, Spring Data R2DBC generates unqualified table references (e.g. `INSERT INTO "venue"`) that fail because
+  the tables don't exist in the `public` schema. Raw `@Query` SQL must still include the schema prefix manually — as `$EVENTS_SCHEMA`, never as a literal — since custom
   queries bypass both `@Table` and
   `NamingStrategy` metadata.
 - **Database migrations** live in `events-importer` only (Flyway). The BFF does not run migrations. Migration naming: `V001__description.sql`. While the project

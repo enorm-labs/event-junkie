@@ -1,5 +1,6 @@
 package de.norm.events.event
 
+import de.norm.events.EVENTS_SCHEMA
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.data.domain.Pageable
@@ -59,7 +60,7 @@ class EventSearchRepository(
 
         val total =
             databaseClient
-                .sql("SELECT COUNT(*) FROM $SCHEMA.event e $where")
+                .sql("SELECT COUNT(*) FROM $EVENTS_SCHEMA.event e $where")
                 .bindAll(params)
                 .map { row: Readable -> row.get(0, Long::class.javaObjectType) ?: 0L }
                 .one()
@@ -69,7 +70,7 @@ class EventSearchRepository(
 
         val ids =
             databaseClient
-                .sql("SELECT e.id FROM $SCHEMA.event e $where ${orderBy(pageable)} LIMIT :limit OFFSET :offset")
+                .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where ${orderBy(pageable)} LIMIT :limit OFFSET :offset")
                 .bindAll(params)
                 .bind("limit", pageable.pageSize)
                 .bind("offset", pageable.offset)
@@ -91,7 +92,7 @@ class EventSearchRepository(
         val where = buildWhereClause(filter, params)
 
         return databaseClient
-            .sql("SELECT e.id FROM $SCHEMA.event e $where $DEFAULT_ORDER")
+            .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where $DEFAULT_ORDER")
             .bindAll(params)
             .map { row: Readable -> row.get(0, Long::class.javaObjectType)!! }
             .all()
@@ -144,11 +145,11 @@ class EventSearchRepository(
             params["eventType"] = it.trim().uppercase()
         }
         filter.venueSlug?.takeIf { it.isNotBlank() }?.let {
-            conditions += "e.venue_id IN (SELECT id FROM $SCHEMA.venue WHERE slug = :venueSlug)"
+            conditions += "e.venue_id IN (SELECT id FROM $EVENTS_SCHEMA.venue WHERE slug = :venueSlug)"
             params["venueSlug"] = it.trim()
         }
         filter.district?.takeIf { it.isNotBlank() }?.let {
-            conditions += "e.venue_id IN (SELECT id FROM $SCHEMA.venue WHERE district = :district)"
+            conditions += "e.venue_id IN (SELECT id FROM $EVENTS_SCHEMA.venue WHERE district = :district)"
             params["district"] = it.trim()
         }
         if (filter.excludeSoldOut) {
@@ -248,17 +249,12 @@ class EventSearchRepository(
         ;
 
         fun existsClause(): String =
-            "EXISTS (SELECT 1 FROM $SCHEMA.$joinTable $joinAlias " +
-                "JOIN $SCHEMA.$refTable $refAlias ON $refAlias.id = $joinAlias.$foreignKey " +
+            "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.$joinTable $joinAlias " +
+                "JOIN $EVENTS_SCHEMA.$refTable $refAlias ON $refAlias.id = $joinAlias.$foreignKey " +
                 "WHERE $joinAlias.event_id = e.id AND $refAlias.slug = :$param)"
     }
 
     companion object {
-        /**
-         * Database schema prefix for raw SQL. Custom queries bypass the `NamingStrategy`, so the
-         * schema must be qualified explicitly here, consistent with the importer's raw-query convention.
-         */
-        private const val SCHEMA = "events"
         private val SORT_COLUMNS =
             mapOf(
                 "eventDate" to "e.event_date",
