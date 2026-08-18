@@ -298,8 +298,32 @@ The site cannot go live until these are closed. They are tracked as issues in th
    ([#260](https://github.com/enorm-labs/event-junkie/issues/260)), and the flag cleared then — not now.
 3. **Art. 28 contracts** — now a single one: **Hetzner's AVV**. The 2026-08-10 amendment to
    [ADR-012](adr/ADR-012_CLOUD_PLATFORM.md) removed Cloudflare, so there is no second DPA to accept and **no third-country transfer to name at all** — the
-   placeholder sentence about a transfer mechanism comes out rather than getting filled in. _A notice naming processors without a DPA in place is worse than one
-   naming none._ Tracked as [#275](https://github.com/enorm-labs/event-junkie/issues/275).
+   placeholder sentence about a transfer mechanism came out rather than getting filled in, and §5 of the notice now states the simple post-#412 truth. _A notice
+   naming processors without a DPA in place is worse than one naming none._ Tracked as [#275](https://github.com/enorm-labs/event-junkie/issues/275).
+
+    **Status, 2026-08-19.** Two of the three original boxes are closed and the third is the live one:
+
+    - The Cloudflare DPA does not apply — [#412](https://github.com/enorm-labs/event-junkie/issues/412) removed it from the architecture.
+    - The transfer-mechanism sentence is **done**: §5 names Hetzner in Germany, states that no transfer outside the EU takes place, and says there is no
+      transfer mechanism to disclose. Nothing there is a placeholder any more.
+    - **The AVV itself is not concluded**, and until 2026-08-19 nothing said so. That is the gap this item is actually about now: §5 describes Hetzner as an
+      _`Auftragsverarbeiter mit einem Vertrag nach Art. 28 DSGVO`_ **in the present tense**, which is a statement of fact about a contract that does not exist
+      yet — precisely the failure the sentence above warns about, arrived at from the direction nobody was watching. `PROCESSOR_CONTRACTS_PENDING` now says so
+      in the banner on both language versions, and a guard test keeps the flag and the claim together.
+
+    It is concluded at <https://accounts.hetzner.com/account/dpa> — self-service, signature-and-download, minutes rather than a negotiation. **File the
+    countersigned copy somewhere it can be produced on request**: concluding it and not filing it is the same position as not concluding it, the day somebody
+    asks. Then clear the flag.
+
+    **The processor list re-checked against what actually runs**, which #275 names as the part most likely to be missed:
+    [#271](https://github.com/enorm-labs/event-junkie/issues/271) and [#518](https://github.com/enorm-labs/event-junkie/issues/518) both ping **healthchecks.io**
+    from outside Hetzner, deliberately — a dead-man's switch on infrastructure cannot report that infrastructure's death. **The assessment is that this needs no
+    entry**, and it is recorded here rather than assumed away: the ping is a bare HTTPS `GET` to an opaque random UUID, with no body and no query string. It
+    carries no personal data, no database contents and nothing identifying a visitor. What it does reveal to healthchecks.io is **our server's public IP and the
+    timing of the pings** — an address of ours, not of a data subject. That is not processing of personal data on our behalf, so it is not an Art. 28
+    relationship and needs no DPA and no entry in §5. **Re-open this the moment a ping gains a body**, because `/fail` and `/log` endpoints accept one and a
+    payload is where this assessment would stop holding.
+
 4. **Backup retention** as its own line — it is a separate period from log retention, and if logs are captured by backups the effective retention is the backup
    window, not the rotation one. Check rather than assume.
 

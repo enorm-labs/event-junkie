@@ -4,5 +4,6 @@
   "authoritativeVersion": "This page exists in German and English. In case of discrepancies, the German version prevails.",
   "notFinal": "This page is not final.",
   "provisionalContact": "The postal address and email address below are placeholders. Real contact details are added before the site goes live.",
-  "provisionalInfrastructure": "Event Junkie is not deployed yet. The hosting and content-delivery providers named here are the ones we intend to use; this page is re-checked against what actually runs before launch."
+  "provisionalInfrastructure": "Event Junkie is not deployed yet. The hosting and content-delivery providers named here are the ones we intend to use; this page is re-checked against what actually runs before launch.",
+  "provisionalProcessorContract": "The Art. 28 GDPR processor contract with the hosting provider named under “Who else is involved” is not concluded yet. It will be in place before launch; until then that section describes the intended arrangement rather than the existing one."
 }
