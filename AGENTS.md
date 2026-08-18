@@ -695,7 +695,7 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
   always report; their combined cost is **54 seconds**.
 
     ```
-    Lint & render · ShellCheck deploy scripts        validate-chart.yml
+    Lint & render · ShellCheck deploy-story scripts  validate-chart.yml
     Lint & audit workflows                           validate-workflows.yml
     Format & Validate (infra/bootstrap)              validate-infra.yml — a MATRIX, so one context per stack
     Format & Validate (infra/environments/staging)
