@@ -232,8 +232,11 @@ conformance_ (k3s owns it), and _PKI certificates_ (k3s owns the cluster PKI; th
 - **The chart ships no `crds/` directory and must not gain one.** Helm has no story for upgrading or deleting CRDs a chart installed, so owning cert-manager's
   or Traefik's is how a chart acquires a resource it can never safely change. The chart renders only _instances_ of their types, and `helm install` failing on
   an unknown kind when cert-manager is absent is the correct behaviour, not a bug to work around.
-- **`security.runAsUser` must match the UID the images actually run as.** It is 1000 today because #426 will build them that way; a distroless `nonroot` base
-  would be 65532. A mismatch is a pod that cannot read its own files, which does not look like a values problem.
+- **`security.runAsUser` must match the UID the images actually run as, and `scripts/uid-consistency.sh` is what makes that a gate rather than a comment.** It
+  is **10001** since #448 — above 10000, so it cannot collide with an account in the host's own user range; a distroless `nonroot` base would be 65532, which
+  also clears the bar. A mismatch is a pod that cannot read its own files, which does not look like a values problem. The check reads the `USER` line out of
+  all three Dockerfiles and compares it with what the chart resolves per component, including a `<component>.runAsUser` override; `helm unittest` can only see
+  the chart, so it catches the chart drifting from itself and never the image moving underneath it.
 - **No floating tags, anywhere.** `image.tag` defaults to `""` and falls back to `.Chart.AppVersion`. The assertions reject `latest`, `head`, `canary`, `main`
   and `edge`, and an image with no tag at all.
 

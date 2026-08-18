@@ -38,7 +38,7 @@ and it grows on the Go release cadence rather than on anything this project does
 | 2026-08-17 | 8      | six more, after three days. Surfaced on an unrelated PR about version ordering                      |
 
 **A waiver that grows on someone else's schedule is not a waiver, it is a subscription.** The reachability argument was sound throughout and still is — pebble
-never runs, both Dockerfiles set `ENTRYPOINT ["java", "-jar", "application.jar"]` and `USER 1000:1000`, and nothing can feed it input. The problem is that
+never runs, both Dockerfiles set `ENTRYPOINT ["java", "-jar", "application.jar"]` and a numeric non-root `USER`, and nothing can feed it input. The problem is that
 repeatedly re-making a true argument is how a gate stops being read: each batch is individually cheap, and the habit is what rots.
 
 ### The constraints any candidate had to satisfy
@@ -49,8 +49,8 @@ Four of these are non-negotiable and come from decisions already made elsewhere:
 - **`linux/amd64` and `linux/arm64` from one runner.** The Dockerfiles contain **no `RUN` instruction** on purpose — the layered jar is extracted in Gradle
   instead — so one runner emits both platforms with no QEMU and no build matrix. Staging is x86 and production is meant to be arm64
   ([#424](https://github.com/enorm-labs/event-junkie/issues/424)), so both are real.
-- **Non-root by numeric UID.** `USER 1000:1000` is numeric so it needs no `/etc/passwd` entry and no `RUN useradd`, and it must keep matching
-  `security.runAsUser` in `values.yaml`.
+- **Non-root by numeric UID.** `USER 10001:10001` is numeric so it needs no `/etc/passwd` entry and no `RUN useradd`, and it must keep matching
+  `security.runAsUser` in `values.yaml` — which `scripts/uid-consistency.sh` enforces. It was `1000` when this ADR was written; #448 raised it above 10000.
 - **Startup time.** The Dockerfiles already record that an AOT cache was rejected because it needs a `RUN`. Startup is measured against the chart's probe budget.
 
 ## Options
@@ -121,7 +121,7 @@ the real image plus the chart's in-cluster `helm test`, rather than on a chart r
 **What is unaffected, and worth stating so nobody re-derives it**
 
 - **No `RUN` is introduced.** The single-runner multi-arch property survives; the change is one `FROM` line per Dockerfile.
-- `USER 1000:1000` needs no change — numeric UIDs require no passwd entry on any base.
+- The numeric `USER` needs no change — numeric UIDs require no passwd entry on any base.
 - `WORKDIR`, the four layered `COPY`s, `EXPOSE` and the exec-form `ENTRYPOINT` are base-agnostic.
 - The frontend image is untouched. It is `nginxinc/nginx-unprivileged:1.31-alpine` and was never affected.
 

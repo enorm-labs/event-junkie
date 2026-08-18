@@ -25,10 +25,14 @@ metadata:
 spec:
   restartPolicy: Never
   automountServiceAccountToken: false
+  {{- /* Taken from `security.runAsUser` rather than written out, even though this pod runs a curl
+         image and not one of ours. Two literals here would be a fourth place the UID can drift, and
+         the one place nothing checks — `scripts/uid-consistency.sh` compares the chart against the
+         three Dockerfiles, and a test pod has no Dockerfile in this repository to compare with. */}}
   securityContext:
     runAsNonRoot: true
-    runAsUser: 1000
-    runAsGroup: 1000
+    runAsUser: {{ .Values.security.runAsUser }}
+    runAsGroup: {{ .Values.security.runAsGroup }}
     seccompProfile:
       type: RuntimeDefault
   containers:

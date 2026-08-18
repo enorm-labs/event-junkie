@@ -31,6 +31,13 @@ on:
       - 'scripts/k3d-rehearsal.sh'
       - 'scripts/version.sh'
       - 'scripts/version-test.sh'
+      - 'scripts/uid-consistency.sh'
+      # The Dockerfiles are here because `scripts/uid-consistency.sh` reads them: the UID they set
+      # has to match the chart's, and a Dockerfile-only change is exactly how that drifts. On pull
+      # requests the question is moot — since #443 this workflow runs on every one of them.
+      - 'events-bff/Dockerfile'
+      - 'events-importer/Dockerfile'
+      - 'events-frontend/Dockerfile'
       - 'gradle.properties'
       - 'events-frontend/package.json'
       - '.github/workflows/validate-chart.yml'
@@ -87,6 +94,18 @@ jobs:
       # while naming image tags the release build will never produce (#264).
       - name: Check the version is consistent across all four files
         run: scripts/version.sh check
+
+      # The same shape of question as the step above, about a different number that also lives in
+      # four files. `security.runAsUser` has always carried the comment "must match the UID the
+      # images actually run as", and a comment is not a gate: nothing compared it with the `USER`
+      # line in the three Dockerfiles, so the chart and the images could drift apart silently. The
+      # `helm unittest` suite asserts the chart renders a specific number, which catches the chart
+      # drifting from itself and cannot see a Dockerfile at all.
+      #
+      # A mismatch does not look like a values problem. The pod starts — the UID is non-root either
+      # way — and then the JVM cannot read its own jar. #448.
+      - name: Check the chart and the images agree about the UID
+        run: scripts/uid-consistency.sh "$CHART"
 
       - name: Set up Helm
         uses: azure/setup-helm@v5
@@ -231,10 +250,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      # All four are part of the deploy story: one asserts on what each cluster's HelmRelease
-      # deploys (#430), one installs this chart, one decides what version gets published, and one
-      # proves those versions order (#455). So a chart change lints them even when nothing under
-      # `scripts/` was touched.
+      # All five are part of the deploy story: one asserts on what each cluster's HelmRelease
+      # deploys (#430), one installs this chart, one decides what version gets published, one
+      # proves those versions order (#455), and one holds the chart and the images to the same UID
+      # (#448). So a chart change lints them even when nothing under `scripts/` was touched.
       #
       # They are *also* linted by validate-scripts.yml, which covers `scripts/*.sh`. The overlap is
       # deliberate: both jobs take seconds, and narrowing either side trades that for a hole that
@@ -250,4 +269,4 @@ jobs:
           docker run --rm -v "$PWD:/mnt" -w /mnt \
             "koalaman/shellcheck:${SHELLCHECK_VERSION}" \
             -x scripts/cluster-assertions.sh scripts/k3d-rehearsal.sh \
-            scripts/version.sh scripts/version-test.sh
+            scripts/version.sh scripts/version-test.sh scripts/uid-consistency.sh
