@@ -95,6 +95,29 @@ It is supposed to. #263 found two values bugs, a wrong prediction and a document
 ## Gotchas
 
 - **`k3d` missing** — `brew install k3d`. `kubectl`, `helm`, `docker` and `yq` are assumed.
+- **Every pod stuck in `ContainerCreating` forever** — the node cannot pull from Docker Hub, and the real cause is four `describe`s away. On a network that
+  inspects TLS this is the shape it takes: the _host_ trusts the interception CA, so the three images build without complaint and `k3d cluster create` succeeds,
+  while the _node's_ containerd does not and fails on `rancher/mirrored-pause:3.6` — the sandbox image, which nothing this project owns. Nothing starts: not
+  CoreDNS, not Traefik, not the workloads. It surfaces late and reads as a chart problem; the install fails on `no matches for kind "Middleware"` because
+  Traefik's CRD job never ran either.
+
+    ```sh
+    K3D_PRELOAD_IMAGES=1 scripts/k3d-rehearsal.sh all
+    ```
+
+    Pulls k3s's eight system images on the host and hands them to the node as an airgap tarball. Off by default, because it costs a pull-and-save and nobody
+    whose node can reach Docker Hub needs it. It installs no CA anywhere and must not grow into doing so — a shared script that injects a corporate trust root
+    is a worse problem than the one it solves.
+
+    **It is not known to be sufficient, and the partial result is the useful part.** Measured on a TLS-inspecting network (#526): six of the eight images land
+    and the cluster gets much further — Traefik comes up with all 23 CRDs, which is what unblocks the chart — but `coredns` and `metrics-server` reach
+    containerd's content store (`ctr -n k8s.io images ls` lists them) without ever becoming visible to the CRI (`crictl images` does not). kubelet therefore
+    treats them as absent, keeps pulling despite `IfNotPresent`, and fails on the same certificate. CoreDNS is what resolves `host.k3d.internal`, so the run
+    still cannot finish. Re-importing with `k3d image import` and recreating the pods does not change it.
+
+    So on a network like that, the honest options are to run off it, or to accept that the k3d path is unavailable and verify against staging instead. Do not
+    reach for `insecure_skip_verify` in a committed file.
+
 - **CoreDNS needs a nudge, and the script gives it one.** k3d writes `host.k3d.internal` into the CoreDNS ConfigMap during cluster creation, but the `reload`
   plugin only picks it up on its next poll — up to 30 seconds later. Installing inside that window gives every pod `UnknownHostException: host.k3d.internal`,
   and the importer crash-loops until DNS catches up. It self-heals, which is _worse_ than failing: the install still succeeds and the only evidence is a restart
