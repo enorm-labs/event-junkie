@@ -1,0 +1,183 @@
+# The body half of `ingress.noindex` (#286): a disallow-all `robots.txt` and an empty sitemap,
+# mounted over the ones the frontend build bakes into the image.
+#
+# Every assertion here exists because the failure mode is silent. A `subPath` that does not name a
+# ConfigMap key, a volume naming a ConfigMap that is not the one rendered, a mount without `subPath`
+# at all — each renders, installs, and reports healthy. What you get is an environment that looks
+# noindexed in the manifest and serves the image's allow-all copy, or in the last case a blank site.
+# None of that is visible in a diff, so it is pinned here instead.
+suite: robots.txt and sitemap overrides outside production
+
+templates:
+  - frontend-seo-configmap.yaml
+  - frontend-deployment.yaml
+
+tests:
+  # --- production renders none of it -------------------------------------------------------------
+
+  - it: renders no SEO ConfigMap when noindex is off, as production has it
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+      ingress.noindex: false
+    templates:
+      - frontend-seo-configmap.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: mounts nothing over the build when noindex is off
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+      ingress.noindex: false
+    templates:
+      - frontend-deployment.yaml
+    asserts:
+      # /tmp and nothing else — the state #262 established by running the real image with
+      # `--read-only --tmpfs /tmp`.
+      - lengthEqual:
+          path: spec.template.spec.containers[0].volumeMounts
+          count: 1
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[0].mountPath
+          value: /tmp
+      - lengthEqual:
+          path: spec.template.spec.volumes
+          count: 1
+      # No checksum for a ConfigMap that does not exist here.
+      - notExists:
+          path: spec.template.metadata.annotations["checksum/seo"]
+
+  # --- what the override actually says -----------------------------------------------------------
+
+  - it: serves a disallow-all robots.txt when noindex is on
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+      ingress.noindex: true
+    templates:
+      - frontend-seo-configmap.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-event-junkie-seo
+      - matchRegex:
+          path: data["robots.txt"]
+          pattern: "User-agent: \\*"
+      # The directive itself, anchored: `Disallow:` with an empty value means *allow everything*,
+      # which is the one-character version of this whole issue.
+      - matchRegex:
+          path: data["robots.txt"]
+          pattern: "(?m)^Disallow: /$"
+
+  - it: names no sitemap in robots.txt, because the only one it could name is production's
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+      ingress.noindex: true
+    templates:
+      - frontend-seo-configmap.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["robots.txt"]
+          pattern: "(?i)sitemap:"
+      - notMatchRegex:
+          path: data["robots.txt"]
+          pattern: "event-junkie\\.de"
+
+  - it: serves a sitemap that lists nothing at all
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+      ingress.noindex: true
+    templates:
+      - frontend-seo-configmap.yaml
+    asserts:
+      # The point of the file is that it names no production URL. Asserting the absence of `<loc>`
+      # says that in the form that stays true if the empty-urlset spelling ever changes.
+      - notMatchRegex:
+          path: data["sitemap.xml"]
+          pattern: "<loc>"
+      - notMatchRegex:
+          path: data["sitemap.xml"]
+          pattern: "event-junkie\\.de"
+      - matchRegex:
+          path: data["sitemap.xml"]
+          pattern: "<urlset"
+
+  # --- the two halves must agree, and this is where they are checked ----------------------------
+
+  - it: mounts both files with subPath, so the rest of the bundle survives
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+      ingress.noindex: true
+    templates:
+      - frontend-deployment.yaml
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].volumeMounts
+          count: 3
+      # `subPath` is the load-bearing field. Without it this mounts as a directory over
+      # /usr/share/nginx/html and hides index.html and every hashed asset with it — a blank site,
+      # not a bad robots.txt.
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[1]
+          value:
+            name: seo
+            mountPath: /usr/share/nginx/html/robots.txt
+            subPath: robots.txt
+            readOnly: true
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[2]
+          value:
+            name: seo
+            mountPath: /usr/share/nginx/html/sitemap.xml
+            subPath: sitemap.xml
+            readOnly: true
+
+  - it: points the seo volume at the ConfigMap this chart actually renders
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+      ingress.noindex: true
+    templates:
+      - frontend-deployment.yaml
+    asserts:
+      # The literal must equal `metadata.name` asserted on the ConfigMap above. A volume naming a
+      # ConfigMap that does not exist leaves the pod Pending with the reason three `describe`s away.
+      - equal:
+          path: spec.template.spec.volumes[1].configMap.name
+          value: RELEASE-NAME-event-junkie-seo
+
+  - it: rolls the pods when the override content changes
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+      ingress.noindex: true
+    templates:
+      - frontend-deployment.yaml
+    asserts:
+      # A subPath mount is a point-in-time copy the kubelet never refreshes, so without this the
+      # ConfigMap changes and the served bytes do not — indefinitely.
+      - exists:
+          path: spec.template.metadata.annotations["checksum/seo"]
+
+  - it: keeps podAnnotations working alongside the checksum
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+      ingress.noindex: true
+      frontend.podAnnotations:
+        example.com/owner: "platform"
+    templates:
+      - frontend-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["example.com/owner"]
+          value: "platform"
+      - exists:
+          path: spec.template.metadata.annotations["checksum/seo"]

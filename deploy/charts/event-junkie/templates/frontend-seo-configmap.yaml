@@ -1,0 +1,51 @@
+{{- if .Values.ingress.noindex }}
+{{- $args := dict "ctx" $ "component" "frontend-seo" }}
+{{- /* `robots.txt` and `sitemap.xml` for an environment that is not production.
+
+       THE BODY HALF OF `ingress.noindex` (#286). The Middleware next door adds `X-Robots-Tag` to
+       every response, and a header is all a header can do: it cannot rewrite a response *body*, so
+       the allow-all `robots.txt` in the image is still served and its `Sitemap:` line still points
+       a crawler at production. That is a different mechanism, which is why it is a different file.
+
+       WHY THIS CANNOT BE FIXED IN THE BUILD. `events-frontend/scripts/seoFiles.ts` emits both files
+       at `generateBundle` from `SITE_URL` in `src/lib/seo.ts`, and that constant is hard-coded on
+       purpose: canonical URLs exist to name ONE address for a page, so deriving the origin from the
+       request host would make staging, the apex and every preview each declare themselves
+       canonical — the duplicate-content problem the tag exists to prevent. One image, one output,
+       served by every environment. So the override belongs here, in the deployment, by
+       construction rather than by preference.
+
+       A ConfigMap mounted over the built files, rather than a second nginx server block: the chart
+       would then own a copy of `events-frontend/docker/nginx.conf` and the two would drift, and the
+       image's copy is the one carrying the unprivileged-safe properties #262 established. */}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-seo" (include "event-junkie.fullname" $) }}
+  annotations:
+    kubernetes.io/description: >-
+      A disallow-all robots.txt and an empty sitemap, mounted over the ones baked into the frontend image. Gated on ingress.noindex, which is off in production.
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+data:
+  {{- /* KEYS ARE FILENAMES HERE, and that is load-bearing rather than tidy: the frontend Deployment
+         mounts each one with `subPath`, and a `subPath` that does not name an existing key mounts an
+         empty directory over the file instead of failing. nginx then serves a directory as a file
+         and the environment quietly keeps the image's allow-all copy. The render assertions check
+         the two lists against each other for exactly that reason. */}}
+  robots.txt: |
+    # This is not the production site. Nothing here should be indexed, and the real
+    # control is that this host has no public address at all — see PLATFORM_SETUP §4a.
+    User-agent: *
+    Disallow: /
+  {{- /* No `Sitemap:` line, deliberately. The image's copy has one and it names production, which
+         is the second half of what #286 is about: a non-production environment that invites
+         indexing AND points the crawler at the real site while doing it. Omitting the line is not
+         an oversight to be tidied up later. */}}
+  sitemap.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!-- Deliberately empty. A ConfigMap can replace a file's contents but cannot make it 404, and
+         an empty urlset is valid, names no production URL, and does not read as a broken deploy to
+         anything that fetches it. -->
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>
+{{- end }}

@@ -201,9 +201,17 @@ ingress:
     - "event-junkie.com"
   # ingress.annotations are merged in after the cert-manager annotation the chart adds itself.
   annotations: {}
-  # ingress.noindex adds `X-Robots-Tag: noindex, nofollow` to every response, through a Traefik
-  # Middleware. Off here because this file is the production configuration, and production is the
-  # one environment that must be indexed. Staging turns it on (#265, #286).
+  # ingress.noindex marks an environment as not-production, and renders everything that follows
+  # from that: a Traefik Middleware adding `X-Robots-Tag: noindex, nofollow` to every response
+  # (#265), plus a ConfigMap mounted over the frontend's built `robots.txt` and `sitemap.xml` with
+  # a disallow-all and an empty urlset (#286). Off here because this file is the production
+  # configuration, and production is the one environment that must be indexed.
+  #
+  # One value rather than two, deliberately. Two switches meaning "not production" can disagree,
+  # and the way they disagree is an environment carrying the header while still serving an
+  # allow-all robots.txt that names production's sitemap — which looks configured and is not. The
+  # name says `ingress` while half of what it renders is a pod mount; that is the price of the
+  # single switch, and it is the cheaper mistake.
   #
   # Defence in depth rather than the control: staging has no public address at all, and a crawler
   # cannot reach what does not resolve. This exists for the day somebody adds an A record "just to
