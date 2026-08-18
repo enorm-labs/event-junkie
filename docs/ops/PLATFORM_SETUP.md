@@ -852,6 +852,12 @@ unaffected.
 chart's `ingress_test.yaml` asserts positively that `/api` and `/` are the only routed paths and `http` the only named port, so adding `prometheus` to the
 exposure list does not widen the public surface at all.
 
+**That list lives in each module's `application.yaml` and nowhere else — the chart deliberately does not set it (#538).** It used to: the shared ConfigMap
+restated `health,info`, and because `envFrom` becomes an environment variable it silently outranked both modules. The endpoint therefore 404'd in every cluster
+from the moment it was added until #538, while working perfectly in every test — which is exactly the shape this section's third warning describes, arriving
+from the deployment side instead of the test side. `invariants_test.yaml` now fails the build if anything in the chart sets
+`MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE`, by a `data` key or an `env` entry.
+
 ---
 
 ## 8. Security — what k3s gives you and what it does not

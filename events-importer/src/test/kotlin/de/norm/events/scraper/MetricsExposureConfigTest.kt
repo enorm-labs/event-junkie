@@ -1,4 +1,4 @@
-package de.norm.events.event
+package de.norm.events.scraper
 
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -7,20 +7,17 @@ import java.io.File
 /**
  * Asserts the **main** `application.yaml` exposes `prometheus`, by reading the file.
  *
- * **A deliberate twin of `events-importer`'s `MetricsExposureConfigTest` — change both or neither.**
- * The importer's copy arrived with #538. #535 added this one and the exposure lines in both modules
- * in the same change, but the guard in only one of them — leaving the importer's two copies of the
- * same list unwatched, in the module that owns the business meters worth scraping.
+ * **A deliberate twin of `events-bff`'s `MetricsExposureConfigTest` — change both or neither.** The
+ * BFF has had this since #415; the importer did not, and #538 is what that asymmetry cost. When the
+ * chart's ConfigMap silently overrode the exposure list, the BFF at least had a test asserting its
+ * own copy; the importer's two copies had nothing watching them at all — in the module that owns the
+ * business meters, which are the ones worth scraping.
  *
- * What neither twin can see is the chart, which is the fifth copy and the one that outranks all four
- * at runtime. That is `invariants_test.yaml`'s job — it fails the build if anything in the chart sets
- * `MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE` at all.
- *
- * This looks like testing configuration for its own sake, and it is not. `src/test/resources/
- * application.yaml` **shadows** the main file rather than merging with it, so every Spring test in
- * this module runs against the test copy — which means an integration test hitting
- * `/actuator/prometheus` proves the endpoint works *when exposed*, and proves nothing at all about
- * whether the shipped configuration exposes it.
+ * The reasoning is the BFF's, and it holds here identically. `src/test/resources/application.yaml`
+ * **shadows** the main file rather than merging with it, so every Spring test in this module runs
+ * against the test copy — which means an integration test hitting `/actuator/prometheus`
+ * ([PrometheusEndpointTest]) proves the endpoint works *when exposed*, and proves nothing at all
+ * about whether the shipped configuration exposes it.
  *
  * The failure that leaves open is the quiet one: delete the line from the main file and every test
  * here still passes, the application still starts, every endpoint still works, and the scrape target
@@ -28,6 +25,10 @@ import java.io.File
  *
  * Both files are checked, because the pair drifting apart is the other half of the same problem: the
  * test config silently doing something the real one does not is how a test starts lying.
+ *
+ * What this cannot see is the chart, which is the third copy and the one that outranks both at
+ * runtime. That is `invariants_test.yaml`'s job: it fails the build if anything in the chart sets
+ * `MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE` at all.
  */
 class MetricsExposureConfigTest {
     private fun exposureLine(path: String): String {
