@@ -259,7 +259,12 @@ kubectl --context event-junkie-staging get secret event-junkie-staging-tls -n ev
 > `event-junkie.de` is the same registered domain production uses. Burning it here would lock production out for a week.
 >
 > So `https://staging.event-junkie.de` shows a certificate warning, by choice. What is proven is the **mechanism** — DNS-01 through the Hetzner webhook, for a
-> hostname with no public `A` record. Switching to the production endpoint is then one value, and worth doing only once the mechanism is known to work.
+> hostname with no public `A` record, which is what staging existed to establish.
+>
+> **It stays on the staging CA, and that was reconsidered rather than inherited ([#265](https://github.com/enorm-labs/event-junkie/issues/265)).** Once DNS-01
+> was known to work, switching looked like one value — but production issues over **HTTP-01**, so pointing staging at the production endpoint would rehearse
+> ACME account registration and nothing else, while spending the shared domain's rate limit on the environment that is _meant_ to break. The warning is only
+> ever seen from inside the tunnel.
 
 **If a challenge fails at `Present`, fixing the config is not enough.** See the last row of the traps table.
 
