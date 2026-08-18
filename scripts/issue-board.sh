@@ -19,6 +19,17 @@
 # An issue that is not yet on the board is added to it. Nothing is hardcoded: every id is
 # resolved at run time, so renaming an option in the UI does not silently break this.
 #
+# ## `status <n> Done` is not a board-only edit any more
+#
+# The project's `Auto-close issue` workflow closes an issue when its Status becomes Done, and
+# `Item closed` sets Done when one closes — inverses that agree, so either end reaches the same
+# place. Both were enabled on 2026-08-18, having been off long enough that two prompt files
+# documented an automation that was not running and every merged PR left its card behind.
+#
+# The consequence for this script is narrow and worth stating: `status <n> Done` now CLOSES the
+# issue. Do not use it to tidy the board for something meant to stay open — and if a card fails to
+# move after a merge, the workflow settings are the first place to look, not this script.
+#
 # ## Why `batch` exists
 #
 # The single-issue path re-resolves the project, the field, the option and the whole item list on
