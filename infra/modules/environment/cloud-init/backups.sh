@@ -116,8 +116,18 @@ check)
 
     # An \`if\`, not \`[[ … ]] && curl\`: under \`set -e\` the && form exits 1 when the URL is unset,
     # so a node without a healthcheck would fail every check while being perfectly healthy.
+    #
+    # THE \`else\` IS THE POINT OF #518, and it is not decoration. Without a URL the three assertions
+    # above still run and still fail loudly — but they fail into \`systemctl status walg-check\`, which
+    # nobody is looking at. The mechanism is built and pointed at nothing, and the two states look
+    # identical from outside: a dead-man's switch that is not wired up reports exactly what a healthy
+    # one does. So say so, on every run, in the place somebody actually reads.
     if [[ -n "\${HEALTHCHECK_URL:-}" ]]; then
         curl -fsS -m 10 --retry 3 "\${HEALTHCHECK_URL}" >/dev/null
+    else
+        echo "warning: HEALTHCHECK_URL is unset in ${CRED_FILE} — this check passes into a void." >&2
+        echo "         Nothing off this host learns that the backups are healthy, and nothing" >&2
+        echo "         learns when they stop. See CLUSTER_BOOTSTRAP.md §8b (#518)." >&2
     fi
     echo "ok: newest \${newest}, disk \${use}%"
     ;;
