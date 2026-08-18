@@ -299,10 +299,39 @@ cmd_up() {
   log "Installing the chart"
   h install "$RELEASE" "$CHART" --values "$VALUES" --wait --timeout 5m >/dev/null \
     || die "the release did not install — nothing below this point would be measuring the chart"
-  # Informational, and deliberately the last thing: it succeeds whether or not anything is running,
-  # so its status must never be what this function returns. Every step above exits on failure, so by
-  # the time control reaches here the install has genuinely succeeded.
+  # Informational, and deliberately before the assertion below: it succeeds whether or not anything
+  # is running, so its status must never be what this function returns. Every step above exits on
+  # failure, so by the time control reaches here the install has genuinely succeeded.
   k get pods -l "app.kubernetes.io/instance=$RELEASE" --no-headers | sed 's/^/   /'
+
+  # `--wait` establishes Ready, and Ready is not the bar. /k3d-rehearsal asks for Ready **and no
+  # restarts**, because a pod that recovered after crashing is a different result from one that
+  # started — and until #544 nothing checked it. That is how #541 survived two rehearsals: the
+  # importer restarted four times on a DNS race and both runs were reported clean, because the only
+  # evidence was a column in a table printed for a human to read.
+  #
+  # `bad` rather than `die`, deliberately. Every other step in this function is a precondition and
+  # fails fast; a restart count is a *measurement*. The stack is up and the rest of the rehearsal is
+  # still worth running, so this accumulates into FAILURES and fails the run at the end — the same
+  # contract cmd_verify has.
+  #
+  # Summed across containers rather than read from the first, so a workload that gains a sidecar does
+  # not quietly stop being covered.
+  local restarted
+  restarted="$(k get pods -l "app.kubernetes.io/instance=$RELEASE" \
+    -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.containerStatuses[*].restartCount}{"\n"}{end}' \
+    | awk '{ s = 0; for (i = 2; i <= NF; i++) s += $i; if (s > 0) print $1, s }')"
+  if [ -z "$restarted" ]; then
+    ok "all pods Ready with no restarts"
+  else
+    # A here-string, NOT a pipe. `while read` on the right of a pipe runs in a subshell, and every
+    # FAILURES increment inside it would be discarded when that subshell exits — an assertion that
+    # prints FAIL and does not fail the run.
+    local pod count
+    while read -r pod count; do
+      bad "$pod restarted ${count}x before becoming Ready — Ready is not the bar (#544). 'kubectl logs --previous' will say why"
+    done <<< "$restarted"
+  fi
 }
 
 # Every negative assertion here checks the CONTENT TYPE, not the status code, and that is the whole
@@ -584,8 +613,20 @@ cmd_flux_trap() {
 cmd_flux_break() {
   guard_context
   log "Breaking the release on purpose"
+  # The Deployment is NAMED, not taken as `.items[0]` (#544). Sorted order made that the bff by
+  # accident — `…-bff` sorts before `…-frontend` and `…-importer` — and the patch below breaks the
+  # *bff* tag specifically. Anything sorting earlier, or a rename, would leave this comparing an
+  # image nobody touched, which passes every time and proves nothing.
+  local deploy="deploy/${RELEASE}-bff"
   local before
-  before="$(k -n "$FLUX_NS" get deploy -o jsonpath='{.items[0].spec.template.spec.containers[0].image}')"
+  before="$(k -n "$FLUX_NS" get "$deploy" -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null)"
+  # An equality of two empty strings is true. Establish there is a real image to compare before
+  # comparing it, or the rollback assertion below passes on an empty namespace and a failed kubectl
+  # alike — the trap cmd_verify spells out in capitals and this function had never learned.
+  if [ -z "$before" ]; then
+    bad "$deploy has no image to read — there is nothing for the rollback assertion to be about"
+    return 1
+  fi
   info "currently running $before"
 
   # `timeout` and `retries: 0` are what keep this to about a minute. Left at the file's own values a
@@ -611,8 +652,10 @@ cmd_flux_break() {
 
   # The property that actually matters: the site kept serving the last good version throughout.
   local after
-  after="$(k -n "$FLUX_NS" get deploy -o jsonpath='{.items[0].spec.template.spec.containers[0].image}')"
-  if [ "$after" = "$before" ]; then
+  after="$(k -n "$FLUX_NS" get "$deploy" -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null)"
+  if [ -z "$after" ]; then
+    bad "$deploy has no image after the broken upgrade — expected the rollback to restore $before"
+  elif [ "$after" = "$before" ]; then
     ok "rolled back — still running $after"
   else
     bad "workload image is now $after, expected the rollback to restore $before"
