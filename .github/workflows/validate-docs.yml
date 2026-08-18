@@ -44,7 +44,9 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       # oxfmt is a devDependency of events-frontend rather than a standalone tool, and that is the
       # point: `package-lock.json` pins the exact version. oxfmt is pre-1.0 and its Markdown output
@@ -54,7 +56,7 @@ jobs:
       # the repository, and that should be caught on the bump rather than on the next unrelated docs
       # pull request.
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24' # should match the version specified in .nvmrc
           cache: 'npm'

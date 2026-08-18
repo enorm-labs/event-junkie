@@ -697,8 +697,8 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     - `validate-workflows.yml` — **actionlint** (correctness) and **zizmor** (security) over `.github/workflows/`, since #383. It is the only gate that looks at
       the workflows themselves, and on its first run zizmor found a template injection in `release.yml`, a cache-poisoning path into it, and two workflow-level
       permission grants that belonged to a single job. zizmor blocks at `--min-severity medium`; suppressions live in `zizmor.yml` or as inline
-      `# zizmor: ignore[…]` comments, each with a reason and a date. **`unpinned-uses` is downgraded to `ref-pin` on purpose** — the 57 tag-pinned actions are
-      #443's work, and that suppression should be raised to `hash-pin` the day it lands.
+      `# zizmor: ignore[…]` comments, each with a reason and a date. **`unpinned-uses` is set to `hash-pin`** since #443 landed on 2026-08-18, so an action added
+      with a tag fails the build — see the actions rule below.
     - `validate-docs.yml` — `scripts/format-markdown.sh check` over every `.md` file. It **checks and never writes**: a job that pushed a formatting commit back
       would need write access on every pull request including forks, which is far more than a formatter is worth, so a failure names the files and leaves the
       one-command fix to the author. It installs `events-frontend`'s dependencies for the pinned oxfmt rather than fetching a released one — versions disagree
@@ -727,6 +727,22 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       `helm unittest` and `scripts/cluster-assertions.sh`. Triggers only when `deploy/**` changes. **Pins a Helm 3 client** even though local binaries are Helm 4, because Flux's helm-controller
       embeds the Helm 3 SDK and a chart that renders only under Helm 4 is one Flux cannot install. Like `validate-infra.yml` it reaches no cluster, so it is a
       syntax and shape gate; the assertions are the part that catches a chart which is well-formed and wrong.
+- **Every `uses:` names a commit SHA, never a tag** (#443, 2026-08-18). A tag is a pointer its owner can move, so a compromised action repository would reach
+  every workflow here on its next run — and since #264 a run on `main` publishes three images and a chart. The form is the one Dependabot maintains:
+
+    ```yaml
+    uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    ```
+
+    **The comment is not decoration** — Dependabot reads it to know what version the SHA is, and rewrites both together, so the ongoing cost of SHA pinning is
+    the same as the cost of tags. Adding an action by tag now fails `Lint & audit workflows`, which is a required check, so this cannot regress by review
+    fatigue. GitHub's repository-level `sha_pinning_required` setting enforces the same thing one layer down and is the belt to zizmor's braces.
+
+    **Every `actions/checkout` also sets `persist-credentials: false`.** Without it the job's token is written into `.git/config`, where any later step — or an
+    artifact upload of the workspace — can read it. No workflow here pushes with git, so nothing needs it. It is also required rather than optional in practice:
+    zizmor's `artipacked` audit can read the version out of `@v7` and skip the check, but a SHA tells it nothing, so pinning without this turns 15 silent passes
+    into 15 medium findings on a gate that blocks at medium.
+
 - **Nine checks are REQUIRED on `main` and a pull request cannot merge without them** (#443, applied 2026-08-13). They were chosen for a specific reason: each
   runs on _every_ pull request, because GitHub keeps a required-but-skipped check `Pending` forever — _"a pull request that requires those checks to be
   successful will be blocked from merging"_ — so requiring a path-filtered check deadlocks every PR that does not touch its paths. #447 was a live example: it

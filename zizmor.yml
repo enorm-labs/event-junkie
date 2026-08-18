@@ -12,15 +12,14 @@ rules:
   unpinned-uses:
     config:
       policies:
-        # 2026-08-12 — **57 findings, and every one of them is #443's work, not a defect in this
-        # config.** Every action here is pinned to a mutable major tag (`actions/checkout@v7`)
-        # rather than a commit SHA. zizmor is right that this is a real supply-chain gap: a tag is a
-        # pointer its owner can move. It is tracked as item 4 of #443, together with GitHub's own
-        # `sha_pinning_required` repository setting, which enforces it going forward rather than by
-        # review.
+        # 2026-08-18 — **raised to `hash-pin` because #443 landed.** Every `uses:` in
+        # `.github/workflows/` now names a commit SHA with the human-readable version as a trailing
+        # comment, which is the form Dependabot maintains, so the ongoing cost is the same as it was
+        # with tags and the gate can hold the stronger line.
         #
-        # Downgraded to `ref-pin` rather than ignored: this still requires a *tag or SHA* and fails
-        # on a floating `@main`, so the gate keeps its teeth on the worse version of the problem
-        # while #443 does the mechanical part. **Raise this to `hash-pin` the moment #443 lands** —
-        # a suppression that outlives its issue is a gate that has been quietly switched off.
-        "*": ref-pin
+        # It replaces the `ref-pin` downgrade this file carried from 2026-08-12, whose own comment
+        # said to raise it the moment #443 landed — *"a suppression that outlives its issue is a gate
+        # that has been quietly switched off"*. There is nothing left to suppress here: the next
+        # action added must arrive pinned or the build fails, which is the half of item 4 that does
+        # not depend on a repository setting being remembered.
+        "*": hash-pin
