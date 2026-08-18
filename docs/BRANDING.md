@@ -135,7 +135,67 @@ Candidate directions (ordered by how well they fuse _music + the "junkie" concep
 5. **The live dot.** A single filled circle — a "hit," a record, a dot on a calendar day — that **pulses**
    when something's on tonight. Minimal, animatable, unbeatable as a favicon; leans on motion for meaning.
 
-**Shipped:** #1 (waveform wordmark) + its standalone favicon glyph, in both inks.
+**Shipped:** #1 (waveform wordmark) + its standalone favicon glyph, in both inks — **and being replaced, see §4a.**
+
+### 4a. The collision, recorded — 2026-08-19 (#475)
+
+The pulse mark is close enough to **sprintpulse.io**'s that it cannot stay. Recorded here rather than remembered, because if a trademark question ever follows,
+_"we noticed and changed it before launch"_ is a materially better position than a recollection.
+
+**Both marks were read from their own source**, not compared by eye:
+
+|                    | Event Junkie (`PulseMark.vue`)                          | SprintPulse (`cdn.sprintpulse.io/assets/logo-7927021e.svg`) |
+| ------------------ | ------------------------------------------------------- | ----------------------------------------------------------- |
+| Construction       | one `<path>`, `fill="none"`                             | one `<path>`, `fill="none"` (plus an arrowhead)             |
+| Line               | ECG/soundwave: flat lead-in, spikes, flat lead-out      | ECG/heartbeat: flat lead-in, spikes, flat lead-out          |
+| Caps / joins       | `round` / `round`                                       | `round` / `round`                                           |
+| Fill               | horizontal `linearGradient`, `x1=0 → x2=1`              | horizontal `linearGradient`, `x1=0% → x2=100%`              |
+| Gradient endpoints | `#823feb` → `#a24df2` → `#d528ce` (violet → magenta)    | `#4f46e5` → `#9333ea` → `#ec4899` (indigo → pink)           |
+| Role               | mark left of the wordmark, collapsing to the mark alone | mark left of the wordmark                                   |
+
+**The collision is not "both are pulse lines".** It is that both are a single round-capped stroke of an ECG line, on a left-to-right violet-to-pink gradient,
+sitting to the left of a wordmark — the same construction, the same palette direction and the same lockup. The differences are the aspect ratio (ours is
+flatter, ~3.9:1 against ~1.6:1) and their arrowhead. That is not enough distance.
+
+**The wordmark itself — a preliminary look, and it is not a trademark search.** A general web search on 2026-08-19 turned up no product, app or company trading
+as _Event Junkie_ or _Eventjunkie_ in the German or EU events market; the nearest neighbours are unrelated (_Startup Junkie_, US, different class). That is
+weak evidence and worth exactly what it cost: it rules out the obvious, and it says nothing about the registers.
+
+**The register search still has to be done by hand**, because DPMAregister and TMview are session-based applications rather than queryable endpoints. Three
+searches, minutes each, all free:
+
+- [DPMAregister](https://register.dpma.de/DPMAregister/marke/einsteiger) — German national marks, `Event Junkie` and `Eventjunkie`
+- [EUIPO eSearch](https://www.euipo.europa.eu/en/search) — EU trade marks
+- [TMview](https://www.tmdn.org/tmview/) — both of the above plus WIPO in one query
+
+Classes that matter here are **9** (software/apps), **41** (entertainment, arranging events) and **42** (SaaS). A word mark in an unrelated class is not a
+problem; one in 9 or 41 is.
+
+### 4b. The direction, with a recommendation — **needs a decision**
+
+Beyond the four still parked above, #475 raises the Trainspotting idea and four others. On Trainspotting: the cultural fit is real, and the execution that
+survives both cautions is the film's **poster language** (orange-and-black, mixed-weight condensed type, numbered character strip, stark white ground) rather
+than its characters — a face breaks §3's _"never actually about drugs"_ rule outright, and it is also a specific actor's likeness.
+
+**Recommended: the overflowing calendar cell.** A single date square with more entries than fits, spilling past its edge. Drawn and committed as
+[`docs/branding/mark-proposal-overflow.svg`](branding/mark-proposal-overflow.svg) so the choice is concrete rather than described.
+
+Why it wins on this project's own criteria rather than on taste:
+
+- **It is the only direction about _events_.** Every other candidate here is about music or about the pun. The product is a calendar of what is on, and the
+  thing it does better than its neighbours is coverage — which is precisely what "more than fits" draws.
+- **It draws the tagline.** _Can't get enough of Berlin_ is a statement about volume, and this is that statement as a silhouette.
+- **It is furthest from where we are leaving.** Waveform, heartbeat, soundbar and equaliser are one neighbourhood, and it is a crowded one — the collision
+  above is what a crowded neighbourhood costs.
+- **It satisfies §4's principles without needing a designer to start.** Geometric, monochrome, one silhouette, legible at 16 px, and hand-authorable as SVG —
+  which is how the current mark was made.
+
+**Runner-up: type-only.** No mark at all, "Event Junkie" set with one deliberate typographic move. Cheapest, ages best, cannot collide with anybody's icon, and
+removes the favicon constraint by using a single letter as the app icon. It is the right answer if the honest conclusion is that this project should not be
+spending decisions on a logo before launch — and that is a legitimate conclusion.
+
+**Not recommended: the scan line.** A cropped barcode is a horizontal-stripe silhouette, which is the same visual family as an equaliser — it would be trading
+one crowded neighbourhood for a neighbouring one.
 
 ## 5. Website / visual design — ideas
 
