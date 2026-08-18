@@ -688,7 +688,9 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       one surface over. **The fix for a red run is to cut a release**, not to re-run the job: these images are immutable and already deployed.
     - `restore-drill-reminder.yml` — Opens the quarterly PostgreSQL restore drill as an assigned issue, and again on any push to `main` touching `backups.sh` or
       `postgres.sh`. Documented as quarterly is not a schedule; this is what makes a skipped quarter visible as an open card rather than as nothing at all.
-      Idempotent by listing open issues rather than searching (the search index is eventually consistent). See `docs/ops/BACKUPS.md` §9.
+      Idempotent by listing open issues rather than searching (the search index is eventually consistent). It does not put the issue on the board itself
+      (`GITHUB_TOKEN` cannot write to an organisation project); the board's `Auto-add to project` workflow was enabled on 2026-08-18 to cover that, and the
+      next issue it opens is what confirms it. See `docs/ops/BACKUPS.md` §9.
     - `label-pr.yml` — Derives labels from the Conventional Commits PR title (`feat(scraper): …` → `feat` + `importer`, `fix(api)!: …` → `fix` +
       `breaking-change`) via `actions/github-script`. Creates any missing label on demand and re-syncs when the title is edited. Uses `pull_request_target` so
       fork PRs get a writable token; safe because it never checks out or runs PR code.
