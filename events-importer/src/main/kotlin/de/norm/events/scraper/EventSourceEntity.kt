@@ -59,6 +59,19 @@ data class EventSourceEntity(
     val lastError: String? = null,
     /** Current import status: IDLE, RUNNING, SUCCESS, FAILED, MISCONFIGURED. */
     val status: String = ImportStatus.IDLE.name,
+    /**
+     * When a run last found materially less of some field than this source normally publishes
+     * (#472), or `null` once a later run looked normal again.
+     *
+     * **Deliberately independent of [status].** A flagged source is one whose every run *succeeds* —
+     * that is the entire failure being caught: the importer keeps working, reports success, writes
+     * the usual number of events, and the data quietly gets worse. Folding this into `FAILED` would
+     * make the scheduler back it off, which is precisely the wrong response to a venue that is
+     * answering perfectly.
+     */
+    val flaggedAt: Instant? = null,
+    /** Which fields dropped and by how much, in the shape a human reads without another query. */
+    val flagReason: String? = null,
     /** Optimistic locking version — prevents lost updates from concurrent modifications. */
     @Version val version: Long? = null,
     @CreatedDate val createdAt: Instant? = null,

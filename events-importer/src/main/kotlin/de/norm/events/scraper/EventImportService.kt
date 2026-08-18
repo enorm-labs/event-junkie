@@ -36,6 +36,8 @@ class EventImportService(
     private val transactionalOperator: TransactionalOperator,
     /** Every meter this pipeline publishes (#415). See [ImporterMetrics] for why the names are an interface. */
     private val metrics: ImporterMetrics,
+    /** Per-field coverage against each source's own history (#472) — the partial-failure alarm. */
+    private val fieldCoverageService: FieldCoverageService,
     /** Injected clock for deterministic time in tests. Defaults to system UTC clock in production. */
     private val clock: Clock = Clock.systemUTC(),
     /**
@@ -228,6 +230,23 @@ class EventImportService(
                     metrics.recordEventsWritten(runningSource.slug, ImporterMetrics.WriteOperation.INSERTED, upsert.inserted)
                     metrics.recordEventsWritten(runningSource.slug, ImporterMetrics.WriteOperation.UPDATED, upsert.updated)
                     metrics.recordEventsWritten(runningSource.slug, ImporterMetrics.WriteOperation.SKIPPED, upsert.skipped)
+
+                    // Per-field coverage, BEFORE markSuccess and after the transaction (#472).
+                    //
+                    // Measured from `result.events` — what the scraper extracted — and not from the
+                    // rows in the database, which also hold everything previous runs wrote. A
+                    // selector that stopped matching shows up in the former and is invisible in the
+                    // latter until the old rows age out.
+                    //
+                    // Before `markSuccess` because that save carries the entity this run has been
+                    // holding: the flag is written by a targeted UPDATE that does not touch
+                    // `version`, so the ordering is safe either way, and doing it first means a
+                    // flagged run is flagged even if the closing save is retried.
+                    //
+                    // Unguarded here on purpose: `record` never throws, and owning that promise in
+                    // the service rather than at each call site is what stops the next caller
+                    // forgetting it.
+                    fieldCoverageService.record(runningSource, result.events)
 
                     markSuccess(runningSource, upsert.total, result.etag, result.lastModified)
                     ImportResultResponse(sourceSlug = runningSource.slug, imported = true, eventCount = upsert.total) to
