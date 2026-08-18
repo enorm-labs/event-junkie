@@ -97,6 +97,11 @@ CREATE TABLE event_source
     etag                    TEXT,
     last_modified           TEXT,
     last_import_at          TIMESTAMPTZ,
+    -- Last *successful* run, as distinct from last_import_at, which is written on failure too
+    -- and therefore means last attempt. Kept as its own column because the difference is the
+    -- whole point of importer.source.last_success: a source that failed an hour ago still has a
+    -- true last-success time, and an alert on staleness needs it (#415).
+    last_success_at         TIMESTAMPTZ,
     last_event_count        INT,
     last_error              TEXT,
     status                  TEXT        NOT NULL DEFAULT 'IDLE',

@@ -92,7 +92,7 @@ class ImporterMetrics(
 
         registry.counter(RUN_OUTCOME, TAG_SOURCE, sourceSlug, TAG_OUTCOME, outcome.tag).increment()
 
-        if (outcome == RunOutcome.SUCCESS) {
+        if (outcome.advancesLastSuccess) {
             markSucceededNow(sourceSlug)
         }
     }
@@ -173,22 +173,41 @@ class ImporterMetrics(
      * can actually produce.
      */
     enum class RunOutcome(
-        val tag: String
+        val tag: String,
+        /**
+         * Whether this outcome advances `importer.source.last_success`.
+         *
+         * **It has to agree with what [EventImportService] writes to `last_success_at`, and this flag
+         * is where that agreement is written down.** The gauge has two feeds — this one, which is
+         * immediate and in-memory, and [MetricsRefreshService], which republishes from the column
+         * every minute. If the two disagreed, the gauge would jump backwards or forwards once a
+         * minute and the disagreement would look like clock skew rather than like a bug. The rule is
+         * one line: **an outcome advances last-success exactly when the run reached the source and
+         * got an answer**, which is what `markSuccess` is called for.
+         */
+        val advancesLastSuccess: Boolean
     ) {
         /** The source was scraped and its events upserted. */
-        SUCCESS("success"),
+        SUCCESS("success", advancesLastSuccess = true),
 
-        /** The source answered 304 — nothing to do, and not a failure. */
-        NOT_MODIFIED("not_modified"),
+        /**
+         * The source answered 304 — nothing to do, and not a failure.
+         *
+         * It advances last-success because a 304 is a **working** scraper: the request went out, the
+         * venue answered, and the conditional headers did their job. Treating it as "no success" would
+         * make a stable venue look like a broken one after three quiet days, which is the false
+         * positive that gets a staleness alert muted.
+         */
+        NOT_MODIFIED("not_modified", advancesLastSuccess = true),
 
         /** The run threw. Transient by assumption, so it consumes retry budget. */
-        FAILED("failed"),
+        FAILED("failed", advancesLastSuccess = false),
 
         /** Unknown source type, or no importer deployed for it. Will never self-resolve on retry. */
-        MISCONFIGURED("misconfigured"),
+        MISCONFIGURED("misconfigured", advancesLastSuccess = false),
 
         /** Another run already held the claim (ADR-009), so this one did nothing. */
-        SKIPPED("skipped")
+        SKIPPED("skipped", advancesLastSuccess = false)
     }
 
     /** What an upsert did to a row. */

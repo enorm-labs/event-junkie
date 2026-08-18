@@ -41,6 +41,18 @@ data class EventSourceEntity(
     val lastModified: String? = null,
     /** Timestamp of the last completed import (successful or failed). */
     val lastImportAt: Instant? = null,
+    /**
+     * Timestamp of the last import that **succeeded**, which [lastImportAt] is not.
+     *
+     * The two differ exactly when they matter most: `lastImportAt` is written on failure as well, so
+     * a source that has been broken for a week reports a fresh timestamp there. This column is the
+     * one `importer.source.last_success` publishes, and the one an alert on
+     * `time() - last_success > 3 * interval` can be written against (#415).
+     *
+     * A 304 counts as a success — the source was reachable and answered, which is what the metric
+     * asserts — and [EventImportService] treats it that way for `status` already.
+     */
+    val lastSuccessAt: Instant? = null,
     /** Number of events imported in the last successful run. */
     val lastEventCount: Int? = null,
     /** Error message from the last failed import, `null` if the last run succeeded. */

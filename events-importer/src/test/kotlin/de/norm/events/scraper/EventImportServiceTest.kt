@@ -15,6 +15,7 @@ import de.norm.events.venue.VenueRepository
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.ints.shouldBeLessThanOrEqual
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -32,6 +33,7 @@ import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.transaction.reactive.TransactionalOperator
 import reactor.core.publisher.Flux
 import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.concurrent.atomic.AtomicInteger
@@ -449,6 +451,57 @@ class EventImportServiceTest {
 
                 outcomeCount("test-source", "not_modified") shouldBe 1.0
                 outcomeCount("test-source", "success") shouldBe 0.0
+            }
+
+        /**
+         * The column and the in-memory gauge have to agree, because the gauge has two feeds — this
+         * one, immediate, and [MetricsRefreshService], which republishes from the column every
+         * minute. A disagreement would make the value jump once a minute and read as clock skew.
+         */
+        @Test
+        fun `a successful run stamps last_success_at, and the gauge agrees with it`() =
+            runTest {
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
+                    ImportResult.Success(events = listOf(scrapedEvent()), etag = null, lastModified = null)
+
+                service.importFromSource(source())
+
+                coVerify { eventSourceRepository.save(match { it.lastSuccessAt != null && it.lastSuccessAt == it.lastImportAt }) }
+                registry.find("importer.source.last_success").tag("source", "test-source").gauge() shouldNotBe null
+            }
+
+        @Test
+        fun `a 304 stamps last_success_at too — the venue answered, which is the scraper working`() =
+            runTest {
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns ImportResult.NotModified
+
+                service.importFromSource(source(etag = "\"old-etag\""))
+
+                coVerify { eventSourceRepository.save(match { it.lastSuccessAt != null }) }
+                registry.find("importer.source.last_success").tag("source", "test-source").gauge() shouldNotBe null
+            }
+
+        /**
+         * The asymmetry that makes the column worth having: `last_import_at` moves on a failure and
+         * `last_success_at` must not, or the staleness alert can never fire.
+         */
+        @Test
+        fun `a failed run moves last_import_at and leaves last_success_at where it was`() =
+            runTest {
+                val previousSuccess = Instant.parse("2026-06-13T04:00:00Z")
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } throws IllegalStateException("selector no longer matches")
+
+                service.importFromSource(source().copy(lastSuccessAt = previousSuccess))
+
+                coVerify {
+                    eventSourceRepository.save(
+                        match {
+                            it.status == ImportStatus.FAILED.name &&
+                                it.lastSuccessAt == previousSuccess &&
+                                it.lastImportAt != previousSuccess
+                        }
+                    )
+                }
             }
 
         @Test
