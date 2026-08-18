@@ -153,3 +153,12 @@ DELETE {{importer-host}}/api/admin/event-sources/{{source_slug}}
         client.assert(response.status === 204, "Expected 204 but got " + response.status);
     });
 %}
+
+### Sources currently flagged for a coverage drop (#472)
+### `flaggedAt` and `flagReason` are on every source response. A flagged source
+### is one whose runs all SUCCEED — that is the failure being caught: the
+### importer keeps working, writes the usual number of events, and the data
+### quietly gets worse. The flag clears itself on the next normal run.
+GET {{importer-host}}/api/admin/event-sources
+Accept: application/json
+

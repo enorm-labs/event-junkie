@@ -39,6 +39,18 @@ data class EventSourceResponse(
     val lastEventCount: Int?,
     @Schema(description = "Error message from the last failed import")
     val lastError: String?,
+    @Schema(
+        description =
+            "When a run last found materially less of some field than this source normally " +
+                "publishes (#472), or null. Independent of status: a flagged source is one whose " +
+                "runs all SUCCEED — that is the failure being caught"
+    )
+    val flaggedAt: Instant?,
+    @Schema(
+        description = "Which fields dropped and by how much",
+        example = "genre 5% of 40 events, baseline 98%"
+    )
+    val flagReason: String?,
     @Schema(description = "Number of consecutive failures", example = "0")
     val retryCount: Int,
     @Schema(description = "Maximum retry attempts before giving up", example = "3")
@@ -60,6 +72,8 @@ data class EventSourceResponse(
                 lastSuccessAt = entity.lastSuccessAt,
                 lastEventCount = entity.lastEventCount,
                 lastError = entity.lastError,
+                flaggedAt = entity.flaggedAt,
+                flagReason = entity.flagReason,
                 retryCount = entity.retryCount,
                 maxRetries = entity.maxRetries
             )

@@ -90,6 +90,14 @@ class EventImportServiceTest {
     private val registry = SimpleMeterRegistry()
     private val metrics = ImporterMetrics(registry)
 
+    /**
+     * Relaxed, because #472's coverage recording is a *measurement* hanging off a successful run and
+     * none of the assertions in this file are about it — `FieldCoverageServiceTest` owns that rule.
+     * What this file does still assert about it is the property that matters here: a coverage
+     * failure must not fail an import (see the `measurement` test below).
+     */
+    private val fieldCoverageService: FieldCoverageService = mockk(relaxed = true)
+
     /** Reusable event source entity with sensible defaults. */
     private fun source(
         id: Long = 1L,
@@ -137,6 +145,12 @@ class EventImportServiceTest {
 
     @BeforeEach
     fun setUp() {
+        buildServices()
+        stubDefaults()
+    }
+
+    /** Extracted from `setUp` so it stays under detekt's method-length limit as collaborators are added. */
+    private fun buildServices() {
         associationSyncService =
             AssociationSyncService(
                 eventArtistRepository = eventArtistRepository,
@@ -163,9 +177,12 @@ class EventImportServiceTest {
                 venueRepository = venueRepository,
                 transactionalOperator = transactionalOperator,
                 metrics = metrics,
+                fieldCoverageService = fieldCoverageService,
                 maxConcurrency = EventImportService.DEFAULT_MAX_CONCURRENCY
             )
+    }
 
+    private fun stubDefaults() {
         // The import claim succeeds by default, so every test below runs the full pipeline.
         // The relaxed mock would otherwise answer 0 and skip the import as already-claimed.
         coEvery { eventSourceRepository.claimForImport(any(), any(), any()) } returns 1
@@ -272,6 +289,7 @@ class EventImportServiceTest {
                         venueRepository = venueRepository,
                         transactionalOperator = transactionalOperator,
                         metrics = metrics,
+                        fieldCoverageService = fieldCoverageService,
                         maxConcurrency = EventImportService.DEFAULT_MAX_CONCURRENCY
                     )
 
@@ -1186,6 +1204,7 @@ class EventImportServiceTest {
                         venueRepository = venueRepository,
                         transactionalOperator = transactionalOperator,
                         metrics = metrics,
+                        fieldCoverageService = fieldCoverageService,
                         maxConcurrency = maxConcurrency
                     )
 

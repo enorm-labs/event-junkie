@@ -829,6 +829,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `importer.scrape.failures`                   | Counter, tagged `source`, `reason`    | Distinguishes HTTP 403 from a parse failure                                         |
 | `importer.source.last_success`               | Gauge, tagged `source`                | Age of the last good run; alert past ~3× its schedule                               |
 | `importer.source.running`                    | Gauge                                 | Catches the ADR-008 `RUNNING`-forever state a restart can strand                    |
+| `importer.source.field_coverage{source,field}` | Gauge                                 | The partial-failure alarm (#472) — alert on a **drop against history**, not a floor |
 | `bff.events.served`                          | Counter, tagged endpoint              | Is anyone actually using it                                                         |
 | `db.events{horizon="all"\|"future"}`         | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end        |
 | `data_quality{source=…,metric=…}`            | Gauge                                 | Per-source quality, refreshed daily (#319). Alert on a metric that starts rising    |
@@ -848,6 +849,10 @@ That last group is what makes the dashboards _business_ dashboards and not CPU g
   its absence** — and note a source that has never succeeded still publishes nothing, deliberately, because a zero would read as 1970.
 - **A 304 counts as a success**, for both the column and the gauge. The request went out, the venue answered, and the conditional headers did their job.
   Treating it as "no success" would make a stable venue look broken after three quiet days, which is the false positive that gets a staleness alert muted.
+- **`importer.source.field_coverage` must never be alerted on with a threshold.** It is a ratio per source per field, and a venue that has never published a
+  price sits at `0` forever without anything being wrong. The signal is a **drop against that source's own history**, which is why the flagging lives in the
+  importer (where the history is) rather than in an alert rule: `event_source.flagged_at` is the alertable thing, and this gauge is what lets you see the shape
+  of it afterwards. Alerting on `field_coverage < 0.5` would page on half the corpus on day one.
 - **`importer.run.outcome` has no `partial`.** This pipeline cannot produce one: a run completes and upserts, is skipped because the source was unchanged or
   already claimed, or throws — and the upserts are in one transaction, so there is no half-written state. The real values are `success`, `not_modified`,
   `failed`, `misconfigured` and `skipped`. A bucket nothing can emit would be a panel that is always zero, which reads as "never happens" rather than "cannot

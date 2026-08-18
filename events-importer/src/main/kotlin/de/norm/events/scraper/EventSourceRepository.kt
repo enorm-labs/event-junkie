@@ -66,6 +66,41 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
     fun findDueForImport(now: Instant): Flow<EventSourceEntity>
 
     /**
+     * Raises the data-quality flag on a source (#472).
+     *
+     * A targeted `UPDATE` rather than a `save()`, and **deliberately without touching `version`**:
+     * this runs inside a completed import, immediately before that run's own `markSuccess` writes
+     * the entity it has been holding. Bumping the version here would make that save fail optimistic
+     * locking and turn a successful import into a spurious retry — the flag would cost exactly the
+     * thing it is meant to observe.
+     *
+     * It writes two columns nothing else writes, so there is no lost update to worry about.
+     */
+    @Modifying
+    @Query(
+        """
+        UPDATE events.event_source
+        SET flagged_at = :flaggedAt, flag_reason = :reason
+        WHERE id = :id
+        """
+    )
+    suspend fun setFlag(
+        id: Long,
+        flaggedAt: Instant,
+        reason: String
+    ): Int
+
+    /**
+     * Clears the flag once a run looks normal again.
+     *
+     * Not optional: a flag that is only ever set is permanently on within a month, and then it is
+     * decoration. The clear is what makes the set mean something.
+     */
+    @Modifying
+    @Query("UPDATE events.event_source SET flagged_at = NULL, flag_reason = NULL WHERE id = :id")
+    suspend fun clearFlag(id: Long): Int
+
+    /**
      * Finds sources stuck in RUNNING status for longer than the staleness timeout.
      *
      * These are reset to FAILED by the scheduler to prevent permanently stuck imports

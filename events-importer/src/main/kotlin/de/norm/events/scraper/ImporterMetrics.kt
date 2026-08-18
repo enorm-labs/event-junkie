@@ -55,6 +55,13 @@ class ImporterMetrics(
      */
     private val lastSuccessEpochSeconds = ConcurrentHashMap<String, AtomicLong>()
 
+    /**
+     * Per-source, per-field coverage ratios. A `Double` holder rather than an [AtomicLong], because
+     * this is the one meter here that is a fraction and rounding it to a long would make every value
+     * either 0 or 1.
+     */
+    private val fieldCoverage = ConcurrentHashMap<Pair<String, String>, java.util.concurrent.atomic.AtomicReference<Double>>()
+
     /** Backs [SOURCE_RUNNING]; see the class KDoc for why it is not a supplier that queries. */
     private val sourcesRunning = AtomicLong(0)
 
@@ -147,6 +154,35 @@ class ImporterMetrics(
             }.set(epochSeconds)
     }
 
+    /**
+     * `importer.source.field_coverage{source,field}` — the fraction of a run's events carrying one
+     * field (#472).
+     *
+     * **Registered here rather than in a second metrics path**, which is what the issue asks for and
+     * is right for a reason worth stating: a meter is only useful next to the meters it is compared
+     * with. A field-coverage gauge in its own registry could not be graphed against
+     * `importer.run.outcome` or `importer.events.written`, and those three together are what tell
+     * "the venue changed its page" apart from "the scraper broke" apart from "nothing happened".
+     *
+     * A ratio rather than a count, because the count is meaningless without the run size and the
+     * run size is already `importer.events.written`. Cardinality is sources times fields — tens,
+     * and both sides are ours.
+     */
+    fun publishFieldCoverage(
+        sourceSlug: String,
+        field: String,
+        ratio: Double
+    ) {
+        fieldCoverage
+            .computeIfAbsent(sourceSlug to field) { (slug, name) ->
+                val holder =
+                    java.util.concurrent.atomic
+                        .AtomicReference(0.0)
+                registry.gauge(FIELD_COVERAGE, Tags.of(TAG_SOURCE, slug, TAG_FIELD, name), holder) { it.get() }
+                holder
+            }.set(ratio)
+    }
+
     private fun markSucceededNow(sourceSlug: String) = publishLastSuccess(sourceSlug, System.currentTimeMillis() / MILLIS_PER_SECOND)
 
     /** Called by [MetricsRefreshService]; see the class KDoc for why a scheduler rather than a supplier. */
@@ -231,6 +267,15 @@ class ImporterMetrics(
         const val SCRAPE_FAILURES = "importer.scrape.failures"
         const val SOURCE_LAST_SUCCESS = "importer.source.last_success"
         const val SOURCE_RUNNING = "importer.source.running"
+
+        /**
+         * `importer.source.field_coverage{source,field}` — #415's list plus one dimension (#472).
+         *
+         * The series to alert on is a **drop against this source's own history**, not a threshold: a
+         * venue that has never published a price sits at 0 forever and is not broken.
+         */
+        const val FIELD_COVERAGE = "importer.source.field_coverage"
+        const val TAG_FIELD = "field"
 
         /**
          * **One gauge with a `horizon` tag, not the two separate names PLATFORM_SETUP.md §7 lists —
