@@ -263,11 +263,11 @@ raising it to 4.x would gate the chart against a client that cannot install it. 
 plugin itself. #430 chose a plugin install over the `helmunittest/helm-unittest` image precisely so `HELM_VERSION` could stay exact — the image's newest Helm 3
 tag lags, and the plugin version it carries has no `--values` flag. If a bump ever tempts you back to the image, that is the constraint to re-check first.
 
-**`SHELLCHECK_VERSION` appears in two**, for the same reason and with a sharper failure mode. It is pinned at all because the runner image's preinstalled
+**`SHELLCHECK_VERSION` appears in three**, for the same reason and with a sharper failure mode. It is pinned at all because the runner image's preinstalled
 ShellCheck is older than a current local install and disagrees with it — v0.9.0 flags `SC2015` on `A && B || true`, v0.11.0 correctly does not — so an unpinned
-job fails on files the author's own copy had just passed. Bump both in one commit, and when a bump does turn a job red, read the findings on their merits before
-assuming the pin is wrong: a newer analyser finding more is the tool working. It was three workflows until #430 deleted `deploy/scripts/` and with it
-`validate-chart.yml`'s ShellCheck job.
+job fails on files the author's own copy had just passed. `cluster-assertions.sh`, `k3d-rehearsal.sh`, `version.sh` and `version-test.sh` are linted by two of the three jobs, so a drifted pin surfaces as two checks
+disagreeing about the same file. Bump all three in one commit, and when a bump does turn a job red, read the findings on their merits before
+assuming the pin is wrong: a newer analyser finding more is the tool working.
 
 A Trivy bump can turn a green scan red by adding advisories rather than by anything changing in the image. That is the tool working — treat the new findings on
 their merits, do not pin back.
