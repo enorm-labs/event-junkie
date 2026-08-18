@@ -12,6 +12,19 @@ interface EventRepository : CoroutineCrudRepository<EventEntity, Long> {
     /** Batch-fetches events by their source IDs to avoid N+1 queries during upsert. */
     fun findBySourceIdIn(sourceIds: Collection<String>): Flow<EventEntity>
 
+    /**
+     * Events dated [date] or later — the `db.events.future` gauge (#415).
+     *
+     * **A future count trending to zero is a broken pipeline seen from the other end**, and it
+     * catches what a per-source metric cannot: every importer can report success while the programme
+     * as a whole quietly ages out, because "imported 0 new events" and "imported nothing because
+     * there is nothing left to import" look identical one source at a time.
+     *
+     * Derived rather than a `@Query`: `countBy*` is one of the forms Spring Data R2DBC does derive
+     * (ADR-002), so this needs no hand-written SQL and no schema prefix.
+     */
+    suspend fun countByEventDateGreaterThanEqual(date: LocalDate): Long
+
     /** Finds all events with pagination and sorting applied via [pageable]. */
     fun findAllBy(pageable: Pageable): Flow<EventEntity>
 

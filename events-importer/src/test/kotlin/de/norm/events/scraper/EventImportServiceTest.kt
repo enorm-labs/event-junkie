@@ -15,6 +15,7 @@ import de.norm.events.venue.VenueRepository
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.ints.shouldBeLessThanOrEqual
 import io.kotest.matchers.shouldBe
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -75,6 +76,17 @@ class EventImportServiceTest {
     private lateinit var associationSyncService: AssociationSyncService
     private lateinit var eventUpsertService: EventUpsertService
     private lateinit var service: EventImportService
+
+    /**
+     * Initialised here rather than in `setUp`: JUnit builds a fresh test instance per method, so a
+     * field initialiser gives each test its own empty registry exactly as a `@BeforeEach` would —
+     * and `setUp` is already at detekt's length limit.
+     *
+     * A real registry rather than a mock, because these tests assert on the meters that come out and
+     * a relaxed mock would happily accept a name no dashboard matches.
+     */
+    private val registry = SimpleMeterRegistry()
+    private val metrics = ImporterMetrics(registry)
 
     /** Reusable event source entity with sensible defaults. */
     private fun source(
@@ -148,6 +160,7 @@ class EventImportServiceTest {
                 eventImporters = listOf(cassiopeiaImporter),
                 venueRepository = venueRepository,
                 transactionalOperator = transactionalOperator,
+                metrics = metrics,
                 maxConcurrency = EventImportService.DEFAULT_MAX_CONCURRENCY
             )
 
@@ -256,6 +269,7 @@ class EventImportServiceTest {
                         eventImporters = emptyList(),
                         venueRepository = venueRepository,
                         transactionalOperator = transactionalOperator,
+                        metrics = metrics,
                         maxConcurrency = EventImportService.DEFAULT_MAX_CONCURRENCY
                     )
 
@@ -385,6 +399,155 @@ class EventImportServiceTest {
                 coVerify {
                     eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name && it.lastEventCount == 1 })
                 }
+            }
+    }
+
+    /**
+     * The meters the pipeline emits (#415).
+     *
+     * These matter more than they look. A scraper does not fail loudly: when a venue redesigns its
+     * site the importer keeps running, reports success, and silently writes zero events — and the
+     * only thing that ever notices is one of these series. So the tests assert **which outcome each
+     * path produces**, because the states that are easiest to merge by accident are exactly the ones
+     * that mean different things: not-modified, skipped-because-claimed and misconfigured all return
+     * `imported=false, eventCount=0`.
+     */
+    @Nested
+    inner class Metrics {
+        private fun outcomeCount(
+            slug: String,
+            outcome: String
+        ) = registry
+            .find("importer.run.outcome")
+            .tags("source", slug, "outcome", outcome)
+            .counter()
+            ?.count() ?: 0.0
+
+        @Test
+        fun `a successful import is tagged success and records a duration`() =
+            runTest {
+                val src = source()
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
+                    ImportResult.Success(events = listOf(scrapedEvent(title = "Show A", sourceId = "cassiopeia:show-a")), etag = null, lastModified = null)
+
+                service.importFromSource(src)
+
+                outcomeCount("test-source", "success") shouldBe 1.0
+                registry
+                    .find("importer.run.duration")
+                    .tag("source", "test-source")
+                    .timer()!!
+                    .count() shouldBe 1L
+            }
+
+        @Test
+        fun `a 304 is not_modified rather than success — it imported nothing and that is fine`() =
+            runTest {
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns ImportResult.NotModified
+
+                service.importFromSource(source(etag = "\"old-etag\""))
+
+                outcomeCount("test-source", "not_modified") shouldBe 1.0
+                outcomeCount("test-source", "success") shouldBe 0.0
+            }
+
+        @Test
+        fun `an unknown source type is misconfigured rather than failed, because retrying cannot help`() =
+            runTest {
+                service.importFromSource(source(sourceType = "NONEXISTENT"))
+
+                outcomeCount("test-source", "misconfigured") shouldBe 1.0
+                outcomeCount("test-source", "failed") shouldBe 0.0
+            }
+
+        @Test
+        fun `losing the claim is skipped, not failed — the other run is doing the work`() =
+            runTest {
+                coEvery { eventSourceRepository.claimForImport(any(), any(), any()) } returns 0
+
+                service.importFromSource(source())
+
+                outcomeCount("test-source", "skipped") shouldBe 1.0
+                outcomeCount("test-source", "failed") shouldBe 0.0
+            }
+
+        @Test
+        fun `a thrown import is failed, and records a scrape failure with its reason`() =
+            runTest {
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } throws
+                    HttpFetchException(403, "https://cassiopeia.example/events")
+
+                service.importFromSource(source())
+
+                outcomeCount("test-source", "failed") shouldBe 1.0
+                registry
+                    .find("importer.scrape.failures")
+                    .tags("source", "test-source", "reason", "http_forbidden")
+                    .counter()!!
+                    .count() shouldBe 1.0
+            }
+
+        /**
+         * The distinction the `operation` tag exists for. `skipped` here is change detection
+         * reporting that it worked — a source returning only skips for days is either genuinely
+         * static or silently broken, and this is half of what tells those apart.
+         */
+        @Test
+        fun `writes are split into inserted, updated and skipped`() =
+            runTest {
+                // One row already in the database byte-identical to what the scraper returns, and one
+                // whose title has moved. Built by hand in the same shape as
+                // `skips saving unchanged events…` above, because change detection compares the whole
+                // entity — deriving the "unchanged" row from the scraped event would compare it with
+                // itself and prove nothing.
+                // The three titles differ deliberately: deduplication keys on date + title + start
+                // time, so three same-titled events on one date would collapse into one before any of
+                // this is reached — which is how the first attempt at this test silently measured a
+                // single insert.
+                val unchangedRow =
+                    EventEntity(
+                        id = 42L,
+                        venueId = 10L,
+                        title = "Same Show",
+                        slug = "2026-06-15-test-venue-same-show",
+                        eventDate = LocalDate.of(2026, 6, 15),
+                        sourceId = "cassiopeia:same",
+                        sourceUrl = "https://example.com/event/test",
+                        eventSourceId = 1L,
+                        eventType = "CONCERT",
+                        status = "SCHEDULED"
+                    )
+                val staleRow =
+                    unchangedRow.copy(
+                        id = 43L,
+                        sourceId = "cassiopeia:changed",
+                        title = "Old Title",
+                        slug = "2026-06-15-test-venue-old-title"
+                    )
+
+                coEvery { eventRepository.findBySourceIdIn(any()) } returns listOf(unchangedRow, staleRow).asFlow()
+
+                val scraped =
+                    listOf(
+                        scrapedEvent(title = "Same Show", sourceId = "cassiopeia:same", eventDate = LocalDate.of(2026, 6, 15)),
+                        scrapedEvent(title = "Changed Show", sourceId = "cassiopeia:changed", eventDate = LocalDate.of(2026, 6, 15)),
+                        scrapedEvent(title = "New Show", sourceId = "cassiopeia:new", eventDate = LocalDate.of(2026, 6, 15))
+                    )
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
+                    ImportResult.Success(events = scraped, etag = null, lastModified = null)
+
+                service.importFromSource(source())
+
+                fun written(operation: String) =
+                    registry
+                        .find("importer.events.written")
+                        .tags("source", "test-source", "operation", operation)
+                        .counter()
+                        ?.count() ?: 0.0
+
+                written("inserted") shouldBe 1.0
+                written("updated") shouldBe 1.0
+                written("skipped") shouldBe 1.0
             }
     }
 
@@ -969,6 +1132,7 @@ class EventImportServiceTest {
                         eventImporters = listOf(ConcurrencyTrackingImporter(active, maxObserved)),
                         venueRepository = venueRepository,
                         transactionalOperator = transactionalOperator,
+                        metrics = metrics,
                         maxConcurrency = maxConcurrency
                     )
 

@@ -21,6 +21,15 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
     fun findByEnabledTrue(): Flow<EventSourceEntity>
 
     /**
+     * How many sources are in [status] right now — the `importer.source.running` gauge (#415).
+     *
+     * The value worth alerting on is `RUNNING`, because ADR-008's staleness guard only runs under
+     * the scheduler: a restart mid-import strands a source in `RUNNING` forever, and nothing about
+     * that looks wrong from outside. A count that stays above zero across a quiet period is the tell.
+     */
+    suspend fun countByStatus(status: String): Long
+
+    /**
      * Finds enabled sources that are candidates for import.
      *
      * This is the first phase of a two-phase filtering strategy:

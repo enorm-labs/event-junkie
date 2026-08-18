@@ -15,6 +15,7 @@ import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
 import java.time.Clock
 import java.time.Instant
+import kotlin.time.Duration.Companion.nanoseconds
 
 /**
  * Orchestrates the event import pipeline: delegate to importer → upsert → cleanup.
@@ -33,6 +34,8 @@ class EventImportService(
     private val venueRepository: VenueRepository,
     /** Programmatic transaction control — used instead of @Transactional to avoid self-invocation issues. */
     private val transactionalOperator: TransactionalOperator,
+    /** Every meter this pipeline publishes (#415). See [ImporterMetrics] for why the names are an interface. */
+    private val metrics: ImporterMetrics,
     /** Injected clock for deterministic time in tests. Defaults to system UTC clock in production. */
     private val clock: Clock = Clock.systemUTC(),
     /**
@@ -132,11 +135,38 @@ class EventImportService(
      */
     internal suspend fun importFromSource(source: EventSourceEntity): ImportResultResponse {
         requireNotNull(source.id) { "Event source must be persisted (have a non-null id) before importing" }
-        return importSemaphore.withPermit { runImportPipeline(source) }
+        return importSemaphore.withPermit { timedImportPipeline(source) }
+    }
+
+    /**
+     * Wraps [runImportPipeline] with the run timer and the outcome counter (#415).
+     *
+     * The outcome is set at each exit rather than derived from the returned [ImportResultResponse],
+     * because the response cannot distinguish them: a not-modified run, a run skipped because
+     * another already held the claim, and a misconfigured source all come back as
+     * `imported=false, eventCount=0`, and two of those carry an error while meaning very different
+     * things. Deriving the tag from the response would quietly merge the states that matter.
+     *
+     * `finally` rather than a call on each path, so a run always records exactly once — including
+     * one that throws past every branch below.
+     */
+    private suspend fun timedImportPipeline(source: EventSourceEntity): ImportResultResponse {
+        val startedAt = System.nanoTime()
+        // FAILED rather than a nullable: if an exception escapes every branch, "the run failed" is
+        // the honest reading, and a missing sample would be indistinguishable from a run that never
+        // started.
+        var outcome = ImporterMetrics.RunOutcome.FAILED
+        try {
+            val (response, runOutcome) = runImportPipeline(source)
+            outcome = runOutcome
+            return response
+        } finally {
+            metrics.recordRun(source.slug, outcome, (System.nanoTime() - startedAt).nanoseconds)
+        }
     }
 
     @Suppress("TooGenericExceptionCaught", "ReturnCount") // Intentional: record any failure; multiple early returns for error paths
-    private suspend fun runImportPipeline(source: EventSourceEntity): ImportResultResponse {
+    private suspend fun runImportPipeline(source: EventSourceEntity): Pair<ImportResultResponse, ImporterMetrics.RunOutcome> {
         val eventSourceEnum =
             try {
                 EventSource.valueOf(source.sourceType)
@@ -146,7 +176,8 @@ class EventImportService(
                 // Configuration error — will never self-resolve on retry, so mark as MISCONFIGURED
                 // instead of FAILED to avoid consuming retry budget (see review issue #1).
                 markMisconfigured(source, error)
-                return ImportResultResponse(sourceSlug = source.slug, imported = false, eventCount = 0, error = error)
+                return ImportResultResponse(sourceSlug = source.slug, imported = false, eventCount = 0, error = error) to
+                    ImporterMetrics.RunOutcome.MISCONFIGURED
             }
 
         val importer = importersBySource[eventSourceEnum]
@@ -155,19 +186,22 @@ class EventImportService(
             logger.error { error }
             // Configuration error — no importer is deployed for this source type.
             markMisconfigured(source, error)
-            return ImportResultResponse(sourceSlug = source.slug, imported = false, eventCount = 0, error = error)
+            return ImportResultResponse(sourceSlug = source.slug, imported = false, eventCount = 0, error = error) to
+                ImporterMetrics.RunOutcome.MISCONFIGURED
         }
 
         val runningSource =
             claimForImport(source)
-                ?: return ImportResultResponse(sourceSlug = source.slug, imported = false, eventCount = 0)
+                ?: return ImportResultResponse(sourceSlug = source.slug, imported = false, eventCount = 0) to
+                    ImporterMetrics.RunOutcome.SKIPPED
 
         return try {
             when (val result = importer.importEvents(runningSource.url, runningSource.etag, runningSource.lastModified)) {
                 is ImportResult.NotModified -> {
                     logger.info { "Source '${runningSource.slug}' not modified, skipping import" }
                     markSuccess(runningSource, 0)
-                    ImportResultResponse(sourceSlug = runningSource.slug, imported = false, eventCount = 0)
+                    ImportResultResponse(sourceSlug = runningSource.slug, imported = false, eventCount = 0) to
+                        ImporterMetrics.RunOutcome.NOT_MODIFIED
                 }
 
                 is ImportResult.Success -> {
@@ -182,21 +216,31 @@ class EventImportService(
                     // Uses TransactionalOperator instead of @Transactional to keep status updates
                     // (the claim, markSuccess/markFailed) outside the transaction boundary —
                     // they must always commit even if the upsert transaction rolls back.
-                    val upsertedCount =
+                    val upsert =
                         transactionalOperator.executeAndAwait {
                             val sourceId = requireNotNull(runningSource.id) { "Event source must be persisted before importing" }
                             eventUpsertService.upsertAndCleanup(result.events, runningSource.venueId, venue.slug, sourceId)
                         }
 
-                    markSuccess(runningSource, upsertedCount, result.etag, result.lastModified)
-                    ImportResultResponse(sourceSlug = runningSource.slug, imported = true, eventCount = upsertedCount)
+                    // After the transaction commits, deliberately: a counter incremented for writes
+                    // that then rolled back would overstate what is in the database, and there is no
+                    // way to take an increment back.
+                    metrics.recordEventsWritten(runningSource.slug, ImporterMetrics.WriteOperation.INSERTED, upsert.inserted)
+                    metrics.recordEventsWritten(runningSource.slug, ImporterMetrics.WriteOperation.UPDATED, upsert.updated)
+                    metrics.recordEventsWritten(runningSource.slug, ImporterMetrics.WriteOperation.SKIPPED, upsert.skipped)
+
+                    markSuccess(runningSource, upsert.total, result.etag, result.lastModified)
+                    ImportResultResponse(sourceSlug = runningSource.slug, imported = true, eventCount = upsert.total) to
+                        ImporterMetrics.RunOutcome.SUCCESS
                 }
             }
         } catch (e: Exception) {
             val error = e.message ?: "Unknown error during import"
             logger.error(e) { "Import failed for source '${runningSource.slug}': $error" }
+            metrics.recordScrapeFailure(runningSource.slug, scrapeFailureReason(e))
             markFailed(runningSource, error)
-            ImportResultResponse(sourceSlug = runningSource.slug, imported = false, eventCount = 0, error = error)
+            ImportResultResponse(sourceSlug = runningSource.slug, imported = false, eventCount = 0, error = error) to
+                ImporterMetrics.RunOutcome.FAILED
         }
     }
 

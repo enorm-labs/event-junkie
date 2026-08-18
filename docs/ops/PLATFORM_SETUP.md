@@ -770,8 +770,13 @@ Do borrow their k3s flags and firewall rules. Do not adopt their control plane.
 
 ## 7. Instrumentation — logging and metrics in the applications
 
-Current state, checked: both apps have `spring-boot-starter-actuator` and expose **only** `health,info`. There is no Micrometer registry, no `logback.xml`, no
-structured logging configuration. This is greenfield.
+Current state: **the metrics half is done ([#415](https://github.com/enorm-labs/event-junkie/issues/415))** — both apps carry
+`micrometer-registry-prometheus`, expose `health,info,prometheus`, and emit every business meter in the table below. The **logging** half below is still
+greenfield: there is no `logback.xml` and no structured logging configuration yet.
+
+**What is deliberately not done, because it cannot be here:** the zero-events alert. An alert needs somewhere to evaluate it, which is
+[#271](https://github.com/enorm-labs/event-junkie/issues/271). The meters it needs now exist; the rule does not, and _"an alert that has never fired is a
+hypothesis"_ still stands.
 
 Deliberately **backend-agnostic** — all of it works unchanged whichever backend ADR-015's trial ends on.
 
@@ -825,9 +830,27 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `importer.source.last_success`               | Gauge, tagged `source`                | Age of the last good run; alert past ~3× its schedule                               |
 | `importer.source.running`                    | Gauge                                 | Catches the ADR-008 `RUNNING`-forever state a restart can strand                    |
 | `bff.events.served`                          | Counter, tagged endpoint              | Is anyone actually using it                                                         |
-| `db.events.total` / `db.events.future`       | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end        |
+| `db.events{horizon="all"\|"future"}`         | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end        |
 
 That last group is what makes the dashboards _business_ dashboards and not CPU graphs — and, per §4b, it is why Superset is unnecessary.
+
+**Two names in that table changed when it met a real Prometheus registry, and both are worth knowing before writing a rule:**
+
+- **`db.events.total` could not exist.** `_total` is Prometheus' reserved suffix for counters, so Micrometer strips it: the meter published as `db_events`,
+  silently, while anything written against the documented name matched nothing. It is now one gauge with a `horizon` label — `db_events{horizon="future"}` —
+  which is the right shape anyway, since the two are the same measurement over two windows.
+- **`importer.run.outcome` has no `partial`.** This pipeline cannot produce one: a run completes and upserts, is skipped because the source was unchanged or
+  already claimed, or throws — and the upserts are in one transaction, so there is no half-written state. The real values are `success`, `not_modified`,
+  `failed`, `misconfigured` and `skipped`. A bucket nothing can emit would be a panel that is always zero, which reads as "never happens" rather than "cannot
+  happen".
+
+**A third thing, which costs an hour if it is not known:** Spring Boot forces `management.defaults.metrics.export.enabled` to false in tests, so
+`/actuator/prometheus` 404s in any `@SpringBootTest` unless the class carries `@AutoConfigureMetrics`. It looks exactly like a wrong exposure list. Production is
+unaffected.
+
+**The endpoint is private by construction rather than by a rule that excludes it.** Actuator lives on its own management port and no Ingress names it — the
+chart's `ingress_test.yaml` asserts positively that `/api` and `/` are the only routed paths and `http` the only named port, so adding `prometheus` to the
+exposure list does not widen the public surface at all.
 
 ---
 

@@ -313,7 +313,12 @@ class EventUpsertServiceStaleCleanupTest {
                 val upserted = service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
 
                 // The past event is dropped before upsert; today + future survive.
-                upserted shouldBe 2
+                upserted.total shouldBe 2
+                // Nothing existed beforehand (findBySourceIdIn is stubbed empty), so both are inserts
+                // rather than updates — the distinction `importer.events.written{operation}` reports.
+                upserted.inserted shouldBe 2
+                upserted.updated shouldBe 0
+                upserted.skipped shouldBe 0
                 sourceIdSlot.captured shouldBe listOf("src:today", "src:future")
             }
 
@@ -328,7 +333,8 @@ class EventUpsertServiceStaleCleanupTest {
 
                 val upserted = service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
 
-                upserted shouldBe 0
+                upserted.total shouldBe 0
+                upserted.inserted shouldBe 0
                 // With no upcoming events, stale cleanup has nothing to query or delete.
                 coVerify(exactly = 0) { eventRepository.findByEventSourceIdAndEventDateBetween(any(), any(), any()) }
                 coVerify(exactly = 0) { eventRepository.deleteByIdIn(any()) }

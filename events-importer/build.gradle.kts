@@ -33,6 +33,15 @@ dependencies {
 
     // Spring Actuator
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    // The Prometheus exposition format, per PLATFORM_SETUP.md §7 and ADR-015. Version comes from the
+    // Boot BOM — do not pin it in gradle.properties; that file's version block is for BOM *overrides*
+    // forced by a CVE, and an ordinary pin there would silently hold this behind future Boot releases.
+    //
+    // Deliberately a registry, not the OTLP exporter. ADR-015 adopted OpenObserve on trial with a
+    // written exit, and the property that makes the exit cheap is that both apps emit vendor-neutral
+    // Prometheus-format metrics — so swapping the backend is a Helm release and a datasource, never a
+    // re-instrumentation.
+    implementation("io.micrometer:micrometer-registry-prometheus")
     testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
 
     // Database
