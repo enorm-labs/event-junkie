@@ -343,16 +343,16 @@ where the workloads do.
 
 ### Infrastructure
 
-| Thing           | Choice                                           | Confidence                                 |
-| --------------- | ------------------------------------------------ | ------------------------------------------ |
-| Ingress + TLS   | **Traefik** (ships with k3s) + **cert-manager**  | Decided — §6                               |
-| Load balancer   | **None.** k3s ServiceLB binds to the node IP     | Decided — §6                               |
-| Registry        | **GHCR**, not Docker Hub                         | Decided — §3                               |
-| GitOps / deploy | **Flux** (pull-based); CI builds and pushes only | Decided — §4, §4a                          |
-| Observability   | **OpenObserve**                                  | ADR-015, _Accepted on trial_ — §5          |
-| Database        | PostgreSQL 18 on its own VM                      | ADR-012                                    |
-| Backups         | `wal-g` → Object Storage (S3), 30-day PITR       | Built and restore-tested 2026-08-18 — #270 |
-| Secrets         | **SOPS + age**                                   | Decided — §8                               |
+| Thing           | Choice                                           | Confidence                                                     |
+| --------------- | ------------------------------------------------ | -------------------------------------------------------------- |
+| Ingress + TLS   | **Traefik** (ships with k3s) + **cert-manager**  | Decided — §6                                                   |
+| Load balancer   | **None.** k3s ServiceLB binds to the node IP     | Decided — §6                                                   |
+| Registry        | **GHCR**, not Docker Hub                         | Decided — §3                                                   |
+| GitOps / deploy | **Flux** (pull-based); CI builds and pushes only | Decided — §4, §4a                                              |
+| Observability   | **OpenObserve**                                  | ADR-015, _Accepted on trial_ — §5                              |
+| Database        | PostgreSQL 18 on its own VM                      | ADR-012                                                        |
+| Backups         | `wal-g` → Object Storage (S3), 30-day PITR       | Built and restore-tested 2026-08-18 — [BACKUPS.md](BACKUPS.md) |
+| Secrets         | **SOPS + age**                                   | Decided — §8                                                   |
 
 ### Deferred, with reasons — §4
 
@@ -1059,8 +1059,8 @@ _(GitHub Environments moved out of this phase. They are no longer a prerequisite
 19. **Backups and a rehearsed restore** (#270). ADR-012 calls this the single highest-risk item it creates. An untested backup is not a backup. The mechanism
     landed 2026-08-18 — `wal-g` to Object Storage, a **30-day** window enforced by both a nightly sweep and a bucket lifecycle rule, and an hourly `walg check`
     that asserts a backup exists and is fresh before it pings healthchecks.io. **The drill was run on 2026-08-18 and passed both halves** — full replay and
-    PITR past a `DROP TABLE`, restore to serving in ~12 s on a 39 MB cluster. It repeats quarterly, owned by @enorm:
-    `docs/CLUSTER_BOOTSTRAP.md` § Proving a restore actually works.
+    PITR past a `DROP TABLE`, restore to serving in ~12 s on a 39 MB cluster. It repeats quarterly, owned by @enorm. The whole picture is
+    [BACKUPS.md](BACKUPS.md); the procedure is [RESTORE_RUNBOOK.md](RESTORE_RUNBOOK.md).
 20. **Monitoring and alerting** (#271), with a route that reaches a human at 23:00.
 
 ### Phase E — go-live

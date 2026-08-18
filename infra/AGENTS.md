@@ -173,8 +173,9 @@ argument behind it. If you contradict one of those documents, change the documen
 
 ## Backups
 
-`backups.sh` is commented far more thinly than anything else here, because it is rendered into a `user_data` that is 91% full. The reasoning lives here
-instead. Read it before editing that file.
+`backups.sh` is commented far more thinly than anything else here, because it is rendered into a `user_data` that is 92% full. The operational picture — what
+each layer survives, retention, costs, how `wal-g` is kept current — is [docs/BACKUPS.md](../docs/BACKUPS.md), and restoring is
+[docs/RESTORE_RUNBOOK.md](../docs/RESTORE_RUNBOOK.md). What follows is what an agent about to change `backups.sh` needs, and nothing else.
 
 **The credential is not in this configuration and must not be put there.** wal-g needs an S3 access key and secret; they would reach the node through
 `user_data`, which is state. So the split is: the machine installs the mechanism, the operator writes `/etc/wal-g/credentials.env` by hand
@@ -201,8 +202,8 @@ pointed at production's prefix would delete real backups on its next sweep.
 production sets `postgres_public_ipv4 = true` and why `backups.sh` stops the boot rather than coming up without backups. `apt.postgresql.org` _does_ answer on
 IPv6, so the older worry in `PLATFORM_SETUP.md` §1 resolves the other way.
 
-**A backup nobody has restored is a belief about a backup.** The drill is `docs/CLUSTER_BOOTSTRAP.md` § Proving a restore actually works, it restores into a
-scratch cluster on port 5433 and never into live `PGDATA`, and it is not optional before go-live.
+**A backup nobody has restored is a belief about a backup.** The drill is `docs/RESTORE_RUNBOOK.md` §4 and §5, it restores into a scratch cluster on port 5433
+and never into live `PGDATA`, and it is not optional before go-live.
 
 **It has been run once: 2026-08-18, staging, both halves passed.** 3,310 events and 3,953 artists came back from the bucket alone, including a marker row
 written _after_ the base backup was taken — which is what proves WAL archiving rather than file copying — and a PITR restore recovered a table dropped

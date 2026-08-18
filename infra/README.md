@@ -201,8 +201,9 @@ the node, the other survives a bad migration. You need both — and since
 
 Two drills, and they prove different halves. Write a row, replace the node, read the row is
 [docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) § _Proving the volume actually survives_ — done, 2026-08-17. Restore from the bucket alone into a
-scratch cluster is § _Proving a restore actually works_ — done, 2026-08-18, both halves including point-in-time recovery past a `DROP TABLE`. Restore to
-serving took ~12 seconds on a 39 MB cluster, which is a number to re-measure rather than to trust as the database grows.
+scratch cluster is [docs/RESTORE_RUNBOOK.md](../docs/RESTORE_RUNBOOK.md) — done, 2026-08-18, both halves including point-in-time recovery past a `DROP TABLE`.
+Restore to serving took ~12 seconds on a 39 MB cluster, which is a number to re-measure rather than to trust as the database grows.
+[docs/BACKUPS.md](../docs/BACKUPS.md) is the whole picture.
 
 ### Closing the door behind you
 
@@ -422,7 +423,7 @@ exist because the failure they prevent is a node reachable only through the brow
 | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Database roles, credentials, schema                | [#261](https://github.com/enorm-labs/event-junkie/issues/261) — application lifecycle, not machine lifecycle. Baking them in would mean a rebuild silently re-creates credentials |
 | The S3 key `wal-g` archives with                   | Written by hand into `/etc/wal-g/credentials.env` — [CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) §8b. It cannot live here: `user_data` is state                           |
-| The bucket lifecycle rule, and the restore drill   | [CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) §8b and § _Proving a restore actually works_ ([#270](https://github.com/enorm-labs/event-junkie/issues/270))                 |
+| The bucket lifecycle rule, and the restore drill   | [CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) §8b, [BACKUPS.md](../docs/BACKUPS.md) and [RESTORE_RUNBOOK.md](../docs/RESTORE_RUNBOOK.md)                                   |
 | Helm chart, cert-manager, ingress, NetworkPolicies | [#261](https://github.com/enorm-labs/event-junkie/issues/261)                                                                                                                     |
 | Flux                                               | [#414](https://github.com/enorm-labs/event-junkie/issues/414)                                                                                                                     |
 | Observability                                      | [ADR-015](../docs/adr/ADR-015_OBSERVABILITY_STACK.md), [#271](https://github.com/enorm-labs/event-junkie/issues/271)                                                              |
