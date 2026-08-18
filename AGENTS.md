@@ -352,6 +352,14 @@ The whole stack on a local Kubernetes — the runtime counterpart to everything 
 scripts/k3d-rehearsal.sh all      # build, install on k3d, assert routing, run a real import, tear down
 ```
 
+The chart and the images have to agree about which UID they run as, and that is a gate rather than a comment (#448). It reads the `USER` line out of all three
+Dockerfiles and compares it with what the chart resolves per component, so a Dockerfile-only change cannot drift away from `values.yaml` silently — which
+`helm unittest` cannot catch, because it can only see the chart. It also enforces the **>10000** floor (Trivy KSV-0020/KSV-0021). `validate-chart.yml` runs it:
+
+```bash
+scripts/uid-consistency.sh
+```
+
 Driven by [`/k3d-rehearsal`](.github/prompts/k3d-rehearsal.prompt.md). It is the only thing here that talks to a Kubernetes cluster, and it passes
 `--context k3d-event-junkie` on every call rather than trusting the active one — read `deploy/AGENTS.md` before changing that.
 
@@ -370,8 +378,10 @@ Three rules these files exist under, each of which something else depends on:
 - **No `RUN`, and no builder stage.** A `RUN` executes target-architecture code, which is what would force QEMU or a runner per architecture. With none, one
   runner emits both platforms. This is why the layer extraction lives in Gradle rather than in the Dockerfile, unlike Spring Boot's reference example — and it
   is also why the **AOT cache** Spring Boot recommends for Java 25+ is deliberately not used: it needs a `RUN` and its output is architecture-specific.
-- **`USER 1000:1000`, numeric.** A named user would need `RUN useradd`. It must match `security.runAsUser` in the chart's `values.yaml`; a mismatch is a pod
-  that cannot read its own files, which does not look like a values problem from the logs.
+- **`USER 10001:10001`, numeric and above 10000.** A named user would need `RUN useradd`. It must match `security.runAsUser` in the chart's `values.yaml`,
+  and `scripts/uid-consistency.sh` is what enforces that — a mismatch is a pod that cannot read its own files, which does not look like a values problem from
+  the logs. Above 10000 since #448: a UID inside the host's own user range lands as a real account if a container ever escapes its namespace, and nothing maps
+  to 10001. Trivy's KSV-0020/KSV-0021 check exactly this.
 - **Nothing about the runtime is baked in.** Ports and `JAVA_TOOL_OPTIONS` come from the chart via `SERVER_PORT`, `MANAGEMENT_SERVER_PORT` and the environment.
   A value fixed in the image either gets overridden confusingly or silently wins.
 
@@ -395,8 +405,8 @@ Three things about it that are decisions rather than defaults:
 **Verify a change by running the image the way the chart will**, which is the check that catches what `docker build` cannot:
 
 ```bash
-docker run --rm --read-only --tmpfs /tmp --user 1000:1000 -e … event-junkie/bff:dev
-docker run --rm --read-only --tmpfs /tmp --user 1000:1000 -p 8080:8080 event-junkie/frontend:dev
+docker run --rm --read-only --tmpfs /tmp -e … event-junkie/bff:dev
+docker run --rm --read-only --tmpfs /tmp -p 8080:8080 event-junkie/frontend:dev
 ```
 
 Local dev environment (used by `/importer-smoke` and `/next-importer`; run with no arguments for the full command list):
@@ -880,6 +890,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Snapshot versions must ORDER (#455)    | `scripts/version-test.sh` — asserted against Helm's own solver; a format check would not catch it           |
 | Markdown formatting                    | `scripts/format-markdown.sh` + `.oxfmtrc.json` — Markdown only, and the scope is load-bearing               |
 | Trivy waivers                          | `.trivyignore` — empty on purpose; an entry needs a reason and a date                                       |
+| Chart and images agree about the UID   | `scripts/uid-consistency.sh` — reads the three Dockerfiles' `USER` and the chart; enforces the >10000 floor |
 | Infrastructure as code (OpenTofu)      | `infra/` — read `infra/AGENTS.md` first; `bootstrap/` is applied, `environments/` is not                    |
 | Cloud-init for the Hetzner nodes       | `infra/modules/environment/cloud-init/`                                                                     |
 | Helm chart (bff · importer · frontend) | `deploy/charts/event-junkie/` — read `deploy/AGENTS.md` first; exercised on k3d, never on a real cluster    |

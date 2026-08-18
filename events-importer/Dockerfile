@@ -41,7 +41,11 @@ COPY spring-boot-loader/ ./
 COPY snapshot-dependencies/ ./
 COPY application/ ./
 
-USER 1000:1000
+# Numeric and above 10000 — see events-bff/Dockerfile for the full reasoning, and #448. In short: a
+# UID below the host's own user range lands as a real account if a container ever escapes its
+# namespace, and nothing in the 10000+ range maps to anything. `scripts/uid-consistency.sh` asserts
+# this matches `security.runAsUser` in the chart.
+USER 10001:10001
 
 # 8081 is this module's `server.port`; 9001 is the management port the chart moves actuator to.
 # Neither is reachable from outside the cluster — the importer has no ingress at all, by design.

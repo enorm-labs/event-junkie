@@ -61,11 +61,18 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY dist/ /usr/share/nginx/html/
 
-# The base image defaults to UID 101. Overridden to 1000 to match `security.runAsUser` in the Helm
-# chart, so one value covers all three workloads. It works because nginx here writes only to /tmp
-# and reads only world-readable files; if a future base image changes that, the chart has a
+# The base image defaults to UID 101. Overridden to 10001 to match `security.runAsUser` in the Helm
+# chart, so one value covers all three workloads; `scripts/uid-consistency.sh` asserts they agree.
+# Above 10000 per #448 — see events-bff/Dockerfile for why a low UID is worth avoiding.
+#
+# **This was the image expected to resist**, because `nginxinc/nginx-unprivileged` is built around a
+# specific unprivileged user and writes to `/tmp` paths owned by it, and an arbitrary `runAsUser`
+# would fail at start rather than at build. Verified instead of assumed: at 10001 with
+# `--read-only --tmpfs /tmp` it starts clean, logs no permission errors and serves 200. It works
+# because nginx here writes only to /tmp — a tmpfs owned by whoever mounts it — and reads only
+# world-readable files. If a future base image changes that, the chart still has a
 # `frontend.runAsUser` override waiting rather than needing a redesign.
-USER 1000:1000
+USER 10001:10001
 
 # Documentation only. It must stay above 1024 — a non-root process cannot bind a privileged port,
 # which is the constraint this image places on the chart's `frontend.service.port`.

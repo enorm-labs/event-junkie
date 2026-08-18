@@ -56,26 +56,26 @@ testing local template changes — which is what `values-k3d.yaml` and its `dev`
 Only the values worth a decision are listed. Every property is documented in
 [`values.yaml`](values.yaml) itself, next to its default.
 
-| Key                                          | Default                 | Notes                                                                                                        |
-| -------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `database.host`                              | `""`                    | **Required.** `postgres_ip` from the matching `infra/environments/<env>` stack                               |
-| `database.existingSecret`                    | `""`                    | **Required.** Name of a Secret that already exists. There is no inline-password path, guarded or otherwise   |
-| `database.secretKeys.username` / `.password` | `username` / `password` | Keys inside that Secret                                                                                      |
-| `image.registry`                             | `ghcr.io`               | Per component: `<component>.image.repository` and `.tag`                                                     |
-| `<component>.image.tag`                      | `""`                    | Falls back to `.Chart.AppVersion`. Never `latest` — the render assertions fail the build on a floating tag   |
-| `bff.replicaCount`                           | `2`                     | Stateless and read-only                                                                                      |
-| `bff.basePath`                               | `/api`                  | Served by Spring, not rewritten by the ingress — see below                                                   |
-| `bff.service.managementPort`                 | `9001`                  | `/actuator/**`. No ingress rule names it                                                                     |
-| `importer.replicaCount`                      | `1`                     | **Pinned to 1 by `values.schema.json`.** ADR-008; see below                                                  |
-| `frontend.service.port`                      | `8080`                  | Cannot be 80: nginx runs non-root and cannot bind a privileged port                                          |
-| `security.runAsUser`                         | `1000`                  | Must match the UID the images actually run as (#426)                                                         |
-| `ingress.host`                               | `event-junkie.de`       | The only name routed to the applications                                                                     |
-| `ingress.redirectHosts`                      | `[event-junkie.com]`    | 301 to `ingress.host`, with its own certificate. Empty means nothing Traefik-specific renders at all         |
-| `certManager.clusterIssuer.create`           | `false`                 | A ClusterIssuer is a cluster-scoped singleton — see below                                                    |
-| `certManager.clusterIssuer.server`           | ACME **staging**        | Deliberately not production. 50 certificates per registered domain per week, and burning it costs seven days |
-| `certManager.clusterIssuer.solver`           | `http01`                | `dns01` for staging, which has no public address for HTTP-01 to reach                                        |
-| `certManager.clusterIssuer.dns01.*`          | official webhook        | `groupName: acme.hetzner.com` and a `tokenSecretKeyRef` — see below, the community forks differ on both      |
-| `ingress.noindex`                            | `false`                 | Marks an environment as not-production: the header, plus a disallow-all `robots.txt` and empty sitemap       |
+| Key                                          | Default                 | Notes                                                                                                                |
+| -------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `database.host`                              | `""`                    | **Required.** `postgres_ip` from the matching `infra/environments/<env>` stack                                       |
+| `database.existingSecret`                    | `""`                    | **Required.** Name of a Secret that already exists. There is no inline-password path, guarded or otherwise           |
+| `database.secretKeys.username` / `.password` | `username` / `password` | Keys inside that Secret                                                                                              |
+| `image.registry`                             | `ghcr.io`               | Per component: `<component>.image.repository` and `.tag`                                                             |
+| `<component>.image.tag`                      | `""`                    | Falls back to `.Chart.AppVersion`. Never `latest` — the render assertions fail the build on a floating tag           |
+| `bff.replicaCount`                           | `2`                     | Stateless and read-only                                                                                              |
+| `bff.basePath`                               | `/api`                  | Served by Spring, not rewritten by the ingress — see below                                                           |
+| `bff.service.managementPort`                 | `9001`                  | `/actuator/**`. No ingress rule names it                                                                             |
+| `importer.replicaCount`                      | `1`                     | **Pinned to 1 by `values.schema.json`.** ADR-008; see below                                                          |
+| `frontend.service.port`                      | `8080`                  | Cannot be 80: nginx runs non-root and cannot bind a privileged port                                                  |
+| `security.runAsUser`                         | `10001`                 | Must match the UID the images actually run as (#426); above 10000 per #448, enforced by `scripts/uid-consistency.sh` |
+| `ingress.host`                               | `event-junkie.de`       | The only name routed to the applications                                                                             |
+| `ingress.redirectHosts`                      | `[event-junkie.com]`    | 301 to `ingress.host`, with its own certificate. Empty means nothing Traefik-specific renders at all                 |
+| `certManager.clusterIssuer.create`           | `false`                 | A ClusterIssuer is a cluster-scoped singleton — see below                                                            |
+| `certManager.clusterIssuer.server`           | ACME **staging**        | Deliberately not production. 50 certificates per registered domain per week, and burning it costs seven days         |
+| `certManager.clusterIssuer.solver`           | `http01`                | `dns01` for staging, which has no public address for HTTP-01 to reach                                                |
+| `certManager.clusterIssuer.dns01.*`          | official webhook        | `groupName: acme.hetzner.com` and a `tokenSecretKeyRef` — see below, the community forks differ on both              |
+| `ingress.noindex`                            | `false`                 | Marks an environment as not-production: the header, plus a disallow-all `robots.txt` and empty sitemap               |
 
 **Two values files ship with the chart, and the environments are not among them.** `values.yaml` is
 production-shaped and cannot render on its own — the two required keys have no safe default.
@@ -211,7 +211,7 @@ hsperfdata and anything a library assumes; nginx needs it because #262's base im
 `/var/cache/nginx`, and symlinks its logs to stdout and stderr.
 
 **Verified by running the images, not by reading their Dockerfiles** — all three start under
-`--read-only --tmpfs /tmp --user 1000:1000`. An earlier revision of this chart also mounted
+`--read-only --tmpfs /tmp`, as the UID they are built with. An earlier revision of this chart also mounted
 `/var/cache/nginx` and `/var/run`, which the stock `nginx` image would need and this one does not.
 If the base image changes, re-check before assuming: the failure is at startup, not at first
 request.
@@ -220,9 +220,15 @@ request.
 [Liberica on Alpine](../../../docs/adr/ADR-017_JRE_BASE_IMAGE.md) (#492). Both backends still start
 under those exact flags, and `/tmp` is still the only writable path either needs. One cosmetic
 difference, noted so it is not mistaken for a fault: the startup line now reads
-`started by ? in /application` rather than a username, because UID 1000 has no `/etc/passwd` entry
-on the Alpine base. That is the same property `USER 1000:1000` was chosen for — numeric UIDs need no
+`started by ? in /application` rather than a username, because the UID has no `/etc/passwd` entry
+on the Alpine base. That is the same property a numeric `USER` was chosen for — numeric UIDs need no
 passwd entry — and Kubernetes' `runAsNonRoot` check reads the number, not the name.
+
+**Re-checked again on 2026-08-18**, when the UID moved from 1000 to **10001** (#448). All three
+images were rebuilt and run: `docker run … id` reports `uid=10001 gid=10001` for each, and the
+frontend serves `/`, a hashed asset and a 404 for a missing one under `--read-only --tmpfs /tmp`.
+`nginxinc/nginx-unprivileged` was the one expected to resist — it is built around a specific
+unprivileged user — and did not.
 
 ### The chart's labels are not `infra/`'s labels
 

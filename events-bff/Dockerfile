@@ -77,8 +77,20 @@ COPY application/ ./
 # Numeric, and numeric on purpose: a name would need `RUN useradd`, which is the one thing this
 # file must not contain. Kubernetes' `runAsNonRoot` check reads the numeric UID, so this satisfies
 # it with no passwd entry — and it must match `security.runAsUser` in the Helm chart
-# (deploy/charts/event-junkie/values.yaml), which is 1000.
-USER 1000:1000
+# (deploy/charts/event-junkie/values.yaml). `scripts/uid-consistency.sh` asserts that they agree,
+# because a mismatch is a pod that cannot read its own files and does not look like a values problem.
+#
+# **Above 10000, which is the whole of #448.** A low UID collides with an account that already
+# exists on the host: if a container ever escapes its namespace, a process running as 1000 lands as
+# *whatever 1000 is on the node*, which on a Debian-family host is the first human user. Nothing in
+# the 10000+ range maps to anything, so the same escape lands as an identity with no files and no
+# group memberships. It is defence in depth against the failure of one of the other controls, not a
+# fix for a live hole — every pod already sets `runAsNonRoot`, `readOnlyRootFilesystem`,
+# `allowPrivilegeEscalation: false`, drops all capabilities and mounts no ServiceAccount token.
+#
+# The files copied above are `root:root` mode 644, so they are readable by any UID — which is what
+# makes this a one-line change here rather than a `chown`.
+USER 10001:10001
 
 # Documentation only — it publishes nothing. The application port and the management port that
 # carries /actuator are both set by the chart via SERVER_PORT and MANAGEMENT_SERVER_PORT; these are

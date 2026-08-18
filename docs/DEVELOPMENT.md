@@ -338,7 +338,7 @@ files. Start the database first (`docker compose up -d`), then attach to its net
 
 ```bash
 docker run --rm --network event-junkie_default \
-  --read-only --tmpfs /tmp --user 1000:1000 \
+  --read-only --tmpfs /tmp \
   -e SPRING_R2DBC_URL='r2dbc:postgresql://postgres:5432/event_junkie' \
   -e SPRING_R2DBC_USERNAME=admin -e SPRING_R2DBC_PASSWORD=admin \
   -e MANAGEMENT_SERVER_PORT=9001 -e SPRING_WEBFLUX_BASE_PATH=/api \
@@ -357,7 +357,7 @@ Same shape, different artefact: `npm run build` produces `dist/`, and the image 
 ```bash
 npm --prefix events-frontend run build
 docker buildx build events-frontend -t event-junkie/frontend:dev --load
-docker run --rm --read-only --tmpfs /tmp --user 1000:1000 -p 8080:8080 event-junkie/frontend:dev
+docker run --rm --read-only --tmpfs /tmp -p 8080:8080 event-junkie/frontend:dev
 ```
 
 It needs no database and no backend, so it runs on its own — but **its API calls will 404**, and that is correct rather than broken. In a cluster the ingress

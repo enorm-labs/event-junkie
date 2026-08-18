@@ -43,11 +43,18 @@ database:
     password: "password"
 
 security:
-  # security.runAsUser must match the UID the images actually run as (#426 builds them). A component
-  # may override it — the frontend's nginx base is the one most likely to differ.
-  runAsUser: 1000
-  # security.runAsGroup matches runAsUser for the same reason.
-  runAsGroup: 1000
+  # security.runAsUser must match the UID the images actually run as (#426 builds them), and
+  # `scripts/uid-consistency.sh` fails the build when it does not — a mismatch is a pod that cannot
+  # read its own files, which does not look like a values problem from the logs. A component may
+  # override it — the frontend's nginx base is the one most likely to differ.
+  #
+  # Above 10000 since #448, and that is the point of the number rather than an arbitrary choice. A
+  # UID below the host's own user range lands as a real account if a container escapes its namespace
+  # — on a Debian-family node, 1000 is the first human user. Nothing maps to 10001. Trivy's
+  # KSV-0020/KSV-0021 check exactly this.
+  runAsUser: 10001
+  # security.runAsGroup matches runAsUser for the same reason. It is also the pod's fsGroup.
+  runAsGroup: 10001
 
 bff:
   # bff.replicaCount is free to exceed 1: the BFF is stateless and read-only.
@@ -169,8 +176,9 @@ frontend:
       memory: "128Mi"
   # frontend.runAsUser overrides security.runAsUser, and is deliberately left unset: #262's image
   # is `nginxinc/nginx-unprivileged`, whose own default user is 101, but it was verified to run
-  # correctly as 1000 — it writes only to /tmp and reads only world-readable files. So all three
-  # workloads share one UID. This exists for the case where a future base image cannot.
+  # correctly as 10001 — read-only root, tmpfs /tmp, clean start, HTTP 200. It writes only to /tmp
+  # and reads only world-readable files. So all three workloads share one UID. This exists for the
+  # case where a future base image cannot.
   runAsUser: null
   serviceAccount:
     # frontend.serviceAccount.create makes a dedicated ServiceAccount with no token mounted.
