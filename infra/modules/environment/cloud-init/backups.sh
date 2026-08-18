@@ -114,7 +114,11 @@ check)
         exit 1
     }
 
-    [[ -n "\${HEALTHCHECK_URL:-}" ]] && curl -fsS -m 10 --retry 3 "\${HEALTHCHECK_URL}" >/dev/null
+    # An \`if\`, not \`[[ … ]] && curl\`: under \`set -e\` the && form exits 1 when the URL is unset,
+    # so a node without a healthcheck would fail every check while being perfectly healthy.
+    if [[ -n "\${HEALTHCHECK_URL:-}" ]]; then
+        curl -fsS -m 10 --retry 3 "\${HEALTHCHECK_URL}" >/dev/null
+    fi
     echo "ok: newest \${newest}, disk \${use}%"
     ;;
 *)

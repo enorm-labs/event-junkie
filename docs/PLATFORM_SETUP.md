@@ -112,8 +112,9 @@ must not be destroyed to find out.
 **A volume is not a backup, and a backup is not a volume.** They fail differently and neither substitutes for the other. A volume survives the node; it does not
 survive `DROP TABLE`, a bad migration, corruption written faithfully to disk, or the loss of the Hetzner project — and it is not off-site. Backups and a
 rehearsed restore are [#270](https://github.com/enorm-labs/event-junkie/issues/270), which this does not close and does not defer. Since #270 the backups exist
-— `wal-g` streaming WAL and a nightly base backup to the `…-backups` bucket, 30-day window — but **the restore has not been rehearsed**, and until it has, the
-sentence above still stands in full.
+— `wal-g` streaming WAL and a nightly base backup to the `…-backups` bucket, 30-day window — and the restore was rehearsed on 2026-08-18, both a full replay
+and a point-in-time recovery past a `DROP TABLE`. The sentence above still describes why the volume is not the answer; it is simply no longer the whole
+picture.
 
 One thing the volume does **not** give you on its own: `delete_protection` stops the console and the API, not OpenTofu. The provider lifts its own locks, so a
 `tofu destroy` in the production directory still removes it. §10 says the same of the Primary IPs, for the same reason.
@@ -342,16 +343,16 @@ where the workloads do.
 
 ### Infrastructure
 
-| Thing           | Choice                                           | Confidence                              |
-| --------------- | ------------------------------------------------ | --------------------------------------- |
-| Ingress + TLS   | **Traefik** (ships with k3s) + **cert-manager**  | Decided — §6                            |
-| Load balancer   | **None.** k3s ServiceLB binds to the node IP     | Decided — §6                            |
-| Registry        | **GHCR**, not Docker Hub                         | Decided — §3                            |
-| GitOps / deploy | **Flux** (pull-based); CI builds and pushes only | Decided — §4, §4a                       |
-| Observability   | **OpenObserve**                                  | ADR-015, _Accepted on trial_ — §5       |
-| Database        | PostgreSQL 18 on its own VM                      | ADR-012                                 |
-| Backups         | `wal-g` → Object Storage (S3), 30-day PITR       | Built — #270; restore drill outstanding |
-| Secrets         | **SOPS + age**                                   | Decided — §8                            |
+| Thing           | Choice                                           | Confidence                                 |
+| --------------- | ------------------------------------------------ | ------------------------------------------ |
+| Ingress + TLS   | **Traefik** (ships with k3s) + **cert-manager**  | Decided — §6                               |
+| Load balancer   | **None.** k3s ServiceLB binds to the node IP     | Decided — §6                               |
+| Registry        | **GHCR**, not Docker Hub                         | Decided — §3                               |
+| GitOps / deploy | **Flux** (pull-based); CI builds and pushes only | Decided — §4, §4a                          |
+| Observability   | **OpenObserve**                                  | ADR-015, _Accepted on trial_ — §5          |
+| Database        | PostgreSQL 18 on its own VM                      | ADR-012                                    |
+| Backups         | `wal-g` → Object Storage (S3), 30-day PITR       | Built and restore-tested 2026-08-18 — #270 |
+| Secrets         | **SOPS + age**                                   | Decided — §8                               |
 
 ### Deferred, with reasons — §4
 
@@ -1057,8 +1058,9 @@ _(GitHub Environments moved out of this phase. They are no longer a prerequisite
     `robots.txt` stay as defence-in-depth.
 19. **Backups and a rehearsed restore** (#270). ADR-012 calls this the single highest-risk item it creates. An untested backup is not a backup. The mechanism
     landed 2026-08-18 — `wal-g` to Object Storage, a **30-day** window enforced by both a nightly sweep and a bucket lifecycle rule, and an hourly `walg check`
-    that asserts a backup exists and is fresh before it pings healthchecks.io. **The restore drill itself is still outstanding**, and it is the half that closes
-    the issue: `docs/CLUSTER_BOOTSTRAP.md` § Proving a restore actually works.
+    that asserts a backup exists and is fresh before it pings healthchecks.io. **The drill was run on 2026-08-18 and passed both halves** — full replay and
+    PITR past a `DROP TABLE`, restore to serving in ~12 s on a 39 MB cluster. It repeats quarterly, owned by @enorm:
+    `docs/CLUSTER_BOOTSTRAP.md` § Proving a restore actually works.
 20. **Monitoring and alerting** (#271), with a route that reaches a human at 23:00.
 
 ### Phase E — go-live
@@ -1067,7 +1069,7 @@ _(GitHub Environments moved out of this phase. They are no longer a prerequisite
     `INFRASTRUCTURE_IS_PROPOSED` **only after** the notice has been checked against what actually runs.
 22. Rate limiting and abuse control (#268) — now real work, since #412 removed the free answer.
 23. SEO: `robots.txt`, `sitemap.xml`, the ADR-014 sidecar.
-24. A restore drill, performed rather than planned.
+24. A restore drill, performed rather than planned — first run 2026-08-18 on staging; production's own is due once #285 applies it.
 
 ---
 
