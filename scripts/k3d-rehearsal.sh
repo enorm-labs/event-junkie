@@ -92,6 +92,55 @@ psql_() { docker exec "$PG_CONTAINER" psql -U admin "$@"; }
 # Shared by `up` and `flux-up`, which need the same cluster and the same database but install the
 # chart in completely different ways — one from the working tree with locally built images, the other
 # from GHCR through Flux.
+# Pull k3s's own system images on the HOST and hand them to the node as an airgap tarball, which
+# k3s imports at startup from /var/lib/rancher/k3s/agent/images.
+#
+# Off by default and deliberately opt-in: it costs a pull-and-save on a cold cache and nobody whose
+# node can reach docker.io needs it. What it is for is a node that cannot, while the host can — the
+# shape a TLS-inspecting network produces, because the host trusts the interception CA and the k3d
+# node's containerd does not. That failure is genuinely hard to read from the inside: the images
+# build fine, `k3d cluster create` succeeds, and every pod then sits in ContainerCreating forever
+# with an x509 error four `describe`s down, on the *pause sandbox* image rather than on anything
+# this project owns.
+#
+# This is an offline/airgap escape hatch, not a workaround for one network. It fixes any node that
+# cannot pull, including a genuinely offline laptop. It does NOT install anyone's CA anywhere, and
+# it must not grow into doing so — a shared script that injects a corporate trust root is a worse
+# problem than the one it solves.
+preload_images() {
+  [ "${K3D_PRELOAD_IMAGES:-0}" = "1" ] || return 0
+
+  local dir="$STATE_DIR/airgap" ver url tar
+  tar="$dir/k3s-airgap.tar"
+  mkdir -p "$dir"
+
+  # Ask k3d which k3s it will actually run rather than pinning a version here — the two must agree,
+  # and k3d's default moves with its own releases.
+  ver="$(k3d version --output json | yq -p json '.k3s')"
+  [ -n "$ver" ] && [ "$ver" != "null" ] || die "could not determine the k3s version k3d will use"
+
+  if [ -f "$tar" ] && [ "$(cat "$dir/version" 2>/dev/null)" = "$ver" ]; then
+    info "airgap images already prepared for $ver"
+    return 0
+  fi
+
+  # The release publishes the canonical list; deriving it by guessing image names is how one gets
+  # missed and the cluster stalls on exactly that one. `+` must be percent-encoded in the URL.
+  url="https://github.com/k3s-io/k3s/releases/download/${ver//-k3s1/%2Bk3s1}/k3s-images.txt"
+  log "Preloading k3s system images for $ver (K3D_PRELOAD_IMAGES=1)"
+  local images=()
+  while IFS= read -r image; do
+    [ -n "$image" ] || continue
+    images+=("$image")
+    docker pull -q "$image" >/dev/null || die "could not pull $image on the host either — this is not the node's trust store, it is the network"
+  done < <(curl -sSL --fail "$url" || die "could not fetch the k3s image list from $url")
+
+  [ "${#images[@]}" -gt 0 ] || die "the k3s image list was empty"
+  docker save "${images[@]}" -o "$tar" || die "could not save the airgap tarball"
+  printf '%s' "$ver" > "$dir/version"
+  info "${#images[@]} images saved to $tar"
+}
+
 create_cluster() {
   mkdir -p "$STATE_DIR"
   # Saved before k3d switches it, so `down` can put it back exactly.
@@ -99,7 +148,18 @@ create_cluster() {
 
   log "Creating the cluster"
   # 8080:80 publishes Traefik, which is what makes the ingress testable from the host at all.
-  k3d cluster create "$CLUSTER" --port "8080:80@loadbalancer" --agents 1 >/dev/null
+  preload_images
+  # k3s imports any tarball it finds in this directory before it starts pulling, so the mount has to
+  # exist at creation time — it cannot be added to a running node.
+  local airgap=()
+  # `@server:0;agent:0` is not optional decoration. Without a node filter k3d warns "No node filter
+  # specified" and the mount does not land where k3s looks, so the tarball is silently ignored and
+  # every pod sits in ContainerCreating exactly as it did without the preload — the failure is
+  # identical to the one this is meant to fix, which is the worst way for it to break.
+  [ "${K3D_PRELOAD_IMAGES:-0}" = "1" ] && airgap=(--volume "$PWD/$STATE_DIR/airgap:/var/lib/rancher/k3s/agent/images@server:0;agent:0")
+  # ${arr[@]+"${arr[@]}"} rather than "${arr[@]}": an empty array under `set -u` is only safe from
+  # bash 4.4 on, and /bin/bash on macOS is still 3.2.
+  k3d cluster create "$CLUSTER" --port "8080:80@loadbalancer" --agents 1 ${airgap[@]+"${airgap[@]}"} >/dev/null
   info "cluster up ($(k get nodes -o jsonpath='{.items[0].status.nodeInfo.architecture}'))"
 
   # k3d writes `host.k3d.internal` into the CoreDNS ConfigMap while creating the cluster, but
