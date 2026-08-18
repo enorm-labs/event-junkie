@@ -10,6 +10,17 @@
     - Say in <notes> *why* the entry exists and what would make the finding real again, so it
       can be re-evaluated rather than inherited on trust.
 
+    THIS FILE IS ONLY HALF THE PICTURE. Dependency-Check and Dependabot look at overlapping sets
+    of the same artifacts and report them under different names — a GHSA on one side, a CVE on the
+    other, frequently the same defect. An accepted risk recorded here does NOT silence the
+    Dependabot alert for the same finding, and vice versa, so the two drift: one gets triaged
+    twice, or accepted once and left open in the other place looking unattended.
+
+    So when an entry below is an ACCEPTED RISK that also has a Dependabot alert, say so in the
+    notes, name the GHSA, and dismiss that alert as `tolerable_risk` pointing back here. The
+    reasoning lives in exactly one place and both views agree with it. The Kotlin entry at the
+    bottom is the worked example (#266).
+
     There are exactly two reasons to add an entry, and they are not interchangeable:
 
     1. FALSE POSITIVE — the CVE does not apply to the artifact it was matched against, or the
@@ -100,9 +111,13 @@
             ACCEPTED RISK, NOT a false positive. CVE-2026-53914 genuinely affects JetBrains
             Kotlin < 2.4.20 and this project is on 2.4.10.
 
-            It is suppressed only because there is nothing to upgrade to: 2.4.20 exists solely
-            as 2.4.20-Beta2, and this project ships stable releases only. Upgrading is the
-            preferred fix and should replace this entry the moment 2.4.20 is released.
+            It is suppressed only because there is nothing to upgrade to: as of 2026-08-19 the
+            newest build on Maven Central is 2.4.20-RC (checked against
+            repo1.maven.org/.../kotlin-gradle-plugin/maven-metadata.xml — the sequence is
+            Beta1, Beta2, RC, and no GA), and this project ships stable releases only. Upgrading is
+            the preferred fix and should replace this entry the moment 2.4.20 is released. The
+            progression Beta2 -> RC since this entry was written is the useful signal: GA is close,
+            and the `until` date below was set with room for it.
 
             The severity is disputed between the two scoring bodies:
               - NVD/NIST:            9.8 CRITICAL  AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H
@@ -121,6 +136,16 @@
             `org.jetbrains.intellij.deps.kotlinx` coroutines: the first version of this entry
             anchored on `org.jetbrains.(kotlin|kotlinx)/`, that one artifact slipped through, and
             it alone failed the enforced scan.
+
+            THE DEPENDABOT ALERT IS THIS ENTRY, NOT A SECOND FINDING (#266). GitHub raises it as
+            GHSA-r937-wjx7-w2jp against org.jetbrains.kotlin:kotlin-gradle-plugin from
+            settings.gradle.kts, and that GHSA's own identifier list contains CVE-2026-53914 — one
+            defect, two scanners, two views. GitHub's advisory carries the CNA's vector verbatim
+            (6.7 MEDIUM, AV:L/AC:H/PR:H/UI:N/S:C/C:H/I:L/A:L), so the GitHub half of the sweep and
+            the reasoning above do not merely coexist, they agree; it is NVD that is the outlier.
+            The alert is dismissed as `tolerable_risk` pointing here, so the two halves cannot drift
+            into being triaged twice or accepted once and forgotten in the other place.
+            Reopening it is one `gh api ... -f state=open` call if this reasoning stops holding.
 
             REMOVAL: delete this entry when Kotlin 2.4.20 (or later) ships stable and is adopted
             — see the kotlin("jvm") version in settings.gradle.kts. The `until` date is a
