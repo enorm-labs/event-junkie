@@ -24,8 +24,33 @@ spring:
 # production. The consequence worth knowing: a test cannot catch a typo in the *main* file's list,
 # because it never reads it. `MetricsExposureConfigTest` asserts that file directly for exactly that
 # reason.
+#
+# The readiness and liveness groups are mirrored for the same reason as the exposure list: without
+# them the tests exercise Spring's default readiness group (`readinessState` only) and prove nothing
+# about the group that actually ships. `ReadinessGroupConfigTest` asserts the two files agree.
+#
+# Both contributors named here exist in every test context — all BFF tests are full @SpringBootTest
+# against a Testcontainers PostgreSQL, so `r2dbc` and `eventsSchema` are both present. A future slice
+# test (@WebFluxTest, no ConnectionFactory) would fail to start on group-membership validation; that
+# is the correct signal, and the fix is to exclude the group, not the indicator.
 management:
   endpoints:
     web:
       exposure:
         include: health,info,prometheus
+  endpoint:
+    health:
+      # `always` rather than the `never` default, and it is the same argument the exposure list above
+      # makes: this is safe *because of where the endpoint lives*. The chart moves the whole
+      # management port off the application port and no Ingress routes it, so /actuator/** is
+      # unreachable from outside the cluster (PLATFORM_SETUP.md §7).
+      #
+      # Without it the readiness group aggregates to a bare {"status":"DOWN"} and an operator cannot
+      # tell "the database is gone" from "the schema is not migrated yet" — which is the whole reason
+      # `r2dbc` and `eventsSchema` are two contributors rather than one.
+      show-details: always
+      group:
+        readiness:
+          include: readinessState,r2dbc,eventsSchema
+        liveness:
+          include: livenessState

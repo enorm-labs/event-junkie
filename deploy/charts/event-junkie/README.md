@@ -168,30 +168,63 @@ The wrong spelling binds to nothing and fails silently. Both are asserted — th
 [`tests/importer_test.yaml`](tests/importer_test.yaml), the wrong one nowhere in the chart at all in
 [`tests/invariants_test.yaml`](tests/invariants_test.yaml) — for that reason.
 
-### The BFF does _not_ crash-loop on a first install — it does something worse
+### On a first install the BFF waits for the schema, because its readiness says so
 
-**Corrected 2026-08-12 by #263, the first time this chart was ever installed.** This section used to
-say the BFF crash-loops for up to ninety seconds on an empty database while the importer migrates,
-and that this was expected. Measured on k3d, that is simply not what happens:
+**The history matters, because the current behaviour is only legible against it.** #263 installed this
+chart for the first time and measured:
 
 | Event                     | Time           |
 | ------------------------- | -------------- |
 | BFF reports **Ready**     | `07:55:59`     |
 | Flyway creates the schema | `07:56:00.451` |
 
-The BFF was Ready **about 1.2 seconds before the schema existed**, with zero restarts. Its readiness
-group contains no database indicator — `/actuator/health/readiness` returns `{"status":"UP"}` with no
-components — so readiness reflects only that Spring started, not that the BFF can serve.
+The BFF was Ready **about 1.2 seconds before the schema existed**, with zero restarts, because its
+readiness group held only `readinessState` — Spring's signal that the context finished starting, not
+that the BFF can answer a query. Before #263 this section claimed the opposite: that the BFF
+crash-loops for up to ninety seconds while the importer migrates, and that this was expected. It did
+not crash-loop, which is **worse** — a crash-looping pod receives no traffic and a Ready one does.
 
-That is worse than crash-looping, because a crash-looping pod receives no traffic while a Ready one
-does. The window is ~1 second here, with one migration against a local Postgres; on a cold database
-with more migrations it is longer, and during it Kubernetes will route requests to a BFF whose
-queries fail.
+**Fixed in [#438](https://github.com/enorm-labs/event-junkie/issues/438).** The BFF's readiness group
+is now `readinessState, r2dbc, eventsSchema`: the database has to be reachable _and_ the `events`
+schema readable before the pod joins the Service. On a first install the BFF therefore stays un-Ready
+until the importer's migrations land — which is what this section claimed in the first place and
+never had.
 
-The design decision stands — no init container and no Helm hook ordering the two, because a startup
-dependency has to stay correct forever and Kubernetes already retries. What was wrong was the
-description. Making readiness mean "can serve" is tracked separately; it is a probe-semantics change,
-not a chart fix.
+**Re-measured on k3d 2026-08-18, on the same path #263 used.** The ordering inverted:
+
+| Event                          | Time (UTC)     |
+| ------------------------------ | -------------- |
+| Flyway creates the schema      | `19:57:11.788` |
+| Flyway completes the migration | `19:57:12.012` |
+| BFF reports **Ready**          | `19:57:16`     |
+
+About **four seconds after** the migration rather than 1.2 seconds before it, with zero restarts, and
+`helm install --wait` returned normally. `/actuator/health/readiness` on the running pod reported all
+three components `UP` — and `r2dbc` listed its validation query as `validate(REMOTE)`, which is the
+in-cluster confirmation that it runs no query and would have reported healthy throughout #263's
+window.
+
+That behaviour is also pinned by `ReadinessWithoutSchemaTest` in `events-bff`, which reproduces the
+opposite state — database reachable, schema absent — and asserts `/actuator/health/readiness` answers
+`503` while `r2dbc` still reports `UP`. A measurement confirms the fix once; the test fails if it ever
+regresses.
+
+[ADR-018](../../../docs/adr/ADR-018_PROBE_SEMANTICS.md) carries the argument, including why liveness
+deliberately does **not** get the same treatment and why the importer answers the question the other
+way. Two consequences belong here rather than there:
+
+- **`--wait` now couples the two workloads.** `helm install --wait` cannot return before the importer
+  has migrated, because the BFF's readiness depends on it. `scripts/k3d-rehearsal.sh` allows
+  `--timeout 5m` against a measured ~1-second gap, but the staging `HelmRelease` allows `3m` and that
+  budget is now shared rather than two independent ones.
+- **A database outage drains the BFF from the Service**, after `periodSeconds: 10 × failureThreshold:
+3` — about 30 seconds of sustained failure. Traefik then answers `503` rather than every pod
+  answering `200`-framed query errors. Those two probe numbers are load-bearing; `tests/probes_test.yaml`
+  pins them so that changing one means reading ADR-018 first.
+
+The design decision itself is unchanged: **no init container and no Helm hook** ordering the two, because
+a startup dependency has to stay correct forever and Kubernetes already retries. Readiness is what makes
+that retry visible instead of silent.
 
 ### One replica for the importer is correctness, not cost
 

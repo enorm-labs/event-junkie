@@ -179,9 +179,15 @@ Note `SPRING_FLYWAY_USER`, not `_USERNAME`. Spring's Flyway property is `spring.
 {{- end }}
 
 {{/*
-The two actuator probes, on the management port. Spring Boot enables the probe health groups on its
-own when it detects Kubernetes; the ConfigMap sets the property explicitly rather than relying on
-that autodetection.
+Three probes over two actuator paths, on the management port. Spring Boot enables the probe health
+groups on its own when it detects Kubernetes; the ConfigMap sets the property explicitly rather than
+relying on that autodetection.
+
+**What the two paths mean is decided in each service's `application.yaml`, not here** (ADR-018), and
+the two services deliberately differ: the BFF's readiness group includes the database and the schema,
+the importer's does not, because nothing routes to the importer. The same template therefore renders
+probes with different semantics per component — which is fine, and is stated because it is not
+visible from this file.
 */}}
 {{- define "event-junkie.jvmProbes" -}}
 startupProbe:
@@ -189,8 +195,10 @@ startupProbe:
     path: /actuator/health/liveness
     port: management
   periodSeconds: 5
-  {{- /* 30 × 5s = 150s for a cold JVM plus, on a first install, the wait for the importer's
-         migrations to create the schema. See the chart README. */}}
+  {{- /* 30 × 5s = 150s for a cold JVM, and *only* for a cold JVM. This watches the liveness path,
+         which has never waited for the importer's migrations and must never be made to — a
+         database-dependent liveness group would turn a first install into the crash-loop the README
+         used to describe. Waiting for the schema is readiness' job (ADR-018). */}}
   failureThreshold: 30
 livenessProbe:
   httpGet:
@@ -202,6 +210,9 @@ readinessProbe:
   httpGet:
     path: /actuator/health/readiness
     port: management
+  {{- /* 3 × 10s = 30s of *sustained* failure before a pod leaves the Service. Since #438 put the
+         database in the BFF's readiness group these two numbers are the blip tolerance that keeps a
+         brief PostgreSQL hiccup from draining every replica — load-bearing, not a default. */}}
   periodSeconds: 10
   failureThreshold: 3
 {{- end }}

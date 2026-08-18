@@ -222,6 +222,13 @@ conformance_ (k3s owns it), and _PKI certificates_ (k3s owns the cluster PKI; th
 - **Actuator is private because it is on its own port**, not because an ingress rule excludes it. Never add an ingress path for `/actuator`, never route the
   `management` port, and never change the importer's Service to `NodePort` or `LoadBalancer` — its admin API has no authentication of its own, and what keeps
   it private is that nothing outside the cluster can address it.
+- **The probes are one template and two meanings, and `_helpers.tpl` cannot show you which.** `event-junkie.jvmProbes` renders identically for the BFF and the
+  importer; what `/actuator/health/readiness` _contains_ is decided in each service's `application.yaml`. The BFF's readiness group includes `r2dbc` and
+  `eventsSchema` so a pod that cannot reach the database or its schema leaves the Service; the importer's does not, because nothing routes to it and taking its
+  admin API away during a database incident removes the tool an operator needs. ADR-018 argues both. Two things follow for anyone editing this file: the
+  readiness probe's `periodSeconds: 10, failureThreshold: 3` is the **blip tolerance** that decision depends on and is not a default to tune, and **liveness
+  must never gain a database indicator** — the `startupProbe` watches the liveness path, so a database-dependent liveness group turns a first install into a
+  crash-loop at 30 × 5s.
 - **`readOnlyRootFilesystem: true` needs writable mounts.** The JVM services need `/tmp`; nginx needs `/var/cache/nginx` and `/var/run` and fails at _startup_
   without them. Adding a workload means adding its mounts.
 - **`importer.replicaCount: 1` is an ADR-008 correctness constraint, not a cost one**, and so is `strategy: Recreate`. Two schedulers means two concurrent

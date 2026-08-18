@@ -126,7 +126,9 @@ It is supposed to. #263 found two values bugs, a wrong prediction and a document
 - **The rehearsal uses its own database** (`event_junkie_k3d`), never the development one. Installing the chart runs Flyway; pointing that at `event_junkie`
   would have the in-cluster importer fighting a local `bootRun` over one schema, and re-seeding means re-scraping ~86 sources.
 - **Port 8080 must be free on the host** — that is where Traefik is published, and it is also the BFF's local `bootRun` port. Stop `dev-env.sh` first.
-- **The first install of a release is not the interesting case for probes.** The BFF reports Ready before the schema exists (#438), so a green `up` does not mean
-  the readiness probe is meaningful. Do not read more into it than it says.
+- **A green `up` now says more about the probes than it used to, and it is worth knowing why.** Until #438 the BFF reported Ready before the schema existed, so a
+  successful install proved nothing about readiness. Since #438 its readiness group includes the database and the `events` schema, which means `helm install
+--wait` cannot return until the importer has migrated — a green `up` is now evidence that the ordering worked. The corollary is that `up` failing on a timeout
+  is a plausible _importer_ failure rather than a BFF one; check the importer's Flyway logs first.
 - **"Runs on k3d" is not "runs on Hetzner".** No TLS, no cert-manager, no DNS, no NetworkPolicies, no Flux, one node under no load, and a database on the same
   machine. Report it in those terms — `deploy/AGENTS.md` uses the phrase "installed and exercised locally" and means it.
