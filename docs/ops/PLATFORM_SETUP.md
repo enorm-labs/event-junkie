@@ -831,6 +831,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `importer.source.running`                    | Gauge                                 | Catches the ADR-008 `RUNNING`-forever state a restart can strand                    |
 | `bff.events.served`                          | Counter, tagged endpoint              | Is anyone actually using it                                                         |
 | `db.events{horizon="all"\|"future"}`         | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end        |
+| `data_quality{source=…,metric=…}`            | Gauge                                 | Per-source quality, refreshed daily (#319). Alert on a metric that starts rising    |
 
 That last group is what makes the dashboards _business_ dashboards and not CPU graphs — and, per §4b, it is why Superset is unnecessary.
 

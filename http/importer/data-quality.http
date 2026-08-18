@@ -1,0 +1,61 @@
+### ============================================================
+### Admin: Data Quality — Pillar 1 (Measure), issue #319
+###
+### Read-only. Nothing here changes an event; the fixing happens through
+### events.http's `PUT /api/admin/events/{id}`, which is the point of the
+### worklist below.
+### ============================================================
+
+### The report — per-source metrics plus an overall roll-up
+### Computed live against the current table, so it always describes now.
+### For trends, read the daily `data_quality_snapshot` rows or the
+### `data_quality{source=…,metric=…}` Prometheus gauges instead: a
+### point-in-time report cannot show whether anything moved.
+GET {{importer-host}}/api/admin/data-quality
+Accept: application/json
+
+### The worklist — the events failing one metric, so they can be fixed
+### The headline gap: CONCERT events with nothing in the lineup.
+GET {{importer-host}}/api/admin/data-quality/worklist?issue=concertsWithoutArtist
+Accept: application/json
+
+### Worklist for one source only
+GET {{importer-host}}/api/admin/data-quality/worklist?issue=concertsWithoutArtist&source=badehaus
+Accept: application/json
+
+### Worklist for hand-created events
+### `manual` is the synthetic bucket for events with no `event_source_id` —
+### they are reported rather than filtered out, so the report's own total
+### agrees with the table's.
+GET {{importer-host}}/api/admin/data-quality/worklist?issue=missingGenre&source=manual
+Accept: application/json
+
+### Worklist, paged
+### `limit` is capped at 500. Ordered newest-first by event date with the id
+### as a tie-break, so a page boundary is stable across requests.
+GET {{importer-host}}/api/admin/data-quality/worklist?issue=missingPrice&limit=20&offset=20
+Accept: application/json
+
+### Every other metric
+GET {{importer-host}}/api/admin/data-quality/worklist?issue=eventsTypedOther
+Accept: application/json
+
+###
+GET {{importer-host}}/api/admin/data-quality/worklist?issue=missingPromoter
+Accept: application/json
+
+###
+GET {{importer-host}}/api/admin/data-quality/worklist?issue=missingStartTime
+Accept: application/json
+
+### An unknown issue is a 400 naming the valid values — NOT an empty list
+### An empty list is the honest answer to "this metric has no offenders", so
+### returning it for a typo would report perfect data quality for a metric
+### that does not exist.
+GET {{importer-host}}/api/admin/data-quality/worklist?issue=missingArtist
+Accept: application/json
+
+### The gauges the same numbers publish, for Prometheus
+### Not reachable on `importer-host`: actuator lives on the management port
+### (9001 in the chart, 8081's sibling locally), which no Ingress routes.
+### Locally: curl http://localhost:8081/actuator/prometheus | grep data_quality

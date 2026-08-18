@@ -221,6 +221,25 @@ Pillar 1's job is only to _expose_ the metrics (§5.2) in a shape these tools co
 - Baseline numbers captured (first snapshot row set) so Pillars 3–4 have a
   "before" to move.
 
+## 8a. Built — 2026-08-19
+
+Shipped as `de.norm.events.dataquality` in `events-importer`. The three open decisions were taken as this plan recommends: **A** — `free` and `price_note`-only
+events are _not_ missing a price; **B1** — state-derived worklists now, the dropped-token queue deferred; **C** — `suspectNonArtistTitles` shipped rather than
+deferred, and it costs one extra query.
+
+**Two deviations from §5, both deliberate and both narrower than the plan:**
+
+- **The worklist returns a lean projection, not `EventResponse`.** Assembling one resolves artists, promoters and genre tags per event — three extra round-trips
+  to attach associations to events selected _because they lack them_. `concertsWithoutArtist` would return an empty artist list on every single row. What a
+  steward needs in order to decide whether to open something is what `WorklistEntryResponse` carries: when it is, where it is, and what it is called.
+- **A source id that does not resolve gets its own label**, `unresolved-source-<id>`, rather than falling into `manual`. `ON DELETE SET NULL` means it should
+  not happen — but folding it into `manual` would attribute a deleted source's events to hand curation, and nobody would ever question that number.
+
+**One thing the build found that the plan could not have.** `data_quality_snapshot` has a `created_at` column with a database default, and mapping it onto the
+entity broke the daily job's _second_ run: Spring Data writes every mapped property on an `UPDATE`, so the re-run set `created_at` to `NULL`, violated the
+column's `NOT NULL`, and failed into the logger's `catch` — where it would have surfaced as a **gap in the series** rather than as an error. The column stays on
+the table and off the entity. The idempotence test is what caught it, and it is the reason that test asserts a re-run rather than only a first write.
+
 ## 9. Open decisions (recap)
 
 - **A — `missingPrice` definition** (§1): recommend excluding `free` and
