@@ -20,9 +20,31 @@ data:
   # Set explicitly because a probe path that exists only by autodetection is a probe path that
   # disappears the day the detection stops working.
   MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
-  # `health,info` matches each module's application.yaml. Restated here so that moving the
-  # management endpoints to their own port does not silently widen what they expose.
-  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info"
+  {{- /* MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE is deliberately absent, and #538 is why it is
+         worth a comment rather than a blank line. It used to be set here to `health,info`, restated
+         from each module's application.yaml "so that moving the management endpoints to their own
+         port does not silently widen what they expose".
+
+         That rationale did not describe a real mechanism: `management.server.port` and
+         `management.endpoints.web.exposure.include` are orthogonal, and moving the port changes
+         nothing about which endpoints exist. What the restatement did do is win, because envFrom
+         becomes an environment variable and an environment variable outranks application.yaml. So
+         when #535 added `prometheus` to both modules, the chart quietly kept the endpoint at 404 in
+         every cluster while it worked perfectly in every test.
+
+         It also broke the rule stated two lines above about MANAGEMENT_SERVER_PORT — two sources of
+         truth for one value — and it fails this ConfigMap's own admission criterion: which endpoints
+         are exposed is a property of the application, not of running in a cluster.
+
+         Nothing is lost by its absence. The management port is unroutable: `ingress_test.yaml`
+         asserts positively that /api and / are the only routed paths and `http` the only named port,
+         so the exposure list cannot widen the public surface whatever it says (PLATFORM_SETUP.md §7).
+         `invariants_test.yaml` fails the build if this key comes back.
+
+         Verified on k3d 2026-08-18: /actuator/prometheus answers 200 on both JVM services' management
+         ports, 213 and 266 lines, and the importer's exposition carries the business meters #535
+         added — `importer_events_written_total{operation="inserted",source="amt"} 2.0` after a real
+         in-cluster import. Before this change both were a 404. */}}
   # The banner is six lines of ASCII art at the top of every container log, repeated on every
   # restart. Harmless locally, pure noise in an aggregated log.
   SPRING_MAIN_BANNER_MODE: "off"

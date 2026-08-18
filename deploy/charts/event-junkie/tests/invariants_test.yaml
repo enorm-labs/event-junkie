@@ -104,6 +104,23 @@ tests:
           path: "$..env[*].name"
           pattern: "^SPRING_FLYWAY_USERNAME$"
 
+      # --- The chart does not decide what actuator exposes ---------------------------------------
+      #
+      # #538. The ConfigMap used to restate `health,info` here, and because envFrom becomes an
+      # environment variable it outranked both modules' application.yaml — so when #535 added
+      # `prometheus`, /actuator/prometheus 404'd in every cluster while passing every test. The list
+      # belongs to the application; nothing in the chart may set it.
+      #
+      # Two paths because there are two ways back in: a ConfigMap `data` key, and a plain `env`
+      # entry on a Deployment. The second is the same shape as the SPRING_FLYWAY_USERNAME assertion
+      # above, and is here for the same reason — the wrong thing is just as silent wherever it
+      # appears.
+      - notExists:
+          path: "$..MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE"
+      - notMatchRegex:
+          path: "$..env[*].name"
+          pattern: "^MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE$"
+
   - it: holds under values-k3d.yaml
     values:
       - ../values-k3d.yaml
@@ -165,3 +182,17 @@ tests:
       - matchRegex:
           path: "$..image"
           pattern: '^ghcr\.io/enorm-labs/event-junkie/(bff|importer|frontend):[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$'
+
+  - it: control — the ConfigMap data path above reaches the shared ConfigMap
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: metadata.labels["app.kubernetes.io/component"]
+      value: config
+    asserts:
+      # A sibling key that must stay, asserted positively. Without this the `notExists` above would
+      # keep passing if the ConfigMap were renamed, restructured, or dropped — the failure mode the
+      # header warns about, and the one that let #538 exist in the first place.
+      - exists:
+          path: data.MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED
