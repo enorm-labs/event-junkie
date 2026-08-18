@@ -244,10 +244,12 @@ that has stopped meaning anything.
 | `ZIZMOR_VERSION`      | `.github/workflows/validate-workflows.yml`                                                               | `zizmorcore/zizmor` releases — the image tag has **no** `v` prefix |
 | `ACTIONLINT_VERSION`  | `.github/workflows/validate-workflows.yml`                                                               | `rhysd/actionlint` releases                                        |
 | `SHELLCHECK_VERSION`  | `validate-scripts.yml`, `validate-chart.yml` **and** `validate-infra.yml` — all three must move together | `koalaman/shellcheck` releases                                     |
+| `walg_version`        | `infra/modules/environment/variables.tf` — **and both `walg_checksums`**                                 | `wal-g/wal-g` releases — read the rules below before bumping       |
+| `k3s_version`         | `infra/modules/environment/variables.tf`                                                                 | `k3s-io/k3s` releases — same rebuild consequence as `wal-g`        |
 
 ```sh
 for repo in helm/helm fluxcd/flux2 fluxcd/flux-schema aquasecurity/trivy gitleaks/gitleaks \
-            zizmorcore/zizmor rhysd/actionlint koalaman/shellcheck; do
+            zizmorcore/zizmor rhysd/actionlint koalaman/shellcheck wal-g/wal-g k3s-io/k3s; do
   printf '%-28s %s\n' "$repo" "$(gh api "repos/$repo/releases/latest" --jq .tag_name)"
 done
 ```
@@ -264,6 +266,28 @@ assuming the pin is wrong: a newer analyser finding more is the tool working.
 
 A Trivy bump can turn a green scan red by adding advisories rather than by anything changing in the image. That is the tool working — treat the new findings on
 their merits, do not pin back.
+
+**The last two rows are not like the others, and the difference is expensive.** `walg_version` and `k3s_version` feed `bootstrap.env`, which is templated into
+`user_data` — **a force-new attribute.** Bumping either one plans a _node replacement_, production included, where bumping Trivy edits a workflow. So:
+
+- **Do not sweep them up with the routine run.** Move them when there is a reason, and take the rebuild deliberately with
+  [docs/CLUSTER_BOOTSTRAP.md](../../docs/CLUSTER_BOOTSTRAP.md) § _Rebuilding a node_ open.
+- **`wal-g` also carries two checksums**, one per architecture, because production is ARM and staging is x86. Both move with the version, and they come from the
+  release's own `.sha256` files — never from the tarball's host, which would verify only that the download completed:
+
+    ```sh
+    V=v3.0.9
+    for a in amd64 aarch64; do
+      printf '%-8s %s\n' "$a" "$(curl -fsSL "https://github.com/wal-g/wal-g/releases/download/$V/wal-g-pg-24.04-$a.tar.gz.sha256" | cut -d' ' -f1)"
+    done
+    ```
+
+    The `aarch64` asset maps to the `arm64` key; the node picks by `dpkg --print-architecture`. A version bumped without its checksums fails the boot at
+    `sha256sum -c` — intended, and an unpleasant way to discover a half-done edit.
+
+- **`wal-g` is on the recovery path, not the request path.** Nothing about a stale version shows up in monitoring, and the moment you find out is the moment you
+  are already restoring — so the natural time to review it is the quarterly restore drill, not this sweep.
+  [docs/BACKUPS.md](../../docs/BACKUPS.md) §8 has the whole argument.
 
 ## Output Summary
 
