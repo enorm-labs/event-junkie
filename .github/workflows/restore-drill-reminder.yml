@@ -179,10 +179,31 @@ jobs:
               type: 'Task',
             });
 
-            // Deliberately not added to the project board from here: the board's own "Auto-add to
-            // project" workflow already picks up every new issue in this repository, and the
-            // `GITHUB_TOKEN` cannot write to an *organisation* project anyway — that needs a PAT.
-            // Verified 2026-08-18: every open issue is on the board.
+            // **This issue does NOT reach the project board on its own, and that is a known gap.**
+            //
+            // An earlier version of this comment claimed the board's "Auto-add to project" workflow
+            // would pick it up, on the evidence that every open issue was on the board. That was a
+            // mechanism inferred from a state, and it was wrong: of the project's six built-in
+            // workflows only `Auto-add sub-issues`, `Item closed`, `Pull request merged` and
+            // `Auto-close issue` are enabled — every card had been placed by hand or by
+            // `scripts/issue-board.sh`. The first real run proved it, by not appearing.
+            //
+            // It is the same error 05b17c0 was written about, one workflow over: *the board
+            // following an event is a setting, not a property of GitHub.*
+            //
+            // It could not have been fixed from here. `GITHUB_TOKEN` cannot write to an
+            // **organisation** project — that needs a PAT with `project` scope stored as a secret,
+            // and a token able to rewrite the whole board is more than a quarterly reminder is worth
+            // holding a credential for.
+            //
+            // **"Auto-add to project" was enabled on the board on 2026-08-18**, in response to this,
+            // which is the right place for the fix: it covers every issue rather than only these
+            // ones. Note what that does and does not settle. It applies to items created *after* it
+            // was switched on, so #536 still had to be placed by hand — and the setting being on is
+            // not the same as having seen it work, which is the exact distinction that produced this
+            // comment in the first place. **The next issue this workflow opens is what confirms it.**
+            // If that one is also missing from the board, the fallback is unchanged:
+            // `scripts/issue-board.sh status <n> Ready`.
             core.notice(`Opened #${issue.number} — ${title}`);
             await core.summary
               .addHeading('🗄️ Restore drill', 2)
