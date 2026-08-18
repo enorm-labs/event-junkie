@@ -200,6 +200,31 @@ the brand accent on cards, revealing full colour on hover / detail pages. Cohesi
 - **Fonts** → self-hosted `@fontsource-variable/geist`, imported in `src/main.ts`; `--font-*` tokens in
   `main.css`.
 
+## 6a. The GitHub repository's own metadata (#477)
+
+Three fields on the repository page are brand surfaces, and they are the ones nobody thinks of as brand surfaces: the description is what appears in search
+results, in the organisation's repository list and under the repo name; the topics are the only discovery mechanism GitHub offers; and the social preview is
+what every link to the project unfurls as on Slack, X or Discord.
+
+**They are derived from §1 rather than written fresh**, which is the whole reason they are recorded here instead of only in a settings page. Anything set on
+GitHub and written down nowhere drifts, and the previous description proves it — it predated the product, never said _Event Junkie_, described the project as
+_simple_ and as _checking_ events, and spent a third of its length on a parenthetical about future scope.
+
+| Field              | Value                                                                                                                                           |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description**    | `Event Junkie — your always-fresh feed of what's on across Berlin's venues. Concerts, club nights, festivals, and the odd quiz night.`          |
+| **Homepage**       | `https://event-junkie.de` — **once it resolves.** Setting it before the deploy points people at nothing, which is worse than empty              |
+| **Topics**         | `berlin` `events` `concerts` `nightlife` `kotlin` `spring-boot` `webflux` `vue` `typescript` `kubernetes` `web-scraping` `gitops` `helm` `flux` |
+| **Social preview** | Blocked on the mark — [#475](https://github.com/enorm-labs/event-junkie/issues/475) produces it                                                 |
+
+**The description is the one-liner from §1 with the product name in front**, and that is deliberate rather than lazy: a second sentence written for GitHub would
+be a fourth line of brand copy to keep in step with the tagline, the positioning line and the one-liner — and §1 already warns what happens when those get used
+in each other's places. The positioning line (_The event app Berlin deserves_) is **not** used here for the same reason it is kept out of the hero: it reads as
+a claim, and a claim in a repository description is a claim about code.
+
+**The topics are half product and half stack**, on purpose. Somebody searching `berlin events` and somebody searching `spring-boot web-scraping` are looking for
+different things and both should find this; the stack half is also what makes the repository useful as the template [#396](https://github.com/enorm-labs/event-junkie/issues/396) wants to extract.
+
 ## 7. Open questions / next steps
 
 - [x] Applied the **UV violet** accent to the tokens, AA-verified in both modes (§5.1).
