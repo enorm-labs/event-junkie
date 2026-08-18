@@ -43,6 +43,12 @@ spec:
     cleanupOnFail: true
     timeout: 5m
   values:
+    networkPolicy:
+      # `host.k3d.internal` resolves to an address k3d assigns at cluster-create time, and
+      # NetworkPolicy cannot resolve a name — so there is nothing narrower to write here. The rule
+      # still constrains the port: the two JVM services may open 5432 anywhere and nothing else.
+      # The real environments set a /32; this is the one policy the rehearsal cannot prove tight.
+      databaseCidr: "0.0.0.0/0"
     database:
       # k3d's built-in name for the host from inside the cluster, injected into CoreDNS at cluster
       # creation. The rehearsal script forces a CoreDNS reload after creating the cluster, because

@@ -1,88 +1,170 @@
 {
   "$schema": "https://json-schema.org/draft-07/schema#",
   "title": "event-junkie chart values",
-  "description": "Deliberately minimal: it constrains the values whose wrong setting is either unrecoverable or invisible, and nothing else. Documenting the whole value surface is values.yaml's job, and a schema that repeats it is a second thing to keep in step. Note that `database.host` and `database.existingSecret` are NOT required here even though the chart cannot render without them — the helpers reject them with a message that says what to do, which is more useful than a schema path.",
+  "description": "Deliberately minimal: it constrains the values whose wrong setting is either unrecoverable or invisible, and nothing else. Documenting the whole value surface is values.yaml's job, and a schema that repeats it is a second thing to keep in step. Note that `database.host` and `database.existingSecret` are NOT required here even though the chart cannot render without them \u2014 the helpers reject them with a message that says what to do, which is more useful than a schema path.",
   "type": "object",
-  "required": ["image", "database", "security", "bff", "importer", "frontend", "ingress", "certManager"],
+  "required": [
+    "image",
+    "database",
+    "security",
+    "bff",
+    "importer",
+    "frontend",
+    "ingress",
+    "certManager",
+    "networkPolicy"
+  ],
   "properties": {
     "image": {
       "type": "object",
       "properties": {
-        "registry": { "type": "string", "minLength": 1 },
+        "registry": {
+          "type": "string",
+          "minLength": 1
+        },
         "pullPolicy": {
           "description": "Never `Always`: every tag this chart references is immutable, so re-pulling can only find the same bytes or fail.",
-          "enum": ["IfNotPresent", "Never"]
+          "enum": [
+            "IfNotPresent",
+            "Never"
+          ]
         },
-        "pullSecrets": { "type": "array" }
+        "pullSecrets": {
+          "type": "array"
+        }
       }
     },
     "database": {
       "type": "object",
       "properties": {
-        "host": { "type": "string" },
-        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
-        "name": { "type": "string", "minLength": 1 },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
         "existingSecret": {
           "description": "The name of an existing Secret. There is deliberately no `password` property anywhere in this schema, and adding one is the change to refuse in review.",
           "type": "string"
         },
         "secretKeys": {
           "type": "object",
-          "required": ["username", "password"],
+          "required": [
+            "username",
+            "password"
+          ],
           "properties": {
-            "username": { "type": "string", "minLength": 1 },
-            "password": { "type": "string", "minLength": 1 }
+            "username": {
+              "type": "string",
+              "minLength": 1
+            },
+            "password": {
+              "type": "string",
+              "minLength": 1
+            }
           }
         }
       },
-      "not": { "required": ["password"] }
+      "not": {
+        "required": [
+          "password"
+        ]
+      }
     },
     "security": {
       "type": "object",
-      "required": ["runAsUser", "runAsGroup"],
+      "required": [
+        "runAsUser",
+        "runAsGroup"
+      ],
       "properties": {
         "runAsUser": {
-          "description": "Must be non-zero: `runAsNonRoot: true` and `runAsUser: 0` is a pod that fails to start, which is the good case — the bad one is a UID that exists in the image and is not the one it runs as.",
+          "description": "Must be non-zero: `runAsNonRoot: true` and `runAsUser: 0` is a pod that fails to start, which is the good case \u2014 the bad one is a UID that exists in the image and is not the one it runs as.",
           "type": "integer",
           "minimum": 1
         },
-        "runAsGroup": { "type": "integer", "minimum": 1 }
+        "runAsGroup": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "bff": {
       "type": "object",
-      "required": ["replicaCount", "image", "basePath", "service", "resources"],
+      "required": [
+        "replicaCount",
+        "image",
+        "basePath",
+        "service",
+        "resources"
+      ],
       "properties": {
-        "replicaCount": { "type": "integer", "minimum": 0 },
+        "replicaCount": {
+          "type": "integer",
+          "minimum": 0
+        },
         "basePath": {
           "description": "Served by Spring itself, so the ingress path and this must agree. A leading slash and no trailing one.",
           "type": "string",
           "pattern": "^/[^/].*[^/]$|^/[^/]*[^/]$"
         },
-        "service": { "$ref": "#/definitions/jvmService" },
-        "maxRamPercentage": { "type": "integer", "minimum": 25, "maximum": 90 }
+        "service": {
+          "$ref": "#/definitions/jvmService"
+        },
+        "maxRamPercentage": {
+          "type": "integer",
+          "minimum": 25,
+          "maximum": 90
+        }
       }
     },
     "importer": {
       "type": "object",
-      "required": ["replicaCount", "image", "service", "resources"],
+      "required": [
+        "replicaCount",
+        "image",
+        "service",
+        "resources"
+      ],
       "properties": {
         "replicaCount": {
-          "description": "Pinned to 1 by ADR-008, so that raising it fails at install time rather than in a review comment. Two schedulers means two concurrent imports of the same source: the 60-second tick skips sources marked RUNNING, but that check is a read-then-write with no lock. `SELECT … FOR UPDATE SKIP LOCKED` is the prerequisite for ever relaxing this, and relaxing it is an ADR change, not a values change.",
+          "description": "Pinned to 1 by ADR-008, so that raising it fails at install time rather than in a review comment. Two schedulers means two concurrent imports of the same source: the 60-second tick skips sources marked RUNNING, but that check is a read-then-write with no lock. `SELECT \u2026 FOR UPDATE SKIP LOCKED` is the prerequisite for ever relaxing this, and relaxing it is an ADR change, not a values change.",
           "const": 1
         },
-        "service": { "$ref": "#/definitions/jvmService" },
-        "maxRamPercentage": { "type": "integer", "minimum": 25, "maximum": 90 }
+        "service": {
+          "$ref": "#/definitions/jvmService"
+        },
+        "maxRamPercentage": {
+          "type": "integer",
+          "minimum": 25,
+          "maximum": 90
+        }
       }
     },
     "frontend": {
       "type": "object",
-      "required": ["replicaCount", "image", "service", "resources"],
+      "required": [
+        "replicaCount",
+        "image",
+        "service",
+        "resources"
+      ],
       "properties": {
-        "replicaCount": { "type": "integer", "minimum": 0 },
+        "replicaCount": {
+          "type": "integer",
+          "minimum": 0
+        },
         "service": {
           "type": "object",
-          "required": ["port"],
+          "required": [
+            "port"
+          ],
           "properties": {
             "port": {
               "description": "Cannot be a privileged port: nginx runs as a non-root user here and cannot bind below 1024.",
@@ -92,63 +174,172 @@
             }
           }
         },
-        "runAsUser": { "type": ["integer", "null"], "minimum": 1 }
+        "runAsUser": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        }
       }
     },
     "ingress": {
       "type": "object",
-      "required": ["enabled", "className", "host", "tls"],
+      "required": [
+        "enabled",
+        "className",
+        "host",
+        "tls",
+        "securityHeaders"
+      ],
       "properties": {
-        "enabled": { "type": "boolean" },
-        "className": { "type": "string", "minLength": 1 },
-        "host": { "type": "string", "minLength": 1 },
-        "redirectHosts": { "type": "array", "items": { "type": "string", "minLength": 1 } },
-        "annotations": { "type": "object" },
+        "enabled": {
+          "type": "boolean"
+        },
+        "className": {
+          "type": "string",
+          "minLength": 1
+        },
+        "host": {
+          "type": "string",
+          "minLength": 1
+        },
+        "redirectHosts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "annotations": {
+          "type": "object"
+        },
         "noindex": {
           "description": "Marks an environment as not-production: X-Robots-Tag via a Traefik Middleware (#265), plus a disallow-all robots.txt and empty sitemap mounted over the frontend build (#286). On outside production.",
           "type": "boolean"
         },
         "tls": {
           "type": "object",
-          "required": ["enabled", "secretName"],
+          "required": [
+            "enabled",
+            "secretName"
+          ],
           "properties": {
-            "enabled": { "type": "boolean" },
-            "secretName": { "type": "string", "minLength": 1 }
+            "enabled": {
+              "type": "boolean"
+            },
+            "secretName": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "securityHeaders": {
+          "description": "HSTS, X-Content-Type-Options, X-Frame-Options and Referrer-Policy on every response, via a Traefik Middleware (#416). Response headers have no Ingress API equivalent.",
+          "type": "object",
+          "required": [
+            "enabled",
+            "hsts",
+            "referrerPolicy"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "referrerPolicy": {
+              "type": "string",
+              "minLength": 1
+            },
+            "hsts": {
+              "type": "object",
+              "required": [
+                "maxAgeSeconds",
+                "includeSubdomains",
+                "preload"
+              ],
+              "properties": {
+                "maxAgeSeconds": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "includeSubdomains": {
+                  "type": "boolean"
+                },
+                "preload": {
+                  "type": "boolean"
+                }
+              }
+            }
           }
         }
       }
     },
     "certManager": {
       "type": "object",
-      "required": ["clusterIssuer"],
+      "required": [
+        "clusterIssuer"
+      ],
       "properties": {
         "clusterIssuer": {
           "type": "object",
-          "required": ["name", "create", "server", "solver"],
+          "required": [
+            "name",
+            "create",
+            "server",
+            "solver"
+          ],
           "properties": {
-            "name": { "type": "string", "minLength": 1 },
-            "create": { "type": "boolean" },
-            "email": { "type": "string" },
-            "server": { "type": "string", "format": "uri" },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "create": {
+              "type": "boolean"
+            },
+            "email": {
+              "type": "string"
+            },
+            "server": {
+              "type": "string",
+              "format": "uri"
+            },
             "solver": {
-              "description": "http01 needs Let's Encrypt to reach the host; staging has no public address, so it uses dns01 (PLATFORM_SETUP §4a).",
-              "enum": ["http01", "dns01"]
+              "description": "http01 needs Let's Encrypt to reach the host; staging has no public address, so it uses dns01 (PLATFORM_SETUP \u00a74a).",
+              "enum": [
+                "http01",
+                "dns01"
+              ]
             },
             "dns01": {
               "description": "The official hetzner/cert-manager-webhook-hetzner solver. Speaks the Cloud API; the old dns.hetzner.com API was shut down in May 2026.",
               "type": "object",
-              "required": ["tokenSecret", "webhookGroupName"],
+              "required": [
+                "tokenSecret",
+                "webhookGroupName"
+              ],
               "properties": {
                 "tokenSecret": {
-                  "description": "A Secret holding an hcloud API token, in cert-manager's namespace — a ClusterIssuer resolves references there, not in the release namespace.",
+                  "description": "A Secret holding an hcloud API token, in cert-manager's namespace \u2014 a ClusterIssuer resolves references there, not in the release namespace.",
                   "type": "object",
-                  "required": ["name", "key"],
+                  "required": [
+                    "name",
+                    "key"
+                  ],
                   "properties": {
-                    "name": { "type": "string", "minLength": 1 },
-                    "key": { "type": "string", "minLength": 1 }
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "key": {
+                      "type": "string",
+                      "minLength": 1
+                    }
                   }
                 },
-                "webhookGroupName": { "type": "string", "minLength": 1 }
+                "webhookGroupName": {
+                  "type": "string",
+                  "minLength": 1
+                }
               }
             }
           }
@@ -158,16 +349,103 @@
     "tests": {
       "type": "object",
       "properties": {
-        "enabled": { "type": "boolean" }
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "networkPolicy": {
+      "description": "Default-deny for the release namespace plus one named allowance per real conversation (#416, PLATFORM_SETUP \u00a78 item 1).",
+      "type": "object",
+      "required": [
+        "enabled",
+        "dns",
+        "ingressController",
+        "scrapeEgress"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "databaseCidr": {
+          "description": "The /32 of PostgreSQL. NetworkPolicy speaks CIDRs and cannot resolve database.host, so this is a second setting that has to agree with it. Required when enabled \u2014 the template fails the render rather than letting pods hang on connect. Empty is allowed by the schema only because values.yaml is validated against it and there is no safe default for an address \u2014 the same reason database.host is untyped for length.",
+          "type": "string"
+        },
+        "dns": {
+          "type": "object",
+          "required": [
+            "namespaceSelector"
+          ],
+          "properties": {
+            "namespaceSelector": {
+              "type": "object",
+              "minProperties": 1
+            }
+          }
+        },
+        "ingressController": {
+          "type": "object",
+          "required": [
+            "namespaceSelector",
+            "podSelector"
+          ],
+          "properties": {
+            "namespaceSelector": {
+              "type": "object",
+              "minProperties": 1
+            },
+            "podSelector": {
+              "type": "object",
+              "minProperties": 1
+            }
+          }
+        },
+        "scrapeEgress": {
+          "type": "object",
+          "required": [
+            "enabled",
+            "ports",
+            "exceptCidrs"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "ports": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535
+              }
+            },
+            "exceptCidrs": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
       }
     }
   },
   "definitions": {
     "jvmService": {
       "type": "object",
-      "required": ["port", "managementPort"],
+      "required": [
+        "port",
+        "managementPort"
+      ],
       "properties": {
-        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
         "managementPort": {
           "description": "Must differ from `port`. That the two are different is what makes /actuator/** unroutable rather than merely unrouted, since the ingress only ever names the application port.",
           "type": "integer",

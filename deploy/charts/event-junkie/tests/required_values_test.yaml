@@ -1,4 +1,4 @@
-# The chart's two mandatory values, and the one its schema pins.
+# The chart's three mandatory values, and the one its schema pins.
 #
 # **New coverage, not a port.** `render-assertions.sh` could not test these at all: it asserted on
 # renders that succeeded, and the whole point of these three is that the render must *fail*. They
@@ -20,6 +20,7 @@ tests:
   - it: refuses to render without database.existingSecret, and says what to create
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
     asserts:
       - failedTemplate:
           errorPattern: "database\\.existingSecret is required — create the Secret out of band"
@@ -31,11 +32,41 @@ tests:
   - it: refuses to render without database.host, and says where to find it
     set:
       database.existingSecret: "events-db"
+      # Turned off so this case is about `database.host` alone. With policies on, whichever of the
+      # two `required` calls Helm reaches first wins, and the assertion below would then be about
+      # render order rather than about the chart refusing — the same trap the suite header warns
+      # about for `templates:`.
+      networkPolicy.enabled: false
     asserts:
       - failedTemplate:
           errorPattern: "database\\.host is required"
       - failedTemplate:
           errorPattern: "postgres_ip.*infra/environments"
+
+  # The third mandatory value, and the one most likely to be missed because `database.host` looks
+  # like it should cover it (#416). NetworkPolicy speaks CIDRs and cannot resolve a name, so the two
+  # are separate settings that must agree — and getting only one of them right produces pods that
+  # start, resolve the host, and hang on connect, which reads as the database being down. The
+  # `required` is what turns that into a render error, and the message is what says why there are two.
+  - it: refuses to render with policies on and no database CIDR, and says why it is not database.host
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+    asserts:
+      - failedTemplate:
+          errorPattern: "networkPolicy\\.databaseCidr is required"
+      - failedTemplate:
+          errorPattern: "cannot resolve database\\.host"
+
+  # And the escape hatch works: policies off, no CIDR needed. Without this the `required` above
+  # could be unconditional and nothing here would notice.
+  - it: needs no CIDR when the policies are turned off
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+      networkPolicy.enabled: false
+    asserts:
+      - notFailedTemplate: {}
 
   # --- The importer's replica count is pinned by the schema ------------------------------------
   #
@@ -47,6 +78,7 @@ tests:
   - it: the schema rejects a second importer replica
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       importer.replicaCount: 2
     asserts:
@@ -58,6 +90,7 @@ tests:
   - it: renders once both are supplied
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
     asserts:
       - notFailedTemplate: {}

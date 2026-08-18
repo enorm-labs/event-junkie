@@ -337,6 +337,46 @@ every environment. The override therefore belongs to the deployment by construct
 **The name says `ingress` while half of it is a pod mount.** That is the price of the single switch,
 and it is the cheaper mistake.
 
+### What may talk to what
+
+`networkPolicy.enabled` renders a default-deny for the release namespace plus one named allowance per real conversation. **Read the allowances as the
+architecture** — if an arrow is not written down in `templates/networkpolicy.yaml`, it does not happen:
+
+| From          | To               | Why                                             |
+| ------------- | ---------------- | ----------------------------------------------- |
+| Traefik       | frontend :8080   | the SPA                                         |
+| Traefik       | bff :8080        | `/api`                                          |
+| bff, importer | PostgreSQL :5432 | `networkPolicy.databaseCidr`, off-cluster       |
+| importer      | the internet     | scraping venue sites, minus every private range |
+| every pod     | CoreDNS :53      | UDP and TCP, or the rest is unusable            |
+| the test hook | bff, frontend    | only while `tests.enabled`                      |
+
+**What is absent is the point.** Nothing reaches the importer — not Traefik, not the frontend, not the BFF. Its admin API was already unroutable because no
+Ingress path names it; this makes it unreachable from inside the namespace too, which is the half an Ingress rule could never give. The frontend gets no egress
+but DNS, because a static bundle has nowhere to go.
+
+**`networkPolicy.databaseCidr` is a second setting for an address `database.host` already names**, and that duplication is unavoidable rather than sloppy:
+NetworkPolicy speaks CIDRs and cannot resolve a name. Getting only one of them right produces pods that start, resolve the host and hang on connect — which
+reads as the database being down — so the template `required`s it and the render fails instead.
+
+**The kubelet is deliberately not in the table.** Liveness and readiness probes originate on the node, and node-to-pod traffic is not subject to NetworkPolicy
+in k3s's implementation. That is tested rather than believed: if it were wrong every pod would fail its probes and `helm install --wait` would time out, which
+is what the k3d rehearsal exercises on every run. `kubectl port-forward` arrives the same way.
+
+### Response headers
+
+`ingress.securityHeaders` renders a Traefik Middleware adding HSTS, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` and a `Referrer-Policy`. A
+response header has no Ingress API vocabulary, which is why this is Traefik-specific like the redirect and noindex middlewares.
+
+- **HSTS `preload` is off**, and it is the one setting here that is genuinely hard to undo: it asks browsers to ship the promise baked in, and removal takes
+  months to propagate through browser releases. It also needs the domain submitted to hstspreload.org, which is a step outside this chart.
+- **`X-XSS-Protection` is deliberately absent.** Removed from every current browser, and its last implementations introduced vulnerabilities of their own.
+- **Content-Security-Policy is not here yet**, and adding it blind is a blank page rather than a warning — it needs the SPA's inline styles and its exact set of
+  origins enumerated first, plus a report-only period. Its own issue, not a line in a values file.
+
+The Ingress annotation that names these is a **comma-separated string with no schema behind it**, so a stray comma or an empty element silently drops _every_
+middleware on the router. It is built as a list in one place, and `tests/ingress_test.yaml` pins the whole string for all three combinations.
+
 ## Validating a change
 
 ```sh

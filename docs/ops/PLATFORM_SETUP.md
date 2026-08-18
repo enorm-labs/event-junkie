@@ -900,6 +900,21 @@ What you have to add:
 **Not needed here:** a service mesh (two services), Falco (no capacity to respond to its findings), OPA/Kyverno (PSA covers the realistic cases at a fraction of
 the effort).
 
+**Where that list stands, 2026-08-19 (#416).** Items 2, 5, 6, 7, 9's header half, 11 and 12 are done and held by tests; 1 and 10 are cloud-init's (#260); 3 and
+4 are architectural and already true; **8 (SOPS) is the one still open**, and 9's rate-limit half belongs to
+[#268](https://github.com/enorm-labs/event-junkie/issues/268).
+
+Two things learned doing 2 and 5 that are worth having written down before the next person touches either:
+
+- **`createNamespace: true` cannot carry a PSA label.** It creates a bare namespace, and PSA is enforced _by namespace label_ — so a namespace that exists is
+  not a namespace that is governed, and nothing about the cluster looks wrong. The namespace is therefore its own manifest in each `deploy/clusters/<env>/`,
+  with `enforce: restricted` pinned to a `enforce-version` so a cluster upgrade cannot tighten the profile under a running release.
+- **A pod's first packet can leave before the CNI has programmed the policy that permits it.** k3s's policy controller populates its ipsets from pod labels
+  asynchronously, so a short-lived pod that connects milliseconds after starting can be denied by a rule that is entirely correct. Measured on k3d: the chart's
+  `helm test` hook failed with `curl: (7) … after 0 ms`, and the identical request two seconds later returned 200. It matters more than it sounds because Flux
+  runs that hook with `remediateLastFailure: true` — **a flaky test rolls back a deploy that was fine** — so the hook retries. Anything else added later that
+  connects immediately on start needs the same treatment.
+
 ### 8a. Admin access — WireGuard, because `admin_cidr` alone does not survive real life
 
 **The problem with an IP allowlist is not that home addresses rotate. It is that work does not all happen at home.** A hotspot, a café, an office, a train and a

@@ -1,0 +1,35 @@
+# The release namespace, created here rather than by the HelmRelease's `createNamespace`, so it can
+# carry the Pod Security Admission labels — PLATFORM_SETUP §8 item 2 (#416).
+#
+# **`createNamespace: true` cannot do this.** It creates a bare namespace with no labels, and PSA
+# is enforced by *namespace label*: without one, the admission controller has nothing to enforce and
+# every pod is admitted, privileged ones included. A namespace that exists is not a namespace that
+# is governed.
+#
+# `createNamespace` stays set on the HelmRelease and becomes a no-op — harmless, and cheaper than
+# a change that makes the release depend on this file having been applied first.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: event-junkie
+  labels:
+    # `restricted` is the strictest of the three built-in profiles: no privileged containers, no
+    # host namespaces, no host paths, no added capabilities beyond NET_BIND_SERVICE, non-root, and a
+    # seccomp profile required. The chart's workloads already satisfy every one of those — #426 and
+    # #448 did that work, and `tests/hardening_test.yaml` holds them to it — so this label is the
+    # enforcement catching up with the practice rather than a change in what runs.
+    #
+    # ENFORCE, NOT JUST WARN. A warn-only label produces a message in `kubectl` output that nobody
+    # reads in a GitOps flow, where nobody runs `kubectl apply` by hand. `enforce` rejects the pod.
+    pod-security.kubernetes.io/enforce: restricted
+    # Pinned to a version rather than `latest`, so a cluster upgrade cannot tighten the profile
+    # under a running release and start rejecting pods that were admitted yesterday. Raise it
+    # deliberately, with a rehearsal, the way any other breaking change is raised.
+    pod-security.kubernetes.io/enforce-version: v1.34
+    # `audit` and `warn` are left at `latest` on purpose: they cannot reject anything, so the only
+    # thing a newer standard does here is tell us early what the next `enforce-version` bump would
+    # break. That is the cheapest possible warning about a future upgrade.
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+    app.kubernetes.io/part-of: event-junkie
+    app.kubernetes.io/managed-by: flux

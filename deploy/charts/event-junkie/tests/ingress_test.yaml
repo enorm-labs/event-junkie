@@ -17,6 +17,7 @@ tests:
   - it: routes /api to the BFF and / to the frontend, and nothing else
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
     documentSelector:
       path: kind
@@ -78,6 +79,7 @@ tests:
   - it: renders neither half of noindex when it is off, as production has it
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       ingress.noindex: false
     templates:
@@ -89,6 +91,7 @@ tests:
   - it: names no noindex middleware on the ingress when it is off
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       ingress.noindex: false
     templates:
@@ -101,6 +104,7 @@ tests:
   - it: renders both halves of noindex when it is on, as staging has it
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       ingress.noindex: true
     templates:
@@ -117,14 +121,48 @@ tests:
           path: spec.headers.customResponseHeaders["X-Robots-Tag"]
           value: "noindex, nofollow"
 
-  - it: names the noindex middleware on the ingress when it is on
+  # The annotation is a comma-separated string with no schema behind it, so a stray comma or an
+  # empty element is not a render error — it is a Traefik router that silently drops **every**
+  # middleware in the list. These three cases pin the whole list rather than checking that each name
+  # appears somewhere in it, which is what makes a malformed join fail here (#416).
+  - it: names both middlewares on the ingress when noindex is on, in one well-formed list
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       ingress.noindex: true
     templates:
       - ingress.yaml
     asserts:
-      - matchRegex:
+      - equal:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
-          pattern: "^NAMESPACE-RELEASE-NAME-event-junkie-noindex@kubernetescrd$"
+          value: >-
+            NAMESPACE-RELEASE-NAME-event-junkie-security-headers@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-noindex@kubernetescrd
+
+  - it: names only the security headers middleware in production, where noindex is off
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      ingress.noindex: false
+    templates:
+      - ingress.yaml
+    asserts:
+      - equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: "NAMESPACE-RELEASE-NAME-event-junkie-security-headers@kubernetescrd"
+
+  # With both off the annotation must be absent rather than empty. An empty one is the failure this
+  # whole list-building exercise exists to avoid, and it is invisible in a rendered manifest.
+  - it: omits the annotation entirely when no middleware applies
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      ingress.noindex: false
+      ingress.securityHeaders.enabled: false
+    templates:
+      - ingress.yaml
+    asserts:
+      - notExists:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]

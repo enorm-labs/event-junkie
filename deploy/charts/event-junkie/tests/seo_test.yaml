@@ -18,6 +18,7 @@ tests:
   - it: renders no SEO ConfigMap when noindex is off, as production has it
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       ingress.noindex: false
     templates:
@@ -29,6 +30,7 @@ tests:
   - it: mounts nothing over the build when noindex is off
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       ingress.noindex: false
     templates:
@@ -54,6 +56,7 @@ tests:
   - it: serves a disallow-all robots.txt when noindex is on
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       ingress.noindex: true
     templates:
@@ -76,6 +79,7 @@ tests:
   - it: names no sitemap in robots.txt, because the only one it could name is production's
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       ingress.noindex: true
     templates:
@@ -91,6 +95,7 @@ tests:
   - it: serves a sitemap that lists nothing at all
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       ingress.noindex: true
     templates:
@@ -113,6 +118,7 @@ tests:
   - it: mounts both files with subPath, so the rest of the bundle survives
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       ingress.noindex: true
     templates:
@@ -142,6 +148,7 @@ tests:
   - it: points the seo volume at the ConfigMap this chart actually renders
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       ingress.noindex: true
     templates:
@@ -156,6 +163,7 @@ tests:
   - it: rolls the pods when the override content changes
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       ingress.noindex: true
     templates:
@@ -169,6 +177,7 @@ tests:
   - it: keeps podAnnotations working alongside the checksum
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       ingress.noindex: true
       frontend.podAnnotations:

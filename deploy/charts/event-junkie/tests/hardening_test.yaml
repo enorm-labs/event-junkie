@@ -19,6 +19,7 @@ tests:
   - it: every workload is hardened under the default values
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
     documentSelector:
       path: kind
@@ -127,6 +128,7 @@ tests:
   - it: every pod runs as the UID the images are built with
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
     documentSelector:
       path: kind
