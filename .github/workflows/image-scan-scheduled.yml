@@ -173,9 +173,9 @@ jobs:
           VERSIONS: ${{ steps.deployed.outputs.versions }}
         run: |
           status=0
+          mkdir -p sarif
           for version in $VERSIONS; do
             for component in bff importer frontend; do
-              mkdir -p "sarif/${component}"
               for arch in amd64 arm64; do
                 ref="${IMAGE_PREFIX}/${component}:${version}"
                 echo "::group::trivy ${ref} (linux/${arch})"
@@ -214,7 +214,7 @@ jobs:
 
                 trivy convert --format table "trivy-${component}-${arch}.json"
                 trivy convert --format sarif \
-                  --output "sarif/${component}/trivy-${component}-${arch}.sarif" \
+                  --output "sarif/trivy-${component}-${arch}.sarif" \
                   "trivy-${component}-${arch}.json"
                 echo "::endgroup::"
               done
@@ -251,29 +251,60 @@ jobs:
       # so a step that reports to GitHub placed above a step that verifies silently loses its
       # annotations the moment anything below it fails — which has bitten this repository twice.
       #
-      # **One category per component, holding both architectures.** Code Scanning keys on the
-      # category, so a single shared one would have each upload overwrite the last. Two categories
-      # per component would instead file an identical CVE twice for one problem; a directory upload
-      # merges the runs, so an arm64-only finding still appears while a shared one is one alert.
+      # **One upload per category, and one SARIF run per upload.** This started out as three
+      # directory uploads — both architectures of a component under one category — on the reasoning
+      # that an identical CVE on amd64 and arm64 is one problem and should be one alert. The CodeQL
+      # Action rejects that outright:
       #
-      # `trivy-deployed-*`, deliberately **not** release.yml's `trivy-*`: same category would mean
-      # this nightly run replacing the publish-time findings for that image, and the two are answers
-      # to different questions.
-      - name: Upload Trivy SARIF (bff)
-        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/bff/*.sarif') != ''
+      #     The CodeQL Action does not support uploading multiple SARIF runs with the same category.
+      #
+      # It has done since 2025-07-21. So the six-category shape is not a preference; it is the only
+      # one that uploads at all, and the pull-request trigger is what surfaced that before this ever
+      # ran on a schedule. The consequence to know when reading the Security tab: a CVE present on
+      # both architectures is **two alerts**, which has to be closed twice. In exchange each alert
+      # names the architecture it was found on, which the merged form could not.
+      #
+      # `trivy-deployed-*`, deliberately **not** release.yml's `trivy-*`: the same category would
+      # mean this nightly run replacing the publish-time findings for that image, and the two are
+      # answers to different questions.
+      #
+      # Each guarded with `success() || failure()` so findings are filed whether the scan passed or
+      # failed, and so one failing upload cannot take the other five with it. The `hashFiles` guard
+      # skips an upload whose report was never produced — what happens when the scan died rather
+      # than found something.
+      - name: Upload Trivy SARIF (bff, amd64)
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-bff-amd64.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: sarif/bff
-          category: trivy-deployed-bff
-      - name: Upload Trivy SARIF (importer)
-        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/importer/*.sarif') != ''
+          sarif_file: sarif/trivy-bff-amd64.sarif
+          category: trivy-deployed-bff-amd64
+      - name: Upload Trivy SARIF (bff, arm64)
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-bff-arm64.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: sarif/importer
-          category: trivy-deployed-importer
-      - name: Upload Trivy SARIF (frontend)
-        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/frontend/*.sarif') != ''
+          sarif_file: sarif/trivy-bff-arm64.sarif
+          category: trivy-deployed-bff-arm64
+      - name: Upload Trivy SARIF (importer, amd64)
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-importer-amd64.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: sarif/frontend
-          category: trivy-deployed-frontend
+          sarif_file: sarif/trivy-importer-amd64.sarif
+          category: trivy-deployed-importer-amd64
+      - name: Upload Trivy SARIF (importer, arm64)
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-importer-arm64.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: sarif/trivy-importer-arm64.sarif
+          category: trivy-deployed-importer-arm64
+      - name: Upload Trivy SARIF (frontend, amd64)
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-frontend-amd64.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: sarif/trivy-frontend-amd64.sarif
+          category: trivy-deployed-frontend-amd64
+      - name: Upload Trivy SARIF (frontend, arm64)
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-frontend-arm64.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: sarif/trivy-frontend-arm64.sarif
+          category: trivy-deployed-frontend-arm64
