@@ -129,8 +129,16 @@ That is not mitigated by remembering. It is mitigated by §6.
 Only if all three pass does it ping `$HEALTHCHECK_URL`. That conditionality is the whole point, and it matches the argument PLATFORM_SETUP.md §11 makes about
 the site monitor: an unconditional heartbeat proves only that the heartbeat ran.
 
-> **`HEALTHCHECK_URL` is currently unset everywhere**, so today the entire signal is a red `systemctl status walg-check` that nobody is looking at.
-> [#518](https://github.com/enorm-labs/event-junkie/issues/518) closes that gap. Until it does, treat the numbers in this section as a design, not as monitoring.
+> **`HEALTHCHECK_URL` is set per environment**, and where it is not, `walg check` now says so on every hourly run rather than passing silently:
+>
+> ```
+> warning: HEALTHCHECK_URL is unset in /etc/wal-g/credentials.env — this check passes into a void.
+> ```
+>
+> That line is [#518](https://github.com/enorm-labs/event-junkie/issues/518)'s smallest and most useful part. A dead-man's switch that is not wired up reports
+> exactly what a healthy one does — nothing — so the two states were indistinguishable from outside, and the mechanism could sit built and pointed at nothing
+> indefinitely. **A node whose check prints that warning is not monitored**, however green its timers look. The setup, and the drill that proves the
+> notification actually arrives, are [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8b.
 
 Checking by hand:
 

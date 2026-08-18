@@ -173,6 +173,26 @@ HEALTHCHECK_URL=https://hc-ping.com/...
 EOF
 ```
 
+### The healthchecks.io check — create it before the credential file, not after
+
+`HEALTHCHECK_URL` above is not optional decoration, and there is no URL to paste until the check exists. **Create it first**, per environment:
+
+| Field       | Value                  | Why exactly this                                                                                                                        |
+| ----------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **Period**  | 26h                    | The same bound `walg check` asserts on the newest base backup. A shorter period alerts on a backup that the check itself considers fine |
+| **Grace**   | 2h                     | `walg-check.timer` runs hourly, so two missed runs is a real signal and one is a reboot                                                 |
+| **Name**    | `walg-<environment>`   | Per environment, because a shared check goes green while one of two nodes has been archiving nothing for a week                         |
+| **Channel** | the same one #271 uses | A second notification stack for this would be the avoidable mistake                                                                     |
+
+Then paste its ping URL into `HEALTHCHECK_URL` above. **`walg check` says so when you have not**, on every hourly run:
+
+```
+warning: HEALTHCHECK_URL is unset in /etc/wal-g/credentials.env — this check passes into a void.
+```
+
+That line exists because the two states are otherwise indistinguishable from outside: a dead-man's switch that is not wired up reports exactly what a healthy
+one does (#518).
+
 Then take the first base backup by hand rather than waiting for 02:30, because the failure you want to find is this one and you want to find it now:
 
 ```sh
@@ -181,6 +201,25 @@ ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 'sudo systemctl start walg-baseba
 ```
 
 **`walg check` failing is the whole design working**, and a green `systemctl status` on the timer is not the same claim — BACKUPS.md §6.
+
+### Prove the alert, once, by breaking it on purpose
+
+**An alert nobody has seen fire is the same class of belief as an untested backup**, which is the argument this whole section rests on. So induce the failure
+rather than trusting the wiring — the cheapest one is the disk assertion, because it needs no backup to be deleted and undoes itself:
+
+```sh
+# Fill /var/lib/postgresql past 85% with a file you can delete, then run the check by hand.
+ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 \
+  'sudo fallocate -l $(( $(df --output=avail -B1 /var/lib/postgresql | tail -1) * 90 / 100 )) /var/lib/postgresql/ZZ-drill && \
+   sudo -u postgres walg check; sudo rm -f /var/lib/postgresql/ZZ-drill'
+# expect: "/var/lib/postgresql is NN% full", exit 1, and NO ping — so the check goes red at healthchecks.io
+```
+
+The notification arrives after the **grace period**, not immediately — that is the point of a dead-man's switch and the part most likely to be mistaken for it
+not working. Wait the two hours, or shorten the grace to a few minutes for the drill and put it back afterwards.
+
+Delete the file before the next `walg-basebackup`. Record the date the notification actually arrived in the go-live checklist (#284) — that date, not the
+configuration, is what makes the box tickable.
 
 **Once per bucket, not per cluster**, and **already done for `event-junkie-backups` on 2026-08-18** — the retention backstop the privacy notice depends on
 ([#277](https://github.com/enorm-labs/event-junkie/issues/277)). Only needed again for a new bucket:
@@ -312,6 +351,12 @@ rebuild, the volume is not your safety net; the backups in the bucket are — se
 **The backup credential is the second thing that will look fine and not be.** `backups.sh` runs on the new node, installs wal-g and starts the timers, and every
 one of them fails because `/etc/wal-g/credentials.env` died with the old disk. Nothing about the node looks wrong. Re-do §8b as part of every rebuild, and let
 `walg check` — not `systemctl status` — be what tells you it worked.
+
+**`HEALTHCHECK_URL` dies with it, and that failure is quieter still.** The whole point of a dead-man's switch is that it reports by _not_ reporting, so a rebuilt
+node whose credential file is missing the URL produces no signal at all — and neither does a healthy one, until the grace period elapses. Two hours later
+healthchecks.io says the check is late, which is correct and is also the only thing that will tell you. Paste the **same** URL back rather than creating a new
+check, or the history that makes "late" mean something starts over. `sudo -u postgres walg check` prints a warning naming the missing variable, and that is the
+fast way to confirm it before waiting (#518).
 
 **The server key is the one that will look like a broken tunnel.** `wireguard.sh` generates a keypair only if none exists, so a fresh node has a fresh one and
 your `~/.wireguard/staging.conf` is pointing at a peer that no longer exists. The handshake simply never happens. Update the `PublicKey =` line from §4; your own
