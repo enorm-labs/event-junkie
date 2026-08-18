@@ -346,12 +346,29 @@ cmd_verify() {
     type="$(curl -s -o /dev/null -w '%{content_type}' -H "$HOST_HEADER" --max-time 10 "$BASE$1")"
   }
 
+  # The header below promises the negatives prove nothing if the positives fail, and until #544
+  # nothing enforced it. The verdict was never wrong — `FAILURES` still fails the run — but the
+  # transcript carried green ticks the script itself calls meaningless, and a transcript is what
+  # somebody reads at 23:00 to decide whether to ship.
+  #
+  # The shape of the false green: with the ingress misrouting, `/actuator/health` answers Traefik's
+  # own HTML error page (`ok`, "it is the SPA fallback") and `/api/admin/sources` answers 404 because
+  # nothing is routed at all (`ok`, "it does not reach the importer"). Both are true statements about
+  # a broken cluster and neither says anything about the security property they are named for.
+  #
+  # `unproven` deliberately does NOT touch FAILURES: the positive that failed already counted the
+  # outage, and counting it again would make the summary claim three things broke when one did.
+  local positives=ok
+  unproven() { printf '   \033[33m----\033[0m %s — unproven, the positive routing above failed\n' "$*"; }
+  ok_if_routed() { if [ "$positives" = ok ]; then ok "$@"; else unproven "$@"; fi; }
+
   log "Positive routing — these must pass, or the negatives below prove nothing"
   probe /
   if [ "$code" = 200 ] && [ "${type#text/html}" != "$type" ]; then
     ok "/ serves the SPA"
   else
     bad "/ -> $code $type"
+    positives=broken
   fi
 
   probe /api/events
@@ -359,19 +376,20 @@ cmd_verify() {
     ok "/api/events reaches the BFF"
   else
     bad "/api/events -> $code $type"
+    positives=broken
   fi
 
   log "Negative routing — the security properties"
   probe /actuator/health
   if [ "${type#text/html}" != "$type" ]; then
-    ok "/actuator/health is the SPA fallback, not actuator"
+    ok_if_routed "/actuator/health is the SPA fallback, not actuator"
   else
     bad "/actuator/health returned $type — actuator may be exposed"
   fi
 
   probe /api/admin/sources
   if [ "$code" = 404 ]; then
-    ok "/api/admin/** does not reach the importer (BFF 404)"
+    ok_if_routed "/api/admin/** does not reach the importer (BFF 404)"
   else
     bad "/api/admin/sources -> $code, expected 404"
   fi
@@ -391,6 +409,10 @@ cmd_verify() {
   # trivially true of an empty string. So each fetch establishes that it got a real response first,
   # and only then asserts on what is missing from it. An assertion that cannot fail is worse than no
   # assertion, because it is counted.
+  # These are NOT gated on `positives`, and the exemption is deliberate rather than an oversight:
+  # `fetched` below establishes its own precondition — a 200 with a non-empty body — which is a
+  # stronger statement than "the ingress routes /", not a weaker one. Gating them as well would turn
+  # real evidence about the mount into `unproven` on the strength of an unrelated failure.
   log "The noindex body half — proves the subPath mount reached nginx, not just the manifest"
   fetched() { # fetched <path> -> sets body; false if there was no real response to judge
     body="$(curl -s -H "$HOST_HEADER" --max-time 10 "$BASE$1")"
@@ -441,8 +463,24 @@ cmd_import() {
   local pf=$!
   # shellcheck disable=SC2064  # expand $pf now
   trap "kill $pf 2>/dev/null || true" RETURN
-  sleep 4
   local api=localhost:18081/api/admin
+
+  # A fixed sleep is the same class of defect as #541 — a timer standing in for a poll — at much
+  # lower stakes, because this one fails loudly through `die "venue POST failed"` rather than passing
+  # wrongly. It is still four seconds that are only ever "usually enough", and the reader of the
+  # resulting failure has no way to tell a slow port-forward from a broken importer.
+  #
+  # Any HTTP status at all is the evidence wanted here: it proves the tunnel is open and something is
+  # listening behind it. curl reports 000 for a refused connection or a timeout, which is the only
+  # value that means "not yet".
+  local waited=0
+  until [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 "$api/venues")" != 000 ]; do
+    kill -0 "$pf" 2>/dev/null || die "the port-forward to ${RELEASE}-importer died after ${waited}s — 'kubectl port-forward' would have said why on stderr, which this discards"
+    [ "$waited" -ge 60 ] && die "the importer never answered on :18081 after ${waited}s — the port-forward is up but nothing is serving behind it"
+    sleep 1
+    waited=$((waited + 1))
+  done
+  info "importer answering on :18081 after ${waited}s"
 
   local vid
   vid="$(curl -sS -X POST "$api/venues" -H 'Content-Type: application/json' -d '{
@@ -494,7 +532,22 @@ cmd_chain() {
     | yq -p json '.content[] | "     - " + .title' 2>/dev/null || true
 }
 
-cmd_test() { guard_context; log "helm test"; h test "$RELEASE" --timeout 3m | tail -4; }
+# The output is piped, so `pipefail` carries helm's exit status out of this function and errexit
+# stops the run at the `&&` in `main` — correctly, and until #544 completely silently: the reader saw
+# the previous step's `ok`, then teardown, with no line naming the step that ended it. Capture first,
+# then judge, so the transcript says which step failed and with what.
+cmd_test() {
+  guard_context
+  log "helm test"
+  local out status=0
+  out="$(h test "$RELEASE" --timeout 3m 2>&1)" || status=$?
+  printf '%s\n' "$out" | tail -4 | sed 's/^/   /'
+  if [ "$status" -ne 0 ]; then
+    bad "helm test failed (exit $status) — the chart's own test hook did not pass; the four lines above are its tail"
+    return 1
+  fi
+  ok "helm test passed"
+}
 
 # --- The Flux half (#414) ------------------------------------------------------------------------
 #
@@ -512,12 +565,28 @@ cmd_flux_up() {
   create_cluster
   prepare_database "$FLUX_NS"
 
+  # EVERY FALLIBLE STEP BELOW CARRIES AN EXPLICIT `|| die`, FOR THE REASON `cmd_up` STATES AT LENGTH:
+  # this function runs on the left of an `&&` chain in `main`, and a command in an AND-list is exempt
+  # from errexit for the whole function, recursively. #525 applied that lesson to the helm half only
+  # (#544), so `f install` and `k apply` could both fail here and the run would carry on to report
+  # "OCIRepository never became Ready" — sending the reader to investigate a registry or semver-range
+  # problem that does not exist.
   log "Installing the Flux controllers"
-  f install >/dev/null
-  info "$(k -n flux-system get deploy -o name | wc -l | tr -d ' ') controllers installed"
+  f install >/dev/null \
+    || die "flux install failed — there are no controllers, and every failure after this point would be a symptom of that rather than of the chart"
+  # A count printed as a fact is how #533 and #541 both hid: `0 controllers installed` prints as
+  # calmly as `6`. Naming the two this rehearsal cannot work without beats counting them — a merely
+  # non-zero count still passes with the wrong set installed, and what `flux install` deploys moves
+  # between versions, so an exact number would be brittle for no gain.
+  for c in source-controller helm-controller; do
+    k -n flux-system get "deploy/$c" >/dev/null 2>&1 \
+      || die "flux install reported success without a $c — the OCIRepository/HelmRelease below would never reconcile, and would say nothing about why"
+  done
+  info "$(k -n flux-system get deploy -o name | wc -l | tr -d ' ') controllers installed, including source-controller and helm-controller"
 
   log "Applying deploy/clusters/k3d"
-  k apply -k "$FLUX_DIR" >/dev/null
+  k apply -k "$FLUX_DIR" >/dev/null \
+    || die "kubectl apply -k $FLUX_DIR failed — the OCIRepository and HelmRelease were never created, so waiting on them below would time out on resources that do not exist"
   # Bounded, and separately, so a failure names which half broke. A source that never becomes Ready
   # is a registry or a semver-range problem; a release that never becomes Ready is a chart or a
   # values problem, and they need entirely different investigations.
@@ -603,8 +672,17 @@ cmd_flux_trap() {
   k -n flux-system patch ocirepository event-junkie --type=merge \
     -p '{"spec":{"ref":{"semver":">=0.0.0-0"}}}' >/dev/null
   f reconcile source oci event-junkie >/dev/null 2>&1 || true
-  k -n flux-system wait ocirepository/event-junkie --for=condition=Ready --timeout=2m >/dev/null \
-    && ok "range restored, artifact resolves again"
+  # `wait && ok` with no else was a silent stop (#544): a failed restore returned non-zero, `main`'s
+  # AND-chain halted, and the reader saw the previous step's `ok` followed by teardown with nothing
+  # naming the step that ended the run. It also leaves the cluster in the broken state this function
+  # created on purpose, which the next step would then measure.
+  if k -n flux-system wait ocirepository/event-junkie --for=condition=Ready --timeout=2m >/dev/null 2>&1; then
+    ok "range restored, artifact resolves again"
+  else
+    bad "the range was NOT restored — the OCIRepository is still not Ready, and this function left it that way"
+    k -n flux-system get ocirepository event-junkie -o jsonpath='{.status.conditions[*].message}' | sed 's/^/     /'
+    return 1
+  fi
 }
 
 # Breaks a release on purpose and watches the rollback. This is the single most valuable thing to see
