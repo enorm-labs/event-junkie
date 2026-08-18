@@ -1,3 +1,18 @@
+# ==============================================================================================
+#  NEVER ADD `actions/checkout` — OR ANY STEP THAT RUNS PULL-REQUEST CODE — TO THIS FILE.
+#
+#  This workflow runs on `pull_request_target`, which executes with the BASE repository's token
+#  and full write permissions, against a pull request that may come from anyone. That is safe
+#  here for exactly one reason: nothing in this file ever fetches or runs the contributor's code.
+#  It reads the title from `context.payload` inside `actions/github-script` and calls the REST API.
+#
+#  Adding a checkout would turn this into an arbitrary-code-execution path holding
+#  `pull-requests: write` and `issues: write` — the single worst supply-chain shape a repository
+#  can have, and it would look like a one-line convenience in review. If a future step genuinely
+#  needs the PR's contents, it belongs in a `pull_request` workflow with a read-only token, not
+#  here (#479, #443).
+# ==============================================================================================
+#
 # Labels each pull request from its Conventional Commits title, so the automatically
 # generated release notes can group it (see .github/release.yml).
 #

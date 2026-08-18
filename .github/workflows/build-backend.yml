@@ -206,9 +206,20 @@ jobs:
       #                                       runs earlier, so a real shortfall fails before here.
       #   * `min-coverage-changed-files: 80` — UNIQUE. Gradle has per-module and aggregate rules and
       #                                       nothing per-changed-file. Removing this loses it.
+      #
+      # SKIPPED ON A FORK'S PULL REQUEST, and that is not a nicety (#479). A fork PR gets a
+      # **read-only** `GITHUB_TOKEN`, so posting a comment is impossible however the step is
+      # written — and without this guard the run goes red on the one contribution path where a
+      # first-time contributor has no way to tell a broken repository from a permission they were
+      # never going to have. `release.yml` guards its SARIF uploads on the same expression.
+      #
+      # The cost is real and worth naming rather than hiding: **the `min-coverage-changed-files: 80`
+      # gate does not run on fork pull requests.** It is unique to this step, so on that path it has
+      # to be a review responsibility. `koverVerify` above still runs and still enforces the
+      # aggregate and per-module floors, which is the larger half.
       - name: Post coverage to Pull Request
         id: coverage
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork != true
         uses: mi-kas/kover-report@v2
         with:
           path: build/reports/kover/report.xml

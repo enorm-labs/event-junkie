@@ -57,6 +57,51 @@ Tests use a **captured HTML snapshot** rather than the live site, so the suite i
 
 `.github/prompts/scaffold-importer.prompt.md` walks the whole thing end to end. It is written as an agent prompt, but it reads perfectly well as a checklist.
 
+## Opening a pull request from a fork
+
+You do not have push access to this repository, and you do not need it. **Fork, branch, push to your
+fork, open the pull request from there** — the ordinary GitHub flow:
+
+```bash
+gh repo fork enorm-labs/event-junkie --clone     # or fork in the UI and clone your copy
+cd event-junkie
+git switch -c fix/opening-hours-parsing
+# ... your change, then:
+git push -u origin fix/opening-hours-parsing
+gh pr create --repo enorm-labs/event-junkie --title "fix(importer): parse opening hours without a year"
+```
+
+Keep the branch rebased on `main` rather than merging `main` into it — pull requests here are merged
+with "Rebase and merge", and a merge commit blocks the button.
+
+### What CI will and will not run on your pull request
+
+Worth knowing before a red check makes you think you broke something. **Nine checks are required**,
+and all nine run on a fork's pull request exactly as they do on ours — none of them needs a secret or
+a token that can write:
+
+```
+Lint & render · ShellCheck deploy-story scripts     the Helm chart
+Lint & audit workflows                              actionlint + zizmor
+Format & Validate (infra/bootstrap | staging | production)
+ShellCheck cloud-init
+CodeQL · Dependency Review
+```
+
+Two things behave differently on a fork, and neither means anything is wrong:
+
+- **The coverage comment does not appear.** A fork's `GITHUB_TOKEN` is read-only, so nothing can post
+  it. The step is skipped rather than failed. Coverage is still enforced — `./gradlew build` runs
+  `koverVerify` — but the per-changed-file threshold that only that comment applies is a review
+  matter on this path.
+- **`Build & Test` is not a required check**, for anyone. It costs about sixteen minutes across
+  backend and frontend, so requiring it would put that on every documentation-only pull request. It
+  still runs, and a red one still needs explaining.
+
+Nothing here consumes a repository secret on a pull request at all. The one workflow that holds one
+(`NVD_API_KEY`, for the scheduled dependency scan) is schedule-triggered, so no pull request can
+reach it.
+
 ## Before opening a pull request
 
 ```bash
