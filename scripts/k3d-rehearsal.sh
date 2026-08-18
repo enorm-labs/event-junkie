@@ -162,20 +162,46 @@ create_cluster() {
   k3d cluster create "$CLUSTER" --port "8080:80@loadbalancer" --agents 1 ${airgap[@]+"${airgap[@]}"} >/dev/null
   info "cluster up ($(k get nodes -o jsonpath='{.items[0].status.nodeInfo.architecture}'))"
 
-  # k3d writes `host.k3d.internal` into the CoreDNS ConfigMap while creating the cluster, but
-  # CoreDNS only picks up a ConfigMap change when its `reload` plugin next polls — up to 30 seconds
-  # later. Installing inside that window gives every pod that resolves the database host a
-  # `java.net.UnknownHostException: host.k3d.internal`, and the importer crash-loops until DNS
-  # catches up. It self-heals, which is worse than failing: the install still succeeds and the only
-  # evidence is a restart count nobody reads.
+  # k3d writes `host.k3d.internal` into the CoreDNS ConfigMap **after `k3d cluster create` returns**,
+  # not while it runs. Measured on this machine (#541): the entry appeared **11 seconds** after create
+  # returned on a bare cluster, and **7 seconds** on the rehearsal's own. Until it lands, every pod
+  # resolving the database host gets `java.net.UnknownHostException: host.k3d.internal`.
   #
-  # Restarting CoreDNS forces the reload immediately, so the wait is bounded and explicit rather
-  # than a race this script happens to win. Found by running this script — doing the same steps by
-  # hand was slow enough to never hit it.
+  # The importer is the one that shows it, and that is not luck: Flyway opens its JDBC connection
+  # eagerly during context startup, so an unresolvable host fails the context and the pod
+  # crash-loops. The BFF's R2DBC pool connects lazily and never notices — which is why this presents
+  # as "the importer is flaky" rather than as a DNS problem.
+  #
+  # **Wait for the write, then restart to load it. Both halves are needed.** This used to restart
+  # first and wait for the rollout, on the belief that k3d had already written the entry and that the
+  # Corefile `reload` plugin was what lagged. Both were wrong: a restart cannot load a write that has
+  # not happened, so CoreDNS came back Ready on the old file and this script printed "resolvable"
+  # eleven seconds before it was.
+  #
+  # The entry lands in the ConfigMap's `NodeHosts` key — not `Corefile` — which CoreDNS reads through
+  # a volume mount at /etc/coredns and watches with the *hosts* plugin's own `reload 15s`. So the
+  # self-heal was kubelet's ConfigMap volume sync plus that 15s, which is long enough to produce
+  # several restarts and then look like it never happened.
+  #
+  # It self-heals, which is worse than failing: the install still succeeds and the only evidence is a
+  # restart count nobody reads. #438's rehearsal passed only because the Traefik CRD wait below
+  # happened to take 15s and absorbed the gap; the run where the CRDs were ready in 0s crash-looped
+  # four times.
+  local dns_waited=0
+  until k -n kube-system get configmap coredns -o yaml 2>/dev/null | grep -q 'host\.k3d\.internal'; do
+    [ "$dns_waited" -ge 120 ] && die "k3d never wrote host.k3d.internal into the CoreDNS ConfigMap (waited ${dns_waited}s).
+Every pod resolving the database host would fail. Check 'kubectl -n kube-system get configmap coredns -o yaml'."
+    sleep 1
+    dns_waited=$((dns_waited + 1))
+  done
+  info "host.k3d.internal written to the CoreDNS ConfigMap after ${dns_waited}s"
+
+  # Now the restart means something: a new pod mounts the ConfigMap as it is, so it comes up already
+  # holding the entry rather than waiting on the volume sync and the plugin's own reload.
   k -n kube-system rollout restart deployment coredns >/dev/null
   k -n kube-system rollout status deployment coredns --timeout=120s >/dev/null \
     || die "CoreDNS did not roll out — every pod resolving host.k3d.internal will fail"
-  info "CoreDNS reloaded — host.k3d.internal resolvable"
+  info "CoreDNS restarted onto it"
 
   # k3s installs its bundled Traefik through a HelmChart CR that the helm-controller reconciles
   # asynchronously, so `k3d cluster create` returns BEFORE `traefik.io/v1alpha1` is a kind the API
