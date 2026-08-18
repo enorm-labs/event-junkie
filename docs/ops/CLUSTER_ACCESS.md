@@ -171,9 +171,13 @@ The certificate is real and correctly issued — for `staging.event-junkie.de`, 
 whose root no browser trusts. Click through it.
 
 **Do not install the Let's Encrypt staging root to silence the warning.** It issues to anyone who asks, so trusting it means trusting a CA that will happily
-vouch for any domain, for every site you visit. The real fix is switching `certManager.clusterIssuer.server` to the production ACME endpoint — one value, and
-the reason it has not happened yet is that the production rate limit is per _registered_ domain and shared with production
-([#265](https://github.com/enorm-labs/event-junkie/issues/265)).
+vouch for any domain, for every site you visit. That is a permanent change to your machine, to remove one warning on one host you reach through a tunnel.
+
+**And do not switch the issuer to production either — that was decided, not deferred.**
+[#265](https://github.com/enorm-labs/event-junkie/issues/265) closed on it: production issues over HTTP-01, so pointing staging at the production ACME endpoint
+would rehearse account registration and nothing else, while spending a rate limit that is per _registered_ domain and therefore shared with the real site. The
+reasoning is in [CLUSTER_BOOTSTRAP §11](CLUSTER_BOOTSTRAP.md#11--verify-the-certificate) and next to the value itself in
+`deploy/clusters/staging/helm-release.yaml`. Click through the warning.
 
 ### Without touching `/etc/hosts`
 
