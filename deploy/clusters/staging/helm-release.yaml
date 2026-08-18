@@ -155,7 +155,13 @@ spec:
         # the challenge fails with a message about the token rather than about the namespace.
         # SOPS-managed Secrets in #416 remove this step.
         solver: "dns01"
-        # Still the ACME *staging* endpoint. Production's rate limits are per registered domain, and
-        # `event-junkie.de` is the same registered domain here as in production — so burning the
+        # The ACME *staging* endpoint, and it stays there — #265 closed on that decision rather
+        # than deferring it. Production's rate limits are per registered domain, and
+        # `event-junkie.de` is the same registered domain here as in production, so burning the
         # limit from this environment would lock out the real one.
+        #
+        # The tempting counter-argument is that switching would rehearse the production ACME path
+        # before production exists. It would not: production issues over HTTP-01 (see the
+        # production cluster's values), so all this endpoint has left to prove is account
+        # registration. The price of that is a browser warning nobody outside the tunnel can see.
         server: "https://acme-staging-v02.api.letsencrypt.org/directory"
