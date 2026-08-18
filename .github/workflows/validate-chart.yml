@@ -57,6 +57,12 @@ env:
   # they are strings in YAML, not a manifest — so /update-dependencies step 12 sweeps them.
   FLUX_VERSION: 2.9.4
   FLUX_SCHEMA_VERSION: 0.11.0
+  # Pinned for the reason validate-scripts.yml sets out at length: `ubuntu-latest` preinstalls an
+  # older ShellCheck than a current local install, old enough to disagree about SC2015. **This pin
+  # appears in three workflows** — here, validate-infra.yml and validate-scripts.yml — and they must
+  # move together, the same rule HELM_VERSION carries. Three pins that can drift are a weaker
+  # version of the problem pinning was meant to remove.
+  SHELLCHECK_VERSION: v0.11.0
   # Pinned like everything else here, and installed onto the Helm above rather than run from the
   # `helmunittest/helm-unittest` image (#430). The image's tags pin a Helm and a plugin version
   # together, which reads like the safer option — but its newest Helm 3 tag carries plugin 1.0.3,
@@ -205,3 +211,38 @@ jobs:
       - name: Assert on the cluster configurations
         run: scripts/cluster-assertions.sh "$CHART"
 
+  # The job name is **`ShellCheck deploy scripts`** and it is load-bearing: it is a required status
+  # check on the `main` ruleset, and a required check that never runs stays Pending forever rather
+  # than failing — which deadlocks every pull request instead of one. #430 deleted this job on the
+  # reasoning that `deploy/scripts/` no longer exists, and that was wrong twice over: the deadlock,
+  # and the premise. The script did not vanish, it moved. Renaming the job means editing the ruleset
+  # in the same change, so leave the name alone unless you are doing both.
+  shellcheck:
+    name: ShellCheck deploy scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # All four are part of the deploy story: one asserts on what each cluster's HelmRelease
+      # deploys (#430), one installs this chart, one decides what version gets published, and one
+      # proves those versions order (#455). So a chart change lints them even when nothing under
+      # `scripts/` was touched.
+      #
+      # They are *also* linted by validate-scripts.yml, which covers `scripts/*.sh`. The overlap is
+      # deliberate: both jobs take seconds, and narrowing either side trades that for a hole that
+      # only opens when the other workflow's path filter misses. It matters more than it reads —
+      # validate-scripts.yml is **not** on the required list and carries a `paths:` filter, so this
+      # is the job that makes shell linting a merge gate rather than a courtesy.
+      #
+      # Runs from the pinned image rather than the runner's preinstalled binary, so this job and
+      # validate-scripts.yml cannot reach different verdicts about the files they both lint — which
+      # is exactly what the version skew would produce.
+      - name: Run ShellCheck
+        run: |
+          docker run --rm -v "$PWD:/mnt" -w /mnt \
+            "koalaman/shellcheck:${SHELLCHECK_VERSION}" \
+            -x scripts/cluster-assertions.sh scripts/k3d-rehearsal.sh \
+            scripts/version.sh scripts/version-test.sh

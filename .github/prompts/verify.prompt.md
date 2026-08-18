@@ -89,8 +89,8 @@ cluster's `HelmRelease`** and re-runs the invariant suites against it, so the as
 It also carries the assertions that read _relationships between files_ — image tags, `dependsOn`, third-party version pins — which no single render can see.
 Between them they cover the `helm template` half as well, so there is no separate render step here.
 
-There is no `shellcheck` line for `deploy/` any more: #430 ported the render assertions to helm-unittest suites and `deploy/scripts/` no longer exists. The
-scripts step below covers `scripts/cluster-assertions.sh`.
+There is no `shellcheck deploy/scripts/*.sh` line any more — #430 ported the render assertions to helm-unittest suites and `deploy/scripts/` no longer exists.
+`scripts/cluster-assertions.sh` took over what it could not express, and it is linted with the rest of `scripts/`.
 
 Add the schema gate if `flux` is installed — CI always runs it. It replaced `kubeconform` in #414, because it also evaluates CEL rules with the API server's own
 semantics, catches duplicate YAML keys, and reads SOPS-encrypted fields without decrypting them:

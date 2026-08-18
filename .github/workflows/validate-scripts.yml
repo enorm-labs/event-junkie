@@ -11,13 +11,18 @@ name: Validate Scripts
 # grew a batch mode with real parsing in it, which is the point at which "linted only if the author
 # happened to have the hook installed" stopped being comfortable.
 #
-# **This is now the only ShellCheck job that covers the deploy scripts.** validate-chart.yml used to
-# lint `scripts/k3d-rehearsal.sh`, `scripts/version.sh` and `scripts/version-test.sh` a second time
-# from a "ShellCheck deploy scripts" job, because `deploy/scripts/` had a script of its own to lint
-# and those three belong to the same story. #430 ported that script to helm-unittest suites and
-# `deploy/scripts/` no longer exists, so the job went with it. The deliberate overlap it recorded is
-# gone rather than forgotten: a pull request that changes any of those files matches this workflow's
-# own `paths:` filter, which is what made the second job redundant rather than merely duplicated.
+# **`scripts/cluster-assertions.sh`, `scripts/k3d-rehearsal.sh`, `scripts/version.sh` and
+# `scripts/version-test.sh` are linted twice** — here, and in validate-chart.yml's "ShellCheck deploy
+# scripts" job. That is deliberate rather than an oversight to tidy up. They belong to the deploy
+# story, so a chart change should lint them; they also live in `scripts/`, so a scripts change
+# should. Both jobs take seconds, and the alternative — narrowing one side — trades that for a
+# coverage hole that only opens when the other workflow's path filter misses.
+#
+# The overlap also carries more weight than it reads. **This job is not on the `main` ruleset's
+# required list and the one in validate-chart.yml is**, so that one is what makes shell linting a
+# merge gate. #430 deleted it on the reasoning that `deploy/scripts/` was gone; the required check
+# then sat Pending forever, which deadlocks a pull request rather than failing it. Do not remove
+# either side without editing the ruleset in the same change.
 
 on:
   push:
