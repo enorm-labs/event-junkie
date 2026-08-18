@@ -17,9 +17,24 @@ spec:
     metadata:
       labels:
         {{- include "event-junkie.labels" $args | nindent 8 }}
-      {{- with .Values.frontend.podAnnotations }}
+      {{- if or .Values.frontend.podAnnotations .Values.ingress.noindex }}
       annotations:
+        {{- if .Values.ingress.noindex }}
+        {{- /* Same job as the BFF's `checksum/config`, for a sharper reason. A `subPath` mount is a
+               point-in-time copy: unlike a whole-volume ConfigMap mount the kubelet never refreshes
+               it, so editing the SEO ConfigMap changes the object and NOT the bytes nginx serves —
+               not eventually, not after the sync period, not at all until the pod restarts for some
+               unrelated reason. This makes the pod template change with the content, so the rollout
+               is what applies it.
+
+               Conditional, unlike the BFF's, because the ConfigMap it hashes does not exist in
+               production — an unconditional one would render the sha256 of an empty string there
+               and invite somebody to wonder what it was checksumming. */}}
+        checksum/seo: {{ include (print $.Template.BasePath "/frontend-seo-configmap.yaml") $ | sha256sum }}
+        {{- end }}
+        {{- with .Values.frontend.podAnnotations }}
         {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
     spec:
       serviceAccountName: {{ include "event-junkie.serviceAccountName" $args }}
@@ -76,9 +91,31 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+            {{- if .Values.ingress.noindex }}
+            {{- /* Mounted over the built files rather than beside them (#286). `subPath` is what
+                   makes that possible: without it this volume would mount as a directory over
+                   /usr/share/nginx/html and hide the entire bundle — index.html included — which
+                   fails as a blank site rather than as a bad robots.txt.
+
+                   `readOnly` because nothing here writes, and the root filesystem is read-only for
+                   the same reason. */}}
+            - name: seo
+              mountPath: /usr/share/nginx/html/robots.txt
+              subPath: robots.txt
+              readOnly: true
+            - name: seo
+              mountPath: /usr/share/nginx/html/sitemap.xml
+              subPath: sitemap.xml
+              readOnly: true
+            {{- end }}
       volumes:
         - name: tmp
           emptyDir: {}
+        {{- if .Values.ingress.noindex }}
+        - name: seo
+          configMap:
+            name: {{ printf "%s-seo" (include "event-junkie.fullname" $) }}
+        {{- end }}
       {{- with .Values.frontend.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

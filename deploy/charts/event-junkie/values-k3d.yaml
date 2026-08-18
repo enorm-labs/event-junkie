@@ -75,6 +75,12 @@ ingress:
   # resolves to 127.0.0.1 without a hosts entry on every current browser and OS.
   host: "event-junkie.localhost"
   redirectHosts: []
+  # The rehearsal is not production either, so it gets the non-production configuration — and that
+  # is the point rather than a formality: it makes /k3d-rehearsal fetch the overridden `robots.txt`
+  # and `sitemap.xml` over a real Traefik route, which is the only place the `subPath` mount in
+  # #286 can be proven outside the tunnel. A render assertion cannot tell you that nginx served
+  # the mounted file rather than the one baked into the image.
+  noindex: true
   tls:
     # No TLS, and therefore no cert-manager: the rehearsal is about whether the workloads start,
     # reach the database and route to each other. Adding certificate issuance to that would mean

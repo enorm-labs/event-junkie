@@ -39,6 +39,7 @@ INVARIANT_SUITES=(
   'tests/hardening_test.yaml'
   'tests/ingress_test.yaml'
   'tests/importer_test.yaml'
+  'tests/seo_test.yaml'
 )
 
 failures=0
@@ -154,6 +155,40 @@ whole release fails on an unknown kind, not just the issuer"
   done
 }
 
+# --- 2b-ii. Exactly one environment may be indexable --------------------------------------------
+#
+# `ingress.noindex` is per-cluster and its default is `false`, so *forgetting* it is what makes an
+# environment indexable — the failure is an omission, which no render of that cluster alone can
+# distinguish from a deliberate choice. Only the set of clusters shows it, which is why this is here
+# and not in a suite.
+#
+# The direction that matters is the omission on a non-production cluster: production is loudly wrong
+# the moment it is not in Google, while a staging environment that quietly is stays that way for
+# months (#265, #286).
+check_noindex() {
+  printf '\n== only production is indexable ==\n'
+
+  local file cluster noindex
+  for file in "$CLUSTERS_DIR"/*/helm-release.yaml; do
+    [[ -e "$file" ]] || continue
+    cluster="$(basename "$(dirname "$file")")"
+    current_case="$cluster"
+
+    noindex="$(yq -N '.spec.values.ingress.noindex // false' "$file")"
+    if [[ "$cluster" == "production" ]]; then
+      assert_equals "production is indexable, which is the whole point of it" "false" "$noindex"
+    else
+      if [[ "$noindex" == "true" ]]; then
+        pass "not production, and not indexable"
+      else
+        fail "a non-production cluster does not set ingress.noindex" \
+          "the default is false, so this is indexable: no X-Robots-Tag, an allow-all robots.txt,
+and a sitemap naming production. Set ingress.noindex: true in spec.values."
+      fi
+    fi
+  done
+}
+
 # --- 2c. Every third-party chart is pinned to one version ---------------------------------------
 #
 # A range lets a new upstream release reach the cluster with no diff, no review and no commit —
@@ -189,6 +224,7 @@ main() {
 
   check_image_tags
   check_cluster_dependencies
+  check_noindex
   check_version_pins
   run_suites_against_clusters
 

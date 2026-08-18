@@ -105,7 +105,7 @@
         "redirectHosts": { "type": "array", "items": { "type": "string", "minLength": 1 } },
         "annotations": { "type": "object" },
         "noindex": {
-          "description": "Adds X-Robots-Tag: noindex, nofollow via a Traefik Middleware. On outside production (#265, #286).",
+          "description": "Marks an environment as not-production: X-Robots-Tag via a Traefik Middleware (#265), plus a disallow-all robots.txt and empty sitemap mounted over the frontend build (#286). On outside production.",
           "type": "boolean"
         },
         "tls": {

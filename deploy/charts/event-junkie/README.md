@@ -75,7 +75,7 @@ Only the values worth a decision are listed. Every property is documented in
 | `certManager.clusterIssuer.server`           | ACME **staging**        | Deliberately not production. 50 certificates per registered domain per week, and burning it costs seven days |
 | `certManager.clusterIssuer.solver`           | `http01`                | `dns01` for staging, which has no public address for HTTP-01 to reach                                        |
 | `certManager.clusterIssuer.dns01.*`          | official webhook        | `groupName: acme.hetzner.com` and a `tokenSecretKeyRef` — see below, the community forks differ on both      |
-| `ingress.noindex`                            | `false`                 | Adds `X-Robots-Tag: noindex, nofollow` via a Middleware. On outside production (#265, #286)                  |
+| `ingress.noindex`                            | `false`                 | Marks an environment as not-production: the header, plus a disallow-all `robots.txt` and empty sitemap       |
 
 **Two values files ship with the chart, and the environments are not among them.** `values.yaml` is
 production-shaped and cannot render on its own — the two required keys have no safe default.
@@ -269,12 +269,34 @@ challenge time. This chart renders the official one:
 The chart renders the solver; it does not install the webhook, and rendering a solver that names one
 is not the same as depending on it.
 
-### `ingress.noindex` is two halves that must agree
+### `ingress.noindex` is four parts that must agree
 
-A Traefik `Middleware` carrying the header, and an annotation on the Ingress naming it. Render only
-the middleware and every response silently lacks the header while the manifest looks right; render
-only the annotation and Traefik drops the route entirely. The render assertions check the two
-against each other in both directions — production correctly renders neither.
+One value, because two values meaning "not production" can disagree and the way they disagree is an
+environment that carries the header and still serves an allow-all `robots.txt`. It renders:
+
+|                                      |                                                        |
+| ------------------------------------ | ------------------------------------------------------ |
+| A Traefik `Middleware`               | carries `X-Robots-Tag: noindex, nofollow`              |
+| An annotation on the Ingress         | names that middleware                                  |
+| A ConfigMap                          | a disallow-all `robots.txt` and an empty `sitemap.xml` |
+| Two `subPath` mounts on the frontend | put them over the ones baked into the image            |
+
+**Every way of getting this half-right is silent.** Render only the middleware and every response
+lacks the header while the manifest looks right; render only the annotation and Traefik drops the
+route entirely. On the body half: a `subPath` naming a key the ConfigMap does not have mounts an
+empty directory over the file rather than failing, so nginx keeps serving the image's allow-all
+copy — and a mount without `subPath` at all hides `index.html` and every hashed asset, which is a
+blank site rather than a bad `robots.txt`. The render assertions in `tests/ingress_test.yaml` and
+`tests/seo_test.yaml` check each pairing in both directions; production correctly renders none of it.
+
+**Why the body half cannot be fixed in the frontend build.** `events-frontend/scripts/seoFiles.ts`
+emits both files from `SITE_URL` in `src/lib/seo.ts`, and that constant is hard-coded deliberately:
+canonical URLs name _one_ address for a page, so deriving the origin from the request host would
+have staging, the apex and every preview each declare themselves canonical. One image, one output,
+every environment. The override therefore belongs to the deployment by construction (#286).
+
+**The name says `ingress` while half of it is a pod mount.** That is the price of the single switch,
+and it is the cheaper mistake.
 
 ## Validating a change
 
