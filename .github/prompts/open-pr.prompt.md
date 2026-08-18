@@ -51,7 +51,11 @@ This is the standard "ship it" flow — the manual equivalent of
       rather than `Fixes`/`Resolves`, one line per issue.
     - **Set the milestone to the issue's own** (`gh pr edit <pr> --milestone '…'`). Every closed PR in this repo carries a milestone — the 255 that predate the
       tracker were backfilled into `Phase 0 — Foundation` — and a PR without one is the exception that makes the milestone view stop meaning anything.
-    - **Move the issue on the board**: `scripts/issue-board.sh status <n> 'In review'`. Merging the PR closes the issue; the board follows from the close.
+    - **Move the issue on the board**: `scripts/issue-board.sh status <n> 'In review'`. Merging the PR closes the issue, and the board follows — but that
+      last part is a **project setting, not a property of GitHub**, so it is worth knowing where it lives. The `Item closed` workflow (Project → ⋯ →
+      Workflows) is what sets `Status: Done`. It was silently off until 2026-08-18, and the failure mode is quiet in both directions: closed issues keep
+      sitting in `In review`, and nobody looks, because this instruction tells you to stop here. **If a card does not move after a merge, check that workflow
+      before assuming anything about the issue.**
 
 8. **Report.** Print the branch name, commit subject, and the PR URL that `gh` returns.
 

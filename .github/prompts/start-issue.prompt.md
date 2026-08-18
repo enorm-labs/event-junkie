@@ -68,7 +68,10 @@ Usage: `/start-issue 313`
 - Implement, then [`/verify`](verify.prompt.md) — or the relevant subset.
 - For an importer change, [`/importer-smoke`](importer-smoke.prompt.md) is the runtime check: seed, import, inspect the rows, diff against a snapshot.
 - Ship with [`/open-pr`](open-pr.prompt.md), which puts **`Closes #<n>`** in the PR body.
-- Move the board on as you go: `scripts/issue-board.sh status <n> 'In review'` once the PR is open. Merging the PR closes the issue and the board follows.
+- Move the board on as you go: `scripts/issue-board.sh status <n> 'In review'` once the PR is open. Merging the PR closes the issue and the board follows,
+  via the project's `Item closed` workflow — see [`/open-pr`](open-pr.prompt.md) for why that is worth remembering rather than trusting.
+- **Setting a card to `Done` now closes its issue**, because `Auto-close issue` is enabled too. The two workflows are inverses and agree, so either end works
+  — but `scripts/issue-board.sh status <n> Done` is no longer a board-only edit, and should not be used to tidy a card whose issue is meant to stay open.
 
 ## Notes
 
