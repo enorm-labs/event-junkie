@@ -113,8 +113,35 @@ create_cluster() {
   # than a race this script happens to win. Found by running this script — doing the same steps by
   # hand was slow enough to never hit it.
   k -n kube-system rollout restart deployment coredns >/dev/null
-  k -n kube-system rollout status deployment coredns --timeout=60s >/dev/null
+  k -n kube-system rollout status deployment coredns --timeout=120s >/dev/null \
+    || die "CoreDNS did not roll out — every pod resolving host.k3d.internal will fail"
   info "CoreDNS reloaded — host.k3d.internal resolvable"
+
+  # k3s installs its bundled Traefik through a HelmChart CR that the helm-controller reconciles
+  # asynchronously, so `k3d cluster create` returns BEFORE `traefik.io/v1alpha1` is a kind the API
+  # server knows. Install inside that window and Helm fails the whole release with
+  # "no matches for kind Middleware" — not just the middleware: nothing is installed at all.
+  #
+  # Nothing hit this until #286, and the reason is worth keeping. The chart renders exactly two
+  # Traefik CRD objects: the redirect Middleware, gated on `redirectHosts`, and the noindex one,
+  # gated on `ingress.noindex`. k3d had `redirectHosts: []` and no `noindex`, so it had never
+  # rendered a Traefik kind at all and never needed the CRDs to exist. Turning noindex on for the
+  # rehearsal is what made this reachable — the race was always there.
+  #
+  # Waiting on the CRD rather than on the Job because the CRD is the thing Helm actually needs, and
+  # `kubectl wait` cannot wait for a resource that does not exist yet — hence the poll.
+  log "Waiting for Traefik's CRDs — the chart renders Middleware objects and Helm resolves kinds up front"
+  local waited=0
+  until k get crd middlewares.traefik.io >/dev/null 2>&1; do
+    [ "$waited" -ge 180 ] && die "Traefik CRDs never appeared (waited ${waited}s).
+A pod stuck in ContainerCreating on an image pull is the usual cause — check
+'kubectl -n kube-system get pods' and whether this machine can reach docker.io."
+    sleep 5
+    waited=$((waited + 5))
+  done
+  k wait --for=condition=established --timeout=60s crd/middlewares.traefik.io >/dev/null \
+    || die "the Middleware CRD exists but never became Established"
+  info "Traefik CRDs ready after ${waited}s"
 }
 
 # Creates the rehearsal's own empty database and the credentials Secret. `namespace` decides where
@@ -210,6 +237,62 @@ cmd_verify() {
     ok "/api/admin/** does not reach the importer (BFF 404)"
   else
     bad "/api/admin/sources -> $code, expected 404"
+  fi
+
+  # The one thing no render assertion can establish (#286). The chart mounts a ConfigMap over the
+  # `robots.txt` and `sitemap.xml` that the frontend build bakes into the image, using `subPath` —
+  # and a `subPath` naming a key the ConfigMap does not have mounts an EMPTY DIRECTORY over the file
+  # rather than failing. The pod stays Ready either way and the manifest looks identical, so the
+  # only evidence that the override reached nginx is the bytes it hands back.
+  #
+  # Which is why these assert on the body and not on the status: both files return 200 whichever
+  # copy is served. The two are told apart by content — the image's says `Allow: /` and carries a
+  # `Sitemap:` line naming production; the mounted one says `Disallow: /` and carries none.
+  # EVERY ASSERTION BELOW IS PHRASED AS AN ABSENCE, AND AN ABSENCE IS TRUE OF NOTHING AT ALL.
+  # The first version of this block reported "names no sitemap" and "lists nothing" as passes during
+  # a run where the release had failed to install and the ingress was answering 000 — both were
+  # trivially true of an empty string. So each fetch establishes that it got a real response first,
+  # and only then asserts on what is missing from it. An assertion that cannot fail is worse than no
+  # assertion, because it is counted.
+  log "The noindex body half — proves the subPath mount reached nginx, not just the manifest"
+  fetched() { # fetched <path> -> sets body; false if there was no real response to judge
+    body="$(curl -s -H "$HOST_HEADER" --max-time 10 "$BASE$1")"
+    code="$(curl -s -o /dev/null -w '%{http_code}' -H "$HOST_HEADER" --max-time 10 "$BASE$1")"
+    if [ "$code" != 200 ] || [ -z "$body" ]; then
+      bad "$1 -> $code and $(printf '%s' "$body" | wc -c | tr -d ' ') bytes — nothing to assert on"
+      return 1
+    fi
+    return 0
+  }
+
+  local body
+  if fetched /robots.txt; then
+    # The image's copy says `Allow: /` and carries a `Sitemap:` line naming production; the mounted
+    # one says `Disallow: /` and carries none. That is how the two are told apart — both are 200.
+    if printf '%s' "$body" | grep -qE '^Disallow: /$'; then
+      ok "/robots.txt is the mounted disallow-all, not the image's copy"
+    else
+      bad "/robots.txt has no 'Disallow: /' — the image's allow-all copy is being served"
+    fi
+    if printf '%s' "$body" | grep -qi 'sitemap:'; then
+      bad "/robots.txt still names a sitemap, which can only be production's"
+    else
+      ok "/robots.txt names no sitemap"
+    fi
+  fi
+
+  if fetched /sitemap.xml; then
+    # Positive first, so the negative below cannot pass on an error page that happens to lack <loc>.
+    if printf '%s' "$body" | grep -q '<urlset'; then
+      ok "/sitemap.xml is a sitemap"
+    else
+      bad "/sitemap.xml is not a urlset at all"
+    fi
+    if printf '%s' "$body" | grep -q '<loc>'; then
+      bad "/sitemap.xml lists URLs — it is the build's copy, naming production"
+    else
+      ok "/sitemap.xml lists nothing"
+    fi
   fi
 }
 
