@@ -79,6 +79,15 @@ dependencies {
     // See: https://springdoc.org/#getting-started
     implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:${property("springdoc.version")}")
 
+    // Swagger UI's webjar, constrained rather than declared, for the same reason as scram above:
+    // it is a pure transitive of the springdoc starter, which pins 5.32.11. See gradle.properties
+    // for why the pin exists and what removes it.
+    constraints {
+        implementation("org.webjars:swagger-ui:${property("swagger-ui.version")}") {
+            because("5.32.11 bundles DOMPurify 3.4.12, affected by GHSA-55q2-fjhq-7xh7; 5.32.13 bundles 3.4.13")
+        }
+    }
+
     // Kotlin
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
