@@ -44,7 +44,8 @@ class MetricsRefreshServiceTest {
     private fun source(
         slug: String,
         status: ImportStatus,
-        lastImportAt: Instant? = null
+        lastImportAt: Instant? = null,
+        lastSuccessAt: Instant? = null
     ) = EventSourceEntity(
         id = 1L,
         venueId = 1L,
@@ -53,7 +54,8 @@ class MetricsRefreshServiceTest {
         url = "https://$slug.example/events",
         sourceType = "CASSIOPEIA",
         status = status.name,
-        lastImportAt = lastImportAt
+        lastImportAt = lastImportAt,
+        lastSuccessAt = lastSuccessAt
     )
 
     @Test
@@ -97,14 +99,13 @@ class MetricsRefreshServiceTest {
         }
 
     @Test
-    fun `last_success is published only for sources whose last run actually succeeded`() =
+    fun `last_success is published from last_success_at, for every source that has ever succeeded`() =
         runTest {
             val succeeded = Instant.parse("2026-06-15T04:00:00Z")
             coEvery { eventSourceRepository.findByEnabledTrue() } returns
                 listOf(
-                    source("good", ImportStatus.SUCCESS, succeeded),
-                    source("broken", ImportStatus.FAILED, Instant.parse("2026-06-15T05:00:00Z")),
-                    source("never-run", ImportStatus.IDLE, null)
+                    source("good", ImportStatus.SUCCESS, lastImportAt = succeeded, lastSuccessAt = succeeded),
+                    source("never-run", ImportStatus.IDLE, lastImportAt = null, lastSuccessAt = null)
                 ).asFlow()
 
             service.refreshGauges()
@@ -115,11 +116,38 @@ class MetricsRefreshServiceTest {
                 .gauge()!!
                 .value() shouldBe
                 succeeded.epochSecond.toDouble()
-            // The known limit, asserted so it stays deliberate: `last_import_at` is written on failure
-            // too, so a failed source's timestamp is a last *attempt* and must not be published as a
-            // success. An absent series is alertable; a wrong one is not.
-            registry.find("importer.source.last_success").tag("source", "broken").gauge() shouldBe null
+            // Never succeeded, so there is no true value to assert. A zero here would read as 1970 to
+            // every rule written on this gauge, which is worse than an absent series.
             registry.find("importer.source.last_success").tag("source", "never-run").gauge() shouldBe null
+        }
+
+    /**
+     * The regression this column exists to close (#415).
+     *
+     * Before `last_success_at`, this service filtered on `status == SUCCESS` and read `last_import_at`
+     * — so the moment a source started failing, its `last_success` series **disappeared**. That is the
+     * exact instant the staleness alert is supposed to fire, and an alert on
+     * `time() - importer_source_last_success_seconds > 3 * interval` has nothing to evaluate when the
+     * series is gone. The gauge went quiet precisely because the thing it watches broke.
+     */
+    @Test
+    fun `a source that is failing now still publishes the success it had before`() =
+        runTest {
+            val lastGoodRun = Instant.parse("2026-06-13T04:00:00Z")
+            val failedAttempt = Instant.parse("2026-06-15T04:00:00Z")
+            coEvery { eventSourceRepository.findByEnabledTrue() } returns
+                listOf(
+                    source("broken", ImportStatus.FAILED, lastImportAt = failedAttempt, lastSuccessAt = lastGoodRun)
+                ).asFlow()
+
+            service.refreshGauges()
+
+            registry
+                .find("importer.source.last_success")
+                .tag("source", "broken")
+                .gauge()!!
+                .value() shouldBe
+                lastGoodRun.epochSecond.toDouble()
         }
 
     /**

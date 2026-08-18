@@ -839,6 +839,14 @@ That last group is what makes the dashboards _business_ dashboards and not CPU g
 - **`db.events.total` could not exist.** `_total` is Prometheus' reserved suffix for counters, so Micrometer strips it: the meter published as `db_events`,
   silently, while anything written against the documented name matched nothing. It is now one gauge with a `horizon` label — `db_events{horizon="future"}` —
   which is the right shape anyway, since the two are the same measurement over two windows.
+- **`importer.source.last_success` needed a column of its own.** It first published from `event_source.last_import_at`, filtered to sources whose status was
+  `SUCCESS` — and `last_import_at` is written on failure too, so it means _last attempt_. The effect was that the series **disappeared the moment a source
+  started failing**, which is the exact instant the staleness rule is meant to fire: `time() - importer_source_last_success_seconds > 3 * interval` has nothing
+  to evaluate when the series is gone, and the alert went quiet because the thing it watches broke. `event_source.last_success_at` is now written only by a
+  successful run, so a failing source keeps publishing its real last-success time and the rule stays evaluable. **Write the rule against the gauge, not against
+  its absence** — and note a source that has never succeeded still publishes nothing, deliberately, because a zero would read as 1970.
+- **A 304 counts as a success**, for both the column and the gauge. The request went out, the venue answered, and the conditional headers did their job.
+  Treating it as "no success" would make a stable venue look broken after three quiet days, which is the false positive that gets a staleness alert muted.
 - **`importer.run.outcome` has no `partial`.** This pipeline cannot produce one: a run completes and upserts, is skipped because the source was unchanged or
   already claimed, or throws — and the upserts are in one transaction, so there is no half-written state. The real values are `success`, `not_modified`,
   `failed`, `misconfigured` and `skipped`. A bucket nothing can emit would be a panel that is always zero, which reads as "never happens" rather than "cannot

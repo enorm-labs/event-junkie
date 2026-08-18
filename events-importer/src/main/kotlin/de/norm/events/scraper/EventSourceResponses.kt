@@ -26,8 +26,15 @@ data class EventSourceResponse(
     val importIntervalMinutes: Int,
     @Schema(description = "Current import status", example = "SUCCESS")
     val status: String,
-    @Schema(description = "Timestamp of the last completed import")
+    @Schema(description = "Timestamp of the last completed import, successful or not")
     val lastImportAt: Instant?,
+    @Schema(
+        description =
+            "Timestamp of the last import that succeeded. Differs from lastImportAt whenever the " +
+                "most recent run failed, which is when a steward needs it: how long this source has " +
+                "actually been broken."
+    )
+    val lastSuccessAt: Instant?,
     @Schema(description = "Number of events imported in the last successful run", example = "12")
     val lastEventCount: Int?,
     @Schema(description = "Error message from the last failed import")
@@ -50,6 +57,7 @@ data class EventSourceResponse(
                 importIntervalMinutes = entity.importIntervalMinutes,
                 status = entity.status,
                 lastImportAt = entity.lastImportAt,
+                lastSuccessAt = entity.lastSuccessAt,
                 lastEventCount = entity.lastEventCount,
                 lastError = entity.lastError,
                 retryCount = entity.retryCount,

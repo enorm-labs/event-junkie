@@ -67,7 +67,7 @@ class MetricsRefreshService(
     }
 
     /**
-     * Publishes `importer.source.last_success` for every source whose last run actually succeeded.
+     * Publishes `importer.source.last_success` for every source that has ever succeeded.
      *
      * Done on every tick rather than once at startup, which costs one query and buys two things: the
      * gauge exists within a minute of a restart instead of only after that source's next run — up to
@@ -75,22 +75,23 @@ class MetricsRefreshService(
      * nothing to evaluate — and a source that succeeds while this instance is running is re-asserted
      * from the database rather than only from memory.
      *
-     * **It is deliberately incomplete, and this is the known limit of the metric.**
-     * `event_source.last_import_at` is written on failure as well as success, so it means *last
-     * attempt*. A source whose most recent attempt failed therefore publishes nothing here, even if
-     * it succeeded an hour before — its true last-success time is not recorded anywhere in the
-     * schema. Seeding from `last_import_at` regardless would be worse than absent: it would assert a
-     * success that did not happen, and this gauge exists precisely to notice that. **An absent series
-     * is alertable; a wrong one is not.**
+     * **This used to be incomplete, and the completion is the point of the `last_success_at` column.**
+     * It previously filtered on `status == SUCCESS` and read `last_import_at`, because that was the
+     * only timestamp in the schema — and `last_import_at` is written on failure too, so it means
+     * *last attempt*. A source whose most recent run failed therefore published **nothing**, exactly
+     * when the staleness alert most needed a value: the series vanished at the moment the source
+     * broke, so `time() - importer_source_last_success_seconds > 3 * interval` had no series to
+     * evaluate and an absence-blind alert stayed silent. Now every source that has ever succeeded
+     * keeps publishing its real last-success time while it is failing, which is what makes the
+     * staleness rule fire rather than go quiet.
      *
-     * Fixing it properly needs a `last_success_at` column, which is a schema change and does not
-     * belong in an instrumentation change.
+     * Sources that have never succeeded still publish nothing, and that stays deliberate: there is no
+     * true value to assert, and a zero would read as "1970" to every rule written on this gauge.
      */
     private suspend fun republishLastSuccess() {
         eventSourceRepository
             .findByEnabledTrue()
             .toList()
-            .filter { it.status == ImportStatus.SUCCESS.name }
-            .forEach { source -> source.lastImportAt?.let { metrics.publishLastSuccess(source.slug, it.epochSecond) } }
+            .forEach { source -> source.lastSuccessAt?.let { metrics.publishLastSuccess(source.slug, it.epochSecond) } }
     }
 }

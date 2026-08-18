@@ -291,6 +291,15 @@ class EventImportService(
         )
     }
 
+    /**
+     * Closes a run that worked, advancing both timestamps.
+     *
+     * `lastSuccessAt` is written **only here**, which is what makes it mean what it says.
+     * `lastImportAt` is written by this, by [markFailed] and by the claim, so it is a last-*attempt*
+     * time; the pair is what lets `importer.source.last_success` stay correct across a failure
+     * instead of disappearing (#415). Every caller of this method is a run that reached the source
+     * and got an answer — including a 304, which is a working scraper and not a skipped one.
+     */
     private suspend fun markSuccess(
         source: EventSourceEntity,
         eventCount: Int,
@@ -298,9 +307,11 @@ class EventImportService(
         newLastModified: String? = source.lastModified
     ): EventSourceEntity =
         saveWithVersionConflictRetry(source) {
+            val now = Instant.now(clock)
             it.copy(
                 status = ImportStatus.SUCCESS.name,
-                lastImportAt = Instant.now(clock),
+                lastImportAt = now,
+                lastSuccessAt = now,
                 lastEventCount = eventCount,
                 lastError = null,
                 etag = newEtag,
