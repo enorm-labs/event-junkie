@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.EVENTS_SCHEMA
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.domain.Pageable
 import org.springframework.data.r2dbc.repository.Modifying
@@ -52,7 +53,7 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
      */
     @Query(
         """
-        SELECT * FROM events.event_source
+        SELECT * FROM $EVENTS_SCHEMA.event_source
         WHERE enabled = true
           AND status NOT IN ('${ImportStatus.S_RUNNING}', '${ImportStatus.S_MISCONFIGURED}')
           AND (status != '${ImportStatus.S_FAILED}' OR retry_count < max_retries)
@@ -72,7 +73,7 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
      */
     @Query(
         """
-        SELECT * FROM events.event_source
+        SELECT * FROM $EVENTS_SCHEMA.event_source
         WHERE status = '${ImportStatus.S_RUNNING}'
           AND last_import_at IS NOT NULL
           AND last_import_at < :stalenessCutoff
@@ -124,7 +125,7 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
     @Modifying
     @Query(
         """
-        UPDATE events.event_source
+        UPDATE $EVENTS_SCHEMA.event_source
         SET status = '${ImportStatus.S_RUNNING}', last_error = NULL, last_import_at = :startedAt, version = version + 1
         WHERE id = :id AND version = :expectedVersion AND status <> '${ImportStatus.S_RUNNING}'
         """
@@ -154,7 +155,7 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
     @Modifying
     @Query(
         """
-        UPDATE events.event_source
+        UPDATE $EVENTS_SCHEMA.event_source
         SET status = '${ImportStatus.S_IDLE}', retry_count = 0, last_error = NULL, version = version + 1
         WHERE enabled = true AND status IN ('${ImportStatus.S_FAILED}', '${ImportStatus.S_MISCONFIGURED}')
         """

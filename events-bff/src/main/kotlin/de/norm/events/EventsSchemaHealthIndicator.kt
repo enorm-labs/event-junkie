@@ -1,6 +1,5 @@
 package de.norm.events
 
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.health.contributor.AbstractReactiveHealthIndicator
 import org.springframework.boot.health.contributor.Health
 import org.springframework.r2dbc.core.DatabaseClient
@@ -49,15 +48,19 @@ import reactor.core.publisher.Mono
  * no handling here.
  *
  * The schema name is interpolated rather than bound because no SQL dialect parameterises an
- * identifier. It comes from `spring.r2dbc.properties.schema`, the same property
- * [R2dbcConfiguration] feeds to the `NamingStrategy`; it is configuration, never request input.
+ * identifier. It is [EVENTS_SCHEMA] — a compile-time constant, never request input.
+ *
+ * **It used to read `spring.r2dbc.properties.schema`, and #540 is why it no longer does.** That made
+ * this probe the third consumer of a property seven hand-written statements ignored, so a changed
+ * property produced a BFF probing one schema and querying another. Resolving both to the same
+ * constant is what makes a green readiness probe mean the queries will work — which is the entire
+ * claim #438 added it to make.
  */
 @Component
 class EventsSchemaHealthIndicator(
-    private val databaseClient: DatabaseClient,
-    @Value("\${spring.r2dbc.properties.schema}") private val schema: String
+    private val databaseClient: DatabaseClient
 ) : AbstractReactiveHealthIndicator("The events schema is not readable — readiness will report DOWN") {
-    private val probeSql = "SELECT EXISTS (SELECT 1 FROM $schema.event)"
+    private val probeSql = "SELECT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event)"
 
     override fun doHealthCheck(builder: Health.Builder): Mono<Health> =
         databaseClient
@@ -67,8 +70,8 @@ class EventsSchemaHealthIndicator(
             .thenReturn(
                 builder
                     .up()
-                    .withDetail("schema", schema)
-                    .withDetail("probe", "$schema.event")
+                    .withDetail("schema", EVENTS_SCHEMA)
+                    .withDetail("probe", "$EVENTS_SCHEMA.event")
                     .build()
             )
 }

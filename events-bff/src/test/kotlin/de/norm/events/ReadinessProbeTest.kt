@@ -1,10 +1,17 @@
 package de.norm.events
 
+import io.r2dbc.spi.Connection
+import io.r2dbc.spi.ConnectionFactory
+import io.r2dbc.spi.ConnectionFactoryMetadata
+import io.r2dbc.spi.R2dbcNonTransientResourceException
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.reactivestreams.Publisher
 import org.springframework.boot.health.contributor.Status
+import org.springframework.r2dbc.core.DatabaseClient
+import reactor.core.publisher.Mono
 
 /**
  * `/actuator/health/readiness` means "can serve", and `/actuator/health/liveness` does not.
@@ -66,16 +73,29 @@ class ReadinessProbeTest : BaseControllerTest() {
         }
 
     @Test
-    fun `a schema the BFF cannot read reports DOWN`(): Unit =
+    fun `a database the BFF cannot query reports DOWN`(): Unit =
         runBlocking {
-            // The database is reachable throughout — only the schema is wrong. That is exactly the
-            // shape of the failure #263 measured on k3d, where PostgreSQL was up the whole time and
-            // the BFF was Ready 1.2 seconds before Flyway created the schema it queries. The stock
-            // `r2dbc` indicator stays UP in this state, which is why it is not sufficient on its own.
-            val health = EventsSchemaHealthIndicator(databaseClient, "no_such_schema").health().awaitSingle()
+            // The failure path, driven through a ConnectionFactory that always errors.
+            //
+            // **It used to pass a bogus schema name to the constructor, and #540 removed that lever
+            // on purpose**: the probe now resolves EVENTS_SCHEMA like every other statement in the
+            // application, precisely so it cannot be aimed at a schema the queries are not using. The
+            // schema-specific case did not lose coverage — ReadinessWithoutSchemaTest asserts it end
+            // to end against a real, deliberately un-migrated PostgreSQL, which is stronger evidence
+            // than a renamed schema ever was. What remains here is the cheap, fast assertion that a
+            // failing query becomes DOWN rather than an exception escaping the actuator endpoint.
+            // The metadata still says PostgreSQL so DatabaseClient can resolve a dialect without
+            // connecting; only `create()` fails, which is the state a dead database presents.
+            val unreachable =
+                object : ConnectionFactory {
+                    override fun create(): Publisher<out Connection> = Mono.error(R2dbcNonTransientResourceException("connection refused"))
+
+                    override fun getMetadata(): ConnectionFactoryMetadata = ConnectionFactoryMetadata { "PostgreSQL" }
+                }
+            val health = EventsSchemaHealthIndicator(DatabaseClient.create(unreachable)).health().awaitSingle()
 
             assertEquals(Status.DOWN, health.status) {
-                "a missing schema must fail readiness, or the BFF is Ready before it can serve again (#438)"
+                "a query that cannot run must fail readiness, or the BFF is Ready before it can serve again (#438)"
             }
         }
 }

@@ -65,6 +65,21 @@ kotlin {
 
 tasks.test {
     useJUnitPlatform()
+
+    // SchemaConfigurationTest defends a repo-wide invariant — that no hand-written statement in
+    // either application names the schema literally — so it reads the sibling modules' sources at
+    // runtime. Those files are not otherwise inputs to this task, which means Gradle would report it
+    // UP-TO-DATE after a change in events-bff or events-importer and the guard would never run on the
+    // change it exists to catch. Verified: without these lines an injected `events.` literal did not
+    // fail the build, because the test simply did not re-execute.
+    //
+    // `withPropertyName` + PathSensitivity.RELATIVE keeps the build cache usable across machines.
+    listOf("events-bff", "events-importer").forEach { module ->
+        inputs
+            .files(fileTree(rootProject.layout.projectDirectory.dir("$module/src/main")))
+            .withPropertyName("$module-main-sources")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    }
 }
 
 // events-core is a pure domain library: almost every class is a plain data class, a Spring
