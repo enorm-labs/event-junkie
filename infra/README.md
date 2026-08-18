@@ -64,6 +64,10 @@ the zone, its delegation and its key untouched.
         "NoncurrentVersionExpiration":{"NoncurrentDays":90}}]}'
     ```
 
+    **Versioning is for `-tfstate` only. Do not turn it on for `-backups`.** There it would keep a copy of everything `wal-g` deletes, so the retention window
+    the privacy notice states would become decorative and the storage would grow without bound. That bucket gets a plain expiry rule instead —
+    [CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) §8b.
+
 3. **Nothing else in the console.** Servers, networks, firewalls, IPs and DNS are all declared here; creating one by hand means the first apply either duplicates
    it or needs a `tofu import`.
 
@@ -190,12 +194,14 @@ script: the provider formats the volume once, at creation. Keeping the destructi
 guard is something a later edit can get wrong.
 
 **What it does not buy.** `delete_protection` stops the console and the API; it does not stop OpenTofu, which lifts its own locks before destroying. A
-`tofu destroy` in the production directory removes the volume with everything else, and there is nothing off-server yet — `wal-g` and a rehearsed restore are
-[#270](https://github.com/enorm-labs/event-junkie/issues/270). **A volume is not a backup, and a backup is not a volume**: one survives the node, the other
-survives a bad migration. You need both, and only one of them exists.
+`tofu destroy` in the production directory removes the volume with everything else. **A volume is not a backup, and a backup is not a volume**: one survives
+the node, the other survives a bad migration. You need both — and since
+[#270](https://github.com/enorm-labs/event-junkie/issues/270) both exist, `wal-g` streaming WAL and a nightly base backup to the `…-backups` bucket with a
+30-day window. What does not exist yet is a **rehearsed restore**, which is the only thing that turns the second one from a belief into a fact.
 
-The drill that proves the first half — write a row, replace the node, read the row — is in
-[docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) § _Proving the volume actually survives_.
+Two drills, and they prove different halves. Write a row, replace the node, read the row is
+[docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) § _Proving the volume actually survives_ — done, 2026-08-17. Restore from the bucket alone into a
+scratch cluster is § _Proving a restore actually works_ — **not yet performed**.
 
 ### Closing the door behind you
 
@@ -414,7 +420,8 @@ exist because the failure they prevent is a node reachable only through the brow
 |                                                    | Where it lives                                                                                                                                                                    |
 | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Database roles, credentials, schema                | [#261](https://github.com/enorm-labs/event-junkie/issues/261) — application lifecycle, not machine lifecycle. Baking them in would mean a rebuild silently re-creates credentials |
-| `wal-g`, backups, the restore drill                | [#270](https://github.com/enorm-labs/event-junkie/issues/270)                                                                                                                     |
+| The S3 key `wal-g` archives with                   | Written by hand into `/etc/wal-g/credentials.env` — [CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) §8b. It cannot live here: `user_data` is state                           |
+| The bucket lifecycle rule, and the restore drill   | [CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) §8b and § _Proving a restore actually works_ ([#270](https://github.com/enorm-labs/event-junkie/issues/270))                 |
 | Helm chart, cert-manager, ingress, NetworkPolicies | [#261](https://github.com/enorm-labs/event-junkie/issues/261)                                                                                                                     |
 | Flux                                               | [#414](https://github.com/enorm-labs/event-junkie/issues/414)                                                                                                                     |
 | Observability                                      | [ADR-015](../docs/adr/ADR-015_OBSERVABILITY_STACK.md), [#271](https://github.com/enorm-labs/event-junkie/issues/271)                                                              |

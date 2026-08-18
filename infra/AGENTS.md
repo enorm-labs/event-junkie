@@ -107,9 +107,20 @@ argument behind it. If you contradict one of those documents, change the documen
 
 ## Things that will bite
 
-- **`user_data` forces replacement.** Any edit under `cloud-init/` rebuilds the node, production included. It is also capped at **32 KiB**. Measured on this
-  tree: **22.1 KiB on the k3s node and 15.1 KiB on the PostgreSQL node — 67% and 46% of the cap.** That is one more script's worth of headroom, not an open
-  budget, so measure after adding one rather than assuming. (`postgres.sh` alone is 8.8 KiB of it, and it is included on both.)
+- **`user_data` forces replacement.** Any edit under `cloud-init/` rebuilds the node, production included. It is also capped at **32 KiB**, and since #270 that
+  is no longer a comfortable margin. Measured on this tree:
+
+    | Node                                 | Rendered | Of the cap | Scripts                                   |
+    | ------------------------------------ | -------- | ---------- | ----------------------------------------- |
+    | k3s, co-located database (staging)   | 29.3 KiB | **91%**    | harden, wireguard, k3s, postgres, backups |
+    | PostgreSQL, dedicated (production)   | 22.7 KiB | 70%        | harden, postgres, backups                 |
+    | k3s, dedicated database (production) | 12.0 KiB | 37%        | harden, wireguard, k3s                    |
+
+    **The co-located node is the binding constraint and it is nearly full.** `backups.sh` is deliberately under-commented for that reason, and `postgres.sh` and
+    `backups.sh` are no longer shipped to a k3s node that has a database next door — that conditional in `cloudinit.tf` is what buys production its headroom, and
+    removing it would take the production k3s node from 37% to 91% for two files nothing on it runs. **Measure after any edit under `cloud-init/`**, with the
+    render check described above; do not estimate.
+
 - **`server_type` cannot cross architectures, and `tofu plan` will not warn you.** Within one architecture it is an in-place resize; between `cpx*` (x86) and
   `cax*` (ARM) Hetzner refuses — [their FAQ](https://docs.hetzner.com/cloud/servers/faq/) lists rescale alongside snapshots and ISOs as places where "it is not
   possible to work with two different architecture types". The plan renders a tidy in-place update and the **apply** fails against the API partway through. So
@@ -118,7 +129,8 @@ argument behind it. If you contradict one of those documents, change the documen
 - **Rebuilding a node keeps its database; destroying an environment does not.** `PGDATA` is on an `hcloud_volume` mounted at `/var/lib/postgresql` (#460), and
   the volume is declared standalone — `location`, never `server_id` — so nothing about it references a server and no server edit can plan to replace it.
   Replacing the node therefore leaves the data alone, and `postgres.sh` adopts the cluster already on the volume. **`tofu destroy` still takes it**, because
-  `delete_protection` does not stop OpenTofu (see below). Off-server backups are #270 and are not done.
+  `delete_protection` does not stop OpenTofu (see below). Off-server backups are `backups.sh` — see § Backups, and note that they are declared but not yet
+  proven by a restore.
 - **`postgres.sh` contains no `mkfs`, and must not grow one.** The volume is formatted once by the provider at creation (`format = "ext4"` in `volume.tf`).
   That is deliberate: the script runs on every boot against a volume that already holds a cluster, so the one genuinely destructive command is kept out of the
   file rather than wrapped in a condition somebody can get wrong later. Its seed step copies only into a volume with no cluster on it, and a cluster of an
@@ -158,6 +170,39 @@ argument behind it. If you contradict one of those documents, change the documen
 - **`.terraform.lock.hcl` is committed and Dependabot maintains it** (`opentofu` ecosystem, all four directories grouped into one PR). Do not delete a lock
   file, and do not hand-edit one — regenerate with `tofu providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_arm64` so CI, the ARM
   nodes and an arm64 laptop all stay covered.
+
+## Backups
+
+`backups.sh` is commented far more thinly than anything else here, because it is rendered into a `user_data` that is 91% full. The reasoning lives here
+instead. Read it before editing that file.
+
+**The credential is not in this configuration and must not be put there.** wal-g needs an S3 access key and secret; they would reach the node through
+`user_data`, which is state. So the split is: the machine installs the mechanism, the operator writes `/etc/wal-g/credentials.env` by hand
+(`docs/CLUSTER_BOOTSTRAP.md` §8b). The honest cost is that **a rebuilt node comes back with the timers and no credential** — the same shape as the `events`
+role's password, which already dies with a rebuild. That is not mitigated by care; it is mitigated by `walg check`, below.
+
+**`walg check` is the point, not the backups themselves.** A backup job that exits 0 having uploaded nothing is the failure mode this whole issue exists to
+catch, so success is defined as _a base backup exists and is younger than 26 hours_, not _the last run did not error_. Only then does it ping healthchecks.io,
+for the reason `PLATFORM_SETUP.md` §11 gives about the site monitor: an unconditional heartbeat proves only that the heartbeat ran. It also asserts
+`/var/lib/postgresql` is under 85% full, because a stalled `archive_command` does not merely stop backups — it fills `pg_wal`, and on a 10 GB volume that stops
+the database.
+
+**`FIND_FULL` in the retention sweep is not optional.** `wal-g delete before <time>` without it will remove a base backup that a later delta still depends on,
+leaving a chain that lists perfectly and cannot be restored.
+
+**Retention is enforced twice, and that is deliberate.** The nightly sweep only runs while the node is healthy, and `backup_retention_days` is a number the
+privacy notice has to state (#277) — so a lifecycle rule on the bucket backs it up, and the window cannot quietly become "forever" because a machine was down.
+Changing the number means changing the notice.
+
+**One bucket, two environments, separated by a prefix** derived from `environment` in `cloudinit.tf` rather than typed anywhere. It is load-bearing: staging
+pointed at production's prefix would delete real backups on its next sweep.
+
+**The binary comes from GitHub, and github.com publishes no AAAA record** (checked 2026-08-18). A node with no public IPv4 cannot install wal-g, which is why
+production sets `postgres_public_ipv4 = true` and why `backups.sh` stops the boot rather than coming up without backups. `apt.postgresql.org` _does_ answer on
+IPv6, so the older worry in `PLATFORM_SETUP.md` §1 resolves the other way.
+
+**A backup nobody has restored is a belief about a backup.** The drill is `docs/CLUSTER_BOOTSTRAP.md` § Proving a restore actually works, it restores into a
+scratch cluster on port 5433 and never into live `PGDATA`, and it is not optional before go-live.
 
 ## If the PostgreSQL node's IPv6-only egress fails
 

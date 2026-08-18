@@ -84,9 +84,13 @@ resource "hcloud_firewall" "k3s" {
   }
 }
 
-# Deliberately empty: no inbound rule of any kind, at any port, from anywhere. The node has no
-# public IPv4 by default and its IPv6 interface answers nothing. Everything it needs — `apt`, and
-# later `wal-g` pushing to Object Storage — is outbound, which the stateful firewall allows.
+# Deliberately empty: no inbound rule of any kind, at any port, from anywhere. Everything the node
+# needs — `apt`, the wal-g release from GitHub, and wal-g pushing to Object Storage — is outbound,
+# which the stateful firewall allows.
+#
+# This is also why `postgres_public_ipv4 = true` in production (#270) is not an exposure. The
+# address exists so the node can *reach* GitHub, which publishes no AAAA record; nothing can reach
+# back through it, because there is no rule here for anything to match.
 resource "hcloud_firewall" "postgres" {
   count = local.dedicated_postgres ? 1 : 0
 
