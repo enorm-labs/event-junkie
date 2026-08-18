@@ -201,7 +201,8 @@ the node, the other survives a bad migration. You need both — and since
 
 Two drills, and they prove different halves. Write a row, replace the node, read the row is
 [docs/CLUSTER_BOOTSTRAP.md](../docs/CLUSTER_BOOTSTRAP.md) § _Proving the volume actually survives_ — done, 2026-08-17. Restore from the bucket alone into a
-scratch cluster is § _Proving a restore actually works_ — **not yet performed**.
+scratch cluster is § _Proving a restore actually works_ — done, 2026-08-18, both halves including point-in-time recovery past a `DROP TABLE`. Restore to
+serving took ~12 seconds on a 39 MB cluster, which is a number to re-measure rather than to trust as the database grows.
 
 ### Closing the door behind you
 

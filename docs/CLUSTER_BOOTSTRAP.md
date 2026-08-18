@@ -407,8 +407,14 @@ needs `/128` rather than `/32` and otherwise fails at plan time with `is not the
 
 ## Proving a restore actually works — the drill
 
-**First run: not yet performed.** [#270](https://github.com/enorm-labs/event-junkie/issues/270) is not closed until this section names a date and a duration,
-because an untested backup is not a backup — it is a belief about a backup. Record both here when it is done, the way the volume drill above does.
+**First run: 2026-08-18, staging — passed, both halves.** A base backup taken at 09:58:26 was restored from the bucket alone into a scratch cluster and replayed
+forward: 3,310 events, 3,953 artists and 86 venues came back exactly, **including a marker row written at 09:58:43 — after the base backup was taken**, which is
+the part that proves WAL archiving rather than file copying. Then `public.restore_drill` was dropped on the live database and recovered by PITR to a timestamp
+before the drop: `recovery stopping before commit of transaction 1914`, table back, live database still without it.
+
+**The numbers, on a 39 MB cluster.** Base backup **3.5 s**; `backup-fetch` **10 s**; replay and promote **~2 s**; **restore to serving, end to end, ≈ 12 s**.
+Two base backups and 8 WAL segments occupy **12.2 MiB** in the bucket, brotli-compressed. **None of this extrapolates linearly** — record the number again when
+the database is an order of magnitude larger, because an RTO derived from 39 MB is not an RTO.
 
 **Owner: @enorm. Repeats quarterly**, and additionally whenever `backups.sh`, `postgres.sh` or the PostgreSQL major version changes.
 
@@ -416,59 +422,137 @@ Two things this drill does not do, and both are the point. **It never touches li
 goes wrong costs a directory rather than the database. And **it never reads the volume**, only the bucket; a restore that quietly fell back to local data would
 prove nothing at all.
 
-```sh
-# 0. Something to compare against, and a marker with a known time.
-ssh ops@<tunnel-address> "sudo -u postgres psql -c \
-  \"create table if not exists restore_drill(at timestamptz default now()); insert into restore_drill default values;\" \
-  -c 'select count(*) from events; select count(*) from artists; select * from restore_drill;'"
-BEFORE_DROP=$(date -u +%Y-%m-%dT%H:%M:%SZ)      # the PITR target for step 4
-```
+### Step 0 — something to compare against
 
 ```sh
-# 1. What is actually in the bucket. If this list is empty or stale, stop here — that is the finding.
-ssh ops@<tunnel-address> 'sudo -u postgres walg check && sudo -u postgres bash -lc "set -a; . /etc/wal-g/wal-g.env; . /etc/wal-g/credentials.env; set +a; wal-g backup-list"'
+ssh ops@<tunnel-address> "sudo -u postgres psql -d events \
+  -c \"create table if not exists public.restore_drill(at timestamptz default now(), note text)\" \
+  -c \"insert into public.restore_drill(note) values ('drill <date>')\" \
+  -c 'select (select count(*) from events.event) ev, (select count(*) from events.artist) ar, (select count(*) from events.venue) ve' \
+  -c 'select * from public.restore_drill'"
 ```
 
-```sh
-# 2. Restore the newest base backup into a scratch directory. Time it — the number goes in this doc.
-ssh ops@<tunnel-address> 'sudo -u postgres bash -lc "
-  set -a; . /etc/wal-g/wal-g.env; . /etc/wal-g/credentials.env; set +a
-  rm -rf /var/lib/postgresql/drill && time wal-g backup-fetch /var/lib/postgresql/drill LATEST"'
-```
+**The tables are `events.event` and `events.artist`** — singular, in the `events` schema (ADR-004), not `public` and not plural. The marker goes in `public` so
+it is nowhere near the application's schema.
+
+Then force the segment holding that insert into the archive, and confirm it got there:
 
 ```sh
-# 3. Bring it up on 5433, replaying WAL from the archive. `restore_command` is what makes this a
-#    restore rather than a file copy: without it the cluster starts at the base backup and stops.
-ssh ops@<tunnel-address> 'sudo -u postgres bash -lc "
-  cat > /var/lib/postgresql/drill/postgresql.auto.conf <<EOF
+ssh ops@<tunnel-address> "sudo -u postgres psql -tAc 'select pg_switch_wal()' >/dev/null; \
+  sudo -u postgres psql -x -c 'select archived_count, failed_count, last_archived_wal from pg_stat_archiver'"
+# failed_count must be 0. If it is not, stop — there is nothing to restore from and that is the finding.
+```
+
+### Step 1 — what is actually in the bucket
+
+```sh
+ssh ops@<tunnel-address> 'sudo -u postgres /usr/local/bin/walg check'
+ssh ops@<tunnel-address> 'sudo -u postgres bash -c "set -a; . /etc/wal-g/wal-g.env; . /etc/wal-g/credentials.env; set +a; wal-g backup-list --detail"'
+```
+
+### Step 2 — fetch, and write the cluster a configuration
+
+**A base backup contains no configuration.** Debian keeps `postgresql.conf` in `/etc/postgresql/18/main`, outside `PGDATA`, so the restored directory has none
+and `pg_ctl` fails with `could not access the server configuration file`. Do **not** solve that by pointing at the live cluster's config: it carries
+`data_directory`, `external_pid_file` and — the one that matters — **`archive_mode = on` with the same `WALG_S3_PREFIX`**, so the scratch cluster would start
+pushing WAL into the very prefix it is restoring from. Write it a small config of its own instead.
+
+Copy this to the node once as `/var/lib/postgresql/drill-start.sh`, owned by `postgres`, mode 0755. It takes an optional recovery target, which is what makes
+step 4 the same script as step 3:
+
+```sh
+#!/bin/bash
+set -euo pipefail
+D=/var/lib/postgresql/drill
+TARGET="${1:-}"
+
+cat > "$D/postgresql.conf" <<CONF
+data_directory = '$D'
+hba_file = '$D/pg_hba.conf'
+ident_file = '$D/pg_ident.conf'
 port = 5433
-restore_command = \"/usr/local/bin/walg fetch %f %p\"
-EOF
-  touch /var/lib/postgresql/drill/recovery.signal
-  /usr/lib/postgresql/18/bin/pg_ctl -D /var/lib/postgresql/drill -l /tmp/drill.log start"'
+listen_addresses = 'localhost'
+unix_socket_directories = '/tmp'
+archive_mode = off
+restore_command = '/usr/local/bin/walg fetch %f %p'
+CONF
 
-# The proof. Same counts, same marker row, on data that came from S3 and nowhere else.
-ssh ops@<tunnel-address> "sudo -u postgres psql -p 5433 -c 'select count(*) from events; select count(*) from artists; select * from restore_drill;'"
+if [[ -n "$TARGET" ]]; then
+    cat >> "$D/postgresql.conf" <<CONF
+recovery_target_time = '$TARGET'
+recovery_target_action = 'promote'
+CONF
+fi
+
+printf 'local all all trust\nhost all all 127.0.0.1/32 trust\n' > "$D/pg_hba.conf"
+: > "$D/pg_ident.conf"
+: > "$D/postgresql.auto.conf"   # read last, so the restored copy would override everything above
+touch "$D/recovery.signal"
+chmod 0700 "$D"
+
+/usr/lib/postgresql/18/bin/pg_ctl -D "$D" -l /tmp/drill.log -w -t 120 start
 ```
 
 ```sh
-# 4. The half that matters more, and the half most drills skip: recovery to a *point in time*,
-#    because the disaster this protects against is usually a bad migration rather than a dead disk.
-ssh ops@<tunnel-address> "sudo -u postgres psql -c 'drop table restore_drill;'"
-#    ...then repeat steps 2-3 with recovery_target_time = '$BEFORE_DROP' and
-#    recovery_target_action = 'promote' in postgresql.auto.conf. The table must come back.
+# Time this one — the number goes in the paragraph at the top of this section.
+ssh ops@<tunnel-address> 'sudo rm -rf /var/lib/postgresql/drill; sudo -u postgres bash -c "
+  set -a; . /etc/wal-g/wal-g.env; . /etc/wal-g/credentials.env; set +a
+  time wal-g backup-fetch /var/lib/postgresql/drill LATEST"'
 ```
+
+### Step 3 — replay to the end of the archive
 
 ```sh
-# 5. Clean up. The scratch cluster is 5433 and shares nothing with the live one, but it is also
-#    sitting on the same 10 GB volume, which walg-check will start complaining about at 85%.
-ssh ops@<tunnel-address> 'sudo -u postgres pg_ctl -D /var/lib/postgresql/drill stop; sudo rm -rf /var/lib/postgresql/drill'
-ssh ops@<tunnel-address> "sudo -u postgres psql -c 'drop table if exists restore_drill;'"
+ssh ops@<tunnel-address> 'sudo -u postgres /var/lib/postgresql/drill-start.sh'
+
+# The proof: the same counts, and the marker row that did not exist when the base backup was taken.
+ssh ops@<tunnel-address> "sudo -u postgres psql -h /tmp -p 5433 -d events \
+  -c 'select (select count(*) from events.event) ev, (select count(*) from events.artist) ar, (select count(*) from events.venue) ve' \
+  -c 'select * from public.restore_drill'"
 ```
 
-**What "passed" means**, and all four are required: `wal-g backup-list` showed a backup younger than 26 hours; the row counts matched what step 0 recorded; the
-PITR restore brought back a table that had been dropped afterwards; and the wall-clock from step 2 is written down. A restore that works but takes four hours is
-a different fact about this system than one that takes ten minutes, and only one of them is compatible with the RTO nobody has written down yet.
+`ERROR: Archive '00000001.history' does not exist` in `/tmp/drill.log` is **normal noise**, not a failure — a timeline that has never failed over has no history
+file, and `archive recovery complete` follows it.
+
+### Step 4 — the half most drills skip: recovery to a point in time
+
+The disaster this protects against is usually a bad migration, not a dead disk, and only this half tests that.
+
+```sh
+# Capture the target BEFORE the destructive change, then make it.
+TARGET=$(ssh ops@<tunnel-address> "sudo -u postgres psql -tAc 'select now()'")
+ssh ops@<tunnel-address> "sudo -u postgres psql -d events -c 'drop table public.restore_drill'"
+ssh ops@<tunnel-address> "sudo -u postgres psql -tAc 'select pg_switch_wal()' >/dev/null"
+
+# Stop and remove the previous scratch cluster properly first — see the warning below.
+# Then fetch again and start with the target:
+ssh ops@<tunnel-address> "sudo -u postgres /var/lib/postgresql/drill-start.sh '$TARGET'"
+ssh ops@<tunnel-address> "sudo -u postgres psql -h /tmp -p 5433 -d events -c 'select * from public.restore_drill'"
+```
+
+The log should say `recovery stopping before commit of transaction <n>`, and the table must be there while the live database no longer has it.
+
+### Step 5 — clean up, and check that you did
+
+```sh
+ssh ops@<tunnel-address> 'sudo -u postgres /usr/lib/postgresql/18/bin/pg_ctl -D /var/lib/postgresql/drill -w stop'
+ssh ops@<tunnel-address> 'sudo ss -lnt | grep -q ":5433" && echo "STILL BOUND - do not delete the directory" || echo free'
+ssh ops@<tunnel-address> 'sudo rm -rf /var/lib/postgresql/drill /tmp/drill.log'
+ssh ops@<tunnel-address> "sudo -u postgres psql -d events -c 'drop table if exists public.restore_drill'"
+ssh ops@<tunnel-address> 'sudo -u postgres /usr/local/bin/walg check'
+```
+
+> **`pg_ctl` is not on `postgres`'s `PATH`.** Plain `sudo -u postgres pg_ctl … stop` fails with `command not found`; use the full
+> `/usr/lib/postgresql/18/bin/pg_ctl`. This cost time on the first run and it fails in the worst possible way: if the stop is unchecked and the directory is
+> removed anyway, the postmaster keeps running with no data directory and keeps port 5433, and the _next_ restore fails with
+> `could not bind … Address already in use` — an error that says nothing about the actual cause. Recover with
+> `kill -TERM $(pgrep -f 'postgres -D /var/lib/postgresql/drill')`. **Always verify the port is free before deleting anything.**
+
+### What "passed" means
+
+All four, and the fourth is not optional: `walg check` reported a backup younger than 26 hours; the row counts matched what step 0 recorded; the PITR restore
+brought back a table dropped afterwards; and the wall-clock is written down. A restore that works but takes four hours is a different fact about this system than
+one that takes twelve seconds, and only one of them is compatible with an RTO.
 
 ## Traps, in the order they bite
 

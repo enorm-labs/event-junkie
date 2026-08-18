@@ -112,8 +112,8 @@ argument behind it. If you contradict one of those documents, change the documen
 
     | Node                                 | Rendered | Of the cap | Scripts                                   |
     | ------------------------------------ | -------- | ---------- | ----------------------------------------- |
-    | k3s, co-located database (staging)   | 29.3 KiB | **91%**    | harden, wireguard, k3s, postgres, backups |
-    | PostgreSQL, dedicated (production)   | 22.7 KiB | 70%        | harden, postgres, backups                 |
+    | k3s, co-located database (staging)   | 29.6 KiB | **92%**    | harden, wireguard, k3s, postgres, backups |
+    | PostgreSQL, dedicated (production)   | 22.9 KiB | 71%        | harden, postgres, backups                 |
     | k3s, dedicated database (production) | 12.0 KiB | 37%        | harden, wireguard, k3s                    |
 
     **The co-located node is the binding constraint and it is nearly full.** `backups.sh` is deliberately under-commented for that reason, and `postgres.sh` and
@@ -203,6 +203,14 @@ IPv6, so the older worry in `PLATFORM_SETUP.md` §1 resolves the other way.
 
 **A backup nobody has restored is a belief about a backup.** The drill is `docs/CLUSTER_BOOTSTRAP.md` § Proving a restore actually works, it restores into a
 scratch cluster on port 5433 and never into live `PGDATA`, and it is not optional before go-live.
+
+**It has been run once: 2026-08-18, staging, both halves passed.** 3,310 events and 3,953 artists came back from the bucket alone, including a marker row
+written _after_ the base backup was taken — which is what proves WAL archiving rather than file copying — and a PITR restore recovered a table dropped
+afterwards. **Restore to serving: ~12 seconds on a 39 MB cluster.** That number does not extrapolate; re-measure when the database is meaningfully larger.
+
+**What is still unproven, so do not describe it as verified: the cloud-init delivery path.** `backups.sh` was installed and run by hand on the live staging node
+rather than through a node replacement, deliberately — the alternative takes k3s, Flux and both secrets with it, and none of that was needed to prove a restore.
+So the script is proven; `user_data` carrying it to a fresh node is not, and the first real rebuild is what will settle that.
 
 ## If the PostgreSQL node's IPv6-only egress fails
 
