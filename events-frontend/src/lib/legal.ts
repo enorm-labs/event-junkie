@@ -43,6 +43,27 @@ export const CONTACT_DETAILS_ARE_PROVISIONAL = true
  */
 export const INFRASTRUCTURE_IS_PROPOSED = true
 
+/**
+ * While `true`, the notice says the Art. 28 processor contract is **not yet concluded** (#275).
+ *
+ * §5 of the privacy notice names Hetzner as an `Auftragsverarbeiter mit einem Vertrag nach Art. 28
+ * DSGVO`, in the present tense. That sentence is a statement of fact about a contract, and
+ * [LEGAL.md](../../../docs/LEGAL.md) §14 is blunt about which way it fails:
+ *
+ * > *A notice naming processors without a DPA in place is worse than one naming none.*
+ *
+ * [INFRASTRUCTURE_IS_PROPOSED] does not cover this and should not be made to: its banner line says
+ * the providers are the intended ones and nothing is deployed, which is a statement about
+ * *infrastructure*. The contract is a separate fact that can be true before anything is deployed
+ * and false long after — they move independently, so they are two flags.
+ *
+ * Hetzner's AVV is self-service at <https://accounts.hetzner.com/account/dpa>: signature and
+ * download, minutes rather than a negotiation. **Set this to `false` once the countersigned copy is
+ * filed somewhere it can be produced on request** — concluding it and not filing it is the same
+ * position as not concluding it, the day somebody asks.
+ */
+export const PROCESSOR_CONTRACTS_PENDING = true
+
 /** Date the legal pages were last reviewed against what the system actually does (§7.7). */
 export const LAST_REVIEWED = '2026-08-08'
 

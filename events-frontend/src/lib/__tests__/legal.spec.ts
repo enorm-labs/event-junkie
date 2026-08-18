@@ -5,6 +5,7 @@ import {
   CONTROLLER,
   INFRASTRUCTURE_IS_PROPOSED,
   LAST_REVIEWED,
+  PROCESSOR_CONTRACTS_PENDING,
 } from '@/lib/legal'
 
 /** Matches the deliberately fake German address used until the real one is rented (§8.3). */
@@ -31,6 +32,17 @@ describe('legal contact details', () => {
     expect(`${CONTROLLER.street} ${CONTROLLER.city}`).not.toMatch(
       /postfach|p\.?o\.? box|packstation/i,
     )
+  })
+
+  // #275. §5 of the notice names Hetzner as an Art. 28 processor in the present tense, and
+  // LEGAL.md §14 is blunt about which way that fails: "A notice naming processors without a DPA in
+  // place is worse than one naming none." So the claim and the banner have to move together.
+  //
+  // Deliberately NOT folded into INFRASTRUCTURE_IS_PROPOSED: that flag says the providers are
+  // intended and nothing is deployed, which is a fact about infrastructure. A contract can be
+  // concluded before anything is deployed and can lapse long after. Two facts, two flags.
+  it('flags the Art. 28 contract as pending while the AVV is not concluded', () => {
+    expect(PROCESSOR_CONTRACTS_PENDING).toBe(true)
   })
 
   it('records a review date in ISO form so the legal pages can show when they were checked', () => {
