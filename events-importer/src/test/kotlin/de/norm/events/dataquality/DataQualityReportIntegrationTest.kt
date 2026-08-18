@@ -156,7 +156,7 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
             .sql(
                 "INSERT INTO events.venue (name, slug, address, city, postal_code) " +
                     "VALUES ('Test Venue', 'test-venue', 'Somewhere 1', 'Berlin', '10999') RETURNING id"
-            ).map { row, _ -> row.get("id", java.lang.Long::class.java)!!.toLong() }
+            ).map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
             .awaitSingle()
 
     private suspend fun insertSource(
@@ -167,19 +167,19 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
             .sql(
                 "INSERT INTO events.event_source (venue_id, name, slug, url, source_type) " +
                     "VALUES ($venueId, '$slug', '$slug', 'https://$slug.example/events', 'CASSIOPEIA') RETURNING id"
-            ).map { row, _ -> row.get("id", java.lang.Long::class.java)!!.toLong() }
+            ).map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
             .awaitSingle()
 
     private suspend fun insertArtist(name: String): Long =
         databaseClient
             .sql("INSERT INTO events.artist (name, slug) VALUES ('$name', '${name.lowercase().replace(' ', '-')}') RETURNING id")
-            .map { row, _ -> row.get("id", java.lang.Long::class.java)!!.toLong() }
+            .map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
             .awaitSingle()
 
     private suspend fun insertPromoter(name: String): Long =
         databaseClient
             .sql("INSERT INTO events.promoter (name, slug) VALUES ('$name', '${name.lowercase().replace(' ', '-')}') RETURNING id")
-            .map { row, _ -> row.get("id", java.lang.Long::class.java)!!.toLong() }
+            .map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
             .awaitSingle()
 
     @Suppress("LongParameterList")
@@ -203,7 +203,7 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
                         ${price ?: "NULL"}, $free)
                 RETURNING id
                 """.trimIndent()
-            ).map { row, _ -> row.get("id", java.lang.Long::class.java)!!.toLong() }
+            ).map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
             .awaitSingle()
 
     private suspend fun linkArtist(

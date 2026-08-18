@@ -81,12 +81,12 @@ class DataQualityWorklistRepository(
         return spec
             .map { row, _ ->
                 WorklistRow(
-                    id = row.get("id", java.lang.Long::class.java)!!.toLong(),
+                    id = row.get("id", Number::class.java)!!.toLong(),
                     slug = row.get("slug", String::class.java)!!,
                     title = row.get("title", String::class.java)!!,
                     eventDate = row.get("event_date", LocalDate::class.java)!!,
                     startTime = row.get("start_time", LocalTime::class.java),
-                    venueId = row.get("venue_id", java.lang.Long::class.java)!!.toLong(),
+                    venueId = row.get("venue_id", Number::class.java)!!.toLong(),
                     sourceSlug = row.get("source_slug", String::class.java) ?: MANUAL_BUCKET
                 )
             }.all()
