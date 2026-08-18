@@ -35,6 +35,14 @@ management:
         # application port (bff.service.managementPort) and no Ingress routes it, so /actuator/** —
         # including this — is unreachable from outside the cluster. See PLATFORM_SETUP.md §7.
         include: health,info,prometheus
+  # **No readiness group here, deliberately — this is the importer's answer to #438, not an
+  # oversight.** The BFF puts `r2dbc` and `eventsSchema` in its readiness group so that Kubernetes
+  # stops routing to a pod that cannot serve. The importer has nothing to route: its Service is
+  # ClusterIP with no Ingress backend anywhere in the chart, it runs one replica under `Recreate`,
+  # and its work is a scheduler tick rather than a request. Readiness gates no traffic, so making it
+  # database-dependent would buy nothing and would take the admin API away during a blip — which is
+  # the one thing an operator needs *during* a database incident. ADR-018 §"And the importer" argues
+  # this at length. Leaving readiness at Spring's `readinessState` default is the decision.
   info:
     build:
       enabled: true

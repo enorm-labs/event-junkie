@@ -21,6 +21,36 @@ management:
         # application port (bff.service.managementPort) and no Ingress routes it, so /actuator/** —
         # including this — is unreachable from outside the cluster. See PLATFORM_SETUP.md §7.
         include: health,info,prometheus
+  # What the two Kubernetes probes mean, stated rather than inherited. `include` *replaces* a group's
+  # default membership, so `readinessState` has to be repeated here — omitting it would drop Spring's
+  # own signal that the application context is up.
+  #
+  # **Readiness includes the database; liveness must never.** ADR-018 argues both halves. In short:
+  # this service is a read-through API over one shared PostgreSQL, so a pod that cannot reach the
+  # database can serve nothing — reporting Ready would put Kubernetes' traffic into a black hole,
+  # which is what #438 found. Liveness stays `livenessState` because a database-dependent liveness
+  # probe restarts every replica during an outage and makes recovery slower than the outage itself.
+  #
+  # `r2dbc` is the stock ConnectionFactory indicator (the database is reachable); `eventsSchema` is
+  # ours (the schema is migrated and readable). Both are needed — see EventsSchemaHealthIndicator for
+  # why the first alone would not have closed the window #263 measured. The names are validated at
+  # startup, so a typo here is a context failure and never a silently smaller readiness group.
+  endpoint:
+    health:
+      # `always` rather than the `never` default, and it is the same argument the exposure list above
+      # makes: this is safe *because of where the endpoint lives*. The chart moves the whole
+      # management port off the application port and no Ingress routes it, so /actuator/** is
+      # unreachable from outside the cluster (PLATFORM_SETUP.md §7).
+      #
+      # Without it the readiness group aggregates to a bare {"status":"DOWN"} and an operator cannot
+      # tell "the database is gone" from "the schema is not migrated yet" — which is the whole reason
+      # `r2dbc` and `eventsSchema` are two contributors rather than one.
+      show-details: always
+      group:
+        readiness:
+          include: readinessState,r2dbc,eventsSchema
+        liveness:
+          include: livenessState
   info:
     build:
       # Reads META-INF/build-info.properties, stamped by the `bootBuildInfo` task.

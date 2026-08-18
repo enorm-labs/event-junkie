@@ -40,6 +40,7 @@ INVARIANT_SUITES=(
   'tests/ingress_test.yaml'
   'tests/importer_test.yaml'
   'tests/seo_test.yaml'
+  'tests/probes_test.yaml'
 )
 
 failures=0

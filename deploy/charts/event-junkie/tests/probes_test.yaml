@@ -1,0 +1,78 @@
+# Probe semantics — ADR-018.
+#
+# The chart renders one `event-junkie.jvmProbes` for two services whose readiness means different
+# things, and nothing in `_helpers.tpl` shows that: what `/actuator/health/readiness` *contains* is
+# decided in each module's `application.yaml`. So what this suite can pin is the chart's half — the
+# paths, the ports, and the two numbers the decision leans on.
+#
+# **If an assertion here fails, read ADR-018 before changing the number.** These are not defaults.
+# `readinessProbe.periodSeconds × failureThreshold` is the ~30 seconds of sustained failure a pod is
+# allowed before it leaves the Service, and it is the only thing standing between a brief PostgreSQL
+# hiccup and every BFF replica draining at once now that the database is in the readiness group.
+#
+# The frontend is deliberately absent: nginx has no actuator and no database, and its probes are
+# written inline rather than through the shared helper.
+suite: probe semantics
+
+# `configmap.yaml` is here and is not optional: both Deployments compute their `checksum/config`
+# annotation with `include (print $.Template.BasePath "/configmap.yaml")`, and helm-unittest renders
+# only the templates a suite lists. Omitting it fails with `no template … associated with template
+# "gotpl"`, which points nowhere useful. `documentSelector` then keeps the assertions on the two
+# Deployments rather than on the ConfigMap that had to be rendered alongside them.
+templates:
+  - bff-deployment.yaml
+  - importer-deployment.yaml
+  - configmap.yaml
+
+tests:
+  - it: both JVM workloads probe the actuator on the management port
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: kind
+      value: Deployment
+      matchMany: true
+    asserts: &probes
+      # --- Readiness: "can this pod serve?" ----------------------------------------------------
+      - equal:
+          path: spec.template.spec.containers[*].readinessProbe.httpGet.path
+          value: /actuator/health/readiness
+      - equal:
+          path: spec.template.spec.containers[*].readinessProbe.httpGet.port
+          value: management
+      # The blip tolerance ADR-018 depends on. 3 × 10s = 30s of sustained failure before a pod
+      # leaves the Service's endpoints.
+      - equal:
+          path: spec.template.spec.containers[*].readinessProbe.periodSeconds
+          value: 10
+      - equal:
+          path: spec.template.spec.containers[*].readinessProbe.failureThreshold
+          value: 3
+
+      # --- Liveness: "is this process wedged?" -------------------------------------------------
+      - equal:
+          path: spec.template.spec.containers[*].livenessProbe.httpGet.path
+          value: /actuator/health/liveness
+
+      # --- Startup watches LIVENESS, and that is the assertion --------------------------------
+      #
+      # Pointing the startup probe at readiness would make a first install fail: the BFF's readiness
+      # now waits for the importer's Flyway migrations, and 30 × 5s of waiting ends in a killed
+      # container rather than a Ready one. The liveness path has never depended on the database and
+      # must not start.
+      - equal:
+          path: spec.template.spec.containers[*].startupProbe.httpGet.path
+          value: /actuator/health/liveness
+      - equal:
+          path: spec.template.spec.containers[*].startupProbe.failureThreshold
+          value: 30
+
+  - it: holds under values-k3d.yaml
+    values:
+      - ../values-k3d.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+      matchMany: true
+    asserts: *probes
