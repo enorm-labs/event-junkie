@@ -118,11 +118,15 @@ It is supposed to. #263 found two values bugs, a wrong prediction and a document
     So on a network like that, the honest options are to run off it, or to accept that the k3d path is unavailable and verify against staging instead. Do not
     reach for `insecure_skip_verify` in a committed file.
 
-- **CoreDNS needs a nudge, and the script gives it one.** k3d writes `host.k3d.internal` into the CoreDNS ConfigMap during cluster creation, but the `reload`
-  plugin only picks it up on its next poll — up to 30 seconds later. Installing inside that window gives every pod `UnknownHostException: host.k3d.internal`,
-  and the importer crash-loops until DNS catches up. It self-heals, which is _worse_ than failing: the install still succeeds and the only evidence is a restart
-  count nobody reads. The script forces the reload and waits for it. This was found by running the script rather than the same steps by hand — doing it manually
-  was slow enough to never hit the race, which is a good reminder that a scripted sequence is not just a faster human.
+- **CoreDNS needs a nudge, and the script now gives it one in the right order (#541).** k3d writes `host.k3d.internal` into the CoreDNS ConfigMap **after
+  `k3d cluster create` returns** — measured at 7 to 11 seconds later. Until it lands, every pod resolving the database host gets
+  `UnknownHostException: host.k3d.internal`, and the importer crash-loops; Flyway opens JDBC eagerly at startup, while the BFF's R2DBC pool connects lazily and
+  never notices, so it reads as "the importer is flaky" rather than as a DNS problem. It self-heals, which is _worse_ than failing: the install still succeeds
+  and the only evidence is a restart count nobody reads.
+  The script waits for the ConfigMap to actually carry the entry, **then** restarts CoreDNS onto it. The earlier version restarted first and waited for the
+  rollout, which proved the pod was Ready and nothing about what it had loaded — a restart cannot load a write that has not happened. Worth knowing if you read
+  the old comment anywhere: the entry lands in the `NodeHosts` key, not `Corefile`, and is watched by the _hosts_ plugin's own `reload 15s` over a volume mount,
+  not by the Corefile `reload` plugin.
 - **The rehearsal uses its own database** (`event_junkie_k3d`), never the development one. Installing the chart runs Flyway; pointing that at `event_junkie`
   would have the in-cluster importer fighting a local `bootRun` over one schema, and re-seeding means re-scraping ~86 sources.
 - **Port 8080 must be free on the host** — that is where Traefik is published, and it is also the BFF's local `bootRun` port. Stop `dev-env.sh` first.
