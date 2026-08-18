@@ -413,6 +413,10 @@ guarantees that the rehearsed one drifts from the real one. The design, the reco
 **First run: 2026-08-18, staging — passed both halves**, full replay and point-in-time recovery past a `DROP TABLE`. Restore to serving in ~12 s on a 39 MB
 cluster. Owner @enorm, quarterly, plus whenever `backups.sh`, `postgres.sh` or the PostgreSQL major version changes.
 
+**What nags you is [`restore-drill-reminder.yml`](../../.github/workflows/restore-drill-reminder.yml)**, not this sentence. It opens the drill as an issue
+assigned to the owner every quarter, and again whenever `backups.sh` or `postgres.sh` changes on `main` — so a skipped quarter shows up as an open issue rather
+than as nothing at all. Each run records its measured timings in that issue and then overwrites the table in [BACKUPS.md](BACKUPS.md) §9.
+
 ## Traps, in the order they bite
 
 |                                                        |                                                                                                                                                                                                                                                                                     |
