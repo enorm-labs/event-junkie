@@ -21,6 +21,7 @@ tests:
   - it: runs exactly one replica and replaces rather than rolls
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
     documentSelector:
       path: kind
@@ -64,6 +65,7 @@ tests:
   - it: carries the JDBC connection Flyway needs, spelled the way Spring binds it
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
     documentSelector:
       path: kind
@@ -109,6 +111,7 @@ tests:
   - it: exposes itself only inside the cluster
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
     templates:
       - importer-service.yaml

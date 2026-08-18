@@ -1,0 +1,65 @@
+{{- if and .Values.ingress.enabled .Values.ingress.securityHeaders.enabled }}
+{{- $args := dict "ctx" $ "component" "security-headers" }}
+{{- /* Response headers the Ingress API cannot express, PLATFORM_SETUP §8 item 11 (#416).
+
+       The third Traefik-specific object in the chart, and here for the same reason as the other
+       two: a security header is a property of the *response*, and `networking.k8s.io/v1` has no
+       vocabulary for one. Every controller does it through its own extension.
+
+       WHAT EACH ONE BUYS, because "security headers" is otherwise a phrase rather than a decision:
+
+       - **HSTS** is the only one that changes what an attacker can do rather than what a browser
+         does with our own content. Without it, the first request of a session is plaintext and
+         strippable; with it, the browser refuses http:// for this host for `stsSeconds` without
+         asking. The redirect Ingress already sends 301s, and a 301 is exactly what HSTS exists to
+         make unnecessary — a redirect is only obeyed *after* the plaintext request has been made.
+
+       - **X-Content-Type-Options: nosniff** stops a browser second-guessing our Content-Type. The
+         frontend serves user-visible content and the BFF serves JSON; a sniffed JSON response
+         rendered as HTML is the shape of the attack.
+
+       - **X-Frame-Options: DENY** — nothing here is meant to be embedded, and clickjacking a page
+         with no authenticated actions is low-value today. It costs nothing and stops being free to
+         add once someone links to an embed.
+
+       - **Referrer-Policy** is a privacy control as much as a security one, which is why it is here
+         and named in the privacy notice's terms rather than only in this file: without it the full
+         URL of the page a visitor came from is sent to every third-party host they navigate to, and
+         event pages carry slugs that describe what somebody was looking at.
+
+       DELIBERATELY ABSENT, so they are not proposed as oversights:
+
+       - **X-XSS-Protection** (`browserXssFilter`). Removed from every current browser, and in its
+         last implementations it introduced vulnerabilities of its own. Setting it is cargo cult.
+       - **Content-Security-Policy.** It belongs here eventually and it is not a header you add
+         blind: the SPA's own inline styles and the exact set of origins it may talk to have to be
+         enumerated first, and a wrong CSP is a blank page rather than a warning. It needs its own
+         issue and a report-only period, not a line in this file. */}}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ printf "%s-security-headers" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      HSTS, nosniff, frame-deny and a referrer policy on every response. Response headers have no Ingress API equivalent.
+spec:
+  headers:
+    {{- /* `stsSeconds: 0` means "do not send the header at all", which is why the value is
+           required rather than defaulted to zero somewhere upstream: a typo that empties it fails
+           the render instead of quietly turning HSTS off. */}}
+    {{- /* `| int64` is load-bearing, not tidiness. Helm parses a values number as float64, so an
+           unpiped 31536000 renders as `3.1536e+07` — which the CRD's `format=int64` rejects, and
+           `helm template` shows without complaint. `tests/network_test.yaml` caught this. */}}
+    stsSeconds: {{ required "ingress.securityHeaders.hsts.maxAgeSeconds is required when securityHeaders is enabled — 0 silently disables HSTS rather than setting it to zero" .Values.ingress.securityHeaders.hsts.maxAgeSeconds | int64 }}
+    stsIncludeSubdomains: {{ .Values.ingress.securityHeaders.hsts.includeSubdomains }}
+    stsPreload: {{ .Values.ingress.securityHeaders.hsts.preload }}
+    {{- /* `forceSTSHeader` stays FALSE. Traefik would then send HSTS over plaintext too, which
+           browsers ignore — so it buys nothing on the happy path — and it is actively wrong on the
+           one host that serves plain HTTP on purpose: the ACME http-01 challenge. */}}
+    forceSTSHeader: false
+    contentTypeNosniff: true
+    frameDeny: true
+    referrerPolicy: {{ .Values.ingress.securityHeaders.referrerPolicy | quote }}
+{{- end }}

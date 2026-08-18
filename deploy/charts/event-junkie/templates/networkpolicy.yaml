@@ -1,0 +1,264 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- $np := .Values.networkPolicy }}
+{{- $importerSelector := include "event-junkie.selectorLabels" (dict "ctx" $ "component" "importer") }}
+{{- $testSelector := include "event-junkie.selectorLabels" (dict "ctx" $ "component" "test") }}
+{{- /* PLATFORM_SETUP §8 item 1 (#416): **NetworkPolicy enforcement being on means nothing while
+       every pod may talk to every pod.** k3s ships the enforcement; the policies are ours.
+
+       WHAT "PER NAMESPACE" MEANS HERE, precisely, because the issue's phrasing is broader than a
+       chart can honour: a NetworkPolicy only selects pods in its own namespace, and this chart owns
+       exactly one. So this is default-deny for the release namespace. Other namespaces —
+       kube-system, cert-manager, flux-system — are the cluster's business and not the chart's; a
+       chart that wrote policies into them would be a chart that breaks a cluster it does not own.
+
+       THE SHAPE. One deny-all policy plus one narrow allowance per real conversation, which is the
+       only ordering that produces a reviewable list: with allow-only policies the absence of a rule
+       is invisible, whereas here every arrow in the system is a named object.
+
+       READ THE ALLOWANCES AS THE ARCHITECTURE, because that is what they are — if a conversation is
+       not below, it does not happen:
+
+         Traefik  -> frontend:8080    the SPA
+         Traefik  -> bff:8080         /api
+         bff      -> PostgreSQL:5432
+         importer -> PostgreSQL:5432
+         importer -> the internet     scraping venue sites, which is the product
+         all      -> CoreDNS:53
+         test pod -> bff, frontend    the helm test hook, only while tests are enabled
+
+       AND WHAT IS ABSENT IS THE POINT. Nothing reaches the importer — not Traefik, not the
+       frontend, not the BFF. Its admin API was already unroutable because no Ingress path names it
+       (§3.2); now it is unreachable from inside the namespace as well, which is the half an Ingress
+       rule could never give. Nothing reaches either management port except the kubelet and the test
+       hook. The frontend gets no egress but DNS, because a static bundle has nowhere to go.
+
+       THE KUBELET IS NOT LISTED, and that is deliberate rather than an omission: liveness and
+       readiness probes originate on the node, and traffic from a node to a pod on that node is not
+       subject to NetworkPolicy in k3s's implementation. That is a property worth *testing* rather
+       than believing — if it were wrong, every pod would fail its probes and `helm install --wait`
+       would time out, which is the loudest possible failure and exactly what the k3d rehearsal
+       exercises. `kubectl port-forward` arrives the same way. */}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-default-deny" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" (dict "ctx" $ "component" "networkpolicy") | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      Denies all ingress and egress in this namespace. Every allowance is a separate, named policy — so an arrow that is not written down does not exist.
+spec:
+  {{- /* An empty podSelector selects every pod in the namespace, including ones this chart does not
+         create. That is intended: a policy that only covered our three workloads would leave a
+         debug pod someone kubectl-runs with unrestricted egress, which is the exact shape of the
+         hole this closes. */}}
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-allow-dns" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" (dict "ctx" $ "component" "networkpolicy") | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      Egress to the cluster DNS service. Without this every other allowance below is unusable, because each one addresses a name.
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              {{- toYaml $np.dns.namespaceSelector | nindent 14 }}
+      ports:
+        {{- /* Both protocols. UDP carries almost every query and TCP carries the ones that do not
+               fit — a UDP-only rule works until the first response over 512 bytes, and then fails
+               intermittently in a way that reads as a flaky network rather than as a missing rule. */}}
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-allow-ingress-controller" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" (dict "ctx" $ "component" "networkpolicy") | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      The only way in from outside the namespace. Traefik reaches the frontend and the BFF on their service ports, and nothing else.
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: In
+        values:
+          - bff
+          - frontend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{- toYaml $np.ingressController.namespaceSelector | nindent 14 }}
+          podSelector:
+            matchLabels:
+              {{- toYaml $np.ingressController.podSelector | nindent 14 }}
+      ports:
+        {{- /* The service ports only. The management port is deliberately not here: `/actuator/**`
+               is already unroutable because no Ingress path names it, and this makes it
+               unreachable from the controller at all — a network guarantee rather than an ingress
+               rule that has to stay correct forever (§3.2). */}}
+        - protocol: TCP
+          port: {{ .Values.bff.service.port }}
+        - protocol: TCP
+          port: {{ .Values.frontend.service.port }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-allow-database" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" (dict "ctx" $ "component" "networkpolicy") | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      The two JVM services reach PostgreSQL. The frontend is excluded because a static bundle has no database.
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: In
+        values:
+          - bff
+          - importer
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        {{- /* A CIDR and not `database.host`, because **NetworkPolicy cannot resolve a name**. The
+               two are therefore two settings that have to agree, which is a cost worth stating: set
+               `database.host` and forget this, and the pods start, resolve the name, and hang on
+               connect — a failure that looks like the database being down. The `required` below is
+               what turns that into a render error instead.
+
+               PostgreSQL is off-cluster on a private address (ADR-012), so this is an ipBlock rather
+               than a pod selector. */}}
+        - ipBlock:
+            cidr: {{ required "networkPolicy.databaseCidr is required when networkPolicy.enabled — NetworkPolicy speaks CIDRs and cannot resolve database.host. Use the /32 of `postgres_ip` from the matching infra stack." $np.databaseCidr | quote }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.database.port }}
+{{- if $np.scrapeEgress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-allow-scraping" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" (dict "ctx" $ "component" "networkpolicy") | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      The importer reaches venue websites. This is the one workload that must talk to the open internet, and the only one that may.
+spec:
+  podSelector:
+    matchLabels:
+      {{- $importerSelector | nindent 6 }}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            {{- /* The private ranges are carved out, so "the internet" means the internet. Without
+                   these the rule would also grant the importer the cluster network, the node
+                   network and any peered network — which is most of what default-deny was for, given
+                   the importer is the workload that parses untrusted HTML from thirty-odd sites.
+                   169.254.0.0/16 is the sharpest of them: it is where a cloud metadata service
+                   lives, and reaching it from a process that fetches attacker-influenced URLs is the
+                   classic SSRF-to-credentials path. */}}
+            except:
+              {{- toYaml $np.scrapeEgress.exceptCidrs | nindent 14 }}
+      ports:
+        {{- range $np.scrapeEgress.ports }}
+        - protocol: TCP
+          port: {{ . }}
+        {{- end }}
+{{- end }}
+{{- if .Values.tests.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-allow-test-hook" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" (dict "ctx" $ "component" "networkpolicy") | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      The helm test hook reaches the BFF's readiness endpoint and the frontend's index. Rendered only while tests are enabled.
+spec:
+  {{- /* Both directions in one object: the hook needs egress, and its two targets need ingress from
+         it. Splitting them across two policies would let one be deleted without the other, and the
+         surviving half would be silently useless.
+
+         This is the only allowance that names the *management* port, and it is why the port is
+         reachable in-cluster and unroutable from outside — the asymmetry the test hook exists to
+         prove (§3.2). Gated on `tests.enabled`, so disabling tests removes the reachability too
+         rather than leaving a hole open for a pod that is no longer rendered. */}}
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: In
+        values:
+          - bff
+          - frontend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- $testSelector | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.bff.service.managementPort }}
+        - protocol: TCP
+          port: {{ .Values.frontend.service.port }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-allow-test-hook-egress" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" (dict "ctx" $ "component" "networkpolicy") | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      The other half of the test hook's conversation. Kept adjacent to its ingress twin so the pair is obvious.
+spec:
+  podSelector:
+    matchLabels:
+      {{- $testSelector | nindent 6 }}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/component
+                operator: In
+                values:
+                  - bff
+                  - frontend
+      ports:
+        - protocol: TCP
+          port: {{ .Values.bff.service.managementPort }}
+        - protocol: TCP
+          port: {{ .Values.frontend.service.port }}
+{{- end }}
+{{- end }}

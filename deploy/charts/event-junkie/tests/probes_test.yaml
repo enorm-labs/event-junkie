@@ -28,6 +28,7 @@ tests:
   - it: both JVM workloads probe the actuator on the management port
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
     documentSelector:
       path: kind

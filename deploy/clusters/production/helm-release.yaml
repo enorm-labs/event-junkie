@@ -57,6 +57,17 @@ spec:
   driftDetection:
     mode: enabled
   values:
+    networkPolicy:
+      # DELIBERATELY NOT A PLAUSIBLE CIDR, for the same reason `database.host` below is not a
+      # plausible address: a realistic-looking value here reads as configured and is not.
+      #
+      # Replace with the /32 of `tofu -chdir=infra/environments/production output postgres_ip` — the same address as `database.host` below, in CIDR form, because NetworkPolicy speaks CIDRs and cannot resolve a name.
+      #
+      # **Two settings for one address is the cost of the feature, and this is the pairing most
+      # likely to be half-done.** Set the host and forget this and the render fails, which is the
+      # intended outcome; set this and forget the host and the render also fails. Neither can be
+      # silently wrong.
+      databaseCidr: "REPLACE-ME-tofu-output-postgres-ip/32"
     database:
       # DELIBERATELY NOT A PLAUSIBLE ADDRESS. #424 has not run, so the real value does not exist yet,
       # and a realistic-looking IP here is exactly the failure #263 found in `values-k3d.yaml` —

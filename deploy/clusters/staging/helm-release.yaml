@@ -79,6 +79,17 @@ spec:
   driftDetection:
     mode: warn
   values:
+    networkPolicy:
+      # DELIBERATELY NOT A PLAUSIBLE CIDR, for the same reason `database.host` below is not a
+      # plausible address: a realistic-looking value here reads as configured and is not.
+      #
+      # Replace with the /32 of `tofu -chdir=infra/environments/staging output postgres_ip` — the same address as `database.host` below, in CIDR form, because NetworkPolicy speaks CIDRs and cannot resolve a name.
+      #
+      # **Two settings for one address is the cost of the feature, and this is the pairing most
+      # likely to be half-done.** Set the host and forget this and the render fails, which is the
+      # intended outcome; set this and forget the host and the render also fails. Neither can be
+      # silently wrong.
+      databaseCidr: "REPLACE-ME-tofu-output-postgres-ip/32"
     database:
       # The k3s node's own private address — PostgreSQL is co-located on staging
       # (`postgres_server_type = null`), but still reached over the network, so the connection path

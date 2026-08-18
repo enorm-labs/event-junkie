@@ -93,3 +93,14 @@ certManager:
     # Nothing to create: with `tls.enabled: false` no annotation references an issuer, and k3d has
     # no cert-manager installed — a ClusterIssuer here would fail the install on an unknown kind.
     create: false
+
+# The rehearsal's PostgreSQL runs in a Docker container on the host, reached through
+# `host.k3d.internal` — an address k3d assigns at cluster-create time and writes into CoreDNS, so it
+# is not knowable when this file is written. `0.0.0.0/0` therefore stands in for it here, and the
+# rule still constrains the **port**: the two JVM services may open 5432 anywhere and nothing else.
+#
+# That is weaker than the /32 the real environments set, and it is the one policy the rehearsal
+# cannot prove tight. Everything else in the set — default-deny, DNS, the ingress controller's two
+# ports, the importer's internet egress, the test hook's pair — is exercised exactly as deployed.
+networkPolicy:
+  databaseCidr: "0.0.0.0/0"

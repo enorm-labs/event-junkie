@@ -46,14 +46,31 @@ spec:
         - -c
         - |
           set -eu
+          # BOTH CURLS RETRY, AND THE REASON IS A MEASURED RACE RATHER THAN CAUTION (#416).
+          #
+          # This pod's first packet can leave before the CNI has finished programming the
+          # NetworkPolicy rules that permit it. k3s's policy controller populates its ipsets from
+          # pod labels asynchronously, and a hook pod that runs curl as its entrypoint is the
+          # worst case there is: it connects milliseconds after starting. Measured on k3d — the
+          # first attempt failed with `curl: (7) … after 0 ms`, and the retry two seconds later
+          # returned 200. A long-lived pod exec'd into never sees it.
+          #
+          # WHY THAT IS WORTH FIXING RATHER THAN TOLERATING. Flux runs this hook with
+          # `remediateLastFailure: true`, so a test that flakes does not merely report a flake —
+          # it **rolls back a deploy that was fine**. A retry loop is the difference between a
+          # test that measures the release and one that occasionally invents an incident.
+          #
+          # `--retry-all-errors` is required alongside `--retry-connrefused`: a packet dropped by
+          # a policy is not necessarily a refused connection, and plain `--retry` covers neither.
+          probe() {
+            curl --fail --silent --show-error --output /dev/null --max-time 10 \
+              --retry 10 --retry-delay 2 --retry-all-errors --retry-connrefused "$1"
+          }
           # The BFF's readiness endpoint, on the management port — reachable in-cluster, and
           # unroutable from outside it. That asymmetry is the point of the split (§3.2).
-          curl --fail --silent --show-error --max-time 10 \
-            "http://{{ $bff }}:{{ .Values.bff.service.managementPort }}/actuator/health/readiness"
-          echo
+          probe "http://{{ $bff }}:{{ .Values.bff.service.managementPort }}/actuator/health/readiness"
           # The frontend's index. A static bundle has no health endpoint; serving / is the contract.
-          curl --fail --silent --show-error --output /dev/null --max-time 10 \
-            "http://{{ $frontend }}:{{ .Values.frontend.service.port }}/"
+          probe "http://{{ $frontend }}:{{ .Values.frontend.service.port }}/"
           echo "connection test passed"
       resources:
         requests:

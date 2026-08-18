@@ -231,6 +231,81 @@ ingress:
     enabled: true
     # ingress.tls.secretName is where cert-manager stores the issued certificate.
     secretName: "event-junkie-tls"
+  # ingress.securityHeaders renders a Traefik Middleware adding HSTS, X-Content-Type-Options,
+  # X-Frame-Options and a Referrer-Policy to every response (#416, PLATFORM_SETUP §8 item 11). A
+  # response header has no Ingress API equivalent, which is why this is the third Traefik-specific
+  # object in the chart. See the template for what each header buys and what is deliberately absent.
+  securityHeaders:
+    enabled: true
+    hsts:
+      # ingress.securityHeaders.hsts.maxAgeSeconds is one year, the value the preload list requires
+      # and the one every guide settles on. It is not a free number: for this long, a browser that
+      # has seen the header once will refuse plain HTTP for this host and offers the visitor no way
+      # through. That is the entire point — and it is also why losing TLS becomes an outage rather
+      # than a degradation, so it belongs on a host that has cert-manager renewing automatically,
+      # which this one does.
+      maxAgeSeconds: 31536000
+      # ingress.securityHeaders.hsts.includeSubdomains extends the promise to every subdomain,
+      # including ones that do not exist yet. Cheap here because nothing else is served under
+      # event-junkie.de; it would have to be reconsidered before putting anything on a subdomain
+      # that cannot do TLS.
+      includeSubdomains: true
+      # ingress.securityHeaders.hsts.preload is OFF, and this is the one setting here that is
+      # genuinely hard to undo. It asks browsers to ship the HSTS promise *baked in*, so it applies
+      # before the first request rather than after it — and removal takes months to propagate
+      # through browser releases. It also requires submitting the domain to hstspreload.org, which
+      # is a step outside this chart. Worth doing once the domain is settled; not worth doing by
+      # default in a values file.
+      preload: false
+    # ingress.securityHeaders.referrerPolicy keeps the origin on cross-site navigations and the full
+    # URL on same-site ones. `no-referrer` would be stricter and would also break the one legitimate
+    # use — knowing that a visitor arrived from another site at all. Event URLs carry slugs that
+    # describe what somebody was looking at, so this is a privacy setting as much as a security one.
+    referrerPolicy: "strict-origin-when-cross-origin"
+
+# networkPolicy closes PLATFORM_SETUP §8 item 1: k3s enforces NetworkPolicy, and enforcement being
+# *on* means nothing while every pod may talk to every pod. One default-deny plus one named
+# allowance per real conversation — read the template's allowances as the architecture, because if
+# an arrow is not written down there, it does not happen.
+networkPolicy:
+  enabled: true
+  # networkPolicy.databaseCidr is the /32 of `postgres_ip` from the matching infra stack. Required
+  # when enabled, and REQUIRED SEPARATELY FROM `database.host` because NetworkPolicy speaks CIDRs
+  # and cannot resolve a name. That duplication is the cost of the feature and worth stating: set
+  # the host and forget this, and the pods start, resolve the name, and hang on connect — which
+  # looks like the database being down. The template's `required` turns that into a render error.
+  # Empty here for the same reason `database.host` is: there is no safe default for an address.
+  databaseCidr: ""
+  dns:
+    # networkPolicy.dns.namespaceSelector finds CoreDNS. `kubernetes.io/metadata.name` is set by the
+    # API server on every namespace since 1.21, so it needs nothing to have been labelled by hand.
+    namespaceSelector:
+      kubernetes.io/metadata.name: kube-system
+  ingressController:
+    # networkPolicy.ingressController locates Traefik — k3s installs it into kube-system with the
+    # standard name label. Both selectors are values rather than literals because this is the one
+    # part of the policy set that is specific to *which* ingress controller is installed, and the
+    # chart is otherwise portable off Traefik apart from two Middleware objects.
+    namespaceSelector:
+      kubernetes.io/metadata.name: kube-system
+    podSelector:
+      app.kubernetes.io/name: traefik
+  scrapeEgress:
+    # networkPolicy.scrapeEgress lets the importer reach venue websites, which is the product. It is
+    # the only workload allowed to talk to the open internet.
+    enabled: true
+    ports:
+      - 80
+      - 443
+    # networkPolicy.scrapeEgress.exceptCidrs carve the private ranges back out, so "the internet"
+    # means the internet and not also the cluster, the node and anything peered. 169.254.0.0/16 is
+    # the sharpest: it is where a cloud metadata service lives, and the importer is the workload
+    # that fetches attacker-influenced URLs and parses untrusted HTML.
+    exceptCidrs:
+      - "10.0.0.0/8"
+      - "172.16.0.0/12"
+      - "192.168.0.0/16"
+      - "169.254.0.0/16"
 
 certManager:
   clusterIssuer:

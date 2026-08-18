@@ -25,6 +25,7 @@ tests:
   - it: holds under the default values
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
     asserts: &invariants
       # --- Namespaces belong to whoever installs the chart -----------------------------------
@@ -138,6 +139,7 @@ tests:
   - it: control — the selector paths above reach all three Deployments
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
     documentSelector:
       path: kind
@@ -151,6 +153,7 @@ tests:
   - it: control — the selector paths above reach all three Services
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
     documentSelector:
       path: kind
@@ -164,6 +167,7 @@ tests:
   - it: control — the image paths above reach every workload image
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
     documentSelector:
       path: kind
@@ -186,6 +190,7 @@ tests:
   - it: control — the ConfigMap data path above reaches the shared ConfigMap
     set:
       database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
     documentSelector:
       path: metadata.labels["app.kubernetes.io/component"]

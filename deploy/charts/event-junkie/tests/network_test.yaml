@@ -1,0 +1,197 @@
+# What may talk to what, and the headers that come back — PLATFORM_SETUP §8 items 1 and 11 (#416).
+#
+# **These assert the shape of the policy set rather than its effect**, and the distinction is worth
+# being honest about: no rendered manifest can prove a packet was dropped. What a render *can* prove
+# is that the default-deny exists, that it selects every pod rather than only ours, that each
+# allowance names the ports it claims to, and — the one most likely to rot — that nothing quietly
+# grew a rule reaching the importer or a management port. The effect is proved on k3d, where the
+# pods either become Ready and import a venue or they do not.
+#
+# The negative assertions carry the weight here, and they are phrased against the whole document set
+# rather than against a named policy, so a *new* policy that opens one of these paths fails too.
+suite: network policy and response headers
+
+templates:
+  - "**/*.yaml"
+
+tests:
+  - it: default-deny selects every pod in the namespace, both directions
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-event-junkie-default-deny
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+      # An empty podSelector is what makes this cover a pod the chart never created — a debug pod
+      # somebody kubectl-runs would otherwise keep unrestricted egress, which is most of the hole.
+      - equal:
+          path: spec.podSelector
+          value: {}
+      - contains:
+          path: spec.policyTypes
+          content: Ingress
+      - contains:
+          path: spec.policyTypes
+          content: Egress
+      # A deny policy with an `ingress:` or `egress:` list is not a deny policy. This is the single
+      # most consequential assertion in the file: adding one rule here would silently turn the
+      # foundation of the whole set into an allowance.
+      - notExists:
+          path: spec.ingress
+      - notExists:
+          path: spec.egress
+
+  - it: the ingress controller reaches the service ports and neither management port
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-event-junkie-allow-ingress-controller
+    asserts:
+      - contains:
+          path: spec.ingress[0].ports
+          content:
+            protocol: TCP
+            port: 8080
+      # 9001 is the management port. It is already unroutable because no Ingress path names it;
+      # this is the half that makes it unreachable rather than merely unrouted (§3.2).
+      - notContains:
+          path: spec.ingress[0].ports
+          content:
+            protocol: TCP
+            port: 9001
+
+  - it: only the two JVM services may reach the database, and only on its port
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      # Pinned explicitly because `scripts/cluster-assertions.sh` replays this suite against each
+      # cluster's own spec.values, and k3d's PostgreSQL is on a mapped port (56298). Without this the
+      # assertion below would be about whichever environment ran last rather than about the rule
+      # following `database.port` — and it failed exactly that way the first time.
+      database.port: 5432
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-event-junkie-allow-database
+    asserts:
+      - equal:
+          path: spec.egress[0].to[0].ipBlock.cidr
+          value: "10.0.1.2/32"
+      - equal:
+          path: spec.egress[0].ports[0].port
+          value: 5432
+      # The frontend is a static bundle. If it ever appears here, something has been added to it
+      # that this chart's whole shape assumes does not exist.
+      - notContains:
+          path: spec.podSelector.matchExpressions[0].values
+          content: frontend
+
+  - it: the importer reaches the internet and not the private ranges behind it
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-event-junkie-allow-scraping
+    asserts:
+      - equal:
+          path: spec.egress[0].to[0].ipBlock.cidr
+          value: "0.0.0.0/0"
+      # The sharpest exclusion, asserted by itself: 169.254.0.0/16 is where a cloud metadata service
+      # lives, and this is the one workload that fetches attacker-influenced URLs. Losing this line
+      # turns a scraper into an SSRF-to-credentials path and nothing else would notice.
+      - contains:
+          path: spec.egress[0].to[0].ipBlock.except
+          content: "169.254.0.0/16"
+      - contains:
+          path: spec.egress[0].to[0].ipBlock.except
+          content: "10.0.0.0/8"
+      - equal:
+          path: spec.podSelector.matchLabels["app.kubernetes.io/component"]
+          value: importer
+
+  - it: nothing anywhere grants ingress to the importer
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: kind
+      value: NetworkPolicy
+      matchMany: true
+    asserts:
+      # Phrased against every policy rather than a named one, so a new policy that opens this path
+      # fails here too. The importer's admin API is the thing in this release with no business being
+      # reachable by anything — not Traefik, not the frontend, not the BFF.
+      - notMatchRegex:
+          path: "$..ingress[*].from[*].podSelector.matchLabels['app.kubernetes.io/component']"
+          pattern: "^importer$"
+      - notMatchRegex:
+          path: "$..ingress[*].from[*].podSelector.matchExpressions[*].values[*]"
+          pattern: "^importer$"
+
+  # Scoped by template rather than by documentSelector: a selector that matches nothing reports
+  # "document not found" instead of a count of zero, which is an error rather than the assertion
+  # this case is making.
+  - it: turning the policies off removes every one of them
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+      networkPolicy.enabled: false
+    templates:
+      - networkpolicy.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # --- Response headers -------------------------------------------------------------------------
+
+  - it: the security headers middleware sets all four, and none of the ones that are wrong to set
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-event-junkie-security-headers
+    asserts:
+      - isKind:
+          of: Middleware
+      - equal:
+          path: spec.headers.stsSeconds
+          value: 31536000
+      - equal:
+          path: spec.headers.stsIncludeSubdomains
+          value: true
+      # Preload is a promise that takes months to withdraw, and submitting the domain is a step
+      # outside this chart. Off by default is the decision, and this is where it is held.
+      - equal:
+          path: spec.headers.stsPreload
+          value: false
+      # Traefik would send HSTS over plaintext with this on. Browsers ignore it there, so it buys
+      # nothing — and it is actively wrong on the ACME http-01 challenge path.
+      - equal:
+          path: spec.headers.forceSTSHeader
+          value: false
+      - equal:
+          path: spec.headers.contentTypeNosniff
+          value: true
+      - equal:
+          path: spec.headers.frameDeny
+          value: true
+      - equal:
+          path: spec.headers.referrerPolicy
+          value: strict-origin-when-cross-origin
+      # X-XSS-Protection is removed from every current browser and its last implementations
+      # introduced vulnerabilities of their own. Setting it is cargo cult, and this says so in a
+      # place that fails rather than in a comment that does not.
+      - notExists:
+          path: spec.headers.browserXssFilter
