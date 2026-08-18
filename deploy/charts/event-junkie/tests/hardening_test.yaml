@@ -1,0 +1,141 @@
+# Workload hardening — PLATFORM_SETUP §8 items 5, 6, 7 and 12, and the pod-level half of the Pod
+# Security Standards `restricted` profile.
+#
+# Positive assertions, unlike invariants_test.yaml, and therefore scoped: `documentSelector` with
+# `matchMany: true` applies each one to every Deployment while the other kinds render in the same
+# suite. That scoping is what makes "every container" mean every container rather than every
+# container that happens to be listed — a new Deployment is inside these without being named, and
+# the failure output names each document an assertion covered, so there is nothing to infer.
+#
+# The container-level fields are quantified with `containers[*]`, which is the wildcard doing the
+# work the script's yq `.containers[] | select(...)` did: it applies the assertion to every
+# container, not to the first one.
+suite: workload hardening
+
+templates:
+  - "**/*.yaml"
+
+tests:
+  - it: every workload is hardened under the default values
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: kind
+      value: Deployment
+      matchMany: true
+    asserts: &hardening
+      # --- Pod level ---------------------------------------------------------------------------
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.template.spec.securityContext.seccompProfile.type
+          value: RuntimeDefault
+      # No token to steal from a workload that never calls the API server.
+      - equal:
+          path: spec.template.spec.automountServiceAccountToken
+          value: false
+
+      # --- Container level ---------------------------------------------------------------------
+      #
+      # Requests and limits are a security control on a single node, not a tuning preference: one
+      # workload without a memory limit can evict the other two.
+      - exists:
+          path: spec.template.spec.containers[*].resources.limits.memory
+      - exists:
+          path: spec.template.spec.containers[*].resources.requests.memory
+      - equal:
+          path: spec.template.spec.containers[*].securityContext.readOnlyRootFilesystem
+          value: true
+      - equal:
+          path: spec.template.spec.containers[*].securityContext.allowPrivilegeEscalation
+          value: false
+      - equal:
+          path: spec.template.spec.containers[*].securityContext.capabilities.drop[0]
+          value: ALL
+
+      # --- Volume types --------------------------------------------------------------------------
+      #
+      # `restricted` permits configMap, csi, downwardAPI, emptyDir, ephemeral, persistentVolumeClaim,
+      # projected and secret — and nothing else. The script expressed that as an allow-list, in one
+      # yq query over the keys of each volume; helm-unittest has no way to ask for a map's keys, so
+      # this is the complement written out: every other volume source the Kubernetes API defines.
+      #
+      # Exhaustive as of Kubernetes 1.34, which makes the residual gap a precise one — a volume type
+      # Kubernetes adds after this was written escapes it, where the allow-list would have caught it.
+      # If you are here because a new type appeared, add it. `hostPath` is the one that matters most
+      # and it is also asserted chart-wide in invariants_test.yaml: it is a mount of the node's
+      # filesystem, and it is how a pod escapes being a pod.
+      - notExists:
+          path: spec.template.spec.volumes[*].awsElasticBlockStore
+      - notExists:
+          path: spec.template.spec.volumes[*].azureDisk
+      - notExists:
+          path: spec.template.spec.volumes[*].azureFile
+      - notExists:
+          path: spec.template.spec.volumes[*].cephfs
+      - notExists:
+          path: spec.template.spec.volumes[*].cinder
+      - notExists:
+          path: spec.template.spec.volumes[*].fc
+      - notExists:
+          path: spec.template.spec.volumes[*].flexVolume
+      - notExists:
+          path: spec.template.spec.volumes[*].flocker
+      - notExists:
+          path: spec.template.spec.volumes[*].gcePersistentDisk
+      - notExists:
+          path: spec.template.spec.volumes[*].gitRepo
+      - notExists:
+          path: spec.template.spec.volumes[*].glusterfs
+      - notExists:
+          path: spec.template.spec.volumes[*].hostPath
+      - notExists:
+          path: spec.template.spec.volumes[*].image
+      - notExists:
+          path: spec.template.spec.volumes[*].iscsi
+      - notExists:
+          path: spec.template.spec.volumes[*].nfs
+      - notExists:
+          path: spec.template.spec.volumes[*].photonPersistentDisk
+      - notExists:
+          path: spec.template.spec.volumes[*].portworxVolume
+      - notExists:
+          path: spec.template.spec.volumes[*].quobyte
+      - notExists:
+          path: spec.template.spec.volumes[*].rbd
+      - notExists:
+          path: spec.template.spec.volumes[*].scaleIO
+      - notExists:
+          path: spec.template.spec.volumes[*].storageos
+      - notExists:
+          path: spec.template.spec.volumes[*].vsphereVolume
+
+  - it: every workload is hardened under values-k3d.yaml
+    values:
+      - ../values-k3d.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+      matchMany: true
+    asserts: *hardening
+
+  # `runAsUser` has to match the UID the images actually run as (#426). A mismatch is a pod that
+  # cannot read its own files, which does not look like a values problem — so the value is asserted
+  # rather than merely its presence.
+  - it: every pod runs as the UID the images are built with
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: kind
+      value: Deployment
+      matchMany: true
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 1000
+      - equal:
+          path: spec.template.spec.securityContext.runAsGroup
+          value: 1000

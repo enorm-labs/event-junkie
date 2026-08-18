@@ -338,8 +338,8 @@ cluster and needs no kubeconfig — and these are what `validate-chart.yml` runs
 ```bash
 helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
 helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
-deploy/scripts/render-assertions.sh          # asserts on the rendered output; the gate that matters
-shellcheck -x deploy/scripts/*.sh
+helm unittest --strict deploy/charts/event-junkie   # asserts on the rendered chart; the gate that matters
+scripts/cluster-assertions.sh                      # and on what each cluster's HelmRelease deploys
 ```
 
 `helm install`, `upgrade`, `uninstall` and `rollback` are **not** on that list — and neither is `helm install --dry-run`, which resolves the current kubeconfig
@@ -684,8 +684,8 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       allowlist** — `push` events, or a `workflow_dispatch` whose `publish` input is ticked — never "everything except the dry run", so a trigger added later
       cannot quietly become a publishing one. And it **tests itself on pull requests that change it**, because the `workflow_dispatch` caveat above applies to
       it with teeth: the button does not exist until the change merges, and merging is what publishes.
-    - `validate-chart.yml` — `helm lint --strict` and `helm template` | `flux schema validate` across every values file and every cluster's Flux resources, plus `deploy/scripts/render-assertions.sh`
-      and ShellCheck. Triggers only when `deploy/**` changes. **Pins a Helm 3 client** even though local binaries are Helm 4, because Flux's helm-controller
+    - `validate-chart.yml` — `helm lint --strict` and `helm template` | `flux schema validate` across every values file and every cluster's Flux resources, plus
+      `helm unittest` and `scripts/cluster-assertions.sh`. Triggers only when `deploy/**` changes. **Pins a Helm 3 client** even though local binaries are Helm 4, because Flux's helm-controller
       embeds the Helm 3 SDK and a chart that renders only under Helm 4 is one Flux cannot install. Like `validate-infra.yml` it reaches no cluster, so it is a
       syntax and shape gate; the assertions are the part that catches a chart which is well-formed and wrong.
 - **Nine checks are REQUIRED on `main` and a pull request cannot merge without them** (#443, applied 2026-08-13). They were chosen for a specific reason: each
@@ -885,7 +885,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Helm chart (bff · importer · frontend) | `deploy/charts/event-junkie/` — read `deploy/AGENTS.md` first; exercised on k3d, never on a real cluster    |
 | Backend container images               | `events-bff/Dockerfile`, `events-importer/Dockerfile` — no `RUN`, context is each module's `build/docker`   |
 | Frontend container image               | `events-frontend/Dockerfile` + `events-frontend/docker/nginx.conf` — nginx on 8080, context is the module   |
-| Chart render assertions                | `deploy/scripts/render-assertions.sh`                                                                       |
+| Chart assertions                       | `deploy/charts/event-junkie/tests/*_test.yaml` (helm-unittest) + `scripts/cluster-assertions.sh`            |
 | Release notes categories               | `.github/release.yml`                                                                                       |
 | Dependabot config                      | `.github/dependabot.yml`                                                                                    |
 | Commit message prompt                  | `.github/prompts/commit-message.prompt.md`                                                                  |

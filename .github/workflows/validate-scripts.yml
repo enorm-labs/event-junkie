@@ -1,7 +1,7 @@
 name: Validate Scripts
 
 # ShellCheck over `scripts/`. The pre-commit hook already matches this directory
-# (`.pre-commit-config.yaml`, `^(infra|deploy/scripts|scripts)/.*\.sh$`), but a hook is advisory by
+# (`.pre-commit-config.yaml`, `^(infra|scripts)/.*\.sh$`), but a hook is advisory by
 # construction — `git commit --no-verify` skips it, and so does anything committed through the
 # GitHub web UI or by an agent that never installed pre-commit. This is the gate that makes it hold
 # on `main`, exactly as validate-docs.yml is for the Markdown formatter.
@@ -11,12 +11,13 @@ name: Validate Scripts
 # grew a batch mode with real parsing in it, which is the point at which "linted only if the author
 # happened to have the hook installed" stopped being comfortable.
 #
-# **`scripts/k3d-rehearsal.sh`, `scripts/version.sh` and `scripts/version-test.sh` are linted
-# twice** — here, and in validate-chart.yml's "ShellCheck deploy scripts" job. That is deliberate
-# rather than an oversight to tidy up. They belong to the deploy story, so a chart change should lint
-# them; they also live in `scripts/`, so a scripts change should. Both jobs take seconds, and the
-# alternative — narrowing one side — trades a duplicated second for a coverage hole that only appears
-# when the other workflow's path filter misses.
+# **This is now the only ShellCheck job that covers the deploy scripts.** validate-chart.yml used to
+# lint `scripts/k3d-rehearsal.sh`, `scripts/version.sh` and `scripts/version-test.sh` a second time
+# from a "ShellCheck deploy scripts" job, because `deploy/scripts/` had a script of its own to lint
+# and those three belong to the same story. #430 ported that script to helm-unittest suites and
+# `deploy/scripts/` no longer exists, so the job went with it. The deliberate overlap it recorded is
+# gone rather than forgotten: a pull request that changes any of those files matches this workflow's
+# own `paths:` filter, which is what made the second job redundant rather than merely duplicated.
 
 on:
   push:

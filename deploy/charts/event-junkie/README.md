@@ -17,9 +17,9 @@ nodes — the same architecture the Hetzner nodes will use. What that run proved
 | **`helm upgrade` across a chart version bump** — the selector-immutability trap does not occur | Behaviour under load, or on a node with real resource pressure |
 | `helm test` passes                                                                             |                                                                |
 
-`helm lint`, `helm template`, `flux schema validate` and
-[`../../scripts/render-assertions.sh`](../../scripts/render-assertions.sh) all pass as before, but
-they are no longer the only evidence.
+`helm lint`, `helm template`, `flux schema validate`, `helm unittest` and
+[`../../../scripts/cluster-assertions.sh`](../../../scripts/cluster-assertions.sh) all pass as
+before, but they are no longer the only evidence.
 
 ## Install
 
@@ -86,8 +86,8 @@ name, neither catchable by rendering).
 **Staging's and production's configuration lives in their `HelmRelease` under `spec.values`**
 (`deploy/clusters/<env>/helm-release.yaml`), not in a values file — a HelmRelease cannot read a file
 from the repository, and keeping both would mean two copies with nothing checking they agree (#414).
-`render-assertions.sh` renders the chart with those values, so the assertions gate what Flux
-actually deploys.
+[`../../../scripts/cluster-assertions.sh`](../../../scripts/cluster-assertions.sh) re-runs the
+chart's invariant suites against those values, so the assertions gate what Flux actually deploys.
 
 ## The parts that are not obvious from the templates
 
@@ -103,8 +103,9 @@ step — and it is one line away from being defeated. A published values file th
 `<component>.image.tag` silently opts that component out: the render still looks correct, with a
 plausible tag on every image, while one workload is pinned to a version nobody chose. Only
 `values-k3d.yaml` sets tags (`dev`), and it never leaves a laptop;
-[`../../scripts/render-assertions.sh`](../../scripts/render-assertions.sh) fails the build if
-`values.yaml` or any cluster's `HelmRelease` ever grows one.
+[`tests/invariants_test.yaml`](tests/invariants_test.yaml) fails the build if `values.yaml` grows
+one, and [`../../../scripts/cluster-assertions.sh`](../../../scripts/cluster-assertions.sh) does the
+same for any cluster's `HelmRelease`.
 
 The chart version does **not** move independently of the application. That would be right for a
 public chart with many consumers; here the chart has one consumer and ships from the same commit as
@@ -163,8 +164,9 @@ until there is no compose file. The JDBC half is the one that gets forgotten, an
 is a migration that never runs rather than a startup error.
 
 The property is `spring.flyway.user` — so `SPRING_FLYWAY_USER`, **not** `SPRING_FLYWAY_USERNAME`.
-The wrong spelling binds to nothing and fails silently. Both are asserted in
-`render-assertions.sh` for that reason.
+The wrong spelling binds to nothing and fails silently. Both are asserted — the right spelling in
+[`tests/importer_test.yaml`](tests/importer_test.yaml), the wrong one nowhere in the chart at all in
+[`tests/invariants_test.yaml`](tests/invariants_test.yaml) — for that reason.
 
 ### The BFF does _not_ crash-loop on a first install — it does something worse
 
@@ -247,7 +249,8 @@ one release on it.
 
 Since #265 cert-manager itself is a `HelmRelease` in each cluster directory rather than a manual
 install, and every release that sets `create: true` declares `dependsOn` so the CRDs exist first.
-`deploy/scripts/render-assertions.sh` fails the build if one stops doing so — without the dependency
+[`../../../scripts/cluster-assertions.sh`](../../../scripts/cluster-assertions.sh) fails the build
+if one stops doing so — without the dependency
 the _whole_ release fails on the unknown kind, workloads included, on the first bootstrap of a new
 cluster, and it reads like a bug in this chart.
 
@@ -278,10 +281,13 @@ against each other in both directions — production correctly renders neither.
 ```sh
 helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
 helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
-deploy/scripts/render-assertions.sh
+helm unittest --strict deploy/charts/event-junkie
+scripts/cluster-assertions.sh
 ```
 
-All three are pure functions of the working tree and reach no cluster. CI runs them plus
+`helm unittest` needs the plugin
+(`helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.1.2 --verify=false`);
+the rest need nothing. All four are pure functions of the working tree and reach no cluster. CI runs them plus
 `flux schema validate` in [`validate-chart.yml`](../../../.github/workflows/validate-chart.yml), and `/verify`
 runs them on any diff touching `deploy/`. See [`../../AGENTS.md`](../../AGENTS.md) for what is safe
 to run and what is not.

@@ -59,11 +59,19 @@ Run all three stacks even for a one-line change: they share `modules/environment
 
 ```bash
 helm lint --strict deploy/charts/event-junkie --set database.host=10.0.1.2 --set database.existingSecret=events-db
-helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-staging.yaml
 helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
-deploy/scripts/render-assertions.sh
-shellcheck -x deploy/scripts/*.sh
+helm unittest --strict deploy/charts/event-junkie
+scripts/cluster-assertions.sh
 ```
+
+`helm unittest` needs the plugin, which is not installed by default:
+
+```bash
+helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.1.2 --verify=false
+```
+
+`--verify=false` is a Helm 4 requirement — the local binary is v4 and refuses an unverifiable plugin source without it. CI pins Helm 3 and does not need the
+flag. Pin the same version CI pins (`HELM_UNITTEST_VERSION` in `.github/workflows/validate-chart.yml`).
 
 Also when the diff touches `scripts/version.sh`, `gradle.properties` or either `Chart.yaml` version field:
 
@@ -76,8 +84,13 @@ scripts/version-test.sh         # snapshot versions still ORDER
 constraint solver and asserts the newest wins — because a snapshot version that parses, lints and publishes can still leave staging pinned to last week's chart,
 silently, which is exactly what happened.
 
-`render-assertions.sh` renders the chart once per values file **and once per cluster's `HelmRelease`**, asserting on each — so it covers the `helm template` half
-as well, and it covers what Flux will actually deploy rather than a file nothing deploys.
+`helm unittest` covers the two value sets the chart can be rendered from on its own; `scripts/cluster-assertions.sh` extracts `spec.values` from **each
+cluster's `HelmRelease`** and re-runs the invariant suites against it, so the assertions gate what Flux will actually deploy rather than a file nothing deploys.
+It also carries the assertions that read _relationships between files_ — image tags, `dependsOn`, third-party version pins — which no single render can see.
+Between them they cover the `helm template` half as well, so there is no separate render step here.
+
+There is no `shellcheck` line for `deploy/` any more: #430 ported the render assertions to helm-unittest suites and `deploy/scripts/` no longer exists. The
+scripts step below covers `scripts/cluster-assertions.sh`.
 
 Add the schema gate if `flux` is installed — CI always runs it. It replaced `kubeconform` in #414, because it also evaluates CEL rules with the API server's own
 semantics, catches duplicate YAML keys, and reads SOPS-encrypted fields without decrypting them:

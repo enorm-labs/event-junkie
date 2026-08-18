@@ -28,7 +28,7 @@ repos:
         # `infra` rather than `infra/modules/environment/cloud-init`: the narrower pattern needed a
         # directory prefix, so `infra/check-capacity.sh` — which sits directly in `infra/` — was
         # linted by nothing at all, here or in CI. Found when rewriting it (#424).
-        files: ^(infra|deploy/scripts|scripts)/.*\.sh$
+        files: ^(infra|scripts)/.*\.sh$
         pass_filenames: true
 
       # One version reaches four files and only one of them is authoritative, so the drift this
@@ -63,8 +63,9 @@ repos:
       # The base values.yaml deliberately cannot render alone: database.host and
       # database.existingSecret have no safe default, hence the two --set flags.
       #
-      # Deliberately NOT the full CI gate: `deploy/scripts/render-assertions.sh` renders the chart
-      # three times and is a `/verify` step rather than a commit-time one.
+      # Deliberately NOT the full CI gate: `helm unittest` needs a plugin that not every checkout
+      # has installed, and `scripts/cluster-assertions.sh` renders the chart five times. Both are
+      # `/verify` steps rather than commit-time ones.
       #
       # And deliberately no `check-yaml` hook, here or anywhere. Helm templates are Go templates
       # that happen to look like YAML; a generic YAML parser rejects every one of them. If someone

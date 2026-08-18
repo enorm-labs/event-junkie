@@ -1,0 +1,118 @@
+# The importer's two ADR-008 constraints, and the JDBC half of its database configuration.
+#
+# `configmap.yaml` is in `templates:` and is not optional. `importer-deployment.yaml` computes its
+# `checksum/config` annotation with `include (print $.Template.BasePath "/configmap.yaml")`, and
+# helm-unittest renders *only* the templates a suite lists — omit it and the suite fails with
+# `no template "…/configmap.yaml" associated with template "gotpl"`, which points nowhere useful.
+# The same applies to any future suite touching bff-deployment.yaml.
+suite: importer
+
+templates:
+  - importer-deployment.yaml
+  - importer-service.yaml
+  - configmap.yaml
+
+tests:
+  # --- The single replica is a correctness constraint, not a cost one -------------------------
+  #
+  # Two schedulers means two concurrent imports of the same source; the 60-second tick's RUNNING
+  # check is a read-then-write with no lock. A rolling update briefly runs two pods, which is the
+  # same failure by a different route — hence Recreate.
+  - it: runs exactly one replica and replaces rather than rolls
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
+
+  - it: runs exactly one replica under values-k3d.yaml too
+    values:
+      - ../values-k3d.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
+
+  # --- Flyway's JDBC connection ---------------------------------------------------------------
+  #
+  # The apps are R2DBC and Flyway is JDBC, so the importer needs two connection configurations for
+  # one database. Forgetting the JDBC half fails silently: migrations simply never run, and nothing
+  # reports an error.
+  #
+  # Each path filters `env` by variable name — `env[?(@.name=="…")]` — rather than indexing into the
+  # list, which is what makes these hold under every values file and still fail loudly: a filter
+  # that matches nothing is reported as an unknown path, not as a pass. That is the vacuity the
+  # script's hand-rolled `assert_nonempty` guards existed to approximate.
+  #
+  # This is also the control for invariants_test.yaml's `$..env[*].name` assertion, which is a
+  # negative and would pass if that path expression ever stopped resolving. It lives here because
+  # the frontend has no `env` at all, so the positive form cannot be quantified over every workload.
+  - it: carries the JDBC connection Flyway needs, spelled the way Spring binds it
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts: &flyway
+      - matchRegex:
+          path: 'spec.template.spec.containers[0].env[?(@.name=="SPRING_FLYWAY_URL")].value'
+          pattern: '^jdbc:postgresql://[^:/]+:[0-9]+/[^/]+$'
+      # `SPRING_FLYWAY_USER`, not `_USERNAME`: the Spring property is `spring.flyway.user` and the
+      # wrong spelling binds to nothing. invariants_test.yaml rejects the wrong spelling anywhere in
+      # the chart; this is the half that says the right one is present.
+      #
+      # The credential comes from the Secret named by `database.existingSecret` — there is no
+      # inline-password path in this chart, which is why the assertion is on `valueFrom` and there
+      # is deliberately no assertion anywhere on a literal `value` for either credential.
+      - exists:
+          path: 'spec.template.spec.containers[0].env[?(@.name=="SPRING_FLYWAY_USER")].valueFrom.secretKeyRef.name'
+      - equal:
+          path: 'spec.template.spec.containers[0].env[?(@.name=="SPRING_FLYWAY_USER")].valueFrom.secretKeyRef.key'
+          value: username
+      - equal:
+          path: 'spec.template.spec.containers[0].env[?(@.name=="SPRING_FLYWAY_PASSWORD")].valueFrom.secretKeyRef.key'
+          value: password
+      # The R2DBC half, asserted alongside it: the failure this guards against is having one of the
+      # two connection styles, not having neither.
+      - matchRegex:
+          path: 'spec.template.spec.containers[0].env[?(@.name=="SPRING_R2DBC_URL")].value'
+          pattern: '^r2dbc:postgresql://[^:/]+:[0-9]+/[^/]+$'
+
+  - it: carries both connection styles under values-k3d.yaml too
+    values:
+      - ../values-k3d.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts: *flyway
+
+  # --- Nothing outside the cluster can address the importer ------------------------------------
+  #
+  # Its /api/admin/** has no authentication of its own; what keeps it private is that no Ingress
+  # names its Service and its own Service is ClusterIP. ingress_test.yaml asserts the first half
+  # from the Ingress side.
+  - it: exposes itself only inside the cluster
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+    templates:
+      - importer-service.yaml
+    asserts:
+      - equal:
+          path: spec.type
+          value: ClusterIP

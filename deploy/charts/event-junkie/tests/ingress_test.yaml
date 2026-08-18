@@ -1,0 +1,130 @@
+# The ingress must not reach anything private, and the noindex mechanism must not render half of
+# itself.
+#
+# The importer's /api/admin/** and every /actuator/** endpoint are unreachable from outside the
+# cluster by construction: the importer has no Ingress backend at all, and actuator lives on its own
+# port that no Ingress rule names. Both properties are one careless path entry away from being
+# false, and neither failure is visible in a diff.
+suite: ingress routing and noindex
+
+templates:
+  - ingress.yaml
+  - redirect-ingress.yaml
+  - noindex-middleware.yaml
+  - redirect-middleware.yaml
+
+tests:
+  - it: routes /api to the BFF and / to the frontend, and nothing else
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: kind
+      value: Ingress
+      matchMany: true
+    asserts:
+      # Positive and exhaustive rather than a list of things that must be absent. The script had to
+      # phrase this as three greps for `-importer$`, `actuator` and `management|9001`; naming the
+      # two paths that may exist covers those and everything nobody has thought of yet, and it
+      # cannot pass vacuously.
+      - equal:
+          path: "$..http.paths[*].pathType"
+          value: Prefix
+      - matchRegex:
+          path: "$..http.paths[*].path"
+          pattern: "^(/api|/)$"
+      # No backend names the importer. The frontend is the only backend on the redirect Ingress and
+      # the BFF and frontend are the only two on the main one.
+      - matchRegex:
+          path: "$..backend.service.name"
+          pattern: "^RELEASE-NAME-event-junkie-(bff|frontend)$"
+      # Actuator is private because it is on its own port, not because a rule excludes it. Every
+      # backend names the `http` port; `management` is never named, and because backends here name
+      # ports rather than numbering them, the port number 9001 cannot appear either.
+      - equal:
+          path: "$..backend.service.port.name"
+          value: http
+      - notExists:
+          path: "$..backend.service.port.number"
+
+  - it: routes the same way under values-k3d.yaml
+    values:
+      - ../values-k3d.yaml
+    documentSelector:
+      path: kind
+      value: Ingress
+      matchMany: true
+    asserts:
+      - matchRegex:
+          path: "$..http.paths[*].path"
+          pattern: "^(/api|/)$"
+      - matchRegex:
+          path: "$..backend.service.name"
+          pattern: "^RELEASE-NAME-event-junkie-(bff|frontend)$"
+      - equal:
+          path: "$..backend.service.port.name"
+          value: http
+
+  # --- noindex is a two-part mechanism, and half of it is silent -------------------------------
+  #
+  # The header needs both a Middleware and an Ingress annotation naming it. Render only the
+  # Middleware and every response is missing the header while the manifest looks entirely correct;
+  # render only the annotation and Traefik drops the route with a middleware-not-found error. The
+  # first failure mode is the dangerous one — a staging environment that believes it is noindexed.
+  #
+  # The script asserted this as an equality between two counts, because that was the only way to
+  # make one yq pass check both directions. Two tests say it directly: production renders neither
+  # half, and that is as much the invariant as staging rendering both.
+  - it: renders neither half of noindex when it is off, as production has it
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+      ingress.noindex: false
+    templates:
+      - noindex-middleware.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: names no noindex middleware on the ingress when it is off
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+      ingress.noindex: false
+    templates:
+      - ingress.yaml
+    asserts:
+      - notMatchRegex:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          pattern: "-noindex@kubernetescrd"
+
+  - it: renders both halves of noindex when it is on, as staging has it
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+      ingress.noindex: true
+    templates:
+      - noindex-middleware.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-event-junkie-noindex
+      # Never an empty header: a Middleware that sets `X-Robots-Tag: ""` renders, installs, reports
+      # healthy and indexes the environment.
+      - equal:
+          path: spec.headers.customResponseHeaders["X-Robots-Tag"]
+          value: "noindex, nofollow"
+
+  - it: names the noindex middleware on the ingress when it is on
+    set:
+      database.host: "10.0.1.2"
+      database.existingSecret: "events-db"
+      ingress.noindex: true
+    templates:
+      - ingress.yaml
+    asserts:
+      - matchRegex:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          pattern: "^NAMESPACE-RELEASE-NAME-event-junkie-noindex@kubernetescrd$"

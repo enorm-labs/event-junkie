@@ -3,7 +3,7 @@
 # **SUSPENDED, AND IT MUST STAY THAT WAY UNTIL PRODUCTION EXISTS.** #424 has not been applied: there
 # is no production cluster, no database, and therefore no address to point this at. The file is here
 # because production's *version policy* is half of what #414 is about, and because
-# `render-assertions.sh` should gate it from the day it is written rather than the day it is first
+# `scripts/cluster-assertions.sh` should gate it from the day it is written rather than the day it is first
 # used. `suspend: true` is what makes that safe — Flux will not reconcile this object at all, so a
 # bootstrap against a real cluster cannot deploy a half-configured release by accident.
 #

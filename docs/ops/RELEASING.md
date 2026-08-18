@@ -91,8 +91,8 @@ gradle.properties  0.1.1-SNAPSHOT
 ```
 
 **That fallback is the mechanism, and it is one line from being defeated.** A published values file — or a `HelmRelease` — that pins `<component>.image.tag`
-opts that component out silently: the render still looks correct, with a plausible tag on every image, while one workload runs a version nobody chose.
-`render-assertions.sh` fails the build on it.
+opts that component out silently: the render still looks correct, with a plausible tag on every image, while one workload runs a version nobody chose. The
+chart's `tests/invariants_test.yaml` fails the build on the values file; `scripts/cluster-assertions.sh` fails it on a `HelmRelease`.
 
 ## The two version policies
 
@@ -182,7 +182,7 @@ This document is about what happens on every commit afterwards.
 
 The one property worth carrying across, because it constrains the chart rather than the runbook: **order is enforced, not assumed.** The chart renders a
 `cert-manager.io/v1` ClusterIssuer, and the API server rejects unknown kinds — so without cert-manager the whole application release fails, workloads included.
-`dependsOn` is what orders it; `render-assertions.sh` fails the build if a release that creates an issuer stops declaring one.
+`dependsOn` is what orders it; `scripts/cluster-assertions.sh` fails the build if a release that creates an issuer stops declaring one.
 
 ## What is not automated, and why
 

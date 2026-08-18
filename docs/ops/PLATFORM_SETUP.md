@@ -977,7 +977,7 @@ Everything below the cloud layer can be exercised without spending money, which 
   `deploy/charts/event-junkie/values-k3d.yaml` exists for this and was written blind: it is there so #263 starts from something rather than a blank page, not
   because it is known to be correct.
 - **What the chart's own gate does and does not prove.** `helm lint --strict`, `helm template`, `flux schema validate` against the Kubernetes and CRD schemas, and
-  `deploy/scripts/render-assertions.sh` all run in CI on every change to `deploy/`, and all four are pure functions of the working tree. They prove the chart
+  `helm unittest` with `scripts/cluster-assertions.sh` all run in CI on every change to `deploy/`, and all four are pure functions of the working tree. They prove the chart
   parses, matches the API schemas, and does not do a specific list of wrong things — no ingress path reaching the importer or `/actuator`, no floating image
   tag, no selector carrying a label that changes between releases, no hardcoded namespace. They prove **nothing** about whether a pod starts, a probe passes or
   a connection string resolves. The assertions exist because `lint` and schema validation both pass on a chart that is well-formed and wrong, and because the

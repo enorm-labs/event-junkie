@@ -3,8 +3,9 @@
 # `spec.values` IS THE STAGING CONFIGURATION — there is no `values-staging.yaml` any more (#414).
 # A HelmRelease cannot read a file from the repository, so keeping both would mean two copies that
 # must agree with nothing checking that they do, which is how an environment quietly drifts.
-# `deploy/scripts/render-assertions.sh` now extracts these values and renders the chart with them, so
-# the assertions gate exactly what Flux deploys rather than a file nothing deploys.
+# `scripts/cluster-assertions.sh` extracts these values and re-runs the chart's helm-unittest
+# invariant suites against them, so the assertions gate exactly what Flux deploys rather than a file
+# nothing deploys.
 #
 # The chart's own `values.yaml` still holds every default and every comment; only the overrides live
 # here.
