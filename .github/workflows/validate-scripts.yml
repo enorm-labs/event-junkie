@@ -12,10 +12,10 @@ name: Validate Scripts
 # happened to have the hook installed" stopped being comfortable.
 #
 # **`scripts/cluster-assertions.sh`, `scripts/k3d-rehearsal.sh`, `scripts/version.sh` and
-# `scripts/version-test.sh` are linted twice** — here, and in validate-chart.yml's "ShellCheck deploy
-# scripts" job. That is deliberate rather than an oversight to tidy up. They belong to the deploy
-# story, so a chart change should lint them; they also live in `scripts/`, so a scripts change
-# should. Both jobs take seconds, and the alternative — narrowing one side — trades that for a
+# `scripts/version-test.sh` are linted twice** — here, and in validate-chart.yml's "ShellCheck
+# deploy-story scripts" job. That is deliberate rather than an oversight to tidy up. They belong to
+# the deploy story, so a chart change should lint them; they also live in `scripts/`, so a scripts
+# change should. Both jobs take seconds, and the alternative — narrowing one side — trades that for a
 # coverage hole that only opens when the other workflow's path filter misses.
 #
 # The overlap also carries more weight than it reads. **This job is not on the `main` ruleset's

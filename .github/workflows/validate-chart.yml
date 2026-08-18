@@ -211,14 +211,19 @@ jobs:
       - name: Assert on the cluster configurations
         run: scripts/cluster-assertions.sh "$CHART"
 
-  # The job name is **`ShellCheck deploy scripts`** and it is load-bearing: it is a required status
-  # check on the `main` ruleset, and a required check that never runs stays Pending forever rather
-  # than failing — which deadlocks every pull request instead of one. #430 deleted this job on the
-  # reasoning that `deploy/scripts/` no longer exists, and that was wrong twice over: the deadlock,
-  # and the premise. The script did not vanish, it moved. Renaming the job means editing the ruleset
-  # in the same change, so leave the name alone unless you are doing both.
+  # The job name is **`ShellCheck deploy-story scripts`** and it is load-bearing: it is a required
+  # status check on the `main` ruleset, and a required check that never runs stays Pending forever
+  # rather than failing — which deadlocks every pull request instead of one. #430 deleted this job
+  # on the reasoning that `deploy/scripts/` no longer exists, and that was wrong twice over: the
+  # deadlock, and the premise. The script did not vanish, it moved.
+  #
+  # It was `ShellCheck deploy scripts` until #430 renamed it, because that name read as
+  # `deploy/scripts/` — a directory that no longer exists — while every file it lints is under
+  # `scripts/`. The rename and the ruleset edit were one change, and that is the rule: **the name
+  # here and the context in the ruleset are one string in two places.** Change one without the
+  # other and pull requests stop being mergeable rather than start failing.
   shellcheck:
-    name: ShellCheck deploy scripts
+    name: ShellCheck deploy-story scripts
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
