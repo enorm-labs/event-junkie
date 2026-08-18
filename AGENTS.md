@@ -677,6 +677,18 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     - `dependency-submission.yml` — Submits Gradle dependency graph to GitHub on `main` push (for Dependabot alerts/security).
     - `dependency-check-scheduled.yml` — The authoritative nightly OWASP Dependency-Check on `main`. Owns the shared NVD cache that the informational PR scan in
       `build-backend.yml` restores.
+    - `image-scan-scheduled.yml` — The nightly Trivy scan of the images that are **deployed**, which is the half `release.yml`'s publish-time gate structurally
+      cannot do: a CVE disclosed against an already-running image triggers no build, so that gate is silent exactly when the risk is newest. Same split as the
+      two Dependency-Check workflows above. Three things about it are decisions rather than defaults. **It scans a published tag, not a rebuild of `main`** —
+      `scripts/deployed-versions.sh` reproduces Flux's own selection, so the target cannot drift from what is deployed and production starts being scanned by
+      itself the day it has a release. **It scans arm64 as well as amd64**, which `release.yml` cannot (a multi-platform image cannot be loaded into a local
+      daemon before it is pushed) and which matters because arm64 is what the Hetzner nodes run. **Its thresholds match `release.yml`'s exactly**
+      (`CRITICAL,HIGH`, `--ignore-unfixed`) so that a finding here which the publish gate did not raise means the advisory is new rather than the scanner
+      different. It asserts a non-zero package count per image, because a scan that enumerates nothing reports as clean — the `Dependencies Scanned: 0` lesson,
+      one surface over. **The fix for a red run is to cut a release**, not to re-run the job: these images are immutable and already deployed.
+    - `restore-drill-reminder.yml` — Opens the quarterly PostgreSQL restore drill as an assigned issue, and again on any push to `main` touching `backups.sh` or
+      `postgres.sh`. Documented as quarterly is not a schedule; this is what makes a skipped quarter visible as an open card rather than as nothing at all.
+      Idempotent by listing open issues rather than searching (the search index is eventually consistent). See `docs/ops/BACKUPS.md` §9.
     - `label-pr.yml` — Derives labels from the Conventional Commits PR title (`feat(scraper): …` → `feat` + `importer`, `fix(api)!: …` → `fix` +
       `breaking-change`) via `actions/github-script`. Creates any missing label on demand and re-syncs when the title is edited. Uses `pull_request_target` so
       fork PRs get a writable token; safe because it never checks out or runs PR code.
@@ -791,7 +803,9 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       into a failing build. **When bumping a base image, check the branch is still being rebuilt**, not just that a newer tag exists: `nginx 1.29` was a
       superseded mainline branch and had been shipping three-month-old Alpine packages.
     - **What no ecosystem covers: a tool version pinned as a plain string.** `HELM_VERSION` and `KUBECONFORM_VERSION` in `validate-chart.yml`, `HELM_VERSION`
-      and `TRIVY_VERSION` in `release.yml`, and gitleaks' `rev:` in `.pre-commit-config.yaml` belong to no Dependabot ecosystem — `github-actions` updates
+      and `TRIVY_VERSION` in `release.yml` **and in `image-scan-scheduled.yml`** (both pairs must move together — the two Trivy pins in particular, since the
+      whole point of the scheduled scan is that its findings are comparable with the publish gate's), and gitleaks' `rev:` in `.pre-commit-config.yaml` belong
+      to no Dependabot ecosystem — `github-actions` updates
       `uses: azure/setup-helm@v5` and has nothing to say about the `version:` handed to it. They rot silently, and a scanner a year behind still reports
       success. `/update-dependencies` step 12 sweeps them. **`HELM_VERSION` is deliberately held at 3.x** — Flux's helm-controller embeds the Helm 3 SDK, so
       that pin is a constraint, not a lag.
@@ -895,6 +909,8 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | CI: dependency review (PR)             | `.github/workflows/dependency-review.yml`                                                                   |
 | CI: dependency graph submission        | `.github/workflows/dependency-submission.yml`                                                               |
 | CI: nightly OWASP scan                 | `.github/workflows/dependency-check-scheduled.yml`                                                          |
+| CI: nightly scan of deployed images    | `.github/workflows/image-scan-scheduled.yml` — a published tag, both arches; thresholds match release.yml   |
+| CI: quarterly restore-drill reminder   | `.github/workflows/restore-drill-reminder.yml` — opens the drill as an assigned issue                       |
 | CI: PR labelling                       | `.github/workflows/label-pr.yml`                                                                            |
 | CI: OpenTofu fmt/validate + ShellCheck | `.github/workflows/validate-infra.yml`                                                                      |
 | CI: workflow lint + security audit     | `.github/workflows/validate-workflows.yml`; suppressions in `zizmor.yml`                                    |
@@ -906,6 +922,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Markdown formatting                    | `scripts/format-markdown.sh` + `.oxfmtrc.json` — Markdown only, and the scope is load-bearing               |
 | Trivy waivers                          | `.trivyignore` — empty on purpose; an entry needs a reason and a date                                       |
 | Chart and images agree about the UID   | `scripts/uid-consistency.sh` — reads the three Dockerfiles' `USER` and the chart; enforces the >10000 floor |
+| What each cluster would deploy         | `scripts/deployed-versions.sh` — reproduces Flux's selection; no cluster and no credential needed           |
 | Infrastructure as code (OpenTofu)      | `infra/` — read `infra/AGENTS.md` first; `bootstrap/` is applied, `environments/` is not                    |
 | Cloud-init for the Hetzner nodes       | `infra/modules/environment/cloud-init/`                                                                     |
 | Helm chart (bff · importer · frontend) | `deploy/charts/event-junkie/` — read `deploy/AGENTS.md` first; exercised on k3d, never on a real cluster    |
