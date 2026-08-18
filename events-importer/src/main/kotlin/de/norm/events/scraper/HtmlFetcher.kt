@@ -230,6 +230,12 @@ sealed interface FetchResult {
  * recorded as a failure on the event source.
  */
 class HttpFetchException(
-    statusCode: Int,
+    /**
+     * Kept as a property rather than only being formatted into the message (#415): the metric tag
+     * `importer.scrape.failures{reason}` has to tell a 403 from a 500 from a parse failure, and
+     * re-extracting a number from a human-readable string to do that is the kind of parsing that
+     * breaks the next time someone improves the wording.
+     */
+    val statusCode: Int,
     url: String
 ) : RuntimeException("HTTP $statusCode when fetching $url")

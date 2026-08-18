@@ -15,3 +15,17 @@ spring:
     enabled: true
     schemas: events
     create-schemas: true
+
+# Mirrors the main application.yaml's exposure list, and has to (#415).
+#
+# **This file shadows the main one rather than merging with it**, which is what the header above
+# means in practice for anything actuator-related: with the list absent here, Spring falls back to
+# its default of `health` only, and `/actuator/prometheus` 404s in tests while working perfectly in
+# production. The consequence worth knowing: a test cannot catch a typo in the *main* file's list,
+# because it never reads it. `MetricsExposureConfigTest` asserts that file directly for exactly that
+# reason.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus

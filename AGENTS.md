@@ -124,7 +124,22 @@ subprojects sharing a root `settings.gradle.kts`, plus a standalone frontend pro
       type leaves the frontend type-checking against an API that no longer exists. With the BFF running: `cd events-frontend && npm run generate:api`. Details
       and failure modes in [events-frontend/AGENTS.md](events-frontend/AGENTS.md) §API Communication.
 - **Jackson 3.x** (`tools.jackson.module:jackson-module-kotlin`) is used for JSON serialization.
-- **Spring Boot Actuator** is included in both BFF and importer for health checks and monitoring.
+- **Spring Boot Actuator** is included in both BFF and importer for health checks and monitoring, and since #415 both also carry
+  **`micrometer-registry-prometheus`** and expose `health,info,prometheus`. Four things about the instrumentation are decisions rather than defaults, and each
+  is the kind that fails silently if reversed:
+    - **Meter names are an interface.** The dashboards and alert rules in [docs/ops/PLATFORM_SETUP.md](docs/ops/PLATFORM_SETUP.md) §7 are written against the
+      exact strings in `ImporterMetrics` and `BffMetrics`, and nothing checks that the two agree — so a rename that looks like a tidy-up is a dead panel. The
+      tests assert the strings literally rather than referring to the constants, deliberately, since referring to them would pass through any rename.
+    - **Tag values are constants, never derived from a venue's page.** Prometheus creates one time series per distinct tag combination, so a tag fed by free
+      text is unbounded; `scrapeFailureReason()` exists to enforce that and has a test asserting no exception message ever reaches a tag.
+    - **Gauges are refreshed on a schedule, not by a supplier.** Micrometer reads a gauge synchronously at scrape time, and every query here suspends — a
+      supplier that asked the database would block a Netty event-loop thread. `MetricsRefreshService` writes into atomics that the gauges read; the cost is that
+      they are as stale as `app.metrics.refresh-interval-ms` (60s).
+    - **`@AutoConfigureMetrics` is required on any Spring test that hits `/actuator/prometheus`.** Boot forces
+      `management.defaults.metrics.export.enabled` to false in tests, and without the annotation the endpoint 404s in a way that reads exactly like a wrong
+      exposure list. Note also that `src/test/resources/application.yaml` **shadows** the main file in both modules, so an actuator property has to be repeated
+      there — `MetricsExposureConfigTest` asserts the two lists match, because a test config that quietly differs from the shipped one is how a test starts
+      lying.
 - **Logging**: Both apps use [kotlin-logging](https://github.com/oshai/kotlin-logging) (`io.github.oshai:kotlin-logging-jvm`) as an idiomatic SLF4J wrapper.
   Declare loggers as: `private val logger = KotlinLogging.logger {}`. Use lambda syntax for lazy evaluation: `logger.info { "msg $var" }`. The BFF registers a
   `RequestLoggingFilter` (`WebFilter`, `HIGHEST_PRECEDENCE`) that emits one INFO access-log line per request (`GET /venues?q=astra -> 200 (12ms)`); WebFlux does

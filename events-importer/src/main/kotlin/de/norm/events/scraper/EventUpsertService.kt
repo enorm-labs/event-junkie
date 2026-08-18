@@ -54,20 +54,20 @@ class EventUpsertService(
      * @param venueId the database ID of the venue these events belong to.
      * @param venueSlug the URL-friendly slug of the venue, included in event slugs for cross-venue uniqueness.
      * @param eventSourceId the database ID of the [EventSourceEntity] that owns these events.
-     * @return the number of events upserted after deduplication.
+     * @return what the upsert did, split by operation. [UpsertOutcome.total] is the count callers
+     *   previously received, so the source's `lastEventCount` is unchanged by the split.
      */
     suspend fun upsertAndCleanup(
         scrapedEvents: List<ScrapedEvent>,
         venueId: Long,
         venueSlug: String,
         eventSourceId: Long
-    ): Int {
+    ): UpsertOutcome {
         val upcomingEvents = dropPastEvents(scrapedEvents, eventSourceId)
         val uniqueEvents = deduplicateScrapedEvents(upcomingEvents)
         // Cleanup runs BEFORE the upsert, and the order is load-bearing — see the KDoc note.
         removeStaleEvents(uniqueEvents, eventSourceId)
-        val upserted = upsertEvents(uniqueEvents, venueId, venueSlug, eventSourceId)
-        return upserted.size
+        return upsertEvents(uniqueEvents, venueId, venueSlug, eventSourceId)
     }
 
     /**
@@ -113,14 +113,16 @@ class EventUpsertService(
      * `updated_at` timestamps. New events are always inserted. Artist and
      * promoter associations are resolved and synced by [AssociationSyncService].
      *
-     * @return the full list of event entities (saved + unchanged).
+     * @return what happened, split into inserted / updated / skipped. The split is not extra work:
+     *   the insert-vs-update distinction was already being computed for the debug log below, and
+     *   `skipped` is exactly the `unchanged` partition change detection already produces (#415).
      */
     private suspend fun upsertEvents(
         scrapedEvents: List<ScrapedEvent>,
         venueId: Long,
         venueSlug: String,
         eventSourceId: Long
-    ): List<EventEntity> {
+    ): UpsertOutcome {
         val existingBySourceId =
             eventRepository
                 .findBySourceIdIn(scrapedEvents.map { it.sourceId })
@@ -153,11 +155,14 @@ class EventUpsertService(
         associationSyncService.resolveAndSyncAssociations(savedEvents, scrapedEvents)
 
         // 3. Log upsert results (only for changed/new events — unchanged ones are already logged in partitionByChanged)
+        //    and count the same distinction for `importer.events.written{operation}` while it is in hand.
+        var inserted = 0
         changed.forEach { saved ->
-            val action = if (existingBySourceId.containsKey(saved.sourceId)) "Updated" else "Created"
-            logger.debug { "$action event '${saved.title}' (sourceId=${saved.sourceId}, id=${saved.id})" }
+            val existed = existingBySourceId.containsKey(saved.sourceId)
+            if (!existed) inserted++
+            logger.debug { "${if (existed) "Updated" else "Created"} event '${saved.title}' (sourceId=${saved.sourceId}, id=${saved.id})" }
         }
-        return savedEvents
+        return UpsertOutcome(inserted = inserted, updated = changed.size - inserted, skipped = unchanged.size)
     }
 
     /**
@@ -338,4 +343,31 @@ class EventUpsertService(
         /** `20:00` → `2000`: colon-free so it survives slugification as one token, not two. */
         val SLUG_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
     }
+}
+
+/**
+ * What one source's upsert did to the database, split the way `importer.events.written` is tagged.
+ *
+ * It exists because the count alone cannot answer the question the metric is for. "42 events" is the
+ * same number whether the venue published a fresh programme or nothing changed at all — and telling
+ * those apart is the difference between a working importer and one that has been silently scraping a
+ * redesigned page for a fortnight (#415, ADR-015). `skipped` is therefore a *result*, not noise: it
+ * is change detection reporting that it worked.
+ */
+data class UpsertOutcome(
+    /** Events that did not exist and were written. */
+    val inserted: Int,
+    /** Events that existed and whose content had changed. */
+    val updated: Int,
+    /** Events that existed and were byte-identical, so no UPDATE was issued. */
+    val skipped: Int
+) {
+    /**
+     * Every event the run touched.
+     *
+     * This is what `upsertAndCleanup` returned before the split, and it is what still reaches
+     * `event_source.last_event_count` — so the source's recorded count means exactly what it always
+     * did.
+     */
+    val total: Int get() = inserted + updated + skipped
 }

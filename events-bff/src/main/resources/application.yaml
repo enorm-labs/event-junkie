@@ -16,7 +16,11 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        # `prometheus` joins health and info here, and this is safe *because of where the endpoint
+        # lives, not because of what it contains*: the chart moves the whole management port off the
+        # application port (bff.service.managementPort) and no Ingress routes it, so /actuator/** —
+        # including this — is unreachable from outside the cluster. See PLATFORM_SETUP.md §7.
+        include: health,info,prometheus
   info:
     build:
       # Reads META-INF/build-info.properties, stamped by the `bootBuildInfo` task.
