@@ -60,7 +60,13 @@ concurrency:
 
 jobs:
   analyze:
-    name: Analyze
+    # Named explicitly, and it is not cosmetic: without this the check context is composed from
+    # *every* matrix value, giving `Analyze (actions, none)` — so `build-mode` would leak into the
+    # ruleset's required-checks list, and changing a language's build mode would silently rename a
+    # required check and deadlock every pull request. Naming it by language alone also makes these
+    # contexts identical to the ones default setup produced, so the ruleset entry is the same string
+    # it would have been.
+    name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
     # java-kotlin builds the whole backend, which is the long pole. The rest finish in about a
     # minute. Generous enough that a cold Gradle cache is not a failure, tight enough that a hung
