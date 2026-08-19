@@ -48,6 +48,45 @@ than only in a pull request:**
   to be re-checked once it is deployed rather than assumed**, and criterion 2 is not truly settled
   until it is.
 
+**Updated 2026-08-20 — the full metrics path, measured.** The collector was deployed and the gap above closed:
+
+| Component                             | Resident  |
+| ------------------------------------- | --------- |
+| OpenObserve standalone                | 634Mi     |
+| Collector gateway                     | 140Mi     |
+| Collector agents (DaemonSet, 2 nodes) | 129Mi     |
+| OTel operator                         | 35Mi      |
+| **Total**                             | **938Mi** |
+
+**Criterion 2 still passes, at 63% of the budget rather than 21%.** That is the honest number for the
+deployed shape, and it is the one to hold future changes against — on a node also running two JVMs
+the margin is real but no longer generous. Criterion 4 is answered too: the importer's meters
+(`importer_run_outcome_total`, `importer_source_last_success`, `importer_source_field_coverage` and
+the rest) reach OpenObserve once the path is open.
+
+**Three things the collector rehearsal established, none of which `helm template` could have shown:**
+
+- **The scrape annotations are necessary and not sufficient.** The collector discovered both pods
+  correctly and every scrape was refused: the chart's default-deny NetworkPolicy has no ingress rule
+  for the management port. It presents as `connection refused` rather than a timeout, because k3s's
+  policy controller REJECTs — so it does not look like a firewall. The chart now ships
+  `-allow-metrics-scrape`.
+- **`-allow-scraping` is a false friend.** It governs the _importer scraping venue websites_
+  (egress). The metrics rule is the opposite direction. Confusing the two costs an afternoon.
+- **A Micrometer counter that has never fired is absent from `/actuator/prometheus`.** Before the
+  first import only `db_events` and `importer_source_running` existed. **Criterion 1's alert —
+  "source X has imported 0 events for 3 consecutive runs" — cannot be written against a series that
+  does not exist until the first success**, so it has to be expressed over the run-outcome counter or
+  over `importer_source_last_success` ageing, not over a missing series. That is a constraint on the
+  alert rather than a defect.
+
+**One finding whose scope is uncertain, recorded rather than generalised:** the `namespaceSelector`
+form of the allow rule was silently refused when collector and target sat on **different k3d nodes**
+— cross-node pod traffic is SNAT'd, so the source address matches no selector and only a CIDR does.
+ADR-012 puts everything on a single node, where that never arises, so this is very likely a k3d
+artifact. The chart defaults to the tight selector form and carries an `ipBlock` switch so that
+being wrong is a values change rather than an investigation.
+
 **What the measurement does not cover, stated so it is not read as more than it is:** k3d on arm64,
 not the Hetzner x86 node; 100,000 synthetic records is a burst rather than the fortnight this section
 asks for, so "sustained" is only partly exercised; and local disk throughout, with no S3 backend

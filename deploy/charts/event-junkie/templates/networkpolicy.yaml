@@ -261,4 +261,47 @@ spec:
         - protocol: TCP
           port: {{ .Values.frontend.service.port }}
 {{- end }}
+{{- if $np.metricsScrape.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-allow-metrics-scrape" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" (dict "ctx" $ "component" "networkpolicy") | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      Lets a metrics collector reach the management port. Without this the meters are exposed, the pods are annotated, the collector finds them, and every
+      scrape is refused — the state this chart was in until #271 ran it. Note that `-allow-scraping` is the opposite direction: the importer scraping venue
+      websites.
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: In
+        values:
+          - bff
+          - importer
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        {{- if eq $np.metricsScrape.mode "ipBlock" }}
+        {{- /* Opens the management port to every pod in the cluster. Only for the cross-node case
+               described in values.yaml — a selector cannot match SNAT'd traffic. */}}
+        - ipBlock:
+            cidr: {{ $np.metricsScrape.cidr | required "networkPolicy.metricsScrape.cidr is required when mode is ipBlock" }}
+        {{- else }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $np.metricsScrape.namespace }}
+        {{- end }}
+      ports:
+        {{- /* The management port only. The application ports are reached through the Ingress and
+               have their own rule; a collector has no business on them. */}}
+        - protocol: TCP
+          port: {{ .Values.bff.service.managementPort }}
+        - protocol: TCP
+          port: {{ .Values.importer.service.managementPort }}
+{{- end }}
 {{- end }}

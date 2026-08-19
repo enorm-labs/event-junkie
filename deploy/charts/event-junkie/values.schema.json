@@ -361,7 +361,8 @@
         "enabled",
         "dns",
         "ingressController",
-        "scrapeEgress"
+        "scrapeEgress",
+        "metricsScrape"
       ],
       "properties": {
         "enabled": {
@@ -397,6 +398,33 @@
             "podSelector": {
               "type": "object",
               "minProperties": 1
+            }
+          }
+        },
+        "metricsScrape": {
+          "type": "object",
+          "required": [
+            "enabled",
+            "namespace",
+            "mode"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "namespace": {
+              "type": "string",
+              "minLength": 1
+            },
+            "mode": {
+              "enum": [
+                "namespaceSelector",
+                "ipBlock"
+              ]
+            },
+            "cidr": {
+              "type": "string",
+              "minLength": 1
             }
           }
         },
