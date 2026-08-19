@@ -1,0 +1,21 @@
+# SOPS encryption rules — #416 item 8.
+#
+# One recipient, one rule. The private half never enters this repository: it lives in the
+# operator's password manager and, per cluster, in a `sops-age` Secret that Flux reads
+# (docs/ops/SECRETS.md).
+#
+# `encrypted_regex` is the load-bearing line. Encrypting ONLY the value fields leaves `kind`,
+# `metadata` and `namespace` in plaintext, which is what keeps an encrypted secret reviewable in a
+# diff and readable by `flux schema validate` — `validate-chart.yml` already depends on that and
+# says so. Encrypting the whole document would turn every secret into an opaque blob that no gate
+# in this repository can check.
+#
+# THE CIPHERTEXT IS PUBLIC AND PERMANENT. This repository is public, so anything encrypted here is
+# world-readable forever — git history is forkable and archived, and rotating a value later changes
+# the future, not the past. That is an acceptable trade for a database password reachable only
+# through the private network; it is NOT the trade taken for the `hetzner` token, which stays
+# hand-made. docs/ops/SECRETS.md has the per-secret reasoning.
+creation_rules:
+  - path_regex: deploy/clusters/.*/secrets/.*\.yaml$
+    encrypted_regex: ^(data|stringData)$
+    age: age15ngml2xyqzg8kltjzytsufgqj8wl5rz5r3zs4p90jdcsy74srfesj74nnt

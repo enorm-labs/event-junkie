@@ -131,9 +131,17 @@ PGPASS="$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 40)"    # generate
 printf "CREATE ROLE events WITH LOGIN PASSWORD '%s';\nCREATE DATABASE events OWNER events;\n" "$PGPASS" \
   | ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 'sudo -u postgres psql -v ON_ERROR_STOP=1'
 
+# The `events-db` Secret is NOT created here any more: it is committed encrypted and Flux
+# decrypts it (SECRETS.md). That inverts this step — the git copy is the source of truth, so an
+# EXISTING environment's role password must MATCH it rather than be freshly generated:
+#
+#   PGPASS="$(sops --decrypt deploy/clusters/staging/secrets/events-db.yaml \
+#              | yq '.data.password' | base64 -d)"
+#
+# Use the generated value above only for a genuinely new environment, and encrypt it into git in
+# the same sitting. A role and a Secret that disagree is a CrashLoopBackOff whose cause is two
+# files apart.
 kubectl --context event-junkie-staging create namespace event-junkie
-kubectl --context event-junkie-staging create secret generic events-db -n event-junkie \
-  --from-literal=username=events --from-literal=password="$PGPASS"
 
 # staging only — production solves HTTP-01 and holds no Hetzner token at all.
 # In `cert-manager`, NOT the release namespace: a ClusterIssuer resolves secret refs there.
@@ -150,7 +158,7 @@ printf '%s\n' "$PGPASS" | ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 \
 unset PGPASS                                                          # expect: events|events
 ```
 
-Both secrets are the last hand-made objects in the system; [#416](https://github.com/enorm-labs/event-junkie/issues/416) replaces them with SOPS — [SECRETS.md](SECRETS.md) is the procedure, including the one of the two that probably should **not** be encrypted into a public repository.
+`events-db` is now committed encrypted and restored by Flux ([SECRETS.md](SECRETS.md)), so only one hand-made object is left. **`hetzner` stays that way deliberately**: it is read+write on the whole Hetzner account, this repository is public, and encrypting it would publish its ciphertext permanently — for a staging-only token that takes two minutes to recreate and that production does not need at all, since production solves ACME by HTTP-01.
 
 ## 8b · The backup credential — _the node is not backing anything up until you do this_
 
