@@ -931,14 +931,24 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 
 Learned the expensive way during the TODO.md → Issues migration (2026-08-09). Each of these looks like a bug in your script the first time you hit it.
 
-- **Fork pull requests work, and the property that makes them work is fragile** (#479, reviewed 2026-08-19). All nine required checks declare only
-  `contents: read` and consume no secret, so a fork's read-only `GITHUB_TOKEN` runs every one of them — there is no required-but-skipped check, which is the
-  failure mode that would make a pull request unmergeable forever and look like a broken repository to a first-time contributor. **Adding a secret or a
-  `write` permission to any of those nine breaks the fork path**, and it breaks it invisibly, because nobody here opens pull requests from forks.
+- **Fork pull requests work, and the property that makes them work is fragile** (#479, first one actually opened 2026-08-19 — enorm-labs/event-junkie#579).
+  All nine required checks declare only `contents: read` and consume no secret, so a fork's read-only `GITHUB_TOKEN` runs every one of them — there is no
+  required-but-skipped check, which is the failure mode that would make a pull request unmergeable forever and look like a broken repository to a first-time
+  contributor. **Adding a secret or a `write` permission to any of those nine breaks the fork path**, and it breaks it invisibly, because pull requests from
+  forks are rare enough here that nothing routinely exercises it.
 
-    Two steps are guarded on `github.event.pull_request.head.repo.fork != true` rather than left to fail: `release.yml`'s SARIF uploads, and
-    `build-backend.yml`'s coverage comment. The comment cannot work with a read-only token however it is written, and the cost of skipping it is named in the
-    file — its `min-coverage-changed-files` gate is unique to that step and does not run on the fork path.
+    **Every step that writes to GitHub is guarded on `github.event.pull_request.head.repo.fork != true`** rather than left to fail — the coverage comment and
+    the three detekt SARIF uploads in `build-backend.yml`, the OWASP SARIF upload in the same file, and the SARIF uploads in `release.yml` and
+    `image-scan-scheduled.yml`. None of them can work with a read-only token however they are written; unguarded, the API answers `403` and the step fails, so
+    the guard is what keeps a fork pull request from going red for a reason its author did not cause. **Add the guard to any new step that posts a comment or
+    uploads SARIF**, in the same change that adds the step.
+
+    The cost is named in the workflow rather than left to be discovered: on the fork path `min-coverage-changed-files` does not run and detekt findings do not
+    reach Code Scanning, so both are a review responsibility. The checks themselves still run and still fail the build.
+
+    **One secret is referenced on the pull-request path**, contrary to what this file and #479 both said until 2026-08-19: `build-backend.yml` passes
+    `NVD_API_KEY` to the OWASP job, and that workflow runs on `pull_request`. It is empty on a fork run, the scan is `continue-on-error`, and nothing fails —
+    but "no pull request reaches a secret" is not the invariant; "no pull request _depends_ on one" is.
 
     `label-pr.yml` is the one workflow using `pull_request_target`, and it is safe **only** because it never checks out or runs pull-request code. The file
     opens with a banner saying so, because that property is one innocuous-looking `actions/checkout` away from being an arbitrary-code-execution path holding

@@ -94,7 +94,7 @@ Two things behave differently on a fork, and neither means anything is wrong:
   fork's `GITHUB_TOKEN` is read-only, so nothing can post a comment and nothing can write to Code
   Scanning. Every one of those steps is skipped rather than failed, which is deliberate — an
   unguarded upload would answer `403` and turn your pull request red for something you did not
-  cause. Both checks still *run*: `./gradlew build` runs `koverVerify` and detekt still fails the
+  cause. Both checks still _run_: `./gradlew build` runs `koverVerify` and detekt still fails the
   build on a violation. What is lost is the reporting, so the per-changed-file coverage threshold
   and the detekt annotations are a review matter on this path.
 - **`Build & Test` is not a required check**, for anyone. It costs about sixteen minutes across
