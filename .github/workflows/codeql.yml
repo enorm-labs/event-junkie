@@ -1,0 +1,133 @@
+name: CodeQL
+
+# CodeQL as a workflow rather than as GitHub's "default setup", because default setup does not run
+# for a pull request from a fork — and `CodeQL` is a required check on the `main` ruleset, so a
+# check that never reports leaves the pull request `Pending` forever (#479).
+#
+# Measured rather than assumed, on 2026-08-19, by opening the repository's first fork pull request
+# (#579) and comparing what ran:
+#
+#     same-repo (#578)    PR #578 · Code Quality: PR #578        event: dynamic
+#     fork      (#579)    — nothing —
+#
+# Every other required check passed from the fork. This one produced no run at all, which is exactly
+# the deadlock the required-checks work (#443) warned about and could not see, because until #579
+# nobody had ever opened a pull request from a fork.
+#
+# ## The property that makes this work on the fork path
+#
+# A fork's `GITHUB_TOKEN` is read-only, so `security-events: write` is never granted and the upload
+# to Code Scanning would fail with 403 — turning the check red instead of Pending, which is not an
+# improvement. `analyze` therefore takes `upload: never` on that path: the analysis still runs, the
+# job still reports, and the required check is satisfied by real work rather than by a stub.
+#
+# **The cost, stated rather than discovered:** on a fork pull request CodeQL findings do not reach
+# the Security tab, so they are a review responsibility — the same trade `build-backend.yml` already
+# makes for detekt and for the coverage comment. The analysis is not skipped; only its reporting is.
+#
+# ## Two things to keep true
+#
+# - **Never add a `paths:` filter to the `pull_request` trigger.** These checks are required, and a
+#   required check that is skipped by path filtering stays Pending forever. Same reason
+#   validate-workflows.yml, validate-chart.yml and validate-infra.yml carry the same warning.
+# - **The matrix defines the check contexts.** Each language produces its own `Analyze (<language>)`
+#   context, and the ruleset names each one exactly — so adding a language here creates a check that
+#   is *not* required, and removing one leaves a required check that never reports. Change the
+#   ruleset in the same pull request, exactly as `validate-infra.yml`'s stack matrix requires.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    # No `paths:` filter, deliberately — see the header. A required check that never runs is worse
+    # than one that runs unnecessarily.
+  schedule:
+    # Weekly, matching what default setup was configured to do, and off-the-hour for the reason every
+    # other scheduled workflow here gives: the top of the hour is a stampede on shared runners.
+    # The scheduled run is the one that catches a new query finding an old bug — no push required.
+    - cron: '29 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # A second push supersedes the first: CodeQL is the longest check on the pull request path and
+  # there is no value in finishing an analysis of a commit nobody will merge.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    # java-kotlin builds the whole backend, which is the long pole. The rest finish in about a
+    # minute. Generous enough that a cold Gradle cache is not a failure, tight enough that a hung
+    # analysis does not hold a pull request for six hours.
+    timeout-minutes: 60
+
+    permissions:
+      contents: read
+      # Reading the Actions API for the analysis metadata.
+      actions: read
+      # Writing the results to Code Scanning. **Not granted on a fork pull request** — that is not a
+      # misconfiguration, it is GitHub's model, and `upload:` below is what accommodates it.
+      security-events: write
+
+    strategy:
+      # One language's failure should not hide another's findings.
+      fail-fast: false
+      matrix:
+        include:
+          # `build-mode` is required per language since CodeQL v3.
+          #
+          # `none` for the two that need no compilation: the analyser reads the source directly.
+          # `autobuild` for java-kotlin, which has to compile to produce a database — it finds the
+          # Gradle wrapper and runs it, which is what default setup did too.
+          - language: actions
+            build-mode: none
+          - language: javascript-typescript
+            build-mode: none
+          - language: java-kotlin
+            build-mode: autobuild
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Every checkout here sets this: without it the job's token is written into `.git/config`,
+          # where any later step can read it. zizmor's `artipacked` audit blocks at medium on a
+          # SHA-pinned checkout that omits it.
+          persist-credentials: false
+
+      # java-kotlin's autobuild runs Gradle, which needs a JDK matching the toolchain in
+      # gradle.properties. Left to its own devices autobuild takes whatever the runner image ships,
+      # which is how a CodeQL run fails for a reason that has nothing to do with CodeQL.
+      - name: Set up JDK
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          # No `queries:` input, deliberately. That leaves the **default** suite, which is what
+          # default setup was configured to run (`code-scanning/default-setup` reported
+          # `"query_suite": "default"`), so this migration changes *where* CodeQL runs and not *what
+          # it finds*. Widening to `security-extended` is a separate decision with its own noise
+          # budget, and mixing it into this change would make a regression in either impossible to
+          # attribute.
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
+        with:
+          category: /language:${{ matrix.language }}
+          # The fork accommodation, and the whole reason this file exists. `never` on a fork pull
+          # request: the analysis runs and the job reports, but nothing is written to Code Scanning,
+          # because a read-only token cannot and the 403 would fail the step.
+          upload: ${{ github.event.pull_request.head.repo.fork == true && 'never' || 'always' }}
