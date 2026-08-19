@@ -29,9 +29,24 @@ jobs:
   build:
     name: Build & Test
     runs-on: ubuntu-latest
-    # Fail fast instead of hanging for the GitHub default of 6h when the
-    # Playwright system-dependency install stalls on a slow apt mirror.
-    timeout-minutes: 15
+    # Fail fast instead of hanging for the GitHub default of 6h when the Playwright
+    # system-dependency install stalls on a slow apt mirror.
+    #
+    # **30, not 15, because 15 could not fit a cache-miss run — and that made the miss permanent.**
+    # `actions/cache` only writes in its post-job step, so a timeout kills the job before anything is
+    # saved: the miss recreates the conditions for the next miss. Six consecutive runs on 2026-08-19
+    # were cancelled this way, reported as `cancelled` rather than `failure`, which is why it did not
+    # look like what it was.
+    #
+    # The arithmetic, measured rather than guessed:
+    #
+    #     cache hit    6s cache + 30s install-deps + 507s e2e   ≈ 9 min
+    #     cache miss   519-875s install          + 507s e2e     ≈ 17-23 min
+    #
+    # A miss is a normal event — every Playwright bump changes the cache key — so the budget has to
+    # accommodate one. 30 leaves headroom above the worst observed miss and still fails fast against
+    # the 6h default this comment was originally about.
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
