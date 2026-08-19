@@ -72,10 +72,21 @@ jobs:
             // from the Alert's `.spec.eventMetadata`, which is merged in with its keys unchanged.
             const metadata = event.metadata ?? {};
 
-            // `production_environment` is what earns the environment its badge on the repository
-            // front page, so the map carries it rather than a second lookup. An unknown env is a
-            // failure and not a default: defaulting would file a staging reconcile under production.
-            const ENVIRONMENTS = { staging: false, production: true };
+            // `production` earns the environment its badge on the repository front page; `url` becomes
+            // the "View deployment" link on each entry. An unknown env is a failure and not a default:
+            // defaulting would file a staging reconcile under production.
+            //
+            // **Staging has no url on purpose.** `staging.event-junkie.de` has no public DNS record at
+            // all and answers only through the WireGuard tunnel (PLATFORM_SETUP §4a), so a link there
+            // would resolve for nobody — including the person most likely to click it, who would read
+            // the failure as the deploy being broken. Absent beats broken.
+            //
+            // Production's is the chart's `ingress.host`, not `event-junkie.com`, which exists only as
+            // a 301 redirect.
+            const ENVIRONMENTS = {
+              staging: { production: false, url: null },
+              production: { production: true, url: 'https://event-junkie.de' },
+            };
             const environment = metadata.env;
             if (!Object.hasOwn(ENVIRONMENTS, environment)) {
               core.setFailed(
@@ -164,7 +175,7 @@ jobs:
                 environment,
                 auto_merge: false,
                 required_contexts: [],
-                production_environment: ENVIRONMENTS[environment],
+                production_environment: ENVIRONMENTS[environment].production,
                 transient_environment: false,
                 description: `Flux reconciled ${revision} on ${metadata.cluster ?? environment}`.slice(0, 140),
                 payload: {
@@ -186,6 +197,10 @@ jobs:
               // be rejected rather than truncated for us.
               description: `${reason}: ${event.message ?? ''}`.slice(0, 140),
               log_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              // Omitted entirely rather than sent as null when the environment has no public address —
+              // the API treats an explicit empty string as "clear the link", which is the same result
+              // by a route that reads like an accident in six months.
+              ...(ENVIRONMENTS[environment].url ? { environment_url: ENVIRONMENTS[environment].url } : {}),
             });
 
             await core.summary
