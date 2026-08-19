@@ -5,17 +5,15 @@ import { type Locale, LOCALES } from '@/i18n/locales'
  * Keeps `<link rel="canonical">`, the `hreflang` alternates and the locale-dependent Open Graph
  * tags in step with the current route.
  *
- * **These are deliberately absent from `index.html`.** A static canonical there would name the
- * home page as the canonical URL of *every* route for anything that does not run scripts — social
- * scrapers included — which consolidates the whole site onto one URL. Absent is better than
- * confidently wrong, and the sitemap carries the same annotations in a form no rendering is
- * needed to read (see `lib/seo.ts`). The static site-level `og:title`/`og:description` in
- * `index.html` stay as they are: those are safe defaults, because they are true of every page.
+ * **These are deliberately absent from `index.html`.** A static canonical there would name the home
+ * page as the canonical URL of *every* route for anything that does not run scripts — social
+ * scrapers included — consolidating the whole site onto one URL. Absent beats confidently wrong,
+ * and the sitemap carries the same annotations in a form needing no rendering (`lib/seo.ts`). The
+ * static site-level `og:title`/`og:description` stay: they are true of every page.
  *
- * Every element written here is marked `data-seo` and the whole set is replaced on each
- * navigation, rather than mutated in place. `og:locale:alternate` repeats once per other locale,
- * so its elements are keyed by content and would otherwise accumulate as the visitor switches
- * language.
+ * Every element written here is marked `data-seo` and the whole set is replaced on each navigation
+ * rather than mutated, because `og:locale:alternate` repeats once per other locale and its elements
+ * would otherwise accumulate as the visitor switches language.
  */
 
 const MANAGED_ATTRIBUTE = 'data-seo'

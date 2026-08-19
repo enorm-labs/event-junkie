@@ -3,10 +3,8 @@ import { expect, type Page, type Route, test } from '@playwright/test'
 /**
  * Detail-route e2e tests with a fully mocked BFF.
  *
- * The smoke suite deliberately skips the data-driven detail routes because they
- * need real data. Here we intercept the BFF with Playwright's request routing so
- * the happy path and the not-found path are both exercised deterministically,
- * without a running backend or a seeded database.
+ * The smoke suite skips these routes because they need real data; Playwright's request routing
+ * intercepts the BFF instead, so both the happy and the not-found path run with no backend.
  *
  * Endpoints per page:
  *   /events/:slug     → GET /api/events/:slug
@@ -14,10 +12,8 @@ import { expect, type Page, type Route, test } from '@playwright/test'
  *   /artists/:slug    → GET /api/artists/:slug  + GET /api/events?artist=… (feed)
  *   /promoters/:slug  → GET /api/promoters/:slug + GET /api/events?promoter=… (feed)
  *
- * Requests are matched with regexes rather than globs: the events search URL
- * carries a query string, which glob wildcards handle awkwardly. The detail and
- * search matchers are intentionally non-overlapping (`/events/:slug` vs
- * `/events?…`), so route registration order does not matter.
+ * Regexes rather than globs, because the search URL carries a query string that glob wildcards
+ * handle awkwardly. The detail and search matchers do not overlap, so registration order is free.
  */
 
 /** Collect uncaught exceptions — the "the app broke" signal, as in the smoke suite. */

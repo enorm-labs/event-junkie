@@ -6,22 +6,17 @@ import type { Locale } from '@/i18n/locales'
 /**
  * schema.org documents, as JSON-LD.
  *
- * The point of this file is Google's **event rich results** — the date-and-venue cards in Search
- * and the events experience behind them. It is the only rich result this product is a candidate
- * for, and eligibility requires structured data; there is no other route in.
+ * The point of this file is Google's **event rich results** — the date-and-venue cards in Search.
+ * It is the only rich result this product is a candidate for, and eligibility requires structured
+ * data. Two rules govern everything below, both Google policy rather than taste:
  *
- * Two rules govern everything below, and both are Google policy rather than taste:
- *
- * 1. **Never describe anything the page does not show.** Structured data must represent visible
- *    content. Every property emitted here is rendered by `EventDetailView.vue` or
- *    `VenueDetailView.vue` — check before adding one.
+ * 1. **Never describe anything the page does not show.** Every property emitted here is rendered by
+ *    `EventDetailView.vue` or `VenueDetailView.vue` — check before adding one.
  * 2. **Omit rather than guess.** An absent property costs a recommendation; a wrong one is a
- *    misrepresentation, and on a site whose imprint says *alle Angaben ohne Gewähr* it is one we
- *    would have volunteered. Every `?? undefined` below is deliberate.
+ *    misrepresentation we volunteered. Every `?? undefined` below is deliberate.
  *
- * Unlike the head tags in `seoTags.ts`, this does **not** need prerendering to be useful: Googlebot
- * renders JavaScript, so it reads JSON-LD injected after boot. That is why this shipped before the
- * rendering decision rather than after it.
+ * Unlike `seoTags.ts` this needs no prerendering: Googlebot runs JavaScript and reads JSON-LD
+ * injected after boot, which is why it shipped before the rendering decision.
  */
 
 /** Anything JSON-serialisable that a schema.org document can hold. */

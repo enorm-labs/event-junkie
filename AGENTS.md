@@ -658,6 +658,9 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     - **Assert behaviour in a test, don't promise it in a comment.** A comment claiming "callers must call `close()`" or "returns at most 50" goes stale in
       silence; a test fails loudly. Prefer the test, and let the comment carry the reason the rule exists.
     - **No commented-out code and no `TODO`s.** Deleted code lives in git; work worth remembering is an issue (see _The Backlog — GitHub Issues_).
+    - **The frontend has its own copy of this rule.** `event-junkie/max-comment-lines` (a local ESLint rule in
+      `events-frontend/eslint-rules/`) caps a TS/Vue comment at 15 — measured from that tree, where nothing reached 25. See
+      [events-frontend/AGENTS.md](events-frontend/AGENTS.md) §Comments.
     - **`LongComment` enforces the cap, at 25 lines.** It is a custom detekt rule (`:detekt-rules`), it counts a run of `//` lines as one comment, and it
       excludes `**/scraper/**` for the reason in the next bullet. A comment that genuinely needs more is `@Suppress("LongComment")` on the declaration — an
       explicit decision a reviewer can see, rather than a threshold raised until nothing fires.

@@ -509,6 +509,30 @@ The project uses a two-tier linting strategy:
 
 **Important**: Do NOT add Prettier — the project uses oxfmt instead.
 
+### Comments
+
+The rules are the repository's, not the frontend's: see **[AGENTS.md](../AGENTS.md) § Code Conventions → "Comments and KDoc"** for the reasoning, which is not
+repeated here. In TS/Vue terms they come out as:
+
+- **Explain _why_, not _what_.** A `computed` that exists to follow the active locale needs a comment; a `computed` that adds two numbers does not. Self-
+  explanatory code needs none at all — rename it or extract it before reaching for prose.
+- **Rewrite, never append.** No "used to", no "since #540 it now", no dates. `git blame` and the PR hold that.
+- **No `@param foo the foo`.** TypeScript already carries the type and the name; document a parameter only for what the signature cannot say.
+- **No commented-out code and no `TODO`s** — deleted code is in git, and work worth remembering is an issue.
+
+**`event-junkie/max-comment-lines` enforces the length half, at 15 lines**, and it counts an unbroken run of `//` lines as one comment. It is a local ESLint
+rule in [`eslint-rules/max-comment-lines.ts`](eslint-rules/max-comment-lines.ts), wired up in `eslint.config.ts` — the counterpart to the `:detekt-rules`
+Gradle module, which caps Kotlin at 25.
+
+- **It lives on the ESLint side because oxlint cannot host it.** oxlint is Rust and takes no JS plugins, so a custom rule has no home there. That is also why
+  `npm run lint` runs both linters rather than one.
+- **15, not Kotlin's 25**, because the number came from this tree: of 285 block comments none reached 25 lines, so 25 would never have fired. Change it by
+  measuring again, not by taste.
+- **The escape hatch is `// eslint-disable-next-line event-junkie/max-comment-lines` with a reason**, the way `@Suppress("LongComment")` is used on the Kotlin
+  side. Reach for it before you reach for a bigger `max`.
+- It reads comments in `<script>`, not in `<template>`: the parser hands the rule script comments only, and HTML comments in a template are somebody else's
+  problem. In practice the prose worth capping lives in the script block.
+
 ## Testing
 
 ### Unit Tests (Vitest)

@@ -4,28 +4,18 @@ import { useI18n } from 'vue-i18n'
 import { DEFAULT_LOCALE, type Locale } from '@/i18n/locales'
 
 /**
- * Routes a page to a **separate component per language** rather than to one component that swaps
- * its prose through the message catalogue.
+ * Routes a page to a **separate component per language** rather than one component that swaps its
+ * prose through the message catalogue.
  *
- * Everywhere else in this app the opposite is right: UI labels belong in `src/i18n/messages`, and
- * the key-parity test exists to keep them honest. This helper is for the four pages where that
- * breaks down — the About page and the three legal pages, ~1,600 words carrying inline links,
- * `<strong>` and `<code>` *inside* their paragraphs. Putting
- * that in JSON means either HTML inside message strings or sentences shattered into fragments.
+ * Everywhere else the catalogue is right, and the key-parity test keeps it honest. These four pages
+ * — About plus the three legal ones, ~1,600 words with inline links, `<strong>` and `<code>` inside
+ * the paragraphs — would need HTML inside message strings or shattered sentences. The legal pages
+ * carry the stronger reason: an imprint is a **document**, reviewed as one, and
+ * `ImprintView.de.vue` reads start to finish as the German imprint.
  *
- * For the legal pages there is a second reason, and it is the stronger one: an imprint and a
- * privacy notice are **documents**, reviewed as documents — possibly by someone who does not read
- * Vue. `ImprintView.de.vue` can be read start to finish as the German imprint. The same page
- * assembled from interpolated fragments cannot be reviewed at all without running it.
- *
- * The cost is real and worth naming: the two versions can drift, and no test can tell you that a
- * German sentence no longer means what the English one does. What *is* testable is that both carry
- * the mandatory elements, which is what `views/legal/__tests__/legalViews.spec.ts` checks per
- * locale, and that the facts they cite come from one place — {@link module:@/lib/legal}.
- *
- * Each locale stays in its own lazy chunk, so a German visitor never downloads the English
- * imprint.
- *
+ * The cost is drift no test can catch. What is testable is that both carry the mandatory elements
+ * (`views/legal/__tests__/legalViews.spec.ts`, per locale) and take their facts from
+ * {@link module:@/lib/legal}. Each locale is its own lazy chunk, so nobody downloads both.
  * @param loaders one dynamic `import()` per published locale
  */
 export function localisedView(loaders: Record<Locale, () => Promise<Component>>): Component {

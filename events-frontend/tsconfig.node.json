@@ -9,7 +9,8 @@
     "eslint.config.*",
     // Build-time helpers imported by the configs above (e.g. the sitemap plugin). They are checked
     // transitively either way; listing them means they stay checked if a config stops importing one.
-    "scripts/**/*.ts"
+    "scripts/**/*.ts",
+    "eslint-rules/**/*.ts"
   ],
   "compilerOptions": {
     // Most tools use transpilation instead of Node.js's native type-stripping.

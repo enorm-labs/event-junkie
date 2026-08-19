@@ -6,6 +6,7 @@ import pluginPlaywright from 'eslint-plugin-playwright'
 import pluginVitest from '@vitest/eslint-plugin'
 import pluginOxlint from 'eslint-plugin-oxlint'
 import skipFormatting from 'eslint-config-prettier/flat'
+import { maxCommentLines } from './eslint-rules/max-comment-lines.ts'
 
 // To allow more languages other than `ts` in `.vue` files, uncomment the following lines:
 // import { configureVueProject } from '@vue/eslint-config-typescript'
@@ -65,6 +66,20 @@ export default defineConfigWithVueTs(
     rules: {
       'vue/multi-word-component-names': 'off',
     },
+  },
+
+  {
+    // This repository's own rules — the frontend counterpart to the `:detekt-rules` Gradle module,
+    // which carries the same cap for Kotlin. It lives on the ESLint side because oxlint is Rust and
+    // cannot host a JS plugin at all.
+    //
+    // 15 rather than Kotlin's 25: the number comes from this tree's own distribution. Of 285 block
+    // comments, none reached 25 lines and ten passed 15, so 25 would never fire here. See
+    // AGENTS.md §Comments.
+    name: 'app/comment-length',
+    files: ['**/*.{vue,ts,mts,tsx}'],
+    plugins: { 'event-junkie': { rules: { 'max-comment-lines': maxCommentLines } } },
+    rules: { 'event-junkie/max-comment-lines': ['error', { max: 15 }] },
   },
 
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
