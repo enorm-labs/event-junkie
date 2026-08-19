@@ -289,7 +289,7 @@ gh api repos/enorm-labs/event-junkie/deployments --jq '.[0] | {environment, ref,
 
 A Provider that is not Ready almost always means the `github-dispatch` Secret from §8 is missing or its PAT has expired — see [CREDENTIALS.md](../CREDENTIALS.md) #16 for the expiry date.
 
-**That check is only worth anything because the other Provider is suspended.** `github` (commit statuses) carries `suspend: true` until [#567](https://github.com/enorm-labs/event-junkie/issues/567) is resolved, precisely so that a not-Ready Provider means something is wrong rather than meaning the known-broken one is still broken. If you un-suspend it, this step needs rewording.
+There is exactly one Provider per cluster, so a not-Ready one is unambiguous. (There used to be a second, `github`, posting commit statuses; [#567](https://github.com/enorm-labs/event-junkie/issues/567) deleted it — a HelmRelease reports a chart version, not a commit, so it could never have worked.)
 
 ## 11 · Verify the certificate
 

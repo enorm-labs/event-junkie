@@ -45,18 +45,16 @@ prepaid number silently ends the alerting path.
 | 12  | **`NVD_API_KEY`**                                                                 | Rate limit on the NVD feed. No access to anything of ours                                                | GitHub Actions repository secret, and `export NVD_API_KEY=…` locally                                                                                                                | No — request another                  |
 | 13  | **GitHub PAT, classic, `write:packages`**                                         | Local `docker push` / `helm push` to GHCR. **Fine-grained tokens do not work here**                      | Created on demand; not stored anywhere by the repo                                                                                                                                  | No                                    |
 | 14  | **GitHub PAT for `flux bootstrap`**                                               | One-time, from a laptop, to commit Flux's manifests and create its deploy key. **CI never holds it**     | Created on demand, then discarded                                                                                                                                                   | No                                    |
-| 15  | **`github-status` PAT** (fine-grained)                                            | Commit statuses on this one repository. Nuisance value if leaked                                         | Kubernetes Secret in `flux-system`. **Does not exist yet** — SOPS-encrypted from the start when it does                                                                             | No                                    |
-| 16  | **`github-dispatch` PAT** (fine-grained) — `event-junkie-staging-github-dispatch` | **`contents: write` on this repository** — can trigger any `repository_dispatch` workflow on `main`      | Created 2026-08-19, **expires 2027-08-20**. **Hand-made** Kubernetes Secret in `flux-system`, one per cluster — nothing in the repo creates it ([`ops/SECRETS.md`](ops/SECRETS.md)) | No                                    |
+| 15  | **`github-dispatch` PAT** (fine-grained) — `event-junkie-staging-github-dispatch` | **`contents: write` on this repository** — can trigger any `repository_dispatch` workflow on `main`      | Created 2026-08-19, **expires 2027-08-20**. **Hand-made** Kubernetes Secret in `flux-system`, one per cluster — nothing in the repo creates it ([`ops/SECRETS.md`](ops/SECRETS.md)) | No                                    |
 
 **`secrets.GITHUB_TOKEN` is not on this list and never should be.** Actions mints it per run; `permissions: packages: write` is the whole configuration.
 
-**Why #15 and #16 are two tokens and not one**, though both are held by the same controller for the same repository: `repository_dispatch` requires
-`contents: write`, and commit statuses require only _commit statuses: write_. Sharing one would silently promote the status path to the stronger scope for no
-benefit, and would make "which of these two wrote that" unanswerable at the API level. **#16 is the most powerful GitHub credential either cluster holds** — it
-can trigger any `repository_dispatch` workflow on `main` — so it is also one per cluster, so that revoking one does not take both down. Note that #15 does not
-currently work even once created, for a reason unrelated to the token ([#567](https://github.com/enorm-labs/event-junkie/issues/567)).
+**#15 is the most powerful GitHub credential either cluster holds** — `contents: write` lets it trigger any `repository_dispatch` workflow on `main` — so there
+is **one per cluster**, and revoking one does not take the other down. There was briefly a second, weaker `github-status` PAT for commit statuses; it was never
+created and [#567](https://github.com/enorm-labs/event-junkie/issues/567) removed the need for it, because a HelmRelease reports a chart version rather than a
+commit and no token could have changed that.
 
-**#16 is the only credential here with an expiry date, and that is the one thing about it worth a reminder.** A fine-grained PAT caps out at 366 days, and when
+**#15 is the only credential here with an expiry date, and that is the one thing about it worth a reminder.** A fine-grained PAT caps out at 366 days, and when
 it lapses **nothing on GitHub says so** — the Environments tab simply stops gaining entries, which looks identical to "no deploys happened lately". Flux logs
 the rejection inside the cluster and nowhere else. **`event-junkie-staging-github-dispatch` expires 2027-08-20**; the name encodes its cluster because there
 will eventually be one per cluster per provider, and the list sorts into pairs that way.

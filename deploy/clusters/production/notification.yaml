@@ -1,80 +1,14 @@
-# Reconciliation status for production, written back onto the commit that caused it.
+# GitHub deployments for production — what is running here, and since when (#565).
 #
-# Identical in shape to staging's, and deliberately a separate file rather than a shared base: these
-# are two clusters that never see each other's objects, and a Kustomize base shared across clusters
-# would imply a relationship that does not exist. The duplication is four fields.
+# **This file used to carry a `github` commit-status Provider as well, and #567 deleted it rather
+# than fixing it.** Recorded here because "why is there no commit status?" is the obvious question
+# and the answer is not obvious: notification-controller's `parseRevision` needs a git hash, and a
+# HelmRelease event reports the *chart version*. The mechanism that solves this — `originRevision`,
+# derived from `org.opencontainers.image.revision` — exists only in **kustomize-controller**;
+# helm-controller has no equivalent, so no annotation on the chart could have fixed it. See §4a.
 ---
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
-kind: Provider
-metadata:
-  name: github
-  namespace: flux-system
-  annotations:
-    kubernetes.io/description: >-
-      Writes Flux reconciliation results back as GitHub commit statuses.
-spec:
-  type: github
-  address: https://github.com/enorm-labs/event-junkie
-  # A **fine-grained** PAT scoped to this single repository with **commit statuses: write** and
-  # nothing else — not a classic token, whose scopes cannot be narrowed to one repository.
-  #
-  # A DIFFERENT TOKEN FROM STAGING'S, even though the permissions are identical. Two clusters
-  # sharing one credential means revoking it takes both down, and it makes "which cluster wrote
-  # this status" unanswerable at the API level. They cost nothing to separate.
-  #
-  #   kubectl create secret generic github-status -n flux-system --from-literal=token=…
-  secretRef:
-    name: github-status
-  # SUSPENDED — and not because it is half-built, but because it cannot work as configured (#567).
-  #
-  # `parseRevision` in notification-controller needs a git hash, and neither watched source reports
-  # one: a HelmRelease reports the *chart version* (`0.1.1`), which fails outright, and an
-  # OCIRepository reports `<tag>@sha256:<digest>`, whose digest passes as a valid-looking SHA-256 and
-  # earns a 422 for a commit that does not exist. The absent token was never the reason there were no
-  # statuses.
-  #
-  # **Suspended rather than deleted**, because whether to fix it (stamp `org.opencontainers.image.
-  # revision` on the chart push) or drop it is #567's decision, and deleting it would throw away the
-  # design and the argument for it along with the broken part.
-  #
-  # **Suspended rather than left failing**, because since #565 this cluster runs two Providers. One
-  # that is permanently not-Ready makes "not Ready" stop meaning anything — and CLUSTER_BOOTSTRAP.md
-  # §10 now leans on exactly that signal to tell you the dispatch secret is missing. A health check
-  # with a standing false positive is worse than no health check.
-  #
-  # Un-suspend when #567 lands, together with creating the `github-status` secret — neither is worth
-  # doing without the other.
-  suspend: true
----
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
-kind: Alert
-metadata:
-  name: github-status
-  namespace: flux-system
-spec:
-  providerRef:
-    name: github
-  # Suspended with its Provider above (#567). Both halves, so that no event is routed into a path
-  # that cannot complete; the Provider's comment carries the reasoning.
-  suspend: true
-  eventSeverity: info
-  eventSources:
-    - kind: HelmRelease
-      name: event-junkie
-      namespace: flux-system
-    - kind: OCIRepository
-      name: event-junkie
-      namespace: flux-system
-  eventMetadata:
-    env: production
-    cluster: production
----
-# The second half of the same story, added by #565: commit statuses say whether *this commit*
-# reconciled; GitHub deployments say what is on *this environment*, and since when.
-#
-# Both, not either. A status is per-commit and shows up on the pull request; a deployment is
-# per-environment and is the only one of the two that produces a queryable timeline — the question
-# "what is on production right now" has no commit to ask about.
+# A deployment is per-environment and produces a timeline, which is the question worth answering:
+# "what is on production right now, and since when" has no single commit to ask about.
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Provider
 metadata:
@@ -87,26 +21,16 @@ metadata:
 spec:
   type: githubdispatch
   address: https://github.com/enorm-labs/event-junkie
-  # A SECOND, SEPARATE PAT — not the `github-status` token, and this is the one thing about this
-  # file worth arguing over.
+  # THE ONLY CREDENTIAL THIS CLUSTER HOLDS FOR GITHUB'S SAKE. `repository_dispatch` needs
+  # **contents: write** — a strong scope, which is why it is per-cluster rather than shared.
   #
-  # `repository_dispatch` needs **contents: write**, where commit statuses need only
-  # *commit statuses: write*. That is a materially stronger credential: it can trigger any
-  # `repository_dispatch` workflow on `main`. Sharing one token would silently promote the status
-  # provider to that power for no reason, and would make "which of these two things wrote that"
-  # unanswerable at the API level.
-  #
-  # Fine-grained, scoped to this repository, and DIFFERENT FROM STAGING'S, for the reason the status
-  # provider above already gives: one credential across two clusters means revoking it takes both
-  # down. **Hand-made rather than SOPS-encrypted** (decided 2026-08-19, docs/ops/SECRETS.md) —
-  # encrypting a `contents: write` token into a public repository publishes its ciphertext for good.
+  # Fine-grained, scoped to this repository, and DIFFERENT FROM STAGING'S: one credential across two
+  # clusters means revoking it takes both down. **Hand-made rather than SOPS-encrypted** (decided
+  # 2026-08-19, docs/ops/SECRETS.md) — encrypting a `contents: write` token into a public repository
+  # publishes its ciphertext for good.
   #
   # So nothing in this repository creates it, and this Provider is inert twice over until production
-  # is bootstrapped (#560) and the Secret is typed against it by hand.
-  #
-  # Production has no `secrets/` directory yet because it has not been bootstrapped (#560). This
-  # Provider is inert until it does and the encrypted Secret lands with it, which is the same state
-  # `github-status` is in — declared, documented, waiting on a token.
+  # is bootstrapped (#560) and the Secret is typed against it by hand — CLUSTER_BOOTSTRAP.md §8.
   secretRef:
     name: github-dispatch
 ---
