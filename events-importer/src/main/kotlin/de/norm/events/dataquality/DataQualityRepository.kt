@@ -1,5 +1,6 @@
 package de.norm.events.dataquality
 
+import de.norm.events.EVENTS_SCHEMA
 import de.norm.events.event.EventEntity
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.r2dbc.repository.Query
@@ -36,17 +37,17 @@ interface DataQualityRepository : CoroutineCrudRepository<EventEntity, Long> {
             e.event_source_id                                              AS event_source_id,
             COUNT(*)                                                       AS total_events,
             COUNT(*) FILTER (WHERE e.event_type = 'CONCERT'
-                AND NOT EXISTS (SELECT 1 FROM events.event_artist ea WHERE ea.event_id = e.id))
+                AND NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_artist ea WHERE ea.event_id = e.id))
                                                                            AS concerts_without_artist,
             COUNT(*) FILTER (WHERE e.event_type = 'OTHER')                 AS events_typed_other,
             COUNT(*) FILTER (WHERE e.genre IS NULL OR e.genre = '')        AS missing_genre,
             COUNT(*) FILTER (WHERE NOT EXISTS
-                (SELECT 1 FROM events.event_promoter ep WHERE ep.event_id = e.id))
+                (SELECT 1 FROM $EVENTS_SCHEMA.event_promoter ep WHERE ep.event_id = e.id))
                                                                            AS missing_promoter,
             COUNT(*) FILTER (WHERE e.price_presale IS NULL AND e.price_box_office IS NULL
                 AND e.free = false AND e.price_note IS NULL)               AS missing_price,
             COUNT(*) FILTER (WHERE e.start_time IS NULL)                   AS missing_start_time
-        FROM events.event e
+        FROM $EVENTS_SCHEMA.event e
         GROUP BY e.event_source_id
         """
     )
@@ -63,9 +64,9 @@ interface DataQualityRepository : CoroutineCrudRepository<EventEntity, Long> {
     @Query(
         """
         SELECT DISTINCT e.event_source_id AS event_source_id, a.name AS artist_name
-        FROM events.event e
-        JOIN events.event_artist ea ON ea.event_id = e.id
-        JOIN events.artist a ON a.id = ea.artist_id
+        FROM $EVENTS_SCHEMA.event e
+        JOIN $EVENTS_SCHEMA.event_artist ea ON ea.event_id = e.id
+        JOIN $EVENTS_SCHEMA.artist a ON a.id = ea.artist_id
         """
     )
     fun artistNamesPerSource(): Flow<SourceArtistNameRow>
