@@ -745,6 +745,11 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     - `label-pr.yml` — Derives labels from the Conventional Commits PR title (`feat(scraper): …` → `feat` + `importer`, `fix(api)!: …` → `fix` +
       `breaking-change`) via `actions/github-script`. Creates any missing label on demand and re-syncs when the title is edited. Uses `pull_request_target` so
       fork PRs get a writable token; safe because it never checks out or runs PR code.
+    - `deployment-status.yml` — turns a Flux `repository_dispatch` into a **GitHub deployment**, so the Environments tab says what is running (#565). Triggered
+      by the `github-dispatch` Provider in each cluster, on the event type `HelmRelease/event-junkie.flux-system` — Flux's own `{Kind}/{Name}.{Namespace}`
+      format, not a name we chose. **It is the only workflow that cannot be tested from a pull request**, because `repository_dispatch` runs workflows from the
+      default branch only; it therefore fails loudly on any payload it does not recognise rather than defaulting. The revision Flux reports is a _chart
+      version_, not a commit, so it parses the commit back out of `scripts/version.sh`'s two shapes — change one and this must change with it.
     - `validate-workflows.yml` — **actionlint** (correctness) and **zizmor** (security) over `.github/workflows/`, since #383. It is the only gate that looks at
       the workflows themselves, and on its first run zizmor found a template injection in `release.yml`, a cache-poisoning path into it, and two workflow-level
       permission grants that belonged to a single job. zizmor blocks at `--min-severity medium`; suppressions live in `zizmor.yml` or as inline
@@ -999,6 +1004,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | CI: Helm lint/render/assertions           | `.github/workflows/validate-chart.yml`                                                                                |
 | CI: Markdown formatting                   | `.github/workflows/validate-docs.yml`                                                                                 |
 | CI: build, scan and publish to GHCR       | `.github/workflows/release.yml` — the only workflow that pushes anything; it does not deploy                          |
+| CI: deployment records from Flux          | `.github/workflows/deployment-status.yml` — writes the GitHub deployment; the cluster triggers it, not a merge        |
 | Version scheme (one number, 4 files)      | `scripts/version.sh`; `gradle.properties` is the source of truth — docs/DEVELOPMENT.md §Versions                      |
 | Snapshot versions must ORDER (#455)       | `scripts/version-test.sh` — asserted against Helm's own solver; a format check would not catch it                     |
 | Markdown formatting                       | `scripts/format-markdown.sh` + `.oxfmtrc.json` — Markdown only, and the scope is load-bearing                         |

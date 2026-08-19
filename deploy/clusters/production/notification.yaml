@@ -45,3 +45,67 @@ spec:
   eventMetadata:
     env: production
     cluster: production
+---
+# The second half of the same story, added by #565: commit statuses say whether *this commit*
+# reconciled; GitHub deployments say what is on *this environment*, and since when.
+#
+# Both, not either. A status is per-commit and shows up on the pull request; a deployment is
+# per-environment and is the only one of the two that produces a queryable timeline — the question
+# "what is on production right now" has no commit to ask about.
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: github-dispatch
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      Fires a repository_dispatch so .github/workflows/deployment-status.yml can record a
+      GitHub deployment for this cluster.
+spec:
+  type: githubdispatch
+  address: https://github.com/enorm-labs/event-junkie
+  # A SECOND, SEPARATE PAT — not the `github-status` token, and this is the one thing about this
+  # file worth arguing over.
+  #
+  # `repository_dispatch` needs **contents: write**, where commit statuses need only
+  # *commit statuses: write*. That is a materially stronger credential: it can trigger any
+  # `repository_dispatch` workflow on `main`. Sharing one token would silently promote the status
+  # provider to that power for no reason, and would make "which of these two things wrote that"
+  # unanswerable at the API level.
+  #
+  # Fine-grained, scoped to this repository, and DIFFERENT FROM STAGING'S, for the reason the status
+  # provider above already gives: one credential across two clusters means revoking it takes both
+  # down. **Hand-made rather than SOPS-encrypted** (decided 2026-08-19, docs/ops/SECRETS.md) —
+  # encrypting a `contents: write` token into a public repository publishes its ciphertext for good.
+  #
+  # So nothing in this repository creates it, and this Provider is inert twice over until production
+  # is bootstrapped (#560) and the Secret is typed against it by hand.
+  #
+  # Production has no `secrets/` directory yet because it has not been bootstrapped (#560). This
+  # Provider is inert until it does and the encrypted Secret lands with it, which is the same state
+  # `github-status` is in — declared, documented, waiting on a token.
+  secretRef:
+    name: github-dispatch
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: github-dispatch
+  namespace: flux-system
+spec:
+  providerRef:
+    name: github-dispatch
+  eventSeverity: info
+  # Deliberately narrower than the commit-status Alert above, which also watches the OCIRepository.
+  # A chart arriving in the registry is not a deployment — it is what a deployment later consumes —
+  # and recording it as one would put two entries on the timeline for a single rollout.
+  eventSources:
+    - kind: HelmRelease
+      name: event-junkie
+      namespace: flux-system
+  # These two are the workflow's whole input beyond the revision: `env` picks the GitHub environment
+  # and `cluster` is recorded on the deployment. An unrecognised `env` fails the run rather than
+  # defaulting, so a typo here is loud instead of filing staging under production.
+  eventMetadata:
+    env: production
+    cluster: production
