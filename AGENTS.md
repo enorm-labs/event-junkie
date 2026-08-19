@@ -965,6 +965,24 @@ Learned the expensive way during the TODO.md → Issues migration (2026-08-09). 
   part of the ruleset source or owner organization"_ — a platform constraint, not a permissions problem, and the UI offers no such actor either. **Design any
   workflow that wants to write to the repo as generate-on-demand or open-a-PR, never as push-to-main.** A whole snapshot workflow was written, merged and
   deleted before this was discovered.
+- **A pull request's `mergeable_state` goes stale after a ruleset change, and polling never refreshes it** (2026-08-19). After the `main` ruleset was edited to
+  drop a rule that had been blocking #579, the API kept answering `"blocked"` across five polls over three minutes — with every required context green. The
+  merge then went through from the web UI, and since `bypass_actors` is `[]` and `current_user_can_bypass` is `"never"`, it cannot have been an override: the
+  rules had been satisfied the whole time and only the cached verdict was wrong. GitHub recomputes mergeability lazily, on a pull-request event or a UI view,
+  and `gh api …/pulls/<n>` reads the cache rather than triggering the recomputation.
+
+    **So do not diagnose a stale `blocked` as a live rule.** Compare the required contexts against what actually reported first — that is a two-line check and
+    it is conclusive:
+
+    ```sh
+    gh api repos/OWNER/REPO/rulesets/<id> --jq '.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context' | sort > /tmp/req
+    gh api repos/OWNER/REPO/commits/<sha>/check-runs?per_page=100 --jq '.check_runs[] | select(.conclusion=="success") | .name' | sort -u > /tmp/got
+    comm -23 /tmp/req /tmp/got     # empty means nothing required is missing
+    ```
+
+    If that comes back empty, open the pull request in a browser or attempt the merge rather than hunting for a rule that is no longer there. Chasing it cost
+    the better part of an afternoon's tail end, ruling out `code_quality` and `copilot_code_review` twice each after both had already been eliminated.
+
 - **Pace bulk mutations.** GitHub's _secondary_ rate limit bites long before the documented hourly one. A `sleep 0.45` between calls carried 255 PR edits and
   146 issue creations with zero failures; without it, a few hundred back-to-back writes reliably trip it.
 - **`gh issue create` and `gh issue edit` do not share a label flag.** Create takes `--label`; edit takes `--add-label` / `--remove-label`. One argument list
