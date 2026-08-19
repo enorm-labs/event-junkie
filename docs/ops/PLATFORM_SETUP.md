@@ -532,10 +532,21 @@ does:
 So creating `staging` and `production` environments is now **optional rather than foundational**. Do it if the Deployments view is wanted as the single place to
 see "what is on what" — declare them on the dispatch-triggered workflow, with `url:` pointing at each site. Skip it and nothing breaks.
 
-> **Taken, in the lighter of the two forms (#565).** The environments exist, but nothing declares them with `environment:` on a job — they are created
-> implicitly by the first deployment that names one, which is what `deployment-status.yml` does. That distinction matters: a job-level `environment:` is what
-> protection rules and environment secrets attach to, and neither is wanted here for the reasons listed just above. So the Environments tab is now populated
-> and remains, deliberately, a **read-only history rather than a gate**.
+> **Taken, in the lighter of the two forms (#565).** `staging` and `production` exist, but **nothing declares them with `environment:` on a job.** That
+> distinction is the whole point: a job-level `environment:` is what protection rules and environment secrets attach to, and neither is wanted here for the
+> reasons listed just above. `deployment-status.yml` names the environment on the Deployments REST API instead, so the tab is populated and remains,
+> deliberately, a **read-only history rather than a gate**.
+>
+> **They are created by hand, once, and that is not a workaround.** GitHub documents implicit creation only for the workflow `environment:` key — _"running a
+> workflow that references an environment that does not exist will create an environment with the referenced name"_ — and that is the route we are not taking.
+> Whether the REST path also creates one is undocumented, and it does not matter, because creating them by hand is better regardless: it is where the
+> **environment URL** gets set, which implicit creation cannot do.
+>
+> - `production` → `https://event-junkie.de` — the chart's `ingress.host`. Not `event-junkie.com`, which exists only as a 301 redirect.
+> - `staging` → **deliberately blank.** `staging.event-junkie.de` has no public DNS record and answers only through the tunnel, so a link would resolve for
+>   nobody. The workflow omits `environment_url` for staging for the same reason; absent beats broken.
+>
+> Leave every protection rule empty on both. That is the "read-only history rather than a gate" decision, expressed in the one place it can be.
 
 Two notes that survive the rewrite:
 
