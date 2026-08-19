@@ -1,0 +1,147 @@
+name: Public Site Probe
+
+# The outer half of #271's two-layer alerting, and the half that is not optional.
+#
+# **An alerting path that runs on the node it monitors cannot report that node's death.** If the
+# Hetzner box is gone, OpenObserve and the Signal bridge are gone with it, and the silence is
+# indistinguishable from health. So this runs on GitHub's infrastructure — off Hetzner, notifying
+# through healthchecks.io's own channel and never through the in-cluster bridge.
+#
+# ## It is a *conditional* ping, and that is the whole design
+#
+# A bare heartbeat proves the cron ran. This resolves the hostname, fetches the site over the public
+# internet, and asserts both the status code and expected content **before** pinging. That way one
+# check also catches DNS failure, an expired certificate, ingress misrouting and an application
+# error — none of which a heartbeat would notice.
+#
+# ## Why it is inert today, and how it wakes up
+#
+# **There is nothing public to probe yet.** Staging is deliberately not on the internet at all
+# (PLATFORM_SETUP §4a: no public `A` record, no public 80/443, Ingress on the WireGuard tunnel), and
+# production is #285, still blocked. Scheduling a probe against a host that does not resolve would
+# fail every fifteen minutes forever and teach everyone to ignore it.
+#
+# So the probe **skips when `HEALTHCHECKS_PING_URL` is unset**, and says so in the job summary rather
+# than passing quietly — a silent skip is the failure mode this repository has been bitten by twice
+# (`hashFiles` in build-backend.yml, the Kustomize resource list in #416). Add the secret when the
+# production deploy lands and it starts working with no change here.
+#
+# ## Do not self-host the other end
+#
+# healthchecks.io is external on purpose. A dead-man's switch on the infrastructure it monitors
+# cannot report that infrastructure's death — the same argument as the first paragraph, one layer
+# out. The account already exists and `wal-g`'s backup drill pings it (infra/AGENTS.md).
+
+on:
+  schedule:
+    # Every fifteen minutes, off-the-hour for the reason every other scheduled workflow here gives:
+    # the top of the hour is a stampede on shared runners, and a delayed probe is a false alarm.
+    #
+    # **GitHub's scheduler is not punctual and occasionally skips runs entirely** — during the
+    # 2026-08-06 Actions incident it dropped ~85% of webhooks. The healthchecks.io *grace period* is
+    # what absorbs that, and it belongs on the check rather than here: set the period to 15 minutes
+    # and the grace to at least 30, so one missed run is tolerated and two are not.
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Deliberately NOT `cancel-in-progress`. Cancelling the older run to start a newer one would
+  # discard exactly the probe that was mid-flight while the site was failing.
+  group: site-probe
+  cancel-in-progress: false
+
+env:
+  # Pinned and visible, like every other tool version and endpoint here. This is `ingress.host` from
+  # the chart's values.yaml and the repository's homepage field — if it changes, it changes there
+  # first and here second.
+  SITE_URL: https://event-junkie.de
+  # Asserted in the body. Chosen because it is the product name rather than a layout detail: a
+  # redesign should not page anyone, but a page that no longer says what it is should.
+  EXPECTED_CONTENT: Event Junkie
+
+jobs:
+  probe:
+    name: Probe the public site
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      # No `actions/checkout`. Nothing here reads the repository, so not checking out means no token
+      # is written to `.git/config` in the first place — the strongest form of the
+      # `persist-credentials: false` rule the other workflows apply.
+      - name: Resolve, fetch, assert, then ping
+        env:
+          PING_URL: ${{ secrets.HEALTHCHECKS_PING_URL }}
+        run: |
+          set -uo pipefail
+
+          if [ -z "${PING_URL}" ]; then
+            {
+              echo "## ⏸️ Not probing — \`HEALTHCHECKS_PING_URL\` is not set"
+              echo
+              echo "This is expected until the production deploy (#285) lands: staging is not on the"
+              echo "public internet by design (PLATFORM_SETUP §4a), so there is nothing to probe yet."
+              echo
+              echo "**To activate:** create a check on healthchecks.io with a 15-minute period and a"
+              echo "grace of at least 30 minutes, then add its ping URL as the \`HEALTHCHECKS_PING_URL\`"
+              echo "repository secret. No change to this workflow is needed."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "HEALTHCHECKS_PING_URL unset — skipping the probe."
+            exit 0
+          fi
+
+          fail() {
+            echo "::error::$1"
+            {
+              echo "## 🔴 Probe failed"
+              echo
+              echo "$1"
+            } >> "$GITHUB_STEP_SUMMARY"
+            # Signal the failure immediately rather than waiting out the grace period. Silence still
+            # covers the case this cannot: GitHub itself being unable to run us at all.
+            curl -fsS -m 15 --retry 3 --retry-delay 2 "${PING_URL}/fail" >/dev/null || true
+            exit 1
+          }
+
+          # 1 — Fetch. `--retry` absorbs a single transient blip; three failures in a row over ~20s
+          #     is a real outage rather than a hiccup, and false alarms are how a pager gets muted.
+          #     No `-f`: a 5xx must reach the status assertion below rather than exit here.
+          body="$(mktemp)"
+          code="$(curl -sS -m 20 --retry 3 --retry-delay 3 --retry-all-errors \
+                    -o "${body}" -w '%{http_code}' "${SITE_URL}")"
+          curl_status=$?
+
+          # 2 — Name curl's own failures rather than reporting an exit code. DNS, connection refused
+          #     and a bad certificate are three different outages with three different fixes, and the
+          #     first line of the alert is the one someone reads at 03:00. Deliberately not `getent`:
+          #     that is Linux-only, so it could not be exercised outside the runner.
+          if [ "${curl_status}" -ne 0 ]; then
+            case "${curl_status}" in
+              6)      fail "DNS did not resolve ${SITE_URL} — the name is gone, not the site." ;;
+              7)      fail "Connection to ${SITE_URL} refused — ingress or the node is down." ;;
+              28)     fail "${SITE_URL} timed out after 20s." ;;
+              35|60)  fail "TLS failed for ${SITE_URL} — expired or untrusted certificate." ;;
+              *)      fail "Could not reach ${SITE_URL} after retries (curl exit ${curl_status})." ;;
+            esac
+          fi
+
+          # 3 — Status and content, in that order: a 200 serving the wrong page is still an outage,
+          #     and an ingress problem shows up here as a non-200.
+          [ "${code}" = "200" ] || fail "${SITE_URL} answered HTTP ${code}, expected 200."
+          grep -qF "${EXPECTED_CONTENT}" "${body}" \
+            || fail "${SITE_URL} answered 200 but the body does not contain '${EXPECTED_CONTENT}'."
+
+          # 4 — Only now. The ping is the *last* step and, unlike the SARIF uploads elsewhere in this
+          #     repository, it must NOT run on failure — reporting success is the one thing a
+          #     dead-man's switch can never do speculatively.
+          curl -fsS -m 15 --retry 3 --retry-delay 2 "${PING_URL}" >/dev/null \
+            || fail "Site is healthy but the healthchecks.io ping failed — the switch is now blind."
+
+          {
+            echo "## ✅ Site healthy"
+            echo
+            echo "\`${SITE_URL}\` answered 200 and contains '${EXPECTED_CONTENT}'. healthchecks.io pinged."
+          } >> "$GITHUB_STEP_SUMMARY"
