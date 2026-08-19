@@ -120,6 +120,24 @@ patches:
 
 `provider` is an enum whose only value is `sops`, and `secretRef.name` points at step 3's secret.
 
+**A patch is only worth anything if something builds it, and here that nearly did not happen.** A Flux `Kustomization` pointing at a directory with no
+`kustomization.yaml` walks it recursively and picks up `flux-system/` for free — that is how a bootstrapped cluster manages Flux itself. This repository added an
+explicit `kustomization.yaml` at the cluster level, which **replaces** that discovery with a literal list, and `flux-system` was not on it. So the patch rendered
+correctly, was committed and merged, and never reached the cluster; the sync then failed on an encrypted Secret it had no key for:
+
+```
+Ready=False  ReconciliationFailed: Secret/event-junkie/events-db is SOPS encrypted,
+             configuring decryption is required for this secret to be reconciled
+```
+
+`flux-system` is now on that list, so the cluster is self-managing again and the patch applies on every reconcile. **Verify by looking at the live object, not
+the rendered one** — the two disagreed for as long as this bug existed:
+
+```sh
+kubectl --context event-junkie-staging -n flux-system get kustomization flux-system \
+  -o jsonpath='{.spec.decryption}'          # expect: {"provider":"sops","secretRef":{"name":"sops-age"}}
+```
+
 ## Verifying it
 
 ```sh
