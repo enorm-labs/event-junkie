@@ -49,7 +49,7 @@ flowchart TB
     imgs -.->|"kubelet pulls<br/>tag = chart appVersion"| wl
     wl --> test
     test -->|"fail"| rb["Rollback"]
-    hr -.->|"commit status"| main
+    hr -.->|"repository_dispatch → deployment"| main
 
     style stop fill:#fee,stroke:#c00
     style scan fill:#ffd

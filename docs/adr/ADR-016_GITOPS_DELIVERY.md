@@ -135,6 +135,12 @@ willingly. What Flux removes is the _stored credential_. **Branch protection is 
 - **The cluster gains one GitHub credential after all** — a fine-grained PAT with _commit statuses: write_ on this repository only, so the notification
   controller can report reconciliation back onto the commit. Narrow, single-purpose, and a deliberate exception to "the cluster holds nothing" rather than an
   erosion of it.
+
+    > **Superseded 2026-08-19, and the exception got wider rather than going away.** The commit-status provider this describes was never able to work: a
+    > HelmRelease reports a chart version, not a commit ([#567](https://github.com/enorm-labs/event-junkie/issues/567)). What replaced it reports **GitHub
+    > deployments** instead ([#565](https://github.com/enorm-labs/event-junkie/issues/565)) and needs `contents: write` rather than _commit statuses: write_ —
+    > still one credential, still single-purpose, but a materially stronger one. The reasoning above holds; the scope in it does not. See PLATFORM_SETUP §4a.
+
 - **Staging gains a second credential, and it is a broad one** (#265). DNS-01 needs an hcloud API token in the cluster, and hcloud tokens are project-scoped
   with no way to narrow them to "write TXT records under one zone" — the same token could delete the servers. It is confined to staging, which is the
   environment that can be rebuilt from `infra/` in an afternoon, and production avoids it entirely by solving HTTP-01 against an address the internet can

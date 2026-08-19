@@ -322,7 +322,6 @@ flowchart LR
     flux --> rel
     rel --> test
     test -->|"fail"| rb["Automatic rollback"]
-    flux -->|"commit status"| gh
     flux -->|"repository_dispatch"| gha["Actions: deployment-status.yml"]
     gha -->|"Deployments API"| gh
 ```
@@ -493,11 +492,19 @@ Flux's **notification-controller** has two GitHub providers, and they do differe
 
 | Provider         | What it does                                                      | Use it for                                                        |
 | ---------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `github`         | Posts **commit statuses** from `Kustomization` events             | The baseline. Every commit gets ✅/❌ for "Flux reconciled this"  |
+| `github`         | Posts **commit statuses** from `Kustomization` events             | ~~The baseline~~ — **unusable here, see below**                   |
 | `githubdispatch` | Fires a `repository_dispatch` event carrying Flux's event payload | Triggering a workflow that then writes a proper Deployment record |
 
-**Start with `github` alone.** A commit status showing reconciliation succeeded or failed, right next to the CI checks, is most of the value for none of the
-work — and it is truthful in a way a push-time deployment record is not, because it is written _after_ the cluster converged.
+~~**Start with `github` alone.**~~ **That advice was wrong, and the table row above says why in five words: _from `Kustomization` events`_.** The workload here
+is a **HelmRelease** fed by an **OCIRepository**, and that combination cannot produce a commit status at all
+([#567](https://github.com/enorm-labs/event-junkie/issues/567), which deleted the Provider rather than fixing it):
+
+- notification-controller's `parseRevision` requires a **git hash**. A HelmRelease event reports the _chart version_
+  (`0.1.1-snapshot.…+<digest>`) and an OCIRepository event reports `<tag>@sha256:<digest>` — the latter passes as a valid-looking SHA-256 and earns a `422`
+  against a commit that does not exist.
+- The mechanism that solves exactly this — **`originRevision`**, derived from `org.opencontainers.image.revision` on the artifact — lives in
+  **kustomize-controller** and has no counterpart in helm-controller. So stamping the annotation on the chart push, which `helm push` _would_ have carried
+  (it merges `Chart.yaml` `annotations:` into the OCI manifest), would still not have worked. **The provider is fine; the pairing is not.**
 
 **Add `githubdispatch` → a small workflow → the Deployments REST API** only if the Deployments view specifically is wanted. That workflow creates the deployment
 and immediately sets its status from the Flux payload, so the entry reflects reality rather than intent.
@@ -515,10 +522,10 @@ and immediately sets its status from the Flux payload, so the entry reflects rea
 >   `scripts/version.sh` produces already encode it, which is why this needed no change to `release.yml`. **And it is not quite the string `version.sh` wrote:**
 >   helm-controller appends the chart's OCI digest as SemVer build metadata, so what actually arrives is
 >   `0.1.1-snapshot.20260819153524.g3b1c09e+97ec754320b5`. That suffix broke the first two real dispatches and is now split off before matching.
-> - **That same fact breaks the `github` commit-status provider**, which is a separate defect and not this one — see
->   [#567](https://github.com/enorm-labs/event-junkie/issues/567).
-> - **The dispatch token is stronger than the status token.** `repository_dispatch` needs **contents: write**, where commit statuses need only _commit statuses:
->   write_. They are therefore two separate PATs per cluster, not one shared one.
+> - **That same fact killed the `github` commit-status provider**, which was deleted by
+>   [#567](https://github.com/enorm-labs/event-junkie/issues/567) rather than fixed — see the strikethrough above.
+> - **The dispatch token needs `contents: write`**, which is a strong scope for a cluster to hold. It is therefore one PAT **per cluster**, so revoking one does
+>   not take the other down.
 
 ### Do the environments still earn their place?
 

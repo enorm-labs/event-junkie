@@ -1,92 +1,14 @@
-# Reconciliation status, written back onto the commit that caused it.
+# GitHub deployments for staging — what is running here, and since when (#565).
 #
-# This is what makes a green CI run distinguishable from a live deploy (PLATFORM_SETUP §4a). Since
-# #264, a green Actions run means "the artifacts exist" — nothing more. Flux reconciles minutes
-# later, on its own schedule, and can fail long after the workflow went green. Without this, nothing
-# on GitHub ever says whether the cluster took the change.
+# **This file used to carry a `github` commit-status Provider as well, and #567 deleted it rather
+# than fixing it.** Recorded here because "why is there no commit status?" is the obvious question
+# and the answer is not obvious: notification-controller's `parseRevision` needs a git hash, and a
+# HelmRelease event reports the *chart version*. The mechanism that solves this — `originRevision`,
+# derived from `org.opencontainers.image.revision` — exists only in **kustomize-controller**;
+# helm-controller has no equivalent, so no annotation on the chart could have fixed it. See §4a.
 ---
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
-kind: Provider
-metadata:
-  name: github
-  namespace: flux-system
-  annotations:
-    kubernetes.io/description: >-
-      Writes Flux reconciliation results back as GitHub commit statuses.
-spec:
-  type: github
-  address: https://github.com/enorm-labs/event-junkie
-  # One of the TWO credentials this cluster holds for GitHub's sake since #565 — worth being explicit
-  # about, because §4's argument rests on the cluster holding nothing pointing back at us. This is
-  # the weaker of the two; `github-dispatch` below is the one that matters.
-  #
-  # A **fine-grained** PAT scoped to this single repository with **commit statuses: write** and
-  # nothing else. Not a classic token: classic scopes cannot be narrowed to one repository, and we
-  # declined one for exactly that reason when deciding to keep the GHCR packages public (§3).
-  #
-  # Created out of band, once:
-  #   kubectl create secret generic github-status -n flux-system --from-literal=token=…
-  # Moves under SOPS in #416 — and per Flux's e2e guide, back the encrypted value up somewhere that
-  # is not this repository, because the repository is not a backup of the key that decrypts it.
-  secretRef:
-    name: github-status
-  # SUSPENDED — and not because it is half-built, but because it cannot work as configured (#567).
-  #
-  # `parseRevision` in notification-controller needs a git hash, and neither watched source reports
-  # one: a HelmRelease reports the *chart version* (`0.1.1`), which fails outright, and an
-  # OCIRepository reports `<tag>@sha256:<digest>`, whose digest passes as a valid-looking SHA-256 and
-  # earns a 422 for a commit that does not exist. The absent token was never the reason there were no
-  # statuses.
-  #
-  # **Suspended rather than deleted**, because whether to fix it (stamp `org.opencontainers.image.
-  # revision` on the chart push) or drop it is #567's decision, and deleting it would throw away the
-  # design and the argument for it along with the broken part.
-  #
-  # **Suspended rather than left failing**, because since #565 this cluster runs two Providers. One
-  # that is permanently not-Ready makes "not Ready" stop meaning anything — and CLUSTER_BOOTSTRAP.md
-  # §10 now leans on exactly that signal to tell you the dispatch secret is missing. A health check
-  # with a standing false positive is worse than no health check.
-  #
-  # Un-suspend when #567 lands, together with creating the `github-status` secret — neither is worth
-  # doing without the other.
-  suspend: true
----
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
-kind: Alert
-metadata:
-  name: github-status
-  namespace: flux-system
-spec:
-  providerRef:
-    name: github
-  # Suspended with its Provider above (#567). Both halves, so that no event is routed into a path
-  # that cannot complete; the Provider's comment carries the reasoning.
-  suspend: true
-  # `info` does not mean "only info" — it means "do not filter". Errors are included, and they are
-  # the ones that matter; successes are what make the absence of a status meaningful rather than
-  # ambiguous.
-  eventSeverity: info
-  eventSources:
-    - kind: HelmRelease
-      name: event-junkie
-      namespace: flux-system
-    - kind: OCIRepository
-      name: event-junkie
-      namespace: flux-system
-  eventMetadata:
-    env: staging
-    cluster: staging
-  # What this does NOT cover, so nobody reads more into a green commit status than it says: it
-  # reports events *at reconcile time*. A release that reconciled fine and has been quietly stale
-  # for a week emits nothing at all, because nothing happened. Catching that needs the metrics half
-  # of Flux's monitoring story, which belongs with ADR-015's OpenObserve rather than here.
----
-# The second half of the same story, added by #565: commit statuses say whether *this commit*
-# reconciled; GitHub deployments say what is on *this environment*, and since when.
-#
-# Both, not either. A status is per-commit and shows up on the pull request; a deployment is
-# per-environment and is the only one of the two that produces a queryable timeline — the question
-# "what is on staging right now" has no commit to ask about.
+# A deployment is per-environment and produces a timeline, which is the question worth answering:
+# "what is on staging right now, and since when" has no single commit to ask about.
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Provider
 metadata:
@@ -99,14 +21,12 @@ metadata:
 spec:
   type: githubdispatch
   address: https://github.com/enorm-labs/event-junkie
-  # A SECOND, SEPARATE PAT — not the `github-status` token, and this is the one thing about this
-  # file worth arguing over.
+  # THE ONLY CREDENTIAL THIS CLUSTER HOLDS FOR GITHUB'S SAKE, and worth being explicit about because
+  # §4's argument rests on the cluster holding nothing pointing back at us.
   #
-  # `repository_dispatch` needs **contents: write**, where commit statuses need only
-  # *commit statuses: write*. That is a materially stronger credential: it can trigger any
-  # `repository_dispatch` workflow on `main`. Sharing one token would silently promote the status
-  # provider to that power for no reason, and would make "which of these two things wrote that"
-  # unanswerable at the API level.
+  # `repository_dispatch` needs **contents: write** — a strong scope, and the reason this token is
+  # per-cluster rather than shared: revoking one must not take the other down, and "which cluster
+  # wrote that" should stay answerable at the API level.
   #
   # Fine-grained, scoped to this repository, and **hand-made rather than SOPS-encrypted** (decided
   # 2026-08-19, docs/ops/SECRETS.md). It does not inherit the SOPS answer #416 gave the other

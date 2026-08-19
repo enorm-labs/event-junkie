@@ -1,15 +1,14 @@
 # Secrets — what is hand-made today, and how SOPS replaces it
 
-The objects nothing in this repository creates, why that is a problem worth fixing, and the procedure for fixing it — split by who has to do each part. Three
-when this was written; `github-dispatch` made it four.
+The objects nothing in this repository creates, why that is a problem worth fixing, and the procedure for fixing it — split by who has to do each part.
 
 > **Done for staging on 2026-08-19** ([#416](https://github.com/enorm-labs/event-junkie/issues/416) item 8). `events-db` is committed encrypted and restored by
-> Flux; `hetzner` stays hand-made by decision; `github-status` does not exist yet and is encrypted from the start when it does. Production gets the same
+> Flux; `hetzner` stays hand-made by decision. Production gets the same
 > treatment as part of standing it up ([#560](https://github.com/enorm-labs/event-junkie/issues/560)).
 >
-> **`github-dispatch` joined the list on 2026-08-19** ([#565](https://github.com/enorm-labs/event-junkie/issues/565)), declared by `notification.yaml` and not
-> yet created — but it does **not** inherit `github-status`'s "encrypt it, the value is a nuisance at worst" answer, because its scope is not the same. See the
-> row below and the note under the table.
+> **`github-dispatch` joined the list on 2026-08-19** ([#565](https://github.com/enorm-labs/event-junkie/issues/565)) and is **hand-made**, not encrypted — its
+> scope is `contents: write`, which is the one place the "encrypt it, the value is a nuisance at worst" reasoning does not hold. See the note under the table.
+> A fourth secret, `github-status`, was declared and then removed without ever existing ([#567](https://github.com/enorm-labs/event-junkie/issues/567)).
 
 ## What is hand-made today
 
@@ -17,7 +16,6 @@ when this was written; `github-dispatch` made it four.
 | ----------------- | -------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
 | `events-db`       | `event-junkie` | the `events` role's password                          | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8                |
 | `hetzner`         | `cert-manager` | an hcloud API token, **read+write** — staging only    | §8                                                             |
-| `github-status`   | `flux-system`  | a fine-grained PAT, commit statuses on one repo       | `deploy/clusters/staging/notification.yaml`                    |
 | `github-dispatch` | `flux-system`  | a fine-grained PAT, **`contents: write`** on one repo | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8 — **after** §9 |
 
 They are typed once by a human and exist nowhere else. **That is the whole problem**, and it is the same shape as the backup credential in §8b: a cluster
@@ -35,27 +33,25 @@ recovery, which is the property being bought.
 
 For one operator the operational difference is otherwise small, and the deciding argument is rebuild survival rather than ergonomics.
 
-## The decision, taken 2026-08-19: two of three, because this repository is public
+## The decision, taken 2026-08-19: one of three, because this repository is public
 
 **Encrypting a secret into a public repository publishes its ciphertext, permanently.** Git history is world-readable, forkable and archived, so "we rotated it
 later" does not un-publish the bytes. That is fine for a value whose exposure requires a future break in X25519 — and it is a different conversation for each
-secret. The heading says "two of three" because that is what was decided on the day; `github-dispatch` arrived later and is still open.
+secret.
 
 | Secret            | If the ciphertext were ever broken                                                                                        | Worth encrypting into a public repo? |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
 | `events-db`       | A Postgres password for a server reachable only through the private network and WireGuard. Useless without network access | **Yes**                              |
-| `github-status`   | Commit statuses on one repository. Nuisance value                                                                         | **Yes**                              |
-| `github-dispatch` | Triggering `repository_dispatch` workflows on `main`. **The strongest of the four** — see below                           | **Recommend not** — open, see below  |
+| `github-dispatch` | Triggering `repository_dispatch` workflows on `main`. **The strongest of the three** — see below                          | **No** — see below                   |
 | `hetzner`         | **Read+write control of the Hetzner account** — servers, volumes, firewalls, the lot                                      | **Recommend not**                    |
 
-**On `github-dispatch` — open, and it should not be closed by analogy to `github-status`.** The table's logic is exposure cost, and the two tokens do not share
-one. A broken `github-status` ciphertext buys an attacker the ability to post a ✅ on a commit. A broken `github-dispatch` ciphertext buys `contents: write` on
-this repository — and under ADR-016, what lands on `main` is what the cluster runs, so repository write access is one branch-protection rule away from being
-cluster access. That is the same argument that kept the Hetzner token hand-made, applied to a different asset.
+**On `github-dispatch`.** The table's logic is exposure cost. A broken `github-dispatch` ciphertext buys `contents: write` on this repository — and under
+ADR-016, what lands on `main` is what the cluster runs, so repository write access is one branch-protection rule away from being cluster access. That is the
+same argument that kept the Hetzner token hand-made, applied to a different asset.
 
 **Decided 2026-08-19: hand-made, like `hetzner`, not encrypted like `events-db`.** The rebuild-survival benefit is small — recreating a PAT is a two-minute job —
-and the exposure cost is the highest of the four. So the count is now **two of four**: `events-db` encrypted, `hetzner` and `github-dispatch` hand-made, and
-`github-status` still hypothetical.
+and the exposure cost is the highest of the three. So the count is **one of three**: `events-db` encrypted, `hetzner` and `github-dispatch` hand-made,
+and that is the whole list.
 
 **What hand-made means operationally, because it is easy to assume Flux will handle it:** nothing in this repository creates this Secret, and no deploy will
 bring it. It is typed once against the cluster and exists nowhere else:
