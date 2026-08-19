@@ -537,16 +537,20 @@ see "what is on what" — declare them on the dispatch-triggered workflow, with 
 > reasons listed just above. `deployment-status.yml` names the environment on the Deployments REST API instead, so the tab is populated and remains,
 > deliberately, a **read-only history rather than a gate**.
 >
-> **They are created by hand, once, and that is not a workaround.** GitHub documents implicit creation only for the workflow `environment:` key — _"running a
-> workflow that references an environment that does not exist will create an environment with the referenced name"_ — and that is the route we are not taking.
-> Whether the REST path also creates one is undocumented, and it does not matter, because creating them by hand is better regardless: it is where the
-> **environment URL** gets set, which implicit creation cannot do.
+> **They are created by hand, once** (done 2026-08-19). GitHub documents implicit creation only for the workflow `environment:` key — _"running a workflow that
+> references an environment that does not exist will create an environment with the referenced name"_ — and that is the route we are not taking. Whether the
+> REST path also creates one is undocumented, so this does not depend on finding out.
 >
-> - `production` → `https://event-junkie.de` — the chart's `ingress.host`. Not `event-junkie.com`, which exists only as a 301 redirect.
-> - `staging` → **deliberately blank.** `staging.event-junkie.de` has no public DNS record and answers only through the tunnel, so a link would resolve for
->   nobody. The workflow omits `environment_url` for staging for the same reason; absent beats broken.
+> **Leave every protection rule empty on both**, which is the entire content of the click-through: that is the "read-only history rather than a gate" decision,
+> expressed in the one place it can be. Verify with `gh api repos/enorm-labs/event-junkie/environments`.
 >
-> Leave every protection rule empty on both. That is the "read-only history rather than a gate" decision, expressed in the one place it can be.
+> **An environment has no URL field, and this is worth writing down because it looks like it should.** Its settings are protection rules, deployment branch
+> policies, secrets and variables — nothing else; the API confirms it (`can_admins_bypass`, `deployment_branch_policy`, `name`, `protection_rules`). The link on
+> an environment card comes from **`environment_url` on each deployment status**, which is why `deployment-status.yml` sends it:
+>
+> - `production` → `https://event-junkie.de`, the chart's `ingress.host`. Not `event-junkie.com`, which exists only as a 301 redirect.
+> - `staging` → **the key is omitted entirely.** `staging.event-junkie.de` has no public DNS record and answers only through the tunnel, so a link would resolve
+>   for nobody, and the person most likely to click it would read the failure as the deploy being broken. Absent beats broken.
 
 Two notes that survive the rewrite:
 
