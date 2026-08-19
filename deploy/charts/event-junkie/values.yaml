@@ -319,6 +319,32 @@ networkPolicy:
       kubernetes.io/metadata.name: kube-system
     podSelector:
       app.kubernetes.io/name: traefik
+  metricsScrape:
+    # networkPolicy.metricsScrape lets a metrics collector reach `/actuator/**` on the management
+    # port. Without it the meters are exposed, the pods are annotated, the collector discovers them
+    # — and every scrape is refused, which is the exact state this chart was in until #271 ran it.
+    #
+    # **Note the name.** `scrapeEgress` below is the importer scraping *venue websites*. This is the
+    # opposite direction: something scraping *us*. The two are unrelated despite the shared word, and
+    # confusing them costs an afternoon.
+    enabled: true
+    # The namespace the collector runs in.
+    namespace: observability
+    # `namespaceSelector` (the default) or `ipBlock`.
+    #
+    # **Prefer `namespaceSelector`.** It permits exactly one namespace, where `ipBlock` opens the
+    # management port to every pod in the cluster — and `/actuator/**` is private precisely because
+    # nothing routes it.
+    #
+    # `ipBlock` exists because a k3d rehearsal on 2026-08-19 found the selector form silently
+    # refused when collector and target sat on **different nodes**: cross-node pod traffic is SNAT'd,
+    # so the source address matches no pod or namespace selector and only a CIDR does. **That is
+    # very likely a multi-node artifact and not a production one** — ADR-012 puts everything on a
+    # single node, where the traffic never leaves it. The switch is here so that discovering
+    # otherwise is a values change rather than an investigation starting from "metrics stopped".
+    mode: namespaceSelector
+    # Only read when mode is `ipBlock`. The cluster's pod CIDR.
+    cidr: 10.42.0.0/16
   scrapeEgress:
     # networkPolicy.scrapeEgress lets the importer reach venue websites, which is the product. It is
     # the only workload allowed to talk to the open internet.

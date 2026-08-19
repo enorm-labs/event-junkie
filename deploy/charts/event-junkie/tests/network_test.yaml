@@ -195,3 +195,54 @@ tests:
       # place that fails rather than in a comment that does not.
       - notExists:
           path: spec.headers.browserXssFilter
+
+  # --- Metrics scraping (#271) --------------------------------------------------------------------
+  #
+  # The rule that makes the meters reachable. Its absence is silent in a way worth testing against:
+  # the pods stay healthy, the collector finds them by annotation, and every scrape is refused.
+  - it: allows the collector namespace to reach the management ports
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    templates:
+      - templates/networkpolicy.yaml
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-event-junkie-allow-metrics-scrape
+    asserts:
+      - equal:
+          path: spec.policyTypes
+          value: [Ingress]
+      - equal:
+          path: spec.ingress[0].from[0].namespaceSelector.matchLabels["kubernetes.io/metadata.name"]
+          value: observability
+      # Both management ports and nothing else. A collector has no business on the application
+      # ports, which the Ingress rule already covers.
+      - equal:
+          path: spec.ingress[0].ports[0].port
+          value: 9001
+      - notExists:
+          path: spec.ingress[0].from[0].ipBlock
+
+  # The escape hatch, asserted so it cannot rot unnoticed — it exists for the cross-node case a
+  # single-node cluster never exercises, which is precisely the kind of code that quietly stops
+  # rendering.
+  - it: switches to an ipBlock when the mode says so
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      networkPolicy.metricsScrape.mode: ipBlock
+      networkPolicy.metricsScrape.cidr: "10.42.0.0/16"
+    templates:
+      - templates/networkpolicy.yaml
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-event-junkie-allow-metrics-scrape
+    asserts:
+      - equal:
+          path: spec.ingress[0].from[0].ipBlock.cidr
+          value: "10.42.0.0/16"
+      - notExists:
+          path: spec.ingress[0].from[0].namespaceSelector
