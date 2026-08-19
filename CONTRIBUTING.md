@@ -76,17 +76,21 @@ with "Rebase and merge", and a merge commit blocks the button.
 
 ### What CI will and will not run on your pull request
 
-Worth knowing before a red check makes you think you broke something. **Nine checks are required**,
-and all nine run on a fork's pull request exactly as they do on ours — none of them needs a secret or
-a token that can write:
+Worth knowing before a red check makes you think you broke something. **Eleven checks are required**,
+and all eleven run on a fork's pull request exactly as they do on ours — none of them needs a secret
+or a token that can write:
 
 ```
 Lint & render · ShellCheck deploy-story scripts     the Helm chart
 Lint & audit workflows                              actionlint + zizmor
 Format & Validate (infra/bootstrap | staging | production)
 ShellCheck cloud-init
-CodeQL · Dependency Review
+Analyze (actions | javascript-typescript | java-kotlin)    CodeQL
+Dependency Review
 ```
+
+That was verified rather than assumed, on 2026-08-19, by opening the repository's first fork pull
+request and merging it (#579).
 
 Two things behave differently on a fork, and neither means anything is wrong:
 
@@ -97,6 +101,12 @@ Two things behave differently on a fork, and neither means anything is wrong:
   cause. Both checks still _run_: `./gradlew build` runs `koverVerify` and detekt still fails the
   build on a violation. What is lost is the reporting, so the per-changed-file coverage threshold
   and the detekt annotations are a review matter on this path.
+- **CodeQL findings do not reach the Security tab either, and the checks still pass.** The three
+  `Analyze (…)` jobs run the full analysis on your pull request; only the upload is skipped, because
+  writing to Code Scanning needs a token a fork does not get. This is why CodeQL runs here as a
+  workflow rather than through GitHub's default setup — default setup produces no run at all for a
+  fork, and a required check that never reports leaves a pull request unmergeable with nothing red to
+  explain why. That was this repository's own bug until #479 found it.
 - **`Build & Test` is not a required check**, for anyone. It costs about sixteen minutes across
   backend and frontend, so requiring it would put that on every documentation-only pull request. It
   still runs, and a red one still needs explaining.

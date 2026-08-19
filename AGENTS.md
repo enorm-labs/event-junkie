@@ -931,11 +931,17 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 
 Learned the expensive way during the TODO.md → Issues migration (2026-08-09). Each of these looks like a bug in your script the first time you hit it.
 
-- **Fork pull requests work, and the property that makes them work is fragile** (#479, first one actually opened 2026-08-19 — enorm-labs/event-junkie#579).
-  All nine required checks declare only `contents: read` and consume no secret, so a fork's read-only `GITHUB_TOKEN` runs every one of them — there is no
-  required-but-skipped check, which is the failure mode that would make a pull request unmergeable forever and look like a broken repository to a first-time
-  contributor. **Adding a secret or a `write` permission to any of those nine breaks the fork path**, and it breaks it invisibly, because pull requests from
-  forks are rare enough here that nothing routinely exercises it.
+- **Fork pull requests work, and the property that makes them work is fragile** (#479 — first one opened _and merged_ 2026-08-19, #579). All eleven required
+  checks declare only `contents: read` and consume no secret, so a fork's read-only `GITHUB_TOKEN` runs every one of them — there is no required-but-skipped
+  check, which is the failure mode that makes a pull request unmergeable forever and look like a broken repository to a first-time contributor. **Adding a
+  secret or a `write` permission to any of those eleven breaks the fork path**, and it breaks it invisibly, because pull requests from forks are rare enough
+  here that nothing routinely exercises it.
+
+    **This was not a hypothetical: the path was broken when it was first tried.** `CodeQL` was required and ran through GitHub's _default setup_, which produces
+    no run at all for a fork — no workflow run, no check suite, no check. Everything else was green and the pull request could never have merged, with nothing
+    red to explain it. #581 moved CodeQL to an advanced-setup workflow (`.github/workflows/codeql.yml`) precisely because a workflow runs on the fork path and
+    default setup does not. **Never move CodeQL back to default setup**, and read that file's header before changing its matrix — the job names are the required
+    check contexts.
 
     **Every step that writes to GitHub is guarded on `github.event.pull_request.head.repo.fork != true`** rather than left to fail — the coverage comment and
     the three detekt SARIF uploads in `build-backend.yml`, the OWASP SARIF upload in the same file, and the SARIF uploads in `release.yml` and
