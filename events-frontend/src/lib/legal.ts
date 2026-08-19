@@ -46,25 +46,16 @@ export const INFRASTRUCTURE_IS_PROPOSED = true
 /**
  * While `true`, the notice says the Art. 28 processor contract is **not yet concluded** (#275).
  *
- * §5 of the privacy notice names Hetzner as an `Auftragsverarbeiter mit einem Vertrag nach Art. 28
- * DSGVO`, in the present tense. That sentence is a statement of fact about a contract, and
- * [LEGAL.md](../../../docs/LEGAL.md) §14 is blunt about which way it fails:
+ * §5 names Hetzner as an `Auftragsverarbeiter mit einem Vertrag nach Art. 28 DSGVO`, in the present
+ * tense — a statement of fact, and [LEGAL.md](../../../docs/LEGAL.md) §14 is blunt about which way
+ * it fails: *a notice naming processors without a DPA in place is worse than one naming none*.
+ * [INFRASTRUCTURE_IS_PROPOSED] cannot stand in for it: a contract can be concluded before anything
+ * is deployed and lapse long after, so they are two facts and two flags.
  *
- * > *A notice naming processors without a DPA in place is worse than one naming none.*
- *
- * [INFRASTRUCTURE_IS_PROPOSED] does not cover this and should not be made to: its banner line says
- * the providers are the intended ones and nothing is deployed, which is a statement about
- * *infrastructure*. The contract is a separate fact that can be true before anything is deployed
- * and false long after — they move independently, so they are two flags.
- *
- * **Concluded 2026-08-19** via <https://accounts.hetzner.com/account/dpa>, so this is `false` and
- * the banner line is gone. §5 now describes a contract that exists.
- *
- * Nothing in code can observe a signed PDF, so this constant *is* the record — which is why
- * [docs/LEGAL.md](../../../docs/LEGAL.md) §14 carries the date alongside it. **Set it back to
- * `true` if the contract ever lapses, is superseded, or a second processor is added without one**;
- * a notice naming a processor without a DPA in place is worse than one naming none, and that
- * failure is silent in both directions.
+ * Concluded 2026-08-19 via <https://accounts.hetzner.com/account/dpa>, so this is `false`. Nothing
+ * in code can observe a signed PDF, which makes this constant the record, carrying the same date as
+ * LEGAL.md §14. **Set it back to `true` if the contract lapses, is superseded, or a second
+ * processor is added without one** — the failure is silent in both directions.
  */
 export const PROCESSOR_CONTRACTS_PENDING = false
 

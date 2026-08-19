@@ -3,25 +3,17 @@ import { expect, type Page, type Route, test } from '@playwright/test'
 /**
  * Calendar view e2e tests with a mocked BFF.
  *
- * The calendar fetches `GET /api/events/calendar?from=&to=` whenever FullCalendar's
- * visible range changes — on initial render and on every prev/next/today or view
- * switch. We mock that endpoint and key its response off the requested `from`, so a
- * deterministic event always lands in the visible window regardless of the machine's
- * clock (FullCalendar opens on the real "today").
+ * The calendar refetches `GET /api/events/calendar?from=&to=` whenever FullCalendar's visible range
+ * changes, so the mock keys its response off the requested `from` — a deterministic event then
+ * lands in the visible window whatever the machine's clock says. The feed matcher
+ * (`/events/calendar?…`) and the detail matcher (`/events/calendar-gig`) cannot collide.
  *
- * FullCalendar renders events that carry a URL as <a> links; the view intercepts the
- * click and navigates via vue-router instead, and `eventDidMount` puts the full
- * "<title> @ <venue>" label on the link's native `title` attribute (the cell clips the
- * visible text). Toolbar controls are plain buttons: prev/next/today (aria-label) and
- * month/week/list (text).
- *
- * The page also carries the shared filter bar (see events-filters.spec.ts for its full
- * behaviour on the list page); here we only assert that a filter reaches the calendar
- * feed and survives range navigation, since the calendar refetches on two independent
- * triggers — the visible window and the URL query.
- *
- * The feed matcher (`/events/calendar?…`) and the event-detail matcher
- * (`/events/calendar-gig`) are deliberately non-overlapping so they don't collide.
+ * What the assertions lean on: FullCalendar renders events carrying a URL as `<a>` links and the
+ * view intercepts the click to navigate through vue-router, `eventDidMount` puts the full
+ * "<title> @ <venue>" label on the link's native `title` (the cell clips the visible text), and the
+ * toolbar controls are plain buttons — prev/next/today by aria-label, month/week/list by text. The
+ * filter bar is covered on the list page (events-filters.spec.ts); here it is only asserted to
+ * reach the feed and survive range navigation, since the calendar refetches on two triggers.
  */
 
 function collectPageErrors(page: Page): string[] {

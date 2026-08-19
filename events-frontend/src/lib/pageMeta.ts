@@ -5,22 +5,17 @@ import { INTL_LOCALES, type Locale } from '@/i18n/locales'
 /**
  * What each page calls itself: the document title, a description, and a representative image.
  *
- * **This module exists to be used twice.** Today the client writes these tags after boot, which
- * reaches Googlebot and nothing else. The planned meta injector
+ * **This module exists to be used twice.** The client writes these tags after boot, reaching
+ * Googlebot and nothing else; the planned meta injector
  * ([ADR-014](../../docs/adr/ADR-014_RENDERING_STRATEGY.md) §Decision 3) will write the same tags
- * server-side, for the scrapers that do not run JavaScript. If the two ever disagree, a shared
- * link previews as one thing and opens as another, and `og:title` flips the moment scripts run —
- * so both must read from here rather than each composing its own.
+ * server-side, for the scrapers that do not run JavaScript. If the two disagree, a shared link
+ * previews as one thing and opens as another — so both read from here.
  *
- * That constraint shapes the whole file: **descriptions are composed from data and punctuation,
- * never from prose.** A sentence like "Concert at Lido on Friday" would need the message
- * catalogue, and the injector may run somewhere that has no catalogue — an edge worker, or a
- * language it was not built with. `Fr., 12. Juni 2026 · Lido, Berlin` needs only `Intl`, which
- * exists everywhere.
- *
- * **Canonical URLs are deliberately absent.** They are already derived by `canonicalUrl()` in
- * `lib/seo.ts` and written by `lib/seoTags.ts`; adding a second source for the same value is the
- * exact divergence this module exists to prevent.
+ * Hence **descriptions are composed from data and punctuation, never from prose**: "Concert at Lido
+ * on Friday" would need the message catalogue, and the injector may run where there is none — an
+ * edge worker, or a language it was not built with. And **canonical URLs are deliberately absent**:
+ * `canonicalUrl()` in `lib/seo.ts` derives them and `lib/seoTags.ts` writes them, so a second
+ * source here would be the divergence this module exists to prevent.
  */
 
 /** Brand name shown in the browser tab, appended to every interior view's title. */

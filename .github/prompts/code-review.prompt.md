@@ -151,6 +151,8 @@ foo` boilerplate; commented-out code; and a new `TODO` (that is an issue).
 
 #### Build & Lint
 
+- Comments follow the same rules as the backend — see the Documentation checklist above; `events-frontend/AGENTS.md` §Comments states them in TS/Vue terms, and
+  `event-junkie/max-comment-lines` caps one comment at 15 lines.
 - `npm run build` passes (type-check + Vite build).
 - `npm run lint` passes (oxlint + eslint).
 - No Prettier — project uses oxfmt.

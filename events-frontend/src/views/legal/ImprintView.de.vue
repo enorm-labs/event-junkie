@@ -2,16 +2,15 @@
 /**
  * Impressum nach § 5 DDG — die **maßgebliche Fassung** (LEGAL.md §6.1).
  *
- * Written in German rather than translated from `ImprintView.en.vue`: the section headings a
- * German reader expects — *Angaben gemäß § 5 DDG*, *Haftung für Inhalte*, *Haftung für Links* —
- * are fixed conventional wording, and rendering the English headings literally is exactly what
- * makes an imprint read as a foreign document translated by machine.
+ * Written in German rather than translated from `ImprintView.en.vue`: the headings a German reader
+ * expects — *Angaben gemäß § 5 DDG*, *Haftung für Inhalte*, *Haftung für Links* — are fixed
+ * conventional wording, and rendering the English ones literally is what makes an imprint read as a
+ * machine-translated foreign document.
  *
- * **Register:** `du`, not `Sie`. The site addresses its readers informally throughout (see the
- * footer disclaimer and BRANDING.md §Voice); switching to `Sie` on two pages would read as copied
- * boilerplate, which is the impression a legal page can least afford. Nothing in § 5 DDG or the
- * DSGVO requires a formal register — Art. 12 (1) DSGVO asks for *klare und einfache Sprache*, and
- * `du` is that.
+ * **Register:** `du`, not `Sie`. The site addresses its readers informally throughout (footer
+ * disclaimer, BRANDING.md §Voice), and switching on two pages would read as copied boilerplate —
+ * the impression a legal page can least afford. Nothing in § 5 DDG or the DSGVO requires a formal
+ * register; Art. 12 (1) DSGVO asks for *klare und einfache Sprache*, and `du` is that.
  *
  * **Change both language versions or neither.** Shared facts come from `@/lib/legal`.
  */

@@ -3,20 +3,15 @@ import { expect, type Page, test } from '@playwright/test'
 /**
  * Resilient smoke suite.
  *
- * Deliberately shallow: it verifies the app boots, the router mounts each static
- * view, and the shared chrome renders — the cross-cutting breakage that unit tests
- * miss (blank screen, broken lazy-loaded chunk, dead route). It intentionally does
- * NOT assert on data-driven content, so it survives UI churn while the frontend is
- * still in flux.
+ * Deliberately shallow: it verifies the app boots, the router mounts each static view, and the
+ * shared chrome renders — the cross-cutting breakage unit tests miss (blank screen, broken
+ * lazy-loaded chunk, dead route). It asserts nothing about data-driven content, so it survives UI
+ * churn while the frontend is still in flux. Detail routes (/events/:slug, /venues/:slug, …) are
+ * omitted for the same reason and covered by detail-routes.spec.ts, which mocks the BFF.
  *
- * Detail routes (/events/:slug, /venues/:slug, …) are omitted on purpose: they
- * depend on the live BFF and real data. Add those once the API can be mocked
- * (Playwright page.route) or a fixture seeded — see the follow-up note in the PR.
- *
- * The BFF is not running during e2e, so onMounted API calls fail and log
- * console/network errors by design; the views render their error state. We
- * therefore assert on uncaught exceptions (pageerror) only — the true "the app
- * broke" signal — rather than console output.
+ * The BFF is not running during e2e, so `onMounted` API calls fail and log console and network
+ * errors by design; the views render their error state. Assertions are therefore on uncaught
+ * exceptions (`pageerror`) only — the true "the app broke" signal — rather than console output.
  */
 
 /** Static routes and the stable <h1> each is expected to mount. */

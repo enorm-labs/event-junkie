@@ -2,23 +2,19 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, type Page, type Route, test } from '@playwright/test'
 
 /**
- * Automated accessibility sweep — the runtime half of the WCAG 2.1 AA target
- * (docs/LEGAL.md §12). Run it on its own with `npm run test:a11y`.
+ * Automated accessibility sweep — the runtime half of the WCAG 2.1 AA target (docs/LEGAL.md §12).
+ * Run it on its own with `npm run test:a11y`.
  *
- * axe catches what `eslint-plugin-vuejs-accessibility` cannot see from the source: colour
- * contrast against the resolved theme tokens, focus order, landmark structure, and duplicate IDs.
- * It is not a conformance certificate — axe reliably finds roughly a third of WCAG issues — but
- * it is what stops the accessibility already in this codebase from regressing silently.
- *
- * Two passes, because they fail for different reasons:
- *
+ * axe sees what `eslint-plugin-vuejs-accessibility` cannot from the source: colour contrast against
+ * the resolved theme tokens, focus order, landmark structure, duplicate IDs. Not a conformance
+ * certificate — axe finds roughly a third of WCAG issues — but it stops the accessibility already
+ * here from regressing silently. Two passes, because they fail for different reasons:
  *   1. **Static routes**, with no BFF. Data-driven views render their error state, which still
  *      exercises the shared chrome — skip link, header, footer — where the repeated content lives.
- *   2. **Data-driven routes, with the BFF mocked.** Without this pass the components that carry
- *      almost all of the interactive markup — the event and venue cards, the filter bar's selects
- *      and checkboxes, pagination, the detail layout — are never scanned at all, because an error
- *      state renders none of them. The mocks are deliberately small; axe needs the elements to
- *      exist, not the data to be realistic.
+ *   2. **Data-driven routes, with the BFF mocked.** Without it the components carrying almost all
+ *      the interactive markup (cards, the filter bar's selects and checkboxes, pagination, the
+ *      detail layout) are never scanned, because an error state renders none of them. The mocks are
+ *      deliberately small: axe needs the elements to exist, not the data to be realistic.
  */
 
 // Both locales. German is reliably longer than English, so it is where a layout overflow or a
