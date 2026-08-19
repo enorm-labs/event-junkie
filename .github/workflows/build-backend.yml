@@ -262,20 +262,29 @@ jobs:
       # Last, with the other GitHub-API steps (#507), and `success() || failure()` on each so they
       # run regardless of what failed above — including each other. detekt wrote these files near the
       # top of the job; nothing since then removes them.
+      #
+      # `head.repo.fork != true` for the same reason the coverage comment above carries it, and it is
+      # the same guard `release.yml` and `image-scan-scheduled.yml` already put on their own uploads
+      # (#479). A fork's `GITHUB_TOKEN` is read-only, so `security-events: write` is not granted and
+      # the Code Scanning API answers 403 — which fails the step, and turns every fork pull request
+      # red for a reason the contributor did not cause and cannot fix. The cost is worth naming: on
+      # that path **detekt findings do not reach Code Scanning at all**, so they are a review
+      # responsibility, exactly as the per-changed-file coverage threshold already is. detekt itself
+      # still runs and still fails the build, which is the larger half.
       - name: Upload detekt SARIF (events-core)
-        if: success() || failure()
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
         uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
         with:
           sarif_file: events-core/build/reports/detekt/detekt.sarif
           category: detekt-events-core
       - name: Upload detekt SARIF (events-bff)
-        if: success() || failure()
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
         uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
         with:
           sarif_file: events-bff/build/reports/detekt/detekt.sarif
           category: detekt-events-bff
       - name: Upload detekt SARIF (events-importer)
-        if: success() || failure()
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
         uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
         with:
           sarif_file: events-importer/build/reports/detekt/detekt.sarif
@@ -338,6 +347,11 @@ jobs:
         continue-on-error: true
         run: ./gradlew dependencyCheckAggregate --no-configuration-cache
         env:
+          # Empty on a pull request from a fork — secrets are not exposed to forked `pull_request`
+          # runs. The scan then falls back to unauthenticated NVD access, which is heavily rate
+          # limited, which is why `continue-on-error` above matters more on that path than on ours.
+          # This is also the one place a pull request touches a repository secret at all, so it is
+          # the counter-example to "no pull request can reach a secret" (#479).
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
       - name: Post report to Job Summary
@@ -362,7 +376,7 @@ jobs:
       # default output directory to build/reports/dependency-check/, so re-check this path
       # whenever the plugin is upgraded.
       - name: Upload SARIF to GitHub Code Scanning
-        if: (success() || failure()) && hashFiles('build/reports/dependency-check/dependency-check-report.sarif') != ''
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('build/reports/dependency-check/dependency-check-report.sarif') != ''
         uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
         with:
           sarif_file: build/reports/dependency-check/dependency-check-report.sarif
