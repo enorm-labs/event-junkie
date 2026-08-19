@@ -2,36 +2,28 @@ package de.norm.events.promoter
 
 // Promoter-name canonicalization for the scraper pipeline.
 //
-// The same real-world promoter is written many ways across (and within) venue
-// websites: an abbreviated label on one site ("LOFT"), a fuller trading name on
-// another ("Loft Concerts GmbH"). Resolving promoters by `slugify(name)` alone
-// therefore fragments one promoter into several rows. [canonicalPromoterName]
-// reduces those variants to a shared canonical form *before* slugging, so they
-// resolve to a single promoter entity.
+// The same real-world promoter is written many ways across venue websites: an abbreviated label on
+// one site ("LOFT"), a fuller trading name on another ("Loft Concerts GmbH"). Resolving promoters by
+// `slugify(name)` alone therefore fragments one promoter into several rows. [canonicalPromoterName]
+// reduces those variants to a shared canonical form *before* slugging.
 //
 // The transform is deliberately conservative and deterministic:
-//   1. Strip a *trailing* run of legal-form and generic-descriptor words
-//      (GmbH, UG, …, "Concerts", "Konzerte", "Music", "Events", …). Only trailing
-//      words are stripped, so a name whose descriptor is load-bearing and not at
-//      the end — e.g. "Concert Concept" — is left intact.
-//   2. "De-shout" ALL-CAPS words ("SIMPLY QUIZ" → "Simply Quiz") for a clean,
-//      order-independent display name; intentional mixed casing ("GreyZone") is
-//      preserved.
-//   3. Fold known source typos and spelling/spacing variants onto a single
-//      canonical spelling via an explicit, curated map ("Trinty" → "Trinity",
-//      "Allrooms" → "All Rooms"). The lookup key is punctuation- and
-//      space-insensitive, so one entry covers "All Rooms", "Allrooms" and
-//      "ALLROOMS" alike. Only exact (normalized) matches are corrected — no
-//      fuzzy/edit-distance matching, which would risk merging genuinely
+//   1. Strip a *trailing* run of legal-form and generic-descriptor words (GmbH, UG, …, "Concerts",
+//      "Konzerte", "Music", "Events", …). Only trailing words, so a name whose descriptor is
+//      load-bearing and not at the end — "Concert Concept" — is left intact.
+//   2. De-shout ALL-CAPS words ("SIMPLY QUIZ" → "Simply Quiz") for an order-independent display
+//      name; intentional mixed casing ("GreyZone") is preserved.
+//   3. Fold known source typos and spacing variants onto one canonical spelling via a curated map
+//      ("Trinty" → "Trinity", "Allrooms" → "All Rooms"). The lookup key is punctuation- and
+//      space-insensitive, so one entry covers "All Rooms", "Allrooms" and "ALLROOMS" alike. Only
+//      exact (normalized) matches are corrected — fuzzy matching would risk merging genuinely
 //      distinct promoters.
-// At least one word is always kept, and stripping never removes the last
-// letter-bearing word: a promoter named purely of descriptor words (e.g.
-// "Records") keeps its single word, and "36 Concerts" stays "36 Concerts"
-// rather than collapsing to the bare, unusable number "36".
 //
-// Known limits (accepted): a *leading* descriptor is not stripped, so
-// "Konzertbüro Schoneberg" does not merge with "Schoneberg Konzerte" unless an
-// explicit correction-map entry is added. Artists are intentionally *not*
+// At least one word is always kept and stripping never removes the last letter-bearing word, so
+// "Records" keeps its single word and "36 Concerts" does not collapse to the unusable "36".
+//
+// Accepted: a *leading* descriptor is not stripped, so "Konzertbüro Schoneberg" does not merge with
+// "Schoneberg Konzerte" without an explicit correction-map entry. Artists are deliberately not
 // normalized this way — stripping words from band names is unsafe.
 
 /**

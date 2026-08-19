@@ -7,54 +7,29 @@ import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 
 /**
- * Reports whether this instance can actually read the `events` schema, so that readiness can mean
- * "can serve" rather than "Spring finished starting".
+ * Reports whether this instance can actually read the `events` schema, so readiness means "can
+ * serve" rather than "Spring finished starting".
  *
- * Registered as the health component **`eventsSchema`** — Spring derives the name from the bean name
- * with the `HealthIndicator` suffix removed — and named in the readiness group in `application.yaml`.
- * Renaming this class renames the health component and breaks that group at **startup**, not at
- * runtime: `management.endpoint.health.validate-group-membership` defaults to `true`, so a group that
- * includes a contributor which no longer exists fails the context. That is the desired behaviour and
- * the reason the property is left at its default.
+ * Registered as the health component **`eventsSchema`** (the bean name minus the `HealthIndicator`
+ * suffix) and named in the readiness group in `application.yaml`, so renaming this class breaks that
+ * group at startup rather than at runtime — `management.endpoint.health.validate-group-membership`
+ * is deliberately left at its default `true`.
  *
- * ### Why this exists alongside the stock `r2dbc` indicator
+ * Boot's stock `r2dbc` indicator only calls `Connection.validate(REMOTE)`, proving the database is
+ * reachable and nothing about the schema — the window [#263](https://github.com/enorm-labs/event-junkie/issues/263)
+ * measured on k3d, where the BFF reported Ready 1.2 seconds before Flyway created the schema it
+ * queries. The two stay separate so `/actuator/health/readiness` names which one is down.
  *
- * Boot's `ConnectionFactoryHealthIndicator` calls `Connection.validate(REMOTE)`. It proves the
- * database is reachable and proves nothing about the schema — which is precisely the failure
- * [#263](https://github.com/enorm-labs/event-junkie/issues/263) measured on k3d: PostgreSQL was up
- * the whole time, the BFF reported Ready 1.2 seconds before the importer's Flyway migrations created
- * the schema it queries, and Kubernetes routed traffic into that window. Adding `r2dbc` to the
- * readiness group alone would have left that window exactly as wide as it was.
+ * `SELECT EXISTS (SELECT 1 FROM <schema>.event)` beats the alternatives three ways: it returns one
+ * row even against an empty table (`… LIMIT 1` returns none, and an empty result builds as
+ * `UNKNOWN`, blocking readiness on a first install); PostgreSQL stops the subquery at the first
+ * tuple, so it stays O(1) where `count(*)` is O(rows); and it exercises the real grant on the real
+ * table, which an `information_schema` lookup does not. A missing schema or revoked grant raises an
+ * `R2dbcException` that [AbstractReactiveHealthIndicator] turns into `DOWN` with the cause.
  *
- * The two are kept separate rather than folded into one so that `/actuator/health/readiness` says
- * *which* of the two is down — "the database is gone" and "the schema is not there yet" have
- * different operators and different fixes.
- *
- * ### Why this query
- *
- * `SELECT EXISTS (SELECT 1 FROM <schema>.event)` was chosen over three alternatives:
- *
- * - **It always returns exactly one row**, including against an empty table. `SELECT 1 FROM … LIMIT 1`
- *   returns *none* on a fresh database, and an empty result reaches `Health.Builder.build()` with no
- *   status set — reporting `UNKNOWN` on a first install, which is legitimate and must not block
- *   readiness.
- * - **It is O(1), not O(rows).** PostgreSQL stops the subquery at the first tuple, so this does not
- *   become a sequential scan as the table grows. `SELECT count(*)` would.
- * - **It exercises the real grant on the real table**, unlike an `information_schema` lookup, which
- *   answers "is it visible" rather than "can I read it".
- *
- * A missing schema or a revoked grant raises an `R2dbcException`, which
- * [AbstractReactiveHealthIndicator] turns into `DOWN` carrying the cause — so the failure path needs
- * no handling here.
- *
- * The schema name is interpolated rather than bound because no SQL dialect parameterises an
- * identifier. It is [EVENTS_SCHEMA] — a compile-time constant, never request input.
- *
- * **It used to read `spring.r2dbc.properties.schema`, and #540 is why it no longer does.** That made
- * this probe the third consumer of a property seven hand-written statements ignored, so a changed
- * property produced a BFF probing one schema and querying another. Resolving both to the same
- * constant is what makes a green readiness probe mean the queries will work — which is the entire
- * claim #438 added it to make.
+ * The schema is interpolated because no SQL dialect parameterises an identifier, and it must stay
+ * [EVENTS_SCHEMA] rather than `spring.r2dbc.properties.schema`: a probe reading a property the
+ * queries ignore reports green while querying a different schema (#540).
  */
 @Component
 class EventsSchemaHealthIndicator(

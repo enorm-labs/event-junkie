@@ -19,28 +19,24 @@ import java.time.Duration
  * The window [#263](https://github.com/enorm-labs/event-junkie/issues/263) measured, reproduced as a
  * regression test: **the database is up and the schema is not there.**
  *
- * That distinction is the whole of [#438](https://github.com/enorm-labs/event-junkie/issues/438).
- * On k3d the BFF reported Ready 1.2 seconds before the importer's Flyway migrations created the
- * schema it queries, with PostgreSQL healthy throughout and zero restarts — so Kubernetes routed
- * traffic to a pod whose every query would fail. Nothing about a reachable database was wrong, which
- * is why the stock `r2dbc` indicator would have reported `UP` for the entire window and closed
- * nothing. This test asserts that directly: `r2dbc` is `UP` and the group is still `DOWN`.
+ * That distinction is the whole of [#438](https://github.com/enorm-labs/event-junkie/issues/438). On
+ * k3d the BFF reported Ready 1.2 seconds before the importer's Flyway migrations created the schema
+ * it queries, with PostgreSQL healthy throughout — so Kubernetes routed traffic to a pod whose every
+ * query would fail. Nothing about a reachable database was wrong, which is why the stock `r2dbc`
+ * indicator would have reported `UP` for the entire window and closed nothing. This test asserts
+ * that directly: `r2dbc` is `UP` and the readiness group is still `DOWN`.
  *
  * The state is produced by starting this context against **its own PostgreSQL, with Flyway off**,
- * rather than by racing a real migration. That is deterministic, it needs no cluster, and it is
- * exactly what the indicator sees during the real window — a query against a relation that does not
- * exist yet, on a database that is perfectly healthy.
- *
- * **It used to fake the state by pointing `spring.r2dbc.properties.schema` at a schema nobody
- * created, and #540 took that lever away** — the probe now resolves `EVENTS_SCHEMA` like every other
- * statement does, precisely so it cannot be aimed somewhere the queries are not. A dedicated
- * container is the honest replacement: `withDatabaseName` and `withReuse(false)` guarantee the
- * `events` schema is absent no matter what any other test in this JVM has migrated, which the shared
+ * rather than by racing a real migration: deterministic, no cluster needed, and exactly what the
+ * indicator sees during the real window — a query against a relation that does not exist yet, on a
+ * database that is perfectly healthy. The probe resolves `EVENTS_SCHEMA` like every other statement
+ * (#540) and so cannot be aimed at a schema nobody created; a dedicated container is what replaces
+ * that lever. `withDatabaseName` and `withReuse(false)` guarantee the `events` schema is absent no
+ * matter what any other test in this JVM has migrated, which the shared
  * `PostgresTestcontainersConfiguration` cannot promise.
  *
- * **The k3d rehearsal confirmed the fix once; this is the half that keeps confirming it.** On
- * 2026-08-18 the BFF reported Ready about four seconds *after* Flyway completed, with zero restarts —
- * the ordering inverted. A one-off measurement cannot fail later, and this can.
+ * The k3d rehearsal confirmed the fix once; this is the half that keeps confirming it — a one-off
+ * measurement cannot fail later, and this can.
  */
 @SpringBootTest(
     webEnvironment = WebEnvironment.RANDOM_PORT,

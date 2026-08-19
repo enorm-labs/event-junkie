@@ -98,7 +98,13 @@ Review the code changes in this pull request (or diff) for correctness, maintain
 #### Documentation
 
 - Public API changes are reflected in `@Schema` annotations and OpenAPI docs.
-- Non-obvious design decisions have code comments explaining _why_, not _what_.
+- **Comments follow the "Comments and KDoc" rules in AGENTS.md** — short, about _why_, present tense. Flag a comment that restates what the code plainly does;
+  history, dates or a changelog ("it used to…", "since #540 it now…"); a decision copied out of AGENTS.md or an ADR rather than referenced; `@param foo the
+foo` boilerplate; commented-out code; and a new `TODO` (that is an issue).
+- **Was the comment rewritten, or appended to?** A behaviour change whose comment grew a "note: also…" clause instead of being edited is the defect worth
+  catching here — the diff is the only place it is ever visible.
+- **Never ask for a long comment to be deleted when it records a deliberate trade-off.** Ask for it in fewer words; the reasoning stays. detekt's `LongComment`
+  rule caps a comment at 25 lines and excludes `**/scraper/**` for exactly that reason, so a long scraper KDoc is not a finding.
 - AGENTS.md is updated if new conventions or architectural patterns are introduced.
 
 #### Build & Dependencies

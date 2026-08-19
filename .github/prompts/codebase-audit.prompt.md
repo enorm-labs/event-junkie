@@ -81,8 +81,14 @@ or propose a new one. Distinguish incidental similarity from true duplication wo
 
 ### 3. Readability & maintainability
 
-Is the code still easy to follow? Unclear names, comments that explain _what_ instead of _why_, dead/commented-out code, leftover TODOs, inconsistent patterns
-between sibling modules, magic numbers/strings that should be named constants or config. Note where a newcomer would struggle.
+Is the code still easy to follow? Unclear names, dead/commented-out code, leftover TODOs, inconsistent patterns between sibling modules, magic numbers/strings
+that should be named constants or config. Note where a newcomer would struggle.
+
+Comments are part of this, measured against the **"Comments and KDoc" section of `AGENTS.md`**: a comment that restates the code, carries history or dates, or
+duplicates a decision that belongs in AGENTS.md or an ADR. detekt's `LongComment` rule already fails the build above 25 lines, so what is left for an audit is
+the shorter prose the rule cannot judge — and the pattern of a codebase drifting toward narration. Two things this audit must **not** do: treat length alone as
+a finding, and touch the scraper KDoc, which is the designated home for accepted limitations (`**/scraper/**` is excluded from the rule for that reason). If a
+comment there is long, the finding is at most "say it in fewer words", never "delete it".
 
 ### 4. Convention adherence (per `AGENTS.md` + code-review rubric)
 

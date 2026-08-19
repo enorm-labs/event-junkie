@@ -79,7 +79,7 @@ When in doubt, flag it in the PR rather than deciding silently. The cost of rais
 ## Project Overview
 
 Event Junkie is a multi-module Kotlin/Spring Boot application for discovering music events in Berlin. It uses a **Gradle multi-project build** with three
-subprojects sharing a root `settings.gradle.kts`, plus a standalone frontend project:
+application subprojects and one build-tooling subproject sharing a root `settings.gradle.kts`, plus a standalone frontend project:
 
 - **`events-core`** – Shared domain model library (no Boot app); consumed via `project(":events-core")` dependency. Applies `java-library`, `maven-publish`, and
   `java-test-fixtures` plugins (add fixtures under `src/testFixtures/`). Uses `api()` scope for `spring-modulith-starter-core` so it's transitively available to
@@ -88,6 +88,9 @@ subprojects sharing a root `settings.gradle.kts`, plus a standalone frontend pro
 - **`events-bff`** – Backend-for-Frontend REST API (Spring Boot 4 + WebFlux + R2DBC). Runs on default port `8080`.
 - **`events-importer`** – Imports events from external sources into the database (Spring Boot 4 + WebFlux + R2DBC + Flyway). Runs on port `8081`. Owns all
   Flyway migrations under `src/main/resources/db/migration/`.
+- **`detekt-rules`** – This repository's own detekt rules (currently `LongComment`), loaded onto every module's `detektPlugins` classpath by the root build and
+  configured under the `event-junkie` key in `detekt.yml`. Build tooling: nothing it contains ships, so it is left out of the Kover aggregate, the licence report
+  and the OWASP scan — each exclusion sits next to its reason in the root `build.gradle.kts`.
 - **`events-frontend`** – Vue 3 SPA (Vite 8, TypeScript 6, Vue Router). Uses oxlint/oxfmt for linting/formatting. Not a Gradle subproject — managed separately
   via npm. Requires Node `>=22.13.0` (see `engines` in `package.json`) — raised from 20 when vue-i18n was adopted, see ADR-013.
 
@@ -545,7 +548,9 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 - **Kotlin DSL** for all Gradle build scripts (`build.gradle.kts`).
 - **Kotlin 2.4.10** with **Spring Boot 4.1.0**; plugin versions pinned in `settings.gradle.kts` `pluginManagement`.
 - **ktlint 1.8.0** enforced project-wide via root `subprojects` block; do not override per-module.
-- **detekt 2.0.0-alpha.6** (`dev.detekt` plugin, migrated from `io.gitlab.arturbosch.detekt`) applied project-wide. The 2.0 line is still pre-release; the alpha
+- **detekt 2.0.0-alpha.6** (`dev.detekt` plugin, migrated from `io.gitlab.arturbosch.detekt`) applied project-wide, with this repository's own rules from
+  `:detekt-rules` on the analysis classpath (see the `event-junkie` section of `detekt.yml`). `detekt.version` in `gradle.properties` must match the plugin
+  version in `settings.gradle.kts`, or a custom rule meets a different API at analysis time. The 2.0 line is still pre-release; the alpha
   is tracked deliberately because it is what supports current Kotlin (see the compatibility-table link in `settings.gradle.kts`). Builds upon default config
   with overrides in root `detekt.yml` (currently only `MaxLineLength: 160`). Run `./gradlew detekt` to analyze all modules.
 - **Max line length**: 160 characters (enforced by both `.editorconfig` and `detekt.yml`).
@@ -633,6 +638,32 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     - **`-x test` implies `-x koverVerify`.** Skipping tests leaves no execution data, so every module reports 0% and the rule fails for a reason that has
       nothing to do with coverage. `build-backend.yml` passes both flags in its build step and runs `koverVerify` in the coverage step instead, after `test`.
       Any other `build -x test` invocation needs the same treatment.
+- **Comments and KDoc: short, about _why_, and written in the present tense.** A comment is prose that has to be maintained like the code it sits on, so every
+  line of it has to earn its keep. Default to one or two sentences; a paragraph is for reasoning that genuinely needs one, never for restating the code at
+  greater length. See [best practices for writing code comments](https://stackoverflow.blog/2021/12/23/best-practices-for-writing-code-comments/).
+    - **Explain _why_, not _what_** — the code already says what it does. A comment earns its place by recording something a reader cannot recover from the
+      code: a trade-off, a constraint imposed from outside, a non-obvious failure this shape avoids. **Self-explanatory code needs no comment at all.** If a
+      comment exists to make the next line understandable, try a better name or an extracted function first; that fix cannot go stale.
+    - **Rewrite, never append.** When behaviour changes, the comment is edited to describe the code as it stands — not extended with the next instalment. "It
+      used to…", "since #540 it now…", "note: this also handles…" are all the same defect: a comment narrating a journey instead of a state.
+    - **No history, no dates, no changelog.** git blame, the PR and the issue already hold when something changed and why it was discussed. Drop "as of
+      2026-08-18", "previously", and re-tellings of a review thread. **One exception**: an abandoned approach that is a live trap someone will re-introduce —
+      then one sentence naming the trap, not the story of it.
+    - **An issue or ADR reference is a pointer, not a summary.** Write `see #540` or "the two-layer strategy is ADR-007" and stop. Duplicating AGENTS.md or an
+      ADR into a comment creates a second copy that drifts; keep in the code only what constrains that specific code.
+    - **Don't restate the signature.** Types, nullability, annotations and `@param foo the foo` boilerplate are noise. Document a parameter only for a
+      constraint the type cannot express — units, a range, an accepted format.
+    - **Lead with one summary sentence.** KDoc renders the first sentence alone in tooling and in IDE popups, so it has to stand by itself; detail comes after
+      it, not inside it.
+    - **Assert behaviour in a test, don't promise it in a comment.** A comment claiming "callers must call `close()`" or "returns at most 50" goes stale in
+      silence; a test fails loudly. Prefer the test, and let the comment carry the reason the rule exists.
+    - **No commented-out code and no `TODO`s.** Deleted code lives in git; work worth remembering is an issue (see _The Backlog — GitHub Issues_).
+    - **`LongComment` enforces the cap, at 25 lines.** It is a custom detekt rule (`:detekt-rules`), it counts a run of `//` lines as one comment, and it
+      excludes `**/scraper/**` for the reason in the next bullet. A comment that genuinely needs more is `@Suppress("LongComment")` on the declaration — an
+      explicit decision a reviewer can see, rather than a threshold raised until nothing fires.
+    - **The one place length is welcome is a deliberate trade-off — and even there, compress the words, not the reasoning.** Scraper sub-package KDoc is the
+      designated home for accepted limitations (a field the venue never publishes, a signal the parser cannot express), and that prose is load-bearing: it is
+      what stops the same "defect" being re-reported every audit. Shorten how it is said; never delete what it says. See the _Where a finding goes_ table.
 - **Kotlin idioms** (per [official coding conventions](https://kotlinlang.org/docs/coding-conventions.html)):
     - **Trailing commas** at declaration sites (constructor params, function params, enum entries, collection literals) — produces cleaner VCS diffs.
     - **Expression bodies** — prefer `fun foo() = expr` over `fun foo() { return expr }` for single-expression functions.

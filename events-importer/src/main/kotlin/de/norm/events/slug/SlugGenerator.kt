@@ -20,32 +20,27 @@ object SlugGenerator {
 }
 
 /**
- * ASCII fallbacks for Latin letters that Unicode canonical decomposition (NFD) cannot
- * split into a base letter plus a combining mark.
+ * ASCII fallbacks for Latin letters that Unicode canonical decomposition (NFD) cannot split into a
+ * base letter plus a combining mark.
  *
- * Slugify strips accents by normalizing to NFD and dropping everything non-ASCII, which
- * handles the *composed* letters — `ö` is `o` + combining diaeresis, so it survives as
- * `o`, as do `å`, `é`, `ñ`, `ğ`, `ş`. But a letter whose glyph is a single indivisible
- * code point has nothing to strip down to, so it was **silently deleted**: `Kėkė Søl`
- * slugged to `keke-sl`, `Revaler Straße` to `revaler-strae`, and `Beyoğlu Işıl` to
- * `beyoglu-isl`. Slugs are the public URL key, so a dropped letter is a permanently
- * wrong — and occasionally colliding — identifier.
+ * Slugify strips accents by normalizing to NFD and dropping everything non-ASCII, which handles the
+ * *composed* letters — `ö` is `o` plus a combining diaeresis, so it survives as `o`, as do `å`, `é`,
+ * `ñ`, `ğ`, `ş`. A letter whose glyph is a single indivisible code point has nothing to strip down
+ * to and was **silently deleted**: `Kėkė Søl` slugged to `keke-sl`, `Revaler Straße` to
+ * `revaler-strae`. Slugs are the public URL key, so a dropped letter is a permanently wrong — and
+ * occasionally colliding — identifier.
  *
- * Each entry maps to the letter's **base form**, not its national expansion, so the
- * result stays consistent with the NFD stripping applied to every other letter in the
- * same slug: `ø` → `o` beside `ö` → `o`, giving `Ørlög` → `orlog`. Slugify's own
- * `no`/`da` locale bundles would instead expand `ø` → `oe` and `å` → `aa`, which is the
- * correct *Norwegian* romanisation but would both clash with the surrounding letters and
- * silently rewrite existing `å` slugs — so the locale bundles are deliberately not used.
- * `æ`, `œ`, `ß` and `þ` have no single base letter and take their standard two-letter
- * romanisation.
+ * Each entry maps to the letter's **base form**, not its national expansion, so the result stays
+ * consistent with the NFD stripping applied to every other letter in the same slug: `ø` → `o` beside
+ * `ö` → `o`, giving `Ørlög` → `orlog`. Slugify's own `no`/`da` locale bundles would instead expand
+ * `ø` → `oe` and `å` → `aa` — the correct *Norwegian* romanisation, but it would clash with the
+ * surrounding letters and silently rewrite existing `å` slugs, so those bundles are deliberately not
+ * used. `æ`, `œ`, `ß` and `þ` have no single base letter and take their two-letter romanisation.
  *
- * Both cases are mapped even though slug output is lower-cased, so the replacements stay
- * correct if the builder is ever configured with `lowerCase(false)`.
- *
- * Curated and reactive: this covers the letters that occur in European artist, band and
- * street names (Nordic, Icelandic, Polish, Croatian/Serbian, Turkish, German, French).
- * Add further letters here as they surface rather than switching on a locale.
+ * Both cases are mapped even though slug output is lower-cased, so the replacements stay correct if
+ * the builder is ever configured with `lowerCase(false)`. The list is curated and reactive — the
+ * letters that occur in European artist, band and street names — so add further letters as they
+ * surface rather than switching on a locale.
  */
 private val NON_DECOMPOSING_LATIN: Map<String, String> =
     mapOf(
