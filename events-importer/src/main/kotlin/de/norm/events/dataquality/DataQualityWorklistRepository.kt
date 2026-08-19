@@ -1,5 +1,6 @@
 package de.norm.events.dataquality
 
+import de.norm.events.EVENTS_SCHEMA
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
@@ -65,8 +66,8 @@ class DataQualityWorklistRepository(
                            e.start_time    AS start_time,
                            e.venue_id      AS venue_id,
                            s.slug          AS source_slug
-                    FROM events.event e
-                    LEFT JOIN events.event_source s ON s.id = e.event_source_id
+                    FROM $EVENTS_SCHEMA.event e
+                    LEFT JOIN $EVENTS_SCHEMA.event_source s ON s.id = e.event_source_id
                     WHERE (${issue.predicate})
                     $sourceFilter
                     ORDER BY e.event_date DESC, e.id DESC

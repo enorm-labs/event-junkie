@@ -1,5 +1,7 @@
 package de.norm.events.dataquality
 
+import de.norm.events.EVENTS_SCHEMA
+
 /**
  * The metrics this pillar measures, and the single place each one's definition lives.
  *
@@ -27,7 +29,7 @@ enum class QualityIssue(
      */
     CONCERTS_WITHOUT_ARTIST(
         Dimension.COMPLETENESS,
-        "e.event_type = 'CONCERT' AND NOT EXISTS (SELECT 1 FROM events.event_artist ea WHERE ea.event_id = e.id)"
+        "e.event_type = 'CONCERT' AND NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_artist ea WHERE ea.event_id = e.id)"
     ),
 
     /** `OTHER` is what the classifier falls back to, so a rising count is a classifier losing ground. */
@@ -37,7 +39,7 @@ enum class QualityIssue(
 
     MISSING_PROMOTER(
         Dimension.COMPLETENESS,
-        "NOT EXISTS (SELECT 1 FROM events.event_promoter ep WHERE ep.event_id = e.id)"
+        "NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_promoter ep WHERE ep.event_id = e.id)"
     ),
 
     /**
