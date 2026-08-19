@@ -1,0 +1,59 @@
+# Prometheus scrape annotations — the chart's half of #415's meters and #271's collection.
+#
+# OpenObserve's collector discovers targets by `prometheus.io/*` pod annotations and by nothing
+# else, so this is the only thing that makes the meters reachable. The failure mode it guards is
+# quiet in both directions: a pod without the annotations is simply never scraped, and a pod
+# annotated with the wrong port produces a target that fails every interval — neither shows up as an
+# unhealthy pod, and both look like "the metrics stopped" weeks later.
+suite: prometheus scrape annotations
+
+tests:
+  - it: annotates the BFF for scraping, on the management port
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    templates:
+      - templates/bff-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/scrape"]
+          value: "true"
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/path"]
+          value: /actuator/prometheus
+      # The coupling that matters. `prometheus.io/port` is a string the collector reads and
+      # `service.managementPort` is an int the container binds, so nothing but a test keeps them
+      # equal — and if they drift, the scrape fails silently rather than the chart failing loudly.
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/port"]
+          value: "9001"
+
+  - it: annotates the importer for scraping, on the management port
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    templates:
+      - templates/importer-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/scrape"]
+          value: "true"
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/port"]
+          value: "9001"
+
+  # Asserted as an absence, deliberately. nginx exposes no metrics endpoint, so annotating it would
+  # point the collector at a 404 every interval — a permanently failing target that means nothing and
+  # trains people to ignore failing targets.
+  - it: does not annotate the frontend, which has no metrics endpoint
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    templates:
+      - templates/frontend-deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations["prometheus.io/scrape"]
