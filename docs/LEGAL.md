@@ -253,7 +253,8 @@ and no participation in consumer arbitration.
 ### 8.3 The address
 
 § 5 DDG requires a _ladungsfähige Anschrift_, and a private individual has no company address to use. The decision: **rent one from
-[Postflex](https://www.postflex.de/)**, ordered once `event-junkie.de` is registered.
+[Postflex](https://www.postflex.de/)**, ordered once `event-junkie.de` is registered — **which it has been since 2026-08-10**. Nothing gates it any more; it
+is simply outstanding.
 
 There is no way around this by omitting the imprint — Art. 13 GDPR requires the controller's identity and contact details in the privacy notice regardless.
 
@@ -313,19 +314,19 @@ editing a `.vue` file loads.
 
 ## 13. Decision log
 
-| #   | Question               | Decision                                                                                                     | Where                |
-| --- | ---------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------- |
-| 1   | Imprint address        | Rent a _ladungsfähige Anschrift_ from Postflex after domain registration; guarded placeholder until then     | §8.3                 |
-| 2   | Legal-page language    | English first, German in the same release as the German UI and authoritative from then — **done 2026-08-08** | §6.1                 |
-| 3   | First public version   | `0.1.1`; `main` carries `0.1.1-SNAPSHOT`; only a released `X.Y.Z` links (#502); `0.1.0` skipped (#455)       | §4.7                 |
-| 4   | `package.json` version | Mirrors the Gradle version, kept in step by hand, without `-SNAPSHOT`                                        | §4.6                 |
-| 5   | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                    | §4.4                 |
-| 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                            | `CODE_OF_CONDUCT.md` |
-| 7   | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                       | §8.4                 |
-| 8   | Localisation           | English + German — **done**, see [ADR-013](adr/ADR-013_LOCALISATION.md)                                      | §6.2                 |
-| 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting and an axe sweep enforcing it                                           | §12                  |
-| 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                      | §9.1                 |
-| 11  | Version source         | Build-stamped from `gradle.properties`, never the GitHub API                                                 | §4.1                 |
+| #   | Question               | Decision                                                                                                                                                      | Where                |
+| --- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| 1   | Imprint address        | Rent a _ladungsfähige Anschrift_ from Postflex; guarded placeholder until it is ordered. The domain has been registered since 2026-08-10, so nothing gates it | §8.3                 |
+| 2   | Legal-page language    | English first, German in the same release as the German UI and authoritative from then — **done 2026-08-08**                                                  | §6.1                 |
+| 3   | First public version   | `0.1.1`; `main` carries `0.1.1-SNAPSHOT`; only a released `X.Y.Z` links (#502); `0.1.0` skipped (#455)                                                        | §4.7                 |
+| 4   | `package.json` version | Mirrors the Gradle version, kept in step by hand, without `-SNAPSHOT`                                                                                         | §4.6                 |
+| 5   | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                                                                     | §4.4                 |
+| 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                                                                             | `CODE_OF_CONDUCT.md` |
+| 7   | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                                                                        | §8.4                 |
+| 8   | Localisation           | English + German — **done**, see [ADR-013](adr/ADR-013_LOCALISATION.md)                                                                                       | §6.2                 |
+| 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting and an axe sweep enforcing it                                                                                            | §12                  |
+| 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                                                                       | §9.1                 |
+| 11  | Version source         | Build-stamped from `gradle.properties`, never the GitHub API                                                                                                  | §4.1                 |
 
 ## 14. Open items — what is **not** signed off
 
@@ -382,11 +383,20 @@ The site cannot go live until these are closed. They are tracked as issues in th
 4. **Backup retention** as its own line — it is a separate period from log retention, and if logs are captured by backups the effective retention is the backup
    window, not the rotation one. Check rather than assume.
 
-**Blocking, and dependent on the domain:**
+**Blocking, and no longer dependent on the domain** — both `event-junkie.de` and `event-junkie.com` were registered at INWX on **2026-08-10** and delegate to
+Hetzner's nameservers:
 
-5. **The Postflex address** (§8.3), and clearing `CONTACT_DETAILS_ARE_PROVISIONAL`.
+5. **The Postflex address** (§8.3), and clearing `CONTACT_DETAILS_ARE_PROVISIONAL`. Nothing external gates this — the address can be ordered today.
 6. **The role mailboxes.** `hello@event-junkie.de` and `security@event-junkie.de` appear in the imprint, the privacy notice, `SECURITY.md` and
-   `CODE_OF_CONDUCT.md` — **none of them exists**, because the domain is not registered. Every published reporting route is currently a dead address.
+   `CODE_OF_CONDUCT.md` — and **neither exists**. Every published reporting route is currently a dead address.
+
+    _Corrected 2026-08-19._ This item gave the reason as _"the domain is not registered"_, which had not been true since **2026-08-10** —
+    [#259](https://github.com/enorm-labs/event-junkie/issues/259) registered it and closed on 2026-08-12, and this sentence is the one it left behind. Registration was
+    never the blocker it was recorded as, and the correction matters because it changes what closing the item requires: **no mail provider has been chosen**,
+    and choosing one is not a purchase but a **processor decision**. A mailbox receives message bodies and sender addresses, so it needs an Art. 28 contract,
+    an entry in §5 of both notices, and — the half most easily missed — an update to [§7.3a](#73a-what-is-processed-and-about-whom--the-answer-every-processor-form-asks-for),
+    because an email address is a category of personal data the Hetzner AVV was not written against. Set `PROCESSOR_CONTRACTS_PENDING` back to `true` if a
+    second processor is added without one.
 
 **Blocking, and dependent on a person:**
 

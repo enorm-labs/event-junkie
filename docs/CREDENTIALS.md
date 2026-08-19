@@ -1,0 +1,131 @@
+# Credentials — what to keep in KeePass
+
+**No secret values are in this file, and none ever should be.** It is the inventory: what exists, what it unlocks, where the working copy lives today, and what
+breaks if the only copy is lost. Use it as the checklist when filling the database, and re-read it after any infrastructure change.
+
+The links are in [`LINKS.md`](LINKS.md). The procedures are in `docs/ops/` — this file points at them rather than repeating them.
+
+## How to read the "only copy?" column
+
+**Yes** means there is no other copy anywhere, so losing it means regenerating the credential and updating everything that consumes it. Those are the entries
+where a password manager is not convenience but the recovery story. **No** means it can be re-derived, re-read from somewhere, or recreated in minutes.
+
+---
+
+## 1. Accounts — logins, 2FA seeds and recovery codes
+
+Store the password, the TOTP seed, **and the recovery codes** for each. The recovery codes are the half people skip, and they are what a lost phone costs.
+
+| #   | Account                                  | Unlocks                                                                      | Status                            | Only copy? |
+| --- | ---------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------- | ---------- |
+| 1   | **Hetzner** (`accounts.hetzner.com`)     | Everything. Servers, volumes, firewalls, DNS zones, Object Storage, the AVV  | In use                            | Yes        |
+| 2   | **GitHub** — personal + `enorm-labs` org | The repository, Actions, GHCR packages, Flux's deploy key, branch protection | In use                            | Yes        |
+| 3   | **INWX** (registrar)                     | Domain renewal, nameserver delegation, the DNSSEC DS record                  | In use                            | Yes        |
+| 4   | **healthchecks.io**                      | The dead-man's switch — its checks, its notification channel, its ping URLs  | In use                            | Yes        |
+| 5   | **Postflex**                             | The rented imprint address (§ 5 DDG)                                         | **Not ordered** — go-live blocker | Yes        |
+| 6   | **Signal**, on its own prepaid number    | The alert bridge's identity. Registration state also lives on a PVC          | **Decided, not built**            | Yes        |
+| 7   | **Mail provider** for the role mailboxes | `hello@` and `security@event-junkie.de` — both published, neither exists     | **Provider not chosen**           | Yes        |
+| 8   | **OpenObserve** admin login              | Logs, metrics, dashboards, alert rules. Created at first start               | **Not deployed**                  | Yes        |
+
+**On the Hetzner account specifically:** it is the single point of total failure here. It holds the infrastructure, the DNS, the backups and the state file.
+Treat its 2FA recovery codes with the same care as the age key in §3.
+
+**Prepaid SIM (#6):** keep the number, the PIN, the **PUK** and the top-up schedule together. Signal blocks most VoIP providers for registration, and a lapsed
+prepaid number silently ends the alerting path.
+
+---
+
+## 2. API tokens and keys
+
+| #   | Credential                                   | Scope / power                                                                                            | Where the working copy lives                                                                                                  | Only copy?                            |
+| --- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| 9   | **Hetzner Cloud API token** (`HCLOUD_TOKEN`) | **Read + write over the whole project.** Servers, networks, firewalls, IPs, DNS                          | macOS Keychain, item `event-junkie-hcloud-token`; loaded by `infra/.envrc`                                                    | Yes — shown once at creation          |
+| 10  | **Object Storage S3 access key**             | **Project-scoped, not bucket-scoped** — one pair reaches `-tfstate`, `-o2` and `-backups` alike          | Keychain items `event-junkie-s3-access-key` / `event-junkie-s3-secret-key`, plus `/etc/wal-g/credentials.env` on each DB node | Yes                                   |
+| 11  | **cert-manager Hetzner DNS token**           | An hcloud token, **read + write**, for DNS-01. **Staging only** — production uses HTTP-01 and holds none | Kubernetes Secret `hetzner` in namespace `cert-manager`, **hand-made**                                                        | Yes — deliberately not SOPS-encrypted |
+| 12  | **`NVD_API_KEY`**                            | Rate limit on the NVD feed. No access to anything of ours                                                | GitHub Actions repository secret, and `export NVD_API_KEY=…` locally                                                          | No — request another                  |
+| 13  | **GitHub PAT, classic, `write:packages`**    | Local `docker push` / `helm push` to GHCR. **Fine-grained tokens do not work here**                      | Created on demand; not stored anywhere by the repo                                                                            | No                                    |
+| 14  | **GitHub PAT for `flux bootstrap`**          | One-time, from a laptop, to commit Flux's manifests and create its deploy key. **CI never holds it**     | Created on demand, then discarded                                                                                             | No                                    |
+| 15  | **`github-status` PAT** (fine-grained)       | Commit statuses on this one repository. Nuisance value if leaked                                         | Kubernetes Secret in `flux-system`. **Does not exist yet** — SOPS-encrypted from the start when it does                       | No                                    |
+
+**`secrets.GITHUB_TOKEN` is not on this list and never should be.** Actions mints it per run; `permissions: packages: write` is the whole configuration.
+
+**Why #11 is hand-made while everything else moves to SOPS:** encrypting a secret into a _public_ repository publishes its ciphertext permanently, and this is
+the one credential where the exposure cost is highest — read+write control of the Hetzner account — and the rebuild-survival benefit is lowest, since it is
+staging-only and a two-minute recreation. That trade is argued in [`ops/SECRETS.md`](ops/SECRETS.md).
+
+---
+
+## 3. Cryptographic keys and key files
+
+These are files, not strings. **Attach the file itself to the KeePass entry** rather than pasting its contents.
+
+| #   | Key                              | What it unlocks                                                                                                                       | Path on the laptop                             | Only copy?                           |
+| --- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------ |
+| 16  | **SOPS age key pair** ⚠️         | **Every encrypted secret in the repository.** With it, the repository restores everything; without it, the ciphertext in git is noise | `~/.config/sops/age/event-junkie.txt`          | **Yes — this is the recovery story** |
+| 17  | **SSH key for the nodes**        | `ops@` on every server. Root by `sudo` from there                                                                                     | `~/.ssh/id_ed25519_hetzner` (+ its passphrase) | Yes                                  |
+| 18  | **WireGuard client private key** | The tunnel. **Staging has no other way in** — no public 80/443/22/6443                                                                | `~/.wireguard/staging.conf`                    | Yes                                  |
+| 19  | **Kubeconfig**                   | Cluster-admin on the k3s cluster. Only usable through the tunnel                                                                      | `~/.kube/event-junkie-staging`                 | No — re-fetchable over SSH           |
+
+**#16 is the single most important entry in the database.** The public half is committed in `.sops.yaml` and is safe to publish; the private half must never
+reach this repository or the cluster's git history. `age-keygen` writes the public key as a comment inside the same file, so **back up the file, not the two
+halves separately**. Rotation is: add a second recipient, `sops updatekeys` over every encrypted file, replace the cluster secret, drop the old recipient — two
+recipients briefly, so nothing is undecryptable mid-flight.
+
+**#18 has a second half worth storing beside it:** the node's WireGuard _public_ key and endpoint address, which are what you need to rebuild a client config
+without going back to the node.
+
+---
+
+## 4. Passwords that live in the cluster or on a node
+
+| #   | Credential                            | What it is                                                                                                             | Source of truth                                                                                                                     | Only copy?                                    |
+| --- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| 20  | **`events` PostgreSQL role password** | The application's database login                                                                                       | **Staging:** SOPS-encrypted in `deploy/clusters/staging/secrets/events-db.yaml`, restored by Flux. **Production:** not yet stood up | No, once encrypted — but only if #16 survives |
+| 21  | **healthchecks.io ping URLs** ⚠️      | One opaque UUID per environment. **Anyone holding one can suppress the alarm**, and the failure it causes is _silence_ | `/etc/wal-g/credentials.env` on the node, and the healthchecks.io dashboard                                                         | No — readable from the dashboard              |
+| 22  | **`/etc/wal-g/credentials.env`**      | The S3 key (#10) plus `HEALTHCHECK_URL` (#21), mode `0640 root:postgres`                                               | Written by hand. **Not in `user_data`** — `user_data` is state                                                                      | No — reconstructible from #10 and #21         |
+| 23  | **Flux deploy key**                   | Read access to this repository from the cluster                                                                        | Created by `flux bootstrap`; lives in the cluster and in the repo's deploy keys                                                     | No — re-bootstrap                             |
+
+**#20 has a trap in both directions.** The git copy is now the source of truth, so bringing up an _existing_ environment means making the database role match
+the encrypted value, not generating a fresh one. A role and a Secret that disagree is a `CrashLoopBackOff` whose cause is two files apart.
+
+**#22 is what a node rebuild silently loses.** The volume carries the database through a rebuild; this file does not. A rebuilt node comes back with both timers
+enabled, `wal-g` installed, `archive_mode = on`, every archive failing — and no ping. Nothing about it looks wrong. **Paste the same ping URL back rather than
+creating a new check**, or the history that makes "late" mean something starts over.
+
+---
+
+## 5. Not credentials, but store them anyway
+
+Small facts that are annoying to re-derive and are needed exactly when something is broken.
+
+- **Node addresses**: the WireGuard tunnel addresses (`10.10.1.1` staging), the private network `10.1.1.0/24`, and each server's public IPv4.
+- **The Hetzner project name and Object Storage bucket names** — bucket names are unique Hetzner-wide, so they are not guessable after the fact.
+- **The countersigned Hetzner AVV (PDF)**, concluded 2026-08-19. Concluding it and not filing it is the same position as not concluding it, the day somebody asks.
+- **The `age` public key** (`age1…`) — it is in `.sops.yaml`, but having it beside the private key means a rebuild does not need the repository first.
+
+---
+
+## 6. Suggested KeePass layout
+
+One group per section above maps cleanly onto how these are actually used:
+
+```
+event-junkie/
+├── Accounts/          Hetzner · GitHub · INWX · healthchecks.io · Postflex · Signal · mail · OpenObserve
+├── API tokens/        HCLOUD_TOKEN · S3 key pair · cert-manager DNS token · NVD · the PATs
+├── Keys/              age key (file attachment) · SSH key (file) · WireGuard config (file) · kubeconfig
+├── Cluster & node/    events role password · ping URLs · wal-g credentials.env
+└── Reference/         addresses · bucket names · the AVV PDF · the age public key
+```
+
+**Two entries deserve a note in their own description**, because losing them is not recoverable by resetting anything: the **age private key** (#16) and the
+**Hetzner account recovery codes** (#1).
+
+---
+
+## 7. What is _not_ here, and why
+
+- **`secrets.GITHUB_TOKEN`** — minted per workflow run.
+- **The k3s node token, the Flux deploy key's private half, the WireGuard server key** — all generated on the node or by the tool at bootstrap, and all
+  recreated by re-running it. Nothing to store; storing them would just be a stale copy.
+- **`admin_cidrs`** — an input, not a secret. It stopped mattering once WireGuard replaced it as the access control.
