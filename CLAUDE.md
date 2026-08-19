@@ -33,8 +33,8 @@ Slash commands available under `.claude/skills/`:
 
 ## Multi-module note
 
-This is a Gradle multi-project build (`events-core`, `events-bff`, `events-importer`) plus a standalone frontend (`events-frontend/`), the OpenTofu
-configuration in `infra/` and the Helm chart in `deploy/`. Per-module `CLAUDE.md` files can be added in any of those directories if module-specific guidance is
+This is a Gradle multi-project build (`events-core`, `events-bff`, `events-importer`, plus `detekt-rules` for the repository's own static-analysis rules) plus a
+standalone frontend (`events-frontend/`), the OpenTofu configuration in `infra/` and the Helm chart in `deploy/`. Per-module `CLAUDE.md` files can be added in any of those directories if module-specific guidance is
 needed — they're loaded automatically when working in that subtree.
 
 `infra/` and `deploy/` already have one each, and neither is optional reading. `infra/` opens with the OpenTofu commands that must never be run there;

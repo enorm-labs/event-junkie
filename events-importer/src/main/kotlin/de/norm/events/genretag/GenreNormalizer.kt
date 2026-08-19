@@ -310,29 +310,20 @@ private fun preNormalize(rawGenre: String): String =
 private val NOISE_SUFFIXES = listOf("disco floor", "floor")
 
 /**
- * Parses a raw genre string into a list of canonical genre tag names.
+ * Parses a raw genre string into a deduplicated list of canonical genre tag names.
  *
- * The normalization pipeline:
- * 1. Split on common delimiters (`, `, `//`, ` & `, ` / `).
- * 2. Trim whitespace and strip noise suffixes ("Floor", "Disco Floor").
- * 3. Look up each token in the synonym map (case-insensitive).
- * 4. Deduplicate — multiple raw tokens may map to the same canonical name.
- *
- * Tokens that don't match any synonym are included as-is with title case,
- * so new genres are automatically captured without requiring synonym updates.
- * The synonym map only handles known variations that should be merged.
+ * Tokens are split on the common delimiters (`, `, `//`, ` & `, ` / `), stripped of their noise
+ * suffixes and looked up in the synonym map case-insensitively. A token matching nothing is kept
+ * as-is in title case, so a genre nobody has seen before is captured without a synonym-map change —
+ * the map exists only to merge known spellings of the same genre.
  *
  * @param rawGenre the free-text genre string from the scraped event, or null.
- * @return a deduplicated list of canonical genre tag names, or empty if input is null/blank.
+ * @return canonical genre tag names, empty when the input is null or blank.
  *
- * Examples:
  * ```
- * normalizeGenre("Hip Hop")                    → ["Hip Hop"]
- * normalizeGenre("Pop Punk, Indie, Karaoke")   → ["Punk", "Indie", "Karaoke"]
- * normalizeGenre("80s, Rock, New Wave")        → ["80s", "Rock", "New Wave"]
- * normalizeGenre("Postpunk, Gothicrock, Darkwave, EBM und Synthpop etc.")
- *                                              → ["Post-Punk", "Gothic Rock", "Darkwave", "EBM", "Synthpop"]
- * normalizeGenre(null)                         → []
+ * normalizeGenre("Pop Punk, Indie, Karaoke")                     → ["Punk", "Indie", "Karaoke"]
+ * normalizeGenre("Postpunk, Gothicrock, EBM und Synthpop etc.")  → ["Post-Punk", "Gothic Rock", "EBM", "Synthpop"]
+ * normalizeGenre(null)                                           → []
  * ```
  */
 fun normalizeGenre(rawGenre: String?): List<String> {

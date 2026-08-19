@@ -5,3 +5,20 @@ style:
   MaxLineLength:
     # Aligned with .editorconfig max_line_length = 160
     maxLineLength: 160
+
+# This repository's own rules, implemented in the :detekt-rules module.
+event-junkie:
+  LongComment:
+    active: true
+    # A cap on how long one comment may be, not a target. What makes a comment long here is nearly
+    # always restated code, a history of how it got this way, or a decision copied out of AGENTS.md
+    # or an ADR instead of referenced. See the "Comments and KDoc" section of AGENTS.md.
+    #
+    # A comment that genuinely needs more is `@Suppress("LongComment")` on the declaration: an
+    # explicit decision, visible in review, rather than a threshold raised until nothing fires.
+    maxLines: 25
+    # Scraper sub-package KDoc is the designated home for accepted limitations — a field a venue
+    # never publishes, a signal the parser cannot express — and that prose is load-bearing: it is
+    # what stops the same non-defect being re-reported by every data-quality audit. Length there is
+    # a feature, so the rule does not apply. See the "Where a finding goes" table in AGENTS.md.
+    excludes: ['**/scraper/**']

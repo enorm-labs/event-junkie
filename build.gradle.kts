@@ -114,6 +114,15 @@ subprojects {
         version = "1.8.0"
     }
 
+    // This repository's own detekt rules (see :detekt-rules), on every module's analysis classpath —
+    // including the rules module itself, which lints its own source with them. Self-reference is
+    // deliberate and not a cycle: `detekt` consumes the jar, and nothing in building the jar
+    // consumes `detekt`. Leaving it out is what would break, since detekt validates `detekt.yml`
+    // against the rules it can see and rejects the `event-junkie` section as misspelled.
+    dependencies {
+        add("detektPlugins", project(":detekt-rules"))
+    }
+
     // Detekt – static analysis for Kotlin. Customizations are defined in the root
     // detekt.yml config file. See https://detekt.dev/docs/introduction
     configure<dev.detekt.gradle.extensions.DetektExtension> {
@@ -282,8 +291,10 @@ subprojects {
 // Kover – aggregates test coverage from all subprojects into a single report.
 // Run `./gradlew koverHtmlReport` to generate an HTML report at build/reports/kover/html/.
 // Run `./gradlew koverLog` to print a coverage summary to the console.
+// `:detekt-rules` is deliberately absent: it is build tooling that never runs in production, so
+// counting it would move the headline number for code no user executes.
 dependencies {
-    subprojects.forEach { kover(project(it.path)) }
+    subprojects.filter { it.path != ":detekt-rules" }.forEach { kover(project(it.path)) }
 }
 
 // Per-module report filters do not propagate into this aggregated report, so mirror the
@@ -381,6 +392,12 @@ dependencyCheck {
     // Names must match exactly — the plugin does `skipConfigurations.contains(configuration.name)`,
     // with no globbing — so a renamed or newly added tool configuration silently starts being
     // scanned again rather than erroring.
+    //
+    // `:detekt-rules` is skipped whole rather than by configuration name: it compiles against
+    // detekt's API, so its `compileOnly` classpath carries exactly the build-agent-only artifacts
+    // the list above exists to keep out — and `compileOnly` cannot be skipped globally without
+    // narrowing the scan for the modules that ship. Matched by `project.path`, like `scanProjects`.
+    skipProjects = listOf(":detekt-rules")
     skipConfigurations =
         listOf(
             "detekt",
@@ -423,7 +440,10 @@ licenseReport {
     // would be noise, and their licences carry no distribution obligation for us.
     configurations = arrayOf("runtimeClasspath")
 
-    projects = arrayOf(project) + subprojects.toTypedArray()
+    // `:detekt-rules` is excluded for the same reason compile-only dependencies are: it is a detekt
+    // plugin, so nothing on its classpath ships, and attributing detekt's own licence on a public
+    // notices page would be noise.
+    projects = arrayOf(project) + subprojects.filter { it.path != ":detekt-rules" }.toTypedArray()
 
     // The explicit `<ReportRenderer>` / `<DependencyFilter>` type arguments are load-bearing, not
     // decoration. Both properties are Java arrays, so Kotlin infers the element type from the

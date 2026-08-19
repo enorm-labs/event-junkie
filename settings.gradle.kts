@@ -30,8 +30,13 @@ pluginManagement {
     }
 }
 
-// All three modules are included as subprojects so events-bff and events-importer
-// can declare a project(":events-core") dependency without needing a published artifact.
+// The repository's own detekt rules, loaded onto every module's `detektPlugins` classpath by the
+// root build. A Gradle project rather than `buildSrc` so it is compiled, linted and tested exactly
+// like the rest of the code.
+include("detekt-rules")
+
+// The three application modules are subprojects so events-bff and events-importer can declare a
+// project(":events-core") dependency without needing a published artifact.
 include("events-core")
 include("events-bff")
 include("events-importer")

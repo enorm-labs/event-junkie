@@ -8,34 +8,26 @@ import kotlin.test.assertTrue
 /**
  * The enforcement ADR-004 never had (#540).
  *
- * ADR-004 said migration SQL is unqualified *"so the target schema remains configurable via
- * `application.yaml`"*, and three lines later that custom `@Query` SQL **must** carry the `events.`
- * prefix — listing under Negative that *"developers must remember the `events.` prefix"*. Both
- * statements were true and they did not reconcile, and "developers must remember" was the only
- * enforcement there was. Nothing checked it, so a third consumer of the property was added in #438
- * without anyone noticing the split widening.
- *
- * These are the checks that make [EVENTS_SCHEMA] a real single source of truth rather than a
- * convention. Each is phrased so it fails on the change that would reintroduce the split:
+ * ADR-004 required custom `@Query` SQL to carry the `events.` prefix and listed *"developers must
+ * remember the `events.` prefix"* under Negative — enforcement by memory, which nothing checked.
+ * These are the checks that make [EVENTS_SCHEMA] a real single source of truth instead, each phrased
+ * so it fails on the change that would reintroduce the split:
  *
  * 1. **No hand-written statement may name a schema literally.** A new `@Query` written with
  *    `events.` still works today and would quietly become the eighth place the name is hardcoded.
  * 2. **Every `application.yaml` must declare the same name.** `spring.flyway.schemas` creates the
  *    schema and `spring.r2dbc.properties.schema` sets the connection's `search_path`; neither can
  *    read a Kotlin constant, so they are declarations that have to agree — including the *test*
- *    copies, which shadow rather than merge, and would otherwise let the suite pass against a schema
+ *    copies, which shadow rather than merge and would otherwise let the suite pass against a schema
  *    that is never shipped.
- * 3. **Migration SQL must stay unqualified**, which is the one place the old ADR sentence was right:
- *    Flyway sets `search_path` from `spring.flyway.schemas` before running it, so qualifying a
- *    migration would pin it to a schema the rest of the configuration no longer controls.
+ * 3. **Migration SQL must stay unqualified.** Flyway sets `search_path` from `spring.flyway.schemas`
+ *    before running it, so qualifying a migration would pin it to a schema the rest of the
+ *    configuration no longer controls.
  *
- * ### Why this test lives here and scans sideways
- *
- * The invariant is repo-wide — it is about *all* raw SQL in *both* applications — and `events-core`
- * is where the constant it defends lives. A per-module copy would be two tests that each see half
- * the problem. The path assumption is the standard Gradle layout, and it is asserted rather than
- * trusted: a module that moved would otherwise make every check below pass by scanning nothing, which
- * is the exact failure mode this repository keeps finding in its own assertions.
+ * It lives in `events-core`, where the constant it defends lives, and reads the sibling modules'
+ * sources: the invariant covers all raw SQL in both applications, and a per-module copy would be two
+ * tests that each see half of it. The standard Gradle layout is asserted rather than trusted — a
+ * module that moved would otherwise make every check below pass by scanning nothing.
  */
 class SchemaConfigurationTest {
     /**

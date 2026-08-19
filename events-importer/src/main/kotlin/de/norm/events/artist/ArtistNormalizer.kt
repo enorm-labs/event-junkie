@@ -2,38 +2,29 @@ package de.norm.events.artist
 
 // Artist-name canonicalization for the scraper pipeline.
 //
-// The same act is written many ways across (and within) venue websites: ALL-CAPS
-// on one site ("GREEN LUNG"), mixed case on another ("Green Lung"). Because slugs
-// are case-insensitive, these already resolve to a single artist row — but
-// whichever import creates the row first also fixes its *display name*, so an act
-// can be stored SHOUTING forever. [canonicalArtistName] de-shouts the name to a
-// clean, stable display form before it is persisted.
+// The same act is written many ways across venue websites ("GREEN LUNG", "Green Lung"). Slugs are
+// case-insensitive, so these already resolve to one artist row — but whichever import creates the
+// row first also fixes its *display name*, so an act can be stored SHOUTING forever.
+// [canonicalArtistName] de-shouts the name to a stable display form before it is persisted.
 //
-// Unlike promoters, artist names are normalized *casing-only* — no words are ever
-// stripped, because every word in a band name can be load-bearing ("The The",
-// "Wolf Alice", "Girl Band", even "Arcade Fire Concerts"). The transform is
-// deterministic and de-shouts each shouted ALL-CAPS word to title case, keeping
-// any attached punctuation in place ("GREEN LUNG" -> "Green Lung",
-// "MURPHY'S LAW" -> "Murphy's Law", "(BLACK KRAY)" -> "(Black Kray)"), while
-// leaving three kinds of token untouched:
-//   - tokens that already carry a lowercase letter — intentional styling survives
-//     ("DJ Koze", "will.i.am", "GoGo", "El Flecha Negra");
-//   - tokens with a digit or an interior "." / "/", i.e. stylised names and dotted
-//     initialisms, not plain words ("MC5", "UB40", "H2O", "AC/DC", "R.E.M.");
-//   - recognised acronyms in [ACRONYMS] ("DJ", "MC", "UK") — so "DJ KOZE" becomes
-//     "DJ Koze", not "Dj Koze";
-//   - a name that is a *single* short all-caps token (≤ [SHORT_INITIALISM_MAX_LEN]
-//     letters: "JJ", "EV", "YU", "MØ") — a standalone two-letter all-caps name is an
-//     initialism/stylisation far more often than a shouted word, and title-casing it
-//     to "Jj"/"Ev" reads as a typo. Scoped to the whole name so a short *word* inside
-//     a multi-word name still de-shouts ("WARS OF ATTRITION" -> "Wars of Attrition").
+// Unlike promoters, the transform is casing-only: no word is ever stripped, because every word in a
+// band name can be load-bearing ("The The", "Wolf Alice", "Arcade Fire Concerts"). It de-shouts each
+// shouted ALL-CAPS word to title case, keeping attached punctuation in place ("MURPHY'S LAW" ->
+// "Murphy's Law"), and leaves four kinds of token alone:
+//   - tokens already carrying a lowercase letter, so intentional styling survives ("DJ Koze",
+//     "will.i.am", "GoGo");
+//   - tokens with a digit or an interior "." / "/" — stylised names and dotted initialisms rather
+//     than plain words ("MC5", "AC/DC", "R.E.M.");
+//   - recognised acronyms in [ACRONYMS], so "DJ KOZE" becomes "DJ Koze" and not "Dj Koze";
+//   - a name that is a *single* short all-caps token (≤ [SHORT_INITIALISM_MAX_LEN] letters: "JJ",
+//     "MØ") — an initialism far more often than a shouted word, and it reads as a typo title-cased.
+//     Scoped to the whole name, so a short word inside a longer one still de-shouts ("WARS OF
+//     ATTRITION" -> "Wars of Attrition").
 //
-// Known limits (accepted): a genuine all-caps name of three-plus letters that isn't
-// in [ACRONYMS] ("ABBA", "MGMT", "MUNA") is title-cased like any shouted word, because
-// it is indistinguishable from one without a lookup table — extend [ACRONYMS] when a
-// real act needs its capitals kept. Names stylised with other interior symbols
-// ("BIGA*RANX", "OI!STURM") are likewise title-cased. This is display-only: slugs are
-// case-insensitive, so the resolved artist row is unaffected.
+// Accepted: a genuine all-caps name of three or more letters that is not in [ACRONYMS] ("ABBA",
+// "MGMT") is title-cased like any shouted word, since nothing distinguishes the two without a lookup
+// table — extend [ACRONYMS] when a real act needs its capitals kept. Display-only either way: slugs
+// are case-insensitive, so the resolved artist row is unaffected.
 
 /**
  * Returns the de-shouted display form of an artist [raw] name (see file header),
