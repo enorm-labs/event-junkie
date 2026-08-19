@@ -757,6 +757,10 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       default branch only; it therefore fails loudly on any payload it does not recognise rather than defaulting. The revision Flux reports is a _chart
       version_, not a commit, so it parses the commit back out of `scripts/version.sh`'s two shapes — change one and this must change with it. Note that
       helm-controller appends the chart's OCI digest as SemVer build metadata (`…g3b1c09e+97ec754320b5`), which is stripped before matching.
+    - `credential-expiry-reminder.yml` — opens an assigned issue 30 days before a credential expires, and a louder, differently-titled one if the date passes
+      anyway (#569). Weekly. **The dates are a literal `CREDENTIALS` table in the workflow, duplicated in `docs/CREDENTIALS.md` §2, and the two must move
+      together** — reading them from GitHub instead would need `admin:org`, which `GITHUB_TOKEN` cannot hold, so that route would watch an expiring token with
+      a stronger expiring token. Only `github-dispatch` has a date today (2027-08-20); nothing else here expires.
     - `validate-workflows.yml` — **actionlint** (correctness) and **zizmor** (security) over `.github/workflows/`, since #383. It is the only gate that looks at
       the workflows themselves, and on its first run zizmor found a template injection in `release.yml`, a cache-poisoning path into it, and two workflow-level
       permission grants that belonged to a single job. zizmor blocks at `--min-severity medium`; suppressions live in `zizmor.yml` or as inline
@@ -1005,6 +1009,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | CI: nightly OWASP scan                    | `.github/workflows/dependency-check-scheduled.yml`                                                                    |
 | CI: nightly scan of deployed images       | `.github/workflows/image-scan-scheduled.yml` — a published tag, both arches; thresholds match release.yml             |
 | CI: quarterly restore-drill reminder      | `.github/workflows/restore-drill-reminder.yml` — opens the drill as an assigned issue                                 |
+| CI: credential expiry reminder            | `.github/workflows/credential-expiry-reminder.yml` — dates live in the workflow, mirrored in docs/CREDENTIALS.md §2   |
 | CI: PR labelling                          | `.github/workflows/label-pr.yml`                                                                                      |
 | CI: OpenTofu fmt/validate + ShellCheck    | `.github/workflows/validate-infra.yml`                                                                                |
 | CI: workflow lint + security audit        | `.github/workflows/validate-workflows.yml`; suppressions in `zizmor.yml`                                              |

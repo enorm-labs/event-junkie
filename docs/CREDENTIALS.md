@@ -56,7 +56,12 @@ commit and no token could have changed that.
 
 **#15 is the only credential here with an expiry date, and that is the one thing about it worth a reminder.** A fine-grained PAT caps out at 366 days, and when
 it lapses **nothing on GitHub says so** — the Environments tab simply stops gaining entries, which looks identical to "no deploys happened lately". Flux logs
-the rejection inside the cluster and nowhere else. **`event-junkie-staging-github-dispatch` expires 2027-08-20**; the name encodes its cluster because there
+the rejection inside the cluster and nowhere else.
+
+**So it is not left to memory.** [`credential-expiry-reminder.yml`](../.github/workflows/credential-expiry-reminder.yml) opens an assigned issue 30 days out,
+and a differently-titled, louder one if the date passes anyway ([#569](https://github.com/enorm-labs/event-junkie/issues/569)). **The dates live in that
+workflow's `CREDENTIALS` table as well as in the row above, and the two must be kept in step** — the same rule the pinned tool versions carry. Adding a
+credential means one line there and one row here; rotating one means editing both, which the issue it opens says explicitly. **`event-junkie-staging-github-dispatch` expires 2027-08-20**; the name encodes its cluster because there
 will eventually be one per cluster per provider, and the list sorts into pairs that way.
 
 The durable fix is a **GitHub App** rather than a PAT: owned by `enorm-labs` instead of a person, installed on this repository alone with _Contents: write_, and
