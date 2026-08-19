@@ -113,6 +113,22 @@ const PRIVACY_ELEMENTS: Element[] = [
     en: /deleted after seven days/i,
     de: /nach sieben Tagen gelöscht/i,
   },
+  // Backup retention is a *separate* period from log retention and the notice has to carry both
+  // (#277). The number is `backup_retention_days` in infra/, whose own comment records that it
+  // exists to be stated here — so this assertion is what couples the two: change the variable and
+  // this fails until the notice follows.
+  {
+    what: 'backup retention period, as a number',
+    en: /backups are kept for\s+30 days/i,
+    de: /Sicherungen werden\s+30 Tage/i,
+  },
+  // The interaction, not just the number: a deletion request and a restore have to be reconciled
+  // somewhere, and leaving it implicit is the defect #277 was filed for.
+  {
+    what: 'erasure reconciled with backups',
+    en: /re-apply the erasure/i,
+    de: /wenden wir die Löschung danach erneut an/i,
+  },
   { what: 'right of access', en: /Art\. 15/, de: /Art\. 15 DSGVO/ },
   { what: 'right to rectification', en: /Art\. 16/, de: /Art\. 16 DSGVO/ },
   { what: 'right to erasure', en: /Art\. 17/, de: /Art\. 17 DSGVO/ },

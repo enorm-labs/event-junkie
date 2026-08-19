@@ -386,9 +386,15 @@ variable "backup_retention_days" {
   description = <<-EOT
     How far back point-in-time recovery reaches, in days.
 
-    **This is a number the privacy notice has to state** (#277), not only an ops setting, so it is
-    enforced twice: by the nightly `wal-g delete` sweep and by a lifecycle rule on the bucket. The
-    sweep alone would let the window quietly become "forever" whenever the node was down.
+    **This is a number the privacy notice has to state** (#277, and it now does), not only an ops
+    setting.
+
+    **Enforced once, not twice — corrected 2026-08-19.** This said retention was enforced "by the
+    nightly `wal-g delete` sweep and by a lifecycle rule on the bucket". Only the sweep exists;
+    there is no lifecycle rule anywhere in this configuration. The reasoning for wanting one still
+    stands and is the reason it is now filed rather than deleted: **the sweep alone lets the window
+    quietly become "forever" whenever the node is down**, and the notice promises a deletion the
+    sweep can only keep while something is running to perform it.
 
     30 days, decided 2026-08-18: long enough that corruption noticed weeks later is still
     recoverable, and a defensible figure to put in front of a data subject.
