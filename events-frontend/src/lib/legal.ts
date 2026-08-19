@@ -57,12 +57,16 @@ export const INFRASTRUCTURE_IS_PROPOSED = true
  * *infrastructure*. The contract is a separate fact that can be true before anything is deployed
  * and false long after — they move independently, so they are two flags.
  *
- * Hetzner's AVV is self-service at <https://accounts.hetzner.com/account/dpa>: signature and
- * download, minutes rather than a negotiation. **Set this to `false` once the countersigned copy is
- * filed somewhere it can be produced on request** — concluding it and not filing it is the same
- * position as not concluding it, the day somebody asks.
+ * **Concluded 2026-08-19** via <https://accounts.hetzner.com/account/dpa>, so this is `false` and
+ * the banner line is gone. §5 now describes a contract that exists.
+ *
+ * Nothing in code can observe a signed PDF, so this constant *is* the record — which is why
+ * [docs/LEGAL.md](../../../docs/LEGAL.md) §14 carries the date alongside it. **Set it back to
+ * `true` if the contract ever lapses, is superseded, or a second processor is added without one**;
+ * a notice naming a processor without a DPA in place is worse than one naming none, and that
+ * failure is silent in both directions.
  */
-export const PROCESSOR_CONTRACTS_PENDING = true
+export const PROCESSOR_CONTRACTS_PENDING = false
 
 /** Date the legal pages were last reviewed against what the system actually does (§7.7). */
 export const LAST_REVIEWED = '2026-08-08'
