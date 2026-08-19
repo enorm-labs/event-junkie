@@ -96,8 +96,21 @@ bff:
     create: true
     # bff.serviceAccount.name overrides the generated name, for a hand-made RBAC binding.
     name: ""
-  # bff.podAnnotations is the hook #415 will hang a Prometheus scrape config from.
-  podAnnotations: {}
+  # bff.podAnnotations carries the Prometheus scrape config (#415 built the meters, #271 consumes
+  # them). OpenObserve's collector discovers targets by these annotations and by nothing else, so a
+  # pod without them is invisible to metrics collection while looking perfectly healthy — which is
+  # the failure this chart can cause and the collector cannot report.
+  #
+  # **`prometheus.io/port` must equal `bff.service.managementPort` above.** They are two values
+  # because the annotation is a string the collector reads and the port is an int the container
+  # binds; `tests/metrics_test.yaml` asserts they agree, so changing one alone fails the chart rather
+  # than silently ending the scrape.
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    # The actuator lives on the management port, which no Ingress routes — that is what keeps
+    # /actuator/** private while still letting an in-cluster collector reach it.
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "9001"
   # bff.nodeSelector constrains scheduling. Empty on a single node.
   nodeSelector: {}
   # bff.tolerations constrains scheduling.
@@ -141,8 +154,21 @@ importer:
     create: true
     # importer.serviceAccount.name overrides the generated name.
     name: ""
-  # importer.podAnnotations is the hook #415 will hang a Prometheus scrape config from.
-  podAnnotations: {}
+  # importer.podAnnotations carries the Prometheus scrape config (#415 built the meters, #271 consumes
+  # them). OpenObserve's collector discovers targets by these annotations and by nothing else, so a
+  # pod without them is invisible to metrics collection while looking perfectly healthy — which is
+  # the failure this chart can cause and the collector cannot report.
+  #
+  # **`prometheus.io/port` must equal `importer.service.managementPort` above.** They are two values
+  # because the annotation is a string the collector reads and the port is an int the container
+  # binds; `tests/metrics_test.yaml` asserts they agree, so changing one alone fails the chart rather
+  # than silently ending the scrape.
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    # The actuator lives on the management port, which no Ingress routes — that is what keeps
+    # /actuator/** private while still letting an in-cluster collector reach it.
+    prometheus.io/path: "/actuator/prometheus"
+    prometheus.io/port: "9001"
   # importer.nodeSelector constrains scheduling.
   nodeSelector: {}
   # importer.tolerations constrains scheduling.
@@ -185,7 +211,10 @@ frontend:
     create: true
     # frontend.serviceAccount.name overrides the generated name.
     name: ""
-  # frontend.podAnnotations is the hook #415 will hang a Prometheus scrape config from.
+  # frontend.podAnnotations is deliberately empty, unlike the BFF's and the importer's. nginx serves
+  # static files and exposes no metrics endpoint to scrape — ADR-015 lists the frontend's *access
+  # logs* as its signal, not meters. Annotating it would point the collector at a 404 every scrape
+  # interval and produce a permanently failing target that means nothing.
   podAnnotations: {}
   # frontend.nodeSelector constrains scheduling.
   nodeSelector: {}

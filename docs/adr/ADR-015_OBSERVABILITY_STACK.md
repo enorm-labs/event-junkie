@@ -20,6 +20,39 @@ before the entry.
 | 4   | **Dashboards carry business metrics**   | The importer meters in PLATFORM_SETUP.md §7 cannot be charted the way they need to be                                                                   |
 | 5   | **Upgrades are uneventful**             | A minor version bump loses data or needs manual migration                                                                                               |
 
+### Trial results so far — measured 2026-08-19 on a k3d rehearsal (#271)
+
+Two of the five are answered, by running the thing rather than by reading its documentation. The
+other three need the collector, which is not deployed yet.
+
+| #   | Test                              | Result                                                                                                                                |
+| --- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Zero-events alert fires           | **Open** — needs the collector and an alert rule                                                                                      |
+| 2   | Footprint ≤ ~1.5 GB sustained     | **Passes.** 309Mi idle, **321Mi after ingesting 100,000 records**, against a deliberately tight 1536Mi limit. No restarts, no OOMKill |
+| 3   | Log search usable under pressure  | **Passes.** `GROUP BY source` across 100,000 rows in **14ms**, 19 MB scanned; a full-text `match_all` in the same 14ms                |
+| 4   | Dashboards carry business metrics | **Open** — the meters exist (#415) but nothing collects them yet                                                                      |
+| 5   | Upgrades uneventful               | **Open** — needs a version bump against real data                                                                                     |
+
+**Two things the rehearsal changed about how this gets deployed, both worth having in the ADR rather
+than only in a pull request:**
+
+- **It is the `openobserve-standalone` chart, not `openobserve`.** The plain chart deploys
+  microservices — ingester, querier, router, scheduler, compactor, and `o2ai` at two replicas — which
+  is nothing like the footprint this ADR compared. `openobserve-standalone` (`ZO_LOCAL_MODE: "true"`)
+  is one StatefulSet and one PVC, and is what every number above was measured on. **Choosing the
+  wrong one silently invalidates criterion 2**, which is the criterion that decided this ADR.
+- **The ~1 GB comparison did not include the collector.** Getting Prometheus metrics in needs
+  `openobserve-collector`, an OpenTelemetry Collector requiring the otel-operator, an agent DaemonSet
+  and a gateway. That is real additional footprint absent from the comparison table below. It does
+  not overturn the decision — 321Mi leaves a great deal of room under 1.5 GB — but **the budget has
+  to be re-checked once it is deployed rather than assumed**, and criterion 2 is not truly settled
+  until it is.
+
+**What the measurement does not cover, stated so it is not read as more than it is:** k3d on arm64,
+not the Hetzner x86 node; 100,000 synthetic records is a burst rather than the fortnight this section
+asks for, so "sustained" is only partly exercised; and local disk throughout, with no S3 backend
+involved.
+
 **If it fails, take fallback 1 — VictoriaMetrics + VictoriaLogs + Grafana.** That is a decision already made below, not one to re-open, and it costs a Helm
 change plus rebuilding dashboards.
 
