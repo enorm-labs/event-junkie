@@ -138,7 +138,7 @@ the site monitor: an unconditional heartbeat proves only that the heartbeat ran.
 > That line is [#518](https://github.com/enorm-labs/event-junkie/issues/518)'s smallest and most useful part. A dead-man's switch that is not wired up reports
 > exactly what a healthy one does — nothing — so the two states were indistinguishable from outside, and the mechanism could sit built and pointed at nothing
 > indefinitely. **A node whose check prints that warning is not monitored**, however green its timers look. The setup, and the drill that proves the
-> notification actually arrives, are [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8b.
+> notification actually arrives, are [HEALTHCHECKS.md](HEALTHCHECKS.md).
 
 Checking by hand:
 
