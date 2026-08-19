@@ -119,7 +119,7 @@ kubectl --context event-junkie-staging get nodes                     # Ready
 
 Add `10.10.1.1  staging.event-junkie.de` to `/etc/hosts` — the name has no public record by design.
 
-## 8 · The database, and the two secrets — _before_ Flux
+## 8 · The database, and the hand-made secrets — _before_ Flux
 
 Nothing creates these: `postgres.sh` stops at "a server is running", and the chart never templates a password. Do them now, or the first reconcile installs a
 crash-looping importer.
@@ -148,6 +148,13 @@ kubectl --context event-junkie-staging create namespace event-junkie
 kubectl --context event-junkie-staging create namespace cert-manager
 kubectl --context event-junkie-staging create secret generic hetzner -n cert-manager \
   --from-literal=token="<an hcloud API token with read+write>"
+
+# Flux's own namespace exists only after `flux bootstrap` in §9, so this one comes AFTER it —
+# it is listed here to keep every hand-made object in one place. Nothing in the repository
+# creates it: the token is `contents: write` on a public repo, so encrypting it into git would
+# publish its ciphertext permanently (SECRETS.md). #565.
+kubectl --context event-junkie-staging create secret generic github-dispatch -n flux-system \
+  --from-literal=token="<the event-junkie-staging-github-dispatch PAT>"
 ```
 
 **Verify before Flux depends on it** — this also exercises the `pg_hba` private-network rule:
@@ -158,7 +165,14 @@ printf '%s\n' "$PGPASS" | ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 \
 unset PGPASS                                                          # expect: events|events
 ```
 
-`events-db` is now committed encrypted and restored by Flux ([SECRETS.md](SECRETS.md)), so only one hand-made object is left. **`hetzner` stays that way deliberately**: it is read+write on the whole Hetzner account, this repository is public, and encrypting it would publish its ciphertext permanently — for a staging-only token that takes two minutes to recreate and that production does not need at all, since production solves ACME by HTTP-01.
+`events-db` is now committed encrypted and restored by Flux ([SECRETS.md](SECRETS.md)), so **two hand-made objects are left, and both are deliberate** — each for the same reason, that this repository is public and encrypting a secret into it publishes the ciphertext for good:
+
+| Secret            | Namespace      | Why not encrypted                                                                                 | Production too?                     |
+| ----------------- | -------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| `hetzner`         | `cert-manager` | Read+write on the whole Hetzner account, and it takes two minutes to recreate                     | **No** — production solves HTTP-01  |
+| `github-dispatch` | `flux-system`  | `contents: write` on this repository, which under ADR-016 is one ruleset away from cluster access | **Yes** — with its own separate PAT |
+
+**Order matters for `github-dispatch` and only for it.** It lives in `flux-system`, which does not exist until `flux bootstrap` runs in §9 — so create it after that step, not with the others. Until it exists the `github-dispatch` Provider reconciles into a failed state and no deployment is recorded; nothing else is affected, and nothing needs restarting once it lands.
 
 ## 8b · The backup credential — _the node is not backing anything up until you do this_
 
@@ -265,6 +279,15 @@ kubectl --context event-junkie-staging get pods -A
 
 Success looks like `Helm test succeeded … 1 test hook completed successfully` on the app release — the chart's own smoke test, run where the workloads are
 because CI cannot reach here.
+
+**Then check that the reconcile reached GitHub**, which is the half that has no evidence inside the cluster (#565):
+
+```sh
+flux --context event-junkie-staging get alerts -A                                # github-dispatch: Ready
+gh api repos/enorm-labs/event-junkie/deployments --jq '.[0] | {environment, ref, created_at}'
+```
+
+A Provider that is not Ready almost always means the `github-dispatch` Secret from §8 is missing or its PAT has expired — see [CREDENTIALS.md](../CREDENTIALS.md) #16 for the expiry date.
 
 ## 11 · Verify the certificate
 
