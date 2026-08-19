@@ -110,10 +110,23 @@ subprojects sharing a root `settings.gradle.kts`, plus a standalone frontend pro
   the tables don't exist in the `public` schema. Raw `@Query` SQL must still include the schema prefix manually (e.g. `events.event_source`) since custom
   queries bypass both `@Table` and
   `NamingStrategy` metadata.
-- **Database migrations** live in `events-importer` only (Flyway). The BFF does not run migrations. Migration naming: `V001__description.sql`. While the project
-  is in development (not yet deployed to production), all schema changes are consolidated into a single
-  `V001__create_initial_schema.sql` migration. Incremental migrations (`V002`, `V003`, …) will be introduced once the first production deployment establishes a
-  baseline.
+- **Database migrations** live in `events-importer` only (Flyway). The BFF does not run migrations. Migration naming: `V001__description.sql`.
+  **`V001__create_initial_schema.sql` is closed. Every schema change is now its own migration** — `V002`, `V003`, … — and editing an existing file is the change
+  to refuse in review.
+
+    The rule used to be the opposite: while nothing was deployed, consolidating everything into `V001` was free and kept the schema readable in one file. It said
+    incremental migrations would start _"once the first production deployment establishes a baseline"_, and that trigger turned out to name the wrong event.
+    **What the consolidation actually depended on was no database existing with `V001` already applied**, and staging became one long before production will.
+    Closed on 2026-08-19 (#415), when three changes in flight were each editing `V001` at once — which is what a policy looks like when it has stopped being
+    free.
+
+    The failure it prevents is worse than a missing column. Editing an applied migration is a `FlywayValidateException: Migration checksum mismatch`, so the
+    importer's context does not start, the pod never goes Ready, and the HelmRelease's `remediateLastFailure: true` **rolls the release back** — presenting as
+    "the deploy reverted", two layers from the cause.
+
+    Migrations stay **unqualified**: Flyway sets `search_path` from `spring.flyway.schemas` before running them, so an unqualified migration follows the
+    configuration and a qualified one pins itself to a schema the configuration no longer controls (ADR-004).
+
 - **Docker Compose dev services**: `bootRun` auto-starts PostgreSQL via Spring Docker Compose support (`compose.yaml` at root).
 - **SpringDoc OpenAPI** enabled in both BFF and importer — Swagger UI available at `/webjars/swagger-ui/index.html`; OpenAPI spec (JSON) at `/v3/api-docs`.
   Controllers are annotated with `@Tag(name = "Admin: <Entity>")` to group endpoints by entity type in Swagger UI (e.g. `"Admin: Venues"`, `"Admin: Events"`).
