@@ -25,6 +25,26 @@ spec:
   #   kubectl create secret generic github-status -n flux-system --from-literal=token=…
   secretRef:
     name: github-status
+  # SUSPENDED — and not because it is half-built, but because it cannot work as configured (#567).
+  #
+  # `parseRevision` in notification-controller needs a git hash, and neither watched source reports
+  # one: a HelmRelease reports the *chart version* (`0.1.1`), which fails outright, and an
+  # OCIRepository reports `<tag>@sha256:<digest>`, whose digest passes as a valid-looking SHA-256 and
+  # earns a 422 for a commit that does not exist. The absent token was never the reason there were no
+  # statuses.
+  #
+  # **Suspended rather than deleted**, because whether to fix it (stamp `org.opencontainers.image.
+  # revision` on the chart push) or drop it is #567's decision, and deleting it would throw away the
+  # design and the argument for it along with the broken part.
+  #
+  # **Suspended rather than left failing**, because since #565 this cluster runs two Providers. One
+  # that is permanently not-Ready makes "not Ready" stop meaning anything — and CLUSTER_BOOTSTRAP.md
+  # §10 now leans on exactly that signal to tell you the dispatch secret is missing. A health check
+  # with a standing false positive is worse than no health check.
+  #
+  # Un-suspend when #567 lands, together with creating the `github-status` secret — neither is worth
+  # doing without the other.
+  suspend: true
 ---
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Alert
@@ -34,6 +54,9 @@ metadata:
 spec:
   providerRef:
     name: github
+  # Suspended with its Provider above (#567). Both halves, so that no event is routed into a path
+  # that cannot complete; the Provider's comment carries the reasoning.
+  suspend: true
   eventSeverity: info
   eventSources:
     - kind: HelmRelease
