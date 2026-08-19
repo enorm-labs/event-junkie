@@ -805,6 +805,10 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     the same as the cost of tags. Adding an action by tag now fails `Lint & audit workflows`, which is a required check, so this cannot regress by review
     fatigue. GitHub's repository-level `sha_pinning_required` setting enforces the same thing one layer down and is the belt to zizmor's braces.
 
+    **Read that setting from `repos/{owner}/{repo}/actions/permissions`, never from the repository object.** `repos/{owner}/{repo}` reports
+    `sha_pinning_required: null` whatever its real value, which is the same shape that made #443's audit record private vulnerability reporting as off
+    when it was on. A `null` there is not a `false`; it means the field is answered somewhere else.
+
     **Every `actions/checkout` also sets `persist-credentials: false`.** Without it the job's token is written into `.git/config`, where any later step — or an
     artifact upload of the workspace — can read it. No workflow here pushes with git, so nothing needs it. It is also required rather than optional in practice:
     zizmor's `artipacked` audit can read the version out of `@v7` and skip the check, but a SHA tells it nothing, so pinning without this turns 15 silent passes
@@ -834,6 +838,18 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     **`Build & Test` is deliberately NOT required**, for both backend and frontend. They cost 382s and 597s, so requiring them means either +16½ minutes on
     every pull request including documentation-only ones, or a change-detection job whose semantics were unverified at the time. A red `Build & Test` is
     visible but not blocking. Revisit deliberately rather than by drift.
+
+- **Commits are deliberately NOT signed** (#443, decided 2026-08-19). There is no `required_signatures` rule on the `main` ruleset and none is wanted: with a
+  single maintainer, a signature proves authorship to the same person who holds the only account that can merge anything, while costing a signing key on every
+  machine _and every agent_ that commits here. The control that actually gates `main` is the ruleset — every change by pull request, nine required checks, no
+  bypass actor. **The condition that would change this is a second committer**, not a change of mind; that is when a signature starts distinguishing one author
+  from another. Recorded so it is decided rather than merely unexamined.
+
+- **Every published image carries a buildx SBOM as well as its signed provenance attestation** (#443). `sbom: true` on the three `docker/build-push-action`
+  steps in `release.yml`, chosen over `actions/attest-sbom` for reasons written out in a comment directly above them — read it before changing this. **The two
+  attestations answer different questions and neither substitutes for the other**: the provenance statement is signed and says _where the image came from_, the
+  SBOM is unsigned metadata on the image index and says _what is inside it_. Only the first is what `gh attestation verify oci://… --repo enorm-labs/event-junkie`
+  checks, and it is quiet on success, so exit 0 is the verdict.
 
 - **Steps that verify come first; steps that report to GitHub come last. Never the other way round** (#507). `if:` on a step carries an implicit `success()`,
   so a failing step skips every step below it — and a _skipped_ step produces no annotation and no summary line, so the loss is invisible. Put anything that
