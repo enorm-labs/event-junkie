@@ -13,12 +13,12 @@ when this was written; `github-dispatch` made it four.
 
 ## What is hand-made today
 
-| Secret            | Namespace      | Holds                                                 | Created at                                      |
-| ----------------- | -------------- | ----------------------------------------------------- | ----------------------------------------------- |
-| `events-db`       | `event-junkie` | the `events` role's password                          | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8 |
-| `hetzner`         | `cert-manager` | an hcloud API token, **read+write** — staging only    | §8                                              |
-| `github-status`   | `flux-system`  | a fine-grained PAT, commit statuses on one repo       | `deploy/clusters/staging/notification.yaml`     |
-| `github-dispatch` | `flux-system`  | a fine-grained PAT, **`contents: write`** on one repo | `deploy/clusters/staging/notification.yaml`     |
+| Secret            | Namespace      | Holds                                                 | Created at                                                     |
+| ----------------- | -------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
+| `events-db`       | `event-junkie` | the `events` role's password                          | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8                |
+| `hetzner`         | `cert-manager` | an hcloud API token, **read+write** — staging only    | §8                                                             |
+| `github-status`   | `flux-system`  | a fine-grained PAT, commit statuses on one repo       | `deploy/clusters/staging/notification.yaml`                    |
+| `github-dispatch` | `flux-system`  | a fine-grained PAT, **`contents: write`** on one repo | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8 — **after** §9 |
 
 They are typed once by a human and exist nowhere else. **That is the whole problem**, and it is the same shape as the backup credential in §8b: a cluster
 rebuild silently loses them, everything comes back looking healthy, and the failure is a `CrashLoopBackOff` at best and a certificate that quietly stops
