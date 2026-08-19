@@ -125,6 +125,47 @@ check_image_tags() {
   done
 }
 
+# --- 2a-bis. A real database host needs a real database CIDR ------------------------------------
+#
+# `networkPolicy.databaseCidr` and `database.host` are two settings for one address, because
+# NetworkPolicy speaks CIDRs and cannot resolve a name (#416). That duplication is unavoidable and
+# it has exactly one silently-wrong combination: a **real host with a placeholder CIDR**.
+#
+# It is silent because the value is a string. `REPLACE-ME-tofu-output-postgres-ip/32` templates
+# perfectly, passes `helm lint`, passes every render assertion here — and is then rejected by the
+# API server as an invalid `ipBlock.cidr`, which fails the HelmRelease and rolls the release back
+# several steps from anything that mentions a CIDR. `required` cannot catch it: the value is
+# present, it is just nonsense.
+#
+# The other two combinations are fine and must stay fine, which is why this is not a blanket format
+# check: both placeholders is an environment nobody has provisioned yet, and both real is correct.
+# So the rule is the pairing, not the shape.
+check_database_cidr() {
+  printf '\n== database CIDR matches the database host ==\n'
+
+  local file host cidr
+  for file in "$CLUSTERS_DIR"/*/helm-release.yaml; do
+    [[ -e "$file" ]] || continue
+    current_case="$(basename "$(dirname "$file")")"
+    host="$(yq -N '.spec.values.database.host // ""' "$file")"
+    cidr="$(yq -N '.spec.values.networkPolicy.databaseCidr // ""' "$file")"
+
+    # Only a dotted-quad host can be checked against a CIDR. Two other shapes are legitimate and
+    # must stay so: an un-provisioned environment carries a `REPLACE-ME` placeholder in both, and
+    # k3d reaches the host by NAME (`host.k3d.internal`, an address k3d assigns at cluster-create
+    # time), which no values file can know — so it widens the rule to `0.0.0.0/0` and relies on the
+    # port instead. Neither can be silently wrong; a real host with a placeholder CIDR can.
+    if [[ "$host" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      assert_equals "helm-release.yaml: databaseCidr is the /32 of database.host ($host)" \
+        "${host}/32" "$cidr"
+    elif [[ -n "$cidr" ]]; then
+      pass "database.host is '$host', not an address, so its CIDR ('$cidr') cannot be derived from it"
+    else
+      fail "helm-release.yaml: networkPolicy.databaseCidr is empty; the render will fail on it"
+    fi
+  done
+}
+
 # --- 2b. A ClusterIssuer needs cert-manager to already be there ---------------------------------
 #
 # The chart's ClusterIssuer template renders a `cert-manager.io/v1` object, and the API server
@@ -225,6 +266,7 @@ main() {
   }
 
   check_image_tags
+  check_database_cidr
   check_cluster_dependencies
   check_noindex
   check_version_pins

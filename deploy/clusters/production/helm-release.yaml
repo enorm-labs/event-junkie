@@ -63,10 +63,16 @@ spec:
       #
       # Replace with the /32 of `tofu -chdir=infra/environments/production output postgres_ip` — the same address as `database.host` below, in CIDR form, because NetworkPolicy speaks CIDRs and cannot resolve a name.
       #
-      # **Two settings for one address is the cost of the feature, and this is the pairing most
-      # likely to be half-done.** Set the host and forget this and the render fails, which is the
-      # intended outcome; set this and forget the host and the render also fails. Neither can be
-      # silently wrong.
+      # **Two settings for one address is the unavoidable cost of the feature** — NetworkPolicy
+      # speaks CIDRs and cannot resolve a name — and this is the pairing most likely to be
+      # half-done. `scripts/cluster-assertions.sh` fails the build when a cluster has a real host
+      # and a placeholder CIDR, which is the only combination that is silently wrong: both
+      # placeholders (here) is an un-deployed environment, and both real is correct.
+      #
+      # **A placeholder does NOT fail the render.** The value is a string, so this templates
+      # perfectly and is then rejected by the API server as an invalid `ipBlock.cidr` — failing the
+      # HelmRelease and rolling the release back, several steps from anything that mentions a CIDR.
+      # Fill both in together before the first production reconcile.
       databaseCidr: "REPLACE-ME-tofu-output-postgres-ip/32"
     database:
       # DELIBERATELY NOT A PLAUSIBLE ADDRESS. #424 has not run, so the real value does not exist yet,
