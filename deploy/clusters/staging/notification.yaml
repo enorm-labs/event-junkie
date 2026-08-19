@@ -56,3 +56,68 @@ spec:
   # reports events *at reconcile time*. A release that reconciled fine and has been quietly stale
   # for a week emits nothing at all, because nothing happened. Catching that needs the metrics half
   # of Flux's monitoring story, which belongs with ADR-015's OpenObserve rather than here.
+---
+# The second half of the same story, added by #565: commit statuses say whether *this commit*
+# reconciled; GitHub deployments say what is on *this environment*, and since when.
+#
+# Both, not either. A status is per-commit and shows up on the pull request; a deployment is
+# per-environment and is the only one of the two that produces a queryable timeline — the question
+# "what is on staging right now" has no commit to ask about.
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: github-dispatch
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      Fires a repository_dispatch so .github/workflows/deployment-status.yml can record a
+      GitHub deployment for this cluster.
+spec:
+  type: githubdispatch
+  address: https://github.com/enorm-labs/event-junkie
+  # A SECOND, SEPARATE PAT — not the `github-status` token, and this is the one thing about this
+  # file worth arguing over.
+  #
+  # `repository_dispatch` needs **contents: write**, where commit statuses need only
+  # *commit statuses: write*. That is a materially stronger credential: it can trigger any
+  # `repository_dispatch` workflow on `main`. Sharing one token would silently promote the status
+  # provider to that power for no reason, and would make "which of these two things wrote that"
+  # unanswerable at the API level.
+  #
+  # Fine-grained, scoped to this repository, and **hand-made rather than SOPS-encrypted** (decided
+  # 2026-08-19, docs/ops/SECRETS.md). It does not inherit the SOPS answer #416 gave the other
+  # secrets: encrypting a value into a PUBLIC repository publishes its ciphertext permanently, and
+  # `contents: write` is the credential where that costs most — the same argument that kept the
+  # Hetzner token hand-made.
+  #
+  # So NOTHING IN THIS REPOSITORY CREATES IT and no deploy will bring it. Typed once, out of band:
+  #
+  #   kubectl --context event-junkie-staging create secret generic github-dispatch \
+  #     -n flux-system --from-literal=token=…
+  #
+  # Until it exists this Provider reconciles into a failed state and no dispatch is sent.
+  secretRef:
+    name: github-dispatch
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: github-dispatch
+  namespace: flux-system
+spec:
+  providerRef:
+    name: github-dispatch
+  eventSeverity: info
+  # Deliberately narrower than the commit-status Alert above, which also watches the OCIRepository.
+  # A chart arriving in the registry is not a deployment — it is what a deployment later consumes —
+  # and recording it as one would put two entries on the timeline for a single rollout.
+  eventSources:
+    - kind: HelmRelease
+      name: event-junkie
+      namespace: flux-system
+  # These two are the workflow's whole input beyond the revision: `env` picks the GitHub environment
+  # and `cluster` is recorded on the deployment. An unrecognised `env` fails the run rather than
+  # defaulting, so a typo here is loud instead of filing staging under production.
+  eventMetadata:
+    env: staging
+    cluster: staging

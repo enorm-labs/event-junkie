@@ -323,6 +323,8 @@ flowchart LR
     rel --> test
     test -->|"fail"| rb["Automatic rollback"]
     flux -->|"commit status"| gh
+    flux -->|"repository_dispatch"| gha["Actions: deployment-status.yml"]
+    gha -->|"Deployments API"| gh
 ```
 
 **Every arrow crossing into the cluster is dashed, and they all start inside it.** That is the entire security argument for Flux: CI holds no cluster
@@ -500,6 +502,22 @@ work — and it is truthful in a way a push-time deployment record is not, becau
 **Add `githubdispatch` → a small workflow → the Deployments REST API** only if the Deployments view specifically is wanted. That workflow creates the deployment
 and immediately sets its status from the Flux payload, so the entry reflects reality rather than intent.
 
+> **Both are in place since [#565](https://github.com/enorm-labs/event-junkie/issues/565)** — the conditional above was taken up. Each cluster carries a second
+> Provider/Alert pair (`github-dispatch`) in `deploy/clusters/<cluster>/notification.yaml`, and
+> [`.github/workflows/deployment-status.yml`](../../.github/workflows/deployment-status.yml) turns the dispatch into a deployment on an environment named after
+> the cluster. The two answer different questions and neither replaces the other: a **status** is per-commit and shows up on the pull request; a **deployment**
+> is per-environment and is the only one that produces a timeline, because "what is on production right now" has no commit to ask about.
+>
+> **Three things that were not obvious until it was built**, recorded so they are not rediscovered:
+>
+> - **The revision Flux reports for a HelmRelease is a chart version, not a commit** — `0.1.1-snapshot.20260814122042.g1a2b3c4` or `0.1.1` — because the chart
+>   is published with a plain `helm push` and carries no `org.opencontainers.image.revision`. The Deployments API wants a ref, so the workflow parses the commit
+>   back out of the version string. Both shapes `scripts/version.sh` produces already encode it, which is why this needed no change to `release.yml`.
+> - **That same fact breaks the `github` commit-status provider**, which is a separate defect and not this one — see
+>   [#567](https://github.com/enorm-labs/event-junkie/issues/567).
+> - **The dispatch token is stronger than the status token.** `repository_dispatch` needs **contents: write**, where commit statuses need only _commit statuses:
+>   write_. They are therefore two separate PATs per cluster, not one shared one.
+
 ### Do the environments still earn their place?
 
 **Less than they did, and it is worth being straight about that** — most of the case for them rested on CI holding the deploy credential, which it no longer
@@ -513,6 +531,11 @@ does:
 
 So creating `staging` and `production` environments is now **optional rather than foundational**. Do it if the Deployments view is wanted as the single place to
 see "what is on what" — declare them on the dispatch-triggered workflow, with `url:` pointing at each site. Skip it and nothing breaks.
+
+> **Taken, in the lighter of the two forms (#565).** The environments exist, but nothing declares them with `environment:` on a job — they are created
+> implicitly by the first deployment that names one, which is what `deployment-status.yml` does. That distinction matters: a job-level `environment:` is what
+> protection rules and environment secrets attach to, and neither is wanted here for the reasons listed just above. So the Environments tab is now populated
+> and remains, deliberately, a **read-only history rather than a gate**.
 
 Two notes that survive the rewrite:
 
