@@ -898,94 +898,95 @@ a PR without one is the exception that makes the milestone view stop meaning any
 
 ## Key Files
 
-| Purpose                                   | Path                                                                                                        |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Root build config & shared versions       | `build.gradle.kts`                                                                                          |
-| Plugin versions & module includes         | `settings.gradle.kts`                                                                                       |
-| Gradle daemon JVM args                    | `gradle.properties`                                                                                         |
-| Dev database (Postgres)                   | `compose.yaml`                                                                                              |
-| Detekt rule overrides                     | `detekt.yml`                                                                                                |
-| OWASP CVE false-positive suppressions     | `owasp-suppressions.xml`                                                                                    |
-| CI: backend build & test                  | `.github/workflows/build-backend.yml`                                                                       |
-| CI: frontend build & test                 | `.github/workflows/build-frontend.yml`                                                                      |
-| CI: dependency review (PR)                | `.github/workflows/dependency-review.yml`                                                                   |
-| CI: dependency graph submission           | `.github/workflows/dependency-submission.yml`                                                               |
-| CI: nightly OWASP scan                    | `.github/workflows/dependency-check-scheduled.yml`                                                          |
-| CI: nightly scan of deployed images       | `.github/workflows/image-scan-scheduled.yml` — a published tag, both arches; thresholds match release.yml   |
-| CI: quarterly restore-drill reminder      | `.github/workflows/restore-drill-reminder.yml` — opens the drill as an assigned issue                       |
-| CI: PR labelling                          | `.github/workflows/label-pr.yml`                                                                            |
-| CI: OpenTofu fmt/validate + ShellCheck    | `.github/workflows/validate-infra.yml`                                                                      |
-| CI: workflow lint + security audit        | `.github/workflows/validate-workflows.yml`; suppressions in `zizmor.yml`                                    |
-| CI: Helm lint/render/assertions           | `.github/workflows/validate-chart.yml`                                                                      |
-| CI: Markdown formatting                   | `.github/workflows/validate-docs.yml`                                                                       |
-| CI: build, scan and publish to GHCR       | `.github/workflows/release.yml` — the only workflow that pushes anything; it does not deploy                |
-| Version scheme (one number, 4 files)      | `scripts/version.sh`; `gradle.properties` is the source of truth — docs/DEVELOPMENT.md §Versions            |
-| Snapshot versions must ORDER (#455)       | `scripts/version-test.sh` — asserted against Helm's own solver; a format check would not catch it           |
-| Markdown formatting                       | `scripts/format-markdown.sh` + `.oxfmtrc.json` — Markdown only, and the scope is load-bearing               |
-| Trivy waivers                             | `.trivyignore` — empty on purpose; an entry needs a reason and a date                                       |
-| Chart and images agree about the UID      | `scripts/uid-consistency.sh` — reads the three Dockerfiles' `USER` and the chart; enforces the >10000 floor |
-| What each cluster would deploy            | `scripts/deployed-versions.sh` — reproduces Flux's selection; no cluster and no credential needed           |
-| Infrastructure as code (OpenTofu)         | `infra/` — read `infra/AGENTS.md` first; `bootstrap/` is applied, `environments/` is not                    |
-| Cloud-init for the Hetzner nodes          | `infra/modules/environment/cloud-init/`                                                                     |
-| Helm chart (bff · importer · frontend)    | `deploy/charts/event-junkie/` — read `deploy/AGENTS.md` first; exercised on k3d, never on a real cluster    |
-| Backend container images                  | `events-bff/Dockerfile`, `events-importer/Dockerfile` — no `RUN`, context is each module's `build/docker`   |
-| Frontend container image                  | `events-frontend/Dockerfile` + `events-frontend/docker/nginx.conf` — nginx on 8080, context is the module   |
-| Chart assertions                          | `deploy/charts/event-junkie/tests/*_test.yaml` (helm-unittest) + `scripts/cluster-assertions.sh`            |
-| Release notes categories                  | `.github/release.yml`                                                                                       |
-| Dependabot config                         | `.github/dependabot.yml`                                                                                    |
-| Commit message prompt                     | `.github/prompts/commit-message.prompt.md`                                                                  |
-| Squash commit message prompt              | `.github/prompts/squash-commit-message.prompt.md`                                                           |
-| Open PR prompt                            | `.github/prompts/open-pr.prompt.md`                                                                         |
-| Code review prompt                        | `.github/prompts/code-review.prompt.md`                                                                     |
-| Security report prompt                    | `.github/prompts/security-report.prompt.md`                                                                 |
-| Shared domain module marker               | `events-core/src/.../EventsCoreModule.kt`                                                                   |
-| Domain data classes                       | `events-core/src/.../artist/`, `event/`, `genretag/`, `promoter/`, `venue/`                                 |
-| Price normalization utility               | `events-core/src/.../event/MoneyExtensions.kt`                                                              |
-| Initial DB migration                      | `events-importer/src/main/resources/db/migration/V001__create_initial_schema.sql`                           |
-| Global exception handler                  | `events-importer/src/.../GlobalExceptionHandler.kt`                                                         |
-| Slug generator utility                    | `events-importer/src/.../slug/SlugGenerator.kt`                                                             |
-| Genre normalizer utility                  | `events-importer/src/.../genretag/GenreNormalizer.kt`                                                       |
-| Shared scraping utilities                 | `events-importer/src/.../scraper/ScrapingExtensions.kt`                                                     |
-| Shared date/time parsing                  | `events-importer/src/.../scraper/DateParsingExtensions.kt`                                                  |
-| Event-type classification                 | `events-importer/src/.../scraper/EventTypeMapping.kt`                                                       |
-| Artist-name resolution                    | `events-importer/src/.../scraper/ArtistNameMapping.kt`                                                      |
-| Event field-level mapping                 | `events-importer/src/.../scraper/EventFieldMapping.kt`                                                      |
-| WebFlux Pageable resolver config          | `events-importer/src/.../WebFluxConfiguration.kt`                                                           |
-| Stable-sort Pageable resolver             | `events-importer/src/.../StableSortPageableArgumentResolver.kt` (duplicated in `events-bff`)                |
-| Base integration test class               | `events-importer/src/test/.../BaseControllerTest.kt`                                                        |
-| Full lifecycle integration test           | `events-importer/src/test/.../event/FullLifecycleIntegrationTest.kt`                                        |
-| Testcontainers setup (BFF)                | `events-bff/src/test/.../PostgresTestcontainersConfiguration.kt`                                            |
-| Testcontainers setup (importer)           | `events-importer/src/test/.../PostgresTestcontainersConfiguration.kt`                                       |
-| Modularity verification (BFF)             | `events-bff/src/test/.../ModularityTests.kt`                                                                |
-| Modularity verification (importer)        | `events-importer/src/test/.../ModularityTests.kt`                                                           |
-| Modularity verification (core)            | `events-core/src/test/.../ModularityTests.kt`                                                               |
-| ADR: Reactive stack                       | `docs/adr/ADR-001_REACTIVE_STACK.md`                                                                        |
-| ADR: R2DBC query derivation limits        | `docs/adr/ADR-002_R2DBC_QUERY_DERIVATION.md`                                                                |
-| ADR: Entity/domain separation             | `docs/adr/ADR-003_ENTITY_DOMAIN_SEPARATION.md`                                                              |
-| ADR: Dedicated database schema            | `docs/adr/ADR-004_DEDICATED_DATABASE_SCHEMA.md`                                                             |
-| ADR: Migrations owned by importer         | `docs/adr/ADR-005_MIGRATIONS_OWNED_BY_IMPORTER.md`                                                          |
-| ADR: Spring Modulith                      | `docs/adr/ADR-006_SPRING_MODULITH.md`                                                                       |
-| ADR: Web scraping strategy                | `docs/adr/ADR-007_WEB_SCRAPING_STRATEGY.md`                                                                 |
-| ADR: Import job scheduling                | `docs/adr/ADR-008_IMPORT_JOB_SCHEDULING.md`                                                                 |
-| ADR: Optimistic locking (event src)       | `docs/adr/ADR-009_OPTIMISTIC_LOCKING_EVENT_SOURCE.md`                                                       |
-| ADR: Frontend styling framework           | `docs/adr/ADR-010_FRONTEND_STYLING_FRAMEWORK.md`                                                            |
-| ADR: Event-calendar library               | `docs/adr/ADR-011_CALENDAR_LIBRARY.md`                                                                      |
-| ADR: Cloud platform & hosting             | `docs/adr/ADR-012_CLOUD_PLATFORM.md`                                                                        |
-| ADR: Localisation (English + German)      | `docs/adr/ADR-013_LOCALISATION.md`                                                                          |
-| ADR: Rendering strategy (SPA/SSG/SSR)     | `docs/adr/ADR-014_RENDERING_STRATEGY.md`                                                                    |
-| ADR: Observability stack                  | `docs/adr/ADR-015_OBSERVABILITY_STACK.md`                                                                   |
-| ADR: GitOps delivery (Flux, pull)         | `docs/adr/ADR-016_GITOPS_DELIVERY.md`                                                                       |
-| ADR: JRE base image (Liberica/Alpine)     | `docs/adr/ADR-017_JRE_BASE_IMAGE.md`                                                                        |
-| ADR: Probe semantics (readiness/liveness) | `docs/adr/ADR-018_PROBE_SEMANTICS.md`                                                                       |
-| Plan: Hetzner + k3s setup, go-live        | `docs/ops/PLATFORM_SETUP.md`                                                                                |
-| Releasing & deploying, end to end         | `docs/ops/RELEASING.md` — the diagram; ADR-016 has the reasoning                                            |
-| Bootstrapping a cluster, once             | `docs/ops/CLUSTER_BOOTSTRAP.md` — ordered runbook, first run 2026-08-13; traps table at the bottom          |
-| Connecting to a running cluster           | `docs/ops/CLUSTER_ACCESS.md` — tunnel, kubeconfig, contexts, k9s. Read-only; nothing in it changes anything |
-| Flux resources (one dir per cluster)      | `deploy/clusters/` — read `deploy/AGENTS.md` first; the semver range is on the OCIRepository                |
-| Plan: footer, legal pages, versioning     | `docs/LEGAL.md`                                                                                             |
-| Backlog snapshot generator                | `scripts/generate-backlog-snapshot.sh` → `build/BACKLOG.md` (generated, not committed)                      |
-| Issue board helper                        | `scripts/issue-board.sh` — Status and Priority are project fields, not labels                               |
-| Frontend entry point                      | `events-frontend/src/main.ts`                                                                               |
-| IntelliJ HTTP Client requests             | `http/importer/` (admin) and `http/bff/` (public read) `.http` files + shared `http/http-client.env.json`   |
-| Local dev environment control script      | `scripts/dev-env.sh` (start/stop the stack, seed sources, trigger imports, inspect + diff the data)         |
-| Performance tests (k6)                    | `perf/` — `smoke.js` · `load.js` · `spike.js`, endpoints in `perf/lib/api.js`                               |
+| Purpose                                   | Path                                                                                                                  |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Root build config & shared versions       | `build.gradle.kts`                                                                                                    |
+| Plugin versions & module includes         | `settings.gradle.kts`                                                                                                 |
+| Gradle daemon JVM args                    | `gradle.properties`                                                                                                   |
+| Dev database (Postgres)                   | `compose.yaml`                                                                                                        |
+| Detekt rule overrides                     | `detekt.yml`                                                                                                          |
+| OWASP CVE false-positive suppressions     | `owasp-suppressions.xml`                                                                                              |
+| CI: backend build & test                  | `.github/workflows/build-backend.yml`                                                                                 |
+| CI: frontend build & test                 | `.github/workflows/build-frontend.yml`                                                                                |
+| CI: dependency review (PR)                | `.github/workflows/dependency-review.yml`                                                                             |
+| CI: dependency graph submission           | `.github/workflows/dependency-submission.yml`                                                                         |
+| CI: nightly OWASP scan                    | `.github/workflows/dependency-check-scheduled.yml`                                                                    |
+| CI: nightly scan of deployed images       | `.github/workflows/image-scan-scheduled.yml` — a published tag, both arches; thresholds match release.yml             |
+| CI: quarterly restore-drill reminder      | `.github/workflows/restore-drill-reminder.yml` — opens the drill as an assigned issue                                 |
+| CI: PR labelling                          | `.github/workflows/label-pr.yml`                                                                                      |
+| CI: OpenTofu fmt/validate + ShellCheck    | `.github/workflows/validate-infra.yml`                                                                                |
+| CI: workflow lint + security audit        | `.github/workflows/validate-workflows.yml`; suppressions in `zizmor.yml`                                              |
+| CI: Helm lint/render/assertions           | `.github/workflows/validate-chart.yml`                                                                                |
+| CI: Markdown formatting                   | `.github/workflows/validate-docs.yml`                                                                                 |
+| CI: build, scan and publish to GHCR       | `.github/workflows/release.yml` — the only workflow that pushes anything; it does not deploy                          |
+| Version scheme (one number, 4 files)      | `scripts/version.sh`; `gradle.properties` is the source of truth — docs/DEVELOPMENT.md §Versions                      |
+| Snapshot versions must ORDER (#455)       | `scripts/version-test.sh` — asserted against Helm's own solver; a format check would not catch it                     |
+| Markdown formatting                       | `scripts/format-markdown.sh` + `.oxfmtrc.json` — Markdown only, and the scope is load-bearing                         |
+| Trivy waivers                             | `.trivyignore` — empty on purpose; an entry needs a reason and a date                                                 |
+| Chart and images agree about the UID      | `scripts/uid-consistency.sh` — reads the three Dockerfiles' `USER` and the chart; enforces the >10000 floor           |
+| What each cluster would deploy            | `scripts/deployed-versions.sh` — reproduces Flux's selection; no cluster and no credential needed                     |
+| Infrastructure as code (OpenTofu)         | `infra/` — read `infra/AGENTS.md` first; `bootstrap/` is applied, `environments/` is not                              |
+| Cloud-init for the Hetzner nodes          | `infra/modules/environment/cloud-init/`                                                                               |
+| Helm chart (bff · importer · frontend)    | `deploy/charts/event-junkie/` — read `deploy/AGENTS.md` first; exercised on k3d, never on a real cluster              |
+| Backend container images                  | `events-bff/Dockerfile`, `events-importer/Dockerfile` — no `RUN`, context is each module's `build/docker`             |
+| Frontend container image                  | `events-frontend/Dockerfile` + `events-frontend/docker/nginx.conf` — nginx on 8080, context is the module             |
+| Chart assertions                          | `deploy/charts/event-junkie/tests/*_test.yaml` (helm-unittest) + `scripts/cluster-assertions.sh`                      |
+| Release notes categories                  | `.github/release.yml`                                                                                                 |
+| Dependabot config                         | `.github/dependabot.yml`                                                                                              |
+| Commit message prompt                     | `.github/prompts/commit-message.prompt.md`                                                                            |
+| Squash commit message prompt              | `.github/prompts/squash-commit-message.prompt.md`                                                                     |
+| Open PR prompt                            | `.github/prompts/open-pr.prompt.md`                                                                                   |
+| Code review prompt                        | `.github/prompts/code-review.prompt.md`                                                                               |
+| Security report prompt                    | `.github/prompts/security-report.prompt.md`                                                                           |
+| Shared domain module marker               | `events-core/src/.../EventsCoreModule.kt`                                                                             |
+| Domain data classes                       | `events-core/src/.../artist/`, `event/`, `genretag/`, `promoter/`, `venue/`                                           |
+| Price normalization utility               | `events-core/src/.../event/MoneyExtensions.kt`                                                                        |
+| Initial DB migration                      | `events-importer/src/main/resources/db/migration/V001__create_initial_schema.sql`                                     |
+| Global exception handler                  | `events-importer/src/.../GlobalExceptionHandler.kt`                                                                   |
+| Slug generator utility                    | `events-importer/src/.../slug/SlugGenerator.kt`                                                                       |
+| Genre normalizer utility                  | `events-importer/src/.../genretag/GenreNormalizer.kt`                                                                 |
+| Shared scraping utilities                 | `events-importer/src/.../scraper/ScrapingExtensions.kt`                                                               |
+| Shared date/time parsing                  | `events-importer/src/.../scraper/DateParsingExtensions.kt`                                                            |
+| Event-type classification                 | `events-importer/src/.../scraper/EventTypeMapping.kt`                                                                 |
+| Artist-name resolution                    | `events-importer/src/.../scraper/ArtistNameMapping.kt`                                                                |
+| Event field-level mapping                 | `events-importer/src/.../scraper/EventFieldMapping.kt`                                                                |
+| WebFlux Pageable resolver config          | `events-importer/src/.../WebFluxConfiguration.kt`                                                                     |
+| Stable-sort Pageable resolver             | `events-importer/src/.../StableSortPageableArgumentResolver.kt` (duplicated in `events-bff`)                          |
+| Base integration test class               | `events-importer/src/test/.../BaseControllerTest.kt`                                                                  |
+| Full lifecycle integration test           | `events-importer/src/test/.../event/FullLifecycleIntegrationTest.kt`                                                  |
+| Testcontainers setup (BFF)                | `events-bff/src/test/.../PostgresTestcontainersConfiguration.kt`                                                      |
+| Testcontainers setup (importer)           | `events-importer/src/test/.../PostgresTestcontainersConfiguration.kt`                                                 |
+| Modularity verification (BFF)             | `events-bff/src/test/.../ModularityTests.kt`                                                                          |
+| Modularity verification (importer)        | `events-importer/src/test/.../ModularityTests.kt`                                                                     |
+| Modularity verification (core)            | `events-core/src/test/.../ModularityTests.kt`                                                                         |
+| ADR: Reactive stack                       | `docs/adr/ADR-001_REACTIVE_STACK.md`                                                                                  |
+| ADR: R2DBC query derivation limits        | `docs/adr/ADR-002_R2DBC_QUERY_DERIVATION.md`                                                                          |
+| ADR: Entity/domain separation             | `docs/adr/ADR-003_ENTITY_DOMAIN_SEPARATION.md`                                                                        |
+| ADR: Dedicated database schema            | `docs/adr/ADR-004_DEDICATED_DATABASE_SCHEMA.md`                                                                       |
+| ADR: Migrations owned by importer         | `docs/adr/ADR-005_MIGRATIONS_OWNED_BY_IMPORTER.md`                                                                    |
+| ADR: Spring Modulith                      | `docs/adr/ADR-006_SPRING_MODULITH.md`                                                                                 |
+| ADR: Web scraping strategy                | `docs/adr/ADR-007_WEB_SCRAPING_STRATEGY.md`                                                                           |
+| ADR: Import job scheduling                | `docs/adr/ADR-008_IMPORT_JOB_SCHEDULING.md`                                                                           |
+| ADR: Optimistic locking (event src)       | `docs/adr/ADR-009_OPTIMISTIC_LOCKING_EVENT_SOURCE.md`                                                                 |
+| ADR: Frontend styling framework           | `docs/adr/ADR-010_FRONTEND_STYLING_FRAMEWORK.md`                                                                      |
+| ADR: Event-calendar library               | `docs/adr/ADR-011_CALENDAR_LIBRARY.md`                                                                                |
+| ADR: Cloud platform & hosting             | `docs/adr/ADR-012_CLOUD_PLATFORM.md`                                                                                  |
+| ADR: Localisation (English + German)      | `docs/adr/ADR-013_LOCALISATION.md`                                                                                    |
+| ADR: Rendering strategy (SPA/SSG/SSR)     | `docs/adr/ADR-014_RENDERING_STRATEGY.md`                                                                              |
+| ADR: Observability stack                  | `docs/adr/ADR-015_OBSERVABILITY_STACK.md`                                                                             |
+| ADR: GitOps delivery (Flux, pull)         | `docs/adr/ADR-016_GITOPS_DELIVERY.md`                                                                                 |
+| ADR: JRE base image (Liberica/Alpine)     | `docs/adr/ADR-017_JRE_BASE_IMAGE.md`                                                                                  |
+| ADR: Probe semantics (readiness/liveness) | `docs/adr/ADR-018_PROBE_SEMANTICS.md`                                                                                 |
+| Plan: Hetzner + k3s setup, go-live        | `docs/ops/PLATFORM_SETUP.md`                                                                                          |
+| Releasing & deploying, end to end         | `docs/ops/RELEASING.md` — the diagram; ADR-016 has the reasoning                                                      |
+| Bootstrapping a cluster, once             | `docs/ops/CLUSTER_BOOTSTRAP.md` — ordered runbook, first run 2026-08-13; traps table at the bottom                    |
+| Connecting to a running cluster           | `docs/ops/CLUSTER_ACCESS.md` — tunnel, kubeconfig, contexts, k9s. Read-only; nothing in it changes anything           |
+| Alerting from outside the cluster         | `docs/ops/HEALTHCHECKS.md` — healthchecks.io dead-man's switches. Ping URLs are credentials and live only on the node |
+| Flux resources (one dir per cluster)      | `deploy/clusters/` — read `deploy/AGENTS.md` first; the semver range is on the OCIRepository                          |
+| Plan: footer, legal pages, versioning     | `docs/LEGAL.md`                                                                                                       |
+| Backlog snapshot generator                | `scripts/generate-backlog-snapshot.sh` → `build/BACKLOG.md` (generated, not committed)                                |
+| Issue board helper                        | `scripts/issue-board.sh` — Status and Priority are project fields, not labels                                         |
+| Frontend entry point                      | `events-frontend/src/main.ts`                                                                                         |
+| IntelliJ HTTP Client requests             | `http/importer/` (admin) and `http/bff/` (public read) `.http` files + shared `http/http-client.env.json`             |
+| Local dev environment control script      | `scripts/dev-env.sh` (start/stop the stack, seed sources, trigger imports, inspect + diff the data)                   |
+| Performance tests (k6)                    | `perf/` — `smoke.js` · `load.js` · `spike.js`, endpoints in `perf/lib/api.js`                                         |

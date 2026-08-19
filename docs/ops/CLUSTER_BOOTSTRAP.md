@@ -175,16 +175,14 @@ EOF
 
 ### The healthchecks.io check — create it before the credential file, not after
 
-`HEALTHCHECK_URL` above is not optional decoration, and there is no URL to paste until the check exists. **Create it first**, per environment:
+`HEALTHCHECK_URL` above is not optional decoration, and there is no URL to paste until the check exists. **[HEALTHCHECKS.md](HEALTHCHECKS.md) is the procedure**
+— what to create, how to wire a node to it, and how to prove it fires. It is a separate page because the same account and channel carry the site probe (#271)
+and anything else that alerts from outside, so it outgrew being a paragraph in the backup section.
 
-| Field       | Value                  | Why exactly this                                                                                                                        |
-| ----------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| **Period**  | 26h                    | The same bound `walg check` asserts on the newest base backup. A shorter period alerts on a backup that the check itself considers fine |
-| **Grace**   | 2h                     | `walg-check.timer` runs hourly, so two missed runs is a real signal and one is a reboot                                                 |
-| **Name**    | `walg-<environment>`   | Per environment, because a shared check goes green while one of two nodes has been archiving nothing for a week                         |
-| **Channel** | the same one #271 uses | A second notification stack for this would be the avoidable mistake                                                                     |
+The one-line version: create `walg-<environment>` (period 26h, grace 2h), paste its ping URL into the `HEALTHCHECK_URL` line above, and run
+`sudo -u postgres walg check` to make it go green immediately rather than at the top of the next hour.
 
-Then paste its ping URL into `HEALTHCHECK_URL` above. **`walg check` says so when you have not**, on every hourly run:
+**`walg check` says so when you have not**, on every hourly run:
 
 ```
 warning: HEALTHCHECK_URL is unset in /etc/wal-g/credentials.env — this check passes into a void.
@@ -204,22 +202,9 @@ ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 'sudo systemctl start walg-baseba
 
 ### Prove the alert, once, by breaking it on purpose
 
-**An alert nobody has seen fire is the same class of belief as an untested backup**, which is the argument this whole section rests on. So induce the failure
-rather than trusting the wiring — the cheapest one is the disk assertion, because it needs no backup to be deleted and undoes itself:
-
-```sh
-# Fill /var/lib/postgresql past 85% with a file you can delete, then run the check by hand.
-ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 \
-  'sudo fallocate -l $(( $(df --output=avail -B1 /var/lib/postgresql | tail -1) * 90 / 100 )) /var/lib/postgresql/ZZ-drill && \
-   sudo -u postgres walg check; sudo rm -f /var/lib/postgresql/ZZ-drill'
-# expect: "/var/lib/postgresql is NN% full", exit 1, and NO ping — so the check goes red at healthchecks.io
-```
-
-The notification arrives after the **grace period**, not immediately — that is the point of a dead-man's switch and the part most likely to be mistaken for it
-not working. Wait the two hours, or shorten the grace to a few minutes for the drill and put it back afterwards.
-
-Delete the file before the next `walg-basebackup`. Record the date the notification actually arrived in the go-live checklist (#284) — that date, not the
-configuration, is what makes the box tickable.
+**An alert nobody has seen fire is the same class of belief as an untested backup**, which is the argument this whole section rests on. The drill — inducing the
+disk assertion, watching the check go red, and the two things that catch people out — is in [HEALTHCHECKS.md](HEALTHCHECKS.md), along with the log of when it
+was last run.
 
 **Once per bucket, not per cluster**, and **already done for `event-junkie-backups` on 2026-08-18** — the retention backstop the privacy notice depends on
 ([#277](https://github.com/enorm-labs/event-junkie/issues/277)). Only needed again for a new bucket:
