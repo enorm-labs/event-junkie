@@ -57,6 +57,10 @@ Versions explicitly pinned in **`settings.gradle.kts`** (plugin versions) and **
 Also check whether the **ktlint version** (`version = "..."` inside the `configure<KtlintExtension>` block in root
 `build.gradle.kts`) has a newer stable release.
 
+**Bumping `dev.detekt` needs no second edit.** `:detekt-rules` compiles against `the<DetektExtension>().toolVersion`, so it follows the plugin. Confirm with
+`./gradlew :detekt-rules:detektToolVersion` after the bump — and note that a 2.0 **alpha** can move its API between pre-releases, so a bump that fails to
+compile that module is the rule needing an update, not a bad version.
+
 ### ❌ Managed by BOMs (do NOT update these)
 
 Dependencies whose versions come from the **Spring Boot BOM** (`org.springframework.boot` plugin) or the **Spring Modulith BOM**. These include, but are not

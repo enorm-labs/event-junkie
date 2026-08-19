@@ -89,7 +89,8 @@ application subprojects and one build-tooling subproject sharing a root `setting
 - **`events-importer`** – Imports events from external sources into the database (Spring Boot 4 + WebFlux + R2DBC + Flyway). Runs on port `8081`. Owns all
   Flyway migrations under `src/main/resources/db/migration/`.
 - **`detekt-rules`** – This repository's own detekt rules (currently `LongComment`), loaded onto every module's `detektPlugins` classpath by the root build and
-  configured under the `event-junkie` key in `detekt.yml`. Build tooling: nothing it contains ships, so it is left out of the Kover aggregate, the licence report
+  configured under the `event-junkie` key in `detekt.yml`. Compiles against the detekt version the plugin itself resolves, so there is no version to keep in
+  step. Build tooling: nothing it contains ships, so it is left out of the Kover aggregate, the licence report
   and the OWASP scan — each exclusion sits next to its reason in the root `build.gradle.kts`.
 - **`events-frontend`** – Vue 3 SPA (Vite 8, TypeScript 6, Vue Router). Uses oxlint/oxfmt for linting/formatting. Not a Gradle subproject — managed separately
   via npm. Requires Node `>=22.13.0` (see `engines` in `package.json`) — raised from 20 when vue-i18n was adopted, see ADR-013.
@@ -549,8 +550,10 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 - **Kotlin 2.4.10** with **Spring Boot 4.1.0**; plugin versions pinned in `settings.gradle.kts` `pluginManagement`.
 - **ktlint 1.8.0** enforced project-wide via root `subprojects` block; do not override per-module.
 - **detekt 2.0.0-alpha.6** (`dev.detekt` plugin, migrated from `io.gitlab.arturbosch.detekt`) applied project-wide, with this repository's own rules from
-  `:detekt-rules` on the analysis classpath (see the `event-junkie` section of `detekt.yml`). `detekt.version` in `gradle.properties` must match the plugin
-  version in `settings.gradle.kts`, or a custom rule meets a different API at analysis time. The 2.0 line is still pre-release; the alpha
+  `:detekt-rules` on the analysis classpath (see the `event-junkie` section of `detekt.yml`). **The plugin version in `settings.gradle.kts` is the only place a
+  detekt version is written.** `:detekt-rules` compiles against `the<DetektExtension>().toolVersion` — the version the plugin resolves for analysis — so a
+  custom rule cannot be built against a different API than the one it is loaded with. Check it with `./gradlew :detekt-rules:detektToolVersion`; bumping the
+  plugin needs no second edit. The 2.0 line is still pre-release; the alpha
   is tracked deliberately because it is what supports current Kotlin (see the compatibility-table link in `settings.gradle.kts`). Builds upon default config
   with overrides in root `detekt.yml` (currently only `MaxLineLength: 160`). Run `./gradlew detekt` to analyze all modules.
 - **Max line length**: 160 characters (enforced by both `.editorconfig` and `detekt.yml`).
