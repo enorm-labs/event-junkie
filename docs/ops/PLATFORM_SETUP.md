@@ -510,9 +510,11 @@ and immediately sets its status from the Flux payload, so the entry reflects rea
 >
 > **Three things that were not obvious until it was built**, recorded so they are not rediscovered:
 >
-> - **The revision Flux reports for a HelmRelease is a chart version, not a commit** — `0.1.1-snapshot.20260814122042.g1a2b3c4` or `0.1.1` — because the chart
->   is published with a plain `helm push` and carries no `org.opencontainers.image.revision`. The Deployments API wants a ref, so the workflow parses the commit
->   back out of the version string. Both shapes `scripts/version.sh` produces already encode it, which is why this needed no change to `release.yml`.
+> - **The revision Flux reports for a HelmRelease is a chart version, not a commit**, because the chart is published with a plain `helm push` and carries no
+>   `org.opencontainers.image.revision`. The Deployments API wants a ref, so the workflow parses the commit back out of the version string — both shapes
+>   `scripts/version.sh` produces already encode it, which is why this needed no change to `release.yml`. **And it is not quite the string `version.sh` wrote:**
+>   helm-controller appends the chart's OCI digest as SemVer build metadata, so what actually arrives is
+>   `0.1.1-snapshot.20260819153524.g3b1c09e+97ec754320b5`. That suffix broke the first two real dispatches and is now split off before matching.
 > - **That same fact breaks the `github` commit-status provider**, which is a separate defect and not this one — see
 >   [#567](https://github.com/enorm-labs/event-junkie/issues/567).
 > - **The dispatch token is stronger than the status token.** `repository_dispatch` needs **contents: write**, where commit statuses need only _commit statuses:
