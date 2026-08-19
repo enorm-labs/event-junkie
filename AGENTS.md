@@ -1027,6 +1027,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Bootstrapping a cluster, once             | `docs/ops/CLUSTER_BOOTSTRAP.md` — ordered runbook, first run 2026-08-13; traps table at the bottom                    |
 | Connecting to a running cluster           | `docs/ops/CLUSTER_ACCESS.md` — tunnel, kubeconfig, contexts, k9s. Read-only; nothing in it changes anything           |
 | Alerting from outside the cluster         | `docs/ops/HEALTHCHECKS.md` — healthchecks.io dead-man's switches. Ping URLs are credentials and live only on the node |
+| Secrets, and the SOPS plan                | `docs/ops/SECRETS.md` — three hand-made objects today; the age private key never enters this repository               |
 | Flux resources (one dir per cluster)      | `deploy/clusters/` — read `deploy/AGENTS.md` first; the semver range is on the OCIRepository                          |
 | Plan: footer, legal pages, versioning     | `docs/LEGAL.md`                                                                                                       |
 | Backlog snapshot generator                | `scripts/generate-backlog-snapshot.sh` → `build/BACKLOG.md` (generated, not committed)                                |

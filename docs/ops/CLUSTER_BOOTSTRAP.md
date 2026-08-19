@@ -150,7 +150,7 @@ printf '%s\n' "$PGPASS" | ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 \
 unset PGPASS                                                          # expect: events|events
 ```
 
-Both secrets are the last hand-made objects in the system; [#416](https://github.com/enorm-labs/event-junkie/issues/416) replaces them with SOPS.
+Both secrets are the last hand-made objects in the system; [#416](https://github.com/enorm-labs/event-junkie/issues/416) replaces them with SOPS — [SECRETS.md](SECRETS.md) is the procedure, including the one of the two that probably should **not** be encrypted into a public repository.
 
 ## 8b · The backup credential — _the node is not backing anything up until you do this_
 
