@@ -803,7 +803,8 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 
     **The comment is not decoration** — Dependabot reads it to know what version the SHA is, and rewrites both together, so the ongoing cost of SHA pinning is
     the same as the cost of tags. Adding an action by tag now fails `Lint & audit workflows`, which is a required check, so this cannot regress by review
-    fatigue. GitHub's repository-level `sha_pinning_required` setting enforces the same thing one layer down and is the belt to zizmor's braces.
+    fatigue. GitHub's repository-level **`sha_pinning_required` is on** (2026-08-19), which enforces the same thing one layer down and is the belt to
+    zizmor's braces — the check refuses the pull request, the setting refuses the run.
 
     **Read that setting from `repos/{owner}/{repo}/actions/permissions`, never from the repository object.** `repos/{owner}/{repo}` reports
     `sha_pinning_required: null` whatever its real value, which is the same shape that made #443's audit record private vulnerability reporting as off
@@ -850,6 +851,11 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
   attestations answer different questions and neither substitutes for the other**: the provenance statement is signed and says _where the image came from_, the
   SBOM is unsigned metadata on the image index and says _what is inside it_. Only the first is what `gh attestation verify oci://… --repo enorm-labs/event-junkie`
   checks, and it is quiet on success, so exit 0 is the verdict.
+
+- **Releases are immutable** (#443, enabled 2026-08-19, before the first release existed so nothing was grandfathered in). A published release's tag and assets
+  cannot be edited or deleted afterwards. This matters more here than it would elsewhere because **publishing a GitHub Release is what triggers a production
+  publish** (#264): the tag that names a production image is now as permanent as the image it names, and a release published by mistake is fixed by shipping
+  forward, never by deleting it and reusing the tag. Read it back from `repos/{owner}/{repo}/immutable-releases`.
 
 - **Steps that verify come first; steps that report to GitHub come last. Never the other way round** (#507). `if:` on a step carries an implicit `success()`,
   so a failing step skips every step below it — and a _skipped_ step produces no annotation and no summary line, so the loss is invisible. Put anything that
