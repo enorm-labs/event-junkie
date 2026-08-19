@@ -41,8 +41,13 @@ describe('legal contact details', () => {
   // Deliberately NOT folded into INFRASTRUCTURE_IS_PROPOSED: that flag says the providers are
   // intended and nothing is deployed, which is a fact about infrastructure. A contract can be
   // concluded before anything is deployed and can lapse long after. Two facts, two flags.
-  it('flags the Art. 28 contract as pending while the AVV is not concluded', () => {
-    expect(PROCESSOR_CONTRACTS_PENDING).toBe(true)
+  it('no longer flags the Art. 28 contract as pending, because the AVV is concluded', () => {
+    // Concluded 2026-08-19. A plain value assertion, and deliberately so: nothing in code can
+    // observe a signed PDF, so unlike the placeholder-address tripwire above there is no second
+    // signal to check this against. What it buys is that flipping the flag forces someone to touch
+    // this line and say why — which is the only guard available when the fact lives outside the
+    // repository. The date is in LEGAL.md §14.
+    expect(PROCESSOR_CONTRACTS_PENDING).toBe(false)
   })
 
   it('records a review date in ISO form so the legal pages can show when they were checked', () => {

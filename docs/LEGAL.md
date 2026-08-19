@@ -291,6 +291,9 @@ The site cannot go live until these are closed. They are tracked as issues in th
 
 **Blocking, and dependent on infrastructure:**
 
+> **Item 3 below is closed.** It is kept in place rather than deleted because the reasoning — why a notice naming a processor without a DPA is worse than one
+> naming none — is what makes the next processor's entry correct, and that argument is easier to find here than to re-derive.
+
 1. **The four logging decisions** (§7.5) — whether Traefik and the nginx container log real client IPs, truncation, retention period, and where retention is
    enforced. The notice currently states an _intended_ seven days.
 2. **`INFRASTRUCTURE_IS_PROPOSED = true`** — [ADR-012](adr/ADR-012_CLOUD_PLATFORM.md) is `Accepted` as of 2026-08-10, but accepting it deployed nothing, so the
@@ -306,10 +309,16 @@ The site cannot go live until these are closed. They are tracked as issues in th
     - The Cloudflare DPA does not apply — [#412](https://github.com/enorm-labs/event-junkie/issues/412) removed it from the architecture.
     - The transfer-mechanism sentence is **done**: §5 names Hetzner in Germany, states that no transfer outside the EU takes place, and says there is no
       transfer mechanism to disclose. Nothing there is a placeholder any more.
-    - **The AVV itself is not concluded**, and until 2026-08-19 nothing said so. That is the gap this item is actually about now: §5 describes Hetzner as an
-      _`Auftragsverarbeiter mit einem Vertrag nach Art. 28 DSGVO`_ **in the present tense**, which is a statement of fact about a contract that does not exist
-      yet — precisely the failure the sentence above warns about, arrived at from the direction nobody was watching. `PROCESSOR_CONTRACTS_PENDING` now says so
-      in the banner on both language versions, and a guard test keeps the flag and the claim together.
+    - **The AVV is concluded — 2026-08-19**, self-service via <https://accounts.hetzner.com/account/dpa>. §5 describes Hetzner as an
+      _`Auftragsverarbeiter mit einem Vertrag nach Art. 28 DSGVO`_ **in the present tense**, and as of that date the sentence is true.
+
+        It was not, for a while, and the gap is recorded rather than tidied away: the notice made that claim before any contract existed, which is precisely the
+        failure the sentence above warns about, arrived at from the direction nobody was watching — a statement about a _relationship_, which was accurate, that
+        is also a statement about a _document_, which was not. `PROCESSOR_CONTRACTS_PENDING` said so in the banner on both language versions until it was
+        signed, and is now `false`.
+
+        **That constant is the only machine-readable record of the contract**, since nothing in code can observe a signed PDF. Set it back to `true` if the
+        contract ever lapses, is superseded, or a second processor is added without one.
 
     It is concluded at <https://accounts.hetzner.com/account/dpa> — self-service, signature-and-download, minutes rather than a negotiation. **File the
     countersigned copy somewhere it can be produced on request**: concluding it and not filing it is the same position as not concluding it, the day somebody
