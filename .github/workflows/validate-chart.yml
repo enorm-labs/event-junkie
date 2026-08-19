@@ -203,10 +203,20 @@ jobs:
       # The `kustomization.yaml` files are skipped by kind rather than by filename: they are kustomize
       # *build* files, not cluster resources, so they legitimately have no `metadata.name` and would
       # otherwise be reported as three schema violations.
+      # `--skip-json-path v1/Secret:/sops` strips the block SOPS adds to an encrypted Secret before
+      # validating it. That block is not part of the Kubernetes Secret schema — `additional
+      # properties 'sops' not allowed` — and Flux removes it at apply time, so validating against it
+      # would be validating something that never reaches the cluster (#416).
+      #
+      # DELIBERATELY NOT `--skip-kind v1/Secret`, which would have been the one-word fix and would
+      # have switched the gate off for every Secret we ever add. Stripping one path keeps the Secret
+      # *validated*: with this flag the run reports `Valid: 54`, with `--skip-kind` it would report
+      # one more skipped instead. The difference is whether a malformed Secret is still caught.
       - name: Validate the Flux manifests
         run: |
           flux schema validate deploy/clusters -s ecosystem --verbose \
-            --skip-kind kustomize.config.k8s.io/v1beta1/Kustomization
+            --skip-kind kustomize.config.k8s.io/v1beta1/Kustomization \
+            --skip-json-path v1/Secret:/sops
 
       - name: Install the helm-unittest plugin
         run: |
