@@ -3,3 +3,23 @@ kind: Kustomization
 resources:
 - gotk-components.yaml
 - gotk-sync.yaml
+# Added by hand, and deliberately HERE rather than in gotk-sync.yaml — that file opens with
+# "DO NOT EDIT" because `flux bootstrap` regenerates it, and a customisation written there is one
+# bootstrap re-run away from silently disappearing. A patch in this file is Flux's documented place
+# for it (#416, docs/ops/SECRETS.md).
+#
+# `sops-age` must already exist in flux-system, holding the private key under a name ending in
+# `.agekey` — Flux ignores any other key name, silently. Without it this Kustomization stops
+# reconciling with a decryption error, which takes every deploy with it, so the secret goes on the
+# cluster BEFORE this merges. It was created on staging on 2026-08-19.
+patches:
+  - patch: |
+      - op: add
+        path: /spec/decryption
+        value:
+          provider: sops
+          secretRef:
+            name: sops-age
+    target:
+      kind: Kustomization
+      name: flux-system

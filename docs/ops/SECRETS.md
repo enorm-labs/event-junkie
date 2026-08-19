@@ -2,8 +2,9 @@
 
 The three objects nothing in this repository creates, why that is a problem worth fixing, and the procedure for fixing it — split by who has to do each part.
 
-> **Nothing here is done yet.** [#416](https://github.com/enorm-labs/event-junkie/issues/416) item 8 is the only one of its list still open, and it needs an age
-> keypair that only the operator can generate. This page is the plan and the runbook; the state below is what is true right now.
+> **Done for staging on 2026-08-19** ([#416](https://github.com/enorm-labs/event-junkie/issues/416) item 8). `events-db` is committed encrypted and restored by
+> Flux; `hetzner` stays hand-made by decision; `github-status` does not exist yet and is encrypted from the start when it does. Production gets the same
+> treatment as part of standing it up ([#560](https://github.com/enorm-labs/event-junkie/issues/560)).
 
 ## What is hand-made today
 
@@ -28,7 +29,7 @@ recovery, which is the property being bought.
 
 For one operator the operational difference is otherwise small, and the deciding argument is rebuild survival rather than ergonomics.
 
-## ⚠️ One thing to decide first, because this repository is public
+## The decision, taken 2026-08-19: two of three, because this repository is public
 
 **Encrypting a secret into a public repository publishes its ciphertext, permanently.** Git history is world-readable, forkable and archived, so "we rotated it
 later" does not un-publish the bytes. That is fine for a value whose exposure requires a future break in X25519 — and it is a different conversation for each of
@@ -40,8 +41,8 @@ the three:
 | `github-status` | Commit statuses on one repository. Nuisance value                                                                         | **Yes**                              |
 | `hetzner`       | **Read+write control of the Hetzner account** — servers, volumes, firewalls, the lot                                      | **Recommend not**                    |
 
-**Recommendation: encrypt the first two, leave the Hetzner token hand-made.** It is staging-only (production solves ACME by HTTP-01 and holds no Hetzner token
-at all), it is a two-minute recreation, and it is the one credential where the rebuild-survival argument buys least and the exposure argument costs most.
+**Decided: encrypt `events-db`, leave the Hetzner token hand-made.** It is staging-only (production solves ACME by HTTP-01 and holds no Hetzner token at all),
+it is a two-minute recreation, and it is the one credential where the rebuild-survival argument buys least and the exposure argument costs most.
 
 The alternative, if you would rather have no hand-made objects at all, is to move the Flux secrets to a **private** repository and point a second `GitRepository`
 at it. That is a real option and a bigger change; it is not worth it for one staging DNS token.
@@ -50,7 +51,7 @@ at it. That is a real option and a bigger change; it is not worth it for one sta
 
 Four steps. **Two are yours** — they involve a private key that must never reach this repository — and two are mine.
 
-### 1. Generate the age key — yours
+### 1. Generate the age key — yours ✅ _done 2026-08-19_
 
 ```sh
 brew install sops age
@@ -66,7 +67,7 @@ story: with it, the repository restores every secret; without it, the ciphertext
 
 **Give me the public key** (the `age1…` line). It is safe to publish — it only encrypts.
 
-### 2. `.sops.yaml` and the encrypted files — mine
+### 2. `.sops.yaml` and the encrypted files — mine ✅ _done for staging_
 
 I add a `.sops.yaml` at the repository root naming the public key as the sole recipient and restricting encryption to secret values only:
 
@@ -82,7 +83,7 @@ and `flux schema validate` can read it — which is what `validate-chart.yml` al
 
 Then each secret becomes a committed, encrypted file, and the hand-made `kubectl create secret` steps come out of §8.
 
-### 3. Put the private key on each cluster — yours
+### 3. Put the private key on each cluster — yours ✅ _done for staging 2026-08-19_
 
 Flux decrypts with a key it holds in-cluster. This is the one step that must be repeated per cluster, and repeated again after a rebuild:
 
@@ -94,7 +95,7 @@ cat ~/.config/sops/age/event-junkie.txt |
 
 The key name **must** be `age.agekey` — Flux looks for a `.agekey` suffix and ignores anything else, silently.
 
-### 4. Wire Flux's decryption — mine
+### 4. Wire Flux's decryption — mine ✅ _done for staging_
 
 The Flux `Kustomization` gains a `decryption` block. **It is added as a patch, not by editing `gotk-sync.yaml`**, which opens with `DO NOT EDIT` because
 `flux bootstrap` regenerates it. The documented place is the bootstrap kustomization beside it:
@@ -126,6 +127,9 @@ flux --context event-junkie-staging reconcile kustomization flux-system --with-s
 kubectl --context event-junkie-staging -n event-junkie get secret events-db \
   -o jsonpath='{.metadata.managedFields[*].manager}'      # expect: kustomize-controller
 ```
+
+**This can only be run once the encrypted file is on `main`** — Flux restores from the repository, so there is nothing to restore from until then. Applying over
+the existing hand-made Secret transfers ownership without downtime; the value is identical, because it was encrypted from the live object.
 
 **The manager field is the assertion that matters.** A secret that is still hand-made looks identical to a decrypted one from the outside — same name, same
 keys, same value — and the only thing that distinguishes "Flux restored this" from "this survived because nobody deleted it" is who owns it. Delete the
