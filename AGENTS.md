@@ -749,7 +749,8 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       by the `github-dispatch` Provider in each cluster, on the event type `HelmRelease/event-junkie.flux-system` — Flux's own `{Kind}/{Name}.{Namespace}`
       format, not a name we chose. **It is the only workflow that cannot be tested from a pull request**, because `repository_dispatch` runs workflows from the
       default branch only; it therefore fails loudly on any payload it does not recognise rather than defaulting. The revision Flux reports is a _chart
-      version_, not a commit, so it parses the commit back out of `scripts/version.sh`'s two shapes — change one and this must change with it.
+      version_, not a commit, so it parses the commit back out of `scripts/version.sh`'s two shapes — change one and this must change with it. Note that
+      helm-controller appends the chart's OCI digest as SemVer build metadata (`…g3b1c09e+97ec754320b5`), which is stripped before matching.
     - `validate-workflows.yml` — **actionlint** (correctness) and **zizmor** (security) over `.github/workflows/`, since #383. It is the only gate that looks at
       the workflows themselves, and on its first run zizmor found a template injection in `release.yml`, a cache-poisoning path into it, and two workflow-level
       permission grants that belonged to a single job. zizmor blocks at `--min-severity medium`; suppressions live in `zizmor.yml` or as inline

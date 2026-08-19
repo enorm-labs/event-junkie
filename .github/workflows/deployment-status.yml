@@ -115,19 +115,34 @@ jobs:
               return;
             }
 
+            // WHAT ARRIVES IS NOT WHAT `scripts/version.sh` PRODUCES, and the first real dispatch is
+            // what proved it: helm-controller appends the chart's OCI digest as SemVer **build
+            // metadata**, so the version reaches us as
+            //
+            //   0.1.1-snapshot.20260819153524.g3b1c09e+97ec754320b5
+            //                                         ^^^^^^^^^^^^^ helm-controller, not us
+            //
+            // It is there so two charts with the same version but different content are
+            // distinguishable, which is a property worth having and not something to strip upstream.
+            // Split it off before matching rather than tolerating `+…` inside each pattern: the
+            // release branch builds a tag from this string, and `v0.1.1+97ec754320b5` is not a tag
+            // that exists.
+            const version = revision.split('+')[0];
+
             const SNAPSHOT = /^\d+\.\d+\.\d+-snapshot\.\d{14}\.g([0-9a-f]{7})$/;
             const RELEASE = /^\d+\.\d+\.\d+$/;
 
-            const snapshot = SNAPSHOT.exec(revision);
+            const snapshot = SNAPSHOT.exec(version);
             let ref;
             if (snapshot) {
               ref = snapshot[1];
-            } else if (RELEASE.test(revision)) {
-              ref = `v${revision}`;
+            } else if (RELEASE.test(version)) {
+              ref = `v${version}`;
             } else {
               core.setFailed(
-                `revision ${JSON.stringify(revision)} is neither a snapshot nor a release version. ` +
-                `If scripts/version.sh changed shape, this workflow has to change with it.`);
+                `revision ${JSON.stringify(revision)} (version core ${JSON.stringify(version)}) is neither ` +
+                `a snapshot nor a release version. If scripts/version.sh changed shape, or helm-controller ` +
+                `changed what it appends, this workflow has to change with it.`);
               return;
             }
 
