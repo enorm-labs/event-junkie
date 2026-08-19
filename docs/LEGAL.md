@@ -141,6 +141,40 @@ and offers a removal route requiring no reason and no public discussion. This is
 It also governs machine-readable output: structured data describes performers as `PerformingGroup`, never `Person`, because of the two types Google accepts only
 one asserts that a named individual is a natural person.
 
+### 7.3a What is processed, and about whom — the answer every processor form asks for
+
+Written down here because it is asked repeatedly and answered from memory otherwise: Hetzner's AVV asks for it as tick-boxes, an Art. 30 record needs it as
+prose, and §5 of the notice is the same facts written for a visitor. **Three documents, one set of facts** — and the only way to notice when they stop agreeing
+is to keep the facts in one place and derive the rest.
+
+**Categories of personal data**, mapped to the vocabulary these forms use:
+
+| Category                        | Applies                      | What it actually is here                                                                                                                                                                              |
+| ------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Personal master data**        | **yes**                      | Artist names, and each artist's `description`, `imageUrl`, `websiteUrl`, `facebookUrl`, `instagramUrl`, `youtubeUrl`. The largest category by far, and see §7.3 for why it counts                     |
+| **Communication data**          | **yes, on a strict reading** | No phone numbers and no email addresses are stored anywhere. The artist profile and social URLs are what a strict reading catches. **Declare it**: the cost is nil and omitting it leaves a scope gap |
+| Contractual master data         | no                           | There is no contract with any data subject                                                                                                                                                            |
+| **Log data**                    | **yes**                      | Timestamp, requested path, HTTP status, bytes transferred, referrer, browser and OS — **and possibly the IP address**, which §7.5 has not settled. Target retention seven days                        |
+| Contract, invoicing and payment | no                           | Nothing is sold and no payment is processed                                                                                                                                                           |
+
+**Declare log data even though §7.5 is open.** A processor agreement should cover the maximum that might be processed; narrowing it later is trivial, and
+discovering that something was processed outside its scope is not.
+
+**Categories of data subject**, which is where this project is unusual:
+
+| Who                                                        | Applies                                |                                                                                                                                                                         |
+| ---------------------------------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Customers and interested parties                           | **yes**                                | Site visitors. Nothing is sold, so they are _Interessenten_ rather than customers, but that is the box these forms offer                                                |
+| Employees                                                  | no                                     | There are none                                                                                                                                                          |
+| **Artists and promoters named in the imported event data** | **yes — and it must be added by hand** | Neither customers nor employees, and **the largest group of data subjects in the system**. A form filled in with only the two standard boxes would omit almost everyone |
+
+That last row is the one to get right. The personal data here is overwhelmingly about **third parties whose names were published by venues**, not about anyone
+who ever visited the site — which is also why §7.3's removal route matters more than a contact form would.
+
+**Two places this has to stay in step.** The backups in Hetzner Object Storage hold the same database, so they carry the same categories rather than being a
+separate question. And a processor's sub-processor annex is worth reading against §5: if any of them sits outside the EU for a service in use, the notice's
+"no third-country transfer" sentence stops being true.
+
 ### 7.4 Device storage — `localStorage`, not just cookies
 
 The site sets **no cookies**. It stores a `theme` key and a locale hint. § 25 TDDDG covers _storage on terminal equipment_, not cookies specifically — both
@@ -150,6 +184,9 @@ That is a property worth defending deliberately: the first non-essential stored 
 detail — escalate rather than implement.
 
 ### 7.5 Logging — **still open**
+
+> Log data is declared to processors as in scope regardless of how this lands — see §7.3a. A processor agreement should cover the maximum that might be
+> processed; narrowing it later is trivial and discovering something was processed outside its scope is not.
 
 #### 7.5.1 The four decisions
 
@@ -319,6 +356,10 @@ The site cannot go live until these are closed. They are tracked as issues in th
 
         **That constant is the only machine-readable record of the contract**, since nothing in code can observe a signed PDF. Set it back to `true` if the
         contract ever lapses, is superseded, or a second processor is added without one.
+
+        **The form's answers come from [§7.3a](#73a-what-is-processed-and-about-whom--the-answer-every-processor-form-asks-for)** — categories of data and
+        categories of data subject — so the AVV, this document and §5 of the notice all describe the same processing. The next processor agreement is filled in
+        from the same place rather than from memory.
 
     It is concluded at <https://accounts.hetzner.com/account/dpa> — self-service, signature-and-download, minutes rather than a negotiation. **File the
     countersigned copy somewhere it can be produced on request**: concluding it and not filing it is the same position as not concluding it, the day somebody
