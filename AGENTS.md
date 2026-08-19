@@ -65,6 +65,10 @@ update
   and needs its own legal basis, retention period and deletion route.
 - **New personal data in the domain model.** Artist names are already personal data (§7.3 of the plan, and §4 of the privacy notice). Adding contact details,
   social handles, photographs of identifiable people, or user-submitted content extends that materially.
+- **Either of the two above also changes what the processor contract has to cover**, and that is the half nobody remembers. `LEGAL.md` §7.3a records the exact
+  categories of personal data and of data subject declared in the Hetzner AVV — **a category not on that list is outside the agreement**, however carefully the
+  privacy notice is updated. An email address or a phone number stored anywhere is the clearest example: it introduces a category the current contract was not
+  written against. Update §7.3a and re-check the AVV in the same change, not afterwards.
 - **Analytics of any kind**, including self-hosted and "cookieless" tools. Self-hosted and cookieless is a better posture, but it is still processing and still
   needs a legal basis and a notice entry.
 

@@ -147,17 +147,22 @@ Written down here because it is asked repeatedly and answered from memory otherw
 prose, and §5 of the notice is the same facts written for a visitor. **Three documents, one set of facts** — and the only way to notice when they stop agreeing
 is to keep the facts in one place and derive the rest.
 
+**This is also the scope actually declared in the Hetzner AVV concluded on 2026-08-19**, not merely an analysis of what could have been declared. That makes it
+the record of what the contract covers, and that has a consequence worth stating in advance: **processing a category not listed below means the AVV needs
+revisiting, not just the notice.** A contact form, a newsletter, or any stored email address or phone number would each do it — updating the notice is the
+change everyone remembers, and the contract behind it is the one nobody does.
+
 **Categories of personal data**, mapped to the vocabulary these forms use:
 
-| Category                        | Applies                      | What it actually is here                                                                                                                                                                              |
-| ------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Personal master data**        | **yes**                      | Artist names, and each artist's `description`, `imageUrl`, `websiteUrl`, `facebookUrl`, `instagramUrl`, `youtubeUrl`. The largest category by far, and see §7.3 for why it counts                     |
-| **Communication data**          | **yes, on a strict reading** | No phone numbers and no email addresses are stored anywhere. The artist profile and social URLs are what a strict reading catches. **Declare it**: the cost is nil and omitting it leaves a scope gap |
-| Contractual master data         | no                           | There is no contract with any data subject                                                                                                                                                            |
-| **Log data**                    | **yes**                      | Timestamp, requested path, HTTP status, bytes transferred, referrer, browser and OS — **and possibly the IP address**, which §7.5 has not settled. Target retention seven days                        |
-| Contract, invoicing and payment | no                           | Nothing is sold and no payment is processed                                                                                                                                                           |
+| Category                        | Applies                      | What it actually is here                                                                                                                                                                                               |
+| ------------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Personal master data**        | **yes**                      | Artist names, and each artist's `description`, `imageUrl`, `websiteUrl`, `facebookUrl`, `instagramUrl`, `youtubeUrl`. The largest category by far, and see §7.3 for why it counts                                      |
+| **Communication data**          | **yes, on a strict reading** | No phone numbers and no email addresses are stored anywhere. The artist profile and social URLs are what a strict reading catches. Declared deliberately: the cost was nil and omitting it would have left a scope gap |
+| Contractual master data         | no                           | There is no contract with any data subject                                                                                                                                                                             |
+| **Log data**                    | **yes**                      | Timestamp, requested path, HTTP status, bytes transferred, referrer, browser and OS — **and possibly the IP address**, which §7.5 has not settled. Target retention seven days                                         |
+| Contract, invoicing and payment | no                           | Nothing is sold and no payment is processed                                                                                                                                                                            |
 
-**Declare log data even though §7.5 is open.** A processor agreement should cover the maximum that might be processed; narrowing it later is trivial, and
+**Log data was declared even though §7.5 is open**, and the reasoning generalises: a processor agreement should cover the maximum that might be processed. Narrowing it later is trivial, and
 discovering that something was processed outside its scope is not.
 
 **Categories of data subject**, which is where this project is unusual:
