@@ -80,16 +80,18 @@ spec:
     mode: warn
   values:
     networkPolicy:
-      # DELIBERATELY NOT A PLAUSIBLE CIDR, for the same reason `database.host` below is not a
-      # plausible address: a realistic-looking value here reads as configured and is not.
+      # The /32 of `database.host` below. Two settings for one address is the unavoidable cost of
+      # the feature — NetworkPolicy speaks CIDRs and cannot resolve a name — and this is the pairing
+      # most likely to be half-done, so `scripts/cluster-assertions.sh` fails the build when a
+      # cluster has a real host and a placeholder CIDR.
       #
-      # Replace with the /32 of `tofu -chdir=infra/environments/staging output postgres_ip` — the same address as `database.host` below, in CIDR form, because NetworkPolicy speaks CIDRs and cannot resolve a name.
+      # **A placeholder here does NOT fail the render**, which is why that check exists: the value
+      # is a string, so `REPLACE-ME…/32` templates perfectly and is then rejected by the API server
+      # as an invalid `ipBlock.cidr` — failing the HelmRelease and rolling the release back, several
+      # steps from anything that mentions a CIDR.
       #
-      # **Two settings for one address is the cost of the feature, and this is the pairing most
-      # likely to be half-done.** Set the host and forget this and the render fails, which is the
-      # intended outcome; set this and forget the host and the render also fails. Neither can be
-      # silently wrong.
-      databaseCidr: "REPLACE-ME-tofu-output-postgres-ip/32"
+      # Confirm with `tofu -chdir=infra/environments/staging output postgres_ip`.
+      databaseCidr: "10.1.1.10/32"
     database:
       # The k3s node's own private address — PostgreSQL is co-located on staging
       # (`postgres_server_type = null`), but still reached over the network, so the connection path
