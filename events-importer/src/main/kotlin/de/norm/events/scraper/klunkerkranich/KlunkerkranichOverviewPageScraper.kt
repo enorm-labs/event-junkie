@@ -62,9 +62,6 @@ private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
  * That mislabels the occasional concert, which is an accepted limitation of a source that states
  * nothing better.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see KlunkerkranichDetailPageScraper for the per-event page, which adds the blurb and the price.
  * @see KlunkerkranichWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://klunkerkranich.org/events/">Klunkerkranich programme</a>
@@ -78,7 +75,6 @@ class KlunkerkranichOverviewPageScraper(
     /**
      * Parses all event cards from the programme document.
      *
-     * @param document the parsed Jsoup document of the `/events/` page.
      * @param baseUrl the URL the document was fetched from, used to resolve the per-event links.
      * @return a list of [ScrapedEvent] instances, in listing order.
      */

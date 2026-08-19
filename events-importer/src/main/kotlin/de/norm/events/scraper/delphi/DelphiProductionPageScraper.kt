@@ -38,8 +38,6 @@ data class DelphiProduction(
  * (identity, date, clock, type, price, ticket link) is already settled by the programme page, which
  * states it per performance.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see DelphiProgrammePageScraper for the programme parser.
  * @see DelphiWebsiteImporter for the HTTP fetch orchestrator.
  */

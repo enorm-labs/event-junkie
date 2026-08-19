@@ -23,10 +23,9 @@ import java.time.LocalTime
 /**
  * Unit tests for [MikropolWebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic, offline-safe
- * testing. Focuses on the overview ↔ detail merge: the detail page supplies the description,
- * image, and ticket URL, while the overview stands in (with its own complete data) whenever a
- * detail page fails to fetch.
+ * Focuses on the overview ↔ detail merge: the detail page supplies the description, image, and
+ * ticket URL, while the overview stands in (with its own complete data) whenever a detail page
+ * fails to fetch.
  */
 class MikropolWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()

@@ -17,9 +17,6 @@ import java.time.LocalDate
 
 /**
  * Unit tests for [EschschloraqueWebsiteImporter].
- *
- * Uses the static HTML fixture and a mocked [HtmlFetcher] for deterministic, offline-safe testing
- * without real HTTP requests.
  */
 class EschschloraqueWebsiteImporterTest {
     private lateinit var importer: EschschloraqueWebsiteImporter

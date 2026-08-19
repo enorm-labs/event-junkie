@@ -28,9 +28,6 @@ import org.jsoup.nodes.Element
  * `13.04.2027`). The slug is used only for the stable [ScrapedEvent.sourceId], so a postponed
  * show keeps its identity across the move.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with a static fixture.
- *
  * @see ModusDetailPageScraper for the detail-page data (start time, ticket link, description).
  * @see ModusWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://modus-berlin.de/events">Modus event listing</a>
@@ -41,7 +38,6 @@ class ModusOverviewPageScraper {
     /**
      * Parses all event tiles from the programme page document.
      *
-     * @param document the parsed Jsoup document of the `/events` page.
      * @param baseUrl the URL the document was fetched from, used to resolve the per-event
      *   detail links and build `sourceId` values.
      * @return a list of [ScrapedEvent] instances, one per tile.

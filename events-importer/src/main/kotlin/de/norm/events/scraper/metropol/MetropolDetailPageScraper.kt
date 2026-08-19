@@ -29,9 +29,6 @@ import org.jsoup.nodes.Document
  * overview's `small.support` line carries (see
  * [MetropolWebsiteImporter.fillGapsFromOverview]).
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with a static fixture.
- *
  * @see MetropolOverviewPageScraper for the listing parser (discovery, support acts, fallback).
  * @see MetropolWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://metropol-berlin.de/event/2026-09-05-mucco">Example detail page</a>
@@ -43,7 +40,6 @@ class MetropolDetailPageScraper {
      * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no
      * `h1` title.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive
      *   the [ScrapedEvent.sourceId].
      */

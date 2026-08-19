@@ -40,9 +40,6 @@ import java.math.BigDecimal
  *    is the venue itself, so neither is read — every night is typed
  *    [PARTY][EventType.PARTY] and carries no artists or promoters.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with a static fixture.
- *
  * @see SodaOverviewPageScraper for overview parsing (discovery, year-less date fallback).
  * @see SodaWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.soda-berlin.de/de/events/famous-friday-31-07-2026">Example detail page</a>
@@ -56,7 +53,6 @@ class SodaDetailPageScraper {
      * Parses an event detail page into a [ScrapedEvent], or `null` when the page has no
      * event title (an unexpected structure).
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive the
      *   [ScrapedEvent.sourceId].
      */

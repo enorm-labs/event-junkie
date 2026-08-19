@@ -16,9 +16,6 @@ import org.junit.jupiter.api.Test
 
 /**
  * Unit tests for [MaxximWebsiteImporter].
- *
- * Uses a static HTML fixture and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing without real HTTP requests.
  */
 class MaxximWebsiteImporterTest {
     private lateinit var importer: MaxximWebsiteImporter

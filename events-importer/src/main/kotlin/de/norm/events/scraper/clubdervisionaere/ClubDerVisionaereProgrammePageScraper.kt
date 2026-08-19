@@ -49,9 +49,6 @@ import java.time.MonthDay
  * Argenis Brito)` is one act billed with its members, and `Naima (2)` is a Resident
  * Advisor disambiguator — so the conjunction split is skipped for them.
  *
- * This class performs **no I/O**; it operates on a pre-fetched Jsoup [Document] and is
- * tested against saved snapshots of both the summer and the winter programme.
- *
  * @see ClubDerVisionaereWebsiteImporter and its sibling room importers for the fetch orchestration.
  * @see <a href="https://clubdervisionaere.com/programm/">Club der Visionäre programme</a>
  */
@@ -64,7 +61,6 @@ class ClubDerVisionaereProgrammePageScraper(
     /**
      * Parses the programme page, returning only the events of the given [room].
      *
-     * @param document the parsed Jsoup document of the programme page.
      * @param sourceUrl the URL the document was fetched from; the page has no per-event
      *   URLs, so it doubles as every event's `sourceUrl`.
      * @param room the room whose nights to return.

@@ -27,9 +27,8 @@ import java.net.URI
  * flat running-order that mixes in labels, whereas the overview lists each act in
  * its own span, so [BerghainOverviewPageScraper]'s artists win on merge.
  *
- * All parsing is scoped to the `<main>` content region, excluding the site header,
- * navigation and footer. This class performs **no I/O** — it operates on a
- * pre-fetched Jsoup [Document].
+ * All parsing is scoped to the `<main>` content region, excluding the site header, navigation and
+ * footer.
  *
  * @see BerghainWebsiteImporter for the fetch orchestration and overview merge.
  */
@@ -39,7 +38,6 @@ class BerghainDetailPageScraper {
     /**
      * Parses a single event detail page.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to
      *   derive its [ScrapedEvent.sourceId].
      * @return the parsed event, or `null` when the page lacks the `<main>`

@@ -36,9 +36,6 @@ import java.time.MonthDay
  * recently-passed events listed; those are dropped centrally at persistence time
  * (`EventUpsertService`), so this parser returns every dated row as-is.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see WildAtHeartWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.wildatheartberlin.de/concerts.php">Wild at Heart programme</a>
  */
@@ -52,7 +49,6 @@ class WildAtHeartOverviewPageScraper(
     /**
      * Parses all events from the programme page document.
      *
-     * @param document the parsed Jsoup document of `concerts.php`.
      * @param baseUrl the URL the document was fetched from, used as each event's `sourceUrl`.
      * @return a list of [ScrapedEvent] instances, one per dated `<tr>` row.
      */

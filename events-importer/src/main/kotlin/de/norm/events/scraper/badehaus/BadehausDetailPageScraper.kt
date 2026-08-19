@@ -25,9 +25,6 @@ import java.time.LocalDate
  * the subtitle line and the inferred event type. Merging is handled by
  * [BadehausWebsiteImporter].
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see BadehausOverviewPageScraper for discovery + the authoritative fields.
  * @see BadehausWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -39,7 +36,6 @@ class BadehausDetailPageScraper {
      * container or its title is missing (an unexpected page structure), so the
      * importer degrades to the overview data.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to
      *   derive the [ScrapedEvent.sourceId].
      */

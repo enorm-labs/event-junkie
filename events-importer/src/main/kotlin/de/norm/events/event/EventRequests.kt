@@ -84,7 +84,6 @@ data class EventRequest(
     @field:Valid
     @Schema(description = "Artists performing at this event with their role and billing position")
     val artists: List<EventArtistRequest> = emptyList(),
-    /** Promoter IDs associated with this event. */
     @Schema(description = "Database IDs of promoters associated with this event", example = "[3, 7]")
     val promoterIds: List<Long> = emptyList()
 )

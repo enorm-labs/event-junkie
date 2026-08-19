@@ -40,9 +40,6 @@ import java.time.LocalTime
  * detail page (the merge's primary side) adds the description, prices, ticket
  * URL, and image. Merging is handled by [LidoWebsiteImporter].
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see LidoDetailPageScraper for the detail-page data source.
  * @see LidoWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.lido-berlin.de/">Lido Berlin</a>
@@ -53,10 +50,8 @@ class LidoOverviewPageScraper {
     /**
      * Parses all event articles from the overview page document.
      *
-     * @param document the parsed Jsoup document of the homepage.
      * @param baseUrl the URL the document was fetched from, used for resolving
      *   relative detail links and building `sourceId` values.
-     * @return a list of [ScrapedEvent] instances extracted from the page.
      */
     fun scrape(
         document: Document,

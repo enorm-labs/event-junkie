@@ -25,10 +25,9 @@ import java.time.ZoneOffset
 /**
  * Unit tests for [HavannaWebsiteImporter].
  *
- * Uses the saved page snapshots and a mocked [HtmlFetcher] for deterministic, offline-safe testing.
- * The clock is pinned to Tuesday 2026-07-28 so the derived occurrence dates are stable — and so the
- * Wednesday page's live summer-break notice ("ab dem 01.07.2026") is in force, which is exactly the
- * case worth pinning: the venue's own announcement removes one of the three nights.
+ * The clock is pinned to Tuesday 2026-07-28 so the derived occurrence dates are stable — and so
+ * the Wednesday page's live summer-break notice ("ab dem 01.07.2026") is in force, which is
+ * exactly the case worth pinning: the venue's own announcement removes one of the three nights.
  */
 class HavannaWebsiteImporterTest {
     private lateinit var importer: HavannaWebsiteImporter

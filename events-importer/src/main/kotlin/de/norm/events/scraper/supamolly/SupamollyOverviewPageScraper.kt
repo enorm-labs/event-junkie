@@ -52,9 +52,6 @@ import java.time.format.DateTimeParseException
  *
  * The venue publishes no prices and no ticket shop, so those fields stay null.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see SupamollyWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.supamolly.de/?p=programm">Supamolly Berlin</a>
  */
@@ -64,9 +61,7 @@ class SupamollyOverviewPageScraper {
     /**
      * Parses all events from the Supamolly programme page document.
      *
-     * @param document the parsed Jsoup document of the Supamolly programme page.
      * @param baseUrl the URL the document was fetched from, used for resolving relative links.
-     * @return a list of [ScrapedEvent] instances extracted from the page.
      */
     fun scrape(
         document: Document,

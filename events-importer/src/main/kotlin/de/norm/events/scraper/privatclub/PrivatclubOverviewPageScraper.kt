@@ -44,9 +44,6 @@ import java.util.Locale
  * selectors. HTML elements serve as **fallback** and provide fields not
  * present in JSON-LD (genre, subtitle, description, prices, status, promoter).
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched
- * Jsoup [Document], making it easy to test with static HTML fixtures.
- *
  * @see PrivatclubWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://privatclub-berlin.de/">Privatclub Berlin</a>
  */
@@ -65,9 +62,7 @@ class PrivatclubOverviewPageScraper(
      * Each event lives in a `.event_wrapper.skewed` element, followed by a
      * JSON-LD script tag with structured event data.
      *
-     * @param document the parsed Jsoup document of the Privatclub homepage.
      * @param baseUrl the URL the document was fetched from, used for resolving relative links.
-     * @return a list of [ScrapedEvent] instances extracted from the page.
      */
     fun scrape(
         document: Document,

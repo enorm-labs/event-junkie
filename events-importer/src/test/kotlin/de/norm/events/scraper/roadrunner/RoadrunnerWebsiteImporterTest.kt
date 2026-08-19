@@ -20,10 +20,8 @@ import java.time.ZoneOffset
 /**
  * Unit tests for [RoadrunnerWebsiteImporter].
  *
- * Uses the static programme fixture and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing without real HTTP requests. The clock is pinned to 2026-05-01 —
- * before the fixture's single event (29 May 2026) — so the scraper's past-event cutoff
- * keeps it and weekday-based year inference stays deterministic.
+ * The clock is pinned to 2026-05-01 — before the fixture's single event (29 May 2026) — so the
+ * scraper's past-event cutoff keeps it and weekday-based year inference stays deterministic.
  */
 class RoadrunnerWebsiteImporterTest {
     private lateinit var importer: RoadrunnerWebsiteImporter

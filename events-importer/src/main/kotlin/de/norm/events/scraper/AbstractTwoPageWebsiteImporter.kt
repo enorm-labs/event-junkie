@@ -11,6 +11,11 @@ import org.jsoup.nodes.Document
  *
  * Subclasses provide venue-specific scrapers and a gap-filling strategy;
  * this class owns the shared fetch orchestration.
+ *
+ * **This is the only class in the package that performs I/O.** Every `*PageScraper` / `*ApiScraper`
+ * takes a pre-fetched [Document] or response body, which is what makes them testable against a
+ * saved fixture — a property of the pattern, stated here rather than repeated in every venue's
+ * KDoc.
  */
 abstract class AbstractTwoPageWebsiteImporter(
     private val htmlFetcher: HtmlFetcher

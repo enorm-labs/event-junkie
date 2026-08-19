@@ -23,7 +23,6 @@ import java.time.LocalTime
 /**
  * Unit tests for [MorphineWebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic, offline-safe testing.
  * Focuses on the overview ↔ detail merge: the detail page supplies the times, lineup, description,
  * image and pricing, while the overview stands in with its date and title whenever a detail page
  * fails to fetch.

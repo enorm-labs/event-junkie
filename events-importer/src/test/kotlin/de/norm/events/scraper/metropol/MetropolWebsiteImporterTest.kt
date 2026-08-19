@@ -19,9 +19,8 @@ import java.time.LocalTime
 /**
  * Unit tests for [MetropolWebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic, offline-safe testing
- * without real HTTP requests. Only the detail pages captured as fixtures are stubbed; every
- * other detail fetch throws, exercising the base class's degrade-to-overview fallback.
+ * Only the detail pages captured as fixtures are stubbed; every other detail fetch throws,
+ * exercising the base class's degrade-to-overview fallback.
  */
 class MetropolWebsiteImporterTest {
     private lateinit var importer: MetropolWebsiteImporter

@@ -39,9 +39,6 @@ import java.time.format.DateTimeParseException
  * Kater's rules or Renate's curated floor names. The rendered date carries no year, so the date is
  * read from the `YYYYMMDD` prefix of the permalink instead.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see TresorDetailPageScraper for the set times and blurb.
  * @see TresorWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://tresorberlin.com/club/events/">Tresor events</a>
@@ -52,7 +49,6 @@ class TresorOverviewPageScraper {
     /**
      * Parses all event items from the listing document.
      *
-     * @param document the parsed Jsoup document of `/club/events/`.
      * @param baseUrl the URL the document was fetched from, used to resolve detail links.
      * @return a list of [ScrapedEvent] instances, in listing order.
      */

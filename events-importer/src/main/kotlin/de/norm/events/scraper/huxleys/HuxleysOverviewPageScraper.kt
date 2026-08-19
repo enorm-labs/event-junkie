@@ -35,9 +35,6 @@ import org.jsoup.nodes.Element
  * [HuxleysWebsiteImporter] falls back to this data when a detail page fails to fetch, each card is
  * parsed as completely as the listing allows.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see HuxleysDetailPageScraper for the detail-page data source.
  * @see HuxleysWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://huxleysneuewelt.de/events">Huxleys Neue Welt events</a>
@@ -48,10 +45,8 @@ class HuxleysOverviewPageScraper {
     /**
      * Parses all event cards from the overview page document.
      *
-     * @param document the parsed Jsoup document of the `/events` listing.
      * @param baseUrl the URL the document was fetched from, used to resolve detail links and build
      *   `sourceId` values.
-     * @return a list of [ScrapedEvent] instances extracted from the page.
      */
     fun scrape(
         document: Document,

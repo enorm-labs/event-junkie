@@ -37,9 +37,6 @@ import org.jsoup.nodes.Element
  * `YYYY-MM-DD` prefix the venue bakes into every event slug — a canonical identifier cleaner
  * than the German `DD.MM.YYYY` rendering — falling back to the `.date` line.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with a static fixture.
- *
  * @see MikropolDetailPageScraper for the detail-page data source (description, image, ticket).
  * @see MikropolWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://mikropol-berlin.de/events/">Mikropol event listing</a>
@@ -50,10 +47,8 @@ class MikropolOverviewPageScraper {
     /**
      * Parses all event cards from the overview page document.
      *
-     * @param document the parsed Jsoup document of the `/events/` listing.
      * @param baseUrl the URL the document was fetched from, used to resolve relative
      *   detail links and build `sourceId` values.
-     * @return a list of [ScrapedEvent] instances extracted from the page.
      */
     fun scrape(
         document: Document,

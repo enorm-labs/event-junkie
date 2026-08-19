@@ -43,8 +43,6 @@ import java.time.format.DateTimeParseException
  * the markup never says which DJ plays which floor (the orders do not correspond), so there is
  * nothing to put in [ScrapedArtist.stage] without guessing.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see MatrixWebsiteImporter for the fetch orchestration (entry page → next month → …).
  */
 class MatrixOverviewPageScraper {
@@ -53,7 +51,6 @@ class MatrixOverviewPageScraper {
     /**
      * Parses all nights from one month page.
      *
-     * @param document the parsed Jsoup document of the month page.
      * @param baseUrl the URL the document was fetched from, used to rebuild each event's canonical
      *   month-page URL (see [monthPageUrl]).
      * @return one [ScrapedEvent] per night with a parseable date and title. The current-month page

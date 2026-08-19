@@ -50,9 +50,6 @@ import java.time.LocalTime
  * The stable per-event identity is the `detail.php?id=<n>` query id, used for
  * both the `sourceId` and the `sourceUrl`.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see GretchenWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.gretchen-club.de/">Gretchen Berlin</a>
  */
@@ -65,9 +62,7 @@ class GretchenOverviewPageScraper {
      *
      * Each event is a `<div class="gig">` block in the programme listing.
      *
-     * @param document the parsed Jsoup document of the Gretchen homepage.
      * @param baseUrl the URL the document was fetched from, used for resolving relative links.
-     * @return a list of [ScrapedEvent] instances extracted from the page.
      */
     fun scrape(
         document: Document,

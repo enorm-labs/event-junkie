@@ -44,9 +44,6 @@ import java.time.format.DateTimeParseException
  * link, excluded by the `/event/` href filter) and the `X`-prefixed `data-id` placeholder a
  * rescheduled show leaves behind at its *original* date (see [isRescheduledPlaceholder]).
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see ColumbiaTheaterDetailPageScraper for the detail-page data source (times, blurb, tickets).
  * @see ColumbiaTheaterWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://columbia-theater.de/">Columbia Theater programme</a>
@@ -57,10 +54,8 @@ class ColumbiaTheaterOverviewPageScraper {
     /**
      * Parses all event cards from the homepage document.
      *
-     * @param document the parsed Jsoup document of the homepage listing.
      * @param baseUrl the URL the document was fetched from, used to resolve detail links and build
      *   `sourceId` values.
-     * @return a list of [ScrapedEvent] instances extracted from the page.
      */
     fun scrape(
         document: Document,

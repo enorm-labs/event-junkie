@@ -77,13 +77,12 @@ class ReadinessProbeTest : BaseControllerTest() {
         runBlocking {
             // The failure path, driven through a ConnectionFactory that always errors.
             //
-            // **It used to pass a bogus schema name to the constructor, and #540 removed that lever
-            // on purpose**: the probe now resolves EVENTS_SCHEMA like every other statement in the
-            // application, precisely so it cannot be aimed at a schema the queries are not using. The
-            // schema-specific case did not lose coverage — ReadinessWithoutSchemaTest asserts it end
-            // to end against a real, deliberately un-migrated PostgreSQL, which is stronger evidence
-            // than a renamed schema ever was. What remains here is the cheap, fast assertion that a
-            // failing query becomes DOWN rather than an exception escaping the actuator endpoint.
+            // The probe resolves EVENTS_SCHEMA like every other statement in the application (#540),
+            // so it cannot be aimed at a schema the queries are not using — hence a failing
+            // connection rather than a bogus schema name. The schema-missing case is covered end to
+            // end by ReadinessWithoutSchemaTest against a real, deliberately un-migrated PostgreSQL.
+            // What stays here is the cheap, fast assertion that a failing query becomes DOWN rather
+            // than an exception escaping the actuator endpoint.
             // The metadata still says PostgreSQL so DatabaseClient can resolve a dialect without
             // connecting; only `create()` fails, which is the state a dead database presents.
             val unreachable =

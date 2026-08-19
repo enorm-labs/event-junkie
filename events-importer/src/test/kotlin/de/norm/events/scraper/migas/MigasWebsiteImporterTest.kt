@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Test
 /**
  * Unit tests for [MigasWebsiteImporter].
  *
- * Uses a static HTML fixture and a mocked [HtmlFetcher] for deterministic, offline-safe testing.
  * The conditional-request tests are the point of this class: migas' `Last-Modified` tracks page
  * edits while the listing itself rolls forward daily, so replaying it would freeze the programme.
  */

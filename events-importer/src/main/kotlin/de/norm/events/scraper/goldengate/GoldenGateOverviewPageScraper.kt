@@ -44,9 +44,6 @@ import java.util.Locale
  * [EventUpsertService][de.norm.events.scraper.EventUpsertService], so an import late in the week
  * legitimately stores as little as one event.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see GoldenGateWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://goldengate-berlin.de/">Golden Gate Berlin</a>
  */
@@ -56,7 +53,6 @@ class GoldenGateOverviewPageScraper {
     /**
      * Parses the announced nights from the homepage document.
      *
-     * @param document the parsed Jsoup document of the homepage.
      * @param baseUrl the URL the document was fetched from, stored as each event's
      *   [ScrapedEvent.sourceUrl] — the venue publishes no per-event page.
      * @return a list of [ScrapedEvent] instances, in listing order.

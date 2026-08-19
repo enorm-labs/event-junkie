@@ -33,9 +33,6 @@ import org.jsoup.nodes.Element
  * artists are still derived from the title here, with the venue's "Live Recording" framing
  * stripped off the derived name ([stripLiveRecordingSuffix]).
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with a static fixture.
- *
  * @see MorphineDetailPageScraper for the detail-page data source (times, lineup, prices, image).
  * @see MorphineWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="http://www.morphinerecords.com/events">Morphine Raum event listing</a>
@@ -46,10 +43,8 @@ class MorphineOverviewPageScraper {
     /**
      * Parses all event rows from the overview page document.
      *
-     * @param document the parsed Jsoup document of the `/events` listing.
      * @param baseUrl the URL the document was fetched from, used to resolve detail links and
      *   build `sourceId` values.
-     * @return a list of [ScrapedEvent] instances extracted from the page.
      */
     fun scrape(
         document: Document,

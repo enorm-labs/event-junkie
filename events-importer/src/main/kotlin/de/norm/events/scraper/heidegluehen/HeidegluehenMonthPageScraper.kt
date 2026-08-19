@@ -32,8 +32,6 @@ import java.time.LocalTime
  * The party runs overnight — the paragraph's closing time belongs to the *next* day — and the model
  * stores no end time, so that tail is kept as the description instead of being dropped.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see HeidegluehenWeekPageScraper for the imminent event's DJ lineup.
  * @see HeidegluehenWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -43,7 +41,6 @@ class HeidegluehenMonthPageScraper {
     /**
      * Parses every event paragraph on the month page.
      *
-     * @param document the parsed Jsoup document of the `/monatsvorschau/` page.
      * @param sourceUrl the URL the document was fetched from, stored as every event's `sourceUrl` —
      *   the venue publishes no per-event page to link to.
      */

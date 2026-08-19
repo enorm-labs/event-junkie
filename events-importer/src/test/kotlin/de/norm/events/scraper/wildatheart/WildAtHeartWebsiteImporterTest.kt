@@ -20,10 +20,8 @@ import java.time.ZoneOffset
 /**
  * Unit tests for [WildAtHeartWebsiteImporter].
  *
- * Uses the static `concerts.php` fixture and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing without real HTTP requests. The clock is pinned to 2026-07-10 —
- * before the fixture's first event (15 July 2026) — so weekday-based year inference
- * stays deterministic.
+ * The clock is pinned to 2026-07-10 — before the fixture's first event (15 July 2026) — so
+ * weekday-based year inference stays deterministic.
  */
 class WildAtHeartWebsiteImporterTest {
     private lateinit var importer: WildAtHeartWebsiteImporter

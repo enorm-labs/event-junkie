@@ -29,9 +29,6 @@ import org.jsoup.nodes.Element
  * Returns `null` when the page carries no title, which is what an unpublished or
  * deleted id renders (an empty block); the importer then degrades to the listing data.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see ArkaodaFieldMapping for the header/title/type/artist rules shared with the listing.
  * @see ArkaodaOverviewPageScraper for discovery.
  * @see ArkaodaWebsiteImporter for the HTTP fetch orchestrator.
@@ -43,7 +40,6 @@ class ArkaodaDetailPageScraper {
      * Parses an event detail page into a [ScrapedEvent], or `null` when the event
      * block or its title is missing.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl], to derive
      *   the [ScrapedEvent.sourceId], and to resolve the relative flyer link.
      */

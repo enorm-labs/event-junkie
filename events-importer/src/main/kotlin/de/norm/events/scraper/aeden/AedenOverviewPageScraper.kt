@@ -33,10 +33,9 @@ import java.time.format.DateTimeParseException
  * - `.accordion-footer a` — the external ticket link (Resident Advisor or Weeztix).
  *
  * Every event is typed [EventType.PARTY]: ÆDEN is a techno club whose nights are DJ parties, so the
- * title is a series name (`silikon`, `TRINITY pt. IV`) rather than a headliner and is never minted as
- * an artist. The month page carries no per-event link and no prices, so `sourceId` is built from the
- * event date plus the slugified title. This class performs **no I/O** — it operates solely on a
- * pre-fetched Jsoup [Document].
+ * title is a series name (`silikon`, `TRINITY pt. IV`) rather than a headliner and is never minted
+ * as an artist. The month page carries no per-event link and no prices, so `sourceId` is built from
+ * the event date plus the slugified title.
  *
  * @see AedenWebsiteImporter for the fetch orchestration (entry page → month pages).
  */
@@ -46,7 +45,6 @@ class AedenOverviewPageScraper {
     /**
      * Parses all events from one month page.
      *
-     * @param document the parsed Jsoup document of the month page.
      * @param baseUrl the URL the document was fetched from; used as the `sourceUrl` since the month
      *   page links no per-event detail pages.
      * @return one [ScrapedEvent] per night with a parseable date and title. The venue leaves

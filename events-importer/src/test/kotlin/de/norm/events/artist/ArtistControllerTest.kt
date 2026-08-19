@@ -21,7 +21,6 @@ class ArtistControllerTest : BaseControllerTest() {
             .returnResult()
             .responseBody!!
 
-    /** Deletes an artist via the API. */
     private fun deleteArtist(id: Long) {
         webTestClient
             .delete()

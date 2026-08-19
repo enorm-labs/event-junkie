@@ -29,14 +29,12 @@ private const val NEUE_ZUKUNFT_URL = "https://neue-zukunft.org/"
  * possible source (ADR-007 §"Selector Strategy" priority 1). [NeueZukunftWebsiteImporter]
  * fetches the response body; this class parses it.
  *
- * The payload nests the events under `data.widgets.<widgetId>.data.settings.events`;
- * the widget id is not hard-coded — every embedded `event-calendar` widget's events
- * are collected. Each event carries an `id`, `name`, a `start.{date,time}`, an HTML
- * `description`, a `coverImage.url`, and `actions[]` (a "Get Tickets" link, or a
- * "Sold Out!" marker with an empty link). Neue Zukunft is a live-music venue with no
- * event-category field, so the type defaults to `CONCERT`, flipping to `FESTIVAL` only
- * for an unambiguous festival title ([isFestivalTitle]). This class performs **no I/O** —
- * it operates on the raw JSON string, making it trivial to test against a saved snapshot.
+ * The payload nests the events under `data.widgets.<widgetId>.data.settings.events`; the widget id
+ * is not hard-coded — every embedded `event-calendar` widget's events are collected. Each event
+ * carries an `id`, `name`, a `start.{date,time}`, an HTML `description`, a `coverImage.url`, and
+ * `actions[]` (a "Get Tickets" link, or a "Sold Out!" marker with an empty link). Neue Zukunft is
+ * a live-music venue with no event-category field, so the type defaults to `CONCERT`, flipping to
+ * `FESTIVAL` only for an unambiguous festival title ([isFestivalTitle]).
  *
  * The widget returns the venue's **whole calendar**, including shows that have already
  * happened; those past-dated events are dropped centrally at persistence time

@@ -35,8 +35,6 @@ import org.jsoup.nodes.Element
  * that runs past midnight, which is most of them. That is an accepted limitation of the model,
  * not a defect of this parser.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * Page structure (a plain Bootstrap two-column block, no CMS classes to key on):
  * - `h1` inside the content column — the title in its real casing
  * - `p` rows introduced by a `<strong>` label — `Date:`, `Start time:`, `End time:`,
@@ -56,7 +54,6 @@ class ClubOstDetailPageScraper {
      * the importer then keeps the overview card's data instead, which states the same date and
      * time and differs only in the title's casing.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the URL the page was fetched from, used as
      *   [ScrapedEvent.sourceUrl][de.norm.events.scraper.ScrapedEvent.sourceUrl] and to derive
      *   the `sourceId`.

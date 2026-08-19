@@ -25,9 +25,6 @@ import java.time.Clock
  * subtitle gap and stands in entirely when the detail fetch fails, via
  * [AlteKantineWebsiteImporter.fillGapsFromOverview].
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with a static fixture.
- *
  * @see AlteKantineOverviewPageScraper for overview parsing (discovery, date, fallback).
  * @see AlteKantineWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://alte-kantine.eu/?p=12371">Example detail page</a>
@@ -42,7 +39,6 @@ class AlteKantineDetailPageScraper(
      * Parses an event detail page into a [ScrapedEvent], or `null` when the page has
      * no resolvable title or post id (an unexpected structure).
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive
      *   the [ScrapedEvent.sourceId].
      */

@@ -51,8 +51,6 @@ import java.time.LocalTime
  * to one venue and has no room or stage field. It is left unread rather than folded into a text
  * field it does not belong in.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see GaertenDerWeltOverviewPageScraper for discovery, identity and the authoritative date.
  * @see GaertenDerWeltWebsiteImporter for the fetch orchestrator and the merge.
  */
@@ -64,7 +62,6 @@ class GaertenDerWeltDetailPageScraper {
      * block, no title, or no URL stamp to key it on — the importer then keeps the listing row's
      * own data rather than persisting a half-parsed event.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the URL the document was fetched from; also the `sourceId` source.
      */
     @Suppress("ReturnCount") // Guard clauses for the unparseable-page cases are clearer than nesting

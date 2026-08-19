@@ -28,7 +28,6 @@ data class ScrapedEvent(
     val description: String? = null,
     /** Kind of event as categorized by the source (e.g. "CONCERT", "PARTY"). Null means the source provided no category. */
     val eventType: String? = null,
-    /** Calendar date of the event. */
     val eventDate: LocalDate,
     /** Time when doors open to the public. */
     val doorsTime: LocalTime? = null,
@@ -36,7 +35,6 @@ data class ScrapedEvent(
     val startTime: LocalTime? = null,
     /** URL of the event's poster or flyer image. */
     val imageUrl: String? = null,
-    /** Original URL of the event on the source website. */
     val sourceUrl: String,
     /**
      * Unique identifier for this event from the import source.
@@ -44,9 +42,7 @@ data class ScrapedEvent(
      * Example: `"privatclub:2026-06-12-the-adicts"`.
      */
     val sourceId: String,
-    /** URL to the external ticket shop. */
     val ticketUrl: String? = null,
-    /** Music genre or style tag. */
     val genre: String? = null,
     /** Presale ticket price (Vorverkauf). */
     val pricePresale: BigDecimal? = null,
@@ -54,7 +50,6 @@ data class ScrapedEvent(
     val priceBoxOffice: BigDecimal? = null,
     /** Free-form pricing note for non-standard pricing (e.g. "donation 2-5€"). */
     val priceNote: String? = null,
-    /** Whether all tickets are sold out. */
     val soldOut: Boolean = false,
     /**
      * Whether the event is free to attend. Scrapers may set this explicitly; when left false,

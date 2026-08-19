@@ -22,9 +22,8 @@ import java.time.LocalDate
 /**
  * Unit tests for [So36WebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing. Two detail pages (a concert and a party) are stubbed
- * explicitly; every other discovered event degrades to its overview data.
+ * Two detail pages (a concert and a party) are stubbed explicitly; every other discovered event
+ * degrades to its overview data.
  */
 class So36WebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()

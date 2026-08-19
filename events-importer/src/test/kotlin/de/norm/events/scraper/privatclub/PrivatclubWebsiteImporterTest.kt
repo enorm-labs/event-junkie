@@ -15,9 +15,6 @@ import org.junit.jupiter.api.Test
 
 /**
  * Unit tests for [PrivatclubWebsiteImporter].
- *
- * Uses a static HTML fixture and mocked [HtmlFetcher] for deterministic,
- * offline-safe testing without real HTTP requests.
  */
 class PrivatclubWebsiteImporterTest {
     private lateinit var importer: PrivatclubWebsiteImporter

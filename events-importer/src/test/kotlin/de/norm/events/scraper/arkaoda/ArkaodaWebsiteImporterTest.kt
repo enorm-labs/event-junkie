@@ -24,10 +24,8 @@ import java.time.LocalDate
 /**
  * Unit tests for [ArkaodaWebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing. Both events on the captured listing have their detail page
- * stubbed, so the tests cover the overview → detail merge as well as the fallback
- * when a detail page cannot be parsed.
+ * Both events on the captured listing have their detail page stubbed, so the tests cover the
+ * overview → detail merge as well as the fallback when a detail page cannot be parsed.
  */
 class ArkaodaWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()

@@ -34,9 +34,6 @@ import java.time.LocalTime
  * `genre`, prices and the untruncated description live on the show page and are merged
  * in afterwards; see [BarJederVernunftShow].
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test against a saved snapshot.
- *
  * @see BarJederVernunftWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.bar-jeder-vernunft.de/de/programm/kalender.html">Bar jeder Vernunft calendar</a>
  */
@@ -52,7 +49,6 @@ class BarJederVernunftOverviewPageScraper {
      * (the show URL from the JSON-LD, the ticket-shop link on the card) is already
      * absolute, so there is nothing to resolve.
      *
-     * @param document the parsed Jsoup document of the calendar page.
      * @return one [ScrapedEvent] per calendar card that carries parseable structured data.
      */
     fun scrape(document: Document): List<ScrapedEvent> {

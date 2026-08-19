@@ -45,8 +45,6 @@ data class HeidegluehenLineup(
  * The lineup appears a few days before each party ("Das Programm folgt am Dienstag…" until then),
  * so on most days this page adds nothing and the event keeps the month page's data alone.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see HeidegluehenMonthPageScraper for the programme itself.
  * @see HeidegluehenWebsiteImporter for the HTTP fetch orchestrator.
  */

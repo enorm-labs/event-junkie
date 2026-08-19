@@ -14,8 +14,6 @@ import org.jsoup.nodes.Document
  * detail scraper is the primary source and must return a whole event (ADR-007 §"Shared Detail
  * Pages" makes the same split for Bar jeder Vernunft).
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see CrackBellmerOverviewPageScraper for the listing parser, which supplies every other field.
  * @see <a href="https://www.crackbellmer.de/events/bad-dad-yr8lk">A Crack Bellmer event page</a>
  */

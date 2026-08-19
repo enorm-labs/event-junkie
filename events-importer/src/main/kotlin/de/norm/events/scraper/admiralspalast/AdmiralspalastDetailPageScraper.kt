@@ -45,9 +45,6 @@ import java.time.format.DateTimeFormatter
  * The date is split across two spans and the month is a German abbreviation, so it is assembled
  * rather than parsed as one string; the weekday span carries the start time after the comma.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see AdmiralspalastListingPageScraper for discovery and the genre categories.
  * @see AdmiralspalastWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.admiralspalast.theater/veranstaltung/abba-gold-the-concert-show-emotion.html">Example production</a>
@@ -58,7 +55,6 @@ class AdmiralspalastDetailPageScraper {
     /**
      * Parses every performance the production page lists.
      *
-     * @param document the parsed Jsoup document of the production page.
      * @param sourceUrl the production's URL, used as [ScrapedEvent.sourceUrl] and to derive the
      *   slug half of each [ScrapedEvent.sourceId].
      * @param category the category the venue files this production under, or `null` when it appears

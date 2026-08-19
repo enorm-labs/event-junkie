@@ -41,13 +41,11 @@ private const val HH_MM_LENGTH = 5
  * the most stable possible source (ADR-007 §"Selector Strategy" priority 1).
  * [FestsaalWebsiteImporter] fetches the response body; this class parses it.
  *
- * Each `items[]` entry carries `title`, `sub_title`, `date`, `doors`, `start`,
- * `ticket`, `price`, a nested `genre.title` and `preview_image.download_url`, a
- * `support` act line, and a `status` code (`sold_out`, `moved_date`,
- * `transferred`, `custom`, or absent). Festsaal has no event-category field, so
- * the type is inferred from the title/subtitle like Bi Nuu (see
- * [inferEventType]). This class performs **no I/O** — it operates on the raw JSON
- * string, making it trivial to test against a saved API snapshot.
+ * Each `items[]` entry carries `title`, `sub_title`, `date`, `doors`, `start`, `ticket`, `price`,
+ * a nested `genre.title` and `preview_image.download_url`, a `support` act line, and a `status`
+ * code (`sold_out`, `moved_date`, `transferred`, `custom`, or absent). Festsaal has no
+ * event-category field, so the type is inferred from the title/subtitle like Bi Nuu (see
+ * [inferEventType]).
  *
  * @see FestsaalWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://festsaal-kreuzberg.de/de/programm/">Festsaal Kreuzberg programme</a>

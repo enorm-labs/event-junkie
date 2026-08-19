@@ -24,8 +24,6 @@ import java.math.BigDecimal
  * `Genre`, `Preise`), whose column count varies per show (`col-lg-3` / `col-lg-4`), so
  * values are looked up by their **label text** rather than by position.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see BarJederVernunftWebsiteImporter for the HTTP fetch orchestrator.
  */
 class BarJederVernunftShowPageScraper {

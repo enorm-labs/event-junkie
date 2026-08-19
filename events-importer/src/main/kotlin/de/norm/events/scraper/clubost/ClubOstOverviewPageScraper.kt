@@ -24,9 +24,6 @@ import org.jsoup.nodes.Element
  * that one already-rendered list, not links to further pages, so nothing is missed by
  * ignoring them.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with static HTML fixtures.
- *
  * **The site is bilingual on `Accept-Language`.** Django's `LocaleMiddleware` renders
  * "Aug. 7, 2026 | 11 p.m." for its default locale and "7. August 2026 | 23:00 Uhr" for
  * German. The shared scraper `WebClient`
@@ -66,7 +63,6 @@ class ClubOstOverviewPageScraper {
     /**
      * Parses every event card on the homepage.
      *
-     * @param document the parsed Jsoup document of the homepage.
      * @param sourceUrl the URL the document was fetched from, used to resolve the relative
      *   detail-page links.
      * @return the events discovered on the page; cards without a usable link, title or date

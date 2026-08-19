@@ -39,9 +39,6 @@ import java.time.format.DateTimeParseException
  * Eintritt / Tickets` block followed by the event's prose — the source for the times, the price
  * and the description.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with a static fixture.
- *
  * @see SaalchenWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.holzmarkt.com/kalender">Holzmarkt calendar</a>
  */
@@ -51,7 +48,6 @@ class SaalchenOverviewPageScraper {
     /**
      * Parses every Säälchen row from the shared calendar document.
      *
-     * @param document the parsed Jsoup document of the `/kalender` page.
      * @param baseUrl the URL the document was fetched from, used to resolve the per-event
      *   `/veranstaltung/<slug>` links and the relative poster paths.
      * @return a list of [ScrapedEvent] instances, one per Säälchen row.

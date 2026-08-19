@@ -91,9 +91,6 @@ import java.time.LocalTime
  *  - **No genre and no per-event page.** The title links straight to the ticket shop, so every event
  *    points at the listing and takes its identity from its date plus its title.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see PeterEdelWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.peteredel.de/events/">Kulturhaus Peter Edel</a>
  */
@@ -103,7 +100,6 @@ class PeterEdelOverviewPageScraper {
     /**
      * Parses every event from the programme page.
      *
-     * @param document the parsed Jsoup document of `/events/`.
      * @param baseUrl the URL the document was fetched from, stored as each event's
      *   [ScrapedEvent.sourceUrl] — the venue publishes no per-event page.
      * @return a list of [ScrapedEvent] instances, in listing order.

@@ -21,8 +21,7 @@ import java.time.LocalDate
 /**
  * Unit tests for [AstraWebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing. Focuses on the overview ↔ detail merge behaviour.
+ * Focuses on the overview ↔ detail merge behaviour.
  */
 class AstraWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()

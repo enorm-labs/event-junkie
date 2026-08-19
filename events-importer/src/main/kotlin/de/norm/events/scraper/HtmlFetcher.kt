@@ -54,7 +54,6 @@ class HtmlFetcher(
      * If the server responds with 304 Not Modified, returns [FetchResult.NotModified].
      * Otherwise, parses the HTML body and returns [FetchResult.Success].
      *
-     * @param url the page URL to fetch.
      * @param etag the ETag value from a previous fetch (sent as `If-None-Match`).
      * @param lastModified the Last-Modified value from a previous fetch (sent as `If-Modified-Since`).
      * @return a [FetchResult] indicating whether the page was modified or not.
@@ -87,7 +86,6 @@ class HtmlFetcher(
      * with parsing executed on the IO dispatcher to avoid blocking the coroutine
      * event loop.
      *
-     * @param url the page URL to fetch.
      * @return a parsed Jsoup [Document].
      */
     suspend fun fetchDocument(url: String): Document {
@@ -104,7 +102,6 @@ class HtmlFetcher(
      * the page's encoding from its `<meta>` tag. Fails fast with [HttpFetchException] on any
      * 4xx/5xx so error pages are never parsed as valid event data.
      *
-     * @param url the page URL to fetch.
      * @return the raw HTML body as a string, decoded with the charset the server declared
      *   (UTF-8 when it declared none — the meta tag cannot be honoured without parsing).
      */
@@ -212,9 +209,7 @@ sealed interface FetchResult {
     /** The page has not been modified since the last fetch (304 response). */
     data object NotModified : FetchResult
 
-    /** The page was successfully fetched and parsed. */
     data class Success(
-        /** Parsed Jsoup document for CSS selector queries. */
         val document: Document,
         /** New ETag header from the response, if present. */
         val etag: String?,

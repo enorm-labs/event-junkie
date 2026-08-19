@@ -70,9 +70,6 @@ private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
  * (the Sunday `Live Podcast "Heisse Platten"`) is stored as the venue bills it, since nothing in
  * the markup separates the two.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see GartnWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.gartn.xyz/">gART.n Berlin</a>
  */
@@ -85,7 +82,6 @@ class GartnOverviewPageScraper(
     /**
      * Parses all event blocks from the programme page document.
      *
-     * @param document the parsed Jsoup document of the homepage.
      * @param baseUrl the URL the document was fetched from, stored as each event's
      *   [ScrapedEvent.sourceUrl] — the venue publishes no per-event page.
      * @return a list of [ScrapedEvent] instances, in listing order.

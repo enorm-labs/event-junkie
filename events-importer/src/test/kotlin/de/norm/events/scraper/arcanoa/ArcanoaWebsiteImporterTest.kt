@@ -21,10 +21,8 @@ import java.time.ZoneOffset
 /**
  * Unit tests for [ArcanoaWebsiteImporter].
  *
- * Uses the static `veranst.htm` snapshot and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing without real HTTP requests. The clock is pinned to 2026-07-20 —
- * before the fixture's earliest date (22.07.) — so weekday-based year inference is
- * deterministic.
+ * The clock is pinned to 2026-07-20 — before the fixture's earliest date (22.07.) — so
+ * weekday-based year inference is deterministic.
  */
 class ArcanoaWebsiteImporterTest {
     private lateinit var importer: ArcanoaWebsiteImporter

@@ -39,9 +39,6 @@ import java.time.LocalTime
  * on-platform availability as `SoldOut` even when tickets are freely available
  * elsewhere — so it is not a trustworthy signal.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see So36OverviewPageScraper for overview parsing (discovery, date/title fallback).
  * @see So36WebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -54,7 +51,6 @@ class So36DetailPageScraper {
      * Returns `null` if the event title is missing (an unexpected page structure),
      * so the importer can fall back to the overview data.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to
      *   derive the [ScrapedEvent.sourceId].
      */

@@ -19,9 +19,6 @@ import tools.jackson.databind.JsonNode
  * (doors, description, tickets, promoters, performers) comes from the detail
  * page via [BinuuDetailPageScraper].
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static fixtures.
- *
  * @see BinuuDetailPageScraper for the primary per-event data source.
  * @see BinuuWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://binuu.de/de/events">Bi Nuu event listing</a>
@@ -32,7 +29,6 @@ class BinuuOverviewPageScraper {
     /**
      * Parses all events from the overview page's embedded `data.events[]` payload.
      *
-     * @param document the parsed Jsoup document of the listing page.
      * @param baseUrl the URL the document was fetched from, used to build per-event
      *   detail URLs.
      * @return a list of discovery [ScrapedEvent] instances, one per listed event.

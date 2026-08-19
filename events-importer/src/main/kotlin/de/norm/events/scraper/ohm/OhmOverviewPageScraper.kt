@@ -33,9 +33,6 @@ import java.time.MonthDay
  * The venue leaves the night in progress on the page until it is over, which is exactly the case
  * that rule protects.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with a static fixture and a fixed [Clock].
- *
  * @see OhmWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://ohmberlin.com/">OHM Berlin</a>
  */
@@ -48,7 +45,6 @@ class OhmOverviewPageScraper(
     /**
      * Parses all events from the programme page document.
      *
-     * @param document the parsed Jsoup document of the home page.
      * @param baseUrl the URL the document was fetched from; used as every event's `sourceUrl`,
      *   since the venue publishes no per-event pages.
      * @return a list of [ScrapedEvent] instances, one per listed night.

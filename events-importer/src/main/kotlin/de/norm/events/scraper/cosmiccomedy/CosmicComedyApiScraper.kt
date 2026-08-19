@@ -44,8 +44,6 @@ data class CosmicComedyPage(
  *  - **Titles and taxonomy names are HTML-escaped** (`&#8211;`, `&#8217;`) and the description is
  *    raw HTML opening with an embedded ticket-widget `<script>`, so both are decoded before use.
  *
- * This class performs **no I/O** — it parses a pre-fetched response body.
- *
  * @see CosmicComedyWebsiteImporter for the HTTP fetch orchestrator.
  */
 class CosmicComedyApiScraper {

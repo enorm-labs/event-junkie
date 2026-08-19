@@ -33,8 +33,6 @@ import java.math.BigDecimal
  * 03:00"). Neither is read: the listing already resolved both, its slug carrying the canonical ISO
  * date, so parsing the German rendering a second time would only add a way to disagree.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see KlunkerkranichOverviewPageScraper for the listing parser, which supplies every other field.
  * @see <a href="https://klunkerkranich.org/events/2026-08-09-la-maison-x-klunkerkranich/">A Klunkerkranich event page</a>
  */

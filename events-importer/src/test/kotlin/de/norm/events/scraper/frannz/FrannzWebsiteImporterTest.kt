@@ -16,9 +16,6 @@ import org.junit.jupiter.api.Test
 
 /**
  * Unit tests for [FrannzWebsiteImporter].
- *
- * Uses the saved HTML fixture and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing without real HTTP requests.
  */
 class FrannzWebsiteImporterTest {
     private lateinit var importer: FrannzWebsiteImporter

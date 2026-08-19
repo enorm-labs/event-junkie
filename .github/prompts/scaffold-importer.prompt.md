@@ -102,6 +102,12 @@ why a selector was chosen, and what the source _doesn't_ carry (no door times, n
 the importer stored everything that was there, so there is nothing to action elsewhere. Only a defect we could actually repair goes in the **Bugs** list in
 an issue. Write it once, next to the code it constrains — not in `EventSource.kt` and not in `dev-seed.http`.
 
+**Don't restate what every scraper in the package already is.** Purity ("performs no I/O", "operates on a pre-fetched `Document`"), the fixture-and-mock test
+setup, and tags like `@param document the parsed Jsoup document of the detail page` or `@return a list of ScrapedEvent instances extracted from the page` say
+nothing the signature and the package convention do not — that boilerplate was deleted from 106 files in #393, and copying an existing scraper is exactly how it
+comes back. The purity of the parsers is stated once, on `AbstractTwoPageWebsiteImporter`. Keep a `@param` or `@return` only for what the signature cannot say:
+an ordering guarantee, the value a parameter is turned into, an accepted format.
+
 ## 4. Reuse the shared scraper utilities
 
 Do not hand-roll extraction/parsing that already exists in the `scraper/` package (ADR-007 §Shared Scraping Utilities). Use these:

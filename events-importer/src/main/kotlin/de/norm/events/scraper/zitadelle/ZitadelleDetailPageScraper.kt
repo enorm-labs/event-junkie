@@ -46,8 +46,6 @@ import java.time.LocalTime
  * name anywhere on the page, so it is left alone; the presenters ("präsentiert von: Flux FM,
  * tip Berlin") are rendered names and are stored instead, as at the Columbia Theater.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see ZitadelleOverviewPageScraper for the listing parser (discovery, title, date, start time).
  * @see ZitadelleWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -58,7 +56,6 @@ class ZitadelleDetailPageScraper {
      * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no event
      * heading — the marker that the request did not return a real event page.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive the
      *   [ScrapedEvent.sourceId].
      */

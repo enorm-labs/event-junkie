@@ -30,9 +30,6 @@ import org.jsoup.nodes.Element
  * ticket-shop link. Each links to `/events/<slug>-<postId>`, whose trailing id keeps the
  * `sourceId` stable across the venue's recurring series.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with a static fixture.
- *
  * @see QuasimodoDetailPageScraper for the detail-page data (category, promoter, prices, text).
  * @see QuasimodoWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://quasimodo.club/events">Quasimodo event listing</a>
@@ -43,7 +40,6 @@ class QuasimodoOverviewPageScraper {
     /**
      * Parses all event cards from the listing page document.
      *
-     * @param document the parsed Jsoup document of the `/events` page.
      * @param baseUrl the URL the document was fetched from, used to resolve the per-event
      *   detail links.
      * @return a list of [ScrapedEvent] instances, one per card.

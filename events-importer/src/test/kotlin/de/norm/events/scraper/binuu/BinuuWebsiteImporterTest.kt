@@ -22,10 +22,8 @@ import java.time.LocalDate
 /**
  * Unit tests for [BinuuWebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing. Focuses on the overview → detail merge behaviour: the
- * detail payload is authoritative, and events fall back to overview data when a
- * detail page cannot be parsed.
+ * Focuses on the overview → detail merge behaviour: the detail payload is authoritative, and
+ * events fall back to overview data when a detail page cannot be parsed.
  */
 class BinuuWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()

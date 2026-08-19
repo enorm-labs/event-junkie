@@ -38,9 +38,6 @@ import java.time.LocalTime
  * intentionally not parsed for artists — only a concert's title-derived headliner is
  * extracted, avoiding minting notes/descriptions as artist entries.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see MonarchWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://kottimonarch.de/programm.php">Monarch programme</a>
  */
@@ -50,7 +47,6 @@ class MonarchOverviewPageScraper {
     /**
      * Parses all events from the Monarch programme page document.
      *
-     * @param document the parsed Jsoup document of `programm.php`.
      * @param baseUrl the URL the document was fetched from, used as each event's `sourceUrl`.
      * @return a list of [ScrapedEvent] instances, one per event block.
      */

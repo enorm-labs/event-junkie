@@ -52,9 +52,7 @@ sealed interface ImportResult {
     /** The page has not been modified since the last fetch (304 response). */
     data object NotModified : ImportResult
 
-    /** Events were successfully fetched and parsed. */
     data class Success(
-        /** Scraped events ready for upserting. */
         val events: List<ScrapedEvent>,
         /** New ETag header from the response, if present. */
         val etag: String?,

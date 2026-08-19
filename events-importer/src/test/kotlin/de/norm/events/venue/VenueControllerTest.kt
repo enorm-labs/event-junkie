@@ -21,7 +21,6 @@ class VenueControllerTest : BaseControllerTest() {
             .returnResult()
             .responseBody!!
 
-    /** Deletes a venue via the API. */
     private fun deleteVenue(id: Long) {
         webTestClient
             .delete()

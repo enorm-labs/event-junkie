@@ -26,9 +26,6 @@ import org.jsoup.nodes.Element
  * sold-out flag, status, and the artist roster are supplied by the overview page
  * via [LidoWebsiteImporter.fillGapsFromOverview].
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see LidoOverviewPageScraper for overview parsing (date, type, status, artists).
  * @see LidoWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.lido-berlin.de/events/2026-06-15-sorry">Example detail page</a>
@@ -42,7 +39,6 @@ class LidoDetailPageScraper {
      * Returns `null` if the event header/title is missing (an unexpected page
      * structure).
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to
      *   derive the [ScrapedEvent.sourceId].
      */

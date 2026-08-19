@@ -21,7 +21,6 @@ class PromoterControllerTest : BaseControllerTest() {
             .returnResult()
             .responseBody!!
 
-    /** Deletes a promoter via the API. */
     private fun deletePromoter(id: Long) {
         webTestClient
             .delete()

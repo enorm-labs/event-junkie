@@ -31,7 +31,6 @@ data class VenueEntity(
     @CreatedDate val createdAt: Instant? = null,
     @LastModifiedDate val updatedAt: Instant? = null
 ) {
-    /** Converts this persistence entity to the shared domain model. */
     fun toDomain(): Venue =
         Venue(
             id = id,
@@ -51,7 +50,6 @@ data class VenueEntity(
         )
 
     companion object {
-        /** Creates a persistence entity from the shared domain model. */
         fun fromDomain(venue: Venue): VenueEntity =
             VenueEntity(
                 id = venue.id,

@@ -49,9 +49,6 @@ import java.time.MonthDay
  * centrally at persistence time (`EventUpsertService`), so this parser returns every dated
  * entry as-is.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with static HTML fixtures.
- *
  * @see ArcanoaWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.ssi-media.com/arcanoa/veranst.htm">Arcanoa programme</a>
  */
@@ -65,7 +62,6 @@ class ArcanoaOverviewPageScraper(
     /**
      * Parses all events from the programme page document.
      *
-     * @param document the parsed Jsoup document of `veranst.htm`.
      * @param baseUrl the URL the document was fetched from; used as every event's
      *   `sourceUrl`, since the site has no per-event pages.
      * @return a list of [ScrapedEvent] instances, one per dated programme line.

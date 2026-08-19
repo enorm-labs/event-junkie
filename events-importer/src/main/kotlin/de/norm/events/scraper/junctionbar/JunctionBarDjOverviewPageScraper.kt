@@ -33,8 +33,6 @@ import java.time.MonthDay
  * venue leaves recently-passed nights on the page; those are dropped centrally at persistence
  * time (`EventUpsertService`), so this parser returns every dated night as-is.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see JunctionBarDjWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.junction-bar.de/DJ_html/DJ.html">Junction Bar DJ program</a>
  */
@@ -48,7 +46,6 @@ class JunctionBarDjOverviewPageScraper(
     /**
      * Parses all DJ nights from the program page.
      *
-     * @param document the parsed Jsoup document of `DJ.html`.
      * @param baseUrl the URL the document was fetched from, used as each event's `sourceUrl`.
      * @return one [ScrapedEvent] per dated night that names a public DJ act.
      */

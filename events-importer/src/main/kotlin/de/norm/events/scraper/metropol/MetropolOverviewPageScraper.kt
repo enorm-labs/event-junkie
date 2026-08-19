@@ -38,9 +38,6 @@ import java.time.LocalTime
  * carries (the importer degrades to it when a detail fetch fails), and the **only** source for
  * the support acts — the detail page's `h1` names the headliner alone.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with a static fixture.
- *
  * @see MetropolDetailPageScraper for the detail-page data (promoter, subtitle, image, ticket, text).
  * @see MetropolWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://metropol-berlin.de/events">Metropol event listing</a>
@@ -51,7 +48,6 @@ class MetropolOverviewPageScraper {
     /**
      * Parses all event rows from the overview page document.
      *
-     * @param document the parsed Jsoup document of the `/events` listing.
      * @param baseUrl the URL the document was fetched from, used to resolve the per-event
      *   detail links and build `sourceId` values.
      * @return a list of [ScrapedEvent] instances, one per listed row.

@@ -38,8 +38,6 @@ import org.jsoup.nodes.Element
  * (`style="--bg: url('…')"`) rather than an `<img>`, so it has to be read out of the inline style —
  * a presentational source used only because the listing offers no other.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see ZitadelleDetailPageScraper for the detail pages (doors, description, tickets, presenters).
  * @see ZitadelleWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -49,7 +47,6 @@ class ZitadelleOverviewPageScraper {
     /**
      * Parses every card on the listing page.
      *
-     * @param document the parsed Jsoup document of the `/events` page.
      * @param baseUrl the URL the document was fetched from, used to resolve detail links.
      */
     fun scrape(

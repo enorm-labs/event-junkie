@@ -16,9 +16,6 @@ import org.junit.jupiter.api.Test
 
 /**
  * Unit tests for [MonarchWebsiteImporter].
- *
- * Uses the static programme fixture and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing without real HTTP requests.
  */
 class MonarchWebsiteImporterTest {
     private lateinit var importer: MonarchWebsiteImporter

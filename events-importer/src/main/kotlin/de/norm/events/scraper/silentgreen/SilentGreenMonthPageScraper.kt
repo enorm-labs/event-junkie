@@ -36,8 +36,6 @@ import java.time.YearMonth
  * says nothing — and no genre. Doors, the poster and the full blurb live on the detail page; see
  * [SilentGreenEventDetails].
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see SilentGreenWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.silent-green.net/programm">silent green calendar</a>
  */
@@ -47,7 +45,6 @@ class SilentGreenMonthPageScraper {
     /**
      * Parses every listed day of one month page.
      *
-     * @param document the parsed Jsoup document of the month page.
      * @param baseUrl the URL the page was fetched from, for resolving the relative detail links.
      * @return one [ScrapedEvent] per calendar row, in page order; empty for a month with no
      *   programme (which is how [SilentGreenWebsiteImporter] knows to stop walking).

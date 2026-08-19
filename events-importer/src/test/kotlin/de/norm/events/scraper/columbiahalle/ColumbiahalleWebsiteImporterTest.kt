@@ -18,7 +18,6 @@ import java.time.LocalDate
 /**
  * Unit tests for [ColumbiahalleWebsiteImporter].
  *
- * Uses a static HTML fixture and a mocked [HtmlFetcher] for deterministic, offline-safe testing.
  * Columbiahalle is a single-page source, so the importer's job is limited to the fetch → scrape →
  * `ImportResult` path: no detail pages are requested.
  */

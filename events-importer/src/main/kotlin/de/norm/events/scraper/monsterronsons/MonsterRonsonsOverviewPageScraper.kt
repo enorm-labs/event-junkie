@@ -43,8 +43,6 @@ import java.time.MonthDay
  * night of a rotation upsert onto the same row — the same reasoning as Bar jeder Vernunft's
  * per-performance identity (ADR-007 §"Shared Detail Pages").
  *
- * This class performs **no I/O** — it operates on a pre-fetched Jsoup [Document].
- *
  * @see MonsterRonsonsDetailPageScraper for the per-event description, price and ticket link.
  * @see <a href="https://www.karaokemonster.de/events">Monster Ronson's events page</a>
  */
@@ -57,7 +55,6 @@ class MonsterRonsonsOverviewPageScraper(
     /**
      * Parses every event card on the listing.
      *
-     * @param document the parsed Jsoup document of the overview page.
      * @param sourceUrl the URL the document was fetched from, used to resolve relative card links.
      * @return the upcoming karaoke nights (today onward); closure cards and past dates are dropped.
      */

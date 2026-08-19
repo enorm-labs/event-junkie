@@ -42,9 +42,6 @@ import java.time.MonthDay
  * of that day/month around today via [inferYearForWeekday] (with no weekday to
  * disambiguate), matching the forward-looking programme the page shows.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with a static fixture.
- *
  * @see AlteKantineDetailPageScraper for the detail-page data source (kind, price, image, DJ).
  * @see AlteKantineWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://alte-kantine.eu/">Alte Kantine programme</a>
@@ -58,10 +55,8 @@ class AlteKantineOverviewPageScraper(
     /**
      * Parses all event items from the homepage document.
      *
-     * @param document the parsed Jsoup document of the homepage listing.
      * @param baseUrl the URL the document was fetched from, used to resolve the
      *   detail links and build `sourceId` values.
-     * @return a list of [ScrapedEvent] instances extracted from the page.
      */
     fun scrape(
         document: Document,

@@ -106,7 +106,7 @@ class ReadinessWithoutSchemaTest {
         runBlocking {
             // ADR-018. A pod waiting for migrations is not a wedged pod. If liveness failed here the
             // startup probe would kill the container after 30 × 5s and a first install would
-            // crash-loop — the behaviour the chart README used to wrongly claim, made real.
+            // crash-loop.
             webTestClient
                 .get()
                 .uri("/actuator/health/liveness")

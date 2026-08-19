@@ -25,9 +25,8 @@ import java.time.LocalTime
  * Unit tests for [UberArenaWebsiteImporter] and [UberEatsMusicHallWebsiteImporter], the two thin
  * venue importers over the shared AEG parser pair.
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic, offline-safe testing
- * without real HTTP requests. Only one detail page per venue is stubbed; every other detail fetch
- * throws, exercising the base class's degrade-to-overview fallback.
+ * Only one detail page per venue is stubbed; every other detail fetch throws, exercising the base
+ * class's degrade-to-overview fallback.
  */
 class AegWebsiteImportersTest {
     private lateinit var arenaImporter: UberArenaWebsiteImporter
