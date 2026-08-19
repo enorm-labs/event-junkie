@@ -820,19 +820,19 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 
 **The ones that have to be written, because they are the ones that matter.** Infrastructure metrics tell you the pod is alive; these tell you it is _working_:
 
-| Metric                                       | Type                                  | Why                                                                                 |
-| -------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------- |
-| `importer.run.duration`                      | Timer, tagged `source`                | Detects a venue that got slow before it gets fatal                                  |
-| `importer.run.outcome`                       | Counter, tagged `source`, `outcome`   | success / failure / partial                                                         |
-| `importer.events.written`                    | Counter, tagged `source`, `operation` | inserted / updated / skipped                                                        |
-| **`importer.events.written` = 0 for N runs** | **Alert rule**                        | **The silently-broken-scraper alarm — the single most valuable rule in the system** |
-| `importer.scrape.failures`                   | Counter, tagged `source`, `reason`    | Distinguishes HTTP 403 from a parse failure                                         |
-| `importer.source.last_success`               | Gauge, tagged `source`                | Age of the last good run; alert past ~3× its schedule                               |
-| `importer.source.running`                    | Gauge                                 | Catches the ADR-008 `RUNNING`-forever state a restart can strand                    |
+| Metric                                         | Type                                  | Why                                                                                 |
+| ---------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------- |
+| `importer.run.duration`                        | Timer, tagged `source`                | Detects a venue that got slow before it gets fatal                                  |
+| `importer.run.outcome`                         | Counter, tagged `source`, `outcome`   | success / failure / partial                                                         |
+| `importer.events.written`                      | Counter, tagged `source`, `operation` | inserted / updated / skipped                                                        |
+| **`importer.events.written` = 0 for N runs**   | **Alert rule**                        | **The silently-broken-scraper alarm — the single most valuable rule in the system** |
+| `importer.scrape.failures`                     | Counter, tagged `source`, `reason`    | Distinguishes HTTP 403 from a parse failure                                         |
+| `importer.source.last_success`                 | Gauge, tagged `source`                | Age of the last good run; alert past ~3× its schedule                               |
+| `importer.source.running`                      | Gauge                                 | Catches the ADR-008 `RUNNING`-forever state a restart can strand                    |
 | `importer.source.field_coverage{source,field}` | Gauge                                 | The partial-failure alarm (#472) — alert on a **drop against history**, not a floor |
-| `bff.events.served`                          | Counter, tagged endpoint              | Is anyone actually using it                                                         |
-| `db.events{horizon="all"\|"future"}`         | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end        |
-| `data_quality{source=…,metric=…}`            | Gauge                                 | Per-source quality, refreshed daily (#319). Alert on a metric that starts rising    |
+| `bff.events.served`                            | Counter, tagged endpoint              | Is anyone actually using it                                                         |
+| `db.events{horizon="all"\|"future"}`           | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end        |
+| `data_quality{source=…,metric=…}`              | Gauge                                 | Per-source quality, refreshed daily (#319). Alert on a metric that starts rising    |
 
 That last group is what makes the dashboards _business_ dashboards and not CPU graphs — and, per §4b, it is why Superset is unnecessary.
 
