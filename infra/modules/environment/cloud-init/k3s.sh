@@ -57,6 +57,18 @@ install -d -m 0700 /etc/rancher/k3s
 
     echo 'kubelet-arg:'
     echo '  - "streaming-connection-idle-timeout=5m"'
+    # Container log retention, and the only thing enforcing any bound today (#276). The privacy
+    # notice must state the retention that is *configured*, not the one intended, and until
+    # OpenObserve ships its bucket policy (#271, ADR-015) this pair is it. Without them the kubelet
+    # defaults apply and the honest answer to "how long are request logs kept" is "until the disk
+    # fills", which is not a period anyone can put in a notice.
+    #
+    # A **size** bound, not a duration — that distinction has to survive into the notice rather than
+    # be rounded to "seven days". 10Mi x 3 per container is roughly a fortnight of this site's
+    # traffic and a small fraction of the disk; the number to revisit is the *duration it buys*,
+    # once there is real traffic to measure it against.
+    echo '  - "container-log-max-size=10Mi"'
+    echo '  - "container-log-max-files=3"'
     echo '  - "tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"'
 
     echo 'tls-san:'

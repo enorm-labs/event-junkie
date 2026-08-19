@@ -159,7 +159,7 @@ change everyone remembers, and the contract behind it is the one nobody does.
 | **Personal master data**        | **yes**                      | Artist names, and each artist's `description`, `imageUrl`, `websiteUrl`, `facebookUrl`, `instagramUrl`, `youtubeUrl`. The largest category by far, and see §7.3 for why it counts                                      |
 | **Communication data**          | **yes, on a strict reading** | No phone numbers and no email addresses are stored anywhere. The artist profile and social URLs are what a strict reading catches. Declared deliberately: the cost was nil and omitting it would have left a scope gap |
 | Contractual master data         | no                           | There is no contract with any data subject                                                                                                                                                                             |
-| **Log data**                    | **yes**                      | Timestamp, requested path, HTTP status, bytes transferred, referrer, browser and OS — **and possibly the IP address**, which §7.5 has not settled. Target retention seven days                                         |
+| **Log data**                    | **yes**                      | Timestamp, requested path, HTTP status, bytes transferred, referrer, browser and OS. **No IP address** since §7.5 was settled on 2026-08-19. Retention is a size bound, not a period — see §7.5.1                      |
 | Contract, invoicing and payment | no                           | Nothing is sold and no payment is processed                                                                                                                                                                            |
 
 **Log data was declared even though §7.5 is open**, and the reasoning generalises: a processor agreement should cover the maximum that might be processed. Narrowing it later is trivial, and
@@ -188,33 +188,61 @@ items are strictly necessary for a setting the visitor chose, so § 25 (2) 2 app
 That is a property worth defending deliberately: the first non-essential stored item makes a banner mandatory. It is a product decision, not an implementation
 detail — escalate rather than implement.
 
-### 7.5 Logging — **still open**
+### 7.5 Logging — **settled 2026-08-19** (#276)
 
 > Log data is declared to processors as in scope regardless of how this lands — see §7.3a. A processor agreement should cover the maximum that might be
 > processed; narrowing it later is trivial and discovering something was processed outside its scope is not.
 
-#### 7.5.1 The four decisions
+#### 7.5.1 The four decisions, and their answers
 
-The notice must state truthfully which logs hold personal data, what is in them, and for how long. Four decisions remain — whether Traefik and the nginx
-container log real client IPs at all, whether any logged IP is truncated, the retention period per log stream, and where retention is actually enforced. They
-depend on infrastructure that does not exist yet; see §14. **They became more load-bearing on 2026-08-10**: with Cloudflare removed from the architecture there
-is no proxy between the visitor and the origin, so these four are the _only_ thing standing between a request and a real IP address on disk.
+The notice must state truthfully which logs hold personal data, what is in them, and for how long. All four were open until 2026-08-19 and were closed by
+**reading the running system rather than the configuration** — a k3d rehearsal, requests driven through the real ingress, and the resulting log lines read out
+of the pods.
 
-What is already settled and must not drift:
+| #   | Decision                                                | Answer                                                                                       |
+| --- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| 1   | Do Traefik and the nginx container log real client IPs? | **Traefik: no, it logs nothing at all.** **nginx: it did, and no longer does**               |
+| 2   | Is any logged IP truncated?                             | **Moot — none is logged.** Truncation was rejected as the weaker lever                       |
+| 3   | What is the retention period per stream?                | **A size bound, not a duration**: `container-log-max-size=10Mi`, `container-log-max-files=3` |
+| 4   | Where is retention actually enforced?                   | **The kubelet, today.** OpenObserve's bucket policy once #271 deploys it (ADR-015)           |
 
-- **The Spring applications log no IP addresses.** `RequestLoggingFilter` logs `METHOD /path -> status (Nms)`. **Never add the client IP to it.** It is IP-free
-  today by design; this is exactly the class of change the `AGENTS.md` reminder exists to catch.
-- **"Do nothing" is not a neutral default, and since 2026-08-10 it is the _unsafe_ default.** Traefik's access log is _off_ by default; nginx's is _on_. This
-  paragraph used to add that the origin only ever saw a Cloudflare proxy IP, so the exposure arrived by an explicit "restore the real client IP" change.
-  [ADR-012's amendment](adr/ADR-012_CLOUD_PLATFORM.md) removed Cloudflare, so **there is no proxy and the origin sees the visitor's real address**. nginx will
-  therefore write real client IPs to disk from the first request unless its access log is configured not to. Nobody has to change anything for that to happen —
-  which is the reverse of the situation this note was originally written for.
-- **Do not claim server logs contain no personal data.** A dynamic IP address held by the operator of an online service is personal data — _Breyer_ (C-582/14) —
-  so a log line carrying one needs no correlation argument to qualify. The earlier version of this bullet reasoned that a timestamp plus request line could be
-  correlated with Cloudflare's own records; that route is gone with Cloudflare, and it has been replaced by the more direct problem of holding the address
-  itself. Truncation is now the lever that decides the answer, which is why it is one of the four open decisions rather than an implementation detail.
+**On 1 — the mechanism was not the one this section predicted, and the difference matters.** The earlier text reasoned that removing Cloudflare left no proxy
+between visitor and origin, so nginx would write real addresses from the first request. Traefik is still a proxy, so `$remote_addr` was never the visitor — it
+was Traefik's own pod address. The leak was one field further along: **the base image's default `main` log format ends with `"$http_x_forwarded_for"`**, and
+Traefik populates X-Forwarded-For with the immediate client, which on the public internet is the visitor. Observed directly:
+
+```
+10.42.1.5 - - [19/Aug/2026:19:54:32 +0000] "GET / HTTP/1.1" 200 1212 "-" "curl/8.7.1" "10.42.1.1"
+└─ Traefik, not the visitor                                                           └─ the visitor
+```
+
+That distinction is worth keeping because it changes the fix. A proxy-shaped problem would be solved by trusting or not trusting a header; this one is solved
+by choosing a log format. `events-frontend/docker/nginx.conf` now defines `ej_no_ip` — time, request, status, bytes, referrer, user agent — and drops
+`$remote_addr` as well as X-Forwarded-For. `$remote_addr` is harmless only while a proxy sits in front, which is a property of the topology rather than of the
+file; logging no address is the version that stays true if that changes. **Verified after the change: zero IP addresses in the pod's entire log stream.**
+
+**On 3 and 4 — the honest answer is a size, and it must not be rounded into a duration.** The notice previously stated an _intended_ seven days, enforced by
+nothing: `k3s.sh` set no container-log limits, so the kubelet defaults applied and the real answer was "until the disk fills". It now sets
+`container-log-max-size=10Mi` and `container-log-max-files=3`, which is a bound but not a period. **The notice must therefore not claim a number of days for
+server logs** until OpenObserve's retention policy exists (#271), at which point the duration becomes real and this row changes.
+
+**Two caveats on that, both load-bearing:**
+
+- **The kubelet limits reach a node only when it is provisioned**, because they are cloud-init. Production does not exist yet (#285), so it will be born with
+  them. **The running staging node predates the change and does not have them** — it needs re-provisioning or a manual edit plus a k3s restart before any claim
+  about staging's retention is true.
+- The `10Mi × 3` figures are reasoned, not measured. The number to revisit is **the duration they buy**, once there is real traffic to measure against.
+
+What is settled and must not drift:
+
+- **The Spring applications log no IP addresses.** `RequestLoggingFilter` logs `METHOD /path -> status (Nms)` — confirmed by observation on 2026-08-19, not
+  only by reading the code. **Never add the client IP to it.**
+- **nginx's access log must never regain an address field.** `ej_no_ip` exists to be the thing that is edited, and the base image's `main` format is what it
+  overrides — a future base-image bump that changed `main` would now be inert here, which is the point of defining our own.
+- **Do not claim server logs contain no personal data** if any address is ever reintroduced. A dynamic IP held by the operator of an online service is personal
+  data — _Breyer_ (C-582/14). Today the claim is available because no address is logged; it is a consequence of a decision, not a permanent property.
 - **The retention period in the notice must be the one actually configured.** A stated period that rotation does not enforce is a worse defect than a longer
-  honest one.
+  honest one — which is exactly the defect that existed here until this issue.
 
 ### 7.6 The disclaimer
 
@@ -337,8 +365,10 @@ The site cannot go live until these are closed. They are tracked as issues in th
 > **Item 3 below is closed.** It is kept in place rather than deleted because the reasoning — why a notice naming a processor without a DPA is worse than one
 > naming none — is what makes the next processor's entry correct, and that argument is easier to find here than to re-derive.
 
-1. **The four logging decisions** (§7.5) — whether Traefik and the nginx container log real client IPs, truncation, retention period, and where retention is
-   enforced. The notice currently states an _intended_ seven days.
+1. ~~**The four logging decisions** (§7.5)~~ — **closed 2026-08-19** (#276). Traefik logs nothing; nginx no longer logs any address; truncation is moot because
+   nothing is logged to truncate; retention is enforced by the kubelet as a **size** bound rather than by rotation as a period. Kept in the list rather than
+   deleted because one consequence outlives the decision: **the notice must not state a number of days for server logs** until OpenObserve's retention policy
+   exists (#271). "Seven days" was intended and enforced by nothing, which is the precise defect §7.5 warns is worse than an honest longer period.
 2. **`INFRASTRUCTURE_IS_PROPOSED = true`** — [ADR-012](adr/ADR-012_CLOUD_PLATFORM.md) is `Accepted` as of 2026-08-10, but accepting it deployed nothing, so the
    notice still describes an intended deployment. It must be re-checked against what actually runs once the platform is provisioned
    ([#260](https://github.com/enorm-labs/event-junkie/issues/260)), and the flag cleared then — not now.

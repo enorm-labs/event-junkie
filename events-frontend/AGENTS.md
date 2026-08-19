@@ -322,6 +322,11 @@ The site is locale-routed: every page lives under `/<locale>/…`, and `src/i18n
   language version means editing the other in the same change**; facts that must not diverge (address, supervisory authority, review date) come from
   `src/lib/legal.ts`, and `views/legal/__tests__/legalViews.spec.ts` runs the mandatory-element checklist against each language separately.
 - **German is the authoritative version of the legal pages** (LEGAL.md §6.1), and both language versions say so. Do not remove that sentence.
+- **`docker/nginx.conf` logs no IP address, and that is a privacy decision rather than a formatting one** (#276, LEGAL.md §7.5). It defines its own `ej_no_ip`
+  format specifically to override the base image's `main`, whose last field is `"$http_x_forwarded_for"` — the field Traefik fills with the visitor's real
+  address. `$remote_addr` is dropped too: it is only ever the proxy's address while a proxy is in front, which is a property of the deployment rather than of
+  this file. **Adding either field back changes what the privacy notice must declare**, so it is a change to make deliberately and with §7.5, not while tidying
+  a log line.
 - **`lib/format.ts` stays pure** — its functions take a locale argument. `composables/useFormat.ts` is the thin layer that supplies it from the active i18n
   instance, so unit tests can call the helpers without mounting an app.
 - **`todayIso()`'s `en-CA` is a format, not a language.** It is the shortest way to get `YYYY-MM-DD` out of `Intl`. Making it locale-aware breaks every date
