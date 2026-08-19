@@ -90,17 +90,23 @@ CodeQL · Dependency Review
 
 Two things behave differently on a fork, and neither means anything is wrong:
 
-- **The coverage comment does not appear.** A fork's `GITHUB_TOKEN` is read-only, so nothing can post
-  it. The step is skipped rather than failed. Coverage is still enforced — `./gradlew build` runs
-  `koverVerify` — but the per-changed-file threshold that only that comment applies is a review
-  matter on this path.
+- **The coverage comment does not appear, and detekt findings do not reach the Security tab.** A
+  fork's `GITHUB_TOKEN` is read-only, so nothing can post a comment and nothing can write to Code
+  Scanning. Every one of those steps is skipped rather than failed, which is deliberate — an
+  unguarded upload would answer `403` and turn your pull request red for something you did not
+  cause. Both checks still *run*: `./gradlew build` runs `koverVerify` and detekt still fails the
+  build on a violation. What is lost is the reporting, so the per-changed-file coverage threshold
+  and the detekt annotations are a review matter on this path.
 - **`Build & Test` is not a required check**, for anyone. It costs about sixteen minutes across
   backend and frontend, so requiring it would put that on every documentation-only pull request. It
   still runs, and a red one still needs explaining.
 
-Nothing here consumes a repository secret on a pull request at all. The one workflow that holds one
-(`NVD_API_KEY`, for the scheduled dependency scan) is schedule-triggered, so no pull request can
-reach it.
+**One secret is referenced on a pull request, and it is empty on yours.** `NVD_API_KEY` is passed to
+the informational OWASP Dependency-Check job in `build-backend.yml`, and GitHub does not expose
+secrets to a run triggered from a fork. The scan then falls back to unauthenticated NVD access,
+which is rate limited enough that it often does not finish — so it is marked `continue-on-error` and
+cannot fail your pull request either way. The authoritative dependency scan is the nightly one,
+which no pull request triggers. Nothing else here reads a secret on a pull request.
 
 ## Before opening a pull request
 
