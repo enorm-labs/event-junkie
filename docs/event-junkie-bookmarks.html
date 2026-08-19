@@ -1,0 +1,144 @@
+<!DOCTYPE NETSCAPE-Bookmark-file-1>
+<!-- Event Junkie — every external service, console and reference the project depends on.
+     Generated from docs/LINKS.md. Import via your browser's bookmark manager:
+       Firefox  Bookmarks > Manage Bookmarks > Import and Backup > Import Bookmarks from HTML
+       Chrome   Bookmarks > Bookmark Manager > (kebab menu) > Import Bookmarks
+       Safari   File > Import From > Bookmarks HTML File
+     Importing ADDS a folder; it does not replace what you already have. -->
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<TITLE>Bookmarks</TITLE>
+<H1>Bookmarks</H1>
+
+<DL><p>
+    <DT><H3 ADD_DATE="1787140800" LAST_MODIFIED="1787140800">Event Junkie</H3>
+    <DL><p>
+
+        <DT><H3 ADD_DATE="1787140800" LAST_MODIFIED="1787140800">1 · GitHub</H3>
+        <DL><p>
+            <DT><A HREF="https://github.com/enorm-labs/event-junkie" ADD_DATE="1787140800">Repository</A>
+            <DD>Public, Apache-2.0.
+            <DT><A HREF="https://github.com/enorm-labs" ADD_DATE="1787140800">enorm-labs organisation</A>
+            <DD>Deploy keys are enabled at the org level, not per repository.
+            <DT><A HREF="https://github.com/enorm-labs/event-junkie/issues" ADD_DATE="1787140800">Issues — the backlog</A>
+            <DT><A HREF="https://github.com/enorm-labs/event-junkie/milestones" ADD_DATE="1787140800">Milestones</A>
+            <DD>v0.2 Deployable, v0.3 Launch-ready, v1.0 Go-live.
+            <DT><A HREF="https://github.com/enorm-labs/event-junkie/discussions" ADD_DATE="1787140800">Discussions</A>
+            <DT><A HREF="https://github.com/enorm-labs/event-junkie/actions" ADD_DATE="1787140800">Actions — CI</A>
+            <DT><A HREF="https://github.com/enorm-labs/event-junkie/security" ADD_DATE="1787140800">Security tab</A>
+            <DT><A HREF="https://github.com/enorm-labs/event-junkie/security/dependabot" ADD_DATE="1787140800">Dependabot alerts</A>
+            <DT><A HREF="https://github.com/enorm-labs/event-junkie/security/code-scanning" ADD_DATE="1787140800">Code scanning alerts</A>
+            <DT><A HREF="https://github.com/orgs/enorm-labs/packages" ADD_DATE="1787140800">GHCR packages</A>
+            <DD>bff, importer, frontend and the chart. Each is private on first publish and needs one click to flip.
+            <DT><A HREF="https://github.com/enorm-labs/event-junkie/issues/new?template=wrong-event-data.yml" ADD_DATE="1787140800">Report wrong event data</A>
+            <DT><A HREF="https://github.com/enorm-labs/event-junkie/issues/new?template=new-venue.yml" ADD_DATE="1787140800">Suggest a venue</A>
+            <DT><A HREF="https://github.com/enorm-labs/event-junkie/issues/new?template=bug.yml" ADD_DATE="1787140800">Report a bug</A>
+        </DL><p>
+
+        <DT><H3 ADD_DATE="1787140800" LAST_MODIFIED="1787140800">2 · Hetzner</H3>
+        <DL><p>
+            <DT><A HREF="https://console.hetzner.com" ADD_DATE="1787140800">Cloud Console</A>
+            <DD>Servers, volumes, firewalls, DNS zones, Object Storage. The one infrastructure provider (ADR-012).
+            <DT><A HREF="https://accounts.hetzner.com/account/dpa" ADD_DATE="1787140800">AVV / DPA — Art. 28 contract</A>
+            <DD>Concluded 2026-08-19. File the countersigned copy where it can be produced on request.
+            <DT><A HREF="https://fsn1.your-objectstorage.com" ADD_DATE="1787140800">Object Storage S3 endpoint (fsn1)</A>
+            <DD>Buckets: event-junkie-tfstate, -o2, -backups.
+            <DT><A HREF="https://docs.hetzner.com" ADD_DATE="1787140800">Hetzner documentation</A>
+            <DT><A HREF="https://community.hetzner.com" ADD_DATE="1787140800">Hetzner community tutorials</A>
+            <DT><A HREF="https://status.hetzner.com" ADD_DATE="1787140800">Hetzner status page</A>
+            <DT><A HREF="https://registry.terraform.io/providers/hetznercloud/hcloud/latest/docs" ADD_DATE="1787140800">hcloud OpenTofu provider</A>
+            <DT><A HREF="https://registry.terraform.io/providers/hetznercloud/hcloud/latest/docs/guides/s3-object-storage" ADD_DATE="1787140800">hcloud S3 guide</A>
+            <DD>What the OpenTofu state backend is built against.
+        </DL><p>
+
+        <DT><H3 ADD_DATE="1787140800" LAST_MODIFIED="1787140800">3 · Domains, DNS and the sites</H3>
+        <DL><p>
+            <DT><A HREF="https://www.inwx.de" ADD_DATE="1787140800">INWX — registrar</A>
+            <DD>Nameserver delegation and the DNSSEC DS record. Both zones already delegate to Hetzner.
+            <DT><A HREF="https://event-junkie.de" ADD_DATE="1787140800">event-junkie.de — production</A>
+            <DD>Not deployed yet.
+            <DT><A HREF="https://staging.event-junkie.de" ADD_DATE="1787140800">staging.event-junkie.de</A>
+            <DD>No public A record. Reachable only over WireGuard.
+            <DT><A HREF="https://event-junkie.com" ADD_DATE="1787140800">event-junkie.com — defensive</A>
+            <DT><A HREF="https://acme-v02.api.letsencrypt.org/directory" ADD_DATE="1787140800">Let's Encrypt — production ACME</A>
+            <DD>50 certificates per registered domain per week. Both environments share that limit.
+            <DT><A HREF="https://acme-staging-v02.api.letsencrypt.org/directory" ADD_DATE="1787140800">Let's Encrypt — staging ACME</A>
+            <DD>The default in every values file, including staging's.
+        </DL><p>
+
+        <DT><H3 ADD_DATE="1787140800" LAST_MODIFIED="1787140800">4 · Monitoring and alerting</H3>
+        <DL><p>
+            <DT><A HREF="https://healthchecks.io" ADD_DATE="1787140800">healthchecks.io — dead-man's switch</A>
+            <DD>Deliberately off Hetzner. One account, one project, one channel. Ping URLs are credentials.
+            <DT><A HREF="https://github.com/openobserve/openobserve" ADD_DATE="1787140800">OpenObserve</A>
+            <DD>ADR-015, accepted on trial. Logs, metrics, dashboards, alerting in one binary.
+            <DT><A HREF="https://github.com/bbernhard/signal-cli-rest-api" ADD_DATE="1787140800">signal-cli-rest-api</A>
+            <DD>The Signal alert bridge. Needs its own prepaid number.
+            <DT><A HREF="https://www.netdata.cloud" ADD_DATE="1787140800">Netdata</A>
+            <DD>Optional complement, self-hosted only — Netdata Cloud would reintroduce a processor.
+        </DL><p>
+
+        <DT><H3 ADD_DATE="1787140800" LAST_MODIFIED="1787140800">5 · Delivery, GitOps and the cluster</H3>
+        <DL><p>
+            <DT><A HREF="https://fluxcd.io" ADD_DATE="1787140800">Flux CD</A>
+            <DD>Pull-based delivery (ADR-016). CI holds no cluster credential.
+            <DT><A HREF="https://cert-manager.io/docs/" ADD_DATE="1787140800">cert-manager</A>
+            <DD>HTTP-01 in production, DNS-01 in staging.
+            <DT><A HREF="https://docs.k3s.io" ADD_DATE="1787140800">k3s</A>
+            <DT><A HREF="https://helm.sh/docs/" ADD_DATE="1787140800">Helm</A>
+            <DT><A HREF="https://k9scli.io" ADD_DATE="1787140800">k9s</A>
+            <DT><A HREF="https://wal-g.readthedocs.io" ADD_DATE="1787140800">wal-g</A>
+            <DD>WAL archiving and base backups to S3. 30-day window.
+            <DT><A HREF="https://direnv.net/" ADD_DATE="1787140800">direnv</A>
+            <DD>Loads infra/.envrc on entry and unloads it on leaving — that scoping is the whole point.
+        </DL><p>
+
+        <DT><H3 ADD_DATE="1787140800" LAST_MODIFIED="1787140800">6 · Legal and business</H3>
+        <DL><p>
+            <DT><A HREF="https://accounts.hetzner.com/account/dpa" ADD_DATE="1787140800">Hetzner AVV — the only Art. 28 contract</A>
+            <DT><A HREF="https://www.postflex.de/" ADD_DATE="1787140800">Postflex — imprint address</A>
+            <DD>Rented ladungsfähige Anschrift for § 5 DDG. Not ordered yet; blocks go-live.
+            <DT><A HREF="https://datenschutz-generator.de/" ADD_DATE="1787140800">datenschutz-generator.de</A>
+            <DD>Second opinion on the German privacy notice — not a substitute for writing it from what the system does.
+            <DT><A HREF="https://www.contributor-covenant.org" ADD_DATE="1787140800">Contributor Covenant 3.0</A>
+        </DL><p>
+
+        <DT><H3 ADD_DATE="1787140800" LAST_MODIFIED="1787140800">7 · Security and dependencies</H3>
+        <DL><p>
+            <DT><A HREF="https://nvd.nist.gov/" ADD_DATE="1787140800">NVD — National Vulnerability Database</A>
+            <DT><A HREF="https://nvd.nist.gov/developers/request-an-api-key" ADD_DATE="1787140800">Request an NVD API key</A>
+            <DD>Where NVD_API_KEY comes from.
+            <DT><A HREF="https://github.com/aquasecurity/trivy" ADD_DATE="1787140800">Trivy</A>
+            <DD>Gates release.yml on fixable CRITICAL/HIGH before anything is pushed.
+            <DT><A HREF="https://github.com/gitleaks/gitleaks" ADD_DATE="1787140800">gitleaks</A>
+            <DT><A HREF="https://github.com/zizmorcore/zizmor" ADD_DATE="1787140800">zizmor</A>
+            <DD>GitHub Actions static analysis.
+        </DL><p>
+
+        <DT><H3 ADD_DATE="1787140800" LAST_MODIFIED="1787140800">8 · Local development</H3>
+        <DL><p>
+            <DT><A HREF="http://localhost:5173" ADD_DATE="1787140800">Frontend — Vite dev server</A>
+            <DT><A HREF="http://localhost:8080/webjars/swagger-ui/index.html" ADD_DATE="1787140800">events-bff — Swagger UI</A>
+            <DT><A HREF="http://localhost:8081/webjars/swagger-ui/index.html" ADD_DATE="1787140800">events-importer — Swagger UI</A>
+        </DL><p>
+
+        <DT><H3 ADD_DATE="1787140800" LAST_MODIFIED="1787140800">9 · Stack reference</H3>
+        <DL><p>
+            <DT><A HREF="https://docs.spring.io/spring-data/relational/reference/r2dbc/query-methods.html" ADD_DATE="1787140800">Spring Data R2DBC — query methods</A>
+            <DD>Its derivation limits are the recurring gotcha in this codebase.
+            <DT><A HREF="https://spring.io/projects/spring-boot" ADD_DATE="1787140800">Spring Boot</A>
+            <DT><A HREF="https://kotlinlang.org" ADD_DATE="1787140800">Kotlin</A>
+            <DT><A HREF="https://openjdk.org" ADD_DATE="1787140800">OpenJDK</A>
+            <DT><A HREF="https://vuejs.org" ADD_DATE="1787140800">Vue 3</A>
+            <DT><A HREF="https://vue-i18n.intlify.dev" ADD_DATE="1787140800">vue-i18n</A>
+            <DT><A HREF="https://fullcalendar.io" ADD_DATE="1787140800">FullCalendar</A>
+            <DD>Standard packages are MIT. Keep the premium plugins out — they are commercially licensed.
+            <DT><A HREF="https://tailwindcss.com" ADD_DATE="1787140800">Tailwind CSS</A>
+            <DT><A HREF="https://jsoup.org" ADD_DATE="1787140800">Jsoup</A>
+            <DD>Every scraper's parser.
+            <DT><A HREF="https://playwright.dev" ADD_DATE="1787140800">Playwright</A>
+            <DT><A HREF="https://sdkman.io/" ADD_DATE="1787140800">SDKMAN</A>
+            <DT><A HREF="https://www.conventionalcommits.org" ADD_DATE="1787140800">Conventional Commits</A>
+        </DL><p>
+
+    </DL><p>
+</DL><p>
