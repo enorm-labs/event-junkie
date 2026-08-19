@@ -21,9 +21,6 @@ import java.time.LocalTime
 
 /**
  * Unit tests for [PankeWebsiteImporter].
- *
- * Uses a static HTML fixture and a mocked [HtmlFetcher] for deterministic, offline-safe testing
- * without real HTTP requests.
  */
 class PankeWebsiteImporterTest {
     private lateinit var importer: PankeWebsiteImporter

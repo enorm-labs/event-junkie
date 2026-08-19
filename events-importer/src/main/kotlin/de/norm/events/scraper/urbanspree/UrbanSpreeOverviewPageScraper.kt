@@ -40,9 +40,6 @@ import java.time.format.DateTimeParseException
  * which Jsoup honours when resolving `abs:`. Resolving them against the fetched page URL
  * instead would double the `program/` segment on every page past the first.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with static HTML fixtures.
- *
  * @see UrbanSpreeDetailPageScraper for the primary per-event data source.
  * @see UrbanSpreeWebsiteImporter for the paginated fetch orchestrator.
  * @see <a href="https://www.urbanspree.com/program/">Urban Spree programme</a>
@@ -58,7 +55,6 @@ class UrbanSpreeOverviewPageScraper {
      * Cards without a parseable `data-dateStart` or detail link are skipped with a
      * warning rather than persisted, and a single malformed card never aborts the page.
      *
-     * @param document the parsed Jsoup document of a `/program/` (or `/program/?page=N`) page.
      * @param baseUrl the URL the document was fetched from, used only for logging — link
      *   resolution goes through the page's own `<base>` tag.
      * @return one [ScrapedEvent] per parseable card.

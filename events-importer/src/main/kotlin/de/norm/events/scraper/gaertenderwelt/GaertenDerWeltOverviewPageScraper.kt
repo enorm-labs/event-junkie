@@ -40,9 +40,6 @@ import org.jsoup.nodes.Element
  * importer spends a detail-page fetch on them — see [isProgrammeCategory] for that decision and
  * how to revisit it.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with static HTML fixtures.
- *
  * @see GaertenDerWeltDetailPageScraper for the description, prices, doors time and promoter.
  * @see GaertenDerWeltWebsiteImporter for the paginated fetch orchestrator.
  * @see <a href="https://www.gaertenderwelt.de/events/veranstaltungen/">Gärten der Welt programme</a>
@@ -56,7 +53,6 @@ class GaertenDerWeltOverviewPageScraper {
      * A row that is out of scope, unstamped or untitled is dropped, and a single malformed row
      * never aborts the page.
      *
-     * @param document the parsed Jsoup document of a listing page.
      * @param baseUrl the URL the document was fetched from, used to resolve the page's
      *   root-relative detail and image links.
      */

@@ -25,9 +25,6 @@ import java.time.LocalDate
  *    link text carries the title. The detail page (the primary source) supplies
  *    everything else. Merging is handled by [So36WebsiteImporter].
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see So36DetailPageScraper for the primary per-event data source.
  * @see So36WebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.so36.com/tickets">SO36 program</a>
@@ -43,7 +40,6 @@ class So36OverviewPageScraper {
      * skipped. Events are deduplicated by their numeric product id, since the
      * featured "TONIGHT" teaser repeats an event that is also in the list.
      *
-     * @param document the parsed Jsoup document of the `/tickets` page.
      * @param baseUrl the URL the document was fetched from, used to resolve
      *   relative detail links.
      * @return a list of [ScrapedEvent] instances (one per distinct event).

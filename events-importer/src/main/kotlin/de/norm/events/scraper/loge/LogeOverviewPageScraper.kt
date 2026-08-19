@@ -28,9 +28,6 @@ import tools.jackson.databind.JsonNode
  *    confirms the status, so everything here except the price survives even when
  *    a detail page cannot be fetched.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with a static fixture.
- *
  * @see LogeDetailPageScraper for the per-event price/status enrichment.
  * @see LogeWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.loge-berlin.org/event-list">Loge event listing</a>
@@ -41,7 +38,6 @@ class LogeOverviewPageScraper {
     /**
      * Parses all events from the overview page's embedded Wix warmup payload.
      *
-     * @param document the parsed Jsoup document of the listing page.
      * @param baseUrl the URL the document was fetched from, used to resolve
      *   per-event `/event-details/<slug>` detail URLs.
      * @return a list of [ScrapedEvent] instances, one per listed event.

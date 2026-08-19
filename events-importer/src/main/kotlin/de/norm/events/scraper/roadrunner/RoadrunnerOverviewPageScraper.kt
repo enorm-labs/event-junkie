@@ -38,9 +38,6 @@ import java.util.Locale
  * past events listed; those past-dated events are dropped centrally at persistence
  * time (`EventUpsertService`), so this parser returns every dated block as-is.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see RoadrunnerWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="http://www.roadrunners-paradise.de/programm.html">Roadrunner's Paradise programme</a>
  */
@@ -54,7 +51,6 @@ class RoadrunnerOverviewPageScraper(
     /**
      * Parses all events from the programme page document.
      *
-     * @param document the parsed Jsoup document of `programm.html`.
      * @param baseUrl the URL the document was fetched from, used to resolve the
      *   relative flyer image path and as each event's `sourceUrl`.
      * @return a list of [ScrapedEvent] instances, one per dated block.

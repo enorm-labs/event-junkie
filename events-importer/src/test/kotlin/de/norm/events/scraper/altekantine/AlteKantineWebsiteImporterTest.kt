@@ -28,11 +28,10 @@ import java.time.ZoneOffset
 /**
  * Unit tests for [AlteKantineWebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing. Focuses on the overview ↔ detail merge: the detail page
- * supplies the kind, price, description, image and DJ, while the overview supplies
- * the subtitle and stands in entirely (with its own date and start time) whenever a
- * detail page fails to fetch. A fixed clock keeps year inference deterministic.
+ * Focuses on the overview ↔ detail merge: the detail page supplies the kind, price, description,
+ * image and DJ, while the overview supplies the subtitle and stands in entirely (with its own date
+ * and start time) whenever a detail page fails to fetch. A fixed clock keeps year inference
+ * deterministic.
  */
 class AlteKantineWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()

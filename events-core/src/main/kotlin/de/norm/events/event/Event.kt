@@ -137,7 +137,6 @@ data class Event(
  * The persistence layer (`EventArtistEntity`) handles the FK mapping.
  */
 data class LineupEntry(
-    /** The artist performing at the event. */
     val artist: Artist,
     /** The artist's role in the event lineup. Example: [ArtistRole.SUPPORT] */
     val role: ArtistRole = ArtistRole.HEADLINER,

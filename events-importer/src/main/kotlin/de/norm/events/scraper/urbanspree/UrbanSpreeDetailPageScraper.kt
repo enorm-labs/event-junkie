@@ -39,8 +39,6 @@ import java.util.Locale
  * deliberately **not** extracted: it appears only inside the free-form description, where
  * an "Einlass: …" line may just as well belong to another show mentioned in the blurb.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see UrbanSpreeOverviewPageScraper for discovery and the authoritative date.
  * @see UrbanSpreeWebsiteImporter for the fetch orchestrator and the merge.
  */
@@ -52,7 +50,6 @@ class UrbanSpreeDetailPageScraper {
      * event hero at all (a 404 body or a redesigned template) — the importer then keeps
      * the overview card's data rather than persisting a half-parsed event.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the URL the document was fetched from; also the `sourceId` source.
      */
     @Suppress("ReturnCount") // Guard clauses for the unparseable-page cases are clearer than nesting

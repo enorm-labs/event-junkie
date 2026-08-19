@@ -20,10 +20,9 @@ import java.time.ZoneOffset
 /**
  * Unit tests for [DunckerWebsiteImporter].
  *
- * Uses the static programme fixture and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing without real HTTP requests. The clock is pinned to 2026-07-01 —
- * before the fixture's earliest date (03.07.) — so the scraper's past-event cutoff keeps
- * all of them and weekday-based year inference stays deterministic.
+ * The clock is pinned to 2026-07-01 — before the fixture's earliest date (03.07.) — so the
+ * scraper's past-event cutoff keeps all of them and weekday-based year inference stays
+ * deterministic.
  */
 class DunckerWebsiteImporterTest {
     private lateinit var importer: DunckerWebsiteImporter

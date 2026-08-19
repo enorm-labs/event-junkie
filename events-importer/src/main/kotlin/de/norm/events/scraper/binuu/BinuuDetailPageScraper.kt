@@ -24,10 +24,6 @@ import tools.jackson.databind.JsonNode
  * (otherwise `HEADLINER`). If `subtitle_2` marks every performer as support, the
  * first performer is promoted to headliner so an event with a roster always has one.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document] (Jsoup is used only to clean the HTML `text` blurb), making it easy
- * to test with static fixtures.
- *
  * @see BinuuOverviewPageScraper for overview parsing (discovery, fallback).
  * @see BinuuWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://binuu.de/de/events/inzpqdgvi1eab2q">Example detail page</a>
@@ -39,7 +35,6 @@ class BinuuDetailPageScraper {
      * Parses an event detail page into a [ScrapedEvent], or `null` when the page
      * carries no parseable `item` payload or is missing the required id/title.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to
      *   confirm the [ScrapedEvent.sourceId].
      */

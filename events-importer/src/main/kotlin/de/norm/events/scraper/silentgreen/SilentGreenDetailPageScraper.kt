@@ -21,8 +21,6 @@ import java.time.LocalTime
  * responsive `<picture>` with ten relative sources per slide, while the meta tag names one
  * absolute URL for the same image.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see SilentGreenWebsiteImporter for the HTTP fetch orchestrator.
  */
 class SilentGreenDetailPageScraper {

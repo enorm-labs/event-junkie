@@ -58,9 +58,6 @@ import java.util.Locale
  * used for both the `sourceId` and a `#post-<id>` deep-link `sourceUrl` back into
  * the listing.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see FrannzWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://frannz.eu/">Frannz Club Berlin</a>
  */
@@ -79,9 +76,7 @@ class FrannzOverviewPageScraper(
      * teaser cards (a subset of the same events, without full data); those are
      * excluded via `:not(.highlight)`.
      *
-     * @param document the parsed Jsoup document of the Frannz homepage.
      * @param baseUrl the URL the document was fetched from, used for resolving relative links.
-     * @return a list of [ScrapedEvent] instances extracted from the page.
      */
     fun scrape(
         document: Document,

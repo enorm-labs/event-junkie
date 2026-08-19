@@ -22,9 +22,8 @@ import java.time.ZoneOffset
  * page ([ClubDerVisionaereWebsiteImporter], [SonnenraumWebsiteImporter],
  * [MsHoppetosseWebsiteImporter]).
  *
- * Uses the static summer snapshot and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing without real HTTP requests. The clock is pinned before the
- * fixture's earliest date (31.7.) so weekday-based year inference stays deterministic.
+ * The clock is pinned before the fixture's earliest date (31.7.) so weekday-based year inference
+ * stays deterministic.
  */
 class ClubDerVisionaereWebsiteImportersTest {
     private val htmlFetcher: HtmlFetcher = mockk()

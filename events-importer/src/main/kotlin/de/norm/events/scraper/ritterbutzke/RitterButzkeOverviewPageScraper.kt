@@ -27,9 +27,6 @@ import org.jsoup.nodes.Element
  * keeps its identity — which also matters because the club runs several floors and two or three
  * events routinely share a date.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with a static fixture.
- *
  * @see RitterButzkeDetailPageScraper for the detail-page data (start time, ticket, DJ lineup).
  * @see RitterButzkeWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://club.ritterbutzke.com/events">Ritter Butzke event listing</a>
@@ -40,7 +37,6 @@ class RitterButzkeOverviewPageScraper {
     /**
      * Parses all event cards from the listing page document.
      *
-     * @param document the parsed Jsoup document of the `/events` page.
      * @param baseUrl the URL the document was fetched from, used to resolve the per-event
      *   detail links.
      * @return a list of [ScrapedEvent] instances, one per card.

@@ -26,9 +26,6 @@ import java.math.BigDecimal
  * used for the canonical [ScrapedEvent.sourceUrl] and the stable
  * [ScrapedEvent.sourceId]).
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with a static fixture.
- *
  * @see MaxximWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.maxxim-berlin.de/partys">MAXXIM programme</a>
  */
@@ -38,7 +35,6 @@ class MaxximOverviewPageScraper {
     /**
      * Parses all events from the programme page's embedded Wix warmup payload.
      *
-     * @param document the parsed Jsoup document of the `/partys` page.
      * @param baseUrl the URL the document was fetched from, used to resolve the
      *   per-event `/event-details/<slug>` URLs.
      * @return a list of [ScrapedEvent] instances, one per listed night.

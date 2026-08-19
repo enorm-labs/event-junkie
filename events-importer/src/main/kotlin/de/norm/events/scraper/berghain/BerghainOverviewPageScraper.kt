@@ -32,10 +32,8 @@ import java.time.LocalDate
  * - one or more `<h4>` blocks hold the running-order lineup, each act in its own
  *   leaf `<span>`, with `Live` / `b2b` format markers in `uppercase` spans.
  *
- * This class performs **no I/O** — it operates on a pre-fetched Jsoup [Document],
- * so it is trivially testable against a saved snapshot. The listing carries only
- * upcoming events, but recently-passed dates are dropped here (mirroring the
- * persistence cutoff) to avoid wasted detail-page fetches.
+ * The listing carries only upcoming events, but recently-passed dates are dropped here (mirroring
+ * the persistence cutoff) to avoid wasted detail-page fetches.
  *
  * @see BerghainDetailPageScraper for the per-event enrichment source (image, prices, ticket, description).
  */
@@ -48,7 +46,6 @@ class BerghainOverviewPageScraper(
     /**
      * Parses every event block on the overview page document.
      *
-     * @param document the parsed Jsoup document of the overview page.
      * @param sourceUrl the URL the document was fetched from, used to resolve
      *   relative event links.
      * @return upcoming [ScrapedEvent]s (today onward); past-dated entries are dropped.

@@ -56,9 +56,6 @@ import java.math.BigDecimal
  * because nothing separates it from a genuinely hyphenated act name. Both are tracked in issue #302 —
  * they need a curated vocabulary, not a Morphine-local rule.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with a static fixture.
- *
  * @see MorphineOverviewPageScraper for overview parsing (discovery, date, fallback).
  * @see MorphineWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="http://www.morphinerecords.com/events/sardy-fardy-live-recording">Example detail page</a>
@@ -70,7 +67,6 @@ class MorphineDetailPageScraper {
      * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no event
      * overlay or no title (an unexpected structure).
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive the
      *   [ScrapedEvent.sourceId].
      */

@@ -25,10 +25,9 @@ import java.time.ZoneId
 /**
  * Unit tests for [SodaWebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic, offline-safe
- * testing. Focuses on the overview ↔ detail merge: the detail page supplies the exact
- * date, start time, prices and description, while the overview stands in — with its
- * weekday-inferred date, flyer and ticket link — whenever a detail page fails to fetch.
+ * Focuses on the overview ↔ detail merge: the detail page supplies the exact date, start time,
+ * prices and description, while the overview stands in — with its weekday-inferred date, flyer and
+ * ticket link — whenever a detail page fails to fetch.
  */
 class SodaWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()

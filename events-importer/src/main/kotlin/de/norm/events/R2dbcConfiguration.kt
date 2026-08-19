@@ -30,11 +30,10 @@ class R2dbcConfiguration {
      * methods, which fail because the tables live in a dedicated schema rather than `public`.
      *
      * **The schema comes from the constant, not from the property, and the property is checked
-     * against it (#540).** It used to come from `spring.r2dbc.properties.schema` alone, while every
-     * hand-written statement carried a literal `events.` — so the property moved derived queries and
-     * left raw SQL behind, producing an application that started cleanly and was half-migrated. The
-     * property has not gone away, because it is what sets the connection's `search_path` and no
-     * Kotlin constant can do that; it is now a declaration that must agree.
+     * against it (#540).** A property that moves derived queries while every hand-written statement
+     * keeps its literal `events.` prefix half-migrates the application and still starts cleanly. The
+     * property stays, because it is what sets the connection's `search_path` and no Kotlin constant
+     * can do that — as a declaration that must agree, not as the source.
      *
      * `require` rather than a log line, deliberately: a warning about a schema mismatch is a warning
      * nobody reads until `/api/events` is already failing, and this is exactly the state #438's

@@ -53,9 +53,6 @@ private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
  *    free-entry signal — the venue writes "Free Tickets & Info" for a free night and
  *    "Tickets & Info" otherwise.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see VoidClubWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.void-club.de/">VOID Club Berlin</a>
  */
@@ -68,7 +65,6 @@ class VoidClubOverviewPageScraper(
     /**
      * Parses all event cards from the homepage document.
      *
-     * @param document the parsed Jsoup document of the homepage.
      * @param baseUrl the URL the document was fetched from, stored as each event's
      *   [ScrapedEvent.sourceUrl] — the venue publishes no per-event page.
      * @return a list of [ScrapedEvent] instances, in listing order.

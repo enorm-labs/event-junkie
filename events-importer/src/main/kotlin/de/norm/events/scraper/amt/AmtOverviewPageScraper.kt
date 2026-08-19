@@ -36,8 +36,7 @@ import java.util.Locale
  * - `a[href^="/event/"]` — the detail-page link, the stable per-event identity for `sourceId`.
  *
  * Every event is typed [EventType.PARTY]: AMT is a techno club and its nights are DJ dance parties,
- * so the title is a series name rather than a headliner and is never minted as an artist. This class
- * performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
+ * so the title is a series name rather than a headliner and is never minted as an artist.
  *
  * @see AmtWebsiteImporter for the fetch orchestration (entry page → month pages).
  */
@@ -47,7 +46,6 @@ class AmtOverviewPageScraper {
     /**
      * Parses all events from one month page.
      *
-     * @param document the parsed Jsoup document of the month page.
      * @param baseUrl the URL the document was fetched from, used to resolve the relative
      *   `/event/<slug>` detail links into absolute `sourceUrl` values.
      * @return one [ScrapedEvent] per night with a parseable date and title. The venue leaves

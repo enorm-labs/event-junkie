@@ -28,9 +28,6 @@ import org.jsoup.nodes.Element
  * `section.additional-content` of teasers for *other* events, each with its own date, title and
  * image; reading the page unscoped would mix a neighbouring show's data into this one.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see VelomaxOverviewPageScraper for the shared listing (discovery, hall filter, fallback).
  * @see <a href="https://www.velodrom.de/events/event/joji-velodrom-2026-08-29">Example detail page</a>
  */
@@ -41,7 +38,6 @@ class VelomaxDetailPageScraper {
      * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no
      * schema.org `Event` block or no name within it.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive its
      *   [ScrapedEvent.sourceId].
      * @param hall the hall this source imports, supplying the `sourceId` prefix.

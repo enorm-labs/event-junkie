@@ -15,9 +15,6 @@ import org.jsoup.nodes.Document
  * The same markup backs the `/veranstaltungsuebersicht/eventkategorie/<genre>.html` filter pages, so
  * one parser serves both: the A–Z page for discovery, and each genre page for the category it names.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see AdmiralspalastDetailPageScraper for the performances themselves.
  * @see AdmiralspalastWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.admiralspalast.theater/veranstaltungsuebersicht.html">Admiralspalast programme</a>
@@ -31,7 +28,6 @@ class AdmiralspalastListingPageScraper {
      * A tile links to its production several times over (poster, title, date), so the raw selector
      * yields roughly three hits per production.
      *
-     * @param document the parsed Jsoup document of a listing or genre-filter page.
      * @param baseUrl the URL the document was fetched from, used to resolve the links.
      */
     fun scrapeProductionUrls(

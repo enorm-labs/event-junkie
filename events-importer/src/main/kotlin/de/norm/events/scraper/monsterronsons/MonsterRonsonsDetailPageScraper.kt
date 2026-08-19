@@ -45,7 +45,6 @@ class MonsterRonsonsDetailPageScraper {
     /**
      * Parses the enrichable fields from a night's detail page.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param url the URL the document was fetched from, used to resolve a relative ticket link.
      * @return the extra fields, or null when the page carries no rich-text body at all — a shell
      *   page that would contribute nothing to merge.

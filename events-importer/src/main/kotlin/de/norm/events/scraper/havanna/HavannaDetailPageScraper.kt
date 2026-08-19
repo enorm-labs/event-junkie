@@ -27,8 +27,6 @@ import java.time.LocalTime
  * during the break. The programme block is identified by containing paragraphs, so notice text never
  * affects which block is read as the programme.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see HavannaWeeklyNight for the undated model this produces and its expansion into dated events.
  * @see <a href="https://www.havanna-berlin.de/friday">Havanna Friday</a>
  */
@@ -39,7 +37,6 @@ class HavannaDetailPageScraper {
     /**
      * Parses a night page into its undated [HavannaWeeklyNight] description.
      *
-     * @param document the parsed Jsoup document of the night page.
      * @param url the URL the document was fetched from — the source of the night's weekday and slug.
      * @return the parsed night, or `null` when the URL names no weekday or the page carries no
      *   programme block (both logged as warnings).

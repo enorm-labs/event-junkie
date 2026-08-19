@@ -64,8 +64,7 @@ private const val HUMBOLDTHAIN_URL = "https://www.humboldthain.com/"
  *
  * The widget returns the **whole calendar**, including nights that have already happened; those
  * past-dated events are dropped centrally at persistence time (`EventUpsertService`), so
- * non-recurring entries are returned as-is. This class performs **no I/O** — it operates on the
- * raw JSON string, making it trivial to test against a saved snapshot.
+ * non-recurring entries are returned as-is.
  *
  * @param clock supplies "today" for the recurrence horizon; override in tests for determinism.
  * @see HumboldthainWebsiteImporter for the HTTP fetch orchestrator.

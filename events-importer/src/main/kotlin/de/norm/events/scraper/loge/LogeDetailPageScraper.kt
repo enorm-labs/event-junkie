@@ -26,9 +26,6 @@ import java.time.LocalTime
  * the artist roster, so `artists` are left for the overview page to supply via
  * [LogeWebsiteImporter.fillGapsFromOverview].
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with a static fixture.
- *
  * @see LogeOverviewPageScraper for overview parsing (discovery, artists, fallback).
  * @see LogeWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.loge-berlin.org/event-details/estamoe-daloy-furie">Example detail page</a>
@@ -42,7 +39,6 @@ class LogeDetailPageScraper {
      * Parses an event detail page into a [ScrapedEvent], or `null` when the page
      * has no parseable schema.org `Event` JSON-LD or it lacks a title.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to
      *   derive the [ScrapedEvent.sourceId].
      */

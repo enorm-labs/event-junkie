@@ -40,9 +40,6 @@ private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
  * ([MAX_ACT_WORDS]); the venue mixes workshop schedules and multi-sentence policy text into the
  * same block, and those would otherwise be stored as DJs.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see RenateWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.renate.cc/">Renate Berlin</a>
  */
@@ -55,7 +52,6 @@ class RenateOverviewPageScraper(
     /**
      * Parses all event rows from the homepage document.
      *
-     * @param document the parsed Jsoup document of the homepage.
      * @param baseUrl the URL the document was fetched from, stored as each event's
      *   [ScrapedEvent.sourceUrl] — the venue publishes no per-event page.
      * @return a list of [ScrapedEvent] instances, in listing order.

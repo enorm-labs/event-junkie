@@ -48,8 +48,6 @@ import java.time.LocalDate
  * they sit among — the same call the Velomax halls make. They are also the only rows carrying a
  * `00:00 Uhr` placeholder start, so the filter removes that noise too.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see AegDetailPageScraper for the detail-page data (doors, description, ticket link).
  * @see AbstractAegVenueImporter for the HTTP fetch orchestrator.
  */
@@ -59,7 +57,6 @@ class AegOverviewPageScraper {
     /**
      * Parses every non-sport row from a venue's listing page.
      *
-     * @param document the parsed Jsoup document of the `/events/all` page.
      * @param baseUrl the URL the document was fetched from, used to resolve detail links.
      * @param eventSource the venue whose page this is, used for the `sourceId` prefix and logging.
      */

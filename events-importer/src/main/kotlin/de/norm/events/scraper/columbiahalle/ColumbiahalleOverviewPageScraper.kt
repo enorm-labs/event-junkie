@@ -36,9 +36,6 @@ import java.util.Locale
  * the collapsed `.bandinfo` panel — so no detail page is fetched (the cards' "Kalender-Eintrag"
  * links serve an iCal file, not HTML).
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see ColumbiahalleWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.columbiahalle.berlin/veranstaltungen.html">Columbiahalle programme</a>
  */
@@ -48,7 +45,6 @@ class ColumbiahalleOverviewPageScraper {
     /**
      * Parses all event cards from the programme page document.
      *
-     * @param document the parsed Jsoup document of `/veranstaltungen.html`.
      * @param baseUrl the URL the document was fetched from, used to resolve poster paths and to
      *   build the per-event anchor URL.
      * @return a list of [ScrapedEvent] instances extracted from the page, in listing order.

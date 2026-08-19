@@ -31,9 +31,6 @@ import org.jsoup.nodes.Element
  * read from the ISO `YYYY-MM-DD` prefix the venue bakes into every event slug — a
  * canonical identifier that is cleaner than the German `"Juli 2026"` month rendering.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with a static fixture.
- *
  * @see Hole44DetailPageScraper for the detail-page data source (promoter, doors, image).
  * @see Hole44WebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://hole-berlin.de/events/">Hole 44 event listing</a>
@@ -44,10 +41,8 @@ class Hole44OverviewPageScraper {
     /**
      * Parses all event items from the overview page document.
      *
-     * @param document the parsed Jsoup document of the `/events/` listing.
      * @param baseUrl the URL the document was fetched from, used to resolve relative
      *   detail links and build `sourceId` values.
-     * @return a list of [ScrapedEvent] instances extracted from the page.
      */
     fun scrape(
         document: Document,

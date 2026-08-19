@@ -23,9 +23,8 @@ import java.time.LocalTime
 /**
  * Unit tests for [QuasimodoWebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic, offline-safe testing
- * without real HTTP requests. Only the four detail pages captured as fixtures are stubbed; every
- * other detail fetch throws, exercising the base class's degrade-to-overview fallback.
+ * Only the four detail pages captured as fixtures are stubbed; every other detail fetch throws,
+ * exercising the base class's degrade-to-overview fallback.
  */
 class QuasimodoWebsiteImporterTest {
     private lateinit var importer: QuasimodoWebsiteImporter

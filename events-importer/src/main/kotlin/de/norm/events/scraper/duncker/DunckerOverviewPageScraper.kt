@@ -37,9 +37,6 @@ import java.time.MonthDay
  * dropped centrally at persistence time (`EventUpsertService`), so this parser returns
  * every dated row as-is.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see DunckerWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.dunckerclub.de/start.html">Duncker Club programme</a>
  */
@@ -53,7 +50,6 @@ class DunckerOverviewPageScraper(
     /**
      * Parses all events from the programme page document.
      *
-     * @param document the parsed Jsoup document of `start.html`.
      * @param baseUrl the URL the document was fetched from, used to resolve the
      *   relative flyer image path and as each event's `sourceUrl`.
      * @return a list of [ScrapedEvent] instances, one per dated table row.

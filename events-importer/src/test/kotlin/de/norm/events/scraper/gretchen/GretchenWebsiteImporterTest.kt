@@ -16,9 +16,6 @@ import org.junit.jupiter.api.Test
 
 /**
  * Unit tests for [GretchenWebsiteImporter].
- *
- * Uses the saved HTML fixture and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing without real HTTP requests.
  */
 class GretchenWebsiteImporterTest {
     private lateinit var importer: GretchenWebsiteImporter

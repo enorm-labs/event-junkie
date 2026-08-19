@@ -16,9 +16,6 @@ import org.junit.jupiter.api.Test
 
 /**
  * Unit tests for [ClashWebsiteImporter].
- *
- * Uses a static HTML fixture and mocked [HtmlFetcher] for deterministic,
- * offline-safe testing without real HTTP requests.
  */
 class ClashWebsiteImporterTest {
     private lateinit var importer: ClashWebsiteImporter

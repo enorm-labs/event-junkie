@@ -36,8 +36,6 @@ import java.time.LocalTime
  * names rather than formats, so a billed DJ lineup is the best evidence that a night is a club
  * night. See [eventTypeOf].
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see PankeWebsiteImporter for the HTTP fetch orchestrator.
  */
 class PankeProgrammePageScraper {
@@ -46,7 +44,6 @@ class PankeProgrammePageScraper {
     /**
      * Parses every upcoming event on the programme page.
      *
-     * @param document the parsed Jsoup document of the `/programme/` page.
      * @param sourceUrl the URL the document was fetched from, stored as every event's `sourceUrl`.
      */
     fun scrape(

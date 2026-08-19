@@ -21,9 +21,6 @@ import java.time.LocalDate
 
 /**
  * Unit tests for [HeidegluehenWebsiteImporter].
- *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic, offline-safe testing
- * without real HTTP requests.
  */
 class HeidegluehenWebsiteImporterTest {
     private lateinit var importer: HeidegluehenWebsiteImporter

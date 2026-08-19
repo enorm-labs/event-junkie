@@ -39,8 +39,6 @@ import java.time.LocalDateTime
  * — so they drive the event type. Only the two that do name a genre ([MUSIC_GENRE_LABELS]) are also
  * stored as one.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see DelphiProductionPageScraper for the per-production page (full description, bigger poster).
  * @see DelphiWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -50,7 +48,6 @@ class DelphiProgrammePageScraper {
     /**
      * Parses every performance row on the programme page.
      *
-     * @param document the parsed Jsoup document of the `/programm/` page.
      * @param baseUrl the URL the document was fetched from, used to resolve production links.
      */
     fun scrape(

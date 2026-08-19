@@ -29,9 +29,6 @@ import java.math.BigDecimal
  * listing (see [WuhlheideWebsiteImporter.fillGapsFromOverview]). And a sold-out show omits both
  * the `Preis` row and the ticket link entirely, so both are simply absent rather than zero.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with a static fixture.
- *
  * @see WuhlheideOverviewPageScraper for the listing parser (discovery, date, subtitle, sold-out).
  * @see WuhlheideWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.wuhlheide.de/programm/alligatoah/2026-08-01">Example detail page</a>
@@ -42,7 +39,6 @@ class WuhlheideDetailPageScraper {
     /**
      * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no title.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive the
      *   [ScrapedEvent.sourceId].
      */

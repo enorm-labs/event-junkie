@@ -24,9 +24,8 @@ import java.time.LocalTime
 /**
  * Unit tests for [ZitadelleWebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic, offline-safe testing
- * without real HTTP requests. Only three detail pages are stubbed; every other detail fetch throws,
- * exercising the base class's degrade-to-overview fallback.
+ * Only three detail pages are stubbed; every other detail fetch throws, exercising the base
+ * class's degrade-to-overview fallback.
  */
 class ZitadelleWebsiteImporterTest {
     private lateinit var importer: ZitadelleWebsiteImporter

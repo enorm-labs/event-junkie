@@ -23,9 +23,8 @@ import java.time.LocalTime
 /**
  * Unit tests for [UraniaWebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic, offline-safe testing
- * without real HTTP requests. Only three event pages are stubbed; every other detail fetch throws,
- * exercising the base class's degrade-to-calendar fallback.
+ * Only three event pages are stubbed; every other detail fetch throws, exercising the base class's
+ * degrade-to-calendar fallback.
  */
 class UraniaWebsiteImporterTest {
     private lateinit var importer: UraniaWebsiteImporter

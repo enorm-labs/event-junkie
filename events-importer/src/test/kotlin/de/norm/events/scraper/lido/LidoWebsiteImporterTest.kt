@@ -24,10 +24,9 @@ import java.time.LocalDate
 /**
  * Unit tests for [LidoWebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing. Focuses on the overview ↔ detail merge behaviour: the
- * detail page supplies prices/description/ticket/image, while the overview keeps
- * the date, status, sold-out flag, and artist roster the detail header omits.
+ * Focuses on the overview ↔ detail merge behaviour: the detail page supplies
+ * prices/description/ticket/image, while the overview keeps the date, status, sold-out flag, and
+ * artist roster the detail header omits.
  */
 class LidoWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()

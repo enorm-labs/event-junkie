@@ -23,8 +23,6 @@ import java.time.LocalTime
  * listing already assembled the date from its own span group. Both are left to
  * [AbstractAegVenueImporter.fillGapsFromOverview].
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see AegOverviewPageScraper for the listing parser (title, date, category, price).
  * @see AbstractAegVenueImporter for the HTTP fetch orchestrator.
  */
@@ -35,7 +33,6 @@ class AegDetailPageScraper {
      * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no event
      * heading — the marker that the request did not return a real event page.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive the
      *   [ScrapedEvent.sourceId].
      * @param eventSource the venue whose page this is, used for the `sourceId` prefix.

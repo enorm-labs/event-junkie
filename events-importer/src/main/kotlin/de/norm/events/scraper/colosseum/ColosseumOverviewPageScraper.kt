@@ -49,9 +49,6 @@ import java.math.BigDecimal
  *   ("Investment", "Das Betreute Singen September") as a performer's, so minting it as a headliner
  *   would create artists that are not people.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see ColosseumWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.colosseumberlin.com/event">Colosseum programme</a>
  */
@@ -61,7 +58,6 @@ class ColosseumOverviewPageScraper {
     /**
      * Parses all events from the programme page's embedded Wix warmup payload.
      *
-     * @param document the parsed Jsoup document of the `/event` page.
      * @param baseUrl the URL the document was fetched from, used to resolve the per-event
      *   `/details-registrierung/<slug>` URLs.
      * @return a list of [ScrapedEvent] instances, one per listed event.

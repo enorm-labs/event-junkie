@@ -20,8 +20,6 @@ import java.time.LocalTime
  * Pure HTML parser for Cassiopeia's Webflow-based event listing (overview) page.
  *
  * Extracts event data from `.event-item` elements on the `/club` page.
- * This class performs **no I/O** — it operates solely on a pre-fetched
- * Jsoup [Document], making it easy to test with static HTML fixtures.
  *
  * The listing page serves two purposes:
  * 1. **Discovery** — identifies all event URLs for detail page fetching.
@@ -58,7 +56,6 @@ class CassiopeiaOverviewPageScraper(
      * with a Webflow CMS numeric ID suffix is preferred because it is the
      * stable, canonical URL.
      *
-     * @param document the parsed Jsoup document of the overview page.
      * @param sourceUrl the URL the document was fetched from, used for
      *   resolving relative links and building `sourceId` values.
      * @return a list of upcoming [ScrapedEvent] instances (today onward) extracted from

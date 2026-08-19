@@ -34,8 +34,6 @@ import java.time.LocalTime
  * `HH:mm`. The venue leaves recently-passed nights on the page; those are dropped centrally at
  * persistence time (`EventUpsertService`), so this parser returns every dated night as-is.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see JunctionBarMusicWebsiteImporter for the fetch orchestration (listing → monthly pages).
  */
 @Suppress("TooManyFunctions") // Cohesive single-responsibility parser; the inline markup needs several small field extractors.
@@ -45,7 +43,6 @@ class JunctionBarMusicOverviewPageScraper {
     /**
      * Parses all live-music events from one monthly program page.
      *
-     * @param document the parsed Jsoup document of the monthly page.
      * @param baseUrl the URL the document was fetched from, used to derive the year, resolve
      *   relative image paths, and as each event's `sourceUrl`.
      * @return one [ScrapedEvent] per dated night that lists at least one real band.

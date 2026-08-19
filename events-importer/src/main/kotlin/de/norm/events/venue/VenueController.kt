@@ -43,7 +43,6 @@ class VenueController(
         @PathVariable id: Long
     ): VenueResponse = venueService.findById(id)
 
-    /** Creates a new venue and returns the persisted entity. */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new venue")

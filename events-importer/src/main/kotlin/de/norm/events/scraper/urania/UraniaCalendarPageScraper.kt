@@ -38,8 +38,6 @@ import java.time.LocalDate
  * against the house rather than split between its halls, which is exactly what all four of those
  * sources describe.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see UraniaEventPageScraper for the event pages (description, price, poster).
  * @see UraniaWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -49,7 +47,6 @@ class UraniaCalendarPageScraper {
     /**
      * Parses every event on the calendar page.
      *
-     * @param document the parsed Jsoup document of the `/kalender/` page.
      * @param baseUrl the URL the document was fetched from, used to resolve event links.
      */
     fun scrape(

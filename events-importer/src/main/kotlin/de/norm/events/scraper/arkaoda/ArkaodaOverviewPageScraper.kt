@@ -26,9 +26,6 @@ import org.jsoup.nodes.Element
  * There is no pagination: the page has no next-page link and no query parameter that
  * yields more events, so ADR-007's "first page only" rule is satisfied trivially.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see ArkaodaFieldMapping for the header/title/type/artist rules shared with the detail page.
  * @see ArkaodaWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://berlin.arkaoda.com/?/default/program">arkaoda Berlin programme</a>
@@ -39,7 +36,6 @@ class ArkaodaOverviewPageScraper {
     /**
      * Parses all event blocks from the programme listing document.
      *
-     * @param document the parsed Jsoup document of `?/default/program`.
      * @param baseUrl the URL the document was fetched from, used to resolve the relative detail and flyer links.
      * @return a list of [ScrapedEvent] instances, one per block.
      */

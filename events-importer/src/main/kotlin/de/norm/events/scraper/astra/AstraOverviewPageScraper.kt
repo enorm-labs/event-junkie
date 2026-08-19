@@ -45,9 +45,6 @@ import java.time.LocalTime
  * needs both the subtitle (support acts) and the `kind`-derived event type,
  * which only coincide on the overview page.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched
- * Jsoup [Document], making it easy to test with static HTML fixtures.
- *
  * @see AstraDetailPageScraper for the primary per-event data source.
  * @see AstraWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.astra-berlin.de/">Astra Kulturhaus</a>
@@ -58,10 +55,8 @@ class AstraOverviewPageScraper {
     /**
      * Parses all event articles from the overview page document.
      *
-     * @param document the parsed Jsoup document of the homepage.
      * @param baseUrl the URL the document was fetched from, used for resolving
      *   relative detail links and building `sourceId` values.
-     * @return a list of [ScrapedEvent] instances extracted from the page.
      */
     fun scrape(
         document: Document,

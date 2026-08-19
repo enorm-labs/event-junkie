@@ -62,9 +62,6 @@ import java.time.LocalTime
  * nights with concerts and workshops, so a cue-less title is genuinely unknown rather than
  * presumed a club night the way Crack Bellmer's is.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see MaayaWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://maaya.de/">MAAYA Berlin</a>
  */
@@ -74,7 +71,6 @@ class MaayaOverviewPageScraper {
     /**
      * Parses every dated event out of the home page's **NEXT DATES** section.
      *
-     * @param document the parsed Jsoup document of the home page.
      * @param baseUrl the URL the document was fetched from; stored as every event's `sourceUrl`,
      *   since the venue publishes no per-event pages.
      * @return a list of [ScrapedEvent] instances in listing order.

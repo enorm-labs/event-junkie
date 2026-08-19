@@ -23,9 +23,8 @@ import java.time.LocalTime
 /**
  * Unit tests for [DelphiWebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic, offline-safe testing
- * without real HTTP requests. Only three production pages are stubbed; every other production
- * fetch throws, exercising the degrade-to-programme-row fallback.
+ * Only three production pages are stubbed; every other production fetch throws, exercising the
+ * degrade-to-programme-row fallback.
  */
 class DelphiWebsiteImporterTest {
     private lateinit var importer: DelphiWebsiteImporter

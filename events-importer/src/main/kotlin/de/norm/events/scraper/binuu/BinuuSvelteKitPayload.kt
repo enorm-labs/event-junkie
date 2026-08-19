@@ -50,7 +50,6 @@ internal object BinuuSvelteKitPayload {
      * the site emits the literal both minified (`events:[`) and pretty-printed
      * (`events: [`).
      *
-     * @param document the parsed Jsoup document of the listing or detail page.
      * @param key the property that opens the wrapping object and is returned from it
      *   (`"events"` for the listing, `"item"` for a detail page).
      * @param openBracket the bracket opening that property's value (`'['` / `'{'`),

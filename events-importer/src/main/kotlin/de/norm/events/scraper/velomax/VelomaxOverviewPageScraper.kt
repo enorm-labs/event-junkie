@@ -48,9 +48,6 @@ import java.time.format.DateTimeFormatter
  * Appending the session's start time (`-1830`) is what makes each one its own event; without it
  * `event.source_id`, which is `UNIQUE`, would keep only the first.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see VelomaxDetailPageScraper for the Microdata detail pages.
  * @see <a href="https://www.velomax.de/events">Velomax events listing</a>
  */
@@ -60,7 +57,6 @@ class VelomaxOverviewPageScraper {
     /**
      * Parses one hall's events from the shared listing.
      *
-     * @param document the parsed Jsoup document of `/events`.
      * @param baseUrl the URL the document was fetched from, used to resolve detail links.
      * @param hall the hall whose entries to keep; the other two halls' entries are skipped.
      * @return a list of [ScrapedEvent] instances for that hall, in listing order.

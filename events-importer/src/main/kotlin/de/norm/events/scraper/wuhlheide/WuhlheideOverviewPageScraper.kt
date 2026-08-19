@@ -29,9 +29,6 @@ import org.jsoup.nodes.Element
  * stable [ScrapedEvent.sourceId]. A run of nights by one act is normal here, and the per-date
  * URL is what keeps them apart.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with a static fixture.
- *
  * @see WuhlheideDetailPageScraper for the detail-page data (times, price, promoter).
  * @see WuhlheideWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.wuhlheide.de/programm">Parkbühne Wuhlheide programme</a>
@@ -42,7 +39,6 @@ class WuhlheideOverviewPageScraper {
     /**
      * Parses all shows from the programme page document.
      *
-     * @param document the parsed Jsoup document of the `/programm` page.
      * @param baseUrl the URL the document was fetched from, used to resolve the per-event
      *   detail links.
      * @return a list of [ScrapedEvent] instances, one per listed show.

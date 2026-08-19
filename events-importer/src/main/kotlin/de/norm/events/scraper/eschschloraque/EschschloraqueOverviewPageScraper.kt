@@ -46,9 +46,6 @@ import java.time.format.DateTimeParseException
  *   doors time, so [ScrapedEvent.doorsTime] stays null.
  * - **No sold-out or cancellation flags**, so every event is `SCHEDULED`.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see EschschloraqueWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.eschschloraque.de/">Eschschloraque Rümschrümp</a>
  */
@@ -58,7 +55,6 @@ class EschschloraqueOverviewPageScraper {
     /**
      * Parses every event node on the home page.
      *
-     * @param document the parsed Jsoup document of the home page.
      * @param baseUrl the URL the document was fetched from, used to resolve each node's relative path.
      * @return a list of [ScrapedEvent] instances in page order (the view sorts by event date).
      */

@@ -30,8 +30,6 @@ import java.time.LocalTime
  * detail and overview data is handled by the [CassiopeiaWebsiteImporter]
  * orchestrator, keeping this scraper focused on parsing only.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched
- * Jsoup [Document], making it easy to test with static HTML fixtures.
  * HTTP fetching is handled by the [CassiopeiaWebsiteImporter] orchestrator.
  *
  * All parsing is scoped to the `.modul-section.events` container, which
@@ -77,7 +75,6 @@ class CassiopeiaDetailPageScraper {
      * `https://cassiopeia-berlin.de/event/some-slug` → `cassiopeia:some-slug`),
      * matching the convention used by [CassiopeiaOverviewPageScraper].
      *
-     * @param document the parsed Jsoup document of the event's detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl]
      *   and to derive the [ScrapedEvent.sourceId].
      * @return the parsed event data, or `null` if the page lacks the expected

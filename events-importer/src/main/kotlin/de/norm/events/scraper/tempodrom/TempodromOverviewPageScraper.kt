@@ -36,9 +36,6 @@ import java.math.BigDecimal
  * `description` are run through [decodeHtml] before anything else touches them — see that function
  * for why decoding late would be too late.
  *
- * This class performs **no I/O** — it operates on a pre-fetched Jsoup [Document], reading only the
- * JSON-LD out of it, which makes it trivial to test against a saved snapshot.
- *
  * @see TempodromWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.tempodrom.de/programm-und-tickets/">Tempodrom programme</a>
  */
@@ -50,7 +47,6 @@ class TempodromOverviewPageScraper {
     /**
      * Parses every event from the listing page's JSON-LD.
      *
-     * @param document the parsed Jsoup document of `/programm-und-tickets/`.
      * @return a list of [ScrapedEvent] instances; empty when the page carries no parseable
      *   schema.org `Event` data.
      */

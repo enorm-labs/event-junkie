@@ -54,9 +54,6 @@ import java.util.Locale
  * never filled — and publishes no doors time, no prices and no ticket links, so none of those is
  * read.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see CrackBellmerWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.crackbellmer.de/program/this-month">Crack Bellmer programme</a>
  */
@@ -69,7 +66,6 @@ class CrackBellmerOverviewPageScraper(
     /**
      * Parses all event items from the programme document.
      *
-     * @param document the parsed Jsoup document of the programme page.
      * @param sourceUrl the URL the document was fetched from, used to resolve the relative
      *   `/events/<slug>` detail links.
      * @return the upcoming [ScrapedEvent] instances (today onward) in listing order.

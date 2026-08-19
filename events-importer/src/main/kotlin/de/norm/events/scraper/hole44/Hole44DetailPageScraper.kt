@@ -33,9 +33,6 @@ import tools.jackson.databind.json.JsonMapper
  * only fills gaps (and stands in entirely when the detail fetch fails) via
  * [Hole44WebsiteImporter.fillGapsFromOverview].
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with a static fixture.
- *
  * @see Hole44OverviewPageScraper for overview parsing (discovery, date, fallback).
  * @see Hole44WebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://hole-berlin.de/event/2026-08-02-municipal-waste/">Example detail page</a>
@@ -49,7 +46,6 @@ class Hole44DetailPageScraper {
      * Parses an event detail page into a [ScrapedEvent], or `null` when the page has
      * no event title (an unexpected structure).
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive
      *   the [ScrapedEvent.sourceId].
      */

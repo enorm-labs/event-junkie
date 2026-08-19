@@ -43,9 +43,6 @@ private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
  * Dates carry a weekday but no year, so the year is inferred from the weekday
  * ([inferYearForWeekday]).
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see KaterWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.katerclub.de/">Kater Berlin</a>
  */
@@ -58,7 +55,6 @@ class KaterOverviewPageScraper(
     /**
      * Parses all event articles from the homepage document.
      *
-     * @param document the parsed Jsoup document of the homepage.
      * @param baseUrl the URL the document was fetched from, used to build each event's anchor URL.
      * @return a list of [ScrapedEvent] instances, in listing order.
      */

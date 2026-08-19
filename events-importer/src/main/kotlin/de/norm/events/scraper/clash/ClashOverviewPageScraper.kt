@@ -37,9 +37,6 @@ import java.time.LocalTime
  * lineup subtitle (see [parseArtists]); the rest of the data is sparse — no doors time,
  * prices, genre, or promoters — so those fields are left unset.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see ClashWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://clash-berlin.de/">Clash Berlin</a>
  */
@@ -49,9 +46,7 @@ class ClashOverviewPageScraper {
     /**
      * Parses all events from the Clash homepage document.
      *
-     * @param document the parsed Jsoup document of the Clash homepage.
      * @param baseUrl the URL the document was fetched from, used for resolving the per-event anchor link.
-     * @return a list of [ScrapedEvent] instances extracted from the page.
      */
     fun scrape(
         document: Document,

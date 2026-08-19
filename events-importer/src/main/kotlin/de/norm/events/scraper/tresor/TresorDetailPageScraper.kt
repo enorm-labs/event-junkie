@@ -25,9 +25,6 @@ import org.jsoup.nodes.Element
  * repeated verbatim on every night ("Garderobe at Tresor is now self-service lockers…"), so only
  * the part above that rule is kept as the description.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see TresorOverviewPageScraper for the listing (discovery, date, floors, fallback).
  * @see TresorWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://tresorberlin.com/event/20260801-tresor-klubnacht/">Example event page</a>
@@ -38,7 +35,6 @@ class TresorDetailPageScraper {
     /**
      * Parses an event page into a [ScrapedEvent], or `null` when it carries no title.
      *
-     * @param document the parsed Jsoup document of the event page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive its date and
      *   [ScrapedEvent.sourceId].
      */

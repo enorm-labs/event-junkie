@@ -47,7 +47,6 @@ internal object WixEventsWarmupData {
      * `null` when the warmup script is absent, unparseable, or carries no Wix
      * Events widget (e.g. an empty program).
      *
-     * @param document the parsed Jsoup document of the venue's listing page.
      * @param source the venue whose page is being read, used only for log context.
      */
     @Suppress(

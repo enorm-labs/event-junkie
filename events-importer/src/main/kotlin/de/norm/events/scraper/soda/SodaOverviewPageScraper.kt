@@ -36,9 +36,6 @@ import java.time.MonthDay
  * date out of the slug, which the venue spells inconsistently (`…-15-08-2026` on most
  * events, `…-150826` on others).
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with a static fixture.
- *
  * @see SodaDetailPageScraper for the primary per-event data source.
  * @see SodaWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.soda-berlin.de/events">Soda Club event listing</a>
@@ -52,10 +49,8 @@ class SodaOverviewPageScraper(
     /**
      * Parses all event cards from the overview page document.
      *
-     * @param document the parsed Jsoup document of the `/events` listing.
      * @param baseUrl the URL the document was fetched from, used to resolve the relative
      *   detail links and build `sourceId` values.
-     * @return a list of [ScrapedEvent] instances extracted from the page.
      */
     fun scrape(
         document: Document,

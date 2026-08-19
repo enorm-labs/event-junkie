@@ -27,9 +27,6 @@ import org.jsoup.nodes.Element
  * by the overview's festival-day normalization), so the overview type wins in
  * the merge and the detail value is only a fallback.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched
- * Jsoup [Document], making it easy to test with static HTML fixtures.
- *
  * @see AstraOverviewPageScraper for overview parsing (event type, discovery).
  * @see AstraWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.astra-berlin.de/events/2026-05-18-green-lung">Example detail page</a>
@@ -44,7 +41,6 @@ class AstraDetailPageScraper {
      * single event. Returns `null` if the container or the event title is
      * missing (an unexpected page structure).
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to
      *   derive the [ScrapedEvent.sourceId].
      */

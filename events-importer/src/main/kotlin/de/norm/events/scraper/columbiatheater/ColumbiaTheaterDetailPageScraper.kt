@@ -30,9 +30,6 @@ import org.jsoup.nodes.Document
  * [ColumbiaTheaterWebsiteImporter.fillGapsFromOverview]. The date comes from the permalink slug
  * for the same reason as on the overview: the rendered header date usually omits the year.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see ColumbiaTheaterOverviewPageScraper for overview parsing (discovery, date, fallback).
  * @see ColumbiaTheaterWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://columbia-theater.de/event/20260803-soulfly/">Example detail page</a>
@@ -44,7 +41,6 @@ class ColumbiaTheaterDetailPageScraper {
      * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no
      * `.event-content` block or no title (an unexpected structure).
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive its date
      *   and [ScrapedEvent.sourceId].
      */

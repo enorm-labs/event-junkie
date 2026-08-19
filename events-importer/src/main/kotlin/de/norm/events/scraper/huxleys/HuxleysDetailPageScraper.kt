@@ -32,9 +32,6 @@ import java.math.BigDecimal
  * `.eventname` stays authoritative and this scraper derives a title only to stand on its own
  * (see [HuxleysWebsiteImporter.fillGapsFromOverview]).
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see HuxleysOverviewPageScraper for overview parsing (discovery, date, times, status, fallback).
  * @see HuxleysWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://huxleysneuewelt.de/event/2026-08-02-thievery-corporation">Example detail page</a>
@@ -46,7 +43,6 @@ class HuxleysDetailPageScraper {
      * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no event
      * article or no derivable title.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive its date and
      *   [ScrapedEvent.sourceId].
      */

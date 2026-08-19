@@ -22,10 +22,9 @@ import java.time.LocalTime
 /**
  * Unit tests for [BadehausWebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing. Two detail pages (a concert with a promoter + start time,
- * and a plain concert) are stubbed explicitly; every other discovered event
- * degrades to its overview data. Focuses on the overview ↔ detail merge.
+ * Two detail pages (a concert with a promoter + start time, and a plain concert) are stubbed
+ * explicitly; every other discovered event degrades to its overview data. Focuses on the overview
+ * ↔ detail merge.
  */
 class BadehausWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()

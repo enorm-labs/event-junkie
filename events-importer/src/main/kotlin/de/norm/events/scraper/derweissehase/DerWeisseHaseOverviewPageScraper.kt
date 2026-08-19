@@ -67,9 +67,6 @@ import java.time.LocalTime
  *    all are stored with the `DJ` role.
  *  - **No status signalling.** A cancelled night is taken off the page rather than labelled.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document], making it
- * easy to test with a static fixture.
- *
  * @see DerWeisseHaseWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://derweissehase.club/events">Der Weiße Hase Berlin</a>
  */
@@ -79,7 +76,6 @@ class DerWeisseHaseOverviewPageScraper {
     /**
      * Parses all announced nights from the event listing document.
      *
-     * @param document the parsed Jsoup document of the listing page.
      * @param baseUrl the URL the document was fetched from, stored as each event's
      *   [ScrapedEvent.sourceUrl] — the venue publishes no per-event page.
      * @return a list of [ScrapedEvent] instances, in listing order.

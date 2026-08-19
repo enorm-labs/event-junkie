@@ -36,9 +36,6 @@ import java.time.LocalTime
  *    type (see [inferEventType]). It also supplies fallback title / date / doors /
  *    image. Merging is handled by [BadehausWebsiteImporter].
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see BadehausWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://badehaus-berlin.com/events/">Badehaus Berlin programme</a>
  */
@@ -48,7 +45,6 @@ class BadehausOverviewPageScraper {
     /**
      * Parses all event cards from the `/events/` listing document.
      *
-     * @param document the parsed Jsoup document of `/events/`.
      * @param baseUrl the URL the document was fetched from, used to resolve relative links.
      * @return a list of [ScrapedEvent] instances, one per card.
      */

@@ -31,9 +31,6 @@ import java.time.LocalTime
  * `selectFirst` rather than collected. And the ticket link comes in two forms: a pretix widget
  * whose `event` attribute holds the shop URL, or a Resident Advisor button.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with a static fixture.
- *
  * @see RitterButzkeOverviewPageScraper for the listing parser (discovery, date, poster).
  * @see RitterButzkeWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://club.ritterbutzke.com/event/070826-Unisonw-ZappedRecords-NizarSarakbi-JosefinaTapia">Example detail page</a>
@@ -44,7 +41,6 @@ class RitterButzkeDetailPageScraper {
     /**
      * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no title.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive the
      *   [ScrapedEvent.sourceId].
      */

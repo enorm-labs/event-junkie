@@ -30,9 +30,6 @@ import java.time.LocalTime
  * markup of its own** — where the venue publishes one at all it is a line inside the
  * description prose (`"Doors: 19:30"`, `"Beginn 20:00"`), so it is read from there.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document],
- * making it easy to test with a static fixture.
- *
  * @see ModusOverviewPageScraper for the listing parser (discovery, date, poster).
  * @see ModusWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://modus-berlin.de/event/240926-c4rl">Example detail page</a>
@@ -43,7 +40,6 @@ class ModusDetailPageScraper {
     /**
      * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no title.
      *
-     * @param document the parsed Jsoup document of the detail page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive the
      *   [ScrapedEvent.sourceId].
      */

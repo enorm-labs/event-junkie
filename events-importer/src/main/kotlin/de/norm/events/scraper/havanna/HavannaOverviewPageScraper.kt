@@ -27,8 +27,6 @@ data class HavannaNightLink(
  * Links are kept only when their path names a weekday, which filters out the site's other buttons
  * (the footer's "Subscribe", a night page's "‹ Back to Events") without depending on the button text.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see HavannaWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.havanna-berlin.de/events">Havanna events page</a>
  */
@@ -38,7 +36,6 @@ class HavannaOverviewPageScraper {
     /**
      * Parses the night links from the overview page.
      *
-     * @param document the parsed Jsoup document of `/events`.
      * @param baseUrl the URL the document was fetched from, used to resolve the relative night links.
      * @return one [HavannaNightLink] per weekly night, in page order and de-duplicated by URL.
      */

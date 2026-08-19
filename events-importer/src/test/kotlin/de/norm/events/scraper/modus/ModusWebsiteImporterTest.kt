@@ -20,9 +20,8 @@ import java.time.LocalTime
 /**
  * Unit tests for [ModusWebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic, offline-safe testing
- * without real HTTP requests. Only the three detail pages captured as fixtures are stubbed;
- * every other detail fetch throws, exercising the base class's degrade-to-overview fallback.
+ * Only the three detail pages captured as fixtures are stubbed; every other detail fetch throws,
+ * exercising the base class's degrade-to-overview fallback.
  */
 class ModusWebsiteImporterTest {
     private lateinit var importer: ModusWebsiteImporter

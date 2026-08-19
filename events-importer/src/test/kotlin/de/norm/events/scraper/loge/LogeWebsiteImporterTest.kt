@@ -21,10 +21,9 @@ import java.time.LocalDate
 /**
  * Unit tests for [LogeWebsiteImporter].
  *
- * Uses static HTML fixtures and a mocked [HtmlFetcher] for deterministic,
- * offline-safe testing. Focuses on the overview → detail merge: the detail page
- * supplies the price and status while the overview supplies the artist roster,
- * and events fall back to overview data when a detail page cannot be parsed.
+ * Focuses on the overview → detail merge: the detail page supplies the price and status while the
+ * overview supplies the artist roster, and events fall back to overview data when a detail page
+ * cannot be parsed.
  */
 class LogeWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()

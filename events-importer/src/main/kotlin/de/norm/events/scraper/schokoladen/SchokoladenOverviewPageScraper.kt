@@ -33,9 +33,6 @@ import java.time.LocalTime
  * the most stable extraction targets: the date needs no year inference, and the
  * fragment id yields a stable per-event `sourceId`.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup
- * [Document], making it easy to test with static HTML fixtures.
- *
  * @see SchokoladenWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.schokoladen-mitte.de/">Schokoladen Mitte</a>
  */
@@ -45,9 +42,7 @@ class SchokoladenOverviewPageScraper {
     /**
      * Parses all events from the Schokoladen overview page document.
      *
-     * @param document the parsed Jsoup document of the Schokoladen homepage.
      * @param baseUrl the URL the document was fetched from, used for resolving relative links.
-     * @return a list of [ScrapedEvent] instances extracted from the page.
      */
     fun scrape(
         document: Document,

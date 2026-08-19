@@ -28,8 +28,6 @@ import java.time.LocalTime
  * intro summarising the evening, which is not repeated in the body, so it is kept at the head of
  * the description rather than dropped.
  *
- * This class performs **no I/O** — it operates solely on a pre-fetched Jsoup [Document].
- *
  * @see UraniaCalendarPageScraper for the calendar (discovery, date, start time).
  * @see UraniaWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -40,7 +38,6 @@ class UraniaEventPageScraper {
      * Parses an event page into a [ScrapedEvent], or `null` when it carries no heading — the marker
      * that the request did not return a real event page.
      *
-     * @param document the parsed Jsoup document of the event page.
      * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and for its `sourceId`.
      */
     @Suppress("ReturnCount") // A guard clause for the missing heading is clearer than nesting
