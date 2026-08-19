@@ -79,7 +79,7 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
     @Modifying
     @Query(
         """
-        UPDATE events.event_source
+        UPDATE $EVENTS_SCHEMA.event_source
         SET flagged_at = :flaggedAt, flag_reason = :reason
         WHERE id = :id
         """
@@ -97,7 +97,7 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
      * decoration. The clear is what makes the set mean something.
      */
     @Modifying
-    @Query("UPDATE events.event_source SET flagged_at = NULL, flag_reason = NULL WHERE id = :id")
+    @Query("UPDATE $EVENTS_SCHEMA.event_source SET flagged_at = NULL, flag_reason = NULL WHERE id = :id")
     suspend fun clearFlag(id: Long): Int
 
     /**

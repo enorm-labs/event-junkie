@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.EVENTS_SCHEMA
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.annotation.Id
 import org.springframework.data.r2dbc.repository.Query
@@ -39,7 +40,7 @@ interface ImportRunFieldStatsRepository : CoroutineCrudRepository<ImportRunField
      */
     @Query(
         """
-        SELECT * FROM events.import_run_field_stats
+        SELECT * FROM $EVENTS_SCHEMA.import_run_field_stats
         WHERE source_id = :sourceId AND field = :field
         ORDER BY observed_at DESC, id DESC
         LIMIT :limit
