@@ -78,9 +78,17 @@ it holds.**
 
 The provider constraint is real but narrower than it first looks. Hetzner's own [S3 guide](https://registry.terraform.io/providers/hetznercloud/hcloud/latest/docs/guides/s3-object-storage)
 says there is no Cloud API for buckets and that third-party providers are "the only supported method" — but it then links a documented workflow using the
-**MinIO** provider. So the other two buckets (`-o2` for OpenObserve, `-backups` for `wal-g`) _could_ be declared that way when their issues land, at the cost of
-a second provider and a second credential in this configuration. Only `-tfstate` is genuinely unavoidable by hand, and it is unavoidable for the
-chicken-and-egg reason rather than the provider one.
+**MinIO** provider — which in turn names Hetzner Object Storage among its tested S3-compatible backends, so it is the documented path from both ends.
+
+**`-o2` is declared that way as of #271** (`bootstrap/storage.tf`). The cost turned out to be lower than this paragraph long predicted: a provider block, and
+three `MINIO_*` exports in `.envrc.example` that re-export the **same** Keychain entries the S3 backend already uses, because the provider reads different
+variable names. There is no second credential to store or rotate.
+
+**`-backups` stays hand-made for now**, for a smaller reason than `-tfstate`: it already exists, so adopting it means `tofu import` — a deliberate act rather
+than a side effect. [#586](https://github.com/enorm-labs/event-junkie/issues/586) decides that, and it matters there because the lifecycle rule backing the
+privacy notice's 30-day backup claim is the thing that ought to be declared.
+
+Only `-tfstate` is genuinely unavoidable by hand, and it is unavoidable for the chicken-and-egg reason rather than the provider one.
 
 ## Running it
 

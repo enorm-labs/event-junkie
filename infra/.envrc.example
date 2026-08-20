@@ -38,6 +38,16 @@ export AWS_SECRET_ACCESS_KEY="$(keychain event-junkie-s3-secret-key)"
 export AWS_DEFAULT_REGION=fsn1
 export AWS_ENDPOINT_URL_S3=https://fsn1.your-objectstorage.com
 
+# The MinIO provider manages the `-o2` bucket (#271). It reads MINIO_* rather than AWS_*, so these
+# are the SAME credential under the names that provider looks for — not a second secret to store,
+# rotate or leak. Nothing new goes in the Keychain.
+#
+# Note the endpoint has NO scheme here, unlike AWS_ENDPOINT_URL_S3 directly above: the provider
+# takes `host[:port]`. Passing the URL form fails at connect time rather than at validate time.
+export MINIO_ENDPOINT=fsn1.your-objectstorage.com
+export MINIO_USER="$AWS_ACCESS_KEY_ID"
+export MINIO_PASSWORD="$AWS_SECRET_ACCESS_KEY"
+
 # Behind a TLS-intercepting corporate proxy, the AWS CLI fails every call with
 # `CERTIFICATE_VERIFY_FAILED … self-signed certificate in certificate chain`. It is not a
 # credentials problem and not a Hetzner problem: the CLI ships its own Python CA bundle and

@@ -37,3 +37,63 @@ variable "ssh_public_keys" {
   type        = map(string)
   nullable    = false
 }
+
+variable "object_storage_endpoint" {
+  description = <<-EOT
+    Object Storage endpoint the MinIO provider talks to.
+
+    **Host and optional port, with no scheme** — the provider takes `host[:port]` while
+    `AWS_ENDPOINT_URL_S3` in `.envrc.example` carries `https://`. Passing the URL form here fails
+    with a connection error rather than a validation one, which is the slower way to find out.
+
+    Matches the region below and the S3 backend in `backend.tf`; traffic inside the `eu-central`
+    network zone is free.
+  EOT
+  type        = string
+  default     = "fsn1.your-objectstorage.com"
+  nullable    = false
+
+  validation {
+    condition     = !can(regex("^https?://", var.object_storage_endpoint))
+    error_message = "object_storage_endpoint is host[:port] with no scheme — drop the https:// prefix."
+  }
+}
+
+variable "object_storage_region" {
+  description = <<-EOT
+    Region for Object Storage request signing, and the location the `-o2` bucket is created in.
+
+    **Hetzner enforces this in the signature and rejects a request signed with the wrong region**,
+    so a mismatch fails every call with a signature error that reads like bad credentials rather
+    than like a wrong region. The MinIO provider's own default is `us-east-1`, which is never right
+    here.
+
+    `fsn1` matches the S3 backend in `backend.tf` and the `-backups` bucket. Buckets cannot be moved
+    after creation, so this is chosen once and then load-bearing — `backend.tf` carries the same
+    warning for the same reason.
+  EOT
+  type        = string
+  default     = "fsn1"
+  nullable    = false
+}
+
+variable "object_storage_bucket_o2" {
+  description = <<-EOT
+    Object Storage bucket for OpenObserve's Parquet files (#271, ADR-015).
+
+    Declared rather than clicked, unlike `-tfstate` and `-backups`. The reason is not tidiness: the
+    retention policy that will live on this bucket is what the privacy notice's log-retention claim
+    depends on (LEGAL.md §7.5), and a control backing a statement made to data subjects should be
+    visible in a diff rather than set in a console.
+  EOT
+  type        = string
+  default     = "event-junkie-o2"
+  nullable    = false
+
+  validation {
+    # Buckets are global to the project and cannot be renamed, so a typo here is a stray bucket
+    # somebody has to notice and delete by hand.
+    condition     = can(regex("^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$", var.object_storage_bucket_o2))
+    error_message = "Bucket names are lower-case letters, digits and hyphens, 3-63 characters, not starting or ending with a hyphen."
+  }
+}
