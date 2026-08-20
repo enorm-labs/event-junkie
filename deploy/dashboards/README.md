@@ -109,11 +109,19 @@ A bare `db_events` returned **six series in one hour** for what is logically two
 query at `now` returned **nothing at all** — the newest series had not been written within the
 lookback. Every query here starts with `max by (<real label>)` to collapse them.
 
-**This is also a cost problem, not only a correctness one.** Stream count went from 603 to 982 in a
-day, and OpenObserve's compactor was observed merging 38 KB Parquet files and building a full-text
-Tantivy index per stream per hour — on two cores. Cardinality is the lever there, and
-`container_image_tag` is the worst offender. **Not yet fixed and not yet filed** — the collector's
-`metricstransform`/`attributes` processor is where the labels would be dropped.
+**This costs storage as well as correctness, though less than it first looked.** I initially blamed
+label churn for the stream count going 603 -> 982 in a day. That was wrong: streams count metric
+_names_, and `pg_*` alone is **362 of them**, added by postgres-exporter in #608. Label churn
+multiplies series _within_ a stream, which is a different and smaller bill.
+
+Where the rows actually are, measured: `apiserver_*` is **51% of all stored rows**, and
+`apiserver_request_duration_seconds_bucket` alone is 277,368 rows and 203 MB. Dropping metric
+families nothing queries is the big lever; this is the correctness one.
+
+The churn itself is fixed in #611 — a `resource` processor on the gateway's metrics pipeline, which
+deletes `container.image.tag` and eleven other identity attributes while keeping `k8s.pod.name`. The
+`max by (...)` in every query here stays regardless: it is what makes a panel correct across a pod
+restart, which is legitimate churn that no processor should remove.
 
 ## What is missing, and why
 
