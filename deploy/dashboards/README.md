@@ -64,6 +64,35 @@ makes the same argument; this is where you would see it.
 watching. A dashboard about the application that cannot show the node dying under it is only half
 a dashboard.
 
+## What these panels cannot see, and it is the broken sources
+
+**A source that has NEVER succeeded is absent from the staleness panels entirely.**
+`ImporterMetrics.publishLastSuccess` is only called on a successful run, so a venue that has failed
+every time it was tried has no `importer_source_last_success` series — and something with no series
+cannot be stale, it is simply not there.
+
+As of 2026-08-20 there are **86 sources and 84 series**. The two missing ones are the two that are
+actually broken:
+
+```
+quasimodo   FAILED  retries=2  last_import 08-17 11:50  last_success NULL  HTTP 500
+club-ost    FAILED  retries=1  last_import 08-19 11:50  last_success NULL  HTTP 500
+```
+
+So **"0 sources stale" does not mean "0 sources broken"**, and the panel says so in its description.
+This is the same shape ADR-015 already records for counters — a meter that has never fired is absent
+from the exposition — applied to a gauge.
+
+The fix belongs in the importer rather than here: something per-source that exists regardless of
+outcome. `importer_run_outcome_total{source,outcome}` would do it, but it is **not yet queryable
+either** — Micrometer counters live in the process, so they vanish on restart and only reappear after
+the next run. Filed separately.
+
+**The thresholds assume a 24h cycle**, because that is what `import_interval_minutes = 1440` is. The
+first version of this dashboard used 12h, which against a 24h interval flags all 84 venues every
+single day — a panel that is red as a matter of routine is a panel everyone learns to ignore. 36h is
+"missed a whole cycle and half of the next".
+
 ## OpenObserve's PromQL is partial, in ways that fail silently
 
 All four of these were found by running queries against the live instance. **None of them produce

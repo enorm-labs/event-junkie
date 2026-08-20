@@ -78,19 +78,21 @@ panels = [
     panel(
         "p_stale_worst",
         "Oldest source (hours since last success)",
-        "The single worst venue. The importer cycles roughly every 4h, so sustained double digits means it is not "
-        "completing. ADR-015's zero-events alert is written against this same series.",
+        "The single worst venue, against a 24h import interval (`import_interval_minutes = 1440`) — so anything under "
+        "24 is routine and the number climbing past ~36 is the signal. ADR-015's zero-events alert uses this series.",
         "stat",
         "max(%s) / 3600" % AGE,
         x=0, y=0, w=12, h=4, decimals=1,
     ),
     panel(
         "p_stale_count",
-        "Sources stale > 12h",
-        "How many of the 84 venues have not had a successful run in twelve hours. Zero is the healthy value. "
-        "Uses `> bool` so the panel shows 0 rather than going blank when nothing is stale.",
+        "Sources stale > 36h",
+        "Venues that have missed a whole import cycle and half of the next. **36h, not 12h** — the interval is 24h, "
+        "so a 12h threshold flags all 84 every single day as a matter of routine, which is how a panel teaches people "
+        "to ignore it. Uses `> bool` so it shows 0 rather than going blank. NOTE: a source that has NEVER succeeded is "
+        "invisible here — see the dashboard README.",
         "stat",
-        "sum(%s > bool 43200)" % AGE,
+        "sum(%s > bool 129600)" % AGE,
         x=12, y=0, w=12, h=4, decimals=0,
     ),
     panel(
@@ -116,8 +118,9 @@ panels = [
     panel(
         "p_stale_by_source",
         "Twenty stalest sources (hours)",
-        "`topk` rather than `sort_desc`, which OpenObserve does not implement. One venue drifting is a scraper to "
-        "fix; all of them drifting together is the importer or the database.",
+        "`topk` rather than `sort_desc`, which OpenObserve does not implement. Against a 24h interval, a flat band "
+        "under 24 is health. One venue alone above it is a scraper to fix; all of them together is the importer or "
+        "the database.",
         "bar",
         "topk(20, %s / 3600)" % AGE,
         x=0, y=4, w=24, h=8, decimals=1,
