@@ -1,0 +1,437 @@
+{
+  "version": 8,
+  "dashboardId": "",
+  "title": "Is it healthy?",
+  "description": "#271's one-screen answer. The top row is the answer; everything below it is why. Generated from deploy/dashboards/gen_dashboard.py \u2014 edit that, not this.",
+  "role": "",
+  "owner": "",
+  "created": "2026-08-20T16:00:00+00:00",
+  "tabs": [
+    {
+      "tabId": "default",
+      "name": "Overview",
+      "panels": [
+        {
+          "id": "p_stale_worst",
+          "type": "stat",
+          "title": "Oldest source (hours since last success)",
+          "description": "The single worst venue. The importer cycles roughly every 4h, so sustained double digits means it is not completing. ADR-015's zero-events alert is written against this same series.",
+          "config": {
+            "show_legends": true,
+            "decimals": 1
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "max((timestamp(max by (source) (importer_source_last_success)) - max by (source) (importer_source_last_success))) / 3600",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 0,
+            "w": 12,
+            "h": 4,
+            "i": 1
+          }
+        },
+        {
+          "id": "p_stale_count",
+          "type": "stat",
+          "title": "Sources stale > 12h",
+          "description": "How many of the 84 venues have not had a successful run in twelve hours. Zero is the healthy value. Uses `> bool` so the panel shows 0 rather than going blank when nothing is stale.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum((timestamp(max by (source) (importer_source_last_success)) - max by (source) (importer_source_last_success)) > bool 43200)",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 12,
+            "y": 0,
+            "w": 12,
+            "h": 4,
+            "i": 2
+          }
+        },
+        {
+          "id": "p_future_events",
+          "type": "stat",
+          "title": "Future events in the database",
+          "description": "What the site can actually show. A fall here is the failure mode no HTTP check sees: the importer runs, reports success, and the listings quietly empty out.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "max(db_events{horizon=\"future\"})",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 24,
+            "y": 0,
+            "w": 12,
+            "h": 4,
+            "i": 3
+          }
+        },
+        {
+          "id": "p_node_mem",
+          "type": "stat",
+          "title": "Node memory available",
+          "description": "The node is a cpx22 \u2014 2 vCPU / 4 GB running k3s, two JVMs, PostgreSQL and this observability stack. It global-OOMed on 2026-08-20 with load at 99. This panel is the one that would have seen it coming.",
+          "config": {
+            "show_legends": true,
+            "decimals": 2,
+            "unit": "bytes"
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "min(k8s_node_memory_available)",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 36,
+            "y": 0,
+            "w": 12,
+            "h": 4,
+            "i": 4
+          }
+        },
+        {
+          "id": "p_stale_by_source",
+          "type": "bar",
+          "title": "Twenty stalest sources (hours)",
+          "description": "`topk` rather than `sort_desc`, which OpenObserve does not implement. One venue drifting is a scraper to fix; all of them drifting together is the importer or the database.",
+          "config": {
+            "show_legends": true,
+            "decimals": 1
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "topk(20, (timestamp(max by (source) (importer_source_last_success)) - max by (source) (importer_source_last_success)) / 3600)",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 4,
+            "w": 24,
+            "h": 8,
+            "i": 5
+          }
+        },
+        {
+          "id": "p_events_trend",
+          "type": "line",
+          "title": "Events in the database",
+          "description": "Both horizons. `all` only ever grows; `future` is the one that matters and the one that can fall.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "max by (horizon) (db_events)",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 24,
+            "y": 4,
+            "w": 24,
+            "h": 8,
+            "i": 6
+          }
+        },
+        {
+          "id": "p_pg",
+          "type": "line",
+          "title": "PostgreSQL \u2014 database size",
+          "description": "Bytes per database. Disk filling is one of #271's five required alerts, and on this node PostgreSQL shares the disk with everything else.",
+          "config": {
+            "show_legends": true,
+            "decimals": 2,
+            "unit": "bytes"
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "max by (datname) (pg_database_size_bytes)",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 12,
+            "w": 16,
+            "h": 7,
+            "i": 7
+          }
+        },
+        {
+          "id": "p_node_pressure",
+          "type": "line",
+          "title": "Node load average and memory utilisation",
+          "description": "Two queries, deliberately on one axis: on 2026-08-20 load reached 99 on 2 cores while CPU sat 68% idle. Load alone reads as a CPU problem; load next to memory utilisation is what identifies it as stalling.",
+          "config": {
+            "show_legends": true,
+            "decimals": 2
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "max(system_cpu_load_average_5m)",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            },
+            {
+              "query": "max(system_memory_utilization)",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 16,
+            "y": 12,
+            "w": 16,
+            "h": 7,
+            "i": 8
+          }
+        },
+        {
+          "id": "p_certs",
+          "type": "line",
+          "title": "Certificate expiry (days)",
+          "description": "cert-manager's own view, per certificate. Expiry is one of #271's five required alerts and the one that breaks the site without anything crashing.",
+          "config": {
+            "show_legends": true,
+            "decimals": 1
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "(min by (name) (certmanager_certificate_expiration_timestamp_seconds) - timestamp(min by (name) (certmanager_certificate_expiration_timestamp_seconds))) / 86400",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 32,
+            "y": 12,
+            "w": 16,
+            "h": 7,
+            "i": 9
+          }
+        }
+      ]
+    }
+  ],
+  "variables": null,
+  "defaultDatetimeDuration": {
+    "type": "relative",
+    "relativeTimePeriod": "6h",
+    "startTime": null,
+    "endTime": null
+  },
+  "updatedAt": 0
+}
