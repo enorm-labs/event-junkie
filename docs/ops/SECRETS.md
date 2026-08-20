@@ -18,6 +18,16 @@ The objects nothing in this repository creates, why that is a problem worth fixi
 | `hetzner`                 | `cert-manager`                                    | an hcloud API token, **read+write** — staging only    | §8                                                             |
 | `openobserve-credentials` | `flux-system` **and** `observability` — see below | the root login and the `-o2` S3 keypair               | [SECRETS.md](SECRETS.md) §openobserve-credentials              |
 | `github-dispatch`         | `flux-system`                                     | a fine-grained PAT, **`contents: write`** on one repo | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8 — **after** §9 |
+| `postgres-exporter`       | `observability`                                   | the `metrics` role's DSN                              | §postgres-exporter, below                                      |
+| `sops-age`                | `flux-system`                                     | the age private key that decrypts `events-db`         | §3, below                                                      |
+
+**This table listed the first four until 2026-08-21**, when a rebuild followed it and would have restored two of six. `postgres-exporter` and `sops-age` were
+each documented in their own section below and simply never reached the summary — which is exactly the failure mode a summary exists to prevent.
+
+**Only `github-dispatch` cannot be regenerated.** `hetzner` is the Keychain's `HCLOUD_TOKEN`, `sops-age` is `~/.config/sops/age/event-junkie.txt`,
+`postgres-exporter` is an `ALTER ROLE` away, and OpenObserve's root password can be brand new — its PVC is `local-path` on the node's disk, so the metadata DB
+dies with the node and the root user is re-seeded from the Secret at first boot. Worth knowing before copying secrets out of a cluster you are about to
+destroy.
 
 They are typed once by a human and exist nowhere else. **That is the whole problem**, and it is the same shape as the backup credential in §8b: a cluster
 rebuild silently loses them, everything comes back looking healthy, and the failure is a `CrashLoopBackOff` at best and a certificate that quietly stops
@@ -168,6 +178,16 @@ kubectl --context event-junkie-staging create secret generic postgres-exporter -
 
 unset PGPW
 ```
+
+**`DATA_SOURCE_NAME` is a URI, so the password has to be percent-encoded**, and the line above does not do it. A generated password containing `@`, `#`, `%`
+or `&` — all of which a password generator that satisfies OpenObserve's policy will happily produce — silently yields a DSN that parses as something else:
+`@` starts the host, `#` starts a fragment, and the exporter reports a connection failure that looks nothing like a quoting problem. Encode it:
+
+```sh
+PGENC="$(python3 -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.readline().rstrip("\n"), safe=""))' <<<"$PGPW")"
+```
+
+Found on 2026-08-21, during the rebuild that also corrected the count above.
 
 **`10.1.1.10` is staging's `postgres_ip`** — the same address the application chart's `database.host`
 carries, because staging co-locates PostgreSQL on the k3s node and still reaches it over the network.

@@ -165,7 +165,29 @@ printf '%s\n' "$PGPASS" | ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 \
 unset PGPASS                                                          # expect: events|events
 ```
 
-`events-db` is now committed encrypted and restored by Flux ([SECRETS.md](SECRETS.md)), so **two hand-made objects are left, and both are deliberate** — each for the same reason, that this repository is public and encrypting a secret into it publishes the ciphertext for good:
+`events-db` is now committed encrypted and restored by Flux ([SECRETS.md](SECRETS.md)). **Six hand-made objects are left, and this list was two of them until 2026-08-21**, when a rebuild followed it and would have brought the cluster back with #271's entire observability stack dead and no obvious cause:
+
+| Secret                    | Namespace       | Recreated from                                   | In this document                                  |
+| ------------------------- | --------------- | ------------------------------------------------ | ------------------------------------------------- |
+| `hetzner`                 | `cert-manager`  | `HCLOUD_TOKEN` — Keychain                        | below                                             |
+| `github-dispatch`         | `flux-system`   | **the PAT, and nothing can re-derive it**        | below                                             |
+| `sops-age`                | `flux-system`   | `~/.config/sops/age/event-junkie.txt`            | [SECRETS.md](SECRETS.md) §3                       |
+| `openobserve-credentials` | `flux-system`   | a **fresh** root password + the `-o2` S3 keypair | [SECRETS.md](SECRETS.md) §openobserve-credentials |
+| `openobserve-credentials` | `observability` | the same values again — see SECRETS.md on why    | as above                                          |
+| `postgres-exporter`       | `observability` | `ALTER ROLE metrics` + a new DSN                 | as above                                          |
+
+**Only `github-dispatch` has to be carried across a rebuild.** Everything else is derivable from the Keychain, a local file, or a role you can re-password —
+which is worth knowing before you start copying secrets out of a cluster you are about to destroy. OpenObserve's root password can be new because its PVC is
+`local-path` on the node's disk: the metadata DB dies with the node and the root user is re-seeded from the Secret at first boot.
+
+**Two traps that cost time on 2026-08-21, both of which produce a credential that looks right and authenticates against nothing:**
+
+- **`security find-generic-password -w` appends a newline.** `--from-file=token=<(kc …)` welds it into the value. Pipe through `tr -d '\n'`, and check with
+  `kubectl get secret … -o json` that the decoded length is what you expect — 64 bytes for an hcloud token, 20 and 40 for the S3 pair.
+- **`DATA_SOURCE_NAME` is a URI, so the password has to be percent-encoded.** A generated password containing `@`, `#`, `%` or `&` silently produces a DSN that
+  parses as something else entirely. `urllib.parse.quote(pw, safe='')`.
+
+The two below are hand-made for the same deliberate reason — this repository is public, and encrypting a secret into it publishes the ciphertext for good:
 
 | Secret            | Namespace      | Why not encrypted                                                                                 | Production too?                     |
 | ----------------- | -------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------- |
@@ -355,7 +377,7 @@ another variable when the prefix changes.
 | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | **The database** — `PGDATA` is on a volume, and the volume is not part of the server ([#460](https://github.com/enorm-labs/event-junkie/issues/460)) | **The k3s cluster** — new CA, new kubeconfig, new node identity            |
 | **Both Primary IPs** — `auto_delete = false`, so the public address and your WireGuard `Endpoint` are unchanged                                      | **The WireGuard server key** — regenerated at first boot                   |
-| The network, subnet and firewall                                                                                                                     | **Flux, and both secrets** — the cluster is new, so its contents are gone  |
+| The network, subnet and firewall                                                                                                                     | **Flux, and all six hand-made Secrets** — the cluster is new (§8)          |
 | Your WireGuard _client_ keypair, and `wireguard_peers`                                                                                               | Anything on the node's own disk outside `/var/lib/postgresql`              |
 | The backups already in the bucket — they are off-server, which is the point                                                                          | **`/etc/wal-g/credentials.env`**, so the node comes back archiving nothing |
 | The DNS zones (`bootstrap/`, outside every environment destroy)                                                                                      |                                                                            |
@@ -382,14 +404,34 @@ key and the `wireguard_peers` entry stay valid.
 
 ### The sequence
 
+> **This block said `tofu destroy` until 2026-08-21, and that would have destroyed the database.** It sat four paragraphs below "Everything below is a
+> _rebuild_, never a `destroy`", and contradicted it: staging's volume has `delete_protection = false`, and OpenTofu lifts its own locks anyway, so a `destroy`
+> here takes `hcloud_volume.postgres` with it. A rebuild never needs one. Replacing the server is an ordinary `apply` — that is what #460 bought.
+
 ```sh
 cd infra/environments/staging
-./check-capacity.sh staging          # advertised != orderable — see the script's header
+./check-capacity.sh --probe staging   # ordering is the only real test — see the script's header
 
-# 1. edit main.tf if the point is to change hardware
-tofu destroy                          # staging has ip_delete_protection = false for exactly this
-ADMIN="[\"$(curl -s https://ifconfig.me)/32\",\"$(dig +short myip.opendns.com @resolver1.opendns.com | tail -1)/32\"]"
-tofu apply -var "admin_cidrs=$ADMIN"  # admin_cidrs again — the tunnel does not exist yet either
+# 1. Edit main.tf if the point is to change hardware. Any edit under cloud-init/ already forces
+#    replacement on its own; if nothing has drifted and you want one anyway, that is what
+#    -replace='module.environment.hcloud_server.k3s' is for. Do NOT reach for `tofu destroy`.
+
+# 2. The tunnel dies with the node, so the firewall has to admit you directly for the duration.
+#    -4 ON BOTH: on 2026-08-21 `curl -s https://ifconfig.me` returned an IPv6 address, which makes
+#    the /32 below meaningless, and the unforced `dig` returned nothing at all.
+ADMIN="[\"$(curl -4 -s https://ifconfig.me)/32\",\"$(dig -4 +short myip.opendns.com @resolver1.opendns.com | tail -1)/32\"]"
+
+# 3. PLAN FIRST, AND READ IT. Expect the server and hcloud_volume_attachment.postgres replaced,
+#    the firewall changed in place, and NOTHING ELSE. `hcloud_volume.postgres` must not appear in
+#    the plan at all — if it does, stop. That is the check this whole runbook exists for.
+tofu plan -var "admin_cidrs=$ADMIN" -out=rebuild.tfplan   # Plan: 2 to add, 1 to change, 2 to destroy
+
+# 4. A SAVED PLAN RE-READS terraform.tfvars AND REFUSES IF IT DISAGREES — "Mismatch between input
+#    and plan variable value", because admin_cidrs is [] there and the plan was built with -var.
+#    Put the same value in terraform.tfvars before applying (and take it out again at §6), or skip
+#    -out and let `tofu apply -var …` prompt. A saved plan is worth the detour: it applies exactly
+#    what you read, with no second plan in between and no confirmation prompt to mis-type.
+tofu apply rebuild.tfplan
 ```
 
 Then **§3 onward**, in full: wait for cloud-init, collect the _new_ server key and fix your client config, tunnel, close the door, kubeconfig, database, both
