@@ -38,8 +38,24 @@ module "environment" {
   # problem; the node never had 1.5 GB to give. k3s-server alone holds 1.08–1.24 GB, and the floor
   # before any observability is ~2.3 GB of 3.81 GB.
   #
-  # **NOT YET APPLIED as of this line being written.** The running node is still a cpx22, so a plan
-  # will show this as a pending in-place change. That is the intent, not drift.
+  # **NOT YET APPLIED as of this line being written**, and applying it REBUILDS THE NODE.
+  #
+  # **This line is not what rebuilds it** — corrected 2026-08-20, having first claimed otherwise.
+  # `server_type` really is an in-place attribute within one architecture, and reasoning from that
+  # is how the wrong claim got written. The plan disagrees, because `user_data` has ALSO drifted:
+  #
+  #     ~ server_type = "cpx22" -> "cx33"
+  #     ~ user_data   = "o5CIpx..." -> "IOxMoC..."   # forces replacement
+  #
+  #     Plan: 2 to add, 0 to change, 2 to destroy.
+  #
+  # Reverting this line to `cpx22` and re-planning gives a byte-identical result, which is the proof
+  # that the two are independent. Four commits changed `cloud-init/` after the 2026-08-17 apply —
+  # WAL streaming, the restore-drill corrections, the dead-man's-switch warning, and the privacy
+  # logging work — so **staging has been one `tofu apply` away from a rebuild since 2026-08-18,
+  # whatever that apply was for.** That is the hazard, not this variable.
+  #
+  # **So the resize is free to take, but only alongside a rebuild it does not cause.**
   #
   # **This is both twice the node and less than half the previous bill** — cpx22 was €23.19 for
   # 2 vCPU / 4 GB, which it only ever was because ARM could not be bought (below).
@@ -48,10 +64,16 @@ module "environment" {
   # `keep_disk` is unset (false): a type change that grew the disk would foreclose ever going back
   # to a smaller one. Equal sizes mean no disk operation happens at all.
   #
-  # **An in-place resize, not a rebuild** — cpx22 and cx33 are both x86. Hetzner powers the server
-  # off to do it, so expect a few minutes of downtime; on staging that is not worth planning around.
-  # The Primary IPs are untouched (they are location-bound, not type-bound) and so is the PGDATA
-  # volume, which `volume.tf` declares against `location` and never `server_id`.
+  # **What survives the rebuild, both checked against the plan rather than assumed:**
+  # `hcloud_volume.postgres` does not appear in it at all — the check AGENTS.md names, and the one
+  # #460 proved on 2026-08-17 — so the database comes through. Neither do the Primary IPs, the
+  # network or the firewall, so the public address and the WireGuard endpoint come back unchanged.
+  # Only `hcloud_server.k3s` and `hcloud_volume_attachment.postgres` are replaced.
+  #
+  # **What does not survive is the k3s cluster** — Flux, cert-manager, the issued certificates, and
+  # the `events` role's password, which lives only in the `events-db` Secret and cannot be recovered
+  # from a SCRAM hash. docs/ops/CLUSTER_BOOTSTRAP.md §Rebuilding a node is the procedure, and
+  # AGENTS.md records the trap: a rebuild needs `ALTER ROLE events PASSWORD ...`, not `CREATE ROLE`.
   #
   # ## Availability here is advertised, not promised, and it lies in BOTH directions
   #
@@ -86,10 +108,15 @@ module "environment" {
   # `./check-capacity.sh staging` tracks whatever this line names; use `--all` to watch the others.
   #
   # GOING TO ARM IS NOT A ONE-LINE CHANGE, AND THE PLAN WILL NOT TELL YOU SO. Hetzner cannot
-  # rescale between architectures; within x86 (cpx22 -> cx33) it is an in-place resize, but x86 ->
-  # ARM is refused by the API *during apply*, after the plan has rendered a tidy in-place update.
-  # It is a node rebuild, and while #460's volume means the database survives one, the k3s cluster
-  # does not. docs/ops/CLUSTER_BOOTSTRAP.md §Rebuilding a node has the sequence.
+  # rescale between architectures; within x86 (cpx22 -> cx33) the ATTRIBUTE is an in-place update,
+  # but x86 -> ARM is refused by the API *during apply*, after the plan has rendered a tidy in-place
+  # change. It is a node rebuild, and while #460's volume means the database survives one, the k3s
+  # cluster does not. docs/ops/CLUSTER_BOOTSTRAP.md §Rebuilding a node has the sequence.
+  #
+  # **"In-place" is a property of the attribute, never a prediction about the apply**, and that is
+  # the lesson from getting this wrong above: any drift in `user_data` turns the whole thing into a
+  # replacement regardless of what `server_type` does. **Read the plan; do not reason from the
+  # field.**
   k3s_server_type      = "cx33"
   postgres_server_type = null
 
