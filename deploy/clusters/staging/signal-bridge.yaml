@@ -1,0 +1,147 @@
+# The Signal alert bridge — OpenObserve's webhook destination, and the inner half of #271's
+# two-layer alerting.
+#
+# **Signal rather than Telegram, and the reason is not convenience** (PLATFORM_SETUP §5a): alert
+# bodies carry venue names, error strings, query fragments and possibly IP addresses, and Signal is
+# end-to-end encrypted so the carrier cannot read any of it. Telegram's Bot API is plaintext to
+# Telegram's servers — the same effort for a materially worse posture, in a project that spent #412
+# removing a company that *could* read request data.
+#
+# **This layer cannot report the node being dead.** If the cluster is gone, OpenObserve and this pod
+# are gone with it and the silence reads as health. That is what `site-probe.yml` and healthchecks.io
+# are for, off Hetzner, and it is why §5a calls the second layer "not optional".
+#
+# ## Registration is a manual step, once, and losing it is silent
+#
+# Nothing here registers the number — that needs a real prepaid SIM and an SMS code. Until it is
+# done, the pod runs and answers health checks and **sends nothing**, which is exactly the failure
+# mode the dead-man's switch exists to catch. docs/ops/SECRETS.md has the procedure.
+#
+# The registration state lives on the PVC below. **Lose the PVC and alerting stops without saying
+# so** — §5a caveat 3, and the second reason the external layer is not optional.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: signal-cli
+  namespace: observability
+  annotations:
+    kubernetes.io/description: >-
+      signal-cli's registration state. Small, but losing it means re-registering the number by hand and alerting is silent until somebody notices.
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      # Registration state is kilobytes. This is the smallest the storage class will honour, and
+      # sizing it larger would only reserve node disk the database wants.
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: signal-cli
+  namespace: observability
+  annotations:
+    kubernetes.io/description: >-
+      signal-cli-rest-api, the thing OpenObserve posts alerts to. One replica, deliberately — two would race for the same registration state on one PVC.
+spec:
+  # One, and not for capacity reasons: the registration state is a single-writer thing and a second
+  # replica would fight the first for it. The same ADR-008 argument the importer's replica count
+  # rests on.
+  replicas: 1
+  strategy:
+    # The PVC is ReadWriteOnce, so a rolling update would deadlock: the new pod cannot mount the
+    # volume until the old one lets go, and the old one is not terminated until the new one is
+    # ready. Recreate makes the brief gap explicit instead of a stuck rollout.
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: signal-cli
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: signal-cli
+    spec:
+      # Nothing here talks to the Kubernetes API, so the token would be a credential sitting in the
+      # container for no reason — #416 item 4.
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: signal-cli
+          # The `-rootless` variant, chosen for #416's `restricted` Pod Security Admission: the
+          # default image expects to start as root and drop privileges, which that profile forbids.
+          # Pinned by tag *and* digest like every other image here — a tag is a pointer its owner can
+          # move.
+          image: bbernhard/signal-cli-rest-api:0.100-rootless@sha256:7f80cec95fc36408fae6bdc6b4534764d825d5bd02c5772db8740842bdd257f0
+          imagePullPolicy: IfNotPresent
+          env:
+            # `normal` is the JVM mode and the ~150-250 MB §5a budgeted for. **`native` is the lever
+            # if the node gets tight** — GraalVM, materially smaller — and it is a behaviour change
+            # rather than a tuning knob, so it is a decision rather than a default to drift into.
+            - name: MODE
+              value: "normal"
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: state
+              mountPath: /home/.local/share/signal-cli
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
+            limits:
+              # 320Mi against §5a's "~150-250 MB, because signal-cli is a JVM". Set above the
+              # expected range rather than at it: a JVM that OOMs while delivering an alert is a
+              # failure of the thing that reports failures, which is the worst place to be tight.
+              memory: "320Mi"
+              cpu: "500m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            # NOT read-only, and this is the exception rather than an oversight: signal-cli writes
+            # its registration and session state under the mount below, and other scratch inside the
+            # image. Narrowing this needs the paths verified against a running container rather than
+            # guessed, and a wrong guess here breaks alerting rather than a build.
+            readOnlyRootFilesystem: false
+          livenessProbe:
+            httpGet:
+              path: /v1/health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /v1/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: state
+          persistentVolumeClaim:
+            claimName: signal-cli
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: signal-cli
+  namespace: observability
+  annotations:
+    kubernetes.io/description: >-
+      Reached only from inside the cluster, by OpenObserve's webhook destination. No Ingress: this API can send messages as us, so exposing it is a way to let
+      somebody else do that.
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: signal-cli
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

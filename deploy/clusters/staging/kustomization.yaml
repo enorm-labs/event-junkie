@@ -33,6 +33,8 @@ resources:
   # resource list replaced Kustomize's directory walk, so a file that is not named is a file that
   # renders, lints, merges — and never reaches the cluster.
   - openobserve.yaml
+  # The Signal bridge (#271). Same rule as above — a file not named here never reaches the cluster.
+  - signal-bridge.yaml
   - oci-repository.yaml
   - helm-release.yaml
   - notification.yaml
