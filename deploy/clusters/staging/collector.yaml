@@ -221,7 +221,7 @@ spec:
         #     workqueue_*             2.9%           4.2%
         #     otelcol_*               2.1%           3.3%
         #     gotk_*                  1.7%           2.5%
-        #     process_* rest_client_* 1.0%           1.3%
+        #     process_* rest_client_* 1.0%           1.3%   <- process_ deliberately NOT dropped
         #
         # **This is the lever, and #611's label-stripping was not.** That change was right for
         # query correctness — a deploy no longer starts a new series — but the volume was never in
@@ -239,7 +239,9 @@ spec:
         # OOM; the latency distribution is what costs 278 MB. `_count` and `_sum` survive for the
         # rest, so a mean is still available where a percentile is not.
         #
-        # **Our own meters are untouched**, as are `pg_*`, `k8s_*`, `system_*`, `container_*`,
+        # **Our own meters are untouched** — verified per family against the live data rather than
+        # assumed from the prefix, which is how the `process_` mistake above was caught — as are
+        # `pg_*`, `k8s_*`, `system_*`, `container_*`,
         # `certmanager_*`, `traefik_*`, `jvm_*` and `kube_*` — the four alerts #271 still owes
         # (disk filling, certificate expiry, site down, importer failing) are all written against
         # those, and `kube_pod_*` is how a restart loop becomes visible.
@@ -259,7 +261,18 @@ spec:
             # A metric is DROPPED when any condition here is true.
             metric:
               # Go runtime and Kubernetes client-library internals, whole families.
-              - 'IsMatch(name, "^(go|process|rest_client|workqueue)_")'
+              #
+              # **`process_` is NOT in this list, and that is a correction rather than an
+              # oversight.** It was, and it silently took five of our own metrics with it:
+              # `process_` is a mixed namespace. The Go Prometheus client publishes
+              # `process_cpu_seconds_total`, `process_resident_memory_bytes`, `process_open_fds`
+              # and friends — cert-manager, coredns — while **Micrometer publishes
+              # `process_cpu_usage`, `process_uptime_seconds`, `process_cpu_time_ns_total` and
+              # `process_files_*` from the BFF and the importer.** A prefix cannot tell them apart.
+              #
+              # The whole `process_` family is ~0.7% of rows and ~1.0% of bytes, so there is nothing
+              # here worth the risk of dropping application metrics to save. Left in.
+              - 'IsMatch(name, "^(go|rest_client|workqueue)_")'
               # The single biggest stream in the system.
               - 'name == "apiserver_request_duration_seconds"'
               # Reconcile-latency histograms from the operators and Flux.
