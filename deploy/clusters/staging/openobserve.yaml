@@ -115,6 +115,29 @@ spec:
       # exactly what `bucket_domain_name` came back as on the import.
       ZO_S3_FEATURE_FORCE_HOSTED_STYLE: "false"
 
+      # **Retention, and this is the number LEGAL.md §7.5 depends on** (#271 item 1). It defaults to
+      # `3650` — ten years — so until now nothing expired anything and §7.5's claim that retention is
+      # enforced by the bucket was resting on a control that did not exist.
+      #
+      # **OpenObserve's own compactor, not an S3 lifecycle rule, is the mechanism.** It deletes the
+      # Parquet *and* its entry in the file list. A bucket rule alone would delete objects out from
+      # under that list, leaving queries referencing files that are gone — a corruption rather than an
+      # expiry. The lifecycle rule in `infra/bootstrap/storage.tf` is a **backstop set deliberately
+      # longer than this**, for the case where the compactor stops running; the same argument #586
+      # makes about a sweep that only runs while its node does.
+      #
+      # **14 days is a starting position, not a settled one.** The privacy notice's original intent
+      # was seven; fourteen leaves room to investigate an incident a week old while staying short
+      # enough that this is not a log archive. **#278 writes the notice and must state whatever this
+      # says**, so changing it here changes a published claim.
+      #
+      # **The catch worth knowing before this bites:** it applies to metrics as well as logs, and
+      # #271 item 7 wants an availability figure that survives a year. That needs per-stream
+      # retention on the metric streams, which is configured in the application rather than here.
+      # **Set short and lose metrics history; set long and over-retain personal data** — this errs
+      # toward the recoverable mistake.
+      ZO_COMPACT_DATA_RETENTION_DAYS: "14"
+
     persistence:
       # Small on purpose: with S3 as the store this is the write-ahead and cache directory, not the
       # corpus. The corpus is in the bucket.
