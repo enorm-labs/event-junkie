@@ -107,12 +107,53 @@ philosophy, it was a close call about whether a JVM gets OOM-killed mid-deploy. 
 > | `ccx13` | 2 / 8 GB  | €51.16     | ✅ orderable, dedicated vCPU, five times the price          |
 >
 > **The two refusal codes are not the same news.** `resource_unavailable` means the type is supported in `nbg1` and merely out of stock, so `cx43`'s 16 GB may
-> become buyable later — `check-capacity.sh` now watches it. `unsupported location` never self-resolves.
+> become buyable later — `check-capacity.sh` now watches it. `unsupported location` has not been seen to resolve.
+
+> ---
+>
+> **Amended 2026-08-21: production is declared `CX33` + `CX23` (x86). ARM cannot be bought anywhere in `eu-central`, and the rows below now say so.**
+>
+> The CAX line had been left in place since 2026-08-13 on the theory that production was not being applied yet and could afford to wait. Ten days in, waiting
+> was settled by ordering a bare server in every `eu-central` location:
+>
+> |         |                      |                                                           |
+> | ------- | -------------------- | --------------------------------------------------------- |
+> | `cax21` | `fsn1` `nbg1` `hel1` | ❌ `unsupported location for server type` in all three    |
+> | `cax11` | `fsn1` `nbg1` `hel1` | ❌ the same, in all three                                 |
+> | `cx33`  | `fsn1`               | ✅ **orderable** — production's k3s node                  |
+> | `cx23`  | `fsn1`               | ✅ **orderable** — production's PostgreSQL node           |
+> | `cx43`  | `fsn1`               | ✅ orderable — and still `resource_unavailable` in `nbg1` |
+> | `cpx31` | `fsn1`               | ❌ `unsupported location`                                 |
+>
+> **Four of those six refusals were in locations `check-capacity.sh` reported as available**, which is the part worth keeping. Acting on its green result would
+> have moved production to `nbg1` to collect the identical refusal — the endpoint's error being wrong is one thing, but it was wrong in a way that pointed at a
+> specific, wasted remedy.
+>
+> **The endpoint contradicted itself inside twenty minutes on the same day.** At 22:19 UTC it advertised `cx33` in `hel1` only; at 22:41, minutes after `cx33`
+> had been successfully ordered in both `fsn1` and `nbg1`, it reported `cx33` as `UNAVAILABLE anywhere in eu-central`. Nothing about the advertisement is
+> load-bearing, in either direction.
+>
+> **So `check-capacity.sh` grew a `--probe` mode** that places the order and deletes what it gets, and the waiting loop this document and that script both
+> recommended has been corrected to use it. The old loop was not merely imprecise: it would never have gone green for `cx33` on 2026-08-20, on a day `cx33`
+> could be bought.
+>
+> **ARM was also, by now, the more expensive plan.** `cx33` + `cx23` is **€16.63/month against `cax21` + `cax11`'s €19.61** — same cores, same memory, same
+> 80 GB and 40 GB disks. The 2026-08-10 amendment called CAX "an upgrade rather than a compromise", and against the `CX` prices of the day it was. It is not
+> against these.
+>
+> **This change is free exactly once.** Production has never been applied, so there are no Primary IPs and no volume pinning either the location or the
+> architecture. After the first apply, going back to ARM is a **rebuild of both nodes** — Hetzner cannot rescale across architectures, and the plan renders a
+> tidy in-place update that the API refuses partway through the apply. `CLUSTER_BOOTSTRAP.md` §Rebuilding a node.
+>
+> **Both environments are now x86, which is more parity than the ARM plan ever delivered.** §"Why ARM" below is kept as the reasoning of the time; its first
+> bullet — laptop, staging and production all arm64 — has been two-thirds false since 2026-08-13 and is now wholly so. What keeps that from mattering is
+> [#264](https://github.com/enorm-labs/event-junkie/issues/264)'s multi-arch images: same chart, same tags, digests per platform, and the door back to ARM open
+> whenever it is worth walking through.
 
 | Role                | Type               | vCPU / RAM / disk    | Notes                                                                                                                       |
 | ------------------- | ------------------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **k3s node**        | **CAX21**          | 4 ARM / 8 GB / 80 GB | Direct CX33 equivalent. Primary IPv4 + IPv6                                                                                 |
-| **PostgreSQL node** | **CAX11**          | 2 ARM / 4 GB / 40 GB | Direct CX23 equivalent. **No public IPv4**                                                                                  |
+| **k3s node**        | ~~CAX21~~ **CX33** | 4 x86 / 8 GB / 80 GB | Primary IPv4 + IPv6. **x86 since 2026-08-21 — ARM is unbuyable in `eu-central`, see above**                                 |
+| **PostgreSQL node** | ~~CAX11~~ **CX23** | 2 x86 / 4 GB / 40 GB | **No public IPv4.** Same reason, same day                                                                                   |
 | **Staging**         | ~~CPX22~~ **CX33** | 4 x86 / 8 GB / 80 GB | All-in-one. Needs a public IPv4 for the WireGuard endpoint. **Declared 2026-08-20 after an OOM; apply pending — see below** |
 | Private network     | —                  | free                 | One `/16`, both production servers attached                                                                                 |
 | Firewalls           | —                  | free                 | Two, one per role                                                                                                           |
@@ -129,7 +170,8 @@ is concerned — a server in `nbg1` reaching a bucket in `fsn1` is free, and the
 
 What _does_ have to stay together is the k3s node and the PostgreSQL node, because every query crosses that link and inter-location latency lands on every
 request. Beyond that, prefer a German location over Helsinki for a Berlin audience — about 25 ms of round trip, which is real but not disqualifying if it is
-the only ARM capacity available.
+the only capacity going. That clause used to read "the only ARM capacity available", which as of 2026-08-21 describes nowhere: `hel1` advertises the CAX line
+and refuses to sell it, exactly as `fsn1` and `nbg1` do. Helsinki buys no architecture that Nuremberg does not.
 
 #### The volume is about durability, not capacity
 
