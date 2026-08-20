@@ -16,6 +16,14 @@ terraform {
     #
     # `-tfstate` stays hand-made regardless — a state backend cannot be managed by the state it
     # holds. This stops the exception growing, it does not remove it (README.md).
+    #
+    # **Its first install is trust-on-first-use, and the lock file is what closes that.** `tofu init`
+    # reports "Signature validation was skipped due to the registry not containing GPG keys for this
+    # provider" — the OpenTofu registry holds no signing key for it, so the initial download is
+    # unverified. `.terraform.lock.hcl` then records the version and 26 hashes, and every later init
+    # is checked against them. **So the lock file is a supply-chain control here rather than a
+    # convenience, and it must stay committed** — the same argument #443 made for pinning actions to
+    # a SHA rather than a tag.
     minio = {
       source  = "aminueza/minio"
       version = "~> 3.0"
