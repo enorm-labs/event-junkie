@@ -62,7 +62,15 @@ fi
 
 # An empty variable produces an authentication error three commands later that looks like a
 # broken backend config. Say so now instead.
-for _var in HCLOUD_TOKEN AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+#
+# **The MINIO_* names were added to this list after they were missing from it cost an apply**
+# (2026-08-20, #271). `.envrc` is gitignored and personal, so adding exports to `.envrc.example`
+# does nothing for a copy somebody made weeks earlier — `direnv allow` re-reads their file, not
+# this one. The provider then signed anonymously and Hetzner answered `AccessDenied`, which reads
+# as a wrong key rather than as an absent one. **If you add a variable above, add it here too**;
+# this loop is the only thing that turns that into a message at the prompt instead of a failure
+# three commands later.
+for _var in HCLOUD_TOKEN AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY MINIO_ENDPOINT MINIO_USER MINIO_PASSWORD; do
     if [ -z "${!_var}" ]; then
         echo "envrc: ${_var} is empty — is it in the Keychain under the name above?" >&2
     fi
