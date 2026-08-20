@@ -672,9 +672,27 @@ string.
 
 The full comparison is [ADR-015](../adr/ADR-015_OBSERVABILITY_STACK.md), **accepted on trial 2026-08-10**. The short version:
 
-**OpenObserve** — one Rust binary covering logs, metrics, dashboards and alerting, storing Parquet in Hetzner Object Storage. ~1 GB against SigNoz's ~5 GB, and
-its object-storage backend means log retention stops competing with the node's disk. Licence is AGPL-3.0, which is fine for unmodified self-hosting and is
-called out explicitly in the ADR rather than glossed.
+**OpenObserve** — one Rust binary covering logs, metrics, dashboards and alerting, storing Parquet in Hetzner Object Storage. Its object-storage backend means
+log retention stops competing with the node's disk. Licence is AGPL-3.0, which is fine for unmodified self-hosting and is called out explicitly in the ADR rather
+than glossed.
+
+**The footprint is measured now, not estimated** (2026-08-19, a k3d rehearsal; ADR-015 carries the detail):
+
+|                                                                                   | Resident  |
+| --------------------------------------------------------------------------------- | --------- |
+| OpenObserve alone, after ingesting 100,000 records                                | **321Mi** |
+| The whole metrics path — plus collector gateway, two agents and the OTel operator | **938Mi** |
+
+The comparison that decided the ADR quoted "~1 GB against SigNoz's ~5 GB". **That figure was OpenObserve on its own and did not count the collector**, which is
+what actually gets Prometheus metrics in. 938Mi still passes the ADR's ~1.5 GB ceiling, but the margin is 63% of the budget rather than 21% — on a node also
+running two JVMs, that is worth knowing before anything else is added.
+
+**Two things follow, both easy to get wrong:**
+
+- **It is the `openobserve-standalone` chart, not `openobserve`.** The plain chart deploys microservices — ingester, querier, router, scheduler, compactor, and
+  `o2ai` at two replicas — which is nothing like the figures above. Picking it silently invalidates the ADR's criterion 2.
+- **The app pods are reachable only because the chart says so.** Collection needs `prometheus.io/*` annotations on the pods _and_ a NetworkPolicy allowing the
+  collector to the management port. Without the second, discovery works perfectly and every scrape is refused — which looks like nothing at all.
 
 **Accepted to be judged, with five written tests** (ADR-015 §Status) applied after a fortnight on staging and again before go-live: does the zero-events alert
 actually fire, is the footprint really ~1 GB, is log search usable at 23:00, can it chart the business metrics, and are upgrades uneventful. **If any fails, the

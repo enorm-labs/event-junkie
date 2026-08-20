@@ -237,6 +237,33 @@ to bypass it. It needs `/etc/hosts` (§6) and **`ijhttp --insecure`**, because t
 `scripts/dev-env.sh seed-all` is deliberately not the way to do this: it hardcodes `--env local` and health-checks a local importer first, which is what keeps
 it from ever reaching a real cluster.
 
+## 6b · OpenObserve, for logs and metrics
+
+The service is `ClusterIP` on port 5080 in the `observability` namespace, and staging is not on the public internet — so there is no URL, and that is
+deliberate. **`/metrics` and `/api/metrics` are blocked for public access whenever OpenObserve's own ingress is enabled**, which is one more reason not to give
+it one here. Reach it through the tunnel and a port-forward:
+
+```sh
+kubectl --context event-junkie-staging -n observability \
+  port-forward svc/openobserve-openobserve-standalone 5080:5080
+```
+
+Then `http://localhost:5080/` and log in with the root credentials from the password manager — the ones in the `openobserve-credentials` Secret
+([SECRETS.md](SECRETS.md)). They are not in this repository and no deploy will bring them.
+
+**A port-forward is the right tool here, unlike for the site below.** §6a rejects it for the application because it skips TLS, the ingress rules and the
+middlewares — the very things being tested. Nothing about OpenObserve is being tested by reaching it; it is an operator console, so the shortest path is the
+correct one.
+
+**If the page does not load, check the release before the tunnel:**
+
+```sh
+flux --context event-junkie-staging get helmrelease openobserve -n flux-system
+```
+
+A missing or malformed `openobserve-credentials` Secret leaves it in a failed state rather than running-but-inaccessible — that is the intended shape, so a
+reconcile error is the first thing to read, not the last.
+
 ## 7 · The PostgreSQL database
 
 **The WireGuard tunnel alone is not enough, and the reason is worth understanding before you try.** PostgreSQL listens on `localhost` and `10.1.1.10` — the
