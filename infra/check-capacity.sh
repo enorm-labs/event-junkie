@@ -67,7 +67,12 @@ readonly API=https://api.hetzner.cloud/v1
 # are the truth and this is a copy. They diverged once already: staging moved to nbg1 on 2026-08-13
 # while this script still called fsn1 "the preferred location" for everything, so its output
 # answered a question nobody was asking.
-export ENVIRONMENTS="staging=nbg1:cpx22;production=fsn1:cax21,cax11"
+#
+# `cx43` is listed for staging alongside the type actually in use. It is not a candidate to move to
+# today — it was refused with `resource_unavailable` on 2026-08-20, which unlike `unsupported
+# location` means supported-here-but-out-of-stock and can therefore come back. 16 GB for €19.03 is
+# worth being told about if it does; watching it costs one entry.
+export ENVIRONMENTS="staging=nbg1:cx33,cx43;production=fsn1:cax21,cax11"
 export NETWORK_ZONE=eu-central
 export TARGET="${1:-}"
 

@@ -32,33 +32,65 @@ module "environment" {
   # still reached over the network at a private address, so the connection path the applications
   # exercise is the same shape as production's.
   #
-  # **cpx22 (x86) rather than cax11 (ARM), and this is forced rather than chosen (2026-08-13).**
-  # Three separate orders for a cax11 in nbg1 were refused with `unsupported location for server
-  # type` while Hetzner's API advertised it as available — including a probe for a bare server with
-  # no IPs, no network and no firewall, which clears this module of any part in it. Production keeps
-  # `cax21` and keeps waiting; staging could not, because everything downstream of a cluster
-  # existing (#265, #286, #270, #416) was blocked behind it.
+  # **cx33 (x86): 4 vCPU / 8 GB at €10.10/month. Changed from cpx22 on 2026-08-20 because the node
+  # ran out of memory** — a global OOM killed OpenObserve, load hit 99 on two cores, and the API
+  # server flapped for half an hour (#271). ADR-015's ~1.5 GB observability budget was not the
+  # problem; the node never had 1.5 GB to give. k3s-server alone holds 1.08–1.24 GB, and the floor
+  # before any observability is ~2.3 GB of 3.81 GB.
   #
-  # The cost is €23.19/month against cax11's €7.13 for identical 2 vCPU / 4 GB, and the parity
-  # argument in PLATFORM_SETUP §1 — laptop, staging and production all arm64 — now holds for two of
-  # the three. It survives because #264 publishes multi-arch images, so the same chart and the same
-  # tags run on both; nothing else about the environment differs.
+  # **NOT YET APPLIED as of this line being written.** The running node is still a cpx22, so a plan
+  # will show this as a pending in-place change. That is the intent, not drift.
   #
-  # **This is meant to be temporary, and there are two cheaper targets to watch**, neither orderable
-  # anywhere in eu-central today:
+  # **This is both twice the node and less than half the previous bill** — cpx22 was €23.19 for
+  # 2 vCPU / 4 GB, which it only ever was because ARM could not be bought (below).
   #
-  #   cax11  €7.13  ARM   — restores full parity with production
-  #   cx23   €6.53  x86   — cheaper than the ARM plan ever was, and no re-platforming
+  # **Disk is 80 GB on both, so nothing shrinks and nothing is upgraded.** That matters because
+  # `keep_disk` is unset (false): a type change that grew the disk would foreclose ever going back
+  # to a smaller one. Equal sizes mean no disk operation happens at all.
   #
-  # `./check-capacity.sh staging` tracks whatever this line names, so it will stop reporting on
-  # those the moment this changes. Watch them with `./check-capacity.sh --all`.
+  # **An in-place resize, not a rebuild** — cpx22 and cx33 are both x86. Hetzner powers the server
+  # off to do it, so expect a few minutes of downtime; on staging that is not worth planning around.
+  # The Primary IPs are untouched (they are location-bound, not type-bound) and so is the PGDATA
+  # volume, which `volume.tf` declares against `location` and never `server_id`.
   #
-  # GOING BACK TO cax11 IS NOT A ONE-LINE CHANGE, AND THE PLAN WILL NOT TELL YOU SO. Hetzner cannot
-  # rescale between architectures; within x86 (cpx22 -> cx23) it is an in-place resize, but x86 ->
+  # ## Availability here is advertised, not promised, and it lies in BOTH directions
+  #
+  # **cax11/cax21 (ARM) still cannot be bought in nbg1.** Re-probed 2026-08-20 by placing a real
+  # order for a bare cax21 with no IPs, no network and no firewall: refused in 0.1s with
+  # `HTTP 422 invalid_input: unsupported location for server type`, the same error three cax11
+  # orders got on 2026-08-13. Production keeps `cax21` and keeps waiting, so the arm64 parity
+  # argument in PLATFORM_SETUP §1 still holds for only two of the three. It survives because #264
+  # publishes multi-arch images — the same chart and tags run on both.
+  #
+  # **cx33 was chosen by probing, because the API said it was NOT available here and was wrong.**
+  # The `datacenters` endpoint omits cx33 from nbg1's `available` list; the order succeeded anyway.
+  # check-capacity.sh's header already warns that a green result means "worth trying" rather than
+  # "orderable" — this is the same unreliability running the other way, and it is why the previous
+  # version of this comment called cx23 "not orderable anywhere in eu-central today". **Only an
+  # order settles it.** Refusals are free and return in 0.1s; delete anything that succeeds.
+  #
+  # Probed 2026-08-20 in nbg1, cheapest first — everything with more headroom than cpx22:
+  #
+  #   cx33   €10.10  4/8GB   ORDERABLE   <- this
+  #   cax21  €12.48  4/8GB   unsupported location
+  #   cx43   €19.03  8/16GB  resource_unavailable  <- supported here, out of stock, may return
+  #   cpx31  €20.81  4/8GB   unsupported location
+  #   cax31  €24.98  8/16GB  unsupported location
+  #   cpx32  €42.23  4/8GB   orderable, four times the price
+  #   ccx13  €51.16  2/8GB   orderable, dedicated vCPU, five times the price
+  #
+  # **The two refusal codes mean different things.** `resource_unavailable` means the type is
+  # supported in nbg1 and merely out of stock, so cx43's 16 GB may become buyable later.
+  # `unsupported location` never self-resolves.
+  #
+  # `./check-capacity.sh staging` tracks whatever this line names; use `--all` to watch the others.
+  #
+  # GOING TO ARM IS NOT A ONE-LINE CHANGE, AND THE PLAN WILL NOT TELL YOU SO. Hetzner cannot
+  # rescale between architectures; within x86 (cpx22 -> cx33) it is an in-place resize, but x86 ->
   # ARM is refused by the API *during apply*, after the plan has rendered a tidy in-place update.
-  # It is a node rebuild, which destroys the co-located database (#460) and the k3s cluster with it.
-  # docs/ops/CLUSTER_BOOTSTRAP.md §Rebuilding a node has the sequence and what has to be redone.
-  k3s_server_type      = "cpx22"
+  # It is a node rebuild, and while #460's volume means the database survives one, the k3s cluster
+  # does not. docs/ops/CLUSTER_BOOTSTRAP.md §Rebuilding a node has the sequence.
+  k3s_server_type      = "cx33"
   postgres_server_type = null
 
   # Distinct from production's 10.0.0.0/16 and 10.10.0.0/24. Both tunnels are routinely up at the
