@@ -15,7 +15,7 @@
           "id": "p_stale_worst",
           "type": "stat",
           "title": "Oldest source (hours since last success)",
-          "description": "The single worst venue. The importer cycles roughly every 4h, so sustained double digits means it is not completing. ADR-015's zero-events alert is written against this same series.",
+          "description": "The single worst venue, against a 24h import interval (`import_interval_minutes = 1440`) \u2014 so anything under 24 is routine and the number climbing past ~36 is the signal. ADR-015's zero-events alert uses this series.",
           "config": {
             "show_legends": true,
             "decimals": 1
@@ -57,8 +57,8 @@
         {
           "id": "p_stale_count",
           "type": "stat",
-          "title": "Sources stale > 12h",
-          "description": "How many of the 84 venues have not had a successful run in twelve hours. Zero is the healthy value. Uses `> bool` so the panel shows 0 rather than going blank when nothing is stale.",
+          "title": "Sources stale > 36h",
+          "description": "Venues that have missed a whole import cycle and half of the next. **36h, not 12h** \u2014 the interval is 24h, so a 12h threshold flags all 84 every single day as a matter of routine, which is how a panel teaches people to ignore it. Uses `> bool` so it shows 0 rather than going blank. NOTE: a source that has NEVER succeeded is invisible here \u2014 see the dashboard README.",
           "config": {
             "show_legends": true,
             "decimals": 0
@@ -66,7 +66,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum((timestamp(max by (source) (importer_source_last_success)) - max by (source) (importer_source_last_success)) > bool 43200)",
+              "query": "sum((timestamp(max by (source) (importer_source_last_success)) - max by (source) (importer_source_last_success)) > bool 129600)",
               "vrlFunctionQuery": null,
               "customQuery": true,
               "fields": {
@@ -188,7 +188,7 @@
           "id": "p_stale_by_source",
           "type": "bar",
           "title": "Twenty stalest sources (hours)",
-          "description": "`topk` rather than `sort_desc`, which OpenObserve does not implement. One venue drifting is a scraper to fix; all of them drifting together is the importer or the database.",
+          "description": "`topk` rather than `sort_desc`, which OpenObserve does not implement. Against a 24h interval, a flat band under 24 is health. One venue alone above it is a scraper to fix; all of them together is the importer or the database.",
           "config": {
             "show_legends": true,
             "decimals": 1
