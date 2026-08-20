@@ -137,8 +137,21 @@ it needs a database role that does not exist yet, and creating one is `psql`, no
 `pg_stat_*` has no business holding that. PostgreSQL ships `pg_monitor` for exactly this — a
 predefined role granting the statistics views and nothing else.
 
+**Getting a superuser shell**, because this is the one database task
+[CLUSTER_ACCESS.md](CLUSTER_ACCESS.md) §7 does not cover. That section's `ssh -L` forward connects you
+as the **`events`** role, which cannot `CREATE ROLE`. For a superuser you skip the forward and work on
+the node itself, where the distribution's peer entries still admit the `postgres` account —
+`cloud-init/postgres.sh` keeps them deliberately, "so `sudo -u postgres psql` keeps working for
+operators":
+
+```sh
+# WireGuard first; 10.10.1.1 is only reachable through it. Staging co-locates PostgreSQL on the k3s
+# node, so this is both hosts at once — production's database node has its own address.
+ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1
+sudo -u postgres psql
+```
+
 ```sql
--- On the database host, as a superuser.
 CREATE ROLE metrics WITH LOGIN PASSWORD '<generated, stored in the password manager>';
 GRANT pg_monitor TO metrics;
 -- No GRANT on the events schema. It is not supposed to read application data.
