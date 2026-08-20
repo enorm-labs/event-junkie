@@ -1,0 +1,127 @@
+# OpenObserve on staging — ADR-015's trial, which cannot start until this runs somewhere real.
+#
+# **The `openobserve-standalone` chart, NOT `openobserve`.** The plain chart deploys microservices —
+# ingester, querier, router, scheduler, compactor, and `o2ai` at two replicas — which is nothing like
+# the footprint ADR-015 compared and would not fit a node already running two JVMs. Standalone is one
+# StatefulSet and one PVC. **Picking the wrong one silently invalidates the ADR's criterion 2**, which
+# is the criterion the whole decision turned on. Every measured number in ADR-015 is standalone's.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: openobserve
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      The upstream OpenObserve chart repository. Same reasoning as the jetstack one next to it: an install nothing versions and nothing notices drifting is
+      the thing this avoids.
+spec:
+  # An hour, like jetstack's and for the same reason: this only asks "what versions exist?", and the
+  # version actually installed is pinned below.
+  interval: 1h
+  url: https://charts.openobserve.ai
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: openobserve
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      Logs, metrics and alerting for staging. Backed by the event-junkie-o2 Object Storage bucket, which #271 declared and imported so that retention is a
+      bucket policy rather than a competitor for the node's disk.
+spec:
+  releaseName: openobserve
+  targetNamespace: observability
+  # Where Helm keeps its release secret. Same reasoning cert-manager.yaml gives: left alone Flux
+  # stores it in flux-system while the objects live elsewhere, which puts `helm list -n observability`
+  # at odds with reality for anyone debugging.
+  storageNamespace: observability
+  interval: 1h
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      # Explicit because the default is the trap #414's flux-break rehearsal found: without it a
+      # failed upgrade is retried and then left running, rather than rolled back.
+      remediateLastFailure: true
+  chart:
+    spec:
+      chart: openobserve-standalone
+      # Pinned, not a range. This is the version ADR-015's measurements were taken against, and a
+      # trial whose subject changes under it is not a trial.
+      version: "0.92.2"
+      sourceRef:
+        kind: HelmRepository
+        name: openobserve
+        namespace: flux-system
+      interval: 1h
+
+  # The two S3 credentials, injected from the hand-made Secret rather than written here.
+  #
+  # **This is the whole reason `valuesFrom` is used at all.** The chart takes `auth.ZO_S3_ACCESS_KEY`
+  # and `auth.ZO_S3_SECRET_KEY` as plain values, so putting them under `spec.values` below would put
+  # live Object Storage credentials in a public repository in plaintext. `existingRootUserSecret`
+  # covers the root user and nothing else — these two have no such option, so Flux merges them in at
+  # reconcile time instead.
+  #
+  # The Secret is created by hand and nothing here creates it: docs/ops/SECRETS.md. Until it exists
+  # this release reconciles into a failed state, which is the intended shape — a missing credential
+  # should stop the deploy, not produce a running server nobody can log into.
+  valuesFrom:
+    - kind: Secret
+      name: openobserve-credentials
+      valuesKey: ZO_S3_ACCESS_KEY
+      targetPath: auth.ZO_S3_ACCESS_KEY
+    - kind: Secret
+      name: openobserve-credentials
+      valuesKey: ZO_S3_SECRET_KEY
+      targetPath: auth.ZO_S3_SECRET_KEY
+
+  values:
+    auth:
+      # Root credentials from the same hand-made Secret. The chart reads the two keys named here
+      # directly, so they never pass through Helm values at all.
+      existingRootUserSecret:
+        name: openobserve-credentials
+        emailKey: ZO_ROOT_USER_EMAIL
+        passwordKey: ZO_ROOT_USER_PASSWORD
+
+    config:
+      # Object storage rather than local disk, which is the point of the bucket. ADR-015: "its
+      # object-storage backend means log retention stops competing with the node's disk", and
+      # LEGAL.md §7.5 needs that retention to be a policy something enforces rather than an intent.
+      ZO_LOCAL_MODE: "false"
+      ZO_S3_PROVIDER: "s3"
+      ZO_S3_SERVER_URL: "https://fsn1.your-objectstorage.com"
+      # Hetzner enforces the region in the request signature and rejects a mismatch — the same trap
+      # infra/bootstrap/versions.tf documents for the MinIO provider. The chart's default is
+      # `us-east-2`, which is never right here.
+      ZO_S3_REGION_NAME: "fsn1"
+      ZO_S3_BUCKET_NAME: "event-junkie-o2"
+      # Path style, not virtual-hosted. Hetzner's endpoint serves `<endpoint>/<bucket>`, which is
+      # exactly what `bucket_domain_name` came back as on the import.
+      ZO_S3_FEATURE_FORCE_HOSTED_STYLE: "false"
+
+    persistence:
+      # Small on purpose: with S3 as the store this is the write-ahead and cache directory, not the
+      # corpus. The corpus is in the bucket.
+      enabled: true
+      size: 5Gi
+
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "100m"
+      limits:
+        # Measured, not guessed. A k3d rehearsal put standalone at 634Mi under load and the whole
+        # metrics path — this, the collector gateway, two agents and the operator — at 938Mi against
+        # ADR-015's ~1.5 GB ceiling.
+        #
+        # **1Gi is deliberately tighter than that ceiling.** Criterion 2 is a real test rather than a
+        # hope only if breaching it is observable, and an OOMKill says so immediately. Raise it if it
+        # proves too tight on real data — but raise it as a decision, and record what the number
+        # became, because 1.5 GB is the point at which ADR-015's fallback is supposed to trigger.
+        memory: "1Gi"
+        cpu: "1"
