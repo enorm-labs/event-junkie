@@ -176,6 +176,20 @@ argument behind it. If you contradict one of those documents, change the documen
   file, and do not hand-edit one — regenerate with `tofu providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_arm64` so CI, the ARM
   nodes and an arm64 laptop all stay covered.
 
+- **A green CI run on a provider bump means the configuration still parses, and nothing more.** `validate-infra.yml` runs `init -backend=false` and `validate`,
+  which reaches no API, renders no `templatefile`, and does not evaluate variable `validation` blocks. **None of the three gates in this repository can tell you
+  a new provider version still works against Hetzner.** So review an `opentofu` Dependabot PR on this basis rather than on its checks:
+
+    1. **Read the lock diff.** Not every provider is signed — `aminueza/minio` is not, and `init` says so: _"Signature validation was skipped due to the registry
+       not containing GPG keys for this provider"_. Each bump is therefore another trust-on-first-use download, and the recorded hashes are the only control.
+       A lock diff that changes hashes without changing the version is the one to stop on.
+    2. **`tofu -chdir=bootstrap plan` and expect _no changes_.** A version bump against an unmodified configuration should be a no-op. **A diff on a
+       configuration nobody edited is the finding** — it means the provider now reads or writes something differently, and that is exactly what a minor release
+       is allowed to do and CI cannot see. This needs credentials and is a deliberate act; see the rule at the top of this file.
+    3. **`aminueza/minio` carries a specific risk the others do not.** It is a MinIO provider pointed at Hetzner's Ceph, which is why `s3_compat_mode` is set at
+       all — features it expects are not all implemented there. Hetzner is one of its tested backends, so this is not a gamble, but the compatibility surface is
+       the thing a minor release can move, and step 2 is the only place it would show.
+
 ## Backups
 
 `backups.sh` is commented far more thinly than anything else here, because it is rendered into a `user_data` that is 92% full. The operational picture — what
