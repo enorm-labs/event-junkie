@@ -1,0 +1,172 @@
+# The metrics and logs collector — #271 item 2, and the reason OpenObserve currently holds nothing.
+#
+# #415 built the meters and #590 annotated the pods so a collector can find them. **Nothing was
+# collecting.** OpenObserve has been running since 2026-08-20 storing only records fed to it by hand
+# to prove the bucket works.
+#
+# ## Two charts, and the order is not a preference
+#
+# The collector chart renders `OpenTelemetryCollector` and `Instrumentation` custom resources, and
+# **Helm resolves kinds up front** — so installing it before the operator's CRDs exist fails with
+# `ensure CRDs are installed first`, not with a wait. Found on a k3d rehearsal, and it is the same
+# shape as the Traefik CRD wait `scripts/k3d-rehearsal.sh` already performs for the application
+# chart. `dependsOn` below is what makes that ordering a property of the config rather than of
+# whoever applies it.
+#
+# ## What the rehearsal established, so it is not rediscovered
+#
+# - **The agent does not scrape the app pods; the gateway does.** The agent's metrics pipeline is
+#   `kubeletstats` and `hostmetrics` only. The `prometheus` receiver with the autodiscovery job lives
+#   in the gateway, so a pod is scraped from wherever the gateway runs — which is what made the
+#   NetworkPolicy in #591 necessary.
+# - **Discovery is by `prometheus.io/*` annotation and nothing else.** A pod without them is invisible
+#   to collection while looking perfectly healthy.
+# - **Footprint, measured:** 938Mi for the whole path — this plus OpenObserve — against ADR-015's
+#   ~1.5 GB ceiling. That was k3d on arm64, so **it is an expectation to check against this node, not
+#   a number to trust**. If it lands materially higher, criterion 2 is the thing to re-judge.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: open-telemetry
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      The upstream OpenTelemetry chart repository, for the operator the collector's custom resources need.
+spec:
+  interval: 1h
+  url: https://open-telemetry.github.io/opentelemetry-helm-charts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: otel-operator
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      The OpenTelemetry operator. Installed for its CRDs and its reconciliation of the collector custom resources — not for auto-instrumentation, which is
+      disabled below.
+spec:
+  releaseName: otel-operator
+  targetNamespace: observability
+  storageNamespace: observability
+  interval: 1h
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      remediateLastFailure: true
+  chart:
+    spec:
+      chart: opentelemetry-operator
+      version: "0.121.0"
+      sourceRef:
+        kind: HelmRepository
+        name: open-telemetry
+        namespace: flux-system
+      interval: 1h
+  values:
+    admissionWebhooks:
+      certManager:
+        # cert-manager IS installed here, but pointing the operator at it couples this release to a
+        # ClusterIssuer and a DNS-01 token for a certificate nothing outside the cluster ever sees.
+        # A self-signed webhook cert is the smaller dependency for an internal admission endpoint.
+        enabled: false
+      autoGenerateCert:
+        enabled: true
+    manager:
+      collectorImage:
+        # The `-k8s` distribution rather than `-contrib`: it carries the Kubernetes and Prometheus
+        # receivers this needs and leaves out the several hundred exporters it does not.
+        repository: otel/opentelemetry-collector-k8s
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "50m"
+        limits:
+          # Measured at 35Mi in the rehearsal. The operator only reconciles CRs; it is not on the
+          # data path.
+          memory: "128Mi"
+          cpu: "200m"
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: openobserve-collector
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      The same OpenObserve chart repository the server comes from, declared separately because a HelmRepository is per-URL and this one is reused by name.
+spec:
+  interval: 1h
+  url: https://charts.openobserve.ai
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: openobserve-collector
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      Scrapes the annotated application pods and the node, and ships to OpenObserve. Depends on the operator for its CRDs and on OpenObserve for somewhere to
+      send to.
+spec:
+  releaseName: o2c
+  targetNamespace: observability
+  storageNamespace: observability
+  interval: 1h
+  # Both, and for different reasons. The operator provides the CRDs this chart's resources are
+  # instances of — without it the install fails outright rather than waiting. OpenObserve is the
+  # destination; starting the collector first would only produce export errors until it appeared.
+  dependsOn:
+    - name: otel-operator
+    - name: openobserve
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      remediateLastFailure: true
+  chart:
+    spec:
+      chart: openobserve-collector
+      version: "0.4.6"
+      sourceRef:
+        kind: HelmRepository
+        name: openobserve-collector
+        namespace: flux-system
+      interval: 1h
+
+  # The collector authenticates to OpenObserve as the root user, from the same hand-made Secret the
+  # server reads. Injected rather than written here for the reason #598 gives: a credential under
+  # `spec.values` is a credential in a public repository.
+  #
+  # The header is `Basic <base64 of email:password>`, which is why it is a separate key rather than
+  # composed from the two the server uses — building it here would mean the two halves passing
+  # through Helm values in the clear.
+  valuesFrom:
+    - kind: Secret
+      name: openobserve-credentials
+      valuesKey: O2_BASIC_AUTH_HEADER
+      targetPath: exporters.otlphttp/openobserve.headers.Authorization
+    - kind: Secret
+      name: openobserve-credentials
+      valuesKey: O2_BASIC_AUTH_HEADER
+      targetPath: exporters.otlphttp/openobserve_k8s_events.headers.Authorization
+
+  values:
+    k8sCluster: staging
+    # The operator is installed above, as its own release. Leaving this true would make the chart
+    # try to install a second copy as a subchart.
+    opentelemetry-operator:
+      enabled: false
+    exporters:
+      otlphttp/openobserve:
+        # In-cluster, so plain HTTP over the pod network rather than through the ingress — which does
+        # not route OpenObserve at all, deliberately.
+        endpoint: http://openobserve-openobserve-standalone.observability.svc.cluster.local:5080/api/default/
+      otlphttp/openobserve_k8s_events:
+        endpoint: http://openobserve-openobserve-standalone.observability.svc.cluster.local:5080/api/default/
+        headers:
+          stream-name: k8s_events

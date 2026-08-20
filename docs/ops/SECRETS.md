@@ -100,6 +100,27 @@ kubectl --context event-junkie-staging create secret generic openobserve-credent
   --from-literal=ZO_S3_SECRET_KEY=<the -o2 secret key>
 ```
 
+**A fifth key, `O2_BASIC_AUTH_HEADER`, for the collector (#271 item 2).** The collector authenticates
+to OpenObserve with an HTTP header rather than with a user and a password, and Flux's `valuesFrom`
+substitutes a value — it cannot compose one from two others. So the composed header is its own key:
+
+```sh
+# Same password you used above. Derived, not new — nothing extra to store in the password manager.
+printf 'root password: '; read -rs OO_PASS; echo
+HDR="Basic $(printf '%s:%s' 'hello@event-junkie.de' "$OO_PASS" | base64)"
+
+kubectl --context event-junkie-staging patch secret openobserve-credentials -n flux-system \
+  -p "{\"stringData\":{\"O2_BASIC_AUTH_HEADER\":\"$HDR\"}}"
+
+unset OO_PASS HDR
+```
+
+**Only in `flux-system`** — this one is read by `valuesFrom`, which resolves in the HelmRelease's
+namespace, and the collector's chart never reads it directly. **Rotate the root password and this key
+goes stale silently**: the collector keeps posting with the old header and OpenObserve starts
+refusing, which looks like an ingestion outage rather than a credential problem. Re-derive it in the
+same change.
+
 **`-n flux-system`, and then again in `observability`.** `valuesFrom` resolves Secrets in the HelmRelease's own namespace, which is `flux-system` like every
 other release here; the chart's `existingRootUserSecret` reads from the release's _target_ namespace instead. **So this Secret has to exist in both** — the same
 contents, created twice, until that asymmetry is worth solving properly.
