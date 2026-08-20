@@ -45,3 +45,43 @@ resource "minio_s3_bucket" "o2" {
   # it first is the deliberate step, and it should be deliberate.
   force_destroy = false
 }
+
+# A backstop under OpenObserve's own retention, not the mechanism itself.
+#
+# **OpenObserve expires its own data** (`ZO_COMPACT_DATA_RETENTION_DAYS`, 14 days as of #271),
+# deleting the Parquet and the file-list entry together. That is the control the privacy notice
+# rests on, and it is deliberately not this rule: a lifecycle rule alone would delete objects out
+# from under OpenObserve's file list, leaving queries pointing at files that no longer exist —
+# corruption rather than expiry.
+#
+# **So why have this at all?** Because the compactor only runs while OpenObserve does. A pod that is
+# down, crash-looping or misconfigured stops expiring anything, and the retention window quietly
+# becomes "forever" — precisely the failure #586 describes for the backup sweep. This rule is the
+# floor that holds when that happens.
+#
+# **90 days, six times the application's 14**, and the gap is the point: it must never be the thing
+# that expires data in normal operation, only the thing that catches a stalled compactor. Narrowing
+# it toward 14 would start deleting files OpenObserve still has indexed.
+resource "minio_s3_bucket_lifecycle" "o2" {
+  bucket = minio_s3_bucket.o2.bucket
+
+  rule {
+    id     = "backstop-expiry"
+    status = "Enabled"
+
+    expiration {
+      days = 90
+    }
+  }
+
+  rule {
+    id     = "abort-incomplete-uploads"
+    status = "Enabled"
+
+    # An interrupted upload leaves parts that are billed and invisible to a plain listing. Nothing
+    # here resumes one, so a week is generous.
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
