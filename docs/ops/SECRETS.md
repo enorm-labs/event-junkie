@@ -84,6 +84,12 @@ backups and the OpenTofu state. Encrypting that into a public repository is the 
 **What hand-made means here**, same as `github-dispatch` above: nothing in this repository creates it and no deploy will bring it. Four keys in one Secret,
 because the chart reads two directly (`auth.existingRootUserSecret`) and Flux merges the other two in through `valuesFrom`:
 
+**`ZO_ROOT_USER_PASSWORD` must satisfy OpenObserve's own policy**, and it is enforced late: the pod
+starts, replays its write-ahead log, and _then_ panics with `ZO_ROOT_USER_PASSWORD is too weak`.
+Nothing before that point complains, so a rejected password looks like a broken deployment rather
+than a bad value. **8-128 characters with at least one lowercase, one uppercase, one digit and one
+special character** — most generated passwords qualify, but a long random alphanumeric one does not.
+
 ```sh
 kubectl --context event-junkie-staging create namespace observability
 kubectl --context event-junkie-staging create secret generic openobserve-credentials \
