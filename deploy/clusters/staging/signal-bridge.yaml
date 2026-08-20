@@ -80,6 +80,22 @@ spec:
           # move.
           image: bbernhard/signal-cli-rest-api:0.100-rootless@sha256:7f80cec95fc36408fae6bdc6b4534764d825d5bd02c5772db8740842bdd257f0
           imagePullPolicy: IfNotPresent
+          # **Bypassing the image's s6-overlay init, deliberately.** The entrypoint is `/init`, and
+          # s6-overlay-suexec demands CAP_SETGID before it does anything else, then CHOWN and FOWNER
+          # to fix up `/run`. Satisfying it means handing four capabilities back to a pod that
+          # otherwise needs none — measured one at a time against the real image, each failure
+          # naming the next.
+          #
+          # s6 is a supervisor. Kubernetes is already the supervisor here, so what it buys inside the
+          # container is a restart policy we do not want and a privilege requirement we do not need.
+          # Running the binary directly starts clean as UID 1000 with `drop: [ALL]` and answers
+          # /v1/health with 204.
+          #
+          # **The one thing this gives up:** s6 also starts a `signal-json-rpc` service. `MODE=normal`
+          # does not use it — the API shells out to signal-cli per request — but **switching MODE to
+          # `json-rpc` would need that daemon and therefore this decision revisited**, not just the
+          # environment variable changed.
+          command: ["/usr/bin/signal-cli-rest-api"]
           env:
             # `normal` is the JVM mode and the ~150-250 MB §5a budgeted for. **`native` is the lever
             # if the node gets tight** — GraalVM, materially smaller — and it is a behaviour change
@@ -110,6 +126,9 @@ spec:
             # its registration and session state under the mount below, and other scratch inside the
             # image. Narrowing this needs the paths verified against a running container rather than
             # guessed, and a wrong guess here breaks alerting rather than a build.
+            #
+            # Worth retrying now that s6 is out of the picture — it was s6's `/run` fix-up that made
+            # this hardest to reason about, and the binary alone may need far less.
             readOnlyRootFilesystem: false
           livenessProbe:
             httpGet:
