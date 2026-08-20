@@ -122,6 +122,24 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
+          # **Off, because it was evicting every other cache in the repository** (#589).
+          #
+          # The `java-kotlin` analysis stores ~333 MB of Gradle dependencies per run. Within a day of
+          # this workflow landing that was 43 entries and 8.99 GB, taking the repository to 10.6 GB
+          # against GitHub's **10 GB** limit — above which GitHub evicts least-recently-used entries.
+          # What it evicted was the Playwright browser cache, and the frontend job then took a
+          # 519-875s install every run and was killed by its own timeout, unable to save a cache
+          # because a timeout skips the post step. Six consecutive runs died that way.
+          #
+          # Deleting the entries by hand bought a day. They regrew to 8.73 GB and evicted Playwright
+          # again, which is what this change is for.
+          #
+          # **The cost is roughly two minutes on `Analyze (java-kotlin)`**, which refetches Gradle
+          # dependencies each run. That is the right trade: **the Gradle cache that shortens the
+          # actual feedback loop belongs to `Build & Test`**, and it was competing for the same
+          # budget with a scanner's private copy of the same jars. One gates every pull request; the
+          # other runs a scan nobody waits on.
+          dependency-caching: false
           # No `queries:` input, deliberately. That leaves the **default** suite, which is what
           # default setup was configured to run (`code-scanning/default-setup` reported
           # `"query_suite": "default"`), so this migration changes *where* CodeQL runs and not *what
