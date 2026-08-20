@@ -28,6 +28,11 @@ shellcheck -x infra/modules/environment/cloud-init/*.sh
 `<stack>` is one of `bootstrap`, `environments/production`, `environments/staging`. Run all three: they share a module, so a change to it can break one and not
 the others. CI runs exactly these commands in `.github/workflows/validate-infra.yml`.
 
+**`validate` does not evaluate variable `validation` blocks either** (measured 2026-08-20). A `default` that breaks its own rule — a bucket name of
+`Bad_Name-` against a regex that forbids it — passes `validate` cleanly. The rules still fire, but at plan time, which is the one command nobody may run
+unasked. **So a `validation` block is documentation until somebody applies the stack**, and it cannot be treated as a gate CI enforces: `validate-infra.yml`
+will go green on a value the variable itself rejects.
+
 **`validate` does not render `templatefile`.** A change to `cloud-init/node.yaml.tftpl` or to any of the `.sh` files can pass `validate` and still produce
 cloud-init that does not parse. To check it, render the template with sample data in a scratch directory and parse the result as YAML — the scripts should
 round-trip byte-identically through `indent()`. That check has caught real breakage; do not skip it after touching the templating.
