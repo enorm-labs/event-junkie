@@ -5,6 +5,27 @@
 # reason — it already exists, so adopting it means `tofu import`, which is a deliberate act rather
 # than a side effect of an observability issue. #586 decides that separately.
 
+# Adopting the bucket that already exists, rather than creating one (2026-08-20).
+#
+# `event-junkie-o2` was made in the console before the provider route was chosen, so the first apply
+# stopped at `bucket already exists!` — the provider refuses to take over a resource it did not
+# create, which is the correct instinct and not a bug.
+#
+# **An `import` block rather than `tofu import` on the command line.** The CLI form is a state edit
+# that happens immediately and leaves nothing behind to review; this one appears in `tofu plan` as
+# an import before anything is written, is visible in the diff of this file, and would have to be
+# deleted deliberately to stop applying. That is the same argument this configuration makes for
+# declaring the bucket at all.
+#
+# **Safe to delete once applied.** OpenTofu treats a block whose target is already in state as a
+# no-op, so leaving it costs nothing but a stale note; removing it in a later change is tidier. What
+# must NOT happen is deleting the `resource` block below and leaving this one — that is a bucket
+# nothing manages and nothing reports.
+import {
+  to = minio_s3_bucket.o2
+  id = "event-junkie-o2"
+}
+
 resource "minio_s3_bucket" "o2" {
   bucket = var.object_storage_bucket_o2
 
