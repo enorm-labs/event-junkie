@@ -128,6 +128,42 @@ contents, created twice, until that asymmetry is worth solving properly.
 Until it exists the release reconciles into a failed state, which is the intended shape: a missing credential should stop the deploy rather than produce a
 running server nobody can log into. Once it exists, helm-controller picks it up on the next reconcile and nothing needs restarting.
 
+### `postgres-exporter` — a monitoring role, not the application's
+
+**Hand-made, and for a different reason than the others.** This one is not about ciphertext exposure:
+it needs a database role that does not exist yet, and creating one is `psql`, not `kubectl`.
+
+**Do not reuse the `events` role.** It owns the schema and can write; an exporter that only reads
+`pg_stat_*` has no business holding that. PostgreSQL ships `pg_monitor` for exactly this — a
+predefined role granting the statistics views and nothing else.
+
+```sql
+-- On the database host, as a superuser.
+CREATE ROLE metrics WITH LOGIN PASSWORD '<generated, stored in the password manager>';
+GRANT pg_monitor TO metrics;
+-- No GRANT on the events schema. It is not supposed to read application data.
+```
+
+Then the connection string, as a single value — the whole DSN is the credential, so it is not
+assembled from parts in a manifest:
+
+```sh
+printf 'metrics role password: '; read -rs PGPW; echo
+
+kubectl --context event-junkie-staging create secret generic postgres-exporter -n observability \
+  --from-literal=DATA_SOURCE_NAME="postgresql://metrics:${PGPW}@10.1.1.10:5432/events?sslmode=require"
+
+unset PGPW
+```
+
+**`10.1.1.10` is staging's `postgres_ip`** — the same address the application chart's `database.host`
+carries, because staging co-locates PostgreSQL on the k3s node and still reaches it over the network.
+Confirm it with `tofu -chdir=infra/environments/staging output postgres_ip` rather than trusting this
+line; **production's is different**, which is the whole reason it is a value and not a constant.
+
+**`sslmode=require`** rather than the libpq default of `prefer`, which silently accepts plaintext if
+the server declines TLS. On a private network that is a small risk and an even smaller cost to close.
+
 ### Registering the Signal number — not a Secret, but the same shape of problem
 
 `signal-cli`'s registration is **state on a PVC**, not a Kubernetes Secret, and it behaves like a

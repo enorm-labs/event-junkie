@@ -37,6 +37,8 @@ resources:
   - signal-bridge.yaml
   # The collector (#271 item 2). Same rule — unnamed here means it never reaches the cluster.
   - collector.yaml
+  # PostgreSQL metrics (#271). Named here or it never reaches the cluster.
+  - postgres-exporter.yaml
   - oci-repository.yaml
   - helm-release.yaml
   - notification.yaml
