@@ -29,6 +29,10 @@ resources:
   - helm-repository-hetzner.yaml
   - cert-manager.yaml
   - cert-manager-webhook.yaml
+  # OpenObserve (#271). Listed here for the reason this file's own header records: the explicit
+  # resource list replaced Kustomize's directory walk, so a file that is not named is a file that
+  # renders, lints, merges — and never reaches the cluster.
+  - openobserve.yaml
   - oci-repository.yaml
   - helm-release.yaml
   - notification.yaml

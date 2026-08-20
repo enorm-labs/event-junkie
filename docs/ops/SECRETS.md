@@ -12,11 +12,12 @@ The objects nothing in this repository creates, why that is a problem worth fixi
 
 ## What is hand-made today
 
-| Secret            | Namespace      | Holds                                                 | Created at                                                     |
-| ----------------- | -------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
-| `events-db`       | `event-junkie` | the `events` role's password                          | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8                |
-| `hetzner`         | `cert-manager` | an hcloud API token, **read+write** — staging only    | §8                                                             |
-| `github-dispatch` | `flux-system`  | a fine-grained PAT, **`contents: write`** on one repo | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8 — **after** §9 |
+| Secret                    | Namespace                                         | Holds                                                 | Created at                                                     |
+| ------------------------- | ------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
+| `events-db`               | `event-junkie`                                    | the `events` role's password                          | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8                |
+| `hetzner`                 | `cert-manager`                                    | an hcloud API token, **read+write** — staging only    | §8                                                             |
+| `openobserve-credentials` | `flux-system` **and** `observability` — see below | the root login and the `-o2` S3 keypair               | [SECRETS.md](SECRETS.md) §openobserve-credentials              |
+| `github-dispatch`         | `flux-system`                                     | a fine-grained PAT, **`contents: write`** on one repo | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8 — **after** §9 |
 
 They are typed once by a human and exist nowhere else. **That is the whole problem**, and it is the same shape as the backup credential in §8b: a cluster
 rebuild silently loses them, everything comes back looking healthy, and the failure is a `CrashLoopBackOff` at best and a certificate that quietly stops
@@ -39,11 +40,12 @@ For one operator the operational difference is otherwise small, and the deciding
 later" does not un-publish the bytes. That is fine for a value whose exposure requires a future break in X25519 — and it is a different conversation for each
 secret.
 
-| Secret            | If the ciphertext were ever broken                                                                                        | Worth encrypting into a public repo? |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `events-db`       | A Postgres password for a server reachable only through the private network and WireGuard. Useless without network access | **Yes**                              |
-| `github-dispatch` | Triggering `repository_dispatch` workflows on `main`. **The strongest of the three** — see below                          | **No** — see below                   |
-| `hetzner`         | **Read+write control of the Hetzner account** — servers, volumes, firewalls, the lot                                      | **Recommend not**                    |
+| Secret                    | If the ciphertext were ever broken                                                                                        | Worth encrypting into a public repo? |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `events-db`               | A Postgres password for a server reachable only through the private network and WireGuard. Useless without network access | **Yes**                              |
+| `github-dispatch`         | Triggering `repository_dispatch` workflows on `main`. **The strongest of the three** — see below                          | **No** — see below                   |
+| `hetzner`                 | **Read+write control of the Hetzner account** — servers, volumes, firewalls, the lot                                      | **Recommend not**                    |
+| `openobserve-credentials` | Admin login to every log and metric, **and** Object Storage keys reaching all three buckets                               | **No** — see below                   |
 
 **On `github-dispatch`.** The table's logic is exposure cost. A broken `github-dispatch` ciphertext buys `contents: write` on this repository — and under
 ADR-016, what lands on `main` is what the cluster runs, so repository write access is one branch-protection rule away from being cluster access. That is the
@@ -64,6 +66,40 @@ kubectl --context event-junkie-staging create secret generic github-dispatch \
 Until it exists, the `github-dispatch` Provider reconciles into a failed state and no dispatch is sent — the Alert is configured correctly and simply has no
 credential to use. Once it exists, notification-controller picks it up on its next reconcile; **nothing needs restarting**. The order does not matter, only that
 both eventually exist.
+
+**On `openobserve-credentials` (#271), decided 2026-08-20: hand-made.** Two assets in one Secret, and the second is the one that decides it.
+
+The root login buys the observability stack: every log line and metric staging holds. LEGAL.md §7.5 is explicit that log content can carry personal data, so
+that alone argues against publishing ciphertext permanently.
+
+**The Object Storage keys are worse, and the reason is scope.** There is one S3 keypair for the whole project — `event-junkie-s3-access-key` in the Keychain —
+and it reaches **all three buckets**: `-o2`, `-backups` and `-tfstate`. So the same credential that lets OpenObserve write Parquet also reads the database
+backups and the OpenTofu state. Encrypting that into a public repository is the `hetzner` argument again with a wider blast radius.
+
+> **Worth fixing rather than only documenting.** A pod that ingests untrusted content — venue HTML in error strings, request paths from the open internet —
+> should not hold a credential that reaches the infrastructure state. **Give OpenObserve its own S3 keypair**, so it can be rotated without breaking the state
+> backend, and scope it to `-o2` if Hetzner's bucket policies allow. The Secret below takes whatever keys it is given, so this is a decision about what you type
+> into it rather than a change to any manifest.
+
+**What hand-made means here**, same as `github-dispatch` above: nothing in this repository creates it and no deploy will bring it. Four keys in one Secret,
+because the chart reads two directly (`auth.existingRootUserSecret`) and Flux merges the other two in through `valuesFrom`:
+
+```sh
+kubectl --context event-junkie-staging create namespace observability
+kubectl --context event-junkie-staging create secret generic openobserve-credentials \
+  -n flux-system \
+  --from-literal=ZO_ROOT_USER_EMAIL=<a role address, not a personal one> \
+  --from-literal=ZO_ROOT_USER_PASSWORD=<generated, stored in the password manager> \
+  --from-literal=ZO_S3_ACCESS_KEY=<the -o2 access key> \
+  --from-literal=ZO_S3_SECRET_KEY=<the -o2 secret key>
+```
+
+**`-n flux-system`, and then again in `observability`.** `valuesFrom` resolves Secrets in the HelmRelease's own namespace, which is `flux-system` like every
+other release here; the chart's `existingRootUserSecret` reads from the release's _target_ namespace instead. **So this Secret has to exist in both** — the same
+contents, created twice, until that asymmetry is worth solving properly.
+
+Until it exists the release reconciles into a failed state, which is the intended shape: a missing credential should stop the deploy rather than produce a
+running server nobody can log into. Once it exists, helm-controller picks it up on the next reconcile and nothing needs restarting.
 
 **Decided: encrypt `events-db`, leave the Hetzner token hand-made.** It is staging-only (production solves ACME by HTTP-01 and holds no Hetzner token at all),
 it is a two-minute recreation, and it is the one credential where the rebuild-survival argument buys least and the exposure argument costs most.
