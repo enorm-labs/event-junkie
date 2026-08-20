@@ -107,6 +107,39 @@ contents, created twice, until that asymmetry is worth solving properly.
 Until it exists the release reconciles into a failed state, which is the intended shape: a missing credential should stop the deploy rather than produce a
 running server nobody can log into. Once it exists, helm-controller picks it up on the next reconcile and nothing needs restarting.
 
+### Registering the Signal number — not a Secret, but the same shape of problem
+
+`signal-cli`'s registration is **state on a PVC**, not a Kubernetes Secret, and it behaves like a
+hand-made credential in every way that matters: nothing in this repository creates it, no deploy
+brings it, and **losing it stops alerting silently** (PLATFORM_SETUP §5a, caveat 3).
+
+The pod runs, answers its health probe and sends nothing until this is done — which is precisely the
+failure the external dead-man's switch exists to catch, and the second reason that layer is not
+optional.
+
+Once the prepaid SIM exists:
+
+```sh
+kubectl --context event-junkie-staging -n observability port-forward svc/signal-cli 8080:8080
+
+# In another shell. +49… is the SIM's number, in international format.
+curl -X POST 'http://localhost:8080/v1/register/+49XXXXXXXXX' \
+  -H 'Content-Type: application/json' -d '{"use_voice": false}'
+
+# Signal sends an SMS. Then:
+curl -X POST 'http://localhost:8080/v1/register/+49XXXXXXXXX/verify/123-456'
+
+# Prove it end to end before trusting it with an alert at 03:00:
+curl -X POST 'http://localhost:8080/v2/send' -H 'Content-Type: application/json' \
+  -d '{"message":"event-junkie alerting is alive","number":"+49XXXXXXXXX","recipients":["+49YYYYYYYYY"]}'
+```
+
+**Do the last one.** §5a is explicit that _"an alert route that has never delivered a message at
+23:00 is a hypothesis, not a route"_, and this is the cheapest moment to turn it into a route.
+
+**Then record, in the password manager and not here:** the number, its PIN, its PUK and the top-up
+schedule. A prepaid number that lapses takes the alert channel with it, and the failure is silence.
+
 **Decided: encrypt `events-db`, leave the Hetzner token hand-made.** It is staging-only (production solves ACME by HTTP-01 and holds no Hetzner token at all),
 it is a two-minute recreation, and it is the one credential where the rebuild-survival argument buys least and the exposure argument costs most.
 
