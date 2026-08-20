@@ -38,24 +38,36 @@ module "environment" {
   # problem; the node never had 1.5 GB to give. k3s-server alone holds 1.08–1.24 GB, and the floor
   # before any observability is ~2.3 GB of 3.81 GB.
   #
-  # **NOT YET APPLIED as of this line being written**, and applying it REBUILDS THE NODE.
+  # **APPLIED 2026-08-20 23:0x UTC, and it rebuilt the node** — `2 added, 1 changed, 2 destroyed`,
+  # the extra change being the firewall opened to admit the operator while the tunnel was down.
+  # This closed the drift #614 was filed for.
   #
-  # **This line is not what rebuilds it** — corrected 2026-08-20, having first claimed otherwise.
+  # **This line is not what rebuilt it** — corrected 2026-08-20, having first claimed otherwise.
   # `server_type` really is an in-place attribute within one architecture, and reasoning from that
-  # is how the wrong claim got written. The plan disagrees, because `user_data` has ALSO drifted:
+  # is how the wrong claim got written. The plan disagreed, because `user_data` had ALSO drifted:
   #
   #     ~ server_type = "cpx22" -> "cx33"
   #     ~ user_data   = "o5CIpx..." -> "IOxMoC..."   # forces replacement
   #
-  #     Plan: 2 to add, 0 to change, 2 to destroy.
-  #
-  # Reverting this line to `cpx22` and re-planning gives a byte-identical result, which is the proof
-  # that the two are independent. Four commits changed `cloud-init/` after the 2026-08-17 apply —
+  # Reverting this line to `cpx22` and re-planning gave a byte-identical result, which is the proof
+  # that the two were independent. Four commits changed `cloud-init/` after the 2026-08-17 apply —
   # WAL streaming, the restore-drill corrections, the dead-man's-switch warning, and the privacy
-  # logging work — so **staging has been one `tofu apply` away from a rebuild since 2026-08-18,
-  # whatever that apply was for.** That is the hazard, not this variable.
+  # logging work — so **staging had been one `tofu apply` away from a rebuild since 2026-08-18,
+  # whatever that apply was for.** That was the hazard, not this variable.
   #
-  # **So the resize is free to take, but only alongside a rebuild it does not cause.**
+  # **What the rebuild actually cost, measured rather than predicted:**
+  #
+  #   survived   the PGDATA volume — `postgres.sh` logged `adopting the existing cluster on the
+  #              volume`, and 3,409 events / 4,149 artists / 86 sources came back, with the two
+  #              failed importers still carrying their retry counts and timestamps
+  #   survived   both Primary IPs, the network, the firewall — so the public address and the
+  #              WireGuard endpoint are unchanged, and only the server's *host* keys rotated
+  #   lost       the k3s cluster, and with it six hand-made Secrets. Only `github-dispatch` could
+  #              not be regenerated; see docs/ops/CLUSTER_BOOTSTRAP.md §8, which said "two"
+  #   lost       the WireGuard *server* key, so every client config needs its `PublicKey =` line
+  #              replaced before the tunnel handshakes again
+  #
+  # Roughly 40 minutes end to end, most of it cloud-init and Flux.
   #
   # **This is both twice the node and less than half the previous bill** — cpx22 was €23.19 for
   # 2 vCPU / 4 GB, which it only ever was because ARM could not be bought (below).
