@@ -7,9 +7,15 @@
 
 # Adopting the bucket that already exists, rather than creating one (2026-08-20).
 #
-# `event-junkie-o2` was made in the console before the provider route was chosen, so the first apply
-# stopped at `bucket already exists!` — the provider refuses to take over a resource it did not
-# create, which is the correct instinct and not a bug.
+# **`event-junkie-o2` was made by hand on 2026-08-10, in the same minute as `-tfstate` and
+# `-backups`** — all three at 19:43, by the same account. It was never a new bucket to create, and
+# README.md said so in the present tense all along: "the other two buckets (`-o2` for OpenObserve,
+# `-backups` for `wal-g`) _could_ be declared that way when their issues land". Their issue landed;
+# the bucket was already sitting there.
+#
+# So the first apply stopped at `bucket already exists!`, and the provider refusing to take over a
+# resource it did not create is the correct instinct rather than a bug — silently adopting a bucket
+# it found by name is how you end up managing someone else's.
 #
 # **An `import` block rather than `tofu import` on the command line.** The CLI form is a state edit
 # that happens immediately and leaves nothing behind to review; this one appears in `tofu plan` as
