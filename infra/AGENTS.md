@@ -46,9 +46,20 @@ and managed. The S3 backend on Hetzner's Ceph works, including through a partial
 explains it. The firewall rules, the k3s flags, WireGuard and the PGDG install have now executed on a real machine and worked on the first boot: k3s `Ready`,
 Traefik up, PostgreSQL listening on the private address, tunnel established with the declared peer.
 
-> **The config and the running node disagree right now (2026-08-20).** `main.tf` declares `cx33` — 4 vCPU / 8 GB, and cheaper than the `cpx22` it replaces —
-> after the node ran out of memory under the observability stack (#271). **It has not been applied**, so a `tofu plan` on staging will show a pending
-> `server_type` change. That is expected, not drift to undo. Applying it is an in-place resize (both x86, both 80 GB disk) and reboots the node.
+> **The config and the running node disagree right now (2026-08-20), and a `tofu apply` on staging REBUILDS THE NODE.** Two independent reasons, and confusing
+> them is easy:
+>
+> - `main.tf` declares `cx33` — 4 vCPU / 8 GB, cheaper than the `cpx22` it replaces — after the node ran out of memory under the observability stack (#271).
+>   This one is harmless on its own: `server_type` is an in-place attribute within an architecture.
+> - **`user_data` has drifted since the 2026-08-17 apply**, and `servers.tf` forces replacement on it. Four commits changed `cloud-init/` on 18–19 August: WAL
+>   streaming, the restore-drill corrections, the dead-man's-switch warning, and the privacy logging work.
+>
+> **The second is what rebuilds the node, and it has been armed since 2026-08-18** — so an apply made for any unrelated reason would have rebuilt it too, and
+> looked like the unrelated change's doing. Measured: reverting `server_type` to `cpx22` and re-planning gives a byte-identical `2 to add, 0 to change, 2 to
+destroy`.
+>
+> `hcloud_volume.postgres` does not appear in that plan, nor do the Primary IPs, the network or the firewall — so the database, the public address and the
+> WireGuard endpoint all survive. The k3s cluster does not.
 
 **The PGDATA volume is applied and proven on staging, as of 2026-08-17 (#460).** The node was replaced and the database came back: a sentinel row written at
 20:11:27 was read back on a machine that booted at 20:14:41, and every table matched a dump taken beforehand exactly — zero rows lost. `postgres.sh` logged
@@ -130,6 +141,9 @@ argument behind it. If you contradict one of those documents, change the documen
     removing it would take the production k3s node from 37% to 91% for two files nothing on it runs. **Measure after any edit under `cloud-init/`**, with the
     render check described above; do not estimate.
 
+- **"In-place" is a property of an attribute, never a prediction about an apply.** `server_type` updates in place within an architecture — and staging's
+  2026-08-20 plan still replaced the node, because `user_data` had drifted and that forces replacement. The two are independent, and the field-level fact says
+  nothing about the outcome. **Read the plan; do not reason from the schema.**
 - **`server_type` cannot cross architectures, and `tofu plan` will not warn you.** Within one architecture it is an in-place resize; between `cpx*` (x86) and
   `cax*` (ARM) Hetzner refuses — [their FAQ](https://docs.hetzner.com/cloud/servers/faq/) lists rescale alongside snapshots and ISOs as places where "it is not
   possible to work with two different architecture types". The plan renders a tidy in-place update and the **apply** fails against the API partway through. So

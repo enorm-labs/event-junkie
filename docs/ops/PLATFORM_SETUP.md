@@ -73,9 +73,18 @@ philosophy, it was a close call about whether a JVM gets OOM-killed mid-deploy. 
 > ---
 >
 > **Amended 2026-08-20: staging is DECLARED as `CX33` — 4 x86 vCPU / 8 GB / 80 GB, €10.10/month — but not yet applied.** `main.tf` names it; the running node
-> is still the `CPX22` until somebody runs `tofu apply`, so treat the rows below as the intent rather than the state. The `CPX22` ran out of memory: a global OOM killed OpenObserve, load
-> reached 99 on two cores, and the API server flapped for half an hour (#271). It is **twice the node for less than half the previous bill**, and an in-place
-> resize rather than a rebuild, since both are x86 and both have an 80 GB disk.
+> is still the `CPX22` until somebody runs `tofu apply`, so treat the rows below as the intent rather than the state. The `CPX22` ran out of memory: a global OOM
+> killed OpenObserve, load reached 99 on two cores, and the API server flapped for half an hour (#271). It is **twice the node for less than half the previous
+> bill**.
+>
+> **Applying it rebuilds the node, and this amendment first said otherwise.** `server_type` is an in-place attribute within one architecture, which is true and
+> was the wrong thing to reason from: `user_data` has separately drifted since the 2026-08-17 apply, and that forces replacement. Reverting the type to `CPX22`
+> and re-planning gives an identical `2 to add, 0 to change, 2 to destroy`, so **the rebuild is not the resize's doing** — staging has been one apply away from
+> it since 2026-08-18, for any reason at all.
+>
+> The database survives (`hcloud_volume.postgres` is absent from the plan, as #460 proved on 2026-08-17), and so do the Primary IPs, the network and the
+> firewall. The k3s cluster does not: expect `CLUSTER_BOOTSTRAP.md` §Rebuilding a node, including `ALTER ROLE events PASSWORD …` because the password lived
+> only in the `events-db` Secret.
 >
 > **It also restores spec parity with production**, which `CPX22` never had: the table below already calls `CX33` the direct `CAX21` equivalent, so staging and
 > production now match on 4 vCPU / 8 GB and differ only on architecture.
