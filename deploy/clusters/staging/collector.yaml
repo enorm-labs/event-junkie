@@ -206,6 +206,68 @@ spec:
     # what catches that; the rendered pipeline list is not enough on its own.
     gateway:
       processors:
+        # ## Dropping the metrics nothing here will ever query
+        #
+        # **One metric was 47% of every row stored and 38% of the bytes**: the k3s API server's
+        # `apiserver_request_duration_seconds` histogram, at 385,752 rows and 278 MB. Its cardinality
+        # is verb x resource x scope x bucket, so it is enormous on a cluster doing almost nothing.
+        #
+        # Measured before this change — 983 streams, 822,942 rows, 729 MB total:
+        #
+        #     apiserver_*            51.5% of rows, 41.9% of bytes   (10 streams)
+        #     go_*                   10.5%          14.6%            (164 streams)
+        #     kube_*                 10.9%           8.1%
+        #     controller_runtime_*    3.7%           5.4%
+        #     workqueue_*             2.9%           4.2%
+        #     otelcol_*               2.1%           3.3%
+        #     gotk_*                  1.7%           2.5%
+        #     process_* rest_client_* 1.0%           1.3%
+        #
+        # **This is the lever, and #611's label-stripping was not.** That change was right for
+        # query correctness — a deploy no longer starts a new series — but the volume was never in
+        # the application's metrics. `importer_source_last_success`, the meter the whole project
+        # cares about, is 0.7% of rows.
+        #
+        # ## What is dropped, and the principle
+        #
+        # **Runtime internals of software we do not operate, and histograms of it.** `go_*` describes
+        # the garbage collector of controllers Kubernetes already restarts when they fail; nothing
+        # here would act on it. The histograms are the same argument plus a cardinality multiplier.
+        #
+        # **`apiserver_request_total` is deliberately KEPT** while its duration histogram goes. The
+        # count carries "is the API server erroring", which is what mattered during the 2026-08-20
+        # OOM; the latency distribution is what costs 278 MB. `_count` and `_sum` survive for the
+        # rest, so a mean is still available where a percentile is not.
+        #
+        # **Our own meters are untouched**, as are `pg_*`, `k8s_*`, `system_*`, `container_*`,
+        # `certmanager_*`, `traefik_*`, `jvm_*` and `kube_*` — the four alerts #271 still owes
+        # (disk filling, certificate expiry, site down, importer failing) are all written against
+        # those, and `kube_pod_*` is how a restart loop becomes visible.
+        #
+        # **Filtered by BASE NAME, not by the `_bucket` suffix**, and that distinction is the whole
+        # trap here. OpenObserve shows `apiserver_request_duration_seconds_bucket` as a stream, but
+        # that name does not exist in this pipeline: the Prometheus receiver rebuilds the histogram
+        # into a single OTLP metric called `apiserver_request_duration_seconds`, and OpenObserve
+        # re-expands it into `_bucket`/`_count`/`_sum` at ingest. A rule matching `_bucket$` here
+        # would match nothing at all and look like it worked. The give-away is the bare stream
+        # sitting at `docs=0` next to the three suffixed ones — that is the name the collector sends.
+        filter/drop_infrastructure_noise:
+          # A condition that fails to evaluate skips rather than tearing down the pipeline. OTTL is
+          # parsed at startup, so a syntax error still fails fast and visibly.
+          error_mode: ignore
+          metrics:
+            # A metric is DROPPED when any condition here is true.
+            metric:
+              # Go runtime and Kubernetes client-library internals, whole families.
+              - 'IsMatch(name, "^(go|process|rest_client|workqueue)_")'
+              # The single biggest stream in the system.
+              - 'name == "apiserver_request_duration_seconds"'
+              # Reconcile-latency histograms from the operators and Flux.
+              - 'name == "controller_runtime_reconcile_time_seconds"'
+              - 'name == "gotk_reconcile_duration_seconds"'
+              # The collector describing the size of its own batches.
+              - 'IsMatch(name, "^otelcol_.*_batch_send_size$")'
+
         resource/strip_metric_identity:
           attributes:
             # Per-deploy churn. The reason this change exists.
@@ -248,6 +310,10 @@ spec:
             # before `batch`.
             processors:
               - memory_limiter
+              # **First, immediately after the limiter**, because two thirds of what arrives is
+              # about to be thrown away and there is no reason to enrich it first. `k8sattributes`
+              # in particular does pod lookups per resource.
+              - filter/drop_infrastructure_noise
               - resourcedetection
               - attributes
               - k8sattributes
