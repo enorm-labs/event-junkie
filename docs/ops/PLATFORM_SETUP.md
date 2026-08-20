@@ -72,19 +72,21 @@ philosophy, it was a close call about whether a JVM gets OOM-killed mid-deploy. 
 >
 > ---
 >
-> **Amended 2026-08-20: staging is DECLARED as `CX33` — 4 x86 vCPU / 8 GB / 80 GB, €10.10/month — but not yet applied.** `main.tf` names it; the running node
-> is still the `CPX22` until somebody runs `tofu apply`, so treat the rows below as the intent rather than the state. The `CPX22` ran out of memory: a global OOM
+> **Amended 2026-08-20, APPLIED 2026-08-21: staging runs `CX33` — 4 x86 vCPU / 8 GB / 80 GB, €10.10/month.** The rebuild took about 40 minutes and is
+> written up under §Rebuilding a node in [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md). The `CPX22` it replaced ran out of memory: a global OOM
 > killed OpenObserve, load reached 99 on two cores, and the API server flapped for half an hour (#271). It is **twice the node for less than half the previous
 > bill**.
 >
-> **Applying it rebuilds the node, and this amendment first said otherwise.** `server_type` is an in-place attribute within one architecture, which is true and
+> **Applying it rebuilt the node, and this amendment first said it would not.** `server_type` is an in-place attribute within one architecture, which is true and
 > was the wrong thing to reason from: `user_data` has separately drifted since the 2026-08-17 apply, and that forces replacement. Reverting the type to `CPX22`
 > and re-planning gives an identical `2 to add, 0 to change, 2 to destroy`, so **the rebuild is not the resize's doing** — staging has been one apply away from
 > it since 2026-08-18, for any reason at all.
 >
-> The database survives (`hcloud_volume.postgres` is absent from the plan, as #460 proved on 2026-08-17), and so do the Primary IPs, the network and the
-> firewall. The k3s cluster does not: expect `CLUSTER_BOOTSTRAP.md` §Rebuilding a node, including `ALTER ROLE events PASSWORD …` because the password lived
-> only in the `events-db` Secret.
+> The database survived, and so did the Primary IPs, the network and the firewall — all four confirmed on 2026-08-21 rather than predicted: `postgres.sh`
+> logged `adopting the existing cluster on the volume`, and 3,409 events, 4,149 artists and 86 sources came back with the failed importers' retry counts
+> intact. The k3s cluster did not survive, and neither did six hand-made Secrets — `CLUSTER_BOOTSTRAP.md` §8 said there were two, which is corrected there.
+> `ALTER ROLE events PASSWORD …` turned out to be unnecessary: `events-db` is committed encrypted, so Flux restored the Secret and it still matched the role
+> on the volume.
 >
 > **It also restores spec parity with production**, which `CPX22` never had: the table below already calls `CX33` the direct `CAX21` equivalent, so staging and
 > production now match on 4 vCPU / 8 GB and differ only on architecture.
@@ -150,16 +152,16 @@ philosophy, it was a close call about whether a JVM gets OOM-killed mid-deploy. 
 > [#264](https://github.com/enorm-labs/event-junkie/issues/264)'s multi-arch images: same chart, same tags, digests per platform, and the door back to ARM open
 > whenever it is worth walking through.
 
-| Role                | Type               | vCPU / RAM / disk    | Notes                                                                                                                       |
-| ------------------- | ------------------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **k3s node**        | ~~CAX21~~ **CX33** | 4 x86 / 8 GB / 80 GB | Primary IPv4 + IPv6. **x86 since 2026-08-21 — ARM is unbuyable in `eu-central`, see above**                                 |
-| **PostgreSQL node** | ~~CAX11~~ **CX23** | 2 x86 / 4 GB / 40 GB | **No public IPv4.** Same reason, same day                                                                                   |
-| **Staging**         | ~~CPX22~~ **CX33** | 4 x86 / 8 GB / 80 GB | All-in-one. Needs a public IPv4 for the WireGuard endpoint. **Declared 2026-08-20 after an OOM; apply pending — see below** |
-| Private network     | —                  | free                 | One `/16`, both production servers attached                                                                                 |
-| Firewalls           | —                  | free                 | Two, one per role                                                                                                           |
-| Backups             | —                  | 20 % of server price | Hetzner's automated daily backups, both production servers                                                                  |
-| **Volume**          | —                  | 10 GB · ~€0.44/mo    | **`PGDATA`.** One per environment, staging included — see below                                                             |
-| **Object Storage**  | —                  | 1 TB inc.            | **One subscription, three buckets** — see below                                                                             |
+| Role                | Type               | vCPU / RAM / disk    | Notes                                                                                                       |
+| ------------------- | ------------------ | -------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **k3s node**        | ~~CAX21~~ **CX33** | 4 x86 / 8 GB / 80 GB | Primary IPv4 + IPv6. **x86 since 2026-08-21 — ARM is unbuyable in `eu-central`, see above**                 |
+| **PostgreSQL node** | ~~CAX11~~ **CX23** | 2 x86 / 4 GB / 40 GB | **No public IPv4.** Same reason, same day                                                                   |
+| **Staging**         | ~~CPX22~~ **CX33** | 4 x86 / 8 GB / 80 GB | All-in-one. Needs a public IPv4 for the WireGuard endpoint. **Applied 2026-08-21 after an OOM — see below** |
+| Private network     | —                  | free                 | One `/16`, both production servers attached                                                                 |
+| Firewalls           | —                  | free                 | Two, one per role                                                                                           |
+| Backups             | —                  | 20 % of server price | Hetzner's automated daily backups, both production servers                                                  |
+| **Volume**          | —                  | 10 GB · ~€0.44/mo    | **`PGDATA`.** One per environment, staging included — see below                                             |
+| **Object Storage**  | —                  | 1 TB inc.            | **One subscription, three buckets** — see below                                                             |
 
 **Not ordered, and why:** Load Balancer (k3s ServiceLB binds to the node IP on one node) · Floating IPs (for failover between servers, which does not apply) ·
 **Storage Box** (superseded — see below) · Storage Share.
