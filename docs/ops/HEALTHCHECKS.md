@@ -20,11 +20,39 @@ correctly, and its own failure is silent by construction.
 
 ## What is watched
 
-| Check                | Watches                        | Pinged by                                               | Issue |
-| -------------------- | ------------------------------ | ------------------------------------------------------- | ----- |
-| `walg-<environment>` | PostgreSQL backups are healthy | `walg check`, hourly via `walg-check.timer`, on success | #518  |
+| Check                | Watches                                                 | Pinged by                                                             | Issue |
+| -------------------- | ------------------------------------------------------- | --------------------------------------------------------------------- | ----- |
+| `walg-<environment>` | PostgreSQL backups are healthy                          | `walg check`, hourly via `walg-check.timer`, on success               | #518  |
+| `site-<environment>` | DNS, TLS, the ingress and the application, from outside | `.github/workflows/site-probe.yml`, every 15 minutes, on success only | #271  |
 
-Planned, not built: a site probe proving DNS, TLS, the ingress and the application answer from outside (#271). It belongs on this account and this channel.
+**The site probe is built and deliberately dormant.** It skips, and says so in its job summary, while
+`HEALTHCHECKS_PING_URL` is unset — which is the state today, because there is nothing public to probe:
+staging is not on the internet by design ([PLATFORM_SETUP](PLATFORM_SETUP.md) §4a) and production is
+[#285](https://github.com/enorm-labs/event-junkie/issues/285). Setting the secret is the whole
+activation; the workflow needs no change.
+
+A silent skip would have been the wrong shape here — this repository has been bitten twice by one — so
+the skip is loud in the Actions tab rather than a green tick that means nothing.
+
+### What the site probe actually asserts
+
+Like `walg check`, it is conditional rather than a heartbeat, and for the same reason: **an
+unconditional ping proves only that the pinger ran.** Before pinging it fetches the site over the public
+internet and asserts
+
+1. the request completes at all — curl's exit code is mapped to a named cause, so DNS failure,
+   connection refused, timeout and a bad certificate are four different alert texts rather than an exit
+   code;
+2. the status is **200**;
+3. the body contains the product name — a 200 serving the wrong page is still an outage.
+
+Only then does it ping. **On a definite failure it pings `/fail`** rather than waiting out the grace
+period, which is faster; silence still covers the case that cannot, namely GitHub being unable to run
+the workflow at all.
+
+**It runs on GitHub, and that is the point.** An alerting path that runs on the node it monitors cannot
+report that node's death — the same argument this document opens with, one layer out. Whatever else
+moves, this must not move into the cluster.
 
 ### What the backup check actually asserts
 
@@ -58,6 +86,34 @@ starts failing its assertions is reported after **26h + 2h ≈ 28 hours**. At `1
 
 Neither is wrong. **28 hours is well inside the window that matters for a backup** — the thing being protected is a restore that has not been needed yet, not a
 serving path — and a longer period is the one that cannot produce a false alarm. Change it deliberately, and change it in both places: here and the check.
+
+## Creating a check for the site probe
+
+| Field        | Value                | Why exactly this                                                                                                                                        |
+| ------------ | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Name**     | `site-<environment>` | Same per-environment rule as the backup check, and for the same reason                                                                                  |
+| **Schedule** | Simple               | As above                                                                                                                                                |
+| **Period**   | `15m`                | Matches the workflow's cron. The probe is cheap and the thing it watches is the serving path, so latency matters here in a way it does not for a backup |
+| **Grace**    | `30m` or more        | **The load-bearing number** — see below                                                                                                                 |
+| **Channel**  | the shared one       | See above                                                                                                                                               |
+
+Then add the ping URL as the **`HEALTHCHECKS_PING_URL`** repository secret. Nothing else activates it.
+
+### Why the grace is double the period, and must not be tightened to match it
+
+**GitHub's scheduler is not punctual, and it skips runs outright.** During the 2026-08-06 Actions
+incident it dropped roughly 85% of webhooks; scheduled workflows are also delayed under load as a matter
+of routine, not of incident. A grace equal to the period would therefore alarm on GitHub's timekeeping
+rather than on the site.
+
+At `15m`/`30m` a single missed run is absorbed and two are not, so a genuine outage is reported within
+about 45 minutes — while a late run is not reported at all. **That asymmetry is the whole point:** this
+check exists to catch the case where nothing else can report, and a channel that cries wolf about its
+own scheduler gets muted long before the outage it was for.
+
+Contrast the backup check's `26h`/`2h`, where the period tracks an assertion the check itself makes about
+data age. Here the period tracks a cron and the grace absorbs the platform. Different reasoning, and
+worth not copying one onto the other.
 
 ## Wiring a node to its check
 
