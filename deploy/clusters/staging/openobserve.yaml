@@ -92,7 +92,18 @@ spec:
       # Object storage rather than local disk, which is the point of the bucket. ADR-015: "its
       # object-storage backend means log retention stops competing with the node's disk", and
       # LEGAL.md §7.5 needs that retention to be a policy something enforces rather than an intent.
-      ZO_LOCAL_MODE: "false"
+      #
+      # **`ZO_LOCAL_MODE` stays `true`, and the storage switch is the line below it.** This first
+      # went out as `ZO_LOCAL_MODE: "false"` on the reading that the flag chooses disk versus S3. It
+      # does not — it chooses *single-node versus cluster*, and the pod crash-looped on:
+      #
+      #     common config error: Meta store only supports postgres in cluster mode.
+      #
+      # Cluster mode requires a Postgres meta store; this deployment uses the sqlite default, which
+      # is correct for one node. `ZO_LOCAL_MODE_STORAGE` is the flag that actually moves the data off
+      # the disk, and it works in exactly the mode we want.
+      ZO_LOCAL_MODE: "true"
+      ZO_LOCAL_MODE_STORAGE: "s3"
       ZO_S3_PROVIDER: "s3"
       ZO_S3_SERVER_URL: "https://fsn1.your-objectstorage.com"
       # Hetzner enforces the region in the request signature and rejects a mismatch — the same trap
