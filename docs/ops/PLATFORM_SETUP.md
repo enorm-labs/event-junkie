@@ -69,17 +69,47 @@ philosophy, it was a close call about whether a JVM gets OOM-killed mid-deploy. 
 > | `cpx22` | x86 | **€23.19** | **orderable** — what staging now runs                       |
 >
 > Either of the first two returning is worth moving back to. `./check-capacity.sh --all` is the way to watch.
+>
+> ---
+>
+> **Amended 2026-08-20: staging is DECLARED as `CX33` — 4 x86 vCPU / 8 GB / 80 GB, €10.10/month — but not yet applied.** `main.tf` names it; the running node
+> is still the `CPX22` until somebody runs `tofu apply`, so treat the rows below as the intent rather than the state. The `CPX22` ran out of memory: a global OOM killed OpenObserve, load
+> reached 99 on two cores, and the API server flapped for half an hour (#271). It is **twice the node for less than half the previous bill**, and an in-place
+> resize rather than a rebuild, since both are x86 and both have an 80 GB disk.
+>
+> **It also restores spec parity with production**, which `CPX22` never had: the table below already calls `CX33` the direct `CAX21` equivalent, so staging and
+> production now match on 4 vCPU / 8 GB and differ only on architecture.
+>
+> **The table above was wrong about `cx23`, and the correction is the useful part.** It is not that capacity returned — it is that Hetzner's `datacenters`
+> endpoint **omits orderable types as well as advertising unorderable ones**. `cx33` is absent from `nbg1`'s `available` list and the order succeeded anyway.
+> `check-capacity.sh` already warns that a green result means "worth trying"; a red one means no more than that either. **Only placing an order settles it** —
+> refusals are free and return in 0.1s.
+>
+> Probed 2026-08-20 in `nbg1`, everything with more headroom than `cpx22`:
+>
+> |         |           |            |                                                             |
+> | ------- | --------- | ---------- | ----------------------------------------------------------- |
+> | `cx33`  | 4 / 8 GB  | **€10.10** | ✅ **orderable** — what staging is declared as              |
+> | `cax21` | 4 / 8 GB  | €12.48     | ❌ `unsupported location` — ARM still cannot be bought here |
+> | `cx43`  | 8 / 16 GB | €19.03     | ❌ `resource_unavailable` — supported here, out of stock    |
+> | `cpx31` | 4 / 8 GB  | €20.81     | ❌ `unsupported location`                                   |
+> | `cax31` | 8 / 16 GB | €24.98     | ❌ `unsupported location`                                   |
+> | `cpx32` | 4 / 8 GB  | €42.23     | ✅ orderable, four times the price                          |
+> | `ccx13` | 2 / 8 GB  | €51.16     | ✅ orderable, dedicated vCPU, five times the price          |
+>
+> **The two refusal codes are not the same news.** `resource_unavailable` means the type is supported in `nbg1` and merely out of stock, so `cx43`'s 16 GB may
+> become buyable later — `check-capacity.sh` now watches it. `unsupported location` never self-resolves.
 
-| Role                | Type                | vCPU / RAM / disk    | Notes                                                                                            |
-| ------------------- | ------------------- | -------------------- | ------------------------------------------------------------------------------------------------ |
-| **k3s node**        | **CAX21**           | 4 ARM / 8 GB / 80 GB | Direct CX33 equivalent. Primary IPv4 + IPv6                                                      |
-| **PostgreSQL node** | **CAX11**           | 2 ARM / 4 GB / 40 GB | Direct CX23 equivalent. **No public IPv4**                                                       |
-| **Staging**         | ~~CAX11~~ **CPX22** | 2 x86 / 4 GB / 40 GB | All-in-one. Needs a public IPv4 for the WireGuard endpoint. **x86 since 2026-08-13 — see below** |
-| Private network     | —                   | free                 | One `/16`, both production servers attached                                                      |
-| Firewalls           | —                   | free                 | Two, one per role                                                                                |
-| Backups             | —                   | 20 % of server price | Hetzner's automated daily backups, both production servers                                       |
-| **Volume**          | —                   | 10 GB · ~€0.44/mo    | **`PGDATA`.** One per environment, staging included — see below                                  |
-| **Object Storage**  | —                   | 1 TB inc.            | **One subscription, three buckets** — see below                                                  |
+| Role                | Type               | vCPU / RAM / disk    | Notes                                                                                                                       |
+| ------------------- | ------------------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **k3s node**        | **CAX21**          | 4 ARM / 8 GB / 80 GB | Direct CX33 equivalent. Primary IPv4 + IPv6                                                                                 |
+| **PostgreSQL node** | **CAX11**          | 2 ARM / 4 GB / 40 GB | Direct CX23 equivalent. **No public IPv4**                                                                                  |
+| **Staging**         | ~~CPX22~~ **CX33** | 4 x86 / 8 GB / 80 GB | All-in-one. Needs a public IPv4 for the WireGuard endpoint. **Declared 2026-08-20 after an OOM; apply pending — see below** |
+| Private network     | —                  | free                 | One `/16`, both production servers attached                                                                                 |
+| Firewalls           | —                  | free                 | Two, one per role                                                                                                           |
+| Backups             | —                  | 20 % of server price | Hetzner's automated daily backups, both production servers                                                                  |
+| **Volume**          | —                  | 10 GB · ~€0.44/mo    | **`PGDATA`.** One per environment, staging included — see below                                                             |
+| **Object Storage**  | —                  | 1 TB inc.            | **One subscription, three buckets** — see below                                                                             |
 
 **Not ordered, and why:** Load Balancer (k3s ServiceLB binds to the node IP on one node) · Floating IPs (for failover between servers, which does not apply) ·
 **Storage Box** (superseded — see below) · Storage Share.

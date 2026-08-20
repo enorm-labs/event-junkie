@@ -46,6 +46,10 @@ and managed. The S3 backend on Hetzner's Ceph works, including through a partial
 explains it. The firewall rules, the k3s flags, WireGuard and the PGDG install have now executed on a real machine and worked on the first boot: k3s `Ready`,
 Traefik up, PostgreSQL listening on the private address, tunnel established with the declared peer.
 
+> **The config and the running node disagree right now (2026-08-20).** `main.tf` declares `cx33` — 4 vCPU / 8 GB, and cheaper than the `cpx22` it replaces —
+> after the node ran out of memory under the observability stack (#271). **It has not been applied**, so a `tofu plan` on staging will show a pending
+> `server_type` change. That is expected, not drift to undo. Applying it is an in-place resize (both x86, both 80 GB disk) and reboots the node.
+
 **The PGDATA volume is applied and proven on staging, as of 2026-08-17 (#460).** The node was replaced and the database came back: a sentinel row written at
 20:11:27 was read back on a machine that booted at 20:14:41, and every table matched a dump taken beforehand exactly — zero rows lost. `postgres.sh` logged
 `adopting the existing cluster on the volume`, and `hcloud_volume.postgres` did not appear in the plan at all, which is the check that matters. A subsequent
