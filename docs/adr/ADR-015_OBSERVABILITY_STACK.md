@@ -20,6 +20,39 @@ before the entry.
 | 4   | **Dashboards carry business metrics**   | The importer meters in PLATFORM_SETUP.md §7 cannot be charted the way they need to be                                                                   |
 | 5   | **Upgrades are uneventful**             | A minor version bump loses data or needs manual migration                                                                                               |
 
+### The trial started 2026-08-20 — deployed to staging (#271)
+
+**The fortnight this ADR asks for begins now**, and it could not begin before: nothing had been
+running OpenObserve since the decision was accepted on 2026-08-10. **So judge it from 2026-09-03**,
+and again before go-live, against the five tests in §Status.
+
+What is running: `openobserve-standalone` 0.92.2, single node, sqlite metadata, storing Parquet in
+the `event-junkie-o2` Object Storage bucket (#593, #597), with credentials hand-made and out of git
+(`docs/ops/SECRETS.md`). The Signal bridge is deployed alongside it and **cannot send anything until
+its number is registered**, so criterion 1 is not merely untested — its delivery path does not exist
+yet.
+
+**The object-storage backend is confirmed end to end**, which was the last thing capable of
+invalidating the choice quietly. Records ingested through the API appeared in the bucket as Parquet
+plus an index:
+
+```
+files/default/logs/probe/2026/08/20/11/7496170706808340480d3f5.parquet
+files/default/index/probe_logs/2026/08/20/11/7496170706808340480d3f5.ttv
+```
+
+**Roughly an hour elapsed between ingest and upload**, and that is worth knowing before it is
+mistaken for a fault: data is served from the write-ahead log until the mover closes a file, and
+`ZO_MAX_FILE_RETENTION_TIME` is 600s **on a file that is large enough to close**. A few hundred
+kilobytes sat in the WAL well past that window. The data was queryable throughout — durability, not
+availability, is what the delay affects.
+
+**One configuration trap cost a crash loop and belongs here rather than only in the commit that fixed
+it:** `ZO_LOCAL_MODE` selects **single-node versus cluster**, not disk versus object storage. Setting
+it to `false` to "use the bucket" selects cluster mode, which requires a Postgres meta store and
+panics on the sqlite default. `ZO_LOCAL_MODE_STORAGE: "s3"` is the flag that moves data off the disk,
+and it works in single-node mode — which is the mode this ADR's whole footprint argument depends on.
+
 ### Trial results so far — measured 2026-08-19 on a k3d rehearsal (#271)
 
 Two of the five are answered, by running the thing rather than by reading its documentation. The
