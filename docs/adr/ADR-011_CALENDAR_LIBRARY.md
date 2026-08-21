@@ -2,11 +2,9 @@
 
 ## Status
 
-Accepted (2026-06-18)
+**Accepted — FullCalendar**, in use on the calendar route.
 
-> Follow-up to [ADR-010](ADR-010_FRONTEND_STYLING_FRAMEWORK.md), which adopted Tailwind v4 + shadcn-vue and
-> explicitly deferred the **event-calendar** library as a separate sub-decision. Adopted **FullCalendar**;
-> the calendar route was scaffolded in `events-frontend/` on 2026-06-18.
+> Follow-up to [ADR-010](ADR-010_FRONTEND_STYLING_FRAMEWORK.md), which adopted Tailwind v4 + shadcn-vue and deferred this as a separate sub-decision.
 
 ## Context
 

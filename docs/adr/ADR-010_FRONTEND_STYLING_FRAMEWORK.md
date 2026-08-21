@@ -2,11 +2,9 @@
 
 ## Status
 
-Accepted (2026-06-18)
+**Accepted — Option A: Tailwind CSS v4 + shadcn-vue**, in use in `events-frontend/`.
 
-> Adopted **Option A — Tailwind CSS v4 + shadcn-vue**. Set up in `events-frontend/` on 2026-06-18.
-> The event-calendar library remains a separate, still-open sub-decision (see the note under
-> [Requirements](#requirements)).
+> The event-calendar library was a separate sub-decision, settled by [ADR-011](ADR-011_CALENDAR_LIBRARY.md).
 
 ## Context
 

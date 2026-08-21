@@ -2,60 +2,19 @@
 
 ## Status
 
-**Accepted (2026-08-10) — Option A: Hetzner Cloud (Nuremberg/Falkenstein), k3s + Helm, OpenTofu, PostgreSQL on a dedicated VM with `wal-g` PITR backups.**
+**Accepted — Option A: Hetzner Cloud (Nuremberg/Falkenstein), k3s + Helm, OpenTofu, PostgreSQL on a dedicated VM with `wal-g` PITR backups.**
 
-Proposed 2026-08-03 · revised 2026-08-05 · accepted 2026-08-10 · **amended 2026-08-10 (Cloudflare removed — see below)**. The recommendation was accepted as
-written; no fallback was taken, so the frontend-hosting and CORS posture below stands unchanged (containerised SPA, same origin as the API). The only
-substantive edit made at acceptance was to add **Option G — Hetzner compute + managed EU Postgres** to the ranked fallbacks, where it had been named as a revisit
-trigger but omitted from the list.
+**Amended: no Cloudflare.** DNS and TLS are in-house — DNS served by Hetzner, and **Traefik terminates TLS in the cluster** via cert-manager
+([#412](https://github.com/enorm-labs/event-junkie/issues/412)). Everything below about compute, database, cost and fallbacks is unaffected; only the edge
+changed. The reasoning, and what it cost, is in §The Cloudflare amendment.
 
-> **Amendment, 2026-08-10 — no Cloudflare. DNS and TLS are in-house.**
-> ([#412](https://github.com/enorm-labs/event-junkie/issues/412))
->
-> As first written, this ADR put Cloudflare's free plan in front for DNS, TLS, CDN and rate limiting, and flagged one nuance: strictly German-only processing
-> would mean _"either dropping Cloudflare's proxy mode or buying its EU data-localisation add-on"_. **The second option does not exist at this tier.**
-> Cloudflare's Data Localization Suite is an **Enterprise-only add-on, custom-priced through direct sales** — not something a €30/month project buys. That left a
-> straight either/or, and the strict reading of criterion 5 won: no US processor in the request path at all.
->
-> **The platform decision is untouched.** Hetzner, k3s, Helm and OpenTofu all stand. Only the edge changes: DNS is served by the registrar or Hetzner DNS, and
-> **Traefik terminates TLS in the cluster** via cert-manager or its built-in ACME client. Everything in this document about compute, database, cost and fallbacks
-> reads as before.
->
-> **What it costs.** Three things Cloudflare was doing for free now need answers, and two of them are not free:
->
-> - **Edge DDoS and rate limiting** — gone. What remains is the existing `PerHostThrottlingFilter`, a Traefik rate-limit middleware, and Hetzner's volumetric
->   protection. This _removes_ the progress this ADR claimed on
->   [#268](https://github.com/enorm-labs/event-junkie/issues/268) rather than making it; #268 grows accordingly.
-> - **Edge access control for the admin UI** — Cloudflare Access was named below as "the cheapest fit". It is no longer available, so the alternatives already
->   listed there (an ingress IP allowlist, or a basic-auth middleware) become the answer.
-> - **CDN caching of the SPA assets** — no longer applies. At this scale it does not matter: one nginx, a few MB, and Hetzner includes 20 TB of egress.
->
-> **What it buys.** One fewer processor, one fewer DPA, no SCCs and no transfer mechanism to name — [#275](https://github.com/enorm-labs/event-junkie/issues/275)
-> drops to a single AVV with Hetzner. It also settles an open question in
-> [ADR-014](ADR-014_RENDERING_STRATEGY.md): the head-rewriting transport was undecided between a Cloudflare Worker and an in-cluster sidecar, and is now the
-> sidecar — the option ADR-014 itself noted "keeps all processing in Germany".
->
-> **One thing it makes harder, not easier.** Behind Cloudflare the origin saw a proxy IP. Without it, **Traefik and nginx see real client IPs**, so log
-> truncation and retention become more load-bearing, not less. See [LEGAL.md](../LEGAL.md) §7.5, which was rewritten for this.
-
-> Resolves [issue #258](https://github.com/enorm-labs/event-junkie/issues/258) — _"Settle the cloud platform"_, the first item in the `v0.2 — Deployable` milestone. This ADR
-> picks
-> the **platform**; the Terraform/OpenTofu layout, the Helm chart, and the CI/CD workflows are follow-up items that depend on it. All prices in this document
-> were checked on **2026-08-03**, and the PaaS / Elastic Beanstalk / App Engine sections were added on **2026-08-05**. They must be re-verified before the money
-> is actually committed — cloud list prices moved twice in 2026 already (see
-> [Hetzner's 15 June 2026 adjustment](https://docs.hetzner.com/general/infrastructure-and-availability/price-adjustment/)). Accepting this ADR commits nothing;
-> the re-check belongs to [#260](https://github.com/enorm-labs/event-junkie/issues/260), where servers are actually provisioned.
->
-> **2026-08-05 revision.** Managed-container platforms priced out at 4–6× the cheapest option, so the PaaS layer was evaluated properly rather than in one
-> paragraph: European PaaS providers are now first-class candidates (Option E1), AWS Elastic Beanstalk is costed separately from Fargate (Option H), and App
-> Engine is costed alongside Cloud Run (Option C). The recommendation is unchanged; the _fallback_ ranking changed materially — it is now European PaaS first,
-> not US PaaS.
+**All prices in this document are indicative.** They were surveyed once and cloud list prices have moved repeatedly since; the _shape_ of the comparison is
+robust to a 30% move, the arithmetic is not. What the platform actually costs today is [ops/COSTS.md](../ops/COSTS.md).
 
 ## Context
 
-Event Junkie is a Berlin music-events guide, **not yet deployed anywhere** (see [README §Status](../../README.md#status)). The decision is being made before the
-first deploy, which means we are choosing the platform we will write Terraform and a Helm chart _against_ — switching later costs real work, so it is worth
-recording why.
+Event Junkie is a Berlin music-events guide. This decision was made **before the first deploy** — choosing the platform the OpenTofu and the Helm chart would
+be written against — which is why the alternatives are recorded at length: switching later costs real work.
 
 ### What actually has to run
 
@@ -526,10 +485,8 @@ therefore **not optional** — they are the price of the decision.
 
 ### Deployment shape
 
-> The sketch below is the _platform_ shape as decided here. It predates several decisions taken while planning
-> [#260](https://github.com/enorm-labs/event-junkie/issues/260) — WireGuard for admin access, Flux for deploys, OpenObserve, and the move to the CAX line — so
-> **[PLATFORM_SETUP.md](../ops/PLATFORM_SETUP.md) §2 is the current picture**, in rendered diagrams. This one is kept because it is what the decision was made
-> against.
+> **This sketch is what the decision was made against, not what runs.** It predates WireGuard admin access, Flux, OpenObserve and the object-storage backups.
+> **[PLATFORM_SETUP.md](../ops/PLATFORM_SETUP.md) §1 is the current picture**, in rendered diagrams.
 
 ```
            DNS only — registrar or Hetzner DNS. No proxy, no edge, no US processor.
@@ -656,6 +613,28 @@ which we would author and maintain in Terraform. AWS's flexibility is real, but 
 
 The honest summary: **AWS is the right answer to a different question** — one with a team, a compliance requirement, or a service catalogue to draw on. Choosing
 Hetzner now does not close that door; the application is containers and Postgres, and the Helm chart is the portable artifact.
+
+### The Cloudflare amendment
+
+As first written, this ADR put Cloudflare's free plan in front for DNS, TLS, CDN and rate limiting, with one nuance flagged: strictly German-only processing
+would mean _"either dropping Cloudflare's proxy mode or buying its EU data-localisation add-on"_. **The second option does not exist at this tier** —
+Cloudflare's Data Localization Suite is an Enterprise-only add-on, custom-priced through direct sales. That left a straight either/or, and the strict reading of
+criterion 5 won: **no US processor in the request path at all.**
+
+**What it costs.** Three things Cloudflare was doing for free needed answers, and two of them are not free:
+
+- **Edge DDoS and rate limiting** — gone. What remains is the existing `PerHostThrottlingFilter`, a Traefik rate-limit middleware, and Hetzner's volumetric
+  protection. This _removes_ progress on [#268](https://github.com/enorm-labs/event-junkie/issues/268) rather than making it.
+- **Edge access control for the admin UI** — Cloudflare Access was named as "the cheapest fit". WireGuard replaced it, and more cleanly: the admin surface is
+  unreachable rather than authenticated (PLATFORM_SETUP §8.1).
+- **CDN caching of the SPA assets** — no longer applies. One nginx, a few MB, and Hetzner includes 20 TB of egress.
+
+**What it buys.** One fewer processor, one fewer DPA, no SCCs and no transfer mechanism to name — a single AVV with Hetzner. It also settled an open question in
+[ADR-014](ADR-014_RENDERING_STRATEGY.md): the head-rewriting transport was undecided between a Cloudflare Worker and an in-cluster sidecar, and is now the
+sidecar.
+
+**One thing it makes harder.** Behind Cloudflare the origin saw a proxy IP. Without it, **Traefik and nginx see real client IPs**, so log truncation and
+retention become more load-bearing, not less — [LEGAL.md](../LEGAL.md) §7.5.
 
 ---
 

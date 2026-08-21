@@ -2,16 +2,11 @@
 
 ## Status
 
-Accepted (2026-08-07) — **implemented in full (2026-08-08)**
+**Accepted, and implemented in full**: locale-prefixed routes for `en` and `de`, per-locale legal and About pages with German authoritative, a switcher in
+header and footer, locale-aware formatting, `hreflang`, `og:locale` and a generated sitemap.
 
-> Written as Phase 0 of a localisation plan, which delivered the follow-up [LEGAL.md](../LEGAL.md) §6.2 had agreed. **That plan has been retired**: every phase
-> shipped, so the decisions live here, the operational rules in [`events-frontend/AGENTS.md`](../../events-frontend/AGENTS.md) §Localisation, and nothing was
-> left for a plan to describe.
->
-> What shipped: locale-prefixed routes for `en` and `de`, per-locale legal and About pages with German authoritative, a switcher in header and footer,
-> locale-aware formatting, `hreflang`, `og:locale` and a generated sitemap.
->
-> Package versions and download figures were checked on **2026-08-07**.
+> The operational rules live in [`events-frontend/AGENTS.md`](../../events-frontend/AGENTS.md) §Localisation; the policy in [LEGAL.md](../LEGAL.md) §6.
+> Package versions and download figures below were surveyed once and are indicative.
 
 ## Context
 
