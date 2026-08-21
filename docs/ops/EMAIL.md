@@ -66,8 +66,10 @@ written against. Choosing Hetzner avoids the contract work; it does not avoid th
 1. Sign in at <https://accounts.hetzner.com/> — the same account that holds Cloud and the DPA. Do **not** create a second account; that is what would split the
    contract.
 2. Order **Webhosting S** from <https://www.hetzner.com/webhosting/>. Do not order a domain with it — `event-junkie.de` stays at INWX.
-3. Wait for the provisioning mail. It names the **web-hosting server your account landed on** — something of the shape `wpXXX.your-server.de`. **Write it down:
-   it is the MX target in §5, it is account-specific, and copying one out of a blog post is how mail ends up delivered to a stranger's server.**
+3. Wait for the provisioning mail. It names the **web-hosting server the account landed on**, and that name is the MX target in §5. **Ordered 2026-08-21, this
+   account is on `www750.your-server.de`** — `167.235.121.178`, `2a01:4f8:1061:21e6::2`, account name `event-junkie`. It is account-specific: copying a server
+   name out of a blog post is how mail ends up delivered to a stranger's machine, and **if Hetzner ever migrates the account, the MX and the SPF in §5 both
+   move with it.**
 4. Sign in to **konsoleH** at <https://konsoleh.hetzner.com/>.
 
 ## 4. Adding the domain and the two mailboxes in konsoleH
@@ -93,13 +95,29 @@ record added by hand in the Cloud Console is a record the next `tofu plan` propo
 
 | Record         | Today                                  | After                                           | Why                                                                       |
 | -------------- | -------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------- |
-| `@ MX`         | _absent_                               | `10 wpXXX.your-server.de.`                      | Without it nothing is delivered anywhere                                  |
-| `@ TXT` (SPF)  | `v=spf1 -all`                          | `v=spf1 include:_spf.hetzner.com -all`          | `-all` means _this domain sends no mail_, and it is about to send replies |
+| `@ MX`         | _absent_                               | `10 www750.your-server.de.`                     | Without it nothing is delivered anywhere                                  |
+| `@ TXT` (SPF)  | `v=spf1 -all`                          | `v=spf1 include:www750.your-server.de -all`     | `-all` means _this domain sends no mail_, and it is about to send replies |
 | `SELECTOR TXT` | `*._domainkey` → `v=DKIM1; p=`         | a real key at the konsoleH selector             | The wildcard revokes every selector; the specific name overrides it       |
 | `_dmarc TXT`   | `p=reject; sp=reject; adkim=s; aspf=s` | unchanged, **`rua=` only if somebody reads it** | Strict alignment still holds — see below                                  |
 
-**The `-all` → `include:` change is the one to get right.** `_spf.hetzner.com` chains to `_spf4`/`_spf6.hetzner.com`, which are **explicit lists of ~19 Hetzner
-outbound relay IPs**, not "all of Hetzner" — verified by lookup on 2026-08-21. Two lookups deep, comfortably inside SPF's limit of ten. Keep the trailing `-all`.
+**The obvious SPF include is the wrong one, and this page said so before it was checked.** `include:_spf.hetzner.com` looks right and is not: `_spf4`/`_spf6`
+under it are explicit lists of ~19 IPs in `213.133.*`, `78.46.*`, `85.10.*`, `88.198.*` and `213.95.*` — **Hetzner's own corporate relays**, and
+`167.235.121.178` is not among them. Publishing it would authorise machines this account never sends from, and fail to authorise the one it does.
+
+The hosting server publishes its own policy, which is the thing to inherit:
+
+```console
+$ dig +short TXT www750.your-server.de
+"v=spf1 a:www750.your-server.de a:mail.www750.your-server.de -all"
+```
+
+`include:www750.your-server.de` therefore tracks whatever Hetzner puts there — three lookups, well inside SPF's limit of ten, and self-maintaining in a way a
+hard-coded `ip4:` is not. Keep the trailing `-all`.
+
+**Treat even that as a hypothesis until a message proves it.** konsoleH's submission and webmail host is the _shared_ `mail.your-server.de` — `78.46.5.205`,
+which the include above does **not** cover and which is not in `_spf.hetzner.com` either. Whether outbound mail leaves from the account's own server or from
+that shared front end is a question **one test message answers and no amount of documentation does** (§7). Publish SPF from the `Received` chain, not from a
+guess — that is why §5 is two applies rather than one.
 
 **DMARC's strict alignment survives this** and should not be loosened reflexively: mail sent through konsoleH carries an envelope sender and a DKIM `d=` of
 `event-junkie.de`, so `aspf=s` and `adkim=s` both align. If a test lands in spam, read the `Authentication-Results` header before touching the policy — DMARC is
@@ -123,12 +141,12 @@ locals {
     mx = {
       name    = "@"
       type    = "MX"
-      records = ["10 wpXXX.your-server.de."] # from the provisioning mail, NOT from a blog
+      records = ["10 www750.your-server.de."] # this account's server, from the provisioning mail
     }
     spf = {
       name    = "@"
       type    = "TXT"
-      records = ["\"v=spf1 include:_spf.hetzner.com -all\""]
+      records = ["\"v=spf1 include:www750.your-server.de -all\""] # after §7 step 2 confirms it
     }
     dkim = {
       name    = "SELECTOR._domainkey" # the selector konsoleH shows after "DKIM aktivieren"
@@ -149,21 +167,33 @@ locals {
 Three details in that snippet each cost something to discover:
 
 - **The MX priority lives inside the value string.** `hcloud_zone_rrset` records take a single `value`; there is no separate priority field. The **trailing dot
-  is required** — without it the target is treated as relative and becomes `wpXXX.your-server.de.event-junkie.de.`
+  is required** — without it the target is treated as relative and becomes `www750.your-server.de.event-junkie.de.`
 - **`provider::hcloud::txt_record()` chunks the DKIM key for you.** A TXT record is one or more quoted strings of at most 255 characters, and an RSA-2048 public
   key is longer than that. Hand-quoting it is the classic silent DKIM failure — the record exists, resolvers return it, and no verifier can parse it.
 - **The wildcard revoke stays.** `*._domainkey` with `p=` only answers names that have no record of their own, so publishing `SELECTOR._domainkey` overrides it
   for that selector while every other selector remains revoked. That is the wanted behaviour, not a conflict to clean up.
 
-### Applying it
+### Applying it, in two sittings rather than one
+
+Receiving needs only the MX; sending needs an SPF value that cannot be known until something has been sent. So:
 
 ```sh
 cd infra/bootstrap
-tofu plan -out=mail.tfplan          # expect exactly 3 to add, 1 to change (the SPF rrset)
+tofu plan -out=mx.tfplan            # 1 to add: the MX rrset. Nothing else.
+tofu apply mx.tfplan
+```
+
+That alone ends the dead-address problem — mail arrives, and `v=spf1 -all` stays true because nothing has sent yet. **A domain that receives and does not send
+is a coherent posture**, not a half-finished one; what `dns.tf` warns against is SPF drifting out of step with reality, and at this point it is exactly in step.
+
+Then create the mailboxes (§4), run §7 step 2, read the sending IP off the headers, and only then:
+
+```sh
+tofu plan -out=mail.tfplan          # 2 to add (DKIM, and _dmarc if rua), 1 to change (SPF)
 tofu apply mail.tfplan
 ```
 
-**Stop if the count differs.** `bootstrap/` holds the zones, `delete_protection` and `prevent_destroy` — a plan that proposes to destroy anything here is a plan
+**Stop if either count differs.** `bootstrap/` holds the zones, `delete_protection` and `prevent_destroy` — a plan that proposes to destroy anything here is a plan
 that ends with an unresolvable domain, because a re-created zone gets a new DNSSEC key and the DS record at INWX stops matching.
 
 ## 6. Reading the mail
@@ -182,17 +212,20 @@ and swapping them produces an authentication failure that reads like a wrong pas
 
 ```sh
 dig +short MX  event-junkie.de @1.1.1.1
-dig +short TXT event-junkie.de @1.1.1.1              # expect the include:, not -all
+dig +short TXT event-junkie.de @1.1.1.1              # -all until the second apply, include: after
 dig +short TXT SELECTOR._domainkey.event-junkie.de @1.1.1.1
 dig +short TXT _dmarc.event-junkie.de @1.1.1.1
 ```
 
-Then the part DNS cannot answer:
+Then the part DNS cannot answer, in this order — step 2 is what makes the SPF value in §5 a measurement rather than a guess:
 
-1. **Send a message to each address from an outside account** and confirm it arrives — in the mailbox _and_ at the forward.
-2. **Reply from each**, to a Gmail or Outlook address, and read `Authentication-Results` in the received headers: `spf=pass`, `dkim=pass`, `dmarc=pass`. Anything
-   less means §5 is not finished, and it is much cheaper to find here than after the first cold-send.
-3. **Watch for the first Let's Encrypt notice.** Certificates renew on their own schedule, so this is a slow signal — but it is the one that proves the address
+1. **Send a message to each address from an outside account** and confirm it arrives — in the mailbox _and_ at the forward. This works with the MX alone.
+2. **Reply from each to a Gmail or Outlook address, and read the `Received:` chain** for the IP the message actually left from. Expect `spf=fail` at this point:
+   the domain still publishes `v=spf1 -all`, and that is the correct answer to a question nobody had asked yet. **The failure does not hide the header** — the
+   sending IP is right there, and it is the input to the second apply.
+3. **Apply the SPF and DKIM records** (§5, second sitting), wait out the TTL, and send again. Now `Authentication-Results` should read `spf=pass`, `dkim=pass`,
+   `dmarc=pass`. Anything less means §5 is not finished, and it is far cheaper to find here than after the first message to a stranger.
+4. **Watch for the first Let's Encrypt notice.** Certificates renew on their own schedule, so this is a slow signal — but it is the one that proves the address
    is reachable by a real sender rather than by you.
 
 **There is no monitoring on any of this.** A mailbox that stops receiving looks exactly like a quiet week, which is the same blindness
