@@ -24,7 +24,7 @@ Store the password, the TOTP seed, **and the recovery codes** for each. The reco
 | 4   | **healthchecks.io**                      | The dead-man's switch — its checks, its notification channel, its ping URLs  | In use                                 | Yes        |
 | 5   | **Postflex**                             | The rented imprint address (§ 5 DDG)                                         | **Not ordered** — go-live blocker      | Yes        |
 | 6   | **Signal**, on its own prepaid number    | The alert bridge's identity. Registration state also lives on a PVC          | **Decided, not built**                 | Yes        |
-| 7   | **Mail provider** for the role mailboxes | `hello@` and `security@event-junkie.de` — both published, neither exists     | **Provider not chosen**                | Yes        |
+| 7   | **Hetzner Webhosting S** (konsoleH)      | `hello@` and `security@event-junkie.de`. Its own login, not the Cloud one    | **In use** — since 2026-08-21          | Yes        |
 | 8   | **OpenObserve** admin login              | Logs, metrics, dashboards, alert rules. Created at first start               | **In use** — staging, since 2026-08-20 | Yes        |
 
 **On the Hetzner account specifically:** it is the single point of total failure here. It holds the infrastructure, the DNS, the backups and the state file.
