@@ -16,16 +16,17 @@ where a password manager is not convenience but the recovery story. **No** means
 
 Store the password, the TOTP seed, **and the recovery codes** for each. The recovery codes are the half people skip, and they are what a lost phone costs.
 
-| #   | Account                                  | Unlocks                                                                      | Status                                 | Only copy? |
-| --- | ---------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------- | ---------- |
-| 1   | **Hetzner** (`accounts.hetzner.com`)     | Everything. Servers, volumes, firewalls, DNS zones, Object Storage, the AVV  | In use                                 | Yes        |
-| 2   | **GitHub** — personal + `enorm-labs` org | The repository, Actions, GHCR packages, Flux's deploy key, branch protection | In use                                 | Yes        |
-| 3   | **INWX** (registrar)                     | Domain renewal, nameserver delegation, the DNSSEC DS record                  | In use                                 | Yes        |
-| 4   | **healthchecks.io**                      | The dead-man's switch — its checks, its notification channel, its ping URLs  | In use                                 | Yes        |
-| 5   | **Postflex**                             | The rented imprint address (§ 5 DDG)                                         | **Not ordered** — go-live blocker      | Yes        |
-| 6   | **Signal**, on its own prepaid number    | The alert bridge's identity. Registration state also lives on a PVC          | **Decided, not built**                 | Yes        |
-| 7   | **Hetzner Webhosting S** (konsoleH)      | `hello@` and `security@event-junkie.de`. Its own login, not the Cloud one    | **In use** — since 2026-08-21          | Yes        |
-| 8   | **OpenObserve** admin login              | Logs, metrics, dashboards, alert rules. Created at first start               | **In use** — staging, since 2026-08-20 | Yes        |
+| #   | Account                                  | Unlocks                                                                         | Status                                   | Only copy? |
+| --- | ---------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------- | ---------- |
+| 1   | **Hetzner** (`accounts.hetzner.com`)     | Everything. Servers, volumes, firewalls, DNS zones, Object Storage, the AVV     | In use                                   | Yes        |
+| 2   | **GitHub** — personal + `enorm-labs` org | The repository, Actions, GHCR packages, Flux's deploy key, branch protection    | In use                                   | Yes        |
+| 3   | **INWX** (registrar)                     | Domain renewal, nameserver delegation, the DNSSEC DS record                     | In use                                   | Yes        |
+| 4   | **healthchecks.io**                      | The dead-man's switch — its checks, its notification channel, its ping URLs     | In use                                   | Yes        |
+| 5   | **Postflex**                             | The rented imprint address (§ 5 DDG)                                            | **Ordered 2026-08-21** — address pending | Yes        |
+| 6   | **Signal**, on its own prepaid number    | The alert bridge's identity. Registration state also lives on a PVC             | **Decided, not built**                   | Yes        |
+| 7   | **Hetzner Webhosting S** (konsoleH)      | The hosting package the mailboxes live on. **Its own login, not the Cloud one** | **In use** — since 2026-08-21            | Yes        |
+| 7a  | **The two mailbox passwords**            | `hello@` and `security@` — IMAP, SMTP and webmail, one password each            | **In use** — since 2026-08-21            | Yes        |
+| 8   | **OpenObserve** admin login              | Logs, metrics, dashboards, alert rules. Created at first start                  | **In use** — staging, since 2026-08-20   | Yes        |
 
 **On the Hetzner account specifically:** it is the single point of total failure here. It holds the infrastructure, the DNS, the backups and the state file.
 Treat its 2FA recovery codes with the same care as the age key in §3.
@@ -173,7 +174,8 @@ One group per section above maps cleanly onto how these are actually used:
 
 ```
 event-junkie/
-├── Accounts/          Hetzner · GitHub · INWX · healthchecks.io · Postflex · Signal · mail · OpenObserve
+├── Accounts/          Hetzner · konsoleH · GitHub · INWX · healthchecks.io · Postflex · Signal · OpenObserve
+├── Mailboxes/         hello@ · security@ — one entry each, not one for "mail"
 ├── API tokens/        HCLOUD_TOKEN · S3 key pair · cert-manager DNS token · NVD · the PATs
 ├── Keys/              age key (file attachment) · SSH key (file) · WireGuard config (file) · kubeconfig
 ├── Cluster & node/    events role password · ping URLs · wal-g credentials.env
