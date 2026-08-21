@@ -877,6 +877,13 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     Build & Test (frontend)                          build-frontend.yml — a gate job, see below
     ```
 
+    **Three of these skip their work on a pull request that cannot affect them, without skipping the check.** `Build & Test (backend)`/`(frontend)` do it with a
+    gate job; the three `Analyze (…)` contexts do it with a `relevance` step that gates every other step in the job. Both shapes exist for the same reason — the
+    required context has to be produced by something unconditional — and both fail loudly rather than skipping when the change detection itself fails. A
+    documentation-only pull request now costs seconds on all five instead of ~22 minutes. - **Adding a step to `codeql.yml`'s `analyze` job means adding `if: steps.relevance.outputs.value == 'true'` to it.** Without it the step runs on a
+    docs-only pull request with nothing checked out, and fails for a reason that looks nothing like its cause. - **The path patterns live next to the thing they gate**, per language in `codeql.yml` and per workflow in the two build files. A change to `codeql.yml`
+    itself matches all three languages, so a change to the patterns is always validated by the pull request that makes it.
+
     Two consequences worth knowing before changing any of this. **Adding a stack to `validate-infra`'s matrix creates a context that is not required** — the rule
     names each one exactly, so the matrix growing silently weakens the gate; add it to the ruleset in the same change. And **never add a `paths:` filter to the
     `pull_request` trigger of those three workflows** — it would block every unrelated pull request, and the failure looks like a hung check rather than a

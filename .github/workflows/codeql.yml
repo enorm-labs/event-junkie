@@ -30,6 +30,10 @@ name: CodeQL
 # - **Never add a `paths:` filter to the `pull_request` trigger.** These checks are required, and a
 #   required check that is skipped by path filtering stays Pending forever. Same reason
 #   validate-workflows.yml, validate-chart.yml and validate-infra.yml carry the same warning.
+#   **Path filtering happens inside the job instead** — see the `relevance` step. The distinction is
+#   the whole point: a workflow-level filter produces no check run, while a job that runs and skips
+#   its steps still reports. A documentation-only pull request pays ~10s a language instead of the
+#   340s `java-kotlin` costs.
 # - **The matrix defines the check contexts.** Each language produces its own `Analyze (<language>)`
 #   context, and the ruleset names each one exactly — so adding a language here creates a check that
 #   is *not* required, and removing one leaves a required check that never reports. Change the
@@ -99,7 +103,65 @@ jobs:
             build-mode: autobuild
 
     steps:
+      # **The job is deliberately unconditional; only its steps are gated.** These three names are
+      # the required check contexts, and a job skipped at job level would have to rely on "a skipped
+      # job counts as success" — the semantics `build-backend.yml` avoids depending on. Running the
+      # job and skipping its work costs ~10s and keeps the context reporting for real.
+      #
+      # **Every step below this one carries the `if:`.** A new step added without it runs on a
+      # docs-only pull request with nothing checked out, and fails for a reason that looks nothing
+      # like its cause.
+      #
+      # The blast radius of a wrong pattern is bounded, which is why this is an acceptable trade at
+      # all: `push:` to main and the weekly `schedule:` both analyse everything unconditionally, so
+      # a gap here delays a finding to the merge commit rather than losing it.
+      - name: Decide whether this language is affected
+        id: relevance
+        env:
+          # Read through `env:` rather than interpolated into the script — a `${{ }}` expression
+          # expanded inside `run:` is the template-injection shape zizmor rejects.
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          LANGUAGE: ${{ matrix.language }}
+        run: |
+          set -euo pipefail
+          # A push to main, the weekly schedule and a manual dispatch all analyse everything.
+          if [ "$EVENT_NAME" != 'pull_request' ]; then
+            echo 'value=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Where each language's source actually lives. A change to this workflow re-runs all three,
+          # so a change to the patterns is always validated by the pull request that makes it.
+          case "$LANGUAGE" in
+            java-kotlin)
+              PATTERN='^(events-core/|events-bff/|events-importer/|detekt-rules/|gradle/|gradlew|build\.gradle\.kts$|settings\.gradle\.kts$|gradle\.properties$|\.github/workflows/codeql\.yml$)' ;;
+            javascript-typescript)
+              PATTERN='^(events-frontend/|perf/|\.github/workflows/codeql\.yml$)' ;;
+            actions)
+              PATTERN='^\.github/' ;;
+            *)
+              echo "::error::no path pattern for language '$LANGUAGE' — refusing to skip it"
+              exit 1 ;;
+          esac
+          FILES="$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[].filename')"
+          # An empty list means the API call went wrong, not that nothing changed. Fail loudly
+          # rather than skip an analysis that was needed.
+          if [ -z "$FILES" ]; then
+            echo '::error::no changed files returned for this pull request'
+            exit 1
+          fi
+          if printf '%s\n' "$FILES" | grep -qE "$PATTERN"; then
+            echo "$LANGUAGE is affected; analysing."
+            echo 'value=true' >> "$GITHUB_OUTPUT"
+          else
+            echo "No $LANGUAGE sources changed; skipping the analysis."
+            echo 'value=false' >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout repository
+        if: steps.relevance.outputs.value == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Every checkout here sets this: without it the job's token is written into `.git/config`,
@@ -111,13 +173,14 @@ jobs:
       # gradle.properties. Left to its own devices autobuild takes whatever the runner image ships,
       # which is how a CodeQL run fails for a reason that has nothing to do with CodeQL.
       - name: Set up JDK
-        if: matrix.language == 'java-kotlin'
+        if: steps.relevance.outputs.value == 'true' && matrix.language == 'java-kotlin'
         uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: 25
 
       - name: Initialize CodeQL
+        if: steps.relevance.outputs.value == 'true'
         uses: github/codeql-action/init@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
         with:
           languages: ${{ matrix.language }}
@@ -148,6 +211,7 @@ jobs:
           # attribute.
 
       - name: Perform CodeQL analysis
+        if: steps.relevance.outputs.value == 'true'
         uses: github/codeql-action/analyze@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
         with:
           category: /language:${{ matrix.language }}
