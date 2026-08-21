@@ -214,3 +214,5 @@ The docs actually consulted while working on this repository, rather than a link
 | [`docs/ops/RELEASING.md`](ops/RELEASING.md)                 | Commit → image → chart → cluster                                                   |
 | [`docs/LEGAL.md`](LEGAL.md)                                 | Processors, the AVV, the imprint, what is not signed off                           |
 | [`infra/README.md`](../infra/README.md)                     | The OpenTofu operator's guide, and the three things only a human can do            |
+
+<!-- gate skip-path verification, reverted before merge -->
