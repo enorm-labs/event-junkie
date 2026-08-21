@@ -6,6 +6,19 @@
 > Related: [ADR-012 (cloud platform)](adr/ADR-012_CLOUD_PLATFORM.md) · [ADR-013 (localisation)](adr/ADR-013_LOCALISATION.md) ·
 > [ADR-014 (rendering)](adr/ADR-014_RENDERING_STRATEGY.md) · [the `v1.0 — Go-live` milestone](https://github.com/enorm-labs/event-junkie/milestones) · [BRANDING.md](BRANDING.md)
 
+## The short version
+
+**Four rules that catch almost every change:**
+
+1. **A change that adds a third-party request, stores anything on the visitor's device, or alters what is logged needs the privacy notice updated in the same
+   PR — in both languages.** [AGENTS.md §Privacy & GDPR](../AGENTS.md) is the trigger list.
+2. **Legal pages are documents, not translated strings.** One component per language under `/{locale}/legal/*`. Edit both or neither.
+3. **German is authoritative** where the two versions could be read differently (§6.1).
+4. **The three flags in `events-frontend/src/lib/legal.ts` are the machine-readable record** of what is still provisional. Never clear one ahead of the thing it
+   describes — that is what §14 exists to prevent.
+
+**The site is not signed off and cannot go live until §14 is closed.**
+
 ## 1. Scope and how to use this
 
 This covers the site's legal surface and the chrome around it: the footer, the imprint and privacy notice, third-party licence attribution, how the running
@@ -50,45 +63,32 @@ people's material.
 
 ## 4. Version and commit exposure
 
-### 4.1 Why the version does not come from the GitHub API
-
-The obvious implementation — fetch the latest release from `api.github.com` — was rejected. It sends every visitor's IP address to GitHub, which makes GitHub a
-recipient in the privacy notice and adds a third-party request to a page that otherwise makes none (see the standing reminder in `AGENTS.md`). It also reports
-what was _released_, not what is _running_, which is the question a version in the footer exists to answer.
-
-### 4.2 Single source of truth
-
-`version` in the root **`gradle.properties`** is authoritative. Nothing else may declare it independently.
-
-### 4.3 Getting it into the artifact
-
-`springBoot { buildInfo }` writes the version plus the commit into `META-INF/build-info.properties` at build time, which Spring exposes as a `BuildProperties`
-bean. The build timestamp is kept: `bootBuildInfo` stays `UP-TO-DATE` between builds, so it costs nothing, and it is served as `buildTime`.
+**`version` in the root `gradle.properties` is authoritative.** Nothing else may declare it independently. `springBoot { buildInfo }` writes it plus the commit
+into `META-INF/build-info.properties` at build time, which Spring exposes as a `BuildProperties` bean.
 
 ### 4.4 Two consumers, one bean
 
-`/actuator/info` is for operators and is **not** publicly routed; `GET /meta` is the public endpoint the frontend calls. Same bean, different audiences — an
-actuator endpoint on the public ingress is a larger surface than one JSON route.
+`/actuator/info` is for operators and is **not** publicly routed; `GET /meta` is the public endpoint the frontend calls. An actuator endpoint on the public
+ingress is a larger surface than one JSON route.
 
-### 4.6 The frontend mirror
+**Never fetch the version from the GitHub API.** It sends every visitor's IP to GitHub, which makes GitHub a recipient in the privacy notice and adds a
+third-party request to a page that otherwise makes none. It also reports what was _released_, not what is _running_ — which is the question a version in the
+footer exists to answer.
 
-`package.json`'s `version` mirrors the Gradle version **by hand**, without the `-SNAPSHOT` suffix. Automating it was considered and rejected as more machinery
-than the problem deserves; the convention is recorded in both `AGENTS.md` files, which is what keeps it honest.
+**`package.json`'s `version` mirrors the Gradle version by hand**, without the `-SNAPSHOT` suffix. Automating it was considered and rejected as more machinery
+than the problem deserves; the convention is recorded in both `AGENTS.md` files.
 
 ### 4.7 Versioning scheme
 
 First public version **`0.1.1`**; `main` carries `0.1.1-SNAPSHOT`. Reaching `1.0.0` and dropping the beta badge (§5) are **one decision, not two**.
 
 **The footer links a version to its release page only when it is a released `X.Y.Z` triple**, and shows every other version as plain text — the number is always
-displayed, only the link is withheld. That is stated positively on purpose, matching the `semverFilter` production's `OCIRepository` uses to answer the same
-question, because the alternative was wrong for months: the guard tested for `-SNAPSHOT`, a spelling that exists only in `gradle.properties`. Deployed builds
-report the computed version (`0.1.1-snapshot.20260817180146.g787d7d0`), so every one of them linked to a tag that does not exist —
-[#502](https://github.com/enorm-labs/event-junkie/issues/502). Snapshots are published to GHCR and never tagged in git, so there is nothing for those links to
-point at.
+displayed, only the link is withheld. Stated positively on purpose, matching the `semverFilter` production's `OCIRepository` uses to answer the same question:
+the negative form (`-SNAPSHOT`) is a spelling that exists only in `gradle.properties`, while deployed builds report a computed version
+(`0.1.1-snapshot.20260817180146.g787d7d0`). Snapshots are published to GHCR and never tagged in git, so there is nothing for those links to point at.
 
-`0.1.0` was skipped and never published. It was spent on snapshots, and the base version had to move past them for ordering reasons rather than for anything
-user-visible — [#455](https://github.com/enorm-labs/event-junkie/issues/455), and docs/DEVELOPMENT.md §Versions has the SemVer rule. Nothing here depends on the
-first public number being `.0`.
+`0.1.0` was skipped and never published — spent on snapshots, and the base version had to move past them for ordering reasons. docs/DEVELOPMENT.md §Versions has
+the SemVer rule. Nothing depends on the first public number being `.0`.
 
 ## 5. The beta marker
 
@@ -185,7 +185,7 @@ items are strictly necessary for a setting the visitor chose, so § 25 (2) 2 app
 That is a property worth defending deliberately: the first non-essential stored item makes a banner mandatory. It is a product decision, not an implementation
 detail — escalate rather than implement.
 
-### 7.5 Logging — **settled 2026-08-19** (#276)
+### 7.5 Logging
 
 > Log data is declared to processors as in scope regardless of how this lands — see §7.3a. A processor agreement should cover the maximum that might be
 > processed; narrowing it later is trivial and discovering something was processed outside its scope is not.
@@ -347,111 +347,67 @@ editing a `.vue` file loads.
 
 ## 13. Decision log
 
-| #   | Question               | Decision                                                                                                                           | Where                |
-| --- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| 1   | Imprint address        | Rent a _ladungsfähige Anschrift_ from Postflex — **rented 2026-08-21**, €39.90/yr, live in the imprint. `c/o` is its own field     | §8.3                 |
-| 2   | Legal-page language    | English first, German in the same release as the German UI and authoritative from then — **done 2026-08-08**                       | §6.1                 |
-| 3   | First public version   | `0.1.1`; `main` carries `0.1.1-SNAPSHOT`; only a released `X.Y.Z` links (#502); `0.1.0` skipped (#455)                             | §4.7                 |
-| 4   | `package.json` version | Mirrors the Gradle version, kept in step by hand, without `-SNAPSHOT`                                                              | §4.6                 |
-| 5   | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                                          | §4.4                 |
-| 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                                                  | `CODE_OF_CONDUCT.md` |
-| 7   | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                                             | §8.4                 |
-| 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor. Live 2026-08-21 | `ops/EMAIL.md`       |
-| 8   | Localisation           | English + German — **done**, see [ADR-013](adr/ADR-013_LOCALISATION.md)                                                            | §6.2                 |
-| 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting and an axe sweep enforcing it                                                                 | §12                  |
-| 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                                            | §9.1                 |
-| 11  | Version source         | Build-stamped from `gradle.properties`, never the GitHub API                                                                       | §4.1                 |
+Settled questions, so they are not re-litigated. The reasoning is in the section named.
+
+| #   | Question               | Decision                                                                                                          | Where                |
+| --- | ---------------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------- |
+| 1   | Imprint address        | A rented _ladungsfähige Anschrift_ from Postflex, €39.90/yr. `c/o` is its own field                               | §8.3                 |
+| 2   | Legal-page language    | English and German, German authoritative                                                                          | §6.1                 |
+| 3   | First public version   | `0.1.1`; `main` carries `0.1.1-SNAPSHOT`; only a released `X.Y.Z` links; `0.1.0` skipped                          | §4.7                 |
+| 4   | `package.json` version | Mirrors the Gradle version, kept in step by hand, without `-SNAPSHOT`                                             | §4.6                 |
+| 5   | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                         | §4.4                 |
+| 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                                 | `CODE_OF_CONDUCT.md` |
+| 7   | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                            | §8.4                 |
+| 8   | Localisation           | English + German — [ADR-013](adr/ADR-013_LOCALISATION.md)                                                         | §6.2                 |
+| 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting and an axe sweep enforcing it                                                | §12                  |
+| 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                           | §9.1                 |
+| 11  | Version source         | Build-stamped from `gradle.properties`, never the GitHub API                                                      | §4.1                 |
+| 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor | `ops/EMAIL.md`       |
+| 13  | Art. 28 contracts      | One: Hetzner's AVV, concluded. No third-country transfer to name at all                                           | §14                  |
 
 ## 14. Open items — what is **not** signed off
 
-The site cannot go live until these are closed. They are tracked as issues in the `v0.3 — Launch-ready` and `v1.0 — Go-live` milestones, the deployment-blocked ones labelled `needs-deployment`; this section says what each one _means_.
+The site cannot go live until these are closed. They are tracked as issues in the `v0.3 — Launch-ready` and `v1.0 — Go-live` milestones, the deployment-blocked
+ones labelled `needs-deployment`; this section says what each one _means_.
 
-**Blocking, and dependent on infrastructure:**
+**Blocking:**
 
-> **Item 3 below is closed.** It is kept in place rather than deleted because the reasoning — why a notice naming a processor without a DPA is worse than one
-> naming none — is what makes the next processor's entry correct, and that argument is easier to find here than to re-derive.
-
-1. ~~**The four logging decisions** (§7.5)~~ — **closed 2026-08-19** (#276). Traefik logs nothing; nginx no longer logs any address; truncation is moot because
-   nothing is logged to truncate; retention is enforced by the kubelet as a **size** bound rather than by rotation as a period. Kept in the list rather than
-   deleted because one consequence outlives the decision: **the notice must not state a number of days for server logs** until OpenObserve's retention policy
-   exists (#271). "Seven days" was intended and enforced by nothing, which is the precise defect §7.5 warns is worse than an honest longer period.
-2. **`INFRASTRUCTURE_IS_PROPOSED = true`** — [ADR-012](adr/ADR-012_CLOUD_PLATFORM.md) is `Accepted` as of 2026-08-10, but accepting it deployed nothing, so the
-   notice still describes an intended deployment. It must be re-checked against what actually runs once the platform is provisioned
-   ([#260](https://github.com/enorm-labs/event-junkie/issues/260)), and the flag cleared then — not now.
-3. **Art. 28 contracts** — now a single one: **Hetzner's AVV**. The 2026-08-10 amendment to
-   [ADR-012](adr/ADR-012_CLOUD_PLATFORM.md) removed Cloudflare, so there is no second DPA to accept and **no third-country transfer to name at all** — the
-   placeholder sentence about a transfer mechanism came out rather than getting filled in, and §5 of the notice now states the simple post-#412 truth. _A notice
-   naming processors without a DPA in place is worse than one naming none._ Tracked as [#275](https://github.com/enorm-labs/event-junkie/issues/275).
-
-    **Status, 2026-08-19.** Two of the three original boxes are closed and the third is the live one:
-
-    - The Cloudflare DPA does not apply — [#412](https://github.com/enorm-labs/event-junkie/issues/412) removed it from the architecture.
-    - The transfer-mechanism sentence is **done**: §5 names Hetzner in Germany, states that no transfer outside the EU takes place, and says there is no
-      transfer mechanism to disclose. Nothing there is a placeholder any more.
-    - **The AVV is concluded — 2026-08-19**, self-service via <https://accounts.hetzner.com/account/dpa>. §5 describes Hetzner as an
-      _`Auftragsverarbeiter mit einem Vertrag nach Art. 28 DSGVO`_ **in the present tense**, and as of that date the sentence is true.
-
-        It was not, for a while, and the gap is recorded rather than tidied away: the notice made that claim before any contract existed, which is precisely the
-        failure the sentence above warns about, arrived at from the direction nobody was watching — a statement about a _relationship_, which was accurate, that
-        is also a statement about a _document_, which was not. `PROCESSOR_CONTRACTS_PENDING` said so in the banner on both language versions until it was
-        signed, and is now `false`.
-
-        **That constant is the only machine-readable record of the contract**, since nothing in code can observe a signed PDF. Set it back to `true` if the
-        contract ever lapses, is superseded, or a second processor is added without one.
-
-        **The form's answers come from [§7.3a](#73a-what-is-processed-and-about-whom--the-answer-every-processor-form-asks-for)** — categories of data and
-        categories of data subject — so the AVV, this document and §5 of the notice all describe the same processing. The next processor agreement is filled in
-        from the same place rather than from memory.
-
-    It is concluded at <https://accounts.hetzner.com/account/dpa> — self-service, signature-and-download, minutes rather than a negotiation. **File the
-    countersigned copy somewhere it can be produced on request**: concluding it and not filing it is the same position as not concluding it, the day somebody
-    asks. Then clear the flag.
-
-    **The processor list re-checked against what actually runs**, which #275 names as the part most likely to be missed:
-    [#271](https://github.com/enorm-labs/event-junkie/issues/271) and [#518](https://github.com/enorm-labs/event-junkie/issues/518) both ping **healthchecks.io**
-    from outside Hetzner, deliberately — a dead-man's switch on infrastructure cannot report that infrastructure's death. **The assessment is that this needs no
-    entry**, and it is recorded here rather than assumed away: the ping is a bare HTTPS `GET` to an opaque random UUID, with no body and no query string. It
-    carries no personal data, no database contents and nothing identifying a visitor. What it does reveal to healthchecks.io is **our server's public IP and the
-    timing of the pings** — an address of ours, not of a data subject. That is not processing of personal data on our behalf, so it is not an Art. 28
-    relationship and needs no DPA and no entry in §5. **Re-open this the moment a ping gains a body**, because `/fail` and `/log` endpoints accept one and a
-    payload is where this assessment would stop holding.
-
-4. **Backup retention** as its own line — it is a separate period from log retention, and if logs are captured by backups the effective retention is the backup
-   window, not the rotation one. Check rather than assume.
-
-**Blocking, and waiting on paperwork rather than on anything technical:**
-
-5. **The Postflex address** (§8.3) — **done 2026-08-21.** Rented at €39.90/year
-   ([#273](https://github.com/enorm-labs/event-junkie/issues/273)), in `CONTROLLER`, rendering on all four legal pages, and
-   `CONTACT_DETAILS_ARE_PROVISIONAL` is now `false`. The banner remains, because `INFRASTRUCTURE_IS_PROPOSED` is still `true` and nothing is deployed — two
-   facts, two flags, and this is the day that distinction earned its keep.
-6. **The role mailboxes** — **done 2026-08-21**, and what is left of this item is not the mailboxes.
-
-    `hello@` and `security@event-junkie.de` are live on Hetzner Webhosting S, proven in both directions, and every published reporting route now reaches
-    somebody ([#274](https://github.com/enorm-labs/event-junkie/issues/274), [ops/EMAIL.md](ops/EMAIL.md)). **Hetzner was chosen over a mail specialist for
-    this section's reason rather than a technical one:** the account-level Art. 28 contract already covers it, so no second processor was added and
-    `PROCESSOR_CONTRACTS_PENDING` stays `false`. A specialist would have flipped it.
-
-    **Still open: [§7.3a](#73a-what-is-processed-and-about-whom--the-answer-every-processor-form-asks-for).** An email address, and the body of whatever
-    someone writes to these addresses, is a category of personal data the processing inventory was not written against. That is a disclosure question and wants
-    a legal read, not a mechanical edit — which is why it is still here rather than ticked.
-
-    _Corrected twice, and both corrections are kept._ On **2026-08-19** this item gave the reason as _"the domain is not registered"_, untrue since
-    **2026-08-10** — [#259](https://github.com/enorm-labs/event-junkie/issues/259) closed on 2026-08-12 and this sentence was what it left behind. On
-    **2026-08-21** it still said _"neither exists"_ two days after both did. The same failure both times: **a blocker outliving the thing that blocked it**,
-    which is the specific way this section rots.
-
-**Blocking, and dependent on a person:**
-
-7. **A qualified review of the German privacy notice.** The drafts are careful and test-covered; neither makes them _reviewed_. This is the item no amount of
+1. **`INFRASTRUCTURE_IS_PROPOSED = true`** (`events-frontend/src/lib/legal.ts`) — the notice still describes an _intended_ deployment. The platform now exists,
+   so this is actionable rather than blocked: re-check §5 of both notices against what actually runs, then clear the flag. Never clear it in advance of that
+   check — the flag is the only machine-readable record that the notice and the infrastructure have been compared.
+2. **Log retention must not state a number of days** for server logs until OpenObserve's retention policy exists
+   ([#271](https://github.com/enorm-labs/event-junkie/issues/271)). A period the notice claims and nothing enforces is the precise defect §7.5 warns is worse
+   than an honest longer one.
+3. **§7.3a does not cover the role mailboxes.** An email address, and the body of whatever someone writes to `hello@` or `security@`, is a category of personal
+   data the processing inventory was not written against. That is a disclosure question wanting a legal read, not a mechanical edit.
+4. **A qualified review of the German privacy notice.** The drafts are careful and test-covered; neither makes them _reviewed_. This is the item no amount of
    engineering substitutes for.
-8. **The DSGVO-generator cross-check** (§7.8) as a second opinion.
+5. **The DSGVO-generator cross-check** (§7.8), as a second opinion.
 
 **Not blocking, recorded so it is not rediscovered:**
 
-9. **`1.0.0` and dropping the beta badge** — one decision, deliberately deferred (§4.7).
-10. **An accessibility statement** — only publishable once conformance is actually measured (§12).
-11. **`FUNDING.yml`** — deliberately absent until donations are wanted (§8.4).
+6. **`1.0.0` and dropping the beta badge** — one decision, deliberately deferred (§4.7).
+7. **An accessibility statement** — only publishable once conformance is actually measured (§12).
+8. **`FUNDING.yml`** — deliberately absent until donations are wanted (§8.4).
+
+### Two rules this section exists to enforce
+
+**A notice naming processors without a DPA in place is worse than one naming none.** `PROCESSOR_CONTRACTS_PENDING` is the machine-readable record of the Art. 28
+position, because nothing in code can observe a signed PDF. It is `false` today: Hetzner's AVV is concluded, §5 names Hetzner in Germany, and there is no
+transfer outside the EU to disclose. **Set it back to `true` if that contract lapses, is superseded, or a second processor is added without one.** Filing
+matters as much as signing — concluding a contract and not filing the countersigned copy is the same position as not concluding it, the day somebody asks.
+
+**A blocker outlives the thing that blocked it.** This section has twice carried an item whose stated reason had been false for days. When you close something
+here, delete the item; do not annotate it. What survives a closed item is at most one sentence of reasoning, moved into the section it constrains.
+
+**healthchecks.io needs no entry in §5, and the assessment is recorded rather than assumed.** The ping is a bare HTTPS `GET` to an opaque random UUID, with no
+body and no query string: no personal data, no database contents, nothing identifying a visitor. What it reveals is our server's public IP and the timing of the
+pings — an address of ours, not of a data subject. That is not processing on our behalf, so no Art. 28 relationship and no entry. **Re-open this the moment a
+ping gains a body**, because `/fail` and `/log` accept one and a payload is where this stops holding.
+
+**Processor forms are answered from [§7.3a](#73a-what-is-processed-and-about-whom--the-answer-every-processor-form-asks-for)** — categories of data and
+categories of data subject — so every agreement, this document and §5 of the notice describe the same processing. The next one is filled in from there rather
+than from memory.
 
 ## 15. References
 
