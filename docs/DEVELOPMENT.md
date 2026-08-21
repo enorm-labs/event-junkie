@@ -6,23 +6,45 @@ Frontend-specific development lives in [events-frontend/README.md](../events-fro
 in [AGENTS.md](../AGENTS.md) — written for AI agents, but it is simply this project's conventions written down, and it is more complete than any other document
 here.
 
-## Contents
+## The short version
 
-- [Prerequisites](#prerequisites)
-- [Git hooks (pre-commit)](#git-hooks-pre-commit)
-- [Build and run](#build-and-run)
-- [The local database](#the-local-database)
-- [The `local` profile — logging to a file](#the-local-profile--logging-to-a-file)
-- [Running the stack with `dev-env.sh`](#running-the-stack-with-dev-envsh)
-- [Calling the APIs](#calling-the-apis)
-- [Quality checks](#quality-checks)
-- [Infrastructure (OpenTofu)](#infrastructure-opentofu)
-- [Container images](#container-images)
-- [Running the whole stack on k3d](#running-the-whole-stack-on-k3d)
-- [Helm chart](#helm-chart)
-- [Versions and cutting a release](#versions-and-cutting-a-release)
-- [Performance tests](#performance-tests)
-- [Dependencies](#dependencies)
+```sh
+sdk env                                   # the JDK from .sdkmanrc
+brew install pre-commit && pre-commit install     # gitleaks + formatting hooks, before your first commit
+
+scripts/dev-env.sh up all                 # importer + bff + frontend, each waited on until it answers
+scripts/dev-env.sh seed-all               # register all event sources (needs ijhttp)
+scripts/dev-env.sh import <slug>          # import one source, polling until it settles
+scripts/dev-env.sh status                 # database / importer / bff / frontend
+scripts/dev-env.sh down all               # add --db to stop Postgres too
+```
+
+Ports: frontend `5173`, BFF `8080`, importer `8081`, Postgres `56298`. Postgres is started for you by `bootRun` — there is no separate database setup step.
+
+**Before opening a PR** — or run `/verify`, which does all of it plus the infra and chart gates when the diff touches them:
+
+```sh
+./gradlew clean build                     # compile, test, ktlint, detekt, coverage
+cd events-frontend && npm run type-check && npm run lint && npm run test:unit && npm run test:e2e
+scripts/format-markdown.sh                # any .md change
+```
+
+> **A green local build can still fail CI.** `build-backend.yml` sets `ORG_GRADLE_PROJECT_warningsAsErrors=true` for its whole job, and local builds do not.
+> Add `-PwarningsAsErrors` to match it.
+
+| Section                                                                           |                                         |
+| --------------------------------------------------------------------------------- | --------------------------------------- |
+| [Prerequisites](#prerequisites)                                                   | Tools and versions                      |
+| [Git hooks (pre-commit)](#git-hooks-pre-commit)                                   | What runs on every commit, and why      |
+| [Build and run](#build-and-run) · [The local database](#the-local-database)       | Gradle, Postgres, ports                 |
+| [The `local` profile](#the-local-profile--logging-to-a-file)                      | Mirroring the console to a file         |
+| [Running the stack with `dev-env.sh`](#running-the-stack-with-dev-envsh)          | The script above, in full               |
+| [Calling the APIs](#calling-the-apis)                                             | Swagger UI and the IntelliJ HTTP Client |
+| [Quality checks](#quality-checks)                                                 | ktlint, detekt, Kover, Markdown, OWASP  |
+| [Infrastructure (OpenTofu)](#infrastructure-opentofu) · [Helm chart](#helm-chart) | The safe commands, and the gates        |
+| [Container images](#container-images) · [k3d](#running-the-whole-stack-on-k3d)    | Building and running the stack locally  |
+| [Versions and cutting a release](#versions-and-cutting-a-release)                 | One number, four files                  |
+| [Performance tests](#performance-tests) · [Dependencies](#dependencies)           | k6, and keeping things current          |
 
 ## Prerequisites
 

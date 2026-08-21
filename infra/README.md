@@ -8,6 +8,26 @@ needs in front of them while running it; [`AGENTS.md`](AGENTS.md) next to it cov
 a live server, network, firewall and Primary IP. Production's domain resolves nowhere until `publish_dns` is set to `true` at go-live
 (`environments/production/variables.tf`).
 
+## The short version
+
+```sh
+# Safe anywhere, no credentials, and exactly what validate-infra.yml runs:
+tofu fmt -recursive -check -diff infra
+tofu -chdir=infra/<stack> init -backend=false     # bootstrap · environments/production · environments/staging
+tofu -chdir=infra/<stack> validate
+shellcheck -x infra/modules/environment/cloud-init/*.sh
+
+cd infra && ./check-capacity.sh --probe staging   # orders a server and deletes it — the only real answer
+```
+
+> **`plan`, `apply`, `destroy` and `import` are not on that list.** They reach live servers that people depend on.
+> [`AGENTS.md`](AGENTS.md) next to this file opens with that rule; read it before changing anything here.
+
+**The one that will bite:** `user_data` is a force-new attribute, so **any** edit under `modules/environment/cloud-init/` replaces the node. That is survivable
+— `PGDATA` is on a volume and the Primary IPs have `auto_delete = false` — but it is a rebuild, and the runbook for it is
+[CLUSTER_BOOTSTRAP.md §Rebuilding a node](../docs/ops/CLUSTER_BOOTSTRAP.md). **Never `tofu destroy` to achieve one**: it takes the volume, and the database
+with it.
+
 ## Layout — split by lifetime, not by environment
 
 ```
