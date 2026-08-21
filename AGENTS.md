@@ -53,6 +53,26 @@ covers the SPA.
   (`events-frontend/`) were changed — the Gradle build covers the backend modules only. A Markdown-only change is not check-free, though: run
   `scripts/format-markdown.sh` (see §Code Conventions), which the commit hook runs anyway.
 - **No unsolicited git commits/pushes**: Never run `git commit`, `git push`, or `git rebase` (squash) unless explicitly asked to by the user.
+- **Documentation describes the current state. Replace, never append.** A document says what is true today, in the present tense. When something changes,
+  **rewrite the affected passage** — do not add an "Update:" note, a dated banner, or a new section beside the old one. Two passages describing successive
+  states of the same thing is a defect, not thoroughness: the reader cannot tell which one is live, and the older one is the one they will act on. This is the
+  _Comments and KDoc_ rule in §Code Conventions applied to Markdown, and for the same reason — prose that has to be maintained has to earn its keep.
+    - **No intermediate states.** Delete completed phases, finished migrations and settled decisions. "Phase B started", "done for staging on 2026-08-19",
+      "this table listed the first four until…" are facts about the past; git, the PR and the issue already hold them. **A plan whose phases have all shipped is
+      deleted, not marked done.**
+    - **Reasoning goes below the instructions**, in a final `## Background and history` section, or into an ADR, or nowhere. Never between the reader and the
+      thing they came for. What survives a closed item is at most one sentence: an abandoned approach that is a live trap someone will re-introduce, named
+      rather than retold. [docs/ops/PLATFORM_SETUP.md](docs/ops/PLATFORM_SETUP.md) is the worked example.
+    - **Every document over ~150 lines opens with `## The short version`** — the commands, one short comment each, and the two or three rules that catch most
+      changes. No prose. [docs/ops/CLUSTER_ACCESS.md](docs/ops/CLUSTER_ACCESS.md) and [docs/ops/DAILY_COMMANDS.md](docs/ops/DAILY_COMMANDS.md) are the models.
+    - **A status banner is a liability with one exception.** It earns its place only while it warns of something _currently_ untrue or unfinished —
+      [docs/LEGAL.md](docs/LEGAL.md)'s "not signed off" — and it is deleted the moment that stops being so. A banner describing progress ("applied, not yet
+      proven") is the shape that goes stale silently, because nothing fails when it does.
+    - **A blocker outlives the thing that blocked it.** When you close an item on a list of open questions, **delete the item**; do not annotate it as done.
+      LEGAL.md §14 carried an item whose stated reason had been false for days, twice, and it is the specific way such a section rots.
+    - **An issue or ADR reference is a pointer, not a summary**, exactly as in code. `see #540`, and stop.
+- **Correct the docs in the same change that makes them wrong.** A behaviour change that leaves a document describing the old behaviour is incomplete work, not
+  a follow-up — and the document to fix is the one a reader would reach for, which is usually not the one you were editing.
 - **ADR numbers are claimed by writing the ADR, never by planning one.** A document that says _"needs ADR-0NN"_ for an ADR nobody has written yet is a
   reservation the numbering scheme does not honour: the next ADR actually written takes that number, and the reference silently starts pointing at an unrelated
   decision. This has already happened twice to the same planned ADR. **Refer to a future ADR by its title only** — _"needs an ADR: AI-Assisted Data Quality"_ —

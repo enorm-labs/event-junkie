@@ -105,6 +105,11 @@ foo` boilerplate; commented-out code; and a new `TODO` (that is an issue).
   catching here — the diff is the only place it is ever visible.
 - **Never ask for a long comment to be deleted when it records a deliberate trade-off.** Ask for it in fewer words; the reasoning stays. detekt's `LongComment`
   rule caps a comment at 25 lines and excludes `**/scraper/**` for exactly that reason, so a long scraper KDoc is not a finding.
+- **Markdown follows the "Documentation describes the current state" rule in AGENTS.md §Agent Instructions.** Flag a doc change that _appends_ where it should
+  have _replaced_: an "Update:" note, a dated banner, a new paragraph beside the one it supersedes, a phase marked done rather than deleted, or reasoning placed
+  above the instructions instead of below them. The diff is the only place this is ever visible — once merged it reads as thoroughness.
+- **Does the change make any document wrong?** A behaviour change that leaves a doc describing the old behaviour is incomplete, and the document to check is
+  rarely the one in the diff. Status banners, `## The short version` blocks and AGENTS.md's Key Files table are the three that go stale most often.
 - AGENTS.md is updated if new conventions or architectural patterns are introduced.
 
 #### Build & Dependencies
