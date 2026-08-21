@@ -74,16 +74,30 @@ written against. Choosing Hetzner avoids the contract work; it does not avoid th
 
 ## 4. Adding the domain and the two mailboxes in konsoleH
 
-1. **Domains → add `event-junkie.de` as a domain without registration** (_Domain ohne Registrierung_ / external domain). This is the €0.76/month line. konsoleH
-   will confirm it cannot manage the nameservers — **that is correct and expected**: the zone lives in Hetzner Cloud DNS and is owned by OpenTofu (§5).
-2. **E-Mail → create `hello@event-junkie.de`** with a generated password. Store it in the password manager under `Accounts/mail` per
-   [CREDENTIALS.md](../CREDENTIALS.md).
-3. **Create `security@event-junkie.de`** the same way — a **separate mailbox, not an alias**. They have different audiences and different retention
+**There is no "add domain" button and no "create mailbox" button, and looking for either is how this stalls.** konsoleH's word for a domain is **Account**, and
+every mail menu is contextual — it appears only once a _domain_ is selected. Straight after ordering, the only thing in the list is the hosting package, so the
+left-hand menu is nearly empty and correctly so.
+
+1. **Sign in to konsoleH at <https://konsoleh.hetzner.com/>** with the account name from the provisioning mail (`event-junkie`) and its own password. This is a
+   separate credential from the Hetzner Console login, even though both hang off the same customer number.
+2. **Select the hosting package** from the list. konsoleH's functions all act on _the currently selected account_, and nothing useful is on offer until one is
+   picked.
+3. **Accountverwaltung → Neuer Account.** This is the "add a domain" step under a name that does not say so. Enter `event-junkie` in the domain field **without
+   the TLD**, choose `.de` from the list, and pick the option for **an account without a linked domain registration** — that is konsoleH's phrasing for _the
+   domain is registered somewhere else_. This is the €0.76/month line. konsoleH will note that it cannot manage the nameservers; **that is correct and
+   expected**, because the zone lives in Hetzner Cloud DNS and is owned by OpenTofu (§5).
+4. **Now select `event-junkie.de` in the list — not the hosting name.** Hetzner's own documentation puts it in bold: _"Wichtig ist, dass du **nicht** den
+   Hosting-Namen auswählst."_ With the domain selected, `E-Mail` appears in the left menu; with the hosting selected, it does not. This one distinction is the
+   whole puzzle.
+5. **E-Mail → Mailboxen → Neue Mailbox** for `hello`. Enter only the part before the `@`, set a generated password, and store it in the password manager under
+   `Accounts/mail` per [CREDENTIALS.md](../CREDENTIALS.md).
+6. **Create `security@event-junkie.de`** the same way — a **separate mailbox, not an alias**. They have different audiences and different retention
    expectations, and an alias cannot be handed to someone else later without handing over `hello@` too.
-4. **Set a forward on each** to the address actually read day to day, keeping a copy on the server. #274's "done when" is not _the mailbox exists_ — it is _a
-   test message arrives somewhere a human reads_, and a mailbox that only fills up quietly fails that in a way nobody notices for months.
-5. **Enable DKIM** for the domain (_E-Mail → Mailsicherheit_). konsoleH generates the key pair, publishes nothing (the nameservers are not its), and shows you
-   the **selector** and the **public key**. Both go into §5.
+7. **Set a forward on each** — _Kopie an_, edited on the mailbox after it exists — to the address actually read day to day, keeping a copy on the server.
+   #274's "done when" is not _the mailbox exists_; it is _a test message arrives somewhere a human reads_, and a mailbox that only fills up quietly fails that
+   in a way nobody notices for months.
+8. **Enable DKIM** for the domain (_E-Mail → Mailsicherheit_), with the domain still selected rather than the hosting. konsoleH generates the key pair,
+   publishes nothing — the nameservers are not its — and shows you the **selector** and the **public key**. Both go into §5.
 
 ## 5. The DNS half — and it is not clicking in a console
 
