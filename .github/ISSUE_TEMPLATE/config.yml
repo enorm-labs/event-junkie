@@ -18,16 +18,33 @@ contact_links:
   # Both of these must stay OFF the public tracker: a security problem should not be public before
   # it is fixed, and nobody should have to ask for their own name to be removed in front of an
   # audience. See SECURITY.md and the privacy notice (§4, "Event, artist and venue information").
+  #
+  # **Both point at the advisory form, and that is now a choice rather than a workaround.** It used
+  # to be one because no mailbox existed; `security@` and `hello@` have been live since 2026-08-21
+  # (#274, docs/ops/EMAIL.md). The form still wins for the security route — it is encrypted in
+  # transit and at rest, and it threads — so the addresses are named in the text instead, where they
+  # can be copied by anyone who would rather write an email.
+  #
+  # **Not `mailto:`.** GitHub's own docs describe `url` as a link to follow, and `mailto:` is
+  # reported to fail schema validation — at which point the entry does not render at all. A contact
+  # route that silently disappears from the chooser is worse than one that asks you to copy an
+  # address, and it fails in a place nobody looks.
+  #
+  # **At go-live**, the removal route should point at the published privacy notice
+  # (`/legal/privacy`), which states the same address alongside the Art. 15-21 rights it belongs to.
+  # It cannot yet: production runs dark and the domain resolves to nothing (#284).
   - name: 🔒 Report a security vulnerability
     url: https://github.com/enorm-labs/event-junkie/security/advisories/new
-    about: Private disclosure, straight to the maintainer. Please do not open a public issue for this.
+    about: >-
+      Private disclosure, straight to the maintainer — encrypted, and it does not become public
+      before a fix. Please do not open a public issue. Prefer email? security@event-junkie.de.
 
   - name: 🙋 Ask for your name or details to be removed
     url: https://github.com/enorm-labs/event-junkie/security/advisories/new
     about: >-
       Artists and organisers — you do not need a reason and you do not have to ask in public.
-      This form is private. (It is labelled for security reports; it is the confidential channel
-      until the site's contact address is live.)
+      Email hello@event-junkie.de, or use this private form if you would rather not. It is
+      labelled for security because GitHub gives us one private form, not because this is one.
 
   # Questions and ideas belong in Discussions rather than the issue tracker: they are conversations,
   # not units of work, and threading them keeps the tracker to things that can actually be closed.
