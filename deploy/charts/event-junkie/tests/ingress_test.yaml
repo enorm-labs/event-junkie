@@ -66,6 +66,74 @@ tests:
           path: "$..backend.service.port.name"
           value: http
 
+  # --- the redirect hosts -----------------------------------------------------------------------
+  #
+  # `redirectHosts` held exactly one entry for as long as it existed, so the `range` in both the
+  # Ingress and the certificate's SAN list was never exercised with more than one — a list that
+  # behaved like a scalar and would not have been noticed if it were. Three names depend on it now,
+  # one of them `www.event-junkie.de`: infra publishes that record and states that Traefik redirects
+  # it, and until #634 nothing here did.
+  #
+  # **Named hosts are set here rather than taken from values.** This suite is re-run against every
+  # cluster's `spec.values` by `scripts/cluster-assertions.sh`, where staging and k3d both set
+  # `redirectHosts: []` — an assertion about which names production happens to list would fail there
+  # for the wrong reason. What is asserted is the template's behaviour given a list, which is the
+  # part that was untested.
+  - it: gives every redirect host a rule and a SAN on one certificate of its own
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      ingress.enabled: true
+      ingress.tls.enabled: true
+      ingress.host: "canonical.example"
+      ingress.redirectHosts:
+        - "first.example"
+        - "second.example"
+        - "third.example"
+    template: redirect-ingress.yaml
+    asserts:
+      - lengthEqual:
+          path: spec.rules
+          count: 3
+      - lengthEqual:
+          path: spec.tls[0].hosts
+          count: 3
+      # One certificate covering all of them, and **not** the primary's Secret. The template's
+      # comment claims a redirect domain failing validation cannot take the main certificate down
+      # with it; that claim is only true while these are two Secrets, so it is asserted rather than
+      # trusted.
+      - lengthEqual:
+          path: spec.tls
+          count: 1
+      - matchRegex:
+          path: spec.tls[0].secretName
+          pattern: "-redirect$"
+
+  - it: sends every redirect host to the canonical host, not to itself
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      ingress.enabled: true
+      ingress.host: "canonical.example"
+      ingress.redirectHosts:
+        - "first.example"
+        - "second.example"
+    template: redirect-middleware.yaml
+    asserts:
+      # One Middleware for the whole list, because the regex matches any host. A per-host
+      # replacement would be the bug this guards: a name 301ing to itself is an infinite loop that
+      # renders perfectly and only fails in a browser.
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.redirectRegex.replacement
+          value: "https://canonical.example/${1}"
+      - equal:
+          path: spec.redirectRegex.permanent
+          value: true
+
   # --- noindex is a two-part mechanism, and half of it is silent -------------------------------
   #
   # The header needs both a Middleware and an Ingress annotation naming it. Render only the

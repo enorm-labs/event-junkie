@@ -873,7 +873,12 @@ Practical notes that cost people a day each:
 
     The same shutdown is why `infra/bootstrap` manages DNS through the official provider's `hcloud_zone` rather than a community DNS provider (#260).
 
-- `event-junkie.com` needs its own certificate for the 301 redirect — one more entry, not a wildcard.
+- **The redirect certificate covers three names, not one** — `www.event-junkie.de`, `event-junkie.com`, `www.event-junkie.com` — each an explicit SAN rather
+  than a wildcard. `www.event-junkie.de` is on that list because the apex is canonical and `www` is redirected **at Traefik, not in DNS**: `infra/` publishes
+  the address record and said so, and nothing in the chart implemented it until [#634](https://github.com/enorm-labs/event-junkie/issues/634).
+- **Every one of those names has to resolve to the node before the certificate can issue.** Production solves HTTP-01, which reaches the host by name, so a
+  redirect domain pointing nowhere leaves a Certificate stuck pending and an Ingress answering TLS errors — with everything else on the cluster green. The
+  `.com` records are `publish_dns`-gated in the same apply as the `.de` ones, so all four appear together or not at all.
 - **Set the CAA record first** (`0 issue "letsencrypt.org"`), which is already in [#259's checklist](https://github.com/enorm-labs/event-junkie/issues/259).
 
 ### How the chart splits it — as built (#261)

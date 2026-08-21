@@ -232,10 +232,23 @@ ingress:
   className: "traefik"
   # ingress.host is the name the certificate is issued for and the only name routed to the apps.
   host: "event-junkie.de"
-  # ingress.redirectHosts get a 301 to `ingress.host` and their own certificate — the .com is a
-  # redirect, not an alias, and not a wildcard entry.
+  # ingress.redirectHosts get a 301 to `ingress.host` and their own certificate — a redirect, not
+  # an alias, and not a wildcard entry. The Middleware's regex is host-agnostic, so every name here
+  # lands on `ingress.host` with its path preserved.
+  #
+  # **`www.event-junkie.de` belongs in this list and not in DNS.** `infra/environments/production`
+  # publishes `www` at the same addresses as the apex and states the intent — "redirected at Traefik
+  # rather than in DNS, because a CNAME cannot sit at the apex" — but nothing here implemented it
+  # until #634. A published name that matches no rule gets Traefik's default 404 over a certificate
+  # never issued for it, and `www.` is a name visitors type.
+  #
+  # Every entry must resolve to this node before the certificate can issue: production solves
+  # HTTP-01, which reaches the host *by name*. The `.com` records are `publish_dns`-gated in the
+  # same apply as the `.de` ones, so all three appear together or not at all.
   redirectHosts:
+    - "www.event-junkie.de"
     - "event-junkie.com"
+    - "www.event-junkie.com"
   # ingress.annotations are merged in after the cert-manager annotation the chart adds itself.
   annotations: {}
   # ingress.noindex marks an environment as not-production, and renders everything that follows

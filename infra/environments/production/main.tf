@@ -175,3 +175,53 @@ resource "hcloud_zone_rrset" "address" {
     environment = "production"
   }
 }
+
+# ---------------------------------------------------------------------------
+# The redirect domain
+#
+# `event-junkie.com` serves nothing — the chart 301s it to the apex (ADR-014, `ingress.redirectHosts`)
+# — but it still has to resolve, because production solves HTTP-01 and the challenge is served over
+# the name being certified. A redirect domain that answers nothing produces a Certificate stuck in
+# pending and an Ingress serving TLS errors, with every other object on the cluster green (#634).
+#
+# `www` is here for the same reason it is in `hostnames` above: it is redirected at Traefik, not in
+# DNS, so it needs an address of its own.
+#
+# **No `prod-check` equivalent.** One rehearsal name on the primary domain exercises the whole TLS
+# path; a second on a domain that only redirects would be a record nobody remembers to remove.
+# ---------------------------------------------------------------------------
+
+data "hcloud_zone" "redirect" {
+  count = var.redirect_domain == "" ? 0 : 1
+
+  name = var.redirect_domain
+}
+
+locals {
+  publish_redirect = var.publish_dns && var.redirect_domain != ""
+
+  redirect_records = {
+    for pair in setproduct(local.publish_redirect ? ["@", "www"] : [], ["A", "AAAA"]) :
+    "${pair[0]}/${pair[1]}" => {
+      name  = pair[0]
+      type  = pair[1]
+      value = pair[1] == "A" ? module.environment.k3s_ipv4 : module.environment.k3s_ipv6
+    }
+  }
+}
+
+resource "hcloud_zone_rrset" "redirect" {
+  for_each = local.redirect_records
+
+  zone = data.hcloud_zone.redirect[0].name
+  name = each.value.name
+  type = each.value.type
+  ttl  = var.dns_ttl
+
+  records = [{ value = each.value.value }]
+
+  labels = {
+    managed-by  = "opentofu"
+    environment = "production"
+  }
+}
