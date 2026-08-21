@@ -51,14 +51,44 @@ locals {
 
   zone_records = merge(local.antispoofing, { caa = local.caa })
 
-  # One flat map so every (domain, record) pair is its own resource with a stable address.
-  rrsets = {
-    for pair in setproduct(local.all_domains, keys(local.zone_records)) :
-    "${pair[0]}/${pair[1]}" => {
-      zone   = pair[0]
-      record = local.zone_records[pair[1]]
+  # Records for the one domain that actually receives mail (#274). Deliberately **not** in
+  # `zone_records`, which is setproduct-ed across every domain: `event-junkie.com` is a defensive
+  # registration and must go on saying it neither sends nor receives.
+  #
+  # **The MX only, for now.** SPF stays `-all`, and that is not a half-finished state: a domain that
+  # receives and does not send is coherent, and nothing has sent yet. What must not happen is
+  # publishing an SPF value nobody has measured — the obvious `include:_spf.hetzner.com` covers
+  # Hetzner's corporate relays and *not* this account's server, so the value gets written from the
+  # `Received` chain of a real message rather than from a guess. docs/ops/EMAIL.md §5 and §7.
+  mail_records = {
+    mx = {
+      name    = "@"
+      type    = "MX"
+      records = ["10 ${var.mail_host}"]
     }
   }
+
+  # One flat map so every (domain, record) pair is its own resource with a stable address.
+  #
+  # The mail records merge in **after**, keyed the same way. Nothing collides today; when SPF joins
+  # them it will, and `event-junkie.de/spf` replacing the `-all` version by key is exactly the wanted
+  # behaviour — one resource, one address, changed rather than duplicated.
+  rrsets = merge(
+    {
+      for pair in setproduct(local.all_domains, keys(local.zone_records)) :
+      "${pair[0]}/${pair[1]}" => {
+        zone   = pair[0]
+        record = local.zone_records[pair[1]]
+      }
+    },
+    {
+      for key, record in local.mail_records :
+      "${var.primary_domain}/${key}" => {
+        zone   = var.primary_domain
+        record = record
+      }
+    },
+  )
 }
 
 resource "hcloud_zone" "main" {

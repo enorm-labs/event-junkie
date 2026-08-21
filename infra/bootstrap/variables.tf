@@ -20,6 +20,27 @@ variable "defensive_domains" {
   nullable    = false
 }
 
+variable "mail_host" {
+  description = <<-EOT
+    The Hetzner webhosting server the role mailboxes live on, as an **absolute** name.
+
+    The trailing dot is not decoration: without it the value is read as relative and the MX becomes
+    `www750.your-server.de.event-junkie.de.`, which resolves to nothing and bounces every message.
+
+    It is account-specific — ordered 2026-08-21, this account landed on `www750` — and it moves if
+    Hetzner ever migrates the hosting. A variable rather than a literal because the MX below and the
+    SPF that follows it (#274) both have to move together when that happens.
+  EOT
+  type        = string
+  default     = "www750.your-server.de."
+  nullable    = false
+
+  validation {
+    condition     = endswith(var.mail_host, ".")
+    error_message = "mail_host must end in a dot, or the MX target is treated as relative to the zone."
+  }
+}
+
 variable "dns_ttl" {
   description = "Default TTL. 300s while records are still moving; raise it once things settle (#259, step 7)."
   type        = number
