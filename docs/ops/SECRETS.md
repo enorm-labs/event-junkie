@@ -1,12 +1,12 @@
-# Secrets — what is hand-made today, and how SOPS replaces it
+# Secrets
 
-The objects nothing in this repository creates, why that is a problem worth fixing, and the procedure for fixing it — split by who has to do each part.
+What is encrypted into git and restored by Flux, what stays hand-made and why, and the procedure for each — split by who has to do it.
 
 > **In place on both staging and production.** `events-db` is committed encrypted and restored by Flux. `hetzner` and `github-dispatch` stay hand-made by
 > decision — `github-dispatch` because its scope is `contents: write`, the one place the "encrypt it, the value is a nuisance at worst" reasoning does not hold.
 > See the note under the table.
 
-## What is hand-made today
+## The six objects, and where each comes from
 
 | Secret                    | Namespace                                         | Holds                                                 | Created at                                                     |
 | ------------------------- | ------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
@@ -17,8 +17,8 @@ The objects nothing in this repository creates, why that is a problem worth fixi
 | `postgres-exporter`       | `observability`                                   | the `metrics` role's DSN                              | §postgres-exporter, below                                      |
 | `sops-age`                | `flux-system`                                     | the age private key that decrypts `events-db`         | §3, below                                                      |
 
-**This table listed the first four until 2026-08-21**, when a rebuild followed it and would have restored two of six. `postgres-exporter` and `sops-age` were
-each documented in their own section below and simply never reached the summary — which is exactly the failure mode a summary exists to prevent.
+**All six belong in that table.** Two of them were once documented only in their own sections below and never reached this summary, and a rebuild that
+followed it would have restored four — which is exactly the failure mode a summary exists to prevent. Add a row here in the same change that adds a secret.
 
 **Only `github-dispatch` cannot be regenerated.** `hetzner` is the Keychain's `HCLOUD_TOKEN`, `sops-age` is `~/.config/sops/age/event-junkie.txt`,
 `postgres-exporter` is an `ALTER ROLE` away, and OpenObserve's root password can be brand new — its PVC is `local-path` on the node's disk, so the metadata DB

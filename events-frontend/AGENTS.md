@@ -1,4 +1,32 @@
-# AGENTS.md
+# AGENTS.md — `events-frontend/`
+
+The conventions every change to the Vue SPA is held to. The nearest `AGENTS.md` wins, so this file overrides the repository root's for anything under
+`events-frontend/`.
+
+## The short version
+
+```sh
+npm run dev                                       # Vite, on 5173 — the BFF must be running on 8080
+npm run type-check && npm run lint && npm run test:unit && npm run test:e2e   # the gate, before any PR
+npm run format                                    # oxfmt; reformatting is intentional, never revert it
+npm run generate:api                              # regenerate schema.d.ts — needed whenever the BFF's API changes
+```
+
+**Four rules that catch most changes:**
+
+1. **A legal or About page is a document per language, not translated strings.** Edit both languages or neither — [docs/LEGAL.md](../docs/LEGAL.md) §6.1.
+2. **A change that adds a third-party request or stores anything on the visitor's device needs the privacy notice updated in the same PR, in both languages.**
+3. **Accessibility is WCAG 2.1 AA and it is linted.** See §Accessibility before adding an interactive component.
+4. **`schema.d.ts` is generated and committed, and nothing checks that it is current.** A BFF API change that skips `npm run generate:api` leaves the frontend
+   type-checking against an API that no longer exists.
+
+| Section                                                                         |                                                    |
+| ------------------------------------------------------------------------------- | -------------------------------------------------- |
+| [Project Structure](#project-structure) · [Code Conventions](#code-conventions) | Where things live, and how they are written        |
+| [Localisation](#localisation)                                                   | i18n, routing per locale, and the document rule    |
+| [Accessibility](#accessibility)                                                 | The AA target and what enforces it                 |
+| [Linting & Formatting](#linting--formatting) · [Testing](#testing)              | oxlint, eslint, oxfmt, Vitest, Playwright          |
+| [Versioning](#versioning) · [Open-source notices](#open-source-notices)         | The hand-mirrored version, and licence attribution |
 
 ## Agent Instructions
 
