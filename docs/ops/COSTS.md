@@ -8,14 +8,24 @@ stale silently and confidently.
 
 ## The short answer
 
-|                                                          | Per month         | Per year |
-| -------------------------------------------------------- | ----------------- | -------- |
-| **Hetzner Cloud** — servers, backups, volumes, addresses | **€33.21**        | €398.52  |
-| Hetzner Object Storage                                   | _to confirm_      |          |
-| Domains (`event-junkie.de`, `event-junkie.com`)          | _to confirm_      |          |
-| healthchecks.io                                          | €0.00 (free tier) | €0.00    |
+|                                                             | Per month         | Per year    | Source            |
+| ----------------------------------------------------------- | ----------------- | ----------- | ----------------- |
+| **Hetzner Cloud** — servers, backups, volumes, addresses    | **€33.21**        | €398.52     | Measured, the API |
+| **Hetzner Webhosting S** + external domain — role mailboxes | €2.66             | €31.92      | Contracted        |
+| **Postflex** — the imprint address                          | €3.33             | **€39.90**  | Contracted        |
+| healthchecks.io                                             | €0.00 (free tier) | €0.00       | Free tier         |
+| Hetzner Object Storage                                      | _to confirm_      |             | —                 |
+| Domains (`event-junkie.de`, `event-junkie.com`)             | _to confirm_      |             | —                 |
+| **Known total**                                             | **€39.20**        | **€470.34** |                   |
 
-**Three of those four are known.** The two "to confirm" rows are marked rather than guessed — see §What is not in the API.
+**The `Source` column is the point of this page.** _Measured_ means re-derivable from the API by the script at the bottom. _Contracted_ means a price that was
+agreed when the thing was ordered — a fact, but one that lives on an order confirmation rather than in any system this repository can query, so it is worth
+re-checking against an invoice once. The two `_to confirm_` rows are neither, and are marked rather than guessed.
+
+**Postflex is billed annually and the monthly figure is derived**, which is why it is the one row where the year is bold. It is also the only line here that
+buys a legal capability rather than compute: a _ladungsfähige Anschrift_ for § 5 DDG, without which the site cannot lawfully be published at all
+([LEGAL.md](../LEGAL.md) §8.3, [#273](https://github.com/enorm-labs/event-junkie/issues/273)). At €39.90 it is 8% of the annual bill and the cheapest go-live
+blocker to clear — no engineering, no dependency, just an order.
 
 ## Hetzner Cloud, line by line
 
@@ -55,6 +65,11 @@ Comfortably inside the included tier, so this is a flat line rather than a growi
 94,791 objects accumulated in about nine hours of observability, which is what #625 is about.
 
 **Domains are at INWX, not Hetzner**, so they are invisible to everything else in this repository. `.de` and `.com` renew annually at the registrar's list price.
+
+**The mailboxes and the imprint address are contracts, not resources.** Neither appears in any API. Webhosting S is €1.90/month plus €0.76 for
+`event-junkie.de` as an external domain — it is registered at INWX, so Hetzner charges to host mail for it ([EMAIL.md](EMAIL.md) §2). Postflex is €39.90/year,
+billed annually. Both figures come from the order rather than from an invoice; correct them the first time a real invoice disagrees, and do not quietly promote
+them to "measured".
 
 **Take both numbers off an invoice rather than a price list.** Neither is guessed here on purpose: a costs page whose figures were plausible-but-invented is worse
 than one with two gaps, because nobody knows which rows to trust.
