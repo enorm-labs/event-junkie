@@ -11,10 +11,12 @@ on:
       - 'docs/**'
   pull_request:
     branches: [ main ]
-    paths-ignore:
-      - 'events-frontend/**'
-      - '*.md'
-      - 'docs/**'
+    # No `paths-ignore:` here, deliberately, since #494. `Build & Test (backend)` is **required** on
+    # the `main` ruleset, and a required check that never runs stays Pending forever, deadlocking
+    # every pull request that happens to touch only the ignored paths. The filtering moved to the
+    # `detect-changes` job below, which is what keeps a documentation-only pull request from paying
+    # for a 7-minute Gradle build: the work is skipped, the context still reports. The `push:` filter
+    # above keeps its paths — nothing requires those runs.
   # Manual trigger, for when the automatic ones cannot be relied on: during the 2026-08-06 Actions
   # outage GitHub dropped ~85% of webhooks, so four PRs merged with no run ever created — and
   # `gh run rerun` is no help when there is no run to re-run. Ignores the path filters above, so it
@@ -30,8 +32,58 @@ permissions:
   contents: read
 
 jobs:
+  # Seconds, and no checkout: the pull request's file list comes from the API. This exists so the
+  # required context at the bottom can be unconditional while the 7-minute build stays conditional.
+  # The patterns mirror the `push:` trigger's `paths-ignore` — a change is irrelevant to the backend
+  # only when *every* file in it is under events-frontend/, docs/, or a root-level *.md.
+  detect-changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      relevant: ${{ steps.filter.outputs.relevant }}
+    steps:
+      - name: Decide whether the backend is affected
+        id: filter
+        env:
+          # Read through `env:` rather than interpolated into the script — a `${{ }}` expression
+          # expanded inside `run:` is the template-injection shape zizmor rejects.
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo 'relevant=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          FILES="$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[].filename')"
+          # An empty list means the API call went wrong, not that nothing changed. Failing here is
+          # correct: the gate below refuses to report a pass when detection did not succeed, so the
+          # pull request blocks visibly instead of skipping a build that was needed.
+          if [ -z "$FILES" ]; then
+            echo '::error::no changed files returned for this pull request'
+            exit 1
+          fi
+          printf '%s\n' "$FILES" | sed 's/^/  /'
+          # Anything that is NOT ignorable makes the backend relevant. Note `^[^/]*\.md$` rather
+          # than `\.md$`: the `push:` filter's `*.md` matches root-level Markdown only, so
+          # .github/prompts/*.md is a backend-relevant change and is treated as one here too.
+          #
+          # Filter-then-test rather than `grep -qv`: the two forms are not equivalent in every grep,
+          # and this one says what it means — drop the ignorable paths, then ask whether anything is
+          # left.
+          if printf '%s\n' "$FILES" | grep -vE '^(events-frontend/|docs/|[^/]*\.md$)' | grep -q .; then
+            echo 'relevant=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'relevant=false' >> "$GITHUB_OUTPUT"
+          fi
+
   build:
-    name: Build & Test
+    name: Backend build
+    needs: detect-changes
+    if: needs.detect-changes.outputs.relevant == 'true'
     runs-on: ubuntu-latest
 
     permissions:
@@ -389,3 +441,41 @@ jobs:
           name: dependency-check-report
           path: build/reports/dependency-check/dependency-check-report.html
 
+
+  # **This is the required context, and it is the only job here that always runs.** The build above
+  # is conditional, and a conditional job cannot be a required check: GitHub leaves an unreported
+  # context Pending forever, which reads as a hung check rather than a misconfiguration (#443, #494).
+  # So the requirement is placed on a job that always reports, and which fails when the build failed.
+  #
+  # Deliberately not relying on "a skipped job counts as success" — GitHub documents that, but
+  # AGENTS.md recorded those semantics as unverified, and this shape does not need them to hold.
+  #
+  # `dependency-check` is deliberately NOT a dependency of this job: it is informational, it is
+  # `continue-on-error`, and its NVD_API_KEY is empty on a fork run. Gating merges on it would make
+  # an unauthenticated NVD rate limit into a blocked pull request.
+  gate:
+    name: Build & Test (backend)
+    needs: [ detect-changes, build ]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Report the build's result
+        env:
+          CHANGES_RESULT: ${{ needs.detect-changes.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          set -euo pipefail
+          echo "detect-changes: $CHANGES_RESULT · build: $BUILD_RESULT"
+          # A failed detection must not be reported as a pass — it would silently gate nothing.
+          if [ "$CHANGES_RESULT" != 'success' ]; then
+            echo "::error::change detection did not succeed ($CHANGES_RESULT); refusing to report a pass"
+            exit 1
+          fi
+          case "$BUILD_RESULT" in
+            success) echo 'The backend build ran and passed.' ;;
+            skipped) echo 'No backend files changed; there was nothing to build.' ;;
+            *)       echo "::error::backend build result: $BUILD_RESULT"; exit 1 ;;
+          esac

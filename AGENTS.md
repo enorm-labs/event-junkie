@@ -873,6 +873,8 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     Format & Validate (infra/environments/production)
     ShellCheck cloud-init                            validate-infra.yml
     CodeQL · Dependency Review                       always run, unfiltered
+    Build & Test (backend)                           build-backend.yml  — a gate job, see below
+    Build & Test (frontend)                          build-frontend.yml — a gate job, see below
     ```
 
     Two consequences worth knowing before changing any of this. **Adding a stack to `validate-infra`'s matrix creates a context that is not required** — the rule
@@ -880,14 +882,20 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     `pull_request` trigger of those three workflows** — it would block every unrelated pull request, and the failure looks like a hung check rather than a
     misconfiguration.
 
-    **`Build & Test` is deliberately NOT required**, for both backend and frontend. They cost 382s and 597s, so requiring them means either +16½ minutes on
-    every pull request including documentation-only ones, or a change-detection job whose semantics were unverified at the time. A red `Build & Test` is
-    visible but not blocking. Revisit deliberately rather than by drift.
+    **`Build & Test (backend)` and `Build & Test (frontend)` are required, and neither is the job that does the work.** The builds cost 382s and 597s, so
+    requiring them directly would put +16½ minutes on every pull request including documentation-only ones. Instead each workflow is three jobs: a
+    `detect-changes` job (seconds, no checkout — it reads the pull request's file list from the API), the real build gated on its output, and a **`gate` job
+    that always runs and carries the required context**, failing when the build failed and passing when it was skipped. - **The required context must never be the conditional job itself.** A job skipped by a job-level `if:` does report a conclusion, but a job skipped by a
+    workflow-level `paths:` filter creates no check run at all — and GitHub leaves an unreported required context Pending forever. The gate exists so the
+    requirement sits on something unconditional, which is the same property the other required checks have. - **`detect-changes` failing is a blocked pull request, not a skipped build.** The gate refuses to report a pass unless detection succeeded, and
+    detection fails on an empty file list. A change-detection bug must never present as a green build that did not run. - **The two job names were `Build & Test` in both workflows until they became required.** One context name cannot express "the backend one and the
+    frontend one", so requiring it would have been ambiguous. Keep them distinct. - **`OWASP Dependency-Check` is deliberately not in the gate's `needs`**: it is informational and `continue-on-error`, and its `NVD_API_KEY` is empty on
+    a fork run, so gating merges on it would turn an unauthenticated rate limit into a blocked pull request.
 
 - **Commits are deliberately NOT signed** (#443). There is no `required_signatures` rule on the `main` ruleset and none is wanted: with a
   single maintainer, a signature proves authorship to the same person who holds the only account that can merge anything, while costing a signing key on every
-  machine _and every agent_ that commits here. The control that actually gates `main` is the ruleset — every change by pull request, nine required checks, no
-  bypass actor. **The condition that would change this is a second committer**, not a change of mind; that is when a signature starts distinguishing one author
+  machine _and every agent_ that commits here. The control that actually gates `main` is the ruleset — every change by pull request, every
+  required check green, no bypass actor. **The condition that would change this is a second committer**, not a change of mind; that is when a signature starts distinguishing one author
   from another. Recorded so it is decided rather than merely unexamined.
 
 - **Every published image carries a buildx SBOM as well as its signed provenance attestation** (#443). `sbom: true` on the three `docker/build-push-action`
@@ -975,11 +983,14 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 
 Each of these looks like a bug in your script the first time you hit it.
 
-- **Fork pull requests work, and the property that makes them work is fragile** (#479 — first one opened _and merged_ 2026-08-19, #579). All eleven required
-  checks declare only `contents: read` and consume no secret, so a fork's read-only `GITHUB_TOKEN` runs every one of them — there is no required-but-skipped
-  check, which is the failure mode that makes a pull request unmergeable forever and look like a broken repository to a first-time contributor. **Adding a
-  secret or a `write` permission to any of those eleven breaks the fork path**, and it breaks it invisibly, because pull requests from forks are rare enough
-  here that nothing routinely exercises it.
+- **Fork pull requests work, and the property that makes them work is fragile** (#479 — first one opened _and merged_ 2026-08-19, #579). Every required check
+  declares only `contents: read` and depends on no secret, so a fork's read-only `GITHUB_TOKEN` runs all of them — there is no required-but-skipped check,
+  which is the failure mode that makes a pull request unmergeable forever and look like a broken repository to a first-time contributor. **Adding a secret or a
+  `write` permission that a step actually depends on breaks the fork path**, and it breaks it invisibly, because pull requests from forks are rare enough here
+  that nothing routinely exercises it.
+    - **This is why `Build & Test`'s required context is the `gate` job rather than the build.** The build declares `pull-requests: write` and
+      `security-events: write` for its coverage comment and SARIF uploads, both guarded on the fork path; the gate declares `contents: read` and nothing else,
+      so the required context keeps the property above even though the job it reports on does not.
 
     **This was not a hypothetical: the path was broken when it was first tried.** `CodeQL` was required and ran through GitHub's _default setup_, which produces
     no run at all for a fork — no workflow run, no check suite, no check. Everything else was green and the pull request could never have merged, with nothing
