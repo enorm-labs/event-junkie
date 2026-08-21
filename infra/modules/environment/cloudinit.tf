@@ -13,11 +13,14 @@ locals {
   cloud_init_dir = "${path.module}/cloud-init"
 
   scripts = {
-    harden    = file("${local.cloud_init_dir}/harden.sh")
-    wireguard = file("${local.cloud_init_dir}/wireguard.sh")
-    k3s       = file("${local.cloud_init_dir}/k3s.sh")
-    postgres  = file("${local.cloud_init_dir}/postgres.sh")
-    backups   = file("${local.cloud_init_dir}/backups.sh")
+    # Runs before everything, on both roles: nothing that follows works without the private
+    # network, and on a first apply cloud-init does not bring it up. See the script.
+    private-net = file("${local.cloud_init_dir}/private-net.sh")
+    harden      = file("${local.cloud_init_dir}/harden.sh")
+    wireguard   = file("${local.cloud_init_dir}/wireguard.sh")
+    k3s         = file("${local.cloud_init_dir}/k3s.sh")
+    postgres    = file("${local.cloud_init_dir}/postgres.sh")
+    backups     = file("${local.cloud_init_dir}/backups.sh")
   }
 
   # Both environments push to one bucket, told apart by this. It is derived rather than a variable
@@ -66,10 +69,15 @@ locals {
       permissions = "0644"
       content     = local.apt_lock_timeout
     },
+    local.script_file["private-net"],
   ]
 
   base_runcmd = [
     "install -d -m 0750 /opt/event-junkie",
+    # First, and on both roles. k3s registers with `--node-ip`, PostgreSQL binds to the private
+    # address, and neither exists until this has run — see private-net.sh for why cloud-init does
+    # not already have it on a first apply.
+    "/opt/event-junkie/private-net.sh",
     "/opt/event-junkie/harden.sh",
   ]
 
