@@ -2,13 +2,9 @@
 
 The objects nothing in this repository creates, why that is a problem worth fixing, and the procedure for fixing it — split by who has to do each part.
 
-> **Done for staging on 2026-08-19** ([#416](https://github.com/enorm-labs/event-junkie/issues/416) item 8). `events-db` is committed encrypted and restored by
-> Flux; `hetzner` stays hand-made by decision. Production gets the same
-> treatment as part of standing it up ([#560](https://github.com/enorm-labs/event-junkie/issues/560)).
->
-> **`github-dispatch` joined the list on 2026-08-19** ([#565](https://github.com/enorm-labs/event-junkie/issues/565)) and is **hand-made**, not encrypted — its
-> scope is `contents: write`, which is the one place the "encrypt it, the value is a nuisance at worst" reasoning does not hold. See the note under the table.
-> A fourth secret, `github-status`, was declared and then removed without ever existing ([#567](https://github.com/enorm-labs/event-junkie/issues/567)).
+> **In place on both staging and production.** `events-db` is committed encrypted and restored by Flux. `hetzner` and `github-dispatch` stay hand-made by
+> decision — `github-dispatch` because its scope is `contents: write`, the one place the "encrypt it, the value is a nuisance at worst" reasoning does not hold.
+> See the note under the table.
 
 ## What is hand-made today
 

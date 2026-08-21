@@ -19,6 +19,10 @@ everything below — someone with a WireGuard tunnel open, not someone writing a
 | [ops/RESTORE_RUNBOOK.md](ops/RESTORE_RUNBOOK.md)     | **Restoring it** — written for someone who is reading it because something has already gone wrong                   |
 | [ops/HEALTHCHECKS.md](ops/HEALTHCHECKS.md)           | The dead-man's switches: what alerts from outside the cluster, how to wire a node to one, and how to prove it fires |
 | [ops/SECRETS.md](ops/SECRETS.md)                     | What is hand-made today, and the SOPS + age procedure that replaces it — split by who does each part                |
+| [ops/DAILY_COMMANDS.md](ops/DAILY_COMMANDS.md)       | The commands you actually type, with the reasoning stripped out and linked instead                                  |
+| [ops/OPENOBSERVE.md](ops/OPENOBSERVE.md)             | Operating the logs, metrics and dashboards — including the trap that silently stops ingestion                       |
+| [ops/EMAIL.md](ops/EMAIL.md)                         | The role mailboxes, and the DNS that lets exactly one machine send as the domain                                    |
+| [ops/COSTS.md](ops/COSTS.md)                         | Every recurring charge, where each number comes from, and which ones are still guesses                              |
 
 ## Building it
 
@@ -47,10 +51,12 @@ everything below — someone with a WireGuard tunnel open, not someone writing a
 
 ## Across all of it
 
-| Document             | What it covers                                                                                                                                                |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [LEGAL.md](LEGAL.md) | Licensing, privacy, accessibility, scraping obligations. Referenced from the product docs, the ops docs and the prompts alike — which is why it has no folder |
-| [adr/](adr)          | Architecture decisions, with the reasoning. Flat and numbered; the numbering is the structure                                                                 |
+| Document                         | What it covers                                                                                                                                                |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [LEGAL.md](LEGAL.md)             | Licensing, privacy, accessibility, scraping obligations. Referenced from the product docs, the ops docs and the prompts alike — which is why it has no folder |
+| [CREDENTIALS.md](CREDENTIALS.md) | The credential inventory — what exists, what it unlocks and where it lives. **No secret values, ever**                                                        |
+| [LINKS.md](LINKS.md)             | Every external service, console and reference this project depends on, in one place                                                                           |
+| [adr/](adr)                      | Architecture decisions, with the reasoning. Flat and numbered; the numbering is the structure                                                                 |
 
 ## Elsewhere in the repository
 

@@ -6,8 +6,8 @@ This is the one-time bring-up. **Connecting to a cluster that already exists is 
 What happens on every commit afterwards is [RELEASING.md](RELEASING.md); why it is shaped this way is [ADR-016](../adr/ADR-016_GITOPS_DELIVERY.md) and
 [PLATFORM_SETUP](PLATFORM_SETUP.md); the long-form detail behind steps 1–8 is [infra/README.md](../../infra/README.md).
 
-**First run: 2026-08-13, staging — carried all the way through to an issued certificate.** Every command below has been executed against a real cluster, and the
-traps at the bottom are the ones that actually cost time rather than the ones worth imagining. Where a step says "verify", it is because that verification
+**Every command below has been executed against a real cluster** — both staging and production were stood up this way, through to an issued certificate. The
+traps at the bottom are the ones that actually cost time rather than the ones worth imagining, and where a step says "verify", it is because that verification
 caught something.
 
 ---

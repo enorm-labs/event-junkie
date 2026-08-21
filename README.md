@@ -51,10 +51,11 @@ which coverage questions are still open is in
 
 ## Status
 
-🚧 **In development — not deployed anywhere yet.**
+🚧 **In development — deployed, but not public yet.**
 
-The product works end-to-end locally: 86 Berlin sources are imported on a schedule, and the frontend, BFF and importer all run. What is missing is a public
-deployment, and the hosting, domain, auth and legal work that goes with it — tracked in the [`v0.2`, `v0.3` and `v1.0` milestones](https://github.com/enorm-labs/event-junkie/milestones).
+The product works end-to-end: 86 Berlin sources are imported on a schedule, and the frontend, BFF and importer run locally and on both Hetzner environments.
+Staging and production are stood up and reconciling under Flux — production is **dark**, serving nothing publicly until the domain is pointed at it at go-live.
+What is left is the legal, auth and go-live work, tracked in the [`v0.3` and `v1.0` milestones](https://github.com/enorm-labs/event-junkie/milestones).
 
 One consequence worth knowing before you build on this: **the database schema is still evolving and offers no migration compatibility between versions.** All
 schema changes are consolidated into a single initial migration (`V001`) until the first production release.
@@ -148,8 +149,8 @@ The OpenAPI document is at `/v3/api-docs` on each port. Request files for both s
 | [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)                                   | Building, running, quality checks, dependencies                                                                                                                         |
 | [docs/ops/](./docs/ops)                                                        | Running the platform: setup, bootstrap, releasing, access, backups, and the restore runbook                                                                             |
 | [docs/adr/](./docs/adr)                                                        | Architecture decisions, with the reasoning                                                                                                                              |
-| [infra/README.md](./infra/README.md)                                           | The OpenTofu that declares that platform. DNS is live; the servers are declared but not yet applied                                                                     |
-| [deploy/charts/event-junkie/README.md](./deploy/charts/event-junkie/README.md) | The Helm chart that deploys the three services onto it. Written and statically validated; never installed                                                               |
+| [infra/README.md](./infra/README.md)                                           | The OpenTofu that declares that platform. Applied — both environments are live                                                                                          |
+| [deploy/charts/event-junkie/README.md](./deploy/charts/event-junkie/README.md) | The Helm chart that deploys the three services onto it. Running on both environments, reconciled by Flux                                                                |
 | [GitHub Issues](https://github.com/enorm-labs/event-junkie/issues)             | The backlog. `scripts/generate-backlog-snapshot.sh` renders it to `build/BACKLOG.md` for grepping                                                                       |
 | [perf/README.md](./perf/README.md)                                             | Performance testing with k6                                                                                                                                             |
 

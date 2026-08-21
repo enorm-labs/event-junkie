@@ -4,22 +4,14 @@ Deploys `events-bff`, `events-importer` and `events-frontend` behind one Traefik
 from cert-manager, and with the importer's admin API and every `/actuator/**` endpoint unreachable
 from outside the cluster.
 
-**Status: installed and exercised on k3d, never on a real cluster.** As of #263 (2026-08-12) the
-chart has been installed, upgraded, tested and uninstalled on a local k3d cluster running **arm64**
-nodes — the same architecture the Hetzner nodes will use. What that run proved, and what it did not:
+**Running on staging and production**, reconciled by Flux, and installable on k3d for local work.
+Production is installed but dark — the domain resolves nowhere until go-live.
 
-| Proved                                                                                         | Still unproven                                                 |
-| ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| The full stack comes up: all three pods Ready, no restarts                                     | Anything on a real cluster, or through a real ingress with TLS |
-| Ingress routing — `/` → frontend, `/api` → BFF                                                 | cert-manager, ACME, DNS-01 (#265)                              |
-| The importer's admin API and `/actuator` are unreachable through the ingress                   | NetworkPolicies and PSA (#416)                                 |
-| A real scrape reaching `/api/events` through Traefik                                           | Flux reconciliation and rollback (#414)                        |
-| **`helm upgrade` across a chart version bump** — the selector-immutability trap does not occur | Behaviour under load, or on a node with real resource pressure |
-| `helm test` passes                                                                             |                                                                |
+Still unproven: behaviour under load, and on a node with real resource pressure.
 
 `helm lint`, `helm template`, `flux schema validate`, `helm unittest` and
-[`../../../scripts/cluster-assertions.sh`](../../../scripts/cluster-assertions.sh) all pass as
-before, but they are no longer the only evidence.
+[`../../../scripts/cluster-assertions.sh`](../../../scripts/cluster-assertions.sh) all pass, and are
+what a change is held to before it reaches a cluster.
 
 ## Install
 
