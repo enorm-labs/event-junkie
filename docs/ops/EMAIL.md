@@ -96,23 +96,33 @@ left-hand menu is nearly empty and correctly so.
 7. **Set a forward on each** — _Kopie an_, edited on the mailbox after it exists — to the address actually read day to day, keeping a copy on the server.
    #274's "done when" is not _the mailbox exists_; it is _a test message arrives somewhere a human reads_, and a mailbox that only fills up quietly fails that
    in a way nobody notices for months.
-8. **Enable DKIM** for the domain (_E-Mail → Mailsicherheit_), with the domain still selected rather than the hosting. konsoleH generates the key pair,
-   publishes nothing — the nameservers are not its — and shows you the **selector** and the **public key**. Both go into §5.
+8. **Enable DKIM** for the domain (_E-Mail → Mailsicherheit_), with the domain still selected rather than the hosting. konsoleH generates the key pair **and
+   publishes the public key into the zone itself** — it can, because the hosting and the DNS zone hang off the same Hetzner account. Nothing is left for you to
+   copy anywhere. Confirmed 2026-08-21: selector `default2608`, live and authoritative within minutes.
 
 ## 5. The DNS half — and it is not clicking in a console
 
-**`event-junkie.de` is delegated to Hetzner's nameservers, and the zone is OpenTofu's** — `infra/bootstrap/dns.tf`, `hcloud_zone` and `hcloud_zone_rrset`. A
-record added by hand in the Cloud Console is a record the next `tofu plan` proposes to delete. Everything below is a code change.
+**`event-junkie.de` is delegated to Hetzner's nameservers, and the zone is OpenTofu's** — `infra/bootstrap/dns.tf`, `hcloud_zone` and `hcloud_zone_rrset`.
+Everything below is a code change.
 
-**Four records change together, and the file says so.** `dns.tf` describes the current SPF/DMARC/DKIM triple as _"all three are true today and stay true until
+**With exactly one exception, and it is deliberate: the DKIM record belongs to konsoleH.** `default2608._domainkey` is the only name in the zone OpenTofu does
+not manage. The rule is _whoever holds the private key owns the public record_ — konsoleH generates and rotates the key pair, so a rotation there has to be able
+to update DNS without a commit. Importing it would look tidier and would create a way to break signing silently: the next apply would revert a rotated key to
+whatever the repository last saw. That is the same failure shape as `O2_BASIC_AUTH_HEADER` in [OPENOBSERVE.md](OPENOBSERVE.md) — a derived value going stale
+with nothing to notice.
+
+An unmanaged rrset is **not** at risk from `tofu apply`: OpenTofu removes what is in its state, and this never enters it. The cost is that `tofu plan` cannot
+tell you the record is wrong, which is why §7 tests DKIM against a real message rather than against the zone file.
+
+**The records change together, and the file says so.** `dns.tf` describes the current SPF/DMARC/DKIM triple as _"all three are true today and stay true until
 #274 gives the project real mailboxes — at which point all three have to change together"_. This is that moment.
 
-| Record         | Today                                  | After                                           | Why                                                                       |
-| -------------- | -------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------- |
-| `@ MX`         | _absent_                               | `10 www750.your-server.de.`                     | Without it nothing is delivered anywhere                                  |
-| `@ TXT` (SPF)  | `v=spf1 -all`                          | `v=spf1 include:www750.your-server.de -all`     | `-all` means _this domain sends no mail_, and it is about to send replies |
-| `SELECTOR TXT` | `*._domainkey` → `v=DKIM1; p=`         | a real key at the konsoleH selector             | The wildcard revokes every selector; the specific name overrides it       |
-| `_dmarc TXT`   | `p=reject; sp=reject; adkim=s; aspf=s` | unchanged, **`rua=` only if somebody reads it** | Strict alignment still holds — see below                                  |
+| Record        | Today                                  | After                                           | Why                                                                       |
+| ------------- | -------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------- |
+| `@ MX`        | _absent_                               | `10 www750.your-server.de.`                     | Without it nothing is delivered anywhere                                  |
+| `@ TXT` (SPF) | `v=spf1 -all`                          | `v=spf1 include:www750.your-server.de -all`     | `-all` means _this domain sends no mail_, and it is about to send replies |
+| `default2608` | `*._domainkey` → `v=DKIM1; p=`         | **already done by konsoleH**, not by us         | The wildcard revokes every selector; the specific name overrides it       |
+| `_dmarc TXT`  | `p=reject; sp=reject; adkim=s; aspf=s` | unchanged, **`rua=` only if somebody reads it** | Strict alignment still holds — see below                                  |
 
 **The obvious SPF include is the wrong one, and this page said so before it was checked.** `include:_spf.hetzner.com` looks right and is not: `_spf4`/`_spf6`
 under it are explicit lists of ~19 IPs in `213.133.*`, `78.46.*`, `85.10.*`, `88.198.*` and `213.95.*` — **Hetzner's own corporate relays**, and
@@ -162,11 +172,6 @@ locals {
       type    = "TXT"
       records = ["\"v=spf1 include:www750.your-server.de -all\""] # after §7 step 2 confirms it
     }
-    dkim = {
-      name    = "SELECTOR._domainkey" # the selector konsoleH shows after "DKIM aktivieren"
-      type    = "TXT"
-      records = [provider::hcloud::txt_record("v=DKIM1; k=rsa; p=MIIBIjAN...")]
-    }
   }
 
   rrsets = merge(
@@ -182,10 +187,12 @@ Three details in that snippet each cost something to discover:
 
 - **The MX priority lives inside the value string.** `hcloud_zone_rrset` records take a single `value`; there is no separate priority field. The **trailing dot
   is required** — without it the target is treated as relative and becomes `www750.your-server.de.event-junkie.de.`
-- **`provider::hcloud::txt_record()` chunks the DKIM key for you.** A TXT record is one or more quoted strings of at most 255 characters, and an RSA-2048 public
-  key is longer than that. Hand-quoting it is the classic silent DKIM failure — the record exists, resolvers return it, and no verifier can parse it.
-- **The wildcard revoke stays.** `*._domainkey` with `p=` only answers names that have no record of their own, so publishing `SELECTOR._domainkey` overrides it
-  for that selector while every other selector remains revoked. That is the wanted behaviour, not a conflict to clean up.
+- **If you ever do publish a TXT value by hand, `provider::hcloud::txt_record()` chunks it for you.** A TXT record is one or more quoted strings of at most 255
+  characters, and an RSA-2048 public key is longer than that — konsoleH's own record is six strings for exactly this reason. Hand-quoting is the classic silent
+  DKIM failure: the record exists, resolvers return it, and no verifier can parse it.
+- **The wildcard revoke stays, and it does not shadow the real key.** `*._domainkey` with `p=` only answers names that have no record of their own, so
+  `default2608._domainkey` returns the key while every other selector stays revoked. Verified against the authoritative nameserver on 2026-08-21 — it was the
+  one piece of this that was reasoning rather than measurement.
 
 ### Applying it, in two sittings rather than one
 
@@ -203,8 +210,8 @@ is a coherent posture**, not a half-finished one; what `dns.tf` warns against is
 Then create the mailboxes (§4), run §7 step 2, read the sending IP off the headers, and only then:
 
 ```sh
-tofu plan -out=mail.tfplan          # 2 to add (DKIM, and _dmarc if rua), 1 to change (SPF)
-tofu apply mail.tfplan
+tofu plan -out=spf.tfplan           # 1 to change: the SPF rrset. DKIM is konsoleH's, _dmarc unchanged
+tofu apply spf.tfplan
 ```
 
 **Stop if either count differs.** `bootstrap/` holds the zones, `delete_protection` and `prevent_destroy` — a plan that proposes to destroy anything here is a plan
@@ -227,7 +234,7 @@ and swapping them produces an authentication failure that reads like a wrong pas
 ```sh
 dig +short MX  event-junkie.de @1.1.1.1
 dig +short TXT event-junkie.de @1.1.1.1              # -all until the second apply, include: after
-dig +short TXT SELECTOR._domainkey.event-junkie.de @1.1.1.1
+dig +short TXT default2608._domainkey.event-junkie.de @1.1.1.1   # konsoleH's, not ours
 dig +short TXT _dmarc.event-junkie.de @1.1.1.1
 ```
 
@@ -237,7 +244,7 @@ Then the part DNS cannot answer, in this order — step 2 is what makes the SPF 
 2. **Reply from each to a Gmail or Outlook address, and read the `Received:` chain** for the IP the message actually left from. Expect `spf=fail` at this point:
    the domain still publishes `v=spf1 -all`, and that is the correct answer to a question nobody had asked yet. **The failure does not hide the header** — the
    sending IP is right there, and it is the input to the second apply.
-3. **Apply the SPF and DKIM records** (§5, second sitting), wait out the TTL, and send again. Now `Authentication-Results` should read `spf=pass`, `dkim=pass`,
+3. **Apply the SPF record** (§5, second sitting), wait out the TTL, and send again. Now `Authentication-Results` should read `spf=pass`, `dkim=pass`,
    `dmarc=pass`. Anything less means §5 is not finished, and it is far cheaper to find here than after the first message to a stranger.
 4. **Watch for the first Let's Encrypt notice.** Certificates renew on their own schedule, so this is a slow signal — but it is the one that proves the address
    is reachable by a real sender rather than by you.
