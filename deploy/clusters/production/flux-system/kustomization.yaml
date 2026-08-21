@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- gotk-components.yaml
+- gotk-sync.yaml
+# Added by hand, and deliberately HERE rather than in gotk-sync.yaml — that file opens with
+# "DO NOT EDIT" because `flux bootstrap` regenerates it, and a customisation written there is one
+# bootstrap re-run away from silently disappearing. A patch in this file is Flux's documented place
+# for it (#416, docs/ops/SECRETS.md).
+#
+# `sops-age` must already exist in flux-system, holding the private key under a name ending in
+# `.agekey` — Flux ignores any other key name, silently. Without it this Kustomization stops
+# reconciling with a decryption error, which takes every deploy with it.
+#
+# **This file is committed BEFORE `flux bootstrap` runs here, unlike staging's, which was written
+# afterwards.** Bootstrap generates the two files listed above and leaves an existing
+# `kustomization.yaml` alone, so putting the patch in first closes a window staging went through:
+# between bootstrap and the patch landing, `secrets/events-db.yaml` reconciles undecrypted and
+# Kubernetes rejects a Secret whose `data` values are the literal `ENC[...]` strings.
+patches:
+  - patch: |
+      - op: add
+        path: /spec/decryption
+        value:
+          provider: sops
+          secretRef:
+            name: sops-age
+    target:
+      kind: Kustomization
+      name: flux-system
