@@ -14,11 +14,17 @@ locals {
   all_domains = concat([var.primary_domain], var.defensive_domains)
 
   # A domain that sends no mail and says so is not spoofable; a fresh domain with no SPF is a
-  # standing invitation. All three records are true today and stay true until #274 gives the
-  # project real mailboxes — at which point all three have to change together.
+  # standing invitation. These are the records for a domain that does neither, which is still true
+  # of `event-junkie.com` and no longer true of the primary — see `mail_records` below.
   #
-  # `p=reject` carries no `rua=`: a report address that nobody reads is worse than none, and there
-  # is no mailbox to point it at yet.
+  # **The DKIM wildcard revoke stays, and it does not shadow a real selector.** A wildcard answers
+  # only names with no record of their own, so `default2608._domainkey` returns konsoleH's key while
+  # every other selector goes on being revoked. That record is konsoleH's and deliberately absent
+  # from this file: whoever holds the private key owns the public one, and importing it would give
+  # the next apply a way to revert a rotated key and break signing silently. docs/ops/EMAIL.md §5.
+  #
+  # `p=reject` still carries no `rua=`: a report address that nobody reads is worse than none, and
+  # a mailbox existing does not make somebody read it.
   antispoofing = {
     spf = {
       name    = "@"
@@ -55,16 +61,29 @@ locals {
   # `zone_records`, which is setproduct-ed across every domain: `event-junkie.com` is a defensive
   # registration and must go on saying it neither sends nor receives.
   #
-  # **The MX only, for now.** SPF stays `-all`, and that is not a half-finished state: a domain that
-  # receives and does not send is coherent, and nothing has sent yet. What must not happen is
-  # publishing an SPF value nobody has measured — the obvious `include:_spf.hetzner.com` covers
-  # Hetzner's corporate relays and *not* this account's server, so the value gets written from the
-  # `Received` chain of a real message rather than from a guess. docs/ops/EMAIL.md §5 and §7.
+  # **`include:` and not `ip4:`, and not the obvious include either.** `_spf.hetzner.com` lists
+  # Hetzner's *corporate* relays and does not contain this account's server, so publishing it would
+  # authorise machines that never send for us and refuse the one that does. The hosting server
+  # publishes its own policy instead —
+  #
+  #     www750.your-server.de. TXT "v=spf1 a:www750.your-server.de a:mail.www750.your-server.de -all"
+  #
+  # — so including it inherits whatever Hetzner puts there, three lookups deep, and survives them
+  # adding a relay without anyone here noticing. `-all` stays: the point of this record is to name
+  # the one sender, not to soften the policy.
+  #
+  # Written from `var.mail_host` so the MX above and the SPF here cannot drift apart if the account
+  # is ever migrated to another hosting server. docs/ops/EMAIL.md §5.
   mail_records = {
     mx = {
       name    = "@"
       type    = "MX"
       records = ["10 ${var.mail_host}"]
+    }
+    spf = {
+      name    = "@"
+      type    = "TXT"
+      records = ["\"v=spf1 include:${trimsuffix(var.mail_host, ".")} -all\""]
     }
   }
 
