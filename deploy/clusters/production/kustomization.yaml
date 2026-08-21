@@ -8,7 +8,21 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  # flux-system/ is Flux's own manifests, and listing it here is what makes the cluster
+  # self-managing. A Flux Kustomization pointing at a directory with no kustomization.yaml walks it
+  # recursively and picks flux-system/ up for free; an explicit list replaces that discovery with
+  # exactly these entries — so omitting it means Flux's own Kustomization is reconciled by nothing
+  # except a `flux bootstrap` re-run.
+  #
+  # Staging learned that in #416 and this file did not: the `decryption` patch in
+  # flux-system/kustomization.yaml rendered perfectly, was committed, merged, and never reached the
+  # cluster. **Rendering is not applying.** Same omission here, found on 2026-08-21 by noticing that
+  # `events-db` had not appeared even though the Kustomization reported Ready.
+  - flux-system
   - namespace.yaml
+  # Encrypted; decrypted by the sops-age patch in flux-system/kustomization.yaml, which is exactly
+  # why that patch has to actually reach the cluster.
+  - secrets/events-db.yaml
   - helm-repository-jetstack.yaml
   - cert-manager.yaml
   - oci-repository.yaml
