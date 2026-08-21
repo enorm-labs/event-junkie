@@ -273,6 +273,29 @@ spec:
               # The whole `process_` family is ~0.7% of rows and ~1.0% of bytes, so there is nothing
               # here worth the risk of dropping application metrics to save. Left in.
               - 'IsMatch(name, "^(go|rest_client|workqueue)_")'
+              # **`postgres-exporter` is 60% of everything ingested, for one metric anybody
+              # queries.** Measured 2026-08-21 from the bucket itself — objects written after 06:30,
+              # so after every earlier filter was already live:
+              #
+              #     pg_*         1810     <- this
+              #     kube_*        440
+              #     otelcol_*     195
+              #     jvm_*         125
+              #
+              # 362 distinct `pg_*` streams, and `deploy/dashboards/` queries exactly one of them.
+              # That is not a rounding error in the budget, it is the budget.
+              #
+              # **It is stream COUNT that hurts, not row count.** OpenObserve partitions its memtable
+              # per stream, so 362 near-idle streams cost far more than the row figures suggest —
+              # which is why raising the container memory limit did not help: the pod was overflowing
+              # at 700Mi of 1536Mi, nowhere near its ceiling, while returning HTTP 503 to the
+              # collector and dropping data outright. Ingestion had effectively stalled from ~05:00.
+              #
+              # The allowlist keeps what a single-node database is actually worth watching: is it up,
+              # how big is it, how many connections, is it committing, is it deadlocking, and did the
+              # exporter itself fail. Everything else is reversible — the exporter still produces it,
+              # this only decides what is stored.
+              - 'IsMatch(name, "^pg_") and not IsMatch(name, "^pg_(up|database_size_bytes|database_connection_limit|locks_count|exporter_last_scrape_error|stat_database_(numbackends|xact_commit|xact_rollback|deadlocks|blks_hit|blks_read))$")'
               # The single biggest stream in the system.
               - 'name == "apiserver_request_duration_seconds"'
               # Reconcile-latency histograms from the operators and Flux.
