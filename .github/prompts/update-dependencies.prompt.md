@@ -293,7 +293,7 @@ their merits, do not pin back.
 
 - **Do not sweep them up with the routine run.** Move them when there is a reason, and take the rebuild deliberately with
   [docs/ops/CLUSTER_BOOTSTRAP.md](../../docs/ops/CLUSTER_BOOTSTRAP.md) § _Rebuilding a node_ open.
-- **`wal-g` also carries two checksums**, one per architecture, because production is ARM and staging is x86. Both move with the version, and they come from the
+- **`wal-g` also carries two checksums**, one per architecture. Both environments have been x86 since 2026-08-21 — ARM cannot be bought anywhere in `eu-central` — so only the `amd64` one is exercised today, and that is exactly why both must stay correct: the unused one is the one nobody notices is wrong. Both move with the version, and they come from the
   release's own `.sha256` files — never from the tarball's host, which would verify only that the download completed:
 
     ```sh
@@ -309,6 +309,54 @@ their merits, do not pin back.
 - **`wal-g` is on the recovery path, not the request path.** Nothing about a stale version shows up in monitoring, and the moment you find out is the moment you
   are already restoring — so the natural time to review it is the quarterly restore drill, not this sweep.
   [docs/ops/BACKUPS.md](../../docs/ops/BACKUPS.md) §8 has the whole argument.
+
+## Step 13: The cluster component versions, which are a different kind of blind spot
+
+Step 12's pins rot in CI. **These rot in production**, and Dependabot cannot see them either: it has no Helm ecosystem, so a `version:` inside a Flux
+`HelmRelease` belongs to no scanner. Six components run the platform and nothing watches any of them.
+
+| Component                      | Where                                                                                                        | Check against                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `openobserve-standalone`       | `deploy/clusters/staging/openobserve.yaml`                                                                   | `charts.openobserve.ai` — `helm search repo --versions` |
+| `openobserve-collector`        | `deploy/clusters/staging/collector.yaml`                                                                     | same repository                                         |
+| `opentelemetry-operator`       | `deploy/clusters/staging/collector.yaml`                                                                     | `open-telemetry/opentelemetry-helm-charts` releases     |
+| `cert-manager`                 | `deploy/clusters/staging/cert-manager.yaml` **and** `production/cert-manager.yaml` — both must move together | `cert-manager/cert-manager` releases                    |
+| `cert-manager-webhook-hetzner` | `deploy/clusters/staging/cert-manager-webhook.yaml`                                                          | `mittwald/cert-manager-webhook-hetzner` releases        |
+| `signal-cli-rest-api`          | `deploy/clusters/staging/signal-bridge.yaml` — **image, digest-pinned**                                      | `bbernhard/signal-cli-rest-api` releases                |
+
+```sh
+helm repo add openobserve https://charts.openobserve.ai >/dev/null && helm repo update >/dev/null
+for c in openobserve/openobserve-standalone openobserve/openobserve-collector; do
+    printf '%-40s %s\n' "$c" "$(helm search repo "$c" --versions -o json | python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["version"])')"
+done
+for repo in cert-manager/cert-manager mittwald/cert-manager-webhook-hetzner \
+            open-telemetry/opentelemetry-helm-charts bbernhard/signal-cli-rest-api; do
+    printf '%-40s %s\n' "$repo" "$(gh api "repos/$repo/releases/latest" --jq .tag_name)"
+done
+```
+
+**Four things make this list different from Step 12's, and each one is a reason not to sweep them casually.**
+
+**`openobserve-standalone` is pinned to the version an ADR was measured against.** [ADR-015](../../docs/adr/ADR-015_OBSERVABILITY_STACK.md) criterion 2 is a
+claim about the footprint of **0.92.2** specifically. Bumping it does not invalidate the decision, but it does invalidate the measurement — so a bump means
+re-checking resident memory against the ~1.5 GB ceiling and saying so, not just watching the pod come up.
+
+**The `ZO_*` defaults are load-bearing and change between versions.** `ZO_LOCAL_MODE` has already been misread once as choosing storage rather than topology
+(it chooses standalone-vs-cluster; `ZO_LOCAL_MODE_STORAGE` chooses the backend). Read the chart's changelog for default changes before the diff, because a
+default that moves under you produces a pod that starts and behaves differently.
+
+**`cert-manager` appears in both clusters and they must not drift.** A version difference between environments means staging stops being a rehearsal for
+production, which is the only reason staging exists.
+
+**`signal-cli-rest-api` is digest-pinned, so the tag alone is not the version.** Move the tag _and_ the `@sha256:` together, or the digest silently wins and
+you have made no change at all — a bump that appears in the diff and not in the cluster.
+
+**None of these belong in a routine sweep either.** Unlike Step 12's CI pins, bumping one of these changes what is running in a cluster. Do them one at a time,
+watch the reconcile, and read [docs/ops/OPENOBSERVE.md](../../docs/ops/OPENOBSERVE.md) § _Keeping it up to date_ first — it carries the same list with the
+operational consequences attached.
+
+**The real fix is Renovate**, which supports Flux `HelmRelease` and `OCIRepository` natively and would make this step unnecessary. Until that exists, this list
+is the only thing standing between the platform and a component two years behind.
 
 ## Output Summary
 
@@ -326,3 +374,5 @@ Also note:
 - Any **major version bumps** that were applied, with a brief note on breaking changes (if any).
 - Any dependencies already at their **latest stable version** (no update needed).
 - Any **CVE-remediation overrides removed** because the BOM caught up, and any **kept**, naming the CVE that still justifies each one.
+- **Cluster components (Step 13) checked but deliberately not bumped**, and why — these are excluded from the routine sweep on purpose, so an empty line here
+  should read as "checked, all current" rather than "not looked at".

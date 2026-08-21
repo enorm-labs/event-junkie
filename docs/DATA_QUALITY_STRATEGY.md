@@ -31,11 +31,18 @@ resolve:
 2. **The feedback loop is open.** The curation signal already exists — the
    `Dropping non-genre token '…'` logs (`GenreNormalizer.kt`), artist-less concerts, `OTHER`-typed events — but nothing routes it back to a human. The curation
    queue is invisible, so the curated lists only grow when someone happens to notice a bad row.
-3. **There is no measurement and no gate.** We have no number for "% of concerts with a headliner" or "% of events typed `OTHER`", and nothing fails when a
-   change regresses them. Quality is asserted in prose, not observed.
+3. ~~**There is no measurement and no gate.**~~ **Half-resolved 2026-08-19.** Pillar 1 shipped as `de.norm.events.dataquality`: the numbers exist, per source,
+   with a `data_quality_snapshot` history so a trend is visible — see [DATA_QUALITY_PILLAR_1_PLAN.md](DATA_QUALITY_PILLAR_1_PLAN.md) §8a. **The gate half is
+   still open**: nothing fails when a change regresses a metric, so quality is now _observed_ but still not _enforced_.
 
-The single largest _fix_ opportunity is already identified: **~40% of `CONCERT`
-events carry no artist** because title-as-headliner extraction is deliberately disabled for Privatclub, Cassiopeia, and Badehaus.
+~~The single largest _fix_ opportunity is already identified: **~40% of `CONCERT` events carry no artist**~~ — **superseded by measurement, 2026-08-21.**
+
+Counted against staging's 3,409 events, the number is **3.5%**: 74 artist-less concerts out of 2,128, with 119 events typed `OTHER`. Title-as-headliner
+extraction is now used by 49 scrapers rather than being disabled at the three venues this paragraph named.
+
+**The order-of-magnitude gap between the estimate and the measurement is the point of §1.3**, not a footnote to it. This document asserted ~40% in prose, that
+figure survived unchallenged into planning, and the first thing an actual query did was refute it. A strategy whose headline problem is ten times smaller than
+stated is one that prioritises the wrong pillar — which is precisely the argument for measuring first.
 
 ## 2. What data-quality issues _are_ — a shared taxonomy
 
