@@ -18,7 +18,7 @@ everything below — someone with a WireGuard tunnel open, not someone writing a
 | [ops/BACKUPS.md](ops/BACKUPS.md)                     | What protects the database, what each layer survives, and how you know it works                                     |
 | [ops/RESTORE_RUNBOOK.md](ops/RESTORE_RUNBOOK.md)     | **Restoring it** — written for someone who is reading it because something has already gone wrong                   |
 | [ops/HEALTHCHECKS.md](ops/HEALTHCHECKS.md)           | The dead-man's switches: what alerts from outside the cluster, how to wire a node to one, and how to prove it fires |
-| [ops/SECRETS.md](ops/SECRETS.md)                     | What is hand-made today, and the SOPS + age procedure that replaces it — split by who does each part                |
+| [ops/SECRETS.md](ops/SECRETS.md)                     | The six cluster secrets: which are encrypted into git, which stay hand-made, and how to recreate each               |
 | [ops/DAILY_COMMANDS.md](ops/DAILY_COMMANDS.md)       | The commands you actually type, with the reasoning stripped out and linked instead                                  |
 | [ops/OPENOBSERVE.md](ops/OPENOBSERVE.md)             | Operating the logs, metrics and dashboards — including the trap that silently stops ingestion                       |
 | [ops/EMAIL.md](ops/EMAIL.md)                         | The role mailboxes, and the DNS that lets exactly one machine send as the domain                                    |

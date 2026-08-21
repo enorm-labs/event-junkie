@@ -7,6 +7,22 @@ How a commit becomes a running deployment. Two halves that meet at a registry an
 The version scheme itself is in [DEVELOPMENT.md §Versions](../DEVELOPMENT.md#versions-and-cutting-a-release); the platform reasoning is in
 [PLATFORM_SETUP §3–4a](PLATFORM_SETUP.md#3-container-registry--ghcr-not-docker-hub).
 
+## The short version
+
+```sh
+# Ship a change: merge to main. That is the whole of it.
+#   release.yml builds and publishes a snapshot; Flux notices and reconciles within minutes.
+
+flux --context event-junkie-staging get helmreleases -A          # did it land?
+flux --context event-junkie-staging reconcile helmrelease event-junkie -n flux-system --with-source   # impatient
+gh api repos/enorm-labs/event-junkie/deployments --jq '.[0] | {environment, ref, created_at}'         # what GitHub thinks
+
+# Cut a release: publish a GitHub Release whose tag matches gradle.properties, v-prefixed.
+```
+
+**Nothing here deploys from CI, and nothing can.** A green Actions run means "the artifact was published", not "it is live" — those are minutes apart. §When a
+deploy goes wrong is the page to read when they diverge.
+
 ## The whole path
 
 ```mermaid

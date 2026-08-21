@@ -1,11 +1,15 @@
 # Data Model
 
-This document describes the domain model for the Event Junkie application. The model is designed to capture music event data from Berlin venue websites
-(e.g. [Astra Kulturhaus](https://www.astra-berlin.de/),
-[Badehaus Berlin](https://badehaus-berlin.com/), [Cassiopeia](https://cassiopeia-berlin.de/),
-[Privatclub](https://privatclub-berlin.de/), [Bi Nuu](https://binuu.de/),
-[Festsaal Kreuzberg](https://festsaal-kreuzberg.de/de), [Lido](https://www.lido-berlin.de/),
-[Urban Spree](https://www.urbanspree.com/), [Madame Claude](https://madameclaude.de/)).
+The domain model: what is stored, and how the pieces relate. It exists to capture music events scraped from Berlin venue websites — every source is listed in
+[EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md).
+
+**The shape, in one paragraph.** An `event` belongs to one `venue` and links to `artist`, `promoter` and `genre_tag` through join tables. `event.sourceId` is
+what makes imports idempotent — an upsert keyed on it, not on the title. `event_source` holds the per-venue import configuration and the conditional-request
+headers (ETag, Last-Modified) that let an unchanged page cost one 304.
+
+**Everything lives in the `events` schema, never `public`**, and the name comes from the `EVENTS_SCHEMA` constant in `events-core` rather than from a YAML
+property — see [ADR-004](adr/ADR-004_DEDICATED_DATABASE_SCHEMA.md) and AGENTS.md §Architecture Decisions. Migrations are owned by the importer
+([ADR-005](adr/ADR-005_MIGRATIONS_OWNED_BY_IMPORTER.md)).
 
 ## Class Diagram
 
