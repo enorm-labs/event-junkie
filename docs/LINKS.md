@@ -50,6 +50,8 @@ ADR-012, as amended on 2026-08-10, leaves exactly one processor. Everything belo
 | Link                                                                                               | What it is                                                                       | Status                           |
 | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------- |
 | <https://console.hetzner.com>                                                                      | Cloud Console — projects, servers, volumes, firewalls, DNS zones, Object Storage | In use                           |
+| <https://konsoleh.hetzner.com>                                                                     | **konsoleH** — Webhosting S, where the role mailboxes live. A separate login     | In use since 2026-08-21          |
+| <https://webmail.your-server.de>                                                                   | Webmail for `hello@` and `security@`. IMAP/SMTP: `mail.your-server.de`, 993/465  | In use since 2026-08-21          |
 | <https://accounts.hetzner.com/account/dpa>                                                         | The **AVV** (Art. 28 DPA), self-service                                          | Concluded 2026-08-19             |
 | <https://fsn1.your-objectstorage.com>                                                              | S3 endpoint, Falkenstein. Buckets `event-junkie-tfstate`, `-o2`, `-backups`      | `-tfstate` and `-backups` in use |
 | <https://api.hetzner.cloud/v1>                                                                     | Cloud API — token-authenticated, not browsable                                   | In use                           |
@@ -139,7 +141,7 @@ Two layers, and the second is not optional: an alerting path that runs on the no
 | Link                                        | What it is                                                           | Status                                                |
 | ------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------- |
 | <https://accounts.hetzner.com/account/dpa>  | The Hetzner **AVV** — the project's only Art. 28 contract            | Concluded 2026-08-19. **File the countersigned copy** |
-| <https://www.postflex.de/>                  | Rented _ladungsfähige Anschrift_ for the § 5 DDG imprint             | Not ordered — blocks go-live                          |
+| <https://www.postflex.de/>                  | Rented _ladungsfähige Anschrift_ for the § 5 DDG imprint             | **Ordered 2026-08-21** — €39.90/yr, address pending   |
 | <https://datenschutz-generator.de/>         | Second-opinion cross-check on the German privacy notice (§7.8)       | Not done                                              |
 | <https://www.contributor-covenant.org>      | Contributor Covenant 3.0 — the Code of Conduct's source              | Adopted                                               |
 | <https://github.com/oss-review-toolkit/ort> | ORT — evaluated and **rejected** as disproportionate (LEGAL.md §9.1) | Not used                                              |

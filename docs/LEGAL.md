@@ -342,19 +342,20 @@ editing a `.vue` file loads.
 
 ## 13. Decision log
 
-| #   | Question               | Decision                                                                                                                                                      | Where                |
-| --- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| 1   | Imprint address        | Rent a _ladungsfähige Anschrift_ from Postflex; guarded placeholder until it is ordered. The domain has been registered since 2026-08-10, so nothing gates it | §8.3                 |
-| 2   | Legal-page language    | English first, German in the same release as the German UI and authoritative from then — **done 2026-08-08**                                                  | §6.1                 |
-| 3   | First public version   | `0.1.1`; `main` carries `0.1.1-SNAPSHOT`; only a released `X.Y.Z` links (#502); `0.1.0` skipped (#455)                                                        | §4.7                 |
-| 4   | `package.json` version | Mirrors the Gradle version, kept in step by hand, without `-SNAPSHOT`                                                                                         | §4.6                 |
-| 5   | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                                                                     | §4.4                 |
-| 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                                                                             | `CODE_OF_CONDUCT.md` |
-| 7   | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                                                                        | §8.4                 |
-| 8   | Localisation           | English + German — **done**, see [ADR-013](adr/ADR-013_LOCALISATION.md)                                                                                       | §6.2                 |
-| 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting and an axe sweep enforcing it                                                                                            | §12                  |
-| 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                                                                       | §9.1                 |
-| 11  | Version source         | Build-stamped from `gradle.properties`, never the GitHub API                                                                                                  | §4.1                 |
+| #   | Question               | Decision                                                                                                                                  | Where                |
+| --- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| 1   | Imprint address        | Rent a _ladungsfähige Anschrift_ from Postflex — **ordered 2026-08-21**, €39.90/yr. Guarded placeholder until the address itself is known | §8.3                 |
+| 2   | Legal-page language    | English first, German in the same release as the German UI and authoritative from then — **done 2026-08-08**                              | §6.1                 |
+| 3   | First public version   | `0.1.1`; `main` carries `0.1.1-SNAPSHOT`; only a released `X.Y.Z` links (#502); `0.1.0` skipped (#455)                                    | §4.7                 |
+| 4   | `package.json` version | Mirrors the Gradle version, kept in step by hand, without `-SNAPSHOT`                                                                     | §4.6                 |
+| 5   | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                                                 | §4.4                 |
+| 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                                                         | `CODE_OF_CONDUCT.md` |
+| 7   | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                                                    | §8.4                 |
+| 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor. Live 2026-08-21        | `ops/EMAIL.md`       |
+| 8   | Localisation           | English + German — **done**, see [ADR-013](adr/ADR-013_LOCALISATION.md)                                                                   | §6.2                 |
+| 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting and an axe sweep enforcing it                                                                        | §12                  |
+| 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                                                   | §9.1                 |
+| 11  | Version source         | Build-stamped from `gradle.properties`, never the GitHub API                                                                              | §4.1                 |
 
 ## 14. Open items — what is **not** signed off
 
@@ -413,20 +414,26 @@ The site cannot go live until these are closed. They are tracked as issues in th
 4. **Backup retention** as its own line — it is a separate period from log retention, and if logs are captured by backups the effective retention is the backup
    window, not the rotation one. Check rather than assume.
 
-**Blocking, and no longer dependent on the domain** — both `event-junkie.de` and `event-junkie.com` were registered at INWX on **2026-08-10** and delegate to
-Hetzner's nameservers:
+**Blocking, and waiting on paperwork rather than on anything technical:**
 
-5. **The Postflex address** (§8.3), and clearing `CONTACT_DETAILS_ARE_PROVISIONAL`. Nothing external gates this — the address can be ordered today.
-6. **The role mailboxes.** `hello@event-junkie.de` and `security@event-junkie.de` appear in the imprint, the privacy notice, `SECURITY.md` and
-   `CODE_OF_CONDUCT.md` — and **neither exists**. Every published reporting route is currently a dead address.
+5. **The Postflex address** (§8.3), and clearing `CONTACT_DETAILS_ARE_PROVISIONAL`. **Ordered 2026-08-21** at €39.90/year
+   ([#273](https://github.com/enorm-labs/event-junkie/issues/273), [ops/COSTS.md](ops/COSTS.md)); the flag stays `true` until the address itself is known and
+   in `lib/legal.ts`. Ordering is not the moment the imprint becomes true.
+6. **The role mailboxes** — **done 2026-08-21**, and what is left of this item is not the mailboxes.
 
-    _Corrected 2026-08-19._ This item gave the reason as _"the domain is not registered"_, which had not been true since **2026-08-10** —
-    [#259](https://github.com/enorm-labs/event-junkie/issues/259) registered it and closed on 2026-08-12, and this sentence is the one it left behind. Registration was
-    never the blocker it was recorded as, and the correction matters because it changes what closing the item requires: **no mail provider has been chosen**,
-    and choosing one is not a purchase but a **processor decision**. A mailbox receives message bodies and sender addresses, so it needs an Art. 28 contract,
-    an entry in §5 of both notices, and — the half most easily missed — an update to [§7.3a](#73a-what-is-processed-and-about-whom--the-answer-every-processor-form-asks-for),
-    because an email address is a category of personal data the Hetzner AVV was not written against. Set `PROCESSOR_CONTRACTS_PENDING` back to `true` if a
-    second processor is added without one.
+    `hello@` and `security@event-junkie.de` are live on Hetzner Webhosting S, proven in both directions, and every published reporting route now reaches
+    somebody ([#274](https://github.com/enorm-labs/event-junkie/issues/274), [ops/EMAIL.md](ops/EMAIL.md)). **Hetzner was chosen over a mail specialist for
+    this section's reason rather than a technical one:** the account-level Art. 28 contract already covers it, so no second processor was added and
+    `PROCESSOR_CONTRACTS_PENDING` stays `false`. A specialist would have flipped it.
+
+    **Still open: [§7.3a](#73a-what-is-processed-and-about-whom--the-answer-every-processor-form-asks-for).** An email address, and the body of whatever
+    someone writes to these addresses, is a category of personal data the processing inventory was not written against. That is a disclosure question and wants
+    a legal read, not a mechanical edit — which is why it is still here rather than ticked.
+
+    _Corrected twice, and both corrections are kept._ On **2026-08-19** this item gave the reason as _"the domain is not registered"_, untrue since
+    **2026-08-10** — [#259](https://github.com/enorm-labs/event-junkie/issues/259) closed on 2026-08-12 and this sentence was what it left behind. On
+    **2026-08-21** it still said _"neither exists"_ two days after both did. The same failure both times: **a blocker outliving the thing that blocked it**,
+    which is the specific way this section rots.
 
 **Blocking, and dependent on a person:**
 
