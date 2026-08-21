@@ -2,13 +2,12 @@
 
 ## Status
 
-Proposed (2026-08-08)
+**Proposed.** The decision stands; **none of it is built yet.**
 
 > Closes the question [ADR-013](ADR-013_LOCALISATION.md) §Consequences deferred (_"SSR / prerendering — wanted for SEO and tracked separately"_) and that the
 > SEO work then ran into: `hreflang` had to be carried by the sitemap, because script-injected annotations are unreliable for crawlers (§Context).
 >
-> **Part of the delivery depends on [ADR-012](ADR-012_CLOUD_PLATFORM.md) being executed; the decision does not.** See §Decision 3, which splits the work by that
-> dependency. Rendering-delay figures were checked on **2026-08-08**.
+> The rendering-delay figures below were measured once and are indicative rather than current.
 
 ## Context
 
