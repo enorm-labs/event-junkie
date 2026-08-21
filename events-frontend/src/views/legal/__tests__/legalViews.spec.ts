@@ -237,16 +237,39 @@ describe('across both language versions', () => {
       [PRIVACY.de, 'de'],
     ] as const) {
       const text = textOf(component, locale)
-      for (const line of [CONTROLLER.name, CONTROLLER.street, CONTROLLER.city]) {
+      for (const line of [
+        CONTROLLER.name,
+        CONTROLLER.careOf,
+        CONTROLLER.street,
+        CONTROLLER.city,
+      ]) {
         expect(text).toContain(line)
       }
     }
   })
 
-  it('says the pages are provisional rather than presenting placeholders as fact', () => {
-    expect(textOf(IMPRINT.en, 'en')).toMatch(/This page is not final.*placeholders/s)
-    expect(textOf(PRIVACY.en, 'en')).toMatch(/This page is not final.*placeholders/s)
-    expect(textOf(IMPRINT.de, 'de')).toMatch(/Diese Seite ist noch nicht final.*Platzhalter/s)
-    expect(textOf(PRIVACY.de, 'de')).toMatch(/Diese Seite ist noch nicht final.*Platzhalter/s)
+  // This asserted "not final ... placeholders" until 2026-08-21, when the Postflex address was
+  // rented and CONTACT_DETAILS_ARE_PROVISIONAL went false. The banner is still there — nothing is
+  // deployed — but it no longer claims the contact details are fake, so the old regex failed. That
+  // is the tripwire working: it caught a page and a test disagreeing about reality.
+  it('still says the pages are not final, because nothing is deployed', () => {
+    expect(textOf(IMPRINT.en, 'en')).toMatch(/This page is not final.*not deployed yet/s)
+    expect(textOf(PRIVACY.en, 'en')).toMatch(/This page is not final.*not deployed yet/s)
+    expect(textOf(IMPRINT.de, 'de')).toMatch(/Diese Seite ist noch nicht final.*nicht in Betrieb/s)
+    expect(textOf(PRIVACY.de, 'de')).toMatch(/Diese Seite ist noch nicht final.*nicht in Betrieb/s)
+  })
+
+  // The direction that now matters more. A page calling a real rented address a placeholder is
+  // worse than one that called a fake address a placeholder: the first is wrong about a fact a
+  // reader would act on, and § 5 DDG asks for an address a reader can rely on.
+  it('no longer calls the contact details placeholders, now that they are real', () => {
+    for (const [component, locale] of [
+      [IMPRINT.en, 'en'],
+      [IMPRINT.de, 'de'],
+      [PRIVACY.en, 'en'],
+      [PRIVACY.de, 'de'],
+    ] as const) {
+      expect(textOf(component, locale)).not.toMatch(/placeholder|Platzhalter/i)
+    }
   })
 })

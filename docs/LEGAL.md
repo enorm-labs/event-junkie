@@ -280,14 +280,22 @@ and no participation in consumer arbitration.
 
 ### 8.3 The address
 
-§ 5 DDG requires a _ladungsfähige Anschrift_, and a private individual has no company address to use. The decision: **rent one from
-[Postflex](https://www.postflex.de/)**, ordered once `event-junkie.de` is registered — **which it has been since 2026-08-10**. Nothing gates it any more; it
-is simply outstanding.
+§ 5 DDG requires a _ladungsfähige Anschrift_, and a private individual has no company address to use. The decision was to **rent one from
+[Postflex](https://www.postflex.de/)** — done on **2026-08-21**, €39.90/year ([ops/COSTS.md](ops/COSTS.md)). It is in `CONTROLLER` in `lib/legal.ts` and
+renders on all four legal pages.
 
 There is no way around this by omitting the imprint — Art. 13 GDPR requires the controller's identity and contact details in the privacy notice regardless.
 
-Until then the address is a **guarded placeholder**: `CONTACT_DETAILS_ARE_PROVISIONAL` in `lib/legal.ts` is `true`, a banner says so on the page, and a unit
-test fails if the flag and the placeholder ever disagree. That guard is what stops a false address going live quietly.
+**`careOf` is its own field, and that is not cosmetic.** German postal convention puts the `c/o` line between the name and the street, and the customer number
+in it is what routes the post — an envelope carrying the street but not the number may never arrive. Folded into `street` it would render as one line and read
+as an address that is _almost_ right, which is the worst kind: reachable-looking and undeliverable. A unit test asserts the number's shape for the same reason.
+
+**The guard now holds the other way round.** `CONTACT_DETAILS_ARE_PROVISIONAL` is `false`, the banner no longer claims the details are placeholders, and the
+test in `legal.spec.ts` fails if the flag and the address ever disagree in **either** direction. **Set it back to `true` if the rental lapses** — an imprint
+naming an address that no longer forwards fails § 5 DDG while looking entirely finished, and nothing in code can observe a missed renewal.
+
+That the tripwire works is not a claim here: replacing the address broke a view test that asserted the pages call the contact details placeholders. It caught a
+page and a test disagreeing about reality, which is what it was for.
 
 ### 8.4 Donations
 
@@ -342,20 +350,20 @@ editing a `.vue` file loads.
 
 ## 13. Decision log
 
-| #   | Question               | Decision                                                                                                                                  | Where                |
-| --- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| 1   | Imprint address        | Rent a _ladungsfähige Anschrift_ from Postflex — **ordered 2026-08-21**, €39.90/yr. Guarded placeholder until the address itself is known | §8.3                 |
-| 2   | Legal-page language    | English first, German in the same release as the German UI and authoritative from then — **done 2026-08-08**                              | §6.1                 |
-| 3   | First public version   | `0.1.1`; `main` carries `0.1.1-SNAPSHOT`; only a released `X.Y.Z` links (#502); `0.1.0` skipped (#455)                                    | §4.7                 |
-| 4   | `package.json` version | Mirrors the Gradle version, kept in step by hand, without `-SNAPSHOT`                                                                     | §4.6                 |
-| 5   | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                                                 | §4.4                 |
-| 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                                                         | `CODE_OF_CONDUCT.md` |
-| 7   | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                                                    | §8.4                 |
-| 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor. Live 2026-08-21        | `ops/EMAIL.md`       |
-| 8   | Localisation           | English + German — **done**, see [ADR-013](adr/ADR-013_LOCALISATION.md)                                                                   | §6.2                 |
-| 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting and an axe sweep enforcing it                                                                        | §12                  |
-| 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                                                   | §9.1                 |
-| 11  | Version source         | Build-stamped from `gradle.properties`, never the GitHub API                                                                              | §4.1                 |
+| #   | Question               | Decision                                                                                                                           | Where                |
+| --- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| 1   | Imprint address        | Rent a _ladungsfähige Anschrift_ from Postflex — **rented 2026-08-21**, €39.90/yr, live in the imprint. `c/o` is its own field     | §8.3                 |
+| 2   | Legal-page language    | English first, German in the same release as the German UI and authoritative from then — **done 2026-08-08**                       | §6.1                 |
+| 3   | First public version   | `0.1.1`; `main` carries `0.1.1-SNAPSHOT`; only a released `X.Y.Z` links (#502); `0.1.0` skipped (#455)                             | §4.7                 |
+| 4   | `package.json` version | Mirrors the Gradle version, kept in step by hand, without `-SNAPSHOT`                                                              | §4.6                 |
+| 5   | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                                          | §4.4                 |
+| 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                                                  | `CODE_OF_CONDUCT.md` |
+| 7   | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                                             | §8.4                 |
+| 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor. Live 2026-08-21 | `ops/EMAIL.md`       |
+| 8   | Localisation           | English + German — **done**, see [ADR-013](adr/ADR-013_LOCALISATION.md)                                                            | §6.2                 |
+| 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting and an axe sweep enforcing it                                                                 | §12                  |
+| 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                                            | §9.1                 |
+| 11  | Version source         | Build-stamped from `gradle.properties`, never the GitHub API                                                                       | §4.1                 |
 
 ## 14. Open items — what is **not** signed off
 
@@ -416,9 +424,10 @@ The site cannot go live until these are closed. They are tracked as issues in th
 
 **Blocking, and waiting on paperwork rather than on anything technical:**
 
-5. **The Postflex address** (§8.3), and clearing `CONTACT_DETAILS_ARE_PROVISIONAL`. **Ordered 2026-08-21** at €39.90/year
-   ([#273](https://github.com/enorm-labs/event-junkie/issues/273), [ops/COSTS.md](ops/COSTS.md)); the flag stays `true` until the address itself is known and
-   in `lib/legal.ts`. Ordering is not the moment the imprint becomes true.
+5. **The Postflex address** (§8.3) — **done 2026-08-21.** Rented at €39.90/year
+   ([#273](https://github.com/enorm-labs/event-junkie/issues/273)), in `CONTROLLER`, rendering on all four legal pages, and
+   `CONTACT_DETAILS_ARE_PROVISIONAL` is now `false`. The banner remains, because `INFRASTRUCTURE_IS_PROPOSED` is still `true` and nothing is deployed — two
+   facts, two flags, and this is the day that distinction earned its keep.
 6. **The role mailboxes** — **done 2026-08-21**, and what is left of this item is not the mailboxes.
 
     `hello@` and `security@event-junkie.de` are live on Hetzner Webhosting S, proven in both directions, and every published reporting route now reaches

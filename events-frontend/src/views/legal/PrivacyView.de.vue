@@ -48,6 +48,7 @@ const { t } = useI18n()
       <h2>1. Verantwortlicher</h2>
       <p>Verantwortlicher für die Datenverarbeitung auf dieser Seite ist:</p>
       <p>{{ CONTROLLER.name }}</p>
+      <p>{{ CONTROLLER.careOf }}</p>
       <p>{{ CONTROLLER.street }}</p>
       <p>{{ CONTROLLER.city }}</p>
       <p>{{ t('legal.country') }}</p>

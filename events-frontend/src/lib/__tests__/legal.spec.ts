@@ -29,9 +29,19 @@ describe('legal contact details', () => {
   it('has a postal address rather than a PO box, which is explicitly insufficient', () => {
     expect(CONTROLLER.street).toBeTruthy()
     expect(CONTROLLER.city).toBeTruthy()
-    expect(`${CONTROLLER.street} ${CONTROLLER.city}`).not.toMatch(
+    // `careOf` is in the haystack deliberately. A rented address is exactly where a Packstation or
+    // a Postfach would plausibly be typed one day, and neither is a ladungsfähige Anschrift.
+    expect(`${CONTROLLER.careOf} ${CONTROLLER.street} ${CONTROLLER.city}`).not.toMatch(
       /postfach|p\.?o\.? box|packstation/i,
     )
+  })
+
+  // The customer number is what routes the post. An envelope carrying the street but not the
+  // number may not arrive, so an address that has lost it is not merely untidy — it is unreachable
+  // while looking complete, which is the failure CONTACT_DETAILS_ARE_PROVISIONAL exists to prevent
+  // and cannot detect.
+  it('keeps the Postflex customer number, without which the address does not forward', () => {
+    expect(CONTROLLER.careOf).toMatch(/^c\/o POSTFLEX PFX-\d{3}-\d{3}$/)
   })
 
   // #275. §5 of the notice names Hetzner as an Art. 28 processor in the present tense, and
