@@ -1,11 +1,14 @@
 # The role mailboxes — ordering them at Hetzner and wiring up the DNS
 
-`hello@event-junkie.de` and `security@event-junkie.de` are **published and do not exist**. This page is how to change that: what to order, what it costs, which
-DNS records have to change together, and what breaks if they do not.
+`hello@event-junkie.de` and `security@event-junkie.de` are **live since 2026-08-21**, on Hetzner Webhosting S. This page is how they got there and how to
+rebuild them: what to order, what it costs, which DNS records carry them, and what breaks if those drift apart.
 
-**This is [#274](https://github.com/enorm-labs/event-junkie/issues/274)**, and [LEGAL.md](../LEGAL.md) §14 item 6 is the reason it blocks go-live — the imprint,
-the privacy notice, `SECURITY.md` and `CODE_OF_CONDUCT.md` all name one of these addresses as a reporting route, and every one of them is currently a dead
-address.
+**This is [#274](https://github.com/enorm-labs/event-junkie/issues/274)** — the imprint, the privacy notice, `SECURITY.md` and `CODE_OF_CONDUCT.md` all name one
+of these addresses as a reporting route, and until that date every one of them was a dead address. Both directions are now proven: mail arrives, and replies
+authenticate `spf=pass` / `dkim=pass` / `dmarc=pass` against a `p=reject` policy (§7).
+
+**Read it as a build log as much as an instruction.** Three of the things below were asserted, checked, and found wrong — the SPF include, konsoleH's navigation,
+and the verification method. Each correction is kept in place rather than tidied away, because the wrong version is the one a reader is likely to arrive with.
 
 **Nothing here may be applied by an agent.** [`infra/AGENTS.md`](../../infra/AGENTS.md) opens with `tofu plan/apply/destroy/import` never being run on
 initiative, and the ordering half is a purchase. The sequence below is written to be read, planned, and then applied by a human.
@@ -138,10 +141,19 @@ $ dig +short TXT www750.your-server.de
 `include:www750.your-server.de` therefore tracks whatever Hetzner puts there — three lookups, well inside SPF's limit of ten, and self-maintaining in a way a
 hard-coded `ip4:` is not. Keep the trailing `-all`.
 
-**Treat even that as a hypothesis until a message proves it.** konsoleH's submission and webmail host is the _shared_ `mail.your-server.de` — `78.46.5.205`,
-which the include above does **not** cover and which is not in `_spf.hetzner.com` either. Whether outbound mail leaves from the account's own server or from
-that shared front end is a question **one test message answers and no amount of documentation does** (§7). Publish SPF from the `Received` chain, not from a
-guess — that is why §5 is two applies rather than one.
+**That was a hypothesis, and a message settled it on 2026-08-21.** The worry was konsoleH's shared submission path: mail composed in Horde leaves
+`webmail.your-server.de` and crosses `sslproxy05.your-server.de` (`78.46.172.2`), neither of which this include covers. The `Received` chain shows both are
+**internal hops** — the machine that speaks to the outside world is the account's own:
+
+```
+[192.168.0.34] helo=webmail.your-server.de      internal
+  -> sslproxy05.your-server.de (78.46.172.2)    internal
+    -> www750.your-server.de
+      -> the receiver, client-ip=167.235.121.178
+```
+
+So the tight include is the correct one and the shared hosts need no authorisation. **Do not widen SPF to cover a submission host you can see in the headers** —
+those hops never touch the recipient's SMTP conversation, and `sslproxy05` is shared with every other Hetzner webhosting customer.
 
 **DMARC's strict alignment survives this** and should not be loosened reflexively: mail sent through konsoleH carries an envelope sender and a DKIM `d=` of
 `event-junkie.de`, so `aspf=s` and `adkim=s` both align. If a test lands in spam, read the `Authentication-Results` header before touching the policy — DMARC is
@@ -238,34 +250,42 @@ dig +short TXT default2608._domainkey.event-junkie.de @1.1.1.1   # konsoleH's, n
 dig +short TXT _dmarc.event-junkie.de @1.1.1.1
 ```
 
-Then the part DNS cannot answer, in this order — step 2 is what makes the SPF value in §5 a measurement rather than a guess:
+Then the part DNS cannot answer:
 
 1. **Send a message to each address from an outside account** and confirm it arrives — in the mailbox _and_ at the forward. This works with the MX alone.
-2. **Reply from each to a Gmail or Outlook address, and read the `Received:` chain** for the IP the message actually left from. Expect `spf=fail` at this point:
-   the domain still publishes `v=spf1 -all`, and that is the correct answer to a question nobody had asked yet. **The failure does not hide the header** — the
-   sending IP is right there, and it is the input to the second apply.
-3. **Apply the SPF record** (§5, second sitting), wait out the TTL, and send again. Now `Authentication-Results` should read `spf=pass`, `dkim=pass`,
-   `dmarc=pass`. Anything less means §5 is not finished, and it is far cheaper to find here than after the first message to a stranger.
+2. **Send _from_ each address to <https://www.mail-tester.com/>**, then read its report: it gives the external sending IP, the HELO, and SPF, DKIM and DMARC
+   separately. Three free checks a day per IP, and an empty message scores badly for unrelated reasons — write two real sentences.
+3. **Only then send to a normal mailbox**, and check the _thread_ rather than the inbox: a reply carries `In-Reply-To`, so Gmail folds it into the existing
+   conversation instead of surfacing it as new mail. That is a genuinely easy way to conclude a delivered message is missing.
 4. **Watch for the first Let's Encrypt notice.** Certificates renew on their own schedule, so this is a slow signal — but it is the one that proves the address
    is reachable by a real sender rather than by you.
+
+**Step 2 is a mail-tester run and not "read the `Received` chain of a reply", and the difference is the whole lesson of this page.** Under `p=reject` a message
+that fails authentication is refused during the SMTP conversation: there is no delivered copy, so there are no `Received` or `Authentication-Results` headers to
+read. **That method can confirm success and cannot diagnose failure** — precisely backwards from what you need while setting this up. mail-tester accepts
+everything and reports, which is why it works in both states. The only header a rejected attempt leaves behind is the bounce in the sending mailbox.
+
+Measured on 2026-08-21, from both addresses: `spf=pass` (`client-ip=167.235.121.178`, `helo=www750.your-server.de`), `dkim=pass` (2048-bit, `s=default2608`,
+`d=event-junkie.de`), `dmarc=pass (p=reject dis=none)`, SpamAssassin `-0.2`. **`dmarc=pass` while `p=reject` is displayed is the outcome to want**: the receiver
+read the strict policy, evaluated against it, and delivered anyway.
 
 **There is no monitoring on any of this.** A mailbox that stops receiving looks exactly like a quiet week, which is the same blindness
 [#618](https://github.com/enorm-labs/event-junkie/issues/618) records for importers and [OPENOBSERVE.md](OPENOBSERVE.md) records for dropped metrics. If these
 addresses matter, a periodic test message is the cheap version of watching them.
 
-## 8. What else has to change once they exist
+## 8. What else changes, and what is still open
 
-Ordering the mailbox is the small half. These are the edits that close #274 rather than merely paying for it:
+Ordering the mailbox was the small half. These are the edits that close #274 rather than merely paying for it:
 
-| File                                 | Change                                                                                                                |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| `SECURITY.md`                        | Says _"once `event-junkie.de` is registered"_ — it has been since **2026-08-10**. The blocker was always the mailbox  |
-| `.github/ISSUE_TEMPLATE/config.yml`  | The advisory-form link is labelled for security but really carries privacy requests; #274 asks for it to be revisited |
-| `docs/LEGAL.md` §7.3a and §14 item 6 | Email as a processed category; the item closes                                                                        |
-| `docs/CREDENTIALS.md` row 7          | Provider chosen, mailbox credentials stored                                                                           |
-| `docs/LINKS.md`                      | The "do not exist yet" paragraph                                                                                      |
-| `docs/ops/COSTS.md`                  | A new line — **after the first invoice**, with a real number                                                          |
-| `events-frontend/src/lib/legal.ts`   | Nothing, if Hetzner. **`PROCESSOR_CONTRACTS_PENDING = true`, if not**                                                 |
+| File                                 | Change                                                                                                   | State                    |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `SECURITY.md`                        | Named registration as the blocker; it never was. `security@` now works and is offered as the alternative | **Done** 2026-08-21      |
+| `docs/LINKS.md`                      | The "do not exist yet" paragraph                                                                         | **Done** 2026-08-21      |
+| `docs/CREDENTIALS.md` row 7          | Provider chosen, konsoleH login stored — its own credential, not the Cloud one                           | **Done** 2026-08-21      |
+| `events-frontend/src/lib/legal.ts`   | Nothing to change: Hetzner adds no processor, so `PROCESSOR_CONTRACTS_PENDING` stays `false`             | **Done** — by not acting |
+| `.github/ISSUE_TEMPLATE/config.yml`  | The advisory link is labelled for security but really carries privacy requests. #274 asks for a revisit  | **Open**                 |
+| `docs/LEGAL.md` §7.3a and §14 item 6 | Email as a processed category. Needs a legal read, not a mechanical edit                                 | **Open**                 |
+| `docs/ops/COSTS.md`                  | A new line — **after the first invoice**, with a real number rather than the order form's                | **Open**, deliberately   |
 
 ## Sources
 

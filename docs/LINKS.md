@@ -92,9 +92,9 @@ Both domains were registered at **INWX on 2026-08-10** and delegate to `hydrogen
 is closed. A DS record at INWX that does not match Hetzner's key makes the domain _unresolvable_ rather than merely wrong, which is why it is a deliberate
 sitting rather than a follow-on.
 
-Role mailboxes `hello@event-junkie.de` and `security@event-junkie.de` are published in the imprint, the privacy notice, `SECURITY.md` and `CODE_OF_CONDUCT.md`
-— and **do not exist yet**. No mail provider has been chosen, so every published reporting route is still a dead address. What ordering them costs and which
-DNS records have to change in the same sitting: [`ops/EMAIL.md`](ops/EMAIL.md).
+Role mailboxes `hello@event-junkie.de` and `security@event-junkie.de` are **live since 2026-08-21**, on Hetzner Webhosting S, and proven in both directions:
+mail arrives, and replies authenticate `spf=pass` / `dkim=pass` / `dmarc=pass` against a `p=reject` policy. Every published reporting route now reaches
+somebody. How they were built, what they cost and which DNS records carry them: [`ops/EMAIL.md`](ops/EMAIL.md).
 
 ---
 
