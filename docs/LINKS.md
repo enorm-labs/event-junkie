@@ -93,7 +93,8 @@ is closed. A DS record at INWX that does not match Hetzner's key makes the domai
 sitting rather than a follow-on.
 
 Role mailboxes `hello@event-junkie.de` and `security@event-junkie.de` are published in the imprint, the privacy notice, `SECURITY.md` and `CODE_OF_CONDUCT.md`
-— and **do not exist yet**. No mail provider has been chosen, so every published reporting route is still a dead address.
+— and **do not exist yet**. No mail provider has been chosen, so every published reporting route is still a dead address. What ordering them costs and which
+DNS records have to change in the same sitting: [`ops/EMAIL.md`](ops/EMAIL.md).
 
 ---
 
@@ -203,6 +204,7 @@ The docs actually consulted while working on this repository, rather than a link
 | [`docs/ops/DAILY_COMMANDS.md`](ops/DAILY_COMMANDS.md)       | The same commands with the reasoning stripped out, plus `scripts/shell-aliases.sh` |
 | [`docs/ops/OPENOBSERVE.md`](ops/OPENOBSERVE.md)             | Operating OpenObserve — streams, filters, dashboards, upgrades                     |
 | [`docs/ops/COSTS.md`](ops/COSTS.md)                         | What it costs to run, measured from the API rather than the price list             |
+| [`docs/ops/EMAIL.md`](ops/EMAIL.md)                         | Ordering the role mailboxes at Hetzner, and the DNS records that change with them  |
 | [`docs/ops/SECRETS.md`](ops/SECRETS.md)                     | SOPS + age, and why two of three secrets are encrypted into a public repo          |
 | [`docs/ops/BACKUPS.md`](ops/BACKUPS.md)                     | `wal-g`, retention, and how you know it is working                                 |
 | [`docs/ops/RESTORE_RUNBOOK.md`](ops/RESTORE_RUNBOOK.md)     | Restoring, including PITR                                                          |

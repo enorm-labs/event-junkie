@@ -7,7 +7,9 @@
 Use [GitHub's private vulnerability reporting form](https://github.com/enorm-labs/event-junkie/security/advisories/new). It is confidential, it reaches the
 maintainer directly, and it gives us a private place to discuss and fix the issue before anything is disclosed.
 
-Once `event-junkie.de` is registered, **security@event-junkie.de** will work as an alternative. Until then, the form above is the only private channel.
+**security@event-junkie.de** is published in this project's legal pages but **does not exist yet**, so the form above is the only private channel today.
+The blocker is the mailbox, not the domain: `event-junkie.de` has been registered since 2026-08-10, and
+[#274](https://github.com/enorm-labs/event-junkie/issues/274) is what makes the address reachable — [docs/ops/EMAIL.md](docs/ops/EMAIL.md) is how.
 
 ### What to expect
 
