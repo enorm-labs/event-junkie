@@ -1,9 +1,9 @@
 # Connecting to a cluster
 
-Day-to-day access to staging. **Nothing here changes anything** — it is the read-only half of operating the environment.
+Day-to-day access. **Nothing here changes anything** — it is the read-only half of operating an environment.
 
-Setting a cluster up for the first time is [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md); this assumes that has already happened and you have
-`~/.wireguard/staging.conf` and the node's address.
+Setting a cluster up for the first time is [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md); this assumes that has already happened and you have the tunnel config
+and the node's address. The commands with the reasoning stripped out are [DAILY_COMMANDS.md](DAILY_COMMANDS.md).
 
 ## The short version
 
@@ -16,6 +16,35 @@ sudo wg-quick down ~/.wireguard/staging.conf       # 3. done
 For the database it is two hops rather than one — the tunnel, then an SSH forward, because `pg_hba` does not admit the tunnel address (§7).
 
 Everything below is that, with the parts that go wrong explained.
+
+## Two environments, and where this page assumes one
+
+**Everything below is written for staging.** Production exists since 2026-08-21 and works the same way with different values — where a section says
+`staging`, the production form is in this table:
+
+|                 | Staging                                          | Production                                                     |
+| --------------- | ------------------------------------------------ | -------------------------------------------------------------- |
+| Tunnel config   | `~/.wireguard/staging.conf`                      | `~/.wireguard/production.conf`                                 |
+| Tunnel address  | `10.10.1.1`                                      | `10.10.0.1`                                                    |
+| kubectl context | `event-junkie-staging`                           | `event-junkie-production`                                      |
+| PostgreSQL      | **on the k3s node**, `10.1.1.10`                 | a **separate node**, `10.0.1.20`, reached through the k3s node |
+| Public web      | none — no `A` record, no 80/443                  | 80/443 open, but **nothing resolves yet**                      |
+| TLS             | Let's Encrypt **staging** CA, so `-k` is correct | real certificates, via HTTP-01                                 |
+| Observability   | OpenObserve, see §6b                             | **none yet**                                                   |
+
+**Both tunnels can be up at once.** That is why the subnets differ — separate keypairs on `10.10.1.x` and `10.10.0.x`, chosen so the routing tables do not
+collide. Overlapping ranges fail in a way that looks like a firewall problem for an hour.
+
+**Production's database node has no inbound rules at all.** Its public IPv4 exists for egress — `wal-g` installs from GitHub, which publishes no AAAA record
+(#270) — and the firewall admits nothing. So it is reached through the k3s node, and every command against it needs a jump:
+
+```sh
+ssh -i ~/.ssh/id_ed25519_hetzner -J ops@10.10.0.1 ops@10.0.1.20
+```
+
+**Production is dark, and that is a state rather than a stage.** `publish_dns` in `infra/environments/production/variables.tf` defaults to `false`, so the apex
+and `www` resolve to nothing; a throwaway `prod-check` record points at the node so TLS can be exercised before launch. Flipping that variable is the launch.
+CLUSTER_BOOTSTRAP.md §12.
 
 ---
 

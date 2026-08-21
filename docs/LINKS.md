@@ -101,31 +101,35 @@ Role mailboxes `hello@event-junkie.de` and `security@event-junkie.de` are publis
 
 Two layers, and the second is not optional: an alerting path that runs on the node it monitors cannot tell you the node is dead.
 
-| Link                                               | What it is                                                                                   | Status                                  |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------- |
-| <https://healthchecks.io>                          | **The dead-man's switch**, deliberately off Hetzner. One account, one project, one channel   | Live — `walg-staging`                   |
-| `https://hc-ping.com/<uuid>`                       | The ping endpoint. **Every ping URL is a credential** — see CREDENTIALS.md                   | Live                                    |
-| <https://github.com/openobserve/openobserve>       | OpenObserve — logs, metrics, dashboards, alerting. AGPL-3.0, in-cluster, Parquet to `-o2`    | ADR-015 accepted on trial; not deployed |
-| <https://github.com/bbernhard/signal-cli-rest-api> | The Signal alert bridge — OpenObserve webhook → signal-cli. Needs its own prepaid number     | Decided, not built                      |
-| <https://www.netdata.cloud>                        | Netdata, **self-hosted only** — connecting it to Netdata Cloud would reintroduce a processor | Optional complement                     |
+| Link                                               | What it is                                                                                   | Status                                                                            |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| <https://healthchecks.io>                          | **The dead-man's switch**, deliberately off Hetzner. One account, one project, one channel   | Live — `walg-staging`, `walg-production`                                          |
+| `https://hc-ping.com/<uuid>`                       | The ping endpoint. **Every ping URL is a credential** — see CREDENTIALS.md                   | Live                                                                              |
+| <https://github.com/openobserve/openobserve>       | OpenObserve — logs, metrics, dashboards, alerting. AGPL-3.0, in-cluster, Parquet to `-o2`    | **Deployed on staging.** Operating it: [`ops/OPENOBSERVE.md`](ops/OPENOBSERVE.md) |
+| <https://github.com/bbernhard/signal-cli-rest-api> | The Signal alert bridge — OpenObserve webhook → signal-cli. Needs its own prepaid number     | **Deployed, unregistered** — no number yet (#271)                                 |
+| <https://www.netdata.cloud>                        | Netdata, **self-hosted only** — connecting it to Netdata Cloud would reintroduce a processor | Optional complement                                                               |
 
 ---
 
 ## 5. Delivery, GitOps and the cluster
 
-| Link                            | What it is                                                             |
-| ------------------------------- | ---------------------------------------------------------------------- |
-| <https://fluxcd.io>             | Flux — pull-based delivery. CI holds no cluster credential (ADR-016)   |
-| <https://cert-manager.io/docs/> | cert-manager — Let's Encrypt, HTTP-01 in production, DNS-01 in staging |
-| <https://docs.k3s.io>           | k3s — the Kubernetes distribution, Traefik bundled                     |
-| <https://get.k3s.io>            | The k3s install script, invoked from cloud-init                        |
-| <https://helm.sh/docs/>         | Helm — the chart lives in `deploy/charts/event-junkie`                 |
-| <https://k9scli.io>             | k9s — for anything more than one `kubectl` command                     |
-| <https://charts.jetstack.io>    | cert-manager's Helm repository                                         |
-| <https://charts.hetzner.cloud>  | Hetzner's Helm repository                                              |
-| <https://wal-g.readthedocs.io>  | `wal-g` — WAL archiving and base backups to S3                         |
-| <https://registry.opentofu.org> | OpenTofu provider registry                                             |
-| <https://direnv.net/>           | direnv — loads `infra/.envrc` on entry and **unloads it on leaving**   |
+| Link                                                                                             | What it is                                                                        |
+| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| <https://fluxcd.io>                                                                              | Flux — pull-based delivery. CI holds no cluster credential (ADR-016)              |
+| <https://cert-manager.io/docs/>                                                                  | cert-manager — Let's Encrypt, HTTP-01 in production, DNS-01 in staging            |
+| <https://docs.k3s.io>                                                                            | k3s — the Kubernetes distribution, Traefik bundled                                |
+| <https://get.k3s.io>                                                                             | The k3s install script, invoked from cloud-init                                   |
+| <https://helm.sh/docs/>                                                                          | Helm — the chart lives in `deploy/charts/event-junkie`                            |
+| <https://k9scli.io>                                                                              | k9s — for anything more than one `kubectl` command                                |
+| <https://charts.jetstack.io>                                                                     | cert-manager's Helm repository                                                    |
+| <https://charts.hetzner.cloud>                                                                   | Hetzner's Helm repository                                                         |
+| <https://wal-g.readthedocs.io>                                                                   | `wal-g` — WAL archiving and base backups to S3                                    |
+| <https://registry.opentofu.org>                                                                  | OpenTofu provider registry                                                        |
+| <https://direnv.net/>                                                                            | direnv — loads `infra/.envrc` on entry and **unloads it on leaving**              |
+| <https://charts.openobserve.ai>                                                                  | OpenObserve's Helm repository — `openobserve-standalone`, `openobserve-collector` |
+| <https://opentelemetry.io/docs/collector/>                                                       | The OTel collector. **Everything is filtered here, not at OpenObserve**           |
+| <https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/ottl/README.md> | OTTL — the language the drop rules are written in                                 |
+| <https://github.com/mittwald/cert-manager-webhook-hetzner>                                       | The DNS-01 solver staging needs, since it has no public address                   |
 
 ---
 
@@ -191,15 +195,18 @@ The docs actually consulted while working on this repository, rather than a link
 
 ## 10. Where the detail lives, in this repository
 
-| Document                                                    | Answers                                                                   |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------- |
-| [`docs/ops/PLATFORM_SETUP.md`](ops/PLATFORM_SETUP.md)       | The whole platform plan — sizing, what to order, what runs where          |
-| [`docs/ops/CLUSTER_BOOTSTRAP.md`](ops/CLUSTER_BOOTSTRAP.md) | Standing a cluster up from nothing, including every hand-made secret      |
-| [`docs/ops/CLUSTER_ACCESS.md`](ops/CLUSTER_ACCESS.md)       | Day-to-day access: WireGuard, kubeconfig, the database                    |
-| [`docs/ops/SECRETS.md`](ops/SECRETS.md)                     | SOPS + age, and why two of three secrets are encrypted into a public repo |
-| [`docs/ops/BACKUPS.md`](ops/BACKUPS.md)                     | `wal-g`, retention, and how you know it is working                        |
-| [`docs/ops/RESTORE_RUNBOOK.md`](ops/RESTORE_RUNBOOK.md)     | Restoring, including PITR                                                 |
-| [`docs/ops/HEALTHCHECKS.md`](ops/HEALTHCHECKS.md)           | The dead-man's switch, and how to prove one fires                         |
-| [`docs/ops/RELEASING.md`](ops/RELEASING.md)                 | Commit → image → chart → cluster                                          |
-| [`docs/LEGAL.md`](LEGAL.md)                                 | Processors, the AVV, the imprint, what is not signed off                  |
-| [`infra/README.md`](../infra/README.md)                     | The OpenTofu operator's guide, and the three things only a human can do   |
+| Document                                                    | Answers                                                                            |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [`docs/ops/PLATFORM_SETUP.md`](ops/PLATFORM_SETUP.md)       | The whole platform plan — sizing, what to order, what runs where                   |
+| [`docs/ops/CLUSTER_BOOTSTRAP.md`](ops/CLUSTER_BOOTSTRAP.md) | Standing a cluster up from nothing, including every hand-made secret               |
+| [`docs/ops/CLUSTER_ACCESS.md`](ops/CLUSTER_ACCESS.md)       | Day-to-day access: WireGuard, kubeconfig, the database                             |
+| [`docs/ops/DAILY_COMMANDS.md`](ops/DAILY_COMMANDS.md)       | The same commands with the reasoning stripped out, plus `scripts/shell-aliases.sh` |
+| [`docs/ops/OPENOBSERVE.md`](ops/OPENOBSERVE.md)             | Operating OpenObserve — streams, filters, dashboards, upgrades                     |
+| [`docs/ops/COSTS.md`](ops/COSTS.md)                         | What it costs to run, measured from the API rather than the price list             |
+| [`docs/ops/SECRETS.md`](ops/SECRETS.md)                     | SOPS + age, and why two of three secrets are encrypted into a public repo          |
+| [`docs/ops/BACKUPS.md`](ops/BACKUPS.md)                     | `wal-g`, retention, and how you know it is working                                 |
+| [`docs/ops/RESTORE_RUNBOOK.md`](ops/RESTORE_RUNBOOK.md)     | Restoring, including PITR                                                          |
+| [`docs/ops/HEALTHCHECKS.md`](ops/HEALTHCHECKS.md)           | The dead-man's switch, and how to prove one fires                                  |
+| [`docs/ops/RELEASING.md`](ops/RELEASING.md)                 | Commit → image → chart → cluster                                                   |
+| [`docs/LEGAL.md`](LEGAL.md)                                 | Processors, the AVV, the imprint, what is not signed off                           |
+| [`infra/README.md`](../infra/README.md)                     | The OpenTofu operator's guide, and the three things only a human can do            |
