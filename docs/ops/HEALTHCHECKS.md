@@ -176,9 +176,31 @@ Three things that catch people out:
 
 ### Drill log
 
-| Date       | Environment | Induced       | Notification arrived |
-| ---------- | ----------- | ------------- | -------------------- |
-| 2026-08-19 | staging     | disk past 85% | yes                  |
+| Date       | Environment | Induced          | Notification arrived            |
+| ---------- | ----------- | ---------------- | ------------------------------- |
+| 2026-08-19 | staging     | disk past 85%    | yes                             |
+| 2026-08-21 | production  | explicit `/fail` | yes — within seconds, 06:06 UTC |
+
+**The two rows induced different things, and the second is the weaker drill.** The disk assertion makes the check go _silent_, so the notification comes from
+healthchecks.io noticing an absence after the grace period — which is what a dead-man's switch actually is, and what a real backup failure looks like. An
+explicit `/fail` is a signal we send, so it alerts immediately and never exercises the timeout at all.
+
+`/fail` still proves the half that is easiest to get wrong: that a check exists, is wired to a channel, and reaches a human. It does not prove the grace period
+is survivable or that silence is noticed. **Production's timeout path is therefore still unrehearsed**, and the disk drill above is how to close that.
+
+Production's sequence, for the record — fired from the database node itself rather than a laptop, so it also proves that node's egress reaches `hc-ping.com`,
+which matters because it has no public inbound at all:
+
+```
+06:04:39   base backup written
+06:06:46   curl "$HEALTHCHECK_URL/fail"  ->  HTTP 200 OK        alert delivered
+06:07:19   systemctl start walg-check.service  ->  ok: newest 2026-08-21T06:04:39Z, disk 2%
+```
+
+**The recovery was deliberately run through `walg-check.service`, not a bare `curl`** — the same path the hourly timer uses. A clear that only works when a
+human types it is not a clear, and the point of the drill is that the mechanism recovers on its own.
+
+No request body was sent, so the §Privacy assessment below is unaffected.
 
 ## The two ways this quietly stops working
 
