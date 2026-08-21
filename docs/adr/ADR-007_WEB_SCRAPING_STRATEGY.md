@@ -6,8 +6,8 @@ Accepted
 
 ## Context
 
-The application needs to import music event data from ~40+ Berlin venue and promoter websites (see [EVENT_DATA_SOURCES.md](../EVENT_DATA_SOURCES.md)). These
-websites vary widely in technology:
+The application imports music event data from Berlin venue and promoter websites — every source and its status is in
+[EVENT_DATA_SOURCES.md](../EVENT_DATA_SOURCES.md). They vary widely in technology, and the proportions below are what the strategy is sized against:
 
 - **~80% are static/server-rendered HTML** — WordPress, PHP, Laravel, hand-coded HTML (e.g. Privatclub, Madame Claude, Supamolly, Junction Bar, Roadrunner's
   Paradise).
