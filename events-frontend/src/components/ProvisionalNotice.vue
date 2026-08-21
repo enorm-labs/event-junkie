@@ -26,7 +26,9 @@ const { t } = useI18n()
 
 <template>
   <aside
-    v-if="CONTACT_DETAILS_ARE_PROVISIONAL || INFRASTRUCTURE_IS_PROPOSED || PROCESSOR_CONTRACTS_PENDING"
+    v-if="
+      CONTACT_DETAILS_ARE_PROVISIONAL || INFRASTRUCTURE_IS_PROPOSED || PROCESSOR_CONTRACTS_PENDING
+    "
     class="rounded-lg border border-border bg-muted/50 p-4 text-sm"
   >
     <p class="font-medium text-foreground">{{ t('legal.notFinal') }}</p>

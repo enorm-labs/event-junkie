@@ -90,11 +90,12 @@ const { t } = useI18n()
         entsprechend angepasst — genannt wird hier immer die tatsächlich konfigurierte Frist.
       </p>
       <p>
-        <strong>Sicherungskopien:</strong> Die Datenbank wird gesichert, und diese Sicherungen werden
-        <strong>30 Tage</strong> aufbewahrt; danach werden sie automatisch gelöscht. Diese Frist ist
-        von der oben genannten unabhängig: Daten, die im laufenden Betrieb bereits gelöscht wurden,
-        können in einer Sicherung noch bis zu 30 Tage fortbestehen. Sicherungen dienen ausschließlich
-        der Wiederherstellung nach einem Ausfall — sie werden nicht durchsucht und nicht ausgewertet.
+        <strong>Sicherungskopien:</strong> Die Datenbank wird gesichert, und diese Sicherungen
+        werden <strong>30 Tage</strong> aufbewahrt; danach werden sie automatisch gelöscht. Diese
+        Frist ist von der oben genannten unabhängig: Daten, die im laufenden Betrieb bereits
+        gelöscht wurden, können in einer Sicherung noch bis zu 30 Tage fortbestehen. Sicherungen
+        dienen ausschließlich der Wiederherstellung nach einem Ausfall — sie werden nicht durchsucht
+        und nicht ausgewertet.
       </p>
     </section>
 
@@ -191,12 +192,12 @@ const { t } = useI18n()
         </li>
       </ul>
       <p>
-        <strong>Löschung und Sicherungskopien.</strong> Eine Löschung nach Art. 17 DSGVO wirkt sofort
-        im laufenden Betrieb. Sicherungskopien werden dabei nicht einzeln bearbeitet — eine einzelne
-        Person aus einer Sicherung herauszulösen würde deren Zweck zerstören und wäre technisch nur
-        unter Inkaufnahme neuer Risiken möglich. Die Daten laufen daher mit der Sicherung selbst aus,
-        also spätestens nach 30 Tagen. Muss eine Sicherung zwischenzeitlich eingespielt werden,
-        wenden wir die Löschung danach erneut an.
+        <strong>Löschung und Sicherungskopien.</strong> Eine Löschung nach Art. 17 DSGVO wirkt
+        sofort im laufenden Betrieb. Sicherungskopien werden dabei nicht einzeln bearbeitet — eine
+        einzelne Person aus einer Sicherung herauszulösen würde deren Zweck zerstören und wäre
+        technisch nur unter Inkaufnahme neuer Risiken möglich. Die Daten laufen daher mit der
+        Sicherung selbst aus, also spätestens nach 30 Tagen. Muss eine Sicherung zwischenzeitlich
+        eingespielt werden, wenden wir die Löschung danach erneut an.
       </p>
       <p>
         <strong>Widerspruchsrecht (Art. 21 DSGVO).</strong> Da wir uns auf berechtigte Interessen
