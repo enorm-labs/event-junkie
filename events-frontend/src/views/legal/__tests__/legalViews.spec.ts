@@ -104,7 +104,11 @@ const PRIVACY_ELEMENTS: Element[] = [
   // The second half asserts the *absence* deliberately: a CDN reappearing in front of the site is a
   // new recipient and a new third country, and it must not be able to arrive without this failing.
   { what: 'recipients', en: /Hetzner/, de: /Hetzner/ },
-  { what: 'no edge provider in front of the origin', en: /no content delivery network/i, de: /kein Content-Delivery-Netzwerk/i },
+  {
+    what: 'no edge provider in front of the origin',
+    en: /no content delivery network/i,
+    de: /kein Content-Delivery-Netzwerk/i,
+  },
   // GitHub, not a processor: the notice still has to address a third country, because choosing to
   // open an issue rather than write an email sends data to a US company.
   { what: 'third-country transfer — GitHub only', en: /US company/, de: /US-Unternehmen/ },
@@ -237,12 +241,7 @@ describe('across both language versions', () => {
       [PRIVACY.de, 'de'],
     ] as const) {
       const text = textOf(component, locale)
-      for (const line of [
-        CONTROLLER.name,
-        CONTROLLER.careOf,
-        CONTROLLER.street,
-        CONTROLLER.city,
-      ]) {
+      for (const line of [CONTROLLER.name, CONTROLLER.careOf, CONTROLLER.street, CONTROLLER.city]) {
         expect(text).toContain(line)
       }
     }
