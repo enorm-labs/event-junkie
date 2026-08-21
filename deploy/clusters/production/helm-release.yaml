@@ -73,7 +73,7 @@ spec:
       # perfectly and is then rejected by the API server as an invalid `ipBlock.cidr` — failing the
       # HelmRelease and rolling the release back, several steps from anything that mentions a CIDR.
       # Fill both in together before the first production reconcile.
-      databaseCidr: "REPLACE-ME-tofu-output-postgres-ip/32"
+      databaseCidr: "10.0.1.20/32"
     database:
       # DELIBERATELY NOT A PLAUSIBLE ADDRESS. #424 has not run, so the real value does not exist yet,
       # and a realistic-looking IP here is exactly the failure #263 found in `values-k3d.yaml` —
@@ -81,7 +81,7 @@ spec:
       # rendering can catch. This one cannot be mistaken for configured.
       #
       # Replace with `tofu -chdir=infra/environments/production output postgres_ip`.
-      host: "REPLACE-ME-tofu-output-postgres-ip"
+      host: "10.0.1.20"
       # Created out of band in the target namespace before the first reconcile; SOPS in #416.
       existingSecret: "events-db"
     # No replica counts, no resources, no ingress host: `values.yaml`'s defaults are already
