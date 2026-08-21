@@ -3,3 +3,28 @@ kind: Kustomization
 resources:
 - gotk-components.yaml
 - gotk-sync.yaml
+# Added by hand, and deliberately HERE rather than in gotk-sync.yaml — that file opens with
+# "DO NOT EDIT" because `flux bootstrap` regenerates it, and a customisation written there is one
+# bootstrap re-run away from silently disappearing. A patch in this file is Flux's documented place
+# for it (#416, docs/ops/SECRETS.md).
+#
+# `sops-age` must already exist in flux-system, holding the private key under a name ending in
+# `.agekey` — Flux ignores any other key name, silently. Without it this Kustomization stops
+# reconciling with a decryption error, which takes every deploy with it, so the secret goes on the
+# cluster BEFORE this merges. It was created on production on 2026-08-21, before bootstrap.
+#
+# **AFTER bootstrap, never before.** Committing this file ahead of `flux bootstrap` was tried on
+# 2026-08-21 and broke it: bootstrap installs the controllers by running `kustomize build` over this
+# directory *before* it writes `gotk-sync.yaml`, so a `resources:` entry naming that file points at
+# something that cannot exist yet. Staging's ordering was the requirement, not an oversight.
+patches:
+  - patch: |
+      - op: add
+        path: /spec/decryption
+        value:
+          provider: sops
+          secretRef:
+            name: sops-age
+    target:
+      kind: Kustomization
+      name: flux-system
