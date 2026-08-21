@@ -37,6 +37,17 @@
 # deletion rather than trusting the status code. A refusal costs nothing and returns in about a
 # tenth of a second; a success is billed by the hour and lives for seconds.
 #
+# **A green probe means orderable at that instant, and says nothing about the next one.** Learned
+# the same day it was written: `--probe production` returned ORDERABLE for cx33 and cx23 in fsn1 at
+# 00:0x on 2026-08-21, and the apply thirty minutes later got `error during placement
+# (resource_unavailable)` on the cx33 — after successfully creating the cx23. Re-probing confirmed
+# cx33 and cx43 had both gone in fsn1 while cx23 remained, so production took one of the last
+# 8 GB-class CX machines there and the shortage closed behind it.
+#
+# **Probe immediately before the apply, not the night before**, and expect to re-probe after a
+# failure rather than assuming the earlier answer still holds. This is a narrower claim than the
+# one this header made when `--probe` landed, and the narrower one is the true one.
+#
 # That is also the loop to wait on, and the reason this line changed: the advertisement-based one
 # that used to be here would not have gone green for cx33 on 2026-08-20, when cx33 was orderable.
 #

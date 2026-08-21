@@ -51,3 +51,29 @@ variable "dns_ttl" {
   default     = 300
   nullable    = false
 }
+
+variable "publish_dns" {
+  description = <<-EOT
+    Whether the apex and `www` resolve to this environment — in other words, whether the site is
+    live. **This is the go-live switch, and it is the only one.** `public_web` opens 80/443 in the
+    firewall, but with nothing resolving to the node that buys an attacker a Traefik 404; the A and
+    AAAA records at `@` are what put the site in front of people.
+
+    False publishes a single throwaway name, `prod-check`, at the same addresses instead. That is
+    not a decoration: production solves **HTTP-01**, which needs Let's Encrypt to reach the host by
+    name, so with no name at all the certificate cannot be issued and the entire TLS path — the
+    firewall, the ingress, the CAA record, ACME reachability — stays unrehearsed until the moment
+    the domain goes live. One name that nobody is looking for rehearses all of it.
+
+    Swapped rather than added, so there is never a forgotten record: at go-live `prod-check`
+    disappears in the same apply that publishes the apex.
+
+    **Defaults to false, and flipping it is the launch.** Not a `terraform.tfvars` value, which is
+    gitignored and would make go-live an act with no record: this is a one-line commit, reviewed and
+    dated like anything else that matters. A fresh environment comes up dark, which is the only
+    sensible default for a switch whose other position is "the public can see this".
+  EOT
+  type        = bool
+  default     = false
+  nullable    = false
+}
