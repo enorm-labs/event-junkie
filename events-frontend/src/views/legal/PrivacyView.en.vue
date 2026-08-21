@@ -46,6 +46,7 @@ const { t } = useI18n()
       <h2>1. Controller</h2>
       <p>The controller responsible for data processing on this site is:</p>
       <p>{{ CONTROLLER.name }}</p>
+      <p>{{ CONTROLLER.careOf }}</p>
       <p>{{ CONTROLLER.street }}</p>
       <p>{{ CONTROLLER.city }}</p>
       <p>{{ t('legal.country') }}</p>

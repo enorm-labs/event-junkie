@@ -141,7 +141,7 @@ Two layers, and the second is not optional: an alerting path that runs on the no
 | Link                                        | What it is                                                           | Status                                                |
 | ------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------- |
 | <https://accounts.hetzner.com/account/dpa>  | The Hetzner **AVV** — the project's only Art. 28 contract            | Concluded 2026-08-19. **File the countersigned copy** |
-| <https://www.postflex.de/>                  | Rented _ladungsfähige Anschrift_ for the § 5 DDG imprint             | **Ordered 2026-08-21** — €39.90/yr, address pending   |
+| <https://www.postflex.de/>                  | Rented _ladungsfähige Anschrift_ for the § 5 DDG imprint             | **Rented 2026-08-21** — €39.90/yr, in the imprint     |
 | <https://datenschutz-generator.de/>         | Second-opinion cross-check on the German privacy notice (§7.8)       | Not done                                              |
 | <https://www.contributor-covenant.org>      | Contributor Covenant 3.0 — the Code of Conduct's source              | Adopted                                               |
 | <https://github.com/oss-review-toolkit/ort> | ORT — evaluated and **rejected** as disproportionate (LEGAL.md §9.1) | Not used                                              |

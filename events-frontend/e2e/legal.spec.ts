@@ -61,13 +61,25 @@ test('the privacy notice states its legal basis, rights and supervisory authorit
   await expect(main).toContainText('§ 25 (2) 2 TDDDG')
 })
 
-test('legal pages say they are provisional while the details are placeholders', async ({
-  page,
-}) => {
+// Renamed 2026-08-21. The contact details stopped being placeholders when the Postflex address was
+// rented; the banner stayed, because nothing is deployed. Two flags, and only one of them moved.
+test('legal pages still say they are not final, because nothing is deployed', async ({ page }) => {
   for (const path of ['/legal/imprint', '/legal/privacy']) {
     await page.goto(path)
     await expect(page.getByRole('main')).toContainText('This page is not final')
+    await expect(page.getByRole('main')).not.toContainText('placeholder')
   }
+})
+
+// The address is only useful if it renders whole. The c/o line carries the customer number that
+// routes the post, so an imprint showing the street without it is undeliverable while looking fine.
+test('the imprint renders the full rented address, c/o line included', async ({ page }) => {
+  await page.goto('/legal/imprint')
+  const main = page.getByRole('main')
+  await expect(main).toContainText('Norman Lange')
+  await expect(main).toContainText('c/o POSTFLEX')
+  await expect(main).toContainText('Emsdettener Straße 10')
+  await expect(main).toContainText('48268 Greven')
 })
 
 test('sets a document title for each legal route', async ({ page }) => {

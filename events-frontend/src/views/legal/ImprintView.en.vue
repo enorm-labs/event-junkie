@@ -32,6 +32,7 @@ const { t } = useI18n()
     <section>
       <h2>Service provider</h2>
       <p>{{ CONTROLLER.name }}</p>
+      <p>{{ CONTROLLER.careOf }}</p>
       <p>{{ CONTROLLER.street }}</p>
       <p>{{ CONTROLLER.city }}</p>
       <p>{{ t('legal.country') }}</p>

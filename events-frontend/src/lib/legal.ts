@@ -9,15 +9,20 @@
 /**
  * The controller / service provider.
  *
- * TODO(imprint-address): the postal address and email are placeholders. Replace both with the
- * rented Postflex address and the real role mailbox once `event-junkie.de` is registered, and
- * set {@link CONTACT_DETAILS_ARE_PROVISIONAL} to `false` in the same commit — a unit test holds
- * the two in step. See docs/LEGAL.md §8.3.
+ * Real since 2026-08-21: a rented *ladungsfähige Anschrift* from Postflex (#273) and a real role
+ * mailbox (#274). Both were placeholders until then, guarded by
+ * {@link CONTACT_DETAILS_ARE_PROVISIONAL} — see docs/LEGAL.md §8.3.
+ *
+ * `careOf` is its own field rather than part of `street`, because German postal convention puts
+ * it on its own line **between** the name and the street, and because the customer number in it
+ * is what routes the post: an envelope without it may not arrive. Folding the two together would
+ * render one line and read as an address that is almost right, which is the worst kind.
  */
 export const CONTROLLER = {
   name: 'Norman Lange',
-  street: 'Musterstraße 1',
-  city: '12345 Musterstadt',
+  careOf: 'c/o POSTFLEX PFX-665-382',
+  street: 'Emsdettener Straße 10',
+  city: '48268 Greven',
   email: 'hello@event-junkie.de',
 } as const
 
@@ -28,10 +33,15 @@ export const CONTROLLER = {
 /**
  * While `true`, the legal pages say so in a banner rather than presenting placeholder details as
  * fact — a legal page that quietly states a false address is worse than one that admits it is not
- * final. Must be `false` before go-live; the guard test in `__tests__/legal.spec.ts` fails if this
- * and the placeholder address ever disagree.
+ * final.
+ *
+ * `false` since 2026-08-21: the Postflex address is rented and in {@link CONTROLLER}, and the
+ * mailbox it names receives. **Set it back to `true` if either stops being true** — a lapsed
+ * rental leaves an imprint naming an address that no longer forwards, which fails § 5 DDG while
+ * looking entirely finished. The guard test in `__tests__/legal.spec.ts` holds this and the
+ * placeholder in step in both directions.
  */
-export const CONTACT_DETAILS_ARE_PROVISIONAL = true
+export const CONTACT_DETAILS_ARE_PROVISIONAL = false
 
 /**
  * The deployment the privacy notice describes (Hetzner in Germany, nothing in front of it) is
