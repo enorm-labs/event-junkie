@@ -107,9 +107,11 @@ Two things behave differently on a fork, and neither means anything is wrong:
   workflow rather than through GitHub's default setup — default setup produces no run at all for a
   fork, and a required check that never reports leaves a pull request unmergeable with nothing red to
   explain why. That was this repository's own bug until #479 found it.
-- **`Build & Test` is not a required check**, for anyone. It costs about sixteen minutes across
-  backend and frontend, so requiring it would put that on every documentation-only pull request. It
-  still runs, and a red one still needs explaining.
+- **`Build & Test (backend)` and `Build & Test (frontend)` are required**, and a documentation-only
+  pull request does not pay for them. Each workflow decides from your changed files whether there is
+  anything to build; if there is not, the build is skipped and the check reports green anyway. So a
+  README typo does not sit through sixteen minutes of Gradle and Playwright, and a change that
+  touches code cannot merge without them.
 
 **One secret is referenced on a pull request, and it is empty on yours.** `NVD_API_KEY` is passed to
 the informational OWASP Dependency-Check job in `build-backend.yml`, and GitHub does not expose
