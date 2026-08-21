@@ -162,7 +162,7 @@ jobs:
 
       - name: Set up Docker Buildx
         if: github.event_name == 'pull_request'
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
       # No QEMU and no per-architecture runner, because neither Dockerfile contains a `RUN` — see
       # the header comment in events-bff/Dockerfile. Both platforms genuinely build here.
@@ -222,7 +222,7 @@ jobs:
       - name: Post coverage to Pull Request
         id: coverage
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork != true
-        uses: mi-kas/kover-report@ea8425161dd880a7dea9e76b3c89cf168b1d1162 # v2.5
+        uses: mi-kas/kover-report@fe40bd3712cf57dd19bfb0c16ccb0472a0478dae # v2.6
         with:
           path: build/reports/kover/report.xml
           title: Code Coverage

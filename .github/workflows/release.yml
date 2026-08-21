@@ -210,7 +210,7 @@ jobs:
       # own arch-specific layers, which is a narrow gap and not a closed one.
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
       # Only when something is actually going to be pushed. Nothing else here needs a credential —
       # the base images and Trivy's database both pull anonymously — and on a fork's pull request
@@ -403,7 +403,7 @@ jobs:
       # chart" argument the block above makes, applied to the signature rather than to the image.
       - name: Attest the published bff image
         if: steps.version.outputs.publish == 'true'
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE_PREFIX }}/bff
           subject-digest: ${{ steps.push-bff.outputs.digest }}
@@ -411,7 +411,7 @@ jobs:
 
       - name: Attest the published importer image
         if: steps.version.outputs.publish == 'true'
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE_PREFIX }}/importer
           subject-digest: ${{ steps.push-importer.outputs.digest }}
@@ -419,7 +419,7 @@ jobs:
 
       - name: Attest the published frontend image
         if: steps.version.outputs.publish == 'true'
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE_PREFIX }}/frontend
           subject-digest: ${{ steps.push-frontend.outputs.digest }}
