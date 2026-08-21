@@ -3,8 +3,7 @@
 **Read this top to bottom. Do not skip to the commands.** The design and the reasoning are [BACKUPS.md](BACKUPS.md); this is the procedure, and it is written on
 the assumption that you are reading it because something has already gone wrong.
 
-**First run of the drill against this document: 2026-08-18, staging — passed.** Sections 4 and 5 have been executed against a real cluster. **Section 6 has
-not** — it says so where it matters.
+**Sections 4 and 5 have been executed against a real cluster and passed. Section 6 has not** — it says so where it matters.
 
 ## Stop. Three things before you touch anything
 

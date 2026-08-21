@@ -1,13 +1,12 @@
 # `infra/` — the Hetzner environment, declared
 
-OpenTofu configuration for [#260](https://github.com/enorm-labs/event-junkie/issues/260). The reasoning behind every choice here — sizing, the ARM line, the
-Cloudflare removal, why deploys are pull-based — is in [`docs/ops/PLATFORM_SETUP.md`](../docs/ops/PLATFORM_SETUP.md) and [ADR-012](../docs/adr/ADR-012_CLOUD_PLATFORM.md).
-This file covers only what an operator needs in front of them while running it; [`AGENTS.md`](AGENTS.md) next to it covers the conventions and the commands an
-agent must not run.
+OpenTofu configuration for the platform. The reasoning behind every choice here — sizing, the ARM line, the Cloudflare removal, why deploys are pull-based — is
+in [`docs/ops/PLATFORM_SETUP.md`](../docs/ops/PLATFORM_SETUP.md) and [ADR-012](../docs/adr/ADR-012_CLOUD_PLATFORM.md). This file covers only what an operator
+needs in front of them while running it; [`AGENTS.md`](AGENTS.md) next to it covers the conventions and the commands an agent must not run.
 
-**`bootstrap/` is applied; `environments/` is not.** The DNS zones, their records and the SSH key are live on Hetzner as of 2026-08-10, which also proved the
-S3 backend works against Hetzner's Ceph. Nothing under `environments/` exists yet — no server, network, firewall or Primary IP — and cloud-init has never run on
-a real machine, so treat that first apply as an experiment rather than a formality.
+**Everything here is applied.** `bootstrap/` holds both DNS zones, their records and the SSH key; `environments/staging` and `environments/production` each hold
+a live server, network, firewall and Primary IP. Production's domain resolves nowhere until `publish_dns` is set to `true` at go-live
+(`environments/production/variables.tf`).
 
 ## Layout — split by lifetime, not by environment
 

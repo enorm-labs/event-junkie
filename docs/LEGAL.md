@@ -1,10 +1,7 @@
 # Legal, compliance and site-chrome policy
 
-> **Status: current state, not a plan.** This replaces `FOOTER_AND_LEGAL_PLAN.md`, whose implementation is complete — every phase shipped between 2026-08-07 and
-> 2026-08-08. What is written here is what the site _does_, and what future changes must keep true.
->
-> **It is not signed off.** Several decisions this document records are provisional, and the site cannot go live until §14 is closed. Read that section before
-> treating anything here as final.
+> **Not signed off.** This is what the site _does_ and what future changes must keep true, but several decisions here are provisional and the site cannot go
+> live until §14 is closed. Read that section before treating anything here as final.
 >
 > Related: [ADR-012 (cloud platform)](adr/ADR-012_CLOUD_PLATFORM.md) · [ADR-013 (localisation)](adr/ADR-013_LOCALISATION.md) ·
 > [ADR-014 (rendering)](adr/ADR-014_RENDERING_STRATEGY.md) · [the `v1.0 — Go-live` milestone](https://github.com/enorm-labs/event-junkie/milestones) · [BRANDING.md](BRANDING.md)

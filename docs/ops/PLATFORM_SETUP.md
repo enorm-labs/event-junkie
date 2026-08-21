@@ -1,17 +1,14 @@
-# Platform Setup — Hetzner + k3s, from nothing to go-live
+# Platform Setup — Hetzner + k3s
 
-Status: **plan**, 2026-08-10. Nothing in here is running yet.
+Both environments are **running**. Staging is reachable only through its WireGuard tunnel; production is installed and reconciling but **dark** — the domain
+resolves nowhere until `publish_dns` is flipped at go-live.
 
-> **Phase B started, 2026-08-10.** All of it exists as code in [`infra/`](../../infra), and its `bootstrap/` half is **applied**: both DNS zones, their records
-> and the SSH key are live, which also settled the design's biggest open question by proving the S3 backend works against Hetzner's Ceph. The servers, network,
-> firewalls and cloud-init are declared but **not applied** — nothing in §2's diagrams is running, and cloud-init has never executed on a real machine.
+This is the reference for what the platform _is_: the inventory, the access paths, the deploy path, and the reasoning behind each. Standing one up is
+[CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md); using one day to day is [CLUSTER_ACCESS.md](CLUSTER_ACCESS.md) and [DAILY_COMMANDS.md](DAILY_COMMANDS.md); what
+happens on every commit is [RELEASING.md](RELEASING.md).
 
-This is the working plan behind the `v0.2 — Deployable` milestone and the operational half of `v1.0 — Go-live`. It answers the questions that came up while
-planning [#260](https://github.com/enorm-labs/event-junkie/issues/260). **Every decision in it is now made** (§11); what remains is work and a few accounts.
-
-**The decisions it rests on:** [ADR-012](../adr/ADR-012_CLOUD_PLATFORM.md) (Hetzner + k3s, and its 2026-08-10 amendment removing Cloudflare) ·
-[ADR-016](../adr/ADR-016_GITOPS_DELIVERY.md) (pull-based delivery with Flux; the end-to-end path is [RELEASING.md](RELEASING.md)) ·
-[ADR-015](../adr/ADR-015_OBSERVABILITY_STACK.md) (observability — OpenObserve, accepted on trial; §5 below is the summary) ·
+**The decisions it rests on:** [ADR-012](../adr/ADR-012_CLOUD_PLATFORM.md) (Hetzner + k3s, no Cloudflare) ·
+[ADR-016](../adr/ADR-016_GITOPS_DELIVERY.md) (pull-based delivery with Flux) · [ADR-015](../adr/ADR-015_OBSERVABILITY_STACK.md) (observability — OpenObserve) ·
 [ADR-014](../adr/ADR-014_RENDERING_STRATEGY.md) (the SEO sidecar) · [ADR-008](../adr/ADR-008_IMPORT_JOB_SCHEDULING.md) (the importer is always-on and
 single-instance).
 
