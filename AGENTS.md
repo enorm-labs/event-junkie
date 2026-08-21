@@ -1,5 +1,36 @@
 # AGENTS.md
 
+The conventions every change in this repository is held to. Written for AI agents, but it is simply this project's conventions written down.
+
+## The short version
+
+**Before you write anything:** read the section below that covers what you are touching. This project has strong opinions and they are all here.
+
+```bash
+./gradlew clean build                    # compile, test, ktlint, detekt, coverage — the backend gate
+./gradlew ktlintFormat                   # auto-fix formatting before fixing anything by hand
+scripts/format-markdown.sh               # any .md change; the commit hook runs it anyway
+cd events-frontend && npm run type-check && npm run lint && npm run test:unit
+```
+
+Skip the Gradle build for Markdown-only or frontend-only changes. `/verify` runs the full pre-PR sequence, including the infra and chart gates.
+
+| Section                                                                                   | When to read it                                                       |
+| ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| [Agent Instructions](#agent-instructions)                                                 | Always. Git, formatting, ADR numbering, what never to run             |
+| [Privacy & GDPR](#privacy--gdpr--re-check-when-infrastructure-or-features-change)         | Any change to infrastructure, third-party requests, or what is logged |
+| [Project Overview](#project-overview) · [Architecture Decisions](#architecture-decisions) | Backend code — the module split, the reactive stack, the domain model |
+| [Build & Dev Commands](#build--dev-commands)                                              | Running anything locally                                              |
+| [Code Conventions](#code-conventions)                                                     | Writing code, comments, Markdown or migrations                        |
+| [Testing Patterns](#testing-patterns)                                                     | Writing or changing a test                                            |
+| [CI/CD & Automation](#cicd--automation)                                                   | Touching a workflow, a release, or anything Dependabot sees           |
+| [The Backlog](#the-backlog--github-issues)                                                | Filing, claiming or closing an issue                                  |
+| [Key Files](#key-files)                                                                   | "Where does X live?"                                                  |
+
+**Sibling files, none of them optional in their own subtree:** [`infra/AGENTS.md`](infra/AGENTS.md) opens with the OpenTofu commands that must never be run ·
+[`deploy/AGENTS.md`](deploy/AGENTS.md) with the difference between rendering the chart and installing it · [`events-frontend/AGENTS.md`](events-frontend/AGENTS.md)
+covers the SPA.
+
 ## Agent Instructions
 
 - **Git non-interactive mode**: Always run git commands with the pager disabled to prevent the agent from hanging on interactive output. Use
@@ -43,9 +74,9 @@ update
 **Infrastructure and operations**
 
 - Choosing or changing a hosting provider, CDN, WAF, DNS, mail, backup, or object-storage provider — each is a processor that must be _named_, needs an Art. 28
-  DPA in place, and, if it is outside the EU/EEA, a transfer mechanism. [ADR-012](docs/adr/ADR-012_CLOUD_PLATFORM.md) is **Accepted** as of 2026-08-10 and
-  amended the same day to remove Cloudflare, so the intended answer is now **one processor, Hetzner**, and the notice says so. Nothing is deployed yet, so
-  `INFRASTRUCTURE_IS_PROPOSED` stays `true` until it is — accepting an ADR is not the moment that changes.
+  DPA in place, and, if it is outside the EU/EEA, a transfer mechanism. [ADR-012](docs/adr/ADR-012_CLOUD_PLATFORM.md) leaves **one processor, Hetzner**, and the
+  notice says so. `INFRASTRUCTURE_IS_PROPOSED` stays `true` until §5 of both notices has been checked against what actually runs — the platform existing is not
+  the moment that changes, the check is (docs/LEGAL.md §14).
 - Changing log content, log retention, or IP handling (truncation/anonymisation) — the notice states a retention period; it must be the real one.
 - Adding monitoring, error tracking, uptime checks, APM, or a metrics backend that receives request or user data.
 - Adding a staging or preview environment reachable from the internet. **Note the SEO hazard alongside the privacy one:** the build emits a `robots.txt` that
@@ -124,12 +155,6 @@ application subprojects and one build-tooling subproject sharing a root `setting
 - **Database migrations** live in `events-importer` only (Flyway). The BFF does not run migrations. Migration naming: `V001__description.sql`.
   **`V001__create_initial_schema.sql` is closed. Every schema change is now its own migration** — `V002`, `V003`, … — and editing an existing file is the change
   to refuse in review.
-
-    The rule used to be the opposite: while nothing was deployed, consolidating everything into `V001` was free and kept the schema readable in one file. It said
-    incremental migrations would start _"once the first production deployment establishes a baseline"_, and that trigger turned out to name the wrong event.
-    **What the consolidation actually depended on was no database existing with `V001` already applied**, and staging became one long before production will.
-    Closed on 2026-08-19 (#415), when three changes in flight were each editing `V001` at once — which is what a policy looks like when it has stopped being
-    free.
 
     The failure it prevents is worse than a missing column. Editing an applied migration is a `FlywayValidateException: Migration checksum mismatch`, so the
     importer's context does not start, the pod never goes Ready, and the HelmRelease's `remediateLastFailure: true` **rolls the release back** — presenting as
@@ -369,7 +394,8 @@ tofu -chdir=infra/<stack> validate
 shellcheck -x infra/modules/environment/cloud-init/*.sh
 ```
 
-`tofu plan` and `tofu apply` are **not** on that list: they need a Hetzner API token and they spend money. Nothing in `infra/` has ever been applied.
+`tofu plan` and `tofu apply` are **not** on that list: they need a Hetzner API token and they spend money. Both environments are applied and live —
+changing `infra/` changes running servers.
 
 Helm chart ([`deploy/`](deploy)). **Read [deploy/AGENTS.md](deploy/AGENTS.md) before touching it.** Everything that renders the chart is safe — it reaches no
 cluster and needs no kubeconfig — and these are what `validate-chart.yml` runs:
@@ -560,18 +586,16 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 - **Markdown is formatted by oxfmt**, via `scripts/format-markdown.sh` (config: root `.oxfmtrc.json`, hook: `format-markdown`). Tables aligned, `_emphasis_`,
   `-` bullets, and **prose left exactly where it was wrapped** — `proseWrap: preserve`, so hard wrapping is still yours to place and a prose edit stays a
   one-line diff. Full rationale in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) §Markdown formatting; the parts that matter when editing:
-    - **Never widen it past Markdown.** oxfmt also formats YAML, JSON, CSS and TS. Running it across this repository's YAML and JSON was measured and rejected:
-      105,005 lines of churn, of which 94,336 were captured scraper fixtures (which must stay faithful to what the venue actually returned) and 10,298 were
-      Flux-generated `gotk-components.yaml`. The genuinely useful remainder was 371 lines of single-to-double quote churn in workflows. Worse, oxfmt **cannot
-      parse the Go-templated YAML** under `deploy/charts/*/templates/` at all — it errors and exits 2 on all 16 of them, the same reason
-      `.pre-commit-config.yaml` refuses a `check-yaml` hook. Scope is pinned in two independent places (the script's arguments and `ignorePatterns`); a change
-      that loosens either is a change that breaks the chart build.
+    - **Never widen it past Markdown.** oxfmt also formats YAML, JSON, CSS and TS, and it **cannot parse the Go-templated YAML** under
+      `deploy/charts/*/templates/` at all — it errors and exits 2 on all 16 of them, the same reason `.pre-commit-config.yaml` refuses a `check-yaml` hook.
+      Widening it across the repository's YAML and JSON was measured and rejected: 105,005 lines of churn, almost all of it captured scraper fixtures and
+      Flux-generated manifests, for 371 useful lines. Scope is pinned in two independent places (the script's arguments and `ignorePatterns`); a change that
+      loosens either is a change that breaks the chart build.
     - **Use the pinned binary**, `events-frontend/node_modules/.bin/oxfmt`, never one on `$PATH`. oxfmt is pre-1.0 and its Markdown output is not stable across
       versions, so the hook, CI and every contributor have to be on one version; `package-lock.json` is what makes that reproducible. The script already does
       this — do not "simplify" it to `oxfmt`.
-    - **oxfmt reads `.editorconfig`.** The `[*] indent_size = 4` is what gives nested list items their four-space indent; without that file oxfmt uses its own
-      default and produces different output. So a scratch directory does not reproduce this repository's formatting unless `.editorconfig` is copied into it —
-      worth knowing before concluding that two oxfmt versions disagree, which is exactly how a scratch-directory measurement misled once already.
+    - **oxfmt reads `.editorconfig`.** The `[*] indent_size = 4` is what gives nested list items their four-space indent. A scratch directory does not
+      reproduce this repository's formatting unless `.editorconfig` is copied into it — check that before concluding two oxfmt versions disagree.
     - **Write mode runs it twice**, because a table nested under a list item is skipped on the first pass. This file is the one that exhibits it. **Permanent
       and intended** — Prettier behaves identically and oxfmt tracks Prettier, so upstream closed it as _not planned_; do not try to drop the second run on a
       version bump. See [DEVELOPMENT.md](docs/DEVELOPMENT.md) §Markdown formatting.
@@ -840,7 +864,7 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     every pull request including documentation-only ones, or a change-detection job whose semantics were unverified at the time. A red `Build & Test` is
     visible but not blocking. Revisit deliberately rather than by drift.
 
-- **Commits are deliberately NOT signed** (#443, decided 2026-08-19). There is no `required_signatures` rule on the `main` ruleset and none is wanted: with a
+- **Commits are deliberately NOT signed** (#443). There is no `required_signatures` rule on the `main` ruleset and none is wanted: with a
   single maintainer, a signature proves authorship to the same person who holds the only account that can merge anything, while costing a signing key on every
   machine _and every agent_ that commits here. The control that actually gates `main` is the ruleset — every change by pull request, nine required checks, no
   bypass actor. **The condition that would change this is a second committer**, not a change of mind; that is when a signature starts distinguishing one author
@@ -929,7 +953,7 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 
 ### Constraints on automating GitHub itself
 
-Learned the expensive way during the TODO.md → Issues migration (2026-08-09). Each of these looks like a bug in your script the first time you hit it.
+Each of these looks like a bug in your script the first time you hit it.
 
 - **Fork pull requests work, and the property that makes them work is fragile** (#479 — first one opened _and merged_ 2026-08-19, #579). All eleven required
   checks declare only `contents: read` and consume no secret, so a fork's read-only `GITHUB_TOKEN` runs every one of them — there is no required-but-skipped
@@ -952,9 +976,9 @@ Learned the expensive way during the TODO.md → Issues migration (2026-08-09). 
     The cost is named in the workflow rather than left to be discovered: on the fork path `min-coverage-changed-files` does not run and detekt findings do not
     reach Code Scanning, so both are a review responsibility. The checks themselves still run and still fail the build.
 
-    **One secret is referenced on the pull-request path**, contrary to what this file and #479 both said until 2026-08-19: `build-backend.yml` passes
-    `NVD_API_KEY` to the OWASP job, and that workflow runs on `pull_request`. It is empty on a fork run, the scan is `continue-on-error`, and nothing fails —
-    but "no pull request reaches a secret" is not the invariant; "no pull request _depends_ on one" is.
+    **One secret is referenced on the pull-request path**: `build-backend.yml` passes `NVD_API_KEY` to the OWASP job, which runs on `pull_request`. It is
+    empty on a fork run, the scan is `continue-on-error`, and nothing fails — but the invariant is not "no pull request reaches a secret", it is "no pull
+    request _depends_ on one".
 
     `label-pr.yml` is the one workflow using `pull_request_target`, and it is safe **only** because it never checks out or runs pull-request code. The file
     opens with a banner saying so, because that property is one innocuous-looking `actions/checkout` away from being an arbitrary-code-execution path holding
@@ -980,8 +1004,7 @@ Learned the expensive way during the TODO.md → Issues migration (2026-08-09). 
     comm -23 /tmp/req /tmp/got     # empty means nothing required is missing
     ```
 
-    If that comes back empty, open the pull request in a browser or attempt the merge rather than hunting for a rule that is no longer there. Chasing it cost
-    the better part of an afternoon's tail end, ruling out `code_quality` and `copilot_code_review` twice each after both had already been eliminated.
+    If that comes back empty, open the pull request in a browser or attempt the merge rather than hunting for a rule that is no longer there.
 
 - **Pace bulk mutations.** GitHub's _secondary_ rate limit bites long before the documented hourly one. A `sleep 0.45` between calls carried 255 PR edits and
   146 issue creations with zero failures; without it, a few hundred back-to-back writes reliably trip it.

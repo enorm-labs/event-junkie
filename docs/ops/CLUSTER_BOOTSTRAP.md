@@ -12,6 +12,35 @@ caught something.
 
 ---
 
+## The short version
+
+Twelve steps, about 40 minutes. **Each one is expanded below, and every step that has a known failure mode links to
+[Traps](#traps-in-the-order-they-bite) — read that table first if something does not behave.**
+
+```sh
+# 1-2  keypair, then apply with your address admitted for this run only
+wg genkey > ~/.wireguard/staging.key && wg pubkey < ~/.wireguard/staging.key   # public half -> terraform.tfvars
+cd infra/environments/staging && tofu apply -var "admin_cidrs=$ADMIN"
+
+# 3-5  wait ~4 min, take the node's WireGuard key, write the client config, bring the tunnel up
+ssh -i ~/.ssh/id_ed25519_hetzner ops@"$IP" sudo cat /etc/wireguard/public.key
+sudo wg-quick up ~/.wireguard/staging.conf && sudo wg show      # `latest handshake` or nothing worked
+
+# 6-7  close 22 and 6443, then take the kubeconfig
+tofu apply                                                      # admin_cidrs back to []
+ssh … sudo cat /etc/rancher/k3s/k3s.yaml | sed 's|127.0.0.1|10.10.1.1|' > ~/.kube/event-junkie-staging
+
+# 8    the role, the database, and the secrets nothing in the repo creates
+# 8b   /etc/wal-g/credentials.env — until this exists the node backs up nothing
+
+# 9-11 Flux, then verify: reconciliation, the GitHub deployment record, the certificate
+flux bootstrap github --owner=enorm-labs --repository=event-junkie --branch=main --path=deploy/clusters/staging
+flux --context event-junkie-staging get helmreleases -A
+kubectl --context event-junkie-staging get clusterissuer,certificate -A
+```
+
+**Two steps are the ones people skip and regret**: §8b (a node that backs up nothing looks identical to one that does) and §6 (leaving `admin_cidrs` open).
+
 ## Before you start
 
 ```sh
@@ -165,7 +194,8 @@ printf '%s\n' "$PGPASS" | ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 \
 unset PGPASS                                                          # expect: events|events
 ```
 
-`events-db` is now committed encrypted and restored by Flux ([SECRETS.md](SECRETS.md)). **Six hand-made objects are left, and this list was two of them until 2026-08-21**, when a rebuild followed it and would have brought the cluster back with #271's entire observability stack dead and no obvious cause:
+`events-db` is committed encrypted and restored by Flux ([SECRETS.md](SECRETS.md)). **Six hand-made objects are left.** A rebuild that restores fewer than
+all six brings the cluster back with part of the observability stack dead and no obvious cause:
 
 | Secret                    | Namespace       | Recreated from                                   | In this document                                  |
 | ------------------------- | --------------- | ------------------------------------------------ | ------------------------------------------------- |
@@ -180,7 +210,7 @@ unset PGPASS                                                          # expect: 
 which is worth knowing before you start copying secrets out of a cluster you are about to destroy. OpenObserve's root password can be new because its PVC is
 `local-path` on the node's disk: the metadata DB dies with the node and the root user is re-seeded from the Secret at first boot.
 
-**Two traps that cost time on 2026-08-21, both of which produce a credential that looks right and authenticates against nothing:**
+**Two traps that produce a credential that looks right and authenticates against nothing:**
 
 - **`security find-generic-password -w` appends a newline.** `--from-file=token=<(kc …)` welds it into the value. Pipe through `tr -d '\n'`, and check with
   `kubectl get secret … -o json` that the decoded length is what you expect — 64 bytes for an hcloud token, 20 and 40 for the S3 pair.
@@ -351,7 +381,7 @@ kubectl --context event-junkie-staging get secret event-junkie-staging-tls -n ev
 
 ## 12 · Standing an environment up dark — and rehearsing TLS before go-live
 
-Production was applied this way on 2026-08-21: everything running, nothing resolving.
+Production was applied this way: everything running, nothing resolving.
 
 `public_web` only gates the 80/443 firewall rules, so a dark environment is still fully reachable over the tunnel. **The go-live switch is `publish_dns`**, in
 `infra/environments/production/variables.tf`, and it defaults to `false`. It swaps rather than adds: false publishes one throwaway name, `prod-check`, at the
@@ -369,7 +399,7 @@ that name, or the chart's install will collide with a resource Helm does not own
 kubectl --context event-junkie-production get certificate,order -n default
 ```
 
-Result on 2026-08-21 — **Ready in about 50 seconds**, `order` `valid`:
+Expect **Ready in about 50 seconds**, `order` `valid`:
 
 ```
 subject=CN=prod-check.event-junkie.de
@@ -423,8 +453,8 @@ another variable when the prefix changes.
 **The database survives a _rebuild_, not a `destroy`.** The distinction is the whole of it. Replacing the server — which is what a `cloud-init/` edit or an
 architecture change does — leaves the volume attached to whatever replaces it, and `postgres.sh` adopts the cluster already on it. A `tofu destroy` in the
 environment directory deletes the volume along with everything else, because `delete_protection` does not stop OpenTofu. If you are about to destroy rather than
-rebuild, the volume is not your safety net; the backups in the bucket are — see §8b, and note that a restore has not yet been rehearsed
-([#270](https://github.com/enorm-labs/event-junkie/issues/270)).
+rebuild, the volume is not your safety net; the backups in the bucket are — see §8b and
+[RESTORE_RUNBOOK.md](RESTORE_RUNBOOK.md).
 
 **The backup credential is the second thing that will look fine and not be.** `backups.sh` runs on the new node, installs wal-g and starts the timers, and every
 one of them fails because `/etc/wal-g/credentials.env` died with the old disk. Nothing about the node looks wrong. Re-do §8b as part of every rebuild, and let
@@ -442,9 +472,8 @@ key and the `wireguard_peers` entry stay valid.
 
 ### The sequence
 
-> **This block said `tofu destroy` until 2026-08-21, and that would have destroyed the database.** It sat four paragraphs below "Everything below is a
-> _rebuild_, never a `destroy`", and contradicted it: staging's volume has `delete_protection = false`, and OpenTofu lifts its own locks anyway, so a `destroy`
-> here takes `hcloud_volume.postgres` with it. A rebuild never needs one. Replacing the server is an ordinary `apply` — that is what #460 bought.
+> **Never `tofu destroy` to rebuild.** Staging's volume has `delete_protection = false`, and OpenTofu lifts its own locks regardless, so a destroy here takes
+> `hcloud_volume.postgres` — the database — with it. Replacing the server is an ordinary `apply`.
 
 ```sh
 cd infra/environments/staging
@@ -455,8 +484,8 @@ cd infra/environments/staging
 #    -replace='module.environment.hcloud_server.k3s' is for. Do NOT reach for `tofu destroy`.
 
 # 2. The tunnel dies with the node, so the firewall has to admit you directly for the duration.
-#    -4 ON BOTH: on 2026-08-21 `curl -s https://ifconfig.me` returned an IPv6 address, which makes
-#    the /32 below meaningless, and the unforced `dig` returned nothing at all.
+#    -4 ON BOTH: unforced, `curl https://ifconfig.me` can return an IPv6 address, which makes the
+#    /32 below meaningless, and the unforced `dig` can return nothing at all.
 ADMIN="[\"$(curl -4 -s https://ifconfig.me)/32\",\"$(dig -4 +short myip.opendns.com @resolver1.opendns.com | tail -1)/32\"]"
 
 # 3. PLAN FIRST, AND READ IT. Expect the server and hcloud_volume_attachment.postgres replaced,
@@ -485,10 +514,8 @@ nothing off the volume exists yet: backups and a rehearsed restore are [#270](ht
 
 ### Proving the volume actually survives — the drill
 
-**First run: 2026-08-17, staging — passed.** A sentinel row written at 20:11:27 was read back on a node that booted at 20:14:41, `postgres.sh` logged
-`adopting the existing cluster on the volume`, and every table matched a `pg_dump` taken beforehand exactly — 3,310 events, 3,953 artists, zero rows lost. A
-reboot afterwards confirmed the fstab entry and the `RequiresMountsFor` drop-in hold when the script does not run at all. Repeat it whenever `postgres.sh` or
-`volume.tf` changes.
+**This drill has been run against staging and passed** — a sentinel row survived the node being replaced, `postgres.sh` logged `adopting the existing cluster
+on the volume`, and every table matched a `pg_dump` taken beforehand. Repeat it whenever `postgres.sh` or `volume.tf` changes.
 
 **That the volume is declared is not evidence that the data comes back**; the only evidence is having read a row that was written before the node was replaced.
 Everything below is a _rebuild_, never a `destroy`.
@@ -553,8 +580,8 @@ needs `/128` rather than `/32` and otherwise fails at plan time with `is not the
 **Moved.** The procedure is [RESTORE_RUNBOOK.md](RESTORE_RUNBOOK.md) §4 and §5, because a drill is a rehearsal of a real restore and keeping two copies of it
 guarantees that the rehearsed one drifts from the real one. The design, the recorded results and the cadence are [BACKUPS.md](BACKUPS.md) §9.
 
-**First run: 2026-08-18, staging — passed both halves**, full replay and point-in-time recovery past a `DROP TABLE`. Restore to serving in ~12 s on a 39 MB
-cluster. Owner @enorm, quarterly, plus whenever `backups.sh`, `postgres.sh` or the PostgreSQL major version changes.
+**It has been run against staging and passed both halves**, full replay and point-in-time recovery past a `DROP TABLE`. Owner @enorm, quarterly, plus
+whenever `backups.sh`, `postgres.sh` or the PostgreSQL major version changes.
 
 **What nags you is [`restore-drill-reminder.yml`](../../.github/workflows/restore-drill-reminder.yml)**, not this sentence. It opens the drill as an issue
 assigned to the owner every quarter, and again whenever `backups.sh` or `postgres.sh` changes on `main` — so a skipped quarter shows up as an open issue rather
