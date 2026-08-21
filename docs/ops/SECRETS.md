@@ -309,6 +309,43 @@ patches:
 
 `provider` is an enum whose only value is `sops`, and `secretRef.name` points at step 3's secret.
 
+**Commit this file AFTER `flux bootstrap`, never before.** Production tried the tidier-looking order on 2026-08-21 and bootstrap failed:
+
+```
+accumulating resources from 'gotk-sync.yaml': no such file or directory
+```
+
+`bootstrap` installs the controllers by running `kustomize build` over this directory, and it does that **before** it writes `gotk-sync.yaml`. So a
+`kustomization.yaml` committed ahead of time names a file that cannot exist yet. Staging's ordering was the requirement, not an oversight — which is worth
+saying out loud, because "staging happened to do it later" reads like an accident worth improving on. It is not.
+
+#### The deadlock this creates, and the one command that breaks it
+
+Once `flux-system` is on the cluster-level resource list (above), Flux manages its own `Kustomization` — including this patch. That is the desired state and it
+has an ugly corollary: **the patch is applied by the very sync that needs it.**
+
+If the encrypted Secret and this patch arrive in the same reconcile on a cluster whose _live_ Kustomization has no `decryption` block, Flux applies neither. A
+Kustomization is applied as a set, the encrypted Secret fails the set, and the patch that would have fixed it is in the set that just failed:
+
+```
+Ready=False  Secret/event-junkie/events-db is SOPS encrypted, configuring decryption
+             is required for this secret to be reconciled
+```
+
+It cannot self-heal, and it looks exactly like the missing-`flux-system` bug above while having a different cause. Break it once, by hand, against the live
+object:
+
+```sh
+kubectl --context event-junkie-production -n flux-system patch kustomization flux-system --type=json \
+  -p '[{"op":"add","path":"/spec/decryption","value":{"provider":"sops","secretRef":{"name":"sops-age"}}}]'
+```
+
+From then on the committed patch reapplies it on every reconcile and nothing needs doing again. Production needed exactly this on 2026-08-21; staging never did,
+because its encrypted Secret and its `flux-system` entry did not land together.
+
+**The clean ordering, if you are standing up a new cluster:** `sops-age` on the cluster → `flux bootstrap` → this patch committed → _then_ the encrypted Secret.
+Doing the last two together is what deadlocks.
+
 **A patch is only worth anything if something builds it, and here that nearly did not happen.** A Flux `Kustomization` pointing at a directory with no
 `kustomization.yaml` walks it recursively and picks up `flux-system/` for free — that is how a bootstrapped cluster manages Flux itself. This repository added an
 explicit `kustomization.yaml` at the cluster level, which **replaces** that discovery with a literal list, and `flux-system` was not on it. So the patch rendered
