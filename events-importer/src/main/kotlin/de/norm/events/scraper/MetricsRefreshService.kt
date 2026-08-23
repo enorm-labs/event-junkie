@@ -17,7 +17,7 @@ import java.time.LocalDate
  * everywhere else in this codebase. The values are therefore refreshed on a schedule into the
  * atomics [ImporterMetrics] holds, and each gauge only reads a number.
  *
- * **The cost, stated so nobody reads one of these as live:** all four are as stale as
+ * **The cost, stated so nobody reads one of these as live:** all five are as stale as
  * `app.metrics.refresh-interval-ms` (default 60s). For counts that move on an import cycle measured
  * in hours that is irrelevant; it would matter for anything driving a synchronous decision, and
  * nothing here does.
@@ -60,14 +60,15 @@ class MetricsRefreshService(
                 future = eventRepository.countByEventDateGreaterThanEqual(LocalDate.now(clock))
             )
             metrics.updateSourcesRunning(eventSourceRepository.countByStatus(ImportStatus.RUNNING.name))
-            republishLastSuccess()
+            republishSourceState()
         } catch (e: Exception) {
             logger.warn(e) { "Could not refresh the metric gauges; they keep their previous values" }
         }
     }
 
     /**
-     * Publishes `importer.source.last_success` for every source that has ever succeeded.
+     * Publishes the two per-source gauges: `last_success` for every source that has ever succeeded,
+     * and `has_succeeded` for **every** source, so that one which never has is still visible.
      *
      * Done on every tick rather than once at startup, which costs one query and buys two things: the
      * gauge exists within a minute of a restart instead of only after that source's next run — up to
@@ -85,13 +86,39 @@ class MetricsRefreshService(
      * keeps publishing its real last-success time while it is failing, which is what makes the
      * staleness rule fire rather than go quiet.
      *
-     * Sources that have never succeeded still publish nothing, and that stays deliberate: there is no
-     * true value to assert, and a zero would read as "1970" to every rule written on this gauge.
+     * Sources that have never succeeded still publish **no last-success**, and that stays deliberate:
+     * there is no true value to assert, and a zero would read as "1970" to every rule written on this
+     * gauge. They publish `importer.source.has_succeeded = 0` instead, which is the point below.
+     *
+     * ## And `has_succeeded`, which exists for every source whether or not it ever worked (#618)
+     *
+     * The paragraph above closed half the blind spot: a source that *had* worked keeps its series
+     * while it is failing. The other half is a source that has **never** worked, which had no series
+     * at all — so it could not be stale, late or failing, only absent. Staging on 2026-08-20: 86
+     * sources, 84 series, and the two missing were the only two that were broken.
+     *
+     * **The population emptied and the mechanism did not.** Both venues fixed themselves on the
+     * 08-21 retry, so the count went to zero — which is the more dangerous state, because "0 sources
+     * stale" and "nothing is broken" then agree, and go on agreeing right through the next source
+     * that is added and never works. `/next-importer` adds one at a time, so that window is routine
+     * rather than hypothetical.
+     *
+     * **Every enabled row gets a `has_succeeded` series from the first tick after start-up**,
+     * regardless of import history — which is exactly what a per-run counter cannot do, since it
+     * lives in the process and vanishes on the deploy that restarts the pod.
      */
-    private suspend fun republishLastSuccess() {
+    private suspend fun republishSourceState() {
         eventSourceRepository
             .findByEnabledTrue()
             .toList()
-            .forEach { source -> source.lastSuccessAt?.let { metrics.publishLastSuccess(source.slug, it.epochSecond) } }
+            .forEach { source ->
+                val succeeded = source.lastSuccessAt
+                if (succeeded != null) {
+                    // Also sets has_succeeded = 1, so the two gauges cannot disagree about this source.
+                    metrics.publishLastSuccess(source.slug, succeeded.epochSecond)
+                } else {
+                    metrics.publishHasSucceeded(source.slug, succeeded = false)
+                }
+            }
     }
 }

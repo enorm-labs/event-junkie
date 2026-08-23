@@ -89,11 +89,24 @@ panels = [
         "Sources stale > 36h",
         "Venues that have missed a whole import cycle and half of the next. **36h, not 12h** — the interval is 24h, "
         "so a 12h threshold flags all 84 every single day as a matter of routine, which is how a panel teaches people "
-        "to ignore it. Uses `> bool` so it shows 0 rather than going blank. NOTE: a source that has NEVER succeeded is "
-        "invisible here — see the dashboard README.",
+        "to ignore it. Uses `> bool` so it shows 0 rather than going blank. A source that has never succeeded is not "
+        "counted here and cannot be — it has no age. The panel next to it is where those live.",
         "stat",
         "sum(%s > bool 129600)" % AGE,
         x=12, y=0, w=12, h=4, decimals=0,
+    ),
+    panel(
+        "p_never_succeeded",
+        "Sources that have never succeeded",
+        "**The blind spot #618 closed.** `last_success` only exists once a source has worked, so a venue that has never "
+        "imported had no series at all — not stale, not late, absent. On 2026-08-20 that was 86 sources and 84 series, "
+        "and the two missing were the only two that were broken while this dashboard read \"0 sources stale\". "
+        "`importer_source_has_succeeded` exists for every enabled row from the first refresh after start-up. "
+        "**Anything but 0 is a scraper that has never once worked** — a different fact from a stale one, and a "
+        "different response: fix the importer, do not wait for a retry.",
+        "stat",
+        "sum(max by (source) (importer_source_has_succeeded) == bool 0)",
+        x=24, y=0, w=12, h=4, decimals=0,
     ),
     panel(
         "p_future_events",
@@ -102,7 +115,7 @@ panels = [
         "reports success, and the listings quietly empty out.",
         "stat",
         'max(db_events{horizon="future"})',
-        x=24, y=0, w=12, h=4, decimals=0,
+        x=36, y=0, w=12, h=4, decimals=0,
     ),
     panel(
         "p_node_mem",
@@ -111,7 +124,7 @@ panels = [
         "It global-OOMed on 2026-08-20 with load at 99. This panel is the one that would have seen it coming.",
         "stat",
         "min(k8s_node_memory_available)",
-        x=36, y=0, w=12, h=4, unit="bytes",
+        x=24, y=12, w=12, h=7, unit="bytes",
     ),
 
     # --- Row 2: the importer, which is what the project is for ------------
@@ -142,7 +155,7 @@ panels = [
         "the disk with everything else.",
         "line",
         "max by (datname) (pg_database_size_bytes)",
-        x=0, y=12, w=16, h=7, unit="bytes",
+        x=0, y=12, w=12, h=7, unit="bytes",
     ),
     panel(
         "p_node_pressure",
@@ -151,7 +164,7 @@ panels = [
         "Load alone reads as a CPU problem; load next to memory utilisation is what identifies it as stalling.",
         "line",
         ["max(system_cpu_load_average_5m)", "max(system_memory_utilization)"],
-        x=16, y=12, w=16, h=7,
+        x=12, y=12, w=12, h=7,
     ),
     panel(
         "p_certs",
@@ -161,7 +174,7 @@ panels = [
         "line",
         "(min by (name) (certmanager_certificate_expiration_timestamp_seconds) - timestamp("
         "min by (name) (certmanager_certificate_expiration_timestamp_seconds))) / 86400",
-        x=32, y=12, w=16, h=7, decimals=1,
+        x=36, y=12, w=12, h=7, decimals=1,
     ),
 
     # --- Row 4: whether any of the above can be believed -------------------

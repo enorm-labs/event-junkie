@@ -56,6 +56,14 @@ class ImporterMetrics(
     private val lastSuccessEpochSeconds = ConcurrentHashMap<String, AtomicLong>()
 
     /**
+     * Whether each source has *ever* succeeded, backing the `has_succeeded` gauge — 1 or 0.
+     *
+     * Separate from [lastSuccessEpochSeconds] rather than derived from it, because the whole point is
+     * that this map has an entry for sources the other one does not.
+     */
+    private val hasSucceeded = ConcurrentHashMap<String, AtomicLong>()
+
+    /**
      * Per-source, per-field coverage ratios. A `Double` holder rather than an [AtomicLong], because
      * this is the one meter here that is a fraction and rounding it to a long would make every value
      * either 0 or 1.
@@ -152,6 +160,47 @@ class ImporterMetrics(
                 registry.gauge(SOURCE_LAST_SUCCESS, Tags.of(TAG_SOURCE, slug), holder) { it.get().toDouble() }
                 holder
             }.set(epochSeconds)
+        // A published last-success IS a success, so the two can never disagree about this source.
+        publishHasSucceeded(sourceSlug, succeeded = true)
+    }
+
+    /**
+     * `importer.source.has_succeeded{source}` — **1 if this source has ever completed a run, 0 if it
+     * never has**, and the point is that the series exists either way (#618).
+     *
+     * ## Why a second gauge rather than reading the first one's absence
+     *
+     * [SOURCE_LAST_SUCCESS] only exists once a source has succeeded, so **a venue that has never
+     * worked has no series at all** — and something with no series cannot be stale, late or failing.
+     * It is simply not there. Measured on staging on 2026-08-20: 86 sources, 84 series, and the two
+     * missing ones were the only two that were broken. The dashboard read "0 sources stale" while
+     * two venues had never once imported.
+     *
+     * **Not fixed by publishing `last_success = 0` for them.** That asserts a successful import at
+     * the epoch — false — and turns every age chart into a 56-year scale. *Never* and *long ago* are
+     * different facts.
+     *
+     * **Not fixed by `absent()` or `unless` in the rule either**, though OpenObserve does implement
+     * both (checked against the live instance, unlike `sort_desc`, which it does not). A rule of the
+     * form `tracked unless last_success` joins two series at query time and therefore reports every
+     * source as never-succeeded during any gap in the *other* metric — and this system has had gaps:
+     * #625 dropped roughly half of all metric points for days. One series carrying the fact is
+     * atomic; a join between two is only as reliable as the flakier side.
+     *
+     * The value is refreshed from `event_source` by [MetricsRefreshService] on every tick, so it
+     * survives a restart — which an in-process counter of failures does not, and which matters
+     * because the importer restarts on every deploy while the import interval is 24 hours.
+     */
+    fun publishHasSucceeded(
+        sourceSlug: String,
+        succeeded: Boolean
+    ) {
+        hasSucceeded
+            .computeIfAbsent(sourceSlug) { slug ->
+                val holder = AtomicLong(0)
+                registry.gauge(SOURCE_HAS_SUCCEEDED, Tags.of(TAG_SOURCE, slug), holder) { it.get().toDouble() }
+                holder
+            }.set(if (succeeded) 1L else 0L)
     }
 
     /**
@@ -266,6 +315,12 @@ class ImporterMetrics(
         const val EVENTS_WRITTEN = "importer.events.written"
         const val SCRAPE_FAILURES = "importer.scrape.failures"
         const val SOURCE_LAST_SUCCESS = "importer.source.last_success"
+
+        /**
+         * `importer.source.has_succeeded{source}` — the series that exists for a source which has
+         * never worked, which [SOURCE_LAST_SUCCESS] deliberately does not. See [publishHasSucceeded].
+         */
+        const val SOURCE_HAS_SUCCEEDED = "importer.source.has_succeeded"
         const val SOURCE_RUNNING = "importer.source.running"
 
         /**

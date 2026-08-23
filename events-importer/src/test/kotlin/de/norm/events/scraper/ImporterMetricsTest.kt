@@ -81,6 +81,44 @@ class ImporterMetricsTest {
             registry.find("importer.source.last_success").tag("source", "fails").gauge() shouldBe null
         }
 
+        /**
+         * The in-memory half of #618's invariant. [MetricsRefreshService] publishes `has_succeeded`
+         * from the database once a minute; a run that succeeds in between must not leave the two
+         * gauges disagreeing until the next tick, so a published last-success sets this too.
+         *
+         * The failed run is asserted as *absent* rather than 0 on purpose: `recordRun` knows this run
+         * failed, not that the source has never succeeded. Only the database knows that, which is why
+         * the zero comes from the refresh service and not from here.
+         */
+        @Test
+        fun `a successful run also marks the source as having succeeded`() {
+            metrics.recordRun("succeeds", ImporterMetrics.RunOutcome.SUCCESS, 1.milliseconds)
+            metrics.recordRun("fails", ImporterMetrics.RunOutcome.FAILED, 1.milliseconds)
+
+            registry
+                .find("importer.source.has_succeeded")
+                .tag("source", "succeeds")
+                .gauge()!!
+                .value() shouldBe 1.0
+            registry.find("importer.source.has_succeeded").tag("source", "fails").gauge() shouldBe null
+        }
+
+        /**
+         * A 304 is a working scraper — the request went out and the venue answered — so it advances
+         * last-success, and this gauge has to agree with that rather than with intuition about the
+         * word "success".
+         */
+        @Test
+        fun `not_modified counts as having succeeded, because the scraper worked`() {
+            metrics.recordRun("quiet-venue", ImporterMetrics.RunOutcome.NOT_MODIFIED, 1.milliseconds)
+
+            registry
+                .find("importer.source.has_succeeded")
+                .tag("source", "quiet-venue")
+                .gauge()!!
+                .value() shouldBe 1.0
+        }
+
         @Test
         fun `two runs of one source share a timer rather than creating a second series`() {
             metrics.recordRun("cassiopeia", ImporterMetrics.RunOutcome.SUCCESS, 100.milliseconds)

@@ -77,29 +77,34 @@ lines in the first place.
 watching. A dashboard about the application that cannot show the node dying under it is only half
 a dashboard.
 
-## What these panels cannot see, and it is the broken sources
+## The blind spot this dashboard used to have, and how it was closed
 
-**A source that has NEVER succeeded is absent from the staleness panels entirely.**
-`ImporterMetrics.publishLastSuccess` is only called on a successful run, so a venue that has failed
-every time it was tried has no `importer_source_last_success` series — and something with no series
-cannot be stale, it is simply not there.
+**A source that had NEVER succeeded was absent from the staleness panels entirely.**
+`importer_source_last_success` springs into existence on a source's first success, so a venue that
+failed every time it was tried had no series — and something with no series cannot be stale, late or
+failing. It is simply not there.
 
-As of 2026-08-20 there are **86 sources and 84 series**. The two missing ones are the two that are
-actually broken:
+As of 2026-08-20 that was **86 sources and 84 series**, and the two missing were the only two that
+were actually broken:
 
 ```
 quasimodo   FAILED  retries=2  last_import 08-17 11:50  last_success NULL  HTTP 500
 club-ost    FAILED  retries=1  last_import 08-19 11:50  last_success NULL  HTTP 500
 ```
 
-So **"0 sources stale" does not mean "0 sources broken"**, and the panel says so in its description.
-This is the same shape ADR-015 already records for counters — a meter that has never fired is absent
-from the exposition — applied to a gauge.
+So "0 sources stale" did not mean "0 sources broken", and for a while the panel simply said so in its
+description — a label on the gap rather than a fix for it.
 
-The fix belongs in the importer rather than here: something per-source that exists regardless of
-outcome. `importer_run_outcome_total{source,outcome}` would do it, but it is **not yet queryable
-either** — Micrometer counters live in the process, so they vanish on restart and only reappear after
-the next run. Filed separately.
+**`importer_source_has_succeeded` is the fix (#618)**, and "Sources that have never succeeded" is the
+panel that reads it. The gauge is published for **every** enabled row by `MetricsRefreshService`, from
+the first refresh after start-up, so it exists whether or not the source has ever worked. A per-run
+counter could not do this: Micrometer counters live in the process, vanish on restart, and do not
+reappear until the next run — which on a 24h interval is most of any given day.
+
+**Two facts, kept separate on purpose.** _Never worked_ and _worked and went stale_ need different
+responses — fix the scraper versus wait for the retry — so they are two panels reading two series
+rather than one number covering both. This is the same shape ADR-015 records for counters, applied to
+a gauge.
 
 **The thresholds assume a 24h cycle**, because that is what `import_interval_minutes = 1440` is. The
 first version of this dashboard used 12h, which against a 24h interval flags all 84 venues every

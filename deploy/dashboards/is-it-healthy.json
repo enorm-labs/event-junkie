@@ -58,7 +58,7 @@
           "id": "p_stale_count",
           "type": "stat",
           "title": "Sources stale > 36h",
-          "description": "Venues that have missed a whole import cycle and half of the next. **36h, not 12h** \u2014 the interval is 24h, so a 12h threshold flags all 84 every single day as a matter of routine, which is how a panel teaches people to ignore it. Uses `> bool` so it shows 0 rather than going blank. NOTE: a source that has NEVER succeeded is invisible here \u2014 see the dashboard README.",
+          "description": "Venues that have missed a whole import cycle and half of the next. **36h, not 12h** \u2014 the interval is 24h, so a 12h threshold flags all 84 every single day as a matter of routine, which is how a panel teaches people to ignore it. Uses `> bool` so it shows 0 rather than going blank. A source that has never succeeded is not counted here and cannot be \u2014 it has no age. The panel next to it is where those live.",
           "config": {
             "show_legends": true,
             "decimals": 0
@@ -98,6 +98,49 @@
           }
         },
         {
+          "id": "p_never_succeeded",
+          "type": "stat",
+          "title": "Sources that have never succeeded",
+          "description": "**The blind spot #618 closed.** `last_success` only exists once a source has worked, so a venue that has never imported had no series at all \u2014 not stale, not late, absent. On 2026-08-20 that was 86 sources and 84 series, and the two missing were the only two that were broken while this dashboard read \"0 sources stale\". `importer_source_has_succeeded` exists for every enabled row from the first refresh after start-up. **Anything but 0 is a scraper that has never once worked** \u2014 a different fact from a stale one, and a different response: fix the importer, do not wait for a retry.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum(max by (source) (importer_source_has_succeeded) == bool 0)",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 24,
+            "y": 0,
+            "w": 12,
+            "h": 4,
+            "i": 3
+          }
+        },
+        {
           "id": "p_future_events",
           "type": "stat",
           "title": "Future events in the database",
@@ -133,11 +176,11 @@
             }
           ],
           "layout": {
-            "x": 24,
+            "x": 36,
             "y": 0,
             "w": 12,
             "h": 4,
-            "i": 3
+            "i": 4
           }
         },
         {
@@ -177,11 +220,11 @@
             }
           ],
           "layout": {
-            "x": 36,
-            "y": 0,
+            "x": 24,
+            "y": 12,
             "w": 12,
-            "h": 4,
-            "i": 4
+            "h": 7,
+            "i": 5
           }
         },
         {
@@ -224,7 +267,7 @@
             "y": 4,
             "w": 24,
             "h": 8,
-            "i": 5
+            "i": 6
           }
         },
         {
@@ -267,7 +310,7 @@
             "y": 4,
             "w": 24,
             "h": 8,
-            "i": 6
+            "i": 7
           }
         },
         {
@@ -309,9 +352,9 @@
           "layout": {
             "x": 0,
             "y": 12,
-            "w": 16,
+            "w": 12,
             "h": 7,
-            "i": 7
+            "i": 8
           }
         },
         {
@@ -373,11 +416,11 @@
             }
           ],
           "layout": {
-            "x": 16,
+            "x": 12,
             "y": 12,
-            "w": 16,
+            "w": 12,
             "h": 7,
-            "i": 8
+            "i": 9
           }
         },
         {
@@ -416,11 +459,11 @@
             }
           ],
           "layout": {
-            "x": 32,
+            "x": 36,
             "y": 12,
-            "w": 16,
+            "w": 12,
             "h": 7,
-            "i": 9
+            "i": 10
           }
         },
         {
@@ -486,7 +529,7 @@
             "y": 19,
             "w": 24,
             "h": 7,
-            "i": 10
+            "i": 11
           }
         },
         {
@@ -530,7 +573,7 @@
             "y": 19,
             "w": 24,
             "h": 7,
-            "i": 11
+            "i": 12
           }
         }
       ]

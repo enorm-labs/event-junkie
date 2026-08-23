@@ -580,20 +580,27 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | **`importer.events.written` = 0 for N runs**   | **Alert rule**                        | **The silently-broken-scraper alarm — the single most valuable rule in the system** |
 | `importer.scrape.failures`                     | Counter, tagged `source`, `reason`    | Distinguishes HTTP 403 from a parse failure                                         |
 | `importer.source.last_success`                 | Gauge, tagged `source`                | Age of the last good run; alert past ~3× its schedule                               |
+| `importer.source.has_succeeded`                | Gauge, tagged `source`                | 1/0 — **exists for a source that has never worked**, which the row above does not   |
 | `importer.source.running`                      | Gauge                                 | Catches the ADR-008 `RUNNING`-forever state a restart can strand                    |
 | `importer.source.field_coverage{source,field}` | Gauge                                 | The partial-failure alarm — alert on a **drop against history**, not a floor        |
 | `bff.events.served`                            | Counter, tagged endpoint              | Is anyone actually using it                                                         |
 | `db.events{horizon="all"\|"future"}`           | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end        |
 | `data_quality{source=…,metric=…}`              | Gauge                                 | Per-source quality, refreshed daily. Alert on a metric that starts rising           |
 
-**Five things to know before writing a rule against these:**
+**Six things to know before writing a rule against these:**
 
 - **`db.events.total` could not exist.** `_total` is Prometheus' reserved suffix for counters, so Micrometer strips it: the meter published as `db_events`,
   silently, while anything written against the documented name matched nothing. It is one gauge with a `horizon` label — `db_events{horizon="future"}`.
 - **`importer.source.last_success` needed a column of its own.** It first published from `event_source.last_import_at`, which is written on failure too, so it
   meant _last attempt_ — and the series **disappeared the moment a source started failing**, which is the exact instant the staleness rule is meant to fire.
   `event_source.last_success_at` is now written only by a successful run. **Write the rule against the gauge, not against its absence** — and note that a source
-  which has never succeeded still publishes nothing, deliberately, because a zero would read as 1970.
+  which has never succeeded still publishes no `last_success`, deliberately, because a zero would read as 1970.
+- **`importer.source.has_succeeded` is how "never worked" is expressible at all** (#618). `last_success` springs into existence on a source's first success, so
+  a venue that has never imported had **no series**, and something with no series cannot be stale, late or failing — it is absent. Staging, 2026-08-20: 86
+  sources, 84 series, and the two missing were the only two that were broken, while the dashboard read "0 sources stale". This gauge is refreshed from
+  `event_source` for **every** enabled row, so it survives the restart that a per-run counter does not. **`never worked` and `worked and went stale` need
+  different responses**, so keep them separate in rules: `importer_source_has_succeeded == 0` is a scraper that has never once worked; an old
+  `importer_source_last_success` is one that has stopped.
 - **A 304 counts as a success**, for both the column and the gauge. The request went out, the venue answered, and the conditional headers did their job.
   Treating it as "no success" would make a stable venue look broken after three quiet days.
 - **`field_coverage` must never be alerted on with a threshold.** A venue that has never published a price sits at `0` forever without anything being wrong. The
