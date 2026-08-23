@@ -113,11 +113,13 @@ Great places to let the voice show — **microcopy**:
 Tagline alternatives explored (kept for reference / A-B testing): _Never miss a hit_ · _Highly addictive_ · _Feed the habit_ · _Your dealer for Berlin
 nightlife_ · _Know before the crowd_.
 
-## 4. Logo — directions to explore
+## 4. Logo — the principles, and the directions that lost
 
-**Done:** direction #1 below (pulse / waveform wordmark) was prototyped and shipped — the pulse mark is the favicon (`events-frontend/public/favicon.svg`) and,
-paired with the wordmark, the header lockup (`src/components/BrandLogo.vue`, collapsing to just the mark on mobile). The other directions stay parked as
-alternatives. The principles that guided it:
+**The logo is decided and shipped: see [§4b](#4b-the-direction--decided-2026-08-23-475).** This section is kept for the two things that outlived the decision —
+the principles below, which are not the reason anything was replaced and therefore still bind, and the candidate directions, which are the record of what was
+considered. Every idea, and the case against each, is in [LOGO_IDEAS.md](LOGO_IDEAS.md).
+
+The principles:
 
 - **Monochrome-first.** The UI theme is currently all-grayscale; the mark must read in a single ink and invert cleanly for dark mode. Design in black/white, add
   the accent (§5) as a highlight only.
@@ -135,7 +137,11 @@ Candidate directions (ordered by how well they fuse _music + the "junkie" concep
 5. **The live dot.** A single filled circle — a "hit," a record, a dot on a calendar day — that **pulses**
    when something's on tonight. Minimal, animatable, unbeatable as a favicon; leans on motion for meaning.
 
-**Shipped:** #1 (waveform wordmark) + its standalone favicon glyph, in both inks — **and being replaced, see §4a.**
+**None of these was adopted.** #1 shipped and was then replaced — it is the pulse mark, and §4a is why. #2 survives in an unexpected form: the EJ monogram is
+the mark, though drawn as separate letters rather than the ligature described above. #5 survives as a UI motif rather than a logo (§5.5). The rest stay parked.
+
+**The first principle above is the one that decided it**, repeatedly and against every expectation: _favicon-legible_ is not a constraint you satisfy at the end,
+it is the one that eliminates candidates. §4b's own recommendation died on it.
 
 ### 4a. The collision, recorded — 2026-08-19 (#475)
 
@@ -386,8 +392,12 @@ the brand accent on cards, revealing full colour on hover / detail pages. Cohesi
 
 ### 5.5 Motion (subtle)
 
-`tw-animate-css` is available. Ideas: a gently **pulsing "live tonight" dot**, soft card hover-lift, a waveform that animates on the logo. Always gate behind
-`prefers-reduced-motion: reduce`.
+`tw-animate-css` is available. Shipping: a gently **pulsing "live tonight" dot** and a soft card hover-lift, both gated behind
+`prefers-reduced-motion: reduce`, which is not optional here.
+
+**The logo does not move, and that is a decision rather than an omission** (§4b, decision C). The old mark's `ej-draw` / `ej-beat` keyframes went with it —
+both depended on `pathLength="1"` and a single continuous stroke, which neither the badge nor the stamp has. A mark that does not need to move is not a worse
+mark, and a rubber stamp that animates is a contradiction.
 
 ### 5.6 Page-level notes
 
@@ -402,8 +412,12 @@ the brand accent on cards, revealing full colour on hover / detail pages. Cohesi
 - **Colour / radius / type tokens** → `events-frontend/src/assets/main.css` (`:root` + `.dark`). Re-theming is CSS-variable edits only (ADR-010).
 - **Page titles & tagline** → already implemented in `src/composables/usePageTitle.ts`
   (`APP_NAME`, `TAGLINE`, `HOME_TITLE`) and `index.html` (title + OG/Twitter tags).
-- **Favicon / logo** → `events-frontend/public/favicon.svg` (pulse badge) and
-  `src/components/BrandLogo.vue` (header lockup).
+- **Logo, source of truth** → `docs/branding/*.svg`. Everything below is a **build** of one of those, never a fresh drawing; a drift between the two is how the
+  old mark survived in three places at once.
+- **Favicon / app icons** → `events-frontend/public/favicon.svg`, `favicon.ico`, `apple-touch-icon.png`, `og-image.png`. The favicon differs from its source in
+  one way only: its letters get an opaque ground, because a knockout's letters would take the colour of the browser tab strip.
+- **Logo in the app** → `src/components/EjBadge.vue` (icon and chrome), `ClubStamp.ts` + `ClubStamp.{en,de}.vue` (the lockup, lazy-loaded per locale) and
+  `src/components/BrandLogo.vue` (the header lockup — badge below `sm`, wordmark from `sm`).
 - **Fonts** → self-hosted `@fontsource-variable/geist`, imported in `src/main.ts`; `--font-*` tokens in
   `main.css`.
 
@@ -417,12 +431,12 @@ what every link to the project unfurls as on Slack, X or Discord.
 GitHub and written down nowhere drifts, and the previous description proves it — it predated the product, never said _Event Junkie_, described the project as
 _simple_ and as _checking_ events, and spent a third of its length on a parenthetical about future scope.
 
-| Field              | Value                                                                                                                                           |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Description**    | `Event Junkie — your always-fresh feed of what's on across Berlin's venues. Concerts, club nights, festivals, and the odd quiz night.`          |
-| **Homepage**       | `https://event-junkie.de` — **once it resolves.** Setting it before the deploy points people at nothing, which is worse than empty              |
-| **Topics**         | `berlin` `events` `concerts` `nightlife` `kotlin` `spring-boot` `webflux` `vue` `typescript` `kubernetes` `web-scraping` `gitops` `helm` `flux` |
-| **Social preview** | Blocked on the mark — [#475](https://github.com/enorm-labs/event-junkie/issues/475) produces it                                                 |
+| Field              | Value                                                                                                                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description**    | `Event Junkie — your always-fresh feed of what's on across Berlin's venues. Concerts, club nights, festivals, and the odd quiz night.`                        |
+| **Homepage**       | `https://event-junkie.de` — **once it resolves.** Setting it before the deploy points people at nothing, which is worse than empty                            |
+| **Topics**         | `berlin` `events` `concerts` `nightlife` `kotlin` `spring-boot` `webflux` `vue` `typescript` `kubernetes` `web-scraping` `gitops` `helm` `flux`               |
+| **Social preview** | `docs/branding/social-preview.png` — 1280×640, the English tagline stamp on ink. **Rendered; still to upload**, which is a settings page rather than a commit |
 
 **The description is the one-liner from §1 with the product name in front**, and that is deliberate rather than lazy: a second sentence written for GitHub would
 be a fourth line of brand copy to keep in step with the tagline, the positioning line and the one-liner — and §1 already warns what happens when those get used
@@ -448,6 +462,8 @@ A sequence that also captures the §3–§5 design ideas not tracked in the chec
 
 - [x] Home hero — ambient violet glow, animated pulse mark, wordmark + tagline — and mono eyebrow section labels (`PulseMark`, `SectionLabel`, motion keyframes
       in `main.css`). _(§5.5, §5.6)_
+- [x] **Superseded 2026-08-23 (#475).** The glow, the pulse mark and its keyframes are gone; the hero is the club stamp, per locale, over nothing. The line
+      above stays because it records what was true when it was ticked — the eyebrow labels it also names are untouched and still shipping.
 - [x] Refined event cards + a pulsing "live tonight" dot + hover-lift, gated by reduced-motion. _(§5.5)_
 - [x] Events & Calendar: eyebrow headers, filter-forward polish, accent-branded day markers. _(§5.6)_
 - [x] Detail pages: editorial layout + eyebrow section labels; desaturate-on-rest image treatment. _(§4, §5.4)_

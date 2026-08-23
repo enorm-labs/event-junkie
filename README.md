@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/branding/readme-logo-dark.png" />
+    <img alt="Event Junkie — can't get enough of Berlin" src="./docs/branding/readme-logo-light.png" width="440" />
+  </picture>
+</p>
+
 # Event Junkie
 
 [![Build & Test Backend](https://github.com/enorm-labs/event-junkie/actions/workflows/build-backend.yml/badge.svg)](https://github.com/enorm-labs/event-junkie/actions/workflows/build-backend.yml)

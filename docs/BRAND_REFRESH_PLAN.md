@@ -194,32 +194,32 @@ whole classes of thing behind. Both apply here.
 
 ### The branding documents
 
-| Where                         | Change                                                                                                                                     |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `docs/BRANDING.md` §4         | Direction #1 is recorded as **shipped**. It is not. Rewrite so the parked alternatives stay parked and the stamp system is the shipped one |
-| `docs/BRANDING.md` §4a        | ✅ Done — the collision, the searches and their results                                                                                    |
-| `docs/BRANDING.md` §4b        | ✅ Done — the decision                                                                                                                     |
-| `docs/BRANDING.md` §5.1, §5.3 | ✅ Done — the accent kept (M), the typeface settled (D)                                                                                    |
-| `docs/BRANDING.md` §5.5       | "a waveform that animates on the logo" — delete it. Phase 3 step 5 removes the logo motion entirely                                        |
-| `docs/BRANDING.md` §6         | The favicon/logo file map, which still says "pulse badge"                                                                                  |
-| `docs/BRANDING.md` §6a        | Social preview is listed as blocked on #475. Unblock it and record the value                                                               |
-| `docs/BRANDING.md` §7         | The checklist needs a **successor line**, not an edit — the waveform entry records what was true when it was ticked                        |
-| `docs/BRANDING.md` glossary   | ✅ Done — audited end to end                                                                                                               |
-| `docs/LOGO_IDEAS.md`          | ✅ Current. Keep it open: it is what makes the decision re-openable                                                                        |
-| `docs/BRAND_REFRESH_PLAN.md`  | This file. **Close it out when Phase 5 ends** rather than leaving a half-ticked plan as the record                                         |
+| Where                         | Change                                                                                                                           |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/BRANDING.md` §4         | ✅ Done — retitled, and the shipped/parked claims corrected. Kept for the principles, which still bind, and the candidate record |
+| `docs/BRANDING.md` §4a        | ✅ Done — the collision, the searches and their results                                                                          |
+| `docs/BRANDING.md` §4b        | ✅ Done — the decision                                                                                                           |
+| `docs/BRANDING.md` §5.1, §5.3 | ✅ Done — the accent kept (M), the typeface settled (D)                                                                          |
+| `docs/BRANDING.md` §5.5       | ✅ Done — the waveform line is gone; the logo not animating is recorded as a decision                                            |
+| `docs/BRANDING.md` §6         | ✅ Done — the file map names the real components, and says `docs/branding/` is the source everything else is built from          |
+| `docs/BRANDING.md` §6a        | ✅ Done — names the rendered file; only the upload is outstanding                                                                |
+| `docs/BRANDING.md` §7         | ✅ Done — a **successor line**, not an edit. The original records what was true when it was ticked                               |
+| `docs/BRANDING.md` glossary   | ✅ Done — audited end to end                                                                                                     |
+| `docs/LOGO_IDEAS.md`          | ✅ Current. Keep it open: it is what makes the decision re-openable                                                              |
+| `docs/BRAND_REFRESH_PLAN.md`  | This file. **Close it out when Phase 5 ends** rather than leaving a half-ticked plan as the record                               |
 
 ### Everything else that names the old mark
 
 **`grep -rln "PulseMark\|pulse mark" --include="*.md"` is the check**, and it must come back empty except for the deliberate `_(retired)_` glossary entry and
 §4a, which is written about the mark and needs it.
 
-| Where                                      | Change                                                                           |
-| ------------------------------------------ | -------------------------------------------------------------------------------- |
-| `events-frontend/AGENTS.md` §Accessibility | Names `PulseMark` as the decorative-SVG example. Becomes `EjBadge` / `ClubStamp` |
-| `README.md`                                | Add the **tagline stamp** above the badges. No logo today; #475 asks for one     |
-| `docs/README.md`                           | ✅ Done — indexes the plan and LOGO_IDEAS                                        |
-| `events-frontend/README.md`                | Check for component inventories that list `PulseMark`                            |
-| `docs/PRODUCT_OVERVIEW.md`                 | Check — it inventories what the frontend does and may describe the hero          |
+| Where                                      | Change                                                                                                                                                    |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `events-frontend/AGENTS.md` §Accessibility | Names `PulseMark` as the decorative-SVG example. Becomes `EjBadge` / `ClubStamp`                                                                          |
+| `README.md`                                | ✅ Done — the tagline stamp, as a `<picture>` with a light and a dark rendering, since GitHub has two themes and `currentColor` means nothing in a README |
+| `docs/README.md`                           | ✅ Done — indexes the plan and LOGO_IDEAS                                                                                                                 |
+| `events-frontend/README.md`                | ✅ Checked — no logo or component references. A verified negative, not an assumption                                                                      |
+| `docs/PRODUCT_OVERVIEW.md`                 | ✅ Checked — describes features, never the hero's artwork. Clean                                                                                          |
 
 ### The issue tracker, which `grep` cannot reach at all
 
@@ -230,15 +230,15 @@ gh issue list --state open --limit 400 --json number,title,body \
   --jq '.[] | select(.body != null and (.body | test("(?i)pulse mark|pulsemark"))) | "#\(.number)\t\(.title)"'
 ```
 
-| Issue                                                                                                                        | What it needs                                                                                   |
-| ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| [#475](https://github.com/enorm-labs/event-junkie/issues/475)                                                                | The decision landed differently from what it proposed — record the outcome before closing       |
-| [#374](https://github.com/enorm-labs/event-junkie/issues/374)                                                                | Its note says the logo comes first and it starts from whatever #475 produces. Say what that was |
-| [#377](https://github.com/enorm-labs/event-junkie/issues/377)                                                                | ✅ Commented — decided all-Geist; retitle, since only the correction remains                    |
-| [#477](https://github.com/enorm-labs/event-junkie/issues/477)                                                                | Social preview was blocked on #475. It is not any more                                          |
-| [#294](https://github.com/enorm-labs/event-junkie/issues/294)                                                                | The README hero screenshot — still sequenced last, but the chain above it has moved             |
-| [#481](https://github.com/enorm-labs/event-junkie/issues/481)                                                                | Launch marketing references the logo; check what it assumes                                     |
-| [#395](https://github.com/enorm-labs/event-junkie/issues/395), [#281](https://github.com/enorm-labs/event-junkie/issues/281) | Repo best-practices and health-file passes both touch the README and social preview             |
+| Issue                                                                                                                        | What it needs                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| [#475](https://github.com/enorm-labs/event-junkie/issues/475)                                                                | ✅ Done — closed already, so the outcome is recorded as a comment: what shipped, why it differs from what the issue proposed, and the searches |
+| [#374](https://github.com/enorm-labs/event-junkie/issues/374)                                                                | ✅ Done — unblocked, and told what it inherits already-decided versus what is genuinely left                                                   |
+| [#377](https://github.com/enorm-labs/event-junkie/issues/377)                                                                | ✅ Commented — decided all-Geist; retitle, since only the correction remains                                                                   |
+| [#477](https://github.com/enorm-labs/event-junkie/issues/477)                                                                | ✅ Done — unblocked; the asset exists and only the upload remains                                                                              |
+| [#294](https://github.com/enorm-labs/event-junkie/issues/294)                                                                | The README hero screenshot — still sequenced last, but the chain above it has moved                                                            |
+| [#481](https://github.com/enorm-labs/event-junkie/issues/481)                                                                | Launch marketing references the logo; check what it assumes                                                                                    |
+| [#395](https://github.com/enorm-labs/event-junkie/issues/395), [#281](https://github.com/enorm-labs/event-junkie/issues/281) | Repo best-practices and health-file passes both touch the README and social preview                                                            |
 
 **And the settings pages, which are neither code nor tracker:** the GitHub **social preview** upload (§6a) and, once the domain resolves, the repository
 **homepage** field. Nothing in the repository will ever remind you about these — §6a exists precisely because a value set in a settings page and written down
