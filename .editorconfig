@@ -39,6 +39,49 @@ ij_css_value_alignment = do_not_align
 [*.dcl]
 ij_declarative_keep_indents_on_empty_lines = false
 
+# Markdown is owned by oxfmt (scripts/format-markdown.sh), not by the IDE formatter, and the two
+# disagree. This block narrows the disagreement; it does NOT end it.
+#
+# What it fixes: format_tables. IntelliJ writes |---| where oxfmt writes | --- |, which is what bit
+# on PR #665 — a file was reformatted on save and the pre-commit hook rejected the commit. The
+# wrap/keep_line_breaks properties matter for the same reason (oxfmt is proseWrap: preserve, so line
+# breaks are content), and force_one_space_* would otherwise collapse table cell padding.
+#
+# What it does NOT fix, measured 2026-08-23 by reformatting docs/BRAND_REFRESH_PLAN.md through the
+# IDE with this block in place: IntelliJ still re-indents list continuation lines from four spaces to
+# two, and still breaks an ordered-list marker onto its own line and reflows the item. There is no
+# .editorconfig property for either — JetBrains exposes no way to disable the formatter for a file
+# pattern from this file.
+#
+# The complete fix is IDE-side and cannot be expressed here:
+#   Settings -> Editor -> Code Style -> Formatter -> "Do not format": *.md
+# It lives in .idea/codeStyles/, which this repository gitignores, so it is set per machine.
+#
+# indent_size is load-bearing and must stay 4: it is what makes oxfmt indent nested list items by
+# four spaces, and format-markdown.sh documents it as the reason its output cannot be reproduced in a
+# scratch directory. Inherited from [*] today; pinned here so an edit up there cannot silently
+# reformat 117 files. Verified: setting it to 2 puts 29 files out of format.
+#
+# IntelliJ's "Export code style to .editorconfig" rewrites this file and drops comments. If that is
+# ever run, restore this block.
+[*.md]
+indent_size = 4
+ij_markdown_force_one_space_after_blockquote_symbol = false
+ij_markdown_force_one_space_after_header_symbol = false
+ij_markdown_force_one_space_after_list_bullet = false
+ij_markdown_force_one_space_between_words = false
+ij_markdown_format_tables = false
+ij_markdown_insert_quote_arrows_on_wrap = false
+ij_markdown_keep_line_breaks_inside_text_blocks = true
+ij_markdown_max_lines_around_block_elements = 1
+ij_markdown_max_lines_around_header = 1
+ij_markdown_max_lines_between_paragraphs = 1
+ij_markdown_min_lines_around_block_elements = 1
+ij_markdown_min_lines_around_header = 1
+ij_markdown_min_lines_between_paragraphs = 1
+ij_markdown_wrap_text_if_long = false
+ij_markdown_wrap_text_inside_blockquotes = false
+
 [*.scss]
 indent_size = 2
 ij_scss_align_closing_brace_with_properties = false
