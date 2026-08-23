@@ -27,7 +27,18 @@
       content="Concerts, club nights, festivals and more across Berlin venues. Find your next event with Event Junkie."
       property="og:description"
     />
-    <meta content="summary" name="twitter:card" />
+    <!--
+      og:image is an ABSOLUTE URL by spec — relative paths are not resolved by most scrapers, so
+      this is the one place the production origin is hard-coded rather than derived. The card is
+      `summary_large_image` because there is one: `summary` renders a thumbnail beside the text and
+      wastes a 1200x630 asset.
+    -->
+    <meta content="https://event-junkie.de/og-image.png" property="og:image" />
+    <meta content="1200" property="og:image:width" />
+    <meta content="630" property="og:image:height" />
+    <meta content="Event Junkie — can't get enough of Berlin" property="og:image:alt" />
+    <meta content="summary_large_image" name="twitter:card" />
+    <meta content="https://event-junkie.de/og-image.png" name="twitter:image" />
     <meta content="Event Junkie — Can't get enough of Berlin" name="twitter:title" />
     <meta
       content="Concerts, club nights, festivals and more across Berlin venues. Find your next event with Event Junkie."
