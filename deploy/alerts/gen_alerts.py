@@ -25,13 +25,28 @@ needs a database-backed gauge, the way #618 did for `has_succeeded`. Until then
 `db_events{horizon="future"}` catches the same failure one level up: the
 catalogue emptying out.
 
-## Two PromQL traps, both established by running queries rather than reading docs
+## Three traps, all established by running queries rather than reading docs
 
   1. `time()` is FROZEN at the query window's start (#610), so an age is
      `timestamp(x) - x`, never `time() - x`. Every staleness rule here depends on
      that, and the wrong form under-reports age by the whole window width.
 
-  2. `count(expr == bool 0)` counts EVERY series, always — it is `sum` that
+  2. **A `<` or `<=` condition fires when it matches ZERO rows, and delivers
+     nothing.** `handlers.rs:2019` says so in as many words — "payload is empty
+     (`<`/`<=` matching zero rows)" — and the scheduler logs `Alert fired
+     without notification (Deliver, payload empty: true)`. Measured here: three
+     rules written as `value < threshold` fired within seconds of being created,
+     while their thresholds were nowhere near crossed, sent nothing, and then
+     silenced themselves for six to twenty-four hours. **That is the worst
+     possible combination** — the UI shows a firing, no one is told, and the
+     silence window blocks the real firing that follows.
+
+     So every rule here is a `>` against an inner `< bool` comparison:
+     `sum(x < bool 15) > 0` is 1 when a real series is below 15, 0 when it is
+     not, and 0 — not empty — when the series is missing. Absence stops
+     masquerading as a firing.
+
+  3. `count(expr == bool 0)` counts EVERY series, always — it is `sum` that
      counts the matching ones. Measured here: `count(up == bool 0)` returns 18
      (the number of scrape targets) while `sum(up == bool 0)` returns 0 (the
      number that are down). A site-down rule written with `count` fires forever
@@ -71,15 +86,24 @@ def rule(
     *,
     stream_name,
     period_minutes,
-    frequency_seconds,
+    frequency_minutes,
     silence_minutes,
 ):
     """One alert.
 
     `period` is the window the query runs over, in minutes; `frequency` is how
-    often it is evaluated, in seconds; `silence` is how long a fired alert stays
-    quiet before it can fire again, in minutes — the difference between "the
-    database is filling" once an hour and once a minute.
+    often it is evaluated, **in minutes**; `silence` is how long a fired alert
+    stays quiet before it can fire again, also in minutes.
+
+    **The frequency unit is measured, not read.** `TriggerCondition.frequency`
+    is documented as seconds — the OpenAPI schema says `(seconds)` and
+    `config/src/meta/alerts/mod.rs` carries a TODO saying alerts are in seconds
+    while derived streams are in minutes. On this deployment it is minutes: an
+    alert created with `frequency: 1` evaluated at 11:32:00, 11:33:10, 11:34:20
+    and 11:35:30 — a 70-second cadence, which is one minute plus the scheduler's
+    poll slack. The first version of this file used seconds, so `ej-site-down`
+    asked for 60 and got one evaluation an hour, and `ej-certificate-expiry`
+    asked for 3600 and would next have run in 2.5 months. Nothing errored.
 
     `stream_name` is required by the API even for a PromQL alert, where the query
     names its own series. It is set to the metric the rule is mostly about, which
@@ -101,9 +125,22 @@ def rule(
             },
             "trigger_condition": {
                 "period": period_minutes,
-                "frequency": frequency_seconds,
+                "frequency": frequency_minutes,
                 "frequency_type": "minutes",
-                "operator": operator,
+                # **`>= 1`, always, and NOT the rule's own operator.** This pair
+                # gates on how many ROWS the rewritten expression returned, not on
+                # the value inside them — the value comparison already happened,
+                # baked into the query. "At least one series came back" is the only
+                # sensible reading of it.
+                #
+                # Measured: with `operator` set to the rule's own `>` and
+                # `threshold: 1`, `ej-importer-stale` needed MORE THAN ONE matching
+                # series and never fired, though its query returned 71 hours against
+                # a 36 hour threshold for eight minutes straight. Changing this one
+                # field to `>=` produced `Alert conditions satisfied` -> `Alert
+                # notification sent` -> `POST /api/default/alert_history/_json 200`
+                # on the next evaluation.
+                "operator": ">=",
                 "threshold": 1,
                 "silence": silence_minutes,
             },
@@ -131,7 +168,7 @@ rule(
     0,
     stream_name="up",
     period_minutes=5,
-    frequency_seconds=60,
+    frequency_minutes=1,
     silence_minutes=30,
 )
 
@@ -152,7 +189,7 @@ rule(
     36,
     stream_name="importer_source_last_success",
     period_minutes=10,
-    frequency_seconds=5 * 60,
+    frequency_minutes=5,
     silence_minutes=12 * 60,
 )
 
@@ -169,7 +206,7 @@ rule(
     0,
     stream_name="importer_source_has_succeeded",
     period_minutes=15,
-    frequency_seconds=30 * 60,
+    frequency_minutes=30,
     silence_minutes=24 * 60,
 )
 
@@ -181,12 +218,12 @@ rule(
     "HTTP check sees: scrapers return 200, runs report success, and the listings empty out "
     "over a fortnight. The per-source version of this needs a database-backed events "
     "counter and does not exist yet.",
-    'max(db_events{horizon="future"})',
-    "<",
-    500,
+    'sum(max(db_events{horizon="future"}) < bool 500)',
+    ">",
+    0,
     stream_name="db_events",
     period_minutes=30,
-    frequency_seconds=10 * 60,
+    frequency_minutes=10,
     silence_minutes=12 * 60,
 )
 
@@ -200,12 +237,12 @@ rule(
     "Less than 15% of the node's filesystem is free. The database is a rounding error here "
     "— what fills this disk is OpenObserve's WAL, container logs and images. A ratio, not "
     "a byte count, so a node resize does not silently invalidate the threshold.",
-    "min(k8s_node_filesystem_available / k8s_node_filesystem_capacity) * 100",
-    "<",
-    15,
+    "sum(min(k8s_node_filesystem_available / k8s_node_filesystem_capacity) * 100 < bool 15)",
+    ">",
+    0,
     stream_name="k8s_node_filesystem_available",
     period_minutes=15,
-    frequency_seconds=5 * 60,
+    frequency_minutes=5,
     silence_minutes=6 * 60,
 )
 
@@ -216,13 +253,13 @@ rule(
     "The soonest-expiring certificate is inside 14 days. cert-manager renews at 30 days "
     "remaining, so reaching 14 means renewal has already failed — silently, because nothing "
     "crashes when a certificate ages.",
-    "min((certmanager_certificate_expiration_timestamp_seconds "
-    "- timestamp(certmanager_certificate_expiration_timestamp_seconds)) / 86400)",
-    "<",
-    14,
+    "sum(min((certmanager_certificate_expiration_timestamp_seconds "
+    "- timestamp(certmanager_certificate_expiration_timestamp_seconds)) / 86400) < bool 14)",
+    ">",
+    0,
     stream_name="certmanager_certificate_expiration_timestamp_seconds",
     period_minutes=60,
-    frequency_seconds=HOUR_S,
+    frequency_minutes=60,
     silence_minutes=24 * 60,
 )
 
@@ -259,7 +296,7 @@ rule(
     0,
     stream_name="otelcol_exporter_send_failed_metric_points_total",
     period_minutes=15,
-    frequency_seconds=5 * 60,
+    frequency_minutes=5,
     silence_minutes=2 * 60,
 )
 
@@ -274,7 +311,7 @@ rule(
     80,
     stream_name="otelcol_exporter_queue_size",
     period_minutes=15,
-    frequency_seconds=5 * 60,
+    frequency_minutes=5,
     silence_minutes=2 * 60,
 )
 
