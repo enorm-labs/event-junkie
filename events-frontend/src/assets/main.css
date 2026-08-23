@@ -10,6 +10,13 @@
   /* Self-hosted via @fontsource-variable/geist (imported in main.ts), which registers the
      'Geist Variable' family — no external font request (see docs/BRANDING.md §5.3). */
   --font-sans: 'Geist Variable', sans-serif;
+  /* Geist Mono, same family and the same self-hosting. It is not decoration: the eyebrow label is a
+     named brand device (§5.6), and without this token it rendered in whichever monospace the OS
+     happened to have. */
+  --font-mono: 'Geist Mono Variable', ui-monospace, monospace;
+  /* Headings are Geist too — decided, not defaulted (§5.3, #377). The token exists so that stays a
+     one-line change rather than a sweep through every view, and the base rule below is what makes
+     it a real lever instead of an advertised one. */
   --font-heading: var(--font-sans);
   /* The editorial "eyebrow" tracking (SectionLabel, the hero tagline) — one value so the two
      can't drift apart the way `tracking-[0.18em]` and `tracking-[0.2em]` did. */
@@ -143,6 +150,16 @@
   body {
     @apply bg-background text-foreground;
     @apply font-sans;
+  }
+  /* Connects --font-heading. Identical to --font-sans today, so this changes nothing visually — the
+     point is that changing the heading face never means touching a view. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading;
   }
 }
 

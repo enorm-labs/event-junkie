@@ -378,12 +378,13 @@ explicit light choice is remembered in
   96 px** (§4b), so the face that gives the identity its personality is structurally unusable as live type. And most remaining headings are **scraped content** —
   event and venue titles — where a characterful face is a liability against long strings and whatever the venues type. The personality was bought in the stamp,
   at a size where legibility is not at risk.
-- **Mono:** **Geist Mono**, via `@fontsource-variable/geist-mono` (OFL-1.1, same family as the sans). This is the half of the typography question nobody had
-  logged. `--font-mono` is **not defined**, so Tailwind's system stack applies and the **eyebrow label** — a named brand device (§5.6) — renders as SF Mono on
-  a Mac, Consolas on Windows and DejaVu on Linux. The hero tagline and the footer version string are in the same position. Pinning it makes _all-Geist_ true
-  rather than approximate, and costs one subsetted variable font on the pattern already established for the sans.
-- **`--font-heading` is a dead token.** It is defined in `main.css` as `var(--font-sans)` and **nothing reads it** — every heading uses `font-bold` and
-  inherits `font-sans`. Wire it up or delete it: a token nothing consumes is worse than no token, because it advertises a lever that is not connected.
+- **Mono:** **Geist Mono** — shipped, self-hosted via `@fontsource-variable/geist-mono` (OFL-1.1, same family as the sans). This was the half of the typography
+  question nobody had logged. `--font-mono` was **not defined**, so Tailwind's system stack applied and the **eyebrow label** — a named brand device (§5.6) — rendered as SF Mono on a Mac,
+  Consolas on Windows and DejaVu on Linux. Pinning it makes _all-Geist_ true rather than approximate. Only the `latin` subset is ever fetched — `unicode-range`
+  leaves the other five unloaded — so the cost is one 23 kB woff2.
+- **`--font-heading` is wired**, and was a dead token until 2026-08-23 — defined as `var(--font-sans)` and read by nothing, so it advertised a lever that was
+  not connected. A base rule on `h1`–`h6` now consumes it. Identical to `--font-sans` today, so it changes nothing visually; the point is that changing the
+  heading face is a one-line token edit rather than a sweep through every view.
 
 ### 5.4 Imagery
 
