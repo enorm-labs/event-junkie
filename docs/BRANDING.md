@@ -378,7 +378,10 @@ explicit light choice is remembered in
   96 px** (§4b), so the face that gives the identity its personality is structurally unusable as live type. And most remaining headings are **scraped content** —
   event and venue titles — where a characterful face is a liability against long strings and whatever the venues type. The personality was bought in the stamp,
   at a size where legibility is not at risk.
-- **Wordmark:** **Rubik**, self-hosted via `@fontsource-variable/rubik` (OFL-1.1), on the header and footer wordmark and **nowhere else**. Rubik Distressed —
+- **Wordmark:** **Rubik**, self-hosted via `@fontsource-variable/rubik` (OFL-1.1), on the header and footer wordmark and **nowhere else**, set **all-caps** to
+  match the stamp — via `text-transform`, so the DOM text stays _Event Junkie_ and the home link's accessible name is read as words rather than spelled out.
+  No tracking utility: the default is what the stamp's own wordmark is set at, and the `tracking-tight` it replaced was a lowercase setting that cramps caps.
+  The eyebrow's 0.18em is deliberately not reused — that spacing is the eyebrow device's signature and sharing it would blur two things. Rubik Distressed —
   the stamp's face — is derived from it, so the two share a skeleton and the wordmark rhymes with the artwork. The distressed face itself cannot come down here:
   rendered at 18 px it is legible but its distress reads as **dirt rather than texture**, since the counters fill in and the strokes look eroded rather than
   pressed. That is a smaller size than the 96 px badge floor implies, because a twelve-character word carries its own shape — it is still below where the
