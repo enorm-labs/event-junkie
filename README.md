@@ -16,7 +16,7 @@
 [![Java](https://img.shields.io/badge/Java-25-ED8B00.svg?logo=openjdk&logoColor=white)](https://openjdk.org)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D.svg?logo=vuedotjs&logoColor=white)](https://vuejs.org)
 
-Every music event in Berlin, in one filterable feed — collected automatically from the venues' own websites.
+Music events across Berlin, in one filterable feed — collected automatically from the venues' own websites.
 
 > **The event app Berlin deserves.**
 
