@@ -239,10 +239,15 @@ spec:
     gateway:
       resources:
         requests:
-          # 928Mi today, but that was a queue backed up behind #625's rejected writes rather than a
-          # working set. Revisit once a week of post-fix data exists; too high a request wastes the
-          # node, too low and the scheduler is again unaware of the largest pod in the namespace.
-          memory: "512Mi"
+          # **256Mi, and the first draft of this line said 512Mi.** The gateway measured 928Mi while
+          # #625 was open, and that was not a working set — it was 1,000 queued batches waiting on
+          # writes OpenObserve was rejecting. Five minutes after the fix reconciled the same pod sat
+          # at **221Mi**, which is what this now requests against.
+          #
+          # Worth keeping as a caution rather than tidying away: a resource request taken during an
+          # incident encodes the incident. The number to size against is the one after the thing is
+          # working.
+          memory: "256Mi"
           cpu: "100m"
         limits:
           memory: "1280Mi"
