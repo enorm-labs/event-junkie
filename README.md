@@ -20,9 +20,6 @@ Every music event in Berlin, in one filterable feed — collected automatically 
 
 > **The event app Berlin deserves.**
 
-**Event Junkie** is the name everywhere — the app, the repository and the identifiers, which use the `event-junkie` form. See the naming rule
-in [BRANDING.md](./docs/BRANDING.md).
-
 <p align="center">
   <img alt="The events list: a filter bar over a grid of Berlin events, each with its poster, venue, time and genre tags" src="./docs/screenshots/events-dark.png" width="900" />
 </p>
