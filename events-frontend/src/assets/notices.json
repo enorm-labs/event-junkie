@@ -1,5 +1,5 @@
 {
-  "componentCount": 646,
+  "componentCount": 647,
   "licenses": [
     {
       "license": "MIT",
@@ -3968,6 +3968,30 @@
       ]
     },
     {
+      "license": "OFL-1.1",
+      "url": "https://openfontlicense.org/",
+      "components": [
+        {
+          "name": "@fontsource-variable/geist",
+          "version": "5.3.0",
+          "url": "https://github.com/fontsource/font-files",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@fontsource-variable/geist-mono",
+          "version": "5.3.0",
+          "url": "https://github.com/fontsource/font-files",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@fontsource-variable/rubik",
+          "version": "5.3.0",
+          "url": "https://github.com/fontsource/font-files",
+          "ecosystem": "frontend"
+        }
+      ]
+    },
+    {
       "license": "Public Domain",
       "url": null,
       "components": [
@@ -4059,24 +4083,6 @@
           "name": "lightningcss",
           "version": "1.33.0",
           "url": "https://github.com/parcel-bundler/lightningcss",
-          "ecosystem": "frontend"
-        }
-      ]
-    },
-    {
-      "license": "OFL-1.1",
-      "url": "https://openfontlicense.org/",
-      "components": [
-        {
-          "name": "@fontsource-variable/geist",
-          "version": "5.3.0",
-          "url": "https://github.com/fontsource/font-files",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@fontsource-variable/geist-mono",
-          "version": "5.3.0",
-          "url": "https://github.com/fontsource/font-files",
           "ecosystem": "frontend"
         }
       ]

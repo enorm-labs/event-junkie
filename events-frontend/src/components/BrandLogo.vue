@@ -28,7 +28,7 @@ withDefaults(
          accessible name is always "Event Junkie". -->
     <span
       :class="alwaysShowWordmark ? '' : 'sr-only sm:not-sr-only'"
-      class="text-lg font-bold tracking-tight text-foreground"
+      class="font-wordmark text-lg font-bold tracking-tight text-foreground"
     >
       Event <span class="text-primary">Junkie</span>
     </span>

@@ -378,6 +378,14 @@ explicit light choice is remembered in
   96 px** (§4b), so the face that gives the identity its personality is structurally unusable as live type. And most remaining headings are **scraped content** —
   event and venue titles — where a characterful face is a liability against long strings and whatever the venues type. The personality was bought in the stamp,
   at a size where legibility is not at risk.
+- **Wordmark:** **Rubik**, self-hosted via `@fontsource-variable/rubik` (OFL-1.1), on the header and footer wordmark and **nowhere else**. Rubik Distressed —
+  the stamp's face — is derived from it, so the two share a skeleton and the wordmark rhymes with the artwork. The distressed face itself cannot come down here:
+  rendered at 18 px it is legible but its distress reads as **dirt rather than texture**, since the counters fill in and the strokes look eroded rather than
+  pressed. That is a smaller size than the 96 px badge floor implies, because a twelve-character word carries its own shape — it is still below where the
+  texture survives.
+  **The cost, measured:** 34.5 kB for the latin subset, against **2.4 kB** if the eleven glyphs were outlined instead. Outlining is the cheaper lever if the
+  weight ever matters; the font is kept because it leaves the wordmark as **live text** — the home link's accessible name, selectable, and scaling with the
+  reader's own font settings.
 - **Mono:** **Geist Mono** — shipped, self-hosted via `@fontsource-variable/geist-mono` (OFL-1.1, same family as the sans). This was the half of the typography
   question nobody had logged. `--font-mono` was **not defined**, so Tailwind's system stack applied and the **eyebrow label** — a named brand device (§5.6) — rendered as SF Mono on a Mac,
   Consolas on Windows and DejaVu on Linux. Pinning it makes _all-Geist_ true rather than approximate. Only the `latin` subset is ever fetched — `unicode-range`
