@@ -21,7 +21,8 @@ path = sys.argv[3] if len(sys.argv) > 3 else "/tmp/ej-dashboard.json"
 end = int(time.time())
 start = end - 6 * 3600
 
-dash = json.load(open(path))
+with open(path) as f:
+    dash = json.load(f)
 panels = [p for tab in dash["tabs"] for p in tab["panels"]]
 
 failures = 0

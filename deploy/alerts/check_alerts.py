@@ -30,7 +30,8 @@ import urllib.parse
 auth, svc = sys.argv[1], sys.argv[2]
 path = sys.argv[3] if len(sys.argv) > 3 else "/tmp/ej-alerts.json"
 
-alerts = json.load(open(path))
+with open(path) as f:
+    alerts = json.load(f)
 
 failures = 0
 firing = 0
