@@ -3,13 +3,13 @@
     "name": "ej-site-down",
     "org_id": "default",
     "stream_type": "metrics",
-    "stream_name": "up",
+    "stream_name": "kube_deployment_status_replicas_available",
     "is_real_time": false,
     "enabled": true,
-    "description": "One or more scrape targets stopped answering \u2014 the BFF, the frontend, Traefik, PostgreSQL's exporter or OpenObserve itself. `sum`, not `count`: count returns the number of targets that exist, which is 18 and never zero.",
+    "description": "One of the application's Deployments has **zero available replicas** \u2014 the BFF, the frontend or the importer. Availability rather than scrape health, because a rolling deploy is not an outage: `up` goes to 0 for the pod being replaced and stays there for about five minutes while the target ages out of service discovery.",
     "query_condition": {
       "type": "promql",
-      "promql": "sum(up == bool 0)",
+      "promql": "sum(max by (deployment) (kube_deployment_status_replicas_available{deployment=~\"event-junkie.*\"}) == bool 0)",
       "promql_condition": {
         "column": "value",
         "operator": ">",
