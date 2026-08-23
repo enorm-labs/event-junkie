@@ -144,7 +144,8 @@ application subprojects and one build-tooling subproject sharing a root `setting
   step. Build tooling: nothing it contains ships, so it is left out of the Kover aggregate, the licence report
   and the OWASP scan — each exclusion sits next to its reason in the root `build.gradle.kts`.
 - **`events-frontend`** – Vue 3 SPA (Vite 8, TypeScript 6, Vue Router). Uses oxlint/oxfmt for linting/formatting. Not a Gradle subproject — managed separately
-  via npm. Requires Node `>=22.13.0` (see `engines` in `package.json`) — raised from 20 when vue-i18n was adopted, see ADR-013.
+  via npm. Requires Node `>=24.15.0` (see `engines` in `package.json`) — a **patch** floor, because jsdom 30's supported range excludes 24.0–24.14. The floor
+  has moved twice and each move was forced by a dependency rather than chosen; `events-frontend/AGENTS.md` records both, and ADR-013 covers the earlier one.
 
 ## Architecture Decisions
 
