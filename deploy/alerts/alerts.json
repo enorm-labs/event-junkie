@@ -1,0 +1,234 @@
+[
+  {
+    "name": "ej-site-down",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "up",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "One or more scrape targets stopped answering \u2014 the BFF, the frontend, Traefik, PostgreSQL's exporter or OpenObserve itself. `sum`, not `count`: count returns the number of targets that exist, which is 18 and never zero.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(up == bool 0)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0
+      }
+    },
+    "trigger_condition": {
+      "period": 5,
+      "frequency": 60,
+      "frequency_type": "minutes",
+      "operator": ">",
+      "threshold": 1,
+      "silence": 30
+    },
+    "destinations": [
+      "record-only"
+    ]
+  },
+  {
+    "name": "ej-importer-stale",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "importer_source_last_success",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "The stalest source has not had a successful run in 36 hours, against a 24h import interval. One venue is a scraper to fix; all of them together is the importer or the database. `timestamp(x) - x` because OpenObserve freezes `time()` at the window start.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "max((timestamp(max by (source) (importer_source_last_success)) - max by (source) (importer_source_last_success)) / 3600)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 36
+      }
+    },
+    "trigger_condition": {
+      "period": 10,
+      "frequency": 300,
+      "frequency_type": "minutes",
+      "operator": ">",
+      "threshold": 1,
+      "silence": 720
+    },
+    "destinations": [
+      "record-only"
+    ]
+  },
+  {
+    "name": "ej-source-never-succeeded",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "importer_source_has_succeeded",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "A source has been enabled long enough to be counted and has never once completed a run. Different from stale and needing a different response: fix the scraper, do not wait for the retry. Blind spot closed by #618.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(max by (source) (importer_source_has_succeeded) == bool 0)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0
+      }
+    },
+    "trigger_condition": {
+      "period": 15,
+      "frequency": 1800,
+      "frequency_type": "minutes",
+      "operator": ">",
+      "threshold": 1,
+      "silence": 1440
+    },
+    "destinations": [
+      "record-only"
+    ]
+  },
+  {
+    "name": "ej-catalogue-emptying",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "db_events",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "Future events have fallen below 500, from a normal ~3,000. This is the failure no HTTP check sees: scrapers return 200, runs report success, and the listings empty out over a fortnight. The per-source version of this needs a database-backed events counter and does not exist yet.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "max(db_events{horizon=\"future\"})",
+      "promql_condition": {
+        "column": "value",
+        "operator": "<",
+        "value": 500
+      }
+    },
+    "trigger_condition": {
+      "period": 30,
+      "frequency": 600,
+      "frequency_type": "minutes",
+      "operator": "<",
+      "threshold": 1,
+      "silence": 720
+    },
+    "destinations": [
+      "record-only"
+    ]
+  },
+  {
+    "name": "ej-node-disk-filling",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "k8s_node_filesystem_available",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "Less than 15% of the node's filesystem is free. The database is a rounding error here \u2014 what fills this disk is OpenObserve's WAL, container logs and images. A ratio, not a byte count, so a node resize does not silently invalidate the threshold.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "min(k8s_node_filesystem_available / k8s_node_filesystem_capacity) * 100",
+      "promql_condition": {
+        "column": "value",
+        "operator": "<",
+        "value": 15
+      }
+    },
+    "trigger_condition": {
+      "period": 15,
+      "frequency": 300,
+      "frequency_type": "minutes",
+      "operator": "<",
+      "threshold": 1,
+      "silence": 360
+    },
+    "destinations": [
+      "record-only"
+    ]
+  },
+  {
+    "name": "ej-certificate-expiry",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "certmanager_certificate_expiration_timestamp_seconds",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "The soonest-expiring certificate is inside 14 days. cert-manager renews at 30 days remaining, so reaching 14 means renewal has already failed \u2014 silently, because nothing crashes when a certificate ages.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "min((certmanager_certificate_expiration_timestamp_seconds - timestamp(certmanager_certificate_expiration_timestamp_seconds)) / 86400)",
+      "promql_condition": {
+        "column": "value",
+        "operator": "<",
+        "value": 14
+      }
+    },
+    "trigger_condition": {
+      "period": 60,
+      "frequency": 3600,
+      "frequency_type": "minutes",
+      "operator": "<",
+      "threshold": 1,
+      "silence": 1440
+    },
+    "destinations": [
+      "record-only"
+    ]
+  },
+  {
+    "name": "ej-ingest-shedding",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "otelcol_exporter_send_failed_metric_points_total",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "OpenObserve is rejecting writes. That means the other rules are evaluating a sample rather than the data \u2014 a gap that looks exactly like a healthy quiet period. #625 ran at ~51% loss for days before anybody noticed, and none of these rules would have said so.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(rate(otelcol_exporter_send_failed_metric_points_total[5m]))",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0
+      }
+    },
+    "trigger_condition": {
+      "period": 15,
+      "frequency": 300,
+      "frequency_type": "minutes",
+      "operator": ">",
+      "threshold": 1,
+      "silence": 120
+    },
+    "destinations": [
+      "record-only"
+    ]
+  },
+  {
+    "name": "ej-ingest-queue-saturated",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "otelcol_exporter_queue_size",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "The collector's export queue is over 80% full \u2014 backpressure, and the step before it starts dropping points it can never retry. Both series here exist at all times, which is why this watches queue depth rather than the enqueue-failure counter that only appears after the damage.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "max(otelcol_exporter_queue_size) / max(otelcol_exporter_queue_capacity) * 100",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 80
+      }
+    },
+    "trigger_condition": {
+      "period": 15,
+      "frequency": 300,
+      "frequency_type": "minutes",
+      "operator": ">",
+      "threshold": 1,
+      "silence": 120
+    },
+    "destinations": [
+      "record-only"
+    ]
+  }
+]

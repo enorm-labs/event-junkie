@@ -111,6 +111,8 @@ kubectl --context event-junkie-staging -n observability \
 ```sh
 cd deploy/dashboards && ./apply.sh            # push the dashboard
 cd deploy/dashboards && ./apply.sh --check    # do the panels return data?
+cd deploy/alerts && ./apply.sh                # push the alert rules
+cd deploy/alerts && ./apply.sh --check        # can each rule fire, and would any fire now?
 ```
 
 Operating it, including the stream-count trap that causes ingestion to stop: [OPENOBSERVE.md](OPENOBSERVE.md).

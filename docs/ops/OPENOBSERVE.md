@@ -81,6 +81,27 @@ most time: `time()` is frozen at the window start, `sort_desc` is unimplemented,
 
 **Re-import after any rebuild.** Dashboards are metadata, and metadata is on the PVC.
 
+## Alert rules are in git too, and have the same seam
+
+```sh
+cd deploy/alerts
+./apply.sh              # create or update every rule in alerts.json
+./apply.sh --check      # evaluate each rule's query against live data, change nothing
+```
+
+`alerts.json` is **generated** by `gen_alerts.py`, exactly like the dashboard. `--check` answers the question the UI cannot: whether a rule's query matches any
+series at all. One that matches none never fires and is indistinguishable from health — it caught a rule that summed two counters, which was silently
+un-fireable whenever either counter was quiet.
+
+**Firings go into the `alert_history` stream, not to a person yet.** Two separate reasons, and only one of them is the phone number:
+
+- [#271](https://github.com/enorm-labs/event-junkie/issues/271) item 4's Signal bridge is unregistered, and
+- **OpenObserve refuses any alert destination inside the cluster** — `signal-cli.observability.svc.cluster.local` is rejected by its SSRF guard, which is item
+  4's architecture blocked by a control unrelated to registration. `ZO_SSRF_ALLOW_LOOPBACK` permits the process to notify itself, which is what the interim
+  destination uses; reaching another pod needs `ZO_SKIP_SSRF_CHECKS` and, honestly, an egress policy alongside it. `deploy/alerts/README.md` has the reasoning.
+
+**Re-apply after any rebuild**, for the same reason as the dashboard: alerts, destinations and templates are all metadata.
+
 ## Credentials
 
 The full inventory is [SECRETS.md](SECRETS.md); two operational traps belong here.

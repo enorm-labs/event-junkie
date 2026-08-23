@@ -192,6 +192,48 @@ spec:
       # than after the data is gone.
       ZO_PROMETHEUS_ENABLED: "true"
 
+      # ## An alert has to have a destination, and every in-cluster URL is refused
+      #
+      # #271's alert rules cannot be created without one — `POST /api/v2/{org}/alerts`
+      # returns `Alert destination or workflows is required`, with or without
+      # `creates_incident`. And **every destination inside the cluster is rejected by an
+      # SSRF guard**, measured rather than assumed:
+      #
+      #     openobserve-…svc.cluster.local  -> 400 Destination URL blocked by SSRF guard
+      #     signal-cli.observability.svc…   -> 400 Destination URL blocked by SSRF guard
+      #
+      # **The second one is #271 item 4's entire architecture** — an OpenObserve webhook
+      # into `signal-cli-rest-api` — and it is blocked today for reasons that have nothing
+      # to do with the missing phone number. Better found now than after the eSIM arrives.
+      #
+      # `config.rs:1177` offers two ways out, and they are not equivalent:
+      #
+      #   - `ZO_SSRF_ALLOW_LOOPBACK` — loopback only. The process may notify **itself** and
+      #     nothing else.
+      #   - `ZO_SKIP_SSRF_CHECKS` — removes the check entirely, for every destination.
+      #
+      # **This takes the loopback one**, which is enough for the interim destination the
+      # rules use: a POST back into this pod's own ingest API, so a firing becomes a row in
+      # the `alert_history` stream and the rules are exercised rather than hypothetical.
+      #
+      # **`ZO_SKIP_SSRF_CHECKS` is deliberately NOT set, and the reason is a gap rather than
+      # a principle:** the `observability` namespace currently has **no NetworkPolicies at
+      # all**, so nothing else constrains where this pod may connect. Turning the guard off
+      # wholesale would make an authenticated OpenObserve user — the root user whose
+      # credential three other components already hold — able to point a "destination" at
+      # any address in the cluster. That is a decision to take with the Signal route, next
+      # to an egress policy, rather than a side effect of adding alert rules.
+      # **It is NOT in the `config:` block above, and that is not a style choice.** The chart
+      # renders its ConfigMap from the 226 keys it knows about and **silently drops anything
+      # else** — no error, no warning, and a `helm template` that looks entirely correct. The
+      # first version of this change set it there and it never reached the pod. `extraEnv` is
+      # the chart's escape hatch for a key it has never heard of, and it lands as a plain
+      # environment variable, which is what the process reads anyway.
+
+    extraEnv:
+      - name: ZO_SSRF_ALLOW_LOOPBACK
+        value: "true"
+
     # The gateway's `prometheus-autodiscovery` job keeps pods carrying these, exactly as
     # postgres-exporter.yaml does. Without them the setting above exposes metrics nothing collects.
     podAnnotations:

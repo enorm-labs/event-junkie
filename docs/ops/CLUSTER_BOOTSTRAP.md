@@ -448,7 +448,7 @@ another variable when the prefix changes.
 | The network, subnet and firewall                                                                                                                     | **Flux, and all six hand-made Secrets** — the cluster is new (§8)          |
 | Your WireGuard _client_ keypair, and `wireguard_peers`                                                                                               | Anything on the node's own disk outside `/var/lib/postgresql`              |
 | The backups already in the bucket — they are off-server, which is the point                                                                          | **`/etc/wal-g/credentials.env`**, so the node comes back archiving nothing |
-| The DNS zones (`bootstrap/`, outside every environment destroy)                                                                                      |                                                                            |
+| The DNS zones (`bootstrap/`, outside every environment destroy)                                                                                      | **Dashboards and alert rules** — OpenObserve metadata, on the node's disk  |
 
 **The database survives a _rebuild_, not a `destroy`.** The distinction is the whole of it. Replacing the server — which is what a `cloud-init/` edit or an
 architecture change does — leaves the volume attached to whatever replaces it, and `postgres.sh` adopts the cluster already on it. A `tofu destroy` in the
@@ -551,6 +551,15 @@ ssh ops@<tunnel-address> "findmnt /var/lib/postgresql; sudo -u postgres psql -c 
 boot of a fresh volume. Seeing `seeding` on a rebuild means the data was not found, and the row will confirm it.
 
 Afterwards: `drop table rebuild_drill`, and put `admin_cidrs` back to `[]`.
+
+**And push the OpenObserve metadata back, because nothing else will.** Dashboards and alert rules are API objects, so Flux does not reconcile them and the
+metadata DB is `local-path` on the node's disk — it dies with the node. A rebuilt cluster therefore comes back observing nothing and alerting on nothing, with
+every pod healthy:
+
+```sh
+cd deploy/dashboards && ./apply.sh && ./apply.sh --check   # 13/14 panels is the expected state until data accumulates
+cd deploy/alerts     && ./apply.sh && ./apply.sh --check   # the template and destination are recreated too
+```
 
 #### The first time, the drill does not work as written — and why
 
