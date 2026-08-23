@@ -79,6 +79,42 @@ ej-api() {
         "https://staging.event-junkie.de/api/${1:-events?size=1}"
 }
 
+# --- one venue, end to end ---------------------------------------------------------------------
+#
+# "Is this venue importing?" used to mean scp-ing a SQL file to the node and running psql as
+# postgres. It does not have to: the importer's admin API has the source row, and the public API
+# says whether those events reached what a visitor sees — which is the better question and the one
+# psql cannot answer.
+#
+# The importer is deliberately unroutable (#416 — no Ingress path names it, and nothing in its
+# namespace may reach it), so its half needs a port-forward. Node-originated traffic is not subject
+# to NetworkPolicy in k3s, which is why port-forward still works. The site's half goes through the
+# ingress on purpose: TLS, routing and middlewares are part of what is being checked.
+
+ej-venue() {
+    local slug="${1:?usage: ej-venue <slug>}"
+    printf '=== source row (importer admin API) ===\n'
+    kubectl --context event-junkie-staging -n event-junkie port-forward svc/event-junkie-importer 8081:8081 >/dev/null 2>&1 &
+    local pf=$!
+    sleep 3
+    # The error body carries a `status` field of its own, so printing it unfiltered renders
+    # `"status": 404` where a source row's status belongs — which reads as a very broken venue
+    # rather than a typo. Check the code instead.
+    local code
+    code=$(curl -sS -o /tmp/ej-venue.json -w '%{http_code}' --max-time 20 \
+        "http://localhost:8081/api/admin/event-sources/${slug}")
+    if [ "$code" = "200" ]; then
+        python3 -c 'import json,sys; d=json.load(open("/tmp/ej-venue.json")); print(json.dumps({k: d.get(k) for k in ("slug","status","retryCount","lastImportAt","lastSuccessAt","lastEventCount","lastError")}, indent=2))'
+    else
+        printf 'no source with slug "%s" (HTTP %s)\n' "$slug" "$code"
+    fi
+    rm -f /tmp/ej-venue.json
+    kill "$pf" 2>/dev/null
+    printf '\n=== what the site would serve ===\n'
+    ej-api "events?venue=${slug}&size=3" |
+        python3 -c 'import json,sys; d=json.load(sys.stdin); print("future events:", d.get("totalElements")); [print(" ", e.get("eventDate"), (e.get("title") or "")[:60]) for e in (d.get("content") or [])]'
+}
+
 # --- database ---------------------------------------------------------------------------------
 #
 # Opens the forward, runs psql, and closes the forward again — an -f -N ssh left running is the

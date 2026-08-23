@@ -75,6 +75,37 @@ Production serves nothing publicly yet. Through its tunnel, once the application
 curl -I -k --resolve 'event-junkie.de:443:10.10.0.1' https://event-junkie.de/
 ```
 
+## Is one venue importing?
+
+The question `/next-importer` and every "did that scraper break?" ends in. **Two commands, no `psql`, no `sudo`** — and the second answers the better half,
+because a row in `event_source` is not the same claim as an event a visitor can see.
+
+```sh
+ej-venue quasimodo
+```
+
+Or by hand. The source row — status, retry budget, when it last succeeded, how many events that run wrote, and the error if there is one:
+
+```sh
+kubectl --context event-junkie-staging -n event-junkie port-forward svc/event-junkie-importer 8081:8081
+curl -s localhost:8081/api/admin/event-sources/quasimodo | jq
+```
+
+And what the site would actually serve for it:
+
+```sh
+curl -sk --resolve 'staging.event-junkie.de:443:10.10.1.1' \
+  'https://staging.event-junkie.de/api/events?venue=quasimodo&size=3'
+```
+
+**The two numbers should agree**, and when they do not that is the finding: `lastEventCount` is what the run wrote, `totalElements` is what survives as a future
+event. A run that wrote 29 and a site that shows 0 is a venue publishing only past dates, which no infrastructure check sees.
+
+**The importer needs a port-forward and the site must not have one.** No Ingress path names the importer and nothing in its namespace may reach it ([#416](https://github.com/enorm-labs/event-junkie/issues/416)) — port-forward works only because node-originated traffic is not subject to NetworkPolicy in k3s. The site goes through the ingress for the opposite reason: TLS, routing and the middlewares are part of what is being checked.
+
+**This replaces the older recipe** of `scp`-ing a `.sql` file to the node and running `sudo -u postgres psql`. That still works and is below, but it needs the
+superuser shell for a read-only question and it stops at the database.
+
 ## Database
 
 ```sh
@@ -158,6 +189,7 @@ What it defines:
 | `ejk` / `ejkp`                     | `kubectl` with `--context` already pinned to staging / production |
 | `ejf` / `ejfp`                     | the same for `flux`                                               |
 | `ej-site` / `ej-api`               | curl the staging site and API with the right `--resolve` and `-k` |
+| `ej-venue <slug>`                  | one venue end to end: the source row, then what the site serves   |
 | `ej-db` / `ej-db-prod`             | open the tunnel _and_ a `psql`, then close it again               |
 | `ej-o2`                            | the OpenObserve port-forward                                      |
 | `ej-backups` / `ej-backups-prod`   | `walg check` on the right node                                    |
