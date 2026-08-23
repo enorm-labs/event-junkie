@@ -9,6 +9,7 @@ import VenueCard from '@/components/VenueCard.vue'
 import { useVenueSearch, type VenueSearchParams } from '@/composables/useVenues'
 import { DISTRICTS } from '@/lib/districts'
 import { useI18n } from 'vue-i18n'
+import { PANEL_CLASS } from '@/lib/utils'
 
 const PAGE_SIZE = 24
 
@@ -71,7 +72,7 @@ const { t } = useI18n()
       <p class="text-muted-foreground">{{ t('venues.subtitle') }}</p>
     </header>
 
-    <div class="flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-4">
+    <div :class="PANEL_CLASS">
       <form class="flex gap-2" @submit.prevent="applyFilters({ q: search })">
         <BaseInput
           v-model="search"

@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import type { VenueSummary } from '@/api/types'
 import { districtLabel } from '@/lib/districts'
 import { useLocalePath } from '@/composables/useLocalePath'
+import { CARD_CLASS } from '@/lib/utils'
 
 const props = withDefaults(
   defineProps<{
@@ -25,7 +26,7 @@ const localePath = useLocalePath()
 <template>
   <RouterLink
     :to="localePath(`/venues/${venue.slug}`)"
-    class="group flex gap-4 rounded-xl border border-border bg-card p-3 shadow-sm transition-all hover:border-primary/40 hover:shadow-md motion-safe:hover:-translate-y-0.5"
+    :class="CARD_CLASS"
   >
     <img
       v-if="venue.imageUrl"
