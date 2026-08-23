@@ -422,6 +422,27 @@ mark, and a rubber stamp that animates is a contradiction.
 - **Detail pages:** editorial layout; big image, lineup, venue — the place to reveal full-colour imagery.
 - **Empty/404/loading:** carry the §3 voice.
 
+### 5.8 Iconography
+
+**Audited 2026-08-23, and it needed no code** — which is worth recording, because the alternative was inventing a pass that had nothing to fix.
+
+**One library: [Lucide](https://lucide.dev), via `@lucide/vue`.** Three icons are in use across the whole application — `CalendarDays`, `Sun` and `Moon` — plus
+two vendored marks that are not icons: `GitHubMark` (a third-party glyph, kept verbatim under GitHub's brand terms) and the brand SVGs.
+
+**Sizing is already handled, by the button rather than by each call site.** The shadcn button carries `[&_svg:not([class*=size-])]:size-4` and scales it per
+variant — `size-3` for `xs`, `size-3.5` for `sm`. **Every icon in the app today sits inside a `Button`**, so all four render at exactly 16 px without a single
+size class anywhere in the source. Measured in a browser rather than assumed.
+
+Two rules follow, and the second is the one that will be needed first:
+
+- **Inside a button, add no size class.** That is what the `:not([class*=size-])` escape hatch is for, and overriding it silently opts out of the scale that
+  keeps a `sm` button's icon smaller than a default one's.
+- **Outside a button there is no rule yet, because there is no such icon yet.** Set the size explicitly when the first one appears and match it to the text it
+  sits beside — an unsized Lucide icon renders at its own default of 24 px, which is larger than any body text here.
+
+Decorative icons take `aria-hidden="true"`; the surrounding control carries the accessible name. That rule lives in
+[`events-frontend/AGENTS.md`](../events-frontend/AGENTS.md) §Accessibility with the rest of the a11y conventions.
+
 ## 6. How this maps to code
 
 - **Colour / radius / type tokens** → `events-frontend/src/assets/main.css` (`:root` + `.dark`). Re-theming is CSS-variable edits only (ADR-010).
