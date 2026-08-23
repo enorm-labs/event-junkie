@@ -536,12 +536,17 @@ what every link to the project unfurls as on Slack, X or Discord.
 GitHub and written down nowhere drifts, and the previous description proves it — it predated the product, never said _Event Junkie_, described the project as
 _simple_ and as _checking_ events, and spent a third of its length on a parenthetical about future scope.
 
-| Field              | Value                                                                                                                                                         |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Description**    | `Event Junkie — your always-fresh feed of what's on across Berlin's venues. Concerts, club nights, festivals, and the odd quiz night.`                        |
-| **Homepage**       | `https://event-junkie.de` — **once it resolves.** Setting it before the deploy points people at nothing, which is worse than empty                            |
-| **Topics**         | `berlin` `events` `concerts` `nightlife` `kotlin` `spring-boot` `webflux` `vue` `typescript` `kubernetes` `web-scraping` `gitops` `helm` `flux`               |
-| **Social preview** | `docs/branding/social-preview.png` — 1280×640, the English tagline stamp on ink. **Rendered; still to upload**, which is a settings page rather than a commit |
+| Field              | Value                                                                                                                                                                                                                                                                            |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description**    | `Event Junkie — your always-fresh feed of what's on across Berlin's venues. Concerts, club nights, festivals, and the odd quiz night.`                                                                                                                                           |
+| **Homepage**       | ⚠️ **Set, and it should not be yet.** The field reads `https://event-junkie.de`, and that domain does not resolve — it is not registered (§7). Every visitor to the repository page is offered a link that fails DNS, which is the exact failure this row was written to prevent |
+| **Topics**         | `berlin` `events` `concerts` `nightlife` `kotlin` `spring-boot` `webflux` `vue` `typescript` `kubernetes` `web-scraping` `gitops` `helm` `flux`                                                                                                                                  |
+| **Social preview** | ✅ **Uploaded 2026-08-23.** `docs/branding/social-preview.png` — 1280×640, the English tagline stamp on ink. Verified by the repo page serving it from `repository-images.githubusercontent.com`, which is the custom-upload host rather than GitHub's generated one             |
+
+**Checked against the live repository on 2026-08-23**, which is the point of recording the values here rather than only in a settings page. Description and
+topics match this table exactly. The social preview is up. **The homepage does not**, and it is worth being blunt about why that matters: the guidance in that
+row — _setting it before the deploy points people at nothing, which is worse than empty_ — was written before the field was filled in, and filling it in anyway
+is how a documented decision quietly becomes a stale one. **Clear it until the domain resolves.**
 
 **The description is the one-liner from §1 with the product name in front**, and that is deliberate rather than lazy: a second sentence written for GitHub would
 be a fourth line of brand copy to keep in step with the tagline, the positioning line and the one-liner — and §1 already warns what happens when those get used
