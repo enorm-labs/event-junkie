@@ -16,10 +16,22 @@ paths = [
     '''build/''',
     '''\.idea''',
     # Scraper snapshots are verbatim captures of public, unauthenticated pages and API
-    # responses — by construction they contain no credentials. They do carry high-entropy
-    # opaque ids (Sanity Portable Text `_key`s, CDN asset hashes, widget ids) that the
-    # entropy-based `generic-api-key` rule flags, so the fixture tree is excluded wholesale
-    # rather than accruing a per-file suppression with every new importer.
+    # responses. They carry high-entropy opaque ids (Sanity Portable Text `_key`s, CDN asset
+    # hashes, widget ids) that the entropy-based `generic-api-key` rule flags, so the fixture
+    # tree is excluded wholesale rather than accruing a per-file suppression with every new
+    # importer.
+    #
+    # **The exclusion is about those false positives, and not about the tree being credential-free.**
+    # It used to claim the latter — "by construction they contain no credentials" — and that was
+    # wrong: a captured page can embed a *third party's* key, because the venue put it there. Void
+    # Club's site did, and GitHub secret scanning raised alert #1 for a Google Maps key on
+    # 2026-08-04 that this file had told gitleaks to skip. Redacted in #684.
+    #
+    # What makes the wholesale exclusion acceptable is therefore not the claim it rested on, but
+    # that a second net exists: GitHub secret scanning reads the tree regardless of this file, and
+    # is what caught the one case. Do not narrow that gap by tightening this list — a per-file
+    # suppression per importer is the cost the exclusion was introduced to avoid, and it would not
+    # have caught the Void Club key either.
     '''events-importer/src/test/resources/scraper/''',
 ]
 
