@@ -221,7 +221,7 @@ _"we noticed and changed it before launch"_ and a recollection.
 `EJ` remains a two-letter monogram that everybody has, which affects what could be protected rather than what may be used. If the badge ever needs defending
 rather than merely using, that is the conversation, and it is a lawyer's rather than this document's.
 
-**Re-run the image searches if the artwork changes materially** — in particular when the stamp's text is converted to outlines and its distress redrawn, since
+**Re-run the image searches if the artwork changes materially** — the text is now outlined, which changed no shape; the distress redraw still would, since
 that changes the shape a similarity search matches on.
 
 ### 4b. The direction — **decided 2026-08-23 (#475)**
@@ -297,8 +297,9 @@ criterion that decides logos.
 **The club stamp is a lockup, not a mark, and the distinction is load-bearing.** Distress is fine detail by definition. At 96 px wide the wordmark still reads
 and _BERLIN_ is already a smudge; at 16 px it is a grey rectangle. It cannot be asked to fill an icon slot, which is exactly why the badge exists.
 
-**One thing must happen before the stamp ships**, down from two. Its wordmark is Rubik Distressed and **already outlined**; what remains is the secondary line
-_BERLIN_, still `<text>`, which should be set in **Geist** — the site's own face, already self-hosted — and then outlined. _BERLIN_ is deliberately **not**
+**The stamp's type is fully outlined**, wordmark and caption both — the wordmark in Rubik Distressed, the caption in **Geist**, the site's own face, via
+`scripts/outline-text.sh` (2026-08-23). Nothing in the lockups can fall back to a different typeface without saying so, which is the whole reason for outlining.
+What remains before it ships is the **frame wear**, which is still algorithmic and wants a hand redraw. _BERLIN_ is deliberately **not**
 distressed: in the same face it degrades to a row of specks long before the wordmark does, and a clean secondary line is how real stamps are built anyway. The
 frame wear still wants a hand redraw, since the current ellipses are algorithmic.
 
