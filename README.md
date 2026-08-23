@@ -28,7 +28,7 @@ in [BRANDING.md](./docs/BRANDING.md).
 </p>
 
 <p align="center">
-  <sub>The events list, in the dark theme new visitors get by default. Real data, scraped from the venues' own sites — the count in the screenshot is not a mock-up.</sub>
+  <sub>The events list, in the dark theme new visitors get by default — real data, scraped from the venues' own sites. August 2026; see <a href="./docs/screenshots/">docs/screenshots</a>.</sub>
 </p>
 
 ## Contents

@@ -533,6 +533,15 @@ those limits. There is no coverage argument for adding the CLI.
 What automation genuinely cannot do is still worth knowing: axe reliably finds roughly a third of WCAG issues. Keyboard-only walkthroughs and a screen-reader
 pass remain manual, and are tracked in [docs/LEGAL.md §12](../docs/LEGAL.md).
 
+## Screenshots go stale silently
+
+`docs/screenshots/` holds the pictures in the README, and **nothing will tell you when one is wrong** — a screenshot of last year's UI renders exactly as well as
+one of today's. Retake after changing `App.vue`, `EventCard.vue`, `EventFilterBar.vue` or the theme tokens in `main.css`, since those are what the shots are
+actually of. The procedure and the reasons behind it are in [`docs/screenshots/README.md`](../docs/screenshots/README.md) — three things are easy to get wrong
+and all three shipped a worse picture the first time.
+
+**Not on a schedule, and not when the data changes.** The events turn over daily; chasing them would churn the image for reasons unrelated to the product.
+
 ## Linting & Formatting
 
 The project uses a two-tier linting strategy:
@@ -638,3 +647,4 @@ Uses Node 24.
 | Components             | `src/components/`           |
 | Unit tests             | `src/components/__tests__/` |
 | E2E tests              | `e2e/`                      |
+| README screenshots     | `../docs/screenshots/`      |
