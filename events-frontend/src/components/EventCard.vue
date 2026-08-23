@@ -55,7 +55,7 @@ const { t } = useI18n()
       v-if="event.imageUrl"
       :alt="event.title ?? ''"
       :src="event.imageUrl"
-      class="size-20 shrink-0 rounded-lg object-cover grayscale-50 transition duration-300 group-hover:grayscale-0"
+      class="size-20 shrink-0 rounded-lg object-cover grayscale transition duration-300 group-hover:grayscale-0"
       loading="lazy"
     />
     <div class="min-w-0 flex-1 space-y-1">
