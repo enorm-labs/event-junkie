@@ -167,6 +167,9 @@ flatter, ~3.9:1 against ~1.6:1) and their arrowhead. That is not enough distance
 as _Event Junkie_ or _Eventjunkie_ in the German or EU events market; the nearest neighbours are unrelated (_Startup Junkie_, US, different class). That is
 weak evidence and worth exactly what it cost: it rules out the obvious, and it says nothing about the registers.
 
+_(The side-by-side image #475 also asked for was never made, and is now moot: the comparison above was read from both sources rather than eyeballed, which is
+the stronger record, and the mark it compares is gone. Noted so it is not mistaken for outstanding work.)_
+
 **The register search still has to be done by hand**, because DPMAregister and TMview are session-based applications rather than queryable endpoints. Three
 searches, minutes each, all free:
 
@@ -311,8 +314,8 @@ outright, and it is also a specific actor's likeness. Note that the club stamp i
 crowded neighbourhood for a neighbouring one.
 
 **Every candidate, the bar each was held to, and the case against each** is in [LOGO_IDEAS.md](LOGO_IDEAS.md). This section holds the decision; that file holds
-the arguments. The execution plan — every file that changes, in order, plus the surfaces a `grep` for `PulseMark` will never reach — is in
-[BRAND_REFRESH_PLAN.md](BRAND_REFRESH_PLAN.md).
+the arguments, and [§6](#6-how-this-maps-to-code) maps every asset to the file that ships it. The plan that executed this replacement was deleted once it was
+finished — see §6's closing note.
 
 ## 5. Website / visual design — ideas
 
@@ -432,6 +435,25 @@ mark, and a rubber stamp that animates is a contradiction.
   `src/components/BrandLogo.vue` (the header lockup — badge below `sm`, wordmark from `sm`).
 - **Fonts** → self-hosted `@fontsource-variable/geist`, imported in `src/main.ts`; `--font-*` tokens in
   `main.css`.
+
+**The plan that carried out the 2026-08 replacement is gone, deliberately.** `BRAND_REFRESH_PLAN.md` ran from the collision (§4a) to the last shipped asset and
+was deleted when it finished, on its own instruction: an all-ticked plan is a worse record than none, because the next reader cannot tell which unticked boxes
+are pending and which were simply overtaken. What it held that outlives it is here — §4a is the collision, §4b the decision, [LOGO_IDEAS.md](LOGO_IDEAS.md) the
+candidates, and the map above the assets. It is recoverable from git if the reasoning behind a phase is ever wanted.
+
+**Two checks it leaves behind, for the next time any of this changes.** Neither is automated and neither should be:
+
+```sh
+# 1. The documents. Expect only §4a and the (retired) glossary entries, which are about the old mark.
+grep -rln "PulseMark\|pulse mark" --include="*.md" .
+
+# 2. The tracker — the surface a grep cannot reach at all, and the one §1 already paid for.
+gh issue list --state all --limit 600 --json number,title,body \
+  --jq '.[] | select(.body != null and (.body | test("(?i)pulse mark|pulsemark"))) | "#\(.number)\t\(.title)"'
+```
+
+**And the surfaces that are neither**: the GitHub social preview and the homepage field, both in a settings page. §6a exists because a value set there and
+written down nowhere drifts.
 
 ## 6a. The GitHub repository's own metadata (#477)
 

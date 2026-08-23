@@ -6,7 +6,7 @@ promoted into [BRANDING.md](BRANDING.md) §4b as the decision.
 > **Decided 2026-08-23, and the answer was not a single mark.** Three surfaces, three assets: the **EJ badge** in every icon slot and in the header below `sm`,
 > the **wordmark** in the header at `sm`+ and in the footer, and the **club stamp** on the home hero, the README, the social preview and the About page. There
 > is no pictorial mark in the UI chrome — which is this page's _type-only_ entry, with a badge doing the one job type cannot do. The decision and its reasoning
-> are in [BRANDING.md](BRANDING.md) §4b; the execution is in [BRAND_REFRESH_PLAN.md](BRAND_REFRESH_PLAN.md).
+> are in [BRANDING.md](BRANDING.md) §4b, and §6 maps every asset to the file that ships it.
 >
 > **Criterion 4 is cleared.** Both adopted assets were put through TMview and eSearch plus image search, Google Lens and TinEye, and the wordmark and `EJ`
 > through DPMAregister, on 2026-08-23 — **no hits on any of them**. That is the check the pulse mark never got. [BRANDING.md](BRANDING.md) §4a bis records what
@@ -17,11 +17,10 @@ promoted into [BRANDING.md](BRANDING.md) §4b as the decision.
 
 Three documents, three jobs, and keeping them apart is what stops them drifting:
 
-| Document                                       | Holds                                                                          |
-| ---------------------------------------------- | ------------------------------------------------------------------------------ |
-| **This file**                                  | Every idea, the honest case against each, and what would have to be true       |
-| [BRANDING.md](BRANDING.md) §4, §4a, §4b        | The shipped mark, the collision that killed the last one, and the **decision** |
-| [BRAND_REFRESH_PLAN.md](BRAND_REFRESH_PLAN.md) | What to do once the decision exists — every file, in order                     |
+| Document                                | Holds                                                                          |
+| --------------------------------------- | ------------------------------------------------------------------------------ |
+| **This file**                           | Every idea, the honest case against each, and what would have to be true       |
+| [BRANDING.md](BRANDING.md) §4, §4a, §4b | The shipped mark, the collision that killed the last one, and the **decision** |
 
 ## The bar
 
