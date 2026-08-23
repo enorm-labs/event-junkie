@@ -85,7 +85,7 @@ useStructuredData((): JsonLd[] => {
 </script>
 
 <template>
-  <main class="mx-auto max-w-3xl space-y-8 p-8">
+  <main class="mx-auto max-w-3xl space-y-8 p-4 sm:p-8">
     <p v-if="loading" class="text-sm text-muted-foreground">{{ t('common.states.loading') }}</p>
 
     <div v-else-if="notFound" class="space-y-3">

@@ -33,7 +33,7 @@ useStructuredData(() => websiteJsonLd(locale.value as Locale))
 </script>
 
 <template>
-  <main class="mx-auto max-w-5xl space-y-12 p-8">
+  <main class="mx-auto max-w-5xl space-y-12 p-4 sm:p-8">
     <section class="relative py-20 sm:py-28">
       <div class="relative flex flex-col items-center gap-5 text-center">
         <!-- The stamp carries both the name and the tagline as artwork, per locale. The ambient
