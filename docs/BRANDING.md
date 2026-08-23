@@ -197,6 +197,10 @@ spending decisions on a logo before launch — and that is a legitimate conclusi
 **Not recommended: the scan line.** A cropped barcode is a horizontal-stripe silhouette, which is the same visual family as an equaliser — it would be trading
 one crowded neighbourhood for a neighbouring one.
 
+**The execution plan** — every file that changes, in order, plus the surfaces a `grep` for `PulseMark` will never reach — is in
+[BRAND_REFRESH_PLAN.md](BRAND_REFRESH_PLAN.md). It covers [#475](https://github.com/enorm-labs/event-junkie/issues/475) and the visual pass
+([#374](https://github.com/enorm-labs/event-junkie/issues/374)) that starts from whatever this section decides.
+
 ## 5. Website / visual design — ideas
 
 Grounded in the real stack: **Tailwind CSS v4 + shadcn-vue**, **Geist** type, **oklch** CSS-variable tokens in `events-frontend/src/assets/main.css`, dark mode
