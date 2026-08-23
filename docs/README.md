@@ -48,6 +48,7 @@ everything below — someone with a WireGuard tunnel open, not someone writing a
 | [EVENT_SCOPE.md](EVENT_SCOPE.md)                   | Which kinds of event belong here, and which don't |
 | [BRANDING.md](BRANDING.md)                         | Name, voice, visual direction                     |
 | [BRAND_REFRESH_PLAN.md](BRAND_REFRESH_PLAN.md)     | Replacing the logo, then the visual pass          |
+| [LOGO_IDEAS.md](LOGO_IDEAS.md)                     | Candidate marks, and the case against each        |
 | [VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md) | Where this is going                               |
 
 ## Across all of it

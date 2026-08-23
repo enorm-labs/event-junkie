@@ -171,35 +171,138 @@ searches, minutes each, all free:
 Classes that matter here are **9** (software/apps), **41** (entertainment, arranging events) and **42** (SaaS). A word mark in an unrelated class is not a
 problem; one in 9 or 41 is.
 
-### 4b. The direction, with a recommendation — **needs a decision**
+**The figurative check is a different search from the word check, and a better one than reverse image search.** #475 asks for the mark to be reverse image
+searched, and that instinct is right but the tool is wrong: TinEye and Google Images are built to find copies of a photograph, and on a flat monochrome logo
+they return stock-icon noise. **eSearch plus and TMview both do AI image search** — upload one PNG and they rank visually similar marks by colour, shape and
+texture across roughly 57 million figurative applications, free and without an account. That searches _registered trade marks_, which is the actual risk, rather
+than the whole web, which is not.
 
-Beyond the four still parked above, #475 raises the Trainspotting idea and four others. On Trainspotting: the cultural fit is real, and the execution that
-survives both cautions is the film's **poster language** (orange-and-black, mixed-weight condensed type, numbered character strip, stark white ground) rather
-than its characters — a face breaks §3's _"never actually about drugs"_ rule outright, and it is also a specific actor's likeness.
+Do both, on both adopted assets. Reverse image search still has a job — it is what would surface an unregistered mark in active use, which is exactly what
+SprintPulse was.
 
-**Recommended: the overflowing calendar cell.** A single date square with more entries than fits, spilling past its edge. Drawn and committed as
-[`docs/branding/mark-proposal-overflow.svg`](branding/mark-proposal-overflow.svg) so the choice is concrete rather than described.
+### 4a bis. What the checks have returned so far — 2026-08-23
 
-Why it wins on this project's own criteria rather than on taste:
+**Text prior-art, run and recorded. It rules out the obvious and is not a substitute for either search above.**
 
-- **It is the only direction about _events_.** Every other candidate here is about music or about the pun. The product is a calendar of what is on, and the
-  thing it does better than its neighbours is coverage — which is precisely what "more than fits" draws.
-- **It draws the tagline.** _Can't get enough of Berlin_ is a statement about volume, and this is that statement as a silhouette.
-- **It is furthest from where we are leaving.** Waveform, heartbeat, soundbar and equaliser are one neighbourhood, and it is a crowded one — the collision
-  above is what a crowded neighbourhood costs.
-- **It satisfies §4's principles without needing a designer to start.** Geometric, monochrome, one silhouette, legible at 16 px, and hand-authorable as SVG —
-  which is how the current mark was made.
+- **The wordmark: reconfirmed clear.** No product, app or company trading as _Event Junkie_ or _Eventjunkie_ in the German or EU events market. Nearest
+  neighbour remains _Startup Junkie_ (US, unrelated class).
+- **"EJ" is not a clear field in events, though nothing found is a design collision.** Several small entities trade under it — _EJ Entertainment Ltd_ (CA), _EJB
+  Entertainment_, _EJ Events_ (US), and a recording artist billed as _EJ_. None is a software product and none was found using a badge mark, but the two letters
+  are in use in class 41 adjacent territory and the register check should be run on `EJ` as a figurative mark, not only on the wordmark.
+- **EJ monogram templates are abundant on the stock marketplaces.** That is a distinctiveness signal rather than a collision: a two-letter monogram is weak to
+  protect precisely because everybody has one. It does not stop us using it — the badge's job is to be an app icon, not to be defended — but it should not be
+  mistaken for an ownable asset.
+- **The stamp device is common and unremarkable.** Nothing specific found in Berlin nightlife. Its distinctiveness comes from the wordmark inside it, which is
+  the thing the register check covers, so its figurative risk is materially lower than the badge's.
 
-**Runner-up: type-only.** No mark at all, "Event Junkie" set with one deliberate typographic move. Cheapest, ages best, cannot collide with anybody's icon, and
-removes the favicon constraint by using a single letter as the app icon. It is the right answer if the honest conclusion is that this project should not be
-spending decisions on a logo before launch — and that is a legitimate conclusion.
+**Run 2026-08-23 — no hits, on any search.** All four, and naming them is the point of recording it:
 
-**Not recommended: the scan line.** A cropped barcode is a horizontal-stripe silhouette, which is the same visual family as an equaliser — it would be trading
-one crowded neighbourhood for a neighbouring one.
+| Search                                                                   | Against                                  | Result |
+| ------------------------------------------------------------------------ | ---------------------------------------- | ------ |
+| [TMview](https://www.tmdn.org/tmview/) image search                      | EJ badge, club stamp — classes 9, 41, 42 | none   |
+| [EUIPO eSearch plus](https://www.euipo.europa.eu/en/search) image search | EJ badge, club stamp                     | none   |
+| [DPMAregister](https://register.dpma.de/DPMAregister/marke/einsteiger)   | `Event Junkie`, `Eventjunkie`, `EJ`      | none   |
+| Google Lens / TinEye                                                     | EJ badge, club stamp                     | none   |
 
-**The execution plan** — every file that changes, in order, plus the surfaces a `grep` for `PulseMark` will never reach — is in
-[BRAND_REFRESH_PLAN.md](BRAND_REFRESH_PLAN.md). It covers [#475](https://github.com/enorm-labs/event-junkie/issues/475) and the visual pass
-([#374](https://github.com/enorm-labs/event-junkie/issues/374)) that starts from whatever this section decides.
+**What that establishes, stated at its actual weight.** The wordmark and both adopted assets are clear of registered figurative marks in the classes that
+matter, and clear of anything a web-wide image search surfaces in active use. That is the check the pulse mark never got, and it is the difference between
+_"we noticed and changed it before launch"_ and a recollection.
+
+**What it does not establish.** It is not a legal clearance opinion, no search is exhaustive, and none of it speaks to the **distinctiveness** point above —
+`EJ` remains a two-letter monogram that everybody has, which affects what could be protected rather than what may be used. If the badge ever needs defending
+rather than merely using, that is the conversation, and it is a lawyer's rather than this document's.
+
+**Re-run the image searches if the artwork changes materially** — in particular when the stamp's text is converted to outlines and its distress redrawn, since
+that changes the shape a similarity search matches on.
+
+### 4b. The direction — **decided 2026-08-23 (#475)**
+
+**There is no single logo. There are three surfaces, and each gets the thing that works on it.** That is the decision, and it is a different shape from the
+question this section originally asked — which was "which mark wins", and had the overflowing calendar cell as its recommendation.
+
+| Surface                                                              | What goes there                                                                                                                                                       |
+| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`favicon.svg`, `favicon.ico`** — 16 px                             | **Small badge** — [`…-ej-badge-small.svg`](branding/mark-ej-badge-small.svg)                                                                                          |
+| **Header, below `sm`** — 24 px                                       | **Small badge** — the same file                                                                                                                                       |
+| **Header, `sm` and up**, and the **footer**                          | The **wordmark** alone                                                                                                                                                |
+| **README, social preview, `apple-touch-icon`, merch** — 96 px and up | **Stamp badge** — [`…-ej-badge-stamp.svg`](branding/mark-ej-badge-stamp.svg)                                                                                          |
+| **Home hero**, **About page**                                        | The **tagline stamp**, per locale — [`…-tagline-en.svg`](branding/lockup-club-stamp-tagline-en.svg) / [`…-tagline-de.svg`](branding/lockup-club-stamp-tagline-de.svg) |
+| **README, GitHub social preview, merch** — English-only              | The **tagline stamp**, English — [`…-tagline-en.svg`](branding/lockup-club-stamp-tagline-en.svg)                                                                      |
+
+**There is no pictorial mark in the UI chrome at all.** This is §4b's own runner-up — type-only — with a badge doing the one job type cannot do, which is being
+an app icon. The parked directions (pin+play, ticket stub, live dot, monogram-as-ligature) stay parked, and the two marks drawn during this decision — the
+overflowing calendar cell and the beanie — were **dropped on 2026-08-23** once the stamp direction was chosen. Their drawings are recoverable from git history
+with their geometry notes intact, and what was learned from rendering them is kept in [LOGO_IDEAS.md](LOGO_IDEAS.md) rather than deleted with them.
+
+**The typeface is Rubik Distressed, and the licence is why.** It is **SIL Open Font License 1.1**, so commercial and logo use are permitted outright, with
+nothing to buy and no record to keep. It was chosen over Dharma Punk and RUBBER STAMP, both of which are **free for personal use only** — and outlining their
+glyphs would not have fixed that, because outlining is a technical step rather than a grant of rights. A mark cleared against every trademark register (§4a bis)
+and then set in an unlicensed font would have been cleared of the wrong risk.
+
+**There are three size rungs, and the boundaries are measured rather than assumed.** Rubik Distressed is a display face and its floor is high: rendered as a
+true-size ladder, the split badge is an illegible blob at 32 px, guessable at 48, resolves roughly at 64, and is comfortable only from **96 px**, where the
+distress starts reading as distress rather than as noise.
+
+| Rung        | Sizes        | Letters                                      |
+| ----------- | ------------ | -------------------------------------------- |
+| **Icon**    | 16 px        | Drawn — geometric, frameless, no font at all |
+| **Chrome**  | 24 px        | Drawn — the same file                        |
+| **Display** | 96 px and up | Set — Rubik Distressed, split and framed     |
+
+**Small-size variants with simplified letterforms are normal practice for a distressed identity**, not a compromise: the drawn letters are what the distressed
+ones look like once the distress stops being resolvable. The icon rung also keeps a property the display rung cannot have — it depends on no font, which
+`favicon.svg` needs because browsers are served the SVG itself.
+
+**The display badge's text is already outlined**, extracted from the font with `fontTools` and embedded as `<path>`. That removes the _"outline before it
+ships"_ blocker this file used to carry and makes it self-contained. It also removes a trap: **a renderer silently substitutes a default face when a font is
+missing**, so a `<text>` version of this rendered as clean Helvetica and looked perfectly fine — a logo that is wrong in a way nothing complains about.
+
+**The display badge is the lockup with the words taken out.** Same −2.5° tilt, same face, same square corners, same frame-only wear — one frame rather than the
+lockup's two, because a double rule closes into a thick band at 32 units where it reads cleanly at 320. Its sizing was matched to the lockup **by density rather
+than by arithmetic**: three settings were rendered against it, and the one where _EJ_ fills its frame the way _EVENT JUNKIE_ fills its own is what makes the two
+read as one family instead of two stamps.
+
+**The hero stamp carries the tagline, and therefore ships per locale — decided 2026-08-23.** The live tagline that sat beneath the hero is removed, so the
+stamp is now the only place it appears. That makes the caption localised artwork rather than language-neutral: _Can't get enough of Berlin_ on `/en` and _Von
+Berlin kriegst du nie genug_ on `/de`, which is what [§8](#8-localisation--the-german-register) requires — German is the brand speaking, not a translation layer
+over English.
+
+**The two files are not one file with the words swapped.** The German line is 31 characters against the English 26, and at the English caption settings it
+overflows the inner frame. Each has its own sizing; neither number transfers. The _BERLIN_ variant stays as the language-neutral option for any surface that
+needs one.
+
+**Badge and wordmark are never shown together.** They are the same two letters, so a badge beside its own wordmark is tautological. Splitting them across the
+`sm` breakpoint also solves a constraint that already exists: the header packs a lockup, a beta badge, four nav links and two icon controls, and at ~390 px that
+row overflowed and pushed the controls off-screen — which is why the wordmark is hidden below `sm` today and why `e2e/smoke.spec.ts` guards it. The badge is
+narrower than the wordmark, so it is what mobile can afford.
+
+**Why the recommendation did not survive.** The overflowing calendar cell was recommended here on reasoning that no rendering supported. Rasterised at 16 px it
+is a clipboard: the hanger ticks merge into the top edge and become a clamp, the entry lines close into a block, and the escaping line — the whole idea — is a
+fuzzy stub. The concept is still the strongest on paper; the drawing does not deliver it. That is criterion 1 of [LOGO_IDEAS.md](LOGO_IDEAS.md), and it is the
+criterion that decides logos.
+
+**The club stamp is a lockup, not a mark, and the distinction is load-bearing.** Distress is fine detail by definition. At 96 px wide the wordmark still reads
+and _BERLIN_ is already a smudge; at 16 px it is a grey rectangle. It cannot be asked to fill an icon slot, which is exactly why the badge exists.
+
+**One thing must happen before the stamp ships**, down from two. Its wordmark is Rubik Distressed and **already outlined**; what remains is the secondary line
+_BERLIN_, still `<text>`, which should be set in **Geist** — the site's own face, already self-hosted — and then outlined. _BERLIN_ is deliberately **not**
+distressed: in the same face it degrades to a row of specks long before the wordmark does, and a clean secondary line is how real stamps are built anyway. The
+frame wear still wants a hand redraw, since the current ellipses are algorithmic.
+
+**Still open: whether the stamp lands in the home hero now or after the visual pass.** Black ink, distressed and high-contrast is a different visual language
+from the UV-violet, soft-glow, dark-mode look §5.1 records as shipped, and putting it in the hero is a partial answer to [#374](https://github.com/enorm-labs/event-junkie/issues/374)
+made inside #475. The README and the social preview sit outside the app and can take it immediately; the hero is the one placement worth holding.
+
+**On Trainspotting**, unchanged: the cultural fit is real, and the execution that survives both cautions is the film's **poster language** (orange-and-black,
+mixed-weight condensed type, numbered character strip, stark white ground) rather than its characters — a face breaks §3's _"never actually about drugs"_ rule
+outright, and it is also a specific actor's likeness. Note that the club stamp is a quieter member of the same family, and that is not an accident.
+
+**Not adopted: the scan line.** A cropped barcode is a horizontal-stripe silhouette, which is the same visual family as an equaliser — it would be trading one
+crowded neighbourhood for a neighbouring one.
+
+**Every candidate, the bar each was held to, and the case against each** is in [LOGO_IDEAS.md](LOGO_IDEAS.md). This section holds the decision; that file holds
+the arguments. The execution plan — every file that changes, in order, plus the surfaces a `grep` for `PulseMark` will never reach — is in
+[BRAND_REFRESH_PLAN.md](BRAND_REFRESH_PLAN.md).
 
 ## 5. Website / visual design — ideas
 
@@ -221,6 +324,32 @@ the accent reads like a spotlight in a dark room — AA-verified in both modes. 
 Notes: keep `--background`, `--card`, `--muted`, borders neutral. Verify **WCAG AA** contrast for text on accent and accent on background in _both_ modes
 (accessibility is a first-class project value). The existing red `--destructive` must stay visually distinct from any red-ish accent — favours violet/magenta.
 
+**Re-examined against the stamp identity, 2026-08-23 — and kept.** The question was fair: the identity went monochrome, so the accent is now the only colour
+in the system, and violet was chosen when the hero was a violet glow. Three things settled it.
+
+**The palette is more constrained than it looks, because two hues already carry meaning.** This is not a taste argument, it is what `BaseBadge.vue` spends:
+
+| Token                 | Meaning                                                                          | How often                         |
+| --------------------- | -------------------------------------------------------------------------------- | --------------------------------- |
+| `--destructive` (red) | **Sold out**, cancelled, non-scheduled status, errors, the calendar's now-marker | Frequent — cards and detail pages |
+| `--success` (green)   | **Free**                                                                         | Frequent                          |
+| `--muted`             | Genre tags                                                                       | Everywhere                        |
+
+So **red is out** — which is a genuine loss, since red is _the_ rubber-stamp ink, but a red accent beside a red _Sold Out_ pill on the same card is exactly the
+collision the note above warns about. **Orange goes with it**, and takes the Trainspotting direction along. **Acid green is out** because `--success` owns it.
+That leaves violet or magenta; blue reads as a link and yellow cannot hold AA in light mode.
+
+**What clashed with the stamp was the glow, not the hue.** The soft radial blur is what made violet feel like an aesthetic the stamp was replacing, and it is
+deleted (§4b). Flat, hard-edged violet on near-black is a different object — and it has a name: **monochrome artwork plus one fluorescent spot ink**, which is
+the Berlin flyer convention and precisely what this system now is.
+
+**Violet is a stamp ink.** Alongside black and blue it is one of the three classic stamp-pad inks — bank endorsements, library date stamps, school marks. It is
+not in tension with a rubber stamp; it is what rubber stamps have been inked with for a century.
+
+**So the accent stays**, and this is recorded so it is not reopened cold. Magenta is the only realistic alternative and would cost an AA re-verification in both
+modes for a hue shift of roughly 55°. **Worth trying rather than deciding** (a #374 question): `ClubStamp` uses `currentColor`, so printing the stamp _in_ the
+accent on a secondary surface — the About page, the 404 — is a one-class change, and a violet stamp is authentic in a way a violet glow never was.
+
 ### 5.2 Dark-mode-first
 
 Nightlife skews dark. **Done:** dark mode is now the **default for first-time visitors**, set by the pre-paint script in `index.html` so there's no flash. An
@@ -233,8 +362,18 @@ explicit light choice is remembered in
 - **Body / UI:** **Geist** — now actually rendering and **self-hosted** via `@fontsource-variable/geist`
   (imported in `main.ts`); the render-blocking Google Fonts request is gone. (A shadcn-scaffold name mismatch had it silently falling back to a system font
   until that was fixed.)
-- **Display / hero:** _(open)_ consider a characterful face for big headings (a tight grotesque, or a mono for a "listings/terminal" edge) to add nightlife
-  personality; keep Geist for everything functional.
+- **Display / hero:** **decided 2026-08-23 — stay with Geist.** [#377](https://github.com/enorm-labs/event-junkie/issues/377) asked this when the hero carried a
+  giant live `<h1>`, which was the one place a display face would clearly have paid. That `<h1>` is now `sr-only` and the stamp carries it as artwork, so the
+  largest live heading on the site is `text-3xl` — 30 px page and detail titles. The brand's own display face cannot help either: **Rubik Distressed floors at
+  96 px** (§4b), so the face that gives the identity its personality is structurally unusable as live type. And most remaining headings are **scraped content** —
+  event and venue titles — where a characterful face is a liability against long strings and whatever the venues type. The personality was bought in the stamp,
+  at a size where legibility is not at risk.
+- **Mono:** **Geist Mono**, via `@fontsource-variable/geist-mono` (OFL-1.1, same family as the sans). This is the half of the typography question nobody had
+  logged. `--font-mono` is **not defined**, so Tailwind's system stack applies and the **eyebrow label** — a named brand device (§5.6) — renders as SF Mono on
+  a Mac, Consolas on Windows and DejaVu on Linux. The hero tagline and the footer version string are in the same position. Pinning it makes _all-Geist_ true
+  rather than approximate, and costs one subsetted variable font on the pattern already established for the sans.
+- **`--font-heading` is a dead token.** It is defined in `main.css` as `var(--font-sans)` and **nothing reads it** — every heading uses `font-bold` and
+  inherits `font-sans`. Wire it up or delete it: a token nothing consumes is worse than no token, because it advertises a lever that is not connected.
 
 ### 5.4 Imagery
 
@@ -295,7 +434,7 @@ different things and both should find this; the stack half is also what makes th
 - [x] Prototyped the waveform wordmark and shipped it as the favicon + header lockup (§4).
 - [x] Dark mode is the default for new visitors (§5.2).
 - [x] Self-hosted Geist via `@fontsource-variable/geist`, so it actually renders with no external request (§5.3).
-- [ ] Decide on a display/hero type face vs. staying all-Geist (§5.3).
+- [x] Decided the display/hero type face question: **stay all-Geist**, and make that true by pinning the mono to Geist Mono (§5.3, #377).
 - [x] Add an `apple-touch-icon` PNG (iOS home screen doesn't render SVG favicons).
 - [ ] Register `event-junkie.de` (tracked in the roadmap).
 
@@ -351,25 +490,45 @@ The English examples in §3 have German counterparts written the same way — fo
 
 ## Glossary
 
-Shorthand used across this doc, the code, and PR descriptions. _(planned)_ marks a term whose implementation is still on the backlog above.
+Shorthand used across this doc, the code, and PR descriptions. _(planned)_ marks a term whose implementation is still on the backlog above; _(retired)_ marks one
+kept because older sections still use it, not because it still exists.
 
-- **Accent** — the single brand hue (UV violet) applied to the `--primary` / `--accent` / `--ring`
-  tokens; everything else stays neutral so it reads like a spotlight. See §5.1.
-- **Ambient glow** — the soft radial violet light in the home hero, centered on the pulse mark so the mark reads as its source. Fades to transparent on its own
-  (no `overflow` clip), never a hard shape.
+- **Accent** — the single brand hue (UV violet) applied to the `--primary` / `--accent` / `--ring` tokens; everything else stays neutral so it reads like a
+  spotlight. See §5.1. Since 2026-08-23 it appears nowhere in the logo — the identity is monochrome ink and the accent is a UI colour only.
+- **Ambient glow** _(retired)_ — the soft radial violet light that sat behind the home hero, centred on the pulse mark so the mark read as its source. Deleted
+  with the mark: its whole premise was that the mark is a light source, and a rubber stamp is ink. See §4b.
+- **Club stamp** — the wordmark lockup: _EVENT JUNKIE_ in Rubik Distressed inside a worn, square, 2.5°-tilted double frame. Two captions with two jobs —
+  _BERLIN_ for the bilingual app, the **tagline** for English-only surfaces (README, social previews, merch), because the tagline is localised and _BERLIN_ is
+  not. Files: [`branding/lockup-club-stamp.svg`](branding/lockup-club-stamp.svg) and its `-tagline` sibling. Component: `ClubStamp.vue`.
+- **EJ badge** — the logomark: the monogram in a square. Two constructions, split by size rather than taste — the **small badge** (drawn letters, no frame) for
+  16–24 px, and the **stamp badge** (Rubik Distressed, framed, tilted) from 96 px. See §4b. Component: `EjBadge.vue`.
 - **Eyebrow label** — a small, mono, uppercase, letter-spaced heading in the accent, used where a section title goes (e.g. "TONIGHT"). The editorial "listings"
-  look. Component: `SectionLabel.vue`.
-- **Favicon badge** — the app icon: a rounded, violet-gradient square holding the white pulse. File: `events-frontend/public/favicon.svg`.
-- **Home hero** — the top block of the home page: the animated pulse mark, the wordmark, the tagline, and the primary call-to-action, over the ambient glow.
+  look. Component: `SectionLabel.vue`. Unrelated to the pulse mark despite the shared vocabulary, and deliberately untouched by the mark replacement.
+- **Favicon badge** — the app icon: the small badge as a **flat ink** square holding the EJ monogram — no gradient and no accent ground (decided 2026-08-23).
+  File: `events-frontend/public/favicon.svg`. It needs **explicit fills** rather than the in-app knockout, or its letters take the colour of the tab strip
+  behind them.
+- **Home hero** — the top block of the home page: the club stamp, the tagline as live text beneath it, and the primary call-to-action. The `<h1>` is `sr-only`,
+  because the stamp carries the name as artwork and the live text has to survive for search and screen readers.
 - **Image treatment** — event card thumbnails are desaturated at rest and reveal full colour on hover, so mismatched, scraped photos feel cohesive. Detail-page
   hero images stay full colour. See §5.4; implemented in `EventCard.vue`.
+- **Ink / wear** — the eroded texture on the frames, drawn as grey ellipses in an SVG `mask`. Grey rather than black on purpose: a mask is luminance-based, so
+  grey **thins** the stroke where black would punch a hole, and ink thins. Never applied over letters — distress across a counter closes it.
+- **Knockout** — letters cut out of a solid shape as transparent holes rather than drawn in a second colour. It is why the badge survives small sizes (the eye
+  reads the surrounding mass) and why the **favicon** needs a separate build with opaque fills.
 - **Live dot** — a small pulsing accent dot on cards for events happening today, reinforcing liveness. See §5.5; implemented in `EventCard.vue`.
-- **Lockup** — the mark and wordmark used together as one unit (e.g. in the header nav). Component: `BrandLogo.vue`.
-- **Monogram** — an "EJ" ligature; a parked logo alternative for icon-only use. See §4.
-- **oklch** — the perceptual colour space the theme tokens are written in:
-  `oklch(lightness chroma hue)`. Neutral tokens have chroma `0`.
-- **Pulse mark** — the logomark itself: a single-stroke line that is at once a soundwave, a heartbeat (ECG), and a "hit". Component: `PulseMark.vue`; also the
-  favicon glyph.
-- **Reversed / single-ink** — the mark or lockup drawn in one flat colour (e.g. white on the accent), for contexts where the gradient can't render.
+- **Lockup** — a fixed arrangement of brand elements reproduced as one unit, never rearranged or respaced. From letterpress: type and blocks were assembled in a
+  metal frame (a _chase_) and **locked up** with expanding wedges so nothing shifted under the press. Two here — the **header lockup** (`BrandLogo.vue`: badge
+  or wordmark, never both) and the **club stamp**, which is the full lockup of wordmark plus caption.
+- **Monogram** — the letters `EJ`, drawn as separate forms rather than a ligature. No longer a parked alternative: since 2026-08-23 it is the mark. See §4b.
+- **oklch** — the perceptual colour space the theme tokens are written in: `oklch(lightness chroma hue)`. Neutral tokens have chroma `0`.
+- **Pulse mark** _(retired)_ — the previous logomark: a single-stroke line that was at once a soundwave, a heartbeat (ECG) and a "hit". Replaced because it
+  collided with **sprintpulse.io** — see §4a, which is the reason this entry is kept.
+- **Reversed / single-ink** — the mark drawn in one flat colour. Since the gradient was dropped this is no longer a separate variant: the badge is already one
+  flat colour.
+- **Rubik Distressed** — the display face, under the **SIL Open Font License 1.1**, so commercial and logo use are permitted with nothing to buy. Used only from
+  96 px up, where its distress resolves; below that the letters are drawn instead. Always **outlined** in artwork, never `<text>`.
+- **Size rung** — which construction a surface gets, decided by measurement rather than taste: **icon** (16 px) and **chrome** (24 px) use drawn letters,
+  **display** (96 px and up) uses Rubik Distressed. See §4b.
 - **Token** — a CSS-variable design value (colour, radius, font) in `main.css` (`:root` + `.dark`); re-theming means editing tokens, not components. See §6.
-- **Wordmark** — "Event Junkie" set as type (accent on "Junkie"), as distinct from the pulse mark. Part of the lockup and the hero.
+- **Wordmark** — "Event Junkie" set as type (accent on "Junkie"), as distinct from the badge. Used alone in the header from `sm` up and in the footer, and set
+  in Rubik Distressed inside the club stamp.
