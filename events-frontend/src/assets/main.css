@@ -14,6 +14,10 @@
      named brand device (§5.6), and without this token it rendered in whichever monospace the OS
      happened to have. */
   --font-mono: 'Geist Mono Variable', ui-monospace, monospace;
+  /* Rubik, for the wordmark and nothing else. Rubik Distressed — the stamp's face — is derived from
+     it, so the two share a skeleton; the distressed face itself cannot come down here, because at
+     18 px its distress reads as dirt rather than as texture (§5.3). */
+  --font-wordmark: 'Rubik Variable', sans-serif;
   /* Headings are Geist too — decided, not defaulted (§5.3, #377). The token exists so that stays a
      one-line change rather than a sweep through every view, and the base rule below is what makes
      it a real lever instead of an advertised one. */
