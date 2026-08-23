@@ -422,6 +422,116 @@
             "h": 7,
             "i": 9
           }
+        },
+        {
+          "id": "p_shedding",
+          "type": "line",
+          "title": "Metrics dropped before storage (points/sec)",
+          "description": "**Two ways a metric dies on the way in, and neither raises anything.** `send_failed` is OpenObserve returning 503 \u2014 the memtable overflow of #625. `enqueue_failed` is the collector's own queue full, so the point was never even attempted. Measured 2026-08-23, before the fix: 4.44M and 8.45M respectively in 48h, against 12.2M delivered \u2014 **about half of everything scraped**. Anything but a flat zero here means the panels above are sampling, not reporting.",
+          "config": {
+            "show_legends": true,
+            "decimals": 2
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum(rate(otelcol_exporter_send_failed_metric_points_total[5m]))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            },
+            {
+              "query": "sum(rate(otelcol_exporter_enqueue_failed_metric_points_total[5m]))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 19,
+            "w": 24,
+            "h": 7,
+            "i": 10
+          }
+        },
+        {
+          "id": "p_memtable",
+          "type": "line",
+          "title": "OpenObserve memtable (bytes held, against a 256 MiB ceiling)",
+          "description": "The gauge the ingest path actually checks \u2014 `writer.rs` rejects every write once the sum across memtables reaches `ZO_MEM_TABLE_MAX_SIZE`, which is a quarter of the container's memory limit: **268,435,456 bytes** at the current 1Gi. Approaching that line is the warning the 2026-08-21 outage never gave, because `ZO_PROMETHEUS_ENABLED` was false and this series did not exist. **Empty until that release reconciles** \u2014 the panel is here because the fix without it is unfalsifiable.",
+          "config": {
+            "show_legends": true,
+            "decimals": 2,
+            "unit": "bytes"
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "max(zo_ingest_memtable_arrow_bytes)",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 24,
+            "y": 19,
+            "w": 24,
+            "h": 7,
+            "i": 11
+          }
         }
       ]
     }

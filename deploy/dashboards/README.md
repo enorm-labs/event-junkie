@@ -45,7 +45,7 @@ The top row is the answer; the two rows under it are why.
 | Panel                  | Question it answers                                            |
 | ---------------------- | -------------------------------------------------------------- |
 | Oldest source          | Is the importer completing its cycle at all?                   |
-| Sources stale > 12h    | How much of the catalogue is going stale?                      |
+| Sources stale > 36h    | How much of the catalogue is going stale?                      |
 | Future events          | Can the site show anything? **The failure no HTTP check sees** |
 | Node memory available  | Is the node about to fall over?                                |
 | Twenty stalest sources | One broken scraper, or all of them?                            |
@@ -53,11 +53,24 @@ The top row is the answer; the two rows under it are why.
 | PostgreSQL size        | Disk filling — one of #271's five required alerts              |
 | Node load and memory   | Is a stall CPU or memory?                                      |
 | Certificate expiry     | Expiry — another of the five, and the silent one               |
+| Metrics dropped        | **Is anything above true?** Shedding on the way in (#625)      |
+| OpenObserve memtable   | How close the ingest path is to rejecting writes               |
 
 **"Future events" is the panel that justifies the whole exercise.** A venue redesigns its site, the
 scraper keeps returning 200 and writing nothing, the importer reports success, and the listings
 empty out over a fortnight while every infrastructure check stays green. `ImporterMetrics`' KDoc
 makes the same argument; this is where you would see it.
+
+**The last two panels are about the other nine.** Every panel above shows a gap the same way
+whether nothing happened or nothing was recorded, and on 2026-08-23 roughly **half of all scraped
+metric points were being dropped** before they reached storage — 4.44M rejected by OpenObserve and
+8.45M never queued by the collector, in 48 hours. A dashboard that cannot distinguish "quiet" from
+"blind" is the thing #625 fixed; these two are how it stays fixed.
+
+**`p_memtable` is empty until the release carrying `ZO_PROMETHEUS_ENABLED: "true"` reconciles**, so
+`apply.sh --check` reports 12/13 rather than 13/13 until then. That is the expected state, not a
+broken panel — the chart ships the setting off, which is why the outage had to be diagnosed from log
+lines in the first place.
 
 **"Node memory available" was added after the fact.** On 2026-08-20 the node global-OOMed — load
 99 on two cores, `openobserve` killed by the kernel, the API server flapping — and nothing was

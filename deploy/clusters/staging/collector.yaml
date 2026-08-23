@@ -285,11 +285,17 @@ spec:
               # 362 distinct `pg_*` streams, and `deploy/dashboards/` queries exactly one of them.
               # That is not a rounding error in the budget, it is the budget.
               #
-              # **It is stream COUNT that hurts, not row count.** OpenObserve partitions its memtable
-              # per stream, so 362 near-idle streams cost far more than the row figures suggest —
-              # which is why raising the container memory limit did not help: the pod was overflowing
-              # at 700Mi of 1536Mi, nowhere near its ceiling, while returning HTTP 503 to the
-              # collector and dropping data outright. Ingestion had effectively stalled from ~05:00.
+              # **It is stream COUNT that hurts, not row count.** OpenObserve holds arrow batches per
+              # stream inside the memtable, so 362 near-idle streams cost far more than the row
+              # figures suggest.
+              #
+              # **Correction, 2026-08-23:** this paragraph used to explain the HTTP 503s by saying the
+              # pod was "overflowing at 700Mi of 1536Mi, nowhere near its ceiling". The 700Mi was the
+              # container's RSS and the ceiling is not the container's — it is a separate 25%-of-cgroup
+              # memtable limit that the default rotation threshold sits above and can never reach.
+              # #625 has the arithmetic and `openobserve.yaml`'s `ZO_MAX_FILE_SIZE_IN_MEMORY` is the
+              # fix. Cutting the stream count was still worth doing and still helped — it lengthened
+              # the interval between overflows — but it was treating a symptom.
               #
               # The allowlist keeps what a single-node database is actually worth watching: is it up,
               # how big is it, how many connections, is it committing, is it deadlocking, and did the
