@@ -65,7 +65,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <main class="mx-auto max-w-5xl space-y-6 p-8">
+  <main class="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
     <header class="space-y-1">
       <SectionLabel as="p">{{ t('venues.eyebrow') }}</SectionLabel>
       <h1 class="text-3xl font-bold tracking-tight">{{ t('venues.title') }}</h1>

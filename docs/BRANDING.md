@@ -436,6 +436,27 @@ mark, and a rubber stamp that animates is a contradiction.
 - **Detail pages:** editorial layout; big image, lineup, venue — the place to reveal full-colour imagery.
 - **Empty/404/loading:** carry the §3 voice.
 
+### 5.7 Spacing
+
+Two rules, both arrived at by measuring what the app already did rather than by picking numbers.
+
+**Gutters: `p-4 sm:p-8`, on every page shell.** Before this, every shell was `p-8` unconditionally — a desktop value applied to phones, where it spent **16% of
+a 390 px viewport on gutters** and left 294 px of usable width inside a card. There was exactly one responsive padding utility in the entire app. Halving it
+below `sm` recovers 32 px, which is enough to reflow the events filter bar from five rows to three. Nothing at `sm` and above changed.
+
+**Section rhythm: `space-y-6` is the default.** Two deliberate exceptions, and they are the only ones:
+
+| Value        | Where                                                        | Why                                                   |
+| ------------ | ------------------------------------------------------------ | ----------------------------------------------------- |
+| `space-y-6`  | Listings (events, venues, calendar) and prose (about, legal) | The default                                           |
+| `space-y-8`  | Detail pages — event, artist, promoter, venue                | They stack more distinct blocks than a list does      |
+| `space-y-12` | Home                                                         | The only page with a hero, which needs room around it |
+
+The scale was 4, 6, 8 and 12 with no rule; About sat at 4 while the legal pages sat at 6 for the same kind of prose. It is now three values with a stated
+reason, and a fourth needs one before it is added.
+
+**Widths are already principled and unchanged:** `max-w-3xl` for reading (detail and prose), `max-w-5xl` for listings.
+
 ### 5.8 Iconography
 
 **Audited 2026-08-23, and it needed no code** — which is worth recording, because the alternative was inventing a pass that had nothing to fix.
