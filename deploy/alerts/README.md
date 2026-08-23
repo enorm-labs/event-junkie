@@ -90,11 +90,34 @@ Alerts are OpenObserve API objects, not Kubernetes ones, so Flux cannot reconcil
 nothing notices if somebody edits a rule in the UI, and nothing restores these after a node rebuild unless `apply.sh` is run.
 [`CLUSTER_BOOTSTRAP.md`](../../docs/ops/CLUSTER_BOOTSTRAP.md) is what has to remember, and it now lists both.
 
-## Two PromQL traps these rules are written around
+## Five traps these rules are written around
 
-Both were established by running queries against the live instance, and both fail silently:
+All five were established by running things against the live instance, and every one of them fails **silently** — a rule that looks configured and does nothing.
 
 1. **`time()` is frozen at the query window's start.** An age is `timestamp(x) - x`. The `time()` form under-reports by the whole window width and goes negative
    for anything newer than the window start.
-2. **`count(expr == bool 0)` counts every series, always.** Measured here: `count(up == bool 0)` returns 18 — the number of scrape targets — while
+2. **`count(expr == bool 0)` counts every series, always.** Measured: `count(up == bool 0)` returns 18 — the number of scrape targets — while
    `sum(up == bool 0)` returns 0, the number that are down. A site-down rule written with `count` fires permanently.
+3. **`frequency` is in minutes, whatever the documentation says.** The OpenAPI schema annotates it `(seconds)` and the source carries a TODO claiming alerts
+   are in seconds. Measured on this deployment: an alert created with `frequency: 1` evaluated at 11:32:00, 11:33:10, 11:34:20, 11:35:30 — a 70-second cadence,
+   one minute plus scheduler slack. The first version of these rules used seconds, so `ej-site-down` asked for 60 and got **one evaluation an hour**, and
+   `ej-certificate-expiry` asked for 3600 and would next have run in **two and a half months**. Nothing errored; the rules simply sat there.
+4. **A `<` or `<=` condition fires when it matches zero rows, and delivers nothing.** `handlers.rs` says it outright — "payload is empty (`<`/`<=` matching zero
+   rows)" — and the scheduler logs `Alert fired without notification (Deliver, payload empty: true)`. Three rules written as `value < threshold` fired seconds
+   after being created, with their thresholds nowhere near crossed, told nobody, and then silenced themselves for six to twenty-four hours. **That is the worst
+   combination available**: the UI shows a firing, no one is paged, and the silence window swallows the real firing behind it. Every rule here is therefore a
+   `>` against an inner `< bool` comparison — `sum(x < bool 15) > 0` is 1 when a real series is below 15, and 0 rather than empty when the series is missing.
+5. **`trigger_condition.operator`/`threshold` gate on the ROW COUNT, not the value**, and must be `>= 1`. The value comparison has already happened — the
+   scheduler rewrites the query as `({promql}) {operator} {value}` and runs that, so what comes back is "the series that crossed the line". Setting this pair to
+   the rule's own operator means `ej-importer-stale` asked for **more than one** matching series and never fired, while its query returned 71 hours against a 36
+   hour threshold for eight minutes straight. One field changed to `>=` produced `Alert conditions satisfied` → `Alert notification sent` →
+   `POST /api/default/alert_history/_json 200` on the very next evaluation.
+
+**What a working firing looks like**, from `alert_history` on 2026-08-23:
+
+```json
+{"alert":"ej-importer-stale","stream":"importer_source_last_success","value":"71.94","environment":"staging"}
+```
+
+`{alert_name}`, `{stream_name}`, `{org_name}` and `{value}` substitute; **`{timestamp}` does not** — it arrives as the literal string. The ingest timestamp is
+already on the row as `_timestamp`.

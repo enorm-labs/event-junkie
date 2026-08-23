@@ -51,7 +51,11 @@ TEMPLATE_BODY = json.dumps(
         "stream": "{stream_name}",
         "org": "{org_name}",
         "value": "{value}",
-        "fired_at": "{timestamp}",
+        # No `{timestamp}`: it is not a substitution OpenObserve knows, so it
+        # arrived as the literal string "{timestamp}" in every row. The ingest
+        # timestamp is already on the row as `_timestamp`, which is the one a
+        # query would use anyway. Verified substitutions: `{alert_name}`,
+        # `{stream_name}`, `{org_name}`, `{value}`.
         "environment": "staging",
     }
 )
