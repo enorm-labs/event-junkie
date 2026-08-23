@@ -68,18 +68,33 @@ signal-cli.observability.svc.cluster.local  ->  400 Destination URL blocked by S
 openobserve-…svc.cluster.local              ->  400 Destination URL blocked by SSRF guard
 ```
 
-An OpenObserve webhook into `signal-cli-rest-api` **is** item 4's architecture, and it cannot be created today regardless of registration. There are two ways
-through (`config.rs:1177`), and they are not equivalent:
+An OpenObserve webhook into `signal-cli-rest-api` **is** item 4's architecture. Two flags govern it (`config.rs:1177`), and they are not equivalent:
 
-|                          |                                                                                      |
-| ------------------------ | ------------------------------------------------------------------------------------ |
-| `ZO_SSRF_ALLOW_LOOPBACK` | the process may notify **itself** and nothing else. Set, and what `record-only` uses |
-| `ZO_SKIP_SSRF_CHECKS`    | removes the check for **every** destination. Not set                                 |
+|                          |                                                                             |
+| ------------------------ | --------------------------------------------------------------------------- |
+| `ZO_SSRF_ALLOW_LOOPBACK` | the process may notify **itself** and nothing else. What `record-only` uses |
+| `ZO_SKIP_SSRF_CHECKS`    | removes the check for **every** destination. Set, **with the policy below** |
 
-The second is what the Signal route needs, and it is deliberately deferred rather than quietly enabled: the `observability` namespace has **no NetworkPolicies at
-all**, so nothing else constrains where this pod may connect. Turning the guard off wholesale lets anyone holding the OpenObserve root credential — which three
-other components already hold — point a "destination" at any address in the cluster. **The honest pairing is `ZO_SKIP_SSRF_CHECKS` plus an egress policy**, and
-that belongs with the Signal work rather than smuggled in with a set of alert rules.
+**The decision, taken 2026-08-23: the guard comes off and the containment moves to the network.** A URL allowlist inside a process is advisory — it constrains
+the feature, not the process — while an egress policy constrains anything the pod can be made to do. `deploy/clusters/staging/openobserve-netpol.yaml` is that
+policy, and the two shipped in the same change:
+
+```
+OpenObserve -> CoreDNS:53                resolving anything at all
+OpenObserve -> the public internet:443   Hetzner Object Storage, where the data lives
+OpenObserve -> signal-cli:8080           the alert route, once item 4 has a number
+```
+
+PostgreSQL on the private network, the Kubernetes API, the kubelet and every other pod are unreachable from this pod, so a destination aimed at them fails at
+the network rather than at a check somebody can turn off.
+
+**What it does not fix, stated rather than glossed:** a destination may still point at any _public_ address, so whoever holds the root credential can exfiltrate
+alert bodies. That is inherent to having a webhook feature, it is not what the SSRF guard addressed, and that credential already reads every metric and log in
+the system.
+
+**The namespace still has no default-deny.** This policy is egress-only and selects one pod, which is enough to bound the feature being unblocked and is not the
+same thing as hardening the namespace — that needs an allowance per conversation for the operator, both collectors, the exporter and the bridge, and a k3d
+rehearsal to prove none of them break.
 
 A destination is mandatory, incidentally: `POST /api/v2/{org}/alerts` with `destinations: []` returns `Alert destination or workflows is required`, with or
 without `creates_incident`. So "rules now, delivery later" needs _a_ destination, which is why the loopback one exists.

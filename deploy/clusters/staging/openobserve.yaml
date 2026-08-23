@@ -192,6 +192,19 @@ spec:
       # than after the data is gone.
       ZO_PROMETHEUS_ENABLED: "true"
 
+      # ## An outbound flow nobody decided on
+      #
+      # `ZO_TELEMETRY` defaults to **true** and posts to `https://e1.zinclabs.dev` every 30
+      # minutes. It was found while working out what this pod is allowed to connect to, which
+      # is the only reason it surfaced at all — nothing here had ever named it.
+      #
+      # Turned off rather than allowed, on the same principle as the egress policy: an
+      # outbound flow that nobody chose is not one to keep because it happens to be small.
+      # It also does not survive scrutiny under LEGAL.md — this is the component holding
+      # every log line and metric in the system, and what its heartbeat contains is
+      # documented nowhere we control.
+      ZO_TELEMETRY: "false"
+
       # ## An alert has to have a destination, and every in-cluster URL is refused
       #
       # #271's alert rules cannot be created without one — `POST /api/v2/{org}/alerts`
@@ -216,13 +229,25 @@ spec:
       # rules use: a POST back into this pod's own ingest API, so a firing becomes a row in
       # the `alert_history` stream and the rules are exercised rather than hypothetical.
       #
-      # **`ZO_SKIP_SSRF_CHECKS` is deliberately NOT set, and the reason is a gap rather than
-      # a principle:** the `observability` namespace currently has **no NetworkPolicies at
-      # all**, so nothing else constrains where this pod may connect. Turning the guard off
-      # wholesale would make an authenticated OpenObserve user — the root user whose
-      # credential three other components already hold — able to point a "destination" at
-      # any address in the cluster. That is a decision to take with the Signal route, next
-      # to an egress policy, rather than a side effect of adding alert rules.
+      # **`ZO_SKIP_SSRF_CHECKS` is now set too, and only because the containment it was
+      # waiting for exists.** The earlier version of this comment said the flag was a
+      # decision to take "next to an egress policy, rather than a side effect of adding
+      # alert rules". That policy is `openobserve-netpol.yaml`, in this directory, and it
+      # ships in the same change as this line.
+      #
+      # **The control moves from the application to the network, which is the stronger
+      # place for it.** A URL allowlist inside a process is advisory — it constrains the
+      # feature, not the process — while an egress policy constrains anything the pod can
+      # be made to do. With the policy in place this pod may reach CoreDNS, the public
+      # internet on 443, and the Signal bridge. PostgreSQL on the private network, the
+      # Kubernetes API, the kubelet and every other pod are unreachable, so a destination
+      # aimed at them fails at the network rather than at a check somebody can turn off.
+      #
+      # **What this does not fix:** a destination may still point at any *public* address,
+      # so an operator with the root credential can exfiltrate alert bodies. That is
+      # inherent to having a webhook feature at all, it is not what the SSRF guard was
+      # about, and the credential in question already grants read access to every metric
+      # and log in the system.
       # **It is NOT in the `config:` block above, and that is not a style choice.** The chart
       # renders its ConfigMap from the 226 keys it knows about and **silently drops anything
       # else** — no error, no warning, and a `helm template` that looks entirely correct. The
@@ -231,7 +256,12 @@ spec:
       # environment variable, which is what the process reads anyway.
 
     extraEnv:
+      # Kept alongside the skip below rather than removed by it: if the wider flag is ever
+      # reverted, the loopback destination that records firings into `alert_history` keeps
+      # working, and the alert rules do not all break at once.
       - name: ZO_SSRF_ALLOW_LOOPBACK
+        value: "true"
+      - name: ZO_SKIP_SSRF_CHECKS
         value: "true"
 
     # The gateway's `prometheus-autodiscovery` job keeps pods carrying these, exactly as

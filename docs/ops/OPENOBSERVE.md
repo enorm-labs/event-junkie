@@ -96,9 +96,11 @@ un-fireable whenever either counter was quiet.
 **Firings go into the `alert_history` stream, not to a person yet.** Two separate reasons, and only one of them is the phone number:
 
 - [#271](https://github.com/enorm-labs/event-junkie/issues/271) item 4's Signal bridge is unregistered, and
-- **OpenObserve refuses any alert destination inside the cluster** — `signal-cli.observability.svc.cluster.local` is rejected by its SSRF guard, which is item
-  4's architecture blocked by a control unrelated to registration. `ZO_SSRF_ALLOW_LOOPBACK` permits the process to notify itself, which is what the interim
-  destination uses; reaching another pod needs `ZO_SKIP_SSRF_CHECKS` and, honestly, an egress policy alongside it. `deploy/alerts/README.md` has the reasoning.
+- **OpenObserve used to refuse any alert destination inside the cluster** — its SSRF guard rejected
+  `signal-cli.observability.svc.cluster.local`, which is item 4's architecture blocked by a control unrelated to registration. Settled on 2026-08-23:
+  `ZO_SKIP_SSRF_CHECKS` is set **and paired with an egress NetworkPolicy** (`deploy/clusters/staging/openobserve-netpol.yaml`) that lets this pod reach CoreDNS,
+  the public internet on 443 and the Signal bridge — and nothing else, including the database and the Kubernetes API. `deploy/alerts/README.md` has the
+  reasoning. So the remaining blocker on delivery really is just the phone number.
 
 **Re-apply after any rebuild**, for the same reason as the dashboard: alerts, destinations and templates are all metadata.
 
