@@ -204,7 +204,50 @@ spec:
     # collector — so the same keys at the top level are silently ignored, and the render looks fine
     # while the processor is simply absent. `helm template` plus a `yq` query for the processor is
     # what catches that; the rendered pipeline list is not enough on its own.
+    # ## Both collectors ship with `resources: {}`, and that is how a node dies
+    #
+    # **The chart sets no requests and no limits on either collector**, with the "conscious choice for
+    # the user" comment that upstream charts use — and until now the choice was never made. The
+    # gateway was measured at **928Mi with nothing above it**: not scheduled against, not capped, free
+    # to take the node with it. That is not a hypothetical failure mode here, it is the 2026-08-20
+    # global OOM (#271), where the kernel killed OpenObserve while the API server flapped.
+    #
+    # **The number is not a guess: it is the limiter's own worst case.** Both collectors run a
+    # `memory_limiter` processor that refuses data at `limit_mib` and forces GC above it — the
+    # graceful, *countable* form of shedding. The container limit therefore has to sit **above**
+    # `limit_mib + spike_limit_mib`, so that the limiter is always what bites first. Below it, the
+    # kernel wins the race and the pod dies with everything in flight, reporting nothing:
+    #
+    #     agent     memory_limiter 512 + 128 spike  ->  limits.memory 640Mi
+    #     gateway   memory_limiter 1024 + 256 spike ->  limits.memory 1280Mi
+    #
+    # **Requests are steady state, not the ceiling**, which is what the scheduler needs and what the
+    # 08-20 post-mortem's "floor before observability" arithmetic was missing: an unrequested pod is
+    # invisible to that sum.
+    agent:
+      resources:
+        requests:
+          memory: "128Mi"
+          cpu: "50m"
+        limits:
+          # Measured at 98Mi steady on staging. 640Mi is the limiter's ceiling plus its spike
+          # allowance, not headroom for growth — if the agent ever needs this much, the limiter has
+          # been refusing data for some time and that is the thing to look at.
+          memory: "640Mi"
+          cpu: "500m"
+
     gateway:
+      resources:
+        requests:
+          # 928Mi today, but that was a queue backed up behind #625's rejected writes rather than a
+          # working set. Revisit once a week of post-fix data exists; too high a request wastes the
+          # node, too low and the scheduler is again unaware of the largest pod in the namespace.
+          memory: "512Mi"
+          cpu: "100m"
+        limits:
+          memory: "1280Mi"
+          cpu: "1"
+
       processors:
         # ## Dropping the metrics nothing here will ever query
         #
@@ -345,6 +388,74 @@ spec:
 
       service:
         pipelines:
+          # ## Twenty-seven object kinds, six of which anybody would look at
+          #
+          # The chart's `logs/k8s_events` pipeline watches **every** workload, RBAC and networking
+          # kind in the cluster. Counted from the gateway's own receiver metrics over 48 hours, that
+          # produced 40,981 log records, of which:
+          #
+          #     crds            33,408   <- 81.5% of everything, a 5-minute PULL of every CRD
+          #     events           4,726
+          #     pods               897
+          #     nodes              571
+          #     replicasets        474   <- deploy churn, and `deployments` already says it
+          #     deployments        378
+          #     endpoints          226
+          #     networkpolicies    144
+          #     services            54
+          #     serviceaccounts     54
+          #     configmaps          36
+          #     ingresses           18
+          #     statefulsets         6
+          #     the other 14         0
+          #
+          # **`crds` is not a watch, it is a `mode: pull` every five minutes** — the full spec and
+          # status of every CustomResourceDefinition in the cluster, which on a cluster running Flux,
+          # cert-manager and the OTel operator is a great deal of YAML nobody will ever query. The
+          # chart carries a `transform/strip_crd_spec` processor whose entire purpose is to make that
+          # receiver survivable; with the receiver gone the processor has nothing to do, so it comes
+          # out of the list below too. **Re-adding `k8sobjects/crds` means re-adding it.**
+          #
+          # **The memory argument matters as much as the volume.** Each of these is a client-go
+          # informer holding its object set in the gateway's heap — 21 fewer of them is the other
+          # half of why that pod sat at 928Mi.
+          #
+          # **What is kept, and why each one earns it:**
+          #
+          #   - `events`       — the reason the pipeline exists: OOMKilled, FailedScheduling,
+          #                      ImagePullBackOff. This is the stream you read after an incident.
+          #   - `pods`         — phase transitions. **kube-state-metrics is not installed** (its
+          #                      scrape target has failed since day one), so this is the only record
+          #                      of a pod's lifecycle we have.
+          #   - `nodes`        — node conditions. MemoryPressure on this node is exactly what nothing
+          #                      was watching on 2026-08-20.
+          #   - `deployments`  — the three application workloads.
+          #   - `statefulsets` — OpenObserve and this gateway, which are the things that break.
+          #   - `daemonsets`   — the agent. Zero records so far, which is what healthy looks like.
+          #
+          # **`jobs` and `cronjobs` are deliberately dropped and deliberately named here**, because
+          # the reason is "nothing in this cluster is one yet" rather than "they do not matter". The
+          # importer is a Deployment with its own scheduler; the backups are systemd timers on the
+          # node. The day either becomes a Job, this list is where that gets noticed.
+          #
+          # **This does not shrink the ClusterRole.** The chart grants get/list/watch on all of these
+          # statically, so the permission survives the watch. Worth its own change; not this one.
+          logs/k8s_events:
+            receivers:
+              - k8sobjects/events
+              - k8sobjects/pods
+              - k8sobjects/nodes
+              - k8sobjects/deployments
+              - k8sobjects/statefulsets
+              - k8sobjects/daemonsets
+            # Restated for the same reason the metrics list below is — Helm replaces lists — and
+            # minus `transform/strip_crd_spec`, whose only receiver is gone.
+            processors:
+              - memory_limiter
+              - resourcedetection
+              - attributes
+              - k8sattributes
+              - batch
           metrics:
             # **Restated in full because Helm replaces lists rather than merging them**, so naming
             # only the new processor here would drop the other five. Order matters: this has to run
