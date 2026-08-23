@@ -443,6 +443,21 @@ Two rules follow, and the second is the one that will be needed first:
 Decorative icons take `aria-hidden="true"`; the surrounding control carries the accessible name. That rule lives in
 [`events-frontend/AGENTS.md`](../events-frontend/AGENTS.md) §Accessibility with the rest of the a11y conventions.
 
+### 5.9 Components
+
+**Audited 2026-08-23.** Most of what a component pass usually finds was already absent: **no arbitrary Tailwind values** outside `ui/`, **no colour literals**,
+and the two hand-rolled form controls already share their chrome through `FIELD_CLASS`. The two findings that remained:
+
+**The card surface was copy-pasted four times, in two pairs.** `EventCard` and `VenueCard` carried the same 160-character class string; `EventFilterBar` and
+`VenuesView` carried the same panel string, the second being an inline copy of the first. Extracted to `CARD_CLASS` and `PANEL_CLASS` in `lib/utils.ts`,
+composed from a shared `SURFACE_CLASS`, for the same reason `FIELD_CLASS` exists: a long class string copied twice drifts the first time only one copy is
+touched. **The built CSS is byte-identical either way**, which is what proves the change is structural rather than visual.
+
+**Focus is treated two ways, and both are correct.** Buttons and fields opt out of the browser outline and draw a ring (`outline-none` +
+`focus-visible:ring-3`); the cards keep the browser's own `outline: auto`, tinted by the global `outline-ring/50`. Both are visible and both use the ring token,
+so this is **recorded rather than fixed** — the browser outline is the one that survives Windows High Contrast Mode, and unifying on the drawn ring would trade
+that away for consistency alone. If it is ever unified, unify toward the outline.
+
 ## 6. How this maps to code
 
 - **Colour / radius / type tokens** → `events-frontend/src/assets/main.css` (`:root` + `.dark`). Re-theming is CSS-variable edits only (ADR-010).

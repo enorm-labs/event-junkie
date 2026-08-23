@@ -7,6 +7,7 @@ import { eventLabel, formatPrice, formatTime, todayIso } from '@/lib/format'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
+import { CARD_CLASS } from '@/lib/utils'
 
 const props = withDefaults(
   defineProps<{
@@ -49,7 +50,7 @@ const { t } = useI18n()
 <template>
   <RouterLink
     :to="localePath(`/events/${event.slug}`)"
-    class="group flex gap-4 rounded-xl border border-border bg-card p-3 shadow-sm transition-all hover:border-primary/40 hover:shadow-md motion-safe:hover:-translate-y-0.5"
+    :class="CARD_CLASS"
   >
     <img
       v-if="event.imageUrl"

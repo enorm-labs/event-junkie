@@ -21,6 +21,7 @@ import { DISTRICTS } from '@/lib/districts'
 import { todayIso } from '@/lib/format'
 import { useFormat } from '@/composables/useFormat'
 import { useI18n } from 'vue-i18n'
+import { PANEL_CLASS } from '@/lib/utils'
 
 const { formatEventType } = useFormat()
 
@@ -102,7 +103,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <div class="flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-4">
+  <div :class="PANEL_CLASS">
     <form class="flex gap-2" @submit.prevent="applyFilters({ q: search })">
       <BaseInput
         v-model="search"
