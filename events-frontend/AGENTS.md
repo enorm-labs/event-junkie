@@ -440,10 +440,13 @@ list: [docs/LEGAL.md §12](../docs/LEGAL.md).
 
 - **Every interactive element needs an accessible name.** Icon-only controls carry an `aria-label`. Where a `title` tooltip is also present, derive both from
   **one** `computed` so they cannot drift — see the theme toggle in `App.vue`.
-- **Decorative SVGs get `aria-hidden="true"`** (`PulseMark`, `GitHubMark`). Meaningful images get a real `alt`; `alt=""` is correct only when the image adds
-  nothing the surrounding text does not already say.
+- **Decorative SVGs get `aria-hidden="true"`** (`EjBadge`, `ClubStamp`, `GitHubMark`). Meaningful images get a real `alt`; `alt=""` is correct only when the
+  image adds nothing the surrounding text does not already say. The brand SVGs are decorative even though they spell the product name, because the adjacent
+  text — the wordmark in `BrandLogo`, the `sr-only` `h1` in the hero — already carries it; two accessible names for one thing is worse than none.
 - **Every view renders exactly one `<main>`.** The detail views inherit theirs from `BaseDetailView` — do not add a second.
-- **A heading level belongs to the page, not to the component.** One `h1` per view, and no skipped levels below it. A shared component that renders a heading
+- **A heading level belongs to the page, not to the component.** One `h1` per view, and no skipped levels below it. **A hidden `h1` still counts** — the home
+  hero renders its `h1` as `sr-only` because the club stamp carries the name as artwork, and the live text has to survive for search and screen readers.
+  Do not delete it as redundant; the a11y heading-outline check in `e2e/a11y.spec.ts` is what proves the outline is intact. A shared component that renders a heading
   takes it as a prop rather than hard-coding one, and the prop is spelled `as` in all of them: `SectionLabel` defaults to `h2`, `EventCard` and `VenueCard`
   to `h3` (right, under a `SectionLabel`). On a card, `as` sets the _heading_ element, not the card's root. **Placing a card grid straight under the page `h1`
   means passing `as="h2"`** — see the list pages, and the `heading-order` gate in `e2e/a11y.spec.ts`.
