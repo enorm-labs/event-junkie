@@ -122,6 +122,79 @@ class MetricsRefreshServiceTest {
         }
 
     /**
+     * #618: the source that has never worked is the one the monitoring could not see.
+     *
+     * `last_success` springs into existence on a source's first success, so a venue that has never
+     * imported had no series at all — and something with no series cannot be stale, late or failing.
+     * Measured on staging 2026-08-20: 86 sources, 84 series, and the two absent ones were the only
+     * two that were broken, while the dashboard read "0 sources stale".
+     */
+    @Test
+    fun `every source publishes has_succeeded, including one that never has`() =
+        runTest {
+            val succeeded = Instant.parse("2026-06-15T04:00:00Z")
+            coEvery { eventSourceRepository.findByEnabledTrue() } returns
+                listOf(
+                    source("good", ImportStatus.SUCCESS, lastImportAt = succeeded, lastSuccessAt = succeeded),
+                    source("never-run", ImportStatus.IDLE, lastImportAt = null, lastSuccessAt = null),
+                    source("tried-and-failed", ImportStatus.FAILED, lastImportAt = succeeded, lastSuccessAt = null)
+                ).asFlow()
+
+            service.refreshGauges()
+
+            registry
+                .find("importer.source.has_succeeded")
+                .tag("source", "good")
+                .gauge()!!
+                .value() shouldBe 1.0
+            // The two that matter: a series exists, and its value says which fact this is.
+            registry
+                .find("importer.source.has_succeeded")
+                .tag("source", "never-run")
+                .gauge()!!
+                .value() shouldBe 0.0
+            registry
+                .find("importer.source.has_succeeded")
+                .tag("source", "tried-and-failed")
+                .gauge()!!
+                .value() shouldBe 0.0
+        }
+
+    /**
+     * The two gauges have one shared invariant — `has_succeeded = 1` exactly when `last_success`
+     * exists — and it is asserted here because they are published from two different call sites.
+     */
+    @Test
+    fun `a source that starts succeeding flips has_succeeded without waiting for a restart`() =
+        runTest {
+            val slug = "late-bloomer"
+            coEvery { eventSourceRepository.findByEnabledTrue() } returns
+                listOf(source(slug, ImportStatus.FAILED, lastSuccessAt = null)).asFlow()
+            service.refreshGauges()
+            registry
+                .find("importer.source.has_succeeded")
+                .tag("source", slug)
+                .gauge()!!
+                .value() shouldBe 0.0
+
+            val firstSuccess = Instant.parse("2026-06-15T04:00:00Z")
+            coEvery { eventSourceRepository.findByEnabledTrue() } returns
+                listOf(source(slug, ImportStatus.SUCCESS, lastImportAt = firstSuccess, lastSuccessAt = firstSuccess)).asFlow()
+            service.refreshGauges()
+
+            registry
+                .find("importer.source.has_succeeded")
+                .tag("source", slug)
+                .gauge()!!
+                .value() shouldBe 1.0
+            registry
+                .find("importer.source.last_success")
+                .tag("source", slug)
+                .gauge()!!
+                .value() shouldBe firstSuccess.epochSecond.toDouble()
+        }
+
+    /**
      * The regression this column exists to close (#415).
      *
      * Before `last_success_at`, this service filtered on `status == SUCCESS` and read `last_import_at`
