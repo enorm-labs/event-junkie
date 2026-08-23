@@ -38,6 +38,46 @@ name: CodeQL
 #   context, and the ruleset names each one exactly — so adding a language here creates a check that
 #   is *not* required, and removing one leaves a required check that never reports. Change the
 #   ruleset in the same pull request, exactly as `validate-infra.yml`'s stack matrix requires.
+#
+# ## The quality queries, and why they skip the pull request
+#
+# `queries: code-quality` runs on `push`, `schedule` and `workflow_dispatch`, and **not** on
+# `pull_request`. The trade is deliberate and asymmetric:
+#
+# - ktlint, detekt, oxlint and ESLint already gate the pull request and answer in seconds, on the
+#   contributor's own machine before they answer in CI. `Analyze (java-kotlin)` costs 340s and is
+#   the long pole on every pull request that touches Kotlin. Buying a second opinion there would
+#   slow the loop people actually wait on in order to report what the fast tools mostly report
+#   already.
+# - Nothing is lost by waiting. `push:` to main analyses everything unconditionally, so a quality
+#   finding still surfaces, still attributed to the merge that introduced it — one merge later than
+#   a pull request check would have caught it, on a branch nobody is blocked on.
+#
+# **The findings land in the Code scanning tab, not the Code quality tab** (`/security/quality`).
+# That tab is reachable only from `analysis-kinds`, which is `[Internal]` and collapses to
+# `code-scanning` alone when combined with it — so in practice only default setup can fill it, and
+# default setup is the thing this file exists to replace. Populating that tab would mean taking back
+# the fork deadlock #579 proved. Not worth a tab.
+#
+# ## There is deliberately no exclusion list
+#
+# The obvious next move is a `query-filters` deny-list suppressing the quality queries that
+# duplicate a lint rule — `js/duplicate-property` against oxlint's `no-dupe-keys`, and about
+# seventeen more that were checked one by one against `eslint --print-config` rather than assumed.
+# **Do not add it.** Checking where the linters actually run is what kills the idea:
+#
+# - Where oxlint runs, it runs at `error` and gates the pull request, so the duplicated defect
+#   cannot reach main in the first place. The query has nothing left to find, and excluding it
+#   saves query time, not noise.
+# - `perf/` — `load.js`, `smoke.js`, `spike.js`, `lib/` — has no ESLint config, no oxlint config and
+#   no lint step in any workflow, while sitting squarely inside this job's `javascript-typescript`
+#   path pattern. It is the only JavaScript here that CodeQL is the *first* reader of.
+#
+# `query-filters` matches on id and tags and cannot be scoped to a path, so any entry that quiets a
+# duplicate in `events-frontend/` blinds the analysis over `perf/` in the same stroke. The overlap
+# resolves itself; the filter would only create a gap. If the volume ever does become a problem,
+# the fix is to measure which queries actually fire and act on that, not to pre-empt it from a
+# mapping table.
 
 on:
   push:
@@ -203,12 +243,30 @@ jobs:
           # budget with a scanner's private copy of the same jars. One gates every pull request; the
           # other runs a scan nobody waits on.
           dependency-caching: false
-          # No `queries:` input, deliberately. That leaves the **default** suite, which is what
-          # default setup was configured to run (`code-scanning/default-setup` reported
-          # `"query_suite": "default"`), so this migration changes *where* CodeQL runs and not *what
-          # it finds*. Widening to `security-extended` is a separate decision with its own noise
-          # budget, and mixing it into this change would make a regression in either impossible to
-          # attribute.
+          # The **default** security suite always runs — it is what default setup was configured to
+          # run (`code-scanning/default-setup` reported `"query_suite": "default"`), and `queries:`
+          # *adds* to it rather than replacing it. Only `disable-default-queries` would take it
+          # away, and nothing here sets that. Widening to `security-extended` remains a separate
+          # decision with its own noise budget.
+          #
+          # `code-quality` is one of the action's own suite aliases, resolved per language to
+          # `<language>-code-quality.qls`: every query tagged `quality` at `@precision high` or
+          # `very-high`. It is 98 queries for `javascript`, 89 for `java`, and — measured on
+          # github/codeql at HEAD, not assumed — **0 for `actions`**, whose suite file exists but
+          # selects nothing. Left in the expression anyway, so the day GitHub writes one we get it.
+          #
+          # **This is the supported way to run these queries from a custom workflow**, and not a
+          # workaround: `analysis-kinds: code-quality` is `[Internal]`, collapses to `code-scanning`
+          # when combined with it (v4.35.5), and logs *"use the `queries` input with `code-quality`
+          # instead"*. The cost of taking that route is where the findings land — the **Code
+          # scanning** tab, not the **Code quality** tab, which only default setup can populate and
+          # which this workflow exists to avoid (see the header).
+          #
+          # **Never on `pull_request`.** See the header for why.
+          #
+          # `''` is not "an empty suite" — the action's `getOptionalInput` treats an empty string as
+          # absent, so the pull request path stays byte-identical to what ran before this line.
+          queries: ${{ github.event_name != 'pull_request' && 'code-quality' || '' }}
 
       - name: Perform CodeQL analysis
         if: steps.relevance.outputs.value == 'true'

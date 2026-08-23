@@ -51,7 +51,8 @@ surface the code itself:
 
 So you know what ground is covered, and where a report is most likely to find something new:
 
-- **CodeQL** analysis on every pull request (Java/Kotlin, JavaScript/TypeScript, and the Actions workflows themselves).
+- **CodeQL** analysis on every pull request (Java/Kotlin, JavaScript/TypeScript, and the Actions workflows themselves), plus the `code-quality` query suites
+  on pushes to `main` and on the weekly schedule — off the pull request path, where they would compete with linters that answer in seconds.
 - **OWASP Dependency-Check** on every build, failing on CVSS ≥ 7, plus a scheduled full scan.
 - **Dependabot** alerts and update PRs, and **dependency review** on pull requests, with a licence policy attached.
 - **gitleaks** as a pre-commit hook, to keep credentials out of the history in the first place.
