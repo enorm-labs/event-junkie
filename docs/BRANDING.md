@@ -498,6 +498,9 @@ that away for consistency alone. If it is ever unified, unify toward the outline
 - **Colour / radius / type tokens** → `events-frontend/src/assets/main.css` (`:root` + `.dark`). Re-theming is CSS-variable edits only (ADR-010).
 - **Page titles & tagline** → already implemented in `src/composables/usePageTitle.ts`
   (`APP_NAME`, `TAGLINE`, `HOME_TITLE`) and `index.html` (title + OG/Twitter tags).
+- **Regenerating the outlined type** → `scripts/outline-text.sh`. Every wordmark and caption in `docs/branding/` is **outlined glyphs, not `<text>`**, because a
+  renderer substitutes a missing font silently — a `<text>` logo looks fine while being the wrong typeface. The script is what produced them and reproduces them
+  byte for byte; it pins fontTools, since a version that rounds differently would redraw committed artwork.
 - **Logo, source of truth** → `docs/branding/*.svg`. Everything below is a **build** of one of those, never a fresh drawing; a drift between the two is how the
   old mark survived in three places at once.
 - **Favicon / app icons** → `events-frontend/public/favicon.svg`, `favicon.ico`, `apple-touch-icon.png`, `og-image.png`. The favicon differs from its source in

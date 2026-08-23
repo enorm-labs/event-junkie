@@ -13,3 +13,6 @@ temp
 .envrc
 !.env.example
 !.envrc.example
+
+# Throwaway venv for scripts/outline-text.sh — rebuilt on demand, never shared.
+.venv-fonts/
