@@ -163,6 +163,38 @@ panels = [
         "min by (name) (certmanager_certificate_expiration_timestamp_seconds))) / 86400",
         x=32, y=12, w=16, h=7, decimals=1,
     ),
+
+    # --- Row 4: whether any of the above can be believed -------------------
+    # A gap in every panel above looks identical to a quiet period. These two say which it was.
+    panel(
+        "p_shedding",
+        "Metrics dropped before storage (points/sec)",
+        "**Two ways a metric dies on the way in, and neither raises anything.** `send_failed` is "
+        "OpenObserve returning 503 — the memtable overflow of #625. `enqueue_failed` is the "
+        "collector's own queue full, so the point was never even attempted. Measured 2026-08-23, "
+        "before the fix: 4.44M and 8.45M respectively in 48h, against 12.2M delivered — **about "
+        "half of everything scraped**. Anything but a flat zero here means the panels above are "
+        "sampling, not reporting.",
+        "line",
+        [
+            "sum(rate(otelcol_exporter_send_failed_metric_points_total[5m]))",
+            "sum(rate(otelcol_exporter_enqueue_failed_metric_points_total[5m]))",
+        ],
+        x=0, y=19, w=24, h=7, decimals=2,
+    ),
+    panel(
+        "p_memtable",
+        "OpenObserve memtable (bytes held, against a 256 MiB ceiling)",
+        "The gauge the ingest path actually checks — `writer.rs` rejects every write once the sum "
+        "across memtables reaches `ZO_MEM_TABLE_MAX_SIZE`, which is a quarter of the container's "
+        "memory limit: **268,435,456 bytes** at the current 1Gi. Approaching that line is the "
+        "warning the 2026-08-21 outage never gave, because `ZO_PROMETHEUS_ENABLED` was false and "
+        "this series did not exist. **Empty until that release reconciles** — the panel is here "
+        "because the fix without it is unfalsifiable.",
+        "line",
+        "max(zo_ingest_memtable_arrow_bytes)",
+        x=24, y=19, w=24, h=7, unit="bytes",
+    ),
 ]
 
 dashboard = {
