@@ -402,8 +402,22 @@ explicit light choice is remembered in
 
 ### 5.4 Imagery
 
-Event/venue photos are the hero content but come from many scraped sources, so they clash. Apply a **consistent treatment** — grayscale or a duotone tinted with
-the brand accent on cards, revealing full colour on hover / detail pages. Cohesive look, and it makes the accent do double duty.
+Event and venue photos are the hero content but come from many scraped sources, so they clash. **Decided 2026-08-23: full grayscale at rest, full colour on
+hover**, with detail-page heroes always in colour. Four treatments were compared on real scraped thumbnails at their real 80 px size before choosing.
+
+**The duotone lost, and not narrowly.** An accent-tinted duotone (`mix-blend-mode: luminosity` over the accent) is the most cohesive and the most obviously
+branded of the four — and at 80 px the violet swallows the image. You cannot tell a drag festival from a techno night. **On an events site the poster is
+content**, not decoration: it is often the fastest signal of what kind of evening this is, and a treatment that erases it costs more than the cohesion buys.
+
+**What shipped before was `grayscale-50`, and it achieved neither goal.** Half-desaturated, the reds and yellows still clash across a grid — so no cohesion —
+while the images are not in colour either. It also made the hover reveal nearly invisible, since the distance between rest and hover was only half a step. At
+full grayscale the reveal is a real event.
+
+**Full grayscale also happens to be the coherent answer**, rather than merely the safe one: monochrome artwork, monochrome imagery and a single violet accent is
+the Berlin flyer convention §5.1 describes — one spot ink on black and white. The accent already does its double duty in the live dot and the eyebrow labels,
+which is where it can be seen.
+
+Implemented in `EventCard.vue` and `VenueCard.vue`, transitioned over 300 ms.
 
 ### 5.5 Motion (subtle)
 
