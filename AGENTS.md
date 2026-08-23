@@ -1138,6 +1138,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Snapshot versions must ORDER (#455)       | `scripts/version-test.sh` — asserted against Helm's own solver; a format check would not catch it                                 |
 | Markdown formatting                       | `scripts/format-markdown.sh` + `.oxfmtrc.json` — Markdown only, and the scope is load-bearing                                     |
 | Brand artwork carries outlined glyphs     | `scripts/outline-text.sh` — a `<text>` logo renders in a fallback face silently; fontTools is pinned for the same reason oxfmt is |
+| README screenshots, and when they rot     | `docs/screenshots/` — dated, because nothing else signals staleness; retake on design changes, never on data changes              |
 | Trivy waivers                             | `.trivyignore` — empty on purpose; an entry needs a reason and a date                                                             |
 | Chart and images agree about the UID      | `scripts/uid-consistency.sh` — reads the three Dockerfiles' `USER` and the chart; enforces the >10000 floor                       |
 | What each cluster would deploy            | `scripts/deployed-versions.sh` — reproduces Flux's selection; no cluster and no credential needed                                 |
