@@ -119,7 +119,10 @@ def main():
     ensure_destination()
 
     known = existing_alerts()
-    for alert in json.load(open(path)):
+    with open(path) as f:
+        alerts = json.load(f)
+
+    for alert in alerts:
         name = alert["name"]
         if name in known and known[name]:
             code, body = call("PUT", "http://%s:5080/api/v2/%s/alerts/%s" % (svc, org, known[name]), alert)

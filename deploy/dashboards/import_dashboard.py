@@ -38,7 +38,8 @@ def unwrap(entry):
     return None
 
 
-wanted = json.load(open(path))
+with open(path) as f:
+    wanted = json.load(f)
 title = wanted["title"]
 
 listing = json.loads(curl(base)).get("dashboards", [])
