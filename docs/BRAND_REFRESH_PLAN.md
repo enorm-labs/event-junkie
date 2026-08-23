@@ -174,11 +174,13 @@ step 7 is the stamp and is not** — see Phase 2.
    anything is animated later it stays gated behind `prefers-reduced-motion: reduce`, which is not optional here.
 6. **`index.html`** — the icon links are already correct (`favicon.svg`, `favicon.ico`, `apple-touch-icon.png`); only the files behind them change. Add
    `og:image` / `twitter:image` and switch `twitter:card` to `summary_large_image` (Phase 2).
-7. **The stamp in the hero — hold this one.** Blocked twice over: on the stamp's own two fixes (Phase 2), and on a judgement that is not #475's to make.
-   Black ink, distressed and high-contrast is a different visual language from the UV-violet, soft-glow, dark-mode look §5.1 records as shipped, so putting it
-   in the hero is a partial answer to [#374](https://github.com/enorm-labs/event-junkie/issues/374) decided inside #475. **The README and the social preview
-   sit outside the app and can take the stamp immediately** (Phase 4); the hero is the placement worth holding until the visual pass runs. When it does land,
-   keep the `<h1>` as `sr-only` — the stamp carries the name as artwork, and the live text has to survive for search and screen readers.
+7. ✅ **The stamp is in the hero, per locale.** It carries the tagline, and the separate live tagline line is gone with it. Two consequences worth knowing:
+   the caption is **outlined artwork**, so the hero needs one component per locale rather than one with a swapped string — and the German line needs its own
+   caption sizing, so they are different drawings. The `<h1>` stays `sr-only` and now says what the artwork says, tagline included.
+    - **This fixed a bug rather than only adding artwork.** The tagline line was the hard-coded English `TAGLINE` constant while the footer read
+      `t('footer.tagline')`, so `/de` showed English in the hero and German in the footer.
+    - **The stamp is lazy-loaded per locale** (`ClubStamp.ts` → `localisedView`). It is ~50 kB gzipped, and before the split it had landed in the **entry**
+      chunk — downloaded on every route rather than the one that shows it. `/en` now fetches `ClubStamp.en` only.
 8. **Tests.** There is no `BrandLogo.spec.ts` or `PulseMark.spec.ts` today — `AppFooter.spec.ts` covers the footer that renders the lockup. Add a component
    spec for the lockup asserting the accessible name **and the badge/wordmark swap at `sm`**, because both are behaviours a logo change can silently break and
    neither is visible in a screenshot. The swap is new behaviour and nothing currently guards it.

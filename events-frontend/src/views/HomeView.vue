@@ -4,10 +4,9 @@ import { RouterLink } from 'vue-router'
 import { CalendarDays } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import EventCard from '@/components/EventCard.vue'
-import ClubStamp from '@/components/ClubStamp.vue'
+import ClubStamp from '@/components/ClubStamp'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { useTodayEvents, useUpcomingEvents } from '@/composables/useEvents'
-import { TAGLINE } from '@/lib/pageMeta'
 import { tomorrowIso } from '@/lib/format'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -37,16 +36,15 @@ useStructuredData(() => websiteJsonLd(locale.value as Locale))
   <main class="mx-auto max-w-5xl space-y-12 p-8">
     <section class="relative py-20 sm:py-28">
       <div class="relative flex flex-col items-center gap-5 text-center">
-        <!-- EXPERIMENT (open decision F): the club stamp as the hero. The ambient glow is gone with
-             the pulse mark — its whole premise was that the mark is its light source, and a rubber
-             stamp is ink, not light. -->
+        <!-- The stamp carries both the name and the tagline as artwork, per locale. The ambient
+             glow went with the pulse mark — its premise was that the mark is its light source, and
+             a rubber stamp is ink, not light. -->
         <ClubStamp class="w-full max-w-lg text-foreground" />
-        <!-- The stamp carries the name as artwork, so the live text stays for search and screen
-             readers. -->
-        <h1 class="sr-only">Event Junkie</h1>
-        <p class="font-mono text-xs tracking-eyebrow text-muted-foreground uppercase sm:text-sm">
-          {{ TAGLINE }}
-        </p>
+        <!-- The accessible equivalent of the artwork above, so it says the same words. It replaces
+             the separate tagline line the stamp now contains — which was hard-coded English and so
+             showed the wrong language on /de; `footer.tagline` is the catalogue's tagline rather
+             than a footer string, and the footer already reads it. -->
+        <h1 class="sr-only">Event Junkie — {{ t('footer.tagline') }}</h1>
         <Button as-child size="lg">
           <RouterLink :to="localePath('/calendar')">
             <CalendarDays />
