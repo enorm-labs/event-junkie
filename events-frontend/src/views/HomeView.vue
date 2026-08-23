@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router'
 import { CalendarDays } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import EventCard from '@/components/EventCard.vue'
-import PulseMark from '@/components/PulseMark.vue'
+import ClubStamp from '@/components/ClubStamp.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { useTodayEvents, useUpcomingEvents } from '@/composables/useEvents'
 import { TAGLINE } from '@/lib/pageMeta'
@@ -37,20 +37,13 @@ useStructuredData(() => websiteJsonLd(locale.value as Locale))
   <main class="mx-auto max-w-5xl space-y-12 p-8">
     <section class="relative py-20 sm:py-28">
       <div class="relative flex flex-col items-center gap-5 text-center">
-        <!-- The glow is centered on the mark (not the whole hero) so the pulse reads as the light
-             source. No overflow-clip anywhere, so the radial fades to transparent softly on all
-             sides; the extra top padding keeps its upward reach from washing over the nav. -->
-        <div class="relative">
-          <div
-            aria-hidden="true"
-            class="pointer-events-none absolute top-1/2 left-1/2 h-[300px] w-[560px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-35 blur-[80px]"
-            style="background: radial-gradient(closest-side, var(--primary), transparent)"
-          />
-          <PulseMark animate class="relative h-14 sm:h-20" />
-        </div>
-        <h1 class="text-4xl font-extrabold tracking-tight sm:text-6xl">
-          Event <span class="text-primary">Junkie</span>
-        </h1>
+        <!-- EXPERIMENT (open decision F): the club stamp as the hero. The ambient glow is gone with
+             the pulse mark — its whole premise was that the mark is its light source, and a rubber
+             stamp is ink, not light. -->
+        <ClubStamp class="w-full max-w-lg text-foreground" />
+        <!-- The stamp carries the name as artwork, so the live text stays for search and screen
+             readers. -->
+        <h1 class="sr-only">Event Junkie</h1>
         <p class="font-mono text-xs tracking-eyebrow text-muted-foreground uppercase sm:text-sm">
           {{ TAGLINE }}
         </p>
