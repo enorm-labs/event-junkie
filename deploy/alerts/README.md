@@ -94,7 +94,7 @@ the system.
 
 **The namespace still has no default-deny.** This policy is egress-only and selects one pod, which is enough to bound the feature being unblocked and is not the
 same thing as hardening the namespace — that needs an allowance per conversation for the operator, both collectors, the exporter and the bridge, and a k3d
-rehearsal to prove none of them break.
+rehearsal to prove none of them break. That is [#662](https://github.com/enorm-labs/event-junkie/issues/662).
 
 A destination is mandatory, incidentally: `POST /api/v2/{org}/alerts` with `destinations: []` returns `Alert destination or workflows is required`, with or
 without `creates_incident`. So "rules now, delivery later" needs _a_ destination, which is why the loopback one exists.

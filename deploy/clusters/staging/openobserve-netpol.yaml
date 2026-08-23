@@ -34,8 +34,8 @@
 # The namespace still has no default-deny, and that is a real gap rather than an oversight here: it
 # would need an allowance per conversation for the operator, both collectors, the Postgres exporter
 # and the Signal bridge, and getting one wrong takes the observability stack down — which is exactly
-# what a k3d rehearsal is for. That is its own issue; this change is scoped to the blast radius of
-# the feature being unblocked.
+# what a k3d rehearsal is for. That is #662; this change is scoped to the blast radius of the
+# feature being unblocked.
 #
 # **Ingress is deliberately untouched.** The collectors write to this pod and `kubectl port-forward`
 # is how anybody reaches the UI; both would need allowances, and neither is what the SSRF guard was
