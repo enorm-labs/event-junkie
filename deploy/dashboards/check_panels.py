@@ -51,8 +51,12 @@ for p in panels:
             failures += 1
             continue
         r = d["data"]["result"]
+        # A spot-check, not a summary: the value is the newest point of the FIRST series only,
+        # while series= counts them all. Labelled last[0] so a multi-series panel cannot be read
+        # as if one number described every line on the chart. The pass/fail test below is
+        # "did any series come back", which is what this script is actually for.
         sample = r[0]["values"][-1][1] if r and r[0].get("values") else None
-        print("%-34s series=%-4d last=%-22s%s" % (label, len(r), sample, "" if r else "   <-- NO DATA"))
+        print("%-34s series=%-4d last[0]=%-19s%s" % (label, len(r), sample, "" if r else "   <-- NO DATA"))
         if not r:
             failures += 1
 
