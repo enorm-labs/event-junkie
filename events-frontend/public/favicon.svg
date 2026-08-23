@@ -1,6 +1,6 @@
 <!--
   The favicon, derived from docs/branding/mark-ej-badge-small.svg — that file is the source, this is
-  a build of it. Do not edit one without the other (BRAND_REFRESH_PLAN.md "Done, when").
+  a build of it. Do not edit one without the other (docs/BRANDING.md §6).
 
   IT DIFFERS FROM THE SOURCE IN ONE WAY, AND THE REASON IS THE RENDERING CONTEXT. In the app the
   letters are a KNOCKOUT — transparent, so the page shows through and the badge inverts with the
