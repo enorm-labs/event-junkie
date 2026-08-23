@@ -220,14 +220,14 @@ that changes the shape a similarity search matches on.
 **There is no single logo. There are three surfaces, and each gets the thing that works on it.** That is the decision, and it is a different shape from the
 question this section originally asked — which was "which mark wins", and had the overflowing calendar cell as its recommendation.
 
-| Surface                                                              | What goes there                                                                                                                                                       |
-| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`favicon.svg`, `favicon.ico`** — 16 px                             | **Small badge** — [`…-ej-badge-small.svg`](branding/mark-ej-badge-small.svg)                                                                                          |
-| **Header, below `sm`** — 24 px                                       | **Small badge** — the same file                                                                                                                                       |
-| **Header, `sm` and up**, and the **footer**                          | The **wordmark** alone                                                                                                                                                |
-| **README, social preview, `apple-touch-icon`, merch** — 96 px and up | **Stamp badge** — [`…-ej-badge-stamp.svg`](branding/mark-ej-badge-stamp.svg)                                                                                          |
-| **Home hero**, **About page**                                        | The **tagline stamp**, per locale — [`…-tagline-en.svg`](branding/lockup-club-stamp-tagline-en.svg) / [`…-tagline-de.svg`](branding/lockup-club-stamp-tagline-de.svg) |
-| **README, GitHub social preview, merch** — English-only              | The **tagline stamp**, English — [`…-tagline-en.svg`](branding/lockup-club-stamp-tagline-en.svg)                                                                      |
+| Surface                                                           | What goes there                                                                                                                                                       |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`favicon.svg`, `favicon.ico`** — 16 px                          | **Small badge** — [`…-ej-badge-small.svg`](branding/mark-ej-badge-small.svg)                                                                                          |
+| **Header, below `sm`** — 24 px                                    | **Small badge** — the same file                                                                                                                                       |
+| **Header, `sm` and up**, and the **footer**                       | The **wordmark** alone                                                                                                                                                |
+| **`apple-touch-icon`** (180 px), merch — 96 px and up             | **Stamp badge** — [`…-ej-badge-stamp.svg`](branding/mark-ej-badge-stamp.svg)                                                                                          |
+| **Home hero**, **About page**                                     | The **tagline stamp**, per locale — [`…-tagline-en.svg`](branding/lockup-club-stamp-tagline-en.svg) / [`…-tagline-de.svg`](branding/lockup-club-stamp-tagline-de.svg) |
+| **README, GitHub social preview, site `og:image`** — English-only | The **tagline stamp**, English — [`…-tagline-en.svg`](branding/lockup-club-stamp-tagline-en.svg)                                                                      |
 
 **There is no pictorial mark in the UI chrome at all.** This is §4b's own runner-up — type-only — with a badge doing the one job type cannot do, which is being
 an app icon. The parked directions (pin+play, ticket stub, live dot, monogram-as-ligature) stay parked, and the two marks drawn during this decision — the
@@ -270,6 +270,10 @@ over English.
 **The two files are not one file with the words swapped.** The German line is 31 characters against the English 26, and at the English caption settings it
 overflows the inner frame. Each has its own sizing; neither number transfers. The _BERLIN_ variant stays as the language-neutral option for any surface that
 needs one.
+
+**Square surfaces take a badge, wide surfaces take a lockup.** That is what separates the two rows above, and it is worth stating because they read as
+overlapping: `apple-touch-icon` is a square, so it gets the stamp badge; the README and the social previews are wide, so they get the stamp with the wordmark
+in it. A badge stretched across a 1200×630 card wastes the card, and a lockup squeezed into a square icon is unreadable.
 
 **Badge and wordmark are never shown together.** They are the same two letters, so a badge beside its own wordmark is tautological. Splitting them across the
 `sm` breakpoint also solves a constraint that already exists: the header packs a lockup, a beta badge, four nav links and two icon controls, and at ~390 px that
