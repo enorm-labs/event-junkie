@@ -25,7 +25,7 @@ needs a database-backed gauge, the way #618 did for `has_succeeded`. Until then
 `db_events{horizon="future"}` catches the same failure one level up: the
 catalogue emptying out.
 
-## Three traps, all established by running queries rather than reading docs
+## Four traps, all established by running queries rather than reading docs
 
   1. `time()` is FROZEN at the query window's start (#610), so an age is
      `timestamp(x) - x`, never `time() - x`. Every staleness rule here depends on
@@ -46,7 +46,18 @@ catalogue emptying out.
      not, and 0 — not empty — when the series is missing. Absence stops
      masquerading as a firing.
 
-  3. `count(expr == bool 0)` counts EVERY series, always — it is `sum` that
+  3. **A filter on a label the stream does not have is SILENTLY IGNORED**, which
+     widens a rule to everything rather than narrowing it to nothing. Measured:
+     `count(up)` is 20, and so is `count(up{job="kube-state-metrics"})` and even
+     `count(up{job="nonexistent-xyz"})` — `job` is not a stored label on `up`.
+     A filter on a label that DOES exist behaves normally:
+     `count(up{service="kube-state-metrics"})` returns no series at all. So the
+     failure mode depends on whether you misspell the label or the value, and only
+     one of them is loud. Every scoping label in this file has been checked by
+     filtering it to a value that should match nothing and confirming an empty
+     result.
+
+  4. `count(expr == bool 0)` counts EVERY series, always — it is `sum` that
      counts the matching ones. Measured here: `count(up == bool 0)` returns 18
      (the number of scrape targets) while `sum(up == bool 0)` returns 0 (the
      number that are down). A site-down rule written with `count` fires forever
@@ -160,13 +171,14 @@ def rule(
 # half and stays dormant until production has DNS.
 rule(
     "ej-site-down",
-    "One or more scrape targets stopped answering — the BFF, the frontend, Traefik, "
-    "PostgreSQL's exporter or OpenObserve itself. `sum`, not `count`: count returns the "
-    "number of targets that exist, which is 18 and never zero.",
-    "sum(up == bool 0)",
+    "One of the application's Deployments has **zero available replicas** — the BFF, the frontend "
+    "or the importer. Availability rather than scrape health, because a rolling deploy is not an "
+    "outage: `up` goes to 0 for the pod being replaced and stays there for about five minutes "
+    "while the target ages out of service discovery.",
+    'sum(max by (deployment) (kube_deployment_status_replicas_available{deployment=~"event-junkie.*"}) == bool 0)',
     ">",
     0,
-    stream_name="up",
+    stream_name="kube_deployment_status_replicas_available",
     period_minutes=5,
     frequency_minutes=1,
     silence_minutes=30,

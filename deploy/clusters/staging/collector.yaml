@@ -429,9 +429,13 @@ spec:
           #
           #   - `events`       — the reason the pipeline exists: OOMKilled, FailedScheduling,
           #                      ImagePullBackOff. This is the stream you read after an incident.
-          #   - `pods`         — phase transitions. **kube-state-metrics is not installed** (its
-          #                      scrape target has failed since day one), so this is the only record
-          #                      of a pod's lifecycle we have.
+          #   - `pods`         — phase transitions, and the object as it changed. **Correction,
+          #                      2026-08-23:** this said kube-state-metrics was not installed and its
+          #                      scrape had failed since day one. It is installed — in `kube-system`
+          #                      since 2026-08-20, scraped, and serving `kube_*` — so that is no
+          #                      longer the reason. The reason is that `kube_pod_*` is a gauge of
+          #                      current state, while this stream carries the transition and its
+          #                      timestamp, which is what an incident is reconstructed from.
           #   - `nodes`        — node conditions. MemoryPressure on this node is exactly what nothing
           #                      was watching on 2026-08-20.
           #   - `deployments`  — the three application workloads.

@@ -38,7 +38,7 @@ always present.
 
 | Rule                        | Fires when                                                                                              | #271 item          |
 | --------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------ |
-| `ej-site-down`              | any scrape target stops answering                                                                       | site down          |
+| `ej-site-down`              | an application Deployment has zero available replicas                                                   | site down          |
 | `ej-importer-stale`         | the stalest source passes 36h against a 24h interval                                                    | importer failing   |
 | `ej-source-never-succeeded` | a source has never once completed a run ([#618](https://github.com/enorm-labs/event-junkie/issues/618)) | importer failing   |
 | `ej-catalogue-emptying`     | future events fall below 500, from a normal ~3,000                                                      | zero events        |
@@ -105,7 +105,20 @@ Alerts are OpenObserve API objects, not Kubernetes ones, so Flux cannot reconcil
 nothing notices if somebody edits a rule in the UI, and nothing restores these after a node rebuild unless `apply.sh` is run.
 [`CLUSTER_BOOTSTRAP.md`](../../docs/ops/CLUSTER_BOOTSTRAP.md) is what has to remember, and it now lists both.
 
-## Five traps these rules are written around
+## `ej-site-down` watches availability, not scrape health
+
+The first version was `sum(up == bool 0) > 0` — any scrape target down. **It fired on the first deploy after it went live**, and would have fired on every one
+after that: a rolling update leaves the replaced pod's target failing for about five minutes while it ages out of service discovery. The alert was correct and
+useless, which is the combination that gets a rule muted.
+
+Neither `avg_over_time(up[10m]) == 0` nor `min_over_time` fixes it. When a target _disappears_ rather than reporting failure, the only samples inside the window
+are the zeros, so a "down for the whole window" test still passes.
+
+`kube_deployment_status_replicas_available{deployment=~"event-junkie.*"} == bool 0` is the deploy-stable form: a rolling update keeps at least one replica
+available by definition, and zero available replicas is what "the site is down" actually means. Checked against the 13:07 deploy on 2026-08-23 — 61 samples
+across the hour, every one of them zero-unavailable, while `up` went to 0 twice.
+
+## Six traps these rules are written around
 
 All five were established by running things against the live instance, and every one of them fails **silently** — a rule that looks configured and does nothing.
 
@@ -122,7 +135,12 @@ All five were established by running things against the live instance, and every
    after being created, with their thresholds nowhere near crossed, told nobody, and then silenced themselves for six to twenty-four hours. **That is the worst
    combination available**: the UI shows a firing, no one is paged, and the silence window swallows the real firing behind it. Every rule here is therefore a
    `>` against an inner `< bool` comparison — `sum(x < bool 15) > 0` is 1 when a real series is below 15, and 0 rather than empty when the series is missing.
-5. **`trigger_condition.operator`/`threshold` gate on the ROW COUNT, not the value**, and must be `>= 1`. The value comparison has already happened — the
+5. **A filter on a label the stream does not have is silently ignored**, widening a rule to everything rather than narrowing it to nothing. Measured:
+   `count(up)` is 20 — and so are `count(up{job="kube-state-metrics"})` and `count(up{job="nonexistent-xyz"})`, because `job` is not a stored label on `up`. A
+   filter on a label that _does_ exist behaves normally: `count(up{service="kube-state-metrics"})` returns nothing. So misspelling the **value** is loud and
+   misspelling the **label** is silent, and only one of those is the mistake people make. Every scoping label here was checked by filtering it to a value that
+   should match nothing and confirming an empty result.
+6. **`trigger_condition.operator`/`threshold` gate on the ROW COUNT, not the value**, and must be `>= 1`. The value comparison has already happened — the
    scheduler rewrites the query as `({promql}) {operator} {value}` and runs that, so what comes back is "the series that crossed the line". Setting this pair to
    the rule's own operator means `ej-importer-stale` asked for **more than one** matching series and never fired, while its query returned 71 hours against a 36
    hour threshold for eight minutes straight. One field changed to `>=` produced `Alert conditions satisfied` → `Alert notification sent` →
