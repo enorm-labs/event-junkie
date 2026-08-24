@@ -53,7 +53,15 @@ data class EventSourceEntity(
      * asserts — and [EventImportService] treats it that way for `status` already.
      */
     val lastSuccessAt: Instant? = null,
-    /** Number of events imported in the last successful run. */
+    /**
+     * Number of events the source last published, as counted by the run that last read its listing.
+     *
+     * **A 304 carries this forward rather than resetting it (#659).** "Not modified" means the
+     * listing still holds what it held, so zeroing the column would report an emptied source on the
+     * one answer that proves it is unchanged — `loge` read `lastEventCount = 0` on a successful run
+     * while the page had six events on it. This is the column an operator reaches for first, and
+     * ADR-015 criterion 1 is the alert written against exactly this class of silence.
+     */
     val lastEventCount: Int? = null,
     /** Error message from the last failed import, `null` if the last run succeeded. */
     val lastError: String? = null,

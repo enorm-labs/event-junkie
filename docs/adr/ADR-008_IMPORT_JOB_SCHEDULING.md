@@ -4,6 +4,10 @@
 
 Accepted
 
+**Amended: the retry backoff is capped, and a spent retry budget no longer removes a source from the schedule**
+([#659](https://github.com/enorm-labs/event-junkie/issues/659)). Everything below about the tick, the table, the status model and the alternatives is
+unaffected; only the retry cadence and the OPEN state changed. The reasoning is in §Circuit Breaker.
+
 ## Context
 
 The event importer needs to periodically scrape ~40 venue websites to keep event data up to date. The scraping infrastructure (ADR-007) provides the pipeline —
@@ -64,9 +68,23 @@ A single `@Scheduled` method ("tick") runs every 60 seconds and:
 2. Skips sources with `status = RUNNING` to prevent overlapping imports.
 3. Skips sources with `status = MISCONFIGURED` — these have permanent configuration errors (e.g. unknown source type, no importer registered) that require
    manual intervention.
-4. Includes **failed sources** if `retry_count < max_retries`, applying exponential backoff (`interval × 2^retryCount`).
+4. Includes **failed sources**. While `retry_count < max_retries` they use backoff — `interval × 2^retryCount`, **capped at six hours**. Once the budget is
+   spent they return to their own `import_interval_minutes`; they are never dropped from the query.
 5. Resets stuck `RUNNING` sources to `FAILED` if they've been running for more than 30 minutes (staleness guard).
 6. Delegates each due source to `EventImportService.importFromSource()`.
+
+> **Amended 2026-08-24 ([#659](https://github.com/enorm-labs/event-junkie/issues/659)). Step 4 originally read "includes failed sources if
+> `retry_count < max_retries`, applying exponential backoff (`interval × 2^retryCount`)", and both halves of that were wrong in the same direction.**
+>
+> **The backoff assumed an interval measured in minutes.** `import_interval_minutes` defaults to 1440, so the first retry waited 48 hours, the second 96 and
+> the third 192 — a failed source was attempted _less_ often than a healthy one, which inverts the point of a retry. `loge` failed on 2026-08-21 11:54 and was
+> next attempted on 2026-08-23 11:55; that is the whole of the 47-hour gap #659 reports, and nothing was stuck. The cap makes the guarantee independent of the
+> source's own schedule: a failure is retried within six hours whatever its interval, which fits all three of a daily source's retries inside the day it
+> failed. Sub-cap intervals are unaffected — an hourly source still waits 2 h, then 4 h.
+>
+> **And the exclusion made exhaustion invisible.** Capping the wait without touching the query would have been a regression, not a fix: a broken daily source
+> spent its budget in 18 hours instead of 14 days and then vanished from the schedule. See §Circuit Breaker for why absence is the one state this system cannot
+> afford.
 
 ### Scheduling is enabled by default
 
@@ -146,17 +164,23 @@ single-instance deployment, this is acceptable. For multi-instance deployments, 
 A formal circuit breaker (e.g. Resilience4J) was considered for handling unavailable venue websites but deferred because the existing retry mechanism already
 provides equivalent protection at the scheduling layer:
 
-| Circuit breaker concept | Existing equivalent                                                                      |
-| ----------------------- | ---------------------------------------------------------------------------------------- |
-| CLOSED (normal)         | `status = SUCCESS`, `retryCount = 0` — imports proceed normally                          |
-| OPEN (blocked)          | `retryCount >= maxRetries` — source is skipped by the scheduler                          |
-| HALF-OPEN (probe)       | Manual `POST /event-sources/{slug}/retry` resets the source for re-test                  |
-| Cool-down period        | Exponential backoff (`interval × 2^retryCount`)                                          |
-| Permanent fault         | `status = MISCONFIGURED` — config errors (unknown source type, no importer) skip retries |
+| Circuit breaker concept | Existing equivalent                                                                                  |
+| ----------------------- | ---------------------------------------------------------------------------------------------------- |
+| CLOSED (normal)         | `status = SUCCESS`, `retryCount = 0` — imports proceed normally                                      |
+| OPEN (blocked)          | `retryCount >= maxRetries` — the shortened retry cadence ends; the source drops back to its interval |
+| HALF-OPEN (probe)       | The next scheduled tick after that interval, or a manual `POST /event-sources/{slug}/retry`          |
+| Cool-down period        | Exponential backoff (`interval × 2^retryCount`), capped at six hours                                 |
+| Permanent fault         | `status = MISCONFIGURED` — config errors (unknown source type, no importer) skip retries             |
 
-The main difference: a classic circuit breaker auto-transitions from OPEN → HALF-OPEN after a timeout. This implementation stays OPEN until a manual retry,
-which is preferable for web scraping — a persistently failing source likely means the website's HTML structure has changed, requiring a scraper code update
-rather than automatic re-attempts.
+The difference from a classic circuit breaker is what OPEN costs. A formal one auto-transitions OPEN → HALF-OPEN after a timeout; here OPEN is not a separate
+state at all, only the end of the shortened cadence, and the source keeps being probed on its normal schedule indefinitely.
+
+**That is a change, and #659 is why.** OPEN used to mean the source was excluded from the due-sources query outright, on the reasoning that a persistently
+failing scraper needs a code change rather than more attempts. The reasoning is sound and the mechanism was not: a source that stops being attempted stops
+producing failures, and a venue with no recent failures is indistinguishable from a venue with nothing to import. The observability built since — `#618`'s
+`has_succeeded`, `#700`'s per-source gauge, the `ej-importer-stale` rule — all read `event_source` rather than the scheduler, so silence there reads as health.
+Probing once a day and failing visibly costs one HTTP request and produces the signal those rules exist to catch. `enabled = false` remains the way to stop a
+source deliberately, and it is still honoured.
 
 Resilience4J could add value at a **different layer** — in-process HTTP retries inside `HtmlFetcher`
 for transient failures (503, timeouts) within a single import attempt. This is a complementary concern and can be added independently if needed.

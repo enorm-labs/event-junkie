@@ -34,20 +34,26 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
      * Finds enabled sources that are candidates for import.
      *
      * This is the first phase of a two-phase filtering strategy:
-     * 1. **SQL (coarse)**: filters out sources that are definitely not due — disabled,
-     *    already running, or exhausted retries. The `last_import_at < :now` clause is
-     *    intentionally broad (always true for past timestamps) to keep candidates that
-     *    need per-source interval evaluation.
+     * 1. **SQL (coarse)**: filters out sources that are definitely not due — disabled or
+     *    already running. The `last_import_at < :now` clause is intentionally broad (always
+     *    true for past timestamps) to keep candidates that need per-source interval evaluation.
      * 2. **Kotlin (precise)**: [ScheduledImportService.isDue] applies per-source interval
-     *    and exponential backoff logic that cannot be expressed in a single SQL query
+     *    and capped backoff logic that cannot be expressed in a single SQL query
      *    (each source has its own `importIntervalMinutes` and `retryCount`).
      *
      * Sources with status = 'RUNNING' are excluded to prevent overlapping imports.
      * Sources with status = 'MISCONFIGURED' are excluded because they need manual intervention.
-     * Failed sources that have exhausted their retry budget (`retry_count >= max_retries`)
-     * are also excluded to avoid fetching rows that will always be skipped.
      * Raw SQL is required because R2DBC does not support derived queries with
      * date arithmetic (see ADR-002).
+     *
+     * **A spent retry budget is no longer an exclusion (#659).** This clause used to carry
+     * `AND (status != 'FAILED' OR retry_count < max_retries)`, which took a persistently
+     * broken source out of the schedule entirely until a human ran `retryAll`. That is the
+     * one failure mode the importer cannot afford to express as *absence*: a source that
+     * stops being attempted looks identical to a source that has nothing to do, and both
+     * `ej-importer-stale` and #700's per-source gauge read the row rather than the schedule.
+     * Exhausting the budget now only ends the shortened retry cadence — [ScheduledImportService.isDue]
+     * puts the source back on its own interval, so it keeps failing visibly instead of quietly.
      *
      * @param now the current timestamp, used as a coarse upper bound on `last_import_at`.
      */
@@ -56,7 +62,6 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
         SELECT * FROM $EVENTS_SCHEMA.event_source
         WHERE enabled = true
           AND status NOT IN ('${ImportStatus.S_RUNNING}', '${ImportStatus.S_MISCONFIGURED}')
-          AND (status != '${ImportStatus.S_FAILED}' OR retry_count < max_retries)
           AND (
               last_import_at IS NULL
               OR last_import_at < :now
