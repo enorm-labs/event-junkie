@@ -6,7 +6,14 @@ _"a dashboard that answers 'is it healthy' in one screen"_.
 ```sh
 ./apply.sh            # import it, replacing any dashboard with the same title
 ./apply.sh --check    # run every panel's query against live data, change nothing
+./apply.sh --diff     # compare the cluster's copy to this file, change nothing
 ```
+
+**`--check` validates this file; `--diff` validates the deployment**, and they read alike. The first `--diff` run found the cluster serving **9 panels against
+this file's 12** — "Sources that have never succeeded" ([#618](https://github.com/enorm-labs/event-junkie/issues/618)) and both OpenObserve ingest panels
+([#625](https://github.com/enorm-labs/event-junkie/issues/625)) were in git and had never been imported. `--check` was green throughout, because the panels it
+checks are the ones in the file. See [#702](https://github.com/enorm-labs/event-junkie/issues/702) and `../alerts/README.md`, where the same gap cost 17 false
+alert firings.
 
 Then, because OpenObserve is deliberately not routed through the ingress:
 

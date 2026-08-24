@@ -118,6 +118,18 @@ def existing_alerts():
     return {row["name"]: row.get("alert_id") or row.get("id") for row in rows if isinstance(row, dict) and "name" in row}
 
 
+def stored_stream(alert_id):
+    """The (stream_type, stream_name) an existing alert is bound to, or None if it cannot be read."""
+    code, body = call("GET", "http://%s:5080/api/v2/%s/alerts/%s" % (svc, org, alert_id))
+    if code != 200:
+        return None
+    try:
+        stored = json.loads(body)
+    except ValueError:
+        return None
+    return stored.get("stream_type"), stored.get("stream_name")
+
+
 def main():
     ensure_template()
     ensure_destination()
@@ -129,8 +141,26 @@ def main():
     for alert in alerts:
         name = alert["name"]
         if name in known and known[name]:
-            code, body = call("PUT", "http://%s:5080/api/v2/%s/alerts/%s" % (svc, org, known[name]), alert)
-            verb = "updated"
+            # **A PUT cannot move an alert to a different stream, and says 200 anyway.**
+            # Measured on 2026-08-24 (#702): `ej-site-down` was rewritten from `up` to
+            # `kube_deployment_status_replicas_available`, the update reported success,
+            # the query changed and `stream_name` did not. Nothing errored, and the only
+            # visible symptom was `alert_history` rows labelled with the old stream —
+            # which is worse than an error, because a diagnostic that reads that label
+            # then dates a firing to a rule that is no longer installed.
+            #
+            # So a stream change is a delete and a recreate. The cost is real and is
+            # accepted here: the alert loses its `last_triggered_at` and its silence
+            # window, so a condition that is true right now can fire again immediately.
+            # The alternative is a rule whose published identity disagrees with its
+            # query, permanently, with no way to correct it short of the UI.
+            if stored_stream(known[name]) not in (None, (alert.get("stream_type"), alert.get("stream_name"))):
+                call("DELETE", "http://%s:5080/api/v2/%s/alerts/%s" % (svc, org, known[name]))
+                code, body = call("POST", "http://%s:5080/api/v2/%s/alerts" % (svc, org), alert)
+                verb = "recreated"
+            else:
+                code, body = call("PUT", "http://%s:5080/api/v2/%s/alerts/%s" % (svc, org, known[name]), alert)
+                verb = "updated"
         else:
             code, body = call("POST", "http://%s:5080/api/v2/%s/alerts" % (svc, org), alert)
             verb = "created"

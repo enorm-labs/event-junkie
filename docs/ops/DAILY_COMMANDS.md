@@ -142,9 +142,15 @@ kubectl --context event-junkie-staging -n observability \
 ```sh
 cd deploy/dashboards && ./apply.sh            # push the dashboard
 cd deploy/dashboards && ./apply.sh --check    # do the panels return data?
+cd deploy/dashboards && ./apply.sh --diff     # is the cluster running this file?
 cd deploy/alerts && ./apply.sh                # push the alert rules
 cd deploy/alerts && ./apply.sh --check        # can each rule fire, and would any fire now?
+cd deploy/alerts && ./apply.sh --diff         # is the cluster running these rules?
 ```
+
+**`--diff` is the one to run after a deploy, and the one to reach for when an alert's behaviour is surprising.** Nothing reconciles these objects, so a fix
+committed here reaches the cluster only when somebody runs `apply.sh` — `ej-site-down` spent 26 hours fixed in git and broken in the cluster, firing 17 times,
+while `--check` stayed green because `--check` reads the file (#702).
 
 Operating it, including the stream-count trap that causes ingestion to stop: [OPENOBSERVE.md](OPENOBSERVE.md).
 

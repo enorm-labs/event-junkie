@@ -12,7 +12,13 @@
 #
 #   ./apply.sh                       # import is-it-healthy.json
 #   ./apply.sh --check               # validate every panel query returns data, change nothing
+#   ./apply.sh --diff                # compare the cluster's copy to this file, change nothing
 #   ./apply.sh other.json            # some other dashboard in this directory
+#
+# `--check` and `--diff` answer different questions and neither substitutes for the other:
+# `--check` asks whether the panels in THIS FILE would return data, `--diff` asks whether the
+# cluster is running this file at all. The alerts directory grew the same pair for the same
+# reason — see ../alerts/diff_alerts.py and #702.
 #
 # The real work happens in two Python files that are copied to the node and run there. That is
 # deliberate: an earlier version inlined it as a remote shell script and the nested quoting was
@@ -26,10 +32,12 @@ readonly ORG="${EJ_O2_ORG:-default}"
 cd "$(dirname "$0")"
 
 check_only=false
+diff_only=false
 file=is-it-healthy.json
 for arg in "$@"; do
     case "$arg" in
         --check) check_only=true ;;
+        --diff) diff_only=true ;;
         *.json) file="$arg" ;;
         *)
             echo "unknown argument: $arg" >&2
@@ -57,6 +65,21 @@ ssh_node 'cat > /tmp/ej-dashboard.json' < "$file"
 # observability copy holds only the four keys the chart itself reads; O2_BASIC_AUTH_HEADER is there
 # for Flux's `valuesFrom`, which resolves Secrets in the HelmRelease's own namespace. Reaching for
 # the observability copy produces a flat 401 that reads like a wrong password.
+if $check_only && $diff_only; then
+    echo "--check and --diff answer different questions; run them one at a time" >&2
+    exit 2
+fi
+
+if $diff_only; then
+    ssh_node 'cat > /tmp/ej-diff-dashboard.py' < diff_dashboard.py
+    ssh_node "
+        AUTH=\$(sudo k3s kubectl -n flux-system get secret openobserve-credentials -o jsonpath='{.data.O2_BASIC_AUTH_HEADER}' | base64 -d)
+        SVC=\$(sudo k3s kubectl -n observability get svc openobserve-openobserve-standalone -o jsonpath='{.spec.clusterIP}')
+        python3 /tmp/ej-diff-dashboard.py \"\$AUTH\" \"\$SVC\" '$ORG' /tmp/ej-dashboard.json
+    "
+    exit $?
+fi
+
 if $check_only; then
     ssh_node 'cat > /tmp/ej-check.py' < check_panels.py
     ssh_node "
