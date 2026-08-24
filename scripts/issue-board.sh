@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
+# comment-lint: allow the header is this script's only --help; there is no usage() to hold it
 #
 # issue-board.sh — read and set an issue's Status and Priority on the Event Junkie project board.
 #
 # Status and Priority are project *fields*, not labels — a deliberate split (AGENTS.md § The
-# Backlog): intrinsic properties of the work are labels, planning state lives on the board,
-# because priority churns and label churn is noise.
-#
-# The cost of that split is that `gh issue edit` cannot touch either one. Setting them means
-# resolving the project id, the field id, the option id and the item id, then calling
-# `gh project item-edit` — four lookups that nobody should retype. Hence this script.
+# Backlog). The cost of it is that `gh issue edit` cannot touch either: setting one means resolving
+# the project id, the field id, the option id and the item id, then calling `gh project item-edit`.
+# Hence this script. Nothing is hardcoded; every id is resolved at run time, so renaming an option
+# in the UI does not silently break it, and an issue not yet on the board is added.
 #
 # Usage:
 #   scripts/issue-board.sh show <issue>
@@ -16,47 +15,28 @@
 #   scripts/issue-board.sh priority <issue> <P0|P1|P2>
 #   scripts/issue-board.sh batch [file]      # many issues at once; reads stdin when no file
 #
-# An issue that is not yet on the board is added to it. Nothing is hardcoded: every id is
-# resolved at run time, so renaming an option in the UI does not silently break this.
+# **`status <n> Done` closes the issue.** The project's `Auto-close issue` workflow closes on Done
+# and `Item closed` sets Done on close, so either end reaches the same place. Do not use it to tidy
+# the board for something meant to stay open — and if a card fails to move after a merge, those
+# workflow settings are the first place to look, not this script.
 #
-# ## `status <n> Done` is not a board-only edit any more
+# **`batch` exists because the single-issue path re-resolves everything on every call** — four to
+# five GraphQL requests each, the item list being the expensive one. Sixteen back-to-back calls trip
+# GitHub's **secondary** rate limiter, the one governing mutations, and it fails in a way that reads
+# as a bug: `gh` reports "API rate limit exceeded" while `gh api rate_limit` still shows thousands of
+# points, because the two budgets are counted separately. `batch` resolves once, then issues at most
+# two mutations per issue.
 #
-# The project's `Auto-close issue` workflow closes an issue when its Status becomes Done, and
-# `Item closed` sets Done when one closes — inverses that agree, so either end reaches the same
-# place. Both were enabled on 2026-08-18, having been off long enough that two prompt files
-# documented an automation that was not running and every merged PR left its card behind.
-#
-# The consequence for this script is narrow and worth stating: `status <n> Done` now CLOSES the
-# issue. Do not use it to tidy the board for something meant to stay open — and if a card fails to
-# move after a merge, the workflow settings are the first place to look, not this script.
-#
-# ## Why `batch` exists
-#
-# The single-issue path re-resolves the project, the field, the option and the whole item list on
-# *every* call — four to five GraphQL requests each, and the item list is the expensive one. That
-# is the right trade for one edit and the wrong one for sixteen.
-#
-# Learned the expensive way (2026-08-13): sixteen back-to-back invocations tripped GitHub's
-# **secondary** rate limiter, the one that governs mutations. It fails in a way that reads as a
-# bug rather than a limit — `gh` reports "API rate limit exceeded" while `gh api rate_limit` still
-# shows thousands of points remaining, because the primary points budget and the secondary write
-# limiter are counted separately. `batch` resolves everything once and then issues at most two
-# mutations per issue.
-#
-# ## Batch input
-#
-# One issue per line: `<issue> [status] [priority]`. A status may contain spaces ("In progress"),
-# so the priority is recognised **by shape from the end of the line** rather than by position.
-# `-` in either slot leaves that field untouched, `#` starts a comment, blank lines are skipped.
+# Batch input is one issue per line, `<issue> [status] [priority]`. A status may contain spaces ("In
+# progress"), so the priority is recognised **by shape from the end of the line** rather than by
+# position. `-` leaves a field untouched, `#` starts a comment, blank lines are skipped:
 #
 #   474 Blocked P2
-#   475 Ready P1
 #   476 In progress        # status only — priority left as it is
 #   480 - P2               # priority only
 #
-# Every line is parsed and validated **before anything is written**, so a typo on the last line
-# does not leave the first thirty applied and the rest not.
-
+# Every line is validated **before anything is written**, so a typo on the last line does not leave
+# the first thirty applied and the rest not.
 set -euo pipefail
 
 REPO="${BACKLOG_REPO:-enorm-labs/event-junkie}"

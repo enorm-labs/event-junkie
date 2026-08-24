@@ -711,6 +711,8 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
     - **How to write the sentences.** A six-rule subset of [ASD-STE100](https://www.asd-ste100.org/), chosen because each one is checkable: one topic per
       sentence, **20 words maximum** · active voice, present tense · **one word, one meaning** — do not rename a thing mid-comment for variety · **three sentences
       maximum** per comment · direct statements, not narrative · no rhetorical build-up. The `asd-ste100` skill applies these to a block that has to stay.
+    - **[`/compact-comments`](.github/prompts/compact-comments.prompt.md) is how the backlog comes down.** It classifies each block DELETE → RENAME → EXTRACT →
+      RELOCATE → KEEP and applies them in that order, so deletion is the default and rewriting the exception. Reach for it before hand-editing a dense file.
     - **Volume is ratcheted, not merely capped.** `scripts/comment-density.sh check` fails when an area carries more comment lines than
       `scripts/comment-baseline.txt` allows, and `/verify` runs it. The number only goes down — compress or delete rather than raise it, and commit the lower
       figure when it drops.
@@ -1175,6 +1177,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Commit message prompt                     | `.github/prompts/commit-message.prompt.md`                                                                                        |
 | Squash commit message prompt              | `.github/prompts/squash-commit-message.prompt.md`                                                                                 |
 | Open PR prompt                            | `.github/prompts/open-pr.prompt.md`                                                                                               |
+| Compact comments prompt                   | `.github/prompts/compact-comments.prompt.md`                                                                                      |
 | Code review prompt                        | `.github/prompts/code-review.prompt.md`                                                                                           |
 | Security report prompt                    | `.github/prompts/security-report.prompt.md`                                                                                       |
 | Shared domain module marker               | `events-core/src/.../EventsCoreModule.kt`                                                                                         |

@@ -1,0 +1,137 @@
+# Compact Comments
+
+Find comments that cost more than they earn and pay them down — by deleting, renaming or extracting first, and only rewriting what genuinely has to stay. The
+burn-down counterpart to the guards in #713: those stop the volume rising, this is what brings it down.
+
+## Important
+
+- **Deletion is the default; rewriting is the exception.** Most long comments are not badly worded, they are unnecessary. Working through the buckets in order
+  (below) is what keeps the effort on removal rather than on polishing prose that should not exist.
+- **Never lose an accepted limitation.** Venue sub-package KDoc is the designated home for them (#393, #714) — a field the venue never publishes, a trade-off a
+  parser makes deliberately. That prose is what stops the same non-defect being re-reported by every `/data-quality-audit`. **Shorten how it is said; never
+  delete what it says.** If a fact has to leave a comment, it moves somewhere reviewable first — a test name, an issue, an ADR.
+- **Re-wrapping is not compaction.** Re-flowing a comment to a wider column drops its line count without removing a word. The caps count lines, so this passes
+  the lint and changes nothing — it is gaming the metric while claiming to fix it. Cut words, not line breaks.
+- **Never raise a baseline to go green.** `comment-baseline.txt` and `comment-lint-baseline.txt` move down. A genuinely new file adding genuinely new comments is
+  the one exception, and it is argued in the PR, not absorbed quietly.
+- This skill edits code. Run [`/verify`](verify.prompt.md) before handing back, and never leave the tree red.
+
+## Usage
+
+```
+/compact-comments              # the current diff — the default
+/compact-comments --worst N    # the N densest files in the repository
+/compact-comments <path>       # one file or directory
+```
+
+## Steps
+
+### 1. Find the targets
+
+```bash
+scripts/comment-density.sh report --top 20     # where the volume actually is
+scripts/comment-lint.sh report                 # every rule violation, by type
+./gradlew detekt --console=plain -q            # LongComment / CommentDensity / CommentSmell
+```
+
+Default to the current diff (`git --no-pager diff --stat main...HEAD`). With `--worst N`, rank by comment lines × ratio rather than by ratio alone: a 90% file
+with 20 comment lines is a declaration with its rationale attached, and there is nothing to win there.
+
+**Read the whole comment before touching it.** The single most common mistake is compressing a paragraph that should have been deleted outright.
+
+### 2. Classify every block into exactly one bucket
+
+| Bucket       | The comment…                                                            | What to do                                                                       |
+| ------------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| **DELETE**   | restates what the code plainly does, or the signature already says it   | Remove it. `@param foo the foo`, "increments the counter", purity boilerplate.   |
+| **RENAME**   | exists to explain a name                                                | Fix the name; the comment goes. A rename cannot go stale.                        |
+| **EXTRACT**  | explains a block of code inside a function                              | Extract a named function; the name carries what the comment said.                |
+| **RELOCATE** | states a constraint, a promise or a fact that belongs somewhere checked | Move it: a test name, an issue, an ADR, `docs/`. Leave a pointer, not a summary. |
+| **KEEP**     | records a genuine _why_ nothing else can carry                          | Compress the words. This is the only bucket that gets rewritten.                 |
+
+**Apply the buckets in that order.** Every block resolved earlier is one you never have to word well.
+
+### 3. What each bucket looks like here
+
+- **DELETE** — the boilerplate #393 removed from 106 files and that copying a scraper puts straight back: `@param document the parsed Jsoup document`, "performs
+  no I/O" (stated once on `AbstractTwoPageWebsiteImporter`), the fixture-and-mock test setup.
+- **RELOCATE, and check first** — a fenced `Example:` block in KDoc is usually a **second copy of an assertion that already exists**. Grep the example's own
+  strings against the test tree before deciding; if the tests hold them, the block goes and the KDoc says so in a clause. Both `ArtistNameMapping` and
+  `MorphineFieldMapping` carried a dozen such lines each.
+- **KEEP, and compress** — the reasoning that survives is the trade-off, the constraint from outside, the non-obvious failure the shape avoids. Invoke the
+  `asd-ste100` skill for the rewrite: ≤20-word sentences, active voice, present tense, one word per concept, ≤3 sentences, no rhetorical build-up.
+
+**The four things that make a comment long here**, and what each one becomes:
+
+1. A **markdown heading** (`## Why this exists`) — the content is a document in the wrong file. Move it to `docs/`, an ADR or the issue; leave a pointer.
+2. A **date or an incident narrative** (`Measured on staging 2026-08-20`, `failed at 11:54 and was next attempted…`) — git blame, the PR and the issue hold it.
+   Keep the conclusion, drop the forensics.
+3. **History** (`This used to ask "does it contain -SNAPSHOT?"`) — rewrite in the present tense. If the old approach is a live trap somebody will re-introduce,
+   name the trap in one sentence rather than telling its story.
+4. An **argument reconstructed from the PR thread** — keep what constrains _this_ code, and reference the rest.
+
+### 4. What is not a smell, and must not be "fixed"
+
+The lint already knows these; a human sweep is where they get broken.
+
+- **A date inside backticks, quotes or a fenced block is data.** This tree documents its parsers with `"2026-05-16T20:00"` far more often than it dates a
+  decision — of 57 date-shaped strings in Kotlin main, 4 were changelog entries.
+- **"used to" is nearly always the verb** — "used to resolve the links", not "it used to resolve the links". 78 hits, 1 of them narration.
+- **A pinned clock in a test** ("the clock is pinned to 2026-07-01") is a fact about a fixture, and a **legal date** (when an address became real, when a DPA was
+  concluded) is a compliance record. Both are exempt from `CommentSmell` for that reason.
+- **A long comment recording a deliberate trade-off is not boilerplate**, however long it is. Ask for it in fewer words; the reasoning stays.
+
+### 5. Apply, then prove it
+
+Work file by file and re-run the checks after each one — the caps are per comment, so a single edit can move a file from four findings to none.
+
+```bash
+./gradlew detekt --console=plain -q
+cd events-frontend && npx eslint .
+scripts/comment-lint.sh check
+scripts/comment-density.sh check
+```
+
+When a count has genuinely dropped, commit the lower ceiling in the same change:
+
+```bash
+git add -N <any new file>          # git ls-files cannot see an untracked one
+scripts/comment-density.sh update-baseline
+scripts/comment-lint.sh update-baseline
+```
+
+Then run [`/verify`](verify.prompt.md) in full. **A comment-only change must not alter behaviour**, so a failing test means an edit went further than intended —
+read it rather than working around it.
+
+### 6. When a comment genuinely cannot fit
+
+Suppress it, with a reason, on the declaration:
+
+- `@Suppress("LongComment")` for Kotlin — and **`@Suppress("LongComment/venue")` inside `scraper/<venue>/`, because the bare rule name silently does not match
+  the second rule instance**.
+- `// eslint-disable-next-line event-junkie/max-comment-lines — <reason>` for TS and Vue.
+- `# comment-lint: allow <reason>` on the line above the block, for Terraform, shell, YAML and Python. A bare directive is itself a violation.
+
+A suppression is an explicit decision a reviewer can see. **Two or three across a sweep is a judgement call; a dozen means the sweep gave up** — say so plainly
+rather than shipping the count.
+
+## Output
+
+Report per bucket, not per file, because the buckets are the point:
+
+```
+DELETE    31 lines   restated signatures, purity boilerplate
+RELOCATE  22 lines   4 Example: blocks already asserted in tests
+KEEP      18 lines   compressed, reasoning intact
+RENAME     0
+EXTRACT    0
+─────────────────────
+          71 lines removed across 9 files
+
+events-importer  20772 → 20516   (-256)
+detekt           28 findings → 0
+suppressions     2 (insel, peteredel — accepted limitations, #714)
+```
+
+Then state what `/verify` did, and name anything you deliberately left: a comment you judged load-bearing, a file you did not reach, a suppression you added and
+why. **A sweep that quietly skipped the hard files reads exactly like one that finished.**

@@ -5,4 +5,4 @@ deploy	79
 events-bff	3
 infra	55
 root	3
-scripts	23
+scripts	13

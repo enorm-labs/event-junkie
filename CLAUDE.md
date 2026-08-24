@@ -11,6 +11,7 @@ Slash commands available under `.claude/skills/`:
 - `/code-review` — review the current diff
 - `/codebase-audit` — comprehensive whole-repo review of code + architecture (size, duplication, conventions, simplification)
 - `/commit-message` — generate a commit message from staged changes
+- `/compact-comments` — pay down comment volume: classify each block DELETE → RENAME → EXTRACT → RELOCATE → KEEP, apply in that order, and prove the drop
 - `/data-quality-audit` — read-only audit of the whole `events` database for data-quality issues
 - `/importer-smoke` — runtime smoke test of a single importer: seed, import, inspect the rows, check for regressions
 - `/k3d-rehearsal` — run the chart and all three images on a local k3d cluster and prove the stack works end to end, then tear it down
