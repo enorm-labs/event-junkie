@@ -261,6 +261,12 @@ rule(
 # The 7d lookback FAILS CLOSED. An ingest gap shortens the history side, so the
 # rule goes quiet rather than crying wolf — which is the right direction, and worth
 # knowing given #625 dropped roughly half of all metric points for days.
+#
+# It also makes the rule blind for the first week after the metric ships: a source
+# already at zero has no `> 20` history to be contrasted against and will not be
+# named, so only a collapse that happens AFTER the deploy fires this. Inherent —
+# broken and legitimately empty differ only in their history — and a reason to read
+# the per-source numbers by hand once rather than to widen the rule.
 rule(
     "ej-source-emptied",
     "A source holds zero future events while it held more than twenty at some point in the "
