@@ -36,21 +36,39 @@ always present.
 
 ## The rules
 
-| Rule                        | Fires when                                                                                              | #271 item          |
-| --------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------ |
-| `ej-site-down`              | an application Deployment has zero available replicas                                                   | site down          |
-| `ej-importer-stale`         | the stalest source passes 36h against a 24h interval                                                    | importer failing   |
-| `ej-source-never-succeeded` | a source has never once completed a run ([#618](https://github.com/enorm-labs/event-junkie/issues/618)) | importer failing   |
-| `ej-catalogue-emptying`     | future events fall below 500, from a normal ~3,000                                                      | zero events        |
-| `ej-node-disk-filling`      | less than 15% of the node's filesystem is free                                                          | disk filling       |
-| `ej-certificate-expiry`     | the soonest certificate is inside 14 days                                                               | certificate expiry |
-| `ej-ingest-shedding`        | OpenObserve is rejecting writes ([#625](https://github.com/enorm-labs/event-junkie/issues/625))         | —                  |
-| `ej-ingest-queue-saturated` | the collector's export queue is over 80% full                                                           | —                  |
+| Rule                        | Fires when                                                                                                                                   | #271 item          |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| `ej-site-down`              | an application Deployment has zero available replicas                                                                                        | site down          |
+| `ej-importer-stale`         | the stalest source passes 36h against a 24h interval                                                                                         | importer failing   |
+| `ej-source-never-succeeded` | a source has never once completed a run ([#618](https://github.com/enorm-labs/event-junkie/issues/618))                                      | importer failing   |
+| `ej-catalogue-emptying`     | future events fall below 500, from a normal ~3,000                                                                                           | zero events        |
+| `ej-source-emptied`         | one source holds zero future events after holding more than twenty this week ([#700](https://github.com/enorm-labs/event-junkie/issues/700)) | zero events        |
+| `ej-node-disk-filling`      | less than 15% of the node's filesystem is free                                                                                               | disk filling       |
+| `ej-certificate-expiry`     | the soonest certificate is inside 14 days                                                                                                    | certificate expiry |
+| `ej-ingest-shedding`        | OpenObserve is rejecting writes ([#625](https://github.com/enorm-labs/event-junkie/issues/625))                                              | —                  |
+| `ej-ingest-queue-saturated` | the collector's export queue is over 80% full                                                                                                | —                  |
 
-**`ej-catalogue-emptying` is a stand-in and should be read as one.** ADR-015's criterion 1 is per-source — a venue whose scraper still returns 200 while writing
-nothing — and the only per-source write signal today is `importer_events_written_total`, a Micrometer counter that resets on every deploy against a 24h import
-interval. Closing that needs a database-backed gauge, the way [#618](https://github.com/enorm-labs/event-junkie/issues/618) did for `has_succeeded`. Until then
-this catches the same failure one level up.
+**The zero-events failure is two rules, and keeping both is deliberate.** ADR-015's criterion 1 is per-source — a venue whose scraper still returns 200 while
+writing nothing — and `ej-source-emptied` is that rule at last, on the `importer_source_events_future` gauge
+[#700](https://github.com/enorm-labs/event-junkie/issues/700) added. It is refreshed from the database rather than accumulated in the process, the way
+[#618](https://github.com/enorm-labs/event-junkie/issues/618) did for `has_succeeded`, because the obvious signal — `importer_events_written_total` — is a
+Micrometer counter that resets on every deploy and is absent until it first increments, against a 24h import interval.
+
+`ej-catalogue-emptying` stays alongside it rather than being replaced, because the two see different failures: a per-source rule cannot see the importer being
+down, the scheduler stopping, or a database restored empty, since those empty every source at once and none of them individually looks different from the rest.
+
+**Zero is not the same as broken, and that is the whole difficulty of the per-source rule.** A venue with nothing on for three weeks — summer break, a
+refurbishment — sits at zero legitimately with a perfectly healthy scraper. So the rule asks for zero _now_ against a non-zero recent history for the **same**
+series:
+
+```promql
+sum((max by (source) (importer_source_events_future) == bool 0)
+  * (max by (source) (max_over_time(importer_source_events_future[7d])) > bool 20))
+```
+
+Both halves come from one metric, so the vector match is one-to-one on `source` and a gap in some _other_ metric cannot make it misfire — the failure
+`has_succeeded` exists to avoid. **The 7-day lookback fails closed**: an ingest gap shortens the history side and the rule goes quiet rather than crying wolf,
+which is the right direction given #625 dropped roughly half of all metric points for days.
 
 **36h, not 24h**, for the reason [#617](https://github.com/enorm-labs/event-junkie/issues/617) gives about the dashboard panel: the interval _is_ 24h, so a 24h
 threshold flags the whole catalogue every day as a matter of routine, and a rule that fires every day is a rule that gets muted.

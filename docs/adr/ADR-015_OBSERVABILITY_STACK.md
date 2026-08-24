@@ -113,6 +113,15 @@ the rest) reach OpenObserve once the path is open.
   over `importer_source_last_success` ageing, not over a missing series. That is a constraint on the
   alert rather than a defect.
 
+    **Resolved 2026-08-24 (#700), and the resolution is worth stating because the constraint above
+    reads as permanent.** The counter is still unusable for this, for exactly the reason given — but
+    the alert did not have to be expressed over a counter. `importer.source.events_future` is a
+    **gauge refreshed from the database on every scheduler tick**, published for every enabled
+    source including those holding nothing, so criterion 1's series exists from the first tick after
+    start-up rather than from a source's first success. `ej-source-emptied` is written against it.
+    The general lesson is #618's: in this system, anything an alert must be able to evaluate _while
+    the thing is broken_ has to be re-read from state, never accumulated in the process.
+
 **One finding whose scope is uncertain, recorded rather than generalised:** the `namespaceSelector`
 form of the allow rule was silently refused when collector and target sat on **different k3d nodes**
 — cross-node pod traffic is SNAT'd, so the source address matches no selector and only a CIDR does.

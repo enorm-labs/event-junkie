@@ -64,6 +64,14 @@ class ImporterMetrics(
     private val hasSucceeded = ConcurrentHashMap<String, AtomicLong>()
 
     /**
+     * Future events currently held per source, backing the `events_future` gauge (#700).
+     *
+     * Keyed by slug like the two above, and for the same reason: sources are created through the
+     * admin API at runtime, so the set is not known at construction time.
+     */
+    private val futureEvents = ConcurrentHashMap<String, AtomicLong>()
+
+    /**
      * Per-source, per-field coverage ratios. A `Double` holder rather than an [AtomicLong], because
      * this is the one meter here that is a fraction and rounding it to a long would make every value
      * either 0 or 1.
@@ -204,6 +212,48 @@ class ImporterMetrics(
     }
 
     /**
+     * `importer.source.events_future{source}` — **how many future events this source holds right
+     * now**, refreshed from the database rather than accumulated in the process (#700).
+     *
+     * ## Why this is not a tag on `db.events`
+     *
+     * `db.events{horizon="future"}` is the whole catalogue, and the rule written on it
+     * (`ej-catalogue-emptying`) selects with `max`. Publishing per-source series under the same name
+     * would put eighty-six smaller series beside the one global one: `max` would keep picking the
+     * global series only because it happens to be the largest, and anything summing `db_events`
+     * would count every event twice. A separate name in the `importer.source.*` family is where an
+     * alert author is already looking, next to [SOURCE_LAST_SUCCESS] and [SOURCE_HAS_SUCCEEDED].
+     *
+     * ## Why not `importer.events.written`, which sounds like the same number
+     *
+     * That is a counter, and a counter lives in this process: it resets on every deploy and is
+     * absent from `/actuator/prometheus` entirely until something increments it. The import interval
+     * is 24 hours and the importer restarts on every deploy, so `increase(...[48h]) == 0` cannot
+     * tell "wrote nothing" from "was restarted". ADR-015 records that shape and #618 paid for it —
+     * a gauge refreshed from the database is what survives a restart, because it re-reads state
+     * instead of accumulating it.
+     *
+     * **Zero is a value here, not an absence**, and [MetricsRefreshService] publishes it for every
+     * enabled source that the count query returns no row for. A source missing from the exposition
+     * cannot be alerted on and reads as healthy, which is the #618 failure exactly.
+     *
+     * **Zero is also not the same as broken**, which is a constraint on the rule rather than on this
+     * meter: a venue with nothing on for three weeks is legitimately at zero. The alert therefore
+     * asks for zero *now* against a non-zero recent history for the same series, not for a floor.
+     */
+    fun publishFutureEvents(
+        sourceSlug: String,
+        count: Long
+    ) {
+        futureEvents
+            .computeIfAbsent(sourceSlug) { slug ->
+                val holder = AtomicLong(0)
+                registry.gauge(SOURCE_EVENTS_FUTURE, Tags.of(TAG_SOURCE, slug), holder) { it.get().toDouble() }
+                holder
+            }.set(count)
+    }
+
+    /**
      * `importer.source.field_coverage{source,field}` — the fraction of a run's events carrying one
      * field (#472).
      *
@@ -321,6 +371,18 @@ class ImporterMetrics(
          * never worked, which [SOURCE_LAST_SUCCESS] deliberately does not. See [publishHasSucceeded].
          */
         const val SOURCE_HAS_SUCCEEDED = "importer.source.has_succeeded"
+
+        /**
+         * `importer.source.events_future{source}` — the per-source half of ADR-015's criterion 1,
+         * which `db.events` can only see once the whole catalogue has drained. See
+         * [publishFutureEvents].
+         *
+         * **Not `events.total` or anything ending in `_total`.** That is Prometheus' reserved suffix
+         * for counters and Micrometer strips it, silently, which is how `db.events.total` came to be
+         * published as `db_events` while every rule written from the documented name matched
+         * nothing.
+         */
+        const val SOURCE_EVENTS_FUTURE = "importer.source.events_future"
         const val SOURCE_RUNNING = "importer.source.running"
 
         /**

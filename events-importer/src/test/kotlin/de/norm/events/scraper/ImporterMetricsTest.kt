@@ -259,5 +259,33 @@ class ImporterMetricsTest {
                 .gauge()!!
                 .value() shouldBe 1_780_000_500.0
         }
+
+        /**
+         * One series per source, updated in place — and **zero is a value**, not a reason to skip
+         * publishing (#700). A source missing from the exposition cannot be alerted on and reads as
+         * healthy, which is precisely the source this gauge exists to catch.
+         */
+        @Test
+        fun `events_future is published per source, and a zero is published like any other number`() {
+            metrics.publishFutureEvents("busy", 41)
+            metrics.publishFutureEvents("emptied-out", 0)
+            metrics.publishFutureEvents("busy", 38)
+
+            registry
+                .find("importer.source.events_future")
+                .tag("source", "busy")
+                .gauges()
+                .size shouldBe 1
+            registry
+                .find("importer.source.events_future")
+                .tag("source", "busy")
+                .gauge()!!
+                .value() shouldBe 38.0
+            registry
+                .find("importer.source.events_future")
+                .tag("source", "emptied-out")
+                .gauge()!!
+                .value() shouldBe 0.0
+        }
     }
 }
