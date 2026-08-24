@@ -557,11 +557,19 @@ metadata DB is `local-path` on the node's disk — it dies with the node. A rebu
 every pod healthy:
 
 ```sh
-cd deploy/dashboards && ./apply.sh && ./apply.sh --check   # 13/14 panels is the expected state until data accumulates
+cd deploy/dashboards && ./apply.sh && ./apply.sh --check   # 13/14 queries returning data is the expected state — see below
 cd deploy/alerts     && ./apply.sh && ./apply.sh --check   # the template and destination are recreated too
 cd deploy/dashboards && ./apply.sh --diff                  # and prove the push landed: both must say they match
 cd deploy/alerts     && ./apply.sh --diff
 ```
+
+**The fourteenth query is not slow, it is absent by design, and the difference matters when you are
+staring at a fresh cluster wondering what else did not come back.** The one that returns nothing is
+the `enqueue_failed` half of _Metrics dropped before storage_: a collector exports that series only
+once something has actually failed to enqueue, so a healthy one has no series at all. It is the same
+trap [`deploy/alerts/README.md`](../../deploy/alerts/README.md) records for `ej-ingest-shedding`,
+where a rule summing two counters was un-fireable during exactly the normal operation it was meant to
+watch. Waiting for that panel to fill in is waiting for an outage.
 
 **`--diff` is what turns "I ran the apply" into "the cluster has it".** It is worth the two extra commands here of all places: a rebuild is exactly when an
 apply gets half-run, and a rule that silently did not land looks identical to one that did until the incident it was written for (#702).
