@@ -90,12 +90,16 @@ const { t } = useI18n()
         entsprechend angepasst — genannt wird hier immer die tatsächlich konfigurierte Frist.
       </p>
       <p>
-        <strong>Sicherungskopien:</strong> Die Datenbank wird gesichert, und diese Sicherungen
-        werden <strong>30 Tage</strong> aufbewahrt; danach werden sie automatisch gelöscht. Diese
-        Frist ist von der oben genannten unabhängig: Daten, die im laufenden Betrieb bereits
-        gelöscht wurden, können in einer Sicherung noch bis zu 30 Tage fortbestehen. Sicherungen
-        dienen ausschließlich der Wiederherstellung nach einem Ausfall — sie werden nicht durchsucht
-        und nicht ausgewertet.
+        <strong>Sicherungskopien:</strong> Die Datenbank wird gesichert. Diese Sicherungen werden im
+        Regelfall <strong>30 Tage</strong> aufbewahrt und danach automatisch gelöscht;
+        <strong>spätestens nach 35 Tagen</strong> werden sie in jedem Fall gelöscht. Die beiden
+        Angaben unterscheiden sich, weil zwei voneinander unabhängige Mechanismen löschen: die
+        tägliche Bereinigung auf dem Server, die eine Sicherung so lange behält, wie sie zur
+        Wiederherstellung der übrigen benötigt wird, und eine Regel des Speicherdienstes, die
+        unabhängig davon greift — auch dann, wenn der Server ausgefallen ist. Diese Frist ist von der
+        oben genannten unabhängig: Daten, die im laufenden Betrieb bereits gelöscht wurden, können in
+        einer Sicherung noch bis zu 35 Tage fortbestehen. Sicherungen dienen ausschließlich der
+        Wiederherstellung nach einem Ausfall — sie werden nicht durchsucht und nicht ausgewertet.
       </p>
     </section>
 
@@ -196,7 +200,7 @@ const { t } = useI18n()
         sofort im laufenden Betrieb. Sicherungskopien werden dabei nicht einzeln bearbeitet — eine
         einzelne Person aus einer Sicherung herauszulösen würde deren Zweck zerstören und wäre
         technisch nur unter Inkaufnahme neuer Risiken möglich. Die Daten laufen daher mit der
-        Sicherung selbst aus, also spätestens nach 30 Tagen. Muss eine Sicherung zwischenzeitlich
+        Sicherung selbst aus, also spätestens nach 35 Tagen. Muss eine Sicherung zwischenzeitlich
         eingespielt werden, wenden wir die Löschung danach erneut an.
       </p>
       <p>

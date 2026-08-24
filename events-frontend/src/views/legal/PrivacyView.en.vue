@@ -86,11 +86,14 @@ const { t } = useI18n()
         always state the period actually configured.
       </p>
       <p>
-        <strong>Backups:</strong> the database is backed up, and those backups are kept for
-        <strong>30 days</strong>, after which they are deleted automatically. This period is
-        separate from the one above: data already deleted from the live system can still exist in a
-        backup for up to 30 days. Backups are used solely to recover from a failure — they are not
-        searched and not analysed.
+        <strong>Backups:</strong> the database is backed up. Those backups are normally kept for
+        <strong>30 days</strong> and then deleted automatically, and in every case they are deleted
+        <strong>within 35 days</strong>. The two figures differ because two independent mechanisms
+        delete them: a daily sweep on the server, which keeps a backup for as long as the others need
+        it to remain restorable, and a rule on the storage service, which applies regardless — including
+        while the server is down. This period is separate from the one above: data already deleted
+        from the live system can still exist in a backup for up to 35 days. Backups are used solely to
+        recover from a failure — they are not searched and not analysed.
       </p>
     </section>
 
@@ -182,7 +185,7 @@ const { t } = useI18n()
         <strong>Erasure and backups.</strong> An erasure under Art. 17 takes effect immediately in
         the live system. Backups are not edited individually — extracting one person from a backup
         would destroy its purpose, and would only be technically possible by accepting new risks.
-        The data therefore expires with the backup itself, so within 30 days at most. If a backup
+        The data therefore expires with the backup itself, so within 35 days at most. If a backup
         has to be restored in the meantime, we re-apply the erasure afterwards.
       </p>
       <p>

@@ -177,6 +177,12 @@ who ever visited the site — which is also why §7.3's removal route matters mo
 separate question. And a processor's sub-processor annex is worth reading against §5: if any of them sits outside the EU for a service in use, the notice's
 "no third-country transfer" sentence stops being true.
 
+**Backup retention is two numbers, and the notice states both (#586).** A nightly `wal-g` sweep on the node deletes at **30 days**, and a lifecycle rule on the
+bucket deletes at **35** regardless of whether anything of ours is running. The gap is not slack: the sweep uses `delete before FIND_FULL`, which deliberately
+keeps a backup older than the window whenever the rest of the window depends on it, so a bucket rule set at exactly 30 would break the restore chain rather than
+enforce the promise. Before #586 only the sweep existed, which meant the stated period held only while the node did — the defect §7.5 names for log retention,
+one system over. **If either number moves, both notices state them and both must move with it.**
+
 ### 7.4 Device storage — `localStorage`, not just cookies
 
 The site sets **no cookies**. It stores a `theme` key and a locale hint. § 25 TDDDG covers _storage on terminal equipment_, not cookies specifically — both

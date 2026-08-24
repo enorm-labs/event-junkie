@@ -1,9 +1,8 @@
 # Object Storage buckets that CAN be declared.
 #
 # `-tfstate` is not here and never will be: a state backend cannot be managed by the state it holds
-# (README.md §"Why the state bucket is hand-made"). `-backups` is not here either, for a smaller
-# reason — it already exists, so adopting it means `tofu import`, which is a deliberate act rather
-# than a side effect of an observability issue. #586 decides that separately.
+# (README.md §"Why the state bucket is hand-made"). Both others now are — `-o2` since #271, and
+# `-backups` since #586 answered the question this file used to defer.
 
 # Adopting the bucket that already exists, rather than creating one (2026-08-20).
 #
@@ -80,6 +79,85 @@ resource "minio_s3_bucket_lifecycle" "o2" {
 
     # An interrupted upload leaves parts that are billed and invisible to a plain listing. Nothing
     # here resumes one, so a week is generous.
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
+# --- the wal-g backup bucket, and the rule the privacy notice rests on ---------------------------
+
+# Adopted, not created — the same situation `-o2` was in, and for the same reason: all three buckets
+# were made by hand on 2026-08-10 at 19:43. See the block above for why an `import` block beats
+# `tofu import` on the command line, and why deleting the `resource` while leaving the `import` is
+# the one move that must not happen.
+import {
+  to = minio_s3_bucket.backups
+  id = "event-junkie-backups"
+}
+
+resource "minio_s3_bucket" "backups" {
+  bucket = var.object_storage_bucket_backups
+
+  # Private, stated rather than defaulted, and here the stakes are higher than for `-o2`: this
+  # bucket holds a physical copy of the entire database. A public backup bucket is not a disclosure
+  # of log fragments but of everything.
+  acl = "private"
+
+  # `false` so `tofu destroy` cannot take the backups with it. Losing the backups in the same action
+  # that loses the node is the failure the backups exist for.
+  force_destroy = false
+}
+
+# **The control that makes the privacy notice true when nothing of ours is running (#586).**
+#
+# Unlike the `-o2` rule above, this is not a backstop under an application-level control that the
+# notice actually rests on. **Whenever the node is down, this rule IS the retention**, because the
+# only other enforcement is the nightly `wal-g delete` sweep on that node — and a sweep cannot run
+# on a machine that is off. That is the whole of #586: an outage over a long weekend silently
+# extended the window, the longer the outage the further the drift, and nothing reported it.
+#
+# ## Why 35 and not 30
+#
+# The sweep runs `wal-g delete before FIND_FULL <30 days ago>`, which finds the last *full* backup
+# before the cutoff and deletes only what precedes it. It therefore keeps a backup older than 30
+# days on purpose, whenever that backup is the thing making the rest of the window restorable. With
+# a daily base backup (`walg-basebackup.timer`) the real window is about 31 days on a healthy
+# schedule.
+#
+# A rule at exactly 30 would delete that base backup while the WAL segments depending on it
+# survived. That is not an expiry, it is an unrestorable gap at the oldest end of the window — and
+# #270's restore drill would not find it, because a drill restores something recent.
+#
+# ## Why 35 and not 90
+#
+# `-o2` can afford 90 because OpenObserve's own compactor is the control the notice rests on, so
+# the backstop's distance from the real figure costs nothing. Here there is no second control: every
+# day of slack is a day the notice has to admit to. Five days buys the chain its margin and no more,
+# which is why the notice now states 30 in the ordinary case and 35 as the ceiling rather than
+# promising a number this rule cannot keep.
+#
+# **The number is duplicated across stacks and cannot be otherwise.** The sweep's window is
+# `backup_retention_days` in `modules/environment`; a bootstrap-stack rule cannot read it. Move one,
+# move the other, and re-check both privacy notices — they state both figures.
+resource "minio_s3_bucket_lifecycle" "backups" {
+  bucket = minio_s3_bucket.backups.bucket
+
+  rule {
+    id     = "retention-ceiling"
+    status = "Enabled"
+
+    expiration {
+      days = var.backup_retention_backstop_days
+    }
+  }
+
+  rule {
+    id     = "abort-incomplete-uploads"
+    status = "Enabled"
+
+    # A base backup is large and multipart. An interrupted push leaves parts that are billed and
+    # invisible to a plain listing, and nothing here resumes one.
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
     }
