@@ -9,17 +9,32 @@
   Distressed wordmark, same square frame, same -2.5 degree tilt, same frame-only wear. Only the
   second line differs.
 
-  ENGLISH-ONLY, AND THAT IS THE WHOLE DECISION. The tagline is localised — "Can't get enough of
+  ENGLISH-ONLY, AND THAT IS STILL THE WHOLE DECISION — but it is a decision about which *locale*
+  this file serves, not about whether it ships. The tagline is localised — "Can't get enough of
   Berlin" in English, "Von Berlin kriegst du nie genug" in German (BRANDING.md §8, and
   src/i18n/messages/*/footer.json). "BERLIN" is language-neutral and this is not, so:
 
-    USE THIS on English-only surfaces — the README, the GitHub social preview, merch.
-    DO NOT USE IT in the app, where /de would render an English tagline as artwork nothing can
-    translate. The app keeps the BERLIN variant, which reads correctly in both locales.
+    USE THIS for /en — the home hero and the About page, via ClubStamp.en.vue — and on
+    English-only surfaces: the README, the GitHub social preview, the site og:image, merch.
+    DO NOT USE IT for /de, which has its own artwork in lockup-club-stamp-tagline-de.svg at its
+    own caption sizing. See BRANDING.md §6's usage table, which is the authority on both.
 
-  IT ALSO COLLIDES WITH THE HERO AS BUILT. HomeView renders the tagline as live text directly beneath
-  the stamp, so this variant would show it twice. If it ever does go in the app, that <p> comes out —
-  which costs the German page its tagline entirely, and is a second reason the app keeps BERLIN.
+  THIS FILE IS IN THE APP, and the two objections that once kept it out were answered rather than
+  waived. Recorded because the header said the opposite until 2026-08-24, and a stale prohibition
+  reads exactly like a live one:
+
+    "/de would render an English tagline as artwork nothing can translate" — answered by drawing
+    the German file, not by falling back to BERLIN. One component per locale, loaded lazily, so
+    neither page carries the other's artwork.
+
+    "It collides with the hero as built" — answered by removing the live <p> the hero used to
+    render beneath the stamp. The stamp is now the only place the tagline appears, and the
+    accessible equivalent is HomeView's sr-only <h1>, which reads `footer.tagline` and is
+    therefore localised. That is also *why* the German file had to exist: once the <p> was gone,
+    an English-only stamp would have left /de with no German tagline anywhere on the page.
+
+  THE BERLIN VARIANT SURVIVES as the language-neutral option for any surface that needs one; it is
+  no longer what the app uses. lockup-club-stamp.svg is that file.
 
   SIZING, chosen against two alternatives rendered side by side. At 12/1.6 tracking the caption
   crowds the inner frame edge to edge; two lines at 11.5 collide with each other and with the frame.
