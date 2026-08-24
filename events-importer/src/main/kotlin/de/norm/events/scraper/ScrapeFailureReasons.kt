@@ -13,9 +13,7 @@ import java.util.concurrent.TimeoutException
  * venue's markup having moved, which is a scraper change. Aggregated into one counter they are
  * indistinguishable, and the graph says only "something is wrong".
  *
- * ## The cardinality rule this function exists to enforce
- *
- * Every return value below is a **constant**. Nothing derived from the exception message, the URL,
+ * **The cardinality rule this function exists to enforce: every return value below is a constant.** Nothing derived from the exception message, the URL,
  * or anything else the venue controls may become a tag value: Prometheus creates one time series per
  * distinct tag combination, and a tag fed by free text is unbounded — a venue that returns a
  * different error string per request would, on its own, exhaust the metrics backend. That failure is

@@ -144,30 +144,25 @@ private val NON_CONCERT_TITLE_KEYWORDS =
 /**
  * Title keywords marking a DJ/club night (mapped to [EventType.PARTY]).
  *
- * **A bare `club` is deliberately absent**, and the compound spellings are what replaced it.
- * As a substring it matched any title *ending* in the word, which is a shape a booked band
- * shares with a resident night: Columbiahalle's `Two Door Cinema Club` was typed `PARTY` and
- * consequently stored no artist at all — the single recoverable lineup in a 3262-event seed
- * (see [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType]'s KDoc).
- * Word-anchoring it would not have helped; `Club` is already a whole word in that name.
+ * **A bare `club` is deliberately absent**, and the compound spellings are what replaced it. As a
+ * substring it matched any title *ending* in the word, a shape a booked band shares with a resident
+ * night: Columbiahalle's `Two Door Cinema Club` was typed `PARTY` and consequently stored no artist
+ * at all — the single recoverable lineup in the seed (see
+ * [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType]'s KDoc). Word-anchoring
+ * would not have helped; `Club` is already a whole word there.
  *
- * Nothing replaces it, which was checked rather than assumed. The resident nights that end in
- * the word — `Soda Social Club`, `The Funky Chicken Club`, `CLUB TROPICANA`, `MONDAY NITE CLUB`
- * — are all at venues whose scraper types every event `PARTY` outright (Soda, Kater, MAXXIM,
- * OHM) or reads the venue's own category (Privatclub), so their titles never reach this list.
- * A `<weekday> club` pattern was written to cover them and deleted again on finding it fired on
- * nothing: a rule with no live case is a rule nobody can tell is broken.
+ * Nothing replaces it, which was checked rather than assumed. The resident nights ending in the word
+ * — `Soda Social Club`, `The Funky Chicken Club`, `CLUB TROPICANA`, `MONDAY NITE CLUB` — are all at
+ * venues whose scraper types every event `PARTY` outright (Soda, Kater, MAXXIM, OHM) or reads the
+ * venue's own category (Privatclub), so their titles never reach this list. A `<weekday> club`
+ * pattern was written to cover them and deleted again on finding it fired on nothing: a rule with no
+ * live case is a rule nobody can tell is broken.
  *
- * **What it cost, accepted deliberately on 2026-08-08 and since repaired.** A full re-scrape of
- * all 86 sources moved three events, and one of them the wrong way: Huxleys' `Corrupted Blood
- * Club Show` became a `CONCERT` and stored its own name as a performer. That is a label showcase
- * — its subtitle reads `Corrupted Blood Records presents` — so the title was never an act. One
- * recovered band against one invented artist was close to a wash on the count, and the
- * tie-breakers were that the keyword was *also* mistyping a concert as a party at an arena-scale
- * venue, and that the loss had a named structural fix while the win had none. That fix landed on
- * 2026-08-09: a `<X> presents` subtitle beside a title opening with `<X>` now yields no artists
- * (`isPresenterOwnEventTitle`), so the row keeps its `CONCERT` type and mints nobody. **Do not
- * restore the bare keyword** — it would trade the recovered band back for nothing.
+ * **Do not restore the bare keyword.** Removing it moved three events, one of them the wrong way:
+ * Huxleys' `Corrupted Blood Club Show` became a `CONCERT` and stored its own name as a performer.
+ * That loss had a named structural fix where the win had none — a `<X> presents` subtitle beside a
+ * title opening with `<X>` now yields no artists (`isPresenterOwnEventTitle`), so the row keeps
+ * `CONCERT` and mints nobody. Restoring the keyword would trade the recovered band back for nothing.
  */
 private val PARTY_TITLE_KEYWORDS =
     listOf("aftershow", "afterparty", "after-party", "after party", "party", "club night", "clubnight", "karaoke")

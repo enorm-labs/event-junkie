@@ -17,8 +17,37 @@ event-junkie:
     # A comment that genuinely needs more is `@Suppress("LongComment")` on the declaration: an
     # explicit decision, visible in review, rather than a threshold raised until nothing fires.
     maxLines: 25
-    # Scraper sub-package KDoc is the designated home for accepted limitations — a field a venue
-    # never publishes, a signal the parser cannot express — and that prose is load-bearing: it is
-    # what stops the same non-defect being re-reported by every data-quality audit. Length there is
-    # a feature, so the rule does not apply. See the "Where a finding goes" table in AGENTS.md.
-    excludes: ['**/scraper/**']
+    # Venue sub-packages only, not `scraper/` itself: the files directly under it are shared service
+    # code, and the old `**/scraper/**` glob exempted 3,561 comment lines of it at 54% density (#714).
+    excludes: ['**/scraper/*/**']
+
+  # Venue sub-package KDoc is the designated home for accepted limitations — a field a venue never
+  # publishes, a signal the parser cannot express — and that prose is load-bearing: it is what stops
+  # the same non-defect being re-reported by every data-quality audit. So it gets a higher cap rather
+  # than an exemption (#714): 58 venue comments exceed 25 and only 11 exceed 40, so the cap reaches
+  # the outliers and leaves the band the good prose occupies. **A suppression here must name the
+  # instance — `@Suppress("LongComment/venue")`; the bare rule name does not match.** See the
+  # "Where a finding goes" table in AGENTS.md.
+  CommentDensity:
+    active: true
+    # The per-file backstop under `scripts/comment-density.sh`, which ratchets the totals per area.
+    # A per-comment cap cannot see twenty reasonable comments adding up to a file that reads as prose
+    # with code between it. 70 is measured: it catches an outlier rather than re-litigating every
+    # dense file, which 65 would.
+    maxPercent: 70
+    # A ratio needs mass behind it to mean anything. `EventsSchema.kt` is one `const val` and the
+    # reasoning for it — 22 comment lines out of 24, and nothing about that is a defect. Below this
+    # floor a file is a declaration with its rationale attached, not prose with code between it.
+    minCommentLines: 25
+
+  CommentSmell:
+    active: true
+    # Test sources are excluded, and deliberately: a date there is usually a fact about a fixture
+    # ("the clock is pinned to 2026-07-01"), not a changelog entry, and 47 of the tree's 52 test-side
+    # dates are that. Flagging them would train everyone to ignore the rule.
+    excludes: ['**/test/**', '**/androidTest/**']
+
+  LongComment/venue:
+    active: true
+    maxLines: 40
+    includes: ['**/scraper/*/**']

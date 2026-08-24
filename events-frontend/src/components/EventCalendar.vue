@@ -81,7 +81,7 @@ const options = computed<CalendarOptions>(() => ({
     center: 'title',
     end: 'dayGridMonth,timeGridWeek,listWeek',
   },
-  // v7 removed the `buttonText` option and the built-in English labels that used to back it.
+  // v7 has no `buttonText` option and no built-in English labels behind it.
   // A view button with no resolvable text is not rendered at all — silently, with no warning —
   // so without this block the calendar loses its entire view switcher while still looking fine.
   buttons: {

@@ -29,10 +29,8 @@ class EventUpsertService(
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Deduplicates, upserts, and cleans up stale events for a single event source.
-     *
-     * This method should be called within a transactional boundary so partial failures
-     * roll back cleanly. The full pipeline:
+     * Deduplicates, upserts, and cleans up stale events for a single event source. Call it within a
+     * transactional boundary so partial failures roll back cleanly. The pipeline:
      * 1. Drop scraped events dated before today (see [dropPastEvents]).
      * 2. Deduplicate scraped events by generated slug (date + title).
      * 3. Remove stale future events no longer listed on the source website.
@@ -45,17 +43,14 @@ class EventUpsertService(
      * re-publishes an event under a new id: SO36 listed its two-day festival's combi ticket
      * (`so36:90006`) on the opening date, then added a day-one ticket (`so36:93090`) with the same
      * title and date. Step 2 keeps the first by page order, step 3 recognises the other as stale —
-     * but with the upsert first, the `INSERT` hit the old row's slug and the `executeMany` batch
-     * failed, taking **all 111 SO36 events** with it rather than the one row. Deleting first frees
-     * the slug; both steps are inside the caller's transaction, so a later failure still rolls the
+     * but with the upsert first, the `INSERT` hits the old row's slug and the `executeMany` batch
+     * fails, taking **all 111 SO36 events** with it rather than the one row. Deleting first frees the
+     * slug; both steps are inside the caller's transaction, so a later failure still rolls the
      * deletion back.
      *
-     * @param scrapedEvents the raw events from the scraper (may contain duplicates).
-     * @param venueId the database ID of the venue these events belong to.
-     * @param venueSlug the URL-friendly slug of the venue, included in event slugs for cross-venue uniqueness.
-     * @param eventSourceId the database ID of the [EventSourceEntity] that owns these events.
-     * @return what the upsert did, split by operation. [UpsertOutcome.total] is the count callers
-     *   previously received, so the source's `lastEventCount` is unchanged by the split.
+     * @param scrapedEvents the raw events from the scraper; may contain duplicates.
+     * @return what the upsert did, split by operation. [UpsertOutcome.total] is what the source's
+     *   `lastEventCount` records.
      */
     suspend fun upsertAndCleanup(
         scrapedEvents: List<ScrapedEvent>,
@@ -168,37 +163,27 @@ class EventUpsertService(
     /**
      * Removes duplicate events from the scraped list — but keeps a second *sitting*.
      *
-     * Duplicates are identified by date + title + **start time**. Within a single import all
-     * events belong to the same venue, so the venue slug is intentionally omitted from the key.
+     * Duplicates are keyed on date + title + **start time**. Within one import every event belongs to
+     * the same venue, so the venue slug is deliberately omitted from the key.
      *
-     * The start time is what separates the two shapes that look identical on date and title:
-     *  - **The same event, published twice.** A venue lists one night under two URLs or two
-     *    ticket products — SO36 sells a two-day festival's combi ticket alongside its day-one
-     *    ticket, same title, same date, same 19:30 start. Only one event is happening, so the
-     *    first by page order wins and the rest are dropped.
-     *  - **Two sittings of one production.** A matinee and an evening show genuinely are two
-     *    events: Theater im Delphi bills *Schwanensee* at 15:00 and 20:00 on one day, and the
-     *    Uber Eats Music Hall does the same with its 23 December *Nussknacker*. These used to be
-     *    dropped here — five of them across the seed — because the key could not tell them apart.
-     *    They are now kept, and [slugDiscriminators] gives each its own slug.
+     * The start time separates the two shapes that look identical on date and title:
+     *  - **The same event, published twice.** SO36 sells a festival combi ticket beside its day-one
+     *    ticket — same title, date and 19:30 start. Only one night happens, so the first wins.
+     *  - **Two sittings of one production.** A matinee and an evening show genuinely are two events:
+     *    Theater im Delphi bills *Schwanensee* at 15:00 and 20:00 on one day. Both are kept, and
+     *    [slugDiscriminators] gives each its own slug.
      *
-     * An event with no start time cannot be a distinguishable sitting, so a group of those still
-     * collapses to one — which is the conservative direction: a venue that publishes no times is
-     * far more likely to have listed one night twice than to be running two unlabelled sittings.
+     * An event with no start time cannot be a distinguishable sitting, so a group of those collapses
+     * to one — the conservative direction for a venue that publishes no times at all.
      *
-     * **A repeated `sourceId` collapses too, whatever the times say.** `event.source_id` is
-     * `UNIQUE`, so two scraped events sharing one cannot both be stored no matter how the slug is
-     * built — they are one row by identity. Several scrapers key on the show and date rather than
-     * the session (Admiralspalast: `admiralspalast:mamma-mia-…-2027-09-18`), so their two sittings
-     * arrive under one id. Without this guard both entities are built with the *same* database id
-     * and `saveAll` issues two UPDATEs to one row: no error, last write wins, and the row's slug
-     * flips between sittings on every import. That is a defect this method already had — it was
-     * merely invisible while both sittings produced an identical slug.
+     * **A repeated `sourceId` collapses too, whatever the times say.** `event.source_id` is `UNIQUE`,
+     * so two scraped events sharing one are one row by identity. Several scrapers key on the show and
+     * date rather than the session (Admiralspalast: `admiralspalast:mamma-mia-…-2027-09-18`), so their
+     * sittings arrive under one id. Without this guard both entities get the same database id and
+     * `saveAll` issues two UPDATEs to one row: no error, last write wins, slug flips every import.
      *
-     * Recovering those sittings is a per-scraper change (put the session time in the `sourceId`),
-     * which re-keys that venue's whole history. Velomax has since had exactly that change; Neue
-     * Zukunft still needs it, and it is why expanding its monthly recurrence rules re-mints every
-     * one of its events rather than adding to them — see issue #333.
+     * Recovering those sittings is a per-scraper change — the session time in the `sourceId` — which
+     * re-keys that venue's whole history. See #333.
      */
     private fun deduplicateScrapedEvents(events: List<ScrapedEvent>): List<ScrapedEvent> {
         val seenIds = mutableSetOf<String>()
@@ -220,8 +205,8 @@ class EventUpsertService(
      * The slug discriminator each event needs, keyed by `sourceId`; absent for events that need none.
      *
      * `event.slug` is `UNIQUE` and built from date + venue + title, so two sittings of one
-     * production on one day would collide on insert — the defect that used to fail the whole
-     * import. Only the full scrape can see that a collision exists, which is why this is computed
+     * production on one day collide on insert without one. Only the full scrape can see that a
+     * collision exists, which is why this is computed
      * here and handed to [ScrapedEvent.toEventEntity] rather than being decided at the boundary.
      *
      * **Every member of a colliding group is suffixed, including the first.** Suffixing only the

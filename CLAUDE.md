@@ -28,7 +28,7 @@ Slash commands available under `.claude/skills/`:
 - `/squash-commit-message` — write a squash commit message for the current branch
 - `/update-dependencies` — bump backend and frontend dependencies safely
 - `/verify` — run the full pre-PR sequence: backend `ktlintCheck detekt build koverLog` + frontend `type-check`, `lint`, `test:unit`, `test:e2e` (chromium),
-  `scripts/format-markdown.sh check` when the diff touches any `.md`, and `tofu fmt`/`validate` + ShellCheck when it touches `infra/`, and `helm lint` +
+  `scripts/comment-density.sh check` + `scripts/comment-lint.sh check` always, `scripts/format-markdown.sh check` when the diff touches any `.md`, and `tofu fmt`/`validate` + ShellCheck when it touches `infra/`, and `helm lint` +
   `helm unittest` + `scripts/cluster-assertions.sh` when it touches `deploy/`
 
 ## Multi-module note

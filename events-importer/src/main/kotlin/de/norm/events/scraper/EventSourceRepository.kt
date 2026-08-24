@@ -46,14 +46,12 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
      * Raw SQL is required because R2DBC does not support derived queries with
      * date arithmetic (see ADR-002).
      *
-     * **A spent retry budget is no longer an exclusion (#659).** This clause used to carry
-     * `AND (status != 'FAILED' OR retry_count < max_retries)`, which took a persistently
-     * broken source out of the schedule entirely until a human ran `retryAll`. That is the
-     * one failure mode the importer cannot afford to express as *absence*: a source that
-     * stops being attempted looks identical to a source that has nothing to do, and both
+     * **A spent retry budget is not an exclusion** (#659). A persistently broken source stays on the
+     * schedule, because the one failure the importer cannot express as *absence* is a source that
+     * stops being attempted: it looks identical to one with nothing to do, and both
      * `ej-importer-stale` and #700's per-source gauge read the row rather than the schedule.
-     * Exhausting the budget now only ends the shortened retry cadence — [ScheduledImportService.isDue]
-     * puts the source back on its own interval, so it keeps failing visibly instead of quietly.
+     * Exhausting the budget only ends the shortened retry cadence — [ScheduledImportService.isDue]
+     * puts the source back on its own interval, so it keeps failing visibly.
      *
      * @param now the current timestamp, used as a coarse upper bound on `last_import_at`.
      */
@@ -122,45 +120,29 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
     fun findStuckSources(stalenessCutoff: Instant): Flow<EventSourceEntity>
 
     /**
-     * Atomically claims a source for an import run, moving it to RUNNING **only if it is not
-     * already running**.
+     * Atomically claims a source for an import run, moving it to RUNNING **only if it is not already
+     * running** and the row still carries [expectedVersion]. Returns `1` on success, `0` when another
+     * run holds it or the row has moved on. [startedAt] is recorded as `last_import_at`.
      *
-     * This is the serialization point that keeps two import runs off the same source. Testing
-     * the status in Kotlin and then saving cannot do it: every caller reaches
-     * [EventImportService.importFromSource] through a bounded semaphore, so a source can sit
-     * queued — still IDLE, still `last_import_at IS NULL`, and therefore still visible to
-     * [findDueForImport] — long after its import was requested. A scheduler tick landing in
-     * that window starts a second run of the same source, and both then scrape and insert the
-     * same events, which collides on the `event_slug_key` unique index.
+     * This is the serialization point that keeps two import runs off the same source. Testing the
+     * status in Kotlin and then saving cannot do it: callers reach
+     * [EventImportService.importFromSource] through a bounded semaphore, so a source can sit queued —
+     * still IDLE, still visible to [findDueForImport] — long after its import was requested. A
+     * scheduler tick landing in that window starts a second run, and both insert the same events,
+     * colliding on the `event_slug_key` unique index.
      *
-     * Optimistic locking does not help here, and in fact hides the problem: two writers each
-     * calling `save()` produce a version conflict that
-     * [EventImportService.saveWithVersionConflictRetry] resolves by re-fetching and retrying,
-     * so the second `markRunning` succeeds and the duplicate run proceeds. A conditional
-     * `UPDATE … WHERE status <> 'RUNNING'` is decided by the database instead: exactly one
-     * caller updates a row, and the loser sees `0`.
+     * Optimistic locking does not help, and in fact hides it: two writers each calling `save()`
+     * produce a conflict that [EventImportService.saveWithVersionConflictRetry] resolves by
+     * re-fetching and retrying, so the second `markRunning` succeeds and the duplicate run proceeds.
+     * A conditional `UPDATE … WHERE status <> 'RUNNING'` is decided by the database: exactly one
+     * caller updates the row, and the loser sees `0`.
      *
-     * `version` is incremented for the same reason [resetAllFailedToIdle] does it — so a
-     * concurrent read-modify-write holding a stale entity cannot silently overwrite the claim.
-     * The caller must account for that increment on the entity it goes on to save.
-     *
-     * The claim is also gated on [expectedVersion], which makes it a compare-and-swap against
-     * the exact row the caller read rather than merely "whatever is not RUNNING right now".
-     * Without that gate the guard only excludes runs that *overlap*, not one that starts the
-     * moment another finishes — and imports queue on a bounded semaphore, so a source can wait
-     * a long time between being read and being claimed. A scheduler tick that reads a source
-     * while it is still IDLE, and reaches its claim after a manual trigger has already imported
-     * it, would find the status back at SUCCESS and re-scrape the whole source. Comparing the
-     * version closes that window: any completed run bumps it, so the stale caller sees `0`.
-     *
-     * Gating on the version additionally makes the caller's `version + 1` exact, so the entity
-     * returned by [EventImportService.claimForImport] carries the version actually written and
-     * the closing `markSuccess`/`markFailed` save no longer trips optimistic locking.
-     *
-     * @param id the source to claim.
-     * @param expectedVersion the `version` the caller read; the claim fails if the row moved on.
-     * @param startedAt the claim timestamp, recorded as `last_import_at` for staleness detection.
-     * @return `1` when the claim succeeded, `0` when another run holds it or the row has changed.
+     * **[expectedVersion] makes it a compare-and-swap** against the row the caller read, not against
+     * "whatever is not RUNNING now". Without it the guard excludes only *overlapping* runs, not one
+     * starting as another finishes: a tick that read a source while it was IDLE and reaches its claim
+     * after a manual trigger already imported it would find SUCCESS and re-scrape everything. Any
+     * completed run bumps the version, so the stale caller sees `0` — and the caller's `version + 1`
+     * stays exact, so the closing `markSuccess`/`markFailed` save does not trip optimistic locking.
      */
     @Modifying
     @Query(

@@ -102,6 +102,10 @@ why a selector was chosen, and what the source _doesn't_ carry (no door times, n
 the importer stored everything that was there, so there is nothing to action elsewhere. Only a defect we could actually repair goes in the **Bugs** list in
 an issue. Write it once, next to the code it constrains — not in `EventSource.kt` and not in `dev-seed.http`.
 
+**Give it a budget.** Aim for under 20 comment lines on the importer and under 10 on each scraper, and state each limitation in one sentence. The scraper
+package aggregates 43% comments today, which is what #713 exists to bring down; copying an existing scraper is how that number was reached. Check where a
+new venue lands with `scripts/comment-density.sh report --top 20`.
+
 **Don't restate what every scraper in the package already is.** Purity ("performs no I/O", "operates on a pre-fetched `Document`"), the fixture-and-mock test
 setup, and tags like `@param document the parsed Jsoup document of the detail page` or `@return a list of ScrapedEvent instances extracted from the page` say
 nothing the signature and the package convention do not — that boilerplate was deleted from 106 files in #393, and copying an existing scraper is exactly how it

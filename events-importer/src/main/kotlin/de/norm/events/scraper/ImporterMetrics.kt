@@ -22,9 +22,8 @@ import kotlin.time.Duration
  * compiler between the two — so treat these strings as an interface, not as an implementation
  * detail.
  *
- * ## Why counters are recorded here and gauges are refreshed elsewhere
- *
- * A counter is recorded at the moment something happens, which is a normal method call. A gauge is
+ * **Counters are recorded here; gauges are refreshed elsewhere.** A counter is recorded at the
+ * moment something happens, which is a normal method call. A gauge is
  * read by Micrometer *at scrape time*, synchronously, on whichever thread the actuator endpoint is
  * being served on — and every query this application can make is reactive and suspending. There is
  * no way to answer "how many events are in the database" from inside a gauge supplier without
@@ -176,13 +175,11 @@ class ImporterMetrics(
      * `importer.source.has_succeeded{source}` — **1 if this source has ever completed a run, 0 if it
      * never has**, and the point is that the series exists either way (#618).
      *
-     * ## Why a second gauge rather than reading the first one's absence
-     *
-     * [SOURCE_LAST_SUCCESS] only exists once a source has succeeded, so **a venue that has never
-     * worked has no series at all** — and something with no series cannot be stale, late or failing.
-     * It is simply not there. Measured on staging on 2026-08-20: 86 sources, 84 series, and the two
-     * missing ones were the only two that were broken. The dashboard read "0 sources stale" while
-     * two venues had never once imported.
+     * **A second gauge, rather than reading the first one's absence.** [SOURCE_LAST_SUCCESS] only
+     * exists once a source has succeeded, so a venue that has never worked has no series at all —
+     * and something with no series cannot be stale, late or failing. Measured on staging: 86
+     * sources, 84 series, and the two missing were the only two that were broken, while the
+     * dashboard read "0 sources stale".
      *
      * **Not fixed by publishing `last_success = 0` for them.** That asserts a successful import at
      * the epoch — false — and turns every age chart into a 56-year scale. *Never* and *long ago* are
@@ -215,23 +212,18 @@ class ImporterMetrics(
      * `importer.source.events_future{source}` — **how many future events this source holds right
      * now**, refreshed from the database rather than accumulated in the process (#700).
      *
-     * ## Why this is not a tag on `db.events`
+     * **Not a tag on `db.events`.** That is the whole catalogue, and its rule (`ej-catalogue-emptying`)
+     * selects with `max`. Per-source series under the same name would put eighty-six smaller series
+     * beside the global one: `max` would keep picking the global series only because it is largest,
+     * and anything summing `db_events` would double-count. A separate name in the `importer.source.*`
+     * family is where an alert author is already looking.
      *
-     * `db.events{horizon="future"}` is the whole catalogue, and the rule written on it
-     * (`ej-catalogue-emptying`) selects with `max`. Publishing per-source series under the same name
-     * would put eighty-six smaller series beside the one global one: `max` would keep picking the
-     * global series only because it happens to be the largest, and anything summing `db_events`
-     * would count every event twice. A separate name in the `importer.source.*` family is where an
-     * alert author is already looking, next to [SOURCE_LAST_SUCCESS] and [SOURCE_HAS_SUCCEEDED].
-     *
-     * ## Why not `importer.events.written`, which sounds like the same number
-     *
-     * That is a counter, and a counter lives in this process: it resets on every deploy and is
-     * absent from `/actuator/prometheus` entirely until something increments it. The import interval
-     * is 24 hours and the importer restarts on every deploy, so `increase(...[48h]) == 0` cannot
-     * tell "wrote nothing" from "was restarted". ADR-015 records that shape and #618 paid for it —
-     * a gauge refreshed from the database is what survives a restart, because it re-reads state
-     * instead of accumulating it.
+     * **Not `importer.events.written`, which sounds like the same number.** That is a counter living
+     * in this process: it resets on every deploy and is absent from `/actuator/prometheus` until
+     * something increments it. The import interval is 24 hours and the importer restarts on every
+     * deploy, so `increase(...[48h]) == 0` cannot tell "wrote nothing" from "was restarted".
+     * ADR-015 records that shape and #618 paid for it — a gauge refreshed from the database survives
+     * a restart, because it re-reads state instead of accumulating it.
      *
      * **Zero is a value here, not an absence**, and [MetricsRefreshService] publishes it for every
      * enabled source that the count query returns no row for. A source missing from the exposition

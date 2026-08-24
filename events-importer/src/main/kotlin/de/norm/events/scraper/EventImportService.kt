@@ -272,32 +272,29 @@ class EventImportService(
     // -- Event source status management --
 
     /**
-     * Claims [source] for this run by moving it to RUNNING, returning the claimed entity — or
-     * `null` when another run already holds the claim, in which case the caller must not import.
+     * Claims [source] for this run by moving it to RUNNING, returning the claimed entity — or `null`
+     * when another run already holds the claim, in which case the caller must not import.
      *
      * The claim is a conditional UPDATE decided by the database
-     * ([EventSourceRepository.claimForImport]), because a read-then-save in Kotlin cannot
-     * serialize two callers: imports queue on [importSemaphore] before reaching this point, so
-     * the same source can be requested twice and stay visibly un-started for the whole wait.
+     * ([EventSourceRepository.claimForImport]), because a read-then-save in Kotlin cannot serialize
+     * two callers: imports queue on [importSemaphore] before reaching this point, so the same source
+     * can be requested twice and stay visibly un-started for the whole wait.
      *
-     * The claim is gated on the version [source] was read at, so it fails not only when another
-     * run currently holds the source but also when the row changed at all since the read. That
-     * covers the case the status check alone misses: imports queue on [importSemaphore], so a
-     * scheduler tick can read a source while it is still IDLE and only reach its claim after a
-     * manual trigger has already imported it — by which point the status is SUCCESS again and a
-     * status-only guard would wave the duplicate run through, re-scraping the venue.
+     * It is gated on the version [source] was read at, so it fails not only when another run holds
+     * the source but whenever the row changed at all since the read. That covers what a status check
+     * alone misses: a scheduler tick can read a source while it is IDLE and reach its claim only
+     * after a manual trigger has already imported it — by which point the status is SUCCESS again,
+     * and a status-only guard would wave the duplicate through and re-scrape the venue.
      *
-     * The returned entity mirrors the claim in memory rather than re-reading the row. The
-     * conditional UPDATE touches exactly the four columns reproduced here, so the copy matches
-     * what was written, and this keeps the claim to a single round trip. Because the claim only
-     * succeeds when the row was still at [EventSourceEntity.version], `version + 1` is the value
-     * actually persisted rather than a guess, so the closing `markSuccess`/`markFailed` save
-     * matches on the first attempt.
+     * The returned entity mirrors the claim in memory rather than re-reading the row. The conditional
+     * UPDATE touches exactly the four columns reproduced here, so the copy matches what was written
+     * and the claim stays a single round trip. Because it succeeds only when the row was still at
+     * [EventSourceEntity.version], `version + 1` is the value actually persisted rather than a guess,
+     * so the closing `markSuccess`/`markFailed` save matches on the first attempt.
      *
      * A source left in RUNNING by a crashed run blocks its own next import until
-     * [ScheduledImportService.resetStuckSources] releases it (default: 30 minutes). That is
-     * the guard the scheduler already relied on — it now also covers a manual trigger, which
-     * previously ignored a RUNNING source and started a second, overlapping run.
+     * [ScheduledImportService.resetStuckSources] releases it (default: 30 minutes). That guard covers
+     * a manual trigger as well as the scheduler.
      */
     private suspend fun claimForImport(source: EventSourceEntity): EventSourceEntity? {
         val sourceId = requireNotNull(source.id) { "Cannot claim an unpersisted event source" }

@@ -20,8 +20,8 @@ import { DEFAULT_LOCALE, type Locale, LOCALES } from '../i18n/locales.ts'
  * deployment, a `www.` alias and the apex each declare themselves canonical, which is the exact
  * duplicate-content problem the tag is there to prevent.
  *
- * TODO(domain): `event-junkie.de` is decided (BRANDING.md §1) but **not yet registered**. Nothing
- * is deployed either, so no URL here resolves today. Both are go-live items.
+ * `event-junkie.de` is registered (#259) and BRANDING.md §1 fixes it as the canonical host. Nothing
+ * is deployed behind it yet, so no URL here resolves until #560 lands.
  */
 export const SITE_URL = 'https://event-junkie.de'
 

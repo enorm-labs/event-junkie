@@ -129,8 +129,8 @@ class ScheduledImportService(
      * **Doubling alone assumes a base interval measured in minutes.** Applied to the daily
      * default it produces a "retry" that waits *longer* than the healthy cadence — 1440 min
      * doubles to 48 h, then 96 h, then 192 h — so a failed source is attempted less often than
-     * a working one, which inverts what a retry is for. `loge` failed on 2026-08-21 11:54 and
-     * was next attempted on 2026-08-23 11:55, and that is the whole of the 47-hour gap.
+     * a working one, which inverts what a retry is for: a daily source that failed went 47 hours
+     * before its next attempt.
      *
      * The cap makes the guarantee interval-independent: whatever a source's own schedule, a
      * failure is retried within [MAX_RETRY_INTERVAL]. Sub-cap intervals keep their backoff

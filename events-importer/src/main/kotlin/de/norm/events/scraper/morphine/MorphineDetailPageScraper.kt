@@ -20,17 +20,15 @@ import java.math.BigDecimal
 /**
  * Pure HTML parser for Morphine Raum event detail pages (`/events/<slug>`).
  *
- * A detail page renders the event as a `section.content.overlay` above the full `/events`
- * listing — the same listing the overview page carries, repeated as the page's navigation. Every
- * selector here is therefore scoped to that overlay; reading the document as a whole would pull
- * the other eleven nights' titles and dates into this event.
+ * A detail page renders the event as a `section.content.overlay` above the full `/events` listing —
+ * the same listing the overview page carries, repeated as navigation. Every selector here is scoped to
+ * that overlay; reading the document whole would pull the other nights' titles and dates into it.
  *
  * Inside the overlay, the hand-coded Kirby template emits a `div.title` and a sequence of typed
  * `div.block` boxes, of which four carry data:
- * - **`.block.day`** — the one-line header `"Friday, 07.08.26, door  20:00"`, the source for the
- *   date and the door time, plus a nested `ul.lineup` of `<li>` set entries pairing a start time
- *   with the billed name. The first entry's time is the event's start time; every entry's name is
- *   read as a performer.
+ * - **`.block.day`** — the one-line header `"Friday, 07.08.26, door  20:00"`, source for the date and
+ *   door time, plus a nested `ul.lineup` of `<li>` set entries pairing a start time with the billed
+ *   name. The first entry's time is the event's start; every entry's name is read as a performer.
  * - **`.block.paypal`** — an advance-ticket PayPal form whose hidden `amount`/`currency_code`
  *   inputs give the presale price. It posts to PayPal rather than linking anywhere, so there is no
  *   ticket URL to store; the button is the only way to buy in advance.
@@ -42,11 +40,10 @@ import java.math.BigDecimal
  *   Paragraphs keep their `<br>` line breaks, because that is how the venue writes out the
  *   instrument credits ("Jon Rose | violin & field recordings"); the first image is stored.
  *
- * **What the source does not publish**, and which therefore stays empty rather than being
- * guessed: genre, a sold-out or cancelled marker (the venue removes a dropped night from the
- * listing instead of flagging it), a ticket URL, and a separate presale price for the nights
- * without a PayPal box. Pricing is a sliding scale or donation range on nearly every night, which
- * the data model has no field for — see [parseDoorPrice].
+ * **What the source does not publish**, and which stays empty rather than guessed: genre, a sold-out
+ * or cancelled marker (a dropped night is removed from the listing instead of flagged), a ticket URL,
+ * and a presale price for nights without a PayPal box. Pricing is a sliding scale or donation range on
+ * nearly every night, which the data model has no field for — see [parseDoorPrice].
  *
  * **The lineup names carry more than the act**, and the shared splitters resolve them only as far
  * as a structural signal allows. A `/`-separated co-bill written without spaces stays one name

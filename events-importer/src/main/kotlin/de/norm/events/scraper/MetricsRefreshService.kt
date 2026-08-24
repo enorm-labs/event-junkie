@@ -67,62 +67,29 @@ class MetricsRefreshService(
     }
 
     /**
-     * Publishes the two per-source gauges: `last_success` for every source that has ever succeeded,
-     * and `has_succeeded` for **every** source, so that one which never has is still visible.
+     * Publishes the per-source gauges: `last_success` for every source that has ever succeeded, and
+     * `has_succeeded` and `events_future` for **every** source.
      *
-     * Done on every tick rather than once at startup, which costs one query and buys two things: the
-     * gauge exists within a minute of a restart instead of only after that source's next run — up to
-     * 24 hours on a daily interval, during which the most important alert in the system would have
-     * nothing to evaluate — and a source that succeeds while this instance is running is re-asserted
-     * from the database rather than only from memory.
+     * Republished every tick rather than once at start-up. That costs one query and buys two things:
+     * the gauge exists within a minute of a restart rather than only after that source's next run —
+     * up to 24 hours on a daily interval, with the staleness alert unable to evaluate throughout —
+     * and a source that succeeds while this instance runs is re-asserted from the database rather
+     * than from memory alone.
      *
-     * **This used to be incomplete, and the completion is the point of the `last_success_at` column.**
-     * It previously filtered on `status == SUCCESS` and read `last_import_at`, because that was the
-     * only timestamp in the schema — and `last_import_at` is written on failure too, so it means
-     * *last attempt*. A source whose most recent run failed therefore published **nothing**, exactly
-     * when the staleness alert most needed a value: the series vanished at the moment the source
-     * broke, so `time() - importer_source_last_success_seconds > 3 * interval` had no series to
-     * evaluate and an absence-blind alert stayed silent. Now every source that has ever succeeded
-     * keeps publishing its real last-success time while it is failing, which is what makes the
-     * staleness rule fire rather than go quiet.
+     * **`last_success_at`, not `last_import_at`.** The latter is written on failure too, so it means
+     * *last attempt*, and reading it published nothing for a source whose most recent run failed —
+     * exactly when the staleness rule needs a value. A source that has never succeeded still
+     * publishes no last-success: there is no true value, and a zero reads as 1970 to every rule
+     * written on this gauge.
      *
-     * Sources that have never succeeded still publish **no last-success**, and that stays deliberate:
-     * there is no true value to assert, and a zero would read as "1970" to every rule written on this
-     * gauge. They publish `importer.source.has_succeeded = 0` instead, which is the point below.
+     * **Every enabled source gets `has_succeeded` and `events_future` from the first tick, whether
+     * or not it has ever worked** (#618, #700). A source with no series cannot be stale, late or
+     * failing, only absent — and "0 sources stale" then agrees with "nothing is broken". It is also
+     * why this loops over the sources and not over the query result: `countFuturePerSource` returns
+     * no row for a source with no future events, which is precisely the broken one.
      *
-     * ## And `has_succeeded`, which exists for every source whether or not it ever worked (#618)
-     *
-     * The paragraph above closed half the blind spot: a source that *had* worked keeps its series
-     * while it is failing. The other half is a source that has **never** worked, which had no series
-     * at all — so it could not be stale, late or failing, only absent. Staging on 2026-08-20: 86
-     * sources, 84 series, and the two missing were the only two that were broken.
-     *
-     * **The population emptied and the mechanism did not.** Both venues fixed themselves on the
-     * 08-21 retry, so the count went to zero — which is the more dangerous state, because "0 sources
-     * stale" and "nothing is broken" then agree, and go on agreeing right through the next source
-     * that is added and never works. `/next-importer` adds one at a time, so that window is routine
-     * rather than hypothetical.
-     *
-     * **Every enabled row gets a `has_succeeded` series from the first tick after start-up**,
-     * regardless of import history — which is exactly what a per-run counter cannot do, since it
-     * lives in the process and vanishes on the deploy that restarts the pod.
-     *
-     * ## And `events_future`, which is the same argument one level down (#700)
-     *
-     * `db.events{horizon="future"}` is the whole catalogue, so a single venue going silent moves it
-     * by a rounding error — a scraper that still returns 200 while writing nothing is invisible
-     * there until eighty-five other sources have joined it. `importer.source.events_future` is that
-     * number per source.
-     *
-     * **The zero is the whole point, and it is why this loops over the sources rather than over the
-     * query result.** `countFuturePerSource` returns rows for sources that *have* future events;
-     * the source the alert exists for has none, so it has no row. Publishing only what the query
-     * returned would leave exactly the broken venues out of the exposition — the #618 failure, one
-     * metric later.
-     *
-     * One additional query per tick, grouped over `event` on `idx_event_event_source_id`. It runs
-     * inside the same `try` as everything else here, so a database that is unwell freezes the
-     * gauges rather than killing the scheduler that also runs the imports.
+     * One extra query per tick, grouped over `event` on `idx_event_event_source_id`, inside the same
+     * `try` as the rest: an unwell database freezes the gauges rather than killing the scheduler.
      */
     private suspend fun republishSourceState() {
         val futureEventsBySourceId =

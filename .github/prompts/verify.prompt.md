@@ -41,6 +41,19 @@ never a "go and work out what is wrong" failure. The `pre-commit` hook runs the 
 local commit history means both pass; this step is here for the case where hooks were skipped with `--no-verify`. Do not reach for `oxfmt` directly — the script
 pins the version and the scope, both of which matter (AGENTS.md §Code Conventions).
 
+### Comment volume (from repo root, always)
+
+```bash
+scripts/comment-density.sh check
+scripts/comment-lint.sh check
+```
+
+Exits 1 naming any area that carries more comment lines than `scripts/comment-baseline.txt` allows, and the ratchet only turns one way: the fix is to compress
+or delete, not to raise the number. An area that has dropped below its baseline is reported too and passes — regenerate with `scripts/comment-density.sh
+update-baseline` and commit the lower figure in the same PR. `comment-lint.sh` is the same ratchet over the rules detekt and ESLint cannot see — the block
+cap, file density, and markdown headings, date literals or change-narration inside a comment in `.tf`, `.sh`, `.yaml` and `.py`. Both take under a second
+and reach no network, and `validate-comments.yml` runs them on every pull request. See #713.
+
 ### Infrastructure (from repo root, only when the diff touches `infra/`)
 
 ```bash

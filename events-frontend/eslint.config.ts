@@ -6,6 +6,8 @@ import pluginPlaywright from 'eslint-plugin-playwright'
 import pluginVitest from '@vitest/eslint-plugin'
 import pluginOxlint from 'eslint-plugin-oxlint'
 import skipFormatting from 'eslint-config-prettier/flat'
+import { commentDensity } from './eslint-rules/comment-density.ts'
+import { commentSmell } from './eslint-rules/comment-smell.ts'
 import { maxCommentLines } from './eslint-rules/max-comment-lines.ts'
 
 // To allow more languages other than `ts` in `.vue` files, uncomment the following lines:
@@ -76,10 +78,47 @@ export default defineConfigWithVueTs(
     // 15 rather than Kotlin's 25: the number comes from this tree's own distribution. Of 285 block
     // comments, none reached 25 lines and ten passed 15, so 25 would never fire here. See
     // AGENTS.md §Comments.
+    // `comment-density` and `comment-smell` are the counterparts to the detekt rules of the same
+    // names. Density is per file, where a per-comment cap cannot see twenty reasonable comments
+    // adding up to prose with code between it; `minCommentLines` keeps a short file that is one
+    // declaration and its rationale out of it. Smell reports what AGENTS.md already forbids and
+    // nothing failed on: a date, a markdown heading, a comment narrating its own history, a `TODO`.
     name: 'app/comment-length',
     files: ['**/*.{vue,ts,mts,tsx}'],
-    plugins: { 'event-junkie': { rules: { 'max-comment-lines': maxCommentLines } } },
-    rules: { 'event-junkie/max-comment-lines': ['error', { max: 15 }] },
+    // `schema.d.ts` is generated from the OpenAPI document; its comment count is nobody's to act on.
+    ignores: ['src/api/schema.d.ts'],
+    plugins: {
+      'event-junkie': {
+        rules: {
+          'max-comment-lines': maxCommentLines,
+          'comment-density': commentDensity,
+          'comment-smell': commentSmell,
+        },
+      },
+    },
+    rules: {
+      'event-junkie/max-comment-lines': ['error', { max: 15 }],
+      'event-junkie/comment-density': ['error', { maxPercent: 70, minCommentLines: 25 }],
+      'event-junkie/comment-smell': 'error',
+    },
+  },
+
+  {
+    // Where a date in a comment is a fact about the world rather than a changelog entry, and so is
+    // exactly what the comment is for. Tests pin clocks and cite fixture provenance; the legal
+    // module records when an address became real and when a DPA was concluded, which is the kind of
+    // thing a supervisory authority asks about. `comment-density` stays on everywhere except the
+    // legal module, which is compliance data with its rationale attached — the shape `EventsSchema`
+    // has on the Kotlin side, only larger.
+    name: 'app/comment-smell-exemptions',
+    files: ['**/__tests__/**', 'e2e/**', 'src/lib/legal.ts', 'src/views/legal/**'],
+    rules: { 'event-junkie/comment-smell': 'off' },
+  },
+
+  {
+    name: 'app/comment-density-exemptions',
+    files: ['src/lib/legal.ts'],
+    rules: { 'event-junkie/comment-density': 'off' },
   },
 
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),

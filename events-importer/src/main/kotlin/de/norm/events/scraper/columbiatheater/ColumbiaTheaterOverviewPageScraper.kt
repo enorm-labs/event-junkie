@@ -158,7 +158,7 @@ private val SLUG_DATE_PATTERN = Regex("""^(\d{8})-""")
 
 /**
  * Reads the event date from the `YYYYMMDD` prefix of an event permalink slug
- * (`20260816-nathan-evans-the-saint-phnx-band` → 2026-08-16), or `null` when the slug carries no
+ * (`20260816-nathan-evans-the-saint-phnx-band` → `2026-08-16`), or `null` when the slug carries no
  * such prefix.
  *
  * This is the only unambiguous date the site publishes: both the overview card
