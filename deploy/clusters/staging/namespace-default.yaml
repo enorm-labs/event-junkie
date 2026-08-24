@@ -1,0 +1,31 @@
+# The `default` namespace, labelled rather than created (#604).
+#
+# Nothing runs here and nothing is meant to. That is exactly why it is worth enforcing: `default` is
+# where a `kubectl run` with no `-n` lands, and where a manifest with no namespace lands. Enforcing
+# `restricted` on an empty namespace costs nothing today and is what stops it quietly becoming
+# somewhere things run.
+#
+# ## `prune: disabled` is not optional here
+#
+# `gotk-sync.yaml` sets `prune: true`, so a resource removed from this directory is **deleted from
+# the cluster**. For every other file here that is the correct behaviour and the whole point of
+# GitOps. For this one it would mean deleting the `default` namespace — along with anything anybody
+# had put in it — because someone tidied up a file.
+#
+# The annotation opts this single object out of garbage collection. Flux still reconciles it, so the
+# labels below are still enforced and still corrected on drift; it simply will not delete the
+# namespace if the file goes away. This is the documented mechanism for exactly this case: adopting
+# an object the cluster owns rather than creating one we own.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: default
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.34
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+    app.kubernetes.io/part-of: event-junkie
+    app.kubernetes.io/managed-by: flux

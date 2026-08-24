@@ -23,3 +23,39 @@ patches:
     target:
       kind: Kustomization
       name: flux-system
+
+  # Pod Security Admission on flux-system (#604). Same argument as the patch above for the same
+  # reason: the Namespace object lives in `gotk-components.yaml`, which opens with "DO NOT EDIT"
+  # because `flux bootstrap` regenerates it. A label written there is one bootstrap re-run away from
+  # vanishing, and vanishing silently — an unlabelled namespace admits everything and reports
+  # nothing, which looks identical to a labelled one until something privileged is deployed.
+  #
+  # **Flux already ships `warn: restricted` here and nothing else** — which is the gap rather than a
+  # head start. A warn label returns a message to whoever created the pod; in a flow where pods are
+  # created by controllers reconciling a Git commit, there is no such reader. Upstream shipping it
+  # warn-only is the same shape `flux-system`'s three allow-only NetworkPolicies have (#662): intent
+  # recorded, nothing enforced. So this patch adds `enforce` and `audit` and leaves `warn` alone.
+  #
+  # `restricted` is verified rather than assumed. All four controllers in the pinned
+  # `gotk-components.yaml` already carry `runAsNonRoot: true`, `seccompProfile: RuntimeDefault`,
+  # `capabilities.drop: [ALL]` and no hostPath volumes:
+  #
+  #     source-controller  kustomize-controller  helm-controller  notification-controller
+  #
+  # Re-check after a Flux upgrade. The failure mode is a controller that will not schedule, which
+  # takes every deploy with it — including the one that would relax the label. That is the argument
+  # for `enforce-version` being pinned rather than `latest`, here more than anywhere else in the
+  # cluster.
+  - patch: |
+      - op: add
+        path: /metadata/labels/pod-security.kubernetes.io~1enforce
+        value: restricted
+      - op: add
+        path: /metadata/labels/pod-security.kubernetes.io~1enforce-version
+        value: v1.34
+      - op: add
+        path: /metadata/labels/pod-security.kubernetes.io~1audit
+        value: restricted
+    target:
+      kind: Namespace
+      name: flux-system
