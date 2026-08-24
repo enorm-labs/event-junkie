@@ -368,9 +368,39 @@ A pod stuck in ContainerCreating on an image pull is the usual cause — check
     sleep 5
     waited=$((waited + 5))
   done
-  k wait --for=condition=established --timeout=60s crd/middlewares.traefik.io >/dev/null \
-    || die "the Middleware CRD exists but never became Established"
-  info "Traefik CRDs ready after ${waited}s"
+  # Polled rather than waited on with `kubectl wait`, and that is not a style choice — **both** of
+  # its `--for` forms fail instantly here rather than waiting (#696).
+  #
+  # This used to be `k wait --for=condition=established --timeout=60s`. The poll above returns the
+  # moment the *object* exists, which can be before the API server has populated the status
+  # subresource, and at that instant `.status.conditions` is present and explicitly **null**. On that
+  # shape `--for=condition` exits 1 immediately with
+  #
+  #     error: .status.conditions accessor error: <nil> is of the type <nil>, expected []interface{}
+  #
+  # so the 60s were never spent. Measured on kubectl 1.36.4: an explicit `conditions: null` fails in
+  # ~1s, while a status that merely *lacks* conditions waits correctly — which is why this is
+  # intermittent and why four rehearsals the same day printed "ready after 0s" without noticing.
+  #
+  # `--for='jsonpath={...}=True'` is the usual advice for that bug and **does not work either**: on
+  # the same object it exits 1 in 0s with `<nil> is not array or slice and cannot be filtered`. Both
+  # were measured against a resource patched to `status: {conditions: null}` on purpose; do not swap
+  # this back for either of them.
+  #
+  # `kubectl get -o jsonpath` fails the same way on that shape, but here it is harmless: a failed
+  # read is empty, empty is not True, and the loop simply goes round again. Errors go to /dev/null so
+  # a transient one cannot leave a misleading explanation on screen next to the die below.
+  local jsonpath='{.status.conditions[?(@.type=="Established")].status}' established=0
+  until [ "$(k get crd middlewares.traefik.io -o jsonpath="$jsonpath" 2>/dev/null)" = "True" ]; do
+    # The elapsed total is in the message, so this can never again describe a wait that did not happen.
+    [ "$established" -ge 60 ] && die "the Middleware CRD exists but was still not Established ${established}s later (${waited}s into the wait).
+'kubectl get crd middlewares.traefik.io -o yaml' shows its status; a null .status.conditions means the API server never finished registering it."
+    sleep 1
+    established=$((established + 1))
+  done
+  # Both stages, because the CRD is not ready until the second one says so — reporting only the
+  # existence poll would print "ready after 0s" for a wait that spent seconds becoming Established.
+  info "Traefik CRDs ready after $((waited + established))s"
 }
 
 # Creates the rehearsal's own empty database and the credentials Secret. `namespace` decides where
