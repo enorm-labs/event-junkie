@@ -353,9 +353,16 @@ variable "backup_bucket" {
   description = <<-EOT
     Object Storage bucket holding wal-g's WAL and base backups.
 
-    Created by hand alongside the state bucket (infra/README.md), because Hetzner has no Cloud API
-    for buckets. Shared by both environments and separated by a prefix derived from `environment`,
-    since the subscription is billed per account and a second bucket would buy nothing.
+    **Declared in `bootstrap/`, not created here and no longer made by hand** (#586). Hetzner has no
+    Cloud API for buckets, but the MinIO provider is the documented path and `bootstrap/` already
+    carried it for `-o2`; that bucket's lifecycle rule is what enforces backup retention while this
+    node is down. This variable is the *name* the node writes to, and it must match
+    `object_storage_bucket_backups` over there — two stacks cannot share a variable.
+
+    Shared by both environments and separated by a prefix derived from `environment`, since the
+    subscription is billed per account and a second bucket would buy nothing. **The lifecycle rule
+    is therefore bucket-wide and applies to both**, which is correct only while both carry the same
+    retention window; they do.
   EOT
   type        = string
   default     = "event-junkie-backups"
@@ -389,12 +396,17 @@ variable "backup_retention_days" {
     **This is a number the privacy notice has to state** (#277, and it now does), not only an ops
     setting.
 
-    **Enforced once, not twice — corrected 2026-08-19.** This said retention was enforced "by the
-    nightly `wal-g delete` sweep and by a lifecycle rule on the bucket". Only the sweep exists;
-    there is no lifecycle rule anywhere in this configuration. The reasoning for wanting one still
-    stands and is the reason it is now filed rather than deleted: **the sweep alone lets the window
-    quietly become "forever" whenever the node is down**, and the notice promises a deletion the
-    sweep can only keep while something is running to perform it.
+    **Enforced twice, and the second one is not in this stack.** This value drives the nightly
+    `wal-g delete` sweep on the node. The ceiling that holds when the node is *not* running is
+    `backup_retention_backstop_days` in `bootstrap/`, a lifecycle rule on the bucket itself (#586) —
+    because a sweep cannot run on a machine that is off, and without it the window quietly became
+    "forever" for the length of any outage.
+
+    **The two numbers differ on purpose: 30 here, 35 there.** The sweep runs
+    `delete before FIND_FULL`, which keeps the last full backup before the cutoff even when that
+    backup is older than the window, because deleting it would break the chain the remaining WAL
+    depends on. The bucket rule is not chain-aware, so it sits above that overshoot. Moving either
+    number means moving both and re-checking the privacy notice, which states them both.
 
     30 days, decided 2026-08-18: long enough that corruption noticed weeks later is still
     recoverable, and a defensible figure to put in front of a data subject.

@@ -118,13 +118,24 @@ const PRIVACY_ELEMENTS: Element[] = [
     de: /nach sieben Tagen gelöscht/i,
   },
   // Backup retention is a *separate* period from log retention and the notice has to carry both
-  // (#277). The number is `backup_retention_days` in infra/, whose own comment records that it
-  // exists to be stated here — so this assertion is what couples the two: change the variable and
-  // this fails until the notice follows.
+  // (#277). The numbers are `backup_retention_days` in infra/modules/environment and
+  // `backup_retention_backstop_days` in infra/bootstrap, whose own comments record that they exist
+  // to be stated here — so these assertions are what couple them: change a variable and this fails
+  // until the notice follows.
   {
     what: 'backup retention period, as a number',
-    en: /backups are kept for\s+30 days/i,
-    de: /Sicherungen werden\s+30 Tage/i,
+    en: /normally kept for\s+30 days/i,
+    de: /im\s+Regelfall\s+30 Tage/i,
+  },
+  // **Both numbers, because only the second one is a promise (#586).** 30 is what the nightly sweep
+  // on the node achieves; 35 is the bucket lifecycle rule, and it is the only figure that still
+  // holds while the node is down. A notice stating 30 alone was true only on a healthy schedule,
+  // which is the defect LEGAL.md §7.5 names — a period nothing enforces is worse than a longer
+  // honest one. Dropping this assertion would let the notice quietly go back to promising 30.
+  {
+    what: 'backup retention ceiling, which is the enforced one',
+    en: /within\s+35 days/i,
+    de: /spätestens nach\s+35 Tagen/i,
   },
   // The interaction, not just the number: a deletion request and a restore have to be reconciled
   // somewhere, and leaving it implicit is the defect #277 was filed for.

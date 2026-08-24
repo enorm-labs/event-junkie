@@ -103,9 +103,9 @@ says there is no Cloud API for buckets and that third-party providers are "the o
 three `MINIO_*` exports in `.envrc.example` that re-export the **same** Keychain entries the S3 backend already uses, because the provider reads different
 variable names. There is no second credential to store or rotate.
 
-**`-backups` stays hand-made for now**, for a smaller reason than `-tfstate`: it already exists, so adopting it means `tofu import` — a deliberate act rather
-than a side effect. [#586](https://github.com/enorm-labs/event-junkie/issues/586) decides that, and it matters there because the lifecycle rule backing the
-privacy notice's 30-day backup claim is the thing that ought to be declared.
+**`-backups` is declared too, as of [#586](https://github.com/enorm-labs/event-junkie/issues/586)** — adopted through an `import` block rather than created,
+since it has existed since 2026-08-10. What made it worth the deliberate act is the lifecycle rule it carries: that rule is the _only_ thing enforcing the
+privacy notice's backup-retention claim whenever the node is down, because the other enforcement is a nightly sweep that runs on the node.
 
 Only `-tfstate` is genuinely unavoidable by hand, and it is unavoidable for the chicken-and-egg reason rather than the provider one.
 
