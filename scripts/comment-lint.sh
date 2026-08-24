@@ -21,9 +21,26 @@ BASELINE="$REPO_ROOT/scripts/comment-lint-baseline.txt"
 MAX_BLOCK="${COMMENT_LINT_MAX_BLOCK:-25}"
 MAX_DENSITY="${COMMENT_LINT_MAX_DENSITY:-55}"
 EXCLUDE='node_modules/|/build/|/dist/|/coverage/'
+SOURCE_GLOBS=(*.tf *.tfvars *.sh *.py *.yaml *.yml)
 
 usage() {
     sed -n '3,15p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+}
+
+# A baseline built from a half-tracked tree is worse than none: `git ls-files` cannot see a new
+# file, so its comments are missing from the number and CI fails on the commit that adds them.
+refuse_if_untracked() {
+    cd "$REPO_ROOT"
+    local pending
+    pending="$(git ls-files --others --exclude-standard -- "${SOURCE_GLOBS[@]}" | grep -vE "$EXCLUDE" || true)"
+    [ -z "$pending" ] && return 0
+    echo "Refusing to write a baseline while these files are untracked:" >&2
+    # shellcheck disable=SC2086  # One path per line is the intent.
+    printf "  %s\n" $pending >&2
+    echo >&2
+    echo "git ls-files cannot see them, so their comments would be missing from the baseline and CI" >&2
+    echo "would fail on the commit that adds them. Stage them first: git add -N <file>" >&2
+    exit 2
 }
 
 files() {
@@ -126,6 +143,7 @@ report() {
 }
 
 update_baseline() {
+    refuse_if_untracked
     {
         echo "# Comment-lint violations per area — a ceiling that only moves down. See #713."
         echo "# Raise a number only with an argument in the PR; the ordinary fix is to compress the comment."
