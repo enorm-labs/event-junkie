@@ -57,6 +57,33 @@ ej-importer-stale              in sync
 8/9 rules match this repository
 ```
 
+**It covers the delivery path as well as the rules, and reports it first** (#704). A rule that matches this repository perfectly still tells nobody anything if
+the destination is wrong, and that failure looks more like health than any other: the UI shows the alert firing, `last_satisfied_at` advances, and no row is
+written anywhere.
+
+```
+event-junkie (template)        in sync
+record-only (destination)      in sync
+…
+11/11 objects match this repository (9 rules, the template and the destination)
+```
+
+**The destination's header values are compared by fingerprint and cannot be printed.** It carries the OpenObserve root credential, and the API returns it in
+full — measured, 74 characters, unredacted — so a field diff of the kind this does everywhere else would put that credential into a terminal, a scrollback and
+possibly a pasted issue comment. Both sides are hashed and only `sha256:` prefixes are shown: enough to detect drift, incapable of disclosing it. **Every**
+value under `headers` is treated that way rather than `Authorization` by name, so a destination that later carries an `X-Auth-Token` is covered without anybody
+remembering to extend a list. A value the server returns empty or asterisked reports `cannot compare` rather than a verdict, because silence that reads as
+health is the failure this whole check exists to remove.
+
+`test_diff_alerts.py` is what holds that property down — it fabricates two credentials, asserts neither appears in the output, and needs no cluster:
+
+```sh
+python3 test_diff_alerts.py
+```
+
+**Both `apply.sh` and `--diff` read the expected template and destination from `alert_objects.py`**, one definition for both. Two copies of the same expected
+object, edited in one place and silently not the other, is the bug this entire directory has spent a week on.
+
 **It compares a subset, deliberately.** The server fills in defaults (`ignore_case`, `cron`, `align_time`), stamps identity (`id`, `owner`, `last_edited_by`)
 and records state (`last_triggered_at`). Comparing whole objects would report every rule as drifted for ever, which is a check nobody keeps running. Every
 field this repository declares must match; anything the server added on top is not our business. A rule in the cluster and **not** in `alerts.json` is reported
