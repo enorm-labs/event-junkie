@@ -11,37 +11,27 @@ import java.util.UUID
 /**
  * Records what each run extracted, and says so when a source starts publishing less (#472).
  *
- * ### The failure this catches, and why nothing else catches it
- *
- * #415 alerts when a source imports **zero** events. That catches a scraper that broke completely.
+ * #415 alerts when a source imports **zero** events, which catches a scraper that broke completely.
  * The quieter and far more common failure is partial: a venue moves the price into a different
- * element, one selector stops matching, and the importer keeps running, reports success, and writes
- * the same forty events it always does — every one of them now missing a price. **Counts are
- * unchanged, so no count-based alert fires.** The data just gets worse, and it is found weeks later
- * by somebody reading the site.
+ * element, one selector stops matching, and the importer keeps running, reports success and writes
+ * the same forty events it always does — every one now missing a price. **Counts are unchanged, so
+ * no count-based alert fires.** The data just gets worse, and somebody finds it weeks later by
+ * reading the site.
  *
- * ### The baseline is derived from history, never from an expectation
+ * **The baseline is derived from history, never from an expectation**, and that is what makes this
+ * useful rather than annoying. It is the **median** coverage ratio over the last [baselineRuns] runs
+ * of *that source*. Median rather than max, because a max makes one lucky run the standard forever;
+ * per source, because a venue that has never published a price has a baseline of 0% and is never
+ * flagged for missing one. A global "every event should have a price" expectation would flag half
+ * the corpus permanently, and a permanently red dashboard stops being read. It also means a field
+ * that **starts** arriving raises its own baseline, with no code change and no list to maintain.
  *
- * **This is the decision that makes the feature work rather than annoy.** The baseline for a field
- * is the **median** coverage ratio over the last [baselineRuns] runs of *that source*. Median rather
- * than max, because a max makes one lucky run the standard forever; and per source, because a venue
- * that has never published a price has a baseline of 0% for price and is never flagged for missing
- * one. A global "every event should have a price" expectation would flag half the corpus
- * permanently, and a dashboard that is permanently red stops being read.
- *
- * It also means a field that **starts** arriving raises its own baseline after enough runs, with no
- * code change and no list to maintain — the auto-widening the issue asks for comes free from
- * deriving rather than storing.
- *
- * ### Two guards, because without both this is a noise generator
- *
- * - **A large enough sample.** A run that scraped three events proves nothing. Below
- *   [minSampleSize] the run is recorded and never compared.
- * - **Persistence.** Flag on the *second* consecutive run below baseline, not the first. A single
- *   run can legitimately skew — a week of club nights has no lineup and no support act, and that is
- *   not a regression.
- *
- * Without both, this gets muted, which is strictly worse than not building it.
+ * **Two guards, because without both this is a noise generator** — and a muted alert is strictly
+ * worse than one never built:
+ * - **A large enough sample.** A run that scraped three events proves nothing; below [minSampleSize]
+ *   the run is recorded and never compared.
+ * - **Persistence.** Flag on the *second* consecutive run below baseline. A single run can
+ *   legitimately skew: a week of club nights has no lineup and no support act.
  */
 @Service
 class FieldCoverageService(

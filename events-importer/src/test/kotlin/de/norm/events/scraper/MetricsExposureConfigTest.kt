@@ -7,11 +7,10 @@ import java.io.File
 /**
  * Asserts the **main** `application.yaml` exposes `prometheus`, by reading the file.
  *
- * **A deliberate twin of `events-bff`'s `MetricsExposureConfigTest` — change both or neither.** The
- * BFF has had this since #415; the importer did not, and #538 is what that asymmetry cost. When the
- * chart's ConfigMap silently overrode the exposure list, the BFF at least had a test asserting its
- * own copy; the importer's two copies had nothing watching them at all — in the module that owns the
- * business meters, which are the ones worth scraping.
+ * **A deliberate twin of `events-bff`'s `MetricsExposureConfigTest` — change both or neither.** #538
+ * is what the asymmetry cost: when the chart's ConfigMap silently overrode the exposure list, the BFF
+ * had a test asserting its own copy while the importer's two copies had nothing watching them — in
+ * the module that owns the business meters, the ones worth scraping.
  *
  * The reasoning is the BFF's, and it holds here identically. `src/test/resources/application.yaml`
  * **shadows** the main file rather than merging with it, so every Spring test in this module runs

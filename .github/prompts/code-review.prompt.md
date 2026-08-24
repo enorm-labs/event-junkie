@@ -105,6 +105,13 @@ foo` boilerplate; commented-out code; and a new `TODO` (that is an issue).
   catching here — the diff is the only place it is ever visible.
 - **Never ask for a long comment to be deleted when it records a deliberate trade-off.** Ask for it in fewer words; the reasoning stays. detekt's `LongComment`
   rule caps a comment at 25 lines and excludes `**/scraper/**` for exactly that reason, so a long scraper KDoc is not a finding.
+- **Look at the ratio, not only at each comment.** Twenty individually reasonable comments still make a file that is more prose than code, and no per-comment cap
+  catches it. `scripts/comment-density.sh report --top 20` ranks the worst files; a diff that pushes an area above `scripts/comment-baseline.txt` fails
+  `/verify`, so raising the baseline instead of compressing is itself the finding. See #713.
+- **A comment with document structure in it is a document in the wrong file.** Markdown headings (`## Why this exists`), bold section titles, or an argument
+  built over several paragraphs belong in `docs/`, an ADR or the issue. Ask for a pointer and a sentence.
+- **The same rules apply to `.tf`, `.sh`, `.yaml` and `.py`, and that is where the volume is.** 84% of the comment lines added since #393 landed in languages
+  that had no lint at all. Review a Terraform or shell comment exactly as strictly as a KDoc — more so, because habit does not.
 - **Markdown follows the "Documentation describes the current state" rule in AGENTS.md §Agent Instructions.** Flag a doc change that _appends_ where it should
   have _replaced_: an "Update:" note, a dated banner, a new paragraph beside the one it supersedes, a phase marked done rather than deleted, or reasoning placed
   above the instructions instead of below them. The diff is the only place this is ever visible — once merged it reads as thoroughness.

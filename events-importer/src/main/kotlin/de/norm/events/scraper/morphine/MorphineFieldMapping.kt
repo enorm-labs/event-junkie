@@ -6,13 +6,10 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
-// Field mapping shared by the Morphine Raum overview and detail scrapers: the venue's own
-// "Live Recording" billing framing, the one-line `.block.day` header its detail template
-// renders, and the free-text pricing line in its `.block.priceevent` box.
-//
-// The overview and the detail page state the date in the same `DD.MM.YY` spelling, so both
-// scrapers read it the same way — the overview so its fallback data is usable when a detail
-// page fetch fails, the detail page because it is the primary source for the stored event.
+// Field mapping shared by the Morphine Raum overview and detail scrapers: the venue's own "Live
+// Recording" billing framing, the one-line `.block.day` header, and the free-text pricing line in
+// `.block.priceevent`. Both pages state the date in the same `DD.MM.YY` spelling and are read the
+// same way, so the overview's fallback data stays usable when a detail-page fetch fails.
 
 /**
  * Morphine's own "… - Live Recording" billing framing, stripped from a **derived artist name**
@@ -33,11 +30,7 @@ private val LIVE_RECORDING_SUFFIX = Regex("""\s*[-–—]?\s*live\s+recording\s*
  * Strips a trailing [LIVE_RECORDING_SUFFIX] from a billed name, keeping the input unchanged when
  * there is no such tail or when stripping would leave nothing.
  *
- * Example:
- * ```kotlin
- * stripLiveRecordingSuffix("Invisible Weather - Live Recording")  // "Invisible Weather"
- * stripLiveRecordingSuffix("VINYL REDUCTION")                     // "VINYL REDUCTION"
- * ```
+ * Example: `"Invisible Weather - Live Recording"` → `"Invisible Weather"`; `"VINYL REDUCTION"` is unchanged.
  */
 fun stripLiveRecordingSuffix(name: String): String {
     val stripped = name.trim().replace(LIVE_RECORDING_SUFFIX, "").trim()
@@ -57,32 +50,24 @@ private val DAY_LINE_DOORS = Regex("""doors?\s*:?\s*(\d{1,2}:\d{2})""", RegexOpt
 /**
  * Reads the event date from a `.block.day` header line, or `null` when the line carries none.
  *
- * Example:
- * ```kotlin
- * parseDayLineDate("Friday, 07.08.26, door  20:00")  // 2026-08-07
- * ```
+ * Example: `"Friday, 07.08.26, door  20:00"` → `2026-08-07`.
  */
 fun parseDayLineDate(dayLine: String?): LocalDate? = parseGermanShortDate(dayLine?.let { DAY_LINE_DATE.find(it)?.value })
 
 /**
  * Reads the door time from a `.block.day` header line, or `null` when the line carries none.
  *
- * Example:
- * ```kotlin
- * parseDayLineDoors("Friday, 07.08.26, door  20:00")  // 20:00
- * ```
+ * Example: `"Friday, 07.08.26, door  20:00"` → `20:00`.
  */
 fun parseDayLineDoors(dayLine: String?): LocalTime? = parseTime(dayLine?.let { DAY_LINE_DOORS.find(it)?.groupValues?.get(1) })
 
 /**
  * Markers that identify the first paragraph of the `.block.priceevent` box as a **pricing** line.
  *
- * That box is a free-text field above the venue's address, and the venue does not always put a
- * price in it — one upcoming show uses it for a house rule instead ("Concert (two sets!) starts at
- * 20:00 sharp. No entrance after the first set has started."). Storing that as a
+ * That box is a free-text field above the venue's address, and does not always hold a price — one
+ * show uses it for a house rule ("Concert (two sets!) starts at 20:00 sharp."). Storing that as a
  * [priceNote][de.norm.events.scraper.ScrapedEvent.priceNote] would label prose as pricing, and its
- * "20:00" would be read as an amount by [parseDoorPrice], so a positive pricing signal is required
- * before the text is taken.
+ * "20:00" would be read as an amount by [parseDoorPrice], so a pricing signal is required first.
  *
  * `Eu` is listed beside `Euro` because the venue abbreviates it that way ("10 - 15 Eu Sliding
  * scale Donation at the door."); it is word-anchored so it cannot match inside another word.
@@ -94,11 +79,7 @@ private val PRICE_MARKER =
  * Returns the `.block.priceevent` [text] when it reads as a pricing line ([PRICE_MARKER]), or
  * `null` when it is blank or carries no pricing signal at all.
  *
- * Example:
- * ```kotlin
- * readPriceNote("10 - 15 Euro donation")             // "10 - 15 Euro donation"
- * readPriceNote("Concert starts at 20:00 sharp.")    // null
- * ```
+ * Example: `"10 - 15 Euro donation"` is kept; `"Concert starts at 20:00 sharp."` yields `null`.
  */
 fun readPriceNote(text: String?): String? = text?.trim()?.takeIf { it.isNotBlank() && PRICE_MARKER.containsMatchIn(it) }
 
@@ -118,11 +99,7 @@ private val PRICE_AMOUNT = Regex("""\d+(?:[.,]\d{1,2})?""")
  * number — a range bound, a set count — is ambiguous and returns `null`, so the rule errs toward
  * storing no price rather than a wrong one.
  *
- * Example:
- * ```kotlin
- * parseDoorPrice("10 Euro At The Door")    // 10
- * parseDoorPrice("10 - 15 Euro donation")  // null (a range)
- * ```
+ * Example: `"10 Euro At The Door"` → `10`; `"10 - 15 Euro donation"` → `null`, being a range.
  */
 fun parseDoorPrice(note: String?): BigDecimal? {
     if (note.isNullOrBlank()) return null

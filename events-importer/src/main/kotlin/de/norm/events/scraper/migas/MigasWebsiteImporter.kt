@@ -15,9 +15,8 @@ import org.springframework.stereotype.Component
  * is already in that page's markup, inside a per-event modal, so one request per import is enough
  * and there are no detail pages to follow. All parsing lives in [MigasOverviewPageScraper].
  *
- * ## Conditional requests are deliberately disabled
- *
- * The page advertises a `Last-Modified` (there is no `ETag`) and the server **does** honour
+ * **Conditional requests are deliberately disabled.** The page advertises a `Last-Modified` (there
+ * is no `ETag`) and the server **does** honour
  * `If-Modified-Since` against it — but the header tracks when the page was last *edited*, while the
  * event list itself is filtered server-side to *upcoming* events and therefore rolls forward every
  * day on its own. Observed on 5 August 2026: `Last-Modified` was three days stale while the listing
@@ -29,9 +28,8 @@ import org.springframework.stereotype.Component
  * no [ImportResult.NotModified] path). This is the same reasoning that disables them for Havanna's
  * derived weekly occurrences.
  *
- * ## Only the first page is imported
- *
- * The listing pages at 10 events, with the remainder behind a "Load More" button that POSTs
+ * **Only the first page is imported.** The listing pages at 10 events, with the remainder behind a
+ * "Load More" button that POSTs
  * `action=load_events&paged=<n>` to `wp-admin/admin-ajax.php` (a GET ignores `paged` and re-serves
  * page 1). Following it is declined per ADR-007 §"Pagination — First Page Only": it would need a
  * POST transport that the shared [HtmlFetcher] does not have, for a venue whose programme runs

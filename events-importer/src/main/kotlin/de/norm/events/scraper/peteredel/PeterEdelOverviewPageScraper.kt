@@ -24,14 +24,12 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for Kulturhaus Peter Edel's Umbraco events page.
  *
- * The whole programme — 39 dated events running more than a year out at capture — lives on the one
- * `/events/` page as an Umbraco grid. The grid is a flat, ordered stream of two kinds of child: a
- * plain `<div>` holding an `<h1>` month heading (`AUGUST 2026`), and a `div.box-rc-dark-grey` holding
- * one event in three Bootstrap columns:
+ * The whole programme, running more than a year out, lives on the one `/events/` page as an Umbraco
+ * grid: a flat ordered stream of two kinds of child — a plain `<div>` holding an `<h1>` month heading
+ * (`AUGUST 2026`), and a `div.box-rc-dark-grey` holding one event in three Bootstrap columns:
  *
  * ```
- * .col-md-2   <h3>DO | 20.08.</h3>            ← weekday + year-less day.month
- *             <a href="…"><img src="…">       ← flyer
+ * .col-md-2   <h3>DO | 20.08.</h3>            ← weekday + year-less day.month, then the flyer
  * .col-md-8   <h3><a href="…">TITLE</a></h3>
  *             <p>Support: Sian Able</p>       ← optional subtitle (support act, tour or format)
  *             <div class="text-block">…</div> ← description
@@ -41,59 +39,54 @@ import java.time.LocalTime
  *             <p>(zzgl. VVK-Gebühr) Abendkasse: 32 Euro …</p>
  * ```
  *
- * **The dates carry no year, so the month headings supply it.** The parser walks the grid children in
- * order, remembering the year of the most recent heading and applying it to every box beneath it. The
- * day and month come from the box itself, so a row filed under the wrong heading still keeps its own
- * date.
+ * **The dates carry no year, so the month headings supply it.** The parser walks the grid in order,
+ * remembering the year of the most recent heading and applying it to every box beneath it. Day and
+ * month come from the box, so a row filed under the wrong heading still keeps its own date.
  *
  * **The page does not always open with a heading, and the boxes above the first one are still real
  * events** (#498). The venue retires the current month's heading as the month winds down while its
- * remaining dates stay listed, so on 2026-08-14 three August events sat above `SEPTEMBER 2026` with
- * no heading of their own. Those take their year from the first heading *below* them instead: the
- * listing runs chronologically month by month, so a box whose month is at or before the heading's
- * shares its year, and one after it belongs to the year before — which is what keeps a December box
- * above a `JANUAR 2027` heading in 2026. Only the month is compared, which is what makes this robust
- * to the venue's occasional out-of-order pair inside a month (17.10. is listed before 16.10. at
- * capture). The year is still read off the page rather than inferred from the clock; a box with no
- * heading anywhere below it, or under a heading whose month will not parse, is skipped rather than
- * guessed at, because inventing a year is worse than dropping a row visibly.
+ * remaining dates stay listed. Those boxes take their year from the first heading *below* them: the
+ * listing runs chronologically, so a box whose month is at or before the heading's shares its year,
+ * and one after it belongs to the year before — which is what keeps a December box above a
+ * `JANUAR 2027` heading in 2026. Only the month is compared, which makes this robust to the venue's
+ * occasional out-of-order pair within a month. The year is still read off the page rather than
+ * inferred from the clock: a box with no heading below it, or under a heading whose month will not
+ * parse, is skipped rather than guessed at, because inventing a year is worse than dropping a row
+ * visibly.
  *
  * Parsing decisions worth knowing:
  *  - **Prices are read from the third column, not the prose.** The middle column's `Tickets:` line is
  *    hand-written and sometimes carries a sale-start date rather than a price ("Tickets: Ab 17.04.26
- *    - online … erhältlich!"), which would parse as a number. The third column is the venue's own
- *    structured rendering — `Tickets: 25,00€` plus an `Abendkasse`/`Tageskasse` line — and is
- *    consistent across all 39 events. Its text (minus the "Für mehr Infos hier klicken" call to
- *    action) is kept verbatim as the [ScrapedEvent.priceNote], which is what preserves the venue's
- *    `Ab …` from-prices, its per-row tiers ("30 Euro / 35 Euro") and the `zzgl.`/`inkl. VVK-Gebühr`
- *    distinction the two numeric fields cannot express.
+ *    …"), which would parse as a number. The third column is the venue's own structured rendering and
+ *    is consistent across the programme. Its text, minus the "Für mehr Infos hier klicken" call to
+ *    action, is kept verbatim as [ScrapedEvent.priceNote] — which preserves the `Ab …` from-prices,
+ *    the per-row tiers ("30 Euro / 35 Euro") and the `zzgl.`/`inkl. VVK-Gebühr` distinction that the
+ *    two numeric fields cannot express.
  *  - **A cancelled event is marked twice** — `[Abgesagt!]` appended to the title and `Leider
- *    abgesagt!` in the ticket column. Either sets `CANCELLED`; the marker is then stripped from the
- *    stored title so it stays out of the `sourceId` and the event keeps its identity if the venue
- *    reinstates it.
- *  - **Doors and start are read as a labelled pair.** The venue writes them separately
- *    ("Einlass: 19:00 Uhr Beginn: 20:00 Uhr") or collapsed ("Beginn & Einlass: 18:00 Uhr"), and
- *    occasionally transposes them (`Einlass: 15:00` after `Beginn: 14:00`) — the transposition is
- *    corrected centrally by `orderDoorsBeforeStart` at the persistence boundary.
+ *    abgesagt!` in the ticket column. Either sets `CANCELLED`; the marker is stripped from the stored
+ *    title so it stays out of the `sourceId` and the event keeps its identity if reinstated.
+ *  - **Doors and start are read as a labelled pair**, written separately ("Einlass: 19:00 Uhr Beginn:
+ *    20:00 Uhr") or collapsed ("Beginn & Einlass: 18:00 Uhr"), and occasionally transposed — which
+ *    `orderDoorsBeforeStart` corrects centrally at the persistence boundary.
  *
  * Accepted limitations:
  *  - **The venue publishes no event category at all**, and its programme spans concerts, comedy,
- *    children's theatre, readings, gin tastings and dance teas. Typing therefore falls back to
- *    [inferUnmarkedTitleType] over the title and subtitle, extended by [VENUE_FORMAT_KEYWORDS] for
- *    the handful of formats the house names in its own words. Anything else stays `OTHER` rather than
- *    being guessed into `CONCERT` — which would also mint the event's name as a headliner.
+ *    children's theatre, readings, gin tastings and dance teas. Typing falls back to
+ *    [inferUnmarkedTitleType] over title and subtitle, extended by [VENUE_FORMAT_KEYWORDS] for the
+ *    formats the house names in its own words. Anything else stays `OTHER` rather than being guessed
+ *    into `CONCERT` — which would also mint the event's name as a headliner.
  *  - **Artists are only taken when the venue bills a support act** ([buildArtistList]). Without a
- *    category there is nothing to confirm that a title is a performer rather than a format, so
- *    "Tanztee im PETER EDEL" must not become an artist. Two of 39 events qualify at capture.
- *  - **The seating badges are dropped** ("Bestuhlt"/"Unbestuhlt"/"Teilbestuhlt" and "Freie
- *    Platzwahl"/"Keine Sitzplatzgarantie"/"Mit Sitzplatzreservierung"). The data model has no field
- *    for them; tracked in issue #303.
+ *    category nothing confirms that a title is a performer rather than a format, so "Tanztee im
+ *    PETER EDEL" must not become an artist. Only a couple of events qualify.
+ *  - **The seating badges are dropped** ("Bestuhlt"/"Unbestuhlt"/"Teilbestuhlt", "Freie
+ *    Platzwahl"/"Keine Sitzplatzgarantie"). The data model has no field for them; see #303.
  *  - **No genre and no per-event page.** The title links straight to the ticket shop, so every event
  *    points at the listing and takes its identity from its date plus its title.
  *
  * @see PeterEdelWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.peteredel.de/events/">Kulturhaus Peter Edel</a>
  */
+@Suppress("LongComment/venue") // Accepted limitations are load-bearing here (#714); compressed from 73 lines.
 class PeterEdelOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 

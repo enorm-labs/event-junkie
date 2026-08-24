@@ -27,8 +27,7 @@ import java.time.LocalTime
  * Pure HTML parser for Der Weiße Hase's Contao event listing.
  *
  * Every upcoming night is one `.event50` block wrapping a single `a.eventlistlink` — the club sells
- * through Resident Advisor and publishes no per-event page of its own, so the anchor points off-site
- * and the whole night is rendered inline:
+ * through RA and has no per-event page, so the anchor points off-site and the night renders inline:
  *
  * ```
  * <p class="dater">Donnerstag 06.08.2026 23:00</p>   ← weekday, dotted date, start time
@@ -37,34 +36,28 @@ import java.time.LocalTime
  *   <p>free entry until midnight*</p>
  *   <h4>LINE UP</h4>
  *   <p>Fran-Cee, Fabian Fischbach, DAV3 + Surprise DJ</p>
- * </p>
  * ```
  *
- * **`p.text` is not a usable container.** The CMS nests `<h4>` and `<p>` inside a `<p>`, which no
- * HTML parser accepts: Jsoup closes `p.text` at the first `<h4>`, leaving it empty and hoisting the
- * note, the heading and the roster to be siblings of `h1` inside `.eventrahm`. This parser therefore
- * walks `.eventrahm`'s children as one ordered stream and keys off content — the roster is the
- * element after the [LINE_UP_HEADING] heading, and everything between the title and that heading is
- * the night's note.
+ * **`p.text` is not a usable container.** The CMS nests `<h4>` and `<p>` inside a `<p>`, which no HTML
+ * parser accepts: Jsoup closes `p.text` at the first `<h4>`, leaving it empty and hoisting the note,
+ * heading and roster to be siblings of `h1` inside `.eventrahm`. This parser therefore walks
+ * `.eventrahm`'s children as one ordered stream and keys off content — the roster is the element after
+ * the [LINE_UP_HEADING] heading, and everything between the title and it is the night's note.
  *
  * Parsing decisions worth knowing:
- *  - **The roster is split on commas, on `+` and on `<br>` only, never on `&`** ([LINEUP_SEPARATOR]). The club
- *    writes back-to-back billings as separate entries but uses `&` *inside* act names
- *    ("Drauf & Dran DJ Team"), so the shared conjunction splitting would tear those in half.
- *  - **Unbooked slots are dropped** ([UNANNOUNCED_SLOT_PATTERN]): the club fills an unannounced
- *    billing with "+ Residents", "+ Surprise DJ" or "Contest Winner", none of which is a performer.
- *    Matching is fully anchored, so a real act is never caught by it.
- *  - **Only a Resident Advisor *event* link becomes the ticket URL** ([RA_EVENT_URL]). A night whose
- *    RA page is not up yet links to the club's RA profile or to a bare `#` on this page instead; both
- *    are placeholders, not that night's tickets.
+ *  - **The roster splits on commas, `+` and `<br>` only, never on `&`** ([LINEUP_SEPARATOR]). The club
+ *    writes back-to-back billings as separate entries but uses `&` *inside* act names ("Drauf & Dran
+ *    DJ Team"), which the shared conjunction splitting would tear in half.
+ *  - **Unbooked slots are dropped** ([UNANNOUNCED_SLOT_PATTERN]): an unannounced billing reads
+ *    "+ Residents" or "Contest Winner". Matching is fully anchored, so a real act is never caught.
+ *  - **Only a Resident Advisor *event* link becomes the ticket URL** ([RA_EVENT_URL]). A night whose RA
+ *    page is not up links to the club's RA profile or a bare `#` — placeholders, not that night's tickets.
  *
  * Accepted limitations — the club publishes none of this, so there is nothing to repair:
- *  - **No prices anywhere**, not even at the door. A note line ("free entry until midnight*") is
- *    stored as the event's description rather than as a `priceNote`, because a pricing note would
- *    trip `detectFree` and flag a paid night as free over its whole run — entry is free for the
- *    first hour only.
- *  - **No genre, no doors time, no support/headliner distinction** — every act is billed flat, so
- *    all are stored with the `DJ` role.
+ *  - **No prices anywhere**, not even at the door. A note line ("free entry until midnight*") is stored
+ *    as the description, not a `priceNote`: that would trip `detectFree` and flag a paid night free for
+ *    its whole run, when entry is free for the first hour only.
+ *  - **No genre, doors time, or support/headliner distinction** — every act is stored with the `DJ` role.
  *  - **No status signalling.** A cancelled night is taken off the page rather than labelled.
  *
  * @see DerWeisseHaseWebsiteImporter for the HTTP fetch orchestrator.

@@ -44,9 +44,9 @@ const { meta } = useAppMeta()
  * **The version is still displayed in all of those cases; only the link is withheld.** Which build
  * staging is running is the whole reason this line exists.
  *
- * `releaseTagUrl` decides, by testing for a `major.minor.patch` triple. This used to ask "does it
- * contain `-SNAPSHOT`?" and got it wrong for three months, because that spelling lives only in
- * `gradle.properties` and never reaches a browser (#502).
+ * `releaseTagUrl` decides, by testing for a `major.minor.patch` triple. **Testing for `-SNAPSHOT`
+ * instead is the trap**: that spelling lives only in `gradle.properties` and never reaches a
+ * browser (#502).
  */
 const releaseUrl = computed(() => releaseTagUrl(meta.value?.version))
 

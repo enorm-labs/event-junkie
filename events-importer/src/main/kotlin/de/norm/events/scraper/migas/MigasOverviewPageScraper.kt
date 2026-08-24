@@ -22,8 +22,6 @@ import java.time.OffsetDateTime
 /**
  * Parses migas' WordPress programme page (`/program/`) into [ScrapedEvent]s.
  *
- * ## Page shape
- *
  * The custom `migas` theme renders every upcoming event **twice** into `.events-list`: a
  * summary anchor (`a.event-item`) followed by a sibling modal (`div.event-popup`) holding the
  * full record. The anchor's `href` is `#` — the modal is opened client-side — so there is no
@@ -34,17 +32,15 @@ import java.time.OffsetDateTime
  * The modal is the richer half and supplies every field except the category, which is read
  * from the anchor. Two of its attributes are what make this source cheap and durable:
  *
- *  - **`button[data-target=add-to-calendar]`'s `data-start-date`** carries a full ISO-8601
- *    offset datetime (`2026-08-05T20:00:00+02:00`). The human rendering next to it — and the
- *    anchor's date block — is year-less (`we · 05.08 · 20:00`), so this attribute is the only
- *    place the year is stated. Reading it avoids the weekday-based year inference the retro
- *    listings need ([inferYearForWeekday][de.norm.events.scraper.inferYearForWeekday]).
+ *  - **`button[data-target=add-to-calendar]`'s `data-start-date`** carries a full ISO-8601 offset
+ *    datetime. The human rendering beside it — and the anchor's date block — is year-less
+ *    (`we · 05.08 · 20:00`), so this attribute is the only place the year is stated, which avoids the
+ *    weekday-based year inference the retro listings need ([inferYearForWeekday]).
  *  - **`button[data-target=share]`'s `data-url`** is the event's canonical permalink
  *    (`https://migas.berlin/event/<slug>/`), which supplies both `sourceUrl` and the stable
  *    `sourceId` slug.
  *
- * ## Traps
- *
+ * Traps:
  *  - **Images are lazy-loaded**: every `<img>`'s `src` is an inline SVG placeholder data URI
  *    and the real file is in `data-src`. Reading `src` (i.e. the shared
  *    [imgSrcAt][de.norm.events.scraper.imgSrcAt] helper) would store a base64 placeholder as
@@ -55,14 +51,11 @@ import java.time.OffsetDateTime
  *    programme at once — inserting duplicates and letting stale-cleanup delete the originals.
  *    Dropping the event with a warning is the safer failure.
  *
- * ## What the source does not carry
- *
- * migas publishes no prices, no ticket links, no door times, and no sold-out or cancellation
- * badges — entry arrangements are not stated on the site at all, so `free` is left to the
+ * **What the source does not carry:** no prices, ticket links, door times, or sold-out and
+ * cancellation badges — entry arrangements are not stated on the site at all, so `free` is left to the
  * shared price-based derivation rather than guessed. There is one time per event, taken as
- * `startTime`. The genre field is left empty: the venue's two categories are *formats*, not
- * genres, and the real genre prose ("Somali funk, Ethio-jazz, Sudanese pop") only ever appears
- * inside the free-text description.
+ * `startTime`. The genre field is left empty: the venue's two categories are *formats*, not genres,
+ * and the real genre prose ("Somali funk, Ethio-jazz, Sudanese pop") appears only in the description.
  *
  * @see MigasWebsiteImporter for the fetch side, including why conditional requests are disabled.
  */
@@ -219,7 +212,7 @@ class MigasOverviewPageScraper {
          * [headlinersFromTitle][de.norm.events.scraper.headlinersFromTitle], which ignores the
          * event type. That early return is the only place in the importer where a type
          * suppresses a lineup, so retyping these nights would leave their artists untouched.
-         * Measured 2026-08-08 while establishing what that rule actually costs; recorded here
+         * Measured while establishing what that rule actually costs; recorded here
          * because a right decision resting on a wrong reason is one re-reading away from being
          * reversed for the wrong reason too.
          */

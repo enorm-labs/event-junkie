@@ -17,22 +17,18 @@ import org.jsoup.nodes.Element
 /**
  * Pure HTML parser for Club OST's homepage programme.
  *
- * The club runs a small hand-built Django site whose **homepage is the programme page** —
- * there is no `/events` route, no month pages and no pagination, so a single fetch sees the
- * whole announced season (8 events spanning five months when this parser was written). The
- * `All` / `Current Month` / `Next Month` buttons above the grid are client-side filters over
- * that one already-rendered list, not links to further pages, so nothing is missed by
- * ignoring them.
+ * The club runs a small hand-built Django site whose **homepage is the programme page** — there is no
+ * `/events` route, no month pages and no pagination, so a single fetch sees the whole announced
+ * season. The `All` / `Current Month` / `Next Month` buttons above the grid are client-side filters
+ * over that one already-rendered list, not links to further pages, so ignoring them misses nothing.
  *
- * **The site is bilingual on `Accept-Language`.** Django's `LocaleMiddleware` renders
- * "Aug. 7, 2026 | 11 p.m." for its default locale and "7. August 2026 | 23:00 Uhr" for
- * German. The shared scraper `WebClient`
+ * **The site is bilingual on `Accept-Language`.** Django's `LocaleMiddleware` renders the date one way
+ * for its default locale and another for German. The shared scraper `WebClient`
  * ([ScraperHttpClientConfig][de.norm.events.scraper.ScraperHttpClientConfig]) sends no
- * `Accept-Language` header and no cookies, so the middleware falls through to the site's
- * default and this parser only ever sees the English rendering — which is why
- * [parseClubOstDate] and [parseClubOstTime] implement only that one. Adding a shared
- * `Accept-Language` to that client would silently switch the rendering and must come with a
- * matching parser here.
+ * `Accept-Language` header and no cookies, so the middleware falls through to the site's default and
+ * this parser only ever sees the English rendering — which is why [parseClubOstDate] and
+ * [parseClubOstTime] implement only that one. Adding a shared `Accept-Language` to that client would
+ * silently switch the rendering and must come with a matching parser here.
  *
  * The listing carries **no category, genre, price, lineup or door time**: every card is a
  * flyer, a title, a start time and a Resident Advisor ticket link. Those fields are simply
@@ -41,11 +37,10 @@ import org.jsoup.nodes.Element
  * same call [gartn][de.norm.events.scraper.gartn], [voidclub][de.norm.events.scraper.voidclub]
  * and the other category-less techno rooms make.
  *
- * The lineup is the one of those the template *reserves a slot for* — each card renders an
- * empty `div.artist`, which the venue has left blank on every event to date; the bills live on
- * the linked Resident Advisor pages instead. Nothing is lost by not reading it, so no artists
- * are extracted, but that div is where a lineup would come from should the venue start filling
- * it in.
+ * The lineup is the one of those the template *reserves a slot for* — each card renders an empty
+ * `div.artist`, left blank on every event so far, with the bills on the linked Resident Advisor pages
+ * instead. No artists are extracted, but that div is where a lineup would come from should the venue
+ * start filling it in.
  *
  * Card structure (Bootstrap grid, one `.event-item` per event):
  * - `a[href^=/event/]` — the detail page link; its numeric id is the stable `sourceId`

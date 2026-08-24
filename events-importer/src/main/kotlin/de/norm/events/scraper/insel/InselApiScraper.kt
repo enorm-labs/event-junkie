@@ -29,78 +29,58 @@ internal val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
  * Pure parser for Kulturhaus Insel Berlin's programme, sourced from a Gatsby **static-query**
  * artefact backed by DatoCMS.
  *
- * The site is a Gatsby front end whose homepage *is* the programme. Unlike Zenner, the events are
- * not in the page's own `page-data.json` — they come from a shared static query, published under
- * `/page-data/sq/d/<queryHash>.json`. The hash is not guessable, so [InselWebsiteImporter] reads
- * the candidate hashes from the page's `staticQueryHashes` and hands each artefact here;
- * [scrape] returns `null` for an artefact that is not the events one, so the importer can move on.
+ * The homepage *is* the programme, but unlike Zenner its events are not in its own `page-data.json`
+ * — they come from a shared static query under `/page-data/sq/d/<queryHash>.json`. The hash is not
+ * guessable, so [InselWebsiteImporter] reads the candidates from the page's `staticQueryHashes` and
+ * hands each artefact here; [scrape] returns `null` for one that is not the events artefact.
  *
- * Each event node carries a `name`, an offset-stamped `time`, a `wholeDay` flag, an HTML
- * `description` and a DatoCMS image. Three properties of that payload shape the parsing:
+ * Each node carries a `name`, an offset-stamped `time`, a `wholeDay` flag, an HTML `description` and
+ * a DatoCMS image. Three properties of that payload shape the parsing:
+ *  1. **The artefact holds the venue's whole archive** — hundreds of past events for a few dozen
+ *     upcoming — so past dates are dropped here rather than minting throwaways on every run.
+ *  2. **The CMS `eventType` field is not a category.** It once held one ("Konzert"); every current
+ *     event has the event's own name copied into it, so it is read only for the closed-function
+ *     marker ([isClosedFunction]) and never mapped to an [EventType].
+ *  3. **`time` is the first time of the evening, not reliably the start** — the *doors* time where
+ *     the description bills both. So `Einlass:` / `Beginn:` win, and `time` supplies the start only
+ *     when neither is written ([parseTimes]).
  *
- *  1. **The artefact holds the venue's whole archive** — 444 events back to 2022 for 39 upcoming at
- *     capture — so past dates are dropped here rather than minting hundreds of throwaway events per
- *     run for the persistence layer to discard.
- *  2. **The CMS `eventType` field is not a category.** It once held one ("Konzert"), but every
- *     current event has the *event's own name* copied into it instead, so it is read only for the
- *     closed-function marker (see [isClosedFunction]) and never mapped to an [EventType].
- *  3. **`time` is the first time of the evening, not reliably the start.** Where the description
- *     bills doors and start separately, `time` is the *doors* time; where it bills only a start,
- *     `time` is that. So the description's own `Einlass:` / `Beginn:` lines win, and `time`
- *     supplies the start only when neither is written ([parseTimes]).
+ * **The description is the venue's real data sheet**, mined for four things the JSON has no field
+ * for: those times, the promoter, the support billing and free entry. Its ticket link is identified
+ * by **anchor text** rather than host — the venue writes `>> TICKETS GIBT ES HIER <<` — which keeps
+ * the YouTube and Bandcamp links it also embeds out of [ScrapedEvent.ticketUrl]. Those lines are then
+ * dropped from the stored description ([METADATA_LINE_PATTERNS]), both to avoid duplicating the
+ * fields and because the date among them is sometimes months off the real one — which is why the
+ * date is only ever taken from `time`.
  *
- * **The description is the venue's real data sheet**, and it is mined for four things the JSON has
- * no field for: the doors and start times above, the promoter (`ATOK prs.`, `All Rooms prs.`,
- * `… präsentiert:`), the support billing, and free entry (`Eintritt frei`). Its ticket link is
- * identified by its **anchor text** rather than its host — the venue writes `>> TICKETS GIBT ES
- * HIER <<` — which keeps the YouTube and Bandcamp links it also embeds out of [ScrapedEvent.ticketUrl].
- * The lines those four facts are read from are then dropped from the stored description
- * ([METADATA_LINE_PATTERNS]), because they would otherwise duplicate the fields — and because the
- * date line among them is sometimes stale (two events at capture print a date months off their real
- * one, which is why the date is only ever taken from `time`).
- *
- * Parsing decisions worth knowing:
- *  - **The title is trusted as the act.** This is a concert house — 35 of 39 upcoming events are
- *    gigs whose title is simply the artist's name — so the type defaults to `CONCERT`
- *    ([inferConcertVenueType]) and the title is minted as the headliner. Two title frames are
- *    unpacked first so an event *name* is not stored as a performer: a `… w/ <acts>` billing yields
- *    the acts after the marker ("RIOT ON THE ISLAND w/ Them Spirals, Painted Lox's & AK In Control"
- *    → three acts), and a `•`-separated title yields its first segment ("June Cocó • Berlin
- *    (Kulturhaus Insel) • EP Release Show" → "June Cocó").
- *  - **A trailing country or city tag is stripped from an act name** ([ORIGIN_TAG_PATTERN]): the
- *    venue bills "Internal Bleeding (US)", "Billie Bird (CH)", "pinkpool (Bln)". The tag is
- *    provenance, not part of the name, and leaving it on would keep the act from resolving to the
- *    same artist row as another venue's booking. The stored *title* keeps the venue's spelling.
- *  - **A closed private function is not a bookable event** ([isClosedFunction]). The venue lists the
- *    days its garden is closed for a company party ("Sommerfest - Geschlossene Gesellschaft"). The
- *    entry is imported — a user checking the calendar should see the venue is shut — but typed
- *    `OTHER` and given no artists, so its name never reaches the artist table.
- *  - **A sold-out show is marked in prose**, as a `!!SOLD OUT!!` title prefix or an "AUSVERKAUFT"
- *    line. Both set the flag, and the prefix is stripped from the title so it stays out of the
- *    `sourceId` and the row survives the venue removing it.
+ * **The title is trusted as the act**: a concert house whose titles are usually just the artist's
+ * name, so the type defaults to `CONCERT` and the title is minted as the headliner. Two frames are
+ * unpacked first so an event *name* is not stored as a performer — `… w/ <acts>` yields the acts
+ * after the marker, a `•`-separated title its first segment. A trailing origin tag ("pinkpool (Bln)")
+ * is stripped from the act ([ORIGIN_TAG_PATTERN]): it is provenance, and leaving it on would stop the
+ * act resolving onto another venue's booking of the same artist, though the stored *title* keeps the
+ * venue's spelling. A closed private function is imported so the calendar shows the venue shut, but
+ * typed `OTHER` with no artists. A sold-out show is marked only in prose — a `!!SOLD OUT!!` prefix or
+ * an "AUSVERKAUFT" line — and the prefix is stripped so it stays out of the `sourceId` and the row
+ * survives the venue removing it.
  *
  * Accepted limitations:
- *  - **No prices anywhere** — neither the JSON nor the description carries one, only "Eintritt
- *    frei" for the free Sunday matinées.
+ *  - **No prices anywhere** — only "Eintritt frei" for the free Sunday matinées.
  *  - **No per-event page**, so every event points at the programme page and takes its identity from
  *    its date plus its title.
- *  - **A support act billed without a colon is not read.** The venue writes "+ support pinkpool" and
- *    "+ Roofman" alongside the "Support: Alles Karo" spelling; only a colon (or a line-leading
- *    `support` marker) is a signal reliable enough to separate a billing from prose.
- *  - **A handful of titles are event names, and the `CONCERT` default still mints them as artists.**
- *    Three of 39 at capture: a club night ("Y2K Nostalgia Soundtrack"), a themed concert programme
- *    ("STIMMEN DER FREIHEIT - …") and a city tail the shared suffix rules do not strip ("Dead
- *    Phoenix - BERLIN"). None carries a structural cue to tell it from the 35 titles that really are
- *    act names, and the venue publishes no category to arbitrate — so the default is kept and the
- *    handful accepted rather than suppressing the lineup for the whole programme.
+ *  - **A support act billed without a colon is not read.** The venue writes "+ support pinkpool"
+ *    beside "Support: Alles Karo"; only a colon, or a line-leading `support` marker, separates a
+ *    billing from prose reliably.
+ *  - **A handful of titles are event names, and the `CONCERT` default mints them as artists** — a
+ *    club night, a themed programme, a city tail the suffix rules miss. None carries a structural cue
+ *    distinguishing it from the titles that really are act names, and the venue publishes no category
+ *    to arbitrate, so the default is kept rather than suppressing the whole programme's lineup.
  *  - **No genre and no cancellation signalling** — a dropped show is removed from the CMS.
- *
- * This class performs **no network I/O** — it operates solely on a pre-fetched JSON body, making it
- * trivially testable against a saved snapshot.
  *
  * @see InselWebsiteImporter for the HTTP fetch orchestrator and the artefact discovery.
  * @see <a href="https://www.inselberlin.de/">Kulturhaus Insel Berlin</a>
  */
+@Suppress("LongComment/venue") // Accepted limitations are load-bearing here (#714); compressed from 76 lines.
 class InselApiScraper(
     /** Clock for the past-event cutoff. Defaults to the venue's own time zone; override in tests for determinism. */
     private val clock: Clock = Clock.system(BERLIN)

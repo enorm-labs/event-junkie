@@ -244,39 +244,27 @@ fun isNonArtistEvent(name: String): Boolean {
 }
 
 /**
- * Trailing suffixes that decorate a real act name, stripped by [stripArtistSuffix]
- * to recover the performer:
- * - a hyphen-separated "… - <tour name> Tour <year>" tail,
- * - a hyphen-separated anniversary tail "… - <n> Years/Jahre …" (e.g.
- *   "THE BUTLERS - 40 YEARS, SKA & SOULPOWER -"),
- * - a hyphen-separated set-count note "… - <n> Set(s)…" ("Toshìn & The Teleporters - 2 Sets!"
- *   → "Toshìn & The Teleporters"),
- * - a hyphen-separated tour/edition tail ending in a four-digit year, for the many tour
- *   labels that name a route or season rather than saying "Tour" ("Jawdropped - USA UK EU
- *   FALL 2026" → "Jawdropped"). Anchored on a `19xx`/`20xx` year at the very end, so a
- *   stylised number in a band name ("Blink - 182", "Front 242") is untouched,
- * - a hyphen-separated German "Releaseshow" tail — the compound spelling the separate
- *   "<format> Release" / "Release Party" rules below do not cover ("Sinem - Hatun -
- *   Releaseshow" → "Sinem - Hatun"),
- * - a trailing "Live" / "Live in <city>",
- * - a trailing performance-format annotation, either parenthesized — "(DJ-Set)",
- *   "(Live)", "(Acoustic)", "(Solo)", "(Unplugged)" — or a bare, whitespace-preceded
- *   "DJ-Set" / "DJ Set" tail ("Acid Arab DJ-Set" → "Acid Arab"),
- * - a trailing German relocation/reschedule note — "Nachholtermin vom <date>" or
- *   "Hochverlegung" (e.g. "The Dear Hunter -Nachholtermin vom 30.09.2025.",
- *   "OCT (On Company Time) – Hochverlegung" → "OCT (On Company Time)"),
- * - a trailing "singt <repertoire>" tribute framing ("Tex singt Leonard Cohen" → "Tex"), and
- * - a trailing "<Album/EP/…> Release" / "Release Party" promo tag ("Hawt Coco Album
- *   Release" → "Hawt Coco").
- * The hyphen tails require a `<space>-<space>` boundary and a recognized marker
- * (`tour`, or a number + `years`/`jahre`/`sets`), so an undecorated hyphenated name like
- * "BAD COMPANY LEGACY - Dave Colwell" is left intact. A whitespace boundary before
- * "Live" is likewise required, so a bare "Live" (the band) is never matched. The
- * relocation/reschedule marker is word-anchored and accepts an optional leading dash
- * (`-`/`–`/`—`), so both "… -Nachholtermin …" and "… Nachholtermin …" spellings are
- * caught. The bare "Release" tag requires a preceding format word (Album/EP/…) or a
- * "Party"/"Show" tail, so a band named just "Release" survives. The parenthetical is
- * keyed on the format word, so an alias in parentheses (e.g. "Sickboyrari (Black Kray)") is kept.
+ * Trailing suffixes that decorate a real act name, stripped by [stripArtistSuffix] to recover the
+ * performer. Every case is asserted in `ArtistNameMappingTest`, which is where the examples live.
+ *
+ * Hyphen-separated tails: a tour name, an anniversary ("<n> Years/Jahre"), a set count ("<n> Sets"),
+ * a tour or edition ending in a four-digit year, and the German compound "Releaseshow" that the
+ * separate "<format> Release" rules below do not cover. Trailing tails: "Live" or "Live in <city>",
+ * a performance-format annotation either parenthesized or a bare "DJ-Set", a German relocation note
+ * ("Nachholtermin vom <date>", "Hochverlegung"), a "singt <repertoire>" tribute framing, and an
+ * "<Album/EP/…> Release" or "Release Party" promo tag.
+ *
+ * **The boundaries are what keep real names intact**, and each guards a specific collision:
+ * - Hyphen tails need a `<space>-<space>` boundary and a recognised marker, so an undecorated
+ *   hyphenated name ("BAD COMPANY LEGACY - Dave Colwell") is left alone.
+ * - The year is anchored at the very end, so a stylised number in a band name ("Blink - 182",
+ *   "Front 242") is untouched.
+ * - "Live" needs a preceding whitespace boundary, so the band named Live is never matched.
+ * - The bare "Release" tag needs a format word before it or a "Party"/"Show" tail, so a band named
+ *   just "Release" survives.
+ * - The parenthetical is keyed on the format word, so an alias in parentheses is kept.
+ * - The relocation marker is word-anchored with an optional leading dash, so "… -Nachholtermin" and
+ *   "… Nachholtermin" are both caught.
  */
 private val ARTIST_SUFFIX_PATTERN =
     Regex(
@@ -485,11 +473,10 @@ private val SUBTITLE_LINE_SEPARATOR = Regex("""\s*[\n|]\s*""")
  * True when the [subtitle] credits a presenter whose own name **opens the [title]** — so the title
  * names that presenter's event and no part of it is a performer.
  *
- * This is the structural counterpart of [isLedByNonArtistLabel], which encodes the same idea against
- * a curated list of titles. Here nothing has to be curated: the venue states the label in one field
- * and repeats it in the other, and the pair is the signal. Huxleys' `Corrupted Blood Club Show`,
- * subtitled `Corrupted Blood Records presents`, is a label showcase — the title is the night's name,
- * and reading it as an act mints a 25-character artist that plays nowhere else.
+ * The structural counterpart of [isLedByNonArtistLabel], which encodes the same idea against a
+ * curated list. Here nothing is curated: the venue states the label in one field and repeats it in
+ * the other, and the pair is the signal. Huxleys' `Corrupted Blood Club Show`, subtitled `Corrupted
+ * Blood Records presents`, is a label showcase — reading it as an act mints an artist playing nowhere else.
  *
  * Three fences keep it off the far more common billing where the presenter names a *real* act:
  *  - the credit must be a **whole subtitle line** ([PRESENTER_CREDIT_PATTERN]) — a subtitle that
@@ -503,11 +490,9 @@ private val SUBTITLE_LINE_SEPARATOR = Regex("""\s*[\n|]\s*""")
  *    to be an act that runs its own label as it is to be a label night, and there is no structural
  *    way to tell; a title that adds to it ("… Club Show") is naming an event.
  *
- * Measured over the whole seeded database (2026-08-09): nine events carry a `presents` /
- * `präsentiert` subtitle and exactly one satisfies all three fences — the Huxleys row this exists
- * for. The other eight are presenter credits for named acts (Colosseum's `CONTRA CREATE
- * präsentiert` before `ÜBERDOSIS CRIME`, Wild at Heart's `Rudeboys Production presents` before
- * `The Spitfires`) and are untouched.
+ * Measured across the seeded database, nine events carry a `presents` / `präsentiert` subtitle and
+ * exactly one satisfies all three fences — the Huxleys row this exists for. The other eight are
+ * presenter credits for named acts and are untouched.
  */
 private fun isPresenterOwnEventTitle(
     title: String,
@@ -795,37 +780,22 @@ fun splitSupportActs(text: String): List<String> =
 /**
  * Splits a headliner title into its individual co-billed acts.
  *
- * Titles frequently pack a whole lineup into one string
- * (`TOTAL CHAOS + RUMKICKS + THE DOLLHEADS`, `LAGWAGON / THE VIRGINMARYS`,
- * `BLACK STAR RIDERS & TYKETTO`, `Earth Tongue und Scott Hepple`). This splits on
- * unambiguous, space-padded separators only, so band names that legitimately
- * contain these characters survive intact:
- * - `" / "` and `" + "` are treated as co-bill separators (space-padding
- *   protects `AC/DC`, `dance/electronic`, etc.).
+ * Titles frequently pack a whole lineup into one string (`TOTAL CHAOS + RUMKICKS + THE DOLLHEADS`,
+ * `LAGWAGON / THE VIRGINMARYS`, `BLACK STAR RIDERS & TYKETTO`). This splits on unambiguous,
+ * space-padded separators only, so band names that legitimately contain those characters survive:
+ * - `" / "` and `" + "` are co-bill separators; the padding is what protects `AC/DC` and
+ *   `dance/electronic`.
  * - a `" & "` / `" and "` / `" und "` conjunction is split per boundary via
- *   [splitSegmentOnConjunctions], and never for a title in [KNOWN_SINGLE_ACTS].
- *   The article-tail guard keeps `X and the Ys` band names (`James and the Cold
- *   Gun`, `Melanie Wiegmann and the Great Band`) whole while still splitting a
- *   real co-bill alongside them.
+ *   [splitSegmentOnConjunctions], and never for a title in [KNOWN_SINGLE_ACTS]. The article-tail
+ *   guard keeps `X and the Ys` band names whole while still splitting a real co-bill beside them.
  *
- * A title with no recognized separator (the common single-act case) returns a
- * singleton list of the trimmed title, so callers see no behavioural change.
- * Placeholder filtering is left to the caller.
+ * A title with no recognised separator returns a singleton list of the trimmed title. Placeholder
+ * filtering is left to the caller.
  *
- * @param splitOnSlash when false, `/` is *not* treated as a co-bill separator (only
- *   ` + ` is) — for venues that use `/` inside a single act name (Madame Claude's
- *   `Morimoto / Wong duo`). Defaults to true (the co-bill spelling other venues use).
+ * @param splitOnSlash when false, `/` is *not* a co-bill separator (only ` + ` is) — for venues that
+ *   use `/` inside a single act name (Madame Claude's `Morimoto / Wong duo`). Defaults to true.
  *
- * Example:
- * ```kotlin
- * splitHeadlinerTitle("TOTAL CHAOS + RUMKICKS")       // ["TOTAL CHAOS", "RUMKICKS"]
- * splitHeadlinerTitle("LAGWAGON / THE VIRGINMARYS")   // ["LAGWAGON", "THE VIRGINMARYS"]
- * splitHeadlinerTitle("Earth Tongue und Scott Hepple") // ["Earth Tongue", "Scott Hepple"]
- * splitHeadlinerTitle("Simon & Garfunkel")            // ["Simon & Garfunkel"]  (denylist)
- * splitHeadlinerTitle("James and the Cold Gun")       // ["James and the Cold Gun"]  (article tail)
- * splitHeadlinerTitle("AC/DC")                         // ["AC/DC"]  (no space padding)
- * splitHeadlinerTitle("Morimoto / Wong duo", splitOnSlash = false) // ["Morimoto / Wong duo"]
- * ```
+ * Every case above is asserted in `ArtistNameMappingTest`.
  */
 @Suppress("ReturnCount") // Guard clauses for blank and denylisted titles are clearer than nesting
 fun splitHeadlinerTitle(
@@ -982,11 +952,10 @@ fun headlinersFromTitle(
 /**
  * A `"<night> w/ <acts>"` guest-billing frame, up to and including the marker.
  *
- * The marker is certainly **not** a co-bill separator, which is the tempting reading: across a
- * 3262-event seed, all 16 titles carrying it name a night, a series or a label on the left and
- * the booked acts on the right — `RIPPLES W/ AMINE K`, `Stil vor Talent w/ Oliver Koletzki`,
- * `House of Rave w/ Maceo Plex, Nicole Moudaber, …`. Splitting in place and keeping both halves
- * would mint all 16 night names as performers.
+ * The marker is **not** a co-bill separator, which is the tempting reading: across the seed, every
+ * title carrying it names a night, a series or a label on the left and the booked acts on the right
+ * (`RIPPLES W/ AMINE K`, `House of Rave w/ Maceo Plex, …`). Splitting in place and keeping both
+ * halves would mint every one of those night names as a performer.
  *
  * **But it is not universally a frame either, which is why unpacking is opt-in.** Zenner bills
  * `Analogue Foundation presents: David August w/ MFO (live)`, where `w/` joins two collaborating
@@ -996,17 +965,14 @@ fun headlinersFromTitle(
  * a venue says it applies, and defaults to off: `w/` means different things at different houses,
  * and no lexical test found here separates them.
  *
- * The tail is split by [splitSupportActs] rather than [splitHeadlinerTitle], because after the
- * marker the text *is* a lineup list: a comma delimits acts there (`w/ Them Spirals, Painted
- * Lox's & AK In Control`), whereas in a title a comma usually sits inside one name and so
- * suppresses splitting. Every act is billed as a headliner — the frame says who is playing, not
- * in what order.
+ * The tail is split by [splitSupportActs] rather than [splitHeadlinerTitle], because after the marker
+ * the text *is* a lineup list, where a comma delimits acts — whereas in a title a comma usually sits
+ * inside one name and so suppresses splitting. Every act is billed as a headliner: the frame says
+ * who is playing, not in what order.
  *
- * Requires the marker to be preceded by something, so a lineup entry that *opens* with `w/`
- * still goes to [ROLE_LABEL_PREFIX], which strips it as a role label.
- *
- * Returns `null`, not an empty list, when the frame yields nothing usable, so the caller falls
- * back to parsing the whole title rather than storing no lineup at all.
+ * The marker must be preceded by something, so a lineup entry that *opens* with `w/` still goes to
+ * [ROLE_LABEL_PREFIX], which strips it as a role label. Returns `null` rather than an empty list
+ * when the frame yields nothing usable, so the caller falls back to parsing the whole title.
  */
 private val WITH_FRAME_PATTERN = Regex("""^.+?\bw/\s*""", RegexOption.IGNORE_CASE)
 
@@ -1054,49 +1020,28 @@ fun buildArtistList(
 }
 
 /**
- * Builds an artist list using the source's own event-type classification, for
- * venues that expose a clean `kind`/type label (the Kulturhäuser platform —
- * Astra, Lido). The strategy keys off [eventType]:
- * - **Festivals / parties** — the title is an event name, not an artist; no
- *   artists are extracted. See the trade below.
- * - **Concerts** — the type confirms the title is the headliner, so it is always
- *   added (plus any support acts), even without a support line.
- * - **Unknown / other** — fall back to the conservative [buildArtistList], which
- *   only treats the title as an artist when a "Support:" line is present.
+ * Builds an artist list using the source's own event-type classification, for venues that expose a
+ * clean `kind`/type label (the Kulturhäuser platform — Astra, Lido). Keys off [eventType]:
+ * - **Festivals / parties** — the title is the night's name, not an artist; none are extracted.
+ * - **Concerts** — the type confirms the title is the headliner, so it is always added, with any
+ *   support acts from the subtitle's `"… + Support: A & B"` pattern.
+ * - **Unknown / other** — fall back to [buildArtistList], which treats the title as an artist only
+ *   when a "Support:" line is present.
  *
- * Support acts come from the subtitle's `"… + Support: A & B"` pattern.
+ * **The `FESTIVAL`/`PARTY` guard is unconditional on purpose, and narrowing it is the trap.**
+ * Running a party title through [headlinersFromTitle] does not recover a missing act, it invents
+ * one. Measured across the whole seeded database: of the party and festival titles reaching this
+ * function, exactly one hid a recoverable act and about ninety-five would have produced a wrong
+ * one. Most would store the night's name verbatim as a 30–60 character "artist"; worse, a tribute
+ * night that names the act it covers splits like a co-bill — `Friday I'm in Love – A Tribute to
+ * Post-Punk · Dark 80s + Nick Cave` yields `Nick Cave`, an artist row that resolves by slug onto
+ * the real Nick Cave, so a visitor browsing him finds a Berlin DJ night in his gig list.
  *
- * ### Why a party and a festival yield no artists at all
- *
- * The `FESTIVAL`/`PARTY` guard is unconditional, and that is deliberate rather than
- * an oversight: a club night's title is the *night's* name, and running it through
- * [headlinersFromTitle] does not produce a missing act, it produces a fictional one.
- * The rule was measured against the whole seeded database (3166 events, 2026-08-08)
- * before being kept:
- *
- * - 335 events are typed `PARTY` or `FESTIVAL` and carry no lineup, but only ~96 of
- *   them (56 distinct titles) even reach this function — the rest come from scrapers
- *   that never derive an artist from a title. A `PARTY` is not artist-less by nature:
- *   302 of the 611 parties in the database *do* have a lineup, because their scraper
- *   read one from a billing list rather than from the title.
- * - Of those 56 titles, exactly **one** hides a recoverable act — Columbiahalle's
- *   `Two Door Cinema Club`, which is a band wrongly typed `PARTY` because
- *   `PARTY_TITLE_KEYWORDS` matches a bare `club` as a substring. The defect there is
- *   the classification, not this rule; fixing the keyword fixes the lineup for free.
- * - Every other title is the night's own name, and the failure is not merely cosmetic.
- *   Most would store the party name verbatim as a 30–60 character "artist"
- *   (`THE EARLY DAYS • LET'S DANCE TO JOY DIVISION` at Lido,
- *   `Learn to Swing Dance mit Swing Patrol` at Frannz). Worse, a tribute night whose
- *   title *names the act it covers* splits like a co-bill: Frannz's
- *   `Friday I'm in Love – A Tribute to Post-Punk · Dark 80s + Nick Cave` cuts on the
- *   `+` and yields `Nick Cave` — an artist row that resolves by slug onto the real
- *   Nick Cave, so a visitor browsing him would find a Berlin DJ night in his gig list.
- *
- * So the trade is ~1 recoverable act against ~95 wrong ones, and it is the right way
- * round. What the measurement *did* surface as genuinely recoverable is a different
- * seam — the `"<night> curated by / invites / hosted by <act>"` idiom at Kater, Club
- * OST, AMT, Tresor and Renate — and none of those venues route through this function
- * at all, so narrowing this guard would not reach them. It is tracked separately in issue #339.
+ * The single recoverable case is a classification defect rather than one here: `PARTY_TITLE_KEYWORDS`
+ * matches a bare `club` as a substring, so Columbiahalle's `Two Door Cinema Club` is typed `PARTY`.
+ * Fixing the keyword fixes the lineup for free. The seam that is genuinely recoverable — the
+ * `"<night> curated by / invites / hosted by <act>"` idiom — is #339, and no venue using it routes
+ * through this function.
  */
 @Suppress("ReturnCount") // Guard clauses for the event-type branches are clearer than nesting
 fun buildArtistsForEventType(

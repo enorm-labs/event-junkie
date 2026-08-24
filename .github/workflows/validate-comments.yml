@@ -1,0 +1,61 @@
+name: Validate Comments
+
+# The CI half of `scripts/comment-density.sh` and `scripts/comment-lint.sh` (#713). Both compare the
+# tree against a committed baseline and fail when a count rises.
+#
+# **No `paths:` filter, deliberately.** Both checks are repository-wide, so a filter would be a hole
+# rather than an optimisation, and the job takes under a second. It is also not on the `main`
+# ruleset's required list — if it is ever added there, no filter has to be removed first, which is
+# the trap validate-docs.yml and validate-scripts.yml both warn about.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  comments:
+    name: Check comment volume
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check comment volume against the baseline
+        run: scripts/comment-density.sh check
+
+      - name: Check comment rules for Terraform, shell, YAML and Python
+        run: scripts/comment-lint.sh check
+
+      - name: Explain the fix
+        if: failure()
+        run: |
+          {
+            echo "## Comment volume"
+            echo
+            echo "A comment count rose above its baseline. The ratchet only turns one way:"
+            echo "compress or delete, rather than raise the number."
+            echo
+            echo '```bash'
+            echo "scripts/comment-density.sh report --top 20   # where the volume is"
+            echo "scripts/comment-lint.sh report               # every rule violation"
+            echo '```'
+            echo
+            echo "If the count went *down*, regenerate and commit the lower figure:"
+            echo
+            echo '```bash'
+            echo "scripts/comment-density.sh update-baseline"
+            echo "scripts/comment-lint.sh update-baseline"
+            echo '```'
+            echo
+            echo "See AGENTS.md §Comments and #713."
+          } >> "$GITHUB_STEP_SUMMARY"

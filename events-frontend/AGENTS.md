@@ -565,6 +565,13 @@ repeated here. In TS/Vue terms they come out as:
 - **No `@param foo the foo`.** TypeScript already carries the type and the name; document a parameter only for what the signature cannot say.
 - **No commented-out code and no `TODO`s** — deleted code is in git, and work worth remembering is an issue.
 
+**`event-junkie/comment-density` and `event-junkie/comment-smell` enforce the rest** (#713), and both are local rules beside `max-comment-lines`. Density caps a
+file at 70% comment once it carries 25 comment lines — a per-comment cap cannot see twenty reasonable comments adding up to prose with code between it. Smell
+reports a date, a markdown heading, a comment narrating its own history, or a `TODO`. **A date inside backticks or quotes is left alone**, because a format
+example is far more common here than a dated decision. `__tests__`, `e2e/` and the legal module are exempt from Smell, and `src/lib/legal.ts` from Density: a
+pinned clock and the date a DPA was concluded are facts about the world, which is exactly what a comment is for. `src/api/schema.d.ts` is generated and exempt
+from all three.
+
 **`event-junkie/max-comment-lines` enforces the length half, at 15 lines**, and it counts an unbroken run of `//` lines as one comment. It is a local ESLint
 rule in [`eslint-rules/max-comment-lines.ts`](eslint-rules/max-comment-lines.ts), wired up in `eslint.config.ts` — the counterpart to the `:detekt-rules`
 Gradle module, which caps Kotlin at 25.
