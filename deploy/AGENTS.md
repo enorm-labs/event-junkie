@@ -12,7 +12,7 @@ not merged into one file.
 **Everything that renders the chart is safe. Everything that installs it is not.**
 
 **The pre-commit `helm lint` is stricter than CI's, and the difference is deliberate rather than a bug.** Local hooks run whatever `helm` is installed —
-currently v4 — while `validate-chart.yml` pins **v3.21.3**, because Flux's helm-controller embeds the Helm 3 SDK. Helm 4's `--strict` rejects an unknown
+currently v4 — while `validate-chart.yml` pins **v3.21.4**, because Flux's helm-controller embeds the Helm 3 SDK. Helm 4's `--strict` rejects an unknown
 `Chart.yaml` key; Helm 3's does not, so a malformed `Chart.yaml` can fail locally and pass CI. Found while probing #443's required checks with a deliberately
 invalid key, which CI accepted. Trust the local failure when they disagree.
 
