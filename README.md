@@ -69,9 +69,6 @@ The product works end-to-end: 86 Berlin sources are imported on a schedule, and 
 Staging and production are stood up and reconciling under Flux — production is **dark**, serving nothing publicly until the domain is pointed at it at go-live.
 What is left is the legal, auth and go-live work, tracked in the [`v0.3` and `v1.0` milestones](https://github.com/enorm-labs/event-junkie/milestones).
 
-One consequence worth knowing before you build on this: **the database schema is still evolving and offers no migration compatibility between versions.** All
-schema changes are consolidated into a single initial migration (`V001`) until the first production release.
-
 ## Built with AI
 
 Most of the code in this repository was written by AI coding agents (primarily
