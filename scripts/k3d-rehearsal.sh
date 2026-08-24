@@ -281,8 +281,26 @@ create_cluster() {
   [ "${K3D_PRELOAD_IMAGES:-0}" = "1" ] && airgap=(--volume "$PWD/$STATE_DIR/airgap:/var/lib/rancher/k3s/agent/images@server:0;agent:0")
   # ${arr[@]+"${arr[@]}"} rather than "${arr[@]}": an empty array under `set -u` is only safe from
   # bash 4.4 on, and /bin/bash on macOS is still 3.2.
-  k3d cluster create "$CLUSTER" --port "8080:80@loadbalancer" --agents 1 ${airgap[@]+"${airgap[@]}"} >/dev/null
-  info "cluster up ($(k get nodes -o jsonpath='{.items[0].status.nodeInfo.architecture}'))"
+  # `|| die` is not belt-and-braces over `set -e`, for the reason `cmd_up` states at length: this
+  # runs on the left of an `&&` chain in `main`, which exempts the whole function from errexit
+  # recursively. Without it a failed creation was reported as success and the run carried on into the
+  # CoreDNS wait, the CRD wait and the chart install against a cluster that does not exist (#692).
+  # Only stdout is redirected, so k3d's own ERRO/FATA lines still reach the terminal; this message
+  # adds the part k3d does not say.
+  k3d cluster create "$CLUSTER" --port "8080:80@loadbalancer" --agents 1 ${airgap[@]+"${airgap[@]}"} >/dev/null \
+    || die "k3d could not create the cluster — its own ERRO/FATA lines are above.
+The usual cause here is something already listening on 8080, which is what the BFF binds under 'bootRun':
+  lsof -nP -iTCP:8080 -sTCP:LISTEN
+k3d rolls its own changes back, so there is nothing left to clean up."
+
+  # Read into a variable and asserted rather than interpolated straight into the message. #541's
+  # lesson was that a printed line is not an assertion, and this was the same shape: it printed
+  # `cluster up ()` — an empty architecture from a `kubectl` that had just said "context was not
+  # found" — which is what made a cluster that was never created look like one that was.
+  local arch
+  arch="$(k get nodes -o jsonpath='{.items[0].status.nodeInfo.architecture}' 2>/dev/null)" || arch=""
+  [ -n "$arch" ] || die "the cluster reports no nodes — k3d returned 0 but context '$CONTEXT' has nothing in it"
+  info "cluster up ($arch)"
 
   # k3d writes `host.k3d.internal` into the CoreDNS ConfigMap **after `k3d cluster create` returns**,
   # not while it runs. Measured on this machine (#541): the entry appeared **11 seconds** after create
@@ -320,7 +338,10 @@ Every pod resolving the database host would fail. Check 'kubectl -n kube-system 
 
   # Now the restart means something: a new pod mounts the ConfigMap as it is, so it comes up already
   # holding the entry rather than waiting on the volume sync and the plugin's own reload.
-  k -n kube-system rollout restart deployment coredns >/dev/null
+  # The `rollout status` below carries a `|| die` and this did not, so a restart that never happened
+  # was waited on rather than reported (#692, same class as the create above).
+  k -n kube-system rollout restart deployment coredns >/dev/null \
+    || die "could not restart CoreDNS — it would come back on the config without host.k3d.internal"
   k -n kube-system rollout status deployment coredns --timeout=120s >/dev/null \
     || die "CoreDNS did not roll out — every pod resolving host.k3d.internal will fail"
   info "CoreDNS restarted onto it"
