@@ -5,6 +5,7 @@ The rules [#271](https://github.com/enorm-labs/event-junkie/issues/271) requires
 ```sh
 ./apply.sh            # create or update every rule
 ./apply.sh --check    # evaluate each rule's query against live data, change nothing
+./apply.sh --diff     # compare the cluster's rules to alerts.json, change nothing
 ```
 
 **Edit `gen_alerts.py`, not `alerts.json`.** The JSON is generated, `apply.sh` regenerates it before doing anything, and the same argument the dashboards make
@@ -33,6 +34,39 @@ sum(rate(otelcol_exporter_send_failed_metric_points_total[5m]))
 restart the series does not exist — and **a binary operation with an empty side yields an empty result, not the other side's value**. The rule was therefore
 un-fireable during exactly the normal operation it was meant to watch, and nothing in the UI would have said so. It is now two rules, each on a series that is
 always present.
+
+## What `--diff` answers that `--check` cannot
+
+**`--check` validates the file. `--diff` validates the deployment.** They read alike and the difference is the whole of
+[#702](https://github.com/enorm-labs/event-junkie/issues/702):
+
+`ej-site-down` was rewritten on 2026-08-23 because the `up`-based form fired on every rolling deploy. The commit landed. The cluster kept running the old rule
+until `apply.sh` was next run by hand — over a day later — and in between `alert_history` collected **17 firings of a rule this repository had already
+replaced**. Throughout, `--check` said `ej-site-down ok`, because the query in the file was fine. Nothing in here could see the gap, and the gap is the one that
+matters: an alert nobody trusts is an alert nobody reads.
+
+`--diff` fetches every rule from the API and compares it field by field against the generated `alerts.json`:
+
+```
+ej-site-down                   DIFFERS     1 field
+    stream_name
+        alerts.json: kube_deployment_status_replicas_available
+        cluster:     up
+ej-importer-stale              in sync
+…
+8/9 rules match this repository
+```
+
+**It compares a subset, deliberately.** The server fills in defaults (`ignore_case`, `cron`, `align_time`), stamps identity (`id`, `owner`, `last_edited_by`)
+and records state (`last_triggered_at`). Comparing whole objects would report every rule as drifted for ever, which is a check nobody keeps running. Every
+field this repository declares must match; anything the server added on top is not our business. A rule in the cluster and **not** in `alerts.json` is reported
+too — that is the direction this file already worried about, somebody adding or editing a rule in the UI.
+
+**A stream change is a delete and a recreate, because a PUT silently will not do it.** The output above is the first thing `--diff` ever found, and it was not
+what it looked like: today's `apply.sh` had already updated that rule's query, reported `200`, and left `stream_name` at `up`. Nothing errored. The only symptom
+was `alert_history` rows carrying the old stream — which is worse than an error, because a diagnostic reading that label dates a firing to a rule that is no
+longer installed, and one did. `apply_alerts.py` now detects a changed stream and recreates the alert; the cost, stated because it is real, is that the rule
+loses its silence window and can fire again immediately.
 
 ## The rules
 

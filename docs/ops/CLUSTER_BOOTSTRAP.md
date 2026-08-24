@@ -559,7 +559,12 @@ every pod healthy:
 ```sh
 cd deploy/dashboards && ./apply.sh && ./apply.sh --check   # 13/14 panels is the expected state until data accumulates
 cd deploy/alerts     && ./apply.sh && ./apply.sh --check   # the template and destination are recreated too
+cd deploy/dashboards && ./apply.sh --diff                  # and prove the push landed: both must say they match
+cd deploy/alerts     && ./apply.sh --diff
 ```
+
+**`--diff` is what turns "I ran the apply" into "the cluster has it".** It is worth the two extra commands here of all places: a rebuild is exactly when an
+apply gets half-run, and a rule that silently did not land looks identical to one that did until the incident it was written for (#702).
 
 #### The first time, the drill does not work as written — and why
 
