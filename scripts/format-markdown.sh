@@ -9,26 +9,22 @@
 #
 # Reaches no network. In `check` mode it writes nothing at all.
 #
-# Three things about this script are deliberate, and each one cost a experiment to establish:
+# Three things about this script are deliberate, and each one cost an experiment to establish:
 #
 # 1. It uses the oxfmt pinned in events-frontend/package.json, never the one on $PATH. oxfmt is
 #    pre-1.0 and its Markdown output is not stable across versions; whichever binary runs in a commit
 #    hook has to be the one CI runs, or `check` fails depending on whose laptop touched the file
 #    last. package-lock.json is what makes that reproducible; Homebrew upgrades out from under you.
-#    (0.62.0 and 0.63.0 happen to agree on this repository — verified byte-for-byte — so the pin is
-#    insurance rather than a fix for a known disagreement.)
 #
 #    Related, and non-obvious: **oxfmt reads .editorconfig**. The `[*] indent_size = 4` there is what
 #    makes nested list items indent by four spaces; without it oxfmt uses its own default and the
-#    output differs. Measuring oxfmt in a scratch directory therefore does not reproduce what it does
-#    here unless .editorconfig is copied alongside — that mistake is what originally made 0.62 and
-#    0.63 look like they disagreed.
+#    output differs. Measuring oxfmt in a scratch directory does not reproduce what it does here
+#    unless .editorconfig is copied alongside.
 #
 # 2. `--disable-nested-config`, because oxfmt's nested configs *replace* rather than merge. Without
-#    it, events-frontend/.oxfmtrc.json shadows the root config wholesale for events-frontend/*.md and
-#    those two files get formatted to different settings than the other 96. The flag is only safe
-#    because this script never formats anything but Markdown — the frontend's JS/TS settings are
-#    untouched either way, since nothing here ever passes it a .ts file.
+#    it, events-frontend/.oxfmtrc.json shadows the root config wholesale for events-frontend/*.md, so
+#    those two files format to different settings than every other. The flag is safe only because
+#    this script never passes oxfmt anything but Markdown.
 #
 # 3. Write mode runs oxfmt twice, and always will. A table indented under a list item is skipped on
 #    the first pass and only formatted on the second; it converges at pass two and stays there. One

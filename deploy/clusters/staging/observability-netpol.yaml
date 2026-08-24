@@ -1,22 +1,16 @@
+# comment-lint: allow 15 of these lines are the arrow inventory, and the rest are silent-failure traps
 # Default-deny for the `observability` namespace, plus one named allowance per real conversation
 # (#662). This replaces `openobserve-netpol.yaml`, whose egress rules are folded in below.
 #
-# ## Why this namespace is the one that mattered
+# This namespace holds the pod with every log line and metric in the system, the Signal bridge that
+# will hold a registered account, and a Postgres exporter carrying database credentials — any of
+# which could otherwise reach the private-network database, the Kubernetes API, each other, or the node.
 #
-# It holds the pod with every log line and metric in the system, the Signal bridge that will hold a
-# registered account, and a Postgres exporter carrying database credentials. Until this file, any of
-# them could open a connection to anything: the database on the private network, the Kubernetes API,
-# each other, the node.
-#
-# ## The shape, copied from the chart because it earned it
-#
-# `deploy/charts/event-junkie/templates/networkpolicy.yaml`: **one deny-all plus one narrow
-# allowance per conversation, which is the only ordering that produces a reviewable list.** With
-# allow-only policies the absence of a rule is invisible. `flux-system` is the counter-example — it
-# ships three `allow-*` policies and no deny, so they document intent and enforce nothing.
-#
-# So read the allowances below as the architecture. **An arrow that is not written down does not
-# happen**, and every arrow here was read off the pinned charts rather than guessed:
+# The shape is the chart's (`templates/networkpolicy.yaml`): **one deny-all plus one narrow allowance
+# per conversation, the only ordering that produces a reviewable list.** With allow-only policies the
+# absence of a rule is invisible — `flux-system` ships three `allow-*` policies and no deny, so they
+# document intent and enforce nothing. Read the allowances as the architecture: **an arrow not written
+# down does not happen**, and every one was read off the pinned charts rather than guessed.
 #
 #     agent            -> OpenObserve:5080          otlphttp export
 #     agent            -> kubelet:10250             the kubeletstats receiver
@@ -34,49 +28,27 @@
 #     signal-cli       -> the internet:443          Signal's servers, once registered
 #     everything       -> CoreDNS:53
 #
-# ## Two selector hazards, both silent
+# **Two selector hazards, both silent.** The operator labels both collector pods
+# `app.kubernetes.io/name: openobserve-collector` — the *chart* name — so `name` cannot tell agent
+# from gateway. The discriminator is `app.kubernetes.io/instance`, set to `<namespace>.<collector>`,
+# which embeds **both the namespace and the Helm release name (`o2c`)**: renaming the release, or
+# moving the agent to its own namespace as #709 proposes, invalidates these selectors without
+# erroring — a `podSelector` matching nothing just leaves the pod under the deny-all, and a collector
+# that cannot reach OpenObserve queues, retries and drops, which is what #625 looked like for days.
+# Verify with `kubectl -n observability get pods --show-labels`, not by reading this file. Second:
+# **the node is reached by port, not address** — its address is public here and changed once when
+# #271 resized it, so `ipBlock: 0.0.0.0/0` bounded by port names no host and survives a rebuild.
 #
-# **The operator does not label collector pods by collector name.** Both carry
-# `app.kubernetes.io/name: openobserve-collector` — the *chart* name — so `name` cannot tell the
-# agent from the gateway. The discriminator is `app.kubernetes.io/instance`, which the operator sets
-# to `<namespace>.<collector-name>`, and which therefore embeds **both the namespace and the Helm
-# release name (`o2c`)**. Renaming the release, or moving the agent to its own namespace as #709
-# proposes, silently invalidates these selectors.
-#
-# Silently is the operative word: a `podSelector` that matches nothing does not error. It leaves the
-# pod under the deny-all with no allowances at all, and a collector that cannot reach OpenObserve
-# queues, retries and drops — which is what #625 looked like for days before anyone noticed. Verify
-# with `kubectl -n observability get pods --show-labels` after any rename, not by reading this file.
-#
-# **The node is reached by port, not by address.** The kubelet and the control-plane scrape targets
-# live on the node, whose address is public on this cluster and changed once already when #271
-# resized it. `ipBlock: 0.0.0.0/0` bounded by port names no host and survives a rebuild — the same
-# reasoning the object-storage rule below uses for the opposite reason.
-#
-# ## What is deliberately absent
-#
-# **No ingress rule for the API server reaching the otel-operator's webhook on 9443, and none for
-# the kubelet's probes.** Both originate on the node, and node-to-pod traffic is not subject to
-# NetworkPolicy in k3s's implementation — the chart's policy records the same thing for the same
-# reason. `kubectl port-forward` arrives the same way, which is how anyone reaches the OpenObserve
-# UI. If that assumption were wrong the failure would be loud and immediate: probes fail, pods never
-# go Ready.
-#
-# **No ingress allowance for the gateway's `otlp` receiver on 4317/4318.** Nothing sends to it
-# today — the agent exports straight to OpenObserve over `otlphttp`, and neither application emits
-# OTLP. It is opened when something needs it, and not before.
-#
-# **`kube-state-metrics` is not allowed for, because it is not installed.** The collector chart
-# references it and does not install it, so that scrape has failed on every cycle since #271 — a
-# permanently-red target, which is the thing that teaches people to ignore red targets. Adding an
-# allowance would make it look intentional. It is #271's own "independent of the sequence" note.
-#
-# **`prometheus-autodiscovery` is bounded to `event-junkie`, not the cluster.** That job scrapes any
-# pod carrying the Prometheus annotations, wherever it is; the gateway's egress opens `event-junkie`
-# and this namespace and no more. If something annotated appears in `kube-system` it will go red,
-# and that is a decision rather than a bug — widen the rule deliberately, naming the namespace, the
-# way every other arrow here is named. Recorded because a newly-red target after this lands would
-# otherwise read as the policy having strangled something.
+# **Deliberately absent.** No ingress for the API server reaching the otel-operator webhook on 9443,
+# nor for kubelet probes: both originate on the node, and node-to-pod traffic is not subject to
+# NetworkPolicy in k3s — the chart records the same, and `kubectl port-forward` arrives that way,
+# which is how anyone reaches the OpenObserve UI. Were that wrong, probes would fail and pods never
+# go Ready, which is loud. No ingress for the gateway's `otlp` receiver on 4317/4318, because nothing
+# sends to it today. No allowance for `kube-state-metrics`, which the collector chart references and
+# does not install, so that scrape has failed every cycle since #271 — an allowance would make a
+# permanently-red target look intentional. And `prometheus-autodiscovery` is bounded to
+# `event-junkie` and this namespace rather than the cluster: something annotated in `kube-system`
+# will go red, and widening is a deliberate decision naming the namespace, like every arrow above.
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -319,9 +291,7 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # ## What this replaces, kept from #661 because the reasoning still holds
-    #
-    # OpenObserve refuses alert destinations that resolve inside the cluster, which is a sensible
+    # **What this replaces, kept from #661 because the reasoning still holds.** OpenObserve refuses alert destinations that resolve inside the cluster, which is a sensible
     # default and also blocks #271 item 4's architecture — a webhook into `signal-cli-rest-api`. The
     # only switch that unblocks it, `ZO_SKIP_SSRF_CHECKS`, removes the check for **every**
     # destination. That guard exists because an authenticated user can point a "destination" at an

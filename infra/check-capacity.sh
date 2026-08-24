@@ -8,63 +8,35 @@
 #   cd infra && ./check-capacity.sh --probe      # ORDERS one bare server per type and deletes it
 #   cd infra && ./check-capacity.sh --probe production
 #
-# THE DEFAULT MODE ANSWERS A WEAKER QUESTION THAN IT LOOKS LIKE, AND IT HAS BEEN WRONG IN BOTH
-# DIRECTIONS. It reports what Hetzner *advertises* in the `datacenters` endpoint. That is not what
-# an order will do, there is no dry-run for a server order, and the two have now disagreed three
-# times out of four — twice saying yes to something unbuyable, once saying no to something buyable:
+# THE DEFAULT MODE ANSWERS A WEAKER QUESTION THAN IT LOOKS LIKE. It reports what Hetzner
+# *advertises* in the `datacenters` endpoint, which is not what an order will do — and there is no
+# dry-run for a server order. The two have disagreed three times out of four, in both directions:
+# twice advertising something unbuyable, once omitting something that ordered fine. Staging runs
+# cx33 because an order succeeded and not because this script said so, and production is x86 because
+# ARM was refused everywhere in eu-central while still advertised in two locations.
 #
-#   2026-08-11  The whole CAX (ARM) line was unavailable across eu-central and fsn1 had nothing at
-#               all. The apply failed with `error during placement (resource_unavailable)`. Here the
-#               advertisement and the order path agreed.
+# **`--probe` is the mode that answers the question.** It places a real order per type — no IPs, no
+# network, `start_after_create: false` — and deletes anything that succeeds, verifying the deletion
+# rather than trusting the status code. A refusal costs nothing and returns in about a tenth of a
+# second; a success is billed by the hour and lives for seconds.
 #
-#   2026-08-13  Advertised cax11 as available in nbg1; cax11's own pricing lists nbg1. Three orders
-#               were refused with `unsupported location for server type (invalid_input)` — a
-#               *different* error from a sold-out one, which is why it reads like a configuration
-#               fault rather than a capacity one. It is not. Settled by ordering a bare cax11
-#               through the API — no Primary IPs, no network, no firewall — and getting the same
-#               refusal, so it is Hetzner's side and not our configuration.
-#
-#   2026-08-20  Omitted cx33 from nbg1 entirely. The order succeeded. Staging is declared cx33
-#               today because of that order and not because of this script.
-#
-#   2026-08-21  Advertised cax21 and cax11 in nbg1 and hel1. Bare orders were refused in nbg1, hel1
-#               *and* fsn1 — ARM cannot be bought anywhere in eu-central. Production moved to x86
-#               (cx33 + cx23, both ordered successfully in fsn1) as a result. Acting on the green
-#               result would have moved production to nbg1 to collect exactly the same refusal.
-#
-# So: **`--probe` is the mode that answers the question.** It places a real order per type — no
-# IPs, no network, `start_after_create: false` — and deletes anything that succeeds, verifying the
-# deletion rather than trusting the status code. A refusal costs nothing and returns in about a
-# tenth of a second; a success is billed by the hour and lives for seconds.
-#
-# **A green probe means orderable at that instant, and says nothing about the next one.** Learned
-# the same day it was written: `--probe production` returned ORDERABLE for cx33 and cx23 in fsn1 at
-# 00:0x on 2026-08-21, and the apply thirty minutes later got `error during placement
-# (resource_unavailable)` on the cx33 — after successfully creating the cx23. Re-probing confirmed
-# cx33 and cx43 had both gone in fsn1 while cx23 remained, so production took one of the last
-# 8 GB-class CX machines there and the shortage closed behind it.
-#
-# **Probe immediately before the apply, not the night before**, and expect to re-probe after a
-# failure rather than assuming the earlier answer still holds. This is a narrower claim than the
-# one this header made when `--probe` landed, and the narrower one is the true one.
-#
-# That is also the loop to wait on, and the reason this line changed: the advertisement-based one
-# that used to be here would not have gone green for cx33 on 2026-08-20, when cx33 was orderable.
+# **A green probe means orderable at that instant, and says nothing about the next one.** One that
+# returned ORDERABLE for cx33 and cx23 in fsn1 was followed thirty minutes later by an apply that
+# got `error during placement (resource_unavailable)` on the cx33, after creating the cx23:
+# production took one of the last 8 GB-class CX machines there and the shortage closed behind it.
+# **Probe immediately before the apply, not the night before**, and re-probe after a failure rather
+# than assuming the earlier answer still holds. That is also the loop to wait on:
 #
 #   until ./check-capacity.sh --probe production; do sleep 1800; done && say "production can go ARM"
 #
 # The two refusal codes do not mean the same thing. `resource_unavailable` means the type is sold
 # here and merely out of stock, so it can come back. `unsupported location` has not been seen to
-# resolve — but it is also the code ARM has been refused with everywhere for ten days, so read it as
-# "not yet seen to resolve" rather than as a promise that it never will.
+# resolve — but it is also the code ARM is refused with across eu-central, so read it as "not yet
+# seen to resolve" rather than a promise that it never will.
 #
-# For the shape of a shortage over time — flickering hourly, or gone for a week — Server Radar polls
-# every minute and keeps the history:
-#
-#   https://radar.iodev.org/cloud-status?arch=arm
-#
-# Community-run (github.com/elsbrock/hetzner-radar), not Hetzner. It is the trend; the default mode
-# here is the current advertisement; only `--probe` is the order path.
+# For the shape of a shortage over time, Server Radar polls every minute and keeps the history:
+# <https://radar.iodev.org/cloud-status?arch=arm>. Community-run, not Hetzner — it is the trend; the
+# default mode here is the current advertisement; only `--probe` is the order path.
 
 set -euo pipefail
 

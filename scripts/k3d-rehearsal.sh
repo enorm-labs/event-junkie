@@ -2,9 +2,8 @@
 #
 # k3d-rehearsal.sh — run the whole stack on a local Kubernetes and prove it works end to end.
 #
-# Deterministic mechanics behind the /k3d-rehearsal skill, in the same spirit as dev-env.sh: the
-# sequence is scripted so nobody re-derives k3d, helm and kubectl incantations, and so the teardown
-# is one command that always works rather than four that are easy to half-finish.
+# Deterministic mechanics behind the /k3d-rehearsal skill, in the spirit of dev-env.sh: nobody
+# re-derives the k3d, helm and kubectl incantations, and teardown is one command that always works.
 #
 # Per ADR-012 this is not an approximation of the production path — the chart and images that run
 # here are the ones that run on Hetzner k3s, which is what makes it worth doing at all.

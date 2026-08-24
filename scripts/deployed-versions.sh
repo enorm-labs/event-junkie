@@ -2,19 +2,18 @@
 #
 # deployed-versions.sh — which published chart version each cluster would resolve, right now.
 #
-# The question this answers is "what is running", and it is deliberately not "what does `main` build".
-# Those diverge the moment a base image is rebuilt, and the deployed one is the one with users in
-# front of it. Nothing here reaches a cluster: with pull-based delivery (ADR-016) a cluster holds no
-# inbound endpoint and CI holds no cluster credential, so the honest way to ask is to make the same
-# selection Flux makes, from the same inputs.
+# It answers "what is running", deliberately not "what does `main` build" — those diverge the moment a
+# base image is rebuilt. Nothing here reaches a cluster: under pull-based delivery (ADR-016) a cluster
+# holds no inbound endpoint and CI holds no cluster credential, so the honest way to ask is to make
+# the same selection Flux makes, from the same inputs.
 #
 # Usage:
 #   scripts/deployed-versions.sh            # every cluster under deploy/clusters/
 #   scripts/deployed-versions.sh staging    # just this one
 #
 # Output is one `cluster<TAB>version` line per cluster, in directory order. A cluster whose range
-# matches nothing published prints `(none)` and a line on stderr saying why — production does that
-# today, correctly, because it admits release versions only and there has never been a release:
+# matches nothing published prints `(none)` plus a line on stderr saying why — which production does,
+# correctly, admitting release versions only when there has never been a release:
 #
 #   k3d          0.1.1-snapshot.20260818153553.g05b17c0
 #   production   (none)
@@ -22,22 +21,19 @@
 #
 # Requires: curl, yq, helm. Reaches the registry, and writes only under a temp dir it removes.
 #
-# ## The three inputs, and why each comes from where it does
-#
 # **The range comes out of `deploy/clusters/*/oci-repository.yaml`**, not from a constant here. That
 # is the whole point: a scan that hardcoded ">=0.0.0-0" would keep passing while somebody narrowed
 # staging's range, and would silently be measuring a version nothing runs. Read the file the cluster
 # reads and the two cannot drift.
 #
 # **The tag list comes from the registry over the anonymous Docker v2 API.** The GHCR packages are
-# public — the same property `oci-repository.yaml` relies on for having no `secretRef` — so this needs
-# no credential at all, which is what lets it run from a laptop as well as from CI.
+# public — as `oci-repository.yaml` already relies on — so this needs no credential, on CI or a laptop.
 #
 # **The selection is made by Helm's own solver**, through a fabricated repository index, exactly as
 # `scripts/version-test.sh` does. Flux's source-controller and Helm share the Masterminds constraint
-# implementation, so this reproduces the selection rather than approximating it. Reimplementing
-# SemVer prerelease ordering in bash is precisely the mistake #455 was: `0.1.0-snapshot.g<sha>`
-# looked ordered and was not, and ten published charts resolved to the sixth-oldest.
+# implementation, so this reproduces the selection rather than approximating it. Reimplementing SemVer
+# prerelease ordering in bash is the mistake #455 was: `0.1.0-snapshot.g<sha>` looked ordered and was
+# not, and ten published charts resolved to the sixth-oldest.
 #
 # `semverFilter` is applied first, as a plain regex, because it is a Flux concept that Helm knows
 # nothing about — production uses it to state "release versions only" positively rather than relying
