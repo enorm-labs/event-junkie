@@ -13,17 +13,26 @@ it produces an alert that never fires rather than an error.
     database disk filling          -> ej-node-disk-filling
     certificate expiry             -> ej-certificate-expiry
     a source that never worked     -> ej-source-never-succeeded   (#618)
+    a source that emptied out      -> ej-source-emptied           (#700)
     metrics being dropped          -> ej-ingest-shedding          (#625)
 
-**The zero-events rule is the aggregate one, and that is a known gap rather than
-the finished article.** ADR-015's criterion 1 is per-source: a venue whose
-scraper still returns 200 while writing nothing. The only per-source write signal
-today is `importer_events_written_total`, a Micrometer counter — it lives in the
-process, resets on every deploy, and the import interval is 24h, so
-`increase(...[48h]) == 0` cannot tell "wrote nothing" from "restarted". Closing it
-needs a database-backed gauge, the way #618 did for `has_succeeded`. Until then
-`db_events{horizon="future"}` catches the same failure one level up: the
-catalogue emptying out.
+**The zero-events failure is two rules, not one, and they see different things.**
+ADR-015's criterion 1 is per-source: a venue whose scraper still returns 200 while
+writing nothing. `ej-source-emptied` is that rule, on the `importer_source_events_future`
+gauge #700 added — a database-backed number, the way #618 did it for `has_succeeded`,
+because the obvious signal (`importer_events_written_total`) is a Micrometer counter
+that lives in the process, resets on every deploy and is absent until it first
+increments, against a 24h interval. `ej-catalogue-emptying` stays as the aggregate:
+it sees what no per-source rule can — the importer down, the scheduler stopped, a
+database restored empty — because those empty every source at once rather than one.
+
+**Zero is not the same as broken, which is the whole difficulty of the per-source
+rule.** A venue with nothing on for three weeks — summer break, a refurbishment —
+sits at zero legitimately, and its scraper is fine. So `ej-source-emptied` asks for
+zero NOW against a non-zero recent history for the SAME series, not for a floor.
+Both halves come from one metric, so the vector match is one-to-one on `source` and
+a gap in some other metric cannot make it misfire — the failure `has_succeeded` was
+created to avoid.
 
 ## Four traps, all established by running queries rather than reading docs
 
@@ -222,14 +231,15 @@ rule(
     silence_minutes=24 * 60,
 )
 
-# The aggregate stand-in for ADR-015 criterion 1 — see the module docstring for
-# why the per-source version does not exist yet.
+# The aggregate half of ADR-015 criterion 1. Not a stand-in any more (#700), but
+# not redundant either — see the module docstring for what each of the two sees.
 rule(
     "ej-catalogue-emptying",
     "Future events have fallen below 500, from a normal ~3,000. This is the failure no "
     "HTTP check sees: scrapers return 200, runs report success, and the listings empty out "
-    "over a fortnight. The per-source version of this needs a database-backed events "
-    "counter and does not exist yet.",
+    "over a fortnight. The per-source version is `ej-source-emptied` (#700); this one stays "
+    "for what that cannot see — the importer down, the scheduler stopped, a database restored "
+    "empty — because those empty every source at once.",
     'sum(max(db_events{horizon="future"}) < bool 500)',
     ">",
     0,
@@ -237,6 +247,35 @@ rule(
     period_minutes=30,
     frequency_minutes=10,
     silence_minutes=12 * 60,
+)
+
+# ADR-015's criterion 1, per source at last (#700). The aggregate rule above cannot
+# see one venue of eighty-six go silent; this is the same failure with the source
+# named, which is also the difference between "something is wrong" and a fix.
+#
+# `> bool 20` rather than `> bool 0` for the history side: a venue that has only
+# ever listed one or two events is noise at this resolution, and the rule should
+# name a source whose listing visibly collapsed. Twenty is roughly a month of
+# programme for the smaller venues in the corpus.
+#
+# The 7d lookback FAILS CLOSED. An ingest gap shortens the history side, so the
+# rule goes quiet rather than crying wolf — which is the right direction, and worth
+# knowing given #625 dropped roughly half of all metric points for days.
+rule(
+    "ej-source-emptied",
+    "A source holds zero future events while it held more than twenty at some point in the "
+    "last week — its listing collapsed. This is ADR-015 criterion 1 per source: the scraper "
+    "still returns 200 and the run still reports success, so nothing else says a word. Zero "
+    "against its own history, not a floor, because a venue on summer break is legitimately "
+    "empty and is not broken.",
+    'sum((max by (source) (importer_source_events_future) == bool 0)'
+    ' * (max by (source) (max_over_time(importer_source_events_future[7d])) > bool 20))',
+    ">",
+    0,
+    stream_name="importer_source_events_future",
+    period_minutes=15,
+    frequency_minutes=30,
+    silence_minutes=24 * 60,
 )
 
 # --- The platform underneath --------------------------------------------------

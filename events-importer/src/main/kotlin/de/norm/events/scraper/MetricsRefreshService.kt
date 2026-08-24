@@ -106,8 +106,31 @@ class MetricsRefreshService(
      * **Every enabled row gets a `has_succeeded` series from the first tick after start-up**,
      * regardless of import history — which is exactly what a per-run counter cannot do, since it
      * lives in the process and vanishes on the deploy that restarts the pod.
+     *
+     * ## And `events_future`, which is the same argument one level down (#700)
+     *
+     * `db.events{horizon="future"}` is the whole catalogue, so a single venue going silent moves it
+     * by a rounding error — a scraper that still returns 200 while writing nothing is invisible
+     * there until eighty-five other sources have joined it. `importer.source.events_future` is that
+     * number per source.
+     *
+     * **The zero is the whole point, and it is why this loops over the sources rather than over the
+     * query result.** `countFuturePerSource` returns rows for sources that *have* future events;
+     * the source the alert exists for has none, so it has no row. Publishing only what the query
+     * returned would leave exactly the broken venues out of the exposition — the #618 failure, one
+     * metric later.
+     *
+     * One additional query per tick, grouped over `event` on `idx_event_event_source_id`. It runs
+     * inside the same `try` as everything else here, so a database that is unwell freezes the
+     * gauges rather than killing the scheduler that also runs the imports.
      */
     private suspend fun republishSourceState() {
+        val futureEventsBySourceId =
+            eventRepository
+                .countFuturePerSource(LocalDate.now(clock))
+                .toList()
+                .associate { it.eventSourceId to it.futureEvents }
+
         eventSourceRepository
             .findByEnabledTrue()
             .toList()
@@ -119,6 +142,9 @@ class MetricsRefreshService(
                 } else {
                     metrics.publishHasSucceeded(source.slug, succeeded = false)
                 }
+                // Iterating the sources rather than the query result is the point: a source with no
+                // future events has no row, and it is the one the alert exists for.
+                metrics.publishFutureEvents(source.slug, source.id?.let { futureEventsBySourceId[it] } ?: 0L)
             }
     }
 }

@@ -572,22 +572,22 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 
 **The ones that had to be written, because they are the ones that matter.** Infrastructure metrics tell you the pod is alive; these tell you it is _working_:
 
-| Metric                                         | Type                                  | Why                                                                                 |
-| ---------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------- |
-| `importer.run.duration`                        | Timer, tagged `source`                | Detects a venue that got slow before it gets fatal                                  |
-| `importer.run.outcome`                         | Counter, tagged `source`, `outcome`   | success / not_modified / failed / misconfigured / skipped                           |
-| `importer.events.written`                      | Counter, tagged `source`, `operation` | inserted / updated / skipped                                                        |
-| **`importer.events.written` = 0 for N runs**   | **Alert rule**                        | **The silently-broken-scraper alarm — the single most valuable rule in the system** |
-| `importer.scrape.failures`                     | Counter, tagged `source`, `reason`    | Distinguishes HTTP 403 from a parse failure                                         |
-| `importer.source.last_success`                 | Gauge, tagged `source`                | Age of the last good run; alert past ~3× its schedule                               |
-| `importer.source.has_succeeded`                | Gauge, tagged `source`                | 1/0 — **exists for a source that has never worked**, which the row above does not   |
-| `importer.source.running`                      | Gauge                                 | Catches the ADR-008 `RUNNING`-forever state a restart can strand                    |
-| `importer.source.field_coverage{source,field}` | Gauge                                 | The partial-failure alarm — alert on a **drop against history**, not a floor        |
-| `bff.events.served`                            | Counter, tagged endpoint              | Is anyone actually using it                                                         |
-| `db.events{horizon="all"\|"future"}`           | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end        |
-| `data_quality{source=…,metric=…}`              | Gauge                                 | Per-source quality, refreshed daily. Alert on a metric that starts rising           |
+| Metric                                         | Type                                  | Why                                                                               |
+| ---------------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------- |
+| `importer.run.duration`                        | Timer, tagged `source`                | Detects a venue that got slow before it gets fatal                                |
+| `importer.run.outcome`                         | Counter, tagged `source`, `outcome`   | success / not_modified / failed / misconfigured / skipped                         |
+| `importer.events.written`                      | Counter, tagged `source`, `operation` | inserted / updated / skipped                                                      |
+| `importer.scrape.failures`                     | Counter, tagged `source`, `reason`    | Distinguishes HTTP 403 from a parse failure                                       |
+| `importer.source.last_success`                 | Gauge, tagged `source`                | Age of the last good run; alert past ~3× its schedule                             |
+| `importer.source.has_succeeded`                | Gauge, tagged `source`                | 1/0 — **exists for a source that has never worked**, which the row above does not |
+| `importer.source.running`                      | Gauge                                 | Catches the ADR-008 `RUNNING`-forever state a restart can strand                  |
+| `importer.source.events_future{source}`        | Gauge                                 | Future events held per source — **the silently-broken-scraper alarm** (#700)      |
+| `importer.source.field_coverage{source,field}` | Gauge                                 | The partial-failure alarm — alert on a **drop against history**, not a floor      |
+| `bff.events.served`                            | Counter, tagged endpoint              | Is anyone actually using it                                                       |
+| `db.events{horizon="all"\|"future"}`           | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end      |
+| `data_quality{source=…,metric=…}`              | Gauge                                 | Per-source quality, refreshed daily. Alert on a metric that starts rising         |
 
-**Six things to know before writing a rule against these:**
+**Seven things to know before writing a rule against these:**
 
 - **`db.events.total` could not exist.** `_total` is Prometheus' reserved suffix for counters, so Micrometer strips it: the meter published as `db_events`,
   silently, while anything written against the documented name matched nothing. It is one gauge with a `horizon` label — `db_events{horizon="future"}`.
@@ -601,6 +601,13 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
   `event_source` for **every** enabled row, so it survives the restart that a per-run counter does not. **`never worked` and `worked and went stale` need
   different responses**, so keep them separate in rules: `importer_source_has_succeeded == 0` is a scraper that has never once worked; an old
   `importer_source_last_success` is one that has stopped.
+- **The silently-broken-scraper alarm is a gauge, not the counter this table used to name** (#700). `importer.events.written = 0 for N runs` was the obvious
+  form and cannot work: a Micrometer counter lives in the process, so it resets on every deploy and is absent from the exposition until it first increments —
+  against a 24h import interval, `increase(...[48h]) == 0` cannot tell _wrote nothing_ from _was restarted_. `importer.source.events_future` is the same
+  question asked of the database, refreshed for **every** enabled source including the ones holding nothing, because a source missing from the exposition reads
+  as healthy. **Zero is not broken, though**: a venue on summer break is legitimately empty, so the rule (`ej-source-emptied`) asks for zero _now_ against a
+  non-zero recent history for the same series rather than for a floor. `db.events{horizon="future"}` stays as the aggregate — it catches what no per-source rule
+  can, because the importer being down empties every source at once.
 - **A 304 counts as a success**, for both the column and the gauge. The request went out, the venue answered, and the conditional headers did their job.
   Treating it as "no success" would make a stable venue look broken after three quiet days.
 - **`field_coverage` must never be alerted on with a threshold.** A venue that has never published a price sits at `0` forever without anything being wrong. The

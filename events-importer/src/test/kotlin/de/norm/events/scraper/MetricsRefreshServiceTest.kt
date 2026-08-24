@@ -1,9 +1,11 @@
 package de.norm.events.scraper
 
 import de.norm.events.event.EventRepository
+import de.norm.events.event.SourceFutureEventsRow
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -37,6 +39,7 @@ class MetricsRefreshServiceTest {
 
         coEvery { eventRepository.count() } returns 0
         coEvery { eventRepository.countByEventDateGreaterThanEqual(any()) } returns 0
+        coEvery { eventRepository.countFuturePerSource(any()) } returns emptyFlow()
         coEvery { eventSourceRepository.countByStatus(any()) } returns 0
         coEvery { eventSourceRepository.findByEnabledTrue() } returns emptyFlow()
     }
@@ -45,9 +48,10 @@ class MetricsRefreshServiceTest {
         slug: String,
         status: ImportStatus,
         lastImportAt: Instant? = null,
-        lastSuccessAt: Instant? = null
+        lastSuccessAt: Instant? = null,
+        id: Long = 1L
     ) = EventSourceEntity(
-        id = 1L,
+        id = id,
         venueId = 1L,
         name = slug,
         slug = slug,
@@ -244,5 +248,89 @@ class MetricsRefreshServiceTest {
                 .tag("horizon", "all")
                 .gauge()!!
                 .value() shouldBe 100.0
+        }
+
+    /**
+     * #700: the per-source count, published from the database rather than accumulated in-process.
+     *
+     * `db.events{horizon="future"}` is the whole catalogue, so one venue of eighty-six going silent
+     * moves it by a rounding error. This is the number that sees it.
+     */
+    @Test
+    fun `every source publishes the future events it holds`() =
+        runTest {
+            coEvery { eventSourceRepository.findByEnabledTrue() } returns
+                listOf(
+                    source("busy", ImportStatus.SUCCESS, id = 7L),
+                    source("quiet", ImportStatus.SUCCESS, id = 8L)
+                ).asFlow()
+            coEvery { eventRepository.countFuturePerSource(today) } returns
+                listOf(
+                    SourceFutureEventsRow(eventSourceId = 7L, futureEvents = 41),
+                    SourceFutureEventsRow(eventSourceId = 8L, futureEvents = 3)
+                ).asFlow()
+
+            service.refreshGauges()
+
+            registry
+                .find("importer.source.events_future")
+                .tag("source", "busy")
+                .gauge()!!
+                .value() shouldBe 41.0
+            registry
+                .find("importer.source.events_future")
+                .tag("source", "quiet")
+                .gauge()!!
+                .value() shouldBe 3.0
+        }
+
+    /**
+     * **The case the metric exists for**, and the one #618 already paid for once on another gauge.
+     *
+     * A source holding no future events returns no row from the `GROUP BY`, so publishing what the
+     * query returned would leave exactly the broken venues out of the exposition — where they cannot
+     * be alerted on and read as healthy. Zero is a value here, not an absence.
+     */
+    @Test
+    fun `a source with no future events publishes zero rather than nothing`() =
+        runTest {
+            coEvery { eventSourceRepository.findByEnabledTrue() } returns
+                listOf(
+                    source("busy", ImportStatus.SUCCESS, id = 7L),
+                    source("emptied-out", ImportStatus.SUCCESS, id = 9L)
+                ).asFlow()
+            coEvery { eventRepository.countFuturePerSource(today) } returns
+                listOf(SourceFutureEventsRow(eventSourceId = 7L, futureEvents = 41)).asFlow()
+
+            service.refreshGauges()
+
+            registry
+                .find("importer.source.events_future")
+                .tag("source", "emptied-out")
+                .gauge()!!
+                .value() shouldBe 0.0
+        }
+
+    /**
+     * The horizon comes from the injected clock, like the aggregate gauge above — a per-source count
+     * taken against the wall clock would disagree with the catalogue count once a day, around
+     * midnight, and look like a bug in one of them.
+     */
+    @Test
+    fun `the per-source count is taken from the clock's today`() =
+        runTest {
+            coEvery { eventSourceRepository.findByEnabledTrue() } returns
+                listOf(source("busy", ImportStatus.SUCCESS, id = 7L)).asFlow()
+            coEvery { eventRepository.countFuturePerSource(today) } returns
+                listOf(SourceFutureEventsRow(eventSourceId = 7L, futureEvents = 12)).asFlow()
+
+            service.refreshGauges()
+
+            coVerify { eventRepository.countFuturePerSource(today) }
+            registry
+                .find("importer.source.events_future")
+                .tag("source", "busy")
+                .gauge()!!
+                .value() shouldBe 12.0
         }
 }

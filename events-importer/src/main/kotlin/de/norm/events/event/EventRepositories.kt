@@ -1,7 +1,9 @@
 package de.norm.events.event
 
+import de.norm.events.EVENTS_SCHEMA
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.domain.Pageable
+import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import java.time.LocalDate
 
@@ -24,6 +26,37 @@ interface EventRepository : CoroutineCrudRepository<EventEntity, Long> {
      * (ADR-002), so this needs no hand-written SQL and no schema prefix.
      */
     suspend fun countByEventDateGreaterThanEqual(date: LocalDate): Long
+
+    /**
+     * The same count as [countByEventDateGreaterThanEqual], **broken down by source** — the
+     * `importer.source.events_future` gauge (#700).
+     *
+     * The aggregate above is the catalogue seen from one level up, and one venue of eighty-six going
+     * silent moves it by a rounding error. The failure #415 was written about is a single scraper:
+     * the venue redesigns its site, the request still returns 200, the run still reports success,
+     * and that one source writes nothing for a fortnight.
+     *
+     * **A source holding nothing produces no row**, which is the trap #618 already paid for once —
+     * absence looks exactly like health. [de.norm.events.scraper.MetricsRefreshService] therefore
+     * publishes an explicit zero for every enabled source this query does not return.
+     *
+     * `event_source_id IS NOT NULL` drops events created by hand through the admin API: no source to
+     * tag them with, and no scraper the number could say anything about.
+     *
+     * `GROUP BY` has no derived form (ADR-002), so this is raw SQL, schema-prefixed with the
+     * interpolated constant rather than a literal (ADR-004, #540). **The column aliases are the
+     * contract** — R2DBC maps a projection by label, nothing checks it at compile time, and
+     * `PerSourceEventsGaugeIntegrationTest` is what runs this against a real database.
+     */
+    @Query(
+        """
+        SELECT e.event_source_id AS event_source_id, COUNT(*) AS future_events
+        FROM $EVENTS_SCHEMA.event e
+        WHERE e.event_date >= :date AND e.event_source_id IS NOT NULL
+        GROUP BY e.event_source_id
+        """
+    )
+    fun countFuturePerSource(date: LocalDate): Flow<SourceFutureEventsRow>
 
     /** Finds all events with pagination and sorting applied via [pageable]. */
     fun findAllBy(pageable: Pageable): Flow<EventEntity>
@@ -50,6 +83,18 @@ interface EventRepository : CoroutineCrudRepository<EventEntity, Long> {
      */
     suspend fun deleteByIdIn(ids: Collection<Long>)
 }
+
+/**
+ * One row of [EventRepository.countFuturePerSource]: a source and how many future events it holds.
+ *
+ * `eventSourceId` is non-null because the query excludes the manual bucket, and both properties are
+ * `Long` because Postgres' `COUNT` is `bigint` — mapping it to `Int` would work until the day it
+ * did not.
+ */
+data class SourceFutureEventsRow(
+    val eventSourceId: Long,
+    val futureEvents: Long
+)
 
 /**
  * Repository for the `event_artist` join table.
