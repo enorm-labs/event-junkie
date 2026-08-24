@@ -94,7 +94,8 @@ It is supposed to. #263 found two values bugs, a wrong prediction and a document
 
 ## Gotchas
 
-- **`k3d` missing** — `brew install k3d`. `kubectl`, `helm`, `docker` and `yq` are assumed.
+- **`k3d` missing** — `brew install k3d`. `kubectl`, `helm`, `docker` and `yq` are assumed. The opt-in airgap preload below also wants `jq`, and `crane`
+  (`brew install crane`) if it can have it.
 - **Every pod stuck in `ContainerCreating` forever** — the node cannot pull from Docker Hub, and the real cause is four `describe`s away. On a network that
   inspects TLS this is the shape it takes: the _host_ trusts the interception CA, so the three images build without complaint and `k3d cluster create` succeeds,
   while the _node's_ containerd does not and fails on `rancher/mirrored-pause:3.6` — the sandbox image, which nothing this project owns. Nothing starts: not
@@ -105,18 +106,25 @@ It is supposed to. #263 found two values bugs, a wrong prediction and a document
     K3D_PRELOAD_IMAGES=1 scripts/k3d-rehearsal.sh all
     ```
 
-    Pulls k3s's eight system images on the host and hands them to the node as an airgap tarball. Off by default, because it costs a pull-and-save and nobody
-    whose node can reach Docker Hub needs it. It installs no CA anywhere and must not grow into doing so — a shared script that injects a corporate trust root
-    is a worse problem than the one it solves.
+    Fetches k3s's eight system images on the host and hands them to the node as an airgap tarball. Off by default, because it costs a fetch-and-verify and
+    nobody whose node can reach Docker Hub needs it. It installs no CA anywhere and must not grow into doing so — a shared script that injects a corporate
+    trust root is a worse problem than the one it solves.
 
-    **It is not known to be sufficient, and the partial result is the useful part.** Measured on a TLS-inspecting network (#526): six of the eight images land
-    and the cluster gets much further — Traefik comes up with all 23 CRDs, which is what unblocks the chart — but `coredns` and `metrics-server` reach
-    containerd's content store (`ctr -n k8s.io images ls` lists them) without ever becoming visible to the CRI (`crictl images` does not). kubelet therefore
-    treats them as absent, keeps pulling despite `IfNotPresent`, and fails on the same certificate. CoreDNS is what resolves `host.k3d.internal`, so the run
-    still cannot finish. Re-importing with `k3d image import` and recreating the pods does not change it.
+    **The "six of eight images land" result this used to record was a bug in the preload, not a limit of it (#533).** The reading was that `coredns` and
+    `metrics-server` reached containerd's content store (`ctr -n k8s.io images ls` listed them) without becoming visible to the CRI (`crictl images` did not),
+    and that kubelet therefore kept pulling and failed on the same certificate. The observations were right and the conclusion was wrong: **the tarball never
+    contained those two images.** `docker save` had exited 0 having written their manifests and configs with no layer blobs at all — 12 KB each — so `ctr`
+    listed what it had been given and the CRI correctly refused to. Everything downstream followed from that, including the `k3d image import` retry, which
+    uses `docker save` too.
 
-    So on a network like that, the honest options are to run off it, or to accept that the k3d path is unavailable and verify against staging instead. Do not
-    reach for `insecure_skip_verify` in a committed file.
+    The preload now fetches with [`crane`](https://github.com/google/go-containerregistry) rather than `docker save`, and **reads the tarball back before
+    trusting it** — every layer blob its own manifest names has to be in it, or the run fails naming the images. Success ends with `8 images verified in …`;
+    that word is the one to look for. `brew install crane` if it is missing, and the run will tell you.
+
+    **What that leaves.** If the preload verifies and pods _still_ sit in `ContainerCreating` with an x509 error, that is a node which genuinely cannot pull —
+    the failure this escape hatch is actually for, tracked in #526 — and not a preload that quietly did nothing. The two were indistinguishable before #533,
+    which is what made the first diagnosis so convincing. On a network like that the honest options are still to run off it, or to accept that the k3d path is
+    unavailable and verify against staging instead. Do not reach for `insecure_skip_verify` in a committed file.
 
 - **CoreDNS needs a nudge, and the script now gives it one in the right order (#541).** k3d writes `host.k3d.internal` into the CoreDNS ConfigMap **after
   `k3d cluster create` returns** — measured at 7 to 11 seconds later. Until it lands, every pod resolving the database host gets
