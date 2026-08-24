@@ -358,7 +358,9 @@ application subprojects and one build-tooling subproject sharing a root `setting
     - Due sources are imported concurrently via `EventImportService.importConcurrently()`, bounded by the configured concurrency limit
       (`app.import.max-concurrency`, default: 4).
     - Each source has its own `import_interval_minutes` (default: 1440 = daily).
-    - Failed imports are retried with exponential backoff up to `max_retries` times.
+    - Failed imports are retried with exponential backoff up to `max_retries` times, **capped at six hours** — doubling a 1440-minute interval produced a
+      retry slower than the healthy cadence (#659). A source that spends its budget returns to its own interval; it is never dropped from the schedule, because
+      a source that stops being attempted is indistinguishable from one with nothing to import.
     - Sources stuck in RUNNING for >30 min are automatically reset to FAILED (staleness guard).
     - Scheduling is enabled by default but disabled in tests via `app.scheduling.enabled: false`.
     - `@EnableScheduling` is applied on `EventsImporterApplication`.

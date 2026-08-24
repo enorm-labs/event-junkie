@@ -20,8 +20,10 @@ import kotlin.math.pow
  * on top of the existing import infrastructure — it adds:
  *
  * - **Per-source scheduling**: each source has its own `importIntervalMinutes`.
- * - **Retry with exponential backoff**: failed sources are retried up to `maxRetries`
- *   times, with the interval doubling on each consecutive failure.
+ * - **Retry with capped exponential backoff**: failed sources are retried up to `maxRetries`
+ *   times, with the interval doubling on each consecutive failure but never exceeding six
+ *   hours. A source that spends its retry budget returns to its normal interval — it is never
+ *   dropped from the schedule.
  * - **Staleness detection**: sources stuck in RUNNING for >30 min are reset to FAILED.
  * - **Overlap prevention**: sources with status = RUNNING are skipped.
  * - **Misconfiguration detection**: sources with status = MISCONFIGURED are skipped entirely
@@ -91,8 +93,9 @@ class ScheduledImportService(
      * - It has never been imported, OR
      * - Enough time has passed since the last import to satisfy the interval.
      *
-     * For failed sources, the interval is multiplied by `2^retryCount` to provide
-     * exponential backoff (e.g. 1440min → 2880min → 5760min).
+     * A source that is retrying uses [retryInterval] instead of its own interval; one whose
+     * retry budget is spent falls back to the plain interval, which is what keeps it on the
+     * schedule rather than off it (#659).
      *
      * @param now the reference timestamp for the current tick (captured once per tick
      *   for consistency across all sources).
@@ -108,16 +111,37 @@ class ScheduledImportService(
         if (lastImport == null || source.status == ImportStatus.IDLE.name) return true
 
         val baseInterval = Duration.ofMinutes(source.importIntervalMinutes.toLong())
-        val effectiveInterval =
-            if (source.status == ImportStatus.FAILED.name && source.retryCount > 0) {
-                // Exponential backoff: double the interval for each retry (2^retryCount)
-                val backoffMultiplier = 2.0.pow(source.retryCount.coerceAtMost(MAX_BACKOFF_EXPONENT)).toLong()
-                baseInterval.multipliedBy(backoffMultiplier)
-            } else {
-                baseInterval
-            }
+        val isRetrying =
+            source.status == ImportStatus.FAILED.name &&
+                source.retryCount > 0 &&
+                source.retryCount < source.maxRetries
+        val effectiveInterval = if (isRetrying) retryInterval(baseInterval, source.retryCount) else baseInterval
 
         return now.isAfter(lastImport.plus(effectiveInterval))
+    }
+
+    /**
+     * How long to wait before the next attempt at a source that is retrying.
+     *
+     * The interval doubles per consecutive failure — and is then capped at [MAX_RETRY_INTERVAL],
+     * which is the part [#659](https://github.com/enorm-labs/event-junkie/issues/659) added.
+     *
+     * **Doubling alone assumes a base interval measured in minutes.** Applied to the daily
+     * default it produces a "retry" that waits *longer* than the healthy cadence — 1440 min
+     * doubles to 48 h, then 96 h, then 192 h — so a failed source is attempted less often than
+     * a working one, which inverts what a retry is for. `loge` failed on 2026-08-21 11:54 and
+     * was next attempted on 2026-08-23 11:55, and that is the whole of the 47-hour gap.
+     *
+     * The cap makes the guarantee interval-independent: whatever a source's own schedule, a
+     * failure is retried within [MAX_RETRY_INTERVAL]. Sub-cap intervals keep their backoff
+     * unchanged — an hourly source still waits 2 h, then 4 h.
+     */
+    private fun retryInterval(
+        baseInterval: Duration,
+        retryCount: Int
+    ): Duration {
+        val backoffMultiplier = 2.0.pow(retryCount.coerceAtMost(MAX_BACKOFF_EXPONENT)).toLong()
+        return minOf(baseInterval.multipliedBy(backoffMultiplier), MAX_RETRY_INTERVAL)
     }
 
     /**
@@ -152,8 +176,18 @@ class ScheduledImportService(
 
     companion object {
         /**
-         * Maximum exponent for backoff to prevent overflow.
-         * 2^6 = 64x multiplier → a daily job would max out at ~64 days between retries.
+         * Longest a retrying source may wait before its next attempt, whatever its own interval.
+         *
+         * Six hours fits all three of a daily source's retries inside the day it failed —
+         * +6 h, +12 h, +18 h — so recovery happens within the cycle rather than across the
+         * following week. See [retryInterval].
+         */
+        private val MAX_RETRY_INTERVAL: Duration = Duration.ofHours(6)
+
+        /**
+         * Maximum exponent for backoff, so `2^retryCount` cannot overflow a [Duration] before
+         * [MAX_RETRY_INTERVAL] gets to cap it. `maxRetries` is operator-configurable, so this
+         * is not bounded by the default of 3.
          */
         private const val MAX_BACKOFF_EXPONENT = 6
 

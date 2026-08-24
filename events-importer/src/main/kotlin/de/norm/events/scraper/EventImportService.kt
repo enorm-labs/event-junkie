@@ -201,7 +201,13 @@ class EventImportService(
             when (val result = importer.importEvents(runningSource.url, runningSource.etag, runningSource.lastModified)) {
                 is ImportResult.NotModified -> {
                     logger.info { "Source '${runningSource.slug}' not modified, skipping import" }
-                    markSuccess(runningSource, 0)
+                    // The count carries forward rather than resetting to 0 (#659). A 304 says the
+                    // listing has not changed, so the number of events it holds has not changed
+                    // either — the count from the run that last read it is still the true one.
+                    // Writing 0 here made an unchanged source indistinguishable from an emptied
+                    // one in the exact column an operator reaches for: `loge` reported
+                    // `lastEventCount = 0` on a run that succeeded, and it had six events all along.
+                    markSuccess(runningSource, runningSource.lastEventCount)
                     ImportResultResponse(sourceSlug = runningSource.slug, imported = false, eventCount = 0) to
                         ImporterMetrics.RunOutcome.NOT_MODIFIED
                 }
@@ -318,10 +324,15 @@ class EventImportService(
      * time; the pair is what lets `importer.source.last_success` stay correct across a failure
      * instead of disappearing (#415). Every caller of this method is a run that reached the source
      * and got an answer — including a 304, which is a working scraper and not a skipped one.
+     *
+     * @param eventCount how many events the run read, or `null` for a run that did not read the
+     *   listing at all (a 304), which carries the previous count forward rather than zeroing it.
+     *   `null` also survives to the column on the one run where it is the honest answer: a source
+     *   whose very first attempt is a 304, which cannot happen without an `etag` from an earlier one.
      */
     private suspend fun markSuccess(
         source: EventSourceEntity,
-        eventCount: Int,
+        eventCount: Int?,
         newEtag: String? = source.etag,
         newLastModified: String? = source.lastModified
     ): EventSourceEntity =

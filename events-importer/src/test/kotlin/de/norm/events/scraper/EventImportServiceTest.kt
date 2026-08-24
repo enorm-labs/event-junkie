@@ -108,6 +108,7 @@ class EventImportServiceTest {
         enabled: Boolean = true,
         etag: String? = null,
         lastModified: String? = null,
+        lastEventCount: Int? = null,
         // A persisted source always carries a version (the column is NOT NULL DEFAULT 0), and
         // the import claim is gated on it, so the default mirrors a freshly inserted row.
         version: Long? = 0L
@@ -121,6 +122,7 @@ class EventImportServiceTest {
         enabled = enabled,
         etag = etag,
         lastModified = lastModified,
+        lastEventCount = lastEventCount,
         version = version
     )
 
@@ -497,6 +499,22 @@ class EventImportServiceTest {
 
                 coVerify { eventSourceRepository.save(match { it.lastSuccessAt != null }) }
                 registry.find("importer.source.last_success").tag("source", "test-source").gauge() shouldNotBe null
+            }
+
+        /**
+         * The other half of the same argument (#659). A 304 is a working scraper, so it must not
+         * write the number an emptied one would write. `loge` reported `lastEventCount = 0` on a
+         * run that succeeded, and the listing had six events on it the whole time — the run simply
+         * never read it.
+         */
+        @Test
+        fun `a 304 carries the previous event count forward instead of zeroing it`() =
+            runTest {
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns ImportResult.NotModified
+
+                service.importFromSource(source(etag = "\"old-etag\"", lastEventCount = 6))
+
+                coVerify { eventSourceRepository.save(match { it.lastEventCount == 6 }) }
             }
 
         /**

@@ -18,7 +18,7 @@ import java.time.ZoneOffset
 /**
  * Unit tests for [ScheduledImportService].
  *
- * Covers the scheduling logic (due-date evaluation, exponential backoff,
+ * Covers the scheduling logic (due-date evaluation, capped exponential backoff,
  * staleness detection) in isolation with mocked dependencies.
  */
 class ScheduledImportServiceTest {
@@ -137,40 +137,98 @@ class ScheduledImportServiceTest {
         }
 
         @Test
-        fun `failed source with retryCount 3 uses 8x backoff`() {
-            // Base interval = 60min, backoff = 2^3 = 8x → effective = 480min
-            val fiveHoursAgo = now.minus(Duration.ofHours(5))
+        fun `failed source with retryCount 3 uses 8x backoff while it stays under the cap`() {
+            // Base interval = 30min, backoff = 2^3 = 8x → effective = 240min, still under 6h,
+            // so a short-interval source keeps the doubling schedule it always had.
+            // maxRetries = 5 so retryCount = 3 is still retrying rather than spent.
+            val threeHoursAgo = now.minus(Duration.ofHours(3))
             val result =
                 service.isDue(
                     source(
-                        importIntervalMinutes = 60,
-                        lastImportAt = fiveHoursAgo,
+                        importIntervalMinutes = 30,
+                        lastImportAt = threeHoursAgo,
                         status = ImportStatus.FAILED.name,
-                        retryCount = 3
+                        retryCount = 3,
+                        maxRetries = 5
                     ),
                     now
                 )
-            // 300min < 480min effective interval → not due yet
+            // 180min < 240min effective interval → not due yet
             result shouldBe false
         }
 
         @Test
-        fun `backoff exponent is capped at 6 to prevent overflow`() {
-            // retryCount = 10, but capped to 2^6 = 64x
-            // Base interval = 60min → effective = 3840min
-            val threeDaysAgo = now.minus(Duration.ofDays(3))
+        fun `retry interval never exceeds six hours, whatever the source interval`() {
+            // The #659 regression. Base interval = 1440min (the default), backoff = 2^1 = 2x.
+            // Uncapped that is 48h — which is exactly the gap loge sat in between its failure
+            // on 2026-08-21 11:54 and its next attempt on 2026-08-23 11:55.
+            val sevenHoursAgo = now.minus(Duration.ofHours(7))
+            val result =
+                service.isDue(
+                    source(
+                        importIntervalMinutes = EventSourceEntity.DEFAULT_IMPORT_INTERVAL_MINUTES,
+                        lastImportAt = sevenHoursAgo,
+                        status = ImportStatus.FAILED.name,
+                        retryCount = 1
+                    ),
+                    now
+                )
+            // 7h > the 6h cap → due, rather than waiting another 41h
+            result shouldBe true
+        }
+
+        @Test
+        fun `a daily source is not retried before the six-hour cap elapses`() {
+            val fiveHoursAgo = now.minus(Duration.ofHours(5))
+            val result =
+                service.isDue(
+                    source(
+                        importIntervalMinutes = EventSourceEntity.DEFAULT_IMPORT_INTERVAL_MINUTES,
+                        lastImportAt = fiveHoursAgo,
+                        status = ImportStatus.FAILED.name,
+                        retryCount = 1
+                    ),
+                    now
+                )
+            result shouldBe false
+        }
+
+        @Test
+        fun `a spent retry budget returns the source to its own interval rather than off the schedule`() {
+            // retryCount = maxRetries: the shortened retry cadence ends, the normal one resumes.
+            // Base interval = 60min and the last attempt was 2h ago → due.
+            val twoHoursAgo = now.minus(Duration.ofHours(2))
             val result =
                 service.isDue(
                     source(
                         importIntervalMinutes = 60,
-                        lastImportAt = threeDaysAgo,
+                        lastImportAt = twoHoursAgo,
                         status = ImportStatus.FAILED.name,
-                        retryCount = 10
+                        retryCount = 3,
+                        maxRetries = 3
                     ),
                     now
                 )
-            // 4320min > 3840min effective interval → due
             result shouldBe true
+        }
+
+        @Test
+        fun `a source past its retry budget still waits out its own interval`() {
+            // The fallback is the base interval, not "always due" — a permanently broken daily
+            // source is attempted once a day, not once a tick.
+            val twoHoursAgo = now.minus(Duration.ofHours(2))
+            val result =
+                service.isDue(
+                    source(
+                        importIntervalMinutes = EventSourceEntity.DEFAULT_IMPORT_INTERVAL_MINUTES,
+                        lastImportAt = twoHoursAgo,
+                        status = ImportStatus.FAILED.name,
+                        retryCount = 10,
+                        maxRetries = 3
+                    ),
+                    now
+                )
+            result shouldBe false
         }
 
         @Test
