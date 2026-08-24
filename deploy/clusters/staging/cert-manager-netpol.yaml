@@ -1,0 +1,242 @@
+# Default-deny for the `cert-manager` namespace, plus one named allowance per conversation (#662).
+#
+# Same shape as `observability-netpol.yaml` and the chart's own policy: one deny-all, then one
+# narrow allowance per real arrow, so that an arrow not written down does not happen.
+#
+#     controller       -> apiserver:443            watching Certificates, leader election
+#     controller       -> the internet:443         ACME — Let's Encrypt's directory and orders
+#     controller       -> the internet:53          the DNS-01 self-check, see below
+#     cainjector       -> apiserver:443            injecting CA bundles into webhook configs
+#     webhook          -> apiserver:443            SubjectAccessReview on every admission call
+#     hetzner webhook  -> apiserver:443            it is an extension API server
+#     hetzner webhook  -> the internet:443         the Hetzner DNS API, where the TXT record goes
+#     everything       -> CoreDNS:53
+#     gateway          -> all three cert-manager pods:9402   the metrics, and see the warning below
+#
+# ## The scrape is not optional, and losing it would be silent
+#
+# `cert-manager`, `cert-manager-cainjector` and `cert-manager-webhook` each carry
+# `prometheus.io/scrape: true` on port 9402, so the collector gateway's `prometheus-autodiscovery`
+# job scrapes them today. One of those series is
+# `certmanager_certificate_expiration_timestamp_seconds`, and **`ej-certificate-expiry` — one of
+# #271's five alert rules — is written against it** (`deploy/alerts/gen_alerts.py`).
+#
+# A default-deny here without the ingress allowance below therefore does not just lose a dashboard
+# panel. It disables the alert that exists because certificate expiry is the failure nobody notices
+# until the site is down, and it disables it in the way that alert was written to prevent: quietly,
+# with the rule still present and still evaluating, against a series that has stopped arriving.
+#
+# **This has a matching half in `observability-netpol.yaml`.** The gateway's egress policy must open
+# this namespace on 9402, and both halves are required — an ingress allowance whose counterpart is
+# missing is a target that is silently unreachable. Change them together.
+#
+# ## The DNS-01 self-check needs the public internet on port 53
+#
+# Before asking Let's Encrypt to validate a challenge, cert-manager verifies the TXT record itself,
+# and it does that by querying nameservers **directly** rather than through the cluster resolver.
+# No `--dns01-recursive-nameservers` flag is set on the controller, so it uses its built-in
+# defaults. Without egress on 53 to the internet, that self-check never passes: the challenge sits
+# `pending`, no order is finalised, and the certificate simply never issues. Nothing errors in a way
+# that reaches anyone — which, for a renewal, means finding out sixty days later.
+#
+# This is the rule most likely to be missed, because port 53 looks like it is already covered by
+# the CoreDNS allowance. It is not: that one names the CoreDNS pod, and this one is the open
+# internet.
+#
+# ## The selector hazard
+#
+# **The Hetzner webhook does not use `app.kubernetes.io/name`.** Its chart labels it `app` and
+# `release`, while the three upstream cert-manager pods use `app.kubernetes.io/name` with values
+# `cert-manager`, `cainjector` and `webhook` — three different values, not one. A policy written on
+# the assumption of a single consistent label scheme selects some of these pods and not others, and
+# a pod it fails to select keeps the deny-all with no allowances.
+#
+# Verified against the cluster rather than assumed: `kubectl -n cert-manager get pods --show-labels`.
+#
+# ## What is deliberately absent
+#
+# **No ingress rule for the API server reaching either webhook.** Both are called by the API server,
+# which runs on the node, and node-to-pod traffic is not subject to NetworkPolicy in k3s — the same
+# property the chart's policy relies on for kubelet probes. If it were wrong, every admission call
+# would fail and nothing involving a Certificate would reconcile, which is loud.
+#
+# **No allowance for HTTP-01 solver pods.** This cluster issues over DNS-01 through the Hetzner
+# webhook; the `--acme-http01-solver-image` flag is a default, not a configuration. If HTTP-01 is
+# ever used, its solver pods land under the deny-all with nothing, and the challenge hangs. Add the
+# allowance in the same change that adds the solver, not afterwards.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cert-manager-default-deny
+  namespace: cert-manager
+  annotations:
+    kubernetes.io/description: >-
+      Denies all ingress and egress in this namespace. Every allowance is a separate, named policy — so an arrow that is not written down does not exist.
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cert-manager-allow-dns
+  namespace: cert-manager
+  annotations:
+    kubernetes.io/description: Name resolution through the cluster resolver. Distinct from the controller's DNS-01 self-check, which does not use it.
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cert-manager-allow-apiserver
+  namespace: cert-manager
+  annotations:
+    kubernetes.io/description: >-
+      Every pod here talks to the API server — the controller watches Certificates and takes a lease, cainjector patches webhook configurations, and both
+      webhooks are admission or extension servers that must authorise their callers.
+spec:
+  # All four, deliberately: the alternative is four near-identical policies whose only difference is
+  # a selector, and a list of arrows is only reviewable while it is short.
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.1/32
+      ports:
+        - protocol: TCP
+          port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cert-manager-allow-controller-egress
+  namespace: cert-manager
+  annotations:
+    kubernetes.io/description: >-
+      ACME over 443, and the DNS-01 self-check over 53. Both are the public internet and neither may reach the cluster, the node or the private network.
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: cert-manager
+  policyTypes:
+    - Egress
+  egress:
+    # Let's Encrypt. By exclusion rather than by address, for the reason the object-storage rule in
+    # `observability-netpol.yaml` gives: the endpoint is a CDN name whose addresses change, and a
+    # policy pinned to today's would fail on the day they do. The excluded ranges cover the pod
+    # CIDR, the service CIDR, the private network carrying PostgreSQL, and link-local — where a
+    # cloud metadata service lives.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+
+    # The DNS-01 self-check, which queries authoritative nameservers directly rather than through
+    # CoreDNS. Without this a challenge stays pending and the certificate never issues — see the
+    # header. UDP first, TCP for truncated answers.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cert-manager-allow-hetzner-webhook-egress
+  namespace: cert-manager
+  annotations:
+    kubernetes.io/description: >-
+      The DNS-01 solver reaching the Hetzner DNS API to write and remove the challenge TXT record. The zone credentials live in this pod, so its egress is the
+      one worth keeping narrow.
+spec:
+  podSelector:
+    matchLabels:
+      # Not `app.kubernetes.io/name` — this chart labels differently from cert-manager's own. See
+      # the header; verified against the running pods.
+      app: cert-manager-webhook-hetzner
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cert-manager-allow-metrics-scrape
+  namespace: cert-manager
+  annotations:
+    kubernetes.io/description: >-
+      Lets the collector gateway reach the three annotated pods on 9402. This is what keeps ej-certificate-expiry fed; without it the rule keeps evaluating
+      against a series that has stopped arriving.
+spec:
+  # The three upstream pods carry `prometheus.io/scrape: true`; the Hetzner webhook does not, so it
+  # is not named here. Three values rather than one, because cert-manager labels each component with
+  # its own name.
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          - cert-manager
+          - cainjector
+          - webhook
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: observability.o2c-openobserve-collector-gateway
+      ports:
+        - protocol: TCP
+          port: 9402
