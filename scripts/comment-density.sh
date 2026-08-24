@@ -18,9 +18,26 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BASELINE="$REPO_ROOT/scripts/comment-baseline.txt"
 
 EXCLUDE='node_modules/|/build/|/dist/|/coverage/|events-frontend/src/api/schema\.d\.ts|package-lock\.json'
+SOURCE_GLOBS=(*.kt *.kts *.ts *.tsx *.js *.mjs *.vue *.tf *.tfvars *.sh *.py *.yaml *.yml)
 
 usage() {
     sed -n '3,12p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+}
+
+# A baseline built from a half-tracked tree is worse than none: `git ls-files` cannot see a new
+# file, so its comments are missing from the number and CI fails on the commit that adds them.
+refuse_if_untracked() {
+    cd "$REPO_ROOT"
+    local pending
+    pending="$(git ls-files --others --exclude-standard -- "${SOURCE_GLOBS[@]}" | grep -vE "$EXCLUDE" || true)"
+    [ -z "$pending" ] && return 0
+    echo "Refusing to write a baseline while these files are untracked:" >&2
+    # shellcheck disable=SC2086  # One path per line is the intent.
+    printf "  %s\n" $pending >&2
+    echo >&2
+    echo "git ls-files cannot see them, so their comments would be missing from the baseline and CI" >&2
+    echo "would fail on the commit that adds them. Stage them first: git add -N <file>" >&2
+    exit 2
 }
 
 # One line per file: "<area>\t<comment>\t<code>".
@@ -138,6 +155,7 @@ areas() {
 }
 
 update_baseline() {
+    refuse_if_untracked
     {
         echo "# Comment lines per area — a ceiling, not a target. See #713."
         echo "# comment-density.sh check fails when any area rises above its number here."
