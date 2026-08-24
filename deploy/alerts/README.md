@@ -70,6 +70,12 @@ Both halves come from one metric, so the vector match is one-to-one on `source` 
 `has_succeeded` exists to avoid. **The 7-day lookback fails closed**: an ingest gap shortens the history side and the rule goes quiet rather than crying wolf,
 which is the right direction given #625 dropped roughly half of all metric points for days.
 
+**The same lookback makes the rule blind for its first week, and that is worth knowing before trusting it.** The history side has nothing to read until
+`importer_source_events_future` has been ingested for a while, so a source already sitting at zero when the metric ships has no `> 20` past to be contrasted
+against and will not be named. Only a source that collapses _after_ the deploy fires it. That is inherent to telling _broken_ from _legitimately empty_ — the
+distinction is entirely historical, so a rule with no history cannot make it — and it is a reason to check the per-source numbers by hand once, rather than a
+reason to widen the rule. `ej-source-never-succeeded` covers the other end: a source that has never worked at all needs no history.
+
 **36h, not 24h**, for the reason [#617](https://github.com/enorm-labs/event-junkie/issues/617) gives about the dashboard panel: the interval _is_ 24h, so a 24h
 threshold flags the whole catalogue every day as a matter of routine, and a rule that fires every day is a rule that gets muted.
 
