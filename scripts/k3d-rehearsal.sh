@@ -38,6 +38,8 @@
 # kubeconfig. This script never relies on whatever happens to be current, and `down` puts it back.
 #
 # Requires: k3d, kubectl, helm, docker, yq, and a JDK + Node for the image builds.
+# The opt-in airgap preload (K3D_PRELOAD_IMAGES=1) additionally wants jq, and `crane` if it can
+# have it — see preload_images for why `docker save` is no longer trusted to build that tarball.
 
 set -euo pipefail
 
@@ -89,16 +91,75 @@ h()  { helm --kube-context "$CONTEXT" "$@"; }
 f()  { flux --context "$CONTEXT" "$@"; }
 psql_() { docker exec "$PG_CONTAINER" psql -U admin "$@"; }
 
-# Shared by `up` and `flux-up`, which need the same cluster and the same database but install the
-# chart in completely different ways — one from the working tree with locally built images, the other
-# from GHCR through Flux.
+# Assert that an image tarball actually carries the images it claims to, and that any images named
+# as extra arguments are among them.
+#
+# `docker save` can exit 0 having written a manifest and a config with no layer blobs at all.
+# Measured here on Docker 29.7.2 with the containerd image store (#533): two of k3s's eight images
+# came out as 12 KB of metadata each, `docker save` reported success, k3s's import reported success
+# ("Imported images ... in 879ms"), and only `ctr -n k8s.io images check` on the node disagreed.
+# The pods that could not start then failed with the same x509 error a node that cannot pull
+# produces — which is the failure this whole escape hatch exists for — so the evidence pointed
+# squarely at the network and the real cause stayed invisible. Three full runs went into that.
+#
+# The check is format-agnostic on purpose. Both writers put a `manifest.json` at the archive root
+# whose `Config` and `Layers` entries are member paths — `blobs/sha256/...` from `docker save`,
+# `<digest>.tar.gz` from `crane pull` — so "every path it names is in the archive" verifies either
+# one. It proves presence, not integrity: a truncated blob would still pass. Absence is the failure
+# that actually happens.
+#
+# Returns rather than dying, because the two callers want different things from a failure: a cached
+# tarball gets rebuilt, a freshly fetched one is a hard stop.
+verify_airgap_tar() {
+  local tar="$1"
+  shift
+  local manifest members refs missing tags want incomplete=0
+
+  manifest="$(tar -xOf "$tar" manifest.json 2>/dev/null)" || manifest=""
+  [ -n "$manifest" ] || { info "$tar has no manifest.json — it is not an image archive"; return 1; }
+  members="$(tar -tf "$tar" 2>/dev/null)" || { info "could not read $tar"; return 1; }
+
+  # One `image<TAB>member` line per blob the manifest references, its config included.
+  refs="$(printf '%s\n' "$manifest" \
+    | jq -r '.[] | (.RepoTags[0] // .Config) as $i | ([.Config] + (.Layers // []))[] | "\($i)\t\(.)"')" \
+    || { info "could not read the manifest.json in $tar"; return 1; }
+
+  missing="$(
+    while IFS=$'\t' read -r image member; do
+      [ -n "$member" ] || continue
+      printf '%s\n' "$members" | grep -qxF "$member" || printf '%s\n' "$image"
+    done <<EOF
+$refs
+EOF
+  )"
+
+  if [ -n "$missing" ]; then
+    printf '%s\n' "$missing" | sort | uniq -c | while read -r n image; do
+      info "$image is missing $n of its blobs"
+    done
+    incomplete=1
+  fi
+
+  # Every blob being present says nothing about coverage: a tarball of seven complete images passes
+  # the check above and still leaves the eighth for the node to pull. The two writers disagree about
+  # the registry prefix — `docker save` strips `docker.io/` from RepoTags and `crane pull` keeps it —
+  # so both sides are normalised before they are compared.
+  tags="$(printf '%s\n' "$manifest" | jq -r '.[].RepoTags[]? | sub("^(index\\.)?docker\\.io/"; "")')"
+  for want in "$@"; do
+    printf '%s\n' "$tags" | grep -qxF "$(printf '%s' "$want" | sed -E 's#^(index\.)?docker\.io/##')" \
+      || { info "$want is not in the tarball at all"; incomplete=1; }
+  done
+
+  [ "$incomplete" = 0 ]
+}
+
 # Pull k3s's own system images on the HOST and hand them to the node as an airgap tarball, which
 # k3s imports at startup from /var/lib/rancher/k3s/agent/images.
 #
-# Off by default and deliberately opt-in: it costs a pull-and-save on a cold cache and nobody whose
-# node can reach docker.io needs it. What it is for is a node that cannot, while the host can — the
-# shape a TLS-inspecting network produces, because the host trusts the interception CA and the k3d
-# node's containerd does not. That failure is genuinely hard to read from the inside: the images
+# Off by default and deliberately opt-in: it costs a fetch-and-verify on a cold cache and nobody
+# whose node can reach docker.io needs it. What it is for is a node that cannot, while the host can
+# — the shape a TLS-inspecting network produces, because the host trusts the interception CA and the
+# k3d node's containerd does not. That failure is genuinely hard to read from the inside: the images
 # build fine, `k3d cluster create` succeeds, and every pod then sits in ContainerCreating forever
 # with an x509 error four `describe`s down, on the *pause sandbox* image rather than on anything
 # this project owns.
@@ -107,8 +168,23 @@ psql_() { docker exec "$PG_CONTAINER" psql -U admin "$@"; }
 # cannot pull, including a genuinely offline laptop. It does NOT install anyone's CA anywhere, and
 # it must not grow into doing so — a shared script that injects a corporate trust root is a worse
 # problem than the one it solves.
+#
+# WHAT A CORRECT PRELOAD LOOKS LIKE, because there are two failure modes here and before #533 they
+# were indistinguishable. On success this ends with
+#
+#     8 images verified in build/k3d-rehearsal/airgap/k3s-airgap.tar
+#
+# and the word to look for is *verified*: the tarball has been read back and every layer blob its
+# own manifest names is in it. Anything less fails here, loudly, naming the images. So if the
+# cluster then comes up and pods still sit in ContainerCreating with an x509 error, the tarball was
+# sound and the node genuinely cannot pull — that is the failure this function is for, tracked in
+# #526, and not a preload that quietly did nothing.
 preload_images() {
   [ "${K3D_PRELOAD_IMAGES:-0}" = "1" ] || return 0
+  # Scoped to the opt-in path rather than added to `require` at the top: the preload is the only
+  # thing here that needs jq, and hard-requiring a tool for everyone to serve an escape hatch most
+  # runs never touch is a poor trade.
+  require jq
 
   local dir="$STATE_DIR/airgap" ver url tar
   tar="$dir/k3s-airgap.tar"
@@ -120,8 +196,17 @@ preload_images() {
   [ -n "$ver" ] && [ "$ver" != "null" ] || die "could not determine the k3s version k3d will use"
 
   if [ -f "$tar" ] && [ "$(cat "$dir/version" 2>/dev/null)" = "$ver" ]; then
-    info "airgap images already prepared for $ver"
-    return 0
+    # Verified again rather than trusted. The marker is only written after a successful check, so a
+    # matching marker does mean this tarball verified once — but tarballs written before #533 have a
+    # marker with no check behind them, and re-reading the archive costs about a second. Failure
+    # rebuilds rather than dies: the cache is keyed on the k3s version alone, which before #533 made
+    # a bad tarball permanent, with `rm -rf` the only way out and nothing anywhere saying so.
+    if verify_airgap_tar "$tar"; then
+      info "airgap images already prepared for $ver"
+      return 0
+    fi
+    info "the cached airgap tarball for $ver is incomplete — discarding it and fetching again"
+    rm -f "$tar" "$dir/version"
   fi
 
   # The release publishes the canonical list; deriving it by guessing image names is how one gets
@@ -132,15 +217,52 @@ preload_images() {
   while IFS= read -r image; do
     [ -n "$image" ] || continue
     images+=("$image")
-    docker pull -q "$image" >/dev/null || die "could not pull $image on the host either — this is not the node's trust store, it is the network"
   done < <(curl -sSL --fail "$url" || die "could not fetch the k3s image list from $url")
 
   [ "${#images[@]}" -gt 0 ] || die "the k3s image list was empty"
-  docker save "${images[@]}" -o "$tar" || die "could not save the airgap tarball"
+
+  # The node runs on this host's Docker, so the daemon's platform is the node's platform. `docker
+  # save` picked it implicitly; `crane` has to be told.
+  local plat
+  plat="$(docker version --format '{{.Server.Os}}/{{.Server.Arch}}')" || plat=""
+  [ -n "$plat" ] || die "could not determine the platform the k3d node will run on"
+
+  # `crane` is preferred and `docker save` is only the fallback, which is the opposite of how this
+  # started. `docker save` is the component that was writing empty images (#533) and it fetches
+  # nothing anyway — it re-exports the daemon's own store, which is what was behaving unexpectedly.
+  # `crane` reads the registry directly and never goes near that store. Being a static Go binary it
+  # resolves TLS through the system trust store exactly as `docker pull` does, so it keeps working
+  # on the interception-CA network this escape hatch exists for — which a containerised crane, with
+  # its own CA bundle, would not. The fallback stays because the preload is opt-in and `docker save`
+  # is fine on plenty of daemons; it is now verified either way rather than believed.
+  if command -v crane >/dev/null; then
+    info "fetching ${#images[@]} images with crane ($plat)"
+    crane pull --platform "$plat" "${images[@]}" "$tar" \
+      || die "crane could not fetch the airgap images — if the host cannot reach docker.io either, this is the network, not the node's trust store"
+  else
+    info "crane not found, falling back to docker save — 'brew install crane' if the check below fails"
+    local image
+    for image in "${images[@]}"; do
+      docker pull -q "$image" >/dev/null \
+        || die "could not pull $image on the host either — this is not the node's trust store, it is the network"
+    done
+    docker save "${images[@]}" -o "$tar" || die "could not save the airgap tarball"
+  fi
+
+  # Discarded on failure so the next run refetches instead of finding a plausible-looking file, and
+  # the version marker is written only past this point so a bad tarball can never become a cached one.
+  verify_airgap_tar "$tar" "${images[@]}" || {
+    rm -f "$tar"
+    die "the airgap tarball is incomplete — the images named above are missing content, and it has been discarded. If docker save wrote it, 'brew install crane' and run again."
+  }
+
   printf '%s' "$ver" > "$dir/version"
-  info "${#images[@]} images saved to $tar"
+  info "${#images[@]} images verified in $tar"
 }
 
+# Shared by `up` and `flux-up`, which need the same cluster and the same database but install the
+# chart in completely different ways — one from the working tree with locally built images, the other
+# from GHCR through Flux.
 create_cluster() {
   mkdir -p "$STATE_DIR"
   # Saved before k3d switches it, so `down` can put it back exactly.
