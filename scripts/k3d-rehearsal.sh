@@ -65,6 +65,11 @@ log()  { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 info() { printf '   %s\n' "$*"; }
 ok()   { printf '   \033[32mok\033[0m   %s\n' "$*"; }
 bad()  { printf '   \033[31mFAIL\033[0m %s\n' "$*" >&2; FAILURES=$((FAILURES + 1)); }
+# A third outcome, for an assertion that could not be made rather than one that failed. The script
+# had only pass and fail, which is why `cmd_chain` had nowhere to put "the importer persisted
+# nothing, so there is nothing to measure" and called it a failure of the stack (#693). Deliberately
+# not counted into FAILURES: it is not a defect, and `all` must be able to exit 0 through it.
+skip() { printf '   \033[33mSKIP\033[0m %s\n' "$*"; }
 die()  { printf '\033[31m%s\033[0m\n' "$*" >&2; exit 1; }
 
 FAILURES=0
@@ -656,13 +661,39 @@ cmd_import() {
 cmd_chain() {
   guard_context
   log "The chain: a scraped event coming back out through the ingress"
-  local rows titles
+  local sources rows reported titles
+  # Read from the database rather than the admin API: `chain` owns no port-forward, and going
+  # through psql keeps it working standalone as well as inside `all`. Summed rather than looked up by
+  # slug so it does not need `cmd_import`'s venue argument threaded through.
+  sources="$(psql_ -d "$DB" -tAc 'select count(*) from events.event_source' | tr -d ' ')"
   rows="$(psql_ -d "$DB" -tAc 'select count(*) from events.event' | tr -d ' ')"
-  if [ "${rows:-0}" -gt 0 ]; then
-    ok "$rows event rows written by the in-cluster importer"
-  else
-    bad "no rows in $DB — run '$0 import' first"
+  reported="$(psql_ -d "$DB" -tAc 'select coalesce(sum(last_event_count), 0) from events.event_source' | tr -d ' ')"
+
+  # Three outcomes, and only one of them is a defect in the stack. Before #693 all three printed
+  # "no rows … run 'import' first", which was wrong in two of them: inside `all` the import had run
+  # seconds earlier and returned SUCCESS, so the remedy named a step that had already succeeded.
+  if [ "${sources:-0}" -eq 0 ]; then
+    # The one case where the old message was right: nothing has been seeded in this database.
+    bad "no event sources in $DB — run '$0 import' first"
     return 1
+  elif [ "${rows:-0}" -gt 0 ]; then
+    ok "$rows event rows written by the in-cluster importer"
+  elif [ "${reported:-0}" -gt 0 ]; then
+    # The importer says it persisted events and the database has none. This is the chain breaking
+    # between the importer and PostgreSQL, and it is the failure this assertion exists to catch.
+    bad "the importer reported $reported event(s) persisted and $DB has none — the chain is broken between the importer and PostgreSQL"
+    return 1
+  else
+    # Nothing was persisted, so there is nothing downstream to measure. `EventUpsertService`
+    # partitions on `!eventDate.isBefore(today)` and drops the past side, so a venue whose next month
+    # is unpublished produces exactly this: a SUCCESS that writes nothing. Not a failure of the
+    # stack — and deliberately not an `ok` either, because a scraper that has genuinely stopped
+    # finding anything lands here too and this script cannot tell the two apart. `last_event_count`
+    # counts what survived the drop; the number dropped exists only in the importer's log.
+    skip "the importer persisted no events, so the chain was not exercised"
+    info "expected when the seeded venue has nothing upcoming — that is what a SUCCESS writing nothing means (#693)"
+    info "a scraper that has stopped finding anything looks identical here; 'Dropped N past event(s)' in the importer's log is what tells them apart"
+    return 0
   fi
 
   titles="$(curl -s -H "$HOST_HEADER" "$BASE/api/events?size=3" | yq -p json '.content | length')"
