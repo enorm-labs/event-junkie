@@ -81,10 +81,9 @@ ej-api() {
 
 # --- one venue, end to end ---------------------------------------------------------------------
 #
-# "Is this venue importing?" used to mean scp-ing a SQL file to the node and running psql as
-# postgres. It does not have to: the importer's admin API has the source row, and the public API
-# says whether those events reached what a visitor sees — which is the better question and the one
-# psql cannot answer.
+# "Is this venue importing?" is answered from the APIs rather than from psql on the node: the
+# importer's admin API has the source row, and the public API says whether those events reached what
+# a visitor sees — the better question, and the one psql cannot answer.
 #
 # The importer is deliberately unroutable (#416 — no Ingress path names it, and nothing in its
 # namespace may reach it), so its half needs a port-forward. Node-originated traffic is not subject

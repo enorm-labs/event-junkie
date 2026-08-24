@@ -7,34 +7,21 @@
 #
 # Requires: yq. Reaches no network, writes nothing, and needs no cluster.
 #
-# ## Why this exists
+# The UID is set in four places that must agree: the `USER` line of each of the three Dockerfiles,
+# and `security.runAsUser` / `runAsGroup` in values.yaml plus any per-component override.
 #
-# The UID is set in three files that must agree, and until #448 nothing checked that they did:
+# **A mismatch does not look like a values problem.** The pod starts and the kubelet is satisfied —
+# the UID is non-root either way — and then the JVM cannot read `/application/application.jar`, or
+# nginx cannot read its bundle. The symptom is a crash-looping container reporting a permissions
+# error from a process that never mentions the chart. `helm unittest` cannot catch it either: it
+# asserts the chart renders a specific number, so it sees the chart drifting from itself and not an
+# image moving out from under it (#448).
 #
-#   events-bff/Dockerfile        USER <uid>:<gid>
-#   events-importer/Dockerfile   USER <uid>:<gid>
-#   events-frontend/Dockerfile   USER <uid>:<gid>
-#   values.yaml                  security.runAsUser / runAsGroup, and any per-component override
-#
-# **A mismatch does not look like a values problem.** The pod starts, the kubelet is satisfied — the
-# UID is non-root either way — and then the JVM cannot read `/application/application.jar`, or nginx
-# cannot read its bundle. What you get is a crash-looping container with a permissions error from a
-# process that never mentions the chart. The chart's own `values.yaml` has always carried the comment
-# "must match the UID the images actually run as"; a comment is not a gate.
-#
-# The `helm unittest` suite asserts the chart renders a specific number. That catches the chart
-# drifting from *itself*, which is the easier half. It cannot see a Dockerfile, so it would happily
-# keep passing while an image moved out from under it — which is exactly the direction #448 moves
-# things, and exactly the direction a future change is most likely to move only one side of.
-#
-# ## The floor is part of the check, not decoration
-#
-# Every UID and GID must be **above 10000** (Trivy's KSV-0020 and KSV-0021). Low UIDs collide with
-# accounts that already exist on the host: a container that escapes its namespace as UID 1000 lands
-# as whatever 1000 is on the node, which on a Debian-family host is the first human user. Nothing
-# maps to 10001. Asserting the floor here means a well-meaning revert to a "normal" UID fails a
-# check with an explanation attached, rather than passing everything and quietly costing the property
-# #448 was filed to buy.
+# **Every UID and GID must be above 10000** (Trivy KSV-0020 and KSV-0021). Low UIDs collide with
+# accounts that already exist on the host: a container escaping its namespace as UID 1000 lands as
+# whatever 1000 is on the node, which on a Debian-family host is the first human user. Nothing maps
+# to 10001. Asserting the floor here means a well-meaning revert to a "normal" UID fails with an
+# explanation attached.
 
 set -euo pipefail
 
