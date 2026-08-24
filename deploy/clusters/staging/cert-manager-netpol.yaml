@@ -1,8 +1,7 @@
 # Default-deny for the `cert-manager` namespace, plus one named allowance per conversation (#662).
 #
-# Same shape as `observability-netpol.yaml` and the chart's own policy: one deny-all, then one
-# narrow allowance per real arrow, so that an arrow not written down does not happen.
-#
+# Same shape as `observability-netpol.yaml` and the chart's own policy: one deny-all, then one narrow
+# allowance per real arrow, so an arrow not written down does not happen.
 #     controller       -> apiserver:443            watching Certificates, leader election
 #     controller       -> the internet:443         ACME — Let's Encrypt's directory and orders
 #     controller       -> the internet:53          the DNS-01 self-check, see below
@@ -11,59 +10,34 @@
 #     hetzner webhook  -> apiserver:443            it is an extension API server
 #     hetzner webhook  -> the internet:443         the Hetzner DNS API, where the TXT record goes
 #     everything       -> CoreDNS:53
-#     gateway          -> all three cert-manager pods:9402   the metrics, and see the warning below
+#     gateway          -> all three cert-manager pods:9402   the metrics, and see below
+# **The scrape is not optional, and losing it would be silent.** All three cert-manager pods carry
+# `prometheus.io/scrape: true` on 9402, and `ej-certificate-expiry` — one of #271's five alert rules
+# — reads `certmanager_certificate_expiration_timestamp_seconds` from it. A default-deny without the
+# ingress allowance below does not lose a dashboard panel; it disables the alert that exists because
+# certificate expiry is the failure nobody notices until the site is down, and disables it exactly as
+# that alert was written to prevent: quietly, the rule still evaluating against a series that has
+# stopped arriving. **Its matching half is the gateway's egress policy in `observability-netpol.yaml`**
+# — change them together; an ingress allowance whose counterpart is missing is an unreachable target.
 #
-# ## The scrape is not optional, and losing it would be silent
-#
-# `cert-manager`, `cert-manager-cainjector` and `cert-manager-webhook` each carry
-# `prometheus.io/scrape: true` on port 9402, so the collector gateway's `prometheus-autodiscovery`
-# job scrapes them today. One of those series is
-# `certmanager_certificate_expiration_timestamp_seconds`, and **`ej-certificate-expiry` — one of
-# #271's five alert rules — is written against it** (`deploy/alerts/gen_alerts.py`).
-#
-# A default-deny here without the ingress allowance below therefore does not just lose a dashboard
-# panel. It disables the alert that exists because certificate expiry is the failure nobody notices
-# until the site is down, and it disables it in the way that alert was written to prevent: quietly,
-# with the rule still present and still evaluating, against a series that has stopped arriving.
-#
-# **This has a matching half in `observability-netpol.yaml`.** The gateway's egress policy must open
-# this namespace on 9402, and both halves are required — an ingress allowance whose counterpart is
-# missing is a target that is silently unreachable. Change them together.
-#
-# ## The DNS-01 self-check needs the public internet on port 53
-#
-# Before asking Let's Encrypt to validate a challenge, cert-manager verifies the TXT record itself,
-# and it does that by querying nameservers **directly** rather than through the cluster resolver.
-# No `--dns01-recursive-nameservers` flag is set on the controller, so it uses its built-in
-# defaults. Without egress on 53 to the internet, that self-check never passes: the challenge sits
-# `pending`, no order is finalised, and the certificate simply never issues. Nothing errors in a way
-# that reaches anyone — which, for a renewal, means finding out sixty days later.
-#
-# This is the rule most likely to be missed, because port 53 looks like it is already covered by
-# the CoreDNS allowance. It is not: that one names the CoreDNS pod, and this one is the open
-# internet.
-#
-# ## The selector hazard
+# **The DNS-01 self-check needs the public internet on port 53.** Before asking Let's Encrypt to
+# validate, cert-manager verifies the TXT record by querying nameservers **directly**, not through
+# the cluster resolver, using its built-in defaults (no `--dns01-recursive-nameservers`).
+# Without that egress the challenge sits `pending`, no order is finalised, and the certificate never
+# issues — silently, which for a renewal means finding out sixty days later. It is the rule most
+# likely to be missed: 53 looks covered by the CoreDNS allowance, but that one names the CoreDNS pod
+# and this one is the open internet.
 #
 # **The Hetzner webhook does not use `app.kubernetes.io/name`.** Its chart labels it `app` and
-# `release`, while the three upstream cert-manager pods use `app.kubernetes.io/name` with values
-# `cert-manager`, `cainjector` and `webhook` — three different values, not one. A policy written on
-# the assumption of a single consistent label scheme selects some of these pods and not others, and
-# a pod it fails to select keeps the deny-all with no allowances.
+# `release`, while the three upstream pods use `app.kubernetes.io/name` with three *different*
+# values. A policy assuming one consistent scheme selects some pods and not others, and one it fails
+# to select keeps the deny-all with no allowances. Verified with `kubectl get pods --show-labels`.
 #
-# Verified against the cluster rather than assumed: `kubectl -n cert-manager get pods --show-labels`.
-#
-# ## What is deliberately absent
-#
-# **No ingress rule for the API server reaching either webhook.** Both are called by the API server,
-# which runs on the node, and node-to-pod traffic is not subject to NetworkPolicy in k3s — the same
-# property the chart's policy relies on for kubelet probes. If it were wrong, every admission call
-# would fail and nothing involving a Certificate would reconcile, which is loud.
-#
-# **No allowance for HTTP-01 solver pods.** This cluster issues over DNS-01 through the Hetzner
-# webhook; the `--acme-http01-solver-image` flag is a default, not a configuration. If HTTP-01 is
-# ever used, its solver pods land under the deny-all with nothing, and the challenge hangs. Add the
-# allowance in the same change that adds the solver, not afterwards.
+# **Deliberately absent**: no ingress rule for the API server reaching either webhook — it runs on
+# the node, and node-to-pod traffic is not subject to NetworkPolicy in k3s, the property the chart's
+# policy also relies on for kubelet probes. And no allowance for HTTP-01 solver pods, this cluster
+# issuing over DNS-01: if HTTP-01 is ever used they land under the deny-all and the challenge hangs,
+# so add the allowance in the change that adds the solver.
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# comment-lint: allow the header is this script's only --help; there is no usage() to hold it
 #
 # issue-board.sh — read and set an issue's Status and Priority on the Event Junkie project board.
 #

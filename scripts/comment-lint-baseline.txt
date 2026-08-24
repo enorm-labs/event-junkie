@@ -1,8 +1,8 @@
 # Comment-lint violations per area — a ceiling that only moves down. See #713.
 # Raise a number only with an argument in the PR; the ordinary fix is to compress the comment.
-.github	33
-deploy	79
+.github	28
+deploy	65
 events-bff	3
-infra	55
+infra	45
 root	3
-scripts	13
+scripts	6

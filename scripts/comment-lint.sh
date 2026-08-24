@@ -19,6 +19,11 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BASELINE="$REPO_ROOT/scripts/comment-lint-baseline.txt"
 
 MAX_BLOCK="${COMMENT_LINT_MAX_BLOCK:-25}"
+# A file header is the script's only `--help` in most of these files, and documents an interface
+# rather than reasoning interleaved with code. It gets a higher cap, not an exemption — the same
+# shape `LongComment/venue` has on the Kotlin side (#714). Density and the area ratchet still bound it.
+MAX_HEADER_BLOCK="${COMMENT_LINT_MAX_HEADER_BLOCK:-40}"
+HEADER_STARTS_BY=3
 MAX_DENSITY="${COMMENT_LINT_MAX_DENSITY:-55}"
 EXCLUDE='node_modules/|/build/|/dist/|/coverage/'
 SOURCE_GLOBS=(*.tf *.tfvars *.sh *.py *.yaml *.yml)
@@ -52,7 +57,8 @@ files() {
 scan() {
     cd "$REPO_ROOT"
     # shellcheck disable=SC2016  # $0 and $1 are awk fields, not shell expansions.
-    files | tr '\n' '\0' | xargs -0 awk -v maxblock="$MAX_BLOCK" -v maxdens="$MAX_DENSITY" '
+    files | tr '\n' '\0' | xargs -0 awk -v maxblock="$MAX_BLOCK" -v maxheader="$MAX_HEADER_BLOCK" \
+            -v headerby="$HEADER_STARTS_BY" -v maxdens="$MAX_DENSITY" '
         function area(f,   a) {
             split(f, a, "/")
             if (a[1] ~ /^(events-core|events-bff|events-importer|events-frontend|detekt-rules|infra|deploy|scripts)$/) return a[1]
@@ -60,10 +66,11 @@ scan() {
             return "root"
         }
         function emit(f, ln, type, detail) { print area(f) "\t" f ":" ln "\t" type "\t" detail }
-        function endblock(   n) {
+        function endblock(   n, cap) {
             n = blocklen
             blocklen = 0
-            if (n > maxblock && !allow) emit(file, blockstart, "long-block", n " lines, cap is " maxblock)
+            cap = (blockstart <= headerby) ? maxheader : maxblock
+            if (n > cap && !allow) emit(file, blockstart, "long-block", n " lines, cap is " cap)
             allow = 0
         }
         FNR == 1 {
