@@ -75,11 +75,11 @@ env:
   # helm-controller embeds the Helm 3 SDK, and `deployed-versions.sh` borrows Helm's solver precisely
   # to reproduce the selection helm-controller makes. A Helm 4 client here would be answering a
   # slightly different question.
-  HELM_VERSION: v3.21.3
+  HELM_VERSION: v3.21.4
   # **Must match release.yml's.** The two scans are meant to be comparable — a finding here that the
   # publish gate did not raise should mean the advisory is new, not that the scanners are.
   # Invisible to Dependabot (a string in YAML), so /update-dependencies step 12 sweeps both together.
-  TRIVY_VERSION: 0.73.0
+  TRIVY_VERSION: 0.74.0
 
 jobs:
   scan:
