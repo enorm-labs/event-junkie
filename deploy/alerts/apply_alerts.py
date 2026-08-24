@@ -36,29 +36,10 @@ import json
 import subprocess
 import sys
 
+from alert_objects import DESTINATION_NAME, TEMPLATE_NAME, destination_payload, template_payload
+
 auth, svc, org, path = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 base = "http://%s:5080/api/%s" % (svc, org)
-
-TEMPLATE_NAME = "event-junkie"
-DESTINATION_NAME = "record-only"
-
-# One line per firing, with the fields an incident actually needs. `{alert_name}`
-# and friends are OpenObserve's substitutions, not Python's — hence the doubled
-# braces below being absent and the string being a plain literal.
-TEMPLATE_BODY = json.dumps(
-    {
-        "alert": "{alert_name}",
-        "stream": "{stream_name}",
-        "org": "{org_name}",
-        "value": "{value}",
-        # No `{timestamp}`: it is not a substitution OpenObserve knows, so it
-        # arrived as the literal string "{timestamp}" in every row. The ingest
-        # timestamp is already on the row as `_timestamp`, which is the one a
-        # query would use anyway. Verified substitutions: `{alert_name}`,
-        # `{stream_name}`, `{org_name}`, `{value}`.
-        "environment": "staging",
-    }
-)
 
 
 def call(method, url, payload=None):
@@ -72,32 +53,16 @@ def call(method, url, payload=None):
 
 
 def ensure_template():
-    code, _ = call("POST", base + "/alerts/templates", {"name": TEMPLATE_NAME, "body": TEMPLATE_BODY, "type": "http"})
+    code, _ = call("POST", base + "/alerts/templates", template_payload())
     if code in (409, 400):  # already exists — update it, so an edit here lands
-        code, body = call("PUT", "%s/alerts/templates/%s" % (base, TEMPLATE_NAME), {"name": TEMPLATE_NAME, "body": TEMPLATE_BODY, "type": "http"})
+        code, body = call("PUT", "%s/alerts/templates/%s" % (base, TEMPLATE_NAME), template_payload())
         print("template %s updated (%s)" % (TEMPLATE_NAME, code))
     else:
         print("template %s created (%s)" % (TEMPLATE_NAME, code))
 
 
 def ensure_destination():
-    # Posting to OpenObserve's own ingest API. The Authorization header is passed
-    # through from the caller rather than written down anywhere: this file is in
-    # git and the credential is not.
-    payload = {
-        "name": DESTINATION_NAME,
-        "type": "http",
-        # **Loopback, not the service DNS name**, and not for tidiness: OpenObserve's SSRF
-        # guard refuses any destination pointing at an internal domain, including its own
-        # Service. `ZO_SSRF_ALLOW_LOOPBACK` (set in the HelmRelease) permits exactly this
-        # one case — the process notifying itself — and nothing wider. Single-node local
-        # mode means 127.0.0.1 is this pod, which is where the ingest API lives.
-        "url": "http://127.0.0.1:5080/api/%s/alert_history/_json" % org,
-        "method": "post",
-        "skip_tls_verify": False,
-        "template": TEMPLATE_NAME,
-        "headers": {"Authorization": auth},
-    }
+    payload = destination_payload(org, auth)
     code, _ = call("POST", base + "/alerts/destinations", payload)
     if code in (409, 400):
         code, _ = call("PUT", "%s/alerts/destinations/%s" % (base, DESTINATION_NAME), payload)

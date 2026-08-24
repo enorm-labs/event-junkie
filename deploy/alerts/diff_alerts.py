@@ -39,20 +39,54 @@ most worth watching — including the destination, which is where a firing goes.
 The list is therefore used only to resolve name -> id, and each rule is then
 fetched individually, which returns the POST shape plus the server's additions.
 
-**The template and the destination are deliberately not compared.** The
-destination object carries the `Authorization` header `apply_alerts.py` sends,
-and a credential that may or may not be echoed back verbatim is a bad thing to
-put on either side of a diff. They drift too and that gap is real; it needs a
-decision about how to compare a secret-bearing object, not a wider loop here.
+## The template and the destination, and the credential in one of them (#704)
+
+Both are compared too, because **the destination is where a firing goes: a wrong
+one makes every rule silently undeliverable**, which is worse than a wrong rule.
+The UI still shows the alert firing and `last_satisfied_at` still advances while
+nobody is told — the combination README.md calls the worst available.
+
+**The header values are compared by fingerprint and can never be printed.** The
+destination carries the OpenObserve root credential, and the API hands it straight
+back: measured on 2026-08-24, `GET /alerts/destinations/record-only` returns
+`{"Authorization": "Basic ..."}` in full, 74 characters, unredacted. A
+field-by-field diff of the kind this file does for everything else would put that
+credential in a terminal, a scrollback and quite possibly a pasted issue comment.
+So both sides are hashed and only the hashes are shown: enough to detect drift,
+incapable of disclosing it.
+
+**Every value under `headers` is treated that way, not just `Authorization`** —
+header values are where credentials live, and a destination that later carries an
+`X-Auth-Token` should not depend on somebody remembering to extend a list.
+
+**If the server ever starts redacting, this says so rather than saying in sync.**
+An empty or all-asterisk value is reported as `cannot compare`; any other form of
+redaction produces a fingerprint mismatch, which is loud and wrong rather than
+quiet and wrong. That asymmetry is deliberate: silence that reads as health is the
+failure this whole check exists to remove.
 """
+import hashlib
 import json
+import re
 import subprocess
 import sys
 
-auth, svc, org = sys.argv[1], sys.argv[2], sys.argv[3]
+from alert_objects import DESTINATION_NAME, TEMPLATE_NAME, destination_payload, template_payload
+
+# Tolerant of being imported with no arguments, so the comparison functions can be
+# exercised without a cluster — which is how the "a header value is never printed"
+# property is tested rather than asserted.
+auth, svc, org = (sys.argv + ["", "", ""])[1:4]
 path = sys.argv[4] if len(sys.argv) > 4 else "/tmp/ej-alerts.json"
 
 BASE = "http://%s:5080/api/v2/%s/alerts" % (svc, org)
+# The template and destination endpoints are v1: there is no v2 for them.
+V1 = "http://%s:5080/api/%s/alerts" % (svc, org)
+
+# Anything under this key is a header value, and header values are credentials
+# until proven otherwise. Compared by fingerprint, never printed.
+SECRET_PARENT = "headers"
+REDACTED = re.compile(r"^\**$")
 
 
 def get(url):
@@ -65,6 +99,11 @@ def get(url):
         return json.loads(out)
     except ValueError:
         sys.exit("not JSON from %s: %s" % (url, out[:200]))
+
+
+def fingerprint(value):
+    """A short digest, enough to answer "did this change" and nothing else."""
+    return "sha256:" + hashlib.sha256(str(value).encode("utf-8")).hexdigest()[:8]
 
 
 def differences(wanted, actual, path=""):
@@ -83,6 +122,13 @@ def differences(wanted, actual, path=""):
             where = "%s.%s" % (path, key) if path else key
             if key not in actual:
                 found.append((where, value, "<absent>"))
+            elif path == SECRET_PARENT or path.endswith("." + SECRET_PARENT):
+                # A header value. Hash both sides; the values never leave this frame.
+                stored = actual[key]
+                if stored is None or (isinstance(stored, str) and REDACTED.match(stored)):
+                    found.append((where, fingerprint(value), "cannot compare — the server returned no value"))
+                elif fingerprint(value) != fingerprint(stored):
+                    found.append((where, fingerprint(value), fingerprint(stored)))
             else:
                 found += differences(value, actual[key], where)
         return found
@@ -94,6 +140,39 @@ def differences(wanted, actual, path=""):
 def show(value):
     text = value if isinstance(value, str) else json.dumps(value)
     return text if len(text) <= 200 else text[:197] + "..."
+
+
+def report(label, wanted, stored, missing_note):
+    """Compare one named object and print the verdict. Returns 1 if it drifted."""
+    if stored is None:
+        print("%-30s MISSING     %s" % (label, missing_note))
+        return 1
+
+    found = differences(wanted, stored)
+    if not found:
+        print("%-30s in sync" % label)
+        return 0
+
+    print("%-30s DIFFERS     %d field%s" % (label, len(found), "" if len(found) == 1 else "s"))
+    for where, want, have in found:
+        print("    %s" % where)
+        print("        alerts.json: %s" % show(want))
+        print("        cluster:     %s" % show(have))
+    return 1
+
+
+def delivery_objects():
+    """The template and the destination — what a firing is shaped like, and where it goes.
+
+    Fetched by name rather than listed: both endpoints answer 404 with a body, so
+    `None` here means genuinely absent rather than a parse accident.
+    """
+    template = get("%s/templates/%s" % (V1, TEMPLATE_NAME))
+    destination = get("%s/destinations/%s" % (V1, DESTINATION_NAME))
+    return (
+        template if isinstance(template, dict) and template.get("name") else None,
+        destination if isinstance(destination, dict) and destination.get("name") else None,
+    )
 
 
 def main():
@@ -109,6 +188,23 @@ def main():
     }
 
     drifted = 0
+
+    # The delivery path first, because a rule that matches perfectly still tells
+    # nobody anything if these two are wrong, and that is the failure that looks
+    # most like health.
+    template, destination = delivery_objects()
+    drifted += report(
+        TEMPLATE_NAME + " (template)",
+        template_payload(),
+        template,
+        "no notification template — firings would arrive shapeless, with no alert name or value",
+    )
+    drifted += report(
+        DESTINATION_NAME + " (destination)",
+        destination_payload(org, auth),
+        destination,
+        "NO DESTINATION — every rule below is undeliverable, and the UI still shows them firing",
+    )
 
     for name, wanted in wanted_alerts.items():
         if name not in live:
@@ -135,12 +231,13 @@ def main():
         print("%-30s EXTRA       in the cluster, absent from alerts.json — created outside this repository?" % name)
         drifted += 1
 
-    total = len(set(wanted_alerts) | set(live))
-    print("\n%d/%d rules match this repository" % (total - drifted, total))
+    total = len(set(wanted_alerts) | set(live)) + 2  # + the template and the destination
+    print("\n%d/%d objects match this repository (%d rules, the template and the destination)" % (total - drifted, total, total - 2))
     if drifted:
         print("`./apply.sh` makes the cluster match the file. Check WHY they differ before running it —")
         print("an emergency edit made in the UI is drift that somebody meant.")
     sys.exit(1 if drifted else 0)
 
 
-main()
+if __name__ == "__main__":
+    main()

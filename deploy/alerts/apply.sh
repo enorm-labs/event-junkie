@@ -62,7 +62,12 @@ ssh_node 'cat > /tmp/ej-alerts.json' < alerts.json
 # The credentials live in the flux-system copy of the Secret, NOT the observability
 # one — the observability copy holds only the four keys the chart itself reads.
 # Reaching for the wrong one produces a flat 401 that reads like a wrong password.
+# `alert_objects.py` goes with it: both scripts import the template and destination
+# from there, because two copies of the same expected object is the bug this whole
+# check exists to catch. Plain name, not the `ej-` prefix the other files use — it
+# has to be importable, and a module name cannot carry a dash.
 if $diff_only; then
+    ssh_node 'cat > /tmp/alert_objects.py' < alert_objects.py
     ssh_node 'cat > /tmp/ej-diff-alerts.py' < diff_alerts.py
     ssh_node "
         AUTH=\$(sudo k3s kubectl -n flux-system get secret openobserve-credentials -o jsonpath='{.data.O2_BASIC_AUTH_HEADER}' | base64 -d)
@@ -82,6 +87,7 @@ if $check_only; then
     exit $?
 fi
 
+ssh_node 'cat > /tmp/alert_objects.py' < alert_objects.py
 ssh_node 'cat > /tmp/ej-apply-alerts.py' < apply_alerts.py
 ssh_node "
     AUTH=\$(sudo k3s kubectl -n flux-system get secret openobserve-credentials -o jsonpath='{.data.O2_BASIC_AUTH_HEADER}' | base64 -d)
