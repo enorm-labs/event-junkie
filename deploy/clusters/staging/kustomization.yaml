@@ -21,6 +21,14 @@ resources:
   # then failed on an encrypted Secret it had no key for. Rendering is not applying.
   - flux-system
   - namespace.yaml
+  # The other namespaces the cluster runs, declared rather than left to `createNamespace: true`
+  # (#604). A HelmRelease creating its own namespace creates a bare one, and Pod Security Admission
+  # is enforced by namespace label — so an undeclared namespace is an ungoverned one, silently.
+  # Each file carries the reasoning for the level it sets; `namespace-observability.yaml` in
+  # particular sets a level that enforces nothing and says why.
+  - namespace-cert-manager.yaml
+  - namespace-observability.yaml
+  - namespace-default.yaml
   # SOPS-encrypted, decrypted by kustomize-controller with the `sops-age` key (#416,
   # docs/ops/SECRETS.md). Order here is presentational — Flux applies by kind, so the
   # namespace exists before the Secret lands wherever this sits in the list.

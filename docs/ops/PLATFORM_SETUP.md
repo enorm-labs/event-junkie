@@ -639,29 +639,47 @@ What you get free: NetworkPolicy enforcement is on (kube-router, unless `--disab
 
 What had to be added — all of it now in place except where noted:
 
-|     | What                                                                     | Why                                                                                                                                                                                        |
-| --- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | **WireGuard on the host; SSH and 6443 reachable only through it**        | The Kubernetes API on the public internet is the whole game. See §8.1 — an IP allowlist alone does not survive changing networks                                                           |
-| 2   | **Default-deny NetworkPolicies per namespace**                           | Enforcement being _on_ means nothing while every pod may talk to every pod. Deny, then allow                                                                                               |
-| 3   | **The importer's admin API is cluster-internal only**                    | ADR-012 is explicit. No Ingress rule, ever. `kubectl port-forward` is the launch answer                                                                                                    |
-| 4   | **The admin frontend is not deployed at launch**                         | Runs locally against the port-forward. When it _is_ deployed, §8.1's WireGuard is its access control                                                                                       |
-| 5   | **Pod Security Admission `restricted`**                                  | One namespace label. Blocks privileged pods, host mounts, root                                                                                                                             |
-| 6   | **Non-root, read-only rootfs, drop ALL capabilities**                    | In the Helm chart's `securityContext`. The JVM and nginx images both cope                                                                                                                  |
-| 7   | **A ServiceAccount per workload, `automountServiceAccountToken: false`** | Default is the namespace's SA with a mounted token — a container escape becomes an API credential                                                                                          |
-| 8   | **SOPS + age for secrets**                                               | Encrypted in git, decrypted at apply. Simpler than Sealed Secrets for one developer, and it survives a cluster rebuild — which Sealed Secrets does not, since the key lives in the cluster |
-| 9   | **Traefik security headers + rate limiting**                             | HSTS, `X-Content-Type-Options`, frame options. **The rate-limit half is still open** — [#268](https://github.com/enorm-labs/event-junkie/issues/268)                                       |
-| 10  | **`unattended-upgrades` in cloud-init**                                  | Nobody patches the OS by hand on a Sunday                                                                                                                                                  |
-| 11  | **Trivy in CI on the built images**                                      | Dependabot and OWASP cover dependencies; neither looks at the base image                                                                                                                   |
-| 12  | **Resource requests _and_ limits on every workload**                     | On a single node, one leak takes down everything. This is a security control, not a tuning one                                                                                             |
+|     | What                                                                     | Why                                                                                                                                                                                          |
+| --- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **WireGuard on the host; SSH and 6443 reachable only through it**        | The Kubernetes API on the public internet is the whole game. See §8.1 — an IP allowlist alone does not survive changing networks                                                             |
+| 2   | **Default-deny NetworkPolicies per namespace**                           | Enforcement being _on_ means nothing while every pod may talk to every pod. Deny, then allow. **`event-junkie` only so far** — [#662](https://github.com/enorm-labs/event-junkie/issues/662) |
+| 3   | **The importer's admin API is cluster-internal only**                    | ADR-012 is explicit. No Ingress rule, ever. `kubectl port-forward` is the launch answer                                                                                                      |
+| 4   | **The admin frontend is not deployed at launch**                         | Runs locally against the port-forward. When it _is_ deployed, §8.1's WireGuard is its access control                                                                                         |
+| 5   | **Pod Security Admission, per namespace**                                | Blocks privileged pods, host mounts, root. Four namespaces at `restricted`, one deliberately not — the table below                                                                           |
+| 6   | **Non-root, read-only rootfs, drop ALL capabilities**                    | In the Helm chart's `securityContext`. The JVM and nginx images both cope                                                                                                                    |
+| 7   | **A ServiceAccount per workload, `automountServiceAccountToken: false`** | Default is the namespace's SA with a mounted token — a container escape becomes an API credential                                                                                            |
+| 8   | **SOPS + age for secrets**                                               | Encrypted in git, decrypted at apply. Simpler than Sealed Secrets for one developer, and it survives a cluster rebuild — which Sealed Secrets does not, since the key lives in the cluster   |
+| 9   | **Traefik security headers + rate limiting**                             | HSTS, `X-Content-Type-Options`, frame options. **The rate-limit half is still open** — [#268](https://github.com/enorm-labs/event-junkie/issues/268)                                         |
+| 10  | **`unattended-upgrades` in cloud-init**                                  | Nobody patches the OS by hand on a Sunday                                                                                                                                                    |
+| 11  | **Trivy in CI on the built images**                                      | Dependabot and OWASP cover dependencies; neither looks at the base image                                                                                                                     |
+| 12  | **Resource requests _and_ limits on every workload**                     | On a single node, one leak takes down everything. This is a security control, not a tuning one                                                                                               |
 
 **Not needed here:** a service mesh (two services), Falco (no capacity to respond to its findings), OPA/Kyverno (PSA covers the realistic cases at a fraction of
 the effort).
+
+**The Pod Security Admission level per namespace**, which is item 5 and is the part a single label never covered:
+
+| Namespace                        | `enforce`        | Why                                                                                               |
+| -------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------- |
+| `event-junkie`                   | `restricted`     | the chart's workloads were built to it (#426, #448)                                               |
+| `cert-manager`                   | `restricted`     | verified against the pinned v1.21.1 render — three Deployments and the startupapicheck Job        |
+| `flux-system`                    | `restricted`     | verified against the pinned `gotk-components.yaml` — all four controllers                         |
+| `default`                        | `restricted`     | nothing runs there, and enforcing is what stops it becoming somewhere things do                   |
+| `observability`                  | **`privileged`** | the collector agent DaemonSet mounts `/`, `/var/log` and `/var/lib/docker/containers` — see below |
+| `kube-system`                    | **exempt**       | k3s's own components need host mounts and privileged pods; a blanket sweep breaks the cluster     |
+| `kube-node-lease`, `kube-public` | **exempt**       | no pods, ever. Labelling them buys nothing and adds two objects Flux would then own               |
+
+**`observability` enforces nothing, and its `audit`/`warn` labels are the point.** `hostPath` is a restricted field in `baseline` as well as `restricted`, so
+no enforcing level admits the collector agent, and rejecting it means losing every log line in the cluster. What the namespace does carry is `audit: restricted`
+and `warn: restricted`, which record every violation without rejecting it — so the next workload added there arrives with its violations named. Real enforcement
+needs the agent moved to a namespace of its own, since PSA has no per-workload exemption; that is [#709](https://github.com/enorm-labs/event-junkie/issues/709).
 
 Two things worth having written down before touching items 2 or 5:
 
 - **`createNamespace: true` cannot carry a PSA label.** It creates a bare namespace, and PSA is enforced _by namespace label_ — so a namespace that exists is
   not a namespace that is governed, and nothing about the cluster looks wrong. The namespace is therefore its own manifest in each `deploy/clusters/<env>/`,
-  with `enforce: restricted` pinned to an `enforce-version` so a cluster upgrade cannot tighten the profile under a running release.
+  with `enforce` pinned to an `enforce-version` so a cluster upgrade cannot tighten the profile under a running release. `scripts/cluster-assertions.sh`
+  enforces the pairing: a release with `createNamespace: true` and no declared Namespace fails the gate (#604).
 - **A pod's first packet can leave before the CNI has programmed the policy that permits it.** k3s's policy controller populates its ipsets from pod labels
   asynchronously, so a short-lived pod that connects milliseconds after starting can be denied by a rule that is entirely correct. Measured on k3d: the chart's
   `helm test` hook failed with `curl: (7) … after 0 ms`, and the identical request two seconds later returned 200. It matters more than it sounds because Flux

@@ -18,7 +18,8 @@
 #
 #   2. **Assert on relationships between files**, which no single render can see: that no published
 #      HelmRelease pins an image tag, that a release creating a ClusterIssuer declares `dependsOn`,
-#      and that every third-party chart is pinned to one version rather than a range.
+#      that every third-party chart is pinned to one version rather than a range, and that a release
+#      creating its own namespace has that namespace declared with a Pod Security Admission level.
 #
 # Usage: scripts/cluster-assertions.sh [chart-dir] [clusters-dir]
 #
@@ -236,24 +237,84 @@ and a sitemap naming production. Set ingress.noindex: true in spec.values."
 #
 # A range lets a new upstream release reach the cluster with no diff, no review and no commit —
 # which is the property GitOps exists to remove, and it would be silent.
+#
+# **Iterate documents, not files**, and the same goes for every check below that walks `*.yaml`.
+# This read `yq -N '.kind' "$file"` and compared it to `HelmRelease`, which silently skips any
+# multi-document file: `yq` prints one line per document, so a file holding a HelmRepository and a
+# HelmRelease yields `HelmRepository\nHelmRelease` and matches nothing.
+#
+# Every observability manifest is that shape. Until this was fixed the check reported three `ok`s
+# and covered three releases out of nine — `openobserve`, `otel-operator`, `openobserve-collector`
+# and the rest were invisible, which is to say the four most recently added charts were the four
+# nobody was checking. A green check over a third of the set is worse than no check, because it is
+# read as a green check over the set.
 check_version_pins() {
   printf '\n== third-party chart versions ==\n'
 
-  local release version cluster
+  local release name version
   for release in "$CLUSTERS_DIR"/*/*.yaml; do
     [[ -e "$release" ]] || continue
-    [[ "$(yq -N '.kind // ""' "$release")" == "HelmRelease" ]] || continue
-    version="$(yq -N '.spec.chart.spec.version // ""' "$release")"
-    [[ -n "$version" ]] || continue
+    while IFS=$'\t' read -r name version; do
+      # An OCIRepository-backed release carries `chartRef` and no `chart.spec.version` — its version
+      # lives in the OCIRepository, which #416 pins separately. Nothing to assert here.
+      [[ -n "$version" ]] || continue
 
-    cluster="$(basename "$(dirname "$release")")/$(basename "$release")"
-    current_case="$cluster"
-    if [[ "$version" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-      pass "chart version is pinned exactly ($version)"
-    else
-      fail "chart version '$version' is a range, not a pin" \
-        "an upstream release could then reach the cluster with no commit and no review"
-    fi
+      current_case="$(basename "$(dirname "$release")")/$(basename "$release"):$name"
+      if [[ "$version" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        pass "chart version is pinned exactly ($version)"
+      else
+        fail "chart version '$version' is a range, not a pin" \
+          "an upstream release could then reach the cluster with no commit and no review"
+      fi
+    done < <(yq -N 'select(.kind=="HelmRelease") | (.metadata.name // "?") + "\t" + (.spec.chart.spec.version // "")' "$release")
+  done
+}
+
+# --- 2d. Every namespace a release creates is declared, and carries a PSA level -----------------
+#
+# **`createNamespace: true` creates a bare namespace**, and Pod Security Admission is enforced by
+# namespace *label* — so a release that makes its own namespace makes an ungoverned one, and the
+# only visible symptom is the absence of a symptom. #416 listed PSA as done on the strength of one
+# namespace label; #604 found it on one namespace out of eight, and `observability` — the namespace
+# holding every log line in the system — was one of the seven.
+#
+# The failure this prevents is not a missing label. It is the *next* HelmRelease: adding one with
+# `createNamespace: true` and no accompanying Namespace manifest reproduces the whole finding, in a
+# diff that looks entirely routine. Nothing else in the repository would object.
+#
+# So: for every HelmRelease that creates its own namespace, this asserts that some file in the same
+# cluster directory declares that Namespace with a `pod-security.kubernetes.io/enforce` label. It
+# does not assert *which* level — `observability` is deliberately `privileged` because the collector
+# agent mounts the node, and a check that demanded `restricted` would be a check that had to be
+# suppressed. Declaring a level is the reviewable act; choosing it is the human one.
+check_namespace_governance() {
+  printf '\n== namespaces are declared, not conjured by createNamespace ==\n'
+
+  local release cluster_dir name target declared
+  for release in "$CLUSTERS_DIR"/*/*.yaml; do
+    [[ -e "$release" ]] || continue
+    cluster_dir="$(dirname "$release")"
+
+    # Per document, for the reason check_version_pins records — every observability manifest holds a
+    # HelmRepository beside its HelmRelease, and those are exactly the releases this is about.
+    while IFS=$'\t' read -r name target; do
+      [[ -n "$target" ]] || continue
+      current_case="$(basename "$cluster_dir")/$(basename "$release"):$name"
+
+      # Every Namespace declared anywhere in this cluster's directory that carries an enforce label.
+      # Recomputed per release rather than hoisted: the set is small, and a stale cache here would
+      # be a check that passes on a file someone deleted.
+      declared="$(yq -N 'select(.kind=="Namespace" and .metadata.labels["pod-security.kubernetes.io/enforce"] != null) | .metadata.name' \
+        "$cluster_dir"/*.yaml 2>/dev/null || true)"
+
+      if grep -qxF "$target" <<<"$declared"; then
+        pass "namespace '$target' is declared with a Pod Security Admission level"
+      else
+        fail "namespace '$target' is created by this release but declared nowhere" \
+          "createNamespace makes a bare namespace, so PSA has no label to enforce and every pod is admitted;
+add a Namespace manifest carrying pod-security.kubernetes.io/enforce (#604)"
+      fi
+    done < <(yq -N 'select(.kind=="HelmRelease" and .spec.install.createNamespace == true) | (.metadata.name // "?") + "\t" + (.spec.targetNamespace // "")' "$release")
   done
 }
 
@@ -270,6 +331,7 @@ main() {
   check_cluster_dependencies
   check_noindex
   check_version_pins
+  check_namespace_governance
   run_suites_against_clusters
 
   printf '\n'

@@ -20,6 +20,16 @@ resources:
   # `events-db` had not appeared even though the Kustomization reported Ready.
   - flux-system
   - namespace.yaml
+  # The other namespaces this cluster runs, declared rather than left to `createNamespace: true`
+  # (#604). A HelmRelease creating its own namespace creates a bare one, and Pod Security Admission
+  # is enforced by namespace label — so an undeclared namespace is an ungoverned one, silently.
+  #
+  # **There is no `namespace-observability.yaml` here and that is not an omission.** Production does
+  # not run the observability stack — `openobserve.yaml`, `collector.yaml`, `postgres-exporter.yaml`
+  # and `signal-bridge.yaml` are staging-only files. When #271 item 6 copies them across, the
+  # namespace declaration goes with them, or the namespace arrives bare exactly as staging's did.
+  - namespace-cert-manager.yaml
+  - namespace-default.yaml
   # Encrypted; decrypted by the sops-age patch in flux-system/kustomization.yaml, which is exactly
   # why that patch has to actually reach the cluster.
   - secrets/events-db.yaml
