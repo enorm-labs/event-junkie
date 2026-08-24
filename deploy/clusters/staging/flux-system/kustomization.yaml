@@ -46,6 +46,15 @@ patches:
   # takes every deploy with it — including the one that would relax the label. That is the argument
   # for `enforce-version` being pinned rather than `latest`, here more than anywhere else in the
   # cluster.
+  #
+  # **`gotk-components.yaml`'s three `allow-*` NetworkPolicies are decorative, and stay that way
+  # (#662).** They permit; nothing denies, so they document intent and enforce nothing — a namespace
+  # with allow-only policies is a namespace with no policy. `observability` and `cert-manager` got
+  # real default-denies in #662 and this one deliberately did not, because the recovery from getting
+  # it wrong runs through the thing being restricted: a controller that cannot reach Git, the OCI
+  # registry or the API server cannot apply the commit that would relax the rule, and the only way
+  # back is manual `kubectl` against the cluster. That is a worse trade here than in a namespace
+  # whose failure costs metrics.
   - patch: |
       - op: add
         path: /metadata/labels/pod-security.kubernetes.io~1enforce

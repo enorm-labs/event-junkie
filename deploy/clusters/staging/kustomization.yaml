@@ -41,11 +41,18 @@ resources:
   # resource list replaced Kustomize's directory walk, so a file that is not named is a file that
   # renders, lints, merges — and never reaches the cluster.
   - openobserve.yaml
-  # The egress boundary that makes `ZO_SKIP_SSRF_CHECKS` a bounded decision rather than an open
-  # door (#271 item 4). A NetworkPolicy that never reaches the cluster is the most dangerous kind
-  # of unnamed file here: the flag it compensates for is in `openobserve.yaml`, which IS named, so
-  # forgetting this line would ship the hole without the containment.
-  - openobserve-netpol.yaml
+  # Default-deny plus one named allowance per conversation, for the two namespaces that had none
+  # (#662). `observability-netpol.yaml` replaces the egress-only `openobserve-netpol.yaml` from
+  # #661 and keeps its `openobserve-egress` object under the same name, so the containment for
+  # `ZO_SKIP_SSRF_CHECKS` is updated in place rather than deleted and recreated — there is no window
+  # in which that flag is set and unbounded.
+  #
+  # A NetworkPolicy that never reaches the cluster is the most dangerous kind of unnamed file here,
+  # and these two are worse than most: the failure of a policy that is *present but wrong* is a pod
+  # cut off in silence, while the failure of one that is *absent* is a namespace that looks hardened
+  # and is not.
+  - observability-netpol.yaml
+  - cert-manager-netpol.yaml
   # The Signal bridge (#271). Same rule as above — a file not named here never reaches the cluster.
   - signal-bridge.yaml
   # The collector (#271 item 2). Same rule — unnamed here means it never reaches the cluster.
