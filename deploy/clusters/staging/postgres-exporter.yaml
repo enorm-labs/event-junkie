@@ -7,8 +7,7 @@
 # the application's own `database.host` is an address rather than `localhost`. One manifest works
 # on both topologies.
 #
-# ## What this does NOT cover, so it is not assumed later
-#
+# **What this does NOT cover, so it is not assumed later.**
 # **Disk usage on a dedicated database node.** The collector's agent already scrapes `filesystem` and
 # `disk` hostmetrics from every node it runs on, so on staging — where PostgreSQL sits on the k3s
 # node — the disk-filling alert is already covered without this. **On production the database node is

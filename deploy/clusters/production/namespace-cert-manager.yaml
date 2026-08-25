@@ -5,8 +5,7 @@
 # flag stays set on the HelmRelease and becomes a no-op — harmless, and cheaper than making the
 # release depend on this file having been applied first.
 #
-# ## `restricted` is verified rather than assumed
-#
+# **`restricted` is verified rather than assumed.**
 # #604's table listed a "plausible target" per namespace, and this is the one where the plausible
 # target held. Rendering `jetstack/cert-manager` v1.21.1 — the version `cert-manager.yaml` pins —
 # gives four pod-producing objects, and every one of them already satisfies the profile:

@@ -11,8 +11,7 @@
 # are gone with it and the silence reads as health. That is what `site-probe.yml` and healthchecks.io
 # are for, off Hetzner, and it is why §5a calls the second layer "not optional".
 #
-# ## Registration is a manual step, once, and losing it is silent
-#
+# **Registration is a manual step, once, and losing it is silent.**
 # Nothing here registers the number — that needs a real prepaid SIM and an SMS code. Until it is
 # done, the pod runs and answers health checks and **sends nothing**, which is exactly the failure
 # mode the dead-man's switch exists to catch. docs/ops/SECRETS.md has the procedure.

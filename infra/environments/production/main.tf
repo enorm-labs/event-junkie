@@ -40,8 +40,7 @@ module "environment" {
   # rather than ArgoCD is what keeps this on an 8 GB node — is PLATFORM_SETUP.md §1 and is unchanged
   # by this: cores, memory and disk are identical to the CAX21 that stood here until 2026-08-21.
   #
-  # ## It is x86 because ARM cannot be bought, and that was settled by ordering rather than asking
-  #
+  # **It is x86 because ARM cannot be bought, and that was settled by ordering rather than asking.**
   # Bare servers — no IPs, no network, `start_after_create: false` — were ordered in every
   # eu-central location on 2026-08-21. Refusals are free and return in ~0.1s:
   #
@@ -59,14 +58,12 @@ module "environment" {
   # `cx` line was gone at the same time and has since come back, in fsn1, which is why there is now
   # something to move to.
   #
-  # ## And ARM was, by this point, the dearer plan
-  #
+  # **And ARM was, by this point, the dearer plan.**
   # cx33 + cx23 is **€16.63/month against cax21 + cax11's €19.61**, for the same cores, the same
   # memory and the same disks. So waiting was not buying a cheaper machine; it was buying nothing at
   # a price. Whatever the ARM argument in PLATFORM_SETUP.md §1 was worth, it was not this.
   #
-  # ## Going back, if CAX returns
-  #
+  # **Going back, if CAX returns.**
   # A one-line change per node — but free only until the first apply. **After that it is a REBUILD
   # of both nodes and not a resize**, because Hetzner cannot rescale across architectures and the
   # plan renders a tidy in-place update that the API then refuses mid-apply. #460's volume means the

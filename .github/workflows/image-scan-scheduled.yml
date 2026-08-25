@@ -15,8 +15,7 @@ name: Scheduled Image Scan
 # OWASP scan on pull requests and `dependency-check-scheduled.yml` runs the authoritative one nightly
 # on `main`. Images had the first half and not the second (#442).
 #
-# ## It scans a published tag, not a rebuild of `main`
-#
+# **It scans a published tag, not a rebuild of `main`.**
 # Those diverge the moment a base image is rebuilt, and the deployed one is the one with users in
 # front of it. `scripts/deployed-versions.sh` makes the same selection Flux makes — it reads each
 # cluster's own `semver` range out of `deploy/clusters/*/oci-repository.yaml`, lists what is actually
@@ -24,16 +23,14 @@ name: Scheduled Image Scan
 # cannot drift from what is deployed, and production starts being scanned by itself the day it has a
 # release rather than the day somebody remembers to add it here.
 #
-# ## Both architectures, which is the gap the publish gate cannot close
-#
+# **Both architectures, which is the gap the publish gate cannot close.**
 # `release.yml` scans only the amd64 variant, and not by choice: a multi-platform image cannot be
 # loaded into a local daemon before it is pushed, so there is nothing to scan yet. A scheduled scan
 # has no such constraint — the images are already in a registry and `--platform` reaches either one.
 # **arm64 is the architecture the Hetzner nodes actually run** (#424), so scanning amd64 only would
 # mean the one architecture nobody serves from was the only one ever examined.
 #
-# ## No credential, deliberately
-#
+# **No credential, deliberately.**
 # The GHCR packages are public — the same property `oci-repository.yaml` relies on for having no
 # `secretRef` — so both the tag listing and the pulls here are anonymous. That is not merely
 # convenient: it exercises the same anonymous registry path the clusters use, and it means this
