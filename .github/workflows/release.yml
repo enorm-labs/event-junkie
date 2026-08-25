@@ -179,6 +179,7 @@ jobs:
       - name: Extract the layered jars
         run: ./gradlew -Pversion=${{ steps.version.outputs.value }} :events-bff:bootJarLayers :events-importer:bootJarLayers
 
+      # comment-lint: allow a dated suppression, per the reason in zizmor.yml
       # 2026-08-12 — the `ignore` below: flagged because `setup-node` *can* cache in a workflow that
       # publishes, not because it does. `cache:` is deliberately absent, and setup-node caches
       # nothing without it. The audit is conservative on purpose, which is the right default; this

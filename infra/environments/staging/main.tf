@@ -6,9 +6,9 @@ module "environment" {
   # all three offer ARM, so this is the line to change when capacity moves — see check-capacity.sh.
   # Staging is a single node, so nothing here has to stay co-located; production does.
   #
-  # nbg1 rather than fsn1 since 2026-08-13, because fsn1 had nothing orderable at all — not merely
-  # no ARM, nothing of any architecture. hel1 has the same x86 types as nbg1, so the tie is broken
-  # on latency: Nuremberg is ~25 ms closer to a Berlin audience than Helsinki (§1).
+  # nbg1 rather than fsn1, because fsn1 had nothing orderable at all — not merely no ARM, nothing of
+  # any architecture. hel1 has the same x86 types as nbg1, so the tie is broken on latency:
+  # Nuremberg is ~25 ms closer to a Berlin audience than Helsinki (§1).
   #
   # BEING ADVERTISED IS NOT BEING ORDERABLE, which is what this line originally moved here for and
   # what it then ran into. Three orders for a cax11 in nbg1 were refused with `unsupported location
@@ -17,12 +17,10 @@ module "environment" {
   # see `k3s_server_type` below for how it was settled, and check-capacity.sh's header for why a
   # green result from it now means "worth trying" rather than "orderable".
   #
-  # Changing this line is no longer free. It was on 2026-08-13 — the project was verified empty
-  # first — but both Primary IPs now exist in nbg1, and a Primary IP is location-bound, so they have
-  # to be destroyed before this can move again. Changing the server type below does not touch them.
-  #
-  # The PGDATA volume is location-bound in the same way and now carries the database (#460), so
-  # moving location is no longer only an addressing problem — the data has to be got off it first.
+  # **Changing this line is not free.** Both Primary IPs exist in nbg1 and a Primary IP is
+  # location-bound, so they have to be destroyed before this can move. The PGDATA volume is bound the
+  # same way and carries the database (#460), so moving is no longer only an addressing problem — the
+  # data has to come off it first. Changing the server type below touches neither.
   #
   # Nothing in the design wanted the two environments co-located: staging has its own network
   # (10.1.0.0/16), its own firewall and its own database, and reaches production over nothing at all.
@@ -32,28 +30,22 @@ module "environment" {
   # still reached over the network at a private address, so the connection path the applications
   # exercise is the same shape as production's.
   #
-  # **cx33 (x86): 4 vCPU / 8 GB at €10.10/month. Changed from cpx22 on 2026-08-20 because the node
-  # ran out of memory** — a global OOM killed OpenObserve, load hit 99 on two cores, and the API
-  # server flapped for half an hour (#271). ADR-015's ~1.5 GB observability budget was not the
-  # problem; the node never had 1.5 GB to give. k3s-server alone holds 1.08–1.24 GB, and the floor
-  # before any observability is ~2.3 GB of 3.81 GB.
+  # **cx33 (x86): 4 vCPU / 8 GB at €10.10/month, up from cpx22 because the node ran out of memory** —
+  # a global OOM killed OpenObserve, load hit 99 on two cores, and the API server flapped for half an
+  # hour (#271). ADR-015's ~1.5 GB observability budget was not the problem; the node never had
+  # 1.5 GB to give. k3s-server alone holds 1.08–1.24 GB, and the floor before any observability is
+  # ~2.3 GB of 3.81 GB.
   #
-  # **APPLIED 2026-08-20 23:0x UTC, and it rebuilt the node** — `2 added, 1 changed, 2 destroyed`,
-  # the extra change being the firewall opened to admit the operator while the tunnel was down.
-  # This closed the drift #614 was filed for.
-  #
-  # **This line is not what rebuilt it** — corrected 2026-08-20, having first claimed otherwise.
-  # `server_type` really is an in-place attribute within one architecture, and reasoning from that
-  # is how the wrong claim got written. The plan disagreed, because `user_data` had ALSO drifted:
+  # **This line does not rebuild the node, and assuming it does is the trap.** `server_type` is an
+  # in-place attribute within one architecture. The apply that raised it rebuilt anyway because
+  # `user_data` had ALSO drifted:
   #
   #     ~ server_type = "cpx22" -> "cx33"
   #     ~ user_data   = "o5CIpx..." -> "IOxMoC..."   # forces replacement
   #
-  # Reverting this line to `cpx22` and re-planning gave a byte-identical result, which is the proof
-  # that the two were independent. Four commits changed `cloud-init/` after the 2026-08-17 apply —
-  # WAL streaming, the restore-drill corrections, the dead-man's-switch warning, and the privacy
-  # logging work — so **staging had been one `tofu apply` away from a rebuild since 2026-08-18,
-  # whatever that apply was for.** That was the hazard, not this variable.
+  # Reverting this line and re-planning gave a byte-identical result, which is the proof that the two
+  # are independent. Any commit touching `cloud-init/` leaves staging **one `tofu apply` away from a
+  # rebuild, whatever that apply is for.** That is the hazard, not this variable.
   #
   # **What the rebuild actually cost, measured rather than predicted:**
   #

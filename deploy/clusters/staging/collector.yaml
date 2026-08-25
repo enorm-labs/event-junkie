@@ -319,13 +319,11 @@ spec:
               # stream inside the memtable, so 362 near-idle streams cost far more than the row
               # figures suggest.
               #
-              # **Correction, 2026-08-23:** this paragraph used to explain the HTTP 503s by saying the
-              # pod was "overflowing at 700Mi of 1536Mi, nowhere near its ceiling". The 700Mi was the
-              # container's RSS and the ceiling is not the container's — it is a separate 25%-of-cgroup
-              # memtable limit that the default rotation threshold sits above and can never reach.
-              # #625 has the arithmetic and `openobserve.yaml`'s `ZO_MAX_FILE_SIZE_IN_MEMORY` is the
-              # fix. Cutting the stream count was still worth doing and still helped — it lengthened
-              # the interval between overflows — but it was treating a symptom.
+              # **The 503s are not this, though.** The ceiling that matters is a separate
+              # 25%-of-cgroup memtable limit which the default rotation threshold sits above and can
+              # never reach; #625 has the arithmetic and `openobserve.yaml`'s
+              # `ZO_MAX_FILE_SIZE_IN_MEMORY` is the fix. Cutting the stream count still helps, by
+              # lengthening the interval between overflows, but it treats a symptom.
               #
               # The allowlist keeps what a single-node database is actually worth watching: is it up,
               # how big is it, how many connections, is it committing, is it deadlocking, and did the
@@ -410,15 +408,13 @@ spec:
           #
           #   - `events`       — the reason the pipeline exists: OOMKilled, FailedScheduling,
           #                      ImagePullBackOff. This is the stream you read after an incident.
-          #   - `pods`         — phase transitions, and the object as it changed. **Correction,
-          #                      2026-08-23:** this said kube-state-metrics was not installed and its
-          #                      scrape had failed since day one. It is installed — in `kube-system`
-          #                      since 2026-08-20, scraped, and serving `kube_*` — so that is no
-          #                      longer the reason. The reason is that `kube_pod_*` is a gauge of
-          #                      current state, while this stream carries the transition and its
-          #                      timestamp, which is what an incident is reconstructed from.
+          #   - `pods`         — phase transitions, and the object as it changed. Not redundant with
+          #                      kube-state-metrics, which is installed and serving `kube_*`:
+          #                      `kube_pod_*` is a gauge of current state, while this stream carries
+          #                      the transition and its timestamp, which is what an incident is
+          #                      reconstructed from.
           #   - `nodes`        — node conditions. MemoryPressure on this node is exactly what nothing
-          #                      was watching on 2026-08-20.
+          #                      else watches.
           #   - `deployments`  — the three application workloads.
           #   - `statefulsets` — OpenObserve and this gateway, which are the things that break.
           #   - `daemonsets`   — the agent. Zero records so far, which is what healthy looks like.

@@ -29,7 +29,8 @@
 name: Label Pull Requests
 
 on:
-  # zizmor: ignore[dangerous-triggers]
+  # comment-lint: allow a dated suppression, per the reason in zizmor.yml
+# zizmor: ignore[dangerous-triggers]
   # 2026-08-12 — `pull_request_target` is insecure when it checks out or executes pull-request code.
   # This workflow does neither: it reads the title from `context.payload` inside `actions/github-script`
   # and calls the REST API. There is no `actions/checkout` step in this file at all, which is the

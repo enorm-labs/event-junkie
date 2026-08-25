@@ -6,12 +6,12 @@ module "environment" {
   # this is the line to change when capacity moves — see check-capacity.sh. It covers both nodes on
   # purpose: they must share a location, since every query crosses that link.
   #
-  # It used to say "all three offer ARM". They advertise it; none of them will sell it, which is
-  # what the server types below record. Moving location is not the lever it looks like — for ARM.
-  # For x86 it is exactly the lever, and it got pulled on 2026-08-21.
+  # All three advertise ARM; none of them will sell it, which is what the server types below record.
+  # Moving location is therefore not the lever it looks like for ARM. For x86 it is exactly the
+  # lever.
   #
-  # **nbg1 since 2026-08-21, mid-apply, because fsn1 ran out of cx33 between the probe and the
-  # order.** `check-capacity.sh --probe production` returned ORDERABLE for both types at 00:0x. The
+  # **nbg1, chosen mid-apply, because fsn1 ran out of cx33 between the probe and the order.**
+  # `check-capacity.sh --probe production` returned ORDERABLE for both types. The
   # apply thirty minutes later created `production-postgres` (cx23) and then failed on the k3s node:
   #
   #     Error: error during placement (resource_unavailable)
@@ -38,11 +38,11 @@ module "environment" {
 
   # CX33: 4 x86 vCPU / 8 GB / 80 GB disk. The memory arithmetic behind it — including why Flux
   # rather than ArgoCD is what keeps this on an 8 GB node — is PLATFORM_SETUP.md §1 and is unchanged
-  # by this: cores, memory and disk are identical to the CAX21 that stood here until 2026-08-21.
+  # by this: cores, memory and disk are identical to the CAX21 this replaced.
   #
   # **It is x86 because ARM cannot be bought, and that was settled by ordering rather than asking.**
   # Bare servers — no IPs, no network, `start_after_create: false` — were ordered in every
-  # eu-central location on 2026-08-21. Refusals are free and return in ~0.1s:
+  # eu-central location. Refusals are free and return in ~0.1s:
   #
   #   cax21   fsn1 / nbg1 / hel1   refused: `unsupported location for server type (invalid_input)`
   #   cax11   fsn1 / nbg1 / hel1   refused: the same, in all three
