@@ -1,10 +1,13 @@
 package de.norm.events.scraper.gartn
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -55,3 +58,15 @@ class GartnWebsiteImporter(
             }
         }
 }
+
+val GARTN_LIMITATIONS =
+    VenueLimitations(
+        EventSource.GARTN,
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue publishes no prices"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the venue publishes no per-event image"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the venue publishes no per-event text"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the Carrd page emits no per-event URL, and removes an event once it has passed"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue states one time per night and no separate doors time"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue states no category; every night here is a DJ party")
+    )

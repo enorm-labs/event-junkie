@@ -69,24 +69,18 @@ import java.time.LocalTime
  *    20:00 Uhr") or collapsed ("Beginn & Einlass: 18:00 Uhr"), and occasionally transposed — which
  *    `orderDoorsBeforeStart` corrects centrally at the persistence boundary.
  *
- * Accepted limitations:
- *  - **The venue publishes no event category at all**, and its programme spans concerts, comedy,
- *    children's theatre, readings, gin tastings and dance teas. Typing falls back to
- *    [inferUnmarkedTitleType] over title and subtitle, extended by [VENUE_FORMAT_KEYWORDS] for the
- *    formats the house names in its own words. Anything else stays `OTHER` rather than being guessed
- *    into `CONCERT` — which would also mint the event's name as a headliner.
- *  - **Artists are only taken when the venue bills a support act** ([buildArtistList]). Without a
- *    category nothing confirms that a title is a performer rather than a format, so "Tanztee im
- *    PETER EDEL" must not become an artist. Only a couple of events qualify.
- *  - **The seating badges are dropped** ("Bestuhlt"/"Unbestuhlt"/"Teilbestuhlt", "Freie
- *    Platzwahl"/"Keine Sitzplatzgarantie"). The data model has no field for them; see #303.
- *  - **No genre and no per-event page.** The title links straight to the ticket shop, so every event
- *    points at the listing and takes its identity from its date plus its title.
+ * Typing falls back to [inferUnmarkedTitleType] over title and subtitle, extended by
+ * [VENUE_FORMAT_KEYWORDS] for the formats the house names in its own words. Anything else stays
+ * `OTHER` rather than being guessed into `CONCERT`, which would also mint the event's name as a
+ * headliner — and for the same reason [buildArtistList] takes an act only where a support billing
+ * confirms one, so "Tanztee im PETER EDEL" does not become an artist. The seating badges
+ * ("Bestuhlt", "Freie Platzwahl") are dropped: the data model has no field for them, see #303.
  *
+ * @see PETER_EDEL_LIMITATIONS for what the venue does not publish.
  * @see PeterEdelWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.peteredel.de/events/">Kulturhaus Peter Edel</a>
  */
-@Suppress("LongComment/venue") // Accepted limitations are load-bearing here (#714); compressed from 73 lines.
+@Suppress("LongComment/venue") // The grid is hand-authored rich text, and this block is the shape the parser walks (#714).
 class PeterEdelOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 

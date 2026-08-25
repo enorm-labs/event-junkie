@@ -1,9 +1,12 @@
 package de.norm.events.scraper.clubost
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -65,3 +68,14 @@ class ClubOstWebsiteImporter(
             description = primary.description ?: fallback.description
         )
 }
+
+val CLUB_OST_LIMITATIONS =
+    VenueLimitations(
+        EventSource.CLUB_OST,
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the venue programmes through Resident Advisor and leaves the CMS description empty on every event"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the listing carries no category; every card is a flyer, a title, a start time and a ticket link"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the listing carries no genre"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the listing carries no price; tickets are sold on Resident Advisor"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the listing carries no lineup, though the CMS holds an empty div where one would go"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the listing carries one time per night and no doors time")
+    )

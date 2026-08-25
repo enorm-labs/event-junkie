@@ -1,10 +1,13 @@
 package de.norm.events.scraper.ritterbutzke
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -64,3 +67,9 @@ class RitterButzkeWebsiteImporter(
             artists = primary.artists.ifEmpty { fallback.artists }
         )
 }
+
+val RITTER_BUTZKE_LIMITATIONS =
+    VenueLimitations(
+        EventSource.RITTER_BUTZKE,
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club publishes no categories; every night is a DJ programme")
+    )

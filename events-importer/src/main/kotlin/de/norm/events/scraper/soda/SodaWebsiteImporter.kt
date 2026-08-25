@@ -1,10 +1,13 @@
 package de.norm.events.scraper.soda
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -68,3 +71,11 @@ class SodaWebsiteImporter(
             ticketUrl = primary.ticketUrl ?: fallback.ticketUrl
         )
 }
+
+val SODA_LIMITATIONS =
+    VenueLimitations(
+        EventSource.SODA,
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the Einlass info box states an age limit, not a doors time"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the JSON-LD performer is the placeholder Unbekannt on every night"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the JSON-LD `organizer` is the venue itself on every night")
+    )

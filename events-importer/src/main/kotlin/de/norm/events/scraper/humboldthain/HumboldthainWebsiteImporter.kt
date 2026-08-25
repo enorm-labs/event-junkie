@@ -1,9 +1,12 @@
 package de.norm.events.scraper.humboldthain
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -60,3 +63,12 @@ class HumboldthainWebsiteImporter(
         return ImportResult.Success(events = events, etag = null, lastModified = null)
     }
 }
+
+val HUMBOLDTHAIN_LIMITATIONS =
+    VenueLimitations(
+        EventSource.HUMBOLDTHAIN,
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the calendar widget exposes no per-event URLs"),
+        AcceptedLimitation(LimitedAspect.PRICE, "prices appear only in the prose, in too many spellings to parse"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "nothing in the payload marks a night sold out"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "nothing in the payload marks a night cancelled or moved")
+    )

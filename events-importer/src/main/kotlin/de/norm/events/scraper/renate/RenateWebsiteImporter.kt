@@ -1,10 +1,13 @@
 package de.norm.events.scraper.renate
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -52,3 +55,10 @@ class RenateWebsiteImporter(
             }
         }
 }
+
+val RENATE_LIMITATIONS =
+    VenueLimitations(
+        EventSource.RENATE,
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club states no category; its `.cat-btn` names the spaces in use, not a kind of event"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night points at the programme page")
+    )

@@ -2,9 +2,12 @@ package de.norm.events.scraper.cassiopeia
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -75,3 +78,9 @@ class CassiopeiaWebsiteImporter(
             artists = primary.artists.ifEmpty { fallback.artists }
         )
 }
+
+val CASSIOPEIA_LIMITATIONS =
+    VenueLimitations(
+        EventSource.CASSIOPEIA,
+        AcceptedLimitation(LimitedAspect.PAGINATION, "only the first page of the listing is read")
+    )

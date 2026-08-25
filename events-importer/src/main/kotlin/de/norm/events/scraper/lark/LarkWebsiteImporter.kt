@@ -1,10 +1,13 @@
 package de.norm.events.scraper.lark
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -136,3 +139,9 @@ class LarkWebsiteImporter(
         const val FIELDS = "id,link,title,date,acf,featured_media"
     }
 }
+
+val LARK_LIMITATIONS =
+    VenueLimitations(
+        EventSource.LARK,
+        AcceptedLimitation(LimitedAspect.START_TIME, "the venue renders its one time as Doors and publishes no separate start time")
+    )

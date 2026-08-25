@@ -1,10 +1,13 @@
 package de.norm.events.scraper.panke
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -54,3 +57,10 @@ class PankeWebsiteImporter(
             }
         }
 }
+
+val PANKE_LIMITATIONS =
+    VenueLimitations(
+        EventSource.PANKE,
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue expands each event's full text inline and publishes no page per event"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue publishes no category, and its titles are series names rather than formats")
+    )

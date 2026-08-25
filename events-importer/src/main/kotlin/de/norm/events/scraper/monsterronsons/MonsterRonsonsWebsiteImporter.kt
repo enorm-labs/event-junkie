@@ -1,11 +1,14 @@
 package de.norm.events.scraper.monsterronsons
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -98,3 +101,12 @@ class MonsterRonsonsWebsiteImporter(
             null
         }
 }
+
+val MONSTER_RONSONS_LIMITATIONS =
+    VenueLimitations(
+        EventSource.MONSTER_RONSONS,
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue states one time per night, which is taken as the start"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the price lives in prose and is often a time-banded tariff, which the model has no field for"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the venue bills no lineup beyond the host named in the title")
+    )

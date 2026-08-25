@@ -1,10 +1,13 @@
 package de.norm.events.scraper.loge
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -69,3 +72,10 @@ class LogeWebsiteImporter(
             artists = primary.artists.ifEmpty { fallback.artists }
         )
 }
+
+val LOGE_LIMITATIONS =
+    VenueLimitations(
+        EventSource.LOGE,
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue has no category field; a live-music venue, so an unmarked title defaults to a concert"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "a title without a + separator can be a band or an event name, so no act is derived from one")
+    )

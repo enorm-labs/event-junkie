@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -119,3 +120,6 @@ class JunctionBarWebsiteImporter(
         private const val DJ_PAGE_FALLBACK = "DJ_html/DJ.html"
     }
 }
+
+/** Nothing this source withholds needs declaring (#715). */
+val JUNCTION_BAR_LIMITATIONS = VenueLimitations(EventSource.JUNCTION_BAR)

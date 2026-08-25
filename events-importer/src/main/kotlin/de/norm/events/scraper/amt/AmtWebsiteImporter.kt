@@ -1,9 +1,12 @@
 package de.norm.events.scraper.amt
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -65,3 +68,9 @@ class AmtWebsiteImporter(
             .map { resolveUrl(entryUrl, it) }
             .distinct()
 }
+
+val AMT_LIMITATIONS =
+    VenueLimitations(
+        EventSource.AMT,
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the DJ line separates names with spaces and nothing else, so it cannot be split apart reliably")
+    )

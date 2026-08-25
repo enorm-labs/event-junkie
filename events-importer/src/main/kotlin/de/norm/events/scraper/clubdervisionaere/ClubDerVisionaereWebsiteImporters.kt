@@ -1,10 +1,13 @@
 package de.norm.events.scraper.clubdervisionaere
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -104,3 +107,14 @@ class MsHoppetosseWebsiteImporter(
     /** Clock for the parser's weekday-based year inference. Defaults to the system clock; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : AbstractClubDerVisionaereRoomImporter(htmlFetcher, ClubDerVisionaereRoom.MS_HOPPETOSSE, clock)
+
+val CLUB_DER_VISIONAERE_LIMITATIONS =
+    VenueLimitations(
+        sources = setOf(EventSource.CLUB_DER_VISIONAERE, EventSource.SONNENRAUM, EventSource.MS_HOPPETOSSE),
+        limitations =
+            listOf(
+                AcceptedLimitation(LimitedAspect.START_TIME, "the venue never publishes one; a from-HH:mm marker on the act line is that act's set time"),
+                AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue publishes no category of its own; every listing is a club night"),
+                AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the programme page is the source for every night")
+            )
+    )

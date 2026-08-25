@@ -1,9 +1,12 @@
 package de.norm.events.scraper.aeden
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -71,3 +74,10 @@ class AedenWebsiteImporter(
             .map { resolveUrl(entryUrl, it) }
             .distinct()
 }
+
+val AEDEN_LIMITATIONS =
+    VenueLimitations(
+        EventSource.AEDEN,
+        AcceptedLimitation(LimitedAspect.PRICE, "the month page carries no prices"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the month page links no page per night")
+    )

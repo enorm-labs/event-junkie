@@ -1,10 +1,13 @@
 package de.norm.events.scraper.peteredel
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -58,3 +61,18 @@ class PeterEdelWebsiteImporter(
             }
         }
 }
+
+val PETER_EDEL_LIMITATIONS =
+    VenueLimitations(
+        EventSource.PETER_EDEL,
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the venue publishes no event category at all, across a programme spanning concerts, comedy, readings and dance teas"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "without a category nothing confirms that a title is a performer rather than a format, so an act is taken only when a support act is billed"
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the title links straight to the ticket shop")
+    )

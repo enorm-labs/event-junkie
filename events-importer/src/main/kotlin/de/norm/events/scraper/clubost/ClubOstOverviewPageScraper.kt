@@ -30,17 +30,15 @@ import org.jsoup.nodes.Element
  * [parseClubOstTime] implement only that one. Adding a shared `Accept-Language` to that client would
  * silently switch the rendering and must come with a matching parser here.
  *
- * The listing carries **no category, genre, price, lineup or door time**: every card is a
- * flyer, a title, a start time and a Resident Advisor ticket link. Those fields are simply
- * not published, so they are left null rather than guessed. The venue is a techno club whose
- * whole programme is club nights, so every event is typed [EventType.PARTY] outright — the
- * same call [gartn][de.norm.events.scraper.gartn], [voidclub][de.norm.events.scraper.voidclub]
- * and the other category-less techno rooms make.
+ * Every card is a flyer, a title, a start time and a Resident Advisor ticket link. The venue is a
+ * techno club whose whole programme is club nights, so every event is typed [EventType.PARTY]
+ * outright — the same call [gartn][de.norm.events.scraper.gartn],
+ * [voidclub][de.norm.events.scraper.voidclub] and the other category-less techno rooms make. The
+ * template does reserve a slot for the lineup — an empty `div.artist`, blank on every event so far,
+ * the bills living on the linked Resident Advisor pages — which is where one would come from should
+ * the venue start filling it in.
  *
- * The lineup is the one of those the template *reserves a slot for* — each card renders an empty
- * `div.artist`, left blank on every event so far, with the bills on the linked Resident Advisor pages
- * instead. No artists are extracted, but that div is where a lineup would come from should the venue
- * start filling it in.
+ * @see CLUB_OST_LIMITATIONS for what the source does not publish.
  *
  * Card structure (Bootstrap grid, one `.event-item` per event):
  * - `a[href^=/event/]` — the detail page link; its numeric id is the stable `sourceId`

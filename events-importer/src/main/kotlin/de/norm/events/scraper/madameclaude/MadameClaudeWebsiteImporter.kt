@@ -4,6 +4,7 @@ import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -85,3 +86,6 @@ class MadameClaudeWebsiteImporter(
         const val PER_PAGE = 100
     }
 }
+
+/** Nothing this source withholds needs declaring (#715). */
+val MADAME_CLAUDE_LIMITATIONS = VenueLimitations(EventSource.MADAME_CLAUDE)

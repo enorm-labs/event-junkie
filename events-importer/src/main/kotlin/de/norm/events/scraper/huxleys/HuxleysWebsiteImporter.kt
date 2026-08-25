@@ -2,10 +2,13 @@ package de.norm.events.scraper.huxleys
 
 import de.norm.events.event.EventStatus
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.buildArtistsForEventType
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
@@ -96,3 +99,9 @@ class HuxleysWebsiteImporter(
         const val SUBTITLE_SEPARATOR = " | "
     }
 }
+
+val HUXLEYS_LIMITATIONS =
+    VenueLimitations(
+        EventSource.HUXLEYS,
+        AcceptedLimitation(LimitedAspect.PRICE, "most shows sell through Eventim and print no price at all — one of eleven sampled pages carried one")
+    )

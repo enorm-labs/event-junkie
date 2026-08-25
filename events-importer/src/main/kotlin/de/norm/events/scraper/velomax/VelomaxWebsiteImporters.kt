@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -97,3 +98,14 @@ class VelodromWebsiteImporter(
 class UfoImVelodromWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractVelomaxHallImporter(htmlFetcher, VelomaxHall.UFO_IM_VELODROM)
+
+/** Nothing this source withholds needs declaring (#715). */
+val VELOMAX_LIMITATIONS =
+    VenueLimitations(
+        sources =
+            setOf(
+                EventSource.MAX_SCHMELING_HALLE,
+                EventSource.UFO_IM_VELODROM,
+                EventSource.VELODROM
+            )
+    )

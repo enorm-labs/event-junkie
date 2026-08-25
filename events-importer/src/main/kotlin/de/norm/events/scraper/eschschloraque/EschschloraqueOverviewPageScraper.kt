@@ -33,19 +33,14 @@ import java.time.format.DateTimeParseException
  * same `span.date-display-single`; the machine attribute carries a four-digit year and needs no
  * German month table, so it is the only date source and an event without it is skipped.
  *
- * Accepted limitations — the venue publishes none of this, so there is nothing to repair:
- * - **No event categories.** The programme mixes DJ nights, live sets, bingo and theatre with no
- *   kind/genre field anywhere, so [inferUnmarkedTitleType] applies: an event is `OTHER` unless its
- *   *title* names an unambiguous format. Deliberately **not** [inferConcertVenueType]
- *   [de.norm.events.scraper.inferConcertVenueType] — defaulting a bar's DJ nights to `CONCERT`
- *   would also mint each event name ("Hot Tunes for Cool Cats") as a headliner.
- * - **No prices and no ticket shop.** Entry is settled at the door; a night that says so in prose
- *   is flagged via [FREE_ENTRY_PHRASE], and everything else keeps an unknown price rather than a
- *   guessed one.
- * - **One time, not two.** The venue publishes a single "ab HH Uhr" start and never a separate
- *   doors time, so [ScrapedEvent.doorsTime] stays null.
- * - **No sold-out or cancellation flags**, so every event is `SCHEDULED`.
+ * Typing goes through [inferUnmarkedTitleType], so an event is `OTHER` unless its *title* names an
+ * unambiguous format. Deliberately **not** [inferConcertVenueType]
+ * [de.norm.events.scraper.inferConcertVenueType]: defaulting a bar's DJ nights to `CONCERT` would
+ * also mint each event name ("Hot Tunes for Cool Cats") as a headliner. A night stating free entry
+ * in prose is flagged via [FREE_ENTRY_PHRASE]; every other night keeps an unknown price rather than
+ * a guessed one.
  *
+ * @see ESCHSCHLORAQUE_LIMITATIONS for what the venue does not publish.
  * @see EschschloraqueWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.eschschloraque.de/">Eschschloraque Rümschrümp</a>
  */

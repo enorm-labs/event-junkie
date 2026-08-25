@@ -1,10 +1,13 @@
 package de.norm.events.scraper.eschschloraque
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -56,3 +59,14 @@ class EschschloraqueWebsiteImporter(
             }
         }
 }
+
+val ESCHSCHLORAQUE_LIMITATIONS =
+    VenueLimitations(
+        EventSource.ESCHSCHLORAQUE,
+        AcceptedLimitation(LimitedAspect.PRICE, "entry is settled at the door and the venue names no figure"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the venue runs no ticket shop"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the venue flags nothing sold out"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the venue flags nothing cancelled, so every event stays scheduled"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the programme mixes DJ nights, live sets, bingo and theatre with no kind field anywhere"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes a single ab-HH-Uhr start and never a separate doors time")
+    )

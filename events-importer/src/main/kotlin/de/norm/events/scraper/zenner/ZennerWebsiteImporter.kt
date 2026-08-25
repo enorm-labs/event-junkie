@@ -1,9 +1,12 @@
 package de.norm.events.scraper.zenner
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.net.URI
@@ -88,3 +91,12 @@ class ZennerWebsiteImporter(
         const val ROOT_PAGE_NAME = "index"
     }
 }
+
+val ZENNER_LIMITATIONS =
+    VenueLimitations(
+        EventSource.ZENNER,
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue publishes no prices"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no doors times"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the venue publishes no sold-out state"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue publishes no per-event pages")
+    )

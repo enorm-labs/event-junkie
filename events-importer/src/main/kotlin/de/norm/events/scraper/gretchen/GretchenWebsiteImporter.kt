@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -56,3 +57,6 @@ class GretchenWebsiteImporter(
             }
         }
 }
+
+/** Nothing this source withholds needs declaring (#715). */
+val GRETCHEN_LIMITATIONS = VenueLimitations(EventSource.GRETCHEN)

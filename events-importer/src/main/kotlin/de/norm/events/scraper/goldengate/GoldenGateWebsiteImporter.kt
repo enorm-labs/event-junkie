@@ -1,10 +1,13 @@
 package de.norm.events.scraper.goldengate
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -57,3 +60,16 @@ class GoldenGateWebsiteImporter(
             }
         }
 }
+
+val GOLDEN_GATE_LIMITATIONS =
+    VenueLimitations(
+        EventSource.GOLDEN_GATE,
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the club emits no category at all and programmes nothing but DJ nights, so the type is fixed rather than inferred"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.PER_EVENT_PAGE,
+            "there is no custom `event` post type in the WordPress REST API and no structured data; the single rendered page is the source"
+        )
+    )

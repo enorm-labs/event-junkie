@@ -10,10 +10,18 @@ The data is scraped from Berlin venue websites by the importers in `events-impor
 **actionable** quality problems — parsing bugs, normalization gaps, and oddities worth a human's attention — and to distinguish them from limitations already
 documented and accepted.
 
-Before reporting anything, check whether the finding is already known. Two places record that: the open issues, mirrored in `build/BACKLOG.md` (defects already
-queued for repair — `grep` it, or `gh issue list --label importer`) and the KDoc of the importer and scrapers under `scraper/<venue>/` (limitations the venue's parser accepts deliberately). A finding matching either —
-artist-less concerts at Badehaus/Privatclub, `eventType` defaulting to `OTHER`, first-page-only pagination — must be labelled **known/accepted** and separated
-from genuinely new ones. Don't re-litigate accepted trade-offs.
+Before reporting anything, check whether the finding is already known. Two places record that:
+
+- **[`docs/data-quality/ACCEPTED_LIMITATIONS.md`](../../docs/data-quality/ACCEPTED_LIMITATIONS.md)** — one row per source and aspect, saying what that venue's
+  site does not publish and why (#715). It is generated from `AcceptedLimitations.kt`, and `AcceptedLimitationsTest` fails the build when the two disagree, so
+  it is a lookup rather than a reading: match the finding's `event_source` and the field it is about against the table. **Read this instead of grepping scraper
+  KDoc.** The KDoc explains how each parser copes; it is not the register of what the source withholds, and treating it as one is what this table replaced.
+- **The open issues**, mirrored in `build/BACKLOG.md` (defects already queued for repair — `grep` it, or `gh issue list --label importer`).
+
+A finding matching either — artist-less concerts at Badehaus, `eventType` defaulting to `OTHER`, first-page-only pagination — must be labelled
+**known/accepted** and separated from genuinely new ones. Don't re-litigate accepted trade-offs.
+
+A source **absent** from the limitations table is one that publishes everything the model stores, so a gap there is a finding, not a trade-off.
 
 ## Connecting to the database
 
@@ -105,7 +113,7 @@ useful — a problem concentrated at one venue usually points at that importer.
   (`2026-07-07`).
 - `start_time` earlier than `doors_time` (doors should be ≤ start).
 - Negative or absurd prices; `price_presale`/`price_box_office` with `free = true`; `price_currency`
-  other than `EUR`; `sold_out = true` for a venue whose importer KDoc says it cannot detect sold-out at all (SO36).
+  other than `EUR`; `sold_out = true` for a venue declaring `SOLD_OUT` in the limitations table — a flag no parser sets should never be true in the data.
 - Many events from one `event_source` sharing the exact same date/time (parsing collapsed to a default).
 
 ### 6. Referential & consistency integrity
@@ -126,11 +134,12 @@ Write the report to `docs/data-quality/audit-<YYYY-MM-DD>.md` (create the direct
 2. **Findings**, grouped by category and ordered by severity:
     - 🔴 **wrong or missing user-visible data** · 🟠 **data-quality / noise** · 🟢 **cosmetic / edge case**.
     - Each finding: what it is, the SQL that found it, the **count**, 3–5 **sample rows**, the likely **root cause** (which importer / normalizer), and whether
-      it's **NEW** or **KNOWN/accepted** (citing the issue number or the KDoc that records it).
+      it's **NEW** or **KNOWN/accepted** (citing the issue number, or the source and aspect of the limitations-table row that covers it).
 3. **Recommended actions** — for NEW findings, point at the specific normalizer or scraper to fix (`canonicalArtistName`, `canonicalPromoterName`,
    `GenreNormalizer`, `isNonArtistName`,
-   `stripArtistSuffix`, per-venue parser). If it is an accepted limitation to document rather than fix, suggest the KDoc it belongs in; if it is repairable,
-   suggest an issue using the 🔍 Importer / data defect form.
+   `stripArtistSuffix`, per-venue parser). If it is an accepted limitation to document rather than fix, suggest the `AcceptedLimitation` to add to that
+   venue's `*_LIMITATIONS` declaration — aspect and one-sentence reason — rather than a paragraph of KDoc; if it is repairable, suggest an issue using the
+   🔍 Importer / data defect form.
 
 Keep the report skimmable and every claim backed by a query result. Do not apply fixes, edit importer code, or modify the database as part of the audit —
 reporting is the deliverable. If the user wants a fix afterward, that's a separate, explicitly-requested step.

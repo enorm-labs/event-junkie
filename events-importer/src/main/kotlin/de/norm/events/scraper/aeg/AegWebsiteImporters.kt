@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -80,3 +81,13 @@ class UberArenaWebsiteImporter(
 class UberEatsMusicHallWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractAegVenueImporter(htmlFetcher, EventSource.UBER_EATS_MUSIC_HALL)
+
+/** Nothing this source withholds needs declaring (#715). */
+val AEG_LIMITATIONS =
+    VenueLimitations(
+        sources =
+            setOf(
+                EventSource.UBER_ARENA,
+                EventSource.UBER_EATS_MUSIC_HALL
+            )
+    )

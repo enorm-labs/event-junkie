@@ -1,11 +1,14 @@
 package de.norm.events.scraper.admiralspalast
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
@@ -110,3 +113,9 @@ class AdmiralspalastWebsiteImporter(
             emptyList()
         }
 }
+
+val ADMIRALSPALAST_LIMITATIONS =
+    VenueLimitations(
+        EventSource.ADMIRALSPALAST,
+        AcceptedLimitation(LimitedAspect.GENRE, "the house classifies by staging format (Konzert, Lesung) and names no musical style anywhere")
+    )
