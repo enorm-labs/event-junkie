@@ -1,21 +1,29 @@
 # Restoring the database
 
-**Read this top to bottom. Do not skip to the commands.** The design and the reasoning are [BACKUPS.md](BACKUPS.md); this is the procedure, and it is written on
-the assumption that you are reading it because something has already gone wrong.
+**Read this top to bottom. Do not skip to the commands.** The design and the reasoning are in [BACKUPS.md](BACKUPS.md). This page is the procedure, and it
+assumes you are reading it because something already went wrong.
 
-**Sections 4 and 5 have been executed against a real cluster and passed. Section 6 has not** — it says so where it matters.
+## The short version
 
-## Stop. Three things before you touch anything
+```sh
+sudo wg-quick up ~/.wireguard/staging.conf      # nothing is reachable without the tunnel
+ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1
+sudo -u postgres /usr/local/bin/walg check      # is there anything to restore from?
+```
 
-1. **Do not restore in place first.** Almost every situation is better served by restoring into a **scratch cluster on port 5433** and looking, which costs
-   nothing and risks nothing. The live database is evidence until you decide otherwise. §4.
-2. **Do not stop the live cluster to "keep things from getting worse".** A running PostgreSQL keeps archiving WAL, and that WAL is what shortens the window you
-   can recover to. Stopping it freezes the damage _and_ the recovery point.
-3. **Write down the time now**, and the time you first noticed. Point-in-time recovery is only as good as your estimate of when things were still right, and
-   that estimate degrades fast once you start working.
+Three rules, before you touch anything:
 
-> **If the volume is full**, none of the above applies and you have a different emergency: PostgreSQL will stop accepting writes and archiving will already have
-> failed. Go to §8, first row.
+1. **Do not restore in place first.** Almost every situation wants a **scratch cluster on port 5433** instead (§4). It costs nothing and risks nothing. The live
+   database is evidence until you decide otherwise.
+2. **Do not stop the live cluster to "keep things from getting worse".** A running PostgreSQL keeps archiving WAL. That WAL is what shortens the window you can
+   recover to. Stopping it freezes the damage _and_ the recovery point.
+3. **Write down the time now**, and the time you first noticed. Point-in-time recovery is only as good as your estimate of when things were still right. That
+   estimate degrades fast once you start working.
+
+Then read §1 for which restore you need, and take the sections in order.
+
+> **If the volume is full**, none of the above applies and you have a different emergency. PostgreSQL stops accepting writes, and archiving already failed. Go
+> to §8, first row.
 
 ## 1. Which restore do you need
 
@@ -56,11 +64,10 @@ sudo -u postgres psql -x -c 'select archived_count, failed_count, last_archived_
 Three things to read off, in this order:
 
 - **`walg check` fails with "no base backup at all"** → there is nothing to restore. Most likely `/etc/wal-g/credentials.env` is missing after a rebuild
-  (BACKUPS.md §5). Nothing below will work until §8b of CLUSTER_BOOTSTRAP.md has been done.
+  (BACKUPS.md §5). Nothing below works until you do §8b of CLUSTER_BOOTSTRAP.md.
 - **`failed_count` is non-zero and rising** → archiving is broken _now_. Your recovery point is wherever it broke, not the present. Fix it before you plan a
   point-in-time target, or you will aim at a time no WAL exists for.
-- **The newest backup's `finish_time`** → everything after this comes from WAL replay. If WAL archiving has been broken since before that, the newest backup is
-  all you have.
+- **The newest backup's `finish_time`** → everything after this comes from WAL replay. If WAL archiving broke before that, the newest backup is all you have.
 
 ## 4. Restore beside the live database — the safe default
 
@@ -84,8 +91,8 @@ the damage.
 **A base backup contains no configuration.** Debian keeps `postgresql.conf` in `/etc/postgresql/18/main`, outside `PGDATA`, so the restored directory has none
 and `pg_ctl` fails with `could not access the server configuration file`.
 
-**Do not solve that by pointing at the live cluster's config.** It carries `data_directory`, `external_pid_file`, and — the one that matters —
-**`archive_mode = on` with the same `WALG_S3_PREFIX`**, so the scratch cluster would start pushing WAL into the very prefix it is restoring from.
+**Do not solve that by pointing at the live cluster's config.** It carries `data_directory` and `external_pid_file`. It also carries the one that
+matters: **`archive_mode = on` with the same `WALG_S3_PREFIX`**. The scratch cluster would then push WAL into the very prefix it is restoring from.
 
 Install this once as `/var/lib/postgresql/drill-start.sh`, owned by `postgres`, mode 0755. The optional argument is what makes §5 the same script as this one:
 
@@ -134,7 +141,7 @@ sudo -u postgres psql -h /tmp -p 5433 -d events \
 The tables are `events.event` and `events.artist` — **singular, in the `events` schema** ([ADR-004](../adr/ADR-004_DEDICATED_DATABASE_SCHEMA.md)), not `public` and
 not plural.
 
-`ERROR: Archive '00000001.history' does not exist` in `/tmp/drill.log` is **normal noise**, not a failure — a timeline that has never failed over has no history
+`ERROR: Archive '00000001.history' does not exist` in `/tmp/drill.log` is **normal noise**, not a failure — a timeline that never failed over has no history
 file, and `archive recovery complete` follows it.
 
 ### 4.4 Copy what you need back
@@ -147,8 +154,8 @@ sudo -u postgres pg_dump -h /tmp -p 5433 -d events -t events.<table> --data-only
 sudo -u postgres psql -d events -f /tmp/recovered.sql
 ```
 
-**Think about foreign keys and about what has changed since.** Restoring rows into a live database that has moved on can violate constraints or resurrect
-records something else has legitimately deleted. `--data-only` into a staging copy first, if there is any doubt.
+**Think about foreign keys, and about what changed since.** Restoring rows into a live database that moved on can violate constraints. It can also resurrect
+records that something else deleted legitimately. `--data-only` into a staging copy first, if there is any doubt.
 
 Then go to §7.
 
@@ -156,8 +163,8 @@ Then go to §7.
 
 Same as §4, with a target. This is the answer to a bad migration, which is the disaster this system is most likely to actually have.
 
-**Pick the target with care.** It must be a moment when things were still right, and it applies to the _whole database_ — everything committed after it is gone
-from the restored copy. Err earlier: you can always replay further forward by restoring again with a later target, and you cannot un-lose a transaction.
+**Pick the target with care.** It must be a moment when things were still right, and it applies to the _whole database_. Everything committed after it is gone
+from the restored copy. Err earlier: you can always restore again with a later target, and you cannot un-lose a transaction.
 
 ```sh
 TARGET='2026-08-18 10:00:34.114865+00'      # UTC, and before the damage
@@ -176,18 +183,19 @@ sudo grep -E 'recovery stopping|last completed transaction' /tmp/drill.log
 ```
 
 **If it says `recovery stopping` at a time later than your target**, the target fell inside a transaction and PostgreSQL stopped at the next boundary. That is
-correct behaviour. **If the cluster is still in recovery** (`select pg_is_in_recovery()` returns `t`), `recovery_target_action = 'promote'` did not fire —
-usually because the target is beyond the end of the archived WAL.
+correct behaviour. **If the cluster is still in recovery** (`select pg_is_in_recovery()` returns `t`), `recovery_target_action = 'promote'` did not fire. The
+target is usually beyond the end of the archived WAL.
 
 Then either copy data back (§4.4) or promote this copy to be the real database (§6).
 
 ## 6. Replacing the live database — the one that is actually dangerous
 
-> **This has never been performed, on any environment.** §4 and §5 are rehearsed quarterly; this is not, because rehearsing it means destroying a working
-> database. Treat every step as unverified, read it through before starting, and prefer §4.4 whenever the damage is bounded enough to copy back.
+> **Nobody ever performed this, on any environment.** The quarterly drill rehearses §4 and §5. It cannot rehearse this one, because rehearsing it means
+> destroying a working database. Treat every step as unverified, read it through before starting, and prefer §4.4 whenever the damage is bounded enough to copy
+> back.
 
-**Take a copy of the broken database first.** It is evidence, it is the only thing that can tell you what happened, and once it is gone the question of _why_
-usually goes with it.
+**Take a copy of the broken database first.** It is evidence, and the only thing that can tell you what happened. Once it is gone, the question of _why_ usually
+goes with it.
 
 ```sh
 sudo -u postgres pg_dump -d events -Fc -f /var/lib/postgresql/broken-$(date -u +%Y%m%dT%H%M%SZ).dump
@@ -224,12 +232,12 @@ sudo -u postgres psql -tAc 'select pg_is_in_recovery()'      # must be f
 
 **Four things that will bite here, and the third is the one that surprises people:**
 
-- **`archive_mode` is still on**, and once promoted this cluster is on a **new timeline**. That is correct and wanted — it means the new history is archived too
-  — but the bucket now holds two timelines, and a future restore has to know which one it wants. Note the timeline in your incident record.
+- **`archive_mode` is still on**, and once promoted this cluster is on a **new timeline**. That is correct and wanted, because the new history is archived too.
+  But the bucket now holds two timelines, and a future restore has to know which one it wants. Note the timeline in your incident record.
 - **Take a fresh base backup immediately after promoting** (§7). Until you do, recovery depends on replaying across a timeline switch, which is a harder thing
   to be confident about at 03:00.
-- **The `events` role's password comes back as it was when the backup was taken.** If it has been rotated since, the `events-db` Secret in the cluster no longer
-  matches and every application will fail authentication — reporting it, unhelpfully, the same way it reports a missing role. Fix with
+- **The `events` role's password comes back as it was when the backup was taken.** If you rotated it since, the `events-db` Secret no longer matches and every
+  application fails authentication. PostgreSQL reports that exactly as it reports a missing role, which is why it misleads. Fix with
   `ALTER ROLE events PASSWORD …` to match the Secret, or re-create both. CLUSTER_BOOTSTRAP.md §8.
 - **`main.broken` is on the same 10 GB volume.** It will not fit twice for long. Keep it until the incident is understood, then remove it deliberately — and
   check `df` before you start, not after.
@@ -254,8 +262,14 @@ sudo ss -lnt | grep -q ':5433' && echo 'STILL BOUND - do not delete the director
 sudo rm -rf /var/lib/postgresql/drill /tmp/drill.log
 ```
 
-**Then write down what happened**: what was lost, what the recovery point ended up being, how long it took, and which step of this document was wrong. The last
-one is the most valuable — three errors in this procedure were found the first time it was run, and they were only found by running it.
+**Then write down what happened:**
+
+- what was lost
+- what the recovery point ended up being
+- how long it took
+- **which step of this document was wrong**
+
+The last one is the most valuable. The first real run of this procedure found three errors in it, and nothing except running it would have found them.
 
 ## 8. Traps, in the order they bite
 
