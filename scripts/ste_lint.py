@@ -33,9 +33,10 @@ LIST_ITEM = re.compile(r"^(\s*)(?:[-*+]|(\d+)\.)\s+(.*)$")
 QUOTE = re.compile(r"^(\s*)>[ \t]?")
 ALLOW = re.compile(r"<!--\s*ste-lint:\s*allow(.*?)-->", re.IGNORECASE | re.DOTALL)
 
-# Emphasis and links are already stripped by the time this runs, so a sentence can
-# only open with a letter or a bracket.
-BOUNDARY = re.compile(r"(?<=[.!?])[\"')\]]*\s+(?=[A-Z(\[\u00a7])")
+# Emphasis and links are already stripped by the time this runs, so a sentence can open with a
+# capital, a bracket, a section mark or a digit. Decimals and version numbers are protected first,
+# so a digit here is a new sentence rather than the tail of a number.
+BOUNDARY = re.compile(r"(?<=[.!?])[\"')\]]*\s+(?=[A-Z(\[\u00a7\d])")
 
 # Case-insensitive, so "No." over-protects "no." and under-splits rather than over-splits.
 # That is the safer direction: an over-split sentence measures short and passes.
