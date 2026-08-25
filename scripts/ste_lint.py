@@ -30,6 +30,7 @@ FENCE = re.compile(r"^\s*(`{3,}|~{3,})(.*)$")
 HEADING = re.compile(r"^\s*#{1,6}\s")
 AMENDMENT = re.compile(r"^\s*#{1,6}\s+(Amendment|Update)\b", re.IGNORECASE)
 LIST_ITEM = re.compile(r"^(\s*)(?:[-*+]|(\d+)\.)\s+(.*)$")
+QUOTE = re.compile(r"^(\s*)>[ \t]?")
 ALLOW = re.compile(r"<!--\s*ste-lint:\s*allow(.*?)-->", re.IGNORECASE | re.DOTALL)
 
 # Emphasis and links are already stripped by the time this runs, so a sentence can
@@ -70,9 +71,11 @@ def clean(text):
     text = re.sub(r"!\[([^\]]*)\]\([^)]*\)", r"\1", text)
     text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)
     text = re.sub(r"\[([^\]]*)\]\[[^\]]*\]", r"\1", text)
-    text = re.sub(r"`[^`]*`", "X", text)
-    text = re.sub(r"<https?://[^>]*>", "X", text)
-    text = re.sub(r"https?://\S+", "X", text)
+    # Lowercase placeholders on purpose: a single capital is what protect() treats as an initial,
+    # so "X." would hide a full stop and silently join the next sentence onto this one.
+    text = re.sub(r"`[^`]*`", "code", text)
+    text = re.sub(r"<https?://[^>]*>", "link", text)
+    text = re.sub(r"https?://\S+", "link", text)
     text = re.sub(r"<[^>]+>", " ", text)
     text = re.sub(r"&[a-zA-Z#0-9]+;", " ", text)
     text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
@@ -139,6 +142,10 @@ def blocks_of(lines, findings, path):
         return None
 
     for lineno, raw in enumerate(lines, 1):
+        # A blockquote here is a callout, not a quotation — the warnings a reader most needs to
+        # parse correctly. Strip the marker and read what is inside it as ordinary prose.
+        raw = QUOTE.sub("", raw, count=1)
+
         if fence is not None:
             if raw.strip().startswith(fence):
                 fence = None
@@ -166,7 +173,7 @@ def blocks_of(lines, findings, path):
             )
 
         stripped = raw.strip()
-        if not stripped or HEADING.match(raw) or stripped.startswith(("|", ">", "<!--")):
+        if not stripped or HEADING.match(raw) or stripped.startswith(("|", "<!--")):
             done = close()
             if done:
                 yield done
