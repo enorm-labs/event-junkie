@@ -16,23 +16,18 @@ spring:
     schemas: events
     create-schemas: true
 
-# Mirrors the main application.yaml's exposure list, and has to (#415).
+# Mirrors the main application.yaml's exposure list and health groups, and has to (#415). **This
+# file shadows the main one rather than merging with it**: with the list absent here Spring falls
+# back to `health` only, so `/actuator/prometheus` 404s in tests while working in production, and
+# the groups fall back to `readinessState` alone, proving nothing about the group that ships. The
+# consequence worth knowing is that a test cannot catch a typo in the *main* file — it never reads
+# it — which is why `MetricsExposureConfigTest` and `ReadinessGroupConfigTest` assert that file
+# directly and assert the two agree.
 #
-# **This file shadows the main one rather than merging with it**, which is what the header above
-# means in practice for anything actuator-related: with the list absent here, Spring falls back to
-# its default of `health` only, and `/actuator/prometheus` 404s in tests while working perfectly in
-# production. The consequence worth knowing: a test cannot catch a typo in the *main* file's list,
-# because it never reads it. `MetricsExposureConfigTest` asserts that file directly for exactly that
-# reason.
-#
-# The readiness and liveness groups are mirrored for the same reason as the exposure list: without
-# them the tests exercise Spring's default readiness group (`readinessState` only) and prove nothing
-# about the group that actually ships. `ReadinessGroupConfigTest` asserts the two files agree.
-#
-# Both contributors named here exist in every test context — all BFF tests are full @SpringBootTest
-# against a Testcontainers PostgreSQL, so `r2dbc` and `eventsSchema` are both present. A future slice
-# test (@WebFluxTest, no ConnectionFactory) would fail to start on group-membership validation; that
-# is the correct signal, and the fix is to exclude the group, not the indicator.
+# Both contributors named here exist in every test context: all BFF tests are full @SpringBootTest
+# against a Testcontainers PostgreSQL. A future slice test (@WebFluxTest, no ConnectionFactory)
+# would fail to start on group-membership validation — the correct signal, and the fix is to exclude
+# the group, not the indicator.
 management:
   endpoints:
     web:

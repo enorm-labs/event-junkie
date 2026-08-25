@@ -1,24 +1,15 @@
 # The cert-manager namespace, declared here so it can carry Pod Security Admission labels (#604).
+# `createNamespace: true` on `cert-manager.yaml` cannot, for the reason `namespace.yaml` records:
+# it creates a bare namespace with no labels, and PSA is enforced by namespace label.
 #
-# **`createNamespace: true` on `cert-manager.yaml` cannot do this**, for the reason `namespace.yaml`
-# records: it creates a bare namespace with no labels, and PSA is enforced by namespace label. The
-# flag stays set on the HelmRelease and becomes a no-op — harmless, and cheaper than making the
-# release depend on this file having been applied first.
-#
-# **`restricted` is verified rather than assumed.**
-# #604's table listed a "plausible target" per namespace, and this is the one where the plausible
-# target held. Rendering `jetstack/cert-manager` v1.21.1 — the version `cert-manager.yaml` pins —
-# gives four pod-producing objects, and every one of them already satisfies the profile:
-#
-#     cm-cert-manager              runAsNonRoot, RuntimeDefault, drop ALL, no privilege escalation
-#     cm-cert-manager-cainjector   same
-#     cm-cert-manager-webhook      same
-#     cm-cert-manager-startupapicheck (Job)  same
-#
-# The Job matters as much as the Deployments: it runs once per install and a profile that rejected
-# it would fail the release rather than a pod, which reads as a chart problem rather than a policy
-# one. Re-render before bumping the pinned version — this label turns an upstream regression into a
-# release that will not install, which is the correct outcome but not an obvious one to diagnose.
+# **`restricted` is verified rather than assumed.** Rendering `jetstack/cert-manager` v1.21.1 — the
+# version `cert-manager.yaml` pins — gives four pod-producing objects, and all four already run
+# `runAsNonRoot` with `RuntimeDefault`, drop ALL and no privilege escalation: the controller, the
+# cainjector, the webhook, and the `startupapicheck` Job. The Job matters as much as the Deployments,
+# because a profile that rejected it would fail the *release* rather than a pod, which reads as a
+# chart problem rather than a policy one. **Re-render before bumping the pinned version** — this
+# label turns an upstream regression into a release that will not install, which is correct but not
+# obvious to diagnose.
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -30,8 +21,8 @@ metadata:
     # Pinned, so a cluster upgrade cannot tighten the profile under a running release. Raised
     # deliberately, with a rehearsal, like any other breaking change.
     pod-security.kubernetes.io/enforce-version: v1.34
-    # Left at `latest`: neither can reject anything, so the only thing a newer standard does here is
-    # say early what the next `enforce-version` bump would break.
+    # Left at `latest`: neither can reject anything, so a newer standard only says early what the
+    # next `enforce-version` bump would break.
     pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/warn: restricted
     app.kubernetes.io/part-of: event-junkie

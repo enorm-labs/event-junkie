@@ -305,19 +305,6 @@ jobs:
           done
           exit $status
 
-      # The three Trivy SARIF uploads used to sit here, between the scan and the publish. They have
-      # moved to the end of the job (#507), and in this workflow that ordering is worth more than it
-      # is in build-backend.yml.
-      #
-      # `upload-sarif` talks to the Code Scanning API. Its own `success() || failure()` guard kept it
-      # running when the scan failed — but every publish step below is guarded on
-      # `steps.version.outputs.publish == 'true'`, which carries an implicit `success()`. So an
-      # upload failing meant **nothing was published**: images built, images scanned clean, chart
-      # packaged, and then all six push steps skipped because a report could not be filed.
-      #
-      # On a push to `main` that is staging silently not receiving the chart — the same shape of
-      # invisible failure as #455, arrived at from a different direction.
-
       # --- Publish the images ---------------------------------------------------------------------
       #
       # `sbom: true` is the SBOM decision #443 asked for, taken rather than deferred. buildx generates
@@ -507,9 +494,15 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # Last in the job, and after the publish steps rather than before them (#507). One upload per
-      # image with its own category, as with the three detekt reports — Code Scanning keys on the
-      # category, so a single category would have each upload overwrite the last.
+      # Last in the job, and after the publish steps rather than before them (#507) — an ordering
+      # that matters more here than in build-backend.yml. Every publish step is guarded on
+      # `steps.version.outputs.publish == 'true'`, which carries an implicit `success()`, so an
+      # upload placed above them can skip the publish entirely: images built, images scanned clean,
+      # chart packaged, and then all six push steps skipped because a report could not be filed. On
+      # a push to `main` that is staging silently not receiving the chart (#455).
+      #
+      # One upload per image with its own category, as with the three detekt reports — Code Scanning
+      # keys on the category, so a single category would have each upload overwrite the last.
       #
       # `success() || failure()` on each, so the findings are filed whether the scan passed, the scan
       # failed, or a publish failed — and so that one upload failing cannot take the other two with

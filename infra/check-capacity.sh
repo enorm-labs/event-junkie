@@ -46,20 +46,19 @@ readonly API=https://api.hetzner.cloud/v1
 # code.
 #
 # KEEP IN STEP WITH infra/environments/*/main.tf — the `location` and `*_server_type` values there
-# are the truth and this is a copy. They diverged once already: staging moved to nbg1 on 2026-08-13
-# while this script still called fsn1 "the preferred location" for everything, so its output
-# answered a question nobody was asking.
+# are the truth and this is a copy. When they drift, this script answers a question nobody is
+# asking, and says nothing about being out of date (#460).
 export ENVIRONMENTS="staging=nbg1:cx33;production=fsn1:cx33,cx23"
 
 # Types worth being told about but which nothing depends on: what each environment would move to if
 # capacity returned. Reported, never counted — a watch entry that turns the script red makes the
 # `until` loop above permanently false, which is exactly what the old `cx43` entry did.
 #
-#   staging     cx43 is 16 GB for €19.03 and was `resource_unavailable` in nbg1 on 2026-08-21 —
-#               supported there, out of stock, so it can return. It is orderable in fsn1, which does
-#               staging no good: the Primary IPs and the PGDATA volume are location-bound (#460).
-#   production  the ARM pair it was declared as until 2026-08-21, and would go back to if that were
-#               both buyable and still cheaper. Today it is neither.
+#   staging     cx43 is 16 GB for €19.03, supported in nbg1 but out of stock there, so it can
+#               return. It is orderable in fsn1, which does staging no good: the Primary IPs and
+#               the PGDATA volume are location-bound (#460).
+#   production  the ARM pair it would go back to if that were both buyable and still cheaper —
+#               currently neither.
 export WATCH="staging=nbg1:cx43;production=fsn1:cax21,cax11"
 
 export NETWORK_ZONE=eu-central

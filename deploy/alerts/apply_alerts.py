@@ -107,9 +107,9 @@ def main():
         name = alert["name"]
         if name in known and known[name]:
             # **A PUT cannot move an alert to a different stream, and says 200 anyway.**
-            # Measured on 2026-08-24 (#702): `ej-site-down` was rewritten from `up` to
-            # `kube_deployment_status_replicas_available`, the update reported success,
-            # the query changed and `stream_name` did not. Nothing errored, and the only
+            # Measured with `ej-site-down` (#702): rewriting its query from `up` to
+            # `kube_deployment_status_replicas_available` reported success, the query
+            # changed and `stream_name` did not. Nothing errored, and the only
             # visible symptom was `alert_history` rows labelled with the old stream —
             # which is worse than an error, because a diagnostic that reads that label
             # then dates a firing to a rule that is no longer installed.

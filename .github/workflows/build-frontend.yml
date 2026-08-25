@@ -14,9 +14,9 @@ on:
     # job below, which is what keeps a documentation-only pull request from paying for a 10-minute
     # build: the work is skipped, the context still reports. The `push:` filter above keeps its
     # paths — nothing requires those runs.
-  # Manual trigger, for when the automatic ones cannot be relied on: during the 2026-08-06 Actions
-  # outage GitHub dropped ~85% of webhooks, so four PRs merged with no run ever created — and
-  # `gh run rerun` is no help when there is no run to re-run. Ignores the path filters above, so it
+  # Manual trigger, for when the automatic ones cannot be relied on: an Actions incident can drop
+  # most webhooks, and pull requests then merge with no run ever created — `gh run rerun` is no help
+  # when there is no run to re-run. Ignores the path filters above, so it
   # also serves "build this ref anyway". Pick the branch to run it on from the Actions tab, or
   # `gh workflow run build-frontend.yml --ref <branch>`.
   workflow_dispatch:
@@ -78,9 +78,8 @@ jobs:
     #
     # **30, not 15, because 15 could not fit a cache-miss run — and that made the miss permanent.**
     # `actions/cache` only writes in its post-job step, so a timeout kills the job before anything is
-    # saved: the miss recreates the conditions for the next miss. Six consecutive runs on 2026-08-19
-    # were cancelled this way, reported as `cancelled` rather than `failure`, which is why it did not
-    # look like what it was.
+    # saved: the miss recreates the conditions for the next miss. A run killed this way reports
+    # `cancelled` rather than `failure`, which is why it does not look like what it is.
     #
     # The arithmetic, measured rather than guessed:
     #

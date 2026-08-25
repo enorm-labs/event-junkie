@@ -1,11 +1,11 @@
 # GitHub deployments for production — what is running here, and since when (#565).
 #
-# **This file used to carry a `github` commit-status Provider as well, and #567 deleted it rather
-# than fixing it.** Recorded here because "why is there no commit status?" is the obvious question
-# and the answer is not obvious: notification-controller's `parseRevision` needs a git hash, and a
-# HelmRelease event reports the *chart version*. The mechanism that solves this — `originRevision`,
-# derived from `org.opencontainers.image.revision` — exists only in **kustomize-controller**;
-# helm-controller has no equivalent, so no annotation on the chart could have fixed it. See §4a.
+# **There is deliberately no `github` commit-status Provider here (#567).** "Why is there no commit
+# status?" is the obvious question and the answer is not: notification-controller's `parseRevision`
+# needs a git hash, while a HelmRelease event reports the *chart version*. The mechanism that solves
+# this — `originRevision`, derived from `org.opencontainers.image.revision` — exists only in
+# **kustomize-controller**; helm-controller has no equivalent, so no annotation on the chart can fix
+# it. See §4a.
 ---
 # A deployment is per-environment and produces a timeline, which is the question worth answering:
 # "what is on production right now, and since when" has no single commit to ask about.
@@ -25,9 +25,9 @@ spec:
   # **contents: write** — a strong scope, which is why it is per-cluster rather than shared.
   #
   # Fine-grained, scoped to this repository, and DIFFERENT FROM STAGING'S: one credential across two
-  # clusters means revoking it takes both down. **Hand-made rather than SOPS-encrypted** (decided
-  # 2026-08-19, docs/ops/SECRETS.md) — encrypting a `contents: write` token into a public repository
-  # publishes its ciphertext for good.
+  # clusters means revoking it takes both down. **Hand-made rather than SOPS-encrypted**
+  # (docs/ops/SECRETS.md) — encrypting a `contents: write` token into a public repository publishes
+  # its ciphertext for good.
   #
   # So nothing in this repository creates it, and this Provider is inert twice over until production
   # is bootstrapped (#560) and the Secret is typed against it by hand — CLUSTER_BOOTSTRAP.md §8.

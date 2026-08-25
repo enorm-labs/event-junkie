@@ -10,7 +10,7 @@
 # **It is not there when the network and the servers are created by the same apply**, which is
 # exactly what a first apply of an environment does: `hcloud_network`, `hcloud_network_subnet` and
 # both servers land within seconds of each other, so the NIC attaches while the machine is already
-# booting. Observed on production 2026-08-21 — both nodes came up with `enp7s0` DOWN and no stanza
+# booting. Observed on production: both nodes came up with `enp7s0` DOWN and no stanza
 # in the rendered netplan, while the API reported them attached with addresses assigned:
 #
 #     production-k3s        10.0.1.10   mac 86:00:00:37:53:f5

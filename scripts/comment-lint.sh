@@ -120,8 +120,13 @@ scan() {
 
             if (prose ~ /[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/ && file !~ datepolicy)
                 emit(file, FNR, "date", "a date belongs in git blame")
-            low = tolower(prose)
-            if (low ~ /(used to |previously,|previously the|as of [0-9]|it now |nowadays)/)
+            # Padded so a marker at either end still has a boundary: unpadded, "it now" matches
+            # inside "that split now lives", which is not a narration of anything.
+            low = " " tolower(prose) " "
+            # "nothing here can be used to push" is the verb, not a change. The passive takes a
+            # form of "be", which the narrating sense never does.
+            gsub(/ (be|been|being|is|are|was|were|get|gets) used to /, " ", low)
+            if (low ~ /(used to |previously,|previously the|as of [0-9]|[^a-z]it now[^a-z]|nowadays)/)
                 emit(file, FNR, "history", "comment narrates a change")
         }
         END { if (file != "") { endblock(); density() } }

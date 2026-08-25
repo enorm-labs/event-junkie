@@ -2,84 +2,47 @@ module "environment" {
   source = "../../modules/environment"
 
   environment = "production"
-  # fsn1, nbg1 and hel1 are interchangeable on cost (free traffic within the eu-central zone), so
-  # this is the line to change when capacity moves — see check-capacity.sh. It covers both nodes on
-  # purpose: they must share a location, since every query crosses that link.
+  # The line to change when capacity moves — fsn1, nbg1 and hel1 are interchangeable on cost (free
+  # traffic within eu-central) — and it covers both nodes on purpose: they must share a location,
+  # since every query crosses that link. All three advertise ARM and none will sell it, so this is
+  # not the lever for ARM; for x86 it is exactly the lever. See check-capacity.sh, whose header
+  # carries the caveat that matters most here: a successful probe means orderable at that instant
+  # and nothing about the next one.
   #
-  # All three advertise ARM; none of them will sell it, which is what the server types below record.
-  # Moving location is therefore not the lever it looks like for ARM. For x86 it is exactly the
-  # lever.
+  # **Not fsn1, and that constraint outlives the capacity one:** Object Storage lives there, so
+  # production in fsn1 would put the database and its only off-server backups in one location. nbg1
+  # over hel1 on latency — Nuremberg is ~25 ms closer to a Berlin audience (PLATFORM_SETUP.md §1) —
+  # accepting that staging is in nbg1 too. That costs little: staging is not production's failover,
+  # so the thing a second location would protect is not a thing this design has.
   #
-  # **nbg1, chosen mid-apply, because fsn1 ran out of cx33 between the probe and the order.**
-  # `check-capacity.sh --probe production` returned ORDERABLE for both types. The
-  # apply thirty minutes later created `production-postgres` (cx23) and then failed on the k3s node:
-  #
-  #     Error: error during placement (resource_unavailable)
-  #
-  # Re-probing immediately afterwards confirmed it: cx33 and cx43 both gone in fsn1, cx23 still
-  # there — so it is the 8 GB+ CX types that went, minutes after this environment took one of the
-  # last cx23s. **A successful probe means orderable at that instant and nothing about the next
-  # one**, which is a real limit of that tool and is now in its header.
-  #
-  # Both types were orderable in nbg1 and hel1 at the same moment. nbg1 was chosen on latency —
-  # Nuremberg is ~25 ms closer to a Berlin audience than Helsinki (PLATFORM_SETUP.md §1) — accepting
-  # that staging is also in nbg1. That co-location costs little: staging is not production's
-  # failover and never was, so the thing a second location would protect is not a thing this design
-  # has.
-  #
-  # **It also fixed something the original choice had wrong.** Object Storage lives in fsn1, so
-  # production in fsn1 would have put the database and its only off-server backups in one location.
-  # Moving out separates them, which is the property backups are for. That was not the reason for
-  # the move and is the better argument for it.
-  #
-  # Moving cost nothing today and will not be free again: the volume was empty and nothing was live.
-  # Once there is data, moving is a dump and a restore, not a variable.
+  # **Moving will not be free again.** Once there is data it is a dump and a restore, not a variable.
   location = "nbg1"
 
-  # CX33: 4 x86 vCPU / 8 GB / 80 GB disk. The memory arithmetic behind it — including why Flux
-  # rather than ArgoCD is what keeps this on an 8 GB node — is PLATFORM_SETUP.md §1 and is unchanged
-  # by this: cores, memory and disk are identical to the CAX21 this replaced.
+  # CX33: 4 x86 vCPU / 8 GB / 80 GB disk. The memory arithmetic — including why Flux rather than
+  # ArgoCD is what keeps this on an 8 GB node — is PLATFORM_SETUP.md §1.
   #
-  # **It is x86 because ARM cannot be bought, and that was settled by ordering rather than asking.**
-  # Bare servers — no IPs, no network, `start_after_create: false` — were ordered in every
-  # eu-central location. Refusals are free and return in ~0.1s:
+  # **It is x86 because ARM cannot be bought, and that is settled by ordering rather than asking.**
+  # cax11 and cax21 are refused in all three eu-central locations with
+  # `unsupported location for server type (invalid_input)`, four of those refusals in locations
+  # check-capacity.sh reports as available. The advertisement is wrong in BOTH directions, which is
+  # what `--probe` exists for: bare servers, no IPs, no network, `start_after_create: false`, and
+  # refusals return in ~0.1s. The shortage is not ARM-only — the whole `cx` line went with it.
   #
-  #   cax21   fsn1 / nbg1 / hel1   refused: `unsupported location for server type (invalid_input)`
-  #   cax11   fsn1 / nbg1 / hel1   refused: the same, in all three
-  #   cx33    fsn1                 ORDERABLE
-  #   cx23    fsn1                 ORDERABLE
+  # **ARM is also the dearer plan.** cx33 + cx23 is **€16.63/month against cax21 + cax11's €19.61**
+  # for the same cores, memory and disks, so waiting for CAX buys nothing at a price.
   #
-  # **Four of those six refusals were in locations check-capacity.sh reported as available.** That
-  # is the finding, not a footnote: the advertisement is wrong in BOTH directions, and acting on a
-  # green result would have moved this environment to nbg1 to collect exactly the same refusal.
-  # `--probe` was added to that script so the question can be settled the way this was.
-  #
-  # The shortage has held since 2026-08-11. It is not an ARM-only shortage and never was — the whole
-  # `cx` line was gone at the same time and has since come back, in fsn1, which is why there is now
-  # something to move to.
-  #
-  # **And ARM was, by this point, the dearer plan.**
-  # cx33 + cx23 is **€16.63/month against cax21 + cax11's €19.61**, for the same cores, the same
-  # memory and the same disks. So waiting was not buying a cheaper machine; it was buying nothing at
-  # a price. Whatever the ARM argument in PLATFORM_SETUP.md §1 was worth, it was not this.
-  #
-  # **Going back, if CAX returns.**
-  # A one-line change per node — but free only until the first apply. **After that it is a REBUILD
-  # of both nodes and not a resize**, because Hetzner cannot rescale across architectures and the
-  # plan renders a tidy in-place update that the API then refuses mid-apply. #460's volume means the
-  # database survives it; the k3s cluster does not. docs/ops/CLUSTER_BOOTSTRAP.md §Rebuilding a node.
-  #
-  # What keeps either direction safe is #264's multi-arch images: same chart, same tags, digests per
-  # platform, nothing to re-tag. And this restores staging/production parity rather than breaking
-  # it — staging has been x86 since 2026-08-13, so the two environments now match on architecture
-  # for the first time.
+  # **Going back, if CAX returns, is a REBUILD of both nodes and not a resize** — free only until
+  # the first apply. Hetzner cannot rescale across architectures, and the plan renders a tidy
+  # in-place update that the API then refuses mid-apply. #460's volume means the database survives;
+  # the k3s cluster does not (docs/ops/CLUSTER_BOOTSTRAP.md §Rebuilding a node). Either direction is
+  # safe for images because #264 publishes multi-arch: same chart, same tags, digests per platform.
   k3s_server_type = "cx33"
 
   # CX23: 2 x86 vCPU / 4 GB / 40 GB disk — spec-for-spec what CAX11 was, for the reason above.
   #
   # IPv6-only was the intent, and #270 settled that it cannot be — not on
   # a guess about `apt`, which turns out to be fine (apt.postgresql.org answers on IPv6), but on
-  # **github.com publishing no AAAA record at all**, checked 2026-08-18. wal-g ships only as a
+  # **github.com publishing no AAAA record at all**. wal-g ships only as a
   # GitHub release, so an IPv6-only node cannot install the one thing standing between us and losing
   # the database, and `backups.sh` stops the boot rather than coming up without it.
   #
@@ -95,7 +58,7 @@ module "environment" {
   # ([#284](https://github.com/enorm-labs/event-junkie/issues/284)). While this environment is dark
   # it holds no data and gets rebuilt on a whim; protection there buys nothing and costs a failed
   # apply every time something location-bound moves. That is not hypothetical — it is why they are
-  # false: the 2026-08-21 move to nbg1 had to delete four Primary IPs and a volume, and
+  # false: moving location has to delete the Primary IPs and the volume, and
   #
   #     DELETE /primary_ips/<id>   ->   HTTP 423 protected
   #

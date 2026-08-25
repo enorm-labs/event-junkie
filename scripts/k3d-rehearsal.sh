@@ -161,28 +161,27 @@ EOF
 # k3s imports at startup from /var/lib/rancher/k3s/agent/images.
 #
 # Off by default and deliberately opt-in: it costs a fetch-and-verify on a cold cache and nobody
-# whose node can reach docker.io needs it. What it is for is a node that cannot, while the host can
-# — the shape a TLS-inspecting network produces, because the host trusts the interception CA and the
-# k3d node's containerd does not. That failure is genuinely hard to read from the inside: the images
-# build fine, `k3d cluster create` succeeds, and every pod then sits in ContainerCreating forever
-# with an x509 error four `describe`s down, on the *pause sandbox* image rather than on anything
-# this project owns.
+# whose node can reach docker.io needs it. What it is for is a node that cannot while the host can —
+# the shape a TLS-inspecting network produces, because the host trusts the interception CA and the
+# k3d node's containerd does not. That failure is hard to read from the inside: the images build
+# fine, `k3d cluster create` succeeds, and every pod then sits in ContainerCreating forever with an
+# x509 error four `describe`s down, on the *pause sandbox* image rather than anything this project
+# owns.
 #
-# This is an offline/airgap escape hatch, not a workaround for one network. It fixes any node that
-# cannot pull, including a genuinely offline laptop. It does NOT install anyone's CA anywhere, and
-# it must not grow into doing so — a shared script that injects a corporate trust root is a worse
-# problem than the one it solves.
+# An offline/airgap escape hatch, not a workaround for one network: it fixes any node that cannot
+# pull, a genuinely offline laptop included. It does NOT install anyone's CA anywhere and must not
+# grow into doing so — a shared script that injects a corporate trust root is a worse problem than
+# the one it solves.
 #
-# WHAT A CORRECT PRELOAD LOOKS LIKE, because there are two failure modes here and before #533 they
-# were indistinguishable. On success this ends with
+# WHAT A CORRECT PRELOAD LOOKS LIKE, because there are two failure modes here and #533 is what made
+# them distinguishable. On success this ends with
 #
 #     8 images verified in build/k3d-rehearsal/airgap/k3s-airgap.tar
 #
 # and the word to look for is *verified*: the tarball has been read back and every layer blob its
-# own manifest names is in it. Anything less fails here, loudly, naming the images. So if the
+# own manifest names is in it. Anything less fails here, loudly, naming the images — so if the
 # cluster then comes up and pods still sit in ContainerCreating with an x509 error, the tarball was
-# sound and the node genuinely cannot pull — that is the failure this function is for, tracked in
-# #526, and not a preload that quietly did nothing.
+# sound and the node genuinely cannot pull (#526), rather than a preload that quietly did nothing.
 preload_images() {
   [ "${K3D_PRELOAD_IMAGES:-0}" = "1" ] || return 0
   # Scoped to the opt-in path rather than added to `require` at the top: the preload is the only
@@ -316,11 +315,9 @@ k3d rolls its own changes back, so there is nothing left to clean up."
   # crash-loops. The BFF's R2DBC pool connects lazily and never notices — which is why this presents
   # as "the importer is flaky" rather than as a DNS problem.
   #
-  # **Wait for the write, then restart to load it. Both halves are needed.** This used to restart
-  # first and wait for the rollout, on the belief that k3d had already written the entry and that the
-  # Corefile `reload` plugin was what lagged. Both were wrong: a restart cannot load a write that has
-  # not happened, so CoreDNS came back Ready on the old file and this script printed "resolvable"
-  # eleven seconds before it was.
+  # **Wait for the write, then restart to load it. Both halves are needed, in that order.** A
+  # restart cannot load a write that has not happened: restart first and CoreDNS comes back Ready on
+  # the old file, and this script reports "resolvable" seconds before it is.
   #
   # The entry lands in the ConfigMap's `NodeHosts` key — not `Corefile` — which CoreDNS reads through
   # a volume mount at /etc/coredns and watches with the *hosts* plugin's own `reload 15s`. So the
@@ -375,8 +372,8 @@ A pod stuck in ContainerCreating on an image pull is the usual cause — check
   # Polled rather than waited on with `kubectl wait`, and that is not a style choice — **both** of
   # its `--for` forms fail instantly here rather than waiting (#696).
   #
-  # This used to be `k wait --for=condition=established --timeout=60s`. The poll above returns the
-  # moment the *object* exists, which can be before the API server has populated the status
+  # `--for=condition=established` is the form to avoid. The poll above returns the moment the
+  # *object* exists, which can be before the API server has populated the status
   # subresource, and at that instant `.status.conditions` is present and explicitly **null**. On that
   # shape `--for=condition` exits 1 immediately with
   #

@@ -11,7 +11,7 @@ resources:
 # `sops-age` must already exist in flux-system, holding the private key under a name ending in
 # `.agekey` — Flux ignores any other key name, silently. Without it this Kustomization stops
 # reconciling with a decryption error, which takes every deploy with it, so the secret goes on the
-# cluster BEFORE this merges. It was created on staging on 2026-08-19.
+# cluster BEFORE this merges.
 patches:
   - patch: |
       - op: add
@@ -24,37 +24,31 @@ patches:
       kind: Kustomization
       name: flux-system
 
-  # Pod Security Admission on flux-system (#604). Same argument as the patch above for the same
+  # Pod Security Admission on flux-system (#604). Same argument as the patch above and for the same
   # reason: the Namespace object lives in `gotk-components.yaml`, which opens with "DO NOT EDIT"
   # because `flux bootstrap` regenerates it. A label written there is one bootstrap re-run away from
   # vanishing, and vanishing silently — an unlabelled namespace admits everything and reports
   # nothing, which looks identical to a labelled one until something privileged is deployed.
   #
-  # **Flux already ships `warn: restricted` here and nothing else** — which is the gap rather than a
-  # head start. A warn label returns a message to whoever created the pod; in a flow where pods are
-  # created by controllers reconciling a Git commit, there is no such reader. Upstream shipping it
-  # warn-only is the same shape `flux-system`'s three allow-only NetworkPolicies have (#662): intent
-  # recorded, nothing enforced. So this patch adds `enforce` and `audit` and leaves `warn` alone.
+  # **Flux ships `warn: restricted` here and nothing else**, which is the gap rather than a head
+  # start: a warn label returns a message to whoever created the pod, and where pods are created by
+  # controllers reconciling a Git commit there is no such reader. So this patch adds `enforce` and
+  # `audit` and leaves `warn` alone.
   #
-  # `restricted` is verified rather than assumed. All four controllers in the pinned
+  # `restricted` is verified rather than assumed — all four controllers in the pinned
   # `gotk-components.yaml` already carry `runAsNonRoot: true`, `seccompProfile: RuntimeDefault`,
-  # `capabilities.drop: [ALL]` and no hostPath volumes:
+  # `capabilities.drop: [ALL]` and no hostPath volumes. **Re-check after a Flux upgrade**, and note
+  # that the failure mode is a controller that will not schedule, which takes every deploy with it
+  # including the one that would relax the label. That is the argument for pinning
+  # `enforce-version` rather than tracking latest, here more than anywhere else in the cluster.
   #
-  #     source-controller  kustomize-controller  helm-controller  notification-controller
-  #
-  # Re-check after a Flux upgrade. The failure mode is a controller that will not schedule, which
-  # takes every deploy with it — including the one that would relax the label. That is the argument
-  # for `enforce-version` being pinned rather than `latest`, here more than anywhere else in the
-  # cluster.
-  #
-  # **`gotk-components.yaml`'s three `allow-*` NetworkPolicies are decorative, and stay that way
-  # (#662).** They permit; nothing denies, so they document intent and enforce nothing — a namespace
-  # with allow-only policies is a namespace with no policy. `observability` and `cert-manager` got
-  # real default-denies in #662 and this one deliberately did not, because the recovery from getting
-  # it wrong runs through the thing being restricted: a controller that cannot reach Git, the OCI
-  # registry or the API server cannot apply the commit that would relax the rule, and the only way
-  # back is manual `kubectl` against the cluster. That is a worse trade here than in a namespace
-  # whose failure costs metrics.
+  # **`gotk-components.yaml`'s three `allow-*` NetworkPolicies are decorative and stay that way
+  # (#662)** — they permit, nothing denies, so a namespace with allow-only policies has no policy.
+  # `observability` and `cert-manager` got real default-denies in #662 and this one deliberately did
+  # not, because recovery runs through the thing being restricted: a controller that cannot reach
+  # Git, the OCI registry or the API server cannot apply the commit that would relax the rule, and
+  # the only way back is manual `kubectl`. A worse trade here than in a namespace whose failure
+  # costs metrics.
   - patch: |
       - op: add
         path: /metadata/labels/pod-security.kubernetes.io~1enforce
