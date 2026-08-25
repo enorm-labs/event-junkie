@@ -3,19 +3,19 @@
 From nothing to a reconciling environment. **Once per cluster**, from a laptop, in this order.
 
 This is the one-time bring-up. **Connecting to a cluster that already exists is [CLUSTER_ACCESS.md](CLUSTER_ACCESS.md)** — that is the one you want most days.
-What happens on every commit afterwards is [RELEASING.md](RELEASING.md); why it is shaped this way is [ADR-016](../adr/ADR-016_GITOPS_DELIVERY.md) and
-[PLATFORM_SETUP](PLATFORM_SETUP.md); the long-form detail behind steps 1–8 is [infra/README.md](../../infra/README.md).
+What happens on every commit afterwards is [RELEASING.md](RELEASING.md). Why it is shaped this way is [ADR-016](../adr/ADR-016_GITOPS_DELIVERY.md) and
+[PLATFORM_SETUP](PLATFORM_SETUP.md). The long-form detail behind steps 1–8 is [infra/README.md](../../infra/README.md).
 
-**Every command below has been executed against a real cluster** — both staging and production were stood up this way, through to an issued certificate. The
-traps at the bottom are the ones that actually cost time rather than the ones worth imagining, and where a step says "verify", it is because that verification
-caught something.
+**Every command below ran against a real cluster.** Both staging and production were stood up this way, through to an issued certificate. The traps at the
+bottom are the ones that actually cost time, rather than the ones worth imagining. Where a step says "verify", it is because that verification caught
+something.
 
 ---
 
 ## The short version
 
-Twelve steps, about 40 minutes. **Each one is expanded below, and every step that has a known failure mode links to
-[Traps](#traps-in-the-order-they-bite) — read that table first if something does not behave.**
+Twelve steps, about 40 minutes. **Each one is expanded below, and every step with a known failure mode links to
+[Traps](#traps-in-the-order-they-bite).** Read that table first if something does not behave.
 
 ```sh
 # 1-2  keypair, then apply with your address admitted for this run only
@@ -39,7 +39,8 @@ flux --context event-junkie-staging get helmreleases -A
 kubectl --context event-junkie-staging get clusterissuer,certificate -A
 ```
 
-**Two steps are the ones people skip and regret**: §8b (a node that backs up nothing looks identical to one that does) and §6 (leaving `admin_cidrs` open).
+**Two steps are the ones people skip and regret.** §8b, because a node that backs up nothing looks identical to one that does. And §6, leaving `admin_cidrs`
+open.
 
 ## Before you start
 
@@ -48,15 +49,18 @@ brew install opentofu wireguard-tools fluxcd/tap/flux kubectl helm jq   # the to
 cd infra && ./check-capacity.sh staging                                  # is the hardware orderable?
 ```
 
-You also need: a Hetzner API token and S3 credentials (both via `direnv` in `infra/`), an SSH keypair whose public half is in `terraform.tfvars`, and a GitHub
-PAT for step 9.
+You also need:
 
-> **A green capacity check means "worth trying", not "will work".** Hetzner has refused orders for hardware it was advertising at that moment. See
+- a Hetzner API token and S3 credentials, both via `direnv` in `infra/`
+- an SSH keypair whose public half is in `terraform.tfvars`
+- a GitHub PAT for step 9
+
+> **A green capacity check means "worth trying", not "will work".** Hetzner refused orders for hardware it was advertising at that moment. See
 > `check-capacity.sh`'s header.
 
 ## 1 · Your WireGuard keypair — _before_ the apply
 
-The public half is an input to the apply; the server's half is generated on the node at first boot.
+The public half is an input to the apply. The node generates the server's half at first boot.
 
 ```sh
 umask 077 && mkdir -p ~/.wireguard
@@ -133,7 +137,7 @@ Only `51820/udp` remains open, and WireGuard never answers an unauthenticated pa
 
 ## 7 · Kubeconfig
 
-**On your laptop.** The `ssh` fetches a file; it is not somewhere to stand.
+**On your laptop.** The `ssh` fetches a file. It is not somewhere to stand.
 
 ```sh
 mkdir -p ~/.kube
@@ -206,30 +210,30 @@ all six brings the cluster back with part of the observability stack dead and no
 | `openobserve-credentials` | `observability` | the same values again — see SECRETS.md on why    | as above                                          |
 | `postgres-exporter`       | `observability` | `ALTER ROLE metrics` + a new DSN                 | as above                                          |
 
-**Only `github-dispatch` has to be carried across a rebuild.** Everything else is derivable from the Keychain, a local file, or a role you can re-password —
-which is worth knowing before you start copying secrets out of a cluster you are about to destroy. OpenObserve's root password can be new because its PVC is
-`local-path` on the node's disk: the metadata DB dies with the node and the root user is re-seeded from the Secret at first boot.
+**Only `github-dispatch` has to be carried across a rebuild.** Everything else is derivable from the Keychain, a local file, or a role you can re-password.
+That is worth knowing before you start copying secrets out of a cluster you are about to destroy. OpenObserve's root password can be new, because its PVC is
+`local-path` on the node's disk. The metadata DB dies with the node, and the Secret re-seeds the root user at first boot.
 
 **Two traps that produce a credential that looks right and authenticates against nothing:**
 
-- **`security find-generic-password -w` appends a newline.** `--from-file=token=<(kc …)` welds it into the value. Pipe through `tr -d '\n'`, and check with
-  `kubectl get secret … -o json` that the decoded length is what you expect — 64 bytes for an hcloud token, 20 and 40 for the S3 pair.
+- **`security find-generic-password -w` appends a newline.** `--from-file=token=<(kc …)` welds it into the value. Pipe through `tr -d '\n'`. Then check with
+  `kubectl get secret … -o json` that the decoded length is what you expect: 64 bytes for an hcloud token, 20 and 40 for the S3 pair.
 - **`DATA_SOURCE_NAME` is a URI, so the password has to be percent-encoded.** A generated password containing `@`, `#`, `%` or `&` silently produces a DSN that
-  parses as something else entirely. `urllib.parse.quote(pw, safe='')`.
+  parses as something else. `urllib.parse.quote(pw, safe='')`.
 
-The two below are hand-made for the same deliberate reason — this repository is public, and encrypting a secret into it publishes the ciphertext for good:
+The two below are hand-made for the same deliberate reason. This repository is public, and encrypting a secret into it publishes the ciphertext for good:
 
 | Secret            | Namespace      | Why not encrypted                                                                                 | Production too?                     |
 | ----------------- | -------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------- |
 | `hetzner`         | `cert-manager` | Read+write on the whole Hetzner account, and it takes two minutes to recreate                     | **No** — production solves HTTP-01  |
 | `github-dispatch` | `flux-system`  | `contents: write` on this repository, which under ADR-016 is one ruleset away from cluster access | **Yes** — with its own separate PAT |
 
-**Order matters for `github-dispatch` and only for it.** It lives in `flux-system`, which does not exist until `flux bootstrap` runs in §9 — so create it after that step, not with the others. Until it exists the `github-dispatch` Provider reconciles into a failed state and no deployment is recorded; nothing else is affected, and nothing needs restarting once it lands.
+**Order matters for `github-dispatch` and only for it.** It lives in `flux-system`, which does not exist until `flux bootstrap` runs in §9. So create it after that step, not with the others. Until it exists, the `github-dispatch` Provider reconciles into a failed state and records no deployment. Nothing else is affected, and nothing needs restarting once it lands.
 
 ## 8b · The backup credential — _the node is not backing anything up until you do this_
 
-`backups.sh` installed wal-g, turned on `archive_mode` and started two timers, and every one of them is failing right now. It could not do otherwise: the S3
-access key would have had to travel through `user_data`, which is state, so the machine gets the mechanism and you supply the authority. The reasoning, and what
+`backups.sh` installed wal-g, turned on `archive_mode` and started two timers. Every one of them is failing right now. It could not do otherwise. The S3 access key
+would need to travel through `user_data`, which is state. So the machine gets the mechanism, and you supply the authority. The reasoning, and what
 it costs, is [BACKUPS.md](BACKUPS.md) §5.
 
 **This is the step a node rebuild silently undoes**, exactly like the `events` password. Put it in the rebuild checklist, not in your memory.
@@ -251,10 +255,10 @@ EOF
 
 `HEALTHCHECK_URL` above is not optional decoration, and there is no URL to paste until the check exists. **[HEALTHCHECKS.md](HEALTHCHECKS.md) is the procedure**
 — what to create, how to wire a node to it, and how to prove it fires. It is a separate page because the same account and channel carry the site probe (#271)
-and anything else that alerts from outside, so it outgrew being a paragraph in the backup section.
+and anything else that alerts from outside. It outgrew being a paragraph in the backup section.
 
-The one-line version: create `walg-<environment>` (period 26h, grace 2h), paste its ping URL into the `HEALTHCHECK_URL` line above, and run
-`sudo -u postgres walg check` to make it go green immediately rather than at the top of the next hour.
+The one-line version: create `walg-<environment>` (period 26h, grace 2h), then paste its ping URL into the `HEALTHCHECK_URL` line above. Run
+`sudo -u postgres walg check` to make it go green immediately, rather than at the top of the next hour.
 
 **`walg check` says so when you have not**, on every hourly run:
 
@@ -262,10 +266,10 @@ The one-line version: create `walg-<environment>` (period 26h, grace 2h), paste 
 warning: HEALTHCHECK_URL is unset in /etc/wal-g/credentials.env — this check passes into a void.
 ```
 
-That line exists because the two states are otherwise indistinguishable from outside: a dead-man's switch that is not wired up reports exactly what a healthy
+That line exists because the two states are otherwise indistinguishable from outside. A dead-man's switch that is not wired up reports exactly what a healthy
 one does (#518).
 
-Then take the first base backup by hand rather than waiting for 02:30, because the failure you want to find is this one and you want to find it now:
+Then take the first base backup by hand, rather than waiting for 02:30. The failure you want to find is this one, and you want to find it now:
 
 ```sh
 ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 'sudo systemctl start walg-basebackup && sudo -u postgres walg check'
@@ -276,11 +280,11 @@ ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 'sudo systemctl start walg-baseba
 
 ### Prove the alert, once, by breaking it on purpose
 
-**An alert nobody has seen fire is the same class of belief as an untested backup**, which is the argument this whole section rests on. The drill — inducing the
-disk assertion, watching the check go red, and the two things that catch people out — is in [HEALTHCHECKS.md](HEALTHCHECKS.md), along with the log of when it
-was last run.
+**An alert nobody ever saw fire is the same class of belief as an untested backup**, which is the argument this whole section rests on. The drill is in
+[HEALTHCHECKS.md](HEALTHCHECKS.md), along with the log of when it last ran. It covers inducing the disk assertion, watching the check go red, and the two
+things that catch people out.
 
-**Once per bucket, not per cluster**, and **already done for `event-junkie-backups` on 2026-08-18** — the retention backstop the privacy notice depends on
+**Once per bucket, not per cluster**, and **already done for `event-junkie-backups`** — the retention backstop the privacy notice depends on
 ([#277](https://github.com/enorm-labs/event-junkie/issues/277)). Only needed again for a new bucket:
 
 ```sh
@@ -304,7 +308,7 @@ gh api repos/enorm-labs/event-junkie/rulesets --jq '.[] | {name, enforcement}'
 
 - **Deploy keys must be enabled** for the org, or bootstrap fails at `422 Deploy keys are disabled for this repository`
 - **Bootstrap pushes directly to `main`**, which the `main` ruleset forbids. Disable it (or add a bypass) for the two pushes, and **turn it back on immediately
-  after** — with Flux live, branch protection is the control that replaces the kubeconfig
+  after**. With Flux live, branch protection is the control that replaces the kubeconfig
 
 PAT scopes: classic `repo`, or fine-grained with **Contents: RW**, **Administration: RW**, **Metadata: RO**.
 
@@ -313,7 +317,7 @@ flux bootstrap github --owner=enorm-labs --repository=event-junkie \
   --branch=main --path=deploy/clusters/staging      # commits gotk-*, installs controllers, creates a read-only deploy key
 ```
 
-Do **not** pass `--token-auth`; it stores the PAT in the cluster instead of a deploy key.
+Do **not** pass `--token-auth`. It stores the PAT in the cluster instead of a deploy key.
 
 Then re-enable the ruleset and confirm:
 
@@ -339,9 +343,11 @@ flux --context event-junkie-staging get alerts -A                               
 gh api repos/enorm-labs/event-junkie/deployments --jq '.[0] | {environment, ref, created_at}'
 ```
 
-A Provider that is not Ready almost always means the `github-dispatch` Secret from §8 is missing or its PAT has expired — see [CREDENTIALS.md](../CREDENTIALS.md) #16 for the expiry date.
+A Provider that is not Ready almost always means one of two things. Either the `github-dispatch` Secret from §8 is missing, or its PAT expired — see
+[CREDENTIALS.md](../CREDENTIALS.md) #16 for the expiry date.
 
-There is exactly one Provider per cluster, so a not-Ready one is unambiguous. (There used to be a second, `github`, posting commit statuses; [#567](https://github.com/enorm-labs/event-junkie/issues/567) deleted it — a HelmRelease reports a chart version, not a commit, so it could never have worked.)
+There is exactly one Provider per cluster, so a not-Ready one is unambiguous. **Do not add a second one to post commit statuses**
+([#567](https://github.com/enorm-labs/event-junkie/issues/567)): a HelmRelease reports a chart version, not a commit, so it cannot work.
 
 ## 11 · Verify the certificate
 
@@ -364,16 +370,16 @@ kubectl --context event-junkie-staging get secret event-junkie-staging-tls -n ev
 ```
 
 > **The issuer will say `(STAGING)`, and that is deliberate — the certificate is not browser-trusted.**
-> `certManager.clusterIssuer.server` points at Let's Encrypt's _staging_ ACME endpoint, because the production rate limit is **per registered domain** and
+> `certManager.clusterIssuer.server` points at Let's Encrypt's _staging_ ACME endpoint. The production rate limit is **per registered domain**, and
 > `event-junkie.de` is the same registered domain production uses. Burning it here would lock production out for a week.
 >
-> So `https://staging.event-junkie.de` shows a certificate warning, by choice. What is proven is the **mechanism** — DNS-01 through the Hetzner webhook, for a
-> hostname with no public `A` record, which is what staging existed to establish.
+> So `https://staging.event-junkie.de` shows a certificate warning, by choice. What it proves is the **mechanism**: DNS-01 through the Hetzner webhook, for a
+> hostname with no public `A` record. That is what staging existed to establish.
 >
 > **It stays on the staging CA, and that was reconsidered rather than inherited ([#265](https://github.com/enorm-labs/event-junkie/issues/265)).** Once DNS-01
-> was known to work, switching looked like one value — but production issues over **HTTP-01**, so pointing staging at the production endpoint would rehearse
-> ACME account registration and nothing else, while spending the shared domain's rate limit on the environment that is _meant_ to break. The warning is only
-> ever seen from inside the tunnel.
+> was known to work, switching looked like one value. But production issues over **HTTP-01**, so pointing staging at the production endpoint would rehearse ACME
+> account registration and nothing else. It would also spend the shared domain's rate limit on the environment that is _meant_ to break. Nobody sees the
+> warning from outside the tunnel.
 
 **If a challenge fails at `Present`, fixing the config is not enough.** See the last row of the traps table.
 
@@ -384,14 +390,14 @@ kubectl --context event-junkie-staging get secret event-junkie-staging-tls -n ev
 Production was applied this way: everything running, nothing resolving.
 
 `public_web` only gates the 80/443 firewall rules, so a dark environment is still fully reachable over the tunnel. **The go-live switch is `publish_dns`**, in
-`infra/environments/production/variables.tf`, and it defaults to `false`. It swaps rather than adds: false publishes one throwaway name, `prod-check`, at the
-same addresses; true publishes the apex and `www`, and `prod-check` disappears in the same apply.
+`infra/environments/production/variables.tf`, and it defaults to `false`. It swaps rather than adds. False publishes one throwaway name, `prod-check`, at the
+same addresses. True publishes the apex and `www`, and `prod-check` disappears in the same apply.
 
 **The throwaway name exists because production solves HTTP-01**, which needs Let's Encrypt to reach the host _by name_. With nothing resolving, no certificate
 can issue and the whole TLS path stays untested until the day it matters. One name nobody is looking for exercises all of it.
 
-The application chart creates the real `letsencrypt-production` ClusterIssuer, so before it is installed you need a temporary one — and it **must not** share
-that name, or the chart's install will collide with a resource Helm does not own:
+The application chart creates the real `letsencrypt-production` ClusterIssuer, so before it is installed you need a temporary one. It **must not** share that
+name. Otherwise the chart's install collides with a resource Helm does not own:
 
 ```sh
 # ClusterIssuer letsencrypt-rehearsal: acme-v02, http01 solver, ingressClassName traefik.
@@ -409,12 +415,12 @@ openssl verify -CAfile <system roots> -untrusted <chain> <leaf>   ->  OK
 ```
 
 That proves DNS, the firewall, the CAA record, Traefik and ACME reachability, all at once. **Delete the issuer, the certificate, its Secret and the ACME account
-key afterwards** — the rehearsal is not a canary and a left-behind certificate renews every sixty days against a rate limit you want at go-live.
+key afterwards.** The rehearsal is not a canary, and a left-behind certificate renews every sixty days against a rate limit you want at go-live.
 
-**What it does not prove** is serving: with the application suspended there is no Ingress for that hostname, so `curl https://prod-check…` fails the handshake
+**What it does not prove** is serving. With the application suspended there is no Ingress for that hostname, so `curl https://prod-check…` fails the handshake
 even though the certificate is valid and trusted. That is the absence of a workload, not a TLS fault, and it is worth expecting rather than debugging.
 
-`prod-check.<domain>` is a different name from the apex, so it costs one of Let's Encrypt's fifty certificates per registered domain per week and leaves all
+`prod-check.<domain>` is a different name from the apex. So it costs one of Let's Encrypt's fifty certificates per registered domain per week, and leaves all
 five duplicate slots for `event-junkie.de` itself.
 
 ## Rebuilding a node — including migrating to ARM
@@ -432,7 +438,7 @@ You end up here for four reasons, and three of them are not optional:
 
 ### Architecture is a rebuild, not a resize, and the plan will not say so
 
-Hetzner cannot rescale between architectures — [their FAQ](https://docs.hetzner.com/cloud/servers/faq/) lists rescale alongside snapshots and ISOs as places
+Hetzner cannot rescale between architectures. [Their FAQ](https://docs.hetzner.com/cloud/servers/faq/) lists rescale alongside snapshots and ISOs as places
 where "it is not possible to work with two different architecture types". Within one architecture (`cpx22` → `cx23`) it is an in-place resize and behaves as you
 would expect.
 
@@ -450,25 +456,25 @@ another variable when the prefix changes.
 | The backups already in the bucket — they are off-server, which is the point                                                                          | **`/etc/wal-g/credentials.env`**, so the node comes back archiving nothing |
 | The DNS zones (`bootstrap/`, outside every environment destroy)                                                                                      | **Dashboards and alert rules** — OpenObserve metadata, on the node's disk  |
 
-**The database survives a _rebuild_, not a `destroy`.** The distinction is the whole of it. Replacing the server — which is what a `cloud-init/` edit or an
-architecture change does — leaves the volume attached to whatever replaces it, and `postgres.sh` adopts the cluster already on it. A `tofu destroy` in the
+**The database survives a _rebuild_, not a `destroy`.** The distinction is the whole of it. Replacing the server leaves the volume attached to whatever replaces it, and `postgres.sh` adopts the cluster
+already on it. That is what a `cloud-init/` edit or an architecture change does. A `tofu destroy` in the
 environment directory deletes the volume along with everything else, because `delete_protection` does not stop OpenTofu. If you are about to destroy rather than
-rebuild, the volume is not your safety net; the backups in the bucket are — see §8b and
+rebuild, the volume is not your safety net. The backups in the bucket are — see §8b and
 [RESTORE_RUNBOOK.md](RESTORE_RUNBOOK.md).
 
 **The backup credential is the second thing that will look fine and not be.** `backups.sh` runs on the new node, installs wal-g and starts the timers, and every
 one of them fails because `/etc/wal-g/credentials.env` died with the old disk. Nothing about the node looks wrong. Re-do §8b as part of every rebuild, and let
 `walg check` — not `systemctl status` — be what tells you it worked.
 
-**`HEALTHCHECK_URL` dies with it, and that failure is quieter still.** The whole point of a dead-man's switch is that it reports by _not_ reporting, so a rebuilt
-node whose credential file is missing the URL produces no signal at all — and neither does a healthy one, until the grace period elapses. Two hours later
+**`HEALTHCHECK_URL` dies with it, and that failure is quieter still.** The whole point of a dead-man's switch is that it reports by _not_ reporting. So a rebuilt
+node whose credential file is missing the URL produces no signal at all. Neither does a healthy one, until the grace period elapses. Two hours later
 healthchecks.io says the check is late, which is correct and is also the only thing that will tell you. Paste the **same** URL back rather than creating a new
 check, or the history that makes "late" mean something starts over. `sudo -u postgres walg check` prints a warning naming the missing variable, and that is the
 fast way to confirm it before waiting (#518).
 
-**The server key is the one that will look like a broken tunnel.** `wireguard.sh` generates a keypair only if none exists, so a fresh node has a fresh one and
-your `~/.wireguard/staging.conf` is pointing at a peer that no longer exists. The handshake simply never happens. Update the `PublicKey =` line from §4; your own
-key and the `wireguard_peers` entry stay valid.
+**The server key is the one that will look like a broken tunnel.** `wireguard.sh` generates a keypair only if none exists. So a fresh node has a fresh one, and your
+`~/.wireguard/staging.conf` points at a peer that no longer exists. The handshake simply never happens. Update the `PublicKey =` line from §4. Your own key and
+the `wireguard_peers` entry stay valid.
 
 ### The sequence
 
@@ -501,23 +507,22 @@ tofu plan -var "admin_cidrs=$ADMIN" -out=rebuild.tfplan   # Plan: 2 to add, 1 to
 tofu apply rebuild.tfplan
 ```
 
-Then **§3 onward**, in full: wait for cloud-init, collect the _new_ server key and fix your client config, tunnel, close the door, kubeconfig, database, both
-secrets, `flux bootstrap`. Steps 1 and 2 are the only ones you skip — your keypair and `terraform.tfvars` are unchanged.
+Then **§3 onward**, in full: cloud-init, the _new_ server key, your client config, the tunnel, the door, the kubeconfig, the database, both secrets, and
+`flux bootstrap`. Steps 1 and 2 are the only ones you skip. Your keypair and `terraform.tfvars` are unchanged.
 
-Two things are cheaper the second time: nothing in `cloud-init/` is architecture-specific, and [#264](https://github.com/enorm-labs/event-junkie/issues/264)
-publishes **multi-arch** images, so the chart, its tags and its digests-per-platform need no attention at all. That is what makes the architecture reversible;
-it was not, before those images existed.
+Two things are cheaper the second time. Nothing in `cloud-init/` is architecture-specific, and [#264](https://github.com/enorm-labs/event-junkie/issues/264)
+publishes **multi-arch** images. So the chart, its tags and its digests-per-platform need no attention at all, which is what makes the architecture reversible.
 
-**Production is different and this section does not cover it.** Its PostgreSQL is a dedicated node, and a _rebuild_ there now keeps its data — that is #460,
-and it is why the volume was declared before production was ever applied rather than migrated onto one afterwards. A **destroy** is still data loss, because
+**Production is different and this section does not cover it.** Its PostgreSQL is a dedicated node, and a _rebuild_ there keeps its data. That is #460, and it
+is why the volume was declared before production was ever applied, rather than migrated onto one afterwards. A **destroy** is still data loss, because
 nothing off the volume exists yet: backups and a rehearsed restore are [#270](https://github.com/enorm-labs/event-junkie/issues/270). Do that one first.
 
 ### Proving the volume actually survives — the drill
 
-**This drill has been run against staging and passed** — a sentinel row survived the node being replaced, `postgres.sh` logged `adopting the existing cluster
-on the volume`, and every table matched a `pg_dump` taken beforehand. Repeat it whenever `postgres.sh` or `volume.tf` changes.
+**This drill ran against staging and passed.** A sentinel row survived the node being replaced, `postgres.sh` logged `adopting the existing cluster on the
+volume`, and every table matched a `pg_dump` taken beforehand. Repeat it whenever `postgres.sh` or `volume.tf` changes.
 
-**That the volume is declared is not evidence that the data comes back**; the only evidence is having read a row that was written before the node was replaced.
+**That the volume is declared is not evidence that the data comes back.** The only evidence is reading back a row you wrote before the node was replaced.
 Everything below is a _rebuild_, never a `destroy`.
 
 ```sh
@@ -537,8 +542,8 @@ tofu plan -replace='module.environment.hcloud_server.k3s' -var "admin_cidrs=$ADM
 ```
 
 **Read that plan before applying it.** Expect exactly one `-/+` on the server and one `-/+` on `hcloud_volume_attachment.postgres`, which follows the server it
-points at. **`hcloud_volume.postgres` must not appear in the plan at all.** If it does, stop — that is the failure this whole issue exists to prevent, and
-applying would destroy the thing you are trying to prove survives.
+points at. **`hcloud_volume.postgres` must not appear in the plan at all.** If it does, stop. That is the failure this whole issue exists to prevent, and applying
+would destroy the thing you are trying to prove survives.
 
 Then apply, wait for cloud-init, fix your client config with the node's **new** WireGuard server key (§4 — this trap bites here too), and:
 
@@ -552,8 +557,8 @@ boot of a fresh volume. Seeing `seeding` on a rebuild means the data was not fou
 
 Afterwards: `drop table rebuild_drill`, and put `admin_cidrs` back to `[]`.
 
-**And push the OpenObserve metadata back, because nothing else will.** Dashboards and alert rules are API objects, so Flux does not reconcile them and the
-metadata DB is `local-path` on the node's disk — it dies with the node. A rebuilt cluster therefore comes back observing nothing and alerting on nothing, with
+**And push the OpenObserve metadata back, because nothing else will.** Dashboards and alert rules are API objects, so Flux does not reconcile them. The metadata DB is
+`local-path` on the node's disk, and it dies with the node. A rebuilt cluster therefore comes back observing nothing and alerting on nothing, with
 every pod healthy:
 
 ```sh
@@ -563,51 +568,54 @@ cd deploy/dashboards && ./apply.sh --diff                  # and prove the push 
 cd deploy/alerts     && ./apply.sh --diff
 ```
 
-**The fourteenth query is not slow, it is absent by design, and the difference matters when you are
-staring at a fresh cluster wondering what else did not come back.** The one that returns nothing is
-the `enqueue_failed` half of _Metrics dropped before storage_: a collector exports that series only
-once something has actually failed to enqueue, so a healthy one has no series at all. It is the same
-trap [`deploy/alerts/README.md`](../../deploy/alerts/README.md) records for `ej-ingest-shedding`,
-where a rule summing two counters was un-fireable during exactly the normal operation it was meant to
-watch. Waiting for that panel to fill in is waiting for an outage.
+**The fourteenth query is not slow. It is absent by design**, and the difference matters when you
+are staring at a fresh cluster wondering what else did not come back. The one that returns nothing is
+the `enqueue_failed` half of _Metrics dropped before storage_. A collector exports that series only
+once something has actually failed to enqueue, so a healthy one has no series at all.
 
-**`--diff` is what turns "I ran the apply" into "the cluster has it".** It is worth the two extra commands here of all places: a rebuild is exactly when an
-apply gets half-run, and a rule that silently did not land looks identical to one that did until the incident it was written for (#702).
+That is the same trap [`deploy/alerts/README.md`](../../deploy/alerts/README.md) records for
+`ej-ingest-shedding`. There, a rule summing two counters was un-fireable during the normal operation
+it was meant to watch. Waiting for that panel to fill in is waiting for an outage.
+
+**`--diff` is what turns "I ran the apply" into "the cluster has it".** It is worth the two extra commands here of all places. A rebuild is exactly when an
+apply gets half-run. And a rule that silently did not land looks identical to one that did, until the incident it was written for (#702).
 
 #### The first time, the drill does not work as written — and why
 
-**On an environment that has no volume yet, the first apply _seeds_ rather than adopts**, so a sentinel written beforehand is on the local disk and dies with the
+**On an environment that has no volume yet, the first apply _seeds_ rather than adopts.** A sentinel written beforehand is on the local disk, and dies with the
 node. Proving adoption needs the volume populated first. Two ways:
 
 - **Two rebuilds.** Apply once to create and seed the volume (today's data is lost — `pg_dump` first), write the sentinel, then `-replace` the server to prove
   adoption. Simple, and it throws away a working database.
-- **One rebuild, keeping the data**, which is what was actually done on 2026-08-17. Create the volume alone with
-  `tofu apply -target=module.environment.hcloud_volume.postgres`, attach it out-of-band, run the new `postgres.sh` by hand on the live node so it seeds from the
-  running cluster, write the sentinel, detach, then apply normally. The node is replaced once and adopts a volume that already holds the real dataset — a
-  stronger proof than a sentinel alone, and a rehearsal of the live migration production would have needed had this been left until later.
+- **One rebuild, keeping the data.** Create the volume alone with `tofu apply -target=module.environment.hcloud_volume.postgres` and attach it out-of-band.
+  Run the new `postgres.sh` by hand on the live node, so it seeds from the running cluster. Write the sentinel, detach, then apply normally. The node is
+  replaced once and adopts a volume that already holds the real dataset. That is a stronger proof than a sentinel alone, and a rehearsal of the live migration
+  production would otherwise require.
 
-**Do not try to `-target` the attachment.** `hcloud_volume_attachment` references `hcloud_server.k3s.id`, so targeting it pulls the server in as a dependency —
-and the server's planned action is _replace_, which is the thing you were trying to avoid. Target the volume only; the attachment is what the out-of-band step
+**Do not try to `-target` the attachment.** `hcloud_volume_attachment` references `hcloud_server.k3s.id`, so targeting it pulls the server in as a dependency.
+And the server's planned action is _replace_, which is the thing you were trying to avoid. Target the volume only. The attachment is what the out-of-band step
 stands in for.
 
-**`admin_cidrs` is not optional for any of this.** Its steady state is `[]`, and a replaced node generates a new WireGuard server key — so the tunnel stops
+**`admin_cidrs` is not optional for any of this.** Its steady state is `[]`, and a replaced node generates a new WireGuard server key. So the tunnel stops
 handshaking at exactly the moment SSH is closed, leaving Hetzner's browser console as the only way in. Pass `-var "admin_cidrs=…"` on every apply in the
-sequence and close it again at the end. Note the recipe in §2 assumes both lookups return **IPv4**: `dig myip.opendns.com` can return an IPv6 address, which
-needs `/128` rather than `/32` and otherwise fails at plan time with `is not the start of the cidr block`.
+sequence, and close it again at the end.
+
+Note that the recipe in §2 assumes both lookups return **IPv4**. `dig myip.opendns.com` can return an IPv6 address, which needs `/128` rather than `/32`. It
+otherwise fails at plan time with `is not the start of the cidr block`.
 
 ---
 
 ## Proving a restore actually works — the drill
 
-**Moved.** The procedure is [RESTORE_RUNBOOK.md](RESTORE_RUNBOOK.md) §4 and §5, because a drill is a rehearsal of a real restore and keeping two copies of it
+**Moved.** The procedure is [RESTORE_RUNBOOK.md](RESTORE_RUNBOOK.md) §4 and §5. A drill is a rehearsal of a real restore, and keeping two copies of it
 guarantees that the rehearsed one drifts from the real one. The design, the recorded results and the cadence are [BACKUPS.md](BACKUPS.md) §9.
 
-**It has been run against staging and passed both halves**, full replay and point-in-time recovery past a `DROP TABLE`. Owner @enorm, quarterly, plus
-whenever `backups.sh`, `postgres.sh` or the PostgreSQL major version changes.
+**It ran against staging and passed both halves**, full replay and point-in-time recovery past a `DROP TABLE`. Owner @enorm, quarterly, plus whenever
+`backups.sh`, `postgres.sh` or the PostgreSQL major version changes.
 
 **What nags you is [`restore-drill-reminder.yml`](../../.github/workflows/restore-drill-reminder.yml)**, not this sentence. It opens the drill as an issue
-assigned to the owner every quarter, and again whenever `backups.sh` or `postgres.sh` changes on `main` — so a skipped quarter shows up as an open issue rather
-than as nothing at all. Each run records its measured timings in that issue and then overwrites the table in [BACKUPS.md](BACKUPS.md) §9.
+assigned to the owner every quarter, and again whenever `backups.sh` or `postgres.sh` changes on `main`. A skipped quarter therefore shows up as an open issue,
+rather than as nothing at all. Each run records its measured timings in that issue and then overwrites the table in [BACKUPS.md](BACKUPS.md) §9.
 
 ## Traps, in the order they bite
 
