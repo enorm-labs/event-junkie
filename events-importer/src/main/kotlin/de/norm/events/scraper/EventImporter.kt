@@ -8,11 +8,10 @@ package de.norm.events.scraper
  * dispatched by their [eventSource] property, which must match an
  * [EventSource] enum value.
  *
- * Unlike the previous `EventSource` interface design, importers own all
- * HTTP fetching (both overview and detail pages), keeping I/O concerns
- * in a single place. HTML parsing is delegated to dedicated `*OverviewPageScraper`
- * and `*DetailPageScraper` classes that operate on parsed Jsoup Documents
- * without performing any I/O themselves.
+ * Importers own all HTTP fetching, both overview and detail pages, keeping I/O in one place.
+ * HTML parsing is delegated to `*OverviewPageScraper` and `*DetailPageScraper` classes that
+ * operate on a parsed Jsoup Document and perform no I/O themselves — which is what makes a
+ * scraper testable against a saved snapshot.
  */
 interface EventImporter {
     /**

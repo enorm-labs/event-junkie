@@ -16,8 +16,8 @@ import java.net.URI
  *
  * The counterpart to [HtmlFetcher]: same reactive [WebClient], same shared per-host
  * politeness throttle and identifying `User-Agent` (both inject the single
- * [SCRAPER_WEB_CLIENT] bean), but semantically scoped to structured-data fetching so JSON
- * importers no longer depend on an HTML-named class.
+ * [SCRAPER_WEB_CLIENT] bean), but scoped to structured-data fetching, so a JSON importer
+ * depends on a name that describes what it fetches.
  *
  * [fetchJson] returns the response **body verbatim** rather than deserializing it here.
  * Parsing stays in the venue's pure `*ApiScraper` (no I/O), which keeps it trivially
