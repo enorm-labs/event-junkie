@@ -2,16 +2,28 @@
 
 How the external alerting works, how to add a check when an environment appears, and how to prove one actually fires.
 
-> **Every ping URL on this page is a credential.** Anyone holding one can ping the check and suppress its alarm — which is worse than a leaked read-only token,
-> because the failure it causes is _silence_. They live in `/etc/wal-g/credentials.env` on the node and nowhere else: not in this repository, not in an issue,
-> not in a pull request, not in a values file. There is deliberately no table of URLs below.
+## The short version
+
+```sh
+sudo -u postgres /usr/local/bin/walg check     # on the node: pings on success, exits 1 on any failure
+sudo grep -c '^HEALTHCHECK_URL=' /etc/wal-g/credentials.env   # expect exactly 1, never 2
+```
+
+- **Two checks per environment**, `walg-<environment>` and `site-<environment>`. One account, one project, one channel.
+- **The node pings out on success.** Silence is the alarm, so the alerting survives the thing it watches.
+- **A ping URL is a credential.** It lives on the node and nowhere else.
+- **A check nobody saw fire proves nothing.** Induce the disk assertion — §Proving it fires.
+
+> **Every ping URL on this page is a credential.** Anyone holding one can ping the check and suppress its alarm. That is worse than a leaked read-only token,
+> because the failure it causes is _silence_. They live in `/etc/wal-g/credentials.env` on the node and nowhere else. Not in this repository, not in
+> an issue, not in a pull request, not in a values file. There is deliberately no table of URLs below.
 
 ## Why an external service at all
 
 Everything else this project monitors runs inside the cluster it is monitoring. That is fine for a metric and useless for an outage: **a dead-man's switch on
 infrastructure cannot report that infrastructure's death.** A pod that is meant to alert when the node stops is a pod that stops when the node stops.
 
-So the arrangement is inverted. The node **pings out on success**, and the absence of a ping is what raises the alarm — which means the alerting works precisely
+So the arrangement is inverted. The node **pings out on success**, and the absence of a ping is what raises the alarm. The alerting therefore works precisely
 when the thing it watches does not. healthchecks.io is deliberately off Hetzner for the same reason
 ([#271](https://github.com/enorm-labs/event-junkie/issues/271), [#518](https://github.com/enorm-labs/event-junkie/issues/518)).
 
@@ -26,13 +38,13 @@ correctly, and its own failure is silent by construction.
 | `site-<environment>` | DNS, TLS, the ingress and the application, from outside | `.github/workflows/site-probe.yml`, every 15 minutes, on success only | #271  |
 
 **The site probe is built and deliberately dormant.** It skips, and says so in its job summary, while
-`HEALTHCHECKS_PING_URL` is unset — which is the state today, because there is nothing public to probe:
-staging is not on the internet by design ([PLATFORM_SETUP](PLATFORM_SETUP.md) §4a) and production is
+`HEALTHCHECKS_PING_URL` is unset. That is the state today, because there is nothing public to probe.
+Staging is not on the internet by design ([PLATFORM_SETUP](PLATFORM_SETUP.md) §4a), and production is
 [#285](https://github.com/enorm-labs/event-junkie/issues/285). Setting the secret is the whole
-activation; the workflow needs no change.
+activation, and the workflow needs no change.
 
-A silent skip would have been the wrong shape here — this repository has been bitten twice by one — so
-the skip is loud in the Actions tab rather than a green tick that means nothing.
+A silent skip would be the wrong shape here, because this repository was bitten twice by one.
+So the skip is loud in the Actions tab, rather than a green tick that means nothing.
 
 ### What the site probe actually asserts
 
@@ -40,18 +52,17 @@ Like `walg check`, it is conditional rather than a heartbeat, and for the same r
 unconditional ping proves only that the pinger ran.** Before pinging it fetches the site over the public
 internet and asserts
 
-1. the request completes at all — curl's exit code is mapped to a named cause, so DNS failure,
-   connection refused, timeout and a bad certificate are four different alert texts rather than an exit
-   code;
-2. the status is **200**;
-3. the body contains the product name — a 200 serving the wrong page is still an outage.
+1. the request completes at all. Curl's exit code maps to a named cause. DNS failure, connection
+   refused, timeout and a bad certificate each get their own alert text.
+2. the status is **200**.
+3. the body contains the product name. A 200 serving the wrong page is still an outage.
 
 Only then does it ping. **On a definite failure it pings `/fail`** rather than waiting out the grace
-period, which is faster; silence still covers the case that cannot, namely GitHub being unable to run
-the workflow at all.
+period, which is faster. Silence still covers the case that cannot ping at all, namely GitHub being
+unable to run the workflow.
 
 **It runs on GitHub, and that is the point.** An alerting path that runs on the node it monitors cannot
-report that node's death — the same argument this document opens with, one layer out. Whatever else
+report that node's death. That is the argument this document opens with, one layer out. Whatever else
 moves, this must not move into the cluster.
 
 ### What the backup check actually asserts
@@ -59,9 +70,9 @@ moves, this must not move into the cluster.
 `walg check` is deliberately **not** "did the last job error". It asserts three things and exits non-zero if any is false
 ([BACKUPS.md](BACKUPS.md) §6):
 
-1. there is a base backup at all;
-2. the newest is younger than **26 hours**;
-3. `/var/lib/postgresql` is below **85%** — a stalled `archive_command` does not stop backups, it fills `pg_wal`, and the volume is 10 GB.
+1. there is a base backup at all.
+2. the newest is younger than **26 hours**.
+3. `/var/lib/postgresql` is below **85%**. A stalled `archive_command` does not stop backups. It fills `pg_wal`, and the volume is 10 GB.
 
 Only when all three pass does it ping. That conditionality is the whole design: an unconditional heartbeat proves only that the heartbeat ran.
 
@@ -77,15 +88,15 @@ Only when all three pass does it ping. That conditionality is the whole design: 
 
 ### The period is a detection-latency choice, and it is worth understanding before changing it
 
-**26h is configured, and it is the conservative reading.** It comes from what `walg check` asserts about _base-backup age_ — the argument being that a shorter
-period would alert on a state the check itself considers fine.
+**26h is configured, and it is the conservative reading.** It comes from what `walg check` asserts about _base-backup age_. The argument is that a shorter period
+would alert on a state the check itself considers fine.
 
-The other reading is that those are two different clocks. The check pings **hourly**, and the period only governs how long _silence_ is tolerated — and silence
-means "the check did not run, or did not pass", which is worth knowing regardless of what it would have said. On the configured values, a node that wedges or
-starts failing its assertions is reported after **26h + 2h ≈ 28 hours**. At `1h`/`2h` it would be about three, and the grace still absorbs a reboot.
+The other reading is that those are two different clocks. The check pings **hourly**, and the period only governs how long _silence_ is tolerated. Silence means
+"the check did not run, or did not pass", which is worth knowing either way. On the configured values, a node that wedges or starts failing
+its assertions is reported after **26h + 2h ≈ 28 hours**. At `1h`/`2h` it would be about three, and the grace still absorbs a reboot.
 
-Neither is wrong. **28 hours is well inside the window that matters for a backup** — the thing being protected is a restore that has not been needed yet, not a
-serving path — and a longer period is the one that cannot produce a false alarm. Change it deliberately, and change it in both places: here and the check.
+Neither is wrong. **28 hours is well inside the window that matters for a backup.** The thing being protected is a restore nobody needed yet, not a serving path.
+And a longer period is the one that cannot produce a false alarm. Change it deliberately, and change it in both places: here and the check.
 
 ## Creating a check for the site probe
 
@@ -102,13 +113,13 @@ Then add the ping URL as the **`HEALTHCHECKS_PING_URL`** repository secret. Noth
 ### Why the grace is double the period, and must not be tightened to match it
 
 **GitHub's scheduler is not punctual, and it skips runs outright.** During the 2026-08-06 Actions
-incident it dropped roughly 85% of webhooks; scheduled workflows are also delayed under load as a matter
+incident it dropped roughly 85% of webhooks. Scheduled workflows are also delayed under load as a matter
 of routine, not of incident. A grace equal to the period would therefore alarm on GitHub's timekeeping
 rather than on the site.
 
-At `15m`/`30m` a single missed run is absorbed and two are not, so a genuine outage is reported within
-about 45 minutes — while a late run is not reported at all. **That asymmetry is the whole point:** this
-check exists to catch the case where nothing else can report, and a channel that cries wolf about its
+At `15m`/`30m` a single missed run is absorbed and two are not. A genuine outage is therefore reported
+within about 45 minutes, and a late run is not reported at all. **That asymmetry is the whole point.**
+This check exists to catch the case where nothing else can report. A channel that cries wolf about its
 own scheduler gets muted long before the outage it was for.
 
 Contrast the backup check's `26h`/`2h`, where the period tracks an assertion the check itself makes about
@@ -118,7 +129,7 @@ worth not copying one onto the other.
 ## Wiring a node to its check
 
 `HEALTHCHECK_URL` lives in `/etc/wal-g/credentials.env`, alongside the S3 key, at mode `0640` `root:postgres`. That file is written by hand and **is not in
-`user_data`**, because `user_data` is state — see [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8b for the whole reasoning and the rest of the file's contents.
+`user_data`**, because `user_data` is state. [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8b has the whole reasoning and the rest of the file's contents.
 
 ```sh
 # Appends without printing the file. `tee -a` preserves the existing mode and group.
@@ -135,7 +146,7 @@ ssh -i ~/.ssh/id_ed25519_hetzner ops@<tunnel-address> \
    sudo -u postgres /usr/local/bin/walg check'                    # expect: ok: newest <ts>, disk NN%
 ```
 
-**Exactly one line matters.** Appending a second `HEALTHCHECK_URL=` does not fail — the file is sourced, so the last assignment silently wins, and a stale first
+**Exactly one line matters.** Appending a second `HEALTHCHECK_URL=` does not fail. The file is sourced, so the last assignment silently wins, and a stale first
 line looks entirely correct in a `grep`. The count is the cheap way to notice.
 
 The final command pings immediately on success, so the check goes green within seconds rather than at the top of the next hour. Do not wait for the timer to
@@ -149,12 +160,12 @@ warning: HEALTHCHECK_URL is unset in /etc/wal-g/credentials.env — this check p
          learns when they stop. See CLUSTER_BOOTSTRAP.md §8b (#518).
 ```
 
-That line exists because the two states are otherwise **indistinguishable from outside**: a dead-man's switch that is not wired up reports exactly what a
-healthy one does — nothing. A node printing that warning is not monitored, however green its timers look.
+That line exists because the two states are otherwise **indistinguishable from outside**. A dead-man's switch that is not wired up reports exactly what a
+healthy one does, which is nothing. A node printing that warning is not monitored, however green its timers look.
 
 ## Proving it fires
 
-**An alert nobody has seen fire is the same class of belief as an untested backup**, which is the argument this whole page rests on. Induce the failure rather
+**An alert nobody ever saw fire is the same class of belief as an untested backup**, which is the argument this whole page rests on. Induce the failure rather
 than trusting the wiring.
 
 The disk assertion is the cheapest to induce: it needs no backup deleted and it undoes itself.
@@ -171,7 +182,7 @@ Three things that catch people out:
 - **The notification arrives after the grace period, not immediately.** That is what a dead-man's switch _is_, and it is the part most likely to be mistaken for
   the alert not working. Shorten the grace to a few minutes for the drill and put it back afterwards.
 - **Delete the drill file.** The command above removes it, but confirm — `sudo test -e /var/lib/postgresql/ZZ-drill`. Leaving a file sized at 90% of the volume
-  turns a drill into the outage it was rehearsing, and the next `walg-basebackup` is what would find out.
+  turns a drill into the outage it was rehearsing. The next `walg-basebackup` is what would find out.
 - **Record the date the notification actually arrived**, in the go-live checklist (#284). That date, not the configuration, is what makes this real.
 
 ### Drill log
@@ -182,14 +193,14 @@ Three things that catch people out:
 | 2026-08-21 | production  | explicit `/fail` | yes — within seconds, 06:06 UTC |
 
 **The two rows induced different things, and the second is the weaker drill.** The disk assertion makes the check go _silent_, so the notification comes from
-healthchecks.io noticing an absence after the grace period — which is what a dead-man's switch actually is, and what a real backup failure looks like. An
+healthchecks.io noticing an absence after the grace period. That is what a dead-man's switch actually is, and what a real backup failure looks like. An
 explicit `/fail` is a signal we send, so it alerts immediately and never exercises the timeout at all.
 
 `/fail` still proves the half that is easiest to get wrong: that a check exists, is wired to a channel, and reaches a human. It does not prove the grace period
 is survivable or that silence is noticed. **Production's timeout path is therefore still unrehearsed**, and the disk drill above is how to close that.
 
-Production's sequence, for the record — fired from the database node itself rather than a laptop, so it also proves that node's egress reaches `hc-ping.com`,
-which matters because it has no public inbound at all:
+Production's sequence, for the record. It was fired from the database node itself rather than a laptop, so it also proves that node's egress reaches
+`hc-ping.com`. That matters, because the node has no public inbound at all:
 
 ```
 06:04:39   base backup written
@@ -198,23 +209,23 @@ which matters because it has no public inbound at all:
 ```
 
 **The recovery was deliberately run through `walg-check.service`, not a bare `curl`** — the same path the hourly timer uses. A clear that only works when a
-human types it is not a clear, and the point of the drill is that the mechanism recovers on its own.
+human types it is not a clear. The point of the drill is that the mechanism recovers on its own.
 
 No request body was sent, so the §Privacy assessment below is unaffected.
 
 ## The two ways this quietly stops working
 
-- **A node rebuild.** `/etc/wal-g/credentials.env` dies with the disk, exactly like the S3 key, so a rebuilt node comes back with both timers enabled, wal-g
-  installed, `archive_mode = on`, and every archive failing — and no ping. Nothing about the node looks wrong. **Paste the same URL back rather than creating a
+- **A node rebuild.** `/etc/wal-g/credentials.env` dies with the disk, exactly like the S3 key. A rebuilt node comes back with both timers enabled, wal-g
+  installed, `archive_mode = on`, every archive failing, and no ping. Nothing about the node looks wrong. **Paste the same URL back rather than creating a
   new check**, or the history that makes "late" mean something starts over. CLUSTER_BOOTSTRAP.md's rebuild checklist carries this.
 - **A new environment with no check.** Provisioning a node does not create one, and the node will happily run un-monitored. Adding an environment means adding a
-  check; the warning above is what makes that visible on the node itself.
+  check. The warning above is what makes that visible on the node itself.
 
 ## Privacy
 
 **The ping is a bare HTTPS `GET` to an opaque random UUID**, with no body and no query string. It carries no personal data, no database contents and nothing
-identifying a visitor. What it reveals to healthchecks.io is the **server's** public IP and the timing of the pings — an address of ours, not of a data subject.
+identifying a visitor. What it reveals to healthchecks.io is the **server's** public IP and the timing of the pings. That is an address of ours, not of a data subject.
 
-The assessment recorded in [LEGAL.md](../LEGAL.md) §14 is therefore that this is **not** an Art. 28 processor relationship and needs no DPA and no entry in the
-privacy notice. **Re-open that assessment the moment a ping gains a body**, because healthchecks.io's `/fail` and `/log` endpoints accept one, and a payload is
-where the reasoning stops holding.
+[LEGAL.md](../LEGAL.md) §14 therefore records that this is **not** an Art. 28 processor relationship. It needs no DPA and no entry in the privacy notice.
+**Re-open that assessment the moment a ping gains a body.** The `/fail` and `/log` endpoints accept one, and a payload is where the
+reasoning stops holding.
