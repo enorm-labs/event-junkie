@@ -3,4 +3,4 @@
 # the ordinary fix is to split the sentence.
 docs	443
 docs/adr	655
-docs/ops	477
+docs/ops	404
