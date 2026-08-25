@@ -31,14 +31,15 @@ file per topic, each declaring the paths it applies to. Claude Code reads them t
 directly; both pull a file into context when you touch a file it matches, so nothing here has to be loaded on the chance it is relevant. An agent that reads
 only this file should follow the links.
 
-| Rule file                                                         | Loads when you touch                                  | Covers                                                         |
-| ----------------------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
-| [architecture](.github/instructions/architecture.instructions.md) | `events-core/`, `events-bff/`, `events-importer/`     | The reactive stack, the schema, migrations, DTOs, metrics      |
-| [kotlin](.github/instructions/kotlin.instructions.md)             | `*.kt`, `*.kts`, `gradle.properties`, `detekt.yml`    | Idioms, where versions live, ktlint · detekt · Kover           |
-| [comments](.github/instructions/comments.instructions.md)         | Every source language                                 | Few, short, about _why_ — and what lint already enforces       |
-| [markdown](.github/instructions/markdown.instructions.md)         | `*.md`                                                | oxfmt, its pinned scope, and why it runs twice                 |
-| [testing](.github/instructions/testing.instructions.md)           | `*/src/test/`, `*/src/testFixtures/`                  | JUnit, WebTestClient, Testcontainers, fixture factories        |
-| [ci-cd](.github/instructions/ci-cd.instructions.md)               | `.github/workflows/`, `dependabot.yml`, `release.yml` | Every workflow, the nine required checks, Dependabot, fork PRs |
+| Rule file                                                           | Loads when you touch                                  | Covers                                                         |
+| ------------------------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
+| [architecture](.github/instructions/architecture.instructions.md)   | `events-core/`, `events-bff/`, `events-importer/`     | The reactive stack, the schema, migrations, DTOs, metrics      |
+| [kotlin](.github/instructions/kotlin.instructions.md)               | `*.kt`, `*.kts`, `gradle.properties`, `detekt.yml`    | Idioms, where versions live, ktlint · detekt · Kover           |
+| [comments](.github/instructions/comments.instructions.md)           | Every source language                                 | Few, short, about _why_ — and what lint already enforces       |
+| [documentation](.github/instructions/documentation.instructions.md) | `docs/**/*.md`                                        | Simplified Technical English: how the sentences are written    |
+| [markdown](.github/instructions/markdown.instructions.md)           | `*.md`                                                | oxfmt, its pinned scope, and why it runs twice                 |
+| [testing](.github/instructions/testing.instructions.md)             | `*/src/test/`, `*/src/testFixtures/`                  | JUnit, WebTestClient, Testcontainers, fixture factories        |
+| [ci-cd](.github/instructions/ci-cd.instructions.md)                 | `.github/workflows/`, `dependabot.yml`, `release.yml` | Every workflow, the nine required checks, Dependabot, fork PRs |
 
 **Sibling files, none of them optional in their own subtree:** [`infra/AGENTS.md`](infra/AGENTS.md) opens with the OpenTofu commands that must never be run ·
 [`deploy/AGENTS.md`](deploy/AGENTS.md) with the difference between rendering the chart and installing it · [`events-frontend/AGENTS.md`](events-frontend/AGENTS.md)
@@ -86,6 +87,12 @@ covers the SPA.
     - **A blocker outlives the thing that blocked it.** When you close an item on a list of open questions, **delete the item**; do not annotate it as done.
       LEGAL.md §14 carried an item whose stated reason had been false for days, twice, and it is the specific way such a section rots.
     - **An issue or ADR reference is a pointer, not a summary**, exactly as in code. `see #540`, and stop.
+- **Documentation under `docs/` is written in Simplified Technical English.** The rules on this page say what a document may contain. [ASD-STE100](https://www.asd-ste100.org/)
+  says how the sentences are built: one idea each, 25 words at most, active voice, no semicolons, no phrasal verbs. The whole rule, the exemptions and the
+  `asd-ste100` skill that applies it are in [.github/instructions/documentation.instructions.md](.github/instructions/documentation.instructions.md), which
+  loads itself when you touch a file under `docs/`. The same discipline already governs code comments
+  ([.github/instructions/comments.instructions.md](.github/instructions/comments.instructions.md) § How to write the sentences). **Keep every hedge at its
+  original strength** — the one way an STE rewrite goes wrong is by shortening _may have failed_ into _failed_. See #733.
 - **Correct the docs in the same change that makes them wrong.** A behaviour change that leaves a document describing the old behaviour is incomplete work, not
   a follow-up — and the document to fix is the one a reader would reach for, which is usually not the one you were editing.
 - **ADR numbers are claimed by writing the ADR, never by planning one.** A document that says _"needs ADR-0NN"_ for an ADR nobody has written yet is a
