@@ -6,6 +6,19 @@ what to know once you are in, and what to do when it misbehaves.
 Why OpenObserve at all, and what the alternatives cost, is [ADR-015](../adr/ADR-015_OBSERVABILITY_STACK.md). This page assumes that decision and does not
 re-argue it.
 
+## The short version
+
+```sh
+kubectl --context event-junkie-staging -n observability \
+  port-forward svc/openobserve-openobserve-standalone 5080:5080     # then http://localhost:5080/
+flux --context event-junkie-staging get helmrelease openobserve -n flux-system
+```
+
+- **Cost tracks the number of metric _names_, not the volume.** A thousand idle names is expensive. §The one thing that will bite you.
+- **The metadata DB dies with the node.** Dashboards and alerts live in git and are pushed by hand after every rebuild.
+- **Changing the Secret restarts nothing**, and both `flux reconcile` and `rollout status` report success anyway.
+- **Staging only.** Production runs no observability stack.
+
 ## The shape of it
 
 |              |                                                                                                                               |
@@ -18,14 +31,14 @@ re-argue it.
 | Ingestion    | The OTel collector gateway, over OTLP. Nothing writes to it directly                                                          |
 | Environments | **Staging only.** Production runs no observability stack yet                                                                  |
 
-**The metadata DB is on that PVC, which means it dies with the node.** Users, dashboards and saved views are metadata; the data is not. A rebuild therefore
-comes back with an empty console and a full bucket — which is why the root password can be regenerated freely during a rebuild (it is re-seeded from the
-Secret at first boot) and why dashboards live in git rather than in the tool.
+**The metadata DB is on that PVC, which means it dies with the node.** Users, dashboards and saved views are metadata. The data is not. A rebuild therefore
+comes back with an empty console and a full bucket. That is why the root password can be regenerated freely: the Secret re-seeds it at first boot. It is
+also why dashboards live in git rather than in the tool.
 
 ## The one thing that will bite you: streams, not rows
 
 **OpenObserve partitions its in-memory table per stream, and a stream is a metric _name_.** Cost tracks the number of distinct names, not the volume of data
-under them. A thousand near-idle metric names is expensive; a million samples of one name is cheap.
+under them. A thousand near-idle metric names is expensive. A million samples of one name is cheap.
 
 This is not academic. On 2026-08-21 staging stopped accepting data for three hours:
 
@@ -52,17 +65,18 @@ Dropping at the edge means the bytes never cross the network and never occupy a 
 | `^otelcol_.*_batch_send_size$`                                                 | The collector measuring itself, at histogram resolution | #615  |
 | `^pg_` except an allowlist                                                     | 362 streams for one queried metric                      | #624  |
 
-**`process_` is deliberately absent**, and that is a correction rather than an oversight. It is a mixed namespace: the Go Prometheus client and Micrometer both
-publish under it, so a prefix drop silently took five of the BFF's and importer's own metrics with it ([#616](https://github.com/enorm-labs/event-junkie/issues/616)).
+**`process_` is deliberately absent**, and that is a correction rather than an oversight. It is a mixed namespace, where the Go Prometheus client and Micrometer both
+publish. A prefix drop silently took five of the BFF's and importer's own metrics with it
+([#616](https://github.com/enorm-labs/event-junkie/issues/616)).
 
-**Adding a rule:** edit the values, then validate before merging — an OTTL syntax error takes the gateway down, and the gateway is the only thing shipping
+**Adding a rule:** edit the values, then validate before merging. An OTTL syntax error takes the gateway down, and the gateway is the only thing shipping
 anything:
 
 ```sh
 docker run --rm -v "$PWD:/cfg" otel/opentelemetry-collector-contrib:0.138.0 validate --config=/cfg/minimal.yaml
 ```
 
-Extract the rules into a minimal config first; the HelmRelease values are not a collector config.
+Extract the rules into a minimal config first. The HelmRelease values are not a collector config.
 
 ## Dashboards are in git, and pushed by hand
 
@@ -75,7 +89,7 @@ cd deploy/dashboards
 ```
 
 `is-it-healthy.json` is **generated** by `gen_dashboard.py` — edit the generator, never the JSON. The README there records the PromQL limitations that cost the
-most time: `time()` is frozen at the window start, `sort_desc` is unimplemented, and `or vector(0)` does not backfill a missing series.
+most time. `time()` is frozen at the window start, `sort_desc` is unimplemented, and `or vector(0)` does not backfill a missing series.
 
 **`--check` fails on a freshly rebuilt cluster and that is correct** — the panels query data that does not exist yet. Run it once there is a day of history.
 
@@ -90,32 +104,32 @@ cd deploy/alerts
 ```
 
 `alerts.json` is **generated** by `gen_alerts.py`, exactly like the dashboard. `--check` answers the question the UI cannot: whether a rule's query matches any
-series at all. One that matches none never fires and is indistinguishable from health — it caught a rule that summed two counters, which was silently
+series at all. One that matches none never fires, and is indistinguishable from health. It caught a rule summing two counters that was silently
 un-fireable whenever either counter was quiet.
 
 **Firings go into the `alert_history` stream, not to a person yet.** Two separate reasons, and only one of them is the phone number:
 
 - [#271](https://github.com/enorm-labs/event-junkie/issues/271) item 4's Signal bridge is unregistered, and
-- **OpenObserve used to refuse any alert destination inside the cluster** — its SSRF guard rejected
-  `signal-cli.observability.svc.cluster.local`, which is item 4's architecture blocked by a control unrelated to registration. Settled on 2026-08-23:
-  `ZO_SKIP_SSRF_CHECKS` is set **and paired with an egress NetworkPolicy** (`deploy/clusters/staging/openobserve-netpol.yaml`) that lets this pod reach CoreDNS,
-  the public internet on 443 and the Signal bridge — and nothing else, including the database and the Kubernetes API. `deploy/alerts/README.md` has the
-  reasoning. So the remaining blocker on delivery really is just the phone number.
+- **OpenObserve's SSRF guard rejects an alert destination inside the cluster**, including
+  `signal-cli.observability.svc.cluster.local`. `ZO_SKIP_SSRF_CHECKS` is therefore set, **and paired with an egress NetworkPolicy**
+  (`deploy/clusters/staging/openobserve-netpol.yaml`). That policy lets this pod reach CoreDNS, the public internet on 443 and the Signal bridge. Nothing
+  else — not the database, not the Kubernetes API. `deploy/alerts/README.md` has the reasoning. So the remaining blocker on delivery really is just the phone
+  number.
 
 **Re-apply after any rebuild**, for the same reason as the dashboard: alerts, destinations and templates are all metadata.
 
 ## Credentials
 
-The full inventory is [SECRETS.md](SECRETS.md); two operational traps belong here.
+The full inventory is [SECRETS.md](SECRETS.md). Two operational traps belong here.
 
-**`openobserve-credentials` exists twice, in `flux-system` and `observability`**, with the same contents. `valuesFrom` resolves in the HelmRelease's namespace;
-the chart's `existingRootUserSecret` reads from the release's target namespace. Reaching for the wrong copy produces a flat 401 that reads like a wrong password.
+**`openobserve-credentials` exists twice, in `flux-system` and `observability`**, with the same contents. `valuesFrom` resolves in the HelmRelease's namespace.
+The chart's `existingRootUserSecret` reads from the release's target namespace instead. Reaching for the wrong copy produces a flat 401 that reads like a wrong password.
 
 **`O2_BASIC_AUTH_HEADER` is derived, and goes stale silently.** The collector authenticates with a header rather than a user and password, and Flux's
-`valuesFrom` substitutes a value rather than composing one. Rotate the root password without re-deriving the header and the collector keeps posting with the old
-one while OpenObserve refuses — which looks like an ingestion outage, not a credential problem.
+`valuesFrom` substitutes a value rather than composing one. Rotate the root password without re-deriving the header, and the collector keeps posting with the old
+one while OpenObserve refuses. That looks like an ingestion outage, not a credential problem.
 
-**Changing the Secret restarts nothing.** The S3 keys reach the pod through `envFrom`, which references a Secret by name, so the running pod keeps the old value
+**Changing the Secret restarts nothing.** The S3 keys reach the pod through `envFrom`, which references a Secret by name. The running pod therefore keeps the old value
 until something replaces it. `flux reconcile` will report success and `rollout status` will say the rollout is complete, both truthfully, with the old credential
 still in place:
 
@@ -125,8 +139,8 @@ kubectl --context event-junkie-staging -n observability rollout restart stateful
 
 ## Keeping it up to date
 
-**Nothing does this automatically, and that is a gap rather than a decision.** Dependabot covers gradle, npm, GitHub Actions, OpenTofu and Docker — it has no
-Helm ecosystem, so every chart version pinned in `deploy/clusters/*/` is watched by nobody:
+**Nothing does this automatically, and that is a gap rather than a decision.** Dependabot covers gradle, npm, GitHub Actions, OpenTofu and Docker. It has no Helm
+ecosystem, so every chart version pinned in `deploy/clusters/*/` is watched by nobody:
 
 | Component                                    | Pinned at      |
 | -------------------------------------------- | -------------- |
@@ -145,9 +159,9 @@ helm search repo openobserve/openobserve-standalone --versions | head -5
 ```
 
 Then bump the `version:` in the HelmRelease, open a PR, and watch the reconcile. **Read the chart's changelog for `ZO_*` defaults**, because this deployment
-relies on several of them being what they are — `ZO_LOCAL_MODE` in particular has already been misread once, as choosing storage rather than topology.
+relies on several of them being what they are. `ZO_LOCAL_MODE` in particular is easy to misread as choosing storage rather than topology.
 
-The pin is not laziness: ADR-015's measurements were taken against 0.92.2, and criterion 2 is a claim about _that_ build.
+The pin is not laziness. ADR-015's measurements were taken against 0.92.2, and criterion 2 is a claim about _that_ build.
 
 ## When it misbehaves
 
@@ -177,12 +191,12 @@ cd infra && direnv exec . sh -c \
   | tr '\t' '\n' | grep -oE '2026/[0-9]{2}/[0-9]{2}/[0-9]{2}' | sort | uniq -c | tail -6
 ```
 
-A healthy system writes into the current hour. Hours that trail off are a backlog; hours that stop are a refusal.
+A healthy system writes into the current hour. Hours that trail off are a backlog. Hours that stop are a refusal.
 
 ## What it does not do yet
 
 - **No alerting.** The rules and the Signal route are [#271](https://github.com/enorm-labs/event-junkie/issues/271) items 3 and 4, blocked on the eSIM. Today
   the dashboard is something a human looks at, which is a worse guarantee than it appears.
 - **Nothing on production.** Standing it up there needs the memory budget re-checked against a node that also runs the application — and #625 answered first.
-- **Nothing watches shedding.** `otelcol_exporter_send_failed_metric_points` is collected and unused; a dropped metric currently looks exactly like a quiet
+- **Nothing watches shedding.** `otelcol_exporter_send_failed_metric_points` is collected and unused. A dropped metric looks exactly like a quiet
   period, which is the same blindness [#618](https://github.com/enorm-labs/event-junkie/issues/618) records for importers.
