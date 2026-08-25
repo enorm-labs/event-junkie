@@ -18,6 +18,9 @@ on:
       - 'scripts/format-markdown.sh'
       - 'scripts/skill-parity.sh'
       - 'scripts/rules-parity.sh'
+      - 'scripts/ste-lint.sh'
+      - 'scripts/ste_lint.py'
+      - 'scripts/ste-baseline.txt'
       - 'events-frontend/package-lock.json'
       - '.github/workflows/validate-docs.yml'
   pull_request:
@@ -33,6 +36,9 @@ on:
       - 'scripts/format-markdown.sh'
       - 'scripts/skill-parity.sh'
       - 'scripts/rules-parity.sh'
+      - 'scripts/ste-lint.sh'
+      - 'scripts/ste_lint.py'
+      - 'scripts/ste-baseline.txt'
       - 'events-frontend/package-lock.json'
       - '.github/workflows/validate-docs.yml'
   workflow_dispatch:
@@ -60,6 +66,51 @@ jobs:
 
       - name: Check rule parity
         run: scripts/rules-parity.sh
+
+  # The sentence rules, ratcheted per area against scripts/ste-baseline.txt (#733). python3 is
+  # preinstalled on the runner and the scanner imports nothing outside the standard library, so this
+  # needs no setup step and finishes in well under a second.
+  language:
+    name: Check documentation language
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check Simplified Technical English findings against the baseline
+        run: scripts/ste-lint.sh check
+
+      - name: Explain the fix
+        if: failure()
+        run: |
+          {
+            echo "## Documentation language"
+            echo
+            echo "An area carries more ASD-STE100 findings than its baseline allows. The ratchet"
+            echo "only turns one way: split the sentence, rather than raise the number."
+            echo
+            echo '```bash'
+            echo "scripts/ste-lint.sh report --top 20   # where the findings are"
+            echo "scripts/ste-lint.sh stats             # sentences scanned, and the share over cap"
+            echo '```'
+            echo
+            echo "If the count went *down*, regenerate and commit the lower figure:"
+            echo
+            echo '```bash'
+            echo "scripts/ste-lint.sh update-baseline"
+            echo '```'
+            echo
+            echo "A sentence that has to stay long takes an inline reason on the line above it:"
+            echo
+            echo '```html'
+            echo '<!-- ste-lint: allow the exact wording the DPA uses -->'
+            echo '```'
+            echo
+            echo "See .github/instructions/documentation.instructions.md and #733."
+          } >> "$GITHUB_STEP_SUMMARY"
 
   format:
     name: Check Markdown formatting

@@ -32,6 +32,11 @@ of the sentences.
       is present for every contributor rather than only the ones who installed it globally. Invoke it by name. Its default output is the rewritten text alone.
       Ask for the rule table when you want to see which rule each edit answers. It is kept byte-identical to upstream: `VENDORED.md` beside it records the
       commit and the update command.
+    - **`scripts/ste-lint.sh` measures it, and the number only goes down.** `check` fails when an area carries more findings than
+      `scripts/ste-baseline.txt` allows, one number per rewrite phase, and `/verify` and `validate-docs.yml` both run it. `report --top 20` shows where they
+      are and `stats` gives the share of sentences over the cap. A sentence that has to stay long takes `<!-- ste-lint: allow <reason> -->` on the line above
+      it, and the reason is not optional. It sees only the structural rules above, so a green run is not a claim of compliance. **A generated document is
+      skipped** — a file whose header says it is not edited by hand cannot be fixed here, and the generator would overwrite the attempt.
     - **Voice-carrying copy is exempt.** [BRANDING.md](../../docs/BRANDING.md) and [LOGO_IDEAS.md](../../docs/LOGO_IDEAS.md) argue a case and hold a tone, which
       is what the standard says it is not for. The glob covers them because it covers `docs/`; this sentence is the exemption. Everything else in `docs/` is in
       scope, and `docs/ops/` and `docs/adr/` are where it matters most.
