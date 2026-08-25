@@ -1,8 +1,10 @@
 {
   "$schema": "./events-frontend/node_modules/oxfmt/configuration_schema.json",
   "//": "Markdown only. oxfmt also claims YAML/JSON/CSS/TS/HTML, and pointing it at this repo root unscoped would rewrite .github/workflows and the Go-templated YAML in deploy/charts. The ignorePatterns deny-list makes that impossible by construction, so the config is safe even when invoked without a path. events-frontend/.oxfmtrc.json shadows this file entirely for anything under events-frontend/ (nested configs replace, they do not merge), which is why the format script passes --disable-nested-config.",
+  "//vendored": "`.claude/skills/asd-ste100/` is a third-party MIT skill kept byte-identical to upstream (see its VENDORED.md). Formatting it would fork the copy and turn every upstream update into a merge conflict, so it is out of scope here — our conventions do not apply to somebody else's repository.",
   "ignorePatterns": [
-    "**/*.{yaml,yml,json,jsonc,json5,ts,tsx,mts,cts,js,jsx,mjs,cjs,css,scss,less,html,vue,svelte,toml,graphql,gql,hbs,mdx}"
+    "**/*.{yaml,yml,json,jsonc,json5,ts,tsx,mts,cts,js,jsx,mjs,cjs,css,scss,less,html,vue,svelte,toml,graphql,gql,hbs,mdx}",
+    ".claude/skills/asd-ste100/**"
   ],
   "overrides": [
     {
