@@ -34,12 +34,21 @@ npm run test:e2e -- --project=chromium
 
 ```bash
 scripts/format-markdown.sh check
+scripts/ste-lint.sh check
 ```
 
 Writes nothing; exits 1 listing every file that is not formatted. The fix is `scripts/format-markdown.sh` with no argument — it rewrites in place, so this is
 never a "go and work out what is wrong" failure. The `pre-commit` hook runs the same script and `validate-docs.yml` runs this exact command in CI, so a clean
 local commit history means both pass; this step is here for the case where hooks were skipped with `--no-verify`. Do not reach for `oxfmt` directly — the script
 pins the version and the scope, both of which matter (.github/instructions/markdown.instructions.md).
+
+`ste-lint.sh` is the same ratchet over what the documents _say_, for `docs/**` only. It counts the structural ASD-STE100 findings — a sentence over 25 words
+(20 inside a numbered step), a semicolon, present perfect, a file over 150 lines with no `## The short version`, an `Amendment,` heading — against
+`scripts/ste-baseline.txt`, one number per rewrite phase. `scripts/ste-lint.sh report --top 20` shows where they are and `stats` gives the share of sentences
+over the cap. A sentence that has to stay long takes `<!-- ste-lint: allow <reason> -->` on the line above it, and the reason is not optional. Only the
+structural half of the standard is checkable here — the lexical rules need a dictionary this repository is not licensed to carry — so nothing it prints means a
+document is STE-compliant. `validate-docs.yml` runs it in CI. See #733 and
+[.github/instructions/documentation.instructions.md](../instructions/documentation.instructions.md).
 
 ### Comment volume (from repo root, always)
 
