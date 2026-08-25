@@ -1,0 +1,114 @@
+# ==============================================================================================
+#  NEVER ADD `actions/checkout` — OR ANY STEP THAT RUNS PULL-REQUEST CODE — TO THIS FILE.
+#
+#  `pull_request_target` runs with the BASE repository's writable token against a pull request
+#  that may come from anyone. Safe here for one reason only: nothing fetches or runs the
+#  contributor's code. A checkout makes it an arbitrary-code-execution path (#479, #443).
+# ==============================================================================================
+#
+# Dependabot pull requests are the one class that arrives with no milestone — `dependabot.yml` has
+# no key for one. This sets it, and never overwrites a milestone already there.
+name: Milestone Dependabot PRs
+
+on:
+  # comment-lint: allow a dated suppression, per the reason in zizmor.yml
+# zizmor: ignore[dangerous-triggers]
+  # 2026-08-25 — safe only while this file has no checkout, the property to re-check before adding
+  # any step. Required rather than preferred, too: a `pull_request` run raised by Dependabot gets a
+  # read-only token and could not write a milestone at all.
+  pull_request_target:
+    types: [ opened, reopened ]
+
+  # Sweeps open Dependabot pull requests that have none, covering the ones predating this workflow.
+  # GitHub offers the button only for workflows on the default branch, so not until this merges.
+  workflow_dispatch:
+    inputs:
+      milestone:
+        description: 'Milestone title to apply (default: the oldest open milestone)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  # Which scope governs a milestone on a pull request is not clearly documented. Both are granted:
+  # the cost is one scope on a workflow that cannot run PR code, and guessing wrong is a 403 on the
+  # first real run — which reads as milestones quietly not appearing, not as a failure.
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: milestone-dependabot-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  milestone:
+    name: Apply a milestone to Dependabot PRs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Set the milestone
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const BOTS = new Set(['dependabot[bot]', 'dependabot-preview[bot]']);
+            const { owner, repo } = context.repo;
+
+            // No milestone here carries a due date, so "the next one due" cannot be asked for. The
+            // oldest open one is the release being worked toward; when it closes the next wins by
+            // itself, so there is no string in this file to keep current.
+            const milestones = await github.paginate(github.rest.issues.listMilestones, {
+              owner, repo, state: 'open', per_page: 100,
+            });
+            if (milestones.length === 0) {
+              core.warning('No open milestone — nothing to apply.');
+              return;
+            }
+
+            // `core.getInput` reads this step's own `with:` block, not the workflow dispatch inputs.
+            const wanted = context.payload.inputs?.milestone;
+            const target = wanted
+              ? milestones.find((m) => m.title === wanted)
+              : milestones.reduce((a, b) => (a.number <= b.number ? a : b));
+
+            // Open milestones only, so an unknown title fails loudly instead of falling back — the
+            // blind spot that leaves a bulk `gh pr edit --milestone` silently half done.
+            if (!target) {
+              core.setFailed(`No open milestone titled "${wanted}". Open: ${milestones.map((m) => m.title).join(', ')}`);
+              return;
+            }
+
+            const assign = async (number, title) => {
+              await github.rest.issues.update({ owner, repo, issue_number: number, milestone: target.number });
+              core.info(`#${number} -> ${target.title}   (${title})`);
+            };
+
+            if (context.eventName === 'pull_request_target') {
+              const pr = context.payload.pull_request;
+              if (!BOTS.has(pr.user.login)) {
+                core.info(`#${pr.number} is from ${pr.user.login}, not Dependabot — left alone.`);
+                return;
+              }
+              if (pr.milestone) {
+                core.info(`#${pr.number} already has "${pr.milestone.title}" — left alone.`);
+                return;
+              }
+              await assign(pr.number, pr.title);
+              return;
+            }
+
+            // `listForRepo` is the issues endpoint, so it returns pull requests too and carries the
+            // milestone field the pulls endpoint omits.
+            const open = await github.paginate(github.rest.issues.listForRepo, {
+              owner, repo, state: 'open', per_page: 100,
+            });
+            const todo = open.filter((i) => i.pull_request && !i.milestone && BOTS.has(i.user.login));
+
+            if (todo.length === 0) {
+              core.info('Every open Dependabot pull request already has a milestone.');
+              return;
+            }
+            for (const pr of todo) {
+              await assign(pr.number, pr.title);
+            }
+            core.notice(`Applied "${target.title}" to ${todo.length} Dependabot pull request(s).`);

@@ -46,6 +46,11 @@ What each workflow is for, which checks are required, and the shapes that fail s
     - `label-pr.yml` — Derives labels from the Conventional Commits PR title (`feat(scraper): …` → `feat` + `importer`, `fix(api)!: …` → `fix` +
       `breaking-change`) via `actions/github-script`. Creates any missing label on demand and re-syncs when the title is edited. Uses `pull_request_target` so
       fork PRs get a writable token; safe because it never checks out or runs PR code.
+    - `milestone-dependabot.yml` — gives every Dependabot pull request a milestone, since `dependabot.yml` has no key for one and they are otherwise the
+      single class of pull request that arrives without one. Same shape and same banner as `label-pr.yml`: `pull_request_target`, no checkout, `github-script`.
+      It picks the **oldest open milestone** — no milestone here carries a due date, so there is no string to keep current, and when one closes the next wins by
+      itself. It never overwrites a milestone already set. Its `workflow_dispatch` sweeps every open Dependabot pull request that has none, which is what covers
+      the ones predating it.
     - `deployment-status.yml` — turns a Flux `repository_dispatch` into a **GitHub deployment**, so the Environments tab says what is running (#565). Triggered
       by the `github-dispatch` Provider in each cluster, on the event type `HelmRelease/event-junkie.flux-system` — Flux's own `{Kind}/{Name}.{Namespace}`
       format, not a name we chose. **It is the only workflow that cannot be tested from a pull request**, because `repository_dispatch` runs workflows from the
@@ -274,9 +279,10 @@ in [AGENTS.md](../../AGENTS.md) § Automating GitHub with `gh`.
     empty on a fork run, the scan is `continue-on-error`, and nothing fails — but the invariant is not "no pull request reaches a secret", it is "no pull
     request _depends_ on one".
 
-    `label-pr.yml` is the one workflow using `pull_request_target`, and it is safe **only** because it never checks out or runs pull-request code. The file
-    opens with a banner saying so, because that property is one innocuous-looking `actions/checkout` away from being an arbitrary-code-execution path holding
-    `pull-requests: write`.
+    **Two workflows use `pull_request_target`** — `label-pr.yml` and `milestone-dependabot.yml` — and both are safe **only** because neither checks out or runs
+    pull-request code. Each opens with the same banner saying so, because that property is one innocuous-looking `actions/checkout` away from being an
+    arbitrary-code-execution path holding write scopes. `milestone-dependabot.yml` needs the trigger for a second reason: a `pull_request` run raised by
+    Dependabot gets a read-only token, so it could not write a milestone at all.
 
 - **Nothing running in CI can push to `main`.** The `main` ruleset requires every change to arrive by pull request, and its **only** bypass actor is
   `OrganizationAdmin`. The obvious workaround does not exist: GitHub refuses the Actions bot as a bypass actor with _"Actor GitHub Actions integration must be
