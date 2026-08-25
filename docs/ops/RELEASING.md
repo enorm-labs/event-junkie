@@ -4,7 +4,7 @@ How a commit becomes a running deployment. Two halves that meet at a registry an
 [`release.yml`](../../.github/workflows/release.yml) **builds and publishes**, and Flux **pulls and reconciles**. Nothing in CI can reach a cluster, by design —
 [ADR-016](../adr/ADR-016_GITOPS_DELIVERY.md).
 
-The version scheme itself is in [DEVELOPMENT.md §Versions](../DEVELOPMENT.md#versions-and-cutting-a-release); the platform reasoning is in
+The version scheme itself is in [DEVELOPMENT.md §Versions](../DEVELOPMENT.md#versions-and-cutting-a-release). The platform reasoning is in
 [PLATFORM_SETUP §3–4a](PLATFORM_SETUP.md#3-container-registry--ghcr-not-docker-hub).
 
 ## The short version
@@ -91,7 +91,7 @@ keeps the Releases page the single record of what shipped.
 
 ## One version, four artifacts
 
-`gradle.properties` is the source of truth; everything derives from it via [`scripts/version.sh`](../../scripts/version.sh).
+`gradle.properties` is the source of truth. Everything derives from it via [`scripts/version.sh`](../../scripts/version.sh).
 
 ```
 gradle.properties  0.1.1-SNAPSHOT
@@ -106,9 +106,9 @@ gradle.properties  0.1.1-SNAPSHOT
                                              └── every image.tag falls back to .Chart.AppVersion
 ```
 
-**That fallback is the mechanism, and it is one line from being defeated.** A published values file — or a `HelmRelease` — that pins `<component>.image.tag`
-opts that component out silently: the render still looks correct, with a plausible tag on every image, while one workload runs a version nobody chose. The
-chart's `tests/invariants_test.yaml` fails the build on the values file; `scripts/cluster-assertions.sh` fails it on a `HelmRelease`.
+**That fallback is the mechanism, and it is one line from being defeated.** A published values file that pins `<component>.image.tag` opts that
+component out silently, and so does a `HelmRelease`. The render still looks correct, with a plausible tag on every image, while one workload runs a version
+nobody chose. The chart's `tests/invariants_test.yaml` fails the build on the values file. `scripts/cluster-assertions.sh` fails it on a `HelmRelease`.
 
 ## The two version policies
 
@@ -136,21 +136,21 @@ semver: ">=0.0.0"    ->  no match found for semver: >=0.0.0
 
 ### The range only means "newest" if the versions order
 
-Two independent things have to be true, and only the first is famous. The `-0` decides **which versions are candidates**; the version scheme decides **which
-candidate wins**. A correct range ranking unordered versions resolves a chart at random, reports `Ready`, and logs nothing — the same silent shape as the missing
-`-0`, and it cost three days ([#455](https://github.com/enorm-labs/event-junkie/issues/455)).
+Two independent things have to be true, and only the first is famous. The `-0` decides **which versions are candidates**. The version scheme decides **which
+candidate wins**. A correct range ranking unordered versions resolves a chart at random, reports `Ready`, and logs nothing. That is the same silent shape as
+the missing `-0`, and it cost three days ([#455](https://github.com/enorm-labs/event-junkie/issues/455)).
 
-SemVer §11: identifiers made only of digits compare **numerically**; identifiers containing a letter compare **lexically in ASCII**. The old
-`0.1.0-snapshot.g<sha>` therefore sorted by short sha, which is random — so staging ran whichever sha happened to sort highest until a merge produced one higher
-still, roughly a 1-in-16 chance per commit, and it could move backwards. The timestamp is digits-only and fixes it; the `g<sha>` stays as a tie-break and for
+SemVer §11 says identifiers made only of digits compare **numerically**, and identifiers containing a letter compare **lexically in ASCII**. The old
+`0.1.0-snapshot.g<sha>` therefore sorted by short sha, which is random. Staging ran whichever sha happened to sort highest, until a merge produced one
+higher still. That is roughly a 1-in-16 chance per commit, and it could move backwards. The timestamp is digits-only and fixes it. The `g<sha>` stays as a tie-break and for
 traceability.
 
-The same rule is why the base version moved `0.1.0` → `0.1.1` without `0.1.0` ever being released: **numeric identifiers rank below alphanumeric ones**, so
-`0.1.0-snapshot.2026…` would have sorted _under_ all ten legacy `0.1.0-snapshot.g…` tags. Those are immutable published artifacts and were not deleted; the patch
-bump puts every new snapshot above them on the `major.minor.patch` comparison, before any prerelease identifier is looked at.
+The same rule is why the base version moved `0.1.0` → `0.1.1` without `0.1.0` ever being released. **Numeric identifiers rank below alphanumeric ones**, so
+`0.1.0-snapshot.2026…` sorts _under_ all ten legacy `0.1.0-snapshot.g…` tags. Those are immutable published artifacts and were not deleted. The patch bump puts
+every new snapshot above them on the `major.minor.patch` comparison, before any prerelease identifier is read.
 
-[`scripts/version-test.sh`](../../scripts/version-test.sh) is the gate. It resolves fabricated version sets through Helm's own Masterminds solver — the library
-Flux's source-controller embeds — and asserts the newest wins. Asserting the _format_ would not have caught this; the format was always valid.
+[`scripts/version-test.sh`](../../scripts/version-test.sh) is the gate. It resolves fabricated version sets through Helm's own Masterminds solver, the library
+Flux's source-controller embeds, and asserts the newest wins. Asserting the _format_ would not have caught this. The format was always valid.
 
 ## When a deploy goes wrong
 
@@ -198,12 +198,12 @@ This document is about what happens on every commit afterwards.
 
 The one property worth carrying across, because it constrains the chart rather than the runbook: **order is enforced, not assumed.** The chart renders a
 `cert-manager.io/v1` ClusterIssuer, and the API server rejects unknown kinds — so without cert-manager the whole application release fails, workloads included.
-`dependsOn` is what orders it; `scripts/cluster-assertions.sh` fails the build if a release that creates an issuer stops declaring one.
+`dependsOn` is what orders it. `scripts/cluster-assertions.sh` fails the build if a release that creates an issuer stops declaring one.
 
 ## What is not automated, and why
 
 - **`flux bootstrap` runs once per cluster, from a laptop** — [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §9. It commits Flux's manifests to this repository
-  and creates a deploy key; it needs a GitHub PAT once, which CI never holds.
+  and creates a deploy key. It needs a GitHub PAT once, which CI never holds.
 - **Two secrets are made by hand** — the database credentials, and on staging only the Hetzner DNS token. The chart never templates a password, and
   [#416](https://github.com/enorm-labs/event-junkie/issues/416) replaces both with SOPS.
 - **Production is `suspend: true`** until [#424](https://github.com/enorm-labs/event-junkie/issues/424) provisions it, and its `database.host` is an
