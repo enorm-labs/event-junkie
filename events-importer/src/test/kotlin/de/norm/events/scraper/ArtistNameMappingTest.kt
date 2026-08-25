@@ -65,6 +65,30 @@ class ArtistNameMappingTest {
             listOf("Earth Tongue", "Scott Hepple & The Sun Band")
     }
 
+    // --- supportSubtitleLine ---
+
+    @Test
+    fun `supportSubtitleLine picks the line carrying a support marker`() {
+        supportSubtitleLine(listOf("Tour 2026", "+ Support: Jeff Clarke")) shouldBe "+ Support: Jeff Clarke"
+        supportSubtitleLine(listOf("Opener: Warwolf")) shouldBe "Opener: Warwolf"
+        supportSubtitleLine(listOf("Special Guest: Motorjesus")) shouldBe "Special Guest: Motorjesus"
+    }
+
+    @Test
+    fun `supportSubtitleLine returns null when no line carries a marker`() {
+        supportSubtitleLine(listOf("Tour 2026")) shouldBe null
+        supportSubtitleLine(emptyList()) shouldBe null
+    }
+
+    // The reason the function exists: `.text()` flattens a trailing notice onto its own line, and
+    // handing the whole subtitle to extractSupportFromSubtitle would capture the notice as an act.
+    @Test
+    fun `supportSubtitleLine isolates the support line from a trailing cancellation notice`() {
+        val lines = listOf("+ Support: Jeff Clarke", "ABGESAGT. Bereits gekaufte Tickets behalten ihre Gültigkeit.")
+        supportSubtitleLine(lines) shouldBe "+ Support: Jeff Clarke"
+        extractSupportFromSubtitle(supportSubtitleLine(lines)) shouldContainExactly listOf("Jeff Clarke")
+    }
+
     // --- isPlaceholderName ---
 
     @Test
@@ -73,6 +97,7 @@ class ArtistNameMappingTest {
         isPlaceholderName("tba") shouldBe true
         isPlaceholderName("TBA.") shouldBe true
         isPlaceholderName("T.B.A.") shouldBe true
+        isPlaceholderName("t.b.a.") shouldBe true
     }
 
     @Test

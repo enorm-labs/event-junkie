@@ -23,14 +23,6 @@ import java.text.Normalizer
  * [ROLE_LABEL_PREFIX]. Returns an empty list when no support line is present.
  * Shared across venue scrapers (e.g. Privatclub, Astra, Hole 44) whose subtitles
  * follow this convention.
- *
- * Example:
- * ```kotlin
- * extractSupportFromSubtitle("Tour 2026 | Support: Luana")               // ["Luana"]
- * extractSupportFromSubtitle("Tour + Support: High On Fire & Gnome")      // ["High On Fire", "Gnome"]
- * extractSupportFromSubtitle("Opener: Warwolf + Special Guest: Motorjesus") // ["Warwolf", "Motorjesus"]
- * extractSupportFromSubtitle("Tour 2026")                                 // []
- * ```
  */
 @Suppress("ReturnCount") // Guard clauses for blank subtitle and missing support line are clearer than nesting
 fun extractSupportFromSubtitle(subtitle: String?): List<String> {
@@ -61,12 +53,6 @@ private val SUPPORT_INTRO_PATTERN =
  * which `.text()` flattens onto the same line — would be captured as a support
  * act. Pair with [textLinesAt][de.norm.events.scraper.textLinesAt] to obtain the
  * lines. Shared by the Kulturhäuser-platform scrapers (Astra, Lido).
- *
- * Example:
- * ```kotlin
- * supportSubtitleLine(listOf("+ Support: Jeff Clarke", "ABGESAGT. …note…"))  // "+ Support: Jeff Clarke"
- * supportSubtitleLine(listOf("Tour 2026"))                                   // null
- * ```
  */
 fun supportSubtitleLine(lines: List<String>): String? = lines.firstOrNull { SUPPORT_INTRO_PATTERN.containsMatchIn(it) }
 
@@ -74,9 +60,6 @@ fun supportSubtitleLine(lines: List<String>): String? = lines.firstOrNull { SUPP
  * Common placeholder names used by venues when the artist has not been
  * announced yet (e.g. "TBA", "TBD", "TBC", "N.N."). These should not be
  * created as artist entries in the database.
- *
- * Comparison is case-insensitive and ignores surrounding whitespace
- * and trailing punctuation (dots).
  */
 private val PLACEHOLDER_NAMES =
     setOf("tba", "tbd", "tbc", "tba.", "tbd.", "tbc.", "nn", "n.n.", "nn.")
@@ -90,9 +73,8 @@ private val PLACEHOLDER_NAMES =
  * A **bare** "More" deliberately does not match: it is a real band name (the NWOBHM act). The
  * placeholder is only recognised with a lead-in (`+`/`&`/`and`/`und`), a `many`/`viele` quantifier,
  * or a trailing `tba`/`tbc`/`tbd` — each of which marks it as a continuation rather than a name.
- * The quantified form is what a comma-split lineup ends on, and it only became reachable once
- * [headlinersFromTitle] learned to unpack a `w/` billing: Zenner's
- * `House of Rave w/ Maceo Plex, …, Mark Dekoda and many more` previously stayed one blob.
+ * The quantified form is what a comma-split lineup ends on, once [headlinersFromTitle] has unpacked
+ * a `w/` billing into separate acts.
  */
 private val MORE_TO_COME_PATTERN =
     Regex(
@@ -103,26 +85,13 @@ private val MORE_TO_COME_PATTERN =
     )
 
 /**
- * Checks whether [name] is a placeholder rather than a real artist name.
- *
- * Returns `true` for common "to be announced" abbreviations like
- * "TBA", "TBD", "N.N." (case-insensitive, ignoring trailing dots).
- *
- * Example:
- * ```kotlin
- * isPlaceholderName("TBA")     // true
- * isPlaceholderName("t.b.a.")  // true
- * isPlaceholderName("N.N.")    // true
- * isPlaceholderName("+ more")  // true
- * isPlaceholderName("more tba")// true
- * isPlaceholderName("More")    // false (a real band name)
- * isPlaceholderName("Aska")    // false
- * ```
+ * Checks whether [name] is a placeholder ([PLACEHOLDER_NAMES]) or a lineup continuation
+ * ([MORE_TO_COME_PATTERN]) rather than a real artist name. Case-insensitive, and dots are ignored,
+ * so "T.B.A." and "tba" are both placeholders.
  */
 fun isPlaceholderName(name: String): Boolean {
     val trimmed = name.trim().lowercase()
     val dotFree = trimmed.replace(".", "")
-    // Check both with and without dots to handle "TBA", "T.B.A.", "N.N." etc.
     return dotFree in PLACEHOLDER_NAMES ||
         trimmed in PLACEHOLDER_NAMES ||
         MORE_TO_COME_PATTERN.containsMatchIn(trimmed)
@@ -140,21 +109,11 @@ val ROLE_LABEL_PREFIX =
     Regex("""^(?:div\.?\s*supports?|special\s+guests?|supports?|openers?|feat\.?|featuring|w/)\s*:?\s*""", RegexOption.IGNORE_CASE)
 
 /**
- * Checks whether [name] is a bare lineup role label ("Special Guest", "Support",
- * "div. Supports", …) rather than a real act name.
- *
- * These leak in when a venue lists an unnamed slot (e.g. a subtitle `"Support:
- * Special Guest"`, where the captured act is just the label). Matching is exact —
- * the whole trimmed value must be the label — so a real name that merely *contains*
- * a label word (`"Special Guest Foo"`, `"Support Act X"`) is kept. Filtered out
- * alongside [isPlaceholderName] wherever support/headliner names are resolved.
- *
- * Example:
- * ```kotlin
- * isNonArtistLabel("Special Guest") // true
- * isNonArtistLabel("Support")       // true
- * isNonArtistLabel("Green Lung")    // false
- * ```
+ * Checks whether [name] is a bare [ROLE_LABEL_PREFIX] label rather than a real act name. These leak
+ * in when a venue lists an unnamed slot — a subtitle `"Support: Special Guest"` captures the label
+ * as the act. **Matching is exact**, the whole trimmed value being the label, so a real name that
+ * merely contains a label word (`"Special Guest Foo"`) is kept. Filtered out alongside
+ * [isPlaceholderName] wherever support and headliner names are resolved.
  */
 fun isNonArtistLabel(name: String): Boolean {
     val trimmed = name.trim()
@@ -164,31 +123,22 @@ fun isNonArtistLabel(name: String): Boolean {
 private val WHITESPACE = Regex("""\s+""")
 
 /**
- * Curated event-*segment* labels — an aftershow/afterparty/warm-up slot that a
- * venue lists in the lineup, which is a part of the night, not a performer. Any
- * optional leading qualifier is allowed (`ACID AFTERSHOW`, `TECHNO AFTERPARTY`),
- * and `aftershow`/`after show`/`after-show` spellings are accepted.
+ * Curated event-*segment* labels — an aftershow/afterparty/warm-up slot a venue lists in the
+ * lineup, which is a part of the night rather than a performer. Any leading qualifier is allowed
+ * (`ACID AFTERSHOW`, `TECHNO AFTERPARTY`), and the `aftershow`/`after show`/`after-show` spellings
+ * are accepted.
+ *
+ * **Matched fully anchored** by [isEventSegmentLabel], so it cannot touch a real band whose name
+ * contains or resembles a segment word: `"AFTERHOURS"` (a band) and the venue's `"Warm Up im
+ * Franken"` are both kept. Curated on purpose — there is no structural signal separating a segment
+ * from an act in flat lineup text, so new families are added here as they appear.
  */
 private val EVENT_SEGMENT_PATTERN =
     Regex("""(?:\S+ )*after[ -]?show(?: party)?|(?:\S+ )*after[ -]?party|warm[ -]?up""", RegexOption.IGNORE_CASE)
 
 /**
- * Checks whether [name] is an event-segment label ("Acid Aftershow", "Warm Up")
- * rather than a performer.
- *
- * Matching is **fully anchored** (the whole trimmed, whitespace-collapsed value
- * must be the segment phrase), so it cannot touch a real band whose name merely
- * contains or resembles a segment word — `"AFTERHOURS"` (a band) and the venue's
- * `"Warm Up im Franken"` are both kept. Curated on purpose: there is no structural
- * signal separating a segment from an act in the flat lineup text, so new families
- * are added to [EVENT_SEGMENT_PATTERN] as they appear.
- *
- * Example:
- * ```kotlin
- * isEventSegmentLabel("ACID AFTERSHOW") // true
- * isEventSegmentLabel("Aftershow Party") // true
- * isEventSegmentLabel("AFTERHOURS")     // false (real band)
- * ```
+ * Checks whether [name] is an [EVENT_SEGMENT_PATTERN] label rather than a performer. The whole
+ * trimmed, whitespace-collapsed value must be the segment phrase.
  */
 fun isEventSegmentLabel(name: String): Boolean {
     val normalized = name.trim().replace(WHITESPACE, " ")
@@ -218,25 +168,8 @@ private val NON_ARTIST_EVENT_PATTERN =
     )
 
 /**
- * Checks whether [name] is an event label (a festival, a festival slot/edition, a
- * festival-ticket, a `Hoffest`, or an "<n> Jahre/Years …" anniversary) rather than a
- * performer.
- *
- * The whitespace-collapsed value must match a word-anchored `fest`/`festival`/`hoffest`
- * marker (which may carry any trailing slot/edition text — `Grey City Fest Opener`,
- * `Grobes Fest 2026`) or open with an "<n> Jahre" anniversary phrase. The word
- * boundaries keep one-word names (`Infest`, `Manifest`) and compounds (`Sommerfest`)
- * safe. Curated: new event-label families are added to [NON_ARTIST_EVENT_PATTERN] as
- * they appear.
- *
- * Example:
- * ```kotlin
- * isNonArtistEvent("SHRED FEST")                     // true
- * isNonArtistEvent("Grey City Fest Opener")          // true
- * isNonArtistEvent("CANARIAS CALLING FESTIVAL")      // true
- * isNonArtistEvent("36 Jahre Schokoladen - Hoffest") // true
- * isNonArtistEvent("Manifest")                       // false
- * ```
+ * Checks whether [name] is a [NON_ARTIST_EVENT_PATTERN] label rather than a performer. The whole
+ * whitespace-collapsed value must match.
  */
 fun isNonArtistEvent(name: String): Boolean {
     val normalized = name.trim().replace(WHITESPACE, " ")
@@ -285,25 +218,9 @@ private val ARTIST_SUFFIX_PATTERN =
  * Strips a trailing tour/live/anniversary suffix or performance-format annotation from
  * a scraped act name to recover the performer.
  *
- * Recovers the band from decorated names — `"DOMINIUM - NIGHT IS CALLING TOUR 2026"` →
- * `"DOMINIUM"`, `"AZ LIVE IN BERLIN"` → `"AZ"`, `"HGICH.T LIVE"` → `"HGICH.T"`,
- * `"THE BUTLERS - 40 YEARS, SKA & SOULPOWER -"` → `"THE BUTLERS"`,
- * `"Avangelic (DJ-Set)"` → `"Avangelic"`. Returns the input unchanged when there is no
- * such suffix, or when stripping would leave nothing — so a bare `"Live"` (the band) and
- * a parenthesized alias like `"Sickboyrari (Black Kray)"` are preserved.
- *
- * Example:
- * ```kotlin
- * stripArtistSuffix("HGICH.T LIVE")                          // "HGICH.T"
- * stripArtistSuffix("THE BUTLERS - 40 YEARS, SKA -")         // "THE BUTLERS"
- * stripArtistSuffix("Avangelic (DJ-Set)")                    // "Avangelic"
- * stripArtistSuffix("Acid Arab DJ-Set")                      // "Acid Arab"
- * stripArtistSuffix("The Dear Hunter -Nachholtermin vom …")  // "The Dear Hunter"
- * stripArtistSuffix("OCT (On Company Time) – Hochverlegung") // "OCT (On Company Time)"
- * stripArtistSuffix("Tex singt Leonard Cohen")               // "Tex"
- * stripArtistSuffix("Hawt Coco Album Release")               // "Hawt Coco"
- * stripArtistSuffix("Sickboyrari (Black Kray)")              // "Sickboyrari (Black Kray)"
- * ```
+ * Returns the input unchanged when there is no such suffix, or when stripping would leave nothing —
+ * so a bare `"Live"` (the band) and a parenthesized alias like `"Sickboyrari (Black Kray)"` survive.
+ * [ARTIST_SUFFIX_PATTERN] has the boundaries and what each one protects.
  */
 fun stripArtistSuffix(name: String): String {
     val stripped = name.trim().replace(ARTIST_SUFFIX_PATTERN, "").trim()
@@ -566,14 +483,6 @@ private val GUEST_SLOT_PATTERN = Regex("""\+?\s*(?:guests?|gäste|gaeste)(?:\s+d
  * Checks whether [name] is a bare unannounced-guest support slot ("+ Guest", "Guests",
  * "Gäste", "Guest DJs") rather than a performer. See [GUEST_SLOT_PATTERN]; matching is
  * fully anchored.
- *
- * Example:
- * ```kotlin
- * isGuestSlotLabel("+ Guest")       // true
- * isGuestSlotLabel("Gäste")         // true
- * isGuestSlotLabel("Guest DJs")     // true
- * isGuestSlotLabel("Guns N' Roses") // false
- * ```
  */
 fun isGuestSlotLabel(name: String): Boolean = GUEST_SLOT_PATTERN.matches(name.trim().replace(WHITESPACE, " "))
 
@@ -679,13 +588,6 @@ private fun isKnownSingleAct(name: String): Boolean = name.trim().replace(CONJUN
  * pre-split its co-bills on its own separator and hand each segment here to safely
  * break just the conjunctions. Public for that reuse; [splitSupportActs] and
  * [splitHeadlinerTitle] apply it after their own hard-separator split.
- *
- * Example:
- * ```kotlin
- * splitSegmentOnConjunctions("Lichene & Neue K")            // ["Lichene", "Neue K"]
- * splitSegmentOnConjunctions("Scott Hepple & The Sun Band") // ["Scott Hepple & The Sun Band"] (article tail)
- * splitSegmentOnConjunctions("Morimoto / Wong duo")         // ["Morimoto / Wong duo"] (no "/" split)
- * ```
  */
 @Suppress("ReturnCount") // Guard clauses for the comma and no-cut cases are clearer than nesting
 fun splitSegmentOnConjunctions(segment: String): List<String> {
@@ -763,12 +665,6 @@ private val SUPPORT_HARD_SEPARATOR = Regex("""\s*[,+/]\s*""")
  * attached to its act (`Scott Hepple & The Sun Band` is one act via the article
  * guard, while `High On Fire & Gnome` is two). Blank fragments are dropped;
  * role-label stripping and placeholder filtering are left to the caller.
- *
- * Example:
- * ```kotlin
- * splitSupportActs("High On Fire & Gnome, Aska")                    // ["High On Fire", "Gnome", "Aska"]
- * splitSupportActs("Earth Tongue und Scott Hepple & The Sun Band")  // ["Earth Tongue", "Scott Hepple & The Sun Band"]
- * ```
  */
 fun splitSupportActs(text: String): List<String> =
     text
@@ -896,14 +792,8 @@ private val ARTIST_LABEL_PREFIX =
  * The title-level counterpart of [stripArtistSuffix], and applied in the same places: to headliners
  * derived from a title, and to a lineup line at a venue that bills a format in front of the act.
  * Returns the input unchanged when there is no such prefix, or when stripping would leave nothing.
- *
- * Example:
- * ```kotlin
- * stripArtistPrefix("Support: A.A. Williams")         // "A.A. Williams"
- * stripArtistPrefix("Record Release: Margot Erkner")  // "Margot Erkner"
- * stripArtistPrefix("Listening Session: Drexciya")    // "Drexciya"
- * stripArtistPrefix("Support Lesbiens")               // "Support Lesbiens" (no colon — a real band)
- * ```
+ * **The colon is what makes it safe**: without it, the band Support Lesbiens would be stripped to
+ * "Lesbiens".
  */
 fun stripArtistPrefix(name: String): String {
     val stripped = name.trim().replaceFirst(ARTIST_LABEL_PREFIX, "").trim()
