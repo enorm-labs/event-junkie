@@ -5,59 +5,46 @@
 # Order here is presentational only. Kustomize applies these as one set and Flux does not read the
 # list as a sequence: what actually orders the installs is `dependsOn` inside the HelmReleases —
 # cert-manager, then the webhook, then the application.
+#
+# **A FILE NOT NAMED IN `resources:` NEVER REACHES THE CLUSTER.** It still renders, still lints and
+# still merges, so the omission is silent. That applies to every entry below and is not repeated.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  # flux-system/ is Flux's own manifests, and listing it here is what makes the cluster
-  # self-managing — the standard bootstrap behaviour, which THIS FILE accidentally switched off.
-  #
-  # A Flux Kustomization pointing at a directory that has no kustomization.yaml walks it
-  # recursively and picks up flux-system/ for free. Adding an explicit one, as this file is,
-  # replaces that discovery with exactly the list below — so from the moment it existed, Flux's own
-  # Kustomization stopped being reconciled by anything except a `flux bootstrap` re-run.
-  #
-  # That was invisible until #416 put a `decryption` patch in flux-system/kustomization.yaml: the
-  # patch rendered perfectly, was committed, merged, and never reached the cluster, and the sync
-  # then failed on an encrypted Secret it had no key for. Rendering is not applying.
+  # Listing flux-system/ is what makes the cluster self-managing, and it is the one entry the rule
+  # above is easiest to forget: a Flux Kustomization pointing at a directory with no
+  # kustomization.yaml walks it recursively and picks flux-system/ up for free, so adding an explicit
+  # list — as this file does — is what takes it away. Omit it and Flux's own Kustomization is
+  # reconciled by nothing but a `flux bootstrap` re-run, which is how #416's `decryption` patch
+  # merged without ever reaching the cluster.
   - flux-system
   - namespace.yaml
-  # The other namespaces the cluster runs, declared rather than left to `createNamespace: true`
-  # (#604). A HelmRelease creating its own namespace creates a bare one, and Pod Security Admission
-  # is enforced by namespace label — so an undeclared namespace is an ungoverned one, silently.
-  # Each file carries the reasoning for the level it sets; `namespace-observability.yaml` in
-  # particular sets a level that enforces nothing and says why.
+  # The other namespaces, declared rather than left to `createNamespace: true` (#604). A HelmRelease
+  # creating its own namespace creates a bare one, and Pod Security Admission is enforced by
+  # namespace label, so an undeclared namespace is an ungoverned one. Each file carries the reasoning
+  # for the level it sets.
   - namespace-cert-manager.yaml
   - namespace-observability.yaml
   - namespace-default.yaml
   # SOPS-encrypted, decrypted by kustomize-controller with the `sops-age` key (#416,
-  # docs/ops/SECRETS.md). Order here is presentational — Flux applies by kind, so the
-  # namespace exists before the Secret lands wherever this sits in the list.
+  # docs/ops/SECRETS.md). Flux applies by kind, so the namespace exists before the Secret lands.
   - secrets/events-db.yaml
   - helm-repository-jetstack.yaml
   - helm-repository-hetzner.yaml
   - cert-manager.yaml
   - cert-manager-webhook.yaml
-  # OpenObserve (#271). Listed here for the reason this file's own header records: the explicit
-  # resource list replaced Kustomize's directory walk, so a file that is not named is a file that
-  # renders, lints, merges — and never reaches the cluster.
   - openobserve.yaml
   # Default-deny plus one named allowance per conversation, for the two namespaces that had none
-  # (#662). `observability-netpol.yaml` replaces the egress-only `openobserve-netpol.yaml` from
-  # #661 and keeps its `openobserve-egress` object under the same name, so the containment for
-  # `ZO_SKIP_SSRF_CHECKS` is updated in place rather than deleted and recreated — there is no window
-  # in which that flag is set and unbounded.
-  #
-  # A NetworkPolicy that never reaches the cluster is the most dangerous kind of unnamed file here,
-  # and these two are worse than most: the failure of a policy that is *present but wrong* is a pod
-  # cut off in silence, while the failure of one that is *absent* is a namespace that looks hardened
-  # and is not.
+  # (#662). `observability-netpol.yaml` keeps its `openobserve-egress` object under the name
+  # `openobserve-netpol.yaml` used, so the containment for `ZO_SKIP_SSRF_CHECKS` is updated in place
+  # rather than deleted and recreated — there is no window in which that flag is set and unbounded.
+  # These are the two entries where omission is worst: an absent policy leaves a namespace that looks
+  # hardened and is not.
   - observability-netpol.yaml
   - cert-manager-netpol.yaml
-  # The Signal bridge (#271). Same rule as above — a file not named here never reaches the cluster.
+  # The Signal bridge, the collector and PostgreSQL metrics (#271, item 2 for the collector).
   - signal-bridge.yaml
-  # The collector (#271 item 2). Same rule — unnamed here means it never reaches the cluster.
   - collector.yaml
-  # PostgreSQL metrics (#271). Named here or it never reaches the cluster.
   - postgres-exporter.yaml
   - oci-repository.yaml
   - helm-release.yaml

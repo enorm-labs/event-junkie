@@ -48,10 +48,9 @@ security:
   # read its own files, which does not look like a values problem from the logs. A component may
   # override it — the frontend's nginx base is the one most likely to differ.
   #
-  # Above 10000 since #448, and that is the point of the number rather than an arbitrary choice. A
-  # UID below the host's own user range lands as a real account if a container escapes its namespace
-  # — on a Debian-family node, 1000 is the first human user. Nothing maps to 10001. Trivy's
-  # KSV-0020/KSV-0021 check exactly this.
+  # Above 10000 on purpose (#448): a UID inside the host's own user range lands as a real account if
+  # a container escapes its namespace, and 1000 is the first human user on a Debian-family node.
+  # Nothing maps to 10001, and Trivy's KSV-0020/KSV-0021 check exactly this.
   runAsUser: 10001
   # security.runAsGroup matches runAsUser for the same reason. It is also the pod's fsGroup.
   runAsGroup: 10001
@@ -96,15 +95,11 @@ bff:
     create: true
     # bff.serviceAccount.name overrides the generated name, for a hand-made RBAC binding.
     name: ""
-  # bff.podAnnotations carries the Prometheus scrape config (#415 built the meters, #271 consumes
-  # them). OpenObserve's collector discovers targets by these annotations and by nothing else, so a
-  # pod without them is invisible to metrics collection while looking perfectly healthy — which is
-  # the failure this chart can cause and the collector cannot report.
-  #
-  # **`prometheus.io/port` must equal `bff.service.managementPort` above.** They are two values
-  # because the annotation is a string the collector reads and the port is an int the container
-  # binds; `tests/metrics_test.yaml` asserts they agree, so changing one alone fails the chart rather
-  # than silently ending the scrape.
+  # bff.podAnnotations carries the Prometheus scrape config (#415, #271). OpenObserve's collector
+  # discovers targets by these annotations and nothing else, so a pod without them is invisible to
+  # metrics collection while looking perfectly healthy. **`prometheus.io/port` must equal
+  # `bff.service.managementPort` above** — two values because the annotation is a string and the
+  # port an int, held together by `tests/metrics_test.yaml` so changing one alone fails the chart.
   podAnnotations:
     prometheus.io/scrape: "true"
     # The actuator lives on the management port, which no Ingress routes — that is what keeps
@@ -154,15 +149,11 @@ importer:
     create: true
     # importer.serviceAccount.name overrides the generated name.
     name: ""
-  # importer.podAnnotations carries the Prometheus scrape config (#415 built the meters, #271 consumes
-  # them). OpenObserve's collector discovers targets by these annotations and by nothing else, so a
-  # pod without them is invisible to metrics collection while looking perfectly healthy — which is
-  # the failure this chart can cause and the collector cannot report.
-  #
-  # **`prometheus.io/port` must equal `importer.service.managementPort` above.** They are two values
-  # because the annotation is a string the collector reads and the port is an int the container
-  # binds; `tests/metrics_test.yaml` asserts they agree, so changing one alone fails the chart rather
-  # than silently ending the scrape.
+  # importer.podAnnotations carries the Prometheus scrape config (#415, #271). OpenObserve's collector
+  # discovers targets by these annotations and nothing else, so a pod without them is invisible to
+  # metrics collection while looking perfectly healthy. **`prometheus.io/port` must equal
+  # `importer.service.managementPort` above** — two values because the annotation is a string and the
+  # port an int, held together by `tests/metrics_test.yaml` so changing one alone fails the chart.
   podAnnotations:
     prometheus.io/scrape: "true"
     # The actuator lives on the management port, which no Ingress routes — that is what keeps
@@ -236,11 +227,10 @@ ingress:
   # an alias, and not a wildcard entry. The Middleware's regex is host-agnostic, so every name here
   # lands on `ingress.host` with its path preserved.
   #
-  # **`www.event-junkie.de` belongs in this list and not in DNS.** `infra/environments/production`
-  # publishes `www` at the same addresses as the apex and states the intent — "redirected at Traefik
-  # rather than in DNS, because a CNAME cannot sit at the apex" — but nothing here implemented it
-  # until #634. A published name that matches no rule gets Traefik's default 404 over a certificate
-  # never issued for it, and `www.` is a name visitors type.
+  # **`www.event-junkie.de` belongs in this list and not in DNS** — `infra/environments/production`
+  # publishes `www` at the apex's addresses because a CNAME cannot sit at an apex, so the redirect
+  # has to happen here (#634). A published name matching no rule gets Traefik's default 404 over a
+  # certificate never issued for it, and `www.` is a name visitors type.
   #
   # Every entry must resolve to this node before the certificate can issue: production solves
   # HTTP-01, which reaches the host *by name*. The `.com` records are `publish_dns`-gated in the
@@ -257,16 +247,14 @@ ingress:
   # a disallow-all and an empty urlset (#286). Off here because this file is the production
   # configuration, and production is the one environment that must be indexed.
   #
-  # One value rather than two, deliberately. Two switches meaning "not production" can disagree,
-  # and the way they disagree is an environment carrying the header while still serving an
-  # allow-all robots.txt that names production's sitemap — which looks configured and is not. The
-  # name says `ingress` while half of what it renders is a pod mount; that is the price of the
-  # single switch, and it is the cheaper mistake.
+  # One value rather than two: two switches meaning "not production" can disagree, and they disagree
+  # as an environment carrying the header while serving an allow-all robots.txt naming production's
+  # sitemap — configured-looking and wrong. The name says `ingress` while half of what it renders is
+  # a pod mount; that is the price of the single switch, and the cheaper mistake.
   #
-  # Defence in depth rather than the control: staging has no public address at all, and a crawler
-  # cannot reach what does not resolve. This exists for the day somebody adds an A record "just to
-  # check something" — the cost is one header and the failure mode is a staging site in Google's
-  # index for months.
+  # Defence in depth rather than the control: staging has no public address, and a crawler cannot
+  # reach what does not resolve. This is for the day somebody adds an A record "just to check
+  # something", where the cost is one header and the failure is a staging site indexed for months.
   noindex: false
   tls:
     # ingress.tls.enabled asks cert-manager for a certificate via the ingress-shim annotation.
@@ -349,12 +337,11 @@ networkPolicy:
     # management port to every pod in the cluster — and `/actuator/**` is private precisely because
     # nothing routes it.
     #
-    # `ipBlock` exists because a k3d rehearsal found the selector form silently
-    # refused when collector and target sat on **different nodes**: cross-node pod traffic is SNAT'd,
-    # so the source address matches no pod or namespace selector and only a CIDR does. **That is
-    # very likely a multi-node artifact and not a production one** — ADR-012 puts everything on a
-    # single node, where the traffic never leaves it. The switch is here so that discovering
-    # otherwise is a values change rather than an investigation starting from "metrics stopped".
+    # `ipBlock` exists because the selector form is silently refused when collector and target sit
+    # on **different nodes**: cross-node pod traffic is SNAT'd, so the source address matches no pod
+    # or namespace selector and only a CIDR does. **Very likely a multi-node artifact rather than a
+    # production one** — ADR-012 puts everything on one node — so the switch is here to make
+    # discovering otherwise a values change rather than an investigation from "metrics stopped".
     mode: namespaceSelector
     # Only read when mode is `ipBlock`. The cluster's pod CIDR.
     cidr: 10.42.0.0/16

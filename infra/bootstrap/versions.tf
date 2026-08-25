@@ -9,21 +9,18 @@ terraform {
       source  = "hetznercloud/hcloud"
       version = "~> 1.68"
     }
-    # Object Storage buckets, because Hetzner has no Cloud API for them. Their own S3 guide says
-    # third-party providers are "the only supported method" and then links a workflow using this
-    # one; the provider in turn names Hetzner Object Storage among its tested S3-compatible
-    # backends, so this is the documented path from both ends rather than an improvisation.
+    # Object Storage buckets, because Hetzner has no Cloud API for them. Hetzner's S3 guide calls
+    # third-party providers "the only supported method" and links a workflow using this one, which
+    # names Hetzner Object Storage among its tested backends — the documented path from both ends.
+    # `-tfstate` stays hand-made regardless: a state backend cannot be managed by the state it holds
+    # (README.md).
     #
-    # `-tfstate` stays hand-made regardless — a state backend cannot be managed by the state it
-    # holds. This stops the exception growing, it does not remove it (README.md).
-    #
-    # **Its first install is trust-on-first-use, and the lock file is what closes that.** `tofu init`
-    # reports "Signature validation was skipped due to the registry not containing GPG keys for this
-    # provider" — the OpenTofu registry holds no signing key for it, so the initial download is
-    # unverified. `.terraform.lock.hcl` then records the version and 26 hashes, and every later init
-    # is checked against them. **So the lock file is a supply-chain control here rather than a
-    # convenience, and it must stay committed** — the same argument #443 made for pinning actions to
-    # a SHA rather than a tag.
+    # **Its first install is trust-on-first-use, and the lock file is what closes that.** The
+    # OpenTofu registry holds no signing key for it, so `tofu init` reports "Signature validation was
+    # skipped" and the initial download is unverified. `.terraform.lock.hcl` records the version and
+    # 26 hashes and every later init is checked against them, so **the lock file is a supply-chain
+    # control here rather than a convenience and must stay committed** — #443's argument for pinning
+    # actions to a SHA.
     minio = {
       source  = "aminueza/minio"
       version = "~> 3.0"
@@ -43,19 +40,18 @@ provider "minio" {
   #
   # Three settings are not optional against Hetzner, and each fails in its own way:
   #
-  #   minio_region   Hetzner enforces the region in the request signature and REJECTS a request
-  #                  signed with the wrong one. The provider's default is `us-east-1`, so leaving
-  #                  it unset fails every call with a signature error that reads like bad
-  #                  credentials.
+  #   minio_region   Hetzner enforces the region in the request signature and REJECTS a mismatch.
+  #                  The default is `us-east-1`, so leaving it unset fails every call with a
+  #                  signature error that reads like bad credentials.
   #   minio_ssl      Defaults to false. Hetzner is HTTPS only.
-  #   s3_compat_mode Skips MinIO-specific admin calls the backend does not implement, instead of
-  #                  erroring on them. This is the flag that makes a MinIO provider usable against
+  #   s3_compat_mode Skips MinIO-specific admin calls this backend does not implement rather than
+  #                  erroring on them — the flag that makes a MinIO provider usable against
   #                  something that is not MinIO.
   #
   # `minio_server` is Required in the provider schema, so it lives here even though the provider
-  # would also read MINIO_ENDPOINT — `tofu validate` fails without it, and a config that cannot be
-  # validated without a shell environment is one CI cannot check. **Host and optional port, no
-  # scheme**, unlike the `AWS_ENDPOINT_URL_S3` next to it in .envrc.example, which carries one.
+  # would also read MINIO_ENDPOINT: `tofu validate` fails without it, and a config CI cannot validate
+  # without a shell environment is one CI cannot check. **Host and optional port, no scheme**, unlike
+  # the `AWS_ENDPOINT_URL_S3` beside it in .envrc.example.
   minio_server   = var.object_storage_endpoint
   minio_region   = var.object_storage_region
   minio_ssl      = true

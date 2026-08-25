@@ -93,15 +93,11 @@ spec:
       # object-storage backend means log retention stops competing with the node's disk", and
       # LEGAL.md §7.5 needs that retention to be a policy something enforces rather than an intent.
       #
-      # **`ZO_LOCAL_MODE` stays `true`, and the storage switch is the line below it.** This first
-      # went out as `ZO_LOCAL_MODE: "false"` on the reading that the flag chooses disk versus S3. It
-      # does not — it chooses *single-node versus cluster*, and the pod crash-looped on:
-      #
-      #     common config error: Meta store only supports postgres in cluster mode.
-      #
-      # Cluster mode requires a Postgres meta store; this deployment uses the sqlite default, which
-      # is correct for one node. `ZO_LOCAL_MODE_STORAGE` is the flag that actually moves the data off
-      # the disk, and it works in exactly the mode we want.
+      # **`ZO_LOCAL_MODE` stays `true`, and the storage switch is the line below it.** The flag
+      # chooses *single-node versus cluster*, not disk versus S3 — set it `false` and the pod
+      # crash-loops on `Meta store only supports postgres in cluster mode`, cluster mode requiring a
+      # Postgres meta store where this uses the sqlite default. `ZO_LOCAL_MODE_STORAGE` is what
+      # actually moves the data off the disk, and it works in the mode we want.
       ZO_LOCAL_MODE: "true"
       ZO_LOCAL_MODE_STORAGE: "s3"
       ZO_S3_PROVIDER: "s3"
@@ -115,27 +111,25 @@ spec:
       # exactly what `bucket_domain_name` came back as on the import.
       ZO_S3_FEATURE_FORCE_HOSTED_STYLE: "false"
 
-      # **Retention, and this is the number LEGAL.md §7.5 depends on** (#271 item 1). It defaults to
-      # `3650` — ten years — so until now nothing expired anything and §7.5's claim that retention is
-      # enforced by the bucket was resting on a control that did not exist.
+      # **Retention, and this is the number LEGAL.md §7.5 depends on** (#271 item 1). The default is
+      # `3650` — ten years — which expires nothing and leaves §7.5's claim resting on a control that
+      # does not exist.
       #
-      # **OpenObserve's own compactor, not an S3 lifecycle rule, is the mechanism.** It deletes the
-      # Parquet *and* its entry in the file list. A bucket rule alone would delete objects out from
-      # under that list, leaving queries referencing files that are gone — a corruption rather than an
-      # expiry. The lifecycle rule in `infra/bootstrap/storage.tf` is a **backstop set deliberately
-      # longer than this**, for the case where the compactor stops running; the same argument #586
-      # makes about a sweep that only runs while its node does.
+      # **OpenObserve's own compactor, not an S3 lifecycle rule, is the mechanism**: it deletes the
+      # Parquet *and* its entry in the file list, where a bucket rule alone would delete objects out
+      # from under that list and leave queries referencing files that are gone — corruption rather
+      # than expiry. `infra/bootstrap/storage.tf`'s lifecycle rule is a **backstop set deliberately
+      # longer than this**, for the case where the compactor stops running (the argument #586 makes
+      # about a sweep that only runs while its node does).
       #
-      # **14 days is a starting position, not a settled one.** The privacy notice's original intent
-      # was seven; fourteen leaves room to investigate an incident a week old while staying short
-      # enough that this is not a log archive. **#278 writes the notice and must state whatever this
-      # says**, so changing it here changes a published claim.
+      # **14 days is a starting position.** It leaves room to investigate an incident a week old
+      # while staying short of a log archive. **#278 writes the privacy notice and must state
+      # whatever this says**, so changing it here changes a published claim.
       #
-      # **The catch worth knowing before this bites:** it applies to metrics as well as logs, and
-      # #271 item 7 wants an availability figure that survives a year. That needs per-stream
-      # retention on the metric streams, which is configured in the application rather than here.
-      # **Set short and lose metrics history; set long and over-retain personal data** — this errs
-      # toward the recoverable mistake.
+      # **The catch:** it applies to metrics as well as logs, and #271 item 7 wants an availability
+      # figure that survives a year — which needs per-stream retention configured in the application,
+      # not here. **Set short and lose metrics history; set long and over-retain personal data.**
+      # This errs toward the recoverable mistake.
       ZO_COMPACT_DATA_RETENTION_DAYS: "14"
 
       # **The memtable never rotates on size, because the default cannot be reached (#625).** Two
@@ -267,16 +261,12 @@ spec:
         # proves too tight on real data — but raise it as a decision, and record what the number
         # became, because 1.5 GB is the point at which ADR-015's fallback is supposed to trigger.
         #
-        # **This number is not only a limit — it sizes two things inside the process**, which is not
-        # obvious and cost #625 a wrong diagnosis:
-        #
-        #   - the memtable ceiling is a quarter of it (`config.rs:3612`), so 1Gi means 256 MiB;
-        #   - `config.rs:3060` caps worker threads at **one core per GiB of this limit**, floored at
-        #     two — `cpu_num = min(real_cpu, mem_total / 1GiB)`. The persist and file-move pools are
-        #     sized from that, so raising `cpu` alone below buys nothing while this stays at 1Gi.
-        #
-        # Both are why the fix for #625 is the rotation threshold in `config` above rather than a
-        # bigger number here: the memtable was never near this limit — 759Mi of 1Gi while rejecting
-        # writes — because it was bounded by its own 256 MiB ceiling, not by the cgroup.
+        # **This number is not only a limit — it sizes two things inside the process**, which cost
+        # #625 a wrong diagnosis: the memtable ceiling is a quarter of it (`config.rs:3612`), so 1Gi
+        # means 256 MiB, and `config.rs:3060` caps worker threads at one core per GiB floored at two
+        # (`cpu_num = min(real_cpu, mem_total / 1GiB)`), which sizes the persist and file-move pools
+        # — so raising `cpu` below buys nothing while this stays at 1Gi. Both are why #625's fix is
+        # the rotation threshold in `config` above and not a bigger number here: the memtable sat at
+        # 759Mi of 1Gi while rejecting writes, bounded by its own 256 MiB ceiling, not the cgroup.
         memory: "1Gi"
         cpu: "1"

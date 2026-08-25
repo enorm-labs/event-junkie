@@ -9,16 +9,14 @@ spring:
 # must NOT be routed through the public ingress — the browser gets `GET /meta`, a curated
 # OpenAPI-documented contract rather than a framework-shaped payload (docs/LEGAL.md §4.4). The chart
 # enforces that split by setting MANAGEMENT_SERVER_PORT=9001 on both JVM services, putting the
-# actuator on a port no ingress rule names. Deliberately not set here, so local development and the
-# tests keep their single-port behaviour.
+# actuator on a port no ingress rule names (PLATFORM_SETUP.md §7). Deliberately not set here, so
+# local development and the tests keep their single-port behaviour.
 management:
   endpoints:
     web:
       exposure:
-        # `prometheus` joins health and info here, and this is safe *because of where the endpoint
-        # lives, not because of what it contains*: the chart moves the whole management port off the
-        # application port (bff.service.managementPort) and no Ingress routes it, so /actuator/** —
-        # including this — is unreachable from outside the cluster. See PLATFORM_SETUP.md §7.
+        # `prometheus` joins health and info, safe for the reason above: unreachable from outside
+        # the cluster because of where the endpoint lives, not because of what it contains.
         include: health,info,prometheus
   # `include` *replaces* a group's default membership, so `readinessState` has to be repeated —
   # omitting it drops Spring's own signal that the context is up. The names are validated at startup,
@@ -33,14 +31,10 @@ management:
   # alone would not have closed the window #263 measured.
   endpoint:
     health:
-      # `always` rather than the `never` default, and it is the same argument the exposure list above
-      # makes: this is safe *because of where the endpoint lives*. The chart moves the whole
-      # management port off the application port and no Ingress routes it, so /actuator/** is
-      # unreachable from outside the cluster (PLATFORM_SETUP.md §7).
-      #
-      # Without it the readiness group aggregates to a bare {"status":"DOWN"} and an operator cannot
-      # tell "the database is gone" from "the schema is not migrated yet" — which is the whole reason
-      # `r2dbc` and `eventsSchema` are two contributors rather than one.
+      # `always` rather than the `never` default, safe for the same reason. Without it the readiness
+      # group aggregates to a bare {"status":"DOWN"} and an operator cannot tell "the database is
+      # gone" from "the schema is not migrated yet" — the whole reason `r2dbc` and `eventsSchema` are
+      # two contributors rather than one.
       show-details: always
       group:
         readiness:

@@ -4,18 +4,17 @@ name: Validate Helm Chart
 # working tree — they reach no cluster and need no kubeconfig, which is what makes them safe to run
 # in CI at all (docs/ops/PLATFORM_SETUP.md §4: nothing outside the cluster holds a credential for it).
 #
-# So this is a syntax and shape gate, not a correctness one. It cannot tell you a pod starts — the
-# k3d rehearsal does that, and `scripts/k3d-rehearsal.sh` is where. What it catches
-# is the failure mode that actually happens to deployment code nobody runs daily: a chart that
-# stopped rendering months ago and nobody noticed until the afternoon it was needed.
+# So this is a syntax and shape gate, not a correctness one. It cannot tell you a pod starts —
+# `scripts/k3d-rehearsal.sh` does that. What it catches is the failure mode deployment code nobody
+# runs daily actually has: a chart that stopped rendering months ago, noticed on the afternoon it
+# was needed.
 #
 # `helm unittest` is the part that earns its keep. Lint and schema validation both pass on a chart
-# that quietly does the wrong thing — an ingress that routes /actuator, an importer scaled to two
-# replicas, a selector carrying a label that changes on every release. It replaced
-# `deploy/scripts/render-assertions.sh` in #430, and it also asserts two things that script
-# structurally could not: that the chart *refuses* to render without `database.host` or
-# `database.existingSecret` and says what to do about it, and that `values.schema.json` still
-# rejects a second importer replica.
+# that quietly does the wrong thing — an ingress routing /actuator, an importer scaled to two
+# replicas, a selector carrying a label that changes every release — and it asserts things a render
+# script structurally could not (#430): that the chart *refuses* to render without `database.host`
+# or `database.existingSecret` and says what to do, and that `values.schema.json` still rejects a
+# second importer replica.
 
 # `gradle.properties` and `events-frontend/package.json` are in the `push:` filter because the chart's
 # `version` and `appVersion` must equal the base version they declare (#264). Editing one of them
@@ -194,11 +193,9 @@ jobs:
             render --values /tmp/release-values.yaml
           done
 
-      # The Flux custom resources (#414) — the objects that decide which chart version each
-      # environment runs, and which nothing else here can see: `helm lint` does not know they exist
-      # and `cluster-assertions.sh` reads only their `spec.values`. A typo in `spec.ref.semver` is a
-      # staging environment that silently stops updating, so it is worth a schema check even though
-      # it is not worth a cluster.
+      # The Flux custom resources (#414), which nothing else here can see: `helm lint` does not know
+      # they exist and `cluster-assertions.sh` reads only their `spec.values`. A typo in
+      # `spec.ref.semver` is an environment that silently stops updating.
       #
       # The `kustomization.yaml` files are skipped by kind rather than by filename: they are kustomize
       # *build* files, not cluster resources, so they legitimately have no `metadata.name` and would
@@ -264,20 +261,14 @@ jobs:
         with:
           persist-credentials: false
 
-      # All five are part of the deploy story: one asserts on what each cluster's HelmRelease
-      # deploys (#430), one installs this chart, one decides what version gets published, one
-      # proves those versions order (#455), and one holds the chart and the images to the same UID
-      # (#448). So a chart change lints them even when nothing under `scripts/` was touched.
+      # All five are part of the deploy story — cluster assertions (#430), installing this chart,
+      # deciding and ordering the published version (#455), and holding chart and images to one UID
+      # (#448) — so a chart change lints them even when nothing under `scripts/` was touched.
       #
-      # They are *also* linted by validate-scripts.yml, which covers `scripts/*.sh`. The overlap is
-      # deliberate: both jobs take seconds, and narrowing either side trades that for a hole that
-      # only opens when the other workflow's path filter misses. It matters more than it reads —
-      # validate-scripts.yml is **not** on the required list and carries a `paths:` filter, so this
-      # is the job that makes shell linting a merge gate rather than a courtesy.
-      #
-      # Runs from the pinned image rather than the runner's preinstalled binary, so this job and
-      # validate-scripts.yml cannot reach different verdicts about the files they both lint — which
-      # is exactly what the version skew would produce.
+      # **The overlap with validate-scripts.yml is deliberate.** That workflow is *not* on the
+      # required list and carries a `paths:` filter, so this is the job that makes shell linting a
+      # merge gate rather than a courtesy. Both take seconds. Runs from the pinned image rather than
+      # the runner's binary, so the two jobs cannot reach different verdicts through version skew.
       - name: Run ShellCheck
         run: |
           docker run --rm -v "$PWD:/mnt" -w /mnt \
