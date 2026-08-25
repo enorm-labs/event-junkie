@@ -1,20 +1,15 @@
-# k3d overrides, for the local rehearsal in #263.
+# k3d overrides for the local rehearsal (#263): k3d with `--port "8080:80@loadbalancer"`, images
+# side-loaded with `k3d image import`, PostgreSQL on the host in the repository's own compose stack.
+# The full loop is in docs/DEVELOPMENT.md.
 #
-# Written blind in #261 and corrected in #263, which ran it. Two of its guesses were wrong — the
-# database port and the database name — and neither could have been caught by rendering the chart,
-# because both were valid values that simply did not match what was listening. See the comments on
-# each below; they are the record of what a blind file costs.
-#
-# The rehearsal it supports: k3d with `--port "8080:80@loadbalancer"`, images side-loaded with
-# `k3d image import`, PostgreSQL on the host in the repository's own compose stack. The full loop is
-# in docs/DEVELOPMENT.md.
+# **The database port and name cannot be checked by rendering the chart.** Both are valid whatever
+# they are, and nothing in the chart knows what is actually listening — compare the rendered URL
+# against `compose.yaml` before installing.
 
 image:
-  # Images are side-loaded into the k3d cluster with `k3d image import`, so there is no registry to
-  # pull from. #263 expected the `localhost/` prefix to be the problem — a registry-shaped prefix
-  # that containerd might try to resolve as a remote host — and it was not: with `IfNotPresent` the
-  # kubelet finds the imported image and never reaches out. Recorded because it is the obvious thing
-  # to suspect when a pod does go ImagePullBackOff here, and it is not the cause.
+  # Images are side-loaded with `k3d image import`, so there is no registry to pull from. The
+  # `localhost/` prefix is **not** the thing to suspect on an ImagePullBackOff here: with
+  # `IfNotPresent` the kubelet finds the imported image and never resolves the prefix at all.
   registry: "localhost"
   # IfNotPresent is what makes a side-loaded image win. `Always` would send k3d to a registry that
   # does not have it and fail with ImagePullBackOff.
@@ -25,19 +20,13 @@ database:
   # `host.k3d.internal` is k3d's built-in name for the host from inside the cluster, injected into
   # CoreDNS when the cluster is created.
   host: "host.k3d.internal"
-  # Both of these were wrong while this file was written blind, and neither could have been caught
-  # by rendering the chart — `5432` and `events` are perfectly valid values, and nothing in the
-  # chart knows what is actually listening. Found by comparing the rendered URL against
-  # `compose.yaml` before the first install (#263).
-  #
   # The container listens on 5432; compose publishes it on the *host* as 56298, and the host is what
   # `host.k3d.internal` resolves to.
   port: 56298
   # A database of its own, NOT the `event_junkie` that `bootRun` and `scripts/dev-env.sh` use.
-  # Installing this chart runs the importer's Flyway migrations, and pointing that at the local
-  # development database would have the in-cluster importer and a local one competing for the same
-  # schema — with ~86 sources and thousands of scraped rows behind it that nobody wants to re-scrape
-  # (ADR-007 on politeness). Create it once:
+  # Installing this chart runs the importer's Flyway migrations, so pointing it at the development
+  # database would have two importers competing for one schema — over thousands of scraped rows
+  # nobody wants to re-scrape (ADR-007 on politeness). Create it once:
   #
   #     docker exec event-junkie-postgres-1 psql -U admin -d postgres -c 'CREATE DATABASE event_junkie_k3d OWNER admin'
   #
@@ -75,17 +64,15 @@ ingress:
   # resolves to 127.0.0.1 without a hosts entry on every current browser and OS.
   host: "event-junkie.localhost"
   redirectHosts: []
-  # The rehearsal is not production either, so it gets the non-production configuration — and that
-  # is the point rather than a formality: it makes /k3d-rehearsal fetch the overridden `robots.txt`
-  # and `sitemap.xml` over a real Traefik route, which is the only place the `subPath` mount in
-  # #286 can be proven outside the tunnel. A render assertion cannot tell you that nginx served
-  # the mounted file rather than the one baked into the image.
+  # Non-production configuration, and the point rather than a formality: it makes /k3d-rehearsal
+  # fetch the overridden `robots.txt` and `sitemap.xml` over a real Traefik route, the only place
+  # #286's `subPath` mount can be proven outside the tunnel. A render assertion cannot tell you
+  # nginx served the mounted file rather than the one baked into the image.
   noindex: true
   tls:
     # No TLS, and therefore no cert-manager: the rehearsal is about whether the workloads start,
-    # reach the database and route to each other. Adding certificate issuance to that would mean
-    # installing cert-manager into k3d and debugging ACME against a name that does not exist. Plain
-    # HTTP over a loopback address costs nothing and tests the same routing.
+    # reach the database and route to each other. Certificate issuance would mean installing
+    # cert-manager into k3d and debugging ACME against a name that does not exist.
     enabled: false
 
 certManager:

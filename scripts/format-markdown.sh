@@ -11,30 +11,23 @@
 #
 # Three things about this script are deliberate, and each one cost an experiment to establish:
 #
-# 1. It uses the oxfmt pinned in events-frontend/package.json, never the one on $PATH. oxfmt is
-#    pre-1.0 and its Markdown output is not stable across versions; whichever binary runs in a commit
-#    hook has to be the one CI runs, or `check` fails depending on whose laptop touched the file
-#    last. package-lock.json is what makes that reproducible; Homebrew upgrades out from under you.
+# 1. It uses the oxfmt pinned in events-frontend/package.json, never the one on $PATH: oxfmt is
+#    pre-1.0 and its Markdown output is not stable across versions, so the binary in a commit hook
+#    has to be the one CI runs or `check` fails depending on whose laptop touched the file last.
+#    Non-obvious with it: **oxfmt reads .editorconfig**, whose `[*] indent_size = 4` is what indents
+#    nested list items by four — measuring oxfmt in a scratch directory reproduces nothing without
+#    that file alongside.
 #
-#    Related, and non-obvious: **oxfmt reads .editorconfig**. The `[*] indent_size = 4` there is what
-#    makes nested list items indent by four spaces; without it oxfmt uses its own default and the
-#    output differs. Measuring oxfmt in a scratch directory does not reproduce what it does here
-#    unless .editorconfig is copied alongside.
-#
-# 2. `--disable-nested-config`, because oxfmt's nested configs *replace* rather than merge. Without
-#    it, events-frontend/.oxfmtrc.json shadows the root config wholesale for events-frontend/*.md, so
-#    those two files format to different settings than every other. The flag is safe only because
-#    this script never passes oxfmt anything but Markdown.
+# 2. `--disable-nested-config`, because oxfmt's nested configs *replace* rather than merge: without
+#    it events-frontend/.oxfmtrc.json shadows the root config wholesale for events-frontend/*.md.
+#    Safe only because this script never passes oxfmt anything but Markdown.
 #
 # 3. Write mode runs oxfmt twice, and always will. A table indented under a list item is skipped on
-#    the first pass and only formatted on the second; it converges at pass two and stays there. One
-#    pass would leave such a file off its own fixpoint, and `check` would then fail on a file the
-#    formatter had just written.
-#
-#    Do not remove the second run on a version bump. This is intended Prettier-compatible behaviour,
-#    not a bug being waited out: Prettier needs the same two passes, oxfmt targets Prettier, and
-#    upstream closed oxc-project/oxc#25612 as `not planned` on exactly that basis. `AGENTS.md` is the
-#    file here that exhibits the shape, so dropping the second run fails `check` immediately.
+#    the first pass and formatted on the second, converging there — one pass leaves such a file off
+#    its own fixpoint and `check` then fails on a file the formatter just wrote. **Do not remove the
+#    second run on a version bump**: Prettier needs the same two passes, oxfmt targets Prettier, and
+#    upstream closed oxc-project/oxc#25612 as `not planned` on that basis. `AGENTS.md` exhibits the
+#    shape, so dropping it fails `check` immediately.
 #
 # Scope is enforced twice over, here and in .oxfmtrc.json's ignorePatterns. oxfmt also claims YAML,
 # JSON, CSS and TS, and the Go-templated YAML under deploy/charts/ is exactly what it cannot parse —

@@ -10,8 +10,8 @@
 # `type:` label family to keep in sync with them.
 
 # Forms only. A blank issue is almost always missing the one thing needed to act on it — which
-# event, which venue, which URL — and asking for it afterwards costs a round trip and usually loses
-# the reporter. Everything the forms deliberately do not cover has a route below.
+# event, which venue, which URL — and asking afterwards costs a round trip and usually loses the
+# reporter. What the forms do not cover has a route below.
 blank_issues_enabled: false
 
 contact_links:
@@ -24,14 +24,13 @@ contact_links:
   # is encrypted in transit and at rest, and it threads — so the addresses are named in the text
   # instead, where anyone who would rather write an email can copy them.
   #
-  # **Not `mailto:`.** GitHub's own docs describe `url` as a link to follow, and `mailto:` is
-  # reported to fail schema validation — at which point the entry does not render at all. A contact
-  # route that silently disappears from the chooser is worse than one that asks you to copy an
-  # address, and it fails in a place nobody looks.
+  # **Not `mailto:`.** GitHub describes `url` as a link to follow, and `mailto:` is reported to fail
+  # schema validation — at which point the entry does not render at all, which is worse than asking
+  # someone to copy an address and fails where nobody looks.
   #
   # **At go-live**, the removal route should point at the published privacy notice
-  # (`/legal/privacy`), which states the same address alongside the Art. 15-21 rights it belongs to.
-  # It cannot yet: production runs dark and the domain resolves to nothing (#284).
+  # (`/legal/privacy`), which states the same address alongside the Art. 15-21 rights. It cannot yet:
+  # production runs dark and the domain resolves to nothing (#284).
   - name: 🔒 Report a security vulnerability
     url: https://github.com/enorm-labs/event-junkie/security/advisories/new
     about: >-
@@ -45,10 +44,9 @@ contact_links:
       Email hello@event-junkie.de, or use this private form if you would rather not. It is
       labelled for security because GitHub gives us one private form, not because this is one.
 
-  # Questions and ideas belong in Discussions rather than the issue tracker: they are conversations,
-  # not units of work, and threading them keeps the tracker to things that can actually be closed.
-  # A discussion that turns out to be actionable can be converted into an issue, so nothing is lost
-  # by starting here.
+  # Questions and ideas belong in Discussions: they are conversations rather than units of work, and
+  # keeping them out leaves the tracker to things that can be closed. A discussion that turns out to
+  # be actionable converts into an issue, so nothing is lost by starting here.
   - name: 💬 Ask a question
     url: https://github.com/enorm-labs/event-junkie/discussions/new?category=q-a
     about: Anything about using the site, the data, or the code.
