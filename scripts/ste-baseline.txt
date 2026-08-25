@@ -3,4 +3,4 @@
 # the ordinary fix is to split the sentence.
 docs	442
 docs/adr	659
-docs/ops	517
+docs/ops	481
