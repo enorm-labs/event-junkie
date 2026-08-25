@@ -1004,6 +1004,10 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       that pin is a constraint, not a lag.
     - `/update-dependencies` still exists and is not redundant: Dependabot proposes one bump at a time, while that skill does a deliberate sweep across both
       stacks and knows which Gradle versions are BOM-managed and must **not** be pinned.
+- **A skill is three files, and `scripts/skill-parity.sh` is what keeps them in step.** The prompt lives in `.github/prompts/<name>.prompt.md`; `.claude/skills/`
+  and `.claude/commands/` each hold a one-line `@` pointer to it; `CLAUDE.md` § Project skills lists it. Nothing joins those trees, so a skill added to one and
+  not the other is **silently absent** from the other — no error, the command simply is not there, which is how four skills went without commands. The check
+  asserts all three copies agree and that every pointer resolves. `/verify` and `validate-docs.yml` both run it.
 - **Conventional Commits** — Commit messages follow the [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) spec. Reusable prompts are
   available at `.github/prompts/` for commit messages, squash commit messages, and code reviews.
 - **Release notes** (`.github/release.yml`) — GitHub's automatically generated release notes group merged PRs into categories (🎪 New Event Sources, ✨ Features,
@@ -1182,6 +1186,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Open PR prompt                              | `.github/prompts/open-pr.prompt.md`                                                                                               |
 | Compact comments prompt                     | `.github/prompts/compact-comments.prompt.md`                                                                                      |
 | Vendored Simplified Technical English skill | `.claude/skills/asd-ste100/`                                                                                                      |
+| Skill and command parity check              | `scripts/skill-parity.sh`                                                                                                         |
 | Code review prompt                          | `.github/prompts/code-review.prompt.md`                                                                                           |
 | Security report prompt                      | `.github/prompts/security-report.prompt.md`                                                                                       |
 | Shared domain module marker                 | `events-core/src/.../EventsCoreModule.kt`                                                                                         |

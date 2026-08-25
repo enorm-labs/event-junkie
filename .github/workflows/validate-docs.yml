@@ -16,6 +16,7 @@ on:
       - '**.md'
       - '.oxfmtrc.json'
       - 'scripts/format-markdown.sh'
+      - 'scripts/skill-parity.sh'
       - 'events-frontend/package-lock.json'
       - '.github/workflows/validate-docs.yml'
   pull_request:
@@ -29,6 +30,7 @@ on:
       - '**.md'
       - '.oxfmtrc.json'
       - 'scripts/format-markdown.sh'
+      - 'scripts/skill-parity.sh'
       - 'events-frontend/package-lock.json'
       - '.github/workflows/validate-docs.yml'
   workflow_dispatch:
@@ -37,6 +39,23 @@ permissions:
   contents: read
 
 jobs:
+  # `.claude/skills/` and `.claude/commands/` are parallel trees of `@` pointers with nothing joining
+  # them, so a skill added to one and not the other is silently absent from the other. The `**.md`
+  # filter above already covers every input this reads. No Node, so it does not wait on the setup the
+  # formatting job needs.
+  parity:
+    name: Check skill and command parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check skill and command parity
+        run: scripts/skill-parity.sh
+
   format:
     name: Check Markdown formatting
     runs-on: ubuntu-latest
