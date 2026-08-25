@@ -10,4 +10,4 @@ events-frontend	3195
 events-importer	20101
 infra	776
 root	502
-scripts	1248
+scripts	1252
