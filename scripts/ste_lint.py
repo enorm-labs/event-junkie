@@ -83,6 +83,10 @@ def clean(text):
     text = re.sub(r"\*([^*]+)\*", r"\1", text)
     text = re.sub(r"(?<![\w`])_([^_]+)_(?![\w`])", r"\1", text)
     text = re.sub(r"~~([^~]+)~~", r"\1", text)
+    # Prose is wrapped where the author put the newline, so a bold span often opens on one line and
+    # closes on the next, and neither half pairs up. What survives matters: a sentence ending in
+    # `.**` has no boundary after the full stop, so it silently absorbs the sentence after it.
+    text = text.replace("**", "")
     return text
 
 
