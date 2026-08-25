@@ -1,13 +1,13 @@
 # Comment lines per area — a ceiling, not a target. See #713.
 # comment-density.sh check fails when any area rises above its number here.
 # Lowering a number is the point. Raising one is a decision to argue for in the PR.
-.github	1377
-deploy	2753
+.github	1379
+deploy	2749
 detekt-rules	124
 events-bff	913
 events-core	328
 events-frontend	3195
 events-importer	20516
-infra	942
+infra	934
 root	506
-scripts	1210
+scripts	1214

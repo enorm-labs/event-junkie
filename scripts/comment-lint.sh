@@ -26,6 +26,11 @@ MAX_HEADER_BLOCK="${COMMENT_LINT_MAX_HEADER_BLOCK:-40}"
 HEADER_STARTS_BY=3
 MAX_DENSITY="${COMMENT_LINT_MAX_DENSITY:-55}"
 EXCLUDE='node_modules/|/build/|/dist/|/coverage/'
+# Files where a date is the policy rather than a smell. A suppression carries one so its staleness
+# is visible — "a suppression that outlives its issue is a gate that has been quietly switched off"
+# (zizmor.yml). These two are nothing but suppressions and their rationale; elsewhere a date in a
+# comment is describing when something changed, which git already holds. See AGENTS.md §Comments.
+DATE_IS_POLICY='^(zizmor\.yml|\.trivyignore|\.github/dependabot\.yml)$'
 SOURCE_GLOBS=(*.tf *.tfvars *.sh *.py *.yaml *.yml)
 
 usage() {
@@ -58,7 +63,8 @@ scan() {
     cd "$REPO_ROOT"
     # shellcheck disable=SC2016  # $0 and $1 are awk fields, not shell expansions.
     files | tr '\n' '\0' | xargs -0 awk -v maxblock="$MAX_BLOCK" -v maxheader="$MAX_HEADER_BLOCK" \
-            -v headerby="$HEADER_STARTS_BY" -v maxdens="$MAX_DENSITY" '
+            -v headerby="$HEADER_STARTS_BY" -v maxdens="$MAX_DENSITY" \
+            -v datepolicy="$DATE_IS_POLICY" '
         function area(f,   a) {
             split(f, a, "/")
             if (a[1] ~ /^(events-core|events-bff|events-importer|events-frontend|detekt-rules|infra|deploy|scripts)$/) return a[1]
@@ -112,7 +118,8 @@ scan() {
             gsub(/`[^`]*`/, " ", prose)
             gsub(/"[^"]*"/, " ", prose)
 
-            if (prose ~ /[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/) emit(file, FNR, "date", "a date belongs in git blame")
+            if (prose ~ /[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/ && file !~ datepolicy)
+                emit(file, FNR, "date", "a date belongs in git blame")
             low = tolower(prose)
             if (low ~ /(used to |previously,|previously the|as of [0-9]|it now |nowadays)/)
                 emit(file, FNR, "history", "comment narrates a change")
