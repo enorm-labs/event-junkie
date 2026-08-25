@@ -2,8 +2,8 @@
 
 Day-to-day access. **Nothing here changes anything** — it is the read-only half of operating an environment.
 
-Setting a cluster up for the first time is [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md); this assumes that has already happened and you have the tunnel config
-and the node's address. The commands with the reasoning stripped out are [DAILY_COMMANDS.md](DAILY_COMMANDS.md).
+Setting a cluster up for the first time is [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md). This page assumes you already did that, and that you have the tunnel
+config and the node's address. The commands with the reasoning stripped out are [DAILY_COMMANDS.md](DAILY_COMMANDS.md).
 
 ## The short version
 
@@ -13,14 +13,14 @@ kubectl --context event-junkie-staging get nodes   # 2. work
 sudo wg-quick down ~/.wireguard/staging.conf       # 3. done
 ```
 
-For the database it is two hops rather than one — the tunnel, then an SSH forward, because `pg_hba` does not admit the tunnel address (§7).
+For the database it is two hops rather than one: the tunnel, then an SSH forward. `pg_hba` does not admit the tunnel address (§7).
 
 Everything below is that, with the parts that go wrong explained.
 
 ## Two environments, and where this page assumes one
 
-**Everything below is written for staging.** Production exists since 2026-08-21 and works the same way with different values — where a section says
-`staging`, the production form is in this table:
+**Everything below is written for staging.** Production works the same way with different values. Where a section says `staging`, the production form is in
+this table:
 
 |                 | Staging                                          | Production                                                     |
 | --------------- | ------------------------------------------------ | -------------------------------------------------------------- |
@@ -42,15 +42,15 @@ collide. Overlapping ranges fail in a way that looks like a firewall problem for
 ssh -i ~/.ssh/id_ed25519_hetzner -J ops@10.10.0.1 ops@10.0.1.20
 ```
 
-**Production is dark, and that is a state rather than a stage.** `publish_dns` in `infra/environments/production/variables.tf` defaults to `false`, so the apex
-and `www` resolve to nothing; a throwaway `prod-check` record points at the node so TLS can be exercised before launch. Flipping that variable is the launch.
+**Production is dark, and that is a state rather than a stage.** `publish_dns` in `infra/environments/production/variables.tf` defaults to `false`. The apex and
+`www` therefore resolve to nothing. A throwaway `prod-check` record points at the node, so you can exercise TLS before launch. Flipping that variable is the launch.
 CLUSTER_BOOTSTRAP.md §12.
 
 ---
 
 ## 1 · Bring the tunnel up
 
-**Staging is not on the public internet.** There is no `A` record and no open 80/443/22/6443 — the tunnel is the only way in, so this comes first and nothing
+**Staging is not on the public internet.** There is no `A` record and no open 80/443/22/6443. The tunnel is the only way in, so this comes first and nothing
 else works without it.
 
 ```sh
@@ -75,7 +75,7 @@ connection.
 
 ## 2 · Get the kubeconfig — once
 
-k3s writes one on the node for `127.0.0.1`; this rewrites it to the tunnel address, which works because `10.10.1.1` is one of the API server's certificate SANs.
+k3s writes one on the node for `127.0.0.1`. This rewrites it to the tunnel address, which works because `10.10.1.1` is one of the API server's certificate SANs.
 
 ```sh
 mkdir -p ~/.kube
@@ -89,7 +89,7 @@ KUBECONFIG=~/.kube/event-junkie-staging kubectl config rename-context default ev
 
 **Run that on your laptop.** The `ssh` is fetching a file, not somewhere to stand — see the traps below.
 
-**This file is cluster-admin.** `chmod 600`, never commit it, and re-fetch rather than copy it around. You only do this once; it does not need repeating each
+**This file is cluster-admin.** `chmod 600`, never commit it, and re-fetch rather than copy it around. You only do this once. It does not need repeating each
 time you connect.
 
 ## 3 · Point kubectl at it
@@ -121,10 +121,10 @@ kubectl config get-contexts | grep event-junkie-staging       # confirm it arriv
 
 `--flatten` inlines the certificates and token, so the merged file stands alone and `~/.kube/event-junkie-staging` becomes redundant.
 
-> **What merging costs, so it is a choice rather than a surprise.** Every `kubectl`, `helm` and `flux` command now defaults to _whatever context is current_,
-> and one of them is a real cluster running the real database. [`deploy/AGENTS.md`](../../deploy/AGENTS.md) forbids running `helm install/upgrade/uninstall` or
-> Flux commands against anything but `k3d-*` without being asked — merging makes that rule depend entirely on `--context` discipline rather than on the shell
-> you happen to be in. **Pass `--context` explicitly for anything that writes.**
+> **What merging costs, so it is a choice rather than a surprise.** Every `kubectl`, `helm` and `flux` command now defaults to _whatever context is current_.
+> One of those contexts is a real cluster running the real database. [`deploy/AGENTS.md`](../../deploy/AGENTS.md) forbids running
+> `helm install/upgrade/uninstall` or Flux commands against anything but `k3d-*` without being asked. Merging leaves that rule resting on `--context`
+> discipline alone, rather than on the shell you happen to be in. **Pass `--context` explicitly for anything that writes.**
 
 ### Switching context
 
@@ -168,15 +168,20 @@ kubectl --context event-junkie-staging logs -n event-junkie deploy/event-junkie-
 
 ## 5 · k9s, for anything more than one command
 
-[k9s](https://k9scli.io/) (installed) is a terminal UI over the same kubeconfig — far quicker than repeated `kubectl` for reading logs, watching a rollout or
-finding why a pod is unhappy.
+[k9s](https://k9scli.io/) (installed) is a terminal UI over the same kubeconfig. It is far quicker than repeated `kubectl` for reading logs, watching a
+rollout, or finding why a pod is unhappy.
 
 ```sh
 k9s --context event-junkie-staging
 ```
 
-Enough to be useful: `:pods` `:deploy` `:svc` `:helmreleases` to jump, `/` to filter, `l` for logs, `d` to describe, `y` for the YAML, `Esc` back, `:q` to
-quit. `s` opens a shell in a container and `Ctrl-D` deletes a resource — both write, so treat them as you would the equivalent `kubectl`.
+Enough to be useful:
+
+- `:pods` `:deploy` `:svc` `:helmreleases` — jump to a resource type
+- `/` filter · `l` logs · `d` describe · `y` the YAML
+- `Esc` back · `:q` quit
+
+`s` opens a shell in a container and `Ctrl-D` deletes a resource. Both write, so treat them as you would the equivalent `kubectl`.
 
 k9s follows `KUBECONFIG` and the current context if you omit `--context`, which is precisely the thing worth being explicit about on a real cluster.
 
@@ -191,22 +196,22 @@ sudo sh -c 'echo "10.10.1.1  staging.event-junkie.de" >> /etc/hosts'
 
 Then `https://staging.event-junkie.de/` in a browser, with the tunnel up.
 
-**Reaching it through Traefik is the point.** `kubectl port-forward` would also get you a page, and it would prove almost nothing: it skips TLS, the ingress
+**Reaching it through Traefik is the point.** `kubectl port-forward` would also get you a page, and it would prove almost nothing. It skips TLS, the ingress
 rules, the `/api` split and the middlewares, so it tests a different topology than production. If the routing is broken, a port-forward hides it.
 
 ### Expect a certificate warning, and do not fix it the easy way
 
-The certificate is real and correctly issued — for `staging.event-junkie.de`, via DNS-01, valid 90 days — but it comes from Let's Encrypt's **staging** CA,
-whose root no browser trusts. Click through it.
+The certificate is real and correctly issued: for `staging.event-junkie.de`, via DNS-01, valid 90 days. But it comes from Let's Encrypt's **staging** CA, whose
+root no browser trusts. Click through it.
 
 **Do not install the Let's Encrypt staging root to silence the warning.** It issues to anyone who asks, so trusting it means trusting a CA that will happily
 vouch for any domain, for every site you visit. That is a permanent change to your machine, to remove one warning on one host you reach through a tunnel.
 
 **And do not switch the issuer to production either — that was decided, not deferred.**
-[#265](https://github.com/enorm-labs/event-junkie/issues/265) closed on it: production issues over HTTP-01, so pointing staging at the production ACME endpoint
-would rehearse account registration and nothing else, while spending a rate limit that is per _registered_ domain and therefore shared with the real site. The
-reasoning is in [CLUSTER_BOOTSTRAP §11](CLUSTER_BOOTSTRAP.md#11--verify-the-certificate) and next to the value itself in
-`deploy/clusters/staging/helm-release.yaml`. Click through the warning.
+[#265](https://github.com/enorm-labs/event-junkie/issues/265) closed on it. Production issues over HTTP-01, so pointing staging at the production ACME endpoint
+would rehearse account registration and nothing else. It would also spend a rate limit that is per _registered_ domain, and therefore shared with the real
+site. The reasoning is in [CLUSTER_BOOTSTRAP §11](CLUSTER_BOOTSTRAP.md#11--verify-the-certificate) and next to the value itself in
+`deploy/clusters/staging/helm-release.yaml`.
 
 ### Without touching `/etc/hosts`
 
@@ -236,21 +241,23 @@ Worth knowing, because two of these look wrong and are not:
 | `/api/admin`       | **`404`** — correct. The importer's admin API has no ingress backend at all                                                           |
 | `/actuator/health` | **`200`, but from nginx** — the SPA catch-all, _not_ the actuator. Check `server:` and the body before concluding anything is exposed |
 
-That last row is the one that looks alarming. Actuator lives on its own port that no ingress rule names, so any unmatched path falls through to the frontend's
+That last row is the one that looks alarming. Actuator lives on its own port, which no ingress rule names. Any unmatched path falls through to the frontend's
 SPA fallback and returns the index page with a `200`.
 
 ## 6a · The importer's admin API, and seeding staging
 
 **The importer has no ingress backend on any cluster** (§6's table, and `deploy/charts/event-junkie/templates/ingress.yaml` says so in a comment). That is the
-design from PLATFORM_SETUP §8a: rather than defend `/api/admin/**` with an allowlist or basic-auth middleware, it is simply not routed, and the tunnel is the
-only way to it. So this is the one place where a `kubectl port-forward` is the right tool rather than the lazy one — §6's warning about port-forwards hiding
-routing bugs is about the _site_, which does have an ingress to test.
+design from PLATFORM_SETUP §8a. Rather than defend `/api/admin/**` with an allowlist or a basic-auth middleware, it is simply not routed, and the tunnel is the
+only way to it.
+
+So this is the one place where a `kubectl port-forward` is the right tool rather than the lazy one. §6's warning about port-forwards hiding routing bugs is
+about the _site_, which does have an ingress to test.
 
 ```sh
 kubectl --context event-junkie-staging port-forward -n event-junkie svc/event-junkie-importer 18081:8081
 ```
 
-**`18081`, not `8081`.** The local importer from `scripts/dev-env.sh` owns `8081`, and a forward that silently lands on a local stack is how you seed the wrong
+**`18081`, not `8081`.** The local importer from `scripts/dev-env.sh` owns `8081`. A forward that silently lands on a local stack is how you seed the wrong
 database and believe you seeded staging.
 
 That port is what the `staging` environment in `http/http-client.env.json` points `importer-host` at, so every `.http` file under `http/importer/` works against
@@ -260,17 +267,17 @@ staging unchanged:
 cd http && ijhttp --env-file http-client.env.json --env staging importer/dev-seed.http
 ```
 
-`bff-host` in the same environment is the real `https://staging.event-junkie.de`, through Traefik — the read path _does_ have an ingress, so there is no reason
+`bff-host` in the same environment is the real `https://staging.event-junkie.de`, through Traefik. The read path _does_ have an ingress, so there is no reason
 to bypass it. It needs `/etc/hosts` (§6) and **`ijhttp --insecure`**, because the certificate comes from Let's Encrypt's staging CA.
 
-`scripts/dev-env.sh seed-all` is deliberately not the way to do this: it hardcodes `--env local` and health-checks a local importer first, which is what keeps
+`scripts/dev-env.sh seed-all` is deliberately not the way to do this. It hardcodes `--env local` and health-checks a local importer first, which is what keeps
 it from ever reaching a real cluster.
 
 ## 6b · OpenObserve, for logs and metrics
 
-The service is `ClusterIP` on port 5080 in the `observability` namespace, and staging is not on the public internet — so there is no URL, and that is
-deliberate. **`/metrics` and `/api/metrics` are blocked for public access whenever OpenObserve's own ingress is enabled**, which is one more reason not to give
-it one here. Reach it through the tunnel and a port-forward:
+The service is `ClusterIP` on port 5080 in the `observability` namespace, and staging is not on the public internet. So there is no URL, and that is
+deliberate. **`/metrics` and `/api/metrics` are blocked for public access whenever OpenObserve's own ingress is enabled.** That is one more reason not to give it one
+here. Reach it through the tunnel and a port-forward:
 
 ```sh
 kubectl --context event-junkie-staging -n observability \
@@ -281,7 +288,7 @@ Then `http://localhost:5080/` and log in with the root credentials from the pass
 ([SECRETS.md](SECRETS.md)). They are not in this repository and no deploy will bring them.
 
 **A port-forward is the right tool here, unlike for the site below.** §6a rejects it for the application because it skips TLS, the ingress rules and the
-middlewares — the very things being tested. Nothing about OpenObserve is being tested by reaching it; it is an operator console, so the shortest path is the
+middlewares — the very things being tested. Reaching OpenObserve tests nothing about it. It is an operator console, so the shortest path is the
 correct one.
 
 **If the page does not load, check the release before the tunnel:**
@@ -290,7 +297,7 @@ correct one.
 flux --context event-junkie-staging get helmrelease openobserve -n flux-system
 ```
 
-A missing or malformed `openobserve-credentials` Secret leaves it in a failed state rather than running-but-inaccessible — that is the intended shape, so a
+A missing or malformed `openobserve-credentials` Secret leaves it in a failed state rather than running-but-inaccessible. That is the intended shape, so a
 reconcile error is the first thing to read, not the last.
 
 ## 7 · The PostgreSQL database
@@ -303,9 +310,9 @@ host  all  all  10.1.1.0/24     scram-sha-256      # the private network
 host  all  all  10.42.0.0/16    scram-sha-256      # pods
 ```
 
-Your tunnel address is `10.10.1.2`, which is in **neither**. So widening `AllowedIPs` to route `10.1.1.0/24` does not help: you would reach port 5432 and then
-be refused with `no pg_hba.conf entry for host`, which reads like a firewall problem and is not one. Adding the tunnel range to `pg_hba` would work and is the
-wrong fix — it widens who may reach the database in order to save one flag.
+Your tunnel address is `10.10.1.2`, which is in **neither**. So widening `AllowedIPs` to route `10.1.1.0/24` does not help. You would reach port 5432 and then
+be refused with `no pg_hba.conf entry for host`, which reads like a firewall problem and is not one. Adding the tunnel range to `pg_hba` would work, and it is the wrong
+fix. It widens who may reach the database in order to save one flag.
 
 **So the connection has to originate on the node.** An SSH local forward does that, needs no change to anything, and stops when you close it.
 
@@ -313,7 +320,7 @@ wrong fix — it widens who may reach the database in order to save one flag.
 ssh -f -N -i ~/.ssh/id_ed25519_hetzner -L 15432:localhost:5432 ops@10.10.1.1
 ```
 
-`-f -N` background with no shell; `15432` locally so it cannot collide with a PostgreSQL you already run. The WireGuard tunnel must be up first — `10.10.1.1`
+`-f -N` background with no shell. `15432` locally, so it cannot collide with a PostgreSQL you already run. The WireGuard tunnel must be up first — `10.10.1.1`
 is only reachable through it.
 
 ### The password
@@ -339,7 +346,7 @@ events=> \dt events.*
   event_promoter · event_source · flyway_schema_history
 ```
 
-The local client is PostgreSQL 17 (Homebrew) against a **18.6** server. That works; a few `\d`-family commands may warn about the version gap. `brew install
+The local client is PostgreSQL 17 (Homebrew) against a **18.6** server. That works, but a few `\d`-family commands may warn about the version gap. `brew install
 postgresql@18` if it ever matters.
 
 ### IntelliJ IDEA
@@ -363,8 +370,8 @@ IntelliJ has its own SSH tunnel, so it does not need the `ssh -L` above — but 
 
 **Test Connection** should report PostgreSQL 18.6. IntelliJ will offer to download the driver on first use.
 
-> **This is a real database.** It is staging, so there is no personal data and nothing irreplaceable — but the importer is writing to it, and a stray `UPDATE`
-> in a query console is not undone by a redeploy. IntelliJ's read-only checkbox on the data source is a cheap seatbelt.
+> **This is a real database.** It is staging, so there is no personal data and nothing irreplaceable. But the importer is writing to it, and a redeploy does
+> not undo a stray `UPDATE` in a query console. IntelliJ's read-only checkbox on the data source is a cheap seatbelt.
 
 Close the forward when you are done — it does not close itself:
 
@@ -379,7 +386,7 @@ sudo wg-quick down ~/.wireguard/staging.conf
 sudo wg show                                   # no interface listed = down
 ```
 
-Not strictly required — it is a split tunnel and idle costs nothing — but bringing it down means a stray command cannot reach staging, which is worth the two
+Not strictly required: it is a split tunnel, and idle costs nothing. But bringing it down means a stray command cannot reach staging, which is worth the two
 seconds. If you merged the kubeconfig, this is the only thing standing between a mistyped context and a real cluster.
 
 ---
@@ -398,9 +405,13 @@ scripts/k3d-rehearsal.sh down      # and takes it away again
 `k3d cluster create` merges into `~/.kube/config` and switches the active context as a side effect. The cluster is named `event-junkie`, so the context is
 always **`k3d-event-junkie`** — and it only exists between `up` and `down`.
 
-**Do not save a copy of it.** Every recreate changes three things: the **API server port** (the script passes no `--api-port`, so Docker assigns a random one),
-the **cluster CA**, and the **client certificate**. A stale copy fails as a connection refused against a port nothing is listening on, which reads like a
-crashed cluster rather than a stale file.
+**Do not save a copy of it.** Every recreate changes three things:
+
+- the **API server port** — the script passes no `--api-port`, so Docker assigns a random one
+- the **cluster CA**
+- the **client certificate**
+
+A stale copy fails as a connection refused against a port nothing is listening on. That reads like a crashed cluster rather than a stale file.
 
 If `~/.kube/config` is ever rewritten while a cluster is running:
 
@@ -409,13 +420,13 @@ k3d kubeconfig merge event-junkie --kubeconfig-merge-default   # back into ~/.ku
 k3d kubeconfig get event-junkie                                 # or print it standalone
 ```
 
-**The contrast with staging is the point, and it is a design difference rather than an accident.** Staging's kubeconfig is fetched once and stays valid because
-the cluster is long-lived — which is exactly why it lives in its own file and why losing it costs a rebuild. k3d's is disposable because the cluster is, so it
-belongs in `~/.kube/config` and nobody should care when it changes.
+**The contrast with staging is the point, and it is a design difference rather than an accident.** Staging's kubeconfig is fetched once and stays valid, because
+the cluster is long-lived. That is why it lives in its own file, and why losing it costs a rebuild. k3d's is disposable because the cluster is. It belongs in
+`~/.kube/config`, and nobody should care when it changes.
 
-**A rehearsal cannot touch staging, even with staging's context current.** `k3d-rehearsal.sh` never relies on the active context: every call goes through a
-wrapper that passes `--context`/`--kube-context` explicitly, `guard_context` refuses to act on anything not named `k3d-*`, and `down` restores whatever context
-was selected before. That mattered less when the only clusters were local; it matters now.
+**A rehearsal cannot touch staging, even with staging's context current.** `k3d-rehearsal.sh` never relies on the active context. Every call goes through a
+wrapper that passes `--context`/`--kube-context` explicitly. `guard_context` refuses to act on anything not named `k3d-*`. And `down` restores whatever context
+was selected before. That mattered less when the only clusters were local. It matters now.
 
 ---
 
