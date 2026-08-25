@@ -740,8 +740,8 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       instance — `@Suppress("LongComment/venue")`. The bare rule name silently does not match**, which is the one trap in this arrangement.
     - **The one place length is welcome is a deliberate trade-off — and even there, compress the words, not the reasoning.** Scraper sub-package KDoc is the
       designated home for accepted limitations (a field the venue never publishes, a signal the parser cannot express), and that prose is load-bearing: it is
-      what stops the same "defect" being re-reported every audit. It is why `LongComment` excludes `**/scraper/**`. Shorten how it is said; never delete what it
-      says. See the _Where a finding goes_ table, and #713 for the plan to move it somewhere reviewable.
+      what stops the same "defect" being re-reported every audit. It is why the base rule excludes `**/scraper/*/**` and `LongComment/venue` caps those files at 40
+      rather than exempting them. Shorten how it is said; never delete what it says. See the _Where a finding goes_ table, and #713 for the plan to move it somewhere reviewable.
 - **Kotlin idioms** (per [official coding conventions](https://kotlinlang.org/docs/coding-conventions.html)):
     - **Trailing commas** at declaration sites (constructor params, function params, enum entries, collection literals) — produces cleaner VCS diffs.
     - **Expression bodies** — prefer `fun foo() = expr` over `fun foo() { return expr }` for single-expression functions.
