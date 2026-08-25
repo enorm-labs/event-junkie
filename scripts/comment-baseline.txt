@@ -7,7 +7,7 @@ detekt-rules	124
 events-bff	894
 events-core	328
 events-frontend	3195
-events-importer	20409
+events-importer	20400
 infra	776
 root	503
 scripts	1186

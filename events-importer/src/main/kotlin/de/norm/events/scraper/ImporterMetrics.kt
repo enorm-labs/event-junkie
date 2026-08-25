@@ -13,25 +13,25 @@ import kotlin.time.Duration
  *
  * **A scraper does not fail loudly, and that is the whole reason this exists.** When a venue
  * redesigns its site the importer keeps running, reports success, and silently writes zero events —
- * and nobody notices for a fortnight, because the site still shows last month's listings. No amount
- * of HTTP or infrastructure monitoring sees that; a business metric with an alert does. ADR-015 calls
- * this the requirement the whole observability decision turns on.
+ * unnoticed for a fortnight, because the site still shows last month's listings. No amount of HTTP
+ * or infrastructure monitoring sees that; a business metric with an alert does, which ADR-015 calls
+ * the requirement the whole observability decision turns on.
  *
  * Names and tags follow `docs/ops/PLATFORM_SETUP.md` §7, which the dashboards and alert rules are
  * written against. **Renaming a meter here silently breaks an alert elsewhere** — there is no
- * compiler between the two — so treat these strings as an interface, not as an implementation
- * detail.
+ * compiler between the two — so treat these strings as an interface, not an implementation detail.
  *
- * **Counters are recorded here; gauges are refreshed elsewhere.** A counter is recorded at the
- * moment something happens, which is a normal method call. A gauge is
- * read by Micrometer *at scrape time*, synchronously, on whichever thread the actuator endpoint is
- * being served on — and every query this application can make is reactive and suspending. There is
- * no way to answer "how many events are in the database" from inside a gauge supplier without
- * blocking a Netty event-loop thread.
+ * **Counters are recorded here; gauges are refreshed elsewhere.** Micrometer reads a gauge *at
+ * scrape time*, synchronously, on the thread serving the actuator endpoint — and every query this
+ * application can make is reactive, so answering "how many events are in the database" from a gauge
+ * supplier would block a Netty event-loop thread. Each gauge therefore reads an [AtomicLong] that
+ * [MetricsRefreshService] updates on a schedule, trading staleness bounded by the refresh interval
+ * for the blocking call in a WebFlux request path that ADR-001 rules out everywhere else.
  *
- * So each gauge reads an [AtomicLong] that [MetricsRefreshService] updates on a schedule. The cost
- * is that a gauge is as stale as the refresh interval; the alternative is a blocking call in the
- * request path of a WebFlux application, which is the one thing ADR-001 rules out everywhere else.
+ * **That refresh is also why the gauges survive a deploy and the counters do not.** A counter
+ * accumulates in this process and resets with it, while a gauge re-reads state — and the importer
+ * restarts on every deploy against a 24-hour import interval, so a counter is absent far more often
+ * than it is wrong (#618).
  */
 @Component
 class ImporterMetrics(
@@ -186,15 +186,10 @@ class ImporterMetrics(
      * different facts.
      *
      * **Not fixed by `absent()` or `unless` in the rule either**, though OpenObserve does implement
-     * both (checked against the live instance, unlike `sort_desc`, which it does not). A rule of the
-     * form `tracked unless last_success` joins two series at query time and therefore reports every
-     * source as never-succeeded during any gap in the *other* metric — and this system has had gaps:
-     * #625 dropped roughly half of all metric points for days. One series carrying the fact is
-     * atomic; a join between two is only as reliable as the flakier side.
-     *
-     * The value is refreshed from `event_source` by [MetricsRefreshService] on every tick, so it
-     * survives a restart — which an in-process counter of failures does not, and which matters
-     * because the importer restarts on every deploy while the import interval is 24 hours.
+     * both. A rule of the form `tracked unless last_success` joins two series at query time and so
+     * reports every source as never-succeeded during any gap in the *other* metric — and this system
+     * has had gaps, #625 dropping roughly half of all metric points for days. One series carrying
+     * the fact is atomic; a join between two is only as reliable as the flakier side.
      */
     fun publishHasSucceeded(
         sourceSlug: String,
@@ -218,12 +213,10 @@ class ImporterMetrics(
      * and anything summing `db_events` would double-count. A separate name in the `importer.source.*`
      * family is where an alert author is already looking.
      *
-     * **Not `importer.events.written`, which sounds like the same number.** That is a counter living
-     * in this process: it resets on every deploy and is absent from `/actuator/prometheus` until
-     * something increments it. The import interval is 24 hours and the importer restarts on every
-     * deploy, so `increase(...[48h]) == 0` cannot tell "wrote nothing" from "was restarted".
-     * ADR-015 records that shape and #618 paid for it — a gauge refreshed from the database survives
-     * a restart, because it re-reads state instead of accumulating it.
+     * **Not `importer.events.written`, which sounds like the same number.** That is a counter, so it
+     * is absent from `/actuator/prometheus` until something increments it and
+     * `increase(...[48h]) == 0` cannot tell "wrote nothing" from "was restarted" (see the class
+     * KDoc).
      *
      * **Zero is a value here, not an absence**, and [MetricsRefreshService] publishes it for every
      * enabled source that the count query returns no row for. A source missing from the exposition
@@ -369,10 +362,8 @@ class ImporterMetrics(
          * which `db.events` can only see once the whole catalogue has drained. See
          * [publishFutureEvents].
          *
-         * **Not `events.total` or anything ending in `_total`.** That is Prometheus' reserved suffix
-         * for counters and Micrometer strips it, silently, which is how `db.events.total` came to be
-         * published as `db_events` while every rule written from the documented name matched
-         * nothing.
+         * **Not `events.total` or anything ending in `_total`** — see [DB_EVENTS] for what that
+         * suffix costs.
          */
         const val SOURCE_EVENTS_FUTURE = "importer.source.events_future"
         const val SOURCE_RUNNING = "importer.source.running"
@@ -399,7 +390,7 @@ class ImporterMetrics(
          * Given the rename was unavoidable, a tag is the right shape for it anyway: "all events" and
          * "future events" are the same measurement over two windows, which is what a label is for,
          * and `db_events{horizon="future"}` is one PromQL selector rather than a second metric name
-         * to remember. §7 has been updated to match.
+         * to remember. §7 states this shape.
          */
         const val DB_EVENTS = "db.events"
         const val TAG_HORIZON = "horizon"
