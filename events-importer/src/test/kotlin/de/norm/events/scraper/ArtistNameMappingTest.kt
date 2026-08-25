@@ -916,4 +916,25 @@ class ArtistNameMappingTest {
         headlinersFromTitle("Bleech 9:3") shouldContainExactly
             listOf(ScrapedArtist(name = "Bleech 9:3", role = "HEADLINER"))
     }
+
+    // --- stripSeriesPrefix ---
+
+    @Test
+    fun `stripSeriesPrefix keeps the acts billed after the series label`() {
+        stripSeriesPrefix("OFF THE RAILS #5: Blake Harley & Superior Motive") shouldBe "Blake Harley & Superior Motive"
+        stripSeriesPrefix("Off the Rails #4: Some Act") shouldBe "Some Act"
+        stripSeriesPrefix("Series # 12 : Act") shouldBe "Act"
+    }
+
+    @Test
+    fun `stripSeriesPrefix leaves a title whose colon is not a series marker`() {
+        stripSeriesPrefix("9:3") shouldBe "9:3"
+        stripSeriesPrefix("H2:O") shouldBe "H2:O"
+        stripSeriesPrefix("Just A Band") shouldBe "Just A Band"
+    }
+
+    @Test
+    fun `stripSeriesPrefix returns the input when stripping would leave nothing`() {
+        stripSeriesPrefix("OFF THE RAILS #5:") shouldBe "OFF THE RAILS #5:"
+    }
 }
