@@ -46,6 +46,7 @@ pins the version and the scope, both of which matter (AGENTS.md §Code Conventio
 ```bash
 scripts/comment-density.sh check
 scripts/comment-lint.sh check
+scripts/skill-parity.sh
 ```
 
 Exits 1 naming any area that carries more comment lines than `scripts/comment-baseline.txt` allows, and the ratchet only turns one way: the fix is to compress
@@ -53,6 +54,10 @@ or delete, not to raise the number. An area that has dropped below its baseline 
 update-baseline` and commit the lower figure in the same PR. `comment-lint.sh` is the same ratchet over the rules detekt and ESLint cannot see — the block
 cap, file density, and markdown headings, date literals or change-narration inside a comment in `.tf`, `.sh`, `.yaml` and `.py`. Both take under a second
 and reach no network, and `validate-comments.yml` runs them on every pull request. See #713.
+
+`skill-parity.sh` is a third check riding along here because it is the same shape and the same cost: `.claude/skills/` and `.claude/commands/` are
+parallel trees of `@` pointers with nothing joining them, so a skill added to one and not the other is silently absent from the other. It also asserts
+every pointer resolves and every skill is listed in `CLAUDE.md`. `validate-docs.yml` runs it in CI.
 
 ### Infrastructure (from repo root, only when the diff touches `infra/`)
 

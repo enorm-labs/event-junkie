@@ -42,6 +42,16 @@ repos:
         files: ^(gradle\.properties|events-frontend/package\.json|deploy/charts/event-junkie/Chart\.yaml)$
         pass_filenames: false
 
+      # `.claude/skills/` and `.claude/commands/` are parallel trees of `@` pointers and nothing
+      # joins them, so a skill added to one and not the other is silently absent from the other —
+      # no error, the command simply is not there. Runs on any of the three copies moving.
+      - id: skill-parity
+        name: skill and command parity
+        entry: scripts/skill-parity.sh
+        language: system
+        files: ^(\.claude/(skills|commands)/|\.github/prompts/|CLAUDE\.md$)
+        pass_filenames: false
+
       # Markdown formatting, via the oxfmt pinned in events-frontend/package.json rather than
       # whatever is on $PATH — a Homebrew oxfmt and the pinned one disagree about tables nested
       # under list items, and a hook that formats differently than CI checks is worse than no hook.
