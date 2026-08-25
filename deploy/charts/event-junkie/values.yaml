@@ -4,8 +4,10 @@
 # either, and `certManager.clusterIssuer.server` points at Let's Encrypt *staging* because the
 # default should never be the one that costs seven days when it is wrong (§3.6).
 #
-# Conventions: camelCase keys, no hyphens, strings quoted, every property carrying a comment that
-# starts with the property's own name. Maps rather than arrays wherever `--set` might touch a value.
+# Conventions: camelCase keys, no hyphens, strings quoted. Maps rather than arrays wherever `--set`
+# might touch a value. **A property gets a comment when it has something to say** — a constraint, a
+# trade-off, a failure it avoids — and not otherwise; a key whose name already explains it is left
+# alone. Where a comment could be read against more than one key, it names the one it applies to.
 
 # nameOverride replaces the chart name in resource names and in `app.kubernetes.io/name`.
 nameOverride: ""
@@ -25,7 +27,6 @@ database:
   # database.host is the address PostgreSQL listens on — `postgres_ip` from the matching OpenTofu
   # environment stack (`tofu -chdir=infra/environments/<env> output postgres_ip`). Required.
   host: ""
-  # database.port is PostgreSQL's port.
   port: 5432
   # database.name is the database, not the schema; the schema is `events` and is set in each app's
   # own application.yaml.
@@ -36,10 +37,9 @@ database:
   # gets committed. SOPS-managed Secrets arrive in #416; until then create it out of band with
   # `kubectl create secret generic <name> --from-literal=username=… --from-literal=password=…`.
   existingSecret: ""
+  # The key *names* inside that Secret, not the values.
   secretKeys:
-    # database.secretKeys.username is the key inside that Secret holding the role name.
     username: "username"
-    # database.secretKeys.password is the key inside that Secret holding the password.
     password: "password"
 
 security:
@@ -59,7 +59,6 @@ bff:
   # bff.replicaCount is free to exceed 1: the BFF is stateless and read-only.
   replicaCount: 2
   image:
-    # bff.image.repository is the path under `image.registry`.
     repository: "enorm-labs/event-junkie/bff"
     # bff.image.tag falls back to `.Chart.AppVersion`, which #264 stamps from the build that pushed
     # the image. Never `latest` — the render assertions fail the build on a floating tag.
@@ -77,23 +76,20 @@ bff:
     managementPort: 9001
   resources:
     requests:
-      # bff.resources.requests.cpu is what the scheduler reserves.
       cpu: "100m"
-      # bff.resources.requests.memory is what the scheduler reserves.
       memory: "512Mi"
     limits:
-      # bff.resources.limits.cpu caps burst usage.
       cpu: "1000m"
-      # bff.resources.limits.memory is a security control on a single node, not a tuning knob
+      # A security control on a single node, not a tuning knob
       # (PLATFORM_SETUP §8 item 12). The JVM reads it and sizes its heap from `MaxRAMPercentage`.
       memory: "768Mi"
   # bff.maxRamPercentage is the JVM heap as a share of the container limit. Without it a JVM sizes
   # its heap at 25% of the limit and then dies with three-quarters of its memory unused.
   maxRamPercentage: 75
+  # A dedicated ServiceAccount with no token mounted. `name` overrides the generated one, for a
+  # hand-made RBAC binding.
   serviceAccount:
-    # bff.serviceAccount.create makes a dedicated ServiceAccount with no token mounted.
     create: true
-    # bff.serviceAccount.name overrides the generated name, for a hand-made RBAC binding.
     name: ""
   # bff.podAnnotations carries the Prometheus scrape config (#415, #271). OpenObserve's collector
   # discovers targets by these annotations and nothing else, so a pod without them is invisible to
@@ -106,11 +102,9 @@ bff:
     # /actuator/** private while still letting an in-cluster collector reach it.
     prometheus.io/path: "/actuator/prometheus"
     prometheus.io/port: "9001"
-  # bff.nodeSelector constrains scheduling. Empty on a single node.
+  # All three empty on a single node.
   nodeSelector: {}
-  # bff.tolerations constrains scheduling.
   tolerations: []
-  # bff.affinity constrains scheduling.
   affinity: {}
 
 importer:
@@ -120,9 +114,7 @@ importer:
   # needs `SELECT … FOR UPDATE SKIP LOCKED` first.
   replicaCount: 1
   image:
-    # importer.image.repository is the path under `image.registry`.
     repository: "enorm-labs/event-junkie/importer"
-    # importer.image.tag falls back to `.Chart.AppVersion`.
     tag: ""
   service:
     # importer.service.port is the application port. Reachable in-cluster only: the importer gets no
@@ -133,21 +125,16 @@ importer:
     managementPort: 9001
   resources:
     requests:
-      # importer.resources.requests.cpu is what the scheduler reserves.
       cpu: "100m"
-      # importer.resources.requests.memory is what the scheduler reserves.
       memory: "512Mi"
     limits:
-      # importer.resources.limits.cpu caps burst usage. Scraping is bursty and IO-bound.
+      # Scraping is bursty and IO-bound.
       cpu: "1000m"
-      # importer.resources.limits.memory has to cover `max-in-memory-size: 8MB` × concurrency 4.
+      # Has to cover `max-in-memory-size: 8MB` × concurrency 4.
       memory: "1Gi"
-  # importer.maxRamPercentage is the JVM heap as a share of the container limit.
   maxRamPercentage: 75
   serviceAccount:
-    # importer.serviceAccount.create makes a dedicated ServiceAccount with no token mounted.
     create: true
-    # importer.serviceAccount.name overrides the generated name.
     name: ""
   # importer.podAnnotations carries the Prometheus scrape config (#415, #271). OpenObserve's collector
   # discovers targets by these annotations and nothing else, so a pod without them is invisible to
@@ -160,20 +147,16 @@ importer:
     # /actuator/** private while still letting an in-cluster collector reach it.
     prometheus.io/path: "/actuator/prometheus"
     prometheus.io/port: "9001"
-  # importer.nodeSelector constrains scheduling.
   nodeSelector: {}
-  # importer.tolerations constrains scheduling.
   tolerations: []
-  # importer.affinity constrains scheduling.
   affinity: {}
 
 frontend:
   # frontend.replicaCount is free to exceed 1: it serves static files.
   replicaCount: 2
   image:
-    # frontend.image.repository is the path under `image.registry`. Built by #262.
+    # Built by #262.
     repository: "enorm-labs/event-junkie/frontend"
-    # frontend.image.tag falls back to `.Chart.AppVersion`.
     tag: ""
   service:
     # frontend.service.port must match what nginx listens on, and it cannot be 80: a non-root
@@ -182,14 +165,11 @@ frontend:
     port: 8080
   resources:
     requests:
-      # frontend.resources.requests.cpu is what the scheduler reserves.
       cpu: "10m"
-      # frontend.resources.requests.memory is what the scheduler reserves.
       memory: "32Mi"
     limits:
-      # frontend.resources.limits.cpu caps burst usage.
       cpu: "200m"
-      # frontend.resources.limits.memory is generous for nginx serving a static bundle.
+      # Generous for nginx serving a static bundle.
       memory: "128Mi"
   # frontend.runAsUser overrides security.runAsUser, and is deliberately left unset: #262's image
   # is `nginxinc/nginx-unprivileged`, whose own default user is 101, but it was verified to run
@@ -198,20 +178,15 @@ frontend:
   # case where a future base image cannot.
   runAsUser: null
   serviceAccount:
-    # frontend.serviceAccount.create makes a dedicated ServiceAccount with no token mounted.
     create: true
-    # frontend.serviceAccount.name overrides the generated name.
     name: ""
   # frontend.podAnnotations is deliberately empty, unlike the BFF's and the importer's. nginx serves
   # static files and exposes no metrics endpoint to scrape — ADR-015 lists the frontend's *access
   # logs* as its signal, not meters. Annotating it would point the collector at a 404 every scrape
   # interval and produce a permanently failing target that means nothing.
   podAnnotations: {}
-  # frontend.nodeSelector constrains scheduling.
   nodeSelector: {}
-  # frontend.tolerations constrains scheduling.
   tolerations: []
-  # frontend.affinity constrains scheduling.
   affinity: {}
 
 ingress:
@@ -259,7 +234,6 @@ ingress:
   tls:
     # ingress.tls.enabled asks cert-manager for a certificate via the ingress-shim annotation.
     enabled: true
-    # ingress.tls.secretName is where cert-manager stores the issued certificate.
     secretName: "event-junkie-tls"
   # ingress.securityHeaders renders a Traefik Middleware adding HSTS, X-Content-Type-Options,
   # X-Frame-Options and a Referrer-Policy to every response (#416, PLATFORM_SETUP §8 item 11). A
@@ -392,22 +366,18 @@ certManager:
         # Not a `dns.hetzner.com` token: that API and its console were shut down in May 2026 and
         # those tokens no longer work anywhere. Issue this one in the Hetzner Console.
         name: "hetzner"
-        # certManager.clusterIssuer.dns01.tokenSecret.key is the key inside that Secret.
         key: "token"
       # certManager.clusterIssuer.dns01.webhookGroupName is the webhook's API group. `.com`, which
       # is the official webhook's; the community forks use `.cloud` and speak the dead API.
       webhookGroupName: "acme.hetzner.com"
 
-# tests.enabled renders the `helm test` hook pod. #414 wires Flux's `test.enable` to it.
+# Renders the `helm test` hook pod in `templates/tests/connection-test.yaml`. #414 wires Flux's
+# `test.enable` to it.
 tests:
-  # tests.enabled renders `templates/tests/connection-test.yaml`.
   enabled: true
   image:
-    # tests.image.registry is Docker Hub rather than `image.registry`: this is the one image in the
-    # chart that is not ours, and it does not live alongside the three that are.
+    # Docker Hub rather than `image.registry` — the one image here that is not ours.
     registry: "docker.io"
-    # tests.image.repository is a curl image; the test pod is the one place a third-party image is
-    # acceptable, because nothing it does outlives the test.
+    # The one place a third-party image is acceptable: nothing the test pod does outlives the test.
     repository: "curlimages/curl"
-    # tests.image.tag is pinned, like every other tag in this chart.
     tag: "8.11.1"
