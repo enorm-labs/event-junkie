@@ -155,8 +155,10 @@ Beyond the [Helm chart best practices guide](https://helm.sh/docs/chart_best_pra
 - **Per-workload templates take a dict**, not the root context: `include "event-junkie.labels" (dict "ctx" $ "component" "bff")`. `component` is both the label
   value and the key under `.Values` holding that workload's settings.
 - **Whitespace inside the braces** (`{{ .Values.x }}`), two-space indent, chomp aggressively.
-- **camelCase values, no hyphens, strings quoted**, and every property carries a comment starting with the property's own name. Maps rather than arrays wherever
-  `--set` might touch a value.
+- **camelCase values, no hyphens, strings quoted.** Maps rather than arrays wherever `--set` might touch a value. **A property gets a comment when it has
+  something to say** — a constraint, a trade-off, a failure it avoids — and not otherwise. A blanket "every property carries one" buys nine lines of
+  `nodeSelector constrains scheduling` and six of `requests.cpu is what the scheduler reserves`: restatement mandated by convention, which is the exact thing
+  the next bullet forbids (#713). Where a comment could be read against more than one key, name the one it applies to.
 - **Per-component nesting** (`bff.*`, `importer.*`, `frontend.*`) rather than the guide's preference for flat, under its own stated exception for "a large
   number of related variables, at least one non-optional".
 - **Comments explain why**, and specifically why an obvious alternative was not taken — why `/api` is not a Traefik middleware, why the ClusterIssuer is off by
