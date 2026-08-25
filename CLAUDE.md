@@ -4,6 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The full agent playbook — commands, architecture decisions, R2DBC/Modulith gotchas, and conventions — lives in @AGENTS.md. Read it before assuming defaults.
 
+## Project rules
+
+Conventions that only matter for one kind of file are not in AGENTS.md. They live in [`.github/instructions/`](.github/instructions) and reach this session
+through [`.claude/rules/`](.claude/rules), which holds one symlink per topic — `architecture`, `kotlin`, `comments`, `markdown`, `testing`, `ci-cd`. Each
+declares `paths:`, so Claude Code pulls it into context when you read a file it matches and leaves it out otherwise.
+
+The same file also carries an `applyTo:` line, which is what GitHub Copilot reads from `.github/instructions/` directly. One copy serves both agents, and
+`scripts/rules-parity.sh` fails when the two glob lists drift apart.
+
+**A rule body has to be inline.** An `@` pointer inside a rule file is expanded at launch whatever its `paths:` says, so a pointer-style rule loads its target
+into every session and the scoping buys nothing — silently, because the content is there, merely always there.
+
 ## Project skills
 
 Slash commands available under `.claude/skills/`:

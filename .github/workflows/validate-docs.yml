@@ -17,6 +17,7 @@ on:
       - '.oxfmtrc.json'
       - 'scripts/format-markdown.sh'
       - 'scripts/skill-parity.sh'
+      - 'scripts/rules-parity.sh'
       - 'events-frontend/package-lock.json'
       - '.github/workflows/validate-docs.yml'
   pull_request:
@@ -31,6 +32,7 @@ on:
       - '.oxfmtrc.json'
       - 'scripts/format-markdown.sh'
       - 'scripts/skill-parity.sh'
+      - 'scripts/rules-parity.sh'
       - 'events-frontend/package-lock.json'
       - '.github/workflows/validate-docs.yml'
   workflow_dispatch:
@@ -39,12 +41,12 @@ permissions:
   contents: read
 
 jobs:
-  # `.claude/skills/` and `.claude/commands/` are parallel trees of `@` pointers with nothing joining
-  # them, so a skill added to one and not the other is silently absent from the other. The `**.md`
-  # filter above already covers every input this reads. No Node, so it does not wait on the setup the
-  # formatting job needs.
+  # `.claude/skills/` and `.claude/commands/` are parallel `@`-pointer trees with nothing joining
+  # them, and `.github/instructions/` carries one glob key per agent — nothing reports either pair
+  # drifting apart. The `**.md` filter above already covers every input they read. No Node, so this
+  # does not wait on the setup the formatting job needs.
   parity:
-    name: Check skill and command parity
+    name: Check skill and rule parity
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -55,6 +57,9 @@ jobs:
 
       - name: Check skill and command parity
         run: scripts/skill-parity.sh
+
+      - name: Check rule parity
+        run: scripts/rules-parity.sh
 
   format:
     name: Check Markdown formatting

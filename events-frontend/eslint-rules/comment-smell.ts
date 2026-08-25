@@ -2,7 +2,7 @@ import type { Rule } from 'eslint'
 import type { Comment } from 'estree'
 
 /**
- * Reports the things AGENTS.md §Comments already forbids, now that a lint run can see them: a date,
+ * Reports the things .github/instructions/comments.instructions.md already forbids, now that a lint run can see them: a date,
  * a markdown heading, a comment narrating its own history, and a `TODO`. The frontend half of
  * detekt's `CommentSmell` (#713).
  *

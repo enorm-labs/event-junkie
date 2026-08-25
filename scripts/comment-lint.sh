@@ -8,7 +8,7 @@
 #   scripts/comment-lint.sh update-baseline    # accept the current counts
 #
 # Covers .tf, .tfvars, .sh, .py, .yaml, .yml. Kotlin is detekt's LongComment; TS and Vue are
-# event-junkie/max-comment-lines. See AGENTS.md §Comments and #713.
+# event-junkie/max-comment-lines. See .github/instructions/comments.instructions.md and #713.
 #
 # Silence one block with `# comment-lint: allow <reason>` on the line above it. The reason is not
 # optional, and a bare directive is itself a violation.
@@ -29,7 +29,7 @@ EXCLUDE='node_modules/|/build/|/dist/|/coverage/'
 # Files where a date is the policy rather than a smell. A suppression carries one so its staleness
 # is visible — "a suppression that outlives its issue is a gate that has been quietly switched off"
 # (zizmor.yml). These two are nothing but suppressions and their rationale; elsewhere a date in a
-# comment is describing when something changed, which git already holds. See AGENTS.md §Comments.
+# comment is describing when something changed, which git already holds. See the comments instructions.
 DATE_IS_POLICY='^(zizmor\.yml|\.trivyignore|\.github/dependabot\.yml)$'
 SOURCE_GLOBS=(*.tf *.tfvars *.sh *.py *.yaml *.yml)
 

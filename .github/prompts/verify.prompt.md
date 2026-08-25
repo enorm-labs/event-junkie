@@ -39,7 +39,7 @@ scripts/format-markdown.sh check
 Writes nothing; exits 1 listing every file that is not formatted. The fix is `scripts/format-markdown.sh` with no argument — it rewrites in place, so this is
 never a "go and work out what is wrong" failure. The `pre-commit` hook runs the same script and `validate-docs.yml` runs this exact command in CI, so a clean
 local commit history means both pass; this step is here for the case where hooks were skipped with `--no-verify`. Do not reach for `oxfmt` directly — the script
-pins the version and the scope, both of which matter (AGENTS.md §Code Conventions).
+pins the version and the scope, both of which matter (.github/instructions/markdown.instructions.md).
 
 ### Comment volume (from repo root, always)
 
@@ -47,6 +47,7 @@ pins the version and the scope, both of which matter (AGENTS.md §Code Conventio
 scripts/comment-density.sh check
 scripts/comment-lint.sh check
 scripts/skill-parity.sh
+scripts/rules-parity.sh
 ```
 
 Exits 1 naming any area that carries more comment lines than `scripts/comment-baseline.txt` allows, and the ratchet only turns one way: the fix is to compress
@@ -58,6 +59,11 @@ and reach no network, and `validate-comments.yml` runs them on every pull reques
 `skill-parity.sh` is a third check riding along here because it is the same shape and the same cost: `.claude/skills/` and `.claude/commands/` are
 parallel trees of `@` pointers with nothing joining them, so a skill added to one and not the other is silently absent from the other. It also asserts
 every pointer resolves and every skill is listed in `CLAUDE.md`. `validate-docs.yml` runs it in CI.
+
+`rules-parity.sh` is the same shape one directory over. A path-scoped rule lives once in `.github/instructions/`, carrying an `applyTo` string for Copilot and
+a `paths` list for Claude Code; each agent reads only its own key, so neither can notice the two describing different globs. It also asserts every
+`.claude/rules/` symlink resolves, that no rule body is an `@` pointer — which is expanded at launch whatever `paths` says, defeating the scoping silently —
+and that every rule is linked from the AGENTS.md table. `validate-docs.yml` runs it beside `skill-parity.sh`.
 
 ### Infrastructure (from repo root, only when the diff touches `infra/`)
 

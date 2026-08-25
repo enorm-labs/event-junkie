@@ -7,7 +7,7 @@ import type { Comment } from 'estree'
  *
  * A run of `//` lines with no blank line between them counts as one comment, because that is how it
  * reads. The cap is a smell detector, not a truth: what makes a comment long is nearly always
- * restated code or a history of how it got this way. See AGENTS.md §Comments.
+ * restated code or a history of how it got this way. See .github/instructions/comments.instructions.md.
  *
  * `// eslint-disable-next-line event-junkie/max-comment-lines` is the escape hatch, with a reason —
  * an explicit decision rather than a cap raised until nothing fires.
