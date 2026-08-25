@@ -40,27 +40,23 @@ import java.time.LocalTime
  *
  * **`p.text` is not a usable container.** The CMS nests `<h4>` and `<p>` inside a `<p>`, which no HTML
  * parser accepts: Jsoup closes `p.text` at the first `<h4>`, leaving it empty and hoisting the note,
- * heading and roster to be siblings of `h1` inside `.eventrahm`. This parser therefore walks
- * `.eventrahm`'s children as one ordered stream and keys off content — the roster is the element after
- * the [LINE_UP_HEADING] heading, and everything between the title and it is the night's note.
+ * heading and roster to be siblings of `h1` inside `.eventrahm`. This parser walks `.eventrahm`'s
+ * children as one ordered stream and keys off content — the roster is the element after the
+ * [LINE_UP_HEADING] heading, and everything between the title and it is the night's note.
  *
- * Parsing decisions worth knowing:
- *  - **The roster splits on commas, `+` and `<br>` only, never on `&`** ([LINEUP_SEPARATOR]). The club
- *    writes back-to-back billings as separate entries but uses `&` *inside* act names ("Drauf & Dran
- *    DJ Team"), which the shared conjunction splitting would tear in half.
- *  - **Unbooked slots are dropped** ([UNANNOUNCED_SLOT_PATTERN]): an unannounced billing reads
- *    "+ Residents" or "Contest Winner". Matching is fully anchored, so a real act is never caught.
- *  - **Only a Resident Advisor *event* link becomes the ticket URL** ([RA_EVENT_URL]). A night whose RA
- *    page is not up links to the club's RA profile or a bare `#` — placeholders, not that night's tickets.
- *
- * A note line ("free entry until midnight*") is stored as the description rather than as a `priceNote`:
- * a `priceNote` would trip `detectFree` and flag a paid night free for its whole run, when entry is
- * free for the first hour only. Every act carries the `DJ` role, the club billing no headliner.
+ * The roster splits on commas, `+` and `<br>` only, never on `&` ([LINEUP_SEPARATOR]): the club writes
+ * back-to-back billings as separate entries but uses `&` *inside* act names ("Drauf & Dran DJ Team").
+ * An unbooked slot ("+ Residents") is dropped on a fully anchored match
+ * ([UNANNOUNCED_SLOT_PATTERN]), so a real act is never caught, and only a Resident Advisor *event*
+ * link becomes the ticket URL ([RA_EVENT_URL]) — a night whose RA page is not up links to the club's
+ * profile or a bare `#`. A note line is stored as the description rather than as a `priceNote`, which
+ * would trip `detectFree` and flag a paid night free for its whole run when entry is free for the
+ * first hour only. Every act carries the `DJ` role, the club billing no headliner.
  *
  * @see DER_WEISSE_HASE_LIMITATIONS for what the club does not publish.
  * @see DerWeisseHaseWebsiteImporter for the HTTP fetch orchestrator.
- * @see <a href="https://derweissehase.club/events">Der Weiße Hase Berlin</a>
  */
+@Suppress("LongComment") // 8 of these lines are the malformed markup the ordered-stream walk exists to survive.
 class DerWeisseHaseOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 

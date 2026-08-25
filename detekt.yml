@@ -14,17 +14,15 @@ event-junkie:
     # of how it got this way, or a decision copied out of AGENTS.md or an ADR instead of referenced.
     # One that genuinely needs more takes `@Suppress("LongComment")` on the declaration — an
     # explicit decision, visible in review, rather than a threshold raised until nothing fires.
+    #
+    # One cap governs every package (#741). Venue sub-packages had their own instance at 40 while
+    # their KDoc was the home for accepted limitations; #739 moved those into `VenueLimitations`
+    # records and the second cap lost what justified it.
+    #
+    # Blank ` * ` separators are not counted: charging a comment for its paragraph breaks made the
+    # same words cheaper as one wall of text.
     maxLines: 25
-    # Venue sub-packages only, not `scraper/` itself: the files directly under it are shared service
-    # code, and the old `**/scraper/**` glob exempted 3,561 comment lines of it at 54% density (#714).
-    excludes: ['**/scraper/*/**']
 
-  # Venue sub-package KDoc is the designated home for accepted limitations, and that prose is
-  # load-bearing: it is what stops the same non-defect being re-reported by every data-quality
-  # audit. So it gets a higher cap rather than an exemption (#714) — 58 venue comments exceed 25 and
-  # only 11 exceed 40, so the cap reaches the outliers and leaves the band good prose occupies.
-  # **A suppression here must name the instance — `@Suppress("LongComment/venue")`; the bare rule
-  # name does not match.**
   CommentDensity:
     active: true
     # The per-file backstop under `scripts/comment-density.sh`, which ratchets the totals per area.
@@ -44,7 +42,3 @@ event-junkie:
     # dates are that. Flagging them would train everyone to ignore the rule.
     excludes: ['**/test/**', '**/androidTest/**']
 
-  LongComment/venue:
-    active: true
-    maxLines: 40
-    includes: ['**/scraper/*/**']

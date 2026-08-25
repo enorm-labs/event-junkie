@@ -3,11 +3,11 @@
 # Lowering a number is the point. Raising one is a decision to argue for in the PR.
 .github	1361
 deploy	2498
-detekt-rules	124
+detekt-rules	137
 events-bff	894
 events-core	328
 events-frontend	3195
-events-importer	20307
+events-importer	20101
 infra	776
-root	503
+root	502
 scripts	1248

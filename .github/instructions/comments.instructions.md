@@ -70,13 +70,14 @@ Lint enforces the mechanical half of this; the rest is review.
       this tree documents its parsers with `"2026-05-16T20:00"` far more often than it dates a decision, and a rule that cannot tell the two apart gets switched
       off. Test sources are excluded for the same reason — a pinned clock is a fact about a fixture. **"used to" preceded by a form of _be_ is the passive verb,
       not a narration** ("nothing here can be used to push"), and is not flagged. `events-frontend/eslint-rules/` carries both counterparts.
-    - **Adding a rule to `:detekt-rules` needs `./gradlew --stop` before it will run.** The daemon caches the plugin classloader, so a newly registered rule is
-      silently absent — detekt passes, reports nothing, and nothing says why. It is not a config error and no amount of `--rerun-tasks` clears it.
-    - **Venue sub-packages run a second instance of the same rule, `LongComment/venue`, capped at 40** (#714). `scraper/` itself is _not_ exempt: the files
-      directly under it are shared service code, and the old `**/scraper/**` glob was exempting 3,561 comment lines of it. **A suppression must name the
-      instance — `@Suppress("LongComment/venue")`. The bare rule name silently does not match**, which is the one trap in this arrangement.
-    - **The one place length is welcome is a deliberate trade-off — and even there, compress the words, not the reasoning.** Scraper sub-package KDoc is the
-      designated home for accepted limitations (a field the venue never publishes, a signal the parser cannot express), and that prose is load-bearing: it is
-      what stops the same "defect" being re-reported every audit. It is why the base rule excludes `**/scraper/*/**` and `LongComment/venue` caps those files
-      at 40 rather than exempting them. Shorten how it is said; never delete what it says. See the _Where a finding goes_ table in [AGENTS.md](../../AGENTS.md) § The Backlog, and #713 for the plan to move it
-      somewhere reviewable.
+    - **Adding or editing a rule in `:detekt-rules` needs `./gradlew --stop` before it will run.** The daemon caches the plugin classloader, so a new rule is
+      silently absent and an edited one silently keeps its old behaviour — detekt passes, reports the previous verdict, and nothing says why. It is not a
+      config error and no amount of `--rerun-tasks` clears it.
+    - **`LongComment` counts every line of the block except blank `*` separators** (#741). Charging a comment for its paragraph breaks made the same words
+      cheaper written as one wall of text, which is the rule rewarding the worse of two formattings. Delimiters and `@see` lines still count, so 25 is the
+      whole block a reader scrolls past, minus the breaks that make it scrollable.
+    - **The one place length is welcome is a deliberate trade-off — and even there, compress the words, not the reasoning.** Venue scraper KDoc carries the
+      shape of a hand-authored source: the markup sample, the trap, the counterexample that made a rule necessary. That prose is load-bearing and a
+      `@Suppress("LongComment")` with a reason is the right answer for it. What the venue does not publish is _not_ prose any more — it is a
+      `VenueLimitations` record (#715). Shorten how it is said; never delete what it says. See the _Where a finding goes_ table in
+      [AGENTS.md](../../AGENTS.md) § The Backlog.

@@ -24,36 +24,27 @@ import java.time.format.DateTimeParseException
 /**
  * Pure HTML parser for Supamolly Berlin's retro hand-coded single-page programme.
  *
- * The whole programme is one `<table>` on `?p=programm` (byte-identical to the
- * homepage). Every night is a `<tr class="event" id="YYYYMMDDHHMM">` row whose
- * **`id` is a date+time stamp** — the most stable signal on the page (ADR-007
- * selector priority 4, a `data`-style identifier) and the basis for both
- * [ScrapedEvent.eventDate] and a stable [ScrapedEvent.sourceId]. Each row pairs:
- * - `td.date` — weekday icon, a year-less `DD.MM.` date, an `HH:MM` time
- *   (`.uhr`), and an optional flyer thumbnail; and
- * - `td.evcont` — one `div.even` block per **billed act**, each with a `.tit`
- *   name, an optional `.beschr` note, and a `.lin` artist reference link
- *   (Bandcamp / YouTube / Instagram).
+ * The whole programme is one `<table>` on `?p=programm` (byte-identical to the homepage). Every night
+ * is a `<tr class="event" id="YYYYMMDDHHMM">` whose **`id` is a date+time stamp** — the most stable
+ * signal on the page (ADR-007 selector priority 4) and the basis for both [ScrapedEvent.eventDate]
+ * and a stable [ScrapedEvent.sourceId]. Its `td.date` carries a year-less `DD.MM.`, an `HH:MM` time
+ * and an optional flyer; its `td.evcont` holds one `div.even` per billed act, each a `.tit` name, an
+ * optional `.beschr` note and a `.lin` reference link.
  *
  * Three quirks drive the design:
- * - **The lineup is the billing.** There is no separate headline: the venue's own
- *   RSS renders a night as its act names joined with ", ", so that joined string is
- *   the event title, and the individual `.even` names become the artist list (first
- *   billed = headliner). Blocks with an empty `.tit` are extra reference links for
- *   the act above, not acts, and are dropped.
- * - **Monthly programme posters are listed as rows.** A flyer-only row titled
- *   "September Programm 2026" ([PROGRAMME_POSTER_TITLE]) announces the month's
- *   printed programme rather than an event, and is skipped.
- * - **Service notes sit in an act slot.** The weekly "Kuchen & Kaffee 15:30 Uhr"
- *   social is billed like an act; a name carrying an inline `HH:MM Uhr`
- *   ([isScheduleNote]) is a programme note, so it stays the event title but is never
- *   minted as an artist — which in turn types the night via [inferUnmarkedTitleType]
- *   instead of defaulting it to a concert.
+ * - **The lineup is the billing.** There is no separate headline: the venue's own RSS renders a night
+ *   as its act names joined with ", ", so that joined string is the event title and the individual
+ *   `.even` names become the artist list, first billed the headliner. A block with an empty `.tit` is
+ *   an extra reference link for the act above, not an act, and is dropped.
+ * - **Monthly programme posters are listed as rows.** A flyer-only row titled "September Programm
+ *   2026" ([PROGRAMME_POSTER_TITLE]) announces the printed programme rather than an event.
+ * - **Service notes sit in an act slot.** The weekly "Kuchen & Kaffee 15:30 Uhr" social is billed
+ *   like an act; a name carrying an inline `HH:MM Uhr` ([isScheduleNote]) is a programme note, so it
+ *   stays the event title but is never minted as an artist — which in turn types the night via
+ *   [inferUnmarkedTitleType] instead of defaulting it to a concert.
  *
- * The venue publishes no prices and no ticket shop, so those fields stay null.
- *
+ * @see SUPAMOLLY_LIMITATIONS for what the venue does not publish.
  * @see SupamollyWebsiteImporter for the HTTP fetch orchestrator.
- * @see <a href="https://www.supamolly.de/?p=programm">Supamolly Berlin</a>
  */
 class SupamollyOverviewPageScraper {
     private val logger = KotlinLogging.logger {}

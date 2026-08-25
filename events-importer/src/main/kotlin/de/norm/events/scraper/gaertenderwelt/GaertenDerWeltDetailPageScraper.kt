@@ -20,36 +20,27 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for a single Gärten der Welt `…/detail/<stamp>/<slug>/` page.
  *
- * The `events2` single view renders one `.tx-events2-single` block: an `h1` title, an `h2`
- * date/time line, a `p.lead` teaser, the full-size poster in `figure.image`, a run of
- * `p.textNormal` prose paragraphs, an `a.ticket` shop link, and a `.venuesList` naming the spot
- * inside the park the event happens at.
- *
- * **The prose block is where the structured fields hide.** The park has no dedicated CMS fields
- * for them, so its editors write them as bold-labelled paragraphs among the description —
- * `Einlass: ab 17:30 Uhr`, `Tickets: ab 60,00 €` with `Abendkasse: ab 65 €` on the next line,
- * `Veranstalter*in: Loft Concert GmbH, …`, `Support: Peter Gregson`. Each recognised label
- * ([FIELD_LABELS]) is lifted out and then *excluded* from the stored description, so the blurb
- * reads as prose rather than repeating the metadata beside it. The support billing is appended to
- * the subtitle in the shared `"Support: A & B"` form, which is where
+ * **The prose block is where the structured fields hide.** The park has no CMS fields for them, so
+ * its editors write them as bold-labelled paragraphs among the description — `Einlass: ab 17:30 Uhr`,
+ * `Tickets: ab 60,00 €` with `Abendkasse: ab 65 €` beneath, `Veranstalter*in: Loft Concert GmbH`,
+ * `Support: Peter Gregson`. Each recognised label ([FIELD_LABELS]) is lifted out and then excluded
+ * from the stored description, so the blurb reads as prose rather than repeating the metadata beside
+ * it. The support billing is appended to the subtitle in the shared `"Support: A & B"` form, where
  * [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType] looks for it.
  *
- * There is no house style behind those paragraphs — they are prose an editor typed — so the
- * parsing is written to the variation rather than to one spelling: the price is `Tickets:` on some
- * pages and `Kosten:` on others, and the doors time comes with or without minutes and with or
- * without a sentence of entrance directions trailing it.
+ * There is no house style behind those paragraphs — they are prose an editor typed — so the parsing
+ * is written to the variation rather than to one spelling: the price is `Tickets:` on some pages and
+ * `Kosten:` on others, and the doors time comes with or without minutes and with or without a
+ * sentence of entrance directions trailing it.
  *
- * The `h2` date line is **not** parsed: it renders the weekday and day-month without a year
- * ("Samstag, 08.08."), and a multi-day run as a range, where the URL stamp
- * [the overview reads][GaertenDerWeltOverviewPageScraper] gives an unambiguous start date and
- * time. Accordingly this scraper leaves the date as [UNRESOLVED_EVENT_DATE] and the importer's
- * merge always takes the overview's.
+ * The `h2` date line is **not** parsed: it renders weekday and day-month without a year ("Samstag,
+ * 08.08."), and a multi-day run as a range, where the URL stamp
+ * [the overview reads][GaertenDerWeltOverviewPageScraper] gives an unambiguous start. This scraper
+ * leaves the date as [UNRESOLVED_EVENT_DATE] and the importer's merge always takes the overview's.
  *
- * **Accepted limitation — the spot in the park is not stored.** `.venuesList` names where inside
- * the grounds an event happens (the Arena, the Besucherzentrum, the Saal der Empfänge, the
- * Japanischer Garten), which is real information the model has nowhere to put: an event belongs
- * to one venue and has no room or stage field. It is left unread rather than folded into a text
- * field it does not belong in.
+ * `.venuesList` names where inside the grounds an event happens (the Arena, the Saal der Empfänge,
+ * the Japanischer Garten) and is left unread: an event belongs to one venue and has no room or stage
+ * field, and folding it into a text field it does not belong in would be worse than losing it.
  *
  * @see GaertenDerWeltOverviewPageScraper for discovery, identity and the authoritative date.
  * @see GaertenDerWeltWebsiteImporter for the fetch orchestrator and the merge.

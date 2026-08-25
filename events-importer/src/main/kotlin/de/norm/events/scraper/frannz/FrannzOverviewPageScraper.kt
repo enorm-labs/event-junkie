@@ -30,36 +30,27 @@ import java.util.Locale
 /**
  * Pure HTML parser for Frannz Club Berlin's WordPress homepage event listing.
  *
- * Frannz renders every upcoming event server-side on the homepage (`/`) inside
- * `<article class="events">` blocks with a rich, semantic `event-*` class
- * vocabulary (`.event-title`, `.event-day` / `.event-month`, `.event-entrance` /
- * `.event-start`, `.event-otitle` / `.event-utitle`, `li.event-vvk`). A hidden
- * `.entry-content` per article carries the poster image, a structured price
- * breakdown, an optional ticket-shop link, and the description. The page has **no
- * per-event detail pages** (nothing links to `/events/<slug>/`), so this is a
- * single-page scrape.
+ * Frannz renders every upcoming event server-side on the homepage inside `<article class="events">`
+ * blocks with a rich, semantic `event-*` class vocabulary, and a hidden `.entry-content` per article
+ * carrying the poster, a structured price breakdown, an optional ticket link and the description.
  *
  * Two Frannz-specific quirks drive the design:
- * - **No year in the rendered date** — only day number + full German month name
- *   (`11` + `Juli`). The year is inferred as the nearest future occurrence,
- *   mirroring [de.norm.events.scraper.privatclub.PrivatclubOverviewPageScraper].
- * - **No structured status markers** — no badge or CSS class states a status. The
- *   *description* is not read for one: words like "ausverkauft" / "verlegt" turn up
- *   in ordinary prose there (e.g. "ihrer restlos *ausverkauften* Tour"), so deriving
- *   a status from it would produce false positives, and `soldOut` is consequently
- *   never set. The **title** is different — the venue appends the note deliberately
- *   and tersely ("MAD TSAI -verlegt ins Gretchen-"), so the status is read from the
- *   raw title via [parseEventStatus] before [cleanEventTitle] strips that same note.
- *   This mirrors Metropol, which reads its `"Verlegt ins <venue> –"` title prefix the
- *   same way. A show that moved *out* of the house is therefore stored `RELOCATED`
- *   rather than silently `SCHEDULED` at a venue it will not play.
+ * - **No year in the rendered date** — only day number plus full German month name (`11` + `Juli`).
+ *   The year is inferred as the nearest future occurrence, mirroring
+ *   [de.norm.events.scraper.privatclub.PrivatclubOverviewPageScraper].
+ * - **No structured status markers.** The *description* is deliberately not read for one: words like
+ *   "ausverkauft" turn up in ordinary prose there ("ihrer restlos *ausverkauften* Tour"), so a status
+ *   derived from it would be a false positive. The **title** is different — the venue appends the
+ *   note deliberately and tersely ("MAD TSAI -verlegt ins Gretchen-"), so the status is read from the
+ *   raw title via [parseEventStatus] before [cleanEventTitle] strips that same note, the way Metropol
+ *   reads its `"Verlegt ins <venue> –"` prefix. A show that moved *out* of the house is therefore
+ *   stored `RELOCATED` rather than silently `SCHEDULED` at a venue it will not play.
  *
- * The stable per-event identity is the WordPress post id (`<article id="post-9874">`),
- * used for both the `sourceId` and a `#post-<id>` deep-link `sourceUrl` back into
- * the listing.
+ * The stable per-event identity is the WordPress post id (`<article id="post-9874">`), used for both
+ * the `sourceId` and a `#post-<id>` deep-link `sourceUrl` back into the listing.
  *
+ * @see FRANNZ_LIMITATIONS for what the venue does not publish.
  * @see FrannzWebsiteImporter for the HTTP fetch orchestrator.
- * @see <a href="https://frannz.eu/">Frannz Club Berlin</a>
  */
 @Suppress("TooManyFunctions")
 class FrannzOverviewPageScraper(

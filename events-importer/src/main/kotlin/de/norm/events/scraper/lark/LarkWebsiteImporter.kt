@@ -16,33 +16,23 @@ import java.time.LocalDate
 /**
  * Website importer for LARK Berlin, sourced from its WordPress REST API.
  *
- * The venue runs WordPress with an Advanced Custom Fields `event` post type whose public REST
- * endpoint (`/wp-json/wp/v2/event`) exposes the whole programme as structured JSON — no HTML
- * scraping (ADR-007 §"Selector Strategy" priority 1). The pipeline is:
- * 1. Walk the listing via [ApiClient.fetchJson], newest post first, requesting only the fields the
- *    parser reads ([FIELDS]).
- * 2. Parse each page via [LarkApiScraper], which keeps only upcoming events.
- * 3. Resolve the posters of those events in **one** batched
- *    `/wp-json/wp/v2/media?include=<ids>` request.
+ * The venue exposes an Advanced Custom Fields `event` post type in full over
+ * `/wp-json/wp/v2/event`, so nothing is scraped (ADR-007 §"Selector Strategy" priority 1): walk the
+ * listing newest-first via [ApiClient.fetchJson], parse each page with [LarkApiScraper], then resolve
+ * the upcoming events' posters in one batched `/wp-json/wp/v2/media?include=<ids>` request.
  *
- * **Why paging usually stops after one request:** LARK overloads WordPress's own `post.date` with
- * the *event* date, so the endpoint's default newest-first ordering is chronological in event
- * terms and the upcoming programme sits at the front of page 1. Paging therefore stops as soon as
- * a page's oldest event is in the past (or the page comes back short), which for the current
- * ~20-event programme means a single listing request — where
- * [HeimathafenWebsiteImporter][de.norm.events.scraper.heimathafen.HeimathafenWebsiteImporter] must
- * walk its whole archive because its date sits in an unsortable ACF field. The loop is still
- * bounded by [MAX_PAGES] in case a future programme runs past one page.
+ * **Paging usually stops after one request** because LARK overloads `post.date` with the *event*
+ * date, making the endpoint's newest-first ordering chronological in event terms — so the upcoming
+ * programme sits at the front of page 1 and paging stops as soon as a page's oldest event is past.
+ * [HeimathafenWebsiteImporter][de.norm.events.scraper.heimathafen.HeimathafenWebsiteImporter] walks
+ * its whole archive for want of that. [MAX_PAGES] still bounds the loop.
  *
- * **Why the poster is fetched separately:** the listing carries only a `featured_media` attachment
- * id. WordPress can inline the media with `_embed`, but that attaches every generated image size
- * to every post and tripled the listing payload in a live capture (308 KB → 845 KB); one batched
- * `media?include=` lookup for just the upcoming events costs ~2 KB instead. A failed or partial
- * media response costs posters, never events.
+ * **The poster is fetched separately** because the listing carries only a `featured_media` id, and
+ * WordPress's `_embed` inlines every generated size for every post — 308 KB → 845 KB in a live
+ * capture, against ~2 KB for one batched lookup. A failed media response costs posters, never events.
  *
- * No ETag / Last-Modified conditional request is used — the `etag` / `lastModified` parameters are
- * ignored and every import returns [ImportResult.Success]; re-imports stay cheap and safe because
- * persistence upserts idempotently by `sourceId`.
+ * No conditional request is used: `etag` / `lastModified` are ignored and every import returns
+ * [ImportResult.Success], which is safe because persistence upserts idempotently by `sourceId`.
  *
  * @see LarkApiScraper for the JSON parsing logic.
  * @see <a href="https://larkberlin.com/events/">LARK events</a>

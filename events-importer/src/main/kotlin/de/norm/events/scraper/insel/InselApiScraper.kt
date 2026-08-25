@@ -74,7 +74,7 @@ internal val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
  * @see InselWebsiteImporter for the HTTP fetch orchestrator and the artefact discovery.
  * @see <a href="https://www.inselberlin.de/">Kulturhaus Insel Berlin</a>
  */
-@Suppress("LongComment/venue") // The venue's prose is its data sheet, and this block is how the parser mines it (#714).
+@Suppress("LongComment") // The venue's prose is its data sheet, and this block is how the parser mines it.
 class InselApiScraper(
     /** Clock for the past-event cutoff. Defaults to the venue's own time zone; override in tests for determinism. */
     private val clock: Clock = Clock.system(BERLIN)

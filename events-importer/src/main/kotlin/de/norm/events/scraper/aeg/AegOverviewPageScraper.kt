@@ -21,9 +21,8 @@ import org.jsoup.nodes.Element
 import java.time.LocalDate
 
 /**
- * Pure HTML parser for the `/events/all` listing both Berlin AEG venues render — Uber Arena and
- * the Uber Eats Music Hall, which run one Carbonhouse tenant (the music hall even serves its
- * posters from the arena's asset bucket).
+ * Pure HTML parser for the `/events/all` listing both Berlin AEG venues render — Uber Arena and the
+ * Uber Eats Music Hall, which run one Carbonhouse tenant.
  *
  * Each venue publishes its whole programme server-side and unpaginated as `div[data-category]`
  * rows; the month buttons beside the list filter it client-side rather than paging the server. A

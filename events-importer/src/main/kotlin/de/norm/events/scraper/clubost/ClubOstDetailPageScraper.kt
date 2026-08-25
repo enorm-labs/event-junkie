@@ -14,33 +14,25 @@ import org.jsoup.nodes.Element
 /**
  * Pure HTML parser for a Club OST event detail page (`/event/<id>/`).
  *
- * The page is a **stub by design**: the club publishes its programme on Resident Advisor and
- * uses its own site as a shopfront, so every detail page prints the same three placeholder
- * sentences where a description, a further-information note and a flyer would go, plus an
- * "More Infos comming soon" overlay on the listing card. Of the four fields it states —
- * date, start time, end time, description — the first two only repeat the listing, the
- * description is always a placeholder, and **the model has no end-time field**, so the page
- * adds no event data at all.
+ * The page is a **stub by design**: the club publishes its programme on Resident Advisor and uses its
+ * own site as a shopfront, so every detail page prints the same three placeholder sentences where a
+ * description, a further-information note and a flyer would go. Of the four fields it states — date,
+ * start time, end time, description — the first two only repeat the listing, the description is
+ * always a placeholder, and **the model has no end-time field**, so the page adds no event data.
  *
- * It is still fetched, for one reason: the **title's real casing**. The listing template
- * upper-cases every title (`RAVE THE PLANET TRUCK`), which is presentation, not the name the
- * venue typed; this page prints it as entered (`Rave The Planet Truck`). Storing the shouted
- * form would be storing a CSS decision as data. The cost is one extra request per event
- * against a programme of well under a dozen, so the two-page fetch is cheap here in a way it
- * would not be for a venue listing hundreds.
+ * It is still fetched, for one reason: the **title's real casing**. The listing template upper-cases
+ * every title (`RAVE THE PLANET TRUCK`), which is presentation, not the name the venue typed; this
+ * page prints it as entered (`Rave The Planet Truck`), and storing the shouted form would be storing
+ * a CSS decision as data. The cost is one extra request per event against a programme of well under
+ * a dozen, so a two-page fetch is cheap here in a way it would not be for a venue listing hundreds.
  *
  * The end time the page states — often the following morning, `11 p.m.` → `8 a.m.` — is
- * **deliberately dropped**: [ScrapedEvent][de.norm.events.scraper.ScrapedEvent] carries doors
- * and start only, and inventing a same-day end time from it would be wrong for every night
- * that runs past midnight, which is most of them. That is an accepted limitation of the model,
- * not a defect of this parser.
+ * **deliberately dropped**: [ScrapedEvent][de.norm.events.scraper.ScrapedEvent] carries doors and
+ * start only, and inventing a same-day end from it would be wrong for every night that runs past
+ * midnight, which is most of them. That is a limitation of the model, not of this parser.
  *
- * Page structure (a plain Bootstrap two-column block, no CMS classes to key on):
- * - `h1` inside the content column — the title in its real casing
- * - `p` rows introduced by a `<strong>` label — `Date:`, `Start time:`, `End time:`,
- *   `Description:`, `More information:`
- * - `a.button-link.ticket` — the Resident Advisor ticket link
- * - `img` in the adjacent column — the flyer, when one was uploaded
+ * There are no CMS classes to key on: the title is the content column's `h1`, the four fields are
+ * `p` rows introduced by a `<strong>` label, and the ticket link is `a.button-link.ticket`.
  *
  * @see ClubOstOverviewPageScraper for discovery and the fallback data this merges over.
  */

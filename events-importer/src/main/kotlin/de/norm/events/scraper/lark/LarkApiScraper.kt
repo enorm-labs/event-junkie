@@ -49,45 +49,37 @@ internal data class LarkPage(
 )
 
 /**
- * Pure parser for LARK's programme, sourced from its WordPress REST API (`/wp-json/wp/v2/event`) — the
+ * Pure parser for LARK's programme, sourced from its WordPress REST API (`/wp-json/wp/v2/event`): the
  * venue exposes an Advanced Custom Fields `event` post type in full, so no HTML is scraped (ADR-007
- * §"Selector Strategy" priority 1). [LarkWebsiteImporter] fetches; this class parses the JSON.
+ * §"Selector Strategy" priority 1).
  *
  * **The post date *is* the event date.** LARK overloads WordPress's own `post.date` with the show's
- * date and time, leaving `date_gmt` as the publish instant. That is what makes this importer cheap:
- * the endpoint's newest-first ordering is chronological in event terms, so the upcoming programme sits
- * at the front of page 1 and paging stops as soon as a page reaches the past — unlike
- * [HEIMATHAFEN][de.norm.events.scraper.EventSource.HEIMATHAFEN], whose date lives in an unsortable ACF
- * field and whose whole archive must be walked. Past events are dropped here, not minted and discarded.
- *
- * The time on that date is the one the venue renders as **`Doors`**, so it is stored as
- * [ScrapedEvent.doorsTime] and no start time is claimed. `acf.event_doors_time` is *not* used: it reads
- * `19:00` on almost every post regardless of the real time, which would put doors after an 18:30 start.
+ * date and time, leaving `date_gmt` as the publish instant — see [LarkWebsiteImporter] for what that
+ * buys — and past ones are dropped here rather than minted and discarded. Its time is the one the
+ * venue renders as `Doors`, so it becomes [ScrapedEvent.doorsTime]; `acf.event_doors_time` is *not*
+ * used, reading `19:00` on almost every post whatever the real time, which would put doors after an
+ * 18:30 start.
  *
  * **Status is written into the title.** `acf.event_status` reads `Scheduled` on every post, while the
- * venue appends or prefixes the real marker to the title — `Flower Face SOLD OUT`, `DOTAN
- * (ausverkauft)`, `CANCELLED: …`. It sets [ScrapedEvent.soldOut] / [ScrapedEvent.status], then is stripped.
+ * venue appends or prefixes the real marker — `Flower Face SOLD OUT`, `DOTAN (ausverkauft)`,
+ * `CANCELLED: …`. It sets [ScrapedEvent.soldOut] / [ScrapedEvent.status], then is stripped.
  *
- * Support acts are also written into the title, as `<act> + <act> (support)`, so the billing is read
- * from there: the title splits on the shared co-bill separators and an act carrying the `(support)`
- * marker is billed [SUPPORT][de.norm.events.event.ArtistRole.SUPPORT]. Dashes are normalised first,
- * because the venue writes tour tails with an en dash (`Greg Mendez – BEAUTY LAND TOUR`) while the
- * shared [stripArtistSuffix] is keyed on the ASCII hyphen.
+ * Support acts are written into the title too, as `<act> + <act> (support)`: it splits on the shared
+ * co-bill separators and a `(support)` marker bills that act
+ * [SUPPORT][de.norm.events.event.ArtistRole.SUPPORT]. Dashes are normalised first, the venue writing
+ * tour tails with an en dash (`Greg Mendez – BEAUTY LAND TOUR`) while [stripArtistSuffix] is keyed on
+ * the ASCII hyphen. **That tail is stripped before the event is classified**, because it otherwise
+ * decides the type: a bare `club` in the keyword classifier turned `LEILA – 20 SOMETHING CLUB TOUR`
+ * into a `PARTY` that lost its headliner.
  *
- * That tour tail is stripped **before the event is classified**, because it otherwise decides the
- * type: a bare `club` in the shared keyword classifier turned `LEILA – 20 SOMETHING CLUB TOUR` — a gig
- * — into a `PARTY` that lost its headliner. Classifying the act rather than the tour fixes that
- * without weakening the shared keyword list for every other venue.
- *
- * Everything else the venue publishes is a field: `event_type` (a category on some posts),
- * `event_organizer`, `event_tickets_url` and `event_description`. The remaining ACF fields are unused
- * defaults — `event_entrance_fee` is `None` throughout, and `event_music_genre`, `event_card_subtitle`
- * and the six-slot act repeater are all but always empty — so no genre and no prices are stored.
+ * The remaining ACF fields are unused defaults: `event_entrance_fee` is `None` throughout, and
+ * `event_music_genre`, `event_card_subtitle` and the act repeater are all but always empty.
  *
  * @param clock supplies "today"; override in tests for determinism.
+ * @see LARK_LIMITATIONS for what the source does not publish.
  * @see LarkWebsiteImporter for the HTTP fetch orchestrator.
- * @see <a href="https://larkberlin.com/events/">LARK events</a>
  */
+@Suppress("LongComment") // 26 lines: the venue writes the date, the status and the billing all into fields meant for something else.
 internal class LarkApiScraper(
     private val clock: Clock = Clock.systemDefaultZone()
 ) {

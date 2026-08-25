@@ -14,35 +14,26 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Heimathafen Neukölln, sourced from its WordPress REST API.
  *
- * The venue runs WordPress with an Advanced Custom Fields `events` post type whose public REST
- * endpoint (`/wp-json/wp/v2/events`) exposes the whole programme as structured JSON — no HTML
- * scraping (ADR-007 §"Selector Strategy" priority 1). The pipeline is:
- * 1. Walk the paged listing via [ApiClient.fetchJson], newest post first, requesting only the
- *    fields the parser reads ([FIELDS]).
- * 2. Parse each page via [HeimathafenApiScraper], which expands every post's
- *    `acf.event_performances` array into one event per dated performance and drops past ones.
+ * The venue exposes an Advanced Custom Fields `events` post type in full over
+ * `/wp-json/wp/v2/events`, so nothing is scraped (ADR-007 §"Selector Strategy" priority 1): walk the
+ * paged listing via [ApiClient.fetchJson], then have [HeimathafenApiScraper] expand each post's
+ * `acf.event_performances` array into one event per dated performance, dropping past ones.
  *
- * **Why every page, rather than the first:** the endpoint returns the venue's whole archive — 400+
- * posts and 800+ performances — ordered by *post* date, and the event date lives in an ACF field
- * that WordPress cannot filter or sort on server-side. Upcoming performances are therefore
- * scattered across all pages (a recent capture found 67 on page 1 but 29 more spread over pages
- * 2–5), so stopping at the first page would silently lose two thirds of the programme. This is the
- * per-importer pagination loop ADR-007 §"Pagination" allows, bounded by [MAX_PAGES]; paging stops
- * as soon as a page comes back short, so no request is ever made past the last page (WordPress
- * answers 400 beyond it).
+ * **Every page is walked, not the first.** The endpoint returns the venue's whole archive — 400+
+ * posts and 800+ performances — ordered by *post* date, while the event date lives in an ACF field
+ * WordPress cannot filter or sort on. Upcoming performances are therefore scattered across all pages
+ * (a recent capture found 67 on page 1 and 29 more over pages 2–5), so stopping at the first would
+ * silently lose two thirds of the programme. This is the per-importer pagination loop ADR-007
+ * §"Pagination" allows, bounded by [MAX_PAGES]; paging stops as soon as a page comes back short, so
+ * nothing is requested past the last one (WordPress answers 400 beyond it).
  *
- * No ETag / Last-Modified conditional request is used — the `etag` / `lastModified` parameters are
- * ignored and every import returns [ImportResult.Success]; re-imports stay cheap and safe because
- * persistence upserts idempotently by `sourceId`.
+ * No conditional request is used: `etag` / `lastModified` are ignored and every import returns
+ * [ImportResult.Success], which is safe because persistence upserts idempotently by `sourceId`.
  *
- * **No genre is stored**, though the venue does tag its events: the `events_tag` vocabulary runs to
- * 560 terms mixing real genres (Soul, Cumbia) with formats and access notes (Konzert, Premiere,
- * Gebärdensprache), the payload carries only term *ids* (six more requests to resolve), and the
- * slugs `class_list` inlines are lossy (`rb` for R&B). Resolving and caching that taxonomy once per
- * import is what would unblock the field — tracked in issue #313.
+ * Resolving the `events_tag` taxonomy once per import is what would unblock the genre field —
+ * see #313 and [HEIMATHAFEN_LIMITATIONS].
  *
  * @see HeimathafenApiScraper for the JSON parsing logic.
- * @see <a href="https://heimathafen-neukoelln.de/programm/">Heimathafen Neukölln programme</a>
  */
 @Component
 class HeimathafenWebsiteImporter(

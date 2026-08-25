@@ -30,19 +30,16 @@ import java.util.Locale
  * Every night is an `.event-item` in one Finsweet CMS list, carrying a `data-date`, an `h:mm a`
  * start time, the title, a comma-separated genre line, a comma-separated lineup line, and a poster.
  * The `/events/<slug>` page it links to adds only a prose blurb, which
- * [CrackBellmerDetailPageScraper] reads; everything else is already here.
- *
- * Four things about this page shape the parser:
+ * [CrackBellmerDetailPageScraper] reads.
  *
  * 1. **`data-date` is the only place the year is written.** The rendered calendar column spells the
- *    date as `Fri . 7 . 8 .` — day and month, no year — while the attribute carries the full
- *    `August 7, 2026`, so the attribute is the date source (ADR-007 ranks a `data-*` attribute above
- *    a class name anyway).
+ *    date as `Fri . 7 . 8 .` while the attribute carries the full `August 7, 2026` — and ADR-007
+ *    ranks a `data-*` attribute above a class name anyway.
  * 2. **The list is the venue's whole published programme, not a month.** The `previous-month`,
  *    `this-month` and `next-month` tabs serve identical markup and filter it client-side, so the
  *    listing carries about a month of already-passed nights. Those are dropped here, before the
- *    importer's per-event detail fetch, so no HTTP is wasted on events persistence would discard
- *    anyway ([dropPastEvents]).
+ *    importer's detail fetch, so no HTTP is wasted on events persistence would discard
+ *    ([dropPastEvents]).
  * 3. **The venue states no event category.** Its genre line ("Techno, House", but also "Drag Show",
  *    "Concert meets Pub Quiz") is the only cue, so the type is read from the title and then the
  *    genre with the shared keyword classifier, defaulting to `PARTY` — this is a dance bar whose
@@ -50,12 +47,8 @@ import java.util.Locale
  * 4. **A poster-less night still renders an `<img>`**, pointing at Webflow's placeholder SVG and
  *    flagged `w-dyn-bind-empty`; the same flag marks an empty genre or lineup paragraph.
  *
- * The venue also renders an always-empty `[fs-list-field=content]` paragraph — a CMS field it has
- * never filled — and publishes no doors time, no prices and no ticket links, so none of those is
- * read.
- *
+ * @see CRACK_BELLMER_LIMITATIONS for what the venue does not publish.
  * @see CrackBellmerWebsiteImporter for the HTTP fetch orchestrator.
- * @see <a href="https://www.crackbellmer.de/program/this-month">Crack Bellmer programme</a>
  */
 class CrackBellmerOverviewPageScraper(
     /** Clock for the past-event cutoff. Defaults to the system clock; override in tests for determinism. */

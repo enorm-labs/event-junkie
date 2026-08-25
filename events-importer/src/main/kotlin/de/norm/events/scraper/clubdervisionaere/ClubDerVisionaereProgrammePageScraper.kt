@@ -24,17 +24,15 @@ import java.time.MonthDay
  * Pure HTML parser for the Club der Visionäre programme page, shared by all three
  * rooms it lists (see [ClubDerVisionaereRoom]).
  *
- * The page is one chronological run of `div#programmC > div[id^=post-]` blocks. Each
- * block carries a `div.headerTxt` date cell, a `p.headerTxt.<room>` title whose colour
- * class names the room, and a flat sequence of `<p>` lineup lines. [scrape] walks
- * **every** block — the date carry-forward below spans rooms — but returns only those
- * belonging to the requested room.
+ * The page is one chronological run of `div#programmC > div[id^=post-]` blocks, each carrying a
+ * `div.headerTxt` date cell, a `p.headerTxt.<room>` title whose colour class names the room, and a
+ * flat sequence of `<p>` lineup lines. [scrape] walks **every** block — the date carry-forward below
+ * spans rooms — but returns only those belonging to the requested room.
  *
  * Three quirks drive the parsing:
  *
- * 1. **Year-less dates.** The date cell reads `Fr. 31.7.` (older captures omit the dot
- *    after the weekday). The German weekday disambiguates the year via
- *    [inferYearForWeekday].
+ * 1. **Year-less dates.** The date cell reads `Fr. 31.7.`, sometimes without the dot after the
+ *    weekday. The German weekday disambiguates the year via [inferYearForWeekday].
  * 2. **Dates are printed once per day.** When a night shares its date with the block
  *    above it — a boat party and the club afterparty that follows it — the second
  *    block's date cell is *empty*, so a dateless block inherits the preceding block's
@@ -49,8 +47,8 @@ import java.time.MonthDay
  * Argenis Brito)` is one act billed with its members, and `Naima (2)` is a Resident
  * Advisor disambiguator — so the conjunction split is skipped for them.
  *
+ * @see CLUB_DER_VISIONAERE_LIMITATIONS for what the venue does not publish.
  * @see ClubDerVisionaereWebsiteImporter and its sibling room importers for the fetch orchestration.
- * @see <a href="https://clubdervisionaere.com/programm/">Club der Visionäre programme</a>
  */
 class ClubDerVisionaereProgrammePageScraper(
     /** Clock for weekday-based year inference. Defaults to the system clock; override in tests for determinism. */
