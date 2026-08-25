@@ -227,4 +227,32 @@ class ScrapingExtensionsTest {
             resolveUrl("https://venue.com", "http://insecure.com/page") shouldBe "http://insecure.com/page"
         }
     }
+
+    @Nested
+    inner class TextLines {
+        @Test
+        fun `textLinesAt splits the matched element on br, trimming and dropping blanks`() {
+            val article = html("""<div class="event__subtitle">+ Support: Jeff Clarke<br><br>ABGESAGT. Ticket info.</div>""")
+            article.textLinesAt(".event__subtitle") shouldBe listOf("+ Support: Jeff Clarke", "ABGESAGT. Ticket info.")
+        }
+
+        @Test
+        fun `textLinesAt returns an empty list when nothing matches`() {
+            html("<div>text</div>").textLinesAt(".missing") shouldBe emptyList()
+        }
+
+        @Test
+        fun `textLines splits the element's own text on br`() {
+            val paragraph = html("<p>Lineup:<br>Alexa Fluor<br>ALIS.</p>").selectFirst("p")!!
+            paragraph.textLines() shouldBe listOf("Lineup:", "Alexa Fluor", "ALIS.")
+        }
+
+        // Only a direct-child `<br>` breaks a line: text inside a nested inline element belongs to
+        // the line it sits on, which is what lets a bolded act name stay attached to its own line.
+        @Test
+        fun `textLines appends nested inline text to the current line`() {
+            val paragraph = html("<p><strong>Support:</strong> Jeff Clarke<br>ALIS.</p>").selectFirst("p")!!
+            paragraph.textLines() shouldBe listOf("Support: Jeff Clarke", "ALIS.")
+        }
+    }
 }

@@ -15,13 +15,6 @@ import java.time.LocalTime
  * **not** a status — venues capture it separately as the `soldOut` flag, leaving
  * the status [SCHEDULED][EventStatus.SCHEDULED]. Shared across Kulturhäuser-platform
  * scrapers (Astra, Lido) whose badges use these conventional labels.
- *
- * Example:
- * ```kotlin
- * parseEventStatus("Abgesagt")   // "CANCELLED"
- * parseEventStatus("Verlegt")    // "RELOCATED"
- * parseEventStatus("Ausverkauft") // "SCHEDULED" (sold-out is a flag, not a status)
- * ```
  */
 fun parseEventStatus(statusText: String): String {
     val text = statusText.lowercase()
@@ -45,13 +38,6 @@ fun parseEventStatus(statusText: String): String {
  *
  * `EventMovedOnline` maps to [RELOCATED][EventStatus.RELOCATED]: the show still happens, just not
  * where it was billed — the closest the model has to "moved".
- *
- * Example:
- * ```kotlin
- * parseSchemaEventStatus("https://schema.org/EventCancelled")  // "CANCELLED"
- * parseSchemaEventStatus("http://schema.org/EventRescheduled") // "POSTPONED"
- * parseSchemaEventStatus(null)                                  // "SCHEDULED"
- * ```
  */
 fun parseSchemaEventStatus(status: String?): String {
     val term = status?.substringAfterLast('/').orEmpty()
@@ -73,13 +59,6 @@ fun parseSchemaEventStatus(status: String?): String {
  * single time, equal times, or an already-valid pair is returned unchanged. Applied
  * once at the [ScrapedEvent.toEventEntity] persistence boundary, so every venue is
  * covered without each scraper repeating the check.
- *
- * Example:
- * ```kotlin
- * orderDoorsBeforeStart(LocalTime.of(19, 30), LocalTime.of(19, 0)) // (19:00, 19:30) — swapped
- * orderDoorsBeforeStart(LocalTime.of(19, 0), LocalTime.of(20, 0))  // (19:00, 20:00) — unchanged
- * orderDoorsBeforeStart(null, LocalTime.of(20, 0))                 // (null, 20:00) — unchanged
- * ```
  */
 fun orderDoorsBeforeStart(
     doors: LocalTime?,
@@ -102,13 +81,6 @@ private val RELOCATION_PREFIX_PATTERN =
 /**
  * Strips a leading [RELOCATION_PREFIX_PATTERN] from a title, keeping the input unchanged
  * when there is no such prefix or when stripping would leave nothing.
- *
- * Example:
- * ```kotlin
- * stripRelocationPrefix("-verlegt in den Frannz Club – CULTURE WARS") // "CULTURE WARS"
- * stripRelocationPrefix("Verlegt ins Bi Nuu – BRKN")                  // "BRKN"
- * stripRelocationPrefix("HOUSE OF PROTECTION")                        // "HOUSE OF PROTECTION"
- * ```
  */
 fun stripRelocationPrefix(title: String): String {
     val stripped = title.replaceFirst(RELOCATION_PREFIX_PATTERN, "").trim()
@@ -156,16 +128,6 @@ private val TITLE_NOISE_PATTERN =
  * headliner is derived from. A [ZERO_WIDTH] character is invisible by definition, so it is never
  * part of a name either — it reaches a title when an editor pastes one in (MAAYA's "HOMECOMING DJ
  * WORKSHOP") — and it is dropped rather than collapsed, since `\s` does not match it.
- *
- * Example:
- * ```kotlin
- * cleanEventTitle("Iggi Kelly Nachholtermin vom 28.04.26-")     // "Iggi Kelly"
- * cleanEventTitle("Luna Simao (verschoben aus 2026)")           // "Luna Simao"
- * cleanEventTitle("Singalong -Das Mitsing-Event (ausverkauft)") // "Singalong -Das Mitsing-Event"
- * cleanEventTitle("Adventurous Juan  (DJ-Set)")                 // "Adventurous Juan (DJ-Set)"
- * cleanEventTitle("Wer singt\u00A0dann Lieder?")                // "Wer singt dann Lieder?"
- * cleanEventTitle("The Adicts")                                 // "The Adicts"
- * ```
  */
 fun cleanEventTitle(title: String): String {
     val collapsed = title.replace(ZERO_WIDTH, "").trim().replace(WHITESPACE_RUN, " ")
@@ -225,14 +187,6 @@ private val FREE_TOKEN_PATTERN =
  * - an unambiguous free-entry phrase ([FREE_PHRASES]) in the title or price note, or
  * - a single-word free marker ([FREE_TOKENS]) in the price note (pricing-scoped, so
  *   an artist name in the title can't trigger it).
- *
- * Example:
- * ```kotlin
- * detectFree(priceNote = "Eintritt frei")         // true
- * detectFree(pricePresale = BigDecimal.ZERO)      // true
- * detectFree(title = "Freedom Festival")          // false
- * detectFree(pricePresale = BigDecimal("12.00"))  // false
- * ```
  */
 fun detectFree(
     pricePresale: BigDecimal? = null,

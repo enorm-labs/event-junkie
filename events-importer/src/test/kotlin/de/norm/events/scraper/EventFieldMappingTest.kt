@@ -137,4 +137,41 @@ class EventFieldMappingTest {
         orderDoorsBeforeStart(LocalTime.of(19, 0), null) shouldBe (LocalTime.of(19, 0) to null)
         orderDoorsBeforeStart(null, null) shouldBe (null to null)
     }
+
+    // --- parseEventStatus ---
+
+    @Test
+    fun `parseEventStatus maps German and English badge text case-insensitively`() {
+        parseEventStatus("Abgesagt") shouldBe "CANCELLED"
+        parseEventStatus("CANCELLED") shouldBe "CANCELLED"
+        parseEventStatus("verschoben") shouldBe "POSTPONED"
+        parseEventStatus("Postponed") shouldBe "POSTPONED"
+        parseEventStatus("Verlegt") shouldBe "RELOCATED"
+        parseEventStatus("RELOCATED") shouldBe "RELOCATED"
+    }
+
+    // Sold-out is a separate flag on the event, not a status, so it must leave the status alone.
+    @Test
+    fun `parseEventStatus leaves a sold-out badge scheduled`() {
+        parseEventStatus("Ausverkauft") shouldBe "SCHEDULED"
+        parseEventStatus("Sold Out") shouldBe "SCHEDULED"
+        parseEventStatus("") shouldBe "SCHEDULED"
+    }
+
+    // --- parseSchemaEventStatus ---
+
+    @Test
+    fun `parseSchemaEventStatus reads the term after the last slash, on either scheme`() {
+        parseSchemaEventStatus("https://schema.org/EventCancelled") shouldBe "CANCELLED"
+        parseSchemaEventStatus("http://schema.org/EventRescheduled") shouldBe "POSTPONED"
+        parseSchemaEventStatus("https://schema.org/EventPostponed") shouldBe "POSTPONED"
+        parseSchemaEventStatus("https://schema.org/EventMovedOnline") shouldBe "RELOCATED"
+    }
+
+    @Test
+    fun `parseSchemaEventStatus falls back to scheduled for an absent or unknown term`() {
+        parseSchemaEventStatus(null) shouldBe "SCHEDULED"
+        parseSchemaEventStatus("https://schema.org/EventScheduled") shouldBe "SCHEDULED"
+        parseSchemaEventStatus("nonsense") shouldBe "SCHEDULED"
+    }
 }

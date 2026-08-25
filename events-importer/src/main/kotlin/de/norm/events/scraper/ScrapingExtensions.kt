@@ -10,12 +10,6 @@ import java.net.URI
  * Returns `null` if no element matches or the text is blank.
  * This is the most common extraction pattern in scrapers — wraps the
  * verbose `selectFirst(...)?.text()?.trim()?.takeIf { ... }` chain.
- *
- * Example:
- * ```kotlin
- * val title = content.textAt("h1.event-title")
- * val genre = item.textAt("[fs-cmsfilter-field=genre]")
- * ```
  */
 fun Element.textAt(cssQuery: String): String? =
     selectFirst(cssQuery)
@@ -27,12 +21,6 @@ fun Element.textAt(cssQuery: String): String? =
  * Extracts an attribute value from the first child element matching [cssQuery].
  *
  * Returns `null` if no element matches or the attribute value is blank.
- *
- * Example:
- * ```kotlin
- * val href = content.attrAt("a.ticket-link", "href")
- * val style = item.attrAt(".image-wrapper", "style")
- * ```
  */
 fun Element.attrAt(
     cssQuery: String,
@@ -49,11 +37,6 @@ fun Element.attrAt(
  * Returns `null` if no element matches, the `src` is blank, or the URL
  * is not absolute (does not start with `http`). This filters out
  * placeholder values like empty strings or relative paths.
- *
- * Example:
- * ```kotlin
- * val imageUrl = content.imgSrcAt("img.eventpage-image")
- * ```
  */
 fun Element.imgSrcAt(cssQuery: String): String? =
     attrAt(cssQuery, "src")
@@ -65,11 +48,6 @@ fun Element.imgSrcAt(cssQuery: String): String? =
  *
  * Returns `null` if no element matches, the `href` is blank, or the URL
  * is not absolute (does not start with `http`).
- *
- * Example:
- * ```kotlin
- * val ticketUrl = content.hrefAt("a.ticket-link")
- * ```
  */
 fun Element.hrefAt(cssQuery: String): String? =
     attrAt(cssQuery, "href")
@@ -87,12 +65,6 @@ fun Element.hrefAt(cssQuery: String): String? =
  * A flag is considered "visible" if it does **not** have the
  * `w-condition-invisible` class and its text content contains [text]
  * (case-insensitive).
- *
- * Example:
- * ```kotlin
- * val isSoldOut = item.hasVisibleWebflowFlag(".event-detail.sold-out", "Sold-Out")
- * val isCancelled = item.hasVisibleWebflowFlag(".event-detail.sold-out", "Cancelled")
- * ```
  */
 fun Element.hasVisibleWebflowFlag(
     cssQuery: String,
@@ -111,12 +83,6 @@ fun Element.hasVisibleWebflowFlag(
  * note appended on a later line). Only direct-child `<br>` elements break a line;
  * text inside nested inline elements is appended to the current line. Returns an
  * empty list when no element matches.
- *
- * Example:
- * ```kotlin
- * // subtitle = "+ Support: Jeff Clarke<br><br>ABGESAGT. …note…"
- * article.textLinesAt(".event__subtitle")  // ["+ Support: Jeff Clarke", "ABGESAGT. …note…"]
- * ```
  */
 fun Element.textLinesAt(cssQuery: String): List<String> = selectFirst(cssQuery)?.textLines() ?: emptyList()
 
@@ -127,12 +93,6 @@ fun Element.textLinesAt(cssQuery: String): List<String> = selectFirst(cssQuery)?
  * The self-referential counterpart to [textLinesAt], for callers that already hold the element —
  * e.g. after picking one paragraph out of a prose block (ÆDEN's `Lineup:` roster). Only direct-child
  * `<br>` elements break a line; text inside nested inline elements is appended to the current line.
- *
- * Example:
- * ```kotlin
- * // <p>Lineup:<br>Alexa Fluor<br>ALIS.</p>
- * paragraph.textLines()  // ["Lineup:", "Alexa Fluor", "ALIS."]
- * ```
  */
 fun Element.textLines(): List<String> {
     val lines = mutableListOf<String>()
@@ -165,12 +125,6 @@ fun Element.textLines(): List<String> {
  *
  * This is a common operation when scraping venue pages that use relative
  * links for event detail pages.
- *
- * Example:
- * ```kotlin
- * resolveUrl("https://venue.com/events", "/event/foo")  // "https://venue.com/event/foo"
- * resolveUrl("https://venue.com/events", "https://other.com/bar")  // "https://other.com/bar"
- * ```
  */
 fun resolveUrl(
     baseUrl: String,
