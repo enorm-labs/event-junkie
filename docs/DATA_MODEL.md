@@ -8,7 +8,7 @@ what makes imports idempotent — an upsert keyed on it, not on the title. `even
 headers (ETag, Last-Modified) that let an unchanged page cost one 304.
 
 **Everything lives in the `events` schema, never `public`**, and the name comes from the `EVENTS_SCHEMA` constant in `events-core` rather than from a YAML
-property — see [ADR-004](adr/ADR-004_DEDICATED_DATABASE_SCHEMA.md) and AGENTS.md §Architecture Decisions. Migrations are owned by the importer
+property — see [ADR-004](adr/ADR-004_DEDICATED_DATABASE_SCHEMA.md) and [.github/instructions/architecture.instructions.md](../.github/instructions/architecture.instructions.md). Migrations are owned by the importer
 ([ADR-005](adr/ADR-005_MIGRATIONS_OWNED_BY_IMPORTER.md)).
 
 ## Class Diagram

@@ -268,7 +268,7 @@ Four things about this are deliberate and easy to undo by accident:
 
 - **It is Markdown-only, enforced twice.** oxfmt also formats YAML, JSON, CSS and TypeScript. The script never passes it anything else, _and_ `.oxfmtrc.json`
   carries an `ignorePatterns` deny-list for those extensions, so even a bare `oxfmt` run at the repository root cannot touch them. Do not widen either one —
-  [AGENTS.md](../AGENTS.md) §Code Conventions records what was measured and why the answer was no.
+  [.github/instructions/markdown.instructions.md](../.github/instructions/markdown.instructions.md) records what was measured and why the answer was no.
 - **It uses the pinned oxfmt, never `$PATH`.** oxfmt is pre-1.0 and its Markdown output is not stable across versions, so the binary is locked by
   `package-lock.json` like everything else and the hook needs `npm ci` in `events-frontend/` rather than a `brew install`. 0.62.0 and 0.63.0 happen to agree
   here — verified byte-for-byte on every tracked file — so this is insurance, not a workaround for a known disagreement.

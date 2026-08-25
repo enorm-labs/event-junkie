@@ -52,6 +52,13 @@ repos:
         files: ^(\.claude/(skills|commands)/|\.github/prompts/|CLAUDE\.md$)
         pass_filenames: false
 
+      - id: rules-parity
+        name: rule parity
+        entry: scripts/rules-parity.sh
+        language: system
+        files: ^(\.claude/rules/|\.github/instructions/|AGENTS\.md$)
+        pass_filenames: false
+
       # Markdown formatting, via the oxfmt pinned in events-frontend/package.json rather than
       # whatever is on $PATH — a Homebrew oxfmt and the pinned one disagree about tables nested
       # under list items, and a hook that formats differently than CI checks is worse than no hook.

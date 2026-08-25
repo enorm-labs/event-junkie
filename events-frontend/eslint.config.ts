@@ -77,7 +77,7 @@ export default defineConfigWithVueTs(
     //
     // 15 rather than Kotlin's 25: the number comes from this tree's own distribution. Of 285 block
     // comments, none reached 25 lines and ten passed 15, so 25 would never fire here. See
-    // AGENTS.md §Comments.
+    // .github/instructions/comments.instructions.md
     // `comment-density` and `comment-smell` are the counterparts to the detekt rules of the same
     // names. Density is per file, where a per-comment cap cannot see twenty reasonable comments
     // adding up to prose with code between it; `minCommentLines` keeps a short file that is one

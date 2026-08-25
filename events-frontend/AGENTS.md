@@ -556,7 +556,7 @@ The project uses a two-tier linting strategy:
 
 ### Comments
 
-The rules are the repository's, not the frontend's: see **[AGENTS.md](../AGENTS.md) § Code Conventions → "Comments and KDoc"** for the reasoning, which is not
+The rules are the repository's, not the frontend's: see **[.github/instructions/comments.instructions.md](../.github/instructions/comments.instructions.md)** for the reasoning, which is not
 repeated here. In TS/Vue terms they come out as:
 
 - **Explain _why_, not _what_.** A `computed` that exists to follow the active locale needs a comment; a `computed` that adds two numbers does not. Self-

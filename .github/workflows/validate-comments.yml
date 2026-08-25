@@ -57,5 +57,5 @@ jobs:
             echo "scripts/comment-lint.sh update-baseline"
             echo '```'
             echo
-            echo "See AGENTS.md §Comments and #713."
+            echo "See .github/instructions/comments.instructions.md and #713."
           } >> "$GITHUB_STEP_SUMMARY"

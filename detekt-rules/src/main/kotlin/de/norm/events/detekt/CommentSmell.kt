@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 
 /**
- * Reports the things AGENTS.md §Comments already forbids, now that a build can see them: a date, a
+ * Reports the things .github/instructions/comments.instructions.md already forbids, now that a build can see them: a date, a
  * markdown heading, a comment narrating its own history, and a `TODO` (#713).
  *
  * Each was policy and nothing failed on it, which is why the tree accumulated them.
