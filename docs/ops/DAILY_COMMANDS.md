@@ -1,12 +1,21 @@
 # Daily commands
 
-The things you actually type, in one place. **Every one of these is explained somewhere else** — this page is the index, not the reasoning, and it links to the
+The things you actually type, in one place. **Every one of these is explained somewhere else.** This page is the index, not the reasoning, and it links to the
 reasoning rather than restating it.
 
-Aliases for all of it: `scripts/shell-aliases.sh`, see §Aliases.
+## The short version
 
-**Two environments, and the difference matters more than the commands do.** Staging is not on the public internet at all; production is running but **dark** —
-the domain resolves to nothing until `publish_dns` is flipped. Both are tunnel-only for anything administrative.
+```sh
+source scripts/shell-aliases.sh                    # every command below, shortened
+sudo wg-quick up ~/.wireguard/staging.conf         # nothing administrative works without the tunnel
+kubectl --context event-junkie-staging get pods -A
+sudo wg-quick down ~/.wireguard/staging.conf
+```
+
+- **Two environments, and the difference matters more than the commands do.** Staging is not on the public internet at all. Production is running but **dark**:
+  the domain resolves to nothing until `publish_dns` is flipped.
+- **Both are tunnel-only** for anything administrative.
+- **Never `tofu plan/apply/destroy/import` on your own initiative.** [`infra/AGENTS.md`](../../infra/AGENTS.md) opens with that rule.
 
 ## Get in
 
@@ -27,7 +36,7 @@ sudo wg-quick down ~/.wireguard/staging.conf
 
 ## Cluster
 
-Both contexts are in `~/.kube/config`; **staging is the default**, deliberately.
+Both contexts are in `~/.kube/config`. **Staging is the default**, deliberately.
 
 ```sh
 kubectl config get-contexts
@@ -54,7 +63,7 @@ flux --context event-junkie-staging reconcile helmrelease event-junkie -n flux-s
 ```
 
 **`--status-selector ready=false` misses `Unknown`**, which is what an in-progress install reports. A release still installing looks identical to a healthy one
-through that filter — check the full listing when something has just changed.
+through that filter. Check the full listing after any change.
 
 ## The site
 
@@ -63,7 +72,7 @@ curl -I -k --resolve 'staging.event-junkie.de:443:10.10.1.1' https://staging.eve
 curl -sk --resolve 'staging.event-junkie.de:443:10.10.1.1' 'https://staging.event-junkie.de/api/events?size=1'
 ```
 
-**`-k` is correct here and must not be "fixed".** Staging issues from Let's Encrypt's _staging_ CA so the production rate limit is not burned; the warning is the
+**`-k` is correct here and must not be "fixed".** Staging issues from Let's Encrypt's _staging_ CA, so the production rate limit is not burned. The warning is the
 design working. [CLUSTER_ACCESS.md](CLUSTER_ACCESS.md) §6.
 
 **Do not port-forward the site.** It skips TLS, the ingress rules and the middlewares — the things being tested. That is the opposite of the OpenObserve advice
@@ -77,8 +86,8 @@ curl -I -k --resolve 'event-junkie.de:443:10.10.0.1' https://event-junkie.de/
 
 ## Is one venue importing?
 
-The question `/next-importer` and every "did that scraper break?" ends in. **Two commands, no `psql`, no `sudo`** — and the second answers the better half,
-because a row in `event_source` is not the same claim as an event a visitor can see.
+The question `/next-importer` and every "did that scraper break?" ends in. **Two commands, no `psql`, no `sudo`.** The second answers the better half, because a row
+in `event_source` is not the same claim as an event a visitor can see.
 
 ```sh
 ej-venue quasimodo
@@ -98,10 +107,10 @@ curl -sk --resolve 'staging.event-junkie.de:443:10.10.1.1' \
   'https://staging.event-junkie.de/api/events?venue=quasimodo&size=3'
 ```
 
-**The two numbers should agree**, and when they do not that is the finding: `lastEventCount` is what the run wrote, `totalElements` is what survives as a future
+**The two numbers should agree**, and a disagreement is the finding. `lastEventCount` is what the run wrote. `totalElements` is what survives as a future
 event. A run that wrote 29 and a site that shows 0 is a venue publishing only past dates, which no infrastructure check sees.
 
-**The importer needs a port-forward and the site must not have one.** No Ingress path names the importer and nothing in its namespace may reach it ([#416](https://github.com/enorm-labs/event-junkie/issues/416)) — port-forward works only because node-originated traffic is not subject to NetworkPolicy in k3s. The site goes through the ingress for the opposite reason: TLS, routing and the middlewares are part of what is being checked.
+**The importer needs a port-forward and the site must not have one.** No Ingress path names the importer, and nothing in its namespace may reach it ([#416](https://github.com/enorm-labs/event-junkie/issues/416)). Port-forward works only because node-originated traffic is not subject to NetworkPolicy in k3s. The site goes through the ingress for the opposite reason: TLS, routing and the middlewares are part of what is being checked.
 
 **This replaces the older recipe** of `scp`-ing a `.sql` file to the node and running `sudo -u postgres psql`. That still works and is below, but it needs the
 superuser shell for a read-only question and it stops at the database.
@@ -137,7 +146,7 @@ kubectl --context event-junkie-staging -n observability \
 # then http://localhost:5080/ — root credentials from the password manager
 ```
 
-**A port-forward is right here**, unlike for the site: nothing about OpenObserve is under test, it is an operator console, so the shortest path is correct.
+**A port-forward is right here**, unlike for the site. Nothing about OpenObserve is under test. It is an operator console, so the shortest path is correct.
 
 ```sh
 cd deploy/dashboards && ./apply.sh            # push the dashboard
@@ -149,7 +158,7 @@ cd deploy/alerts && ./apply.sh --diff         # is the cluster running these rul
 ```
 
 **`--diff` is the one to run after a deploy, and the one to reach for when an alert's behaviour is surprising.** Nothing reconciles these objects, so a fix
-committed here reaches the cluster only when somebody runs `apply.sh` — `ej-site-down` spent 26 hours fixed in git and broken in the cluster, firing 17 times,
+committed here reaches the cluster only when somebody runs `apply.sh`. `ej-site-down` spent 26 hours fixed in git and broken in the cluster, firing 17 times,
 while `--check` stayed green because `--check` reads the file (#702).
 
 Operating it, including the stream-count trap that causes ingestion to stop: [OPENOBSERVE.md](OPENOBSERVE.md).
@@ -171,9 +180,9 @@ cd infra && ./check-capacity.sh --probe staging      # orders a server and delet
 cd infra && ./check-capacity.sh --all                # advertised inventory
 ```
 
-**Only `--probe` answers the question.** The advertisement has disagreed with the order path three times out of four, in both directions.
+**Only `--probe` answers the question.** The advertisement disagreed with the order path three times out of four, in both directions.
 
-Never `tofu plan/apply/destroy/import` on your own initiative — [`infra/AGENTS.md`](../../infra/AGENTS.md) opens with that, and it is the file to read before
+Never `tofu plan/apply/destroy/import` on your own initiative. [`infra/AGENTS.md`](../../infra/AGENTS.md) opens with that, and it is the file to read before
 touching anything there.
 
 ## Aliases
@@ -184,8 +193,8 @@ touching anything there.
 echo 'source ~/repos/event-junkie/scripts/shell-aliases.sh' >> ~/.zshrc
 ```
 
-It is a file in the repository rather than a block to paste, for one reason: **a cheatsheet drifts from reality silently, and a sourced file drifts loudly** —
-it is reviewed in PRs, linted by ShellCheck in `pre-commit`, and a wrong path fails in your terminal instead of quietly reading wrong on a page.
+It is a file in the repository rather than a block to paste, for one reason. **A cheatsheet drifts from reality silently, and a sourced file drifts loudly.**
+It is reviewed in PRs and linted by ShellCheck in `pre-commit`. A wrong path fails in your terminal, instead of quietly reading wrong on a page.
 
 What it defines:
 
