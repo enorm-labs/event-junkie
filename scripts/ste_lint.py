@@ -71,11 +71,12 @@ def clean(text):
     text = re.sub(r"!\[([^\]]*)\]\([^)]*\)", r"\1", text)
     text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)
     text = re.sub(r"\[([^\]]*)\]\[[^\]]*\]", r"\1", text)
-    # Lowercase placeholders on purpose: a single capital is what protect() treats as an initial,
-    # so "X." would hide a full stop and silently join the next sentence onto this one.
-    text = re.sub(r"`[^`]*`", "code", text)
-    text = re.sub(r"<https?://[^>]*>", "link", text)
-    text = re.sub(r"https?://\S+", "link", text)
+    # A placeholder has to survive both halves of the split. A single capital ("X") is what protect()
+    # reads as an initial, so it hides the full stop before it; a lowercase word cannot open a
+    # sentence, so it hides the full stop after it. A capitalised word is neither.
+    text = re.sub(r"`[^`]*`", "Code", text)
+    text = re.sub(r"<https?://[^>]*>", "Link", text)
+    text = re.sub(r"https?://\S+", "Link", text)
     text = re.sub(r"<[^>]+>", " ", text)
     text = re.sub(r"&[a-zA-Z#0-9]+;", " ", text)
     text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
