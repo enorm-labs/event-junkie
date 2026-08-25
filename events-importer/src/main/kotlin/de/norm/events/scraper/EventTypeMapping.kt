@@ -43,14 +43,6 @@ private val BASE_EVENT_TYPE_SYNONYMS: Map<String, String> =
  * ([ScrapedEvent.toEventEntity]) apply the `OTHER` default. This is the single
  * shared mapper used by every venue scraper — venue-specific labels are supplied
  * via [extraSynonyms], which take precedence over [BASE_EVENT_TYPE_SYNONYMS].
- *
- * Example:
- * ```kotlin
- * mapEventType("Konzert")                              // "CONCERT"
- * mapEventType("Festival")                             // "FESTIVAL"
- * mapEventType("Workshop")                             // null
- * mapEventType("Live", mapOf("live" to "CONCERT"))     // "CONCERT" (venue-specific)
- * ```
  */
 fun mapEventType(
     label: String?,
@@ -144,25 +136,18 @@ private val NON_CONCERT_TITLE_KEYWORDS =
 /**
  * Title keywords marking a DJ/club night (mapped to [EventType.PARTY]).
  *
- * **A bare `club` is deliberately absent**, and the compound spellings are what replaced it. As a
- * substring it matched any title *ending* in the word, a shape a booked band shares with a resident
- * night: Columbiahalle's `Two Door Cinema Club` was typed `PARTY` and consequently stored no artist
- * at all — the single recoverable lineup in the seed (see
- * [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType]'s KDoc). Word-anchoring
- * would not have helped; `Club` is already a whole word there.
+ * **A bare `club` is deliberately absent, and must not be restored.** A booked band and a resident
+ * night share the shape: as a substring it typed Columbiahalle's `Two Door Cinema Club` as `PARTY`,
+ * which stored no artist at all. Word-anchoring does not help — `Club` is already a whole word
+ * there.
  *
- * Nothing replaces it, which was checked rather than assumed. The resident nights ending in the word
- * — `Soda Social Club`, `The Funky Chicken Club`, `CLUB TROPICANA`, `MONDAY NITE CLUB` — are all at
- * venues whose scraper types every event `PARTY` outright (Soda, Kater, MAXXIM, OHM) or reads the
- * venue's own category (Privatclub), so their titles never reach this list. A `<weekday> club`
- * pattern was written to cover them and deleted again on finding it fired on nothing: a rule with no
- * live case is a rule nobody can tell is broken.
- *
- * **Do not restore the bare keyword.** Removing it moved three events, one of them the wrong way:
- * Huxleys' `Corrupted Blood Club Show` became a `CONCERT` and stored its own name as a performer.
- * That loss had a named structural fix where the win had none — a `<X> presents` subtitle beside a
- * title opening with `<X>` now yields no artists (`isPresenterOwnEventTitle`), so the row keeps
- * `CONCERT` and mints nobody. Restoring the keyword would trade the recovered band back for nothing.
+ * Nothing replaces it, checked rather than assumed: the resident nights ending in the word
+ * (`Soda Social Club`, `CLUB TROPICANA`, `MONDAY NITE CLUB`) are all at venues whose scraper types
+ * every event `PARTY` outright or reads the venue's own category, so their titles never reach this
+ * list. The one title the keyword still caught, Huxleys' `Corrupted Blood Club Show`, is handled
+ * structurally instead: a `<X> presents` subtitle beside a title opening with `<X>` yields no
+ * artists ([isPresenterOwnEventTitle][de.norm.events.scraper.isPresenterOwnEventTitle]), so the row
+ * keeps `CONCERT` and mints nobody.
  */
 private val PARTY_TITLE_KEYWORDS =
     listOf("aftershow", "afterparty", "after-party", "after party", "party", "club night", "clubnight", "karaoke")
@@ -309,12 +294,5 @@ private val FESTIVAL_TITLE_PATTERN =
  * venue labelled "Konzert", or a title with no source category at all — to
  * `FESTIVAL`. A source that already typed the event `PARTY`/`QUIZ`/`FESTIVAL` is
  * trusted and left unchanged.
- *
- * Example:
- * ```kotlin
- * isFestivalTitle("CANARIAS CALLING FESTIVAL")               // true
- * isFestivalTitle("GROSSSTADTWAHNSINN 2026 - FESTIVALTICKET") // true
- * isFestivalTitle("Manifest")                                 // false
- * ```
  */
 fun isFestivalTitle(title: String): Boolean = FESTIVAL_TITLE_PATTERN.containsMatchIn(title)

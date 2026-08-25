@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.Month
 
 class DateParsingExtensionsTest {
     // --- parseTime ---
@@ -176,5 +177,43 @@ class DateParsingExtensionsTest {
     fun `parseGermanShortDate returns null for invalid format`() {
         parseGermanShortDate("invalid").shouldBeNull()
         parseGermanShortDate("11.12.2026").shouldBeNull()
+    }
+
+    // --- parseRealDate ---
+
+    @Test
+    fun `parseRealDate reads the leading ISO date from a data-realdate attribute`() {
+        parseRealDate("2026-07-08 19:00:00 +0200") shouldBe LocalDate.of(2026, 7, 8)
+    }
+
+    @Test
+    fun `parseRealDate returns null for an absent or unparseable attribute`() {
+        parseRealDate(null).shouldBeNull()
+        parseRealDate("").shouldBeNull()
+        parseRealDate("08.07.2026 19:00").shouldBeNull()
+    }
+
+    // --- parseGermanMonthAbbreviation ---
+
+    @Test
+    fun `parseGermanMonthAbbreviation maps abbreviations case- and punctuation-insensitively`() {
+        parseGermanMonthAbbreviation("Okt") shouldBe Month.OCTOBER
+        parseGermanMonthAbbreviation("Aug.") shouldBe Month.AUGUST
+        parseGermanMonthAbbreviation("dez") shouldBe Month.DECEMBER
+    }
+
+    // German abbreviates every month to three letters except March, which venues render
+    // unabbreviated in an otherwise abbreviated column, and spell four different ways.
+    @Test
+    fun `parseGermanMonthAbbreviation accepts every March spelling`() {
+        listOf("Mrz", "mrz.", "Mär", "März", "maer", "maerz").forEach {
+            parseGermanMonthAbbreviation(it) shouldBe Month.MARCH
+        }
+    }
+
+    @Test
+    fun `parseGermanMonthAbbreviation returns null for a spelling these sites do not render`() {
+        parseGermanMonthAbbreviation("Sept").shouldBeNull()
+        parseGermanMonthAbbreviation(null).shouldBeNull()
     }
 }
