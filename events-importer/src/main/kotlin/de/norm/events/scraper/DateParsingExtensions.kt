@@ -55,12 +55,6 @@ private val GERMAN_SHORT_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.o
  * Returns `null` if [text] is null, blank, or cannot be parsed — rather
  * than throwing an exception. This is the expected behavior for scrapers
  * where missing or malformed time values should degrade gracefully.
- *
- * Example:
- * ```kotlin
- * val doorsTime = parseTime("19:00", HH_MM_FORMATTER)  // LocalTime.of(19, 0)
- * val invalid = parseTime("TBA", HH_MM_FORMATTER)      // null
- * ```
  */
 fun parseTime(
     text: String?,
@@ -84,13 +78,6 @@ fun parseTime(
  * This is the standard date format used by schema.org `MusicEvent`
  * JSON-LD blocks (`startDate` field), which many venue websites embed
  * for SEO. Returns `null` for unparseable input.
- *
- * Example:
- * ```kotlin
- * parseIsoDate("2026-05-16T20:00")  // LocalDate.of(2026, 5, 16)
- * parseIsoDate("2026-05-16")        // LocalDate.of(2026, 5, 16)
- * parseIsoDate("invalid")           // null
- * ```
  */
 fun parseIsoDate(dateTimeStr: String): LocalDate? =
     try {
@@ -108,12 +95,6 @@ fun parseIsoDate(dateTimeStr: String): LocalDate? =
  *
  * This complements [parseIsoDate] for splitting schema.org `startDate`
  * values into separate date and time components.
- *
- * Example:
- * ```kotlin
- * parseIsoTime("2026-05-16T20:00")  // LocalTime.of(20, 0)
- * parseIsoTime("2026-05-16")        // null (no time component)
- * ```
  */
 fun parseIsoTime(dateTimeStr: String): LocalTime? {
     val timePart = dateTimeStr.substringAfter("T", "")
@@ -128,12 +109,6 @@ fun parseIsoTime(dateTimeStr: String): LocalTime? {
  * a human `DD.MM.YY` rendering because it carries a full four-digit year and no
  * two-digit-year pivot ambiguity. Returns `null` when the attribute is absent
  * (e.g. some detail headers) or unparseable, so the caller can fall back.
- *
- * Example:
- * ```kotlin
- * parseRealDate("2026-07-08 19:00:00 +0200")  // LocalDate.of(2026, 7, 8)
- * parseRealDate(null)                          // null
- * ```
  */
 fun parseRealDate(attr: String?): LocalDate? {
     if (attr.isNullOrBlank()) return null
@@ -152,13 +127,6 @@ fun parseRealDate(attr: String?): LocalDate? {
  *
  * This format is used by some WordPress-based Berlin venue websites
  * (e.g. Madame Claude) for event dates. Returns `null` for unparseable input.
- *
- * Example:
- * ```kotlin
- * parseShortDate("21/09/26")  // LocalDate.of(2026, 9, 21)
- * parseShortDate("1/9/26")    // LocalDate.of(2026, 9, 1)
- * parseShortDate("invalid")   // null
- * ```
  */
 fun parseShortDate(text: String?): LocalDate? {
     if (text.isNullOrBlank()) return null
@@ -175,13 +143,6 @@ fun parseShortDate(text: String?): LocalDate? {
  * The most common human date rendering on Berlin venue pages (e.g. "10.07.2026",
  * "23.09.2026"). Single-digit day/month values are also accepted (e.g. "1.9.2026").
  * Returns `null` for null, blank, or unparseable input.
- *
- * Example:
- * ```kotlin
- * parseGermanDate("10.07.2026")  // LocalDate.of(2026, 7, 10)
- * parseGermanDate("1.9.2026")    // LocalDate.of(2026, 9, 1)
- * parseGermanDate("invalid")     // null
- * ```
  */
 fun parseGermanDate(text: String?): LocalDate? = parseGerman(text, GERMAN_DATE_FORMATTER)
 
@@ -192,13 +153,6 @@ fun parseGermanDate(text: String?): LocalDate? = parseGerman(text, GERMAN_DATE_F
  * "29.06.26"). Two-digit years resolve to the 2000–2099 range; single-digit
  * day/month values are also accepted. Returns `null` for null, blank, or
  * unparseable input.
- *
- * Example:
- * ```kotlin
- * parseGermanShortDate("11.12.26")  // LocalDate.of(2026, 12, 11)
- * parseGermanShortDate("1.9.26")    // LocalDate.of(2026, 9, 1)
- * parseGermanShortDate("invalid")   // null
- * ```
  */
 fun parseGermanShortDate(text: String?): LocalDate? = parseGerman(text, GERMAN_SHORT_DATE_FORMATTER)
 
@@ -215,13 +169,6 @@ fun parseGermanShortDate(text: String?): LocalDate? = parseGerman(text, GERMAN_S
  *
  * Shared by the venues whose listings render this calendar block — Soda, Velomax, Admiralspalast
  * and Metropol.
- *
- * Example:
- * ```kotlin
- * parseGermanMonthAbbreviation("Okt")   // Month.OCTOBER
- * parseGermanMonthAbbreviation("mrz.")  // Month.MARCH
- * parseGermanMonthAbbreviation("Sept")  // null (not an abbreviation these sites render)
- * ```
  */
 fun parseGermanMonthAbbreviation(text: String?): Month? = GERMAN_MONTH_ABBREVIATIONS[text?.trim(',', '.', ' ')?.lowercase()]
 
@@ -271,12 +218,6 @@ private fun parseGerman(
  * future repeat. When [weekday] is `null` (unparseable), the nearest occurrence to
  * today across all candidate years is used. Shared by the retro single-page
  * scrapers (Roadrunner, Duncker).
- *
- * Example:
- * ```kotlin
- * // today = 2026-07-09; 3 July falls on a Friday in 2026
- * inferYearForWeekday(MonthDay.of(7, 3), DayOfWeek.FRIDAY, clock)  // 2026-07-03
- * ```
  */
 fun inferYearForWeekday(
     monthDay: MonthDay,
