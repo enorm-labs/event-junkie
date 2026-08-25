@@ -80,7 +80,7 @@ import java.time.LocalTime
  * @see PeterEdelWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.peteredel.de/events/">Kulturhaus Peter Edel</a>
  */
-@Suppress("LongComment/venue") // The grid is hand-authored rich text, and this block is the shape the parser walks (#714).
+@Suppress("LongComment") // The grid is hand-authored rich text, and this block is the shape the parser walks.
 class PeterEdelOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 

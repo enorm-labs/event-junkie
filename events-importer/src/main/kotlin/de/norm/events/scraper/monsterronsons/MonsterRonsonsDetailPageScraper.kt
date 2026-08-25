@@ -31,8 +31,7 @@ import java.math.BigDecimal
  *     both `€5` and `5€`, sometimes in one list, so both spellings are matched — the shared
  *     [de.norm.events.scraper.parsePriceValue] only covers the latter.
  *  2. **Paragraphs must be read individually.** Webflow emits one `<p>` per line with no whitespace
- *     between them, so reading the body's text as a whole yields `… - FREE19:00 - 20:00 - €5`: the
- *     description becomes unreadable and a following start time fuses onto the amount before it.
+ *     between them, so the body's text as a whole reads `… - FREE19:00 - 20:00 - €5`.
  *  3. **The ticket button is always in the markup.** Webflow renders it on every night and hides it
  *     with `w-condition-invisible` when the CMS field is empty, so it is read through
  *     [hasVisibleWebflowFlag] rather than by presence.

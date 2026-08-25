@@ -21,10 +21,8 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
  * code, a history of how the code got this way, or a decision copied out of AGENTS.md or an ADR
  * rather than referenced. See the "Comments and KDoc" section of AGENTS.md.
  *
- * Scraper sub-packages are excluded in `detekt.yml`, because their KDoc is the designated home for
- * accepted limitations and that prose is load-bearing. Anywhere else, a comment that genuinely
- * needs the length is `@Suppress("LongComment")` on the declaration — an explicit decision a
- * reviewer can see.
+ * A comment that genuinely needs the length is `@Suppress("LongComment")` on the declaration — an
+ * explicit decision a reviewer can see, rather than a threshold raised until nothing fires.
  */
 class LongComment(
     config: Config
@@ -35,12 +33,12 @@ class LongComment(
     override fun visit(root: KtFile) {
         super.visit(root)
         root.commentBlocks().forEach { block ->
-            val lines = block.sumOf { it.text.count { char -> char == '\n' } + 1 }
+            val lines = block.sumOf { it.text.lines().count(String::carriesProse) }
             if (lines > maxLines) {
                 report(
                     Finding(
                         Entity.from(block.first()),
-                        "This comment spans $lines lines, more than the maximum of $maxLines. Keep the reason, drop the rest."
+                        "This comment carries $lines lines of prose, more than the maximum of $maxLines. Keep the reason, drop the rest."
                     )
                 )
             }
@@ -81,3 +79,12 @@ class LongComment(
         const val DEFAULT_MAX_LINES = 25
     }
 }
+
+/**
+ * Whether a comment line carries prose rather than the block's own scaffolding.
+ *
+ * A blank ` *` between paragraphs is structure, not length: counting it charges a paragraphed
+ * comment for being readable while the same words as one wall of text cost nothing (#741).
+ * Delimiters still count, so `maxLines` is the block a reader scrolls past minus its breaks.
+ */
+private fun String.carriesProse(): Boolean = trim().removePrefix("*").removePrefix("//").isNotBlank()

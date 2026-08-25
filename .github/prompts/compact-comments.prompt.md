@@ -107,8 +107,7 @@ read it rather than working around it.
 
 Suppress it, with a reason, on the declaration:
 
-- `@Suppress("LongComment")` for Kotlin — and **`@Suppress("LongComment/venue")` inside `scraper/<venue>/`, because the bare rule name silently does not match
-  the second rule instance**.
+- `@Suppress("LongComment")` for Kotlin, on the declaration the block documents.
 - `// eslint-disable-next-line event-junkie/max-comment-lines — <reason>` for TS and Vue.
 - `# comment-lint: allow <reason>` on the line above the block, for Terraform, shell, YAML and Python. A bare directive is itself a violation.
 

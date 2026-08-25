@@ -28,11 +28,10 @@ private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
 /**
  * Pure HTML parser for gART.n's single-page Carrd programme.
  *
- * Carrd emits no semantic markup, no per-event URL and no structured data — every block is a
- * `div.container-component` whose `id` and `instance-N` class are renumbered whenever the owner edits
- * the page, so neither can identify an event. What *is* stable is Carrd's component classes plus the
- * programme's shape: an event block is a `.container-component` whose `h2` is a date heading (`SA
- * 08.08.`), which is how [DATE_HEADING] separates them from image and footer containers:
+ * Carrd renumbers every block's `id` and `instance-N` class whenever the owner edits the page, so
+ * neither identifies an event. What is stable is the programme's shape — an event block is a
+ * `.container-component` whose `h2` is a date heading, which is how [DATE_HEADING] tells one from the
+ * image and footer containers:
  *
  * ```
  * <h2>SA <strong>08.08.</strong></h2>   ← weekday + day.month, no year
@@ -41,30 +40,26 @@ private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
  * <ul class="buttons-component"><li><a href="https://ra.co/events/…">Tickets</a></li></ul>
  * ```
  *
- * Four things about this page shape the parser:
- * 1. **The date carries no year** but states its German weekday, so the year is inferred from it
- *    ([inferYearForWeekday]) rather than assumed — the rule Arcanoa and VOID Club also use, and what
- *    keeps a programme correct across the turn of the year.
- * 2. **The paragraphs are told apart by content, not position**: the one that is *nothing but* a time
- *    range is the opening hours, the one beside the ticket button is the ticket note, and the rest is
- *    the lineup. Carrd's wrappers carry no classes, so the alternative is a positional selector (ADR-007).
- * 3. **`<sup>` is the venue's annotation marker**, inline for a `b2b` join and a `live` set format, and
- *    once for a whole line annotating the one above it. An inline annotation is kept — `b2b` splits the
- *    slot into two acts, `live` is trimmed off by [stripArtistSuffix] — while a line that is *only* an
- *    annotation is a note rather than a billing, and is dropped with the guests it names.
- * 4. **"pre-sale sold out" does not mean sold out.** The venue pairs that label with a "more tickets
- *    at the door" note, so [ScrapedEvent.soldOut] is set only when the label says sold out and no
- *    such note accompanies it. The note is kept as the price note — the only pricing the page has.
+ * The date states a German weekday but no year, so the year is inferred from it
+ * ([inferYearForWeekday]), which keeps the programme correct across the turn of the year. Carrd's
+ * wrappers carry no classes, so the paragraphs are told apart by content rather than position
+ * (ADR-007): the one that is *nothing but* a time range is the opening hours, the one beside the
+ * ticket button is the ticket note, and the rest is the lineup.
  *
- * The venue publishes no prices, genre, per-event image, description or per-event page, and removes an
- * event once it has passed, so its identity is the date plus the slugified title. The closing time is
- * dropped: the model stores doors and start, not an end. Every lineup entry is stored as a `DJ` —
- * `ArtistRole` has no value for the page's `live` marker — and a line billing a live format rather
- * than a performer is stored as the venue bills it, since nothing separates the two.
+ * **`<sup>` is the venue's annotation marker.** Inline it joins or qualifies a slot — `b2b` splits it
+ * into two acts, `live` is trimmed by [stripArtistSuffix] — but a line that is *only* an annotation
+ * is a note rather than a billing, and is dropped with the guests it names.
  *
+ * **"pre-sale sold out" does not mean sold out.** The venue pairs that label with a "more tickets at
+ * the door" note, so [ScrapedEvent.soldOut] is set only when no such note accompanies it; the note
+ * becomes the price note, the only pricing the page has. An event is removed once it has passed, so
+ * its identity is the date plus the slugified title, and every lineup entry is stored as a `DJ`,
+ * `ArtistRole` having no value for the page's `live` marker.
+ *
+ * @see GARTN_LIMITATIONS for what the venue does not publish.
  * @see GartnWebsiteImporter for the HTTP fetch orchestrator.
- * @see <a href="https://www.gartn.xyz/">gART.n Berlin</a>
  */
+@Suppress("LongComment") // 6 of these lines are the Carrd block, which is the only thing about this page that is stable.
 class GartnOverviewPageScraper(
     /** Clock for the year inference. Defaults to the venue's own time zone; override in tests for determinism. */
     private val clock: Clock = Clock.system(BERLIN)

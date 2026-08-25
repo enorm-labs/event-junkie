@@ -33,38 +33,31 @@ internal val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
  * Pure parser for Zenner's programme, sourced from the Gatsby page-data artefact
  * (`/page-data/programm/page-data.json`) that backs the venue's `/programm` page.
  *
- * Zenner runs a Gatsby front end over a Sanity headless CMS. The rendered page is a React
- * shell whose event markup is produced from a GraphQL query — and Gatsby publishes that
- * query's result verbatim as a static JSON artefact next to the page. Parsing it gives the
- * whole programme as structured data with no CSS selectors at all (ADR-007 §"Selector
- * Strategy" priority 1). [ZennerWebsiteImporter] fetches the body; this class parses it and
- * performs **no network I/O**, so it is trivially testable against a saved snapshot.
+ * Zenner runs a Gatsby front end over a Sanity headless CMS, and Gatsby publishes the GraphQL result
+ * its React shell renders from as a static JSON artefact next to the page — so the whole programme is
+ * structured data and no CSS selector is involved (ADR-007 §"Selector Strategy" priority 1).
  *
- * The payload nests the events under `result.data.queryKultur.nodes`, each carrying a
- * Gatsby node `id` (deterministically derived from the Sanity document id — the stable
- * [ScrapedEvent.sourceId] key), a `title`, a `typeOfEvent`, the `place` (room), an ISO
- * `eventDate`, a ticket-shop `linkEvent`, a Sanity CDN `image`, and a Portable Text
- * `_rawText` blurb. Three properties of that payload shape the parsing:
+ * Events nest under `result.data.queryKultur.nodes`, each with a Gatsby node `id` derived
+ * deterministically from the Sanity document id (the stable [ScrapedEvent.sourceId] key), a `title`,
+ * `typeOfEvent`, `place`, an ISO `eventDate`, a ticket-shop `linkEvent`, an `image` and a Portable
+ * Text `_rawText` blurb. Three properties of that payload shape the parsing:
  *
- *  1. **`eventDate` is a true UTC instant.** The site converts it client-side, so a
- *     `21:45Z` party is a `23:45` Berlin door time. It is converted to [BERLIN] rather than
- *     read as a wall clock, which would shift every event one to two hours early and roll a
- *     late night onto the previous day.
- *  2. **The artefact holds the venue's whole archive** — years of past events for a handful
- *     of upcoming ones — so past dates are dropped here ([dropPastEvents]) instead of
- *     minting a hundred throwaway events per run for the persistence layer to discard.
- *  3. **A sibling `queryShowHidePlaces` block carries the venue's own per-room publish
- *     flags** ([ZennerPlaceVisibility]), which are honoured so a programme Zenner has
- *     unpublished is not imported.
+ *  1. **`eventDate` is a true UTC instant**, converted client-side by the site, so a `21:45Z` party is
+ *     a `23:45` Berlin door time. Reading it as a wall clock would shift every event one to two hours
+ *     early and roll a late night onto the previous day.
+ *  2. **The artefact holds the venue's whole archive**, years of past events for a handful of upcoming
+ *     ones, so past dates are dropped here ([dropPastEvents]) rather than minting a hundred throwaway
+ *     events per run for the persistence layer to discard.
+ *  3. **A sibling `queryShowHidePlaces` block carries the venue's per-room publish flags**
+ *     ([ZennerPlaceVisibility]), honoured so a programme Zenner has unpublished is not imported.
  *
- * The venue publishes no prices, doors times, sold-out state or per-event pages. Its `place`
- * (Saal / Klub / Biergarten / Weingarten) is a room within one venue with no field in the
- * data model to hold it, so it is not stored — but it is read twice: for the visibility
- * filter above, and to disambiguate the "Open Air" label, which means a DJ day party in the
- * Weingarten and an ice-skating session in the Biergarten (see [resolveEventType]).
+ * `place` (Saal / Klub / Biergarten / Weingarten) is a room within one venue and has no field in the
+ * model, so it is not stored — but it is read twice: for that visibility filter, and to disambiguate
+ * the "Open Air" label, which means a DJ day party in the Weingarten and ice skating in the Biergarten
+ * (see [resolveEventType]).
  *
+ * @see ZENNER_LIMITATIONS for what the venue does not publish.
  * @see ZennerWebsiteImporter for the HTTP fetch orchestrator.
- * @see <a href="https://zenner.berlin/programm">Zenner Programm</a>
  */
 class ZennerApiScraper(
     /** Clock for the past-event cutoff. Defaults to the venue's own time zone; override in tests for determinism. */

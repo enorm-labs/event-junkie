@@ -25,32 +25,25 @@ import java.math.BigDecimal
  *
  * Every field comes from the embedded `wix-warmup-data` JSON (see [WixEventsWarmupData]) — the
  * rendered cards are never read. As at MAXXIM, the payload already carries prices and the sold-out
- * flag, so the single overview fetch is complete and no per-event page is fetched. The event
- * `slug` still yields the canonical [ScrapedEvent.sourceUrl] and the stable [ScrapedEvent.sourceId];
- * this site publishes its detail pages under `/details-registrierung/<slug>` rather than Wix's
- * default `/event-details/<slug>` (the payload's own `siteSettings.detailsPagePath` says
- * `"details"`, which is not the live path, so the path is a constant here).
+ * flag, so the single overview fetch is complete and no per-event page is fetched. The event `slug`
+ * still yields the canonical [ScrapedEvent.sourceUrl] and the stable [ScrapedEvent.sourceId]; this
+ * site publishes its detail pages under `/details-registrierung/<slug>` rather than Wix's default,
+ * and the payload's own `siteSettings.detailsPagePath` says `"details"`, which is not the live path
+ * — so the path is a constant here.
  *
- * Traps this parser handles:
- * - **`registration.ticketing` lies for externally ticketed events.** Three of the eighteen live
- *   events sell through a promoter's shop (`registration.type == 3`); Wix still emits a `ticketing`
- *   node for them, and — because the event has no Wix ticket definitions — it reports
- *   `"soldOut": true` while the page renders a working "Tickets kaufen" button. The whole ticketing
- *   block is therefore read only when Wix itself sells the tickets ([WIX_REGISTRATION_TICKETS]);
- *   for the external ones the shop URL becomes the [ScrapedEvent.ticketUrl] instead.
- * - **The house states no category.** `categories` is empty on every event, so the type is inferred
- *   from the title and subtitle ([resolveEventType]).
+ * **`registration.ticketing` lies for externally ticketed events.** Three of the eighteen live
+ * events sell through a promoter's shop (`registration.type == 3`); Wix still emits a `ticketing`
+ * node for them and — the event having no Wix ticket definitions — reports `"soldOut": true` while
+ * the page renders a working "Tickets kaufen" button. The block is therefore read only when Wix
+ * itself sells the tickets ([WIX_REGISTRATION_TICKETS]); for the external ones the shop URL becomes
+ * the [ScrapedEvent.ticketUrl] instead.
  *
- * What the source does not carry, and is therefore left null rather than guessed:
- * - **No doors time.** Wix publishes one `startDate` per event and nothing else; the detail page's
- *   "Einlass: 19 Uhr" line is boilerplate (see [ColosseumWebsiteImporter]).
- * - **No genre and no lineup.** With no support-act convention in the subtitles,
- *   [buildArtistList] extracts nothing — a Colosseum title is as often an event name
- *   ("Investment", "Das Betreute Singen September") as a performer's, so minting it as a headliner
- *   would create artists that are not people.
+ * With no support-act convention in the subtitles, [buildArtistList] extracts nothing: a Colosseum
+ * title is as often an event name ("Investment", "Das Betreute Singen September") as a performer's,
+ * so minting it as a headliner would create artists that are not people.
  *
+ * @see COLOSSEUM_LIMITATIONS for what the house does not publish.
  * @see ColosseumWebsiteImporter for the HTTP fetch orchestrator.
- * @see <a href="https://www.colosseumberlin.com/event">Colosseum programme</a>
  */
 class ColosseumOverviewPageScraper {
     private val logger = KotlinLogging.logger {}

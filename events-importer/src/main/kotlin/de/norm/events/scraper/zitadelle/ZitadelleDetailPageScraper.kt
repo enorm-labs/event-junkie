@@ -22,9 +22,8 @@ import java.time.LocalTime
  * Pure HTML parser for a Citadel Music Festival `/event/<YYYY-MM-DD-slug>` detail page.
  *
  * The page adds what a listing card cannot: the `Einlass` doors time, the tour title, the prose
- * description, the ticket-shop link, the media partners who present the show, and the fuller
- * account of a changed date. Its facts sit in a `ul.details-list` of `<li><span>Label</span>value`
- * rows and in a handful of blocks around it.
+ * description, the ticket-shop link, the presenting media partners, and the fuller account of a
+ * changed date. Its facts sit in a `ul.details-list` of `<li><span>Label</span>value` rows.
  *
  * It deliberately supplies **no date**: the page renders it only as long German prose
  * ("Samstag, 15. August 2026") where the listing already carries a machine-readable

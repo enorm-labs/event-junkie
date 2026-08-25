@@ -30,25 +30,16 @@ import org.jsoup.nodes.Element
  * [parseClubOstTime] implement only that one. Adding a shared `Accept-Language` to that client would
  * silently switch the rendering and must come with a matching parser here.
  *
- * Every card is a flyer, a title, a start time and a Resident Advisor ticket link. The venue is a
- * techno club whose whole programme is club nights, so every event is typed [EventType.PARTY]
- * outright — the same call [gartn][de.norm.events.scraper.gartn],
- * [voidclub][de.norm.events.scraper.voidclub] and the other category-less techno rooms make. The
- * template does reserve a slot for the lineup — an empty `div.artist`, blank on every event so far,
- * the bills living on the linked Resident Advisor pages — which is where one would come from should
- * the venue start filling it in.
+ * Every card is a flyer, a title, a start time and a Resident Advisor ticket link, identified by the
+ * numeric id in its `/event/<id>` link. The venue is a techno club whose whole programme is club
+ * nights, so every event is typed [EventType.PARTY] outright — the same call
+ * [gartn][de.norm.events.scraper.gartn], [voidclub][de.norm.events.scraper.voidclub] and the other
+ * category-less techno rooms make. The template does reserve a slot for the lineup — an empty
+ * `div.artist`, blank on every event so far, the bills living on the linked Resident Advisor pages —
+ * which is where one would come from should the venue start filling it in.
  *
  * @see CLUB_OST_LIMITATIONS for what the source does not publish.
- *
- * Card structure (Bootstrap grid, one `.event-item` per event):
- * - `a[href^=/event/]` — the detail page link; its numeric id is the stable `sourceId`
- * - `h3` — the title, upper-cased by the template (the detail page has the real casing)
- * - `img.event-image` — the flyer, or a relative-path house logo when none was uploaded
- * - `a:has(span.tag-evento)` — the Resident Advisor ticket link
- * - `.event-info` — `"<date> | <start time>"`
- *
  * @see ClubOstDetailPageScraper for the primary per-event data source.
- * @see <a href="https://clubost.de/">Club OST homepage</a>
  */
 class ClubOstOverviewPageScraper {
     private val logger = KotlinLogging.logger {}

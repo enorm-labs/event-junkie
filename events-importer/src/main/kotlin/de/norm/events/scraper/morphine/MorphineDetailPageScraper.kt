@@ -24,34 +24,24 @@ import java.math.BigDecimal
  * the same listing the overview page carries, repeated as navigation. Every selector here is scoped to
  * that overlay; reading the document whole would pull the other nights' titles and dates into it.
  *
- * Inside the overlay, the hand-coded Kirby template emits a `div.title` and a sequence of typed
- * `div.block` boxes, of which four carry data:
- * - **`.block.day`** — the one-line header `"Friday, 07.08.26, door  20:00"`, source for the date and
- *   door time, plus a nested `ul.lineup` of `<li>` set entries pairing a start time with the billed
- *   name. The first entry's time is the event's start; every entry's name is read as a performer.
- * - **`.block.paypal`** — an advance-ticket PayPal form whose hidden `amount`/`currency_code`
- *   inputs give the presale price. It posts to PayPal rather than linking anywhere, so there is no
- *   ticket URL to store; the button is the only way to buy in advance.
- * - **`.block.priceevent`** — a free-text pricing line above the venue's address. It is read via
- *   [readPriceNote], which requires a pricing signal because the venue also uses this box for
- *   house rules, and via [parseDoorPrice], which only stores a box-office price when the line
- *   states a single unambiguous amount.
- * - **`.block.paragraph`** / **`.block.image`** — the programme text and the poster/press images.
- *   Paragraphs keep their `<br>` line breaks, because that is how the venue writes out the
- *   instrument credits ("Jon Rose | violin & field recordings"); the first image is stored.
+ * Inside it the hand-coded Kirby template emits typed `div.block` boxes, of which four carry data.
+ * `.block.day` is the header `"Friday, 07.08.26, door  20:00"` plus a nested `ul.lineup` whose first
+ * entry's time is the event's start and whose every name is a performer. `.block.paypal` is an
+ * advance-ticket form: its hidden `amount` input is the presale price, and it posts to PayPal rather
+ * than linking, so the button is the only way to buy and there is nothing to store as a ticket URL.
+ * `.block.priceevent` is free text the venue also uses for house rules, so [readPriceNote] requires a
+ * pricing signal and [parseDoorPrice] stores a figure only for a single unambiguous amount — a
+ * sliding scale or donation range, which is most nights, has no field to go in. `.block.paragraph`
+ * keeps its `<br>` breaks, because that is how the instrument credits are written ("Jon Rose | violin
+ * & field recordings").
  *
- * **What the source does not publish**, and which stays empty rather than guessed: genre, a sold-out
- * or cancelled marker (a dropped night is removed from the listing instead of flagged), a ticket URL,
- * and a presale price for nights without a PayPal box. Pricing is a sliding scale or donation range on
- * nearly every night, which the data model has no field for — see [parseDoorPrice].
+ * **The lineup names carry more than the act**, and the shared splitters resolve them only as far as a
+ * structural signal allows: a `/`-separated co-bill written without spaces stays one name, because
+ * [splitHeadlinerTitle][de.norm.events.scraper.splitHeadlinerTitle] requires the padding that protects
+ * `AC/DC`, and a `– <project>` tail stays attached for want of anything separating it from a
+ * hyphenated act name. Both need a curated vocabulary rather than a Morphine-local rule; see #302.
  *
- * **The lineup names carry more than the act**, and the shared splitters resolve them only as far
- * as a structural signal allows. A `/`-separated co-bill written without spaces stays one name
- * (`Kowa Axis/Aidan Baker/Tim Wyskida`), because
- * [splitHeadlinerTitle][de.norm.events.scraper.splitHeadlinerTitle] deliberately requires the
- * padding that protects `AC/DC`; and a `– <project>` or `– <member list>` tail stays attached,
- * because nothing separates it from a genuinely hyphenated act name. Both are tracked in issue #302 —
- * they need a curated vocabulary, not a Morphine-local rule.
+ * @see MORPHINE_LIMITATIONS for what the source does not publish.
  *
  * @see MorphineOverviewPageScraper for overview parsing (discovery, date, fallback).
  * @see MorphineWebsiteImporter for the HTTP fetch orchestrator.

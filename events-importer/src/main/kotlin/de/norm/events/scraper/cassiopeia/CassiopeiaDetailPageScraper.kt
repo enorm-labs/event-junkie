@@ -22,37 +22,23 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for Cassiopeia event detail pages.
  *
- * The detail page is the **primary data source** for each event, providing
- * richer and more structured information than the listing page (including
- * description, ticket URL, and cleaner image URLs via `<img>` tags instead
- * of CSS `background-image`). Data extracted from the listing page by
- * [CassiopeiaOverviewPageScraper] serves as a **fallback** — merging of
- * detail and overview data is handled by the [CassiopeiaWebsiteImporter]
- * orchestrator, keeping this scraper focused on parsing only.
+ * The detail page is the **primary data source**: it carries the description, the ticket URL and
+ * clean `<img>` posters where the listing renders CSS `background-image`. What
+ * [CassiopeiaOverviewPageScraper] parses is the fallback, and [CassiopeiaWebsiteImporter] merges the
+ * two.
  *
- * HTTP fetching is handled by the [CassiopeiaWebsiteImporter] orchestrator.
+ * Parsing is scoped to the `.modul-section.events` container, which holds every event field on the
+ * page — that keeps navigation, footer and scripts out of the parse tree, so the selectors below can
+ * be simple without matching chrome. The Webflow template gives the genre no class of its own: it is
+ * the sibling *after* the `.subheading.invert.gap` category, which is the one positional read here
+ * and the reason the category selector has to stay exact.
  *
- * All parsing is scoped to the `.modul-section.events` container, which
- * holds all event-related content on the detail page. This excludes
- * navigation, footer, scripts, and other page chrome from the parse tree,
- * making selectors simpler and less prone to false matches.
+ * **Artists are taken for concerts only.** Where the category is "Konzert" the title is the
+ * headliner, and support acts are description paragraphs prefixed `"Support: "`. A party's title is
+ * an event name, so nothing is minted from it.
  *
- * Detail page structure (Webflow CMS, inside `.modul-section.events`):
- * - `h1.event-date.dark.event` — event title
- * - `.date-wrapper .subheading.invert` — date (day, month, year)
- * - `.date-wrapper` with "Einlass"/"Beginn" labels — doors/start times
- * - `.subheading.invert.gap` — category (Konzert, Party, Sonstiges)
- * - Next sibling of category — genre
- * - `img.eventpage-image` — event image
- * - `.paragraph-wrapper > .paragraph.events` — event description paragraphs
- * - `a.faq-link-wrapper` with "Tickets" text — ticket shop link
- * - `.flag-wrapper .event-detail.sold-out` — sold-out / cancelled flags
- *
- * **Artist extraction** (concerts only): For events categorized as "Konzert",
- * the event title equals the headliner artist name. Support acts are listed
- * as separate description paragraphs prefixed with "Support: " (e.g.
- * `"Support: Aska"`). Non-concert events (parties, etc.) don't follow this
- * pattern, so no artists are extracted for them.
+ * @see CassiopeiaOverviewPageScraper for the listing and the fallback fields.
+ * @see CassiopeiaWebsiteImporter for the HTTP fetch orchestrator and the merge.
  */
 @Suppress("TooManyFunctions") // Cohesive scraper with private helpers for each parsed field
 class CassiopeiaDetailPageScraper {

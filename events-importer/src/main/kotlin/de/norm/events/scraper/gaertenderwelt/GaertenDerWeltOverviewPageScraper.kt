@@ -36,13 +36,11 @@ import org.jsoup.nodes.Element
  * with a warning rather than half-parsed: the stamp is also the row's identity, so without it
  * there is no stable `sourceId` either.
  *
- * Rows the park files under one of its participation formats are dropped here, before the
- * importer spends a detail-page fetch on them — see [isProgrammeCategory] for that decision and
- * how to revisit it.
+ * Rows the park files under one of its participation formats are dropped here, before the importer
+ * spends a detail-page fetch on them — see [isProgrammeCategory].
  *
  * @see GaertenDerWeltDetailPageScraper for the description, prices, doors time and promoter.
  * @see GaertenDerWeltWebsiteImporter for the paginated fetch orchestrator.
- * @see <a href="https://www.gaertenderwelt.de/events/veranstaltungen/">Gärten der Welt programme</a>
  */
 class GaertenDerWeltOverviewPageScraper {
     private val logger = KotlinLogging.logger {}

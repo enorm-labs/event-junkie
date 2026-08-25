@@ -34,37 +34,31 @@ private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
 /**
  * Pure HTML parser for Klunkerkranich's `/events/` programme listing.
  *
- * The page is a WordPress theme grouping the coming nights by day. Each night is an
- * `article.o-card` inside a `.c-events-overview__event`, carrying its `/events/<slug>` link, an
- * `.o-card__title`, a German date line (`.o-card__meta--primary`), an opening-hours range
- * (`.o-card__meta--secondary`) and a thumbnail. The same day-list also renders the soonest event a
- * second time as an `article.o-page-header` hero above it, which is why the card selector is scoped
- * to `.c-events-overview__event` rather than matching `article` anywhere on the page.
+ * The WordPress theme groups the coming nights by day, each an `article.o-card` inside a
+ * `.c-events-overview__event` carrying its `/events/<slug>` link, title, a German date line, an
+ * opening-hours range and a thumbnail. The same day-list renders the soonest event a second time as
+ * an `article.o-page-header` hero, which is why the card selector is scoped to that wrapper rather
+ * than matching `article` anywhere on the page.
  *
- * Three things about this listing shape the parser:
- *
- * 1. **The rendered date carries no year** ("Mittwoch, 05. August"), but the venue bakes the ISO
- *    date into every event slug (`/events/2026-08-05-wochenmitte-w-pascale-project/`). The slug is
- *    read first — it is the canonical, unambiguous spelling — and the rendered German date is the
- *    fallback, with the year inferred from the stated weekday ([inferYearForWeekday]).
+ * 1. **The rendered date carries no year** ("Mittwoch, 05. August"), but the venue bakes the ISO date
+ *    into every slug (`/events/2026-08-05-wochenmitte-w-pascale-project/`). The slug is read first as
+ *    the canonical spelling, the German date is the fallback, and its year is inferred from the
+ *    stated weekday ([inferYearForWeekday]).
  * 2. **The time range is opening hours, not doors and start.** "17:00 — 00:00" is when the roof is
- *    open, so only its first time is stored, as the start; the venue publishes no doors time and
- *    the model has nowhere to put a closing time.
- * 3. **The title packs the whole billing** — `<series> w. <DJ lineup>`, occasionally
- *    `<promoter> presents: <acts>` — with the acts separated by commas, `&` and `b2b`, and a `*live`
- *    marker on the ones that play rather than spin. [parseLineup] reads the acts out of the tail and
- *    uses that marker to tell a live act (`HEADLINER`) from a DJ, the same split Club der Visionäre
- *    makes. The series name before the marker is left in the title and not minted as an artist: it
- *    is a night's name ("WOCHENMITTE", "MONDAY ROAST"), not a performer.
+ *    open, so only its first time is stored, as the start.
+ * 3. **The title packs the whole billing** — `<series> w. <DJ lineup>`, occasionally `<promoter>
+ *    presents: <acts>` — with acts separated by commas, `&` and `b2b`, and a `*live` marker on the
+ *    ones that play rather than spin. [parseLineup] reads the acts out of the tail and uses that
+ *    marker to tell a live act (`HEADLINER`) from a DJ, the same split Club der Visionäre makes. The
+ *    series name before the marker stays in the title and is not minted as an artist: it is a night's
+ *    name ("WOCHENMITTE", "MONDAY ROAST"), not a performer.
  *
- * The venue publishes no category, so — like ÆDEN, OHM and gART.n — every night is stored as a
- * [PARTY][EventType.PARTY]: 1034 of the 1200 events in its sitemap are `… w. <DJ lineup>` nights.
- * That mislabels the occasional concert, which is an accepted limitation of a source that states
- * nothing better.
+ * Every night is stored as a [PARTY][EventType.PARTY], like ÆDEN, OHM and gART.n: 1034 of the 1200
+ * events in the sitemap are `… w. <DJ lineup>` nights. That mislabels the occasional concert.
  *
+ * @see KLUNKERKRANICH_LIMITATIONS for what the venue does not publish.
  * @see KlunkerkranichDetailPageScraper for the per-event page, which adds the blurb and the price.
  * @see KlunkerkranichWebsiteImporter for the HTTP fetch orchestrator.
- * @see <a href="https://klunkerkranich.org/events/">Klunkerkranich programme</a>
  */
 class KlunkerkranichOverviewPageScraper(
     /** Clock for the fallback date's year inference. Defaults to the venue's own time zone; override in tests. */

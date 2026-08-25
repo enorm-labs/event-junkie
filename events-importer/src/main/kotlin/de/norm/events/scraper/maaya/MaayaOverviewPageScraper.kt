@@ -20,43 +20,34 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for MAAYA Berlin's home-page **NEXT DATES** programme.
  *
- * The venue runs WordPress with Elementor and has no events plugin at all — `/wp-json/wp/v2/types`
- * lists no event post type, and the only other dated-looking pages render no dates. The programme is
- * hand-built Elementor widgets on the home page, so this one section is the whole source: no per-event
- * pages, no detail text, no prices, no lineups. Every event's `sourceUrl` is the home page itself, and
- * its identity is the resolved date plus the slugified title.
+ * The venue runs WordPress with Elementor and no events plugin at all — `/wp-json/wp/v2/types` lists
+ * no event post type — so this one hand-built section is the whole source. It is anchored on the
+ * `#events` id rather than Elementor's generated `elementor-element-<hash>` classes, which change on
+ * every re-save.
  *
- * The section is anchored on the `#events` id rather than Elementor's generated
- * `elementor-element-<hash>` classes, which change on every re-save. Each card is one Elementor column
- * holding a poster, an `h4` heading, a one-line schedule and a button.
- *
- * Four things about this section shape the parser:
+ * Four things about it shape the parser:
  * 1. **It mixes standing opening hours in with the dated programme.** "MAAYA POOL DAY — Tue. to Sat.
- *    from 12:00 pm to 5:00 pm" and "LUNCH AT MAAYA" are the daytime offering, not events, and name no
- *    date. Cards without a `dd.MM.yyyy` are skipped, which drops exactly those.
+ *    from 12:00 pm to 5:00 pm" is the daytime offering, not an event, and names no date. Cards
+ *    without a `dd.MM.yyyy` are skipped, which drops exactly those.
  * 2. **The clock is 24-hour with a decorative `pm` glued to every time**, whatever the hour — a
- *    daytime party reads "from 11:00pm – 17:00pm". The meridiem is meaningless and is ignored; only
- *    the leading `HH:mm` is read, and the stated end time is dropped for want of a field.
+ *    daytime party reads "from 11:00pm – 17:00pm". The meridiem is meaningless and ignored; only the
+ *    leading `HH:mm` is read, and the stated end time is dropped for want of a field.
  * 3. **The weekday label is unreliable**, so it is not read: the venue writes "Thu. 05.08.2026" for a
- *    Wednesday, and the four-digit date is unambiguous anyway — nothing for a weekday to disambiguate.
- * 4. **The button is both the ticket link and the entry note.** It links out to Xceed or rausgegangen
- *    where an event is ticketed, and carries the venue's own entry wording otherwise ("FREE ENTRY",
- *    "TICKETS AT THE DOOR"); see [entryNoteOf]. The link is taken as the venue states it, mistakes
- *    included — both halves of a two-part night can point at the same shop page.
+ *    Wednesday, and a four-digit date needs no weekday to disambiguate it anyway.
+ * 4. **The button is both the ticket link and the entry note** — out to Xceed or rausgegangen where
+ *    an event is ticketed, the venue's own wording otherwise ("FREE ENTRY"); see [entryNoteOf]. It
+ *    is taken as stated, mistakes included: both halves of a two-part night can share a shop page.
  *
- * Beyond that the card carries nothing: **no doors time, description, genre or numeric price** — the
- * entry note is as close to a price as the venue publishes, so the price fields are never set.
- *
- * **No artists are minted.** There is no lineup field, and the titles are series and party names
- * ("SUPAFLY", "RIPPLES W/ AMINE K") rather than acts, so deriving a headliner would file party names
- * in the artist table. For the same reason the type falls back to `OTHER` via [inferUnmarkedTitleType]
- * rather than `PARTY`: MAAYA is a multi-format house — gallery, garden, pool and market — whose
- * programme mixes club nights with concerts and workshops, so a cue-less title is genuinely unknown
+ * **No artists are minted.** The titles are series and party names ("SUPAFLY", "RIPPLES W/ AMINE K")
+ * rather than acts, so a derived headliner would file party names in the artist table. For the same
+ * reason the type falls back to `OTHER` via [inferUnmarkedTitleType] rather than `PARTY`: MAAYA is a
+ * multi-format house — gallery, garden, pool and market — so a cue-less title is genuinely unknown
  * rather than presumed a club night the way Crack Bellmer's is.
  *
+ * @see MAAYA_LIMITATIONS for what the venue does not publish.
  * @see MaayaWebsiteImporter for the HTTP fetch orchestrator.
- * @see <a href="https://maaya.de/">MAAYA Berlin</a>
  */
+@Suppress("LongComment") // 26 lines, and the four numbered traps are four real ones — the fake `pm`, the wrong weekday, the opening hours among the events.
 class MaayaOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 

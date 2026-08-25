@@ -109,37 +109,30 @@ fun arkaodaTicketUrl(lines: List<String>): String? =
         }?.trimEnd('.', ',', ')')
 
 /**
- * Derives the billed acts from a `Konser`-labelled event's [title], which is the only
- * artist source on the site — there is no lineup markup, no JSON-LD and no `og:` act
- * field anywhere, and the prose description names performers only in free text.
+ * Derives the billed acts from a `Konser`-labelled event's [title], the only artist source on the
+ * site — there is no lineup markup, no JSON-LD and no `og:` act field anywhere.
  *
- * The rule is deliberately narrow, because arkaoda titles are dominated by series,
- * label and collaboration names rather than billings (`"Osàre! Editions x arkaoda"`,
- * `"AL.Berlin - Remise Takeover"`, `"Alonas FFS Fundraiser"`), and a wrongly-minted
- * artist becomes a permanent row in the artist table:
- * 1. **Only `CONCERT` events qualify.** The venue's own `Konser` label is what
- *    confirms the title bills live acts; an unlabelled night's title is an event name
- *    ([arkaodaEventType]), so it yields nothing.
- * 2. **The framing is removed first** — a `"<promoter> pres."` prefix
- *    ([PRESENTS_PREFIX], the promoter is captured separately by [arkaodaPromoters]),
- *    a `"<series>: "` prefix ([SERIES_PREFIX], `"Signal To Noise: Vicente Yáñez, …"`
- *    → the three acts), and a trailing `" at Arkaoda"` venue tail.
+ * The rule is deliberately narrow, because arkaoda titles are dominated by series, label and
+ * collaboration names rather than billings (`"Osàre! Editions x arkaoda"`, `"Alonas FFS Fundraiser"`),
+ * and a wrongly-minted artist becomes a permanent row in the artist table:
+ * 1. **Only `CONCERT` events qualify.** The venue's own `Konser` label is what confirms the title
+ *    bills live acts; an unlabelled night's title is an event name ([arkaodaEventType]).
+ * 2. **The framing is removed first** — a `"<promoter> pres."` prefix ([PRESENTS_PREFIX]; the
+ *    promoter is captured separately by [arkaodaPromoters]), a `"<series>: "` prefix
+ *    ([SERIES_PREFIX]), and a trailing `" at Arkaoda"` venue tail.
  * 3. **A title that still reads as a compound event label yields nothing**
- *    ([isCompoundEventLabel]) — a spaced dash, an ` x ` collaboration marker, or an
- *    event-format word (`release`, `takeover`, `fundraiser`, `market`). This is the
- *    conservative half of the rule: it drops the real acts out of
- *    `"Grumpy Pieces release; Harmonious Thelonious (Live) + Saeko Killy (Live)"`
- *    rather than risk minting `"Remise Takeover"` as a band.
- * 4. **What remains is split into acts** on commas and space-padded `+` / `/`
- *    ([ACT_SEPARATOR] — the padding keeps a `"(PL/USA)"` country tag intact), then
- *    per conjunction boundary via the shared [splitSegmentOnConjunctions], so a
- *    backing-band tail stays attached to its act.
+ *    ([isCompoundEventLabel]) — a spaced dash, an ` x ` collaboration marker, or a format word
+ *    (`release`, `takeover`, `fundraiser`). This is the conservative half of the rule: it drops the
+ *    real acts out of `"Grumpy Pieces release; Harmonious Thelonious (Live)"` rather than risk
+ *    minting `"Remise Takeover"` as a band.
+ * 4. **What remains is split into acts** on commas and space-padded `+` / `/` ([ACT_SEPARATOR] — the
+ *    padding keeps a `"(PL/USA)"` country tag intact), then per conjunction boundary via the shared
+ *    [splitSegmentOnConjunctions], so a backing-band tail stays attached to its act.
  *
- * Each act is then stripped of a trailing country tag ([COUNTRY_TAG_SUFFIX]) and of
- * the shared tour/live/format tails ([stripArtistSuffix]), and dropped if it is not a
- * performer ([isNonArtistName]). All survivors are billed `HEADLINER` in title order:
- * arkaoda publishes no billing hierarchy, so promoting the first act and demoting the
- * rest to `SUPPORT` would invent one.
+ * Each act is then stripped of a trailing country tag ([COUNTRY_TAG_SUFFIX]) and the shared
+ * tour/live/format tails ([stripArtistSuffix]), and dropped if it is not a performer
+ * ([isNonArtistName]). All survivors are billed `HEADLINER` in title order: arkaoda publishes no
+ * billing hierarchy, so promoting the first would invent one.
  */
 @Suppress("ReturnCount") // Guard clauses for the non-concert and compound-label cases are clearer than nesting
 fun arkaodaArtists(

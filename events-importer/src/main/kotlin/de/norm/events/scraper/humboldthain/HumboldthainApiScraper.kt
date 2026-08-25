@@ -25,44 +25,32 @@ import java.time.temporal.TemporalAdjusters
 private const val HUMBOLDTHAIN_URL = "https://www.humboldthain.com/"
 
 /**
- * Pure parser for Humboldthain Club's programme, sourced from the JSON boot response
- * of the Elfsight "Event Calendar" widget embedded on its WordPress landing page
- * (`core.service.elfsight.com/p/boot/?w=<widgetId>`).
+ * Pure parser for Humboldthain Club's programme, sourced from the JSON boot response of the Elfsight
+ * "Event Calendar" widget embedded on its WordPress landing page.
  *
- * The widget renders client-side, so the page itself carries no events; its boot API returns the whole
- * calendar as structured JSON — the most stable possible source (ADR-007 §"Selector Strategy" priority
- * 1) — without a headless browser. [HumboldthainWebsiteImporter] fetches the body; this class parses
- * it. The payload shape is shared with [de.norm.events.scraper.neuezukunft.NeueZukunftApiScraper]:
- * events nest under `data.widgets.<widgetId>.data.settings.events`, and the widget id is not
- * hard-coded — every embedded widget exposing a `settings.events` array contributes. Three things are
- * then specific to this venue.
+ * The widget renders client-side, so the page carries no events; its boot API returns the calendar as
+ * JSON (ADR-007 §"Selector Strategy" priority 1). The payload shape is shared with
+ * [de.norm.events.scraper.neuezukunft.NeueZukunftApiScraper] — events nest under
+ * `data.widgets.<widgetId>.data.settings.events`, and every embedded widget exposing a
+ * `settings.events` array contributes, so no widget id is hard-coded.
  *
  * **Recurrences are expanded.** The resident night is a *single* entry carrying a weekly repeat rule
  * the widget expands in the browser, so reading only `start.date` would import it once at the series'
- * opening date — long past — and lose every upcoming occurrence. Weekly rules are expanded here into
- * one event per occurrence over a rolling [OCCURRENCE_HORIZON_WEEKS] horizon (bounded further by the
- * rule's own end date or count), which is why `sourceId` combines the widget id with the occurrence
- * date. Other frequencies (Elfsight's `nthDayInMonth` month rules) are **not** expanded — the venue
- * uses none — and contribute their start date alone.
+ * long-past opening date and lose every upcoming occurrence. Weekly rules become one event per
+ * occurrence over a rolling [OCCURRENCE_HORIZON_WEEKS] horizon, bounded further by the rule's own end
+ * date or count, which is why `sourceId` combines the widget id with the occurrence date. Elfsight's
+ * `nthDayInMonth` month rules are not expanded; the venue uses none.
  *
- * **Artists come from the description's links, not its prose.** The roster is written as
- * `ra.co/dj/<slug>` anchors inside the HTML `description`, a machine-readable list whose link text is
- * the DJ's name. The prose around them is not: its lineup headings vary night to night ("Lineup/Musik",
- * "Line-up Live:") and its other lines are door policy and awareness notes, so nothing is minted.
+ * **Artists come from the description's links, not its prose.** The roster is `ra.co/dj/<slug>`
+ * anchors whose link text is the DJ's name; the prose around them varies night to night
+ * ("Lineup/Musik", "Line-up Live:") and its other lines are door policy and awareness notes.
  *
- * **Every night is a party.** Events are typed [PARTY][EventType.PARTY] unless the title opens with
- * the venue's one category marker, `KONZERT:`, which is stripped and makes the remainder the
- * headliner. The widget's own `eventType` vocabulary is ignored: the venue has filled it with
- * weekday/time labels ("Samstag, 14:00") that contradict the event's own `start.time`. Prices appear
- * only in the prose, in too many spellings to parse, and nothing marks a night sold out, cancelled or
- * moved — so prices, `soldOut` and `status` are left unset.
+ * **Every night is a party** unless the title opens with the venue's one category marker, `KONZERT:`,
+ * which is stripped and makes the remainder the headliner. The widget's own `eventType` vocabulary is
+ * ignored: the venue has filled it with weekday labels ("Samstag, 14:00") that contradict `start.time`.
  *
- * The widget returns the **whole calendar**, past nights included; those are dropped centrally at
- * persistence time (`EventUpsertService`), so non-recurring entries are returned as-is.
- *
- * @param clock supplies "today" for the recurrence horizon; override in tests for determinism.
+ * @see HUMBOLDTHAIN_LIMITATIONS for what the source does not publish.
  * @see HumboldthainWebsiteImporter for the HTTP fetch orchestrator.
- * @see <a href="https://www.humboldthain.com/">Humboldthain Club</a>
  */
 class HumboldthainApiScraper(
     private val clock: Clock = Clock.systemDefaultZone()

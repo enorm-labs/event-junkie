@@ -60,6 +60,7 @@ private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
  * @see HeimathafenWebsiteImporter for the HTTP fetch orchestrator and pagination.
  * @see <a href="https://heimathafen-neukoelln.de/wp-json/wp/v2/events">Heimathafen events API</a>
  */
+@Suppress("LongComment") // 6 of these lines are the payload, which names the ACF fields the parser reads.
 class HeimathafenApiScraper(
     /** Clock for the past-performance cut-off. Defaults to the venue's own time zone; override in tests for determinism. */
     private val clock: Clock = Clock.system(BERLIN)

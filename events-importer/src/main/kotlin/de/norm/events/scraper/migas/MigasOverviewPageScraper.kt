@@ -22,40 +22,31 @@ import java.time.OffsetDateTime
 /**
  * Parses migas' WordPress programme page (`/program/`) into [ScrapedEvent]s.
  *
- * The custom `migas` theme renders every upcoming event **twice** into `.events-list`: a
- * summary anchor (`a.event-item`) followed by a sibling modal (`div.event-popup`) holding the
- * full record. The anchor's `href` is `#` — the modal is opened client-side — so there is no
- * detail page to follow and this is a single-page importer. The two halves are joined by the
- * anchor's `data-target`, which is the modal's `#popup-<wp-post-id>` selector rather than
- * document order, so a template that reorders or nests them still parses.
+ * The custom `migas` theme renders every upcoming event **twice** into `.events-list`: a summary
+ * anchor (`a.event-item`) whose `href` is `#`, followed by a sibling modal (`div.event-popup`)
+ * holding the full record. The two are joined by the anchor's `data-target` — the modal's
+ * `#popup-<wp-post-id>` selector — rather than by document order, so a template that reorders or
+ * nests them still parses.
  *
- * The modal is the richer half and supplies every field except the category, which is read
- * from the anchor. Two of its attributes are what make this source cheap and durable:
+ * The modal is the richer half and supplies every field except the category, which is read from the
+ * anchor. Two of its button attributes carry the fields nothing else states: `data-start-date` on the
+ * add-to-calendar button is a full ISO-8601 offset datetime, and the only place the year appears —
+ * every human rendering is year-less (`we · 05.08 · 20:00`) — so no [inferYearForWeekday] is needed
+ * here; `data-url` on the share button is the canonical permalink, supplying `sourceUrl` and the
+ * stable `sourceId` slug.
  *
- *  - **`button[data-target=add-to-calendar]`'s `data-start-date`** carries a full ISO-8601 offset
- *    datetime. The human rendering beside it — and the anchor's date block — is year-less
- *    (`we · 05.08 · 20:00`), so this attribute is the only place the year is stated, which avoids the
- *    weekday-based year inference the retro listings need ([inferYearForWeekday]).
- *  - **`button[data-target=share]`'s `data-url`** is the event's canonical permalink
- *    (`https://migas.berlin/event/<slug>/`), which supplies both `sourceUrl` and the stable
- *    `sourceId` slug.
+ * **Images are lazy-loaded**: every `<img>`'s `src` is an inline SVG placeholder and the real file is
+ * in `data-src`, so the shared [imgSrcAt][de.norm.events.scraper.imgSrcAt] helper would store a
+ * base64 placeholder as every poster.
  *
- * Traps:
- *  - **Images are lazy-loaded**: every `<img>`'s `src` is an inline SVG placeholder data URI
- *    and the real file is in `data-src`. Reading `src` (i.e. the shared
- *    [imgSrcAt][de.norm.events.scraper.imgSrcAt] helper) would store a base64 placeholder as
- *    the poster for every event, so this scraper reads `data-src` explicitly.
- *  - **An event without a share permalink is skipped, not re-keyed.** `sourceId` is the
- *    identity used for idempotent upserts, so falling back to a second scheme (the WordPress
- *    post id on the modal, say) when the share button is missing would re-key the *whole*
- *    programme at once — inserting duplicates and letting stale-cleanup delete the originals.
- *    Dropping the event with a warning is the safer failure.
+ * **An event without a share permalink is skipped, not re-keyed.** `sourceId` is the identity
+ * idempotent upserts turn on, so falling back to a second scheme — the WordPress post id, say —
+ * would re-key the *whole* programme at once, inserting duplicates and letting stale-cleanup delete
+ * the originals. Dropping the event with a warning is the safer failure.
  *
- * **What the source does not carry:** no prices, ticket links, door times, or sold-out and
- * cancellation badges — entry arrangements are not stated on the site at all, so `free` is left to the
- * shared price-based derivation rather than guessed. There is one time per event, taken as
- * `startTime`. The genre field is left empty: the venue's two categories are *formats*, not genres,
- * and the real genre prose ("Somali funk, Ethio-jazz, Sudanese pop") appears only in the description.
+ * There is one time per event, taken as `startTime`. The genre stays empty even though the venue
+ * writes real genre prose ("Somali funk, Ethio-jazz, Sudanese pop") into its descriptions: its two
+ * categories are *formats*, and mining prose for a genre is not something this parser guesses at.
  *
  * @see MigasWebsiteImporter for the fetch side, including why conditional requests are disabled.
  */

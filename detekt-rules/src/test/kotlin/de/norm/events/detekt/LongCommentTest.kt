@@ -42,6 +42,27 @@ class LongCommentTest {
         assertEquals(0, findings.size)
     }
 
+    // Otherwise the rule charges a comment for being paragraphed, and the same words written as one
+    // wall of text cost less than the readable version of themselves (#741).
+    @Test
+    fun `a blank separator between paragraphs is not length`() {
+        val findings =
+            rule.lint(
+                """
+                /**
+                 * One.
+                 *
+                 * Two.
+                 * Three.
+                 */
+                fun f() = Unit
+                """.trimIndent()
+            )
+
+        assertEquals(1, findings.size)
+        assertTrue(findings.single().message.contains("5 lines"), findings.single().message)
+    }
+
     @Test
     fun `treats a run of line comments as one comment`() {
         val findings =

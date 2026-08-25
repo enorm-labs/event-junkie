@@ -22,33 +22,26 @@ import org.springframework.stereotype.Component
  * hatch ADR-007 §"Pagination — First Page Only" leaves open: the programme runs eight to nine pages
  * ahead, ascending by date, so importing the first page would yield the next fortnight and nothing
  * else. The importer walks the paginator's own "nächste" link until the last page renders none,
- * bounded by [MAX_PAGES].
+ * bounded by [MAX_PAGES]. **Following the rendered link, rather than counting `/pageN/` URLs, is what
+ * makes the walk terminate:** TYPO3 clamps an out-of-range page number to the last page and answers
+ * `200` with its rows repeated, so a counting walk would run to its own cap on every import.
  *
- * **Following the rendered link, rather than counting `/pageN/` URLs, is what makes the walk
- * terminate.** TYPO3 clamps an out-of-range page number to the last page and answers `200` with
- * its rows repeated, so a counting walk would never see an end and would run to its own cap on
- * every import.
- *
- * Each surviving row is then enriched from its detail page, which is where the park writes the
- * description, the prices, the doors time and the promoter. A detail page that fails to fetch or
- * parse degrades to the row's own data rather than failing the import.
- *
- * Conditional requests are intentionally **not** used: the entry page's `ETag` covers page 1 alone, so
- * a `304` there would freeze the eight pages behind it, including every event further out than the
- * next fortnight. [ImportResult.Success] is returned with `null` cache headers and the run relies on
- * idempotent `sourceId` upserts.
+ * Each surviving row is enriched from its detail page, which is where the park writes the
+ * description, prices, doors time and promoter; one that fails degrades to the row's own data rather
+ * than failing the import. Conditional requests are intentionally **not** used — the entry page's
+ * `ETag` covers page 1 alone, so a `304` there would freeze the eight pages behind it.
  *
  * **The park's participation formats are deliberately not imported** — see [isProgrammeCategory].
  *
  * **A multi-day run is stored as its opening date.** The park lists a run under one row with a date
- * range — an exhibition across two months, a drone show over three nights, a workshop over a weekend
- * — and the model holds one date per event. The URL stamp gives the opening unambiguously, so that
- * is what is stored; expanding a range into one event per day would invent sixty openings for a
- * two-month exhibition and cannot be told from a genuine multi-night booking.
+ * range — an exhibition across two months, a drone show over three nights — and the model holds one
+ * date per event. The URL stamp gives the opening unambiguously; expanding a range into one event per
+ * day would invent sixty openings for a two-month exhibition and cannot be told from a genuine
+ * multi-night booking.
  *
+ * @see GAERTEN_DER_WELT_LIMITATIONS for what the park does not publish.
  * @see GaertenDerWeltOverviewPageScraper for listing-page parsing, identity, date and pagination.
  * @see GaertenDerWeltDetailPageScraper for the description, prices, doors time and promoter.
- * @see <a href="https://www.gaertenderwelt.de/events/veranstaltungen/">Gärten der Welt programme</a>
  */
 @Component
 class GaertenDerWeltWebsiteImporter(

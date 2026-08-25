@@ -42,7 +42,6 @@ import java.time.format.DateTimeParseException
  *
  * @see UrbanSpreeDetailPageScraper for the primary per-event data source.
  * @see UrbanSpreeWebsiteImporter for the paginated fetch orchestrator.
- * @see <a href="https://www.urbanspree.com/program/">Urban Spree programme</a>
  */
 class UrbanSpreeOverviewPageScraper {
     private val logger = KotlinLogging.logger {}

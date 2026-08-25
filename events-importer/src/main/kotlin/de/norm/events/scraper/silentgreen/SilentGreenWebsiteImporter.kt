@@ -16,35 +16,30 @@ import org.springframework.stereotype.Component
 
 /**
  * Website importer for silent green — the Wedding cultural quarter in a 1911 crematorium, whose
- * TYPO3 (`tx_news`) programme is published one calendar month at a time (`/programm` for the
- * current month, `/programm/<yyyy>/<m>` for the rest).
+ * TYPO3 (`tx_news`) programme is published one calendar month at a time (`/programm` for the current
+ * month, `/programm/<yyyy>/<m>` for the rest).
  *
  * Two shapes of the site drive this class, and both are why it implements [EventImporter] directly
  * rather than extending [de.norm.events.scraper.AbstractTwoPageWebsiteImporter]:
  *
- * 1. **The month walk.** The entry URL serves the current month; this importer then follows the
- *    page's own next-month link forward. Unlike Matrix, the venue *never* drops that link — it
- *    renders an empty calendar for any month you ask for, arbitrarily far ahead — so the walk stops
- *    at the first month with no entries, which is the only end-of-programme signal the site gives.
+ * 1. **The month walk.** The entry URL serves the current month and this importer follows the page's
+ *    own next-month link forward. Unlike Matrix, the venue *never* drops that link — it renders an
+ *    empty calendar for any month you ask for, arbitrarily far ahead — so the walk stops at the
+ *    first month with no entries, the only end-of-programme signal the site gives.
  *    [MAX_MONTH_PAGES] caps it regardless.
  * 2. **Shared detail pages.** A run is listed once per day it is open, so many rows resolve to one
- *    `/programm/detail/<slug>` page — 92 rows over five months for 55 distinct pages at the time of
- *    writing, one exhibition alone accounting for 23. Each distinct page is therefore fetched once
- *    and applied to every day of that run ([SilentGreenEventDetails.applyTo]); a per-event fetch
- *    would re-request the same page 20+ times and be serialised by the per-host politeness throttle.
+ *    `/programm/detail/<slug>` page — 92 rows over five months for 55 distinct pages, one exhibition
+ *    alone accounting for 23. Each distinct page is fetched once and applied to every day of that
+ *    run ([SilentGreenEventDetails.applyTo]); a per-event fetch would re-request the same page 20+
+ *    times and be serialised by the per-host politeness throttle.
  *
  * A detail page that cannot be fetched or parsed is not fatal: those days keep their calendar data,
- * losing only the doors time, poster and blurb.
- *
- * Conditional requests are intentionally **not** used: the site answers `Cache-Control: private,
- * no-store` with neither ETag nor Last-Modified, and even if it sent them, a 304 on the entry page
- * would say nothing about the later months. Every run re-fetches and relies on idempotent
- * `sourceId` upserts — [ImportResult.Success] is returned with `null` cache headers (there is no
- * `NotModified` path).
+ * losing only the doors time, poster and blurb. Conditional requests are intentionally **not** used
+ * — the site answers `Cache-Control: private, no-store` with neither validator, and a 304 on the
+ * entry page would say nothing about the later months.
  *
  * @see SilentGreenMonthPageScraper for the per-month calendar parsing.
  * @see SilentGreenDetailPageScraper for the run-level detail parsing.
- * @see <a href="https://www.silent-green.net/programm">silent green calendar</a>
  */
 @Component
 class SilentGreenWebsiteImporter(

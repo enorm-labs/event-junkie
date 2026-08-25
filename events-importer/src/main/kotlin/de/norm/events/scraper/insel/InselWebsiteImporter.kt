@@ -18,35 +18,29 @@ import java.net.URI
  *
  * The venue's homepage is its programme, rendered by a Gatsby front end over a DatoCMS backend. The
  * served HTML is a React shell, but Gatsby publishes every GraphQL query's result as a static JSON
- * artefact — so the whole programme is available as structured data with no CSS selectors at all
- * (ADR-007 §"Selector Strategy" priority 1).
+ * artefact, so the whole programme is structured data with no CSS selectors (ADR-007 §"Selector
+ * Strategy" priority 1).
  *
  * **The events are in a shared *static* query, not in the page's own `page-data.json`.** Gatsby keys
- * a static query's artefact by a hash of the query text (`/page-data/sq/d/3497155224.json`), which
- * is neither guessable nor stable across a query edit — so the hash is discovered rather than
- * configured:
- * 1. Fetch the page's own `page-data.json`, whose `staticQueryHashes` array lists every static query
- *    the page depends on ([toPageDataUrl]).
- * 2. Fetch each candidate artefact in turn and hand it to [InselApiScraper], stopping at the first
- *    one that *is* the events query — the scraper returns `null` for any other, so a sibling query
- *    publishing the same collection projected down to bare dates is skipped rather than parsed into
- *    title-less events.
- *
- * That costs one extra request plus however many candidates precede the events one (two of six at
- * capture), which a daily import can afford; the alternative — pinning the hash in configuration —
- * would break silently on the venue's next content-model change.
+ * a static query's artefact by a hash of the query text (`/page-data/sq/d/3497155224.json`), which is
+ * neither guessable nor stable across a query edit — so the hash is discovered rather than
+ * configured: fetch the page's own `page-data.json`, whose `staticQueryHashes` array lists every
+ * static query it depends on ([toPageDataUrl]), then hand each candidate to [InselApiScraper] until
+ * one *is* the events query. The scraper returns `null` for any other, so a sibling query publishing
+ * the same collection projected down to bare dates is skipped rather than parsed into title-less
+ * events. That costs one extra request plus however many candidates precede the events one — two of
+ * six at capture — which a daily import can afford, where pinning the hash in configuration would
+ * break silently on the venue's next content-model change.
  *
  * The **programme page** is what the event source stores, not an artefact URL: it is the venue's
  * real, user-facing entry point and doubles as the events' `sourceUrl`, and the
  * `/page-data/<path>/page-data.json` layout it maps onto is a fixed Gatsby convention rather than a
  * per-venue detail (ADR-007: entry-point URL in config, derivation in code).
  *
- * No ETag / Last-Modified conditional request is used — the `etag` / `lastModified` parameters are
- * ignored and every import returns [ImportResult.Success]. The artefacts are regenerated on every
- * site rebuild, so their validators track the build rather than the programme, and re-imports stay
- * cheap because persistence upserts idempotently by `sourceId`.
+ * No conditional request is used: the artefacts are regenerated on every site rebuild, so their
+ * validators track the build rather than the programme.
  *
- * @see InselApiScraper for the JSON parsing logic and the source's limitations.
+ * @see InselApiScraper for the JSON parsing logic.
  * @see <a href="https://www.inselberlin.de/">Kulturhaus Insel Berlin</a>
  */
 @Component

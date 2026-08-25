@@ -35,22 +35,22 @@ import java.time.format.DateTimeFormatter
  * </a>
  * ```
  *
- * Two filters apply. Entries are kept only for the [VelomaxHall] being imported, since all three
- * halls share the page. And the venue's own `data-type` must be a **cultural** one: the arena's
- * biggest strand is handball, volleyball and basketball, and with no `SPORT` event type in the
- * model those fixtures are skipped rather than filed as `OTHER`, which would bury the concerts they
- * sit among. A hall's imported count is therefore well below what its programme page shows.
+ * Two filters apply: entries are kept only for the [VelomaxHall] being imported, and the venue's own
+ * `data-type` must be a **cultural** one. The arena's biggest strand is handball, volleyball and
+ * basketball, and with no `SPORT` type in the model those fixtures are skipped rather than filed as
+ * `OTHER`, which would bury the concerts they sit among — so a hall's imported count is well below
+ * what its programme page shows.
  *
  * **The listing is the only per-session source, which is why the `sourceId` is built here.** A run
  * that plays more than once in a day lists each session separately but links them all to one detail
- * page — `Disney On Ice` has three entries on 13 March 2027 behind a single
- * `…-velodrom-2027-03-13` permalink — so the page slug identifies the *show*, not the performance.
- * Appending the session's start time (`-1830`) is what makes each one its own event; without it
- * `event.source_id`, which is `UNIQUE`, would keep only the first.
+ * page — `Disney On Ice` has three entries on 13 March 2027 behind a single `…-velodrom-2027-03-13`
+ * permalink — so the slug identifies the *show*, not the performance. Appending the session's start
+ * time (`-1830`) is what makes each one its own event; without it `event.source_id`, which is
+ * `UNIQUE`, would keep only the first.
  *
  * @see VelomaxDetailPageScraper for the Microdata detail pages.
- * @see <a href="https://www.velomax.de/events">Velomax events listing</a>
  */
+@Suppress("LongComment") // 11 of these lines are the listing entry, which is what the two filters and the session-time `sourceId` are read off.
 class VelomaxOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
