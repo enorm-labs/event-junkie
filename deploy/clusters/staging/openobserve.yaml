@@ -138,8 +138,7 @@ spec:
       # toward the recoverable mistake.
       ZO_COMPACT_DATA_RETENTION_DAYS: "14"
 
-      # ## The memtable never rotated on size, because the default cannot be reached (#625)
-      #
+      # **The memtable never rotated on size, because the default cannot be reached (#625).**
       # **Two thresholds decide whether ingestion works, and out of the box the smaller one is the
       # wrong one.** Read together, in `v0.92.2`:
       #
@@ -179,8 +178,7 @@ spec:
       # data that no longer exists.
       ZO_MAX_FILE_SIZE_IN_MEMORY: "32"
 
-      # ## Let it report its own pressure — the chart turns this off, the app defaults it on
-      #
+      # **Let it report its own pressure — the chart turns this off, the app defaults it on.**
       # `config.rs:1447` has `ZO_PROMETHEUS_ENABLED` defaulting to **true**; the chart sets it to
       # `false`, so `/metrics` answers 200 with an empty body and **the store that holds every metric
       # exports none of its own**. `zo_ingest_memtable_arrow_bytes` is the exact gauge the overflow
@@ -192,8 +190,7 @@ spec:
       # than after the data is gone.
       ZO_PROMETHEUS_ENABLED: "true"
 
-      # ## An outbound flow nobody decided on
-      #
+      # **An outbound flow nobody decided on.**
       # `ZO_TELEMETRY` defaults to **true** and posts to `https://e1.zinclabs.dev` every 30
       # minutes. It was found while working out what this pod is allowed to connect to, which
       # is the only reason it surfaced at all — nothing here had ever named it.
@@ -205,8 +202,7 @@ spec:
       # documented nowhere we control.
       ZO_TELEMETRY: "false"
 
-      # ## An alert has to have a destination, and every in-cluster URL is refused
-      #
+      # **An alert has to have a destination, and every in-cluster URL is refused.**
       # #271's alert rules cannot be created without one — `POST /api/v2/{org}/alerts`
       # returns `Alert destination or workflows is required`, with or without
       # `creates_incident`. And **every destination inside the cluster is rejected by an

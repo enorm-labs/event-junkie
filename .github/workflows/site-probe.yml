@@ -7,15 +7,13 @@ name: Public Site Probe
 # indistinguishable from health. So this runs on GitHub's infrastructure — off Hetzner, notifying
 # through healthchecks.io's own channel and never through the in-cluster bridge.
 #
-# ## It is a *conditional* ping, and that is the whole design
-#
+# **It is a *conditional* ping, and that is the whole design.**
 # A bare heartbeat proves the cron ran. This resolves the hostname, fetches the site over the public
 # internet, and asserts both the status code and expected content **before** pinging. That way one
 # check also catches DNS failure, an expired certificate, ingress misrouting and an application
 # error — none of which a heartbeat would notice.
 #
-# ## Why it is inert today, and how it wakes up
-#
+# **Why it is inert today, and how it wakes up.**
 # **There is nothing public to probe yet.** Staging is deliberately not on the internet at all
 # (PLATFORM_SETUP §4a: no public `A` record, no public 80/443, Ingress on the WireGuard tunnel), and
 # production is #285, still blocked. Scheduling a probe against a host that does not resolve would
@@ -26,8 +24,7 @@ name: Public Site Probe
 # (`hashFiles` in build-backend.yml, the Kustomize resource list in #416). Add the secret when the
 # production deploy lands and it starts working with no change here.
 #
-# ## Do not self-host the other end
-#
+# **Do not self-host the other end.**
 # healthchecks.io is external on purpose. A dead-man's switch on the infrastructure it monitors
 # cannot report that infrastructure's death — the same argument as the first paragraph, one layer
 # out. The account already exists and `wal-g`'s backup drill pings it (infra/AGENTS.md).

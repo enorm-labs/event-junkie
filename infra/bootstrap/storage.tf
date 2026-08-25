@@ -1,13 +1,13 @@
 # Object Storage buckets that CAN be declared.
 #
 # `-tfstate` is not here and never will be: a state backend cannot be managed by the state it holds
-# (README.md §"Why the state bucket is hand-made"). Both others now are — `-o2` since #271, and
-# `-backups` since #586 answered the question this file used to defer.
+# (README.md §"Why the state bucket is hand-made"). Both others are, `-o2` per #271 and `-backups`
+# per #586.
 
-# Adopting the bucket that already exists, rather than creating one (2026-08-20).
+# Adopting the bucket that already exists, rather than creating one.
 #
-# **`event-junkie-o2` was made by hand on 2026-08-10, in the same minute as `-tfstate` and
-# `-backups`** — all three at 19:43, by the same account. It was never a new bucket to create, and
+# **`event-junkie-o2` was made by hand, in the same minute as `-tfstate` and `-backups`** — all three
+# by the same account. It was never a new bucket to create, and
 # README.md said so in the present tense all along: "the other two buckets (`-o2` for OpenObserve,
 # `-backups` for `wal-g`) _could_ be declared that way when their issues land". Their issue landed;
 # the bucket was already sitting there.
@@ -88,7 +88,7 @@ resource "minio_s3_bucket_lifecycle" "o2" {
 # --- the wal-g backup bucket, and the rule the privacy notice rests on ---------------------------
 
 # Adopted, not created — the same situation `-o2` was in, and for the same reason: all three buckets
-# were made by hand on 2026-08-10 at 19:43. See the block above for why an `import` block beats
+# were made by hand. See the block above for why an `import` block beats
 # `tofu import` on the command line, and why deleting the `resource` while leaving the `import` is
 # the one move that must not happen.
 import {
@@ -111,31 +111,24 @@ resource "minio_s3_bucket" "backups" {
 
 # **The control that makes the privacy notice true when nothing of ours is running (#586).**
 #
-# Unlike the `-o2` rule above, this is not a backstop under an application-level control that the
-# notice actually rests on. **Whenever the node is down, this rule IS the retention**, because the
-# only other enforcement is the nightly `wal-g delete` sweep on that node — and a sweep cannot run
-# on a machine that is off. That is the whole of #586: an outage over a long weekend silently
-# extended the window, the longer the outage the further the drift, and nothing reported it.
+# Unlike the `-o2` rule above, this is not a backstop under an application-level control. **Whenever
+# the node is down, this rule IS the retention**, because the only other enforcement is the nightly
+# `wal-g delete` sweep on that node, and a sweep cannot run on a machine that is off. That is the
+# whole of #586: an outage silently extended the window, the longer the outage the further the drift,
+# and nothing reported it.
 #
-# ## Why 35 and not 30
+# **Why 35 and not 30.** The sweep runs `wal-g delete before FIND_FULL <30 days ago>`, which finds
+# the last *full* backup before the cutoff and deletes only what precedes it — so it deliberately
+# keeps a backup older than 30 days whenever that backup is what makes the rest of the window
+# restorable. With a daily base backup (`walg-basebackup.timer`) the real window is about 31 days. A
+# rule at exactly 30 would delete that base backup while the WAL segments depending on it survived:
+# not an expiry but an unrestorable gap at the oldest end, which #270's restore drill would not find,
+# because a drill restores something recent.
 #
-# The sweep runs `wal-g delete before FIND_FULL <30 days ago>`, which finds the last *full* backup
-# before the cutoff and deletes only what precedes it. It therefore keeps a backup older than 30
-# days on purpose, whenever that backup is the thing making the rest of the window restorable. With
-# a daily base backup (`walg-basebackup.timer`) the real window is about 31 days on a healthy
-# schedule.
-#
-# A rule at exactly 30 would delete that base backup while the WAL segments depending on it
-# survived. That is not an expiry, it is an unrestorable gap at the oldest end of the window — and
-# #270's restore drill would not find it, because a drill restores something recent.
-#
-# ## Why 35 and not 90
-#
-# `-o2` can afford 90 because OpenObserve's own compactor is the control the notice rests on, so
-# the backstop's distance from the real figure costs nothing. Here there is no second control: every
-# day of slack is a day the notice has to admit to. Five days buys the chain its margin and no more,
-# which is why the notice now states 30 in the ordinary case and 35 as the ceiling rather than
-# promising a number this rule cannot keep.
+# **Why 35 and not 90.** `-o2` can afford 90 because OpenObserve's own compactor is the control the
+# notice rests on, so the backstop's distance costs nothing. Here there is no second control and
+# every day of slack is a day the notice has to admit to. Five days buys the chain its margin and no
+# more, which is why the notice states 30 in the ordinary case and 35 as the ceiling.
 #
 # **The number is duplicated across stacks and cannot be otherwise.** The sweep's window is
 # `backup_retention_days` in `modules/environment`; a bootstrap-stack rule cannot read it. Move one,

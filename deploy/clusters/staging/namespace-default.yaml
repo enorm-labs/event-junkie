@@ -5,8 +5,7 @@
 # `restricted` on an empty namespace costs nothing today and is what stops it quietly becoming
 # somewhere things run.
 #
-# ## `prune: disabled` is not optional here
-#
+# **`prune: disabled` is not optional here.**
 # `gotk-sync.yaml` sets `prune: true`, so a resource removed from this directory is **deleted from
 # the cluster**. For every other file here that is the correct behaviour and the whole point of
 # GitOps. For this one it would mean deleting the `default` namespace — along with anything anybody

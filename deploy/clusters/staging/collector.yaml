@@ -1,20 +1,13 @@
-# The metrics and logs collector — #271 item 2, and the reason OpenObserve currently holds nothing.
+# The metrics and logs collector — #271 item 2.
 #
-# #415 built the meters and #590 annotated the pods so a collector can find them. **Nothing was
-# collecting.** OpenObserve has been running since 2026-08-20 storing only records fed to it by hand
-# to prove the bucket works.
+# **Two charts, and the order is not a preference.** The collector chart renders
+# `OpenTelemetryCollector` and `Instrumentation` custom resources, and **Helm resolves kinds up
+# front**, so installing it before the operator's CRDs exist fails with `ensure CRDs are installed
+# first` rather than waiting. Same shape as the Traefik CRD wait `scripts/k3d-rehearsal.sh` already
+# performs for the application chart. `dependsOn` below makes that ordering a property of the config
+# rather than of whoever applies it.
 #
-# ## Two charts, and the order is not a preference
-#
-# The collector chart renders `OpenTelemetryCollector` and `Instrumentation` custom resources, and
-# **Helm resolves kinds up front** — so installing it before the operator's CRDs exist fails with
-# `ensure CRDs are installed first`, not with a wait. Found on a k3d rehearsal, and it is the same
-# shape as the Traefik CRD wait `scripts/k3d-rehearsal.sh` already performs for the application
-# chart. `dependsOn` below is what makes that ordering a property of the config rather than of
-# whoever applies it.
-#
-# ## What the rehearsal established, so it is not rediscovered
-#
+# What the rehearsal established:
 # - **The agent does not scrape the app pods; the gateway does.** The agent's metrics pipeline is
 #   `kubeletstats` and `hostmetrics` only. The `prometheus` receiver with the autodiscovery job lives
 #   in the gateway, so a pod is scraped from wherever the gateway runs — which is what made the
@@ -171,41 +164,32 @@ spec:
         headers:
           stream-name: k8s_events
 
-    # ## Stripping the identity attributes that churn — metrics only
+    # **Stripping the identity attributes that churn — metrics only.** Every metric arrives with about
+    # 29 resource attributes, a dozen of which change when a pod is replaced, and a new value in any
+    # one is a NEW TIME SERIES. A pod restart starting a new series is defensible — a counter really
+    # did reset. **A deploy starting one is not**: `container.image.tag` is a snapshot version, so
+    # every push to main multiplies the series count for every metric that pod emits, permanently,
+    # until retention expires it. Measured on staging, a bare `db_events` returned **six series in one
+    # hour** for what is logically two, and an *instant* PromQL query at `now` returned **nothing**, the
+    # newest series not having been written inside the lookback window — a silently empty panel.
     #
-    # **Every metric arrives carrying about 29 resource attributes**, and a dozen of them change
-    # whenever a pod is replaced. A new value in any one of them is a NEW TIME SERIES, so:
+    # **`k8s.pod.name` is deliberately KEPT.** Dropping it would merge two replicas of one deployment
+    # into a single series, and for a counter that is not a tidier graph but a wrong one. Everything
+    # deleted below is per-deploy churn or a duplicate of something kept.
     #
-    #   - a pod restart starts a new series, which is defensible — a counter really did reset;
-    #   - **a deploy also starts a new series**, which is not. `container.image.tag` is a snapshot
-    #     version (`0.1.1-snapshot.20260820145738.g12be9a8`), so every push to main multiplies the
-    #     series count for every metric the pod emits, permanently, until retention expires it.
-    #
-    # Measured on staging: a bare `db_events` returned **six series in one hour** for what is
-    # logically two, and an *instant* PromQL query at `now` returned **nothing at all**, because the
-    # newest series had not been written within the lookback window. That is the failure mode this
-    # prevents — not an error, just a panel that is silently empty.
-    #
-    # **`k8s.pod.name` is deliberately KEPT.** Dropping it would merge two replicas of the same
-    # deployment into one series, and for a counter that is not a tidier graph but a wrong one.
-    # Everything deleted below is either per-deploy churn or a duplicate of something kept.
-    #
-    # **Metrics only, not logs or traces.** A pod name in a log line is how you find the log; the
-    # `logs/k8s_events` and `traces` pipelines are left alone. This is also why the deletions are a
-    # separate processor rather than a narrower `k8sattributes.extract.metadata` list — that setting
-    # is shared by all three pipelines.
-    #
-    # **This changes nothing about the agent**, which is a separate collector and the only thing
-    # holding `kubeletstats`. Its `k8s_pod_*` metrics keep their pod names, which they need: there
-    # the pod IS the subject of the measurement rather than a label on it.
+    # **Metrics only, not logs or traces.** A pod name in a log line is how you find the log, so the
+    # `logs/k8s_events` and `traces` pipelines are left alone — which is why this is a separate
+    # processor rather than a narrower `k8sattributes.extract.metadata` list, that setting being
+    # shared by all three pipelines. **The agent is unaffected**: a separate collector, the only thing
+    # holding `kubeletstats`, whose `k8s_pod_*` metrics need their pod names because there the pod IS
+    # the subject rather than a label on it.
     #
     # **Nested under `gateway:`, unlike `exporters:` above.** The chart puts `exporters` at the top
     # level because both collectors share them, but `processors` and `service` exist once per
-    # collector — so the same keys at the top level are silently ignored, and the render looks fine
-    # while the processor is simply absent. `helm template` plus a `yq` query for the processor is
-    # what catches that; the rendered pipeline list is not enough on its own.
-    # ## Both collectors ship with `resources: {}`, and that is how a node dies
-    #
+    # collector, so the same keys at the top level are silently ignored and the render looks fine
+    # while the processor is absent. `helm template` plus a `yq` query catches that; the rendered
+    # pipeline list is not enough.
+    # **Both collectors ship with `resources: {}`, and that is how a node dies.**
     # **The chart sets no requests and no limits on either collector**, with the "conscious choice for
     # the user" comment that upstream charts use — and until now the choice was never made. The
     # gateway was measured at **928Mi with nothing above it**: not scheduled against, not capped, free
@@ -254,8 +238,7 @@ spec:
           cpu: "1"
 
       processors:
-        # ## Dropping the metrics nothing here will ever query
-        #
+        # **Dropping the metrics nothing here will ever query.**
         # **One metric was 47% of every row stored and 38% of the bytes**: the k3s API server's
         # `apiserver_request_duration_seconds` histogram, at 385,752 rows and 278 MB. Its cardinality
         # is verb x resource x scope x bucket, so it is enormous on a cluster doing almost nothing.
@@ -276,8 +259,7 @@ spec:
         # the application's metrics. `importer_source_last_success`, the meter the whole project
         # cares about, is 0.7% of rows.
         #
-        # ## What is dropped, and the principle
-        #
+        # **What is dropped, and the principle.**
         # **Runtime internals of software we do not operate, and histograms of it.** `go_*` describes
         # the garbage collector of controllers Kubernetes already restarts when they fail; nothing
         # here would act on it. The histograms are the same argument plus a cardinality multiplier.
@@ -393,8 +375,7 @@ spec:
 
       service:
         pipelines:
-          # ## Twenty-seven object kinds, six of which anybody would look at
-          #
+          # **Twenty-seven object kinds, six of which anybody would look at.**
           # The chart's `logs/k8s_events` pipeline watches **every** workload, RBAC and networking
           # kind in the cluster. Counted from the gateway's own receiver metrics over 48 hours, that
           # produced 40,981 log records, of which:

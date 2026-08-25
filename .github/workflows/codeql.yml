@@ -14,8 +14,7 @@ name: CodeQL
 # the deadlock the required-checks work (#443) warned about and could not see, because until #579
 # nobody had ever opened a pull request from a fork.
 #
-# ## The property that makes this work on the fork path
-#
+# **The property that makes this work on the fork path.**
 # A fork's `GITHUB_TOKEN` is read-only, so `security-events: write` is never granted and the upload
 # to Code Scanning would fail with 403 — turning the check red instead of Pending, which is not an
 # improvement. `analyze` therefore takes `upload: never` on that path: the analysis still runs, the

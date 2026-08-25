@@ -87,8 +87,7 @@ module "environment" {
   # from a SCRAM hash. docs/ops/CLUSTER_BOOTSTRAP.md §Rebuilding a node is the procedure, and
   # AGENTS.md records the trap: a rebuild needs `ALTER ROLE events PASSWORD ...`, not `CREATE ROLE`.
   #
-  # ## Availability here is advertised, not promised, and it lies in BOTH directions
-  #
+  # **Availability here is advertised, not promised, and it lies in BOTH directions.**
   # **cax11/cax21 (ARM) still cannot be bought in nbg1.** Re-probed 2026-08-20 by placing a real
   # order for a bare cax21 with no IPs, no network and no firewall: refused in 0.1s with
   # `HTTP 422 invalid_input: unsupported location for server type`, the same error three cax11
