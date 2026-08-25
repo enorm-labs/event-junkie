@@ -44,7 +44,7 @@
 # `netty-transport-native-*`, so Netty runs its NIO transport on both. The remaining musl difference
 # that matters is DNS resolution, and the database is reached by hostname over the private network —
 # which the k3d rehearsal and the chart's in-cluster `helm test` are what actually exercise.
-FROM bellsoft/liberica-openjre-alpine:25@sha256:2f5382a899d9d218183d43e3a081ed73ad29567dd711f886e8772ba2975127ad
+FROM bellsoft/liberica-openjre-alpine:25@sha256:33b92304b3abdad54fb937224adcab07febad199180867d51be0fcd9da340ee4
 
 # Supplied by the build; both default to something obviously wrong rather than to a plausible lie.
 ARG VERSION=unspecified
