@@ -233,10 +233,11 @@ spec:
           cpu: "1"
 
       processors:
-        # **Dropping the metrics nothing here will ever query.** One metric is 47% of every row
-        # stored and 38% of the bytes: the k3s API server's `apiserver_request_duration_seconds`
-        # histogram, at 385,752 rows and 278 MB, its cardinality verb x resource x scope x bucket on
-        # a cluster doing almost nothing. Measured across 983 streams / 822,942 rows / 729 MB:
+        # comment-lint: allow the six-line measurement is what every drop rule below is argued from.
+        # **Dropping the metrics nothing here will ever query.** The k3s API server's
+        # `apiserver_request_duration_seconds` histogram alone is 47% of every row stored and 38% of
+        # the bytes — 385,752 rows, 278 MB, cardinality verb x resource x scope x bucket on a cluster
+        # doing almost nothing. Measured across 983 streams / 822,942 rows / 729 MB:
         #
         #     apiserver_*            51.5% of rows, 41.9% of bytes   (10 streams)
         #     kube_*                 10.9%           8.1%
@@ -245,29 +246,23 @@ spec:
         #     workqueue_*             2.9%           4.2%
         #     process_* rest_client_* 1.0%           1.3%   <- process_ deliberately NOT dropped
         #
-        # The volume is never in the application's own metrics: `importer_source_last_success`, the
-        # meter the whole project cares about, is 0.7% of rows.
+        # The application's own meters are never the volume: `importer_source_last_success`, the one
+        # the whole project cares about, is 0.7% of rows. **What goes is runtime internals of
+        # software we do not operate, and histograms of it** — `go_*` describes the garbage collector
+        # of controllers Kubernetes already restarts when they fail. **`apiserver_request_total` is
+        # deliberately KEPT** while its duration histogram goes: the count carries "is the API server
+        # erroring", which is what mattered during the OOM in #271, and `_count`/`_sum` survive
+        # elsewhere, so a mean is available where a percentile is not. **Our own meters are
+        # untouched**, verified per family against live data rather than assumed from the prefix —
+        # which is how the `process_` trap below was caught — as are `pg_*`, `k8s_*`, `system_*`,
+        # `container_*`, `certmanager_*`, `traefik_*`, `jvm_*` and `kube_*`.
         #
-        # **What is dropped: runtime internals of software we do not operate, and histograms of it.**
-        # `go_*` describes the garbage collector of controllers Kubernetes already restarts when they
-        # fail; nothing here would act on it, and the histograms are that argument plus a cardinality
-        # multiplier. **`apiserver_request_total` is deliberately KEPT** while its duration histogram
-        # goes: the count carries "is the API server erroring", which is what mattered during the OOM
-        # in #271, and `_count`/`_sum` survive elsewhere, so a mean is available where a percentile is
-        # not.
-        #
-        # **Our own meters are untouched**, verified per family against live data rather than assumed
-        # from the prefix — which is how the `process_` trap below was caught — as are `pg_*`,
-        # `k8s_*`, `system_*`, `container_*`, `certmanager_*`, `traefik_*`, `jvm_*` and `kube_*`. The
-        # four alerts #271 owes (disk filling, certificate expiry, site down, importer failing) are
-        # written against those, and `kube_pod_*` is how a restart loop becomes visible.
-        #
-        # **Filtered by BASE NAME, not by the `_bucket` suffix**, which is the trap. OpenObserve
-        # shows `apiserver_request_duration_seconds_bucket` as a stream, but that name does not exist
-        # in this pipeline: the Prometheus receiver rebuilds the histogram into one OTLP metric named
-        # `apiserver_request_duration_seconds`, and OpenObserve re-expands it at ingest. A rule
-        # matching `_bucket$` here matches nothing and looks like it worked. The give-away is the
-        # bare stream sitting at `docs=0` beside the three suffixed ones.
+        # **Filtered by BASE NAME, not by the `_bucket` suffix**, which is the trap. OpenObserve shows
+        # `apiserver_request_duration_seconds_bucket` as a stream, but that name does not exist here:
+        # the Prometheus receiver rebuilds the histogram into one OTLP metric named
+        # `apiserver_request_duration_seconds`, which OpenObserve re-expands at ingest. A rule
+        # matching `_bucket$` matches nothing and looks like it worked; the give-away is the bare
+        # stream at `docs=0` beside the three suffixed ones.
         filter/drop_infrastructure_noise:
           # A condition that fails to evaluate skips rather than tearing down the pipeline. OTTL is
           # parsed at startup, so a syntax error still fails fast and visibly.
@@ -354,6 +349,7 @@ spec:
 
       service:
         pipelines:
+          # comment-lint: allow the five-line count is what says which kinds are worth watching.
           # **Twenty-seven object kinds, six of which anybody would look at.** The chart's
           # `logs/k8s_events` pipeline watches **every** workload, RBAC and networking kind in the
           # cluster: 40,981 log records over 48 hours, counted from the gateway's own receiver
@@ -365,14 +361,13 @@ spec:
           #     nodes       571
           #     the rest  1,379  across 23 kinds, 14 of them at zero
           #
-          # **`crds` is not a watch, it is a `mode: pull` every five minutes** — the full spec and
-          # status of every CustomResourceDefinition, which on a cluster running Flux, cert-manager
-          # and the OTel operator is a great deal of YAML nobody will query. The chart's
+          # **`crds` is not a watch, it is a `mode: pull` every five minutes** of the full spec and
+          # status of every CustomResourceDefinition — on a cluster running Flux, cert-manager and
+          # the OTel operator, a great deal of YAML nobody will query. The chart's
           # `transform/strip_crd_spec` processor exists only to make that receiver survivable, so it
-          # comes out of the list below too. **Re-adding `k8sobjects/crds` means re-adding it.**
-          #
-          # Each kind is also a client-go informer holding its object set in the gateway's heap, so
-          # 21 fewer of them is the other half of why that pod sat at 928Mi.
+          # comes out below too: **re-adding `k8sobjects/crds` means re-adding it.** Each kind is
+          # also a client-go informer holding its object set in the gateway's heap, so 21 fewer of
+          # them is the other half of why that pod sat at 928Mi.
           #
           # **What is kept:** `events` (OOMKilled, FailedScheduling, ImagePullBackOff — the stream
           # read after an incident); `pods`, for the phase *transition* and its timestamp, which
@@ -380,14 +375,11 @@ spec:
           # like MemoryPressure that nothing else watches; `deployments` for the three application
           # workloads; `statefulsets` for OpenObserve and this gateway, which are what break; and
           # `daemonsets` for the agent, at zero records, which is what healthy looks like.
-          #
-          # **`jobs` and `cronjobs` are dropped and deliberately named**, because the reason is
-          # "nothing here is one yet" rather than "they do not matter" — the importer is a Deployment
-          # with its own scheduler and the backups are systemd timers on the node. The day either
-          # becomes a Job, this list is where that gets noticed.
-          #
-          # **This does not shrink the ClusterRole.** The chart grants get/list/watch on all of these
-          # statically, so the permission survives the watch. Worth its own change; not this one.
+          # **`jobs` and `cronjobs` are dropped and deliberately named**, the reason being "nothing
+          # here is one yet" rather than "they do not matter" — the importer is a Deployment with its
+          # own scheduler and the backups are systemd timers. **This does not shrink the
+          # ClusterRole**: the chart grants get/list/watch on all of these statically, so the
+          # permission survives the watch.
           logs/k8s_events:
             receivers:
               - k8sobjects/events
