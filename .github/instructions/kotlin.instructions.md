@@ -35,19 +35,18 @@ How code here is written, and where its versions and thresholds live. Comments h
   `springdoc.version`), read in the module build scripts via `property("…")`; plugin versions in `settings.gradle.kts`
   `pluginManagement`. They live in `gradle.properties` rather than root `extra[...]` because Gradle 10 removes the implicit lookup of parent-project properties
   that the `extra[...]` form depended on.
-    - **`gradle.properties` also holds a second, different kind of entry** — the "Spring Boot BOM overrides (CVE remediation)" block (`netty.version`,
-      `postgresql.version`, `log4j2.version`, `jackson-2-bom.version`, `jackson-bom.version`) plus `scram.version`. These are **not** ordinary project versions
-      and must not be bumped on sight. Each overrides a version the Spring Boot BOM would otherwise manage, and exists only because the BOM's version carries a
-      known CVE. `io.spring.dependency-management` resolves BOM properties from Gradle project properties, so naming the BOM's own property here is enough to
-      reach every module that applies the Boot plugin.
-    - **They are temporary by design: delete each one once a Spring Boot release ships an equal or newer version.** An override kept past its purpose pins the
-      project _behind_ the BOM, so later Boot upgrades stop raising that dependency and the staleness is invisible. `/update-dependencies` checks this on every
-      run.
-    - Two dependencies are not BOM-managed at all and are pinned by `constraints` blocks instead: **`scram.version`** (a transitive of `r2dbc-postgresql`, which
-      pins the vulnerable version in every release) in both Boot modules, and **`log4j2.version`** reused in `events-core`. That last one matters —
-      `events-core` applies `io.spring.dependency-management` but **not** the Boot plugin, so no BOM override reaches it. Importing the Boot BOM there is not a
-      fix: without the Boot plugin nothing aligns the BOM's `kotlin.version`, and `compileKotlin` fails with a null plugin classpath. **When adding a BOM
-      override, check `events-core` separately — verifying only the two Boot modules will report success while this one keeps the vulnerable version.**
+    - **`gradle.properties` also holds a second, different kind of entry** — `log4j-api.version` and `scram.version`, under "Pins that are not ordinary project
+      versions". Neither is BOM-managed and neither may be bumped on sight. **`scram`** is a transitive of `r2dbc-postgresql`, which pins the vulnerable version
+      in every release, and is raised by a `constraints` block in both Boot modules. **`log4j-api`** is a direct dependency of `events-core`, which applies
+      `io.spring.dependency-management` but **not** the Boot plugin — so no BOM reaches it and that property is the only thing choosing a version. Importing the
+      Boot BOM there is not a fix: without the Boot plugin nothing aligns the BOM's `kotlin.version`, and `compileKotlin` fails with a null plugin classpath.
+    - **A CVE-remediation override is temporary by design: delete it once a Spring Boot release ships an equal or newer version.** Setting a BOM property name
+      in `gradle.properties` overrides it for every module applying the Boot plugin, which is how such an override is written — and an override kept past its
+      purpose pins the project _behind_ the BOM, so later Boot upgrades stop raising that dependency and the staleness is invisible. `/update-dependencies`
+      checks this on every run. Boot 4.1.1 emptied the block, so there is nothing here overriding the BOM today.
+    - **`log4j-api.version` is deliberately not called `log4j2.version`.** That is the BOM's own property, and a pin `events-core` needs would silently become
+      an override every Boot module resolves — the trap above, entered by naming rather than by intent. **When pinning for `events-core`, check whether the name
+      collides with a BOM property**; verifying only the two Boot modules reports success either way.
 - Use `val` for injected dependencies; constructor injection only (no field injection).
 - Application config files use **`.yaml`** extension (not `.yml`).
 - Kotlin compiler flags: `-Xjsr305=strict` (all modules) and `-Xannotation-default-target=param-property` (BFF + importer) are set in `compilerOptions`.

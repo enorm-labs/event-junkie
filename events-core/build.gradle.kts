@@ -50,7 +50,7 @@ dependencies {
     // Consumers of the published artifact resolve log4j through their own BOM; this constraint is
     // about this module's own classpath, which is what the CVE scan sees.
     constraints {
-        implementation("org.apache.logging.log4j:log4j-api:${property("log4j2.version")}") {
+        implementation("org.apache.logging.log4j:log4j-api:${property("log4j-api.version")}") {
             because("2.25.4 (via spring-modulith-starter-core) is affected by CVE-2026-49844, fixed in 2.25.5")
         }
     }
