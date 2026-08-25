@@ -393,7 +393,7 @@ variable "backup_retention_days" {
   description = <<-EOT
     How far back point-in-time recovery reaches, in days.
 
-    **This is a number the privacy notice has to state** (#277, and it now does), not only an ops
+    **This is a number the privacy notice has to state** (#277), not only an ops
     setting.
 
     **Enforced twice, and the second one is not in this stack.** This value drives the nightly

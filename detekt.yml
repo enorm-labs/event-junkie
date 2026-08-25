@@ -10,24 +10,21 @@ style:
 event-junkie:
   LongComment:
     active: true
-    # A cap on how long one comment may be, not a target. What makes a comment long here is nearly
-    # always restated code, a history of how it got this way, or a decision copied out of AGENTS.md
-    # or an ADR instead of referenced. See the "Comments and KDoc" section of AGENTS.md.
-    #
-    # A comment that genuinely needs more is `@Suppress("LongComment")` on the declaration: an
+    # A cap, not a target. What makes a comment long here is nearly always restated code, a history
+    # of how it got this way, or a decision copied out of AGENTS.md or an ADR instead of referenced.
+    # One that genuinely needs more takes `@Suppress("LongComment")` on the declaration — an
     # explicit decision, visible in review, rather than a threshold raised until nothing fires.
     maxLines: 25
     # Venue sub-packages only, not `scraper/` itself: the files directly under it are shared service
     # code, and the old `**/scraper/**` glob exempted 3,561 comment lines of it at 54% density (#714).
     excludes: ['**/scraper/*/**']
 
-  # Venue sub-package KDoc is the designated home for accepted limitations — a field a venue never
-  # publishes, a signal the parser cannot express — and that prose is load-bearing: it is what stops
-  # the same non-defect being re-reported by every data-quality audit. So it gets a higher cap rather
-  # than an exemption (#714): 58 venue comments exceed 25 and only 11 exceed 40, so the cap reaches
-  # the outliers and leaves the band the good prose occupies. **A suppression here must name the
-  # instance — `@Suppress("LongComment/venue")`; the bare rule name does not match.** See the
-  # "Where a finding goes" table in AGENTS.md.
+  # Venue sub-package KDoc is the designated home for accepted limitations, and that prose is
+  # load-bearing: it is what stops the same non-defect being re-reported by every data-quality
+  # audit. So it gets a higher cap rather than an exemption (#714) — 58 venue comments exceed 25 and
+  # only 11 exceed 40, so the cap reaches the outliers and leaves the band good prose occupies.
+  # **A suppression here must name the instance — `@Suppress("LongComment/venue")`; the bare rule
+  # name does not match.**
   CommentDensity:
     active: true
     # The per-file backstop under `scripts/comment-density.sh`, which ratchets the totals per area.
@@ -35,9 +32,9 @@ event-junkie:
     # with code between it. 70 is measured: it catches an outlier rather than re-litigating every
     # dense file, which 65 would.
     maxPercent: 70
-    # A ratio needs mass behind it to mean anything. `EventsSchema.kt` is one `const val` and the
-    # reasoning for it — 22 comment lines out of 24, and nothing about that is a defect. Below this
-    # floor a file is a declaration with its rationale attached, not prose with code between it.
+    # A ratio needs mass behind it. `EventsSchema.kt` is one `const val` and its reasoning — 22
+    # comment lines of 24, and nothing about that is a defect. Below this floor a file is a
+    # declaration with its rationale attached, not prose with code between it.
     minCommentLines: 25
 
   CommentSmell:

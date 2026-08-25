@@ -349,7 +349,7 @@ networkPolicy:
     # management port to every pod in the cluster — and `/actuator/**` is private precisely because
     # nothing routes it.
     #
-    # `ipBlock` exists because a k3d rehearsal on 2026-08-19 found the selector form silently
+    # `ipBlock` exists because a k3d rehearsal found the selector form silently
     # refused when collector and target sat on **different nodes**: cross-node pod traffic is SNAT'd,
     # so the source address matches no pod or namespace selector and only a CIDR does. **That is
     # very likely a multi-node artifact and not a production one** — ADR-012 puts everything on a

@@ -34,8 +34,8 @@ on:
     # Every fifteen minutes, off-the-hour for the reason every other scheduled workflow here gives:
     # the top of the hour is a stampede on shared runners, and a delayed probe is a false alarm.
     #
-    # **GitHub's scheduler is not punctual and occasionally skips runs entirely** — during the
-    # 2026-08-06 Actions incident it dropped ~85% of webhooks. The healthchecks.io *grace period* is
+    # **GitHub's scheduler is not punctual and occasionally skips runs entirely** — an Actions
+    # incident can drop most webhooks outright. The healthchecks.io *grace period* is
     # what absorbs that, and it belongs on the check rather than here: set the period to 15 minutes
     # and the grace to at least 30, so one missed run is tolerated and two are not.
     - cron: '7,22,37,52 * * * *'

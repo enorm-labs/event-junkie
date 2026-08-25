@@ -17,9 +17,9 @@ on:
     # `detect-changes` job below, which is what keeps a documentation-only pull request from paying
     # for a 7-minute Gradle build: the work is skipped, the context still reports. The `push:` filter
     # above keeps its paths — nothing requires those runs.
-  # Manual trigger, for when the automatic ones cannot be relied on: during the 2026-08-06 Actions
-  # outage GitHub dropped ~85% of webhooks, so four PRs merged with no run ever created — and
-  # `gh run rerun` is no help when there is no run to re-run. Ignores the path filters above, so it
+  # Manual trigger, for when the automatic ones cannot be relied on: an Actions incident can drop
+  # most webhooks, and pull requests then merge with no run ever created — `gh run rerun` is no help
+  # when there is no run to re-run. Ignores the path filters above, so it
   # also serves "build this ref anyway". Pick the branch to run it on from the Actions tab, or
   # `gh workflow run build-backend.yml --ref <branch>`.
   workflow_dispatch:
@@ -135,13 +135,6 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "---" >> $GITHUB_STEP_SUMMARY
           done
-
-      # The SARIF uploads used to sit here, between detekt and the build. They have moved to the end
-      # of the job with everything else that talks to the GitHub API (#507) — `success() || failure()`
-      # keeps them running whether or not something above went wrong, and the reports detekt wrote
-      # are still on disk, so nothing about their behaviour changes. What changes is that an upload
-      # failing can no longer skip the compilation, the tests or the image build that used to follow
-      # it.
 
       # `-x koverVerify` alongside `-x test`: `koverVerify` is attached to `check` (so a local
       # `./gradlew build` enforces the coverage floors), but skipping tests means there is no
@@ -393,7 +386,7 @@ jobs:
       # but does not fail the job, so PRs are never blocked by the dependency scan.
       # --no-configuration-cache: the Dependency-Check plugin's Aggregate task reaches for
       # `project` at execution time and so cannot be used with the configuration cache
-      # (enabled in gradle.properties). Still true as of 13.0.0 — upstream PR #478 is open.
+      # (enabled in gradle.properties). Upstream PR #478, open at 13.0.0, would remove the need.
       - name: Run OWASP Dependency-Check
         id: depcheck
         continue-on-error: true

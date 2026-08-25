@@ -257,9 +257,8 @@ jobs:
       #
       #     The CodeQL Action does not support uploading multiple SARIF runs with the same category.
       #
-      # It has done since 2025-07-21. So the six-category shape is not a preference; it is the only
-      # one that uploads at all, and the pull-request trigger is what surfaced that before this ever
-      # ran on a schedule. The consequence to know when reading the Security tab: a CVE present on
+      # So the six-category shape is not a preference; it is the only one that uploads at all, and
+      # the pull-request trigger is what surfaced that before this ever ran on a schedule. The consequence to know when reading the Security tab: a CVE present on
       # both architectures is **two alerts**, which has to be closed twice. In exchange each alert
       # names the architecture it was found on, which the merged form could not.
       #

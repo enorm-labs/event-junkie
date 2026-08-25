@@ -58,7 +58,7 @@ jobs:
       # outage) marks the scheduled run red so it gets attention and retried.
       # --no-configuration-cache: the Dependency-Check plugin's Aggregate task reaches for
       # `project` at execution time and so cannot be used with the configuration cache
-      # (enabled in gradle.properties). Still true as of 13.0.0 — upstream PR #478 is open.
+      # (enabled in gradle.properties). Upstream PR #478, open at 13.0.0, would remove the need.
       - name: Run OWASP Dependency-Check
         run: ./gradlew dependencyCheckAggregate --no-configuration-cache
         env:

@@ -68,17 +68,15 @@ tests:
 
   # --- the redirect hosts -----------------------------------------------------------------------
   #
-  # `redirectHosts` held exactly one entry for as long as it existed, so the `range` in both the
-  # Ingress and the certificate's SAN list was never exercised with more than one — a list that
-  # behaved like a scalar and would not have been noticed if it were. Three names depend on it now,
-  # one of them `www.event-junkie.de`: infra publishes that record and states that Traefik redirects
-  # it, and until #634 nothing here did.
+  # `redirectHosts` is a list that behaves like a scalar — production lists three names, staging and
+  # k3d none — so the `range` in both the Ingress and the certificate's SAN list needs a multi-entry
+  # case to be exercised at all (#634). One of the three is `www.event-junkie.de`, which infra
+  # publishes while stating that Traefik redirects it.
   #
-  # **Named hosts are set here rather than taken from values.** This suite is re-run against every
-  # cluster's `spec.values` by `scripts/cluster-assertions.sh`, where staging and k3d both set
+  # **Named hosts are set here rather than taken from values.** `scripts/cluster-assertions.sh`
+  # re-runs this suite against every cluster's `spec.values`, where staging and k3d both set
   # `redirectHosts: []` — an assertion about which names production happens to list would fail there
-  # for the wrong reason. What is asserted is the template's behaviour given a list, which is the
-  # part that was untested.
+  # for the wrong reason. What is asserted is the template's behaviour given a list.
   - it: gives every redirect host a rule and a SAN on one certificate of its own
     set:
       database.host: "10.0.1.2"

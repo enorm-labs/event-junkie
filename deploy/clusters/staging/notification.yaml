@@ -1,11 +1,11 @@
 # GitHub deployments for staging — what is running here, and since when (#565).
 #
-# **This file used to carry a `github` commit-status Provider as well, and #567 deleted it rather
-# than fixing it.** Recorded here because "why is there no commit status?" is the obvious question
-# and the answer is not obvious: notification-controller's `parseRevision` needs a git hash, and a
-# HelmRelease event reports the *chart version*. The mechanism that solves this — `originRevision`,
-# derived from `org.opencontainers.image.revision` — exists only in **kustomize-controller**;
-# helm-controller has no equivalent, so no annotation on the chart could have fixed it. See §4a.
+# **There is deliberately no `github` commit-status Provider here (#567).** "Why is there no commit
+# status?" is the obvious question and the answer is not: notification-controller's `parseRevision`
+# needs a git hash, while a HelmRelease event reports the *chart version*. The mechanism that solves
+# this — `originRevision`, derived from `org.opencontainers.image.revision` — exists only in
+# **kustomize-controller**; helm-controller has no equivalent, so no annotation on the chart can fix
+# it. See §4a.
 ---
 # A deployment is per-environment and produces a timeline, which is the question worth answering:
 # "what is on staging right now, and since when" has no single commit to ask about.
@@ -28,9 +28,8 @@ spec:
   # per-cluster rather than shared: revoking one must not take the other down, and "which cluster
   # wrote that" should stay answerable at the API level.
   #
-  # Fine-grained, scoped to this repository, and **hand-made rather than SOPS-encrypted** (decided
-  # 2026-08-19, docs/ops/SECRETS.md). It does not inherit the SOPS answer #416 gave the other
-  # secrets: encrypting a value into a PUBLIC repository publishes its ciphertext permanently, and
+  # Fine-grained, scoped to this repository, and **hand-made rather than SOPS-encrypted**
+  # (docs/ops/SECRETS.md). It does not inherit the SOPS answer #416 gave the other secrets: encrypting a value into a PUBLIC repository publishes its ciphertext permanently, and
   # `contents: write` is the credential where that costs most — the same argument that kept the
   # Hetzner token hand-made.
   #

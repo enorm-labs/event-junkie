@@ -1,35 +1,20 @@
 # The observability namespace, declared here so it can carry Pod Security Admission labels (#604).
 #
-# **This namespace enforces nothing, and that is the honest state rather than an oversight.** Read
-# the next section before changing `enforce` to anything stricter.
+# **This namespace enforces nothing, and that is the honest state rather than an oversight.** The
+# **collector agent DaemonSet** collects every log line in the cluster by mounting the node —
+# rendering `openobserve-collector` 0.4.6, the version `collector.yaml` pins, gives `hostPath`
+# mounts of `/`, `/var/log` and `/var/lib/docker/containers`. `hostPath` is restricted in **both**
+# `restricted` and `baseline`, so neither level admits this pod. `privileged` is not a preference
+# here; it is the only level that does not reject the agent, and a rejected agent is a log pipeline
+# that stops quietly, the way #625 did.
 #
-# **Why not `restricted`, and why not `baseline` either.**
-# #604's table proposed `restricted` here, on the reasoning that "OpenObserve and signal-cli both run
-# non-root today, so this should be free". Both halves of that are true and the conclusion is not:
-# the table does not account for the **collector agent DaemonSet**, which is the pod that collects
-# every log line in the cluster and does it by mounting the node. Rendering
-# `openobserve-collector` 0.4.6 — the version `collector.yaml` pins — gives:
+# **`audit` and `warn` are what this file buys.** They record and report every violation without
+# rejecting it, so the collector keeps its mounts while the **next** workload added here arrives
+# with its violations named rather than silent. A bare namespace gives neither.
 #
-#     hostfs                   hostPath: /
-#     varlog                   hostPath: /var/log
-#     varlibdockercontainers   hostPath: /var/lib/docker/containers
-#
-# `hostPath` is a restricted field in **both** `restricted` and `baseline`, so neither level admits
-# this pod. `privileged` is not a preference here; it is the only level that does not reject the
-# agent, and an agent that is rejected is a log pipeline that stops — quietly, the way #625 did.
-#
-# **What the audit and warn labels buy, since enforce buys nothing.**
-# They are the whole point of this file. `audit: restricted` writes an annotation on every violating
-# pod into the API server's audit log, and `warn: restricted` returns one to any client that creates
-# one. Neither rejects anything, so the collector keeps its mounts — but the **next** workload added
-# here arrives with its violations named rather than silent, which is the property #604 was actually
-# after. A bare namespace, which is what this was, produces neither enforcement nor a record.
-#
-# **Getting to real enforcement.**
-# PSA is namespace-scoped, so there is no per-workload exemption: enforcing on OpenObserve,
-# signal-cli, the Postgres exporter and the collector *gateway* means moving the **agent** out to a
-# namespace of its own. That is a live DaemonSet with its own RBAC, service references and — after
-# #662 — NetworkPolicies, so it is its own change rather than a line in this one. See #709.
+# **Getting to real enforcement** means moving the agent out to a namespace of its own, since PSA is
+# namespace-scoped and has no per-workload exemption. That is a live DaemonSet with its own RBAC,
+# service references and NetworkPolicies (#662), so it is its own change — see #709.
 apiVersion: v1
 kind: Namespace
 metadata:

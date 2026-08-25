@@ -138,44 +138,40 @@ spec:
       # toward the recoverable mistake.
       ZO_COMPACT_DATA_RETENTION_DAYS: "14"
 
-      # **The memtable never rotated on size, because the default cannot be reached (#625).**
-      # **Two thresholds decide whether ingestion works, and out of the box the smaller one is the
-      # wrong one.** Read together, in `v0.92.2`:
+      # **The memtable never rotates on size, because the default cannot be reached (#625).** Two
+      # thresholds decide whether ingestion works, and out of the box the smaller one is the wrong
+      # one. Read together, in `v0.92.2`:
       #
       #   - `writer.rs:68` rejects a write with `MemoryTableOverflowError` when the **global** gauge
       #     `zo_ingest_memtable_arrow_bytes` — the sum across every memtable — reaches
       #     `ZO_MEM_TABLE_MAX_SIZE`.
       #   - `config.rs:3612` derives that, when unset, as **`mem_total / 4` in local mode** — 25%,
-      #     not 50%, and `mem_total` is the **cgroup limit**, not the node's memory. With
-      #     `limits.memory: 1Gi` below, the ceiling is **256 MiB**.
+      #     not 50%, and `mem_total` is the **cgroup limit**, not the node's. With `limits.memory:
+      #     1Gi` below, the ceiling is **256 MiB**.
       #   - `writer.rs:706` rotates a memtable — the thing that actually drains it — when **that one
       #     table** exceeds `ZO_MAX_FILE_SIZE_IN_MEMORY`, which defaults to **512 MB**.
       #
-      # **One table has to reach 512 MB while all of them together may not exceed 256 MiB.** So
-      # size-triggered rotation is unreachable by construction, and the only thing that ever rotates
-      # a memtable is the age check in `check_wal_threshold` — `ZO_MAX_FILE_RETENTION_TIME`, 600
-      # seconds. The pod therefore accumulates up to ten minutes of arrow batches, hits the ceiling,
-      # and returns HTTP 503 to the collector until the timer fires.
-      #
-      # That is the shape #625 recorded as "bursts during flush cycles" and it is worse than bursts:
-      # measured on 2026-08-23 the gateway had **lost ~51% of all post-filter metric points** over 48
-      # hours — 4.44M rejected outright and 8.45M never even queued — and **74% of k8s event logs**.
+      # **One table has to reach 512 MB while all of them together may not exceed 256 MiB**, so
+      # size-triggered rotation is unreachable by construction and the only thing that ever rotates a
+      # memtable is the age check in `check_wal_threshold` (`ZO_MAX_FILE_RETENTION_TIME`, 600s). The
+      # pod accumulates up to ten minutes of arrow batches, hits the ceiling, and returns HTTP 503 to
+      # the collector until the timer fires. #625 recorded that as "bursts during flush cycles"; over
+      # 48 hours it **lost ~51% of all post-filter metric points** — 4.44M rejected outright and
+      # 8.45M never even queued — and **74% of k8s event logs**.
       #
       # **32 MB, not something closer to the ceiling.** Writers are one per `(bucket, org,
       # stream_type)` (`writer.rs:718`), so with `ZO_MEM_TABLE_BUCKET_NUM` at its default of 1 there
       # are a handful — `default` and `_meta` x logs/metrics/traces. Six full tables at 32 MB is
-      # 192 MB against a 256 MiB ceiling; at 64 MB the worst case is over it, which would be the same
-      # bug with a larger constant.
+      # 192 MB against a 256 MiB ceiling; at 64 MB the worst case is over it, the same bug with a
+      # larger constant.
       #
-      # **This is why raising the memory limit did not work**, and the reason is worth keeping: at
-      # `1536Mi` the ceiling becomes 384 MiB — still below the 512 MB rotation threshold, so nothing
-      # changes except how long it takes to fill. Reaching the default by sizing alone needs a 4 GiB
-      # limit, which is more than ADR-015 budgets for the whole stack.
+      # **Raising the memory limit does not work**: at `1536Mi` the ceiling becomes 384 MiB, still
+      # below the 512 MB rotation threshold, so nothing changes but how long it takes to fill.
+      # Reaching the default by sizing alone needs 4 GiB, more than ADR-015 budgets for the stack.
       #
       # **The cost is more, smaller Parquet files**, which the compactor merges on its 10s interval
-      # (`ZO_COMPACT_MAX_FILE_SIZE` is 2048 MB). That is the trade this takes deliberately: file
-      # count is the compactor's problem and it has a mechanism for it, while a rejected write is
-      # data that no longer exists.
+      # (`ZO_COMPACT_MAX_FILE_SIZE` is 2048 MB) — file count is the compactor's problem and it has a
+      # mechanism for it, while a rejected write is data that no longer exists.
       ZO_MAX_FILE_SIZE_IN_MEMORY: "32"
 
       # **Let it report its own pressure — the chart turns this off, the app defaults it on.**
@@ -202,54 +198,38 @@ spec:
       # documented nowhere we control.
       ZO_TELEMETRY: "false"
 
-      # **An alert has to have a destination, and every in-cluster URL is refused.**
-      # #271's alert rules cannot be created without one — `POST /api/v2/{org}/alerts`
-      # returns `Alert destination or workflows is required`, with or without
-      # `creates_incident`. And **every destination inside the cluster is rejected by an
-      # SSRF guard**, measured rather than assumed:
+      # **An alert has to have a destination, and every in-cluster URL is refused.** #271's alert
+      # rules cannot be created without one — `POST /api/v2/{org}/alerts` returns `Alert destination
+      # or workflows is required`, with or without `creates_incident` — and every destination inside
+      # the cluster is rejected by an SSRF guard:
       #
       #     openobserve-…svc.cluster.local  -> 400 Destination URL blocked by SSRF guard
       #     signal-cli.observability.svc…   -> 400 Destination URL blocked by SSRF guard
       #
-      # **The second one is #271 item 4's entire architecture** — an OpenObserve webhook
-      # into `signal-cli-rest-api` — and it is blocked today for reasons that have nothing
-      # to do with the missing phone number. Better found now than after the eSIM arrives.
+      # The second is #271 item 4's entire architecture — an OpenObserve webhook into
+      # `signal-cli-rest-api` — blocked for reasons unrelated to the missing phone number.
       #
-      # `config.rs:1177` offers two ways out, and they are not equivalent:
+      # `config.rs:1177` offers two ways out and they are not equivalent: `ZO_SSRF_ALLOW_LOOPBACK`
+      # lets the process notify **itself** and nothing else, `ZO_SKIP_SSRF_CHECKS` removes the check
+      # for every destination. **Both are set** — the first for the interim destination the rules
+      # use, a POST back into this pod's own ingest API so a firing becomes a row in `alert_history`;
+      # the second only because the containment it needs now exists, `openobserve-netpol.yaml` in
+      # this directory.
       #
-      #   - `ZO_SSRF_ALLOW_LOOPBACK` — loopback only. The process may notify **itself** and
-      #     nothing else.
-      #   - `ZO_SKIP_SSRF_CHECKS` — removes the check entirely, for every destination.
-      #
-      # **This takes the loopback one**, which is enough for the interim destination the
-      # rules use: a POST back into this pod's own ingest API, so a firing becomes a row in
-      # the `alert_history` stream and the rules are exercised rather than hypothetical.
-      #
-      # **`ZO_SKIP_SSRF_CHECKS` is now set too, and only because the containment it was
-      # waiting for exists.** The earlier version of this comment said the flag was a
-      # decision to take "next to an egress policy, rather than a side effect of adding
-      # alert rules". That policy is `openobserve-netpol.yaml`, in this directory, and it
-      # ships in the same change as this line.
-      #
-      # **The control moves from the application to the network, which is the stronger
-      # place for it.** A URL allowlist inside a process is advisory — it constrains the
-      # feature, not the process — while an egress policy constrains anything the pod can
-      # be made to do. With the policy in place this pod may reach CoreDNS, the public
-      # internet on 443, and the Signal bridge. PostgreSQL on the private network, the
-      # Kubernetes API, the kubelet and every other pod are unreachable, so a destination
-      # aimed at them fails at the network rather than at a check somebody can turn off.
-      #
-      # **What this does not fix:** a destination may still point at any *public* address,
-      # so an operator with the root credential can exfiltrate alert bodies. That is
-      # inherent to having a webhook feature at all, it is not what the SSRF guard was
-      # about, and the credential in question already grants read access to every metric
-      # and log in the system.
-      # **It is NOT in the `config:` block above, and that is not a style choice.** The chart
-      # renders its ConfigMap from the 226 keys it knows about and **silently drops anything
-      # else** — no error, no warning, and a `helm template` that looks entirely correct. The
-      # first version of this change set it there and it never reached the pod. `extraEnv` is
-      # the chart's escape hatch for a key it has never heard of, and it lands as a plain
-      # environment variable, which is what the process reads anyway.
+      # **That moves the control from the application to the network, which is the stronger place.**
+      # A URL allowlist inside a process constrains the feature, not the process; an egress policy
+      # constrains anything the pod can be made to do. This pod may reach CoreDNS, the public
+      # internet on 443 and the Signal bridge — PostgreSQL, the Kubernetes API, the kubelet and every
+      # other pod are unreachable, so a destination aimed at them fails at the network rather than at
+      # a check somebody can turn off. **What it does not fix:** a destination may still be any
+      # *public* address, so the root credential can exfiltrate alert bodies — inherent to having a
+      # webhook at all, and that credential already reads every metric and log in the system.
+
+      # **It is NOT in the `config:` block above, and that is not a style choice.** The chart renders
+      # its ConfigMap from the 226 keys it knows about and **silently drops anything else** — no
+      # error, no warning, and a `helm template` that looks entirely correct. `extraEnv` is the
+      # chart's escape hatch for a key it has never heard of, and it lands as a plain environment
+      # variable, which is what the process reads anyway.
 
     extraEnv:
       # Kept alongside the skip below rather than removed by it: if the wider flag is ever

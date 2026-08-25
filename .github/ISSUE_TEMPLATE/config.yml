@@ -19,11 +19,10 @@ contact_links:
   # it is fixed, and nobody should have to ask for their own name to be removed in front of an
   # audience. See SECURITY.md and the privacy notice (§4, "Event, artist and venue information").
   #
-  # **Both point at the advisory form, and that is now a choice rather than a workaround.** It used
-  # to be one because no mailbox existed; `security@` and `hello@` have been live since 2026-08-21
-  # (#274, docs/ops/EMAIL.md). The form still wins for the security route — it is encrypted in
-  # transit and at rest, and it threads — so the addresses are named in the text instead, where they
-  # can be copied by anyone who would rather write an email.
+  # **Both point at the advisory form by choice, not for want of a mailbox.** `security@` and
+  # `hello@` are live (#274, docs/ops/EMAIL.md), but the form still wins for the security route — it
+  # is encrypted in transit and at rest, and it threads — so the addresses are named in the text
+  # instead, where anyone who would rather write an email can copy them.
   #
   # **Not `mailto:`.** GitHub's own docs describe `url` as a link to follow, and `mailto:` is
   # reported to fail schema validation — at which point the entry does not render at all. A contact

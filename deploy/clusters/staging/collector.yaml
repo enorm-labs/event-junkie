@@ -164,50 +164,45 @@ spec:
         headers:
           stream-name: k8s_events
 
-    # **Stripping the identity attributes that churn — metrics only.** Every metric arrives with about
-    # 29 resource attributes, a dozen of which change when a pod is replaced, and a new value in any
-    # one is a NEW TIME SERIES. A pod restart starting a new series is defensible — a counter really
-    # did reset. **A deploy starting one is not**: `container.image.tag` is a snapshot version, so
-    # every push to main multiplies the series count for every metric that pod emits, permanently,
-    # until retention expires it. Measured on staging, a bare `db_events` returned **six series in one
-    # hour** for what is logically two, and an *instant* PromQL query at `now` returned **nothing**, the
-    # newest series not having been written inside the lookback window — a silently empty panel.
+    # **Stripping the identity attributes that churn — metrics only.** Every metric arrives with
+    # ~29 resource attributes, a dozen of which change when a pod is replaced, and a new value in any
+    # one is a NEW TIME SERIES. A pod restart starting one is defensible; **a deploy starting one is
+    # not**: `container.image.tag` is a snapshot version, so every push to main multiplies the series
+    # count for every metric that pod emits until retention expires it. On staging a bare `db_events`
+    # returned **six series in one hour** for what is logically two, and an *instant* PromQL query at
+    # `now` returned **nothing** — the newest series not yet written inside the lookback window, so a
+    # silently empty panel.
     #
-    # **`k8s.pod.name` is deliberately KEPT.** Dropping it would merge two replicas of one deployment
-    # into a single series, and for a counter that is not a tidier graph but a wrong one. Everything
-    # deleted below is per-deploy churn or a duplicate of something kept.
+    # **`k8s.pod.name` is deliberately KEPT.** Dropping it merges two replicas of one deployment into
+    # a single series, which for a counter is not a tidier graph but a wrong one. Everything deleted
+    # below is per-deploy churn or a duplicate of something kept.
     #
-    # **Metrics only, not logs or traces.** A pod name in a log line is how you find the log, so the
-    # `logs/k8s_events` and `traces` pipelines are left alone — which is why this is a separate
-    # processor rather than a narrower `k8sattributes.extract.metadata` list, that setting being
-    # shared by all three pipelines. **The agent is unaffected**: a separate collector, the only thing
-    # holding `kubeletstats`, whose `k8s_pod_*` metrics need their pod names because there the pod IS
-    # the subject rather than a label on it.
+    # **Metrics only, not logs or traces** — a pod name in a log line is how you find the log. That
+    # is why this is a separate processor rather than a narrower `k8sattributes.extract.metadata`
+    # list, which is shared by all three pipelines. **The agent is unaffected**: a separate collector
+    # and the only one holding `kubeletstats`, whose `k8s_pod_*` metrics need their pod names because
+    # there the pod IS the subject rather than a label on it.
     #
-    # **Nested under `gateway:`, unlike `exporters:` above.** The chart puts `exporters` at the top
-    # level because both collectors share them, but `processors` and `service` exist once per
-    # collector, so the same keys at the top level are silently ignored and the render looks fine
-    # while the processor is absent. `helm template` plus a `yq` query catches that; the rendered
-    # pipeline list is not enough.
-    # **Both collectors ship with `resources: {}`, and that is how a node dies.**
-    # **The chart sets no requests and no limits on either collector**, with the "conscious choice for
-    # the user" comment that upstream charts use — and until now the choice was never made. The
-    # gateway was measured at **928Mi with nothing above it**: not scheduled against, not capped, free
-    # to take the node with it. That is not a hypothetical failure mode here, it is the 2026-08-20
-    # global OOM (#271), where the kernel killed OpenObserve while the API server flapped.
+    # **Nested under `gateway:`, unlike `exporters:` above.** The chart shares `exporters` between
+    # both collectors, but `processors` and `service` exist once per collector — the same keys at the
+    # top level are silently ignored and the render looks fine while the processor is absent.
+    # `helm template` plus a `yq` query catches that; the rendered pipeline list does not.
+
+    # **Both collectors ship with `resources: {}`, and that is how a node dies** — not scheduled
+    # against, not capped, free to take the node with them. The gateway measures **928Mi**, which is
+    # the global OOM in #271 where the kernel killed OpenObserve while the API server flapped.
     #
-    # **The number is not a guess: it is the limiter's own worst case.** Both collectors run a
+    # **The limits are not a guess: they are the limiter's own worst case.** Both collectors run a
     # `memory_limiter` processor that refuses data at `limit_mib` and forces GC above it — the
-    # graceful, *countable* form of shedding. The container limit therefore has to sit **above**
-    # `limit_mib + spike_limit_mib`, so that the limiter is always what bites first. Below it, the
-    # kernel wins the race and the pod dies with everything in flight, reporting nothing:
+    # graceful, *countable* form of shedding. The container limit has to sit **above** `limit_mib +
+    # spike_limit_mib` so the limiter always bites first; below it the kernel wins the race and the
+    # pod dies with everything in flight, reporting nothing:
     #
     #     agent     memory_limiter 512 + 128 spike  ->  limits.memory 640Mi
     #     gateway   memory_limiter 1024 + 256 spike ->  limits.memory 1280Mi
     #
-    # **Requests are steady state, not the ceiling**, which is what the scheduler needs and what the
-    # 08-20 post-mortem's "floor before observability" arithmetic was missing: an unrequested pod is
-    # invisible to that sum.
+    # **Requests are steady state, not the ceiling** — what the scheduler needs, and what a "floor
+    # before observability" sum misses entirely, an unrequested pod being invisible to it.
     agent:
       resources:
         requests:
@@ -238,51 +233,41 @@ spec:
           cpu: "1"
 
       processors:
-        # **Dropping the metrics nothing here will ever query.**
-        # **One metric was 47% of every row stored and 38% of the bytes**: the k3s API server's
-        # `apiserver_request_duration_seconds` histogram, at 385,752 rows and 278 MB. Its cardinality
-        # is verb x resource x scope x bucket, so it is enormous on a cluster doing almost nothing.
-        #
-        # Measured before this change — 983 streams, 822,942 rows, 729 MB total:
+        # **Dropping the metrics nothing here will ever query.** One metric is 47% of every row
+        # stored and 38% of the bytes: the k3s API server's `apiserver_request_duration_seconds`
+        # histogram, at 385,752 rows and 278 MB, its cardinality verb x resource x scope x bucket on
+        # a cluster doing almost nothing. Measured across 983 streams / 822,942 rows / 729 MB:
         #
         #     apiserver_*            51.5% of rows, 41.9% of bytes   (10 streams)
-        #     go_*                   10.5%          14.6%            (164 streams)
         #     kube_*                 10.9%           8.1%
+        #     go_*                   10.5%          14.6%            (164 streams)
         #     controller_runtime_*    3.7%           5.4%
         #     workqueue_*             2.9%           4.2%
-        #     otelcol_*               2.1%           3.3%
-        #     gotk_*                  1.7%           2.5%
         #     process_* rest_client_* 1.0%           1.3%   <- process_ deliberately NOT dropped
         #
-        # **This is the lever, and #611's label-stripping was not.** That change was right for
-        # query correctness — a deploy no longer starts a new series — but the volume was never in
-        # the application's metrics. `importer_source_last_success`, the meter the whole project
-        # cares about, is 0.7% of rows.
+        # The volume is never in the application's own metrics: `importer_source_last_success`, the
+        # meter the whole project cares about, is 0.7% of rows.
         #
-        # **What is dropped, and the principle.**
-        # **Runtime internals of software we do not operate, and histograms of it.** `go_*` describes
-        # the garbage collector of controllers Kubernetes already restarts when they fail; nothing
-        # here would act on it. The histograms are the same argument plus a cardinality multiplier.
+        # **What is dropped: runtime internals of software we do not operate, and histograms of it.**
+        # `go_*` describes the garbage collector of controllers Kubernetes already restarts when they
+        # fail; nothing here would act on it, and the histograms are that argument plus a cardinality
+        # multiplier. **`apiserver_request_total` is deliberately KEPT** while its duration histogram
+        # goes: the count carries "is the API server erroring", which is what mattered during the OOM
+        # in #271, and `_count`/`_sum` survive elsewhere, so a mean is available where a percentile is
+        # not.
         #
-        # **`apiserver_request_total` is deliberately KEPT** while its duration histogram goes. The
-        # count carries "is the API server erroring", which is what mattered during the 2026-08-20
-        # OOM; the latency distribution is what costs 278 MB. `_count` and `_sum` survive for the
-        # rest, so a mean is still available where a percentile is not.
+        # **Our own meters are untouched**, verified per family against live data rather than assumed
+        # from the prefix — which is how the `process_` trap below was caught — as are `pg_*`,
+        # `k8s_*`, `system_*`, `container_*`, `certmanager_*`, `traefik_*`, `jvm_*` and `kube_*`. The
+        # four alerts #271 owes (disk filling, certificate expiry, site down, importer failing) are
+        # written against those, and `kube_pod_*` is how a restart loop becomes visible.
         #
-        # **Our own meters are untouched** — verified per family against the live data rather than
-        # assumed from the prefix, which is how the `process_` mistake above was caught — as are
-        # `pg_*`, `k8s_*`, `system_*`, `container_*`,
-        # `certmanager_*`, `traefik_*`, `jvm_*` and `kube_*` — the four alerts #271 still owes
-        # (disk filling, certificate expiry, site down, importer failing) are all written against
-        # those, and `kube_pod_*` is how a restart loop becomes visible.
-        #
-        # **Filtered by BASE NAME, not by the `_bucket` suffix**, and that distinction is the whole
-        # trap here. OpenObserve shows `apiserver_request_duration_seconds_bucket` as a stream, but
-        # that name does not exist in this pipeline: the Prometheus receiver rebuilds the histogram
-        # into a single OTLP metric called `apiserver_request_duration_seconds`, and OpenObserve
-        # re-expands it into `_bucket`/`_count`/`_sum` at ingest. A rule matching `_bucket$` here
-        # would match nothing at all and look like it worked. The give-away is the bare stream
-        # sitting at `docs=0` next to the three suffixed ones — that is the name the collector sends.
+        # **Filtered by BASE NAME, not by the `_bucket` suffix**, which is the trap. OpenObserve
+        # shows `apiserver_request_duration_seconds_bucket` as a stream, but that name does not exist
+        # in this pipeline: the Prometheus receiver rebuilds the histogram into one OTLP metric named
+        # `apiserver_request_duration_seconds`, and OpenObserve re-expands it at ingest. A rule
+        # matching `_bucket$` here matches nothing and looks like it worked. The give-away is the
+        # bare stream sitting at `docs=0` beside the three suffixed ones.
         filter/drop_infrastructure_noise:
           # A condition that fails to evaluate skips rather than tearing down the pipeline. OTTL is
           # parsed at startup, so a syntax error still fails fast and visibly.
@@ -304,31 +289,27 @@ spec:
               # here worth the risk of dropping application metrics to save. Left in.
               - 'IsMatch(name, "^(go|rest_client|workqueue)_")'
               # **`postgres-exporter` is 60% of everything ingested, for one metric anybody
-              # queries.** Measured 2026-08-21 from the bucket itself — objects written after 06:30,
-              # so after every earlier filter was already live:
+              # queries.** Measured from the bucket itself, over objects written after every
+              # earlier filter was live:
               #
               #     pg_*         1810     <- this
               #     kube_*        440
               #     otelcol_*     195
               #     jvm_*         125
               #
-              # 362 distinct `pg_*` streams, and `deploy/dashboards/` queries exactly one of them.
-              # That is not a rounding error in the budget, it is the budget.
+              # 362 distinct `pg_*` streams, and `deploy/dashboards/` queries exactly one. **It is
+              # stream COUNT that hurts, not row count**: OpenObserve holds arrow batches per stream
+              # inside the memtable, so near-idle streams cost far more than the row figures suggest.
               #
-              # **It is stream COUNT that hurts, not row count.** OpenObserve holds arrow batches per
-              # stream inside the memtable, so 362 near-idle streams cost far more than the row
-              # figures suggest.
+              # **The 503s are not this, though.** That ceiling is a separate 25%-of-cgroup memtable
+              # limit the default rotation threshold sits above and can never reach; #625 has the
+              # arithmetic and `openobserve.yaml`'s `ZO_MAX_FILE_SIZE_IN_MEMORY` is the fix. Cutting
+              # the stream count lengthens the interval between overflows, but it treats a symptom.
               #
-              # **The 503s are not this, though.** The ceiling that matters is a separate
-              # 25%-of-cgroup memtable limit which the default rotation threshold sits above and can
-              # never reach; #625 has the arithmetic and `openobserve.yaml`'s
-              # `ZO_MAX_FILE_SIZE_IN_MEMORY` is the fix. Cutting the stream count still helps, by
-              # lengthening the interval between overflows, but it treats a symptom.
-              #
-              # The allowlist keeps what a single-node database is actually worth watching: is it up,
-              # how big is it, how many connections, is it committing, is it deadlocking, and did the
-              # exporter itself fail. Everything else is reversible — the exporter still produces it,
-              # this only decides what is stored.
+              # The allowlist keeps what a single-node database is worth watching: is it up, how big,
+              # how many connections, is it committing, is it deadlocking, and did the exporter fail.
+              # Everything else is reversible — the exporter still produces it; this decides only
+              # what is stored.
               - 'IsMatch(name, "^pg_") and not IsMatch(name, "^pg_(up|database_size_bytes|database_connection_limit|locks_count|exporter_last_scrape_error|stat_database_(numbackends|xact_commit|xact_rollback|deadlocks|blks_hit|blks_read))$")'
               # The single biggest stream in the system.
               - 'name == "apiserver_request_duration_seconds"'
@@ -373,56 +354,37 @@ spec:
 
       service:
         pipelines:
-          # **Twenty-seven object kinds, six of which anybody would look at.**
-          # The chart's `logs/k8s_events` pipeline watches **every** workload, RBAC and networking
-          # kind in the cluster. Counted from the gateway's own receiver metrics over 48 hours, that
-          # produced 40,981 log records, of which:
+          # **Twenty-seven object kinds, six of which anybody would look at.** The chart's
+          # `logs/k8s_events` pipeline watches **every** workload, RBAC and networking kind in the
+          # cluster: 40,981 log records over 48 hours, counted from the gateway's own receiver
+          # metrics, of which
           #
-          #     crds            33,408   <- 81.5% of everything, a 5-minute PULL of every CRD
-          #     events           4,726
-          #     pods               897
-          #     nodes              571
-          #     replicasets        474   <- deploy churn, and `deployments` already says it
-          #     deployments        378
-          #     endpoints          226
-          #     networkpolicies    144
-          #     services            54
-          #     serviceaccounts     54
-          #     configmaps          36
-          #     ingresses           18
-          #     statefulsets         6
-          #     the other 14         0
+          #     crds     33,408  <- 81.5%, a 5-minute PULL of every CRD
+          #     events    4,726
+          #     pods        897
+          #     nodes       571
+          #     the rest  1,379  across 23 kinds, 14 of them at zero
           #
           # **`crds` is not a watch, it is a `mode: pull` every five minutes** — the full spec and
-          # status of every CustomResourceDefinition in the cluster, which on a cluster running Flux,
-          # cert-manager and the OTel operator is a great deal of YAML nobody will ever query. The
-          # chart carries a `transform/strip_crd_spec` processor whose entire purpose is to make that
-          # receiver survivable; with the receiver gone the processor has nothing to do, so it comes
-          # out of the list below too. **Re-adding `k8sobjects/crds` means re-adding it.**
+          # status of every CustomResourceDefinition, which on a cluster running Flux, cert-manager
+          # and the OTel operator is a great deal of YAML nobody will query. The chart's
+          # `transform/strip_crd_spec` processor exists only to make that receiver survivable, so it
+          # comes out of the list below too. **Re-adding `k8sobjects/crds` means re-adding it.**
           #
-          # **The memory argument matters as much as the volume.** Each of these is a client-go
-          # informer holding its object set in the gateway's heap — 21 fewer of them is the other
-          # half of why that pod sat at 928Mi.
+          # Each kind is also a client-go informer holding its object set in the gateway's heap, so
+          # 21 fewer of them is the other half of why that pod sat at 928Mi.
           #
-          # **What is kept, and why each one earns it:**
+          # **What is kept:** `events` (OOMKilled, FailedScheduling, ImagePullBackOff — the stream
+          # read after an incident); `pods`, for the phase *transition* and its timestamp, which
+          # `kube_pod_*` cannot give because it is a gauge of current state; `nodes`, for conditions
+          # like MemoryPressure that nothing else watches; `deployments` for the three application
+          # workloads; `statefulsets` for OpenObserve and this gateway, which are what break; and
+          # `daemonsets` for the agent, at zero records, which is what healthy looks like.
           #
-          #   - `events`       — the reason the pipeline exists: OOMKilled, FailedScheduling,
-          #                      ImagePullBackOff. This is the stream you read after an incident.
-          #   - `pods`         — phase transitions, and the object as it changed. Not redundant with
-          #                      kube-state-metrics, which is installed and serving `kube_*`:
-          #                      `kube_pod_*` is a gauge of current state, while this stream carries
-          #                      the transition and its timestamp, which is what an incident is
-          #                      reconstructed from.
-          #   - `nodes`        — node conditions. MemoryPressure on this node is exactly what nothing
-          #                      else watches.
-          #   - `deployments`  — the three application workloads.
-          #   - `statefulsets` — OpenObserve and this gateway, which are the things that break.
-          #   - `daemonsets`   — the agent. Zero records so far, which is what healthy looks like.
-          #
-          # **`jobs` and `cronjobs` are deliberately dropped and deliberately named here**, because
-          # the reason is "nothing in this cluster is one yet" rather than "they do not matter". The
-          # importer is a Deployment with its own scheduler; the backups are systemd timers on the
-          # node. The day either becomes a Job, this list is where that gets noticed.
+          # **`jobs` and `cronjobs` are dropped and deliberately named**, because the reason is
+          # "nothing here is one yet" rather than "they do not matter" — the importer is a Deployment
+          # with its own scheduler and the backups are systemd timers on the node. The day either
+          # becomes a Job, this list is where that gets noticed.
           #
           # **This does not shrink the ClusterRole.** The chart grants get/list/watch on all of these
           # statically, so the permission survives the watch. Worth its own change; not this one.

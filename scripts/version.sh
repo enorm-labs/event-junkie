@@ -116,34 +116,25 @@ cmd_compute() {
   # 0.1.1-snapshot.20260814122042.g33fd32g before 0.1.1, so naming a snapshot after the released
   # version would have it claim to be older than code it is newer than. Maven's -SNAPSHOT semantics.
   #
-  # THE TIMESTAMP IS THE ORDERING, AND IT IS THE WHOLE REASON THIS IDENTIFIER EXISTS (#455).
+  # THE TIMESTAMP IS THE ORDERING, AND IT IS THE WHOLE REASON THIS IDENTIFIER EXISTS (#455). SemVer
+  # §11 compares prerelease identifiers field by field, numerically for an all-digit identifier and
+  # lexically in ASCII for one containing a letter. A short sha is effectively random, so a
+  # `0.1.0-snapshot.g<sha>` scheme gives staging's `semver: ">=0.0.0-0"` range no way to mean "the
+  # newest chart" — it means "whichever sha sorts highest", a different chart on most days, and it
+  # can move backwards. Observed on staging: ten snapshots published, Flux resolved the sixth-oldest
+  # because `f` > `d`. A 14-digit UTC timestamp is numeric, so it orders, and it stays legible in a
+  # `helm list`, which `github.run_number` is not.
   #
-  # SemVer §11 compares prerelease identifiers field by field, and an identifier made only of digits
-  # is compared *numerically* while one containing a letter is compared lexically in ASCII. A short
-  # sha is effectively random, so the scheme this replaced — `0.1.0-snapshot.g<sha>` — gave staging's
-  # `semver: ">=0.0.0-0"` range no way to mean "the newest chart". It meant "whichever sha sorts
-  # highest", which is a different chart on most days and can move backwards. Observed on staging:
-  # ten snapshots published, and Flux resolved the sixth-oldest because `f` > `d`.
+  # **The `g` prefix is load-bearing, for one reason:** a numeric SemVer identifier must not carry a
+  # leading zero, so a short sha like `0031234` produces a version string `helm lint --strict`
+  # rejects outright — about one commit in 270, since a sha is uniform over hex. Starting the
+  # identifier with a letter makes it alphanumeric, where the rule does not apply.
   #
-  # A 14-digit UTC timestamp is a numeric identifier, so it orders. It is also legible in a `helm
-  # list`, which `github.run_number` — the strictly-monotonic alternative — is not; the tie it
-  # avoids needs two merges to `main` inside the same second, and the sha below breaks that tie
-  # arbitrarily but harmlessly.
-  #
-  # The `g` prefix is git-describe's convention and it is load-bearing rather than cosmetic, for one
-  # reason only: a numeric SemVer identifier must not carry a leading zero, so a short sha like
-  # `0031234` — seven characters that all happen to be digits, starting with one — produces a version
-  # string `helm lint --strict` rejects outright. About one commit in 270: (10/16)^6 / 16, since a
-  # sha is uniform over hex. Starting the identifier with a letter makes it alphanumeric, and the
-  # leading-zero rule does not apply to those.
-  #
-  # It does NOT help the ordering, and it is worth being exact about that because the opposite is
-  # easy to assume. Identifiers are compared left to right and the comparison stops at the first
-  # difference, so the timestamp decides everything and the sha is reached only when two timestamps
-  # are equal — the same-second tie. There, `g` does buy one small thing: every sha is alphanumeric,
-  # so ties break by plain ASCII. Bare shas would be a mix of numeric and alphanumeric, and SemVer
-  # ranks every numeric identifier below every non-numeric one, so an all-digit sha would always
-  # lose a tie regardless of its value. Both are arbitrary; consistently arbitrary is better.
+  # It does NOT help the ordering, and the opposite is easy to assume. Identifiers compare left to
+  # right and stop at the first difference, so the timestamp decides everything and the sha is
+  # reached only on a same-second tie. There `g` buys one thing: SemVer ranks every numeric
+  # identifier below every non-numeric one, so a bare all-digit sha would always lose a tie
+  # regardless of its value. Both are arbitrary; consistently arbitrary is better.
   [[ -n "$stamp" ]] || stamp="$(commit_timestamp "$sha")"
   printf '%s-snapshot.%s.g%s\n' "$base" "$stamp" "${sha:0:7}"
 }

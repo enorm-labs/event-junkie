@@ -8,26 +8,22 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  # flux-system/ is Flux's own manifests, and listing it here is what makes the cluster
-  # self-managing. A Flux Kustomization pointing at a directory with no kustomization.yaml walks it
-  # recursively and picks flux-system/ up for free; an explicit list replaces that discovery with
-  # exactly these entries — so omitting it means Flux's own Kustomization is reconciled by nothing
-  # except a `flux bootstrap` re-run.
-  #
-  # Staging learned that in #416 and this file did not: the `decryption` patch in
-  # flux-system/kustomization.yaml rendered perfectly, was committed, merged, and never reached the
-  # cluster. **Rendering is not applying.** Same omission here, found on 2026-08-21 by noticing that
-  # `events-db` had not appeared even though the Kustomization reported Ready.
+  # Listing flux-system/ here is what makes the cluster self-managing. A Flux Kustomization
+  # pointing at a directory with no kustomization.yaml walks it recursively and picks it up for
+  # free; an explicit list replaces that discovery, so omitting it leaves Flux's own Kustomization
+  # reconciled by nothing but a `flux bootstrap` re-run — and the `decryption` patch in
+  # flux-system/kustomization.yaml then renders, merges, and never reaches the cluster (#416).
+  # **Rendering is not applying**: the symptom is a Kustomization reporting Ready while what it
+  # declares never appears.
   - flux-system
   - namespace.yaml
   # The other namespaces this cluster runs, declared rather than left to `createNamespace: true`
   # (#604). A HelmRelease creating its own namespace creates a bare one, and Pod Security Admission
   # is enforced by namespace label — so an undeclared namespace is an ungoverned one, silently.
   #
-  # **There is no `namespace-observability.yaml` here and that is not an omission.** Production does
-  # not run the observability stack — `openobserve.yaml`, `collector.yaml`, `postgres-exporter.yaml`
-  # and `signal-bridge.yaml` are staging-only files. When #271 item 6 copies them across, the
-  # namespace declaration goes with them, or the namespace arrives bare exactly as staging's did.
+  # **There is no `namespace-observability.yaml` here and that is not an omission**: production does
+  # not run the observability stack. When #271 item 6 copies it across, the namespace declaration
+  # goes with it, or the namespace arrives bare exactly as staging's did.
   - namespace-cert-manager.yaml
   - namespace-default.yaml
   # Encrypted; decrypted by the sops-age patch in flux-system/kustomization.yaml, which is exactly
