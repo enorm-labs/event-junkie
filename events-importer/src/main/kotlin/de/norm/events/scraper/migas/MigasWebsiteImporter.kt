@@ -1,9 +1,12 @@
 package de.norm.events.scraper.migas
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -64,3 +67,14 @@ class MigasWebsiteImporter(
         return ImportResult.Success(events = events, etag = null, lastModified = null)
     }
 }
+
+val MIGAS_LIMITATIONS =
+    VenueLimitations(
+        EventSource.MIGAS,
+        AcceptedLimitation(LimitedAspect.PRICE, "entry arrangements are not stated on the site at all"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "entry arrangements are not stated on the site at all"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the listing carries no door time"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the listing carries no sold-out badge"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the listing carries no cancellation badge"),
+        AcceptedLimitation(LimitedAspect.PAGINATION, "the listing pages at ten events, with the rest behind a Load More button that POSTs to `admin-ajax.php`")
+    )

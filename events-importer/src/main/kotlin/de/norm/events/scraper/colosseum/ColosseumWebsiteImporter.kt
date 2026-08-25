@@ -1,10 +1,13 @@
 package de.norm.events.scraper.colosseum
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -69,3 +72,15 @@ class ColosseumWebsiteImporter(
             }
         }
 }
+
+val COLOSSEUM_LIMITATIONS =
+    VenueLimitations(
+        EventSource.COLOSSEUM,
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "`categories` is empty on every event, so the type is inferred from the title and subtitle"),
+        AcceptedLimitation(
+            LimitedAspect.DOORS_TIME,
+            "the Wix payload carries one `startDate` per event, and the detail page repeats one boilerplate Einlass line for all of them"
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "the house names no musical style anywhere"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "no support-act convention exists in the subtitles, and a title is as often an event name as a performer's")
+    )

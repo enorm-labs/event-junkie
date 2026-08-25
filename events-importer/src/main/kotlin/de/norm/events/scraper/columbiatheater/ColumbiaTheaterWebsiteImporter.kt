@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -70,3 +71,6 @@ class ColumbiaTheaterWebsiteImporter(
             promoters = primary.promoters.ifEmpty { fallback.promoters }
         )
 }
+
+/** Nothing this source withholds needs declaring (#715). */
+val COLUMBIA_THEATER_LIMITATIONS = VenueLimitations(EventSource.COLUMBIA_THEATER)

@@ -31,6 +31,10 @@ Lint enforces the mechanical half of this; the rest is review.
       `events-importer/.../scraper/` were documented with worked `Example:` blocks and asserted by nothing (#726), while reporting 100% line coverage because
       venue fixtures call them. Two of those blocks had already drifted from the assertion they duplicated. If a case is worth showing it is worth asserting:
       put it in the test, and name the suite if a reader needs the examples.
+    - **A fact another tool has to act on belongs in a record, not in prose.** Leaving what a venue's site does not publish in scraper KDoc makes
+      `/data-quality-audit` parse free text across 213 files to tell an accepted trade-off from a defect, which is silently wrong in both directions. It is a
+      `VenueLimitations` declaration per importer instead, rendered to `docs/data-quality/ACCEPTED_LIMITATIONS.md` and asserted by a test (#715). The KDoc keeps
+      the reasoning: which selector, which trap, what the parser does instead. A comment is for a human reading this code; a record is for anything else.
     - **An issue or ADR reference is a pointer, not a summary.** Write `see #540` and stop. Duplicating AGENTS.md or an ADR into a comment creates a second copy
       that drifts; keep in the code only what constrains that specific code.
     - **No document structure inside a comment.** Markdown headings (`## Why this exists`), bold section titles and multi-paragraph argument mean the content is a

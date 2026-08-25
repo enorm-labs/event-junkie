@@ -1,10 +1,13 @@
 package de.norm.events.scraper.kater
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -54,3 +57,10 @@ class KaterWebsiteImporter(
             }
         }
 }
+
+val KATER_LIMITATIONS =
+    VenueLimitations(
+        EventSource.KATER,
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club has no category field; only an unambiguous title keyword overrides the party default"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the per-event page carries nothing the homepage listing lacks")
+    )

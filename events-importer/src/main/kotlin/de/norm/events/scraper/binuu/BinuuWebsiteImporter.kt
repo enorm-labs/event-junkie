@@ -1,10 +1,13 @@
 package de.norm.events.scraper.binuu
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -68,3 +71,9 @@ class BinuuWebsiteImporter(
             status = primary.status.takeIf { it != "SCHEDULED" } ?: fallback.status
         )
 }
+
+val BINUU_LIMITATIONS =
+    VenueLimitations(
+        EventSource.BINUU,
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the SvelteKit payload carries no category field, and neither does anywhere else on the site")
+    )

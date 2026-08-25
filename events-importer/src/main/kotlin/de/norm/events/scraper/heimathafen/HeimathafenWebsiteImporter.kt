@@ -1,10 +1,13 @@
 package de.norm.events.scraper.heimathafen
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -103,3 +106,12 @@ class HeimathafenWebsiteImporter(
         const val FIELDS = "id,link,title,excerpt,content,acf,class_list,featured_images"
     }
 }
+
+val HEIMATHAFEN_LIMITATIONS =
+    VenueLimitations(
+        EventSource.HEIMATHAFEN,
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "its `events_tag` vocabulary mixes genres with formats across 560 terms, the payload carries only term ids, and the inlined slugs are lossy"
+        )
+    )

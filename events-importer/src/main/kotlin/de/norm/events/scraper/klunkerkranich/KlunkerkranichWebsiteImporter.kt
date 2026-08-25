@@ -1,11 +1,14 @@
 package de.norm.events.scraper.klunkerkranich
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -28,11 +31,7 @@ import java.time.Clock
  * class's detail scraper is expected to be. An event page that cannot be fetched or parsed is not
  * fatal — that night keeps its listing data, losing only the blurb, the price and the larger image.
  *
- * **What the source does not carry.** Nothing here names a genre, links a ticket shop — entry is
- * paid at the door, and the occasional advance-RSVP link is written into a blurb rather than
- * published as a field — or flags a night sold out or cancelled. There is no doors time either:
- * the venue states when the roof opens, not when a show starts (see
- * [KlunkerkranichOverviewPageScraper]).
+ * **What the source does not carry** is declared in [KLUNKERKRANICH_LIMITATIONS].
  *
  * **The programme is a short rolling horizon.** The venue publishes about ten days ahead and its
  * listing pagination is a no-op — `/events/page/2/` serves the same nights as page 1 — so one fetch
@@ -99,3 +98,20 @@ class KlunkerkranichWebsiteImporter(
             event
         }
 }
+
+val KLUNKERKRANICH_LIMITATIONS =
+    VenueLimitations(
+        EventSource.KLUNKERKRANICH,
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the venue publishes no category, so every night is stored as a party — which mislabels the occasional concert"
+        ),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue states when the roof opens, not when a show starts"),
+        AcceptedLimitation(LimitedAspect.GENRE, "nothing on the site names a genre"),
+        AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "entry is paid at the door; an occasional advance-RSVP link is written into a blurb rather than published as a field"
+        ),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "nothing flags a night sold out"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "nothing flags a night cancelled")
+    )

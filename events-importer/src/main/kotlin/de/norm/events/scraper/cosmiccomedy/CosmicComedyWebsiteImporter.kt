@@ -1,10 +1,13 @@
 package de.norm.events.scraper.cosmiccomedy
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -71,3 +74,9 @@ class CosmicComedyWebsiteImporter(
         const val MAX_PAGES = 20
     }
 }
+
+val COSMIC_COMEDY_LIMITATIONS =
+    VenueLimitations(
+        EventSource.COSMIC_COMEDY,
+        AcceptedLimitation(LimitedAspect.PRICE, "`cost` and `cost_details` are empty on every event")
+    )

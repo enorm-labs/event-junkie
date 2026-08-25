@@ -1,9 +1,12 @@
 package de.norm.events.scraper.neuezukunft
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -54,3 +57,9 @@ class NeueZukunftWebsiteImporter(
         return ImportResult.Success(events = events, etag = null, lastModified = null)
     }
 }
+
+val NEUE_ZUKUNFT_LIMITATIONS =
+    VenueLimitations(
+        EventSource.NEUE_ZUKUNFT,
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the calendar widget exposes no per-event URLs")
+    )

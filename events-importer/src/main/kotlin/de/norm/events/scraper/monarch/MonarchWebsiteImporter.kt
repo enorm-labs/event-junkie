@@ -1,10 +1,13 @@
 package de.norm.events.scraper.monarch
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -52,3 +55,9 @@ class MonarchWebsiteImporter(
             }
         }
 }
+
+val MONARCH_LIMITATIONS =
+    VenueLimitations(
+        EventSource.MONARCH,
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site is hand-coded PHP with no per-event URLs")
+    )

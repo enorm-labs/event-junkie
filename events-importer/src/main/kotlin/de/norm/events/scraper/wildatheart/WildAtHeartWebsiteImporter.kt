@@ -1,10 +1,13 @@
 package de.norm.events.scraper.wildatheart
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -59,3 +62,10 @@ class WildAtHeartWebsiteImporter(
             }
         }
 }
+
+val WILD_AT_HEART_LIMITATIONS =
+    VenueLimitations(
+        EventSource.WILD_AT_HEART,
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme is one hand-coded page"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the retro page has no category field; a live-music venue, so an unmarked title defaults to a concert")
+    )

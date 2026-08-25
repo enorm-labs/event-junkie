@@ -1,10 +1,13 @@
 package de.norm.events.scraper.derweissehase
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -59,3 +62,17 @@ class DerWeisseHaseWebsiteImporter(
             }
         }
 }
+
+val DER_WEISSE_HASE_LIMITATIONS =
+    VenueLimitations(
+        EventSource.DER_WEISSE_HASE,
+        AcceptedLimitation(LimitedAspect.PRICE, "the club publishes no prices anywhere, not even at the door"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the club publishes no genre"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the club publishes no doors time"),
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the club states no category anywhere and programmes nothing but DJ nights, so the type is fixed rather than inferred"
+        ),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the club sells through Resident Advisor and the listing links off-site"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "a cancelled night is taken off the page rather than labelled")
+    )

@@ -2,10 +2,13 @@ package de.norm.events.scraper.badehaus
 
 import de.norm.events.event.EventStatus
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -77,3 +80,13 @@ class BadehausWebsiteImporter(
             status = fallback.status.takeIf { it != EventStatus.SCHEDULED.name } ?: primary.status
         )
 }
+
+val BADEHAUS_LIMITATIONS =
+    VenueLimitations(
+        EventSource.BADEHAUS,
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest"
+        ),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue publishes no category; the type is inferred from the title and subtitle")
+    )

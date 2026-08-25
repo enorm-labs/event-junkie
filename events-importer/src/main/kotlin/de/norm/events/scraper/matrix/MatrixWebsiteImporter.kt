@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.matrix.MatrixWebsiteImporter.Companion.MAX_MONTH_PAGES
 import de.norm.events.scraper.resolveUrl
@@ -83,3 +84,6 @@ class MatrixWebsiteImporter(
         private const val MAX_MONTH_PAGES = 12
     }
 }
+
+/** Nothing this source withholds needs declaring (#715). */
+val MATRIX_LIMITATIONS = VenueLimitations(EventSource.MATRIX)

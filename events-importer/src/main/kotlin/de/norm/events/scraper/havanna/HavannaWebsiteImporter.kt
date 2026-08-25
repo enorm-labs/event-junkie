@@ -1,10 +1,13 @@
 package de.norm.events.scraper.havanna
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -80,3 +83,12 @@ class HavannaWebsiteImporter(
             emptyList()
         }
 }
+
+val HAVANNA_LIMITATIONS =
+    VenueLimitations(
+        EventSource.HAVANNA,
+        AcceptedLimitation(
+            LimitedAspect.EVENT_DATE,
+            "the venue publishes no dated programme: its three resident nights carry only a weekday, so occurrences are generated from the weekly schedule"
+        )
+    )

@@ -1,10 +1,13 @@
 package de.norm.events.scraper.morphine
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -68,3 +71,16 @@ class MorphineWebsiteImporter(
             artists = primary.artists.ifEmpty { fallback.artists }
         )
 }
+
+val MORPHINE_LIMITATIONS =
+    VenueLimitations(
+        EventSource.MORPHINE,
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the venue flags nothing sold out"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "a dropped night is removed from the listing rather than flagged"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the advance-sale button posts to PayPal rather than linking anywhere"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "nearly every night is priced as a sliding scale or donation range, which the model has no field for, so the wording is kept verbatim as the note"
+        )
+    )

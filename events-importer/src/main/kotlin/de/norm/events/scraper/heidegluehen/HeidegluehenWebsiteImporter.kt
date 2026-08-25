@@ -1,11 +1,14 @@
 package de.norm.events.scraper.heidegluehen
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
@@ -92,3 +95,12 @@ class HeidegluehenWebsiteImporter(
 
 /** The venue's "Diese Woche" page, resolved against the configured month-page URL. */
 private const val WEEK_PAGE_PATH = "/aktuell/"
+
+val HEIDEGLUEHEN_LIMITATIONS =
+    VenueLimitations(
+        EventSource.HEIDEGLUEHEN,
+        AcceptedLimitation(
+            LimitedAspect.PER_EVENT_PAGE,
+            "the site has no per-event pages and no archive; one rich-text block lists the month's Saturdays and is replaced wholesale"
+        )
+    )

@@ -1,10 +1,13 @@
 package de.norm.events.scraper.wuhlheide
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.buildArtistsForEventType
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
@@ -66,3 +69,9 @@ class WuhlheideWebsiteImporter(
             artists = buildArtistsForEventType(primary.title, fallback.subtitle, primary.eventType ?: fallback.eventType)
         )
 }
+
+val WUHLHEIDE_LIMITATIONS =
+    VenueLimitations(
+        EventSource.WUHLHEIDE,
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the venue publishes no cancellations; its one badge, Ausverkauft, is a sold-out flag")
+    )

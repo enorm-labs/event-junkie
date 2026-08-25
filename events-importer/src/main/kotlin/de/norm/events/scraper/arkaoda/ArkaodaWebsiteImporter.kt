@@ -1,10 +1,13 @@
 package de.norm.events.scraper.arkaoda
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -77,3 +80,13 @@ class ArkaodaWebsiteImporter(
             promoters = primary.promoters.ifEmpty { fallback.promoters }
         )
 }
+
+val ARKAODA_LIMITATIONS =
+    VenueLimitations(
+        EventSource.ARKAODA,
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "a set time is written into the prose blurb, which has no reliable delimiter"),
+        AcceptedLimitation(LimitedAspect.START_TIME, "a set time is written into the prose blurb, which has no reliable delimiter"),
+        AcceptedLimitation(LimitedAspect.PRICE, "a door price is written into the prose blurb, which has no reliable delimiter"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the venue runs no ticket integration and has no field for the sold-out state"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue has no structured genre field")
+    )

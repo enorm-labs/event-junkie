@@ -98,9 +98,25 @@ New importers live in their own sub-package: `scraper/<venue>/`. Create:
 Set `override val eventSource = EventSource.<VENUE>`.
 
 **The importer's and scrapers' KDoc is where the source gets documented** — the platform, which pages or APIs are read and why, the traps the parser handles,
-why a selector was chosen, and what the source _doesn't_ carry (no door times, no prices, no poster, no per-event page). Accepted limitations live here too:
-the importer stored everything that was there, so there is nothing to action elsewhere. Only a defect we could actually repair goes in the **Bugs** list in
-an issue. Write it once, next to the code it constrains — not in `EventSource.kt` and not in `dev-seed.http`.
+and why a selector was chosen. Write it once, next to the code it constrains — not in `EventSource.kt` and not in `dev-seed.http`. Only a defect we could
+actually repair goes in the **Bugs** list in an issue.
+
+**What the source _doesn't_ carry goes in a record, not in prose** (#715). Every importer file ends with a `VenueLimitations` declaration, and the build fails
+if a new `EventSource` has none:
+
+```kotlin
+val <VENUE>_LIMITATIONS =
+    VenueLimitations(
+        EventSource.<VENUE>,
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes only one time per night"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue names no musical style anywhere"),
+    )
+```
+
+One `AcceptedLimitation` per thing the source withholds; a `reason` that reads as a property of the _site_ ("the venue publishes no prices"), lowercase, no
+full stop, one sentence. A venue that publishes everything the model stores declares `VenueLimitations(EventSource.<VENUE>)` and nothing else — that is a
+statement, not an omission. `/data-quality-audit` reads these to tell an accepted trade-off from a defect, so a limitation left in prose is one the audit will
+re-report every run. What stays in the KDoc is the _reasoning_: which selector, which trap, what the parser does instead.
 
 **Give it a budget.** Aim for under 20 comment lines on the importer and under 10 on each scraper, and state each limitation in one sentence. The scraper
 package aggregates 43% comments today, which is what #713 exists to bring down; copying an existing scraper is how that number was reached. Check where a
@@ -204,6 +220,8 @@ imported events look sane. Be polite — the per-host throttle (200ms) applies a
 - [ ] `<venue>/` package: overview scraper (+ detail scraper if list+detail) + `@Component` importer
 - [ ] Shared extension helpers reused; selectors are semantic/structured, not positional
 - [ ] `sourceId` is stable and prefixed via `sourceIdPrefix`; events validated before return
+- [ ] `<VENUE>_LIMITATIONS` declared at the foot of the importer file and registered in `AcceptedLimitations.declarations`; `ACCEPTED_LIMITATIONS.md`
+      regenerated if it changed
 - [ ] Fixtures saved under `src/test/resources/scraper/<venue>/` (`.html` for HTML, `.json` for API)
 - [ ] Scraper + importer tests covering happy path, edge cases, NotModified, empty page
 - [ ] `dev-seed.http` updated (venue + source + trigger); source list at the top refreshed

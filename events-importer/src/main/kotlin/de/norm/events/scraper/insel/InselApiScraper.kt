@@ -64,23 +64,17 @@ internal val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
  * an "AUSVERKAUFT" line — and the prefix is stripped so it stays out of the `sourceId` and the row
  * survives the venue removing it.
  *
- * Accepted limitations:
- *  - **No prices anywhere** — only "Eintritt frei" for the free Sunday matinées.
- *  - **No per-event page**, so every event points at the programme page and takes its identity from
- *    its date plus its title.
- *  - **A support act billed without a colon is not read.** The venue writes "+ support pinkpool"
- *    beside "Support: Alles Karo"; only a colon, or a line-leading `support` marker, separates a
- *    billing from prose reliably.
- *  - **A handful of titles are event names, and the `CONCERT` default mints them as artists** — a
- *    club night, a themed programme, a city tail the suffix rules miss. None carries a structural cue
- *    distinguishing it from the titles that really are act names, and the venue publishes no category
- *    to arbitrate, so the default is kept rather than suppressing the whole programme's lineup.
- *  - **No genre and no cancellation signalling** — a dropped show is removed from the CMS.
+ * The venue writes "+ support pinkpool" beside "Support: Alles Karo", so only a colon or a
+ * line-leading `support` marker separates a billing from prose reliably. A handful of titles are
+ * event names the `CONCERT` default then mints as artists — a club night, a themed programme, a city
+ * tail the suffix rules miss. None carries a structural cue distinguishing it from the titles that
+ * really are act names, so the default is kept rather than suppressing the whole programme's lineup.
  *
+ * @see INSEL_LIMITATIONS for what the venue does not publish.
  * @see InselWebsiteImporter for the HTTP fetch orchestrator and the artefact discovery.
  * @see <a href="https://www.inselberlin.de/">Kulturhaus Insel Berlin</a>
  */
-@Suppress("LongComment/venue") // Accepted limitations are load-bearing here (#714); compressed from 76 lines.
+@Suppress("LongComment/venue") // The venue's prose is its data sheet, and this block is how the parser mines it (#714).
 class InselApiScraper(
     /** Clock for the past-event cutoff. Defaults to the venue's own time zone; override in tests for determinism. */
     private val clock: Clock = Clock.system(BERLIN)

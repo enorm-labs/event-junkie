@@ -6,6 +6,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -95,3 +96,6 @@ class BarJederVernunftWebsiteImporter(
             null
         }
 }
+
+/** Nothing this source withholds needs declaring (#715). */
+val BAR_JEDER_VERNUNFT_LIMITATIONS = VenueLimitations(EventSource.BAR_JEDER_VERNUNFT)

@@ -53,13 +53,11 @@ import java.time.LocalTime
  *  - **Only a Resident Advisor *event* link becomes the ticket URL** ([RA_EVENT_URL]). A night whose RA
  *    page is not up links to the club's RA profile or a bare `#` — placeholders, not that night's tickets.
  *
- * Accepted limitations — the club publishes none of this, so there is nothing to repair:
- *  - **No prices anywhere**, not even at the door. A note line ("free entry until midnight*") is stored
- *    as the description, not a `priceNote`: that would trip `detectFree` and flag a paid night free for
- *    its whole run, when entry is free for the first hour only.
- *  - **No genre, doors time, or support/headliner distinction** — every act is stored with the `DJ` role.
- *  - **No status signalling.** A cancelled night is taken off the page rather than labelled.
+ * A note line ("free entry until midnight*") is stored as the description rather than as a `priceNote`:
+ * a `priceNote` would trip `detectFree` and flag a paid night free for its whole run, when entry is
+ * free for the first hour only. Every act carries the `DJ` role, the club billing no headliner.
  *
+ * @see DER_WEISSE_HASE_LIMITATIONS for what the club does not publish.
  * @see DerWeisseHaseWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://derweissehase.club/events">Der Weiße Hase Berlin</a>
  */

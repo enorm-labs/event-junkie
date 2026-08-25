@@ -1,10 +1,13 @@
 package de.norm.events.scraper.insel
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import tools.jackson.databind.json.JsonMapper
@@ -149,3 +152,20 @@ class InselWebsiteImporter(
         const val STATIC_QUERY_HASHES = "staticQueryHashes"
     }
 }
+
+val INSEL_LIMITATIONS =
+    VenueLimitations(
+        EventSource.INSEL,
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue names no prices anywhere; only an Eintritt-frei note on the free Sunday matinées"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "a dropped show is removed from the CMS rather than flagged"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every event points at the programme page and takes its identity from its date plus its title"),
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the venue publishes no category, so a title that is an event name rather than an act is minted as a concert"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "a support act billed without a colon reads as prose, so only a colon or a line-leading support marker is followed"
+        )
+    )

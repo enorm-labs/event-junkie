@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.urbanspree.UrbanSpreeWebsiteImporter.Companion.MAX_PAGES
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
@@ -169,3 +170,6 @@ class UrbanSpreeWebsiteImporter(
         private const val PAGE_QUERY_PARAM = "page"
     }
 }
+
+/** Nothing this source withholds needs declaring (#715). */
+val URBAN_SPREE_LIMITATIONS = VenueLimitations(EventSource.URBAN_SPREE)

@@ -1,10 +1,13 @@
 package de.norm.events.scraper.supamolly
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -57,3 +60,10 @@ class SupamollyWebsiteImporter(
             }
         }
 }
+
+val SUPAMOLLY_LIMITATIONS =
+    VenueLimitations(
+        EventSource.SUPAMOLLY,
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue publishes no prices"),
+        AcceptedLimitation(LimitedAspect.TICKET_URL, "the venue runs no ticket shop")
+    )

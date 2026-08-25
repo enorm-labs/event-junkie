@@ -1,10 +1,13 @@
 package de.norm.events.scraper.voidclub
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -52,3 +55,17 @@ class VoidClubWebsiteImporter(
             }
         }
 }
+
+val VOID_CLUB_LIMITATIONS =
+    VenueLimitations(
+        EventSource.VOID_CLUB,
+        AcceptedLimitation(LimitedAspect.START_TIME, "the venue publishes no times; every night stores a bare date"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no times; every night stores a bare date"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue publishes no prices"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the venue publishes no per-event text"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night points at the programme page"),
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the club states no category; `.void-event-genre` names the music and `.void-event-venue` the rooms in use, neither of which is a kind of event"
+        )
+    )

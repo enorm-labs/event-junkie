@@ -1,10 +1,13 @@
 package de.norm.events.scraper.clash
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -52,3 +55,14 @@ class ClashWebsiteImporter(
             }
         }
 }
+
+val CLASH_LIMITATIONS =
+    VenueLimitations(
+        EventSource.CLASH,
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the `event` post type is not exposed over the WordPress REST API and the numeric permalinks 404"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the homepage listing is the whole source and carries no doors time"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the homepage listing is the whole source and carries no price"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the homepage listing is the whole source and carries no genre"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the homepage listing is the whole source and names no promoter"),
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site has no category field; the type is inferred from the title, defaulting to a concert")
+    )

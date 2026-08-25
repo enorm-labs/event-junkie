@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -60,3 +61,6 @@ class ModusWebsiteImporter(
             artists = primary.artists.ifEmpty { fallback.artists }
         )
 }
+
+/** Nothing this source withholds needs declaring (#715). */
+val MODUS_LIMITATIONS = VenueLimitations(EventSource.MODUS)

@@ -1,10 +1,13 @@
 package de.norm.events.scraper.maxxim
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -62,3 +65,9 @@ class MaxximWebsiteImporter(
             }
         }
 }
+
+val MAXXIM_LIMITATIONS =
+    VenueLimitations(
+        EventSource.MAXXIM,
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club publishes no categories; every night is a DJ dance party")
+    )

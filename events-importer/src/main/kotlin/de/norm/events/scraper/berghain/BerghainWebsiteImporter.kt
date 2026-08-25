@@ -4,6 +4,7 @@ import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -75,3 +76,6 @@ class BerghainWebsiteImporter(
             artists = primary.artists.ifEmpty { fallback.artists }
         )
 }
+
+/** Nothing this source withholds needs declaring (#715). */
+val BERGHAIN_LIMITATIONS = VenueLimitations(EventSource.BERGHAIN)

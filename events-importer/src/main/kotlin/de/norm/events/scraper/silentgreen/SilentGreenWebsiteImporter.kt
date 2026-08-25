@@ -1,10 +1,13 @@
 package de.norm.events.scraper.silentgreen
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -116,3 +119,10 @@ class SilentGreenWebsiteImporter(
         const val MAX_MONTH_PAGES = 12
     }
 }
+
+val SILENT_GREEN_LIMITATIONS =
+    VenueLimitations(
+        EventSource.SILENT_GREEN,
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue names no prices anywhere — an event either links out to a ticket shop or says nothing"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre")
+    )

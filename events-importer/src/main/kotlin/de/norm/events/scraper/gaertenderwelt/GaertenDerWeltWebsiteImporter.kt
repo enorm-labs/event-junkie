@@ -1,11 +1,14 @@
 package de.norm.events.scraper.gaertenderwelt
 
 import de.norm.events.event.EventStatus
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.gaertenderwelt.GaertenDerWeltWebsiteImporter.Companion.MAX_PAGES
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -37,15 +40,11 @@ import org.springframework.stereotype.Component
  *
  * **The park's participation formats are deliberately not imported** — see [isProgrammeCategory].
  *
- * Two accepted limitations, both of them the source's shape rather than a parsing gap:
- *  - **No genre is stored.** The park's only classification is the format category the event type
- *    is already built from ("Konzerte", "Open-Air Kino"); it names no musical style anywhere, not
- *    even in the prose, so there is nothing to put in the field.
- *  - **A multi-day run is stored as its opening date.** The park lists a run under one row with a
- *    date range — an exhibition across two months, a drone show over three nights, a workshop over
- *    a weekend — and the model holds one date per event. The URL stamp gives the opening
- *    unambiguously, so that is what is stored; expanding a range into one event per day would invent
- *    sixty openings for a two-month exhibition and cannot be told from a genuine multi-night booking.
+ * **A multi-day run is stored as its opening date.** The park lists a run under one row with a date
+ * range — an exhibition across two months, a drone show over three nights, a workshop over a weekend
+ * — and the model holds one date per event. The URL stamp gives the opening unambiguously, so that
+ * is what is stored; expanding a range into one event per day would invent sixty openings for a
+ * two-month exhibition and cannot be told from a genuine multi-night booking.
  *
  * @see GaertenDerWeltOverviewPageScraper for listing-page parsing, identity, date and pagination.
  * @see GaertenDerWeltDetailPageScraper for the description, prices, doors time and promoter.
@@ -151,3 +150,12 @@ class GaertenDerWeltWebsiteImporter(
         private const val MAX_PAGES = 40
     }
 }
+
+val GAERTEN_DER_WELT_LIMITATIONS =
+    VenueLimitations(
+        EventSource.GAERTEN_DER_WELT,
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the park's only classification is the format category the event type is already built from; it names no musical style, not even in prose"
+        )
+    )

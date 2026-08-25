@@ -1,10 +1,13 @@
 package de.norm.events.scraper.maaya
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -61,3 +64,14 @@ class MaayaWebsiteImporter(
             }
         }
 }
+
+val MAAYA_LIMITATIONS =
+    VenueLimitations(
+        EventSource.MAAYA,
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the programme is one hand-built section of the WordPress home page"),
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the programme is one hand-built section of the home page and carries no detail text"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue publishes an entry note in words and no numeric price"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "there is no lineup field, and the titles are series and party names rather than acts"),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no doors time"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre")
+    )

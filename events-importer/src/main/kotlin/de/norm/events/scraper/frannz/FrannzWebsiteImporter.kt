@@ -1,10 +1,13 @@
 package de.norm.events.scraper.frannz
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -53,3 +56,10 @@ class FrannzWebsiteImporter(
             }
         }
 }
+
+val FRANNZ_LIMITATIONS =
+    VenueLimitations(
+        EventSource.FRANNZ,
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "nothing on the site links a `/events/<slug>/` page"),
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the word ausverkauft appears only in the prose blurb, where it also turns up describing a past tour")
+    )

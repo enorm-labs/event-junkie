@@ -1,10 +1,13 @@
 package de.norm.events.scraper.columbiahalle
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -55,3 +58,12 @@ class ColumbiahalleWebsiteImporter(
             }
         }
 }
+
+val COLUMBIAHALLE_LIMITATIONS =
+    VenueLimitations(
+        EventSource.COLUMBIAHALLE,
+        AcceptedLimitation(
+            LimitedAspect.PER_EVENT_PAGE,
+            "the venue's own iCal export keys the event on the same Contao id and points back at the listing anchor"
+        )
+    )
