@@ -1,10 +1,10 @@
 # OpenObserve on staging — ADR-015's trial, which cannot start until this runs somewhere real.
 #
 # **The `openobserve-standalone` chart, NOT `openobserve`.** The plain chart deploys microservices —
-# ingester, querier, router, scheduler, compactor, and `o2ai` at two replicas — which is nothing like
-# the footprint ADR-015 compared and would not fit a node already running two JVMs. Standalone is one
-# StatefulSet and one PVC. **Picking the wrong one silently invalidates the ADR's criterion 2**, which
-# is the criterion the whole decision turned on. Every measured number in ADR-015 is standalone's.
+# ingester, querier, router, scheduler, compactor and `o2ai` at two replicas — nothing like the
+# footprint ADR-015 compared, and it would not fit a node already running two JVMs. Standalone is one
+# StatefulSet and one PVC, and every measured number in ADR-015 is standalone's, so **picking the
+# wrong one silently invalidates criterion 2**, which the whole decision turned on.
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
@@ -32,9 +32,9 @@ metadata:
 spec:
   releaseName: openobserve
   targetNamespace: observability
-  # Where Helm keeps its release secret. Same reasoning cert-manager.yaml gives: left alone Flux
-  # stores it in flux-system while the objects live elsewhere, which puts `helm list -n observability`
-  # at odds with reality for anyone debugging.
+  # Where Helm keeps its release secret (cert-manager.yaml gives the same reasoning): left alone,
+  # Flux stores it in flux-system while the objects live elsewhere, so `helm list -n observability`
+  # disagrees with reality for anyone debugging.
   storageNamespace: observability
   interval: 1h
   install:
@@ -58,17 +58,14 @@ spec:
         namespace: flux-system
       interval: 1h
 
-  # The two S3 credentials, injected from the hand-made Secret rather than written here.
+  # **The whole reason `valuesFrom` is used at all.** The chart takes `auth.ZO_S3_ACCESS_KEY` and
+  # `auth.ZO_S3_SECRET_KEY` as plain values, so putting them under `spec.values` would put live
+  # Object Storage credentials in a public repository in plaintext. `existingRootUserSecret` covers
+  # the root user and nothing else, so Flux merges these two in at reconcile time instead.
   #
-  # **This is the whole reason `valuesFrom` is used at all.** The chart takes `auth.ZO_S3_ACCESS_KEY`
-  # and `auth.ZO_S3_SECRET_KEY` as plain values, so putting them under `spec.values` below would put
-  # live Object Storage credentials in a public repository in plaintext. `existingRootUserSecret`
-  # covers the root user and nothing else — these two have no such option, so Flux merges them in at
-  # reconcile time instead.
-  #
-  # The Secret is created by hand and nothing here creates it: docs/ops/SECRETS.md. Until it exists
-  # this release reconciles into a failed state, which is the intended shape — a missing credential
-  # should stop the deploy, not produce a running server nobody can log into.
+  # Nothing here creates the Secret (docs/ops/SECRETS.md). Until it exists this release reconciles
+  # into a failed state, which is intended: a missing credential should stop the deploy, not produce
+  # a running server nobody can log into.
   valuesFrom:
     - kind: Secret
       name: openobserve-credentials
@@ -89,9 +86,9 @@ spec:
         passwordKey: ZO_ROOT_USER_PASSWORD
 
     config:
-      # Object storage rather than local disk, which is the point of the bucket. ADR-015: "its
-      # object-storage backend means log retention stops competing with the node's disk", and
-      # LEGAL.md §7.5 needs that retention to be a policy something enforces rather than an intent.
+      # Object storage rather than local disk, which is the point of the bucket: ADR-015 wants log
+      # retention to stop competing with the node's disk, and LEGAL.md §7.5 needs that retention to
+      # be a policy something enforces rather than an intent.
       #
       # **`ZO_LOCAL_MODE` stays `true`, and the storage switch is the line below it.** The flag
       # chooses *single-node versus cluster*, not disk versus S3 — set it `false` and the pod
@@ -219,23 +216,21 @@ spec:
       # *public* address, so the root credential can exfiltrate alert bodies — inherent to having a
       # webhook at all, and that credential already reads every metric and log in the system.
 
-      # **It is NOT in the `config:` block above, and that is not a style choice.** The chart renders
-      # its ConfigMap from the 226 keys it knows about and **silently drops anything else** — no
-      # error, no warning, and a `helm template` that looks entirely correct. `extraEnv` is the
-      # chart's escape hatch for a key it has never heard of, and it lands as a plain environment
-      # variable, which is what the process reads anyway.
+      # **NOT in the `config:` block above, and that is not a style choice.** The chart renders its
+      # ConfigMap from the 226 keys it knows about and **silently drops anything else** — no error,
+      # no warning, and a `helm template` that looks correct. `extraEnv` is the escape hatch for a
+      # key it has never heard of, and it lands as a plain environment variable anyway.
 
     extraEnv:
-      # Kept alongside the skip below rather than removed by it: if the wider flag is ever
-      # reverted, the loopback destination that records firings into `alert_history` keeps
-      # working, and the alert rules do not all break at once.
+      # Kept alongside the skip below rather than removed by it: revert the wider flag and the
+      # loopback destination recording firings into `alert_history` keeps working.
       - name: ZO_SSRF_ALLOW_LOOPBACK
         value: "true"
       - name: ZO_SKIP_SSRF_CHECKS
         value: "true"
 
-    # The gateway's `prometheus-autodiscovery` job keeps pods carrying these, exactly as
-    # postgres-exporter.yaml does. Without them the setting above exposes metrics nothing collects.
+    # The gateway's `prometheus-autodiscovery` job keys on these, as postgres-exporter.yaml does.
+    # Without them the setting above exposes metrics nothing collects.
     podAnnotations:
       prometheus.io/scrape: "true"
       prometheus.io/port: "5080"
@@ -252,14 +247,12 @@ spec:
         memory: "512Mi"
         cpu: "100m"
       limits:
-        # Measured, not guessed. A k3d rehearsal put standalone at 634Mi under load and the whole
+        # Measured, not guessed: a k3d rehearsal put standalone at 634Mi under load and the whole
         # metrics path — this, the collector gateway, two agents and the operator — at 938Mi against
-        # ADR-015's ~1.5 GB ceiling.
-        #
-        # **1Gi is deliberately tighter than that ceiling.** Criterion 2 is a real test rather than a
-        # hope only if breaching it is observable, and an OOMKill says so immediately. Raise it if it
-        # proves too tight on real data — but raise it as a decision, and record what the number
-        # became, because 1.5 GB is the point at which ADR-015's fallback is supposed to trigger.
+        # ADR-015's ~1.5 GB ceiling. **1Gi is deliberately tighter than that ceiling**, because
+        # criterion 2 is a real test only if breaching it is observable and an OOMKill says so
+        # immediately. Raise it as a decision and record the number: 1.5 GB is where ADR-015's
+        # fallback triggers.
         #
         # **This number is not only a limit — it sizes two things inside the process**, which cost
         # #625 a wrong diagnosis: the memtable ceiling is a quarter of it (`config.rs:3612`), so 1Gi

@@ -72,22 +72,12 @@ module "environment" {
 }
 
 # ---------------------------------------------------------------------------
-# There are deliberately no DNS records in this file.
-#
-# `staging.event-junkie.de` does not resolve on the public internet — that is the design, not an
-# omission (§4a). Name resolution happens over the tunnel, via its DNS or a `hosts` entry pointing
-# at the node's WireGuard address.
-#
-# So TLS cannot use the HTTP-01 challenge, which requires Let's Encrypt to reach the host — the
-# thing this design exists to stop. cert-manager uses DNS-01 against the Hetzner DNS API, which
-# needs no inbound access, so a hostname with no public address still gets a real ACME certificate:
-# the TXT record is public, the A record never exists. The chart renders that solver (#261); #265
-# installs cert-manager and the Hetzner webhook that answers it. The token is an **hcloud** token,
-# the same kind this stack authenticates with, which is also why `hcloud_zone` in bootstrap/ is the
-# official provider's resource rather than a community DNS provider's.
-#
-# **That certificate is not publicly trusted, and that is a separate thing.** DNS-01 solves
-# reachability, not which CA signs: deploy/clusters/staging/helm-release.yaml points at
-# `acme-staging-v02`, whose root is in no trust store, so `curl` fails without `-k` here and that is
-# correct. Production uses `acme-v02`.
+# There are deliberately no DNS records in this file. `staging.event-junkie.de` does not resolve on
+# the public internet — the design, not an omission (PLATFORM_SETUP.md §6). Name resolution happens
+# over the tunnel, and the consequence worth stating where somebody will look for it is that TLS
+# cannot use HTTP-01, which needs Let's Encrypt to reach the host. cert-manager uses DNS-01 against
+# the Hetzner DNS API instead, so a hostname with no public address still gets a real ACME
+# certificate: the TXT record is public, the A record never exists. The chart renders that solver
+# (#261); #265 installs cert-manager and the webhook that answers it. The token is an **hcloud**
+# token, which is also why `hcloud_zone` in bootstrap/ is the official provider's resource.
 # ---------------------------------------------------------------------------

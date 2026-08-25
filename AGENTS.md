@@ -731,7 +731,8 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
       file is a declaration with its rationale attached, not prose with code between it. Smell reports a date, a markdown heading, a comment narrating its own
       history, or a `TODO` — all of it already policy, none of it previously enforceable. **A date inside backticks, quotes or a fenced block is left alone**:
       this tree documents its parsers with `"2026-05-16T20:00"` far more often than it dates a decision, and a rule that cannot tell the two apart gets switched
-      off. Test sources are excluded for the same reason — a pinned clock is a fact about a fixture. `events-frontend/eslint-rules/` carries both counterparts.
+      off. Test sources are excluded for the same reason — a pinned clock is a fact about a fixture. **"used to" preceded by a form of _be_ is the passive verb,
+      not a narration** ("nothing here can be used to push"), and is not flagged. `events-frontend/eslint-rules/` carries both counterparts.
     - **Adding a rule to `:detekt-rules` needs `./gradlew --stop` before it will run.** The daemon caches the plugin classloader, so a newly registered rule is
       silently absent — detekt passes, reports nothing, and nothing says why. It is not a config error and no amount of `--rerun-tasks` clears it.
     - **Venue sub-packages run a second instance of the same rule, `LongComment/venue`, capped at 40** (#714). `scraper/` itself is _not_ exempt: the files
