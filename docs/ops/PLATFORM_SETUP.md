@@ -516,8 +516,9 @@ runs.
 | **Name resolution over WireGuard**                 | The tunnel's DNS (or a `hosts` entry) maps the hostname to the tunnel address |
 
 **The one real consequence: TLS must be DNS-01** (§5), because HTTP-01 requires Let's Encrypt to reach the host, which is precisely what this prevents. Staging
-still gets a genuine, publicly-trusted certificate for a hostname that has no public address. Note the shape of that: **the TXT record is public, the `A` record
-never exists.**
+gets a real ACME certificate for a hostname that has no public address — note the shape of that: **the TXT record is public, the `A` record never exists.** It
+is **not** publicly trusted, and that is a separate thing: DNS-01 solves reachability, not which CA signs, and staging points at `acme-staging-v02` (§5), whose
+root is in no trust store. `curl` fails here without `-k`, and that is correct.
 
 **What it removes:** no password to set, share, rotate or leak, and no `basicAuth` middleware to misplace onto the wrong Ingress. Indexing stops being a managed
 risk and becomes an impossibility — a crawler cannot reach what does not resolve. `X-Robots-Tag: noindex, nofollow` and a per-environment `robots.txt` are still
