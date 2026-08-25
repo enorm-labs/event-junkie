@@ -27,6 +27,10 @@ Lint enforces the mechanical half of this; the rest is review.
       also handles…" are the same defect: a comment narrating a journey instead of a state.
     - **No history, no dates, no changelog.** git blame, the PR and the issue already hold when something changed and why. Drop "as of 2026-08-18", "previously"
       and re-tellings of a review thread. **One exception**: an abandoned approach that is a live trap — one sentence naming the trap, not the story of it.
+    - **A KDoc example is not a test, and writing one suppresses the instinct to go and write the test.** Seven public helpers under
+      `events-importer/.../scraper/` were documented with worked `Example:` blocks and asserted by nothing (#726), while reporting 100% line coverage because
+      venue fixtures call them. Two of those blocks had already drifted from the assertion they duplicated. If a case is worth showing it is worth asserting:
+      put it in the test, and name the suite if a reader needs the examples.
     - **An issue or ADR reference is a pointer, not a summary.** Write `see #540` and stop. Duplicating AGENTS.md or an ADR into a comment creates a second copy
       that drifts; keep in the code only what constrains that specific code.
     - **No document structure inside a comment.** Markdown headings (`## Why this exists`), bold section titles and multi-paragraph argument mean the content is a

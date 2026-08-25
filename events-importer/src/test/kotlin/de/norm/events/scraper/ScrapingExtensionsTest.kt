@@ -255,4 +255,28 @@ class ScrapingExtensionsTest {
             paragraph.textLines() shouldBe listOf("Support: Jeff Clarke", "ALIS.")
         }
     }
+
+    @Nested
+    inner class ExtractEventSlug {
+        @Test
+        fun `extractEventSlug strips the path prefix and any trailing slash`() {
+            extractEventSlug("https://www.lido-berlin.de/events/2026-06-15-sorry") shouldBe "2026-06-15-sorry"
+            extractEventSlug("https://www.lido-berlin.de/events/2026-06-15-sorry/") shouldBe "2026-06-15-sorry"
+            extractEventSlug("https://example.com/event/mucco", prefix = "/event/") shouldBe "mucco"
+        }
+
+        // The platform keeps the slug when an event moves, so a `sourceId` built from it survives
+        // a reschedule that a date-derived one would not.
+        @Test
+        fun `extractEventSlug keeps a stale embedded date, which is what makes it stable`() {
+            val slug = extractEventSlug("https://www.astra-berlin.de/events/2026-06-15-sorry")
+            slug shouldBe "2026-06-15-sorry"
+            parseIsoDate(slug.take(ISO_DATE_LENGTH)) shouldBe java.time.LocalDate.of(2026, 6, 15)
+        }
+
+        @Test
+        fun `extractEventSlug leaves a path that does not carry the prefix`() {
+            extractEventSlug("https://example.com/other/thing") shouldBe "/other/thing"
+        }
+    }
 }

@@ -174,4 +174,25 @@ class EventFieldMappingTest {
         parseSchemaEventStatus("https://schema.org/EventScheduled") shouldBe "SCHEDULED"
         parseSchemaEventStatus("nonsense") shouldBe "SCHEDULED"
     }
+
+    // --- stripRelocationPrefix ---
+
+    // Mikropol writes "verlegt in den", Metropol "Verlegt ins".
+    @Test
+    fun `stripRelocationPrefix accepts both contractions and either dash`() {
+        stripRelocationPrefix("Verlegt ins Bi Nuu – BRKN") shouldBe "BRKN"
+        stripRelocationPrefix("-verlegt in den Frannz Club – CULTURE WARS") shouldBe "CULTURE WARS"
+        stripRelocationPrefix("VERLEGT INS Astra - HOUSE OF PROTECTION") shouldBe "HOUSE OF PROTECTION"
+    }
+
+    @Test
+    fun `stripRelocationPrefix leaves a title with no relocation prefix`() {
+        stripRelocationPrefix("The Adicts") shouldBe "The Adicts"
+        stripRelocationPrefix("Verlegt") shouldBe "Verlegt"
+    }
+
+    @Test
+    fun `stripRelocationPrefix returns the input when stripping would leave nothing`() {
+        stripRelocationPrefix("Verlegt ins Bi Nuu –") shouldBe "Verlegt ins Bi Nuu –"
+    }
 }

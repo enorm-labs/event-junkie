@@ -3,9 +3,13 @@ package de.norm.events.scraper
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import java.time.Clock
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.Month
+import java.time.MonthDay
+import java.time.ZoneOffset
 
 class DateParsingExtensionsTest {
     // --- parseTime ---
@@ -215,5 +219,35 @@ class DateParsingExtensionsTest {
     fun `parseGermanMonthAbbreviation returns null for a spelling these sites do not render`() {
         parseGermanMonthAbbreviation("Sept").shouldBeNull()
         parseGermanMonthAbbreviation(null).shouldBeNull()
+    }
+
+    // --- inferYearForWeekday ---
+
+    private fun clockAt(date: String) = Clock.fixed(LocalDate.parse(date).atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC)
+
+    // Retro venues leave recently-passed events on the page, which is what the naive
+    // "roll to next year if already past" rule gets wrong.
+    @Test
+    fun `inferYearForWeekday resolves a just-passed date to this year rather than a future repeat`() {
+        // 3 July 2026 was a Friday, and today is the Thursday six days later.
+        inferYearForWeekday(MonthDay.of(7, 3), DayOfWeek.FRIDAY, clockAt("2026-07-09")) shouldBe LocalDate.of(2026, 7, 3)
+    }
+
+    @Test
+    fun `inferYearForWeekday picks the candidate year whose date lands on the stated weekday`() {
+        // 3 July is a Saturday in 2027 and a Friday in 2026, so the weekday decides the year.
+        inferYearForWeekday(MonthDay.of(7, 3), DayOfWeek.SATURDAY, clockAt("2026-07-09")) shouldBe LocalDate.of(2027, 7, 3)
+    }
+
+    @Test
+    fun `inferYearForWeekday falls back to the nearest occurrence when the weekday is null`() {
+        inferYearForWeekday(MonthDay.of(12, 31), null, clockAt("2026-01-02")) shouldBe LocalDate.of(2025, 12, 31)
+        inferYearForWeekday(MonthDay.of(1, 2), null, clockAt("2026-12-30")) shouldBe LocalDate.of(2027, 1, 2)
+    }
+
+    @Test
+    fun `inferYearForWeekday ignores an impossible weekday instead of returning nothing`() {
+        val resolved = inferYearForWeekday(MonthDay.of(7, 3), DayOfWeek.FRIDAY, clockAt("2026-07-09"), yearWindow = 0)
+        resolved shouldBe LocalDate.of(2026, 7, 3)
     }
 }
