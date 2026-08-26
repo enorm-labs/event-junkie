@@ -13,6 +13,9 @@
 # be compared on the same prompt rather than argued about.
 #
 # **There is no `github_token:` input.** See agent-security.yml.
+#
+# **`display_report: true` is what makes the run readable**, and is not interchangeable with
+# `show_full_output`. ci-cd.instructions.md has the difference and why it matters here.
 name: Agent — Compact Comments
 
 on:
@@ -74,6 +77,7 @@ jobs:
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          display_report: true
           prompt: /compact-comments ${{ inputs.scope }} --unattended${{ inputs.dry_run && ' --dry-run' || '' }}
           claude_args: |
             --model ${{ inputs.model }}
