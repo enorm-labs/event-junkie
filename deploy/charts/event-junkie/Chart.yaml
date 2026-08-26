@@ -7,16 +7,13 @@ name: event-junkie
 description: The event-junkie stack — BFF, importer and frontend behind one Traefik ingress
 type: application
 
-# version and appVersion are PLACEHOLDERS, and both are stamped by `.github/workflows/release.yml`
-# from one computed number before the chart is packaged — so editing them here does not decide what
-# gets published. They must equal the base version in `gradle.properties` (0.1.1-SNAPSHOT -> 0.1.1),
-# and `scripts/version.sh check` fails the build if they drift; a checkout is still installable, and
-# a chart that lies about its own version in a local `helm install` is worth nothing.
-#
-# They move in lockstep, which is the unusual half of the decision (#264): versioning a chart
-# separately suits a public chart with many consumers, but this one has exactly one and ships from
-# the same commit as the code, so a second number would be pure bookkeeping. The cost is that a
-# template-only fix still consumes a version.
+# version and appVersion are PLACEHOLDERS, stamped by `.github/workflows/release.yml` from one
+# computed number before packaging, so editing them here decides nothing. They must equal the base
+# version in `gradle.properties` and `scripts/version.sh check` fails the build if they drift — a
+# chart that lies about its own version in a local `helm install` is worth nothing. They move in
+# lockstep (#264): separate versioning suits a public chart with many consumers, and this one has
+# exactly one and ships from the same commit as the code. The cost is that a template-only fix
+# still consumes a version.
 version: 0.1.1
 
 # appVersion is also the default image tag for all three workloads (`<component>.image.tag`
@@ -24,11 +21,10 @@ version: 0.1.1
 # step: one number, stamped once per build, reaches all four artifacts. Never `latest`.
 appVersion: "0.1.1"
 
-# No `dependencies:` block, and that is a decision rather than an omission: PostgreSQL runs on its
-# own VM per ADR-012, so the reflex of vendoring the Bitnami postgresql subchart is wrong here — it
-# would put the database inside the blast radius of a `helm uninstall`. cert-manager and Traefik are
-# installed on the cluster separately (#265); this chart renders only instances of their types and
-# ships no `crds/` directory. See docs/ops/PLATFORM_SETUP.md §6.
+# No `dependencies:` block, a decision rather than an omission: PostgreSQL runs on its own VM per
+# ADR-012, so vendoring the Bitnami subchart would put the database inside the blast radius of a
+# `helm uninstall`. cert-manager and Traefik are installed separately (#265); this chart renders only
+# instances of their types and ships no `crds/`. See docs/ops/PLATFORM_SETUP.md §6.
 
 home: https://event-junkie.com
 sources:

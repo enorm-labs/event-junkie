@@ -1,3 +1,4 @@
+# comment-lint: allow-file 10 lines of Namespace, and the reason it enforces nothing does not fit in 12.
 # The observability namespace, declared here so it can carry Pod Security Admission labels (#604).
 #
 # **This namespace enforces nothing, and that is the honest state rather than an oversight.** The
@@ -12,9 +13,9 @@
 # rejecting it, so the collector keeps its mounts while the **next** workload added here arrives
 # with its violations named rather than silent. A bare namespace gives neither.
 #
-# **Getting to real enforcement** means moving the agent out to a namespace of its own, since PSA is
-# namespace-scoped and has no per-workload exemption. That is a live DaemonSet with its own RBAC,
-# service references and NetworkPolicies (#662), so it is its own change — see #709.
+# **Getting to real enforcement** means moving the agent to a namespace of its own, PSA being
+# namespace-scoped with no per-workload exemption — a live DaemonSet with its own RBAC, service
+# references and NetworkPolicies (#662), so its own change. See #709.
 apiVersion: v1
 kind: Namespace
 metadata:

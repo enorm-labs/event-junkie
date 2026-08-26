@@ -10,8 +10,9 @@
 # Covers .tf, .tfvars, .sh, .py, .yaml, .yml. Kotlin is detekt's LongComment; TS and Vue are
 # event-junkie/max-comment-lines. See .github/instructions/comments.instructions.md and #713.
 #
-# Silence one block with `# comment-lint: allow <reason>` on the line above it. The reason is not
-# optional, and a bare directive is itself a violation.
+# Silence one block with `# comment-lint: allow <reason>` on the line above it, or a whole file's
+# density with `# comment-lint: allow-file <reason>`. The reason is not optional either way, and a
+# bare directive is itself a violation.
 
 set -euo pipefail
 
@@ -20,10 +21,19 @@ BASELINE="$REPO_ROOT/scripts/comment-lint-baseline.txt"
 
 MAX_BLOCK="${COMMENT_LINT_MAX_BLOCK:-25}"
 # A file header is the script's only `--help` in most of these files, and documents an interface
-# rather than reasoning interleaved with code. It gets a higher cap, not an exemption — the same
-# shape `LongComment/venue` has on the Kotlin side (#714). Density and the area ratchet still bound it.
+# rather than reasoning interleaved with code. It gets a higher cap, not an exemption; density and
+# the area ratchet still bound it.
 MAX_HEADER_BLOCK="${COMMENT_LINT_MAX_HEADER_BLOCK:-40}"
 HEADER_STARTS_BY=3
+# **55, where `CommentDensity` and the ESLint rule both cap at 70** (#721). The argument for parity
+# is real — in Kotlin one comment explains a twenty-line function, while in HCL and YAML one comment
+# explains one assignment, so the same reasoning lands at a higher ratio here — but 70 was measured
+# to flag two files where 55 flags seventeen, and raising a cap to clear findings is the move #713
+# rejected when it threw away a working KDoc rewrapper. A file that genuinely cannot fit says so
+# with `allow-file` and a reason, which is visible in review; a looser number is not.
+#
+# The floor stays at 21 comment lines (`c > 20` below) rather than moving to the 25 its counterparts
+# use, for the same reason: it would retire three findings by redefinition.
 MAX_DENSITY="${COMMENT_LINT_MAX_DENSITY:-55}"
 EXCLUDE='node_modules/|/build/|/dist/|/coverage/'
 # Files where a date is the policy rather than a smell. A suppression carries one so its staleness
@@ -81,10 +91,10 @@ scan() {
         }
         FNR == 1 {
             if (file != "") { endblock(); density() }
-            file = FILENAME; c = 0; k = 0; blocklen = 0; allow = 0
+            file = FILENAME; c = 0; k = 0; blocklen = 0; allow = 0; fileallow = 0
         }
         function density() {
-            if (c + k > 0 && 100 * c / (c + k) > maxdens && c > 20)
+            if (c + k > 0 && 100 * c / (c + k) > maxdens && c > 20 && !fileallow)
                 emit(file, 1, "dense-file", sprintf("%.0f%% comments, cap is %d%%", 100 * c / (c + k), maxdens))
         }
         {
@@ -94,9 +104,19 @@ scan() {
             if (FNR == 1 && line ~ /^#!/) { k++; next }
             if (line !~ /^#/) { endblock(); k++; next }
 
-            c++
             rest = line
             sub(/^#+[ \t]?/, "", rest)
+
+            # Tested before the block directive, which is a prefix of it. It does not count toward the
+            # ratio either: a suppression should not be able to push the thing it suppresses over.
+            if (rest ~ /^comment-lint:[ \t]*allow-file/) {
+                if (rest !~ /^comment-lint:[ \t]*allow-file[ \t]+[^ \t]/)
+                    emit(file, FNR, "bare-suppression", "no reason given")
+                fileallow = 1
+                next
+            }
+
+            c++
 
             if (rest ~ /^comment-lint:[ \t]*allow/) {
                 if (rest !~ /^comment-lint:[ \t]*allow[ \t]+[^ \t]/)

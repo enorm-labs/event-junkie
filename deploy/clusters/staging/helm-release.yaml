@@ -1,14 +1,11 @@
 # Staging's release of the event-junkie chart.
 #
-# `spec.values` IS THE STAGING CONFIGURATION — there is no `values-staging.yaml` any more (#414).
-# A HelmRelease cannot read a file from the repository, so keeping both would mean two copies that
-# must agree with nothing checking that they do, which is how an environment quietly drifts.
-# `scripts/cluster-assertions.sh` extracts these values and re-runs the chart's helm-unittest
-# invariant suites against them, so the assertions gate exactly what Flux deploys rather than a file
-# nothing deploys.
-#
-# The chart's own `values.yaml` still holds every default and every comment; only the overrides live
-# here.
+# `spec.values` IS THE STAGING CONFIGURATION — there is no `values-staging.yaml` (#414). A
+# HelmRelease cannot read a file from the repository, so keeping both would mean two copies that must
+# agree with nothing checking they do. `scripts/cluster-assertions.sh` extracts these values and
+# re-runs the chart's helm-unittest invariant suites against them, so the assertions gate what Flux
+# deploys rather than a file nothing deploys. The chart's `values.yaml` holds every default; only
+# overrides live here.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -80,24 +77,18 @@ spec:
     mode: warn
   values:
     networkPolicy:
-      # The /32 of `database.host` below. Two settings for one address is the unavoidable cost of
-      # the feature — NetworkPolicy speaks CIDRs and cannot resolve a name — and this is the pairing
-      # most likely to be half-done, so `scripts/cluster-assertions.sh` fails the build when a
-      # cluster has a real host and a placeholder CIDR.
-      #
-      # **A placeholder here does NOT fail the render**, which is why that check exists: the value
-      # is a string, so `REPLACE-ME…/32` templates perfectly and is then rejected by the API server
-      # as an invalid `ipBlock.cidr` — failing the HelmRelease and rolling the release back, several
-      # steps from anything that mentions a CIDR.
-      #
-      # Confirm with `tofu -chdir=infra/environments/staging output postgres_ip`.
+      # The /32 of `database.host` below. Two settings for one address is the unavoidable cost of the
+      # feature — NetworkPolicy speaks CIDRs and cannot resolve a name — and the pairing most likely
+      # to be half-done, so `scripts/cluster-assertions.sh` fails the build on a real host with a
+      # placeholder CIDR. **A placeholder does NOT fail the render**, which is why that check exists:
+      # the value is a string, so `REPLACE-ME…/32` templates perfectly and is then rejected by the
+      # API server as an invalid `ipBlock.cidr`, rolling the release back several steps from anything
+      # that mentions a CIDR. Confirm with `tofu -chdir=infra/environments/staging output postgres_ip`.
       databaseCidr: "10.1.1.10/32"
     database:
       # The k3s node's own private address — PostgreSQL is co-located on staging
-      # (`postgres_server_type = null`), but still reached over the network, so the connection path
-      # is the same shape as production's. Matches `k3s_private_ip` in
-      # infra/environments/staging/main.tf; confirm with
-      # `tofu -chdir=infra/environments/staging output postgres_ip`.
+      # (`postgres_server_type = null`) but still reached over the network, so the connection path
+      # has production's shape. Matches `k3s_private_ip` in infra/environments/staging/main.tf.
       host: "10.1.1.10"
       # Created out of band before the first reconcile, in the TARGET namespace (`event-junkie`),
       # not in flux-system where this object lives:
@@ -156,9 +147,9 @@ spec:
         # Not a preference: HTTP-01 needs Let's Encrypt to reach the host, and this environment
         # exists to stop that. The TXT record is public; the A record never exists.
         #
-        # The webhook that answers this is `cert-manager-webhook.yaml`, and the chart's defaults for
-        # `dns01.tokenSecret` and `dns01.webhookGroupName` already match it, so nothing is repeated
-        # here. The one thing that is NOT automated is the token itself, created once per cluster:
+        # The webhook answering it is `cert-manager-webhook.yaml`, and the chart's defaults for
+        # `dns01.tokenSecret` and `dns01.webhookGroupName` already match it. The token is the one
+        # thing NOT automated, created once per cluster:
         #
         #   kubectl create secret generic hetzner -n cert-manager \
         #     --from-literal=token=<an hcloud API token with read+write>
@@ -168,13 +159,10 @@ spec:
         # the challenge fails with a message about the token rather than about the namespace.
         # SOPS-managed Secrets in #416 remove this step.
         solver: "dns01"
-        # The ACME *staging* endpoint, and it stays there — #265 closed on that decision rather
-        # than deferring it. Production's rate limits are per registered domain, and
-        # `event-junkie.de` is the same registered domain here as in production, so burning the
-        # limit from this environment would lock out the real one.
-        #
-        # The tempting counter-argument is that switching would rehearse the production ACME path
-        # before production exists. It would not: production issues over HTTP-01 (see the
-        # production cluster's values), so all this endpoint has left to prove is account
-        # registration. The price of that is a browser warning nobody outside the tunnel can see.
+        # The ACME *staging* endpoint, and it stays there (#265). Production's rate limits are per
+        # registered domain and `event-junkie.de` is the same registered domain here, so burning the
+        # limit from this environment would lock out the real one. The counter-argument — that
+        # switching rehearses the production ACME path — does not hold: production issues over
+        # HTTP-01, so all this endpoint has left to prove is account registration, against a browser
+        # warning nobody outside the tunnel can see.
         server: "https://acme-staging-v02.api.letsencrypt.org/directory"

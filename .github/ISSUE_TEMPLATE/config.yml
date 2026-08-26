@@ -1,36 +1,28 @@
-# Issue-template chooser configuration.
-# https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository
+# Issue-template chooser configuration. See GitHub's "Configuring issue templates for your
+# repository".
 #
-# The chooser lists forms in FILENAME order, which is why every form carries a numeric prefix.
-# 1-3 are for visitors and come first; 4-8 are maintainer forms. A visitor should never have to
-# scroll past an internal form to find the one that fits them.
-#
-# Every form also sets `type:`, which maps it to a GitHub issue type (Task / Bug / Feature, defined
-# on the enorm-labs org). Issue types ARE the type axis in this repo — there is deliberately no
-# `type:` label family to keep in sync with them.
+# The chooser lists forms in FILENAME order, hence the numeric prefixes: 1-3 are for visitors and
+# come first, 4-8 are maintainer forms, and a visitor should never scroll past an internal form to
+# find theirs. Every form also sets `type:`, mapping it to a GitHub issue type defined on the org.
+# Issue types ARE the type axis here — there is deliberately no `type:` label family to sync.
 
 # Forms only. A blank issue is almost always missing the one thing needed to act on it — which
 # event, which venue, which URL — and asking afterwards costs a round trip and usually loses the
-# reporter. What the forms do not cover has a route below.
+# reporter.
 blank_issues_enabled: false
 
 contact_links:
-  # Both of these must stay OFF the public tracker: a security problem should not be public before
-  # it is fixed, and nobody should have to ask for their own name to be removed in front of an
-  # audience. See SECURITY.md and the privacy notice (§4, "Event, artist and venue information").
-  #
-  # **Both point at the advisory form by choice, not for want of a mailbox.** `security@` and
-  # `hello@` are live (#274, docs/ops/EMAIL.md), but the form still wins for the security route — it
-  # is encrypted in transit and at rest, and it threads — so the addresses are named in the text
-  # instead, where anyone who would rather write an email can copy them.
+  # Both must stay OFF the public tracker: a security problem should not be public before it is
+  # fixed, and nobody should have to ask for their own name to be removed in front of an audience.
+  # **Both point at the advisory form by choice, not for want of a mailbox** — `security@` and
+  # `hello@` are live (#274), but the form is encrypted in transit and at rest and it threads, so
+  # the addresses are named in the text where anyone preferring email can copy them.
   #
   # **Not `mailto:`.** GitHub describes `url` as a link to follow, and `mailto:` is reported to fail
-  # schema validation — at which point the entry does not render at all, which is worse than asking
-  # someone to copy an address and fails where nobody looks.
-  #
-  # **At go-live**, the removal route should point at the published privacy notice
-  # (`/legal/privacy`), which states the same address alongside the Art. 15-21 rights. It cannot yet:
-  # production runs dark and the domain resolves to nothing (#284).
+  # schema validation, at which point the entry does not render at all — worse than copying an
+  # address, and it fails where nobody looks. **At go-live** the removal route should point at the
+  # published privacy notice, which states the same address alongside the Art. 15-21 rights; it
+  # cannot yet, production running dark with the domain resolving to nothing (#284).
   - name: 🔒 Report a security vulnerability
     url: https://github.com/enorm-labs/event-junkie/security/advisories/new
     about: >-
@@ -45,12 +37,13 @@ contact_links:
       labelled for security because GitHub gives us one private form, not because this is one.
 
   # Questions and ideas belong in Discussions: they are conversations rather than units of work, and
-  # keeping them out leaves the tracker to things that can be closed. A discussion that turns out to
-  # be actionable converts into an issue, so nothing is lost by starting here.
+  # keeping them out leaves the tracker to things that can be closed. One that turns out to be
+  # actionable converts into an issue, so nothing is lost by starting here.
   - name: 💬 Ask a question
     url: https://github.com/enorm-labs/event-junkie/discussions/new?category=q-a
     about: Anything about using the site, the data, or the code.
 
   - name: 💡 Suggest a feature or an idea
     url: https://github.com/enorm-labs/event-junkie/discussions/new?category=ideas
-    about: For product ideas. To suggest a venue we should be importing, use the venue form instead.
+    about: >-
+      For product ideas. To suggest a venue we should be importing, use the venue form instead.

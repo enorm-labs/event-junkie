@@ -2,53 +2,48 @@ module "environment" {
   source = "../../modules/environment"
 
   environment = "production"
-  # The line to change when capacity moves — fsn1, nbg1 and hel1 are interchangeable on cost (free
-  # traffic within eu-central) — and it covers both nodes on purpose: they must share a location,
-  # since every query crosses that link. All three advertise ARM and none will sell it, so this is
-  # not the lever for ARM; for x86 it is exactly the lever. See check-capacity.sh, whose header
-  # carries the caveat that matters most here: a successful probe means orderable at that instant
-  # and nothing about the next one.
+  # Covers both nodes on purpose: they must share a location, every query crossing that link. All
+  # three eu-central locations advertise ARM and none will sell it, so this is not the lever for ARM;
+  # for x86 it is exactly the lever, and check-capacity.sh's header carries the caveat that a
+  # successful probe means orderable at that instant and nothing about the next.
   #
   # **Not fsn1, and that constraint outlives the capacity one:** Object Storage lives there, so
   # production in fsn1 would put the database and its only off-server backups in one location. nbg1
-  # over hel1 on latency — Nuremberg is ~25 ms closer to a Berlin audience (PLATFORM_SETUP.md §1) —
-  # accepting that staging is in nbg1 too. That costs little: staging is not production's failover,
-  # so the thing a second location would protect is not a thing this design has.
+  # over hel1 on latency (~25 ms closer to Berlin, PLATFORM_SETUP.md §1), accepting that staging is
+  # in nbg1 too — staging is not production's failover, so a second location protects nothing here.
   #
   # **Moving will not be free again.** Once there is data it is a dump and a restore, not a variable.
   location = "nbg1"
 
   # CX33: 4 x86 vCPU / 8 GB / 80 GB disk. The memory arithmetic — including why Flux rather than
-  # ArgoCD is what keeps this on an 8 GB node — is PLATFORM_SETUP.md §1.
+  # ArgoCD keeps this on an 8 GB node — is PLATFORM_SETUP.md §1.
   #
   # **It is x86 because ARM cannot be bought, and that is settled by ordering rather than asking.**
-  # cax11 and cax21 are refused in all three eu-central locations with
-  # `unsupported location for server type (invalid_input)`, four of those refusals in locations
-  # check-capacity.sh reports as available. The advertisement is wrong in BOTH directions, which is
-  # what `--probe` exists for: bare servers, no IPs, no network, `start_after_create: false`, and
-  # refusals return in ~0.1s. The shortage is not ARM-only — the whole `cx` line went with it.
+  # cax11 and cax21 are refused in all three eu-central locations with `unsupported location for
+  # server type`, four of those in locations check-capacity.sh reports as available. The
+  # advertisement is wrong in BOTH directions, which is what `--probe` exists for: bare servers, no
+  # IPs, `start_after_create: false`, refusals in ~0.1s.
   #
   # **ARM is also the dearer plan.** cx33 + cx23 is **€16.63/month against cax21 + cax11's €19.61**
   # for the same cores, memory and disks, so waiting for CAX buys nothing at a price.
   #
-  # **Going back, if CAX returns, is a REBUILD of both nodes and not a resize** — free only until
-  # the first apply. Hetzner cannot rescale across architectures, and the plan renders a tidy
-  # in-place update that the API then refuses mid-apply. #460's volume means the database survives;
-  # the k3s cluster does not (docs/ops/CLUSTER_BOOTSTRAP.md §Rebuilding a node). Either direction is
-  # safe for images because #264 publishes multi-arch: same chart, same tags, digests per platform.
+  # **Going back, if CAX returns, is a REBUILD of both nodes and not a resize** — free only until the
+  # first apply. Hetzner cannot rescale across architectures, and the plan renders a tidy in-place
+  # update the API then refuses mid-apply. #460's volume means the database survives, the k3s cluster
+  # does not (CLUSTER_BOOTSTRAP.md §Rebuilding a node). Images are safe either way: #264 is
+  # multi-arch.
   k3s_server_type = "cx33"
 
   # CX23: 2 x86 vCPU / 4 GB / 40 GB disk — spec-for-spec what CAX11 was, for the reason above.
   #
-  # IPv6-only was the intent, and #270 settled that it cannot be — not on
-  # a guess about `apt`, which turns out to be fine (apt.postgresql.org answers on IPv6), but on
-  # **github.com publishing no AAAA record at all**. wal-g ships only as a
-  # GitHub release, so an IPv6-only node cannot install the one thing standing between us and losing
-  # the database, and `backups.sh` stops the boot rather than coming up without it.
+  # IPv6-only was the intent, and #270 settled that it cannot be — not on a guess about `apt`, which
+  # is fine, but on **github.com publishing no AAAA record at all**. wal-g ships only as a GitHub
+  # release, so an IPv6-only node cannot install the one thing between us and losing the database,
+  # and `backups.sh` stops the boot rather than coming up without it.
   #
-  # ~€0.50/month for the address, against a NAT gateway (infra/AGENTS.md) that is only worth
-  # building if the address itself is the objection. It is not: the firewall still admits nothing
-  # inbound, so this buys egress and not exposure.
+  # ~€0.50/month for the address, against a NAT gateway (infra/AGENTS.md) worth building only if the
+  # address itself is the objection. It is not: the firewall still admits nothing inbound, so this
+  # buys egress and not exposure.
   postgres_server_type = "cx23"
   postgres_public_ipv4 = true
 
@@ -69,10 +64,9 @@ module "environment" {
   # taking a live site dark also stripped delete protection from the volume holding the database,
   # at exactly the moment somebody is already having a bad day.
   #
-  # The old comment here said "neither stops `tofu destroy` — the provider lifts its own locks".
-  # The API demonstrably does not lift them; whether the *provider* does is untested, and the same
-  # claim in staging's main.tf is now suspect for the same reason. Do not rely on either reading:
-  # if something protected has to go, turn protection off in its own apply first.
+  # Whether `tofu destroy` lifts these is untested — the API demonstrably does not, and staging's
+  # main.tf claims otherwise. Do not rely on either reading: if something protected has to go, turn
+  # protection off in its own apply first.
   ip_delete_protection              = false
   postgres_volume_delete_protection = false
   enable_backups                    = true
@@ -88,11 +82,9 @@ module "environment" {
 }
 
 # ---------------------------------------------------------------------------
-# Address records
-#
-# The zone belongs to the bootstrap stack and is read, never managed, from here — so a `destroy`
-# in this directory removes the records and leaves the zone, its delegation and its DNSSEC key
-# untouched. That separation is the point of the two-stack split.
+# Address records. The zone belongs to the bootstrap stack and is read, never managed, from here —
+# so a `destroy` in this directory removes the records and leaves the zone, its delegation and its
+# DNSSEC key untouched. That separation is the point of the two-stack split.
 # ---------------------------------------------------------------------------
 
 data "hcloud_zone" "main" {
@@ -100,14 +92,12 @@ data "hcloud_zone" "main" {
 }
 
 locals {
-  # The apex is canonical; `www` carries the same addresses and is redirected at Traefik rather
-  # than in DNS, because a CNAME cannot sit at the apex and a redirect wants to be one rule in one
-  # place (#259).
-  #
-  # Until `publish_dns` is true this is one throwaway name instead, so a real certificate can be
-  # issued and the whole TLS path exercised while the domain still resolves to nothing. See the
-  # variable. The swap is deliberate: two lists that could both be published is how a temporary
-  # record becomes permanent.
+  # The apex is canonical; `www` carries the same addresses and is redirected at Traefik rather than
+  # in DNS, a CNAME being unable to sit at the apex and a redirect wanting to be one rule in one
+  # place (#259). Until `publish_dns` is true this is one throwaway name instead, so a real
+  # certificate can be issued and the TLS path exercised while the domain resolves to nothing. The
+  # swap is deliberate: two lists that could both be published is how a temporary record becomes
+  # permanent.
   hostnames = var.publish_dns ? ["@", "www"] : ["prod-check"]
 
   address_records = {

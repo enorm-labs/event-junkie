@@ -58,8 +58,13 @@ Lint enforces the mechanical half of this; the rest is review.
       figure when it drops.
     - **Terraform, shell, YAML and Python are linted too, by `scripts/comment-lint.sh`.** It applies the block cap, a per-file density cap and the rules above
       that are mechanical — a markdown heading inside a comment, a date literal, a comment narrating a change — and `check` ratchets the count per area the way
-      `comment-density.sh` does. Silence one block with `# comment-lint: allow <reason>` on the line above it; the reason is not optional and a bare directive
-      is itself a violation.
+      `comment-density.sh` does. Silence one block with `# comment-lint: allow <reason>` on the line above it, or a whole file's density with
+      `# comment-lint: allow-file <reason>`; the reason is not optional either way and a bare directive is itself a violation.
+    - **The density budget is 70% for code and 55% for the declarative formats** (#721), which is the one place the three implementations differ on purpose.
+      The argument for parity is real — in Kotlin one comment explains a twenty-line function, while in HCL and YAML one comment explains one assignment, so
+      the same reasoning lands at a higher ratio — but 70 was measured to flag two `.tf`/`.yaml` files where 55 flags seventeen, and raising a cap to clear
+      findings is what #713 rejected when it threw away a working KDoc rewrapper. The floor differs for the same reason: 21 comment lines rather than 25.
+      A declarative file that genuinely cannot fit says so with `allow-file` and a reason, which a reviewer sees; a looser number is not.
     - **Per-comment caps are enforced by lint.** `LongComment` (a custom detekt rule in `:detekt-rules`) caps a Kotlin comment at 25 lines and counts a run of
       `//` lines as one comment; `event-junkie/max-comment-lines` (a local ESLint rule in `events-frontend/eslint-rules/`) caps TS and Vue at 15, measured from
       that tree. Over the cap is `@Suppress(…)` or `// eslint-disable-next-line` **with a reason** — an explicit decision a reviewer can see, never a threshold

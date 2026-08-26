@@ -10,35 +10,27 @@ style:
 event-junkie:
   LongComment:
     active: true
-    # A cap, not a target. What makes a comment long here is nearly always restated code, a history
-    # of how it got this way, or a decision copied out of AGENTS.md or an ADR instead of referenced.
-    # One that genuinely needs more takes `@Suppress("LongComment")` on the declaration — an
-    # explicit decision, visible in review, rather than a threshold raised until nothing fires.
-    #
-    # One cap governs every package (#741). Venue sub-packages had their own instance at 40 while
-    # their KDoc was the home for accepted limitations; #739 moved those into `VenueLimitations`
-    # records and the second cap lost what justified it.
-    #
-    # Blank ` * ` separators are not counted: charging a comment for its paragraph breaks made the
-    # same words cheaper as one wall of text.
+    # A cap, not a target: what makes a comment long here is nearly always restated code, a history
+    # of how it got that way, or a decision copied out of an ADR instead of referenced. One that
+    # genuinely needs more takes `@Suppress("LongComment")` with a reason — an explicit decision a
+    # reviewer sees, rather than a threshold raised until nothing fires. One cap governs every
+    # package (#741), and blank ` * ` separators do not count toward it.
     maxLines: 25
 
   CommentDensity:
     active: true
-    # The per-file backstop under `scripts/comment-density.sh`, which ratchets the totals per area.
-    # A per-comment cap cannot see twenty reasonable comments adding up to a file that reads as prose
-    # with code between it. 70 is measured: it catches an outlier rather than re-litigating every
-    # dense file, which 65 would.
+    # The per-file backstop a per-comment cap cannot be: twenty individually reasonable comments
+    # still add up to a file that reads as prose with code between it. 70 is measured to catch an
+    # outlier rather than re-litigate every dense file, which 65 would.
     maxPercent: 70
-    # A ratio needs mass behind it. `EventsSchema.kt` is one `const val` and its reasoning — 22
-    # comment lines of 24, and nothing about that is a defect. Below this floor a file is a
-    # declaration with its rationale attached, not prose with code between it.
+    # A ratio needs mass behind it: `EventsSchema.kt` is one `const val` and its reasoning, 22
+    # comment lines of 24, and nothing about that is a defect.
     minCommentLines: 25
 
   CommentSmell:
     active: true
-    # Test sources are excluded, and deliberately: a date there is usually a fact about a fixture
-    # ("the clock is pinned to 2026-07-01"), not a changelog entry, and 47 of the tree's 52 test-side
-    # dates are that. Flagging them would train everyone to ignore the rule.
+    # Test sources are excluded deliberately: a date there is usually a fact about a fixture, not a
+    # changelog entry — 47 of the tree's 52 test-side dates are — and flagging them would train
+    # everyone to ignore the rule.
     excludes: ['**/test/**', '**/androidTest/**']
 
