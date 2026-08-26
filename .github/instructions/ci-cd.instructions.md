@@ -70,6 +70,17 @@ What each workflow is for, which checks are required, and the shapes that fail s
       shell and no GitHub API and the run reads the repository and does nothing. And **Dependabot alerts are expected to `403`** — neither `GITHUB_TOKEN` nor the
       Claude App carries a permission for them — so its honest scope is code scanning. `workflow_dispatch` only, and `dry_run` defaults to true; a schedule is a
       line to add once a run has been watched end to end.
+    - **All four are weekly, staggered one per weekday, and a scheduled run is live.** Security Monday, refactor Tuesday, dependency pins Wednesday, comments
+      Thursday, each off-the-hour like every other schedule here. One workload per day means a bad week is one pull request to close rather than four, and the
+      `concurrency` group on each stops a manual dispatch racing its own cron. **A schedule cannot pass inputs, and this is the trap**: the `inputs` context is
+      populated only for `workflow_dispatch` and `workflow_call`, so on a cron `inputs.model` is the empty string and `--model` reaches the CLI with no value,
+      while `inputs.dry_run` is falsy and the run goes live by accident rather than by decision. Every input is therefore read as `inputs.x || '<default>'`, and
+      the dry-run flag is additionally gated on `github.event_name == 'workflow_dispatch'` so that "scheduled runs open pull requests" is written down rather
+      than inherited from an empty context. `inputs.scope` matters as much as the other two: empty means "the current diff", and a scheduled run on `main` has
+      none, so the refactor job would rank nothing and the comment job would sweep nothing. Two further GitHub properties apply and neither is ours to
+      configure — scheduled workflows run **from the default branch only**, and on a public repository GitHub **disables the schedule after 60 days without
+      repository activity**. The action also rejects a bot actor unless it is named in `allowed_bots`, and a scheduled run is attributed to whoever last
+      changed the `cron` line, so that line must be edited by a human account.
     - **All four set `display_report: true`, and none sets `show_full_output`.** The two are not interchangeable and the default of both is `false`, which is
       how the first dry run finished green having answered nothing: the report went to a temp file on a runner that then stopped existing. `display_report`
       publishes the agent's final report to the job summary; `show_full_output` dumps every intermediate tool result, and the action's own description warns it
