@@ -1,3 +1,6 @@
 # ASD-STE100 findings per area — a ceiling that only moves down. See #733.
 # One area per rewrite phase. Raise a number only with an argument in the PR;
 # the ordinary fix is to split the sentence.
+#
+# An area with no row here is at zero, which is where all three finished. That is the
+# goal state, not a missing file: do not run update-baseline to make a red check pass.
