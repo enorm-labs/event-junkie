@@ -35,7 +35,9 @@ of the sentences.
     - **`scripts/ste-lint.sh` measures it, and the number only goes down.** `check` fails when an area carries more findings than
       `scripts/ste-baseline.txt` allows, one number per rewrite phase, and `/verify` and `validate-docs.yml` both run it. `report --top 20` shows where they
       are and `stats` gives the share of sentences over the cap. A sentence that has to stay long takes `<!-- ste-lint: allow <reason> -->` on the line above
-      it, and the reason is not optional. It sees only the structural rules above, so a green run is not a claim of compliance. **A generated document is
+      it, and the reason is not optional. It sees only the structural rules above, so a green run is not a claim of compliance. **An ADR is checked differently**: its summary is the Status line, so
+      the checker asks whether Status says what was decided rather than whether the file opens with `## The short version`. A bare _"Accepted"_ tells a reader
+      nothing, and repeating the decision under a second heading is the duplication the rest of this rule exists to prevent. **A generated document is
       skipped** — a file whose header says it is not edited by hand cannot be fixed here, and the generator would overwrite the attempt.
     - **Voice-carrying copy is exempt.** [BRANDING.md](../../docs/BRANDING.md) and [LOGO_IDEAS.md](../../docs/LOGO_IDEAS.md) argue a case and hold a tone, which
       is what the standard says it is not for. The glob covers them because it covers `docs/`; this sentence is the exemption. Everything else in `docs/` is in
