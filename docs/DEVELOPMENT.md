@@ -1,10 +1,11 @@
 # Development
 
-Everything needed to build, run and check this project locally. The [README](../README.md) gets you running in four commands; this document is the rest of it.
+Everything needed to build, run and check this project locally. The [README](../README.md) gets you running in four
+commands, and this document is the rest of it.
 
-Frontend-specific development lives in [events-frontend/README.md](../events-frontend/README.md). The conventions every change is held to are
-in [AGENTS.md](../AGENTS.md) — written for AI agents, but it is simply this project's conventions written down, and it is more complete than any other document
-here.
+Frontend-specific development lives in [events-frontend/README.md](../events-frontend/README.md). The conventions
+every change is held to are in [AGENTS.md](../AGENTS.md). That is written for AI agents, but it is simply this
+project's conventions written down, and it is more complete than any other document here.
 
 ## The short version
 
@@ -55,9 +56,9 @@ scripts/format-markdown.sh                # any .md change
 | Node.js      | see [`.nvmrc`](../events-frontend/.nvmrc) | frontend only; `nvm use`                                          |
 | `pre-commit` | any                                       | for the commit hooks — `brew install pre-commit`                  |
 
-Optional, for specific jobs: [`ijhttp`](https://www.jetbrains.com/help/idea/http-client-cli.html) (running `.http`
-files from the CLI), [`k6`](https://k6.io) (performance tests), and [`tofu`](https://opentofu.org/) with `shellcheck` (anything under `infra/` — the
-pre-commit hooks below need both).
+Optional, for specific jobs: [`ijhttp`](https://www.jetbrains.com/help/idea/http-client-cli.html) to run `.http` files
+from the CLI, [`k6`](https://k6.io) for the performance tests, and [`tofu`](https://opentofu.org/) with `shellcheck`
+for anything under `infra/`. The pre-commit hooks below need both of the last two.
 
 ```bash
 sdk env      # Java version from .sdkmanrc
@@ -80,8 +81,8 @@ pre-commit run gitleaks --all-files       # everything tracked by git
 gitleaks detect --source . --verbose      # the entire history (needs: brew install gitleaks)
 ```
 
-Four more hooks run alongside it, all `local` — they use the `tofu`, `shellcheck` and `helm` already on your machine rather than pulling third-party hook
-repositories that would each need their own pinning:
+Four more hooks run alongside it, all `local`. They use the `tofu`, `shellcheck` and `helm` already on your machine,
+rather than pulling third-party hook repositories that would each need their own pinning:
 
 | Hook                 | Runs on                                                                                                                      |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -90,21 +91,25 @@ repositories that would each need their own pinning:
 | `format-markdown`    | any `.md` file. Also rewrites in place, so the same "re-stage and commit again" applies                                      |
 | `helm-lint`          | anything under `deploy/charts/`. Lints the chart directory, so it takes no filenames                                         |
 
-All four are also CI's job (`validate-infra.yml`, `validate-chart.yml`, `validate-scripts.yml`, `validate-docs.yml`); the hooks just move the deterministic half
-of that feedback before the push. If you do not have the tools installed, the hooks fail — install them (`brew install opentofu shellcheck helm`) or skip with `git commit --no-verify`
-on a change that touches none of those paths.
+All four are also CI's job, in `validate-infra.yml`, `validate-chart.yml`, `validate-scripts.yml` and
+`validate-docs.yml`. The hooks move the deterministic half of that feedback before the push. Without the tools
+installed the hooks fail. Install them with `brew install opentofu shellcheck helm`, or skip them with
+`git commit --no-verify` on a change that touches none of those paths.
 
-`format-markdown` is the exception to "uses what is already on your machine": it deliberately calls the oxfmt pinned in `events-frontend/package.json`, not one
-on `$PATH`, so it needs `npm ci` in `events-frontend/` rather than a `brew install`. See [Markdown formatting](#markdown-formatting).
+`format-markdown` is the exception to "uses what is already on your machine". It deliberately calls the oxfmt pinned in
+`events-frontend/package.json`, not one on `$PATH`, so it needs `npm ci` in `events-frontend/` rather than a
+`brew install`. See [Markdown formatting](#markdown-formatting).
 
-**CI's ShellCheck is pinned; your local one is not.** All three CI jobs (`validate-scripts.yml`, `validate-chart.yml`, `validate-infra.yml`) run
-`koalaman/shellcheck:v0.11.0` from Docker rather than the runner's preinstalled binary, and the pin is swept by
-[`/update-dependencies`](../.github/prompts/update-dependencies.prompt.md) step 12. The pre-commit hook still uses whatever `shellcheck` is on your `$PATH`, so
-the two can still disagree — but only in the direction of the hook being noisier or quieter than the gate, never a false green on `main`.
+**CI's ShellCheck is pinned. Your local one is not.** All three CI jobs — `validate-scripts.yml`,
+`validate-chart.yml`, `validate-infra.yml` — run `koalaman/shellcheck:v0.11.0` from Docker rather than the runner's
+preinstalled binary. [`/update-dependencies`](../.github/prompts/update-dependencies.prompt.md) step 12 sweeps the
+pin. The pre-commit hook uses whatever `shellcheck` is on your `$PATH`, so the two can disagree. The disagreement only
+makes the hook noisier or quieter than the gate, never a false green on `main`.
 
-The disagreement is real and worth knowing about: versions differ in which checks they even have. An `A && B || C` construct that 0.11.0 accepts is still
-`SC2015` on 0.9.0. That is why CI is pinned at all — before it was, a script the author's Homebrew build had just cleared arrived red on the runner, and the
-temptation is to contort the source until the older analyser is happy rather than to fix the version skew. To reproduce a CI result exactly:
+That disagreement is real and worth knowing about, because versions differ in which checks they even have. An
+`A && B || C` construct that 0.11.0 accepts is still `SC2015` on 0.9.0. That is why CI is pinned at all. Before the
+pin, a script the author's Homebrew build cleared arrived red on the runner. The temptation then is to contort the
+source until the older analyser is happy, rather than to fix the version skew. To reproduce a CI result exactly:
 
 ```bash
 docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:v0.11.0 -x scripts/*.sh
@@ -133,9 +138,8 @@ Ports: importer `8081`, BFF `8080`, frontend `5173`, Postgres `56298`.
 
 ## The local database
 
-PostgreSQL is exposed on host port **56298** (mapped from the container's 5432). Spring Boot discovers the port itself; you need it only to connect by hand —
-`localhost:56298`, credentials `admin` / `admin`, database
-`event_junkie`.
+PostgreSQL is exposed on host port **56298**, mapped from the container's 5432. Spring Boot discovers the port itself,
+and you need it only to connect by hand: `localhost:56298`, credentials `admin` / `admin`, database `event_junkie`.
 
 If that port is taken:
 
@@ -155,8 +159,8 @@ The next `bootRun` recreates it and re-runs the Flyway migrations. Note that an 
 
 ## The `local` profile — logging to a file
 
-Both services define a `local` Spring profile whose only effect is to mirror console output to a file, so an import or request run can be grepped afterwards
-instead of scrolled in the IDE console.
+Both services define a `local` Spring profile whose only effect is to mirror console output to a file. An import or a
+request run can then be grepped afterwards, rather than scrolled in the IDE console.
 
 | Service           | Log file                                     |
 | ----------------- | -------------------------------------------- |
@@ -170,8 +174,9 @@ instead of scrolled in the IDE console.
 In IntelliJ, set **Active profiles: `local`** on the run configuration. Paths are relative to each module directory (`bootRun`'s working directory) and land
 under `build/`, which is gitignored.
 
-**The profile gate is deliberate.** On a container platform the log belongs on stdout where the platform collects it; a file appender there would write into the
-container's in-memory filesystem. `scripts/dev-env.sh` does not need the profile — it redirects each service's stdout to `build/dev-env/<service>.log` itself.
+**The profile gate is deliberate.** On a container platform the log belongs on stdout, where the platform collects it.
+A file appender there would write into the container's in-memory filesystem. `scripts/dev-env.sh` does not need the
+profile, because it redirects each service's stdout to `build/dev-env/<service>.log` itself.
 
 ## Running the stack with `dev-env.sh`
 
@@ -199,9 +204,10 @@ With a service running:
 - **events-bff** — <http://localhost:8080/webjars/swagger-ui/index.html>
 - **events-importer** — <http://localhost:8081/webjars/swagger-ui/index.html>
 
-The OpenAPI document (JSON) is at `/v3/api-docs` on each port. **The BFF's document is also the source of the frontend's TypeScript types** —
-see [events-frontend/README.md](../events-frontend/README.md#regenerate-the-api-types-after-a-bff-change); changing the BFF's public API means regenerating them
-in the same PR.
+The OpenAPI document (JSON) is at `/v3/api-docs` on each port. **The BFF's document is also the source of the
+frontend's TypeScript types** — see
+[events-frontend/README.md](../events-frontend/README.md#regenerate-the-api-types-after-a-bff-change). Changing the
+BFF's public API means regenerating them in the same PR.
 
 ### IntelliJ HTTP Client
 
@@ -229,7 +235,7 @@ ijhttp --env-file http-client.env.json --env local -L VERBOSE full-lifecycle.htt
 
 ## Quality checks
 
-Everything below runs in CI too; the point of running it locally is not to find out from a red build.
+Everything below runs in CI too. The point of running it locally is not to find out from a red build.
 
 ```bash
 ./gradlew ktlintCheck            # lint
@@ -257,38 +263,49 @@ scripts/format-markdown.sh          # format in place
 scripts/format-markdown.sh check    # report drift, write nothing; exits 1 if anything is unformatted
 ```
 
-Enforced in two places: the `format-markdown` pre-commit hook, which formats on the way in, and `validate-docs.yml`, which runs `check` in CI. The hook is
-advisory by construction — `--no-verify` skips it, as does anything committed through the web UI — so CI is what makes it hold on `main`. CI checks and never
-writes: a job that pushes a formatting commit back would need write access on every pull request including forks, which is more than a formatter is worth.
+Enforced in two places: the `format-markdown` pre-commit hook, which formats on the way in, and `validate-docs.yml`,
+which runs `check` in CI. The hook is advisory by construction, because `--no-verify` skips it, as does anything
+committed through the web UI. CI is what makes it hold on `main`. CI checks and never writes. A job that pushes a
+formatting commit back would need write access on every pull request, forks included. That is more than a formatter is
+worth.
 
-Configuration is the root [`.oxfmtrc.json`](../.oxfmtrc.json): tables aligned, `_emphasis_` over `*emphasis*`, `-` bullets, and prose left exactly where the
-author wrapped it (`proseWrap: preserve`) — reflowing 150-column paragraphs would turn every prose edit into a whole-paragraph diff.
+Configuration is the root [`.oxfmtrc.json`](../.oxfmtrc.json): tables aligned, `_emphasis_` over `*emphasis*`, `-`
+bullets, and prose left exactly where the author wrapped it (`proseWrap: preserve`). Reflowing a 150-column paragraph
+would turn every prose edit into a whole-paragraph diff.
 
 Four things about this are deliberate and easy to undo by accident:
 
-- **It is Markdown-only, enforced twice.** oxfmt also formats YAML, JSON, CSS and TypeScript. The script never passes it anything else, _and_ `.oxfmtrc.json`
-  carries an `ignorePatterns` deny-list for those extensions, so even a bare `oxfmt` run at the repository root cannot touch them. Do not widen either one —
-  [.github/instructions/markdown.instructions.md](../.github/instructions/markdown.instructions.md) records what was measured and why the answer was no.
-- **It uses the pinned oxfmt, never `$PATH`.** oxfmt is pre-1.0 and its Markdown output is not stable across versions, so the binary is locked by
-  `package-lock.json` like everything else and the hook needs `npm ci` in `events-frontend/` rather than a `brew install`. 0.62.0 and 0.63.0 happen to agree
-  here — verified byte-for-byte on every tracked file — so this is insurance, not a workaround for a known disagreement.
-- **oxfmt reads `.editorconfig`.** The `[*] indent_size = 4` is what gives nested list items their four-space indent. Copy `.editorconfig` alongside if you ever
-  reproduce oxfmt's behaviour in a scratch directory; without it the output differs, and it differs in a way that looks exactly like a version disagreement.
-- **Write mode runs oxfmt twice, permanently.** A table indented under a list item is skipped on the first pass and only formatted on the second. One pass would
-  leave the file off its own fixpoint, and `check` would then fail on a file the formatter had just written.
+- **It is Markdown-only, enforced twice.** oxfmt also formats YAML, JSON, CSS and TypeScript. The script never passes
+  it anything else, _and_ `.oxfmtrc.json` carries an `ignorePatterns` deny-list for those extensions. Even a bare
+  `oxfmt` run at the repository root therefore cannot touch them. Do not widen either one.
+  [.github/instructions/markdown.instructions.md](../.github/instructions/markdown.instructions.md) records what was
+  measured and why the answer was no.
+- **It uses the pinned oxfmt, never `$PATH`.** oxfmt is pre-1.0 and its Markdown output is not stable across versions.
+  The binary is locked by `package-lock.json` like everything else, so the hook needs `npm ci` in `events-frontend/`
+  rather than a `brew install`. 0.62.0 and 0.63.0 happen to agree here, verified byte-for-byte on every tracked file.
+  This is insurance, not a workaround for a known disagreement.
+- **oxfmt reads `.editorconfig`.** The `[*] indent_size = 4` is what gives nested list items their four-space indent.
+  Copy `.editorconfig` alongside if you ever reproduce oxfmt's behaviour in a scratch directory. Without it the output
+  differs, and it differs in a way that looks exactly like a version disagreement.
+- **Write mode runs oxfmt twice, permanently.** A table indented under a list item is skipped on the first pass and
+  only formatted on the second. One pass would leave the file off its own fixpoint, and `check` would then fail on a
+  file the formatter wrote a moment earlier.
 
-    **This is intended behaviour, not a version bug — do not go looking for the release that fixes it.** Prettier does exactly the same thing, same two passes
-    and same intermediate output, and oxfmt targets Prettier compatibility; upstream closed
-    [oxc-project/oxc#25612](https://github.com/oxc-project/oxc/issues/25612) as _not planned_ on that basis. So the second run is a permanent part of how this
-    script works, and the cost is a few hundred milliseconds on a ~100-file tree. Removing it breaks `check` on `AGENTS.md`, which is the file in this
-    repository that exhibits the shape.
+    **This is intended behaviour, not a version bug. Do not go looking for the release that fixes it.** Prettier does
+    exactly the same thing, with the same two passes and the same intermediate output, and oxfmt targets Prettier
+    compatibility. Upstream closed [oxc-project/oxc#25612](https://github.com/oxc-project/oxc/issues/25612) as _not
+    planned_ on that basis. The second run is a permanent part of how this script works, and it costs a few hundred
+    milliseconds on a ~100-file tree. Removing it breaks `check` on `AGENTS.md`, the file in this repository that
+    exhibits the shape.
 
-- **`--disable-nested-config`**, because oxfmt's nested configs _replace_ rather than merge. Without it, `events-frontend/.oxfmtrc.json` shadows the root config
-  wholesale for the two `.md` files under `events-frontend/`.
+- **`--disable-nested-config`**, because oxfmt's nested configs _replace_ rather than merge. Without it,
+  `events-frontend/.oxfmtrc.json` shadows the root config wholesale for the two `.md` files under
+  `events-frontend/`.
 
-IntelliJ has its own Markdown formatter and it does not agree with oxfmt about table padding. The conflicting `ij_markdown_*` keys were removed from
-`.editorconfig`, but that unpins IntelliJ's settings rather than disabling its formatter — Reformat Code on a `.md` file will still reflow it. The commit hook
-runs oxfmt last and normalises the result, so commits stay consistent either way; the tidy habit is to leave Markdown to the script.
+IntelliJ has its own Markdown formatter, and it does not agree with oxfmt about table padding. The conflicting
+`ij_markdown_*` keys were removed from `.editorconfig`. That unpins IntelliJ's settings rather than disabling its
+formatter, so Reformat Code on a `.md` file still reflows it. The commit hook runs oxfmt last and normalises the
+result, so commits stay consistent either way. The tidy habit is to leave Markdown to the script.
 
 ### Dependency CVE scanning (OWASP Dependency-Check)
 
@@ -302,8 +319,8 @@ Reports land in `build/reports/`: `dependency-check-report.html` and `.sarif` (t
 `owasp-suppressions.xml`](../owasp-suppressions.xml). The
 `--no-configuration-cache` flag is required — the plugin is not configuration-cache compatible.
 
-**Get an NVD API key.** Unauthenticated requests are rate-limited hard enough to make the first database download take 10+ minutes; a free key brings it to
-about one.
+**Get an NVD API key.** Unauthenticated requests are rate-limited hard enough to make the first database download take
+10+ minutes. A free key brings it to about one.
 
 1. Request one at <https://nvd.nist.gov/developers/request-an-api-key>
 2. Locally: `export NVD_API_KEY=your-key-here`
@@ -327,19 +344,21 @@ shellcheck -x infra/modules/environment/cloud-init/*.sh
 
 Run all three stacks: they share a module, so a change to it can break one and leave the others green.
 
-**`tofu plan` and `tofu apply` are not part of local verification.** They need a Hetzner API token and they spend money — see
-[infra/README.md](../infra/README.md) for who runs them and in what order. One consequence worth knowing rather than discovering: `validate` does **not** render
-`templatefile`, so a change to the cloud-init template can pass every check here and still produce YAML that a booting server rejects.
+**`tofu plan` and `tofu apply` are not part of local verification.** They need a Hetzner API token and they spend
+money. See [infra/README.md](../infra/README.md) for who runs them and in what order. One consequence is worth knowing
+rather than discovering: `validate` does **not** render `templatefile`. A change to the cloud-init template can
+therefore pass every check here and still produce YAML that a booting server rejects.
 
 ## Container images
 
-`events-bff` and `events-importer` each build to a container image. The Dockerfiles are runtime-only — the fat jar is exploded into its layers by Gradle first,
-and the **build context is that output directory**, not the module:
+`events-bff` and `events-importer` each build to a container image. The Dockerfiles are runtime-only. Gradle explodes
+the fat jar into its layers first, and the **build context is that output directory**, not the module:
 
 > **The runtime base is `bellsoft/liberica-openjre-alpine`, not Temurin, and the build JDK is still Temurin** —
-> [ADR-017](adr/ADR-017_JRE_BASE_IMAGE.md) has the reasoning. Nothing about your local workflow changes: `.sdkmanrc` is unchanged and you compile with what you
-> always did. It matters in one place — the image runs on **musl**, so a JVM-level difference would appear only in a container, never in `bootRun` or a unit
-> test. The read-only run below is the cheapest way to catch that, and the k3d rehearsal is the thorough one.
+> [ADR-017](adr/ADR-017_JRE_BASE_IMAGE.md) has the reasoning. Nothing about your local workflow changes: `.sdkmanrc`
+> is unchanged and you compile with what you always did. It matters in one place. The image runs on **musl**, so a
+> JVM-level difference would appear only in a container, never in `bootRun` or a unit test. The read-only run below is
+> the cheapest way to catch that, and the k3d rehearsal is the thorough one.
 
 ```bash
 ./gradlew :events-bff:bootJarLayers            # → events-bff/build/docker/{dependencies,application,…}
@@ -355,8 +374,9 @@ docker buildx build -f events-bff/Dockerfile events-bff/build/docker \
 
 `type=cacheonly` rather than `--load`, because a multi-platform image cannot be loaded into the local daemon.
 
-**Run it the way the cluster will**, which is the check that finds what `docker build` cannot — a missing writable path, or a UID that cannot read its own
-files. Start the database first (`docker compose up -d`), then attach to its network:
+**Run it the way the cluster will.** That is the check that finds what `docker build` cannot: a missing writable path,
+or a UID that cannot read its own files. Start the database first (`docker compose up -d`), then attach to its
+network:
 
 ```bash
 docker run --rm --network event-junkie_default \
@@ -367,9 +387,10 @@ docker run --rm --network event-junkie_default \
   -p 19002:9001 -p 18080:8080 event-junkie/bff:dev
 ```
 
-The importer additionally needs the **JDBC** pair — `SPRING_FLYWAY_URL`, `SPRING_FLYWAY_USER` (not `_USERNAME`) and `SPRING_FLYWAY_PASSWORD` — because it owns
-the migrations and Flyway has no reactive driver. Locally under `bootRun` all of this is supplied by Spring Boot's Docker Compose support, which is
-`developmentOnly` and therefore absent from the image; in a container nothing sets a URL unless you do.
+The importer additionally needs the **JDBC** trio: `SPRING_FLYWAY_URL`, `SPRING_FLYWAY_USER` (not `_USERNAME`) and
+`SPRING_FLYWAY_PASSWORD`. It owns the migrations, and Flyway has no reactive driver. Locally under `bootRun`, Spring
+Boot's Docker Compose support supplies all of this. That support is `developmentOnly` and therefore absent from the
+image, so in a container nothing sets a URL unless you do.
 
 ### The frontend image
 
@@ -382,8 +403,9 @@ docker buildx build events-frontend -t event-junkie/frontend:dev --load
 docker run --rm --read-only --tmpfs /tmp -p 8080:8080 event-junkie/frontend:dev
 ```
 
-It needs no database and no backend, so it runs on its own — but **its API calls will 404**, and that is correct rather than broken. In a cluster the ingress
-routes `/api` to the BFF and `/` to this container; nginx here proxies nothing.
+It needs no database and no backend, so it runs on its own. But **its API calls will 404**, and that is correct rather
+than broken. In a cluster the ingress routes `/api` to the BFF and `/` to this container. Here, nginx proxies
+nothing.
 
 What the config guarantees, and what is worth re-checking after any change to it:
 
@@ -399,56 +421,64 @@ The images are **not pushed by CI** — that is the release workflow's job (#264
 
 ## Running the whole stack on k3d
 
-The chart, the three images and a real import, on a local Kubernetes. Per ADR-012 this is not an approximation of the production path — **it is the same chart
-and the same images that run on Hetzner k3s**, which is what makes it worth doing. Needs `k3d` (`brew install k3d`) on top of the tools above.
+The chart, the three images and a real import, on a local Kubernetes. Per ADR-012 this is not an approximation of the
+production path. **It is the same chart and the same images that run on Hetzner k3s**, which is what makes it worth
+doing. Needs `k3d` (`brew install k3d`) on top of the tools above.
 
 ```bash
 scripts/k3d-rehearsal.sh all      # up → verify → import → chain → test → down
 ```
 
-That is the whole loop, and it tears down even if something in the middle fails. The individual commands (`up`, `verify`, `import`, `chain`, `test`, `status`,
-`down`) exist for when you want to keep the cluster and look at it; `scripts/k3d-rehearsal.sh --help` lists them. The agent-facing version is
+That is the whole loop, and it tears down even if something in the middle fails. The individual commands exist for
+when you want to keep the cluster and look at it: `up`, `verify`, `import`, `chain`, `test`, `status`, `down`.
+`scripts/k3d-rehearsal.sh --help` lists them. The agent-facing version is
 [`/k3d-rehearsal`](../.github/prompts/k3d-rehearsal.prompt.md).
 
-The steps live in the script rather than here on purpose — two copies of a sequence like this diverge, and the script is the one that gets run. What is worth
-knowing before you read it:
+The steps live in the script rather than here on purpose. Two copies of a sequence like this diverge, and the script is
+the one that gets run. What is worth knowing before you read it:
 
 - **Every `kubectl` and `helm` call names its context explicitly.** `k3d cluster create` switches the active context as a side effect, and most machines have
   other clusters — production ones among them — in the same kubeconfig. `down` restores whatever was current before.
-- **The rehearsal uses its own database** (`event_junkie_k3d`), never the development one. Installing the chart runs Flyway, and pointing that at
-  `event_junkie` would have the in-cluster importer fighting a local `bootRun` over one schema — with ~86 sources behind it that nobody wants to re-scrape.
-- **Port 8080 must be free**, because that is where Traefik is published — and it is also the BFF's `bootRun` port. Stop `dev-env.sh` first.
-- **CoreDNS needs a nudge.** k3d writes `host.k3d.internal` into the CoreDNS ConfigMap during cluster creation, but the `reload` plugin only picks it up on its
-  next poll, up to 30 seconds later. Installing inside that window gives every pod `UnknownHostException: host.k3d.internal` and the importer crash-loops until
-  DNS catches up — self-healing, which is worse than failing, because the install still succeeds and the only evidence is a restart count. The script forces the
-  reload with a CoreDNS rollout restart. If you do this by hand, do the same.
-- **A TLS-inspecting proxy breaks the cluster before any of our code runs, and it does not look like a proxy problem.** The node pulls images with its own
-  containerd, which has its own CA trust store — so a corporate MITM proxy whose root CA is installed in macOS and Docker Desktop is still unknown inside the
-  k3d node. `docker pull` from your shell succeeds; the node's pull of the same image fails.
+- **The rehearsal uses its own database** (`event_junkie_k3d`), never the development one. Installing the chart runs
+  Flyway. Pointing that at `event_junkie` would have the in-cluster importer fighting a local `bootRun` over one
+  schema, with ~86 sources nobody wants to re-scrape.
+- **Port 8080 must be free**, because that is where Traefik is published. It is also the BFF's `bootRun` port, so stop
+  `dev-env.sh` first.
+- **CoreDNS needs a nudge.** k3d writes `host.k3d.internal` into the CoreDNS ConfigMap during cluster creation. The
+  `reload` plugin only picks it up on its next poll, up to 30 seconds later. Installing inside that window gives
+  every pod `UnknownHostException: host.k3d.internal`, and the importer crash-loops until DNS catches up. That is
+  self-healing, which is worse than failing: the install still succeeds, and the only evidence is a restart count. The
+  script forces the reload with a CoreDNS rollout restart. If you do this by hand, do the same.
+- **A TLS-inspecting proxy breaks the cluster before any of our code runs, and it does not look like a proxy
+  problem.** The node pulls images with its own containerd, which has its own CA trust store. A corporate MITM proxy
+  whose root CA is installed in macOS and Docker Desktop is still unknown inside the k3d node. `docker pull` from your
+  shell succeeds, and the node's pull of the same image fails.
 
-    The symptom is **every pod stuck in `ContainerCreating`**, including `coredns`, `metrics-server`, `local-path-provisioner` and the Traefik installers. That
-    reads like resource exhaustion, so the reflex is to go looking at Docker's memory and disk — where there is nothing to find. The cause is only visible in a
-    `describe`:
+    The symptom is **every pod stuck in `ContainerCreating`**: `coredns`, `metrics-server`,
+    `local-path-provisioner` and the Traefik installers. That reads like resource exhaustion, so the reflex is to go
+    looking at Docker's memory and disk, where there is nothing to find. The cause is only visible in a `describe`:
 
     ```bash
     kubectl --context k3d-event-junkie describe pod -n kube-system -l k8s-app=kube-dns | grep -A3 FailedCreatePodSandBox
     # failed to pull image "rancher/mirrored-pause:3.6": … x509: certificate signed by unknown authority
     ```
 
-    `rancher/mirrored-pause` is the infrastructure container Kubernetes puts in **every** pod, which is why nothing at all starts rather than just our three
-    workloads. Confirm it in one line before suspecting anything else — TLS from inside a container is the same path the node takes:
+    `rancher/mirrored-pause` is the infrastructure container Kubernetes puts in **every** pod. That is why nothing at
+    all starts, rather than only our three workloads. Confirm it in one line before suspecting anything else. TLS from
+    inside a container takes the same path the node does:
 
     ```bash
     docker run --rm alpine wget -q -O- 'https://auth.docker.io/token?service=registry.docker.io&scope=repository:rancher/mirrored-pause:pull'
     # a JSON token → fine. An SSL/x509 error → this is the problem.
     ```
 
-    Turning the proxy off is the fix; trusting its CA inside the node would also work and is more work than it is worth for a throwaway cluster. **Cost when it
-    bit: the chart install timed out after five minutes and every routing assertion failed**, which looks exactly like a broken change and is not one.
+    Turning the proxy off is the fix. Trusting its CA inside the node would also work, and is more work than it is
+    worth for a throwaway cluster. **Cost when it bit: the chart install timed out after five minutes and every
+    routing assertion failed.** That looks exactly like a broken change, and is not one.
 
-**Check the content type, not the status code**, when testing what should _not_ be reachable. nginx serves the SPA for every unmatched path, so
-`/actuator/health` through the ingress returns **200** — and that 200 is `text/html`, the SPA fallback, not actuator. A negative test that only looks at the
-status code passes for the wrong reason:
+**Check the content type, not the status code**, when testing what should _not_ be reachable. The nginx container
+serves the SPA on every unmatched path, so `/actuator/health` through the ingress returns **200**. That 200 is `text/html`, the SPA
+fallback, not actuator. A negative test that reads only the status code passes for the wrong reason:
 
 ```bash
 curl -s -o /dev/null -w '%{content_type}\n' -H 'Host: event-junkie.localhost' localhost:8080/actuator/health
@@ -457,8 +487,9 @@ curl -s -o /dev/null -w '%{content_type}\n' -H 'Host: event-junkie.localhost' lo
 
 ## Helm chart
 
-The chart that deploys the three services onto that platform lives in [`deploy/charts/event-junkie/`](../deploy/charts/event-junkie). It has been **installed
-and exercised on k3d** (#263) and **never on a real cluster** — those are different claims, and the section above is the one that keeps the first true. Read
+The chart that deploys the three services onto that platform lives in
+[`deploy/charts/event-junkie/`](../deploy/charts/event-junkie). It was **installed and exercised on k3d** (#263), and
+runs on **no real cluster**. Those are different claims, and the section above is what keeps the first one true. Read
 [deploy/AGENTS.md](../deploy/AGENTS.md) before changing it.
 
 Needs `helm`, `yq` and `flux` with its schema plugin, plus the helm-unittest plugin:
@@ -468,9 +499,9 @@ brew install helm yq fluxcd/tap/flux && flux plugin install schema
 helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.1.2 --verify=false
 ```
 
-`--verify=false` is a Helm 4 requirement: it refuses an unverifiable plugin source without it, and the local binary is v4. CI pins Helm 3 and installs the same
-version without the flag — pin whatever `HELM_UNITTEST_VERSION` in `validate-chart.yml` pins, because a gate whose plugin version floats is a gate whose verdict
-floats.
+`--verify=false` is a Helm 4 requirement. Helm 4 refuses an unverifiable plugin source without it, and the local
+binary is v4. CI pins Helm 3 and installs the same version without the flag. Pin whatever `HELM_UNITTEST_VERSION` in
+`validate-chart.yml` pins: a gate whose plugin version floats is a gate whose verdict floats.
 
 Everything below reaches no cluster and needs no kubeconfig, and is what `validate-chart.yml` runs in CI:
 
@@ -481,18 +512,22 @@ helm unittest --strict deploy/charts/event-junkie
 scripts/cluster-assertions.sh
 ```
 
-There is no `values-staging.yaml`: since #414 staging's and production's configuration lives in each cluster's `HelmRelease` under `spec.values`, because a
-HelmRelease cannot read a file from this repository and two copies would drift.
+There is no `values-staging.yaml`. Since #414, staging's and production's configuration lives in each cluster's
+`HelmRelease` under `spec.values`. A HelmRelease cannot read a file from this repository, and two copies would drift.
 
-`helm unittest` is the pair worth understanding, with `scripts/cluster-assertions.sh`. `helm lint` and schema validation both pass on a chart that is
-well-formed, schema-valid and wrong — an ingress that routes `/actuator`, an importer scaled past one replica, a selector carrying a label that changes on every
-release. The suites in `deploy/charts/event-junkie/tests/` assert against those, and the script re-runs them against the `spec.values` of every cluster's
-`HelmRelease` so they gate what Flux actually deploys. Five renders in total. They also assert that the chart _refuses_ to render without `database.host` or
-`database.existingSecret` and says what to do about it, which is the interface a first-time installer meets.
+`helm unittest` is the pair worth understanding, with `scripts/cluster-assertions.sh`. `helm lint` and schema
+validation both pass on a chart that is well-formed, schema-valid and wrong. An ingress that routes `/actuator`, an
+importer scaled past one replica, a selector carrying a label that changes on every release. The suites in
+`deploy/charts/event-junkie/tests/` assert against those. The script re-runs them against the `spec.values` of every
+cluster's `HelmRelease`, so they gate what Flux actually deploys. Five renders in total. They also assert that the
+chart _refuses_ to render without `database.host` or `database.existingSecret`, and that it says what to do about it.
+That refusal is the interface a first-time installer meets.
 
-Two things to know before running anything else. **`helm install --dry-run` is not safe here**: it resolves your current kubeconfig context and talks to that
-cluster. Use `helm template`, or `--dry-run=client` if you need `NOTES.txt`. And **the base `values.yaml` cannot render on its own** — `database.host` and
-`database.existingSecret` have no safe default, so add `--set database.host=10.0.1.2 --set database.existingSecret=events-db` when not using an environment
+Two things to know before running anything else. **`helm install --dry-run` is not safe here.** It resolves your
+current kubeconfig context and talks to that cluster. Use `helm template`, or `--dry-run=client` if you need
+`NOTES.txt`. And **the base `values.yaml` cannot render on its own**. `database.host` and `database.existingSecret`
+have no safe default, so add `--set database.host=10.0.1.2 --set database.existingSecret=events-db` when not using an
+environment
 values file.
 
 ## Versions and cutting a release
@@ -500,8 +535,9 @@ values file.
 > The **end-to-end** picture — build, scan, publish, and how Flux reconciles it onto a cluster, with a diagram — is [RELEASING.md](ops/RELEASING.md). This section is
 > the version scheme and the local commands.
 
-**One number reaches four artifacts, and only one file decides it.** [`gradle.properties`](../gradle.properties) carries `version=X.Y.Z-SNAPSHOT`; everything
-else derives from it. Three other files repeat the number and none is authoritative:
+**One number reaches four artifacts, and only one file decides it.** [`gradle.properties`](../gradle.properties)
+carries `version=X.Y.Z-SNAPSHOT`, and everything else derives from it. Three other files repeat the number, and none
+is authoritative:
 
 | File                           | Holds            | Why it is not the source                                                       |
 | ------------------------------ | ---------------- | ------------------------------------------------------------------------------ |
@@ -519,32 +555,39 @@ scripts/version.sh check      # fails if the four files disagree — also a pre-
 scripts/version-test.sh       # fails if snapshot versions stop ordering — needs helm
 ```
 
-**Snapshots are prereleases _of the coming release_, not of the last one.** SemVer sorts `0.1.1-snapshot.20260814122042.g33fd32g` _before_ `0.1.1`, so naming a
-snapshot after the released version would have it claim to be older than code it is newer than. Same semantics as Maven's `-SNAPSHOT`.
+**Snapshots are prereleases _of the coming release_, not of the last one.** SemVer sorts
+`0.1.1-snapshot.20260814122042.g33fd32g` _before_ `0.1.1`. Naming a snapshot after the released version would have it
+claim to be older than code it is newer than. Same semantics as Maven's `-SNAPSHOT`.
 
-**The timestamp is there so that snapshots _order_, and that is not a detail** ([#455](https://github.com/enorm-labs/event-junkie/issues/455)). SemVer §11
-compares digits-only identifiers numerically and identifiers containing a letter lexically in ASCII, so the previous scheme — `0.1.0-snapshot.g<sha>` — sorted by
-short sha, which is random. Staging's `semver: ">=0.0.0-0"` range therefore resolved whichever sha sorted highest rather than the newest chart, silently, while
-reporting `Ready`. It ran a three-day-old chart until the symptom turned up somewhere unrelated. The timestamp is `YYYYMMDDHHMMSS` in UTC, taken from the
-commit's **committer date** rather than the clock so that `compute` stays a pure function of the commit and a workflow re-run cannot produce a second name for
-identical artifacts.
+**The timestamp is there so that snapshots _order_, and that is not a detail**
+([#455](https://github.com/enorm-labs/event-junkie/issues/455)). SemVer §11 compares a digits-only identifier
+numerically, and one containing a letter lexically in ASCII. The previous scheme — `0.1.0-snapshot.g<sha>` — therefore
+sorted by short sha, which is random. Staging's `semver: ">=0.0.0-0"` range resolved whichever sha sorted highest
+rather than the newest chart, silently, while reporting `Ready`. It ran a three-day-old chart until the symptom turned
+up somewhere unrelated. The timestamp is `YYYYMMDDHHMMSS` in UTC, taken from the commit's **committer date** rather
+than from the clock. `compute` therefore stays a pure function of the commit, and a workflow re-run cannot produce a
+second name for identical artifacts.
 
-The same §11 rule is why the base version moved `0.1.0` → `0.1.1` without `0.1.0` ever shipping: numeric identifiers rank **below** alphanumeric ones, so a
-timestamped snapshot of `0.1.0` would have sorted under every legacy `0.1.0-snapshot.g…` tag already in GHCR. Those tags are immutable and were not deleted.
+The same §11 rule is why the base version moved `0.1.0` → `0.1.1` without `0.1.0` ever shipping. A numeric identifier
+ranks **below** an alphanumeric one, so a timestamped snapshot of `0.1.0` would have sorted under every legacy
+`0.1.0-snapshot.g…` tag already in GHCR. Those tags are immutable and were not deleted.
 
-The `g` before the sha is git-describe's convention and is load-bearing rather than decorative: a SemVer identifier made only of digits may not have a leading
-zero, so a short sha like `0031234` would produce a version `helm lint --strict` rejects outright — about one commit in 270, being `(10/16)^6 / 16` for a sha
-uniform over hex.
+The `g` before the sha is git-describe's convention, and it is load-bearing rather than decorative. A SemVer identifier
+made only of digits may not have a leading zero. A short sha like `0031234` would therefore produce a version that
+`helm lint --strict` rejects outright. That is about one commit in 270, being `(10/16)^6 / 16` for a sha uniform over
+hex.
 
-**It does not help the ordering**, which is worth stating because the opposite is easy to assume. Prerelease identifiers are compared left to right and the
-comparison stops at the first difference, so the timestamp decides and the sha is reached only when two timestamps are equal. In that same-second tie the `g`
-buys one small thing: every sha is alphanumeric, so ties break by plain ASCII, where bare shas would be a mix and SemVer ranks every numeric identifier below
-every non-numeric one — an all-digit sha would lose every tie regardless of its value.
+**It does not help the ordering**, which is worth stating because the opposite is easy to assume. Prerelease
+identifiers are compared left to right, and the comparison stops at the first difference. The timestamp decides, and
+the sha is reached only when two timestamps are equal. In that same-second tie the `g` buys one small thing. Every sha
+is then alphanumeric, so ties break by plain ASCII. Bare shas would be a mix, and SemVer ranks every numeric
+identifier below every non-numeric one. An all-digit sha would lose every tie regardless of its value.
 
 ### What gets published, and when
 
-[`release.yml`](../.github/workflows/release.yml) builds, scans and pushes **four artifacts** — three images and the chart — from one computed version. It does
-not deploy: Flux pulls from GHCR on its own schedule (#414), so a green run means the artifacts exist, not that they are live.
+[`release.yml`](../.github/workflows/release.yml) builds, scans and pushes **four artifacts** from one computed
+version: three images and the chart. It does not deploy. Flux pulls from GHCR on its own schedule (#414), so a green
+run means the artifacts exist, not that they are live.
 
 | Trigger                                         | Version                                 | Published                                         |
 | ----------------------------------------------- | --------------------------------------- | ------------------------------------------------- |
@@ -553,13 +596,14 @@ not deploy: Flux pulls from GHCR on its own schedule (#414), so a green run mean
 | a PR touching `release.yml` or `version.sh`     | snapshot                                | **nothing**                                       |
 | `workflow_dispatch`                             | as above                                | **nothing**, unless the `publish` input is ticked |
 
-Publishing is an allowlist — `push` events and a dispatch that explicitly asks for it — rather than "everything except the dry run", so a trigger added later
-cannot quietly become a publishing one.
+Publishing is an allowlist: `push` events, and a dispatch that explicitly asks for it. It is not "everything except
+the dry run", so a trigger added later cannot quietly become a publishing one.
 
-**The workflow tests itself, because it is the one workflow that cannot be tried before it is trusted.** `workflow_dispatch` is offered only for workflows
-already on the default branch, so a dispatch button added in a pull request does not exist until that request merges — and merging is exactly what publishes.
-Hence the `pull_request` trigger: a change to `release.yml` or `scripts/version.sh` runs the whole thing on the PR — three images built and scanned, the chart
-stamped, linted and packaged — and pushes none of it.
+**The workflow tests itself, because it is the one workflow that cannot be tried before it is trusted.**
+`workflow_dispatch` is offered only for a workflow already on the default branch. A dispatch button added in a pull
+request therefore does not exist until that request merges, and merging is exactly what publishes. Hence the
+`pull_request` trigger. A change to `release.yml` or `scripts/version.sh` runs the whole thing on the PR, and pushes
+none of it. Three images built and scanned, and the chart stamped, linted and packaged.
 
 ### Cutting a release
 
@@ -582,21 +626,23 @@ gh release create v0.1.1 --target main --generate-notes
 A release version is **never committed** — `release.yml` passes `-Pversion=` from the tag, so the tag and the built artifacts cannot disagree. Tagging `v0.2.0`
 on a tree that still says `0.1.1-SNAPSHOT` fails immediately in `scripts/version.sh compute`, before anything is built.
 
-Two consequences of triggering on `published` rather than on the tag: a **draft** release creates no tag and publishes nothing until you publish it, which makes
-drafting notes safe; and a release cut from a tag that already exists still triggers, which a tag-push trigger would not. **Pre-releases are not supported** by
-the version scheme — `v0.1.0-rc1` fails the match against `gradle.properties`, and snapshots already fill that role.
+Triggering on `published` rather than on the tag has two consequences. A **draft** release creates no tag and
+publishes nothing until you publish it, which makes drafting notes safe. And a release cut from a tag that already
+exists still triggers, which a tag-push trigger would not. **Pre-releases are not supported** by the version scheme.
+`v0.1.0-rc1` fails the match against `gradle.properties`, and snapshots already fill that role.
 
-**`latest` is publish-only.** It is a human pointer at the newest release; nothing in the deploy path may consume it. With `imagePullPolicy: IfNotPresent` a
-mutable tag lets two nodes run different code and neither is wrong — the chart's helm-unittest suites fail the build on a floating tag, which is that rule enforced
-from the consuming side.
+**`latest` is publish-only.** It is a human pointer at the newest release, and nothing in the deploy path may consume
+it. With `imagePullPolicy: IfNotPresent`, a mutable tag lets two nodes run different code and neither is wrong. The
+chart's helm-unittest suites fail the build on a floating tag, which is that rule enforced from the consuming side.
 
 ### Two things that are clicks, not code
 
 - **Every GHCR package is private on its first publish**, regardless of repository visibility. Four packages — `bff`, `importer`, `frontend` and the chart —
   each needing one visibility flip in its package settings. The symptom of forgetting is `ImagePullBackOff` on the first deploy, with nothing in the logs
   naming the cause. See [PLATFORM_SETUP §3](ops/PLATFORM_SETUP.md#3-container-registry--ghcr-not-docker-hub).
-- **A local `docker push` or `helm push` needs a classic PAT** with `write:packages`; GitHub Packages does not support fine-grained tokens. CI needs no such
-  credential — `permissions: packages: write` and the run's own token are enough.
+- **A local `docker push` or `helm push` needs a classic PAT** with `write:packages`, because GitHub Packages does not
+  support a fine-grained token. CI needs no such credential: `permissions: packages: write` and the run's own token
+  are enough.
 
 ## Performance tests
 
@@ -621,8 +667,8 @@ k6 run perf/spike.js     # a sudden surge — the finding is whether it recovers
 ./gradlew dependencyUpdates      # https://github.com/ben-manes/gradle-versions-plugin
 ```
 
-Versions are centralised in [`gradle.properties`](../gradle.properties); plugin versions in
-[`settings.gradle.kts`](../settings.gradle.kts). Frontend dependencies are pinned exactly — `npm outdated`, then
+Versions are centralised in [`gradle.properties`](../gradle.properties), and plugin versions in
+[`settings.gradle.kts`](../settings.gradle.kts). Frontend dependencies are pinned exactly: `npm outdated`, then
 `npm update --save --save-exact`.
 
 There is a [`/update-dependencies`](../.github/prompts/update-dependencies.prompt.md) skill that does this safely across both.
@@ -664,6 +710,6 @@ change on either side:
 cd events-frontend && npm run generate:notices             # merges both ecosystems into src/assets/notices.json
 ```
 
-The generator writes no timestamp, so re-running it with unchanged dependencies produces an identical file and an empty diff. It is committed rather than
-generated at build time because the frontend is not a Gradle subproject: its build must not have to invoke Gradle, and the page then works under `npm run dev`
-with nothing else run first.
+The generator writes no timestamp, so re-running it with unchanged dependencies produces an identical file and an
+empty diff. It is committed rather than generated at build time, because the frontend is not a Gradle subproject. Its
+build must not have to invoke Gradle, and the page then works under `npm run dev` with nothing else run first.
