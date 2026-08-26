@@ -45,6 +45,7 @@ Slash commands available under `.claude/skills/`:
 - `/verify` — run the full pre-PR sequence: backend `ktlintCheck detekt build koverLog` + frontend `type-check`, `lint`, `test:unit`, `test:e2e` (chromium),
   `scripts/comment-density.sh check` + `scripts/comment-lint.sh check` always, `scripts/format-markdown.sh check` when the diff touches any `.md`, and `tofu fmt`/`validate` + ShellCheck when it touches `infra/`, and `helm lint` +
   `helm unittest` + `scripts/cluster-assertions.sh` when it touches `deploy/`
+- `/write-adr` — turn a decision that has been made into the record of why; claims the next ADR number by writing the file
 
 ## Multi-module note
 
