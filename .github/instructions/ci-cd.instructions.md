@@ -61,6 +61,15 @@ What each workflow is for, which checks are required, and the shapes that fail s
       anyway (#569). Weekly. **The dates are a literal `CREDENTIALS` table in the workflow, duplicated in `docs/CREDENTIALS.md` §2, and the two must move
       together** — reading them from GitHub instead would need `admin:org`, which `GITHUB_TOKEN` cannot hold, so that route would watch an expiring token with
       a stronger expiring token. Only `github-dispatch` has a date today (2027-08-20); nothing else here expires.
+    - `agent-security.yml` — **the only workflow that runs an agent**, and the first of #387's four workloads. Claude, driven by this repository's own
+      [`/security-triage`](../prompts/security-triage.prompt.md) prompt, opening a pull request and never pushing to `main`. Four things about it are decisions.
+      **It invokes the prompt as `--unattended`**, which is a clause in the prompt rather than a hint: the "ask first" tier has nobody to ask from a runner, so
+      unattended it dismisses nothing and files nothing, and the candidates go into the pull request body. **It never passes `github_token`**, so the action
+      authenticates as the Claude GitHub App — Actions does not trigger workflows on `GITHUB_TOKEN` commits, and a pull request whose pushes start no run sits
+      Pending against nine required checks forever. **`--allowedTools` is load-bearing**: these prompts carry no frontmatter, so without it the agent has no
+      shell and no GitHub API and the run reads the repository and does nothing. And **Dependabot alerts are expected to `403`** — neither `GITHUB_TOKEN` nor the
+      Claude App carries a permission for them — so its honest scope is code scanning. `workflow_dispatch` only, and `dry_run` defaults to true; a schedule is a
+      line to add once a run has been watched end to end.
     - `validate-workflows.yml` — **actionlint** (correctness) and **zizmor** (security) over `.github/workflows/`, since #383. It is the only gate that looks at
       the workflows themselves, and on its first run zizmor found a template injection in `release.yml`, a cache-poisoning path into it, and two workflow-level
       permission grants that belonged to a single job. zizmor blocks at `--min-severity medium`; suppressions live in `zizmor.yml` or as inline

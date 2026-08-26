@@ -7,7 +7,7 @@ where the working copy lives today, and what breaks if the only copy is lost. Us
 database, and re-read it after any infrastructure change.
 
 Two entries carry most of the risk. Losing **#16**, the SOPS age key, makes every encrypted file undecryptable.
-**#15** is the only credential with an expiry, and its lapse is silent.
+**#15** is the only credential with a tracked expiry, and its lapse is silent.
 
 The links are in [`LINKS.md`](LINKS.md). The procedures are in `docs/ops/`, and this file points at them rather than
 repeating them.
@@ -56,9 +56,21 @@ prepaid number silently ends the alerting path.
 | 14  | **GitHub PAT for `flux bootstrap`**                                               | One-time, from a laptop, to commit Flux's manifests and create its deploy key. **CI never holds it**                                               | Created on demand, then discarded                                                                                                                                                             | No                                    |
 | 15  | **`github-dispatch` PAT** (fine-grained) — `event-junkie-staging-github-dispatch` | **`contents: write` on this repository** — can trigger any `repository_dispatch` workflow on `main`                                                | Created 2026-08-19, **expires 2027-08-20**. **Hand-made** Kubernetes Secret in `flux-system`, one per cluster — nothing in the repo creates it ([`ops/SECRETS.md`](ops/SECRETS.md))           | No                                    |
 | 15a | **`github-dispatch` PAT** — `event-junkie-production-github-dispatch`             | Same power as #15, on the **production** cluster. Created 2026-08-21                                                                               | Keychain item of that name; **hand-made** Secret in production's `flux-system`. One PAT per cluster by decision, not convenience                                                              | No                                    |
+| 24  | **`CLAUDE_CODE_OAUTH_TOKEN`** — Claude Code subscription token                    | **Spends the Claude subscription.** It reaches nothing in this repository: the agent's GitHub access is the Claude App's, not this token's         | GitHub Actions repository secret, minted by `claude setup-token`. Shown once                                                                                                                  | No — mint another                     |
 
 **`secrets.GITHUB_TOKEN` is not on this list and never should be.** Actions mints it per run, and
 `permissions: packages: write` is the whole configuration.
+
+**#24 buys inference, not access.** [`agent-security.yml`](../.github/workflows/agent-security.yml) runs Claude on a
+runner, and the two halves of what that agent can do come from different credentials. This token pays for the model.
+Everything the agent touches on GitHub goes through the **Claude GitHub App**, installed on this repository. So
+revoking #24 stops the agent running. It does not reduce what a run can reach. Uninstalling the App does that.
+
+**Its expiry is whatever `claude setup-token` sets, and is not known before it exists.** Read the date at creation. If
+the token carries one, add it to the `CREDENTIALS` table in
+[`credential-expiry-reminder.yml`](../.github/workflows/credential-expiry-reminder.yml) in the same sitting, under the
+rule the row above already carries. A lapse here is loud rather than silent — the workflow fails on an auth error — so
+it is a lower-stakes entry than #15.
 
 **#15 is the most powerful GitHub credential either cluster holds.** `contents: write` lets it trigger any
 `repository_dispatch` workflow on `main`. So there is **one per cluster**, and revoking one does not take the other
@@ -66,7 +78,7 @@ down. A second, weaker `github-status` PAT for commit statuses was planned and n
 [#567](https://github.com/enorm-labs/event-junkie/issues/567) removed the need for it. A HelmRelease reports a chart
 version rather than a commit, and no token could have changed that.
 
-**#15 is also the only credential here with an expiry date, which is the one thing about it worth a reminder.** A
+**#15 is also the only credential here with a tracked expiry date, which is the one thing about it worth a reminder.** A
 fine-grained PAT caps out at 366 days, and when it lapses **nothing on GitHub says so**. The Environments tab simply
 stops gaining entries, which looks identical to "no deploys happened lately". Flux logs the rejection inside the
 cluster and nowhere else.
