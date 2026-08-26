@@ -5,8 +5,9 @@
 Accepted
 
 **Amended: the retry backoff is capped, and a spent retry budget no longer removes a source from the schedule**
-([#659](https://github.com/enorm-labs/event-junkie/issues/659)). Everything below about the tick, the table, the status model and the alternatives is
-unaffected; only the retry cadence and the OPEN state changed. The reasoning is in §Circuit Breaker.
+([#659](https://github.com/enorm-labs/event-junkie/issues/659)). Everything below about the tick, the table, the status
+model and the alternatives is unaffected. Only the retry cadence and the OPEN state changed. The reasoning is in
+§Circuit Breaker.
 
 ## Context
 
@@ -63,28 +64,31 @@ The `event_source` table already tracks most job metadata (status, last run, err
 
 A single `@Scheduled` method ("tick") runs every 60 seconds and:
 
-1. Queries for **enabled sources** that are **due for import** — where `last_import_at` is older than
-   `import_interval_minutes` ago (or `null` for never-imported sources).
+1. Queries for **enabled sources** that are **due for import**. A source is due when `last_import_at` is older than
+   `import_interval_minutes`, or `null`.
 2. Skips sources with `status = RUNNING` to prevent overlapping imports.
-3. Skips sources with `status = MISCONFIGURED` — these have permanent configuration errors (e.g. unknown source type, no importer registered) that require
-   manual intervention.
-4. Includes **failed sources**. While `retry_count < max_retries` they use backoff — `interval × 2^retryCount`, **capped at six hours**. Once the budget is
-   spent they return to their own `import_interval_minutes`; they are never dropped from the query.
+3. Skips sources with `status = MISCONFIGURED`. Their configuration errors are permanent — an unknown source type, no
+   importer registered — and need a person.
+4. Includes **failed sources**. While `retry_count < max_retries` they use backoff — `interval × 2^retryCount`,
+   **capped at six hours**. Once the budget is spent they return to their own `import_interval_minutes`. They are
+   never dropped from the query.
 5. Resets stuck `RUNNING` sources to `FAILED` if they've been running for more than 30 minutes (staleness guard).
 6. Delegates each due source to `EventImportService.importFromSource()`.
 
-> **Amended 2026-08-24 ([#659](https://github.com/enorm-labs/event-junkie/issues/659)). Step 4 originally read "includes failed sources if
-> `retry_count < max_retries`, applying exponential backoff (`interval × 2^retryCount`)", and both halves of that were wrong in the same direction.**
+> **Why step 4 caps the wait and keeps a spent source in the query**
+> ([#659](https://github.com/enorm-labs/event-junkie/issues/659)).
 >
-> **The backoff assumed an interval measured in minutes.** `import_interval_minutes` defaults to 1440, so the first retry waited 48 hours, the second 96 and
-> the third 192 — a failed source was attempted _less_ often than a healthy one, which inverts the point of a retry. `loge` failed on 2026-08-21 11:54 and was
-> next attempted on 2026-08-23 11:55; that is the whole of the 47-hour gap #659 reports, and nothing was stuck. The cap makes the guarantee independent of the
-> source's own schedule: a failure is retried within six hours whatever its interval, which fits all three of a daily source's retries inside the day it
-> failed. Sub-cap intervals are unaffected — an hourly source still waits 2 h, then 4 h.
+> **An uncapped backoff assumes an interval measured in minutes.** `import_interval_minutes` defaults to 1440, so the
+> first retry waited 48 hours, the second 96 and the third 192. A failed source was attempted _less_ often than a
+> healthy one, which inverts the point of a retry. `loge` failed on 2026-08-21 11:54 and was next attempted on
+> 2026-08-23 11:55. That is the whole of the 47-hour gap #659 reports, and nothing was stuck. The cap makes the
+> guarantee independent of the source's own schedule. A failure is retried within six hours whatever its interval,
+> which fits all three of a daily source's retries inside the day it failed. A sub-cap interval is unaffected: an
+> hourly source still waits 2 h, then 4 h.
 >
-> **And the exclusion made exhaustion invisible.** Capping the wait without touching the query would have been a regression, not a fix: a broken daily source
-> spent its budget in 18 hours instead of 14 days and then vanished from the schedule. See §Circuit Breaker for why absence is the one state this system cannot
-> afford.
+> **Excluding a spent source made exhaustion invisible.** Capping the wait alone was a regression rather
+> than a fix. A broken daily source spent its budget in 18 hours instead of 14 days, and then vanished from the
+> schedule. See §Circuit Breaker for why absence is the one state this system cannot afford.
 
 ### Scheduling is enabled by default
 
@@ -110,46 +114,51 @@ coroutine `Semaphore`:
 Concurrent execution is safe because:
 
 - The **artist cache** in `AssociationSyncService` is local to each `importFromSource` call (not shared across sources).
-- **Concurrent artist creation** is handled via a `DataIntegrityViolationException` fallback — if two imports try to create the same artist simultaneously, the
-  unique constraint on `artist.slug` catches the duplicate and the loser falls back to a lookup.
+- **Concurrent artist creation** falls back on a `DataIntegrityViolationException`. If two imports try to create the
+  same artist at once, the unique constraint on `artist.slug` catches the duplicate and the loser does a lookup.
 - Each source's **upsert runs in its own transaction** via `TransactionalOperator.executeAndAwait`.
 - **Status updates** (markSuccess/markFailed) use `saveWithVersionConflictRetry` off optimistic locking conflicts.
 - **One run per source** is guaranteed by an atomic claim: a run opens by issuing
   `UPDATE … SET status = 'RUNNING' … WHERE id = :id AND version = :expectedVersion AND status <> 'RUNNING'` (`EventSourceRepository.claimForImport`) and imports
-  only when it updated the row. This matters because `status = 'RUNNING'` is not yet set while a request waits for a concurrency permit, so a source can be
-  requested by a manual trigger and _still_ look due to a scheduler tick; without the claim both runs scrape and upsert the same events and collide on the
-  `event_slug_key` unique index. The `version` half of the guard extends that from overlapping runs to _consecutive_ ones: a tick that waited out the whole of
-  another run's import would otherwise find the status back at SUCCESS and re-scrape the venue. A source another run holds, or that has been imported since this
-  run read it, is skipped, not failed. See ADR-009 for why optimistic locking cannot serve this purpose on its own.
+  only when it updated the row. This matters because `status = 'RUNNING'` is not yet set while a request waits for a
+  concurrency permit. A manual trigger can request a source that _still_ looks due to a scheduler tick. Without the
+  claim, both runs scrape and upsert the same events, and collide on the `event_slug_key` unique index. The `version`
+  half of the guard extends that from overlapping runs to _consecutive_ ones. A tick that waited out the whole of
+  another run's import would otherwise find the status back at SUCCESS and re-scrape the venue. The scheduler skips a
+  source another run holds, or that another run imported since this one read it. It does not fail it. See ADR-009 for
+  why optimistic locking cannot serve this purpose on its own.
 
 The manual "import all" endpoint (`POST /api/admin/event-sources/import`) uses the same
 `importConcurrently()` method, benefiting from the same bounded concurrency.
 
 ### Manual Triggers Run Fire-and-Forget
 
-Both manual import endpoints — `POST /api/admin/event-sources/import` and
-`POST /api/admin/event-sources/{slug}/import` — are **asynchronous**: they launch the import on an application-scoped coroutine and return `202 Accepted`
-immediately, rather than blocking the request until the import finishes.
+Both manual import endpoints are **asynchronous**: `POST /api/admin/event-sources/import` and
+`POST /api/admin/event-sources/{slug}/import`. They launch the import on an application-scoped coroutine and return
+`202 Accepted` at once, rather than blocking the request until the import finishes.
 
-**Why:** a heavy two-page importer makes one throttled HTTP fetch per event (see ADR-007's per-host politeness throttling). Badehaus, for example, fetches ~90
-detail pages and runs for over a minute. Running that inline in the request means the caller's HTTP read timeout (the IntelliJ HTTP Client /
-`ijhttp` default is 60s) can elapse first; when the client disconnects, WebFlux cancels the request-scoped coroutine, which aborts the import
-**mid-transaction** and leaves the source stuck in
-`RUNNING` with nothing persisted. Decoupling the import from the request removes that failure mode and lets triggers scale to any number of sources.
+**Why:** a heavy two-page importer makes one throttled HTTP fetch per event (see ADR-007's per-host politeness
+throttling). Badehaus, for example, fetches ~90 detail pages and runs for over a minute. Run that inline in the request
+and the caller's HTTP read timeout can elapse first — the IntelliJ HTTP Client and `ijhttp` default to 60s. When the
+client disconnects, WebFlux cancels the request-scoped coroutine. That aborts the import **mid-transaction** and leaves
+the source stuck in `RUNNING` with nothing persisted. Decoupling the import from the request removes that failure mode,
+and lets triggers scale to any number of sources.
 
-**How:** `ImportJobLauncher` owns a `CoroutineScope(SupervisorJob() + ioDispatcher)` — a `SupervisorJob`
-so one failing import never cancels the scope or sibling imports, and application-scoped so it outlives the request (cancelled on shutdown via
-`DisposableBean`). `{slug}/import` still resolves the source synchronously before launching, so an unknown slug returns `404` rather than failing silently in
-the background. Progress and outcome are recorded on the `event_source` row (`RUNNING → SUCCESS/FAILED`) as usual, so clients **poll**
-`GET /api/admin/event-sources[/{slug}]` to observe them instead of reading the (now absent) synchronous result. This is a natural fit for a future
-imports-status dashboard.
+**How:** `ImportJobLauncher` owns a `CoroutineScope(SupervisorJob() + ioDispatcher)`. The `SupervisorJob` keeps one
+failing import from cancelling the scope or its sibling imports. The scope is application-scoped, so it outlives the
+request, and `DisposableBean` cancels it on shutdown. `{slug}/import` still resolves the source synchronously before
+launching, so an unknown slug returns `404` rather than failing silently in the background. Progress and outcome go on
+the `event_source` row (`RUNNING → SUCCESS/FAILED`) as usual. Clients **poll**
+`GET /api/admin/event-sources[/{slug}]` to observe them, instead of reading a synchronous result that is no longer
+there. This is a natural fit for a future imports-status dashboard.
 
-The **scheduled** path (`ScheduledImportService.tick()`) was already request-independent — it runs on the `@Scheduled` executor and is bounded only by the
-`staleness-timeout` — so it was never affected by this failure mode; this change brings the manual path in line with it.
+The **scheduled** path (`ScheduledImportService.tick()`) was already request-independent. It runs on the `@Scheduled`
+executor and is bounded only by the `staleness-timeout`, so this failure mode never reached it. The change brings the
+manual path in line with it.
 
-**Known edge case — REST trigger during a scheduled tick:** A manual `POST /api/admin/event-sources/{slug}/import`
-could overlap with the scheduler processing the same source. Both would read the source as IDLE, both would set it to RUNNING, and both would upsert the same
-events. This is not harmful because:
+**Known edge case — REST trigger during a scheduled tick.** A manual `POST /api/admin/event-sources/{slug}/import`
+could overlap with the scheduler processing the same source. Both would read the source as IDLE, set it to RUNNING, and
+upsert the same events. This is not harmful because:
 
 - Event upserts are **idempotent by `sourceId`** — last write wins, end state is correct.
 - Artist auto-creation is guarded by a `slug` UNIQUE constraint — duplicate attempts fail with a
@@ -161,8 +170,8 @@ single-instance deployment, this is acceptable. For multi-instance deployments, 
 
 ### Circuit Breaker — Considered and Deferred
 
-A formal circuit breaker (e.g. Resilience4J) was considered for handling unavailable venue websites but deferred because the existing retry mechanism already
-provides equivalent protection at the scheduling layer:
+A formal circuit breaker (Resilience4J, for example) would handle an unavailable venue website. It is deferred,
+because the existing retry mechanism already gives equivalent protection at the scheduling layer:
 
 | Circuit breaker concept | Existing equivalent                                                                                  |
 | ----------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -172,34 +181,38 @@ provides equivalent protection at the scheduling layer:
 | Cool-down period        | Exponential backoff (`interval × 2^retryCount`), capped at six hours                                 |
 | Permanent fault         | `status = MISCONFIGURED` — config errors (unknown source type, no importer) skip retries             |
 
-The difference from a classic circuit breaker is what OPEN costs. A formal one auto-transitions OPEN → HALF-OPEN after a timeout; here OPEN is not a separate
-state at all, only the end of the shortened cadence, and the source keeps being probed on its normal schedule indefinitely.
+The difference from a classic circuit breaker is what OPEN costs. A formal one auto-transitions OPEN → HALF-OPEN after
+a timeout. Here OPEN is not a separate state at all, only the end of the shortened cadence. The source keeps being
+probed on its normal schedule.
 
-**That is a change, and #659 is why.** OPEN used to mean the source was excluded from the due-sources query outright, on the reasoning that a persistently
-failing scraper needs a code change rather than more attempts. The reasoning is sound and the mechanism was not: a source that stops being attempted stops
-producing failures, and a venue with no recent failures is indistinguishable from a venue with nothing to import. The observability built since — `#618`'s
-`has_succeeded`, `#700`'s per-source gauge, the `ej-importer-stale` rule — all read `event_source` rather than the scheduler, so silence there reads as health.
-Probing once a day and failing visibly costs one HTTP request and produces the signal those rules exist to catch. `enabled = false` remains the way to stop a
-source deliberately, and it is still honoured.
+**Why OPEN does not exclude the source** ([#659](https://github.com/enorm-labs/event-junkie/issues/659)). Excluding it
+outright is the obvious reading: a persistently failing scraper needs a code change, not more attempts. The reasoning
+is sound and the mechanism is not. A source that stops being attempted stops producing failures, and a venue with no
+recent failures looks exactly like a venue with nothing to import. The observability around it reads `event_source`
+rather than the scheduler — `#618`'s `has_succeeded`, `#700`'s per-source gauge, the `ej-importer-stale` rule. Silence
+there therefore reads as health. Probing once a day and failing visibly costs one HTTP request, and
+produces the signal those rules exist to catch. `enabled = false` remains the way to stop a source deliberately, and it
+is still honoured.
 
-Resilience4J could add value at a **different layer** — in-process HTTP retries inside `HtmlFetcher`
-for transient failures (503, timeouts) within a single import attempt. This is a complementary concern and can be added independently if needed.
+Resilience4J could add value at a **different layer**: in-process HTTP retries inside `HtmlFetcher` for a transient
+failure (503, a timeout) within one import attempt. That is a complementary concern, and can be added on its own.
 
 ## Consequences
 
-- **Positive**: Zero new dependencies; fully coroutine-native; per-source scheduling with different intervals; retry with exponential backoff; staleness
-  detection for stuck imports; all job metadata lives in one table (`event_source`); easy to build a dashboard/API on top.
-- **Negative**: Not as feature-rich as JobRunr's built-in dashboard (but we're building our own Vue frontend); cron expressions are not supported (only fixed
-  intervals — sufficient for venue scraping where "every N hours" is the typical pattern).
-- If more sophisticated scheduling is needed in the future (e.g. time-of-day constraints, complex cron patterns, distributed job processing), JobRunr would be
-  the natural upgrade — but this would require adding a JDBC DataSource alongside R2DBC (see below).
+- **Positive**: zero new dependencies, and fully coroutine-native. Per-source scheduling with different intervals,
+  retry with exponential backoff, and staleness detection for a stuck import. All job metadata lives in one table
+  (`event_source`), which makes a dashboard or an API easy to build on top.
+- **Negative**: not as feature-rich as JobRunr's built-in dashboard, though we are building our own Vue frontend. No
+  cron expressions, only fixed intervals — enough for venue scraping, where "every N hours" is the typical pattern.
+- More sophisticated scheduling would make JobRunr the natural upgrade: time-of-day constraints, complex cron
+  patterns, or distributed job processing. That needs a JDBC DataSource alongside R2DBC (see below).
 
 ### JobRunr Dual-DataSource Feasibility
 
-JobRunr requires JDBC and has [no R2DBC support](https://github.com/jobrunr/jobrunr/issues/257). However, a **dual-DataSource** approach is technically
-feasible: configure a JDBC `DataSource`
-alongside the existing R2DBC connection, both pointing to the same PostgreSQL instance. JobRunr supports this via `jobrunr.database.datasource` to target a
-specific named `DataSource` bean.
+JobRunr requires JDBC and has [no R2DBC support](https://github.com/jobrunr/jobrunr/issues/257). A **dual-DataSource**
+approach is technically feasible. Configure a JDBC `DataSource` alongside the existing R2DBC connection, both pointing
+at the same PostgreSQL instance. JobRunr supports that through `jobrunr.database.datasource`, which targets a specific
+named `DataSource` bean.
 
 This was evaluated and **deferred** because the costs outweigh the benefits at current scale:
 
@@ -211,8 +224,8 @@ This was evaluated and **deferred** because the costs outweigh the benefits at c
 | Architecture inconsistency | Breaks the "reactive stack throughout" principle ([ADR-001](ADR-001_REACTIVE_STACK.md))                  |
 | Configuration complexity   | Two DataSource beans with custom qualifiers, shared credentials                                          |
 
-**When to reconsider:** if the project needs distributed job processing across multiple instances, cron-expression scheduling (e.g. "scrape only at 3 AM"), job
-queues with priorities, or a built-in dashboard without building one in the Vue frontend.
+**When to reconsider:** distributed job processing across multiple instances. Cron-expression scheduling ("scrape only
+at 3 AM"). Job queues with priorities. A built-in dashboard that nobody has to write in the Vue frontend.
 
 ## References
 
