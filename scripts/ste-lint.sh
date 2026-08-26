@@ -111,6 +111,9 @@ update_baseline() {
         echo "# ASD-STE100 findings per area — a ceiling that only moves down. See #733."
         echo "# One area per rewrite phase. Raise a number only with an argument in the PR;"
         echo "# the ordinary fix is to split the sentence."
+        echo "#"
+        echo "# An area with no row here is at zero, which is where all three finished. That is the"
+        echo "# goal state, not a missing file: do not run update-baseline to make a red check pass."
         counts
     } > "$BASELINE"
     echo "Wrote $BASELINE"
@@ -140,10 +143,10 @@ check() {
         fi
     done < "$BASELINE"
 
-    while IFS=$'\t' read -r area now; do
+    while IFS=$'\t' read -r area now; do # an absent area is a limit of zero, not an unknown (#733)
         [ -z "${area:-}" ] && continue
         if ! grep -q "^${area}	" "$BASELINE"; then
-            printf '  %-12s %4d  (no baseline entry)\n' "$area" "$now"
+            printf '  %-12s %4d > 0     (+%d)\n' "$area" "$now" "$now"
             failed=1
         fi
     done <<< "$current"
