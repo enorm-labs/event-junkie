@@ -12,6 +12,9 @@
 # **`--allowedTools` is load-bearing.** These prompts carry no frontmatter, so without it the agent
 # has no shell and no GitHub API, and the run reads the repository and does nothing. Bash is
 # unrestricted because the fix half runs Gradle and npm. The runner is ephemeral and main is ruled.
+#
+# **`display_report: true` is what makes the run readable**, and is not interchangeable with
+# `show_full_output`. ci-cd.instructions.md has the difference and why it matters here.
 name: Agent — Security Triage
 
 on:
@@ -65,6 +68,7 @@ jobs:
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          display_report: true
           prompt: /security-triage --unattended${{ inputs.dry_run && ' --dry-run' || '' }}
           claude_args: |
             --model ${{ inputs.model }}

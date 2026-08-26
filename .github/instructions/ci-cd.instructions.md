@@ -70,6 +70,11 @@ What each workflow is for, which checks are required, and the shapes that fail s
       shell and no GitHub API and the run reads the repository and does nothing. And **Dependabot alerts are expected to `403`** — neither `GITHUB_TOKEN` nor the
       Claude App carries a permission for them — so its honest scope is code scanning. `workflow_dispatch` only, and `dry_run` defaults to true; a schedule is a
       line to add once a run has been watched end to end.
+    - **All four set `display_report: true`, and none sets `show_full_output`.** The two are not interchangeable and the default of both is `false`, which is
+      how the first dry run finished green having answered nothing: the report went to a temp file on a runner that then stopped existing. `display_report`
+      publishes the agent's final report to the job summary; `show_full_output` dumps every intermediate tool result, and the action's own description warns it
+      "may contain secrets, API keys, or other sensitive information" in a publicly visible log. The report itself is public in the step summary either way,
+      which is the exposure the pull request body already carries by design — so it is a decision rather than an oversight, recorded here rather than four times.
     - `agent-refactor.yml` — the `/refactor` workload, and the one whose prompt was written for this (#389, `.github/prompts/refactor.prompt.md`).
       Behaviour-preserving changes only, with the test suite as the proof. **`--unattended` fences it away from shared normalization** — `SlugGenerator`,
       `GenreNormalizer`, `ArtistNameMapping`, `MoneyExtensions` — because a change there compiles, passes the whole suite, and still changes the rows that land
