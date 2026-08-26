@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+**Accepted — Spring WebFlux, R2DBC and Kotlin coroutines throughout, and no blocking API in a request path.**
 
 ## Context
 
@@ -25,11 +25,12 @@ Use the **reactive stack throughout**: Spring WebFlux for HTTP, R2DBC for databa
 
 ## Consequences
 
-- **Positive**: Efficient concurrency model for I/O-bound workloads; Kotlin coroutines make the code readable and testable despite being non-blocking; natural
-  fit for streaming event data.
-- **Negative**: R2DBC has more limited query derivation than JPA (see [ADR-002](ADR-002_R2DBC_QUERY_DERIVATION.md)); no lazy loading or entity relationships —
-  joins must be handled manually; smaller ecosystem of tooling and community examples compared to JPA; blocking libraries (e.g. some email or file-processing
-  libs) require careful wrapping with `Dispatchers.IO`.
+- **Positive**: an efficient concurrency model for I/O-bound workloads. Kotlin coroutines keep the code readable and
+  testable despite being non-blocking, and the stack is a natural fit for streaming event data.
+- **Negative**: R2DBC derives fewer queries than JPA (see [ADR-002](ADR-002_R2DBC_QUERY_DERIVATION.md)). There is no
+  lazy loading and there are no entity relationships, so joins are written by hand. The tooling ecosystem and the
+  supply of community examples are smaller than JPA's. A blocking library — an email or file-processing one, say —
+  needs careful wrapping in `Dispatchers.IO`.
 - **Testing**: Use `WebTestClient` (reactive) instead of `MockMvc` (servlet). Coroutine tests use `runTest`.
 - All team members must understand coroutines and avoid accidentally introducing blocking calls.
 

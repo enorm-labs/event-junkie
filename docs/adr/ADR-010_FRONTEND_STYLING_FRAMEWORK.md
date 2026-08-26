@@ -71,7 +71,7 @@ Two largely orthogonal decisions are bundled here:
 | Upfront effort        | Medium                   | Low                     | Low             | High             |
 | Distinctive look      | Easy                     | Medium                  | Hard (Material) | Easy             |
 
-## Requirements
+## Criteria
 
 The frontend is the public face of a **Berlin music-events guide** (concerts, club nights, festivals across Berlin venues —
 see [VISION_ROADMAP_IDEAS.md](../VISION_ROADMAP_IDEAS.md)). Prioritised criteria:

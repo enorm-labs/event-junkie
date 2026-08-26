@@ -611,7 +611,7 @@ web scraping pitfalls documented in industry literature (see References).
    republish raw content. Respect venue copyright: store only the structured fields you need — title, date, artists,
    URL. Link to the original source for the full details.
 
-### Alternatives Considered
+### Candidate options
 
 | Library            | Verdict                                                                                                                                     |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |

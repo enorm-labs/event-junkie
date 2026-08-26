@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+**Accepted — `@Version` on `EventSourceEntity` alone, with the mutual exclusion done by a conditional `UPDATE`.**
 
 ## Context
 
@@ -21,8 +21,9 @@ Without concurrency control, a race condition can cause **lost updates**. For ex
 The `EventImportService` also threads entity state through multiple save operations in sequence (claim → business logic → `markSuccess`/`markFailed`/
 `markMisconfigured`). Each step must operate on the latest persisted state to avoid overwriting intermediate changes.
 
-Other entities (`VenueEntity`, `ArtistEntity`, `PromoterEntity`, `EventEntity`) are single-writer (admin CRUD or importer upsert) with no realistic concurrent
-modification scenarios, so they do not justify the overhead of optimistic locking.
+The other entities are single-writer: `VenueEntity`, `ArtistEntity`, `PromoterEntity` and `EventEntity`, through
+admin CRUD or an importer upsert. No realistic concurrent modification reaches them, so they do not justify the
+overhead of optimistic locking.
 
 ## Decision
 
@@ -34,40 +35,47 @@ Add **Spring Data `@Version` optimistic locking** to `EventSourceEntity` only.
   `WHERE version = ?` in UPDATE statements.
 - If a concurrent modification is detected, Spring throws `OptimisticLockingFailureException`.
 
-The import run's opening RUNNING transition returns the claimed entity so that subsequent status updates (`markSuccess`, `markFailed`,
-`markMisconfigured`) operate on the latest version — preventing stale writes throughout the import lifecycle.
+The import run's opening RUNNING transition returns the claimed entity. The status updates that follow —
+`markSuccess`, `markFailed`, `markMisconfigured` — therefore operate on the latest version, and no stale write reaches
+the row.
 
-**Optimistic locking does not, and cannot, prevent two runs importing the same source.** Two writers each calling `save()` to mark a source RUNNING produce a
-version conflict that the retry-on-conflict strategy below resolves by re-fetching and retrying — so the second write succeeds and the duplicate run proceeds.
-Mutual exclusion needs a _conditional_ write, which the database decides: `EventSourceRepository.claimForImport` issues
-`UPDATE … SET status = 'RUNNING' … WHERE id = :id AND version = :expectedVersion AND status <> 'RUNNING'` and returns the affected row count, so exactly one
-caller claims a source and the loser (seeing `0`) skips its run. Optimistic locking remains for its actual purpose — protecting an in-flight import's metadata
-from concurrent admin edits.
+**Optimistic locking does not, and cannot, prevent two runs importing the same source.** Two writers each calling
+`save()` to mark a source RUNNING produce a version conflict. The retry-on-conflict strategy below resolves it by
+re-fetching and retrying, so the second write succeeds and the duplicate run proceeds. Mutual exclusion needs a
+_conditional_ write, which the database decides. `EventSourceRepository.claimForImport` issues
+`UPDATE … SET status = 'RUNNING' … WHERE id = :id AND version = :expectedVersion AND status <> 'RUNNING'` and returns
+the affected row count. Exactly one caller claims a source, and the loser sees `0` and skips its run. Optimistic
+locking remains for its actual purpose: protecting an in-flight import's metadata from a concurrent admin edit.
 
-The `version = :expectedVersion` half of that guard is what makes the claim a **compare-and-swap against the exact row the caller read**, and it is not
-redundant with the status check. A status-only guard excludes runs that _overlap_; it does not exclude one that starts the instant another finishes. Imports
-queue on a bounded semaphore (`app.import.max-concurrency`), so a source can sit between "read" and "claimed" for a long time — long enough to still look IDLE
-with `last_import_at IS NULL` to a scheduler tick, be imported by a manual trigger, and then be re-claimed by that tick because the status has already returned
-to SUCCESS. The result is a second full scrape of the same venue, which is exactly what ADR-007's politeness constraints are meant to avoid. Any completed run
-bumps the version, so gating on it makes the stale caller lose.
+The `version = :expectedVersion` half of that guard makes the claim a **compare-and-swap against the exact row the
+caller read**. It is not redundant with the status check. A status-only guard excludes runs that _overlap_. It does
+not exclude one that starts the instant another finishes. Imports queue on a bounded semaphore
+(`app.import.max-concurrency`), so a source can sit between "read" and "claimed" for a long time. Long enough to still
+look IDLE to a scheduler tick, with `last_import_at IS NULL`. A manual trigger imports it, and the tick then re-claims
+it, because the status is back at SUCCESS. The result is a second full scrape of the same venue, which is exactly what
+ADR-007's politeness constraints exist to avoid. Any completed run bumps the version, so gating on it makes the stale
+caller lose.
 
-Gating on the version also makes the claim's `version + 1` **exact**, so the entity returned to the caller carries the version actually persisted rather than an
-in-memory guess, and the closing `markSuccess`/`markFailed` save matches on its first attempt. Before the gate, a stale caller's guess was wrong by however many
-writes it had missed, and every such run logged an `OptimisticLockingFailureException` warning on the way to being repaired by the retry below.
+Gating on the version also makes the claim's `version + 1` **exact**. The entity returned to the caller carries the
+version actually persisted rather than an in-memory guess. The closing `markSuccess` or `markFailed` save then matches
+on its first attempt. Without the gate, a stale caller's guess is wrong by however many writes it missed. Every such
+run logs an `OptimisticLockingFailureException` warning on the way to being repaired by the retry below.
 
-A version conflict can still occur if an external writer (e.g. `ScheduledImportService.resetStuckSources()`)
-modifies the `event_source` row between the claim and the subsequent status update. To handle this, all status update methods use a **retry-on-conflict**
-strategy: on `OptimisticLockingFailureException`, the entity is re-fetched by ID to obtain the current version, the status mutation is re-applied, and the save
-is retried once. If the retry also fails, the exception propagates — the scheduler picks up the source on the next tick.
+A version conflict can still occur. An external writer such as `ScheduledImportService.resetStuckSources()` modifies
+the `event_source` row between the claim and the status update that follows. Every status update method therefore uses
+a **retry-on-conflict** strategy. On `OptimisticLockingFailureException` it re-fetches the entity by ID to obtain the
+current version, re-applies the status mutation, and retries the save once. If the retry also fails the exception
+propagates, and the scheduler picks the source up on the next tick.
 
 ## Consequences
 
 ### Positive
 
 - **Prevents lost updates** — concurrent modifications fail fast rather than silently overwriting each other.
-- **No distributed locks needed** — optimistic locking is lightweight and works with any PostgreSQL setup (no advisory locks, no external coordination).
-- **Self-healing** — status update methods retry once on version conflict by re-fetching the entity. If the retry also fails, the exception propagates
-  harmlessly; the scheduler picks up the source on the next tick.
+- **No distributed locks needed** — optimistic locking is lightweight and works with any PostgreSQL setup. No
+  advisory locks, no external coordination.
+- **Self-healing** — a status update retries once on a version conflict, by re-fetching the entity. If the retry also
+  fails, the exception propagates harmlessly, and the scheduler picks the source up on the next tick.
 - **Future-proof** — if more concurrent writers are added (e.g. webhooks, multiple importer instances), the protection is already in place.
 
 ### Negative
@@ -79,7 +87,7 @@ is retried once. If the retry also fails, the exception propagates — the sched
 ### Not Applied To
 
 - **VenueEntity / ArtistEntity / PromoterEntity** — single-writer admin CRUD, no concurrent updates.
-- **EventEntity** — upserted by a single importer per source via `sourceId`; no competing writers.
+- **EventEntity** — upserted by a single importer per source through `sourceId`, with no competing writers.
 - **EventArtistEntity / EventPromoterEntity** — join tables managed via delete-and-recreate, never updated in place.
 
 ## References

@@ -46,7 +46,7 @@ is required and 6443 need never be publicly reachable at all.
 GitOps tooling is built for many apps, many clusters and many teams. The cost of that generality is paid in components
 that have nothing to do here.
 
-## Options
+## Candidate options
 
 |                        | Cost    | What it buys                                                                                                      |
 | ---------------------- | ------- | ----------------------------------------------------------------------------------------------------------------- |

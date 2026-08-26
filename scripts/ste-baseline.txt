@@ -2,4 +2,3 @@
 # One area per rewrite phase. Raise a number only with an argument in the PR;
 # the ordinary fix is to split the sentence.
 docs	435
-docs/adr	68

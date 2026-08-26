@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+**Accepted — a derived query per property, and `@Query` with explicit SQL wherever derivation stops.**
 
 ## Context
 
