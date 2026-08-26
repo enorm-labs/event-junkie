@@ -168,4 +168,11 @@ const options = computed<CalendarOptions>(() => ({
 
   color: var(--foreground);
 }
+
+/* A token pair, not an opacity fade: dimming below the contrast threshold is the failure the
+   two notes above record. `:deep` because the class sits on a FullCalendar descendant. */
+.event-calendar :deep(.fc-event-past) {
+  --fc-classic-event: var(--muted);
+  --fc-classic-event-contrast: var(--muted-foreground);
+}
 </style>

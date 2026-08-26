@@ -7,6 +7,7 @@ import EventFilterBar from '@/components/EventFilterBar.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { describeError } from '@/api/client'
 import { fetchCalendarEvents } from '@/composables/useEvents'
+import { isPastEvent } from '@/lib/format'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useI18n } from 'vue-i18n'
 
@@ -36,6 +37,8 @@ async function load() {
       title: event.title ?? '',
       start: event.startTime ? `${event.eventDate}T${event.startTime}` : event.eventDate,
       url: `/events/${event.slug}`,
+      // Paging back a month already returned past events; this is what tells them apart.
+      classNames: isPastEvent(event.eventDate) ? ['fc-event-past'] : [],
       // `venue` backs the calendar's hover tooltip, where the clipped title is spelled out.
       extendedProps: { slug: event.slug, venue: event.venue?.name },
     }))

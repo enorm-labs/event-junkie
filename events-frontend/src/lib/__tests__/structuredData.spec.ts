@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { EventDetail, VenueDetail } from '@/api/types'
 import {
@@ -64,6 +64,16 @@ describe('eventStartDate', () => {
 })
 
 describe('eventJsonLd', () => {
+  // `offers` is dropped once an event is past, so the fixture needs a fixed clock.
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-06-01T12:00:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it("carries Google's three required properties", () => {
     const document = eventJsonLd(event, 'en')!
 
@@ -133,6 +143,18 @@ describe('eventJsonLd', () => {
 
   it('sends buyers to the ticket seller, who holds the authoritative price', () => {
     expect(eventJsonLd(event, 'en')!.offers).toMatchObject({ url: 'https://tickets.test/buy' })
+  })
+
+  it('drops offers once the event is past, because the page drops the ticket link', () => {
+    // Rule 1 of this file: never describe anything the page does not show, and a past event's
+    // page shows no "Buy tickets".
+    vi.setSystemTime(new Date('2026-06-13T12:00:00Z'))
+
+    const document = eventJsonLd(event, 'en')!
+    expect(document.offers).toBeUndefined()
+    // The event is still real and still accurately dated — only the offer goes.
+    expect(document.name).toBe('Test Act')
+    expect(document.startDate).toBe('2026-06-12T20:00:00+02:00')
   })
 
   it('describes performers without claiming they are natural persons', () => {

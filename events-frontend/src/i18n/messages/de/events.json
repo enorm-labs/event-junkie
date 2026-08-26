@@ -26,7 +26,8 @@
   "card": {
     "liveTonight": "Heute Abend live",
     "soldOut": "Ausverkauft",
-    "free": "Kostenlos"
+    "free": "Kostenlos",
+    "past": "Vorbei"
   },
   "detail": {
     "notFound": "Event nicht gefunden",
@@ -40,7 +41,8 @@
     "facebook": "Facebook",
     "kind": "Event",
     "presale": "Vorverkauf",
-    "boxOffice": "Abendkasse"
+    "boxOffice": "Abendkasse",
+    "hasTakenPlace": "Dieses Event hat bereits stattgefunden."
   },
   "role": {
     "HEADLINER": "Headliner",

@@ -27,6 +27,17 @@ function json(route: Route, body: unknown, status = 200): Promise<void> {
 
 const slugify = (title: string) => title.toLowerCase().replace(/\s+/g, '-')
 
+/** Today in Berlin, the boundary the app treats as the start of "upcoming". */
+const todayInBerlin = () =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date())
+
+/** An ISO date offset from today, for ranges that have to stay relative to the clock. */
+function isoDaysFromNow(days: number): string {
+  const date = new Date()
+  date.setDate(date.getDate() + days)
+  return date.toISOString().slice(0, 10)
+}
+
 /** Build an EventPage payload from a list of event titles. */
 function eventPage(
   titles: string[],
@@ -56,6 +67,8 @@ function eventsResponseFor(sp: URLSearchParams) {
   if (sp.get('excludeSoldOut') === 'true') return eventPage(['Available Only'])
   if (sp.get('free') === 'true') return eventPage(['Free Show'])
   if (sp.get('minPrice') || sp.get('maxPrice')) return eventPage(['Cheap Gig'])
+  const to = sp.get('to')
+  if (to && to < todayInBerlin()) return eventPage(['Gig Last Month'])
   if (sp.get('from') && sp.get('to')) return eventPage(['Gig In Range'])
   if (sp.get('from')) return eventPage(['Gig From Date'])
 
@@ -231,20 +244,43 @@ test('each preset sends its own range and only one reads as pressed', async ({ p
   expect(url.searchParams.get('from')).not.toBe(url.searchParams.get('to'))
 })
 
-test('bounds the date inputs so the range cannot invert or reach into the past', async ({
-  page,
-}) => {
-  await page.goto('/events?from=2026-09-01&to=2026-09-30')
+test('bounds the date inputs so the range cannot invert', async ({ page }) => {
+  await page.goto('/events?from=2099-09-01&to=2099-09-30')
   await expect(eventHeading(page, 'Gig In Range')).toBeVisible()
 
   // `min`/`max` come from the sibling bound, so the browser enforces from <= to for us.
-  await expect(page.getByLabel('Earliest event date')).toHaveAttribute('max', '2026-09-30')
-  await expect(page.getByLabel('Latest event date')).toHaveAttribute('min', '2026-09-01')
-  // The lower bound is today: this app is about upcoming events.
-  await expect(page.getByLabel('Earliest event date')).toHaveAttribute(
-    'min',
-    new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date()),
-  )
+  await expect(page.getByLabel('Earliest event date')).toHaveAttribute('max', '2099-09-30')
+  await expect(page.getByLabel('Latest event date')).toHaveAttribute('min', '2099-09-01')
+})
+
+test('leaves both date bounds open into the past, so the archive is reachable', async ({
+  page,
+}) => {
+  await page.goto('/events')
+
+  // The default is still upcoming-only, but that is the BFF's doing when no range is sent.
+  await expect(page.getByLabel('Earliest event date')).not.toHaveAttribute('min', /./)
+  await expect(page.getByLabel('Latest event date')).not.toHaveAttribute('min', /./)
+})
+
+test('browses past events from an explicit range', async ({ page }) => {
+  const errors = collectPageErrors(page)
+  await page.goto(`/events?from=${isoDaysFromNow(-60)}&to=${isoDaysFromNow(-30)}`)
+
+  await expect(eventHeading(page, 'Gig Last Month')).toBeVisible()
+  expect(errors, 'unexpected uncaught exceptions').toEqual([])
+})
+
+test('the last-30-days preset asks for a range that has already ended', async ({ page }) => {
+  await page.goto('/events')
+
+  await page.getByRole('button', { name: 'Last 30 days' }).click()
+
+  await expect(eventHeading(page, 'Gig Last Month')).toBeVisible()
+  // It ends yesterday, so the range holds only events that have happened.
+  const url = new URL(page.url())
+  expect(url.searchParams.get('to')).toBe(isoDaysFromNow(-1))
+  expect(url.searchParams.get('from')).toBe(isoDaysFromNow(-30))
 })
 
 test('hides sold-out events when the toggle is checked', async ({ page }) => {

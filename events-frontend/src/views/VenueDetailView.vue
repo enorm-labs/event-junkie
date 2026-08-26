@@ -5,6 +5,7 @@ import BaseDetailView from '@/components/BaseDetailView.vue'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { APP_NAME, placeholderPageMeta, venuePageMeta } from '@/lib/pageMeta'
 import { useEventSearch } from '@/composables/useEvents'
+import { yesterdayIso } from '@/lib/format'
 import { useVenue } from '@/composables/useVenue'
 import { useI18n } from 'vue-i18n'
 import { useStructuredData } from '@/composables/useStructuredData'
@@ -21,6 +22,13 @@ const {
   loading: eventsLoading,
   run: loadEvents,
 } = useEventSearch(() => ({ venue: slug.value, size: 50 }), 'events at this venue')
+// `to` with no `from` is every past event, newest first; the page size is what bounds it.
+const { data: pastEvents, run: loadPastEvents } = useEventSearch(() => ({
+  venue: slug.value,
+  to: yesterdayIso(),
+  size: 20,
+  sort: ['eventDate,desc'],
+}))
 
 // Composed in script to avoid fragile template whitespace around the comma/space separators.
 const addressLine = computed(() => {
@@ -33,6 +41,7 @@ const addressLine = computed(() => {
 function reload() {
   loadVenue()
   loadEvents()
+  loadPastEvents()
 }
 
 onMounted(reload)
@@ -40,12 +49,7 @@ watch(slug, reload)
 
 const { t, locale } = useI18n()
 
-/**
- * Entity label: the eyebrow above the name, the not-found heading, and the placeholder title.
- *
- * A `computed` rather than a constant because it has to follow the active locale — the locale can
- * change without this view remounting, since the switcher only rewrites the URL's locale segment.
- */
+/** Entity label. A `computed` because a locale switch rewrites the URL without remounting this. */
 const kind = computed(() => t('detail.venue.kind'))
 
 // A MusicVenue carries the address and coordinates the page already displays. No rich result rides
@@ -68,9 +72,7 @@ useStructuredData((): JsonLd[] => {
   ].filter((document): document is JsonLd => document !== null)
 })
 
-// Title, description and image for this page — the same values the meta injector will need
-// server-side later (ADR-014 §Decision 3). Mirrors the loading / not-found states the view
-// itself renders.
+// The same values the meta injector will need server-side later (ADR-014 §Decision 3).
 usePageMeta(() =>
   venue.value
     ? venuePageMeta(venue.value)
@@ -93,6 +95,7 @@ usePageMeta(() =>
     :name="venue?.name"
     :not-found="notFound"
     :not-found-text="t('detail.venue.notFound')"
+    :past-events="pastEvents"
     :ready="Boolean(venue)"
   >
     <template #meta>

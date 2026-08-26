@@ -93,10 +93,27 @@ export function todayIso(): string {
 /**
  * Tomorrow's date in Berlin as an ISO date string (`YYYY-MM-DD`). Used by the Home "Upcoming"
  * feed so it starts the day after today — today's events live in the separate "Tonight" section.
- * Adds a day to the Berlin calendar date (not to `now`), so it's correct across the DST shift.
  */
 export function tomorrowIso(): string {
-  const next = new Date(`${todayIso()}T00:00:00Z`)
-  next.setUTCDate(next.getUTCDate() + 1)
-  return next.toISOString().slice(0, 10)
+  return addDays(todayIso(), 1)
+}
+
+/** Yesterday in Berlin. The archive feeds' inclusive `to`, so today's events stay out of them. */
+export function yesterdayIso(): string {
+  return addDays(todayIso(), -1)
+}
+
+/** Adds whole calendar days to an ISO date. UTC arithmetic, so a DST shift can't move it. */
+export function addDays(isoDate: string, days: number): string {
+  const date = new Date(`${isoDate}T00:00:00Z`)
+  date.setUTCDate(date.getUTCDate() + days)
+  return date.toISOString().slice(0, 10)
+}
+
+/**
+ * Whether an event has happened. Today counts as upcoming, matching the importer's
+ * `dropPastEvents` and the BFF's `event_date >= today`; one function keeps the three agreeing.
+ */
+export function isPastEvent(isoDate?: string | null): boolean {
+  return !!isoDate && isoDate < todayIso()
 }

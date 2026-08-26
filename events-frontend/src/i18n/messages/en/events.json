@@ -26,7 +26,8 @@
   "card": {
     "liveTonight": "Live tonight",
     "soldOut": "Sold out",
-    "free": "Free"
+    "free": "Free",
+    "past": "Past"
   },
   "detail": {
     "notFound": "Event not found",
@@ -40,7 +41,8 @@
     "facebook": "Facebook",
     "kind": "Event",
     "presale": "Presale",
-    "boxOffice": "Box office"
+    "boxOffice": "Box office",
+    "hasTakenPlace": "This event has already taken place."
   },
   "role": {
     "HEADLINER": "Headliner",

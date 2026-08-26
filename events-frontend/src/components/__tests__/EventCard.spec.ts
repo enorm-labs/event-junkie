@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { mount } from '@vue/test-utils'
 import EventCard from '@/components/EventCard.vue'
@@ -25,6 +25,17 @@ const stubs = {
 }
 
 describe('EventCard', () => {
+  // The card reads its date against the clock, so the fixture needs a fixed one — otherwise the
+  // suite starts failing on the day `eventDate` becomes history.
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-06-15T12:00:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('renders the event title and venue name', () => {
     const wrapper = mount(EventCard, { props: { event }, global: { stubs } })
     expect(wrapper.text()).toContain('Tonight Show')
@@ -106,6 +117,32 @@ describe('EventCard', () => {
       global: { stubs },
     })
     expect(wrapper.text()).not.toContain('Other')
+  })
+
+  it('marks an event that has already happened as past', () => {
+    const wrapper = mount(EventCard, {
+      props: { event: { ...event, eventDate: '2026-06-14' } },
+      global: { stubs },
+    })
+    expect(wrapper.text()).toContain('Past')
+  })
+
+  it("does not call today's event past — it may still be running", () => {
+    const wrapper = mount(EventCard, {
+      props: { event: { ...event, eventDate: todayIso() } },
+      global: { stubs },
+    })
+    expect(wrapper.text()).not.toContain('Past')
+  })
+
+  it('shows Past instead of Sold out once the event has happened', () => {
+    // One badge slot: "Sold out" on a past gig is stale, not informative.
+    const wrapper = mount(EventCard, {
+      props: { event: { ...event, eventDate: '2026-06-14', soldOut: true, free: false } },
+      global: { stubs },
+    })
+    expect(wrapper.text()).toContain('Past')
+    expect(wrapper.text()).not.toContain('Sold out')
   })
 
   it('does not mark an event on another day as live', () => {

@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { DATE_PRESETS, nextSevenDays, thisWeekend, tonight } from '@/lib/dateRanges'
+import {
+  DATE_PRESETS,
+  lastThirtyDays,
+  nextSevenDays,
+  thisWeekend,
+  tonight,
+} from '@/lib/dateRanges'
 
 /** Freezes the clock at midday Berlin time on the given date, so the day never straddles. */
 function freezeOn(isoDate: string) {
@@ -21,6 +27,16 @@ describe('date range presets', () => {
   it('next 7 days spans today plus six more', () => {
     freezeOn('2026-08-05')
     expect(nextSevenDays()).toEqual({ from: '2026-08-05', to: '2026-08-11' })
+  })
+
+  it('last 30 days ends yesterday, so it holds only events that have happened', () => {
+    freezeOn('2026-08-05')
+    expect(lastThirtyDays()).toEqual({ from: '2026-07-06', to: '2026-08-04' })
+  })
+
+  it('last 30 days rolls back across a year boundary', () => {
+    freezeOn('2026-01-10')
+    expect(lastThirtyDays()).toEqual({ from: '2025-12-11', to: '2026-01-09' })
   })
 
   it('this weekend reaches forward to Fri–Sun from earlier in the week', () => {

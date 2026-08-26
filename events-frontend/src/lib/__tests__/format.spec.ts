@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { eventLabel, formatDate, humaniseEventType, todayIso, tomorrowIso } from '@/lib/format'
+import {
+  eventLabel,
+  formatDate,
+  humaniseEventType,
+  isPastEvent,
+  todayIso,
+  tomorrowIso,
+  yesterdayIso,
+} from '@/lib/format'
 
 describe('formatDate locale handling', () => {
   it('uses day-before-month for English, not US ordering', () => {
@@ -79,5 +87,44 @@ describe('date helpers', () => {
     vi.setSystemTime(new Date('2026-03-28T12:00:00Z'))
 
     expect(tomorrowIso()).toBe('2026-03-29')
+  })
+
+  it('yesterdayIso is the calendar day before todayIso, across a year boundary', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-07T12:00:00Z'))
+    expect(yesterdayIso()).toBe('2026-07-06')
+
+    vi.setSystemTime(new Date('2026-01-01T12:00:00Z'))
+    expect(yesterdayIso()).toBe('2025-12-31')
+  })
+})
+
+describe('isPastEvent', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("treats today's event as still to come, and yesterday's as past", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-07T12:00:00Z'))
+
+    // The boundary the BFF and the importer both use: `>= today` is upcoming.
+    expect(isPastEvent('2026-07-06')).toBe(true)
+    expect(isPastEvent('2026-07-07')).toBe(false)
+    expect(isPastEvent('2026-07-08')).toBe(false)
+  })
+
+  it('is false for a missing date rather than throwing', () => {
+    expect(isPastEvent(null)).toBe(false)
+    expect(isPastEvent(undefined)).toBe(false)
+    expect(isPastEvent('')).toBe(false)
+  })
+
+  it('reads the Berlin calendar day, not UTC', () => {
+    // 23:30 UTC on the 6th is already the 7th in Berlin, so the 6th has passed.
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-06T23:30:00Z'))
+
+    expect(isPastEvent('2026-07-06')).toBe(true)
   })
 })

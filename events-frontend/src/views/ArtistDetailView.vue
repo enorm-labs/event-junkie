@@ -6,16 +6,12 @@ import { usePageMeta } from '@/composables/usePageMeta'
 import { artistPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
 import { useArtist } from '@/composables/useArtist'
 import { useEventSearch } from '@/composables/useEvents'
+import { yesterdayIso } from '@/lib/format'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 
-/**
- * Entity label: the eyebrow above the name, the not-found heading, and the placeholder title.
- *
- * A `computed` rather than a constant because it has to follow the active locale — the locale can
- * change without this view remounting, since the switcher only rewrites the URL's locale segment.
- */
+/** Entity label. A `computed` because a locale switch rewrites the URL without remounting this. */
 const kind = computed(() => t('detail.artist.kind'))
 
 const route = useRoute()
@@ -28,6 +24,13 @@ const {
   loading: eventsLoading,
   run: loadEvents,
 } = useEventSearch(() => ({ artist: slug.value, size: 50 }), 'events for this artist')
+// `to` with no `from` is every past event, newest first; the page size is what bounds it.
+const { data: pastEvents, run: loadPastEvents } = useEventSearch(() => ({
+  artist: slug.value,
+  to: yesterdayIso(),
+  size: 20,
+  sort: ['eventDate,desc'],
+}))
 
 const links = computed(() =>
   [
@@ -42,14 +45,13 @@ const links = computed(() =>
 function reload() {
   loadArtist()
   loadEvents()
+  loadPastEvents()
 }
 
 onMounted(reload)
 watch(slug, reload)
 
-// Title, description and image for this page — the same values the meta injector will need
-// server-side later (ADR-014 §Decision 3). Mirrors the loading / not-found states the view
-// itself renders.
+// The same values the meta injector will need server-side later (ADR-014 §Decision 3).
 usePageMeta(() =>
   artist.value
     ? artistPageMeta(artist.value)
@@ -72,6 +74,7 @@ usePageMeta(() =>
     :name="artist?.name"
     :not-found="notFound"
     :not-found-text="t('detail.artist.notFound')"
+    :past-events="pastEvents"
     :ready="Boolean(artist)"
   >
     <template #meta>
