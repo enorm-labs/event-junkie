@@ -141,16 +141,14 @@ def blocks_of(lines, findings, path):
     pending_allow = False
 
     def close():
-        nonlocal current, allow, pending_allow
+        nonlocal current, allow  # a directive holds until a block starts, over the formatter's blank line
         if current is not None and current.text.strip():
             yielded = (current, allow)
             current = None
-            allow = pending_allow
-            pending_allow = False
+            allow = False
             return yielded
         current = None
-        allow = pending_allow
-        pending_allow = False
+        allow = False
         return None
 
     for lineno, raw in enumerate(lines, 1):
@@ -197,11 +195,13 @@ def blocks_of(lines, findings, path):
             if done:
                 yield done
             current = Block(lineno, item.group(2) is not None)
+            allow, pending_allow = pending_allow, False
             current.add(lineno, clean(item.group(3)))
             continue
 
         if current is None:
             current = Block(lineno, False)
+            allow, pending_allow = pending_allow, False
         current.add(lineno, clean(stripped))
 
     done = close()
