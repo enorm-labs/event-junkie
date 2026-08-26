@@ -2,12 +2,14 @@
 
 ## Status
 
-Accepted
+**Accepted — Spring Modulith, with each module declaring its `allowedDependencies` and a test failing the build on a
+violation.**
 
 ## Context
 
-The application is organized by feature/domain (`venue`, `artist`, `event`, `promoter`). As the codebase grows, it's easy for modules to develop unintended
-dependencies — e.g. the venue module accidentally importing something from the event module, creating a circular or undesired coupling.
+The application is organized by feature and domain: `venue`, `artist`, `event`, `promoter`. As the codebase grows,
+modules easily develop unintended dependencies. The venue module imports something from the event module by accident,
+and the coupling is circular or simply unwanted.
 
 Two approaches were considered:
 
@@ -60,10 +62,12 @@ The decision to keep all modules as **direct sub-packages** of `de.norm.events` 
 
 ## Consequences
 
-- **Positive**: Module boundaries are enforced at build time, not just by convention; violations are caught immediately in CI; `allowedDependencies` serves as
-  living documentation of the dependency graph; Spring Modulith can generate module documentation to `build/spring-modulith-docs/`.
-- **Negative**: Every new feature module needs a `*Module.kt` marker and must declare its dependencies; adding a cross-module dependency requires updating
-  `allowedDependencies` (this friction is intentional — it forces a conscious decision).
+- **Positive**: the build enforces module boundaries, rather than convention alone, and CI catches a violation at
+  once. `allowedDependencies` is living documentation of the dependency graph. Spring Modulith can also generate
+  module documentation into `build/spring-modulith-docs/`.
+- **Negative**: every new feature module needs a `*Module.kt` marker and has to declare its dependencies. A new
+  cross-module dependency means editing `allowedDependencies`. That friction is intentional: it forces a conscious
+  decision.
 - The `spring-modulith-starter-core` dependency is declared with `api()` scope in `events-core` so it's transitively available to all consumers.
 
 ## References

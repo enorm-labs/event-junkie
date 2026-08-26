@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+**Accepted — plain domain classes in `events-core`, and annotated `*Entity` classes per application.**
 
 ## Context
 
@@ -11,16 +11,17 @@ be accessible to all consumers without coupling them to persistence concerns.
 
 Two approaches were considered:
 
-1. **Single class for both domain and persistence** — Annotate domain classes with `@Table`, `@Id`, etc. Simpler, less boilerplate. Common in many Spring Data
-   projects. However, this couples the shared library to Spring Data R2DBC, meaning every consumer must pull in R2DBC dependencies even if they don't need them
-   (e.g. the BFF might use a different data access strategy in the future).
-2. **Separate domain classes and persistence entities** — Keep domain classes as plain Kotlin data classes in
-   `events-core`, and define annotated persistence entities in each application module that needs them.
+1. **Single class for both domain and persistence** — annotate the domain classes with `@Table`, `@Id` and the rest.
+   Simpler, less boilerplate, and common in Spring Data projects. But it couples the shared library to Spring Data
+   R2DBC. Every consumer then pulls in R2DBC dependencies, whether or not it needs them. The BFF could want a
+   different data access strategy later.
+2. **Separate domain classes and persistence entities** — keep the domain classes as plain Kotlin data classes in
+   `events-core`. Define annotated persistence entities in each application module that needs them.
 
 ## Decision
 
-Use **separate classes**: plain Kotlin data classes in `events-core` for the domain model, and `*Entity.kt`
-classes with Spring Data annotations (`@Table`, `@Id`) in the importer (and BFF where needed).
+Use **separate classes**. The domain model is plain Kotlin data classes in `events-core`. The `*Entity.kt` classes
+carry the Spring Data annotations (`@Table`, `@Id`), in the importer and in the BFF where needed.
 
 Each entity provides two conversion functions:
 
@@ -54,10 +55,12 @@ data class VenueEntity(
 
 ## Consequences
 
-- **Positive**: `events-core` has zero Spring Data dependencies and can be consumed by any module without pulling in R2DBC; domain classes can carry Swagger
-  annotations in consumers without polluting the shared model (we chose not to — see AGENTS.md); each app can map to its own table structure if needed.
-- **Negative**: Boilerplate in `toDomain()`/`fromDomain()` converters; fields added to the domain class must also be added to the entity (risk of drift). This
-  could be mitigated with code generation or mapping libraries in the future, but for now the explicitness is preferred.
+- **Positive**: `events-core` has zero Spring Data dependencies, so any module can consume it without pulling in
+  R2DBC. A consumer can carry Swagger annotations without polluting the shared model, though we chose not to (see
+  AGENTS.md). Each app can map to its own table structure.
+- **Negative**: boilerplate in the `toDomain()` and `fromDomain()` converters. A field added to the domain class must
+  be added to the entity too, and the two can drift. Code generation or a mapping library could mitigate that later.
+  For now the explicitness is preferred.
 - Domain classes in `events-core` are intentionally kept free of Swagger/OpenAPI annotations to avoid coupling the shared library to web-layer concerns.
 
 ## References

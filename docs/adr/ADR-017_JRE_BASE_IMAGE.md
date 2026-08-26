@@ -62,7 +62,7 @@ Four of these are non-negotiable and come from decisions already made elsewhere:
   raised it above 10000.
 - **Startup time.** The Dockerfiles already record that an AOT cache was rejected because it needs a `RUN`. Startup is measured against the chart's probe budget.
 
-## Options
+## Candidate options
 
 Measured on **2026-08-17**, each scanned with the release workflow's own flags:
 `trivy image <ref> --severity CRITICAL,HIGH --ignore-unfixed`. Vulnerability counts are a snapshot and will drift. The
