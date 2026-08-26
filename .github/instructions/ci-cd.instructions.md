@@ -291,7 +291,7 @@ What each workflow is for, which checks are required, and the shapes that fail s
       a live vulnerability**, and nothing in its title distinguishes one from a routine version bump. `release.yml`'s image scan is what turns an unmerged one
       into a failing build. **When bumping a base image, check the branch is still being rebuilt**, not just that a newer tag exists: `nginx 1.29` was a
       superseded mainline branch and had been shipping three-month-old Alpine packages.
-    - **What no ecosystem covers: a tool version pinned as a plain string.** `HELM_VERSION` and `KUBECONFORM_VERSION` in `validate-chart.yml`, `HELM_VERSION`
+    - **What no ecosystem covers: a tool version pinned as a plain string.** `HELM_VERSION`, `FLUX_VERSION`, `FLUX_SCHEMA_VERSION` and `HELM_UNITTEST_VERSION` in `validate-chart.yml`, `HELM_VERSION`
       and `TRIVY_VERSION` in `release.yml` **and in `image-scan-scheduled.yml`** (both pairs must move together — the two Trivy pins in particular, since the
       whole point of the scheduled scan is that its findings are comparable with the publish gate's), and gitleaks' `rev:` in `.pre-commit-config.yaml` belong
       to no Dependabot ecosystem — `github-actions` updates
