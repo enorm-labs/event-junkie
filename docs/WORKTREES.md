@@ -1,8 +1,8 @@
 # Parallel work with Git worktrees
 
 A [git worktree](https://git-scm.com/docs/git-worktree) is a second working directory on its own branch, sharing the repository's `.git` directory and remote.
-Two worktrees means two checkouts whose files cannot collide — which is what makes it practical to run two coding sessions, or two AI agents, on two importers
-at the same time.
+Two worktrees means two checkouts whose files cannot collide. That is what makes it practical to run two coding
+sessions, or two AI agents, on two importers at the same time.
 
 Background: [Claude Code: run parallel sessions with worktrees](https://code.claude.com/docs/en/worktrees) ·
 [Git worktrees for parallel AI coding](https://www.mindstudio.ai/blog/git-worktrees-parallel-ai-coding-agents).
@@ -29,7 +29,8 @@ Run it again with another name in a second terminal for a second isolated sessio
 "work in a worktree" mid-session.)
 
 **For work that ends in a pull request, plain git is usually nicer**, because you pick the branch name that
-`/open-pr` will push — it reuses the branch it finds rather than cutting a new one, so a `--worktree` session would open its PR from `worktree-tresor`:
+`/open-pr` will push. It reuses the branch it finds rather than cutting a new one, so a `--worktree` session would open
+its PR from `worktree-tresor`:
 
 ```bash
 git worktree add ../event-junkie-tresor -b feat/tresor origin/main
@@ -45,7 +46,8 @@ IntelliJ can do the same from the UI ([JetBrains docs](https://www.jetbrains.com
   name and a location _outside_ this repository, e.g.
   `../event-junkie-tresor`. The worktree opens as its own project window. The same branch cannot be checked out in two worktrees, so give each one a new
   branch.
-- **Switch** — double-click a worktree in the **Worktrees** tab; or right-click a branch in **Log** → **Open Worktree**.
+- **Switch** — double-click a worktree in the **Worktrees** tab, or right-click a branch in **Log** →
+  **Open Worktree**.
 - **Remove** — select it in **Worktrees** and click **Delete** (not possible for the main or currently open worktree, and commit first). A directory deleted by
   hand shows as _Prunable_ — **Prune** clears them.
 
@@ -71,9 +73,10 @@ cd events-frontend && npm ci             # only if you need the frontend; dev-en
 **This is the one step that bites.**
 
 Docker Compose derives its project name from the directory holding `compose.yaml`, and both `bootRun` and
-`scripts/dev-env.sh` pass the _worktree's_ copy. So a worktree at `.claude/worktrees/tresor` would come up as compose project `tresor` — a second Postgres
-container on a brand-new empty `tresor_postgres-data` volume, clashing with the main checkout on host port `56298`. An empty database also makes `diff-snapshot`
-report every existing source as `GONE`.
+`scripts/dev-env.sh` pass the _worktree's_ copy. So a worktree at `.claude/worktrees/tresor` comes up as compose
+project `tresor`. That is a second Postgres container on a brand-new empty `tresor_postgres-data` volume, clashing
+with the main checkout on host port `56298`. An empty database also makes `diff-snapshot` report every existing source
+as `GONE`.
 
 Export the main checkout's project name in every worktree shell, and compose reuses the running container, its volume and its seeded data instead:
 
@@ -84,15 +87,17 @@ export COMPOSE_PROJECT_NAME=event-junkie
 # without it  →  Volume tresor_postgres-data  Creating              (empty DB, and port 56298 is already allocated)
 ```
 
-Put it in the worktree's shell profile, a direnv `.envrc`, or the IntelliJ run configuration — anywhere it is guaranteed to be set before the first `bootRun`.
+Put it in the worktree's shell profile, a direnv `.envrc`, or the IntelliJ run configuration. Anywhere it is
+guaranteed to be set before the first `bootRun`.
 
 ## 4. Take turns on the stack
 
 Everything that only touches files runs in parallel across as many worktrees as you like: writing scrapers, fixtures and unit tests, `ktlintFormat`, `detekt`,
 `:events-importer:test`. Everything with a port or a row in the database is serialised:
 
-- **Only one worktree may hold the stack.** `scripts/dev-env.sh down` in the first, then `up` in the second —
-  `dev-env.sh` overrides such as `IMPORTER_HOST` only change the URL it polls, not the port the JVM binds, so a second importer cannot simply move to `8091`.
+- **Only one worktree may hold the stack.** `scripts/dev-env.sh down` in the first, then `up` in the second. A
+  `dev-env.sh` override such as `IMPORTER_HOST` only changes the URL it polls, not the port the JVM binds. A second
+  importer cannot simply move to `8091`.
 - **`bootRun` does not hot-reload**: whichever worktree started the JVM is the code being smoke-tested. Restart after switching.
 - **Never let two worktrees import at once.** `snapshot` / `diff-snapshot` count events per source across the whole database, so the other session's import
   lands in your regression diff as an unexplained delta.
@@ -110,7 +115,8 @@ One worktree = one venue = one PR (that is exactly the `/next-importer` contract
 | `events-importer/.../scraper/EventSource.kt` | one new enum entry each                                                                                      |
 | _(none — file an issue)_                     | a smoke-test finding goes to the tracker, not to a file                                                      |
 
-**Rebase feature branches onto `main`; don't merge `main` into them** — PRs here are merged with "Rebase and merge", which a merge commit blocks.
+**Rebase a feature branch onto `main`. Do not merge `main` into it** — PRs here are merged with "Rebase and merge",
+which a merge commit blocks.
 
 ## 6. Clean up
 
