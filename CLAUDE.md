@@ -33,6 +33,7 @@ Slash commands available under `.claude/skills/`:
   `/loop`, to work through the backlog
 - `/next-issue` — recommend what to work on next, and say why
 - `/open-pr` — branch, commit (Conventional Commits), push, and open a PR in one flow
+- `/refactor` — change the shape of the code without changing what it does; the acting counterpart to `/codebase-audit`
 - `/start-issue <n>` — pick up an issue: claim it, move the board, cut the branch, read its dependencies, and plan before writing code
 - `/scaffold-importer` — scaffold a new venue event importer (scraper) end to end
 - `/security-report` — read-only report on the latest OWASP Dependency-Check findings and GitHub Dependabot alerts, reconciled and triaged

@@ -70,6 +70,22 @@ What each workflow is for, which checks are required, and the shapes that fail s
       shell and no GitHub API and the run reads the repository and does nothing. And **Dependabot alerts are expected to `403`** — neither `GITHUB_TOKEN` nor the
       Claude App carries a permission for them — so its honest scope is code scanning. `workflow_dispatch` only, and `dry_run` defaults to true; a schedule is a
       line to add once a run has been watched end to end.
+    - `agent-refactor.yml` — the `/refactor` workload, and the one whose prompt was written for this (#389, `.github/prompts/refactor.prompt.md`).
+      Behaviour-preserving changes only, with the test suite as the proof. **`--unattended` fences it away from shared normalization** — `SlugGenerator`,
+      `GenreNormalizer`, `ArtistNameMapping`, `MoneyExtensions` — because a change there compiles, passes the whole suite, and still changes the rows that land
+      in the database. The only check that catches it is a `--full` re-seed, which needs a database and a live scrape, so findings in that code are reported and
+      never applied. Second in the evaluation order, because a wrong answer is caught mechanically.
+    - `agent-dependencies.yml` — the `/update-dependencies` workload, narrowed by `--unattended` to **Step 12 and nothing else**. Dependabot already owns
+      `gradle`, `npm`, `docker`, `github-actions` and `opentofu`, so an agent re-deriving those bumps only produces a worse second pull request against the same
+      files. Step 12's pins are the blind spot: a tool version pinned as a plain string belongs to no ecosystem, so `HELM_VERSION`, `ZIZMOR_VERSION`,
+      `ACTIONLINT_VERSION` and their siblings rot while the checks that consume them keep reporting success. **`walg_version` and `k3s_version` are excluded** —
+      they are force-new attributes and bumping either plans a node replacement — and so is Step 13, whose check is a k3d rehearsal the runner cannot run.
+    - `agent-comments.yml` — the `/compact-comments` workload, and **the dangerous one**, in the terms #387 uses. A large share of the comments here exist to
+      carry reasoning, and each reads as removable to something optimising for brevity. `--unattended` limits the run to **DELETE, RENAME and EXTRACT**, the
+      buckets a reviewer checks in seconds; **RELOCATE and KEEP are reported, never applied**, and venue KDoc is off-limits whatever its density. Its default
+      model is `claude-opus-4-8` rather than Opus 5, which is a measured preference about verbosity at comment work rather than a cost decision — the input
+      exists so 4.6 and 4.8 can be compared on one prompt. Last to earn a schedule, per #387's ordering. It sets up a JDK and Gradle, because the proof
+      obligation is a full build and a missing toolchain reads to a model as a broken one.
     - `validate-workflows.yml` — **actionlint** (correctness) and **zizmor** (security) over `.github/workflows/`, since #383. It is the only gate that looks at
       the workflows themselves, and on its first run zizmor found a template injection in `release.yml`, a cache-poisoning path into it, and two workflow-level
       permission grants that belonged to a single job. zizmor blocks at `--min-severity medium`; suppressions live in `zizmor.yml` or as inline

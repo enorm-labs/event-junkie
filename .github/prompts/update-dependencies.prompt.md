@@ -11,6 +11,31 @@ Always run git commands with the pager disabled (`git --no-pager ...`) to preven
 alert and stops when the alert is gone. This command starts from "what is out of date" and applies only to versions we manage. They overlap on the same files, so
 running both at once produces two half-finished bumps of the same property — do one, ship it, then the other.
 
+## Running unattended
+
+[`agent-dependencies.yml`](../workflows/agent-dependencies.yml) invokes this prompt as `/update-dependencies --unattended` from a runner. **It runs Step 12 and
+nothing else**, which is a much narrower job than the name suggests and is the only part of this sweep that is worth automating at all.
+
+The reason is that Dependabot already does the rest, and better. It owns `gradle`, `npm`, `docker`, `github-actions` and `opentofu`, with grouping, a suppression
+that carries its argument, and a held major on the JRE. An agent re-deriving those bumps produces a second, worse pull request against the same files and a merge
+conflict with the first. **Step 12's pins are the blind spot** — a tool version pinned as a plain string belongs to no ecosystem, so `HELM_VERSION`,
+`ZIZMOR_VERSION`, `ACTIONLINT_VERSION`, `SHELLCHECK_VERSION` and their siblings rot in silence while the checks that use them keep reporting success. That is
+the failure worth a scheduled job: a green gate that has stopped meaning anything.
+
+- **Step 12 only, minus its last two rows.** `walg_version` and `k3s_version` feed `bootstrap.env` and are force-new attributes — bumping either plans a node
+  replacement, production included. They are reported, never edited, and Step 12 already says to move them deliberately with the rebuild runbook open.
+- **Nothing from Step 13.** Cluster component versions rot in production rather than in CI, and the check for them is a k3d rehearsal the runner cannot run.
+- **A pin that appears in two or three workflows moves in all of them or in none.** `HELM_VERSION`, `HELM_UNITTEST_VERSION` and `SHELLCHECK_VERSION` each live in
+  more than one file, and a half-applied bump surfaces as two checks disagreeing about the same file. If every copy cannot be found, report the pin and leave it.
+- **`HELM_VERSION` stays on 3.x** whatever `helm/helm` says is latest. That constraint is semantic, not version lag — helm-controller embeds the Helm 3 SDK — and
+  an unattended run is exactly where it would get "fixed".
+- **A bump that turns a check red is a finding, not a thing to work around.** A newer analyser finding more is the tool working. Report the new findings and
+  leave the pin raised, or revert it and say so; never pin back to make the gate green.
+- **`--dry-run`** on top of it opens no pull request and writes the report to the job summary. Use it first, and after any change to this section.
+
+The proof is the repository's own gates: every pin here is consumed by a workflow that lints or validates something, so a wrong version fails the pull request
+rather than merging quietly.
+
 ## Step 1: Generate the Dependency Update Report
 
 Run the Gradle Versions Plugin to detect available updates:
