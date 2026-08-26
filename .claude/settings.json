@@ -1,5 +1,8 @@
 {
   "enabledPlugins": {
-    "gitops-skills@fluxcd": true
+    "gitops-skills@fluxcd": true,
+    "kotlin-lsp@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "terraform@claude-plugins-official": true
   }
 }
