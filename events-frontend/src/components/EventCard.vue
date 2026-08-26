@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { EventSummary } from '@/api/types'
 import BaseBadge from '@/components/BaseBadge.vue'
-import { eventLabel, formatPrice, formatTime, todayIso } from '@/lib/format'
+import { eventLabel, formatPrice, formatTime, isPastEvent, todayIso } from '@/lib/format'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -41,6 +41,8 @@ const eventType = computed(() =>
 const isLive = computed(
   () => Boolean(props.event.eventDate) && props.event.eventDate === todayIso(),
 )
+
+const isPast = computed(() => isPastEvent(props.event.eventDate))
 
 const localePath = useLocalePath()
 
@@ -84,7 +86,11 @@ const { t } = useI18n()
             {{ event.title }}
           </component>
         </div>
-        <BaseBadge v-if="event.soldOut" class="shrink-0" variant="destructive">{{
+        <!-- Past wins this slot: "Sold out" on last month's gig is stale, not informative. -->
+        <BaseBadge v-if="isPast" class="shrink-0" variant="muted">{{
+          t('events.card.past')
+        }}</BaseBadge>
+        <BaseBadge v-else-if="event.soldOut" class="shrink-0" variant="destructive">{{
           t('events.card.soldOut')
         }}</BaseBadge>
         <BaseBadge v-else-if="event.free" class="shrink-0" variant="success">{{

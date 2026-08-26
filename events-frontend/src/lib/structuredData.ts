@@ -1,5 +1,6 @@
 import type { EventDetail, VenueDetail } from '@/api/types'
 import { canonicalUrl, SITE_URL } from '@/lib/seo'
+import { isPastEvent } from '@/lib/format'
 import { APP_NAME } from '@/lib/pageMeta'
 import type { Locale } from '@/i18n/locales'
 
@@ -89,6 +90,9 @@ const EVENT_TYPES: Record<string, string> = {
 }
 
 function offers(event: EventDetail, url: string): JsonLd | undefined {
+  // Rule 1 above: a past event's page shows no ticket link, so this must not publish one either.
+  if (isPastEvent(event.eventDate)) return undefined
+
   const price = event.free ? 0 : (event.pricePresale ?? event.priceBoxOffice)
   if (price == null) return undefined
 

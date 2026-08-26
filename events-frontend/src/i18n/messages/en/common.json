@@ -27,6 +27,8 @@
     "loadingVenues": "Rounding up the rooms…"
   },
   "upcomingEvents": "Upcoming events",
+  "pastEvents": "Past events",
+  "pastEventsNote": "Our archive starts when we started watching — earlier nights never made it into the books.",
   "locale": {
     "label": "Language"
   },

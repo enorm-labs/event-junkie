@@ -18,7 +18,6 @@ import { useGenres } from '@/composables/useGenres'
 import { useAllVenues } from '@/composables/useVenues'
 import { DATE_PRESETS, type DateRange } from '@/lib/dateRanges'
 import { DISTRICTS } from '@/lib/districts'
-import { todayIso } from '@/lib/format'
 import { useFormat } from '@/composables/useFormat'
 import { useI18n } from 'vue-i18n'
 import { PANEL_CLASS } from '@/lib/utils'
@@ -42,9 +41,6 @@ withDefaults(defineProps<{ showDateRange?: boolean }>(), { showDateRange: true }
 
 const route = useRoute()
 const { queryString, applyFilters } = useEventFilters()
-
-/** Lower bound for the date pickers: the app is about upcoming events, so past dates are out. */
-const today = todayIso()
 
 /**
  * Opens the browser's calendar on a click anywhere in the field. Without this, Chrome only
@@ -117,8 +113,9 @@ const { t } = useI18n()
     <!--
       Two native date inputs rather than a range-picker component: the browser supplies the
       calendar, the value is already the ISO `YYYY-MM-DD` the BFF wants, and `min`/`max` express
-      "not in the past" and "to cannot precede from" without any code. They apply on change like
-      the selects, so the bar keeps a single Apply button (the price range's).
+      "to cannot precede from" without any code. They apply on change like the selects, so the bar
+      keeps a single Apply button (the price range's). Neither bound is floored at today: past
+      dates are the archive, and the BFF still defaults to upcoming when no range is sent at all.
       The browser's own calendar follows our dark mode via the `color-scheme` declared on
       `:root`/`.dark` in main.css, which covers every native control rather than just these two.
     -->
@@ -126,7 +123,6 @@ const { t } = useI18n()
       <BaseInput
         :aria-label="t('events.filters.earliestDate')"
         :max="queryString('to') || undefined"
-        :min="today"
         :model-value="queryString('from')"
         type="date"
         @change="applyFilters({ from: ($event.target as HTMLInputElement).value })"
@@ -135,7 +131,7 @@ const { t } = useI18n()
       <span class="text-sm text-muted-foreground">–</span>
       <BaseInput
         :aria-label="t('events.filters.latestDate')"
-        :min="queryString('from') || today"
+        :min="queryString('from') || undefined"
         :model-value="queryString('to')"
         type="date"
         @change="applyFilters({ to: ($event.target as HTMLInputElement).value })"

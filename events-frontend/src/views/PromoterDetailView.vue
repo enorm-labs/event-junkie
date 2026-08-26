@@ -5,6 +5,7 @@ import BaseDetailView from '@/components/BaseDetailView.vue'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { placeholderPageMeta, promoterPageMeta } from '@/lib/pageMeta'
 import { useEventSearch } from '@/composables/useEvents'
+import { yesterdayIso } from '@/lib/format'
 import { usePromoter } from '@/composables/usePromoter'
 import { useI18n } from 'vue-i18n'
 
@@ -24,10 +25,18 @@ const {
   loading: eventsLoading,
   run: loadEvents,
 } = useEventSearch(() => ({ promoter: slug.value, size: 50 }), 'events from this promoter')
+// `to` with no `from` is every past event, newest first; the page size is what bounds it.
+const { data: pastEvents, run: loadPastEvents } = useEventSearch(() => ({
+  promoter: slug.value,
+  to: yesterdayIso(),
+  size: 20,
+  sort: ['eventDate,desc'],
+}))
 
 function reload() {
   loadPromoter()
   loadEvents()
+  loadPastEvents()
 }
 
 onMounted(reload)
@@ -35,17 +44,10 @@ watch(slug, reload)
 
 const { t } = useI18n()
 
-/**
- * Entity label: the eyebrow above the name, the not-found heading, and the placeholder title.
- *
- * A `computed` rather than a constant because it has to follow the active locale — the locale can
- * change without this view remounting, since the switcher only rewrites the URL's locale segment.
- */
+/** Entity label. A `computed` because a locale switch rewrites the URL without remounting this. */
 const kind = computed(() => t('detail.promoter.kind'))
 
-// Title, description and image for this page — the same values the meta injector will need
-// server-side later (ADR-014 §Decision 3). Mirrors the loading / not-found states the view
-// itself renders.
+// The same values the meta injector will need server-side later (ADR-014 §Decision 3).
 usePageMeta(() =>
   promoter.value
     ? promoterPageMeta(promoter.value)
@@ -68,6 +70,7 @@ usePageMeta(() =>
     :name="promoter?.name"
     :not-found="notFound"
     :not-found-text="t('detail.promoter.notFound')"
+    :past-events="pastEvents"
     :ready="Boolean(promoter)"
   >
     <template #meta>

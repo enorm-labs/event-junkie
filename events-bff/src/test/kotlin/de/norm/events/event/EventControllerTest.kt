@@ -437,6 +437,66 @@ class EventControllerTest : BaseControllerTest() {
             .isNotFound
     }
 
+    // A retention policy (#350) has to fail here before it can turn every shared past-event
+    // link into a 404. See #362.
+    @Test
+    fun `GET event by slug resolves an event that has already happened`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Astra", "astra")
+            insertEvent(venueId, "Last Month", "last-month", LocalDate.now().minusDays(30))
+
+            webTestClient
+                .get()
+                .uri("/events/last-month")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.slug")
+                .isEqualTo("last-month")
+        }
+
+    @Test
+    fun `GET events returns past events when the range asks for them`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Astra", "astra")
+            insertEvent(venueId, "Last Month", "last-month", LocalDate.now().minusDays(30))
+            insertEvent(venueId, "Next Month", "next-month", LocalDate.now().plusDays(30))
+
+            webTestClient
+                .get()
+                .uri("/events?to=${LocalDate.now().minusDays(1)}")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.totalElements")
+                .isEqualTo(1)
+                .jsonPath("$.content[0].slug")
+                .isEqualTo("last-month")
+        }
+
+    @Test
+    fun `GET events sorts a past range newest first when asked`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Astra", "astra")
+            insertEvent(venueId, "Older", "older", LocalDate.now().minusDays(30))
+            insertEvent(venueId, "Newer", "newer", LocalDate.now().minusDays(2))
+
+            // Descending has to survive the resolver that appends `id` to every sort.
+            webTestClient
+                .get()
+                .uri("/events?to=${LocalDate.now().minusDays(1)}&sort=eventDate,desc")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[0].slug")
+                .isEqualTo("newer")
+                .jsonPath("$.content[1].slug")
+                .isEqualTo("older")
+        }
+
     @Test
     fun `GET events ignores an unknown or malicious sort parameter`(): Unit =
         runBlocking {

@@ -10,7 +10,7 @@ import { APP_NAME, eventPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
 import { useStructuredData } from '@/composables/useStructuredData'
 import { breadcrumbJsonLd, eventJsonLd, type JsonLd } from '@/lib/structuredData'
 import type { Locale } from '@/i18n/locales'
-import { formatPrice, formatTime } from '@/lib/format'
+import { formatPrice, formatTime, isPastEvent } from '@/lib/format'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -20,11 +20,12 @@ const slug = computed(() => String(route.params.slug))
 
 const { data: event, error, notFound, loading, run } = useEvent(() => slug.value)
 
-// Title, description and image for this page. The description leads with the date and venue
 // Lineup arrives in billing order already, but sort defensively so headliners stay first.
 const lineup = computed(() =>
   [...(event.value?.lineup ?? [])].sort((a, b) => (a.billingOrder ?? 0) - (b.billingOrder ?? 0)),
 )
+
+const isPast = computed(() => isPastEvent(event.value?.eventDate))
 
 onMounted(run)
 watch(slug, run)
@@ -111,13 +112,17 @@ useStructuredData((): JsonLd[] => {
           <BaseBadge v-if="event.status && event.status !== 'SCHEDULED'" variant="destructive">
             {{ enumLabel('events.status', event.status) }}
           </BaseBadge>
-          <BaseBadge v-if="event.soldOut" variant="destructive">{{
+          <BaseBadge v-if="isPast" variant="muted">{{ t('events.card.past') }}</BaseBadge>
+          <BaseBadge v-else-if="event.soldOut" variant="destructive">{{
             t('events.card.soldOut')
           }}</BaseBadge>
           <BaseBadge v-else-if="event.free" variant="success">{{
             t('events.card.free')
           }}</BaseBadge>
         </div>
+        <p v-if="isPast" class="text-sm text-muted-foreground">
+          {{ t('events.detail.hasTakenPlace') }}
+        </p>
       </header>
 
       <img
@@ -216,11 +221,12 @@ useStructuredData((): JsonLd[] => {
         </p>
       </section>
 
+      <!-- No ticket CTA once the night has happened; source and Facebook stay honest. -->
       <section
-        v-if="event.ticketUrl || event.sourceUrl || event.facebookEventUrl"
+        v-if="(event.ticketUrl && !isPast) || event.sourceUrl || event.facebookEventUrl"
         class="flex flex-wrap gap-3"
       >
-        <Button v-if="event.ticketUrl" as-child>
+        <Button v-if="event.ticketUrl && !isPast" as-child>
           <a :href="event.ticketUrl" rel="noopener noreferrer" target="_blank">{{
             t('events.detail.buyTickets')
           }}</a>

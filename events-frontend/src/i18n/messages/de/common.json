@@ -27,6 +27,8 @@
     "loadingVenues": "Wir trommeln die Läden zusammen …"
   },
   "upcomingEvents": "Kommende Events",
+  "pastEvents": "Vergangene Events",
+  "pastEventsNote": "Unser Archiv beginnt, als wir angefangen haben mitzuschreiben — alles davor steht nicht in den Büchern.",
   "locale": {
     "label": "Sprache"
   },

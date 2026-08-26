@@ -31,10 +31,18 @@ function json(route: Route, body: unknown, status = 200): Promise<void> {
 /** Empty paged result for the upcoming-events feed on venue/artist/promoter pages. */
 const emptyEventPage = { content: [], page: 0, size: 50, totalElements: 0, totalPages: 0 }
 
+/** An ISO date offset from today. A literal one changes what these tests assert once it passes. */
+function isoDaysFromNow(days: number): string {
+  const date = new Date()
+  date.setDate(date.getDate() + days)
+  return date.toISOString().slice(0, 10)
+}
+
 const eventBody = {
   slug: 'mock-event',
   title: 'Mock Fest',
-  eventDate: '2026-08-15',
+  eventDate: isoDaysFromNow(30),
+  ticketUrl: 'https://tickets.test/buy',
   startTime: '20:00',
   status: 'SCHEDULED',
   venue: { slug: 'mock-venue', name: 'Mock Venue', address: 'Test Str. 1', city: 'Berlin' },
@@ -130,6 +138,64 @@ for (const detail of detailRoutes) {
     })
   })
 }
+
+test.describe('a past event', () => {
+  const pastEventBody = { ...eventBody, eventDate: isoDaysFromNow(-30) }
+
+  // Links shared in a group chat outlive the event. This is what stops a deletion policy
+  // (#350) turning them into 404s without failing a test first.
+  test('still resolves rather than 404-ing', async ({ page }) => {
+    const errors = collectPageErrors(page)
+    await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, pastEventBody))
+
+    await page.goto('/events/mock-event')
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Mock Fest' })).toBeVisible()
+    await expect(page.getByText('Event not found')).toHaveCount(0)
+    expect(errors, 'unexpected uncaught exceptions').toEqual([])
+  })
+
+  test('says it has taken place and stops selling tickets for it', async ({ page }) => {
+    await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, pastEventBody))
+
+    await page.goto('/events/mock-event')
+
+    await expect(page.getByText('This event has already taken place.')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Buy tickets' })).toHaveCount(0)
+  })
+
+  test('an upcoming event still offers its tickets', async ({ page }) => {
+    await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, eventBody))
+
+    await page.goto('/events/mock-event')
+
+    await expect(page.getByRole('link', { name: 'Buy tickets' })).toBeVisible()
+    await expect(page.getByText('This event has already taken place.')).toHaveCount(0)
+  })
+})
+
+test('a venue with only past events shows them as an archive', async ({ page }) => {
+  const pastEvent = {
+    slug: 'past-night',
+    title: 'Past Night',
+    eventDate: isoDaysFromNow(-14),
+    venue: { slug: 'mock-venue', name: 'Mock Venue' },
+    genreTags: [],
+  }
+  await page.route(/\/api\/venues\//, (route) => json(route, venueBody))
+  // The two feeds hit one endpoint and differ only by the archive's `to` bound.
+  await page.route(eventsFeed, (route) =>
+    route.request().url().includes('to=')
+      ? json(route, { ...emptyEventPage, content: [pastEvent], totalElements: 1 })
+      : json(route, emptyEventPage),
+  )
+
+  await page.goto('/venues/mock-venue')
+
+  await page.getByText('Past events').click()
+  await expect(page.getByRole('link', { name: /Past Night/ })).toBeVisible()
+  await expect(page.getByText(/archive starts when we started watching/i)).toBeVisible()
+})
 
 test('links nested entities and navigates from an event to its venue', async ({ page }) => {
   const errors = collectPageErrors(page)

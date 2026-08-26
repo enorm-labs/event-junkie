@@ -9,8 +9,8 @@ import { useI18n } from 'vue-i18n'
 
 /**
  * Presentational shell shared by the artist, venue, and promoter detail pages. Owns the
- * loading / not-found / error scaffold, the hero header (image + kind label + name), and the
- * "Upcoming events" feed, so each view only wires its data and fills the entity-specific slots.
+ * loading / not-found / error scaffold, the hero header (image + kind label + name), and both
+ * event feeds, so each view only wires its data and fills the entity-specific slots.
  *
  * Slots:
  * - `meta` — entity-specific header metadata rendered under the name (links, address, …).
@@ -36,6 +36,11 @@ defineProps<{
   eventsError: string | null
   /** Copy shown when the events feed is empty. */
   emptyText: string
+  /**
+   * The past-events feed. No loading or error state: the section appears only once it has events,
+   * so a slow or failed archive is absent rather than noisy.
+   */
+  pastEvents?: EventPage | null
 }>()
 
 // The document title is *not* set here. Each detail view owns its own page meta, because the
@@ -94,6 +99,18 @@ const { t } = useI18n()
           <EventCard v-for="event in events.content" :key="event.slug" :event="event" />
         </div>
       </section>
+
+      <!-- Collapsed and content-gated: history must not bury the forecast, and the depth
+           caveat on an empty list would read as an excuse. -->
+      <details v-if="pastEvents?.content?.length">
+        <summary class="cursor-pointer">
+          <SectionLabel as="span">{{ t('common.pastEvents') }}</SectionLabel>
+        </summary>
+        <p class="pt-3 text-sm text-muted-foreground">{{ t('common.pastEventsNote') }}</p>
+        <div class="grid grid-cols-1 gap-3 pt-3 sm:grid-cols-2">
+          <EventCard v-for="event in pastEvents.content" :key="event.slug" :event="event" />
+        </div>
+      </details>
     </template>
   </main>
 </template>
