@@ -13,11 +13,18 @@
 #
 # **`display_report: true` is what makes the run readable**, and is not interchangeable with
 # `show_full_output`. ci-cd.instructions.md has the difference and why it matters here.
+#
+# **The `inputs` context is empty on a `schedule` trigger**, so every input below carries an explicit
+# fallback. Without them a scheduled run passes `--model` with no value, and goes live by accident
+# rather than by decision. ci-cd.instructions.md has the rest.
 name: Agent — Dependency Pins
 
 on:
-  # Dispatch only until a run has been watched end to end. Monthly is the right cadence once it is:
-  # these pins move on their own schedules and a weekly run would mostly find nothing.
+  # Weekly, Wednesdays, off-the-hour for the reason every other schedule here gives: the top of the
+  # hour is a stampede on shared runners. One workload per weekday, so a bad week is one pull request
+  # to close rather than four.
+  schedule:
+    - cron: '52 5 * * 3'
   workflow_dispatch:
     inputs:
       model:
@@ -58,8 +65,8 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           display_report: true
-          prompt: /update-dependencies --unattended${{ inputs.dry_run && ' --dry-run' || '' }}
+          prompt: /update-dependencies --unattended${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && ' --dry-run' || '' }}
           claude_args: |
-            --model ${{ inputs.model }}
+            --model ${{ inputs.model || 'claude-opus-5' }}
             --max-turns 60
             --allowedTools "Bash,Read,Glob,Grep,Edit,Write,WebFetch,TodoWrite"

@@ -15,11 +15,18 @@
 #
 # **`display_report: true` is what makes the run readable**, and is not interchangeable with
 # `show_full_output`. ci-cd.instructions.md has the difference and why it matters here.
+#
+# **The `inputs` context is empty on a `schedule` trigger**, so every input below carries an explicit
+# fallback. Without them a scheduled run passes `--model` with no value, and goes live by accident
+# rather than by decision. ci-cd.instructions.md has the rest.
 name: Agent — Security Triage
 
 on:
-  # Dispatch only, deliberately, until a run has been watched end to end. The schedule is the easy
-  # half and can be added in a line; what it cannot do is tell you the prompt behaves unattended.
+  # Weekly, Mondays, off-the-hour for the reason every other schedule here gives: the top of the
+  # hour is a stampede on shared runners. One workload per weekday, so a bad week is one pull request
+  # to close rather than four.
+  schedule:
+    - cron: '23 4 * * 1'
   workflow_dispatch:
     inputs:
       model:
@@ -69,8 +76,8 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           display_report: true
-          prompt: /security-triage --unattended${{ inputs.dry_run && ' --dry-run' || '' }}
+          prompt: /security-triage --unattended${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && ' --dry-run' || '' }}
           claude_args: |
-            --model ${{ inputs.model }}
+            --model ${{ inputs.model || 'claude-opus-5' }}
             --max-turns 80
             --allowedTools "Bash,Read,Glob,Grep,Edit,Write,WebFetch,TodoWrite"
