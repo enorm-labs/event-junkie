@@ -105,8 +105,8 @@ What each workflow is for, which checks are required, and the shapes that fail s
       supply: a well-formed report can be confidently wrong, and only a re-runnable command output cannot. Two `--all` runs minutes apart once disagreed about
       whether a pattern still existed in the tree — `git grep` settled it, and the run reporting zero was the wrong one. A zero needs its evidence, and so does every other
       number: a later run proved each of its zeros, left its one non-zero count unproved, and reported three RELOCATE candidates where the tree held
-      fifty-seven — the unproved count was the only wrong one. **`/compact-comments` also gained the ship step it never had**: it edits files and had no
-      `/open-pr` at the end, so a live run made changes that died with the runner while still reporting success. Every acting prompt here now ends the same way,
+      fifty-seven — the unproved count was the only wrong one. **`/compact-comments` and `/update-dependencies` also gained the ship step neither had**: both edit files and neither had
+      an `/open-pr` at the end, so a live run made changes that died with the runner while still reporting success. Every acting prompt here now ends the same way,
       and a sweep that applied nothing ships nothing rather than an empty pull request.
     - `agent-refactor.yml` — the `/refactor` workload, and the one whose prompt was written for this (#389, `.github/prompts/refactor.prompt.md`).
       Behaviour-preserving changes only, with the test suite as the proof. **`--unattended` fences it away from shared normalization** — `SlugGenerator`,

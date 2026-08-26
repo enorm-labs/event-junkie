@@ -404,6 +404,21 @@ operational consequences attached.
 **The real fix is Renovate**, which supports Flux `HelmRelease` and `OCIRepository` natively and would make this step unnecessary. Until that exists, this list
 is the only thing standing between the platform and a component two years behind.
 
+## Step 14: Ship it
+
+**An edit that is not committed is an edit that did not happen.** This sweep rewrites `gradle.properties`, `settings.gradle.kts`, `package.json`, the README
+badges and the pinned tool versions in `.github/workflows/`. A change left in the working tree is lost when the session ends — on a runner that is the end of
+the job, and the run still reports success.
+
+The verification is already above: Step 6 for the backend, Step 10 for the frontend. Run whichever the diff touched, then [`/open-pr`](open-pr.prompt.md) with
+the table from Output Summary below as the body.
+
+**One pull request per sweep, not per bump.** Grouping is what `dependabot.yml` does for the ecosystems it owns, for the reason its own comments give: separate
+pull requests per dependency is how people learn to ignore them.
+
+**If nothing moved, ship nothing and say so.** These pins are checked far more often than they change, so an empty sweep is the normal outcome rather than a
+failure — and an empty pull request costs a review to learn that.
+
 ## Output Summary
 
 After completing the update, provide a summary table:
