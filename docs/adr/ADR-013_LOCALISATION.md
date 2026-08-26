@@ -2,33 +2,37 @@
 
 ## Status
 
-**Accepted, and implemented in full**: locale-prefixed routes for `en` and `de`, per-locale legal and About pages with German authoritative, a switcher in
-header and footer, locale-aware formatting, `hreflang`, `og:locale` and a generated sitemap.
+**Accepted, and implemented in full.** Locale-prefixed routes for `en` and `de`, with German authoritative on the
+per-locale legal and About pages. A switcher in header and footer, locale-aware formatting, `hreflang`, `og:locale`
+and a generated sitemap.
 
-> The operational rules live in [`events-frontend/AGENTS.md`](../../events-frontend/AGENTS.md) §Localisation; the policy in [LEGAL.md](../LEGAL.md) §6.
-> Package versions and download figures below were surveyed once and are indicative.
+> The operational rules live in [`events-frontend/AGENTS.md`](../../events-frontend/AGENTS.md) §Localisation, and the
+> policy in [LEGAL.md](../LEGAL.md) §6. Package versions and download figures below were surveyed once and are
+> indicative.
 
 ## Context
 
-The site is English-only today. It targets Berlin — an audience that is heavily international but lives in Germany — and it is operated by a German controller
-under German law. Two forces make German non-optional rather than a nice-to-have:
+The site is English-only today. It targets Berlin, an audience that is heavily international but lives in Germany, and
+a German controller operates it under German law. Two forces make German non-optional rather than a nice-to-have:
 
 1. **Audience.** A Berlin events guide that cannot be read in German excludes a large part of the city it is about.
-2. **Law.** [LEGAL.md §6.1](../LEGAL.md) chose English-only legal pages on the explicit condition that _German legal pages ship in the same release as German
-   UI_. An English-only imprint and privacy notice on a site presenting itself in German to a German visitor is the configuration where the Art. 12 GDPR "clear
-   and plain language" argument turns against us.
+2. **Law.** [LEGAL.md §6.1](../LEGAL.md) chose English-only legal pages on one explicit condition: _German legal
+   pages ship in the same release as German UI_. Picture an English-only imprint on a site that presents itself in
+   German. That is where the Art. 12 GDPR "clear and plain language" argument turns against us.
 
-The scale is what makes this ADR worth writing: 20 of 29 `.vue` files carry user-facing text (~145 literal strings), 7 TypeScript modules do too, and ~82 e2e
-assertions address elements by their English accessible name.
+The scale is what makes this ADR worth writing. 20 of 29 `.vue` files carry user-facing text (~145 literal strings),
+and 7 TypeScript modules do too. About 82 e2e assertions address elements by their English accessible name.
 
 ### Criteria
 
 Inherited from [ADR-010](ADR-010_FRONTEND_STYLING_FRAMEWORK.md) — simple, well-supported, well-documented, lightweight, popular — plus three specific to this
 decision:
 
-- **Composition-API native.** The codebase is `<script setup>` throughout; an options-based API would be a foreign body.
+- **Composition-API native.** The codebase is `<script setup>` throughout, and an options-based API would be a foreign
+  body.
 - **Locale-aware date and number formatting**, not just string lookup. Dates are the most visible difference between the two locales.
-- **Crawlable per-language URLs.** SEO is on the backlog and prerendering is planned; a language that exists only in JavaScript state is invisible to crawlers.
+- **Crawlable per-language URLs.** SEO is on the backlog and prerendering is planned. A language that exists only in
+  JavaScript state is invisible to crawlers.
 
 ## Candidate options
 
@@ -37,8 +41,8 @@ decision:
 #### Option A — `vue-i18n` + `@intlify/unplugin-vue-i18n`
 
 - v11.4.8, MIT, ~3.6 M weekly downloads, 19 releases in the last 8 months. The de-facto standard for Vue 3, by the Intlify team.
-- Composition API (`useI18n`) is first-class; the Legacy API is deprecated in v11 and removed in v12, so writing Composition-only today makes v12 a version
-  bump.
+- Composition API (`useI18n`) is first-class. The Legacy API is deprecated in v11 and removed in v12, so
+  Composition-only code today makes v12 a version bump.
 - Ships `$d`/`$n` wrappers over `Intl` for dates and numbers.
 - The unplugin (v11.2.4, MIT) precompiles messages at build time, which removes the runtime message compiler.
 - **Verified compatible with this repo**: `vue ^3.0.0` (we have 3.5.41), plugin peers `vite ^6 || ^7 || ^8` (we have 8.2.0).
@@ -47,23 +51,25 @@ decision:
 #### Option B — `petite-vue-i18n`
 
 - Same team, same version line, a deliberately reduced subset (~1 MB unpacked).
-- **~4.7 K weekly downloads against vue-i18n's 3.6 M.** That ratio is the problem: it is the same project's minor sibling, so every question, example and Stack
-  Overflow answer is written for the full package.
-- Drops features we would immediately want back, including the datetime/number formatting that is the most visible part of German localisation.
+- **~4.7 K weekly downloads against vue-i18n's 3.6 M.** That ratio is the problem. It is the same project's minor
+  sibling, so every question, example and Stack Overflow answer is written for the full package.
+- Drops features we would immediately want back. Among them is the datetime and number formatting that is the most
+  visible part of German localisation.
 
 #### Option C — `vue-intl` / FormatJS
 
 - `vue-intl` is a thin Vue binding (~10 kB) over FormatJS, which is itself very widely used (`@formatjs/intl`, ~3.3 M weekly).
-- But the Vue binding has **~6 K weekly downloads** and is not the mainline of the FormatJS project — the React binding is. The ICU message syntax is excellent;
-  the Vue-side ecosystem around it is thin.
+- But the Vue binding has **~6 K weekly downloads**, and it is not the mainline of the FormatJS project. The React
+  binding is. The ICU message syntax is excellent, and the Vue-side ecosystem around it is thin.
 
 #### Option D — Hand-rolled: plain JSON catalogues + native `Intl` + a small composable
 
-- No dependency at all. `Intl.DateTimeFormat` and `Intl.NumberFormat` already do the formatting work; a `useT()` composable over a JSON object is perhaps 40
-  lines.
+- No dependency at all. `Intl.DateTimeFormat` and `Intl.NumberFormat` already do the formatting work, and a `useT()`
+  composable over a JSON object is perhaps 40 lines.
 - Genuinely viable at this size, and worth taking seriously rather than dismissing.
-- What it costs: pluralisation, interpolation, fallback chains, lazy-loading per locale, and the SFC/devtools integration all become ours to write and
-  maintain — and each is a small thing that is easy to get subtly wrong. It also gives future contributors nothing familiar to work from.
+- What it costs: pluralisation, interpolation, fallback chains, lazy-loading per locale, and the SFC and devtools
+  integration all become ours to write and maintain. Each is a small thing that is easy to get subtly wrong. It also
+  gives a future contributor nothing familiar to work from.
 
 ### URL strategy
 
@@ -81,9 +87,10 @@ decision:
 
 ### 1. `vue-i18n` v11 with `@intlify/unplugin-vue-i18n`, Composition API only
 
-Option A. Option D is the only real contender — at 145 strings and two locales, a hand-rolled composable would work — but the features it defers (plural rules,
-fallback chains, lazy loading, and the `Intl` wrappers) are exactly the ones that arrive later as small, quiet bugs, and this project has no appetite for
-maintaining an i18n runtime alongside everything else. Options B and C are ruled out by ecosystem size rather than by capability.
+Option A. Option D is the only real contender: at 145 strings and two locales, a hand-rolled composable would work.
+But the features it defers arrive later as small, quiet bugs — plural rules, fallback chains, lazy loading, the `Intl`
+wrappers. This project has no appetite for maintaining an i18n runtime alongside
+everything else. Options B and C are ruled out by ecosystem size rather than by capability.
 
 **The Legacy API is not to be used**, even though most tutorials show it. `useI18n` from the first line.
 
@@ -91,12 +98,12 @@ maintaining an i18n runtime alongside everything else. Options B and C are ruled
 
 Bare `/` redirects to a locale chosen from `Accept-Language`, falling back to `en`. Unprefixed routes (`/events`) redirect rather than 404.
 
-**Doing this now is materially cheaper than doing it later**: the site is not deployed, so there are no inbound links, no search index and no bookmarks to
-preserve. Every month this waits, the cost rises.
+**Doing this now is materially cheaper than doing it later.** The site is not deployed, so there are no inbound links,
+no search index and no bookmarks to preserve. Every month this waits, the cost rises.
 
-A stored locale preference (`localStorage`) is permitted **only** as a hint for resolving bare `/`. The URL is always the source of truth. This keeps the § 25
-TDDDG posture from [LEGAL.md §7.4](../LEGAL.md) intact: a preference the user set themselves is strictly necessary, so no consent banner — but it must not
-become the _only_ record of the choice.
+A stored locale preference (`localStorage`) is permitted **only** as a hint for resolving bare `/`. The URL is always
+the source of truth. That keeps the § 25 TDDDG posture from [LEGAL.md §7.4](../LEGAL.md) intact. A preference the user
+set themselves is strictly necessary, so no consent banner. But it must not become the _only_ record of the choice.
 
 ### 3. Translate the chrome, not the data
 
@@ -114,13 +121,14 @@ them as data avoids a translation table that would be wrong as often as right.
 ### 4. Formatting
 
 - **`formatDate`** becomes locale-aware — the most visible change in the whole phase (_Fri, 12 Jun 2026_ → _Fr., 12. Juni 2026_).
-- **`formatEventType`** stops deriving labels by string manipulation (`CLUB_NIGHT` → `Club night`) and becomes a message lookup keyed by the enum, with a
-  fallback for `OTHER` and for values the frontend has not seen. **No amount of locale plumbing can translate the current implementation** — this is a rewrite,
-  not a wiring change.
-- **`formatPrice` stays `de-DE` in both locales** (`38,00 €`). That is the price written on the door in Berlin; `€38.00` would be a worse answer for an
-  English-speaking user standing in front of that door.
-- **`todayIso` must NOT become locale-aware.** It uses `Intl.DateTimeFormat('en-CA')` as a trick to obtain `YYYY-MM-DD` — a _format_, not a language. Changing
-  it breaks every date filter in the app **silently**, because the output remains a plausible date.
+- **`formatEventType`** stops deriving labels by string manipulation (`CLUB_NIGHT` → `Club night`). It becomes a
+  message lookup keyed by the enum, with a fallback for `OTHER` and for a value the frontend does not know. **No
+  amount of locale plumbing can translate the current implementation.** This is a rewrite, not a wiring change.
+- **`formatPrice` stays `de-DE` in both locales** (`38,00 €`). That is the price written on the door in Berlin.
+  `€38.00` would be a worse answer for an English-speaking user standing in front of that door.
+- **`todayIso` must NOT become locale-aware.** It uses `Intl.DateTimeFormat('en-CA')` as a trick to obtain
+  `YYYY-MM-DD`, which is a _format_, not a language. Changing it breaks every date filter in the app **silently**,
+  because the output remains a plausible date.
 
 ### 5. German becomes the authoritative version of the legal pages
 
@@ -130,26 +138,30 @@ Stated on each page once both exist: _Maßgeblich ist die deutsche Fassung._ The
 
 **Accepted costs:**
 
-- **Node 20 support is dropped.** `vue-i18n` requires Node ≥ 22 and the plugin ≥ 22.13, while `package.json` currently declares `^20.19.0 || >=22.12.0`. The
-  engines field must be raised in the same change; nothing in CI pins Node 20, but this is a deliberate narrowing, not an accident.
+- **Node 20 support is dropped.** `vue-i18n` requires Node ≥ 22 and the plugin ≥ 22.13, while `package.json` declares
+  `^20.19.0 || >=22.12.0`. The engines field must be raised in the same change. Nothing in CI pins Node 20, but this
+  is a deliberate narrowing rather than an accident.
 - **Every route gains a prefix**, so every internal link, every router assertion and the `scrollBehavior` added in the footer work must account for it.
 - **The German legal pages become release-blocking.** German UI cannot ship without them (§Context). This is the constraint most likely to be forgotten under
   time pressure, and the one with an actual legal standard attached.
-- **Two message catalogues drift.** Mitigated by a unit test asserting identical key sets — a missing German key silently falls back to English, which is
-  exactly the failure that ships unnoticed.
-- **German is longer than English**, reliably. Layouts that fit today will not all fit tomorrow; the axe sweep and the overflow guards must cover `/de`.
+- **Two message catalogues drift.** A unit test asserting identical key sets mitigates that. A missing German key
+  silently falls back to English, which is exactly the failure that ships unnoticed.
+- **German is longer than English**, reliably. Layouts that fit today will not all fit tomorrow, so the axe sweep and
+  the overflow guards must cover `/de`.
 
 **Deliberately deferred:**
 
-- **More than two languages.** The structure supports it; nothing here assumes it.
-- **Backend localisation.** The BFF returns data and RFC 9457 problem details; the frontend owns all user-facing language. If that changes, `Accept-Language`
-  handling in the BFF is a separate decision.
-- **SSR / prerendering.** Wanted for SEO and tracked separately, but not a prerequisite: `hreflang` and per-locale `og:locale` are worth adding regardless. _(
-  Decided in [ADR-014](ADR-014_RENDERING_STRATEGY.md), 2026-08-08. The "not a prerequisite" judgement held for `hreflang` — the sitemap carries it — but only
-  partly: page-level `og:` tags do need server-side rendering, because the scrapers that consume them do not run JavaScript.)_
-- **A German tagline.** _"Can't get enough of Berlin"_ is a pun on the brand premise ([BRANDING.md](../BRANDING.md) §2) and a literal rendering loses it.
-  Whether the brand line stays English on the German site is a **brand decision, not an architectural one** — it belongs in BRANDING.md, and many Berlin brands
-  do keep an English tagline.
+- **More than two languages.** The structure supports it, and nothing here assumes it.
+- **Backend localisation.** The BFF returns data and RFC 9457 problem details, and the frontend owns all user-facing
+  language. If that changes, `Accept-Language` handling in the BFF is a separate decision.
+- **SSR / prerendering.** Wanted for SEO and tracked separately, but not a prerequisite. `hreflang` and per-locale
+  `og:locale` are worth adding regardless. _[ADR-014](ADR-014_RENDERING_STRATEGY.md) decides this. The "not a
+  prerequisite" judgement held for `hreflang`, which the sitemap carries. It held only partly for page-level `og:`
+  tags, which do need server-side rendering, because the scrapers that consume them do not run JavaScript._
+- **A German tagline.** _"Can't get enough of Berlin"_ is a pun on the brand premise
+  ([BRANDING.md](../BRANDING.md) §2), and a literal rendering loses it. Whether the brand line stays English on the
+  German site is a **brand decision, not an architectural one**. It belongs in BRANDING.md, and many Berlin brands do
+  keep an English tagline.
 
 ## References
 
