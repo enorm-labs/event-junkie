@@ -101,7 +101,10 @@ What each workflow is for, which checks are required, and the shapes that fail s
       tool to spawn. The check is under 400 bytes or fewer than five lines, measured against real output: the observed stub was 105 bytes on one line and a real
       report 5,207 bytes over 62. It runs **after** the upload so the stub survives for diagnosis, and only when the agent step itself succeeded, because a
       failure above is already red for a better reason. Every prompt's unattended section now also states the contract directly — the final message _is_ the
-      report, and there is no second turn.
+      report, and there is no second turn. **And every count in a report carries the command that produced it**, which is the one guard the stub check cannot
+      supply: a well-formed report can be confidently wrong, and only a re-runnable command output cannot. Two `--all` runs minutes apart once disagreed about
+      whether a pattern still existed in the tree — `git grep` settled it, and the run reporting zero was the wrong one. A zero needs its evidence most, because
+      "nothing to do here" is the finding nobody checks.
     - `agent-refactor.yml` — the `/refactor` workload, and the one whose prompt was written for this (#389, `.github/prompts/refactor.prompt.md`).
       Behaviour-preserving changes only, with the test suite as the proof. **`--unattended` fences it away from shared normalization** — `SlugGenerator`,
       `GenreNormalizer`, `ArtistNameMapping`, `MoneyExtensions` — because a change there compiles, passes the whole suite, and still changes the rows that land
