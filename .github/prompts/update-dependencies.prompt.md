@@ -296,19 +296,19 @@ string_ belongs to none of those ecosystems. `github-actions` updates `uses: azu
 it. So these rot silently, and a scanner or validator that is a year behind still reports success, which is the failure mode worth caring about: a green check
 that has stopped meaning anything.
 
-| Pin                     | Where                                                                                  | Check against                                                      |
-| ----------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `HELM_VERSION`          | `.github/workflows/validate-chart.yml` **and** `release.yml` — both must move together | `helm/helm` releases, **staying on 3.x**                           |
-| `FLUX_VERSION`          | `.github/workflows/validate-chart.yml`                                                 | `fluxcd/flux2` releases                                            |
-| `FLUX_SCHEMA_VERSION`   | `.github/workflows/validate-chart.yml`                                                 | `fluxcd/flux-schema` releases — or `flux plugin list` locally      |
-| `TRIVY_VERSION`         | `.github/workflows/release.yml`                                                        | `aquasecurity/trivy` releases                                      |
-| `gitleaks` `rev:`       | `.pre-commit-config.yaml`                                                              | `gitleaks/gitleaks` releases                                       |
-| `ZIZMOR_VERSION`        | `.github/workflows/validate-workflows.yml`                                             | `zizmorcore/zizmor` releases — the image tag has **no** `v` prefix |
-| `ACTIONLINT_VERSION`    | `.github/workflows/validate-workflows.yml`                                             | `rhysd/actionlint` releases                                        |
-| `HELM_UNITTEST_VERSION` | `.github/workflows/validate-chart.yml` **and** `release.yml` — both must move together | `helm-unittest/helm-unittest` releases                             |
-| `SHELLCHECK_VERSION`    | `validate-scripts.yml` **and** `validate-infra.yml` — both must move together          | `koalaman/shellcheck` releases                                     |
-| `walg_version`          | `infra/modules/environment/variables.tf` — **and both `walg_checksums`**               | `wal-g/wal-g` releases — read the rules below before bumping       |
-| `k3s_version`           | `infra/modules/environment/variables.tf`                                               | `k3s-io/k3s` releases — same rebuild consequence as `wal-g`        |
+| Pin                     | Where                                                                                                              | Check against                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| `HELM_VERSION`          | `.github/workflows/validate-chart.yml`, `release.yml` **and** `image-scan-scheduled.yml` — all three move together | `helm/helm` releases, **staying on 3.x**                           |
+| `FLUX_VERSION`          | `.github/workflows/validate-chart.yml`                                                                             | `fluxcd/flux2` releases                                            |
+| `FLUX_SCHEMA_VERSION`   | `.github/workflows/validate-chart.yml`                                                                             | `fluxcd/flux-schema` releases — or `flux plugin list` locally      |
+| `TRIVY_VERSION`         | `.github/workflows/release.yml` **and** `image-scan-scheduled.yml` — both must move together                       | `aquasecurity/trivy` releases                                      |
+| `gitleaks` `rev:`       | `.pre-commit-config.yaml`                                                                                          | `gitleaks/gitleaks` releases                                       |
+| `ZIZMOR_VERSION`        | `.github/workflows/validate-workflows.yml`                                                                         | `zizmorcore/zizmor` releases — the image tag has **no** `v` prefix |
+| `ACTIONLINT_VERSION`    | `.github/workflows/validate-workflows.yml`                                                                         | `rhysd/actionlint` releases                                        |
+| `HELM_UNITTEST_VERSION` | `.github/workflows/validate-chart.yml` **and** `release.yml` — both must move together                             | `helm-unittest/helm-unittest` releases                             |
+| `SHELLCHECK_VERSION`    | `validate-scripts.yml`, `validate-infra.yml` **and** `validate-chart.yml` — all three move together                | `koalaman/shellcheck` releases                                     |
+| `walg_version`          | `infra/modules/environment/variables.tf` — **and both `walg_checksums`**                                           | `wal-g/wal-g` releases — read the rules below before bumping       |
+| `k3s_version`           | `infra/modules/environment/variables.tf`                                                                           | `k3s-io/k3s` releases — same rebuild consequence as `wal-g`        |
 
 ```sh
 for repo in helm/helm helm-unittest/helm-unittest fluxcd/flux2 fluxcd/flux-schema aquasecurity/trivy \
@@ -325,7 +325,7 @@ raising it to 4.x would gate the chart against a client that cannot install it. 
 plugin itself. #430 chose a plugin install over the `helmunittest/helm-unittest` image precisely so `HELM_VERSION` could stay exact — the image's newest Helm 3
 tag lags, and the plugin version it carries has no `--values` flag. If a bump ever tempts you back to the image, that is the constraint to re-check first.
 
-**`SHELLCHECK_VERSION` appears in three**, for the same reason and with a sharper failure mode. It is pinned at all because the runner image's preinstalled
+**`SHELLCHECK_VERSION` appears in three** — `validate-scripts.yml`, `validate-infra.yml` and `validate-chart.yml` — for the same reason and with a sharper failure mode. It is pinned at all because the runner image's preinstalled
 ShellCheck is older than a current local install and disagrees with it — v0.9.0 flags `SC2015` on `A && B || true`, v0.11.0 correctly does not — so an unpinned
 job fails on files the author's own copy had just passed. `cluster-assertions.sh`, `k3d-rehearsal.sh`, `version.sh` and `version-test.sh` are linted by two of the three jobs, so a drifted pin surfaces as two checks
 disagreeing about the same file. Bump all three in one commit, and when a bump does turn a job red, read the findings on their merits before
