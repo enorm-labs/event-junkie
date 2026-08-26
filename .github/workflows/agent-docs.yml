@@ -1,0 +1,115 @@
+# Claude driven by this repository's own /update-docs prompt, opening a pull request and never
+# pushing to main. The fifth workload, and the one #387 puts last on purpose: a wrong answer here is
+# a plausible paragraph nobody notices for months. ci-cd.instructions.md carries the shared shape.
+#
+# **`--unattended` limits it to detecting and correcting facts.** A path that does not resolve, a
+# command that fails, a number that disagrees with its source of truth, an issue whose state is
+# wrong. It rewrites no argument, simplifies nothing, and deletes no paragraph — those are reported.
+#
+# **The `inputs` context is empty on a `schedule` trigger**, so every input below carries an explicit
+# fallback. Without them a scheduled run passes `--model` with no value, and goes live by accident
+# rather than by decision. ci-cd.instructions.md has the rest.
+#
+# **`display_report: true` is what makes the run readable**, and is not interchangeable with
+# `show_full_output`. ci-cd.instructions.md has the difference and why it matters here.
+#
+# **There is no `github_token:` input.** See agent-security.yml.
+name: Agent — Documentation Currency
+
+on:
+  # Weekly, Fridays, off-the-hour for the reason every other schedule here gives: the top of the
+  # hour is a stampede on shared runners. One workload per weekday, so a bad week is one pull request
+  # to close rather than five.
+  schedule:
+    - cron: '35 6 * * 5'
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Model to run the sweep with
+        type: choice
+        default: claude-opus-4-8
+        options:
+          - claude-opus-4-8
+          - claude-opus-4-6
+          - claude-opus-5
+      dry_run:
+        description: Report only — read, reason, and open no pull request
+        type: boolean
+        default: true
+      scope:
+        description: What to sweep — a path, or --report to detect and change nothing
+        type: string
+        default: docs
+
+permissions:
+  contents: read
+  # Reading issue state, which is staleness row 4 — a closed issue a document still calls open.
+  issues: read
+  id-token: write
+
+concurrency:
+  group: agent-docs
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    name: Documentation currency (agent)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # `format-markdown.sh` needs the pinned oxfmt from the frontend's lockfile, not one on PATH —
+      # oxfmt is pre-1.0 and its Markdown output is not stable across versions.
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24' # should match the version specified in .nvmrc
+          cache: 'npm'
+          cache-dependency-path: events-frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: events-frontend
+        run: npm ci
+
+      - name: Run /update-docs
+        id: claude
+        uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          display_report: true
+          prompt: /update-docs ${{ inputs.scope || 'docs' }} --unattended${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && ' --dry-run' || '' }}
+          claude_args: |
+            --model ${{ inputs.model || 'claude-opus-4-8' }}
+            --max-turns 80
+            --allowedTools "Bash,Read,Glob,Grep,Edit,Write,TodoWrite"
+
+      # Reporting steps, last and guarded, per the rule in ci-cd.instructions.md. The step summary
+      # `display_report` writes has no REST API, so a scheduled report would exist only as a browser
+      # page. This extracts the same final report and nothing else — the execution file also holds
+      # every tool result, which is what must never be uploaded from a public repository.
+      - name: Extract the report
+        if: success() || failure()
+        env:
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+        run: |
+          set -euo pipefail
+          : > agent-report.md
+          if [ -n "${EXECUTION_FILE:-}" ] && [ -s "$EXECUTION_FILE" ]; then
+            jq -s -r '[.. | objects | select(.type == "result") | .result // empty] | last // ""' \
+              "$EXECUTION_FILE" > agent-report.md || true
+          fi
+          if [ ! -s agent-report.md ]; then
+            echo 'No report extracted. The execution file was empty or its shape changed.' > agent-report.md
+          fi
+
+      - name: Upload the report
+        if: success() || failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: agent-report
+          path: agent-report.md

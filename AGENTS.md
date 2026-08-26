@@ -516,6 +516,8 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Agentic workflow (dependency pins)          | `.github/workflows/agent-dependencies.yml` — Step 12 only, the pins Dependabot cannot see                                         |
 | Agentic workflow (comments)                 | `.github/workflows/agent-comments.yml` — DELETE/RENAME/EXTRACT only, never rewrites a KEEP                                        |
 | Refactor prompt                             | `.github/prompts/refactor.prompt.md`                                                                                              |
+| Documentation currency prompt               | `.github/prompts/update-docs.prompt.md`                                                                                           |
+| Agentic workflow (documentation)            | `.github/workflows/agent-docs.yml` — corrects facts, rewrites no argument, never touches an ADR                                   |
 | Shared domain module marker                 | `events-core/src/.../EventsCoreModule.kt`                                                                                         |
 | Domain data classes                         | `events-core/src/.../artist/`, `event/`, `genretag/`, `promoter/`, `venue/`                                                       |
 | Price normalization utility                 | `events-core/src/.../event/MoneyExtensions.kt`                                                                                    |

@@ -70,8 +70,15 @@ What each workflow is for, which checks are required, and the shapes that fail s
       shell and no GitHub API and the run reads the repository and does nothing. And **Dependabot alerts are expected to `403`** — neither `GITHUB_TOKEN` nor the
       Claude App carries a permission for them — so its honest scope is code scanning. `workflow_dispatch` only, and `dry_run` defaults to true; a schedule is a
       line to add once a run has been watched end to end.
-    - **All four are weekly, staggered one per weekday, and a scheduled run is live.** Security Monday, refactor Tuesday, dependency pins Wednesday, comments
-      Thursday, each off-the-hour like every other schedule here. One workload per day means a bad week is one pull request to close rather than four, and the
+    - `agent-docs.yml` — the `/update-docs` workload, and **the one #387 puts last on purpose**: a wrong answer is a plausible-looking paragraph nobody
+      notices for months. `--unattended` limits it to detecting and **correcting facts** — a path that does not resolve, a command that fails, a number that
+      disagrees with its named source of truth, an issue whose state is wrong. It rewrites no argument, simplifies nothing and deletes no paragraph; those are
+      reported. `docs/adr/` is off-limits by construction, because an ADR describing something no longer true is a decision that was later changed, and the fix
+      is a **Status** line rather than a rewrite of the argument that would destroy the only record of why the old choice was made. `BRANDING.md` and
+      `LOGO_IDEAS.md` are exempt as voice-carrying copy, and `ACCEPTED_LIMITATIONS.md` is generated. It installs Node and the frontend's lockfile, because
+      `format-markdown.sh` needs the **pinned** oxfmt rather than one on `PATH` — the same reason `validate-docs.yml` does it.
+    - **All five are weekly, staggered one per weekday, and a scheduled run is live.** Security Monday, refactor Tuesday, dependency pins Wednesday, comments
+      Thursday, documentation Friday, each off-the-hour like every other schedule here. One workload per day means a bad week is one pull request to close rather than four, and the
       `concurrency` group on each stops a manual dispatch racing its own cron. **A schedule cannot pass inputs, and this is the trap**: the `inputs` context is
       populated only for `workflow_dispatch` and `workflow_call`, so on a cron `inputs.model` is the empty string and `--model` reaches the CLI with no value,
       while `inputs.dry_run` is falsy and the run goes live by accident rather than by decision. Every input is therefore read as `inputs.x || '<default>'`, and
@@ -81,7 +88,7 @@ What each workflow is for, which checks are required, and the shapes that fail s
       configure — scheduled workflows run **from the default branch only**, and on a public repository GitHub **disables the schedule after 60 days without
       repository activity**. The action also rejects a bot actor unless it is named in `allowed_bots`, and a scheduled run is attributed to whoever last
       changed the `cron` line, so that line must be edited by a human account.
-    - **All four set `display_report: true`, and none sets `show_full_output`.** The two are not interchangeable and the default of both is `false`, which is
+    - **All five set `display_report: true`, and none sets `show_full_output`.** The two are not interchangeable and the default of both is `false`, which is
       how the first dry run finished green having answered nothing: the report went to a temp file on a runner that then stopped existing. `display_report`
       publishes the agent's final report to the job summary; `show_full_output` dumps every intermediate tool result, and the action's own description warns it
       "may contain secrets, API keys, or other sensitive information" in a publicly visible log. The report itself is public in the step summary either way,
