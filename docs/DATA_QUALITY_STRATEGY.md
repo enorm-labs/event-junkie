@@ -5,8 +5,7 @@ How we fix the data-quality gaps we have and prevent new ones from accumulating.
 own scraper KDoc. Where this doc names work to do, **the authoritative task is the issue** and this doc points at it — the two must not drift.
 
 Related: [ADR-007 Web Scraping Strategy](adr/ADR-007_WEB_SCRAPING_STRATEGY.md) ·
-[EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md) · [DATA_MODEL.md](DATA_MODEL.md) ·
-[DATA_QUALITY_PILLAR_1_PLAN.md](DATA_QUALITY_PILLAR_1_PLAN.md).
+[EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md) · [DATA_MODEL.md](DATA_MODEL.md).
 
 ---
 
@@ -31,9 +30,10 @@ resolve:
 2. **The feedback loop is open.** The curation signal already exists — the
    `Dropping non-genre token '…'` logs (`GenreNormalizer.kt`), artist-less concerts, `OTHER`-typed events — but nothing routes it back to a human. The curation
    queue is invisible, so the curated lists only grow when someone happens to notice a bad row.
-3. ~~**There is no measurement and no gate.**~~ **Half-resolved 2026-08-19.** Pillar 1 shipped as `de.norm.events.dataquality`: the numbers exist, per source,
-   with a `data_quality_snapshot` history so a trend is visible — see [DATA_QUALITY_PILLAR_1_PLAN.md](DATA_QUALITY_PILLAR_1_PLAN.md) §8a. **The gate half is
-   still open**: nothing fails when a change regresses a metric, so quality is now _observed_ but still not _enforced_.
+3. ~~**There is no measurement and no gate.**~~ **Half-resolved 2026-08-19.** Pillar 1 shipped as
+   `de.norm.events.dataquality`. The numbers exist per source, with a `data_quality_snapshot` history, so a trend is
+   visible. **The gate half is still open**: nothing fails when a change regresses a metric, so quality is now
+   _observed_ but still not _enforced_.
 
 ~~The single largest _fix_ opportunity is already identified: **~40% of `CONCERT` events carry no artist**~~ — **superseded by measurement, 2026-08-21.**
 
@@ -152,7 +152,18 @@ The keystone. Everything else is judged against these numbers.
 _Exit criterion:_ a per-source number for each headline metric, chartable in an external BI tool (§4), so Pillars 3–4 can be judged by whether those numbers
 move.
 
-_Implementation plan:_ [DATA_QUALITY_PILLAR_1_PLAN.md](DATA_QUALITY_PILLAR_1_PLAN.md).
+_Shipped 2026-08-19_ as `de.norm.events.dataquality` in `events-importer`, closing
+[#319](https://github.com/enorm-labs/event-junkie/issues/319). Three definitions were settled in the build and are
+worth knowing before reading a number:
+
+- **`missingPrice` excludes a free event and a `price_note`-only one.** Neither is missing a price. Both state one.
+- **The worklist returns a lean projection, not an `EventResponse`.** Assembling one resolves artists, promoters and
+  genre tags per event — three extra round-trips to attach associations to events selected _because they lack them_.
+  `WorklistEntryResponse` carries what a steward needs to decide whether to open something: when it is, where it is,
+  and what it is called.
+- **A source id that does not resolve gets its own `unresolved-source-<id>` label**, not `manual`.
+  `ON DELETE SET NULL` means it should not happen. Folding it into `manual` would attribute a deleted source's events
+  to hand curation, and nobody would question that number.
 
 ### Pillar 2 — Prevent (stop regressions) 🟠 medium effort, low risk
 
@@ -212,7 +223,8 @@ These are recorded, not yet resolved — settle them before the pillar that need
 
 Tracked via the Pillar 1 report, per source and overall, and charted over time in an external BI tool (§4):
 
-- **Concert headliner coverage** — % of `CONCERT` events with ≥1 artist (baseline ~60%; target the Privatclub/Cassiopeia/Badehaus recovery).
+- **Concert headliner coverage** — % of `CONCERT` events with ≥1 artist. The measured baseline is **96.5%** (§1), not
+  the ~60% this section carried before anything was counted.
 - **Event-type classification** — % of events _not_ typed `OTHER`.
 - **Field completeness** — % with genre / promoter / price where the source exposes them.
 - **Curation-queue burn-down** — dropped/flagged items reviewed vs. outstanding.

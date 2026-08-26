@@ -33,12 +33,11 @@ everything below — someone with a WireGuard tunnel open, not someone writing a
 
 ## The data
 
-| Document                                                       | What it covers                           |
-| -------------------------------------------------------------- | ---------------------------------------- |
-| [DATA_MODEL.md](DATA_MODEL.md)                                 | The domain model and schema              |
-| [DATA_QUALITY_STRATEGY.md](DATA_QUALITY_STRATEGY.md)           | How the data is kept honest              |
-| [DATA_QUALITY_PILLAR_1_PLAN.md](DATA_QUALITY_PILLAR_1_PLAN.md) | The plan for the first quality pillar    |
-| [EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md)                 | Every venue source and its import status |
+| Document                                             | What it covers                           |
+| ---------------------------------------------------- | ---------------------------------------- |
+| [DATA_MODEL.md](DATA_MODEL.md)                       | The domain model and schema              |
+| [DATA_QUALITY_STRATEGY.md](DATA_QUALITY_STRATEGY.md) | How the data is kept honest              |
+| [EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md)       | Every venue source and its import status |
 
 ## The product
 
