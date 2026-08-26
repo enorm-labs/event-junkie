@@ -85,7 +85,10 @@ What each workflow is for, which checks are required, and the shapes that fail s
       how the first dry run finished green having answered nothing: the report went to a temp file on a runner that then stopped existing. `display_report`
       publishes the agent's final report to the job summary; `show_full_output` dumps every intermediate tool result, and the action's own description warns it
       "may contain secrets, API keys, or other sensitive information" in a publicly visible log. The report itself is public in the step summary either way,
-      which is the exposure the pull request body already carries by design — so it is a decision rather than an oversight, recorded here rather than four times.
+      which is the exposure the pull request body already carries by design — so it is a decision rather than an oversight, recorded here rather than four times. **A step summary has no REST API**, so each workflow also extracts the final
+      report from the action's `execution_file` output and uploads it as an `agent-report` artifact — otherwise a weekly scheduled report would exist only as a
+      browser page nobody opens. Only the final report is extracted, never the file itself: it holds every tool result, which is the thing
+      `show_full_output`'s warning is about. A shape change in that file produces an empty artifact with an explanatory line, not a red job.
     - `agent-refactor.yml` — the `/refactor` workload, and the one whose prompt was written for this (#389, `.github/prompts/refactor.prompt.md`).
       Behaviour-preserving changes only, with the test suite as the proof. **`--unattended` fences it away from shared normalization** — `SlugGenerator`,
       `GenreNormalizer`, `ArtistNameMapping`, `MoneyExtensions` — because a change there compiles, passes the whole suite, and still changes the rows that land
