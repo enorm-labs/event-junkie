@@ -593,19 +593,28 @@ web scraping pitfalls documented in industry literature (see References).
 
 ## Consequences
 
-- **Positive**: Jsoup is mature, well-documented, and handles real-world HTML; WebClient integration keeps everything non-blocking; conditional requests reduce
-  load on venue websites; first-page-only scraping keeps the pipeline simple while covering the most relevant upcoming events; the `EventImporter`
-  `EventImporter` interface makes adding new scrapers a single-class addition; shared scraping utilities (`ScrapingExtensions.kt`, `DateParsingExtensions.kt`,
-  `EventTypeMapping.kt`, `ArtistNameMapping.kt`,
-  `EventFieldMapping.kt`) reduce boilerplate when implementing new scrapers — common patterns like text extraction, URL parsing, time/date parsing, category
-  mapping, and artist list construction are available as reusable functions; per-host politeness throttling via `PerHostThrottlingFilter` is transparent to
-  scrapers — new importers get rate-limiting for free without any manual delay management; import metadata in the database enables future scheduling dashboards
-  (TODO item #2); semantic selector guidelines and regression tests on HTML snapshots reduce breakage when venues redesign; operational best practices
-  (rate-limiting, transparent User-Agent, off-peak scheduling) keep the scraper ethical and sustainable.
-- **Negative**: Jsoup's `parse()` is blocking (mitigated by `Dispatchers.IO`); each venue requires a hand-written scraper class since HTML structure varies;
-  JS-rendered venues are not covered until Playwright is added; maintaining HTML snapshot test fixtures adds per-venue overhead but pays off in early breakage
-  detection.
-- The `event_source` table is owned by the importer (consistent with ADR-005: migrations owned by importer).
+**Positive**
+
+- Jsoup is mature, well documented, and handles real-world HTML.
+- WebClient integration keeps everything non-blocking.
+- Conditional requests reduce load on venue websites.
+- First-page-only scraping keeps the pipeline simple, while covering the most relevant upcoming events.
+- The `EventImporter` interface makes a new scraper a single-class addition.
+- Shared utilities reduce boilerplate: `ScrapingExtensions.kt`, `DateParsingExtensions.kt`, `EventTypeMapping.kt`, `ArtistNameMapping.kt` and
+  `EventFieldMapping.kt`. Text extraction, URL parsing, time and date parsing, category mapping and artist-list construction are reusable functions.
+- Per-host politeness throttling via `PerHostThrottlingFilter` is transparent to scrapers. A new importer gets rate limiting without managing any delay itself.
+- Import metadata in the database enables a future scheduling dashboard.
+- Semantic selector guidelines and regression tests on HTML snapshots reduce breakage when a venue redesigns.
+- Rate limiting, a transparent User-Agent and off-peak scheduling keep the scraper ethical and sustainable.
+
+**Negative**
+
+- Jsoup's `parse()` is blocking. `Dispatchers.IO` mitigates it.
+- Each venue needs a hand-written scraper class, because HTML structure varies.
+- JS-rendered venues are not covered until Playwright is added.
+- HTML snapshot fixtures cost something per venue to maintain. They pay for it in early breakage detection.
+
+The `event_source` table is owned by the importer, consistent with [ADR-005](ADR-005_MIGRATIONS_OWNED_BY_IMPORTER.md).
 
 ## References
 
