@@ -19,6 +19,9 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BASELINE="$REPO_ROOT/scripts/comment-lint-baseline.txt"
 
+# A block's length is its lines that carry something, not its lines. Blank ` # ` separators between
+# paragraphs are structure and do not count (#750), matching `LongComment` since #741; delimiters and
+# indentation do. So 25 is what a reader scrolls past, minus the breaks that make it scrollable.
 MAX_BLOCK="${COMMENT_LINT_MAX_BLOCK:-25}"
 # A file header is the script's only `--help` in most of these files, and documents an interface
 # rather than reasoning interleaved with code. It gets a higher cap, not an exemption; density and
@@ -125,8 +128,13 @@ scan() {
                 next
             }
 
+            # A blank ` # ` between paragraphs is structure, not length. Counting it charges a
+            # comment for being paragraphed, which makes the same words cheaper written as one wall
+            # of text — `LongComment` stopped doing that in #741 and this is the other half (#750).
+            # Density is unaffected: `c` above still counts every comment line, as all three
+            # implementations do, so a blank line lands in both halves of that ratio.
             if (blocklen == 0) blockstart = FNR
-            blocklen++
+            if (rest ~ /[^ \t]/) blocklen++
 
             if (allow) next
 
