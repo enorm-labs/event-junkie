@@ -100,7 +100,7 @@ def protect(text):
     """Hide the periods that are not full stops, so the split does not fire on them."""
     text = re.sub(r"(\d)\.(\d)", "\\1\x00\\2", text)
     text = text.replace("...", "\x01")
-    text = re.sub(r"\b([A-Z])\.", "\\1\x00", text)
+    text = re.sub(r"(?<![\w./-])([A-Z])\.", "\\1\x00", text)  # not after "/": "I/O." ends a sentence
     for word in ABBREVIATIONS:
         stem = re.escape(word)
         text = re.sub(r"(?<![\w.])" + stem + r"\.", word + "\x00", text, flags=re.IGNORECASE)
