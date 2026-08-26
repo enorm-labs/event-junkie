@@ -1,9 +1,16 @@
 # Credentials — what to keep in KeePass
 
-**No secret values are in this file, and none ever should be.** It is the inventory: what exists, what it unlocks, where the working copy lives today, and what
-breaks if the only copy is lost. Use it as the checklist when filling the database, and re-read it after any infrastructure change.
+## The short version
 
-The links are in [`LINKS.md`](LINKS.md). The procedures are in `docs/ops/` — this file points at them rather than repeating them.
+**No secret values are in this file, and none ever should be.** It is the inventory: what exists, what it unlocks,
+where the working copy lives today, and what breaks if the only copy is lost. Use it as the checklist when filling the
+database, and re-read it after any infrastructure change.
+
+Two entries carry most of the risk. Losing **#16**, the SOPS age key, makes every encrypted file undecryptable.
+**#15** is the only credential with an expiry, and its lapse is silent.
+
+The links are in [`LINKS.md`](LINKS.md). The procedures are in `docs/ops/`, and this file points at them rather than
+repeating them.
 
 ## How to read the "only copy?" column
 
@@ -50,29 +57,37 @@ prepaid number silently ends the alerting path.
 | 15  | **`github-dispatch` PAT** (fine-grained) — `event-junkie-staging-github-dispatch` | **`contents: write` on this repository** — can trigger any `repository_dispatch` workflow on `main`                                                | Created 2026-08-19, **expires 2027-08-20**. **Hand-made** Kubernetes Secret in `flux-system`, one per cluster — nothing in the repo creates it ([`ops/SECRETS.md`](ops/SECRETS.md))           | No                                    |
 | 15a | **`github-dispatch` PAT** — `event-junkie-production-github-dispatch`             | Same power as #15, on the **production** cluster. Created 2026-08-21                                                                               | Keychain item of that name; **hand-made** Secret in production's `flux-system`. One PAT per cluster by decision, not convenience                                                              | No                                    |
 
-**`secrets.GITHUB_TOKEN` is not on this list and never should be.** Actions mints it per run; `permissions: packages: write` is the whole configuration.
+**`secrets.GITHUB_TOKEN` is not on this list and never should be.** Actions mints it per run, and
+`permissions: packages: write` is the whole configuration.
 
-**#15 is the most powerful GitHub credential either cluster holds** — `contents: write` lets it trigger any `repository_dispatch` workflow on `main` — so there
-is **one per cluster**, and revoking one does not take the other down. There was briefly a second, weaker `github-status` PAT for commit statuses; it was never
-created and [#567](https://github.com/enorm-labs/event-junkie/issues/567) removed the need for it, because a HelmRelease reports a chart version rather than a
-commit and no token could have changed that.
+**#15 is the most powerful GitHub credential either cluster holds.** `contents: write` lets it trigger any
+`repository_dispatch` workflow on `main`. So there is **one per cluster**, and revoking one does not take the other
+down. A second, weaker `github-status` PAT for commit statuses was planned and never created.
+[#567](https://github.com/enorm-labs/event-junkie/issues/567) removed the need for it. A HelmRelease reports a chart
+version rather than a commit, and no token could have changed that.
 
-**#15 is the only credential here with an expiry date, and that is the one thing about it worth a reminder.** A fine-grained PAT caps out at 366 days, and when
-it lapses **nothing on GitHub says so** — the Environments tab simply stops gaining entries, which looks identical to "no deploys happened lately". Flux logs
-the rejection inside the cluster and nowhere else.
+**#15 is also the only credential here with an expiry date, which is the one thing about it worth a reminder.** A
+fine-grained PAT caps out at 366 days, and when it lapses **nothing on GitHub says so**. The Environments tab simply
+stops gaining entries, which looks identical to "no deploys happened lately". Flux logs the rejection inside the
+cluster and nowhere else.
 
-**So it is not left to memory.** [`credential-expiry-reminder.yml`](../.github/workflows/credential-expiry-reminder.yml) opens an assigned issue 30 days out,
-and a differently-titled, louder one if the date passes anyway ([#569](https://github.com/enorm-labs/event-junkie/issues/569)). **The dates live in that
-workflow's `CREDENTIALS` table as well as in the row above, and the two must be kept in step** — the same rule the pinned tool versions carry. Adding a
-credential means one line there and one row here; rotating one means editing both, which the issue it opens says explicitly. **`event-junkie-staging-github-dispatch` expires 2027-08-20**; the name encodes its cluster because there
-will eventually be one per cluster per provider, and the list sorts into pairs that way.
+**So it is not left to memory.** [`credential-expiry-reminder.yml`](../.github/workflows/credential-expiry-reminder.yml)
+opens an assigned issue 30 days out, and a differently-titled, louder one if the date passes anyway
+([#569](https://github.com/enorm-labs/event-junkie/issues/569)). **The dates live in that workflow's `CREDENTIALS`
+table as well as in the row above, and the two must be kept in step.** That is the same rule the pinned tool versions
+carry.
+Adding a credential means one line there and one row here. Rotating one means editing both, which the issue it opens
+says explicitly. The name encodes its cluster, because there will eventually be one per cluster per provider, and the
+list sorts into pairs that way.
 
-The durable fix is a **GitHub App** rather than a PAT: owned by `enorm-labs` instead of a person, installed on this repository alone with _Contents: write_, and
-with no expiry to miss. Flux takes it as `githubAppID` / `githubAppInstallationID` / `githubAppPrivateKey` in the same Secret, so no manifest changes.
+The durable fix is a **GitHub App** rather than a PAT. It is owned by `enorm-labs` instead of a person, installed on
+this repository alone with _Contents: write_, and has no expiry to miss. Flux takes it as `githubAppID` /
+`githubAppInstallationID` / `githubAppPrivateKey` in the same Secret, so no manifest changes.
 
-**Why #11 is hand-made while everything else moves to SOPS:** encrypting a secret into a _public_ repository publishes its ciphertext permanently, and this is
-the one credential where the exposure cost is highest — read+write control of the Hetzner account — and the rebuild-survival benefit is lowest, since it is
-staging-only and a two-minute recreation. That trade is argued in [`ops/SECRETS.md`](ops/SECRETS.md).
+**Why #11 is hand-made while everything else moves to SOPS.** Encrypting a secret into a _public_ repository publishes
+its ciphertext permanently. This is the one credential whose exposure cost is highest: read and write control of the
+Hetzner account. Its rebuild-survival benefit is also the lowest, because it is staging-only and a two-minute
+recreation. That trade is argued in [`ops/SECRETS.md`](ops/SECRETS.md).
 
 ---
 
@@ -88,13 +103,14 @@ These are files, not strings. **Attach the file itself to the KeePass entry** ra
 | 18a | **WireGuard key, production**    | Production's tunnel. A separate keypair on a separate subnet (`10.10.0.x` vs staging's `10.10.1.x`) so both can be up at once         | `~/.wireguard/production.conf` + `production.key`                                                        | Yes                                  |
 | 19  | **Kubeconfig**                   | Cluster-admin. Only usable through the tunnel                                                                                         | `~/.kube/event-junkie-staging`, `~/.kube/event-junkie-production`, and both merged into `~/.kube/config` | No — re-fetchable over SSH           |
 
-**#16 is the single most important entry in the database.** The public half is committed in `.sops.yaml` and is safe to publish; the private half must never
-reach this repository or the cluster's git history. `age-keygen` writes the public key as a comment inside the same file, so **back up the file, not the two
-halves separately**. Rotation is: add a second recipient, `sops updatekeys` over every encrypted file, replace the cluster secret, drop the old recipient — two
-recipients briefly, so nothing is undecryptable mid-flight.
+**#16 is the single most important entry in the database.** The public half is committed in `.sops.yaml` and is safe
+to publish. The private half must never reach this repository or the cluster's git history. `age-keygen` writes the
+public key as a comment inside the same file, so **back up the file, not the two halves separately**. Rotation goes:
+add a second recipient, `sops updatekeys` over every encrypted file, replace the cluster secret, drop the old
+recipient. Two recipients exist briefly, so nothing is undecryptable mid-flight.
 
-**#18 has a second half worth storing beside it:** the node's WireGuard _public_ key and endpoint address, which are what you need to rebuild a client config
-without going back to the node.
+**#18 has a second half worth storing beside it.** The node's WireGuard _public_ key and endpoint address are what you
+need to rebuild a client config without going back to the node.
 
 ---
 
@@ -107,29 +123,34 @@ without going back to the node.
 | 22  | **`/etc/wal-g/credentials.env`**      | The S3 key (#10) plus `HEALTHCHECK_URL` (#21), mode `0640 root:postgres`                                               | Written by hand. **Not in `user_data`** — `user_data` is state                                                            | No — reconstructible from #10 and #21         |
 | 23  | **Flux deploy key**                   | Read access to this repository from the cluster                                                                        | Created by `flux bootstrap`; lives in the cluster and in the repo's deploy keys                                           | No — re-bootstrap                             |
 
-**#10a does not do what this table said it did, and the correction matters more than the entry.** It read: _"created so the observability stack does not hold
-#10 — a pod that parses untrusted venue HTML should not carry a credential reaching the OpenTofu state and the database backups"_. That describes least
-privilege, and Hetzner does not offer it: **S3 credentials there are project-scoped, exactly as #10 says two rows above.** Tested directly on 2026-08-21 with
-#10a's key — objects written to and deleted from both other buckets:
+**#10a is not a privilege boundary, and it is easy to read as one.** A separate key for the observability stack looks
+like least privilege. The pod parses untrusted venue HTML, and should be kept away from the OpenTofu state and the
+database backups. Hetzner does not offer that. **S3 credentials there are project-scoped, exactly as #10 says two rows above.**
+Tested directly with #10a's key, writing objects to and deleting them from both other buckets:
 
 ```
 o2 key -> event-junkie-backups    write SUCCEEDED
 o2 key -> event-junkie-tfstate    write SUCCEEDED
 ```
 
-So a compromised OpenObserve reaches the state file and the backups whichever key it holds. **What a separate key does buy is rotation independence** — revoking
-OpenObserve's credential does not stop OpenTofu or wal-g, and the two show up separately in any access log. That is worth having; it is not a boundary, and
-anyone reading the old wording would have believed a boundary existed.
+So a compromised OpenObserve reaches the state file and the backups whichever key it holds. **What a separate key does
+buy is rotation independence.** Revoking OpenObserve's credential does not stop OpenTofu or wal-g, and the two show up
+separately in any access log. That is worth having, and it is not a boundary.
 
-**Found by breaking it.** The staging rebuild on 2026-08-21 recreated `openobserve-credentials` from the Keychain, which held only #10 — #10a lived solely in
-the Secret that the rebuild destroyed and in the password manager. It is now in the Keychain under the names above, so the next rebuild cannot repeat it.
+**Found by breaking it.** The staging rebuild on 2026-08-21 recreated `openobserve-credentials` from the Keychain,
+and the Keychain held only #10. Entry #10a lived solely in the Secret that the rebuild destroyed, and in the password
+manager. It is now
+in the Keychain under the names above, so the next rebuild cannot repeat it.
 
-**#20 has a trap in both directions.** The git copy is now the source of truth, so bringing up an _existing_ environment means making the database role match
-the encrypted value, not generating a fresh one. A role and a Secret that disagree is a `CrashLoopBackOff` whose cause is two files apart.
+**#20 has a trap in both directions.** The git copy is the source of truth. Bringing up an _existing_ environment
+therefore means making the database role match the encrypted value, rather than generating a fresh one. A role and a
+Secret that
+disagree is a `CrashLoopBackOff` whose cause is two files apart.
 
-**#22 is what a node rebuild silently loses.** The volume carries the database through a rebuild; this file does not. A rebuilt node comes back with both timers
-enabled, `wal-g` installed, `archive_mode = on`, every archive failing — and no ping. Nothing about it looks wrong. **Paste the same ping URL back rather than
-creating a new check**, or the history that makes "late" mean something starts over.
+**#22 is what a node rebuild silently loses.** The volume carries the database through a rebuild, and this file does
+not. A rebuilt node comes back with both timers enabled, `wal-g` installed, `archive_mode = on`, every archive failing,
+and no ping. Nothing about it looks wrong. **Paste the same ping URL back rather than creating a new check**, or the
+history that makes "late" mean something starts over.
 
 ---
 
@@ -137,20 +158,24 @@ creating a new check**, or the history that makes "late" mean something starts o
 
 Small facts that are annoying to re-derive and are needed exactly when something is broken.
 
-- **Node addresses**: the WireGuard tunnel addresses (`10.10.1.1` staging, `10.10.0.1` production), the private networks (`10.1.1.0/24` and `10.0.1.0/24`), and
-  each server's public IPv4. Production's database node has a public IPv4 for **egress only** — its firewall admits nothing inbound, so it is reached at
-  `10.0.1.20` through the k3s node.
-- **The Hetzner project name and Object Storage bucket names** — bucket names are unique Hetzner-wide, so they are not guessable after the fact.
-- **The countersigned Hetzner AVV (PDF)**, concluded 2026-08-19. Concluding it and not filing it is the same position as not concluding it, the day somebody asks.
-- **The `age` public key** (`age1…`) — it is in `.sops.yaml`, but having it beside the private key means a rebuild does not need the repository first.
+- **Node addresses.** The WireGuard tunnel addresses (`10.10.1.1` staging, `10.10.0.1` production), the private
+  networks (`10.1.1.0/24` and `10.0.1.0/24`), and each server's public IPv4. Production's database node has a public
+  IPv4 for **egress only**. Its firewall admits nothing inbound, so it is reached at `10.0.1.20` through the k3s
+  node.
+- **The Hetzner project name and Object Storage bucket names.** A bucket name is unique Hetzner-wide, so it is not
+  guessable after the fact.
+- **The countersigned Hetzner AVV (PDF)**, concluded 2026-08-19. Concluding it and not filing it is the same position
+  as not concluding it, the day somebody asks.
+- **The `age` public key** (`age1…`). It is in `.sops.yaml`, and having it beside the private key means a rebuild does
+  not need the repository first.
 
 ---
 
 ### What is in the macOS Keychain, and why that is not a backup
 
-`infra/.envrc` loads some of these; the rest are there so a rebuild does not need the password manager at 02:00. **The Keychain is a working copy, not the
-record** — it lives on one laptop, is not versioned, and the 2026-08-21 rebuild proved what happens when something exists only in a place that gets destroyed
-(see the #10a correction above).
+`infra/.envrc` loads some of these. The rest are there so a rebuild does not need the password manager at 02:00. **The
+Keychain is a working copy, not the record.** It lives on one laptop and is not versioned. The 2026-08-21 rebuild
+proved what happens when something exists only in a place that gets destroyed.
 
 | Keychain item                                | Which entry        | Loaded by                                             |
 | -------------------------------------------- | ------------------ | ----------------------------------------------------- |
@@ -165,8 +190,9 @@ record** — it lives on one laptop, is not versioned, and the 2026-08-21 rebuil
 | `event-junkie-staging-o2-root-password`      | #8                 | by hand, into `openobserve-credentials`               |
 | `event-junkie-staging-metrics-password`      | the `metrics` role | by hand, into `postgres-exporter`                     |
 
-**Every one of these belongs in KeePass too.** The two OpenObserve/metrics passwords were regenerated during the 2026-08-21 rebuild rather than recovered — the
-old values died with the node's PVC — so if the password manager still holds the pre-rebuild ones, they are stale.
+**Every one of these belongs in KeePass too.** The two OpenObserve and metrics passwords were regenerated during the
+2026-08-21 rebuild rather than recovered, because the old values died with the node's PVC. If the password manager
+still holds the pre-rebuild ones, they are stale.
 
 ## 6. Suggested KeePass layout
 
@@ -182,14 +208,15 @@ event-junkie/
 └── Reference/         addresses · bucket names · the AVV PDF · the age public key
 ```
 
-**Two entries deserve a note in their own description**, because losing them is not recoverable by resetting anything: the **age private key** (#16) and the
-**Hetzner account recovery codes** (#1).
+**Two entries deserve a note in their own description**, because no reset recovers them. They are the **age private
+key** (#16) and the **Hetzner account recovery codes** (#1).
 
 ---
 
 ## 7. What is _not_ here, and why
 
 - **`secrets.GITHUB_TOKEN`** — minted per workflow run.
-- **The k3s node token, the Flux deploy key's private half, the WireGuard server key** — all generated on the node or by the tool at bootstrap, and all
-  recreated by re-running it. Nothing to store; storing them would just be a stale copy.
+- **The k3s node token, the Flux deploy key's private half, the WireGuard server key.** All are generated on the node
+  or by the tool at bootstrap, and all are recreated by re-running it. There is nothing to store, and storing them
+  would only make a stale copy.
 - **`admin_cidrs`** — an input, not a secret. It stopped mattering once WireGuard replaced it as the access control.
