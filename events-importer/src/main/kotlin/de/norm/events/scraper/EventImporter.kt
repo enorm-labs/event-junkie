@@ -31,7 +31,6 @@ interface EventImporter {
      * 3. Optionally fetching and parsing detail pages for enrichment.
      * 4. Returning a list of [ScrapedEvent] instances ready for upserting.
      *
-     * @param url the event listing page URL to scrape.
      * @param etag optional cached ETag for conditional requests.
      * @param lastModified optional cached Last-Modified for conditional requests.
      * @return an [ImportResult] with the scraped events and updated cache headers,

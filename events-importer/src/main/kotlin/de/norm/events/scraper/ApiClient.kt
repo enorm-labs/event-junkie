@@ -39,9 +39,6 @@ class ApiClient(
      *
      * Returns the body verbatim so the caller's pure parser can deserialize it. Fails fast
      * with [HttpFetchException] on any 4xx/5xx so error payloads are never mistaken for data.
-     *
-     * @param url the API URL to fetch.
-     * @return the raw response body as a string.
      */
     suspend fun fetchJson(url: String): String {
         logger.debug { "Fetching JSON body: $url" }
