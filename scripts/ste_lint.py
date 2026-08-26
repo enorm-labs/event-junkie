@@ -22,6 +22,11 @@ MIN_LINES_FOR_SUMMARY = int(os.environ.get("STE_LINT_MIN_LINES_FOR_SUMMARY", "15
 
 EXEMPT = {"docs/BRANDING.md", "docs/LOGO_IDEAS.md"}
 SHORT_VERSION = "## The short version"
+# An ADR's summary is its Status line, not a separate section: the reader wants the decision, and
+# repeating it under a second heading is the duplication the rest of this rule exists to prevent.
+# So ADRs answer a different question — does Status say what was decided, or only "Accepted"?
+STATUS = re.compile(r"^##+\s+Status\s*$", re.MULTILINE)
+MIN_STATUS_WORDS = int(os.environ.get("STE_LINT_MIN_STATUS_WORDS", "6"))
 # A rendered document is not editable prose: the generator would overwrite the fix, and the words
 # come from wherever it reads. docs/data-quality/ACCEPTED_LIMITATIONS.md is the first of these.
 GENERATED = re.compile(r"<!--[^>]*do not edit", re.IGNORECASE)
@@ -245,6 +250,27 @@ def check_block(block, path, findings):
     return counted
 
 
+def check_status(path, lines):
+    """An ADR states its decision in Status, so a bare "Accepted" is the ADR form of no summary."""
+    body = "\n".join(lines)
+    match = STATUS.search(body)
+    if not match:
+        return [(path, 1, "no-status", "an ADR needs a Status section")]
+
+    start = body.count("\n", 0, match.end()) + 1
+    words = []
+    for lineno in range(start, len(lines)):
+        line = lines[lineno]
+        if line.startswith("## "):
+            break
+        words.extend(clean(line).split())
+    if len(words) < MIN_STATUS_WORDS:
+        return [
+            (path, start, "bare-status", '"%s" does not say what was decided' % " ".join(words))
+        ]
+    return []
+
+
 def scan(path):
     findings = []
     with open(path, encoding="utf-8") as handle:
@@ -253,7 +279,9 @@ def scan(path):
     if any(GENERATED.search(line) for line in lines[:10]):
         return findings, 0
 
-    if len(lines) > MIN_LINES_FOR_SUMMARY and SHORT_VERSION not in "\n".join(lines):
+    if path.startswith("docs/adr/"):
+        findings.extend(check_status(path, lines))
+    elif len(lines) > MIN_LINES_FOR_SUMMARY and SHORT_VERSION not in "\n".join(lines):
         findings.append(
             (
                 path,
