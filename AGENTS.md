@@ -510,6 +510,8 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Skill and command parity check              | `scripts/skill-parity.sh`                                                                                                         |
 | Code review prompt                          | `.github/prompts/code-review.prompt.md`                                                                                           |
 | Security report prompt                      | `.github/prompts/security-report.prompt.md`                                                                                       |
+| Security triage prompt                      | `.github/prompts/security-triage.prompt.md` — its `--unattended` section is what `agent-security.yml` runs                        |
+| Agentic workflow (security)                 | `.github/workflows/agent-security.yml` — dispatch only, opens a PR, dismisses nothing                                             |
 | Shared domain module marker                 | `events-core/src/.../EventsCoreModule.kt`                                                                                         |
 | Domain data classes                         | `events-core/src/.../artist/`, `event/`, `genretag/`, `promoter/`, `venue/`                                                       |
 | Price normalization utility                 | `events-core/src/.../event/MoneyExtensions.kt`                                                                                    |

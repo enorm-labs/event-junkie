@@ -22,6 +22,27 @@ understand the position; use this one to change it.
   `gh auth refresh -s security_events` if you see one.
 - Run `git` and `gh` non-interactively (`git --no-pager …`); see AGENTS.md.
 
+## Running unattended
+
+[`agent-security.yml`](../workflows/agent-security.yml) invokes this prompt as `/security-triage --unattended` from a scheduled runner, where the "ask first"
+tier above has nobody to ask. **Unattended, that tier does not collapse into the pre-authorized one — it collapses the other way.**
+
+- **Dismiss nothing. Not one alert, not even a fixture finding this prompt would otherwise pre-authorize.** Dismissal is the single irreversible act here and
+  the only one no reviewer will ever re-read. List the candidates in the pull request body, with the evidence each would have carried, and leave the API call to
+  a human running this command by hand.
+- **File nothing.** Step 5's `/new-issue` needs judgement about duplicates and board fields that is not available from a runner, and an agent filing issues on a
+  schedule is how a tracker stops being read. What would have been an issue becomes a section of the pull request body.
+- **Fix what the prompt already calls cheap**, and nothing else. A version bump with a matching advisory is in scope; a refactor to remove a vulnerable call
+  path is not, and is one of the sections above.
+- **`--dry-run` on top of it opens no pull request at all** and writes the whole report to the job summary. That is the mode to use the first time, and after
+  any change to this section.
+- **Report the reachability of each surface, not just its findings.** Dependabot alerts are expected to return `403` from Actions: neither `GITHUB_TOKEN` nor
+  the Claude GitHub App carries a permission for them. Say which surfaces answered, because the Notes below are exactly right that a quiet inventory and a
+  clean one look identical.
+
+The output contract is unchanged; it lands in the pull request body rather than a terminal. **What was dismissed** becomes _what a human should consider
+dismissing_, and keeps the evidence either way.
+
 ## Where each finding actually lives
 
 Getting this table wrong is how a triage session ends with a clean Security tab and a still-failing nightly build:
