@@ -108,7 +108,7 @@ venue as a tour operator. One predicate holds the rule:
 That is the line to change to revisit it.
 
 Note the deliberate asymmetry. A row with **no** category is kept. The park files its one-off evening events under no
-category at all — a games night, a quiz show — and dropping uncategorised rows would lose them.
+category at all: a games night, a quiz show. Dropping an uncategorised row would lose them.
 
 ### 3.3 Trade fairs and conferences
 
