@@ -56,6 +56,7 @@ IRREGULAR = (
     r"|known|shown|grown|drawn|thrown|built|sent|spent|left|lost|meant|dealt|felt"
     r"|got|gotten|had|read|said|set|cut|hit|let|shut|split|spread"
 )
+MODAL = re.compile(r"\b(would|could|should|might|must|may|will|can|shall)\s+$", re.IGNORECASE)
 PERFECT = re.compile(
     r"\b(has|have|had)\s+(?:(?:not|never|already|just|also|only|since|now|always)\s+)*"
     r"(" + PARTICIPLE + r"|" + IRREGULAR + r")\b"
@@ -218,6 +219,8 @@ def check_block(block, path, findings):
     for match in PERFECT.finditer(text):
         if match.group(2).lower() in NOT_PARTICIPLES:
             continue
+        if MODAL.search(text[: match.start()]):
+            continue  # "would have been" is a counterfactual, and "was" asserts what it denied
         findings.append(
             (
                 path,
