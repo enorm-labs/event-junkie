@@ -31,6 +31,9 @@ changes is which of them an unwatched run is allowed to reach.
   repository by construction, and it is the single most attractive target for something optimising for line count.
 - **The baseline only moves down.** If the run cannot lower a number honestly, it leaves the number alone. An unattended run must never argue for a raise,
   because the argument is the part a human makes in the pull request.
+- **Cap the pull request at twelve files, and report the rest.** A whole-tree sweep can reach hundreds; a diff nobody watched being made is one a reviewer has
+  to re-derive from scratch, and past about a dozen files that stops happening. Take the highest-value twelve, list what was left, and let the next run take
+  it. A sweep that converges over four runs is worth more than one unreviewable pull request.
 - **`--dry-run`** on top of it opens no pull request and writes the report to the job summary. Use it first, and after any change to this section.
 
 The proof obligation is unchanged and is what makes the workload safe at all: `scripts/comment-density.sh check` and `scripts/comment-lint.sh check` measure the
@@ -40,6 +43,7 @@ result mechanically, and a comment-only change that turns a test red went furthe
 
 ```
 /compact-comments              # the current diff — the default
+/compact-comments --all        # every tracked file, in density order
 /compact-comments --worst N    # the N densest files in the repository
 /compact-comments <path>       # one file or directory
 ```
@@ -56,6 +60,10 @@ scripts/comment-lint.sh report                 # every rule violation, by type
 
 Default to the current diff (`git --no-pager diff --stat main...HEAD`). With `--worst N`, rank by comment lines × ratio rather than by ratio alone: a 90% file
 with 20 comment lines is a declaration with its rationale attached, and there is nothing to win there.
+
+**`--worst N` and `--all` do not find the same thing, and the difference is why both exist.** Ranking by comment lines × ratio selects for files that are dense
+_deliberately_ — the venue KDoc, the Gradle traps, the metrics contracts — which is where the least is removable. Boilerplate is the opposite shape: a few lines
+each, spread across many files, ranking nowhere. `--all` walks every tracked file so that population is reachable at all.
 
 **Read the whole comment before touching it.** The single most common mistake is compressing a paragraph that should have been deleted outright.
 
