@@ -1,8 +1,8 @@
 # Documentation
 
-Everything written down about Event Junkie, and where each thing lives. **The conventions every change is held to are in
-[AGENTS.md](../AGENTS.md)** — it is written for AI agents, but it is simply this project's conventions written down, and it is the most complete
-document in the repository.
+Everything written down about Event Junkie, and where each thing lives. **The conventions every change is held to are
+in [AGENTS.md](../AGENTS.md).** That is written for AI agents, but it is simply this project's conventions written
+down, and it is the most complete document in the repository.
 
 ## Running it — [`ops/`](ops)
 

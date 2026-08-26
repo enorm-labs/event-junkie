@@ -1,14 +1,17 @@
 # Links
 
-Every external service, console and reference this project depends on, in one place. The companion files are
-[`event-junkie-bookmarks.html`](event-junkie-bookmarks.html) — the same set, importable into a browser — and [`CREDENTIALS.md`](CREDENTIALS.md), which lists
-what you need to hold in a password manager to actually use any of it.
+## The short version
 
-**Read the status column.** Most of this project is documented well ahead of being deployed: staging exists, production does not, and several accounts below are
-decided rather than opened. A link that resolves is not evidence that the thing behind it is running.
+Every external service, console and reference this project depends on, in one place. **Read the status column**: most
+of this project is documented well ahead of being deployed. Staging exists, production does not, and several accounts
+below are decided rather than opened. A link that resolves is not evidence that the thing behind it is running.
 
-Everything here is derived from the repository's own documentation. Where a document names a service but not its entry point — INWX, the Hetzner status page —
-the obvious console URL is filled in and marked _(added)_.
+Two companion files sit beside this one. [`event-junkie-bookmarks.html`](event-junkie-bookmarks.html) is the same set,
+importable into a browser. [`CREDENTIALS.md`](CREDENTIALS.md) lists what you need in a password manager to actually use
+any of it.
+
+Everything here is derived from the repository's own documentation. Some documents name a service but not its entry
+point, such as INWX or the Hetzner status page. The obvious console URL is filled in there, and marked _(added)_.
 
 ---
 
@@ -87,16 +90,18 @@ ADR-012, as amended on 2026-08-10, leaves exactly one processor. Everything belo
 > The production ACME rate limit is **per registered domain**, and `event-junkie.de` is the same registered domain in both environments. Burning it from
 > staging would lock production out for a week.
 
-Both domains were registered at **INWX on 2026-08-10** and delegate to `hydrogen`/`oxygen`/`helium.ns.hetzner.com`, closing
-[#259](https://github.com/enorm-labs/event-junkie/issues/259) on 2026-08-12 — so the nameserver flip (PLATFORM_SETUP §10 Phase B step 9) is done.
+Both domains were registered at **INWX on 2026-08-10** and delegate to `hydrogen`/`oxygen`/`helium.ns.hetzner.com`.
+That closed [#259](https://github.com/enorm-labs/event-junkie/issues/259), so the nameserver flip
+(PLATFORM_SETUP §10 Phase B step 9) is done.
 
-**DNSSEC is not**, and it has no issue of its own: PLATFORM_SETUP §10 step 9 calls it _"a separate, later step — #259"_, but #259 is the registration issue and
-is closed. A DS record at INWX that does not match Hetzner's key makes the domain _unresolvable_ rather than merely wrong, which is why it is a deliberate
-sitting rather than a follow-on.
+**DNSSEC is not**, and it has no issue of its own. PLATFORM_SETUP §10 step 9 calls it _"a separate, later step —
+#259"_, and #259 is the registration issue and is closed. A DS record at INWX that does not match Hetzner's key makes
+the domain _unresolvable_ rather than merely wrong. That is why it is a deliberate sitting rather than a follow-on.
 
-Role mailboxes `hello@event-junkie.de` and `security@event-junkie.de` are **live since 2026-08-21**, on Hetzner Webhosting S, and proven in both directions:
-mail arrives, and replies authenticate `spf=pass` / `dkim=pass` / `dmarc=pass` against a `p=reject` policy. Every published reporting route now reaches
-somebody. How they were built, what they cost and which DNS records carry them: [`ops/EMAIL.md`](ops/EMAIL.md).
+Role mailboxes `hello@event-junkie.de` and `security@event-junkie.de` are **live since 2026-08-21**, on Hetzner
+Webhosting S, and proven in both directions. Mail arrives, and replies authenticate `spf=pass` / `dkim=pass` /
+`dmarc=pass` against a `p=reject` policy. Every published reporting route reaches somebody. How they were built, what
+they cost and which DNS records carry them: [`ops/EMAIL.md`](ops/EMAIL.md).
 
 ---
 
@@ -164,7 +169,7 @@ The site's own legal pages, once deployed, are `/legal/privacy`, `/legal/imprint
 
 ## 8. Local development
 
-Nothing here is a service you have an account with; it is the set of addresses `scripts/dev-env.sh up` produces.
+Nothing here is a service you have an account with. It is the set of addresses `scripts/dev-env.sh up` produces.
 
 | Address                                               | What                                         |
 | ----------------------------------------------------- | -------------------------------------------- |
