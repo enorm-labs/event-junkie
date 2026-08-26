@@ -23,9 +23,11 @@
 name: Agent — Compact Comments
 
 on:
-  # Weekly, Thursdays, off-the-hour for the reason every other schedule here gives: the top of the
-  # hour is a stampede on shared runners. One workload per weekday, so a bad week is one pull request
-  # to close rather than four.
+  # Weekly, Thursdays, off-the-hour like every other schedule here, and **`--all` rather than
+  # `--worst N`**: ranking by comment lines times ratio selects for files that are dense on purpose,
+  # where the least is removable. Boilerplate is a few lines each across many files and ranks
+  # nowhere, so only a whole-tree walk reaches it. The prompt caps the pull request at twelve files
+  # and reports the rest, so a sweep converges over several runs instead of arriving unreviewable.
   schedule:
     - cron: '14 6 * * 4'
   workflow_dispatch:
@@ -43,9 +45,9 @@ on:
         type: boolean
         default: true
       scope:
-        description: What to sweep — a path, or --worst N for the densest files
+        description: What to sweep — --all, a path, --worst N, or blank for the current diff
         type: string
-        default: --worst 5
+        default: --all
 
 permissions:
   contents: read
@@ -86,7 +88,7 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           display_report: true
-          prompt: /compact-comments ${{ inputs.scope || '--worst 5' }} --unattended${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && ' --dry-run' || '' }}
+          prompt: /compact-comments ${{ inputs.scope || '--all' }} --unattended${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && ' --dry-run' || '' }}
           claude_args: |
             --model ${{ inputs.model || 'claude-opus-4-8' }}
             --max-turns 80

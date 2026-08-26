@@ -514,7 +514,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Agentic workflow (security)                 | `.github/workflows/agent-security.yml` — dispatch only, opens a PR, dismisses nothing                                             |
 | Agentic workflow (refactor)                 | `.github/workflows/agent-refactor.yml` — fenced away from shared normalization                                                    |
 | Agentic workflow (dependency pins)          | `.github/workflows/agent-dependencies.yml` — Step 12 only, the pins Dependabot cannot see                                         |
-| Agentic workflow (comments)                 | `.github/workflows/agent-comments.yml` — DELETE/RENAME/EXTRACT only, never rewrites a KEEP                                        |
+| Agentic workflow (comments)                 | `.github/workflows/agent-comments.yml` — whole tree weekly, capped at twelve files per PR                                         |
 | Refactor prompt                             | `.github/prompts/refactor.prompt.md`                                                                                              |
 | Documentation currency prompt               | `.github/prompts/update-docs.prompt.md`                                                                                           |
 | Agentic workflow (documentation)            | `.github/workflows/agent-docs.yml` — corrects facts, rewrites no argument, never touches an ADR                                   |

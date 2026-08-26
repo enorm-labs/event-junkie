@@ -108,7 +108,11 @@ What each workflow is for, which checks are required, and the shapes that fail s
       they are force-new attributes and bumping either plans a node replacement — and so is Step 13, whose check is a k3d rehearsal the runner cannot run.
     - `agent-comments.yml` — the `/compact-comments` workload, and **the dangerous one**, in the terms #387 uses. A large share of the comments here exist to
       carry reasoning, and each reads as removable to something optimising for brevity. `--unattended` limits the run to **DELETE, RENAME and EXTRACT**, the
-      buckets a reviewer checks in seconds; **RELOCATE and KEEP are reported, never applied**, and venue KDoc is off-limits whatever its density. Its default
+      buckets a reviewer checks in seconds; **RELOCATE and KEEP are reported, never applied**, and venue KDoc is off-limits whatever its density. **It sweeps with `--all`, not `--worst N`, and the first run is why.** A `--worst 5` sweep removed
+      **zero lines safely** and explained itself: ranking by comment lines times ratio selects for the files that are dense _on purpose_ — venue KDoc, Gradle
+      traps, metrics contracts — which is where the least is removable. Boilerplate is the opposite shape, a few lines each across many files, ranking nowhere,
+      so only a whole-tree walk reaches it at all. The prompt therefore **caps the pull request at twelve files and reports the rest**, so a sweep converges
+      over several runs rather than arriving unreviewable. Its default
       model is `claude-opus-4-8` rather than Opus 5, which is a measured preference about verbosity at comment work rather than a cost decision — the input
       exists so 4.6 and 4.8 can be compared on one prompt. Last to earn a schedule, per #387's ordering. It sets up a JDK and Gradle, because the proof
       obligation is a full build and a missing toolchain reads to a model as a broken one.
