@@ -1,0 +1,77 @@
+# Claude driven by this repository's own /refactor prompt, opening a pull request and never pushing
+# to main. Fourth of #387's four workloads, and the one whose prompt was written for it (#389). The
+# shared shape is documented once in ci-cd.instructions.md; two lines below are the traps here.
+#
+# **`--unattended` fences the run away from shared normalization, and that fence is the whole
+# safety argument.** Slug generation, genre normalization, artist-name mapping and price parsing are
+# called by every importer. A change there compiles, passes the whole suite, and still changes the
+# rows that land in the database — the only check that catches it is a `--full` re-seed, which needs
+# a database and a live scrape. The runner has neither, so findings in that code are reported.
+#
+# **There is no `github_token:` input.** See agent-security.yml.
+name: Agent — Refactor
+
+on:
+  # Dispatch only until a run has been watched end to end, and second in #387's ordering because the
+  # test suite catches a wrong answer here mechanically.
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Model to run the refactor with
+        type: choice
+        default: claude-opus-5
+        options:
+          - claude-opus-5
+          - claude-opus-4-8
+          - claude-sonnet-5
+      dry_run:
+        description: Report only — read, reason, and open no pull request
+        type: boolean
+        default: true
+      scope:
+        description: What to reshape — a path, or --audit to rank the whole repository first
+        type: string
+        default: --audit
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: agent-refactor
+  cancel-in-progress: false
+
+jobs:
+  refactor:
+    name: Refactor (agent)
+    runs-on: ubuntu-latest
+    # The longest of the four. The prompt requires the suite after every concern, not once at the
+    # end, so the wall clock is several builds rather than one.
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Java 25 (Temurin)
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      # Kover is the before-and-after number the prompt reports, and a refactor that quietly drops
+      # coverage is one that deleted a tested branch.
+      - name: Run /refactor
+        uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: /refactor ${{ inputs.scope }} --unattended${{ inputs.dry_run && ' --dry-run' || '' }}
+          claude_args: |
+            --model ${{ inputs.model }}
+            --max-turns 120
+            --allowedTools "Bash,Read,Glob,Grep,Edit,Write,TodoWrite"

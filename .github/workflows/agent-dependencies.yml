@@ -1,0 +1,61 @@
+# Claude driven by this repository's own /update-dependencies prompt, opening a pull request and
+# never pushing to main. Second of #387's four workloads. The shared shape is documented once in
+# ci-cd.instructions.md; the two lines below are what fails silently if edited here.
+#
+# **`--unattended` narrows this to Step 12, and that is the entire point.** Dependabot already owns
+# gradle, npm, docker, actions and opentofu, with grouping and a reasoned suppression. An agent
+# re-deriving those bumps produces a worse second pull request against the same files. Step 12 is
+# the blind spot: a tool version pinned as a plain string belongs to no ecosystem, so it rots while
+# the check using it keeps reporting success.
+#
+# **There is no `github_token:` input.** See agent-security.yml — passing one makes the pull request
+# unmergeable in a way that reads as a hung check.
+name: Agent — Dependency Pins
+
+on:
+  # Dispatch only until a run has been watched end to end. Monthly is the right cadence once it is:
+  # these pins move on their own schedules and a weekly run would mostly find nothing.
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Model to run the sweep with
+        type: choice
+        default: claude-opus-5
+        options:
+          - claude-opus-5
+          - claude-opus-4-8
+          - claude-sonnet-5
+      dry_run:
+        description: Report only — read, reason, and open no pull request
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: agent-dependencies
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    name: Dependency pins (agent)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run /update-dependencies
+        uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: /update-dependencies --unattended${{ inputs.dry_run && ' --dry-run' || '' }}
+          claude_args: |
+            --model ${{ inputs.model }}
+            --max-turns 60
+            --allowedTools "Bash,Read,Glob,Grep,Edit,Write,WebFetch,TodoWrite"

@@ -512,6 +512,10 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Security report prompt                      | `.github/prompts/security-report.prompt.md`                                                                                       |
 | Security triage prompt                      | `.github/prompts/security-triage.prompt.md` — its `--unattended` section is what `agent-security.yml` runs                        |
 | Agentic workflow (security)                 | `.github/workflows/agent-security.yml` — dispatch only, opens a PR, dismisses nothing                                             |
+| Agentic workflow (refactor)                 | `.github/workflows/agent-refactor.yml` — fenced away from shared normalization                                                    |
+| Agentic workflow (dependency pins)          | `.github/workflows/agent-dependencies.yml` — Step 12 only, the pins Dependabot cannot see                                         |
+| Agentic workflow (comments)                 | `.github/workflows/agent-comments.yml` — DELETE/RENAME/EXTRACT only, never rewrites a KEEP                                        |
+| Refactor prompt                             | `.github/prompts/refactor.prompt.md`                                                                                              |
 | Shared domain module marker                 | `events-core/src/.../EventsCoreModule.kt`                                                                                         |
 | Domain data classes                         | `events-core/src/.../artist/`, `event/`, `genretag/`, `promoter/`, `venue/`                                                       |
 | Price normalization utility                 | `events-core/src/.../event/MoneyExtensions.kt`                                                                                    |

@@ -16,6 +16,26 @@ burn-down counterpart to the guards in #713: those stop the volume rising, this 
   the one exception, and it is argued in the PR, not absorbed quietly.
 - This skill edits code. Run [`/verify`](verify.prompt.md) before handing back, and never leave the tree red.
 
+## Running unattended
+
+[`agent-comments.yml`](../workflows/agent-comments.yml) invokes this prompt as `/compact-comments --unattended` from a runner. The buckets do not change; what
+changes is which of them an unwatched run is allowed to reach.
+
+- **DELETE, RENAME and EXTRACT only.** Those three are checkable by a reviewer in seconds — the comment is gone, the name is better, the function is named. They
+  are also the buckets where deletion is the right answer, which is the point of the ordering.
+- **RELOCATE is reported, never applied.** Moving a fact to a test, an issue or an ADR is a judgement about where it belongs, and getting it wrong loses the
+  fact rather than moving it. List the candidates with their destinations and let a human place them.
+- **KEEP is reported, never rewritten.** This is the rule that matters most here. A rewrite of load-bearing reasoning reads as an improvement whatever it
+  deleted, and nobody re-reads a comment that still looks fine. The `asd-ste100` pass on prose that has to stay is a human's job.
+- **Never touch a scraper's venue KDoc**, whatever its density. It is the designated home for accepted limitations (#393, #714), it is the densest prose in the
+  repository by construction, and it is the single most attractive target for something optimising for line count.
+- **The baseline only moves down.** If the run cannot lower a number honestly, it leaves the number alone. An unattended run must never argue for a raise,
+  because the argument is the part a human makes in the pull request.
+- **`--dry-run`** on top of it opens no pull request and writes the report to the job summary. Use it first, and after any change to this section.
+
+The proof obligation is unchanged and is what makes the workload safe at all: `scripts/comment-density.sh check` and `scripts/comment-lint.sh check` measure the
+result mechanically, and a comment-only change that turns a test red went further than intended.
+
 ## Usage
 
 ```
