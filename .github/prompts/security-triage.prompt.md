@@ -54,9 +54,13 @@ exactly what cannot be checked after the fact. Show the command and its output �
 next run, can re-run it and get the same number. This is the rule [`/codebase-audit`](codebase-audit.prompt.md) already applies: every claim backed by a
 concrete file, count or command output.
 
-**A zero needs its evidence most of all.** "Nothing to do here" is the finding nobody checks and the one that ends the run early. Two runs of this prompt
-minutes apart once disagreed about whether a pattern still existed in the tree — both reports were confident, well formatted, and one of them was wrong. The
-command output is the only part of a report that cannot be plausible and false at the same time.
+**A zero needs its evidence, and so does every other number.** "Nothing to do here" is the finding nobody checks and the one that ends the run early. But the
+rule is not "prove the zeros" — a run that carried a command for each of its zeros and none for its one non-zero count reported three candidates where the tree
+held fifty-seven, and the count with no command behind it was the only one that was wrong. **A number you did not produce with a command is a guess, whatever
+its size**, and a guess in a section headed _"reported for a human"_ is the one a human acts on.
+
+Two runs of this prompt minutes apart once disagreed about whether a pattern still existed at all. Both reports were confident, well formatted, and one of them
+was wrong. The command output is the only part of a report that cannot be plausible and false at the same time.
 
 ## Where each finding actually lives
 
