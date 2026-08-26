@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted — WebClient fetches, Jsoup parses, and a structured JSON source wins over HTML whenever the venue has one.
 
 ## Context
 
@@ -12,8 +12,7 @@ The application imports music event data from Berlin venue and promoter websites
 - **~80% are static/server-rendered HTML** — WordPress, PHP, Laravel, hand-coded HTML (e.g. Privatclub, Madame Claude, Supamolly, Junction Bar, Roadrunner's
   Paradise).
 - **~15% are JavaScript-rendered SPAs** — Angular (Fluxbau), Nuxt.js (Festsaal Kreuzberg), Wix (Loge), or sites behind cookie walls (SO36).
-- **A few offer structured feeds** — Supamolly has an RSS feed; Astra exposes `schema.org MusicEvent`
-  JSON-LD markup.
+- **A few offer structured feeds** — Supamolly has an RSS feed. Astra exposes `schema.org MusicEvent` JSON-LD markup.
 
 Key requirements:
 
@@ -31,8 +30,8 @@ Use a **layered scraping strategy** with three tools, each covering a different 
 `spring-boot-starter-webclient` is already a dependency. Use it as the HTTP client for all scraping requests instead of Jsoup's built-in `Jsoup.connect()`. This
 keeps HTTP fetching reactive and integrates naturally with the coroutine stack via `awaitBody<String>()`.
 
-WebClient also supports conditional requests out of the box — send `If-None-Match` (ETag) and
-`If-Modified-Since` headers to detect whether a page has changed before downloading the full body.
+WebClient also supports conditional requests. Send an `If-None-Match` (ETag) or `If-Modified-Since` header, and the
+server answers `304 Not Modified` when the page did not change.
 
 ### 2. Jsoup — HTML Parsing (new dependency)
 
@@ -57,31 +56,36 @@ import.
 
 ### Prefer a JSON / API Source over HTML
 
-Before writing any HTML scraper, **check whether the venue exposes its events as structured JSON** — either a public/internal REST or GraphQL API, or an
-embedded third-party calendar widget with its own data endpoint. A structured feed is the single most stable source
-(see [Selector Strategy](#selector-strategy--prefer-semantic-selectors), priority 1): it is an explicit machine-readable contract that survives site redesigns,
-needs no CSS selectors, and often requires no headless browser even for otherwise JS-rendered SPAs. Many "JS-only"
-venues turn out to be a thin front-end over a JSON API discoverable in the browser Network tab.
+Before you write an HTML scraper, **look for the venue's events as structured JSON**. It can be a public or internal
+REST or GraphQL API, or an embedded third-party calendar widget with its own data endpoint.
+
+A structured feed is the most stable source there is
+(see [Selector Strategy](#selector-strategy--prefer-semantic-selectors), priority 1). It is an explicit
+machine-readable contract, so it survives a site redesign. It needs no CSS selectors, and it often needs no headless
+browser even for a JS-rendered SPA. Many "JS-only" venues are a thin front-end over a JSON API that the browser
+Network tab shows.
 
 Two implemented importers already take this path and skip HTML entirely:
 
-- **Festsaal Kreuzberg** — a Nuxt.js SPA renders nothing server-side, but it is backed by a **Wagtail headless CMS** whose public JSON REST API returns every
-  upcoming event as clean structured data.
-- **Neue Zukunft** — a static landing page whose concert programme lives only in an embedded **Elfsight
-  "Event Calendar" widget**; the widget's public JSON boot API (`core.service.elfsight.com/p/boot/?w=<id>`)
-  returns every event, no client-side rendering or OCR of the PDF flyer required.
+- **Festsaal Kreuzberg** — the Nuxt.js SPA renders nothing on the server. A **Wagtail headless CMS** behind it has a
+  public JSON REST API that returns every upcoming event as clean structured data.
+- **Neue Zukunft** — the static landing page holds the concert programme only in an embedded **Elfsight
+  "Event Calendar" widget**. The widget has a public JSON boot API (`core.service.elfsight.com/p/boot/?w=<id>`) that
+  returns every event. Neither client-side rendering nor OCR of the PDF flyer is necessary.
 
-JSON/API importers use **`ApiClient`** (below) instead of `HtmlFetcher`, but are otherwise identical:
-they implement `EventImporter` directly and delegate parsing to a pure `*OverviewPageScraper` that takes the raw JSON string (rather than a Jsoup `Document`)
-and returns `List<ScrapedEvent>`. Keeping the parser I/O-free preserves snapshot-based testability exactly as for HTML scrapers.
+A JSON/API importer uses **`ApiClient`** (below) in place of `HtmlFetcher`, and is otherwise identical. It implements
+`EventImporter` and delegates parsing to a pure `*OverviewPageScraper`. That scraper takes the raw JSON string rather
+than a Jsoup `Document`, and returns `List<ScrapedEvent>`. An I/O-free parser keeps snapshot-based testability exactly
+as for an HTML scraper.
 
-**`ApiClient` reuses the reactive `WebClient`, not Spring's blocking `RestClient`.** `RestClient` (the synchronous client from
-the [Spring REST clients](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html)
-docs) was considered because its imperative `.body(T::class)` API is ergonomic, but it is **blocking** — dropping it into a coroutine importer would stall the
-WebFlux event loop and violate the non-blocking stack mandated by [ADR-001](ADR-001_REACTIVE_STACK.md). `WebClient` integrates natively with coroutines via
-`awaitBody()`, so it stays the client for both HTML and JSON. `ApiClient` returns the raw body as a
-`String` (parsing happens in the pure scraper) rather than deserializing in the fetch layer, which keeps it decoupled from the global WebClient codec
-configuration and lets each scraper use its own Jackson mapper.
+**`ApiClient` reuses the reactive `WebClient`, not Spring's blocking `RestClient`.** `RestClient` is the synchronous
+client from the [Spring REST clients](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html)
+docs, and its imperative `.body(T::class)` API is ergonomic. But it **blocks**. In a coroutine importer it stalls the
+WebFlux event loop, which breaks the non-blocking stack that [ADR-001](ADR-001_REACTIVE_STACK.md) mandates.
+`WebClient` integrates natively with coroutines through `awaitBody()`, so it stays the client for both HTML and JSON.
+`ApiClient` returns the raw body as a `String` and leaves parsing to the pure scraper. It deserializes nothing in the
+fetch layer. That keeps it independent of the global WebClient codec configuration, and lets each scraper use its own
+Jackson mapper.
 
 Only when there is genuinely **no** usable structured source does an HTML scraper (Jsoup, priority 2+) apply.
 
@@ -231,27 +235,30 @@ Key components:
   avoid reinventing boilerplate and ensure consistent handling of blank/missing values.
 - **`HtmlFetcher`** — WebClient wrapper for **HTML** venues handling conditional requests (ETag / Last-Modified) and returning either the parsed HTML document
   or a "not modified" signal. Per-host politeness throttling is applied transparently via a `PerHostThrottlingFilter` registered as a WebClient
-  `ExchangeFilterFunction` (see [Per-Host Politeness Throttling](#per-host-politeness-throttling) below). Response bodies are handed to Jsoup as **bytes**, not
-  as a decoded `String`: a retro host that answers `Content-Type: text/html` with no `charset` parameter while serving a Latin-1 page would otherwise be decoded
-  with Spring's UTF-8 fallback, destroying every umlaut before a scraper sees it. Passing the raw bytes lets Jsoup run its standard detection chain (BOM → HTTP
-  `charset` → `<meta charset>` → UTF-8), so a page's declared encoding wins wherever it is stated.
+  `ExchangeFilterFunction` (see [Per-Host Politeness Throttling](#per-host-politeness-throttling) below). It hands
+  response bodies to Jsoup as **bytes**, not as a decoded `String`. A retro host can answer `Content-Type: text/html`
+  with no `charset` parameter and still serve a Latin-1 page. Spring's UTF-8 fallback then decodes it and destroys
+  every umlaut before a scraper sees it. Raw bytes let Jsoup run its standard detection chain (BOM → HTTP `charset` →
+  `<meta charset>` → UTF-8). A page's declared encoding then wins wherever it states one.
 - **`ApiClient`** — the JSON/API counterpart to `HtmlFetcher` (see
   [Prefer a JSON / API Source over HTML](#prefer-a-json--api-source-over-html)). `fetchJson(url)` returns the raw response body verbatim for venues whose events
-  come from a REST/GraphQL API or a calendar-widget boot endpoint. Both fetchers inject the **same** shared `WebClient` bean (`ScraperHttpClientConfig`), so
-  they share one `PerHostThrottlingFilter` instance — HTML and API requests to the same host are throttled together, and JSON importers get the identifying
-  User-Agent for free.
+  come from a REST/GraphQL API or a calendar-widget boot endpoint. Both fetchers inject the **same** shared `WebClient`
+  bean (`ScraperHttpClientConfig`), so they share one `PerHostThrottlingFilter` instance. That filter throttles HTML
+  and API requests to the same host together, and a JSON importer gets the identifying User-Agent for free.
 - **`ScraperHttpClientConfig`** — builds the single shared, throttled scraper `WebClient` bean (`SCRAPER_WEB_CLIENT`) injected by both `HtmlFetcher` and
   `ApiClient`.
 - **`PerHostThrottlingFilter`** — WebClient `ExchangeFilterFunction` that enforces a configurable minimum delay between consecutive HTTP requests to the same
   host. Throttling is transparent to callers — scraper implementations do not need to manage delays themselves.
-- **`EventImportService`** — orchestrator that loads event source configuration from the database, delegates to the correct `EventImporter` bean, wraps
-  persistence in a transaction via
-  `EventUpsertService`, and manages event source status transitions (RUNNING → SUCCESS/FAILED/MISCONFIGURED).
-- **`EventUpsertService`** — handles the event persistence pipeline within a transactional boundary:
-  deduplicates scraped events, upserts events (insert new / update existing by `sourceId`), and removes stale future events no longer listed on the source
-  website. Delegates artist/promoter resolution and association syncing to `AssociationSyncService`.
-- **`AssociationSyncService`** — resolves artists and promoters by slug (auto-creating unknown ones with concurrent-safe fallback) and synchronizes many-to-many
-  join-table associations via a diff strategy (insert new, update changed role/billing order, delete stale).
+- **`EventImportService`** — the orchestrator. It loads event source configuration from the database and delegates to
+  the correct `EventImporter` bean. It wraps persistence in a transaction through `EventUpsertService`, and it drives
+  the event source status transitions (RUNNING → SUCCESS/FAILED/MISCONFIGURED).
+- **`EventUpsertService`** — the event persistence pipeline, inside one transactional boundary. It deduplicates scraped
+  events, upserts them (insert new, update existing by `sourceId`), and removes stale future events that the source
+  website no longer lists. It delegates artist and promoter resolution and association syncing to
+  `AssociationSyncService`.
+- **`AssociationSyncService`** — resolves artists and promoters by slug, and creates an unknown one with a
+  concurrent-safe fallback. It synchronizes many-to-many join-table associations with a diff strategy: insert new,
+  update a changed role or billing order, delete stale.
 - **`EventSourceService`** — CRUD service for managing event source configuration.
 - **`event_source` table** — tracks per-venue import metadata: URL, ETag, Last-Modified, last import timestamp, event count, status, and error messages.
 
@@ -265,26 +272,28 @@ runtime:
 2. The `event_source` table has a `source_type` column that must match an `EventSource` enum name.
 3. On startup, `EventImportService` indexes all `EventImporter` beans into a
    `Map<EventSource, EventImporter>` keyed by `EventImporter.eventSource`.
-4. When an import runs, the service resolves the enum from the stored key and looks up
-   `importersBySource[eventSourceEnum]` for O (1) dispatch to the correct importer. If no bean matches or the key is invalid, the source is marked as
-   `MISCONFIGURED` — a permanent status that the scheduler skips entirely (no retry budget consumed), requiring manual intervention to fix.
+4. When an import runs, the service resolves the enum from the stored key. It then looks up
+   `importersBySource[eventSourceEnum]` for O (1) dispatch to the correct importer. If no bean matches, or the key is
+   invalid, the source becomes `MISCONFIGURED`. That status is permanent: the scheduler skips the source and spends no
+   retry budget. Only a person can clear it.
 
-This design decouples **what** to scrape (URL, schedule — stored in the database) from **how** to parse it (HTML selectors — implemented in code), so new venues
-can be added by implementing a single
-`EventImporter` class, adding an enum value, and seeding an `event_source` row.
+This design separates **what** to scrape from **how** to parse it. The database holds the URL and the schedule. The
+code holds the HTML selectors. To add a venue, implement one `EventImporter` class, add an enum value, and seed an
+`event_source` row.
 
 The relationship between `event_source` rows and `EventSource` enum values is intentionally **many-to-one**: multiple event source rows can share the same
 `source_type` (enum value). This enables two important scenarios:
 
-1. **Same importer, different venues**: If two venues use identical website templates (e.g. both built on the same Webflow CMS theme), they can share a single
-   `EventImporter` implementation and `EventSource` enum value. Each venue gets its own `event_source` row (with its own URL, schedule, and ETag) but reuses the
-   same parsing logic.
-2. **Same venue, multiple pages**: A single venue may expose events across multiple pages — e.g. Cassiopeia could have separate listings for `/club` (indoor
-   concerts) and `/garden` (outdoor events). Each page gets its own `event_source` row with a distinct URL and independent change detection, but both rows
-   reference `CASSIOPEIA` as their `source_type` and are handled by the same `CassiopeiaWebsiteImporter`.
+1. **Same importer, different venues**: two venues can use identical website templates, for example the same Webflow
+   CMS theme. They then share one `EventImporter` implementation and one `EventSource` enum value. Each venue keeps its
+   own `event_source` row, with its own URL, schedule and ETag, and reuses the parsing logic.
+2. **Same venue, multiple pages**: one venue can publish its events on more than one page. Cassiopeia could list
+   `/club` (indoor concerts) and `/garden` (outdoor events) separately. Each page gets its own `event_source` row, with
+   a distinct URL and its own change detection. Both rows name `CASSIOPEIA` as their `source_type`, and the same
+   `CassiopeiaWebsiteImporter` handles them.
 
-Using the enum as a primary key for the `event_source` table was considered and rejected precisely because it would enforce a one-to-one constraint, preventing
-both of these scenarios.
+The `event_source` table could use the enum as its primary key instead. That is rejected here, because a primary key
+enforces a one-to-one constraint and removes both scenarios above.
 
 ### Event Source Management
 
@@ -305,8 +314,9 @@ venue's HTML structure is different.
 `DELETE /event-sources/{slug}` endpoint to remove them. This avoids using Flyway for data seeding (Flyway is reserved for schema-only DDL changes). Sources can
 also be seeded via the IntelliJ HTTP Client scripts in `http/event-sources.http` for local development.
 
-**Operational changes are runtime**: `EventSourceController` also exposes endpoints to enable/disable sources, adjust import intervals, change retry limits,
-trigger manual imports, and reset failed sources — all without redeployment.
+**Operational changes are runtime**: `EventSourceController` also exposes endpoints that need no redeployment. They
+enable and disable a source, adjust import intervals, change retry limits, trigger a manual import, and reset a failed
+source.
 
 ### Single Entry URL with Internal Detail-Page Fetching
 
@@ -314,8 +324,9 @@ The `event_source` table stores a single `url` per source — the **entry point*
 patterns:
 
 1. **Single listing page (~70%)** — all event data on one page (e.g. Privatclub, Supamolly, Monarch). The single `url` covers everything.
-2. **List + detail pages (~25%)** — summaries on a listing page, full data on individual event pages (e.g. Loge, Hole 44, Madame Claude). The scraper extracts
-   detail URLs from the listing HTML and fetches them internally via `HtmlFetcher`.
+2. **List + detail pages (~25%)** — a listing page carries the summaries and each event page carries the full data.
+   Loge, Hole 44 and Madame Claude work this way. The scraper extracts the detail URLs from the listing HTML and
+   fetches each one with `HtmlFetcher`.
 3. **Paginated / multi-page listings (~5%)** — monthly program pages (e.g. Junction Bar:
    `/program/05_2026/05_26.html`). The scraper constructs page URLs from the entry point.
 
@@ -325,69 +336,80 @@ Adding a `detail_url_pattern` column or a `urls` array was considered and reject
 - Multiple URLs complicate ETag/Last-Modified caching — which URL do you track for change detection?
 - The listing page is the natural change-detection target: it changes when events are added or removed.
 
-Instead, concrete `EventImporter` implementations own all HTTP fetching for their venue, using `HtmlFetcher` to fetch both overview and detail pages within
-their `importEvents()` method. Parsing is delegated to dedicated `*OverviewPageScraper` and `*DetailPageScraper` classes that operate on parsed Jsoup Documents
-without performing any I/O. This keeps the infrastructure layer simple (one URL, one ETag) while giving importers full flexibility.
+Instead, each `EventImporter` owns all HTTP fetching for its venue. Its `importEvents()` method uses `HtmlFetcher` for
+the overview page and for every detail page. Parsing goes to dedicated `*OverviewPageScraper` and `*DetailPageScraper`
+classes that read a parsed Jsoup Document and do no I/O. The infrastructure layer stays simple — one URL, one ETag —
+and the importer keeps full freedom.
 
 ### Pagination — First Page Only
 
 Venue listing pages are sometimes paginated (e.g. Cassiopeia uses Finsweet CMS Load to lazy-load additional pages via JavaScript). **The scraper intentionally
 imports only the first page of each listing.** Multi-page crawling was considered and rejected for several reasons:
 
-1. **Most pagination is JS-driven**: The majority of paginated venue sites use client-side pagination (infinite scroll, "load more" buttons, Finsweet CMS Load).
-   Fetching subsequent pages would require either reverse-engineering undocumented JavaScript APIs or adding a headless browser dependency (Playwright), both of
-   which are disproportionate to the value gained.
-2. **First page = most upcoming events**: Venue listings are typically sorted chronologically. The first page already contains the most relevant upcoming
-   events — exactly the data users care about for event discovery. Far-future events add little practical value.
-3. **Stale event cleanup is already pagination-safe**: `removeStaleEvents()` scopes cleanup to the date range of the current scrape (`today..maxScrapedDate`).
-   Events beyond the scraped date range are left untouched, so not fetching page 2+ does not cause accidental deletions.
-4. **Conditional requests only cover the entry page**: ETag and Last-Modified headers apply to the overview page URL. Subsequent pages would each need
-   independent change tracking, significantly complicating the `event_source` metadata model for minimal benefit.
-5. **Complexity cost**: Multi-page crawling introduces loop/termination logic, per-page error handling, rate-limiting between page requests, and partial-failure
-   semantics — all for a marginal increase in event coverage.
+1. **Most pagination is JS-driven**: infinite scroll, a "load more" button, or Finsweet CMS Load. To reach the later
+   pages, the scraper would have to reverse-engineer an undocumented JavaScript API. The alternative is a headless
+   browser (Playwright). Both cost more than the extra events are worth.
+2. **First page = most upcoming events**: venue listings are sorted by date. The first page already holds the events a
+   reader is looking for. Far-future events add little.
+3. **Stale event cleanup is already pagination-safe**: `removeStaleEvents()` scopes cleanup to the date range of the
+   current scrape (`today..maxScrapedDate`). The cleanup leaves events outside that range alone, so an unfetched page
+   2 deletes nothing by accident.
+4. **Conditional requests only cover the entry page**: ETag and Last-Modified headers apply to the overview page URL.
+   Every later page would need its own change tracking, which complicates the `event_source` metadata model for little
+   gain.
+5. **Complexity cost**: multi-page crawling adds loop and termination logic, per-page error handling, rate limiting
+   between page requests, and partial-failure semantics. The gain in event coverage is marginal.
 
-If a specific venue later requires multi-page support (e.g. a site with server-side `?page=2` query parameter pagination), it can be implemented **inside that
-venue's `*WebsiteImporter`** by looping over pages in `importEvents()` and concatenating results before returning `ImportResult.Success`. This keeps pagination
-a per-importer concern without changing the `EventImporter` interface or the framework-level infrastructure.
+One venue may later need multi-page support — a site with server-side `?page=2` pagination, for example. That belongs
+**inside that venue's `*WebsiteImporter`**: loop over the pages in `importEvents()` and concatenate the results before
+you return `ImportResult.Success`. Pagination stays a per-importer concern, and the `EventImporter` interface and the
+framework-level infrastructure do not change.
 
 ### Shared Detail Pages — Fetch Once Per Distinct URL
 
 The list+detail pattern above assumes a one-to-one mapping: one listing entry, one detail page. A venue that programmes **runs** rather than one-off nights
-breaks that assumption. Bar jeder Vernunft's calendar lists one card per _performance date_, but every date of a production links to the same
-`/programmuebersicht/<show>.html` page — at the time of writing 28 calendar cards resolve to 2 show pages.
+breaks that assumption. Bar jeder Vernunft's calendar lists one card per _performance date_. Every date of a
+production links to the same `/programmuebersicht/<show>.html` page, so 28 calendar cards can resolve to 2 show pages.
 
-`AbstractTwoPageWebsiteImporter` fetches a detail page per event, so it would re-request one page 20+ times per import. With
-[per-host throttling](#per-host-politeness-throttling) that is not just wasteful but slow, and it is exactly the kind of load the
-[best practices](#scraping-best-practices) say to keep off a venue's server. Such an importer therefore implements `EventImporter` directly and de-duplicates
-the fetch itself — group the scraped events by their detail URL, fetch each distinct URL once, and apply the parsed result to every event that shares it.
+`AbstractTwoPageWebsiteImporter` fetches a detail page per event, so it would re-request one page 20+ times per import.
+With [per-host throttling](#per-host-politeness-throttling) that is both wasteful and slow. It is also the load the
+[best practices](#scraping-best-practices) tell you to keep off a venue's server. Such an importer therefore
+implements `EventImporter` directly and de-duplicates the fetch itself. It groups the scraped events by detail URL,
+fetches each distinct URL once, and applies the parsed result to every event that shares it.
 
 Two consequences follow for the parser split:
 
-1. **The detail scraper does not return a `ScrapedEvent`.** It parses _show-level_ data (genre, price range, blurb) with no date of its own, so it returns a
-   small venue model (`BarJederVernunftShow`) that knows how to enrich an occurrence — the same modelling choice as `HavannaWeeklyNight` below.
+1. **The detail scraper does not return a `ScrapedEvent`.** It parses _show-level_ data — genre, price range, blurb —
+   and has no date of its own. So it returns a small venue model (`BarJederVernunftShow`) that enriches an occurrence.
+   `HavannaWeeklyNight` below makes the same modelling choice.
 2. **`sourceId` cannot be the URL slug**, which is shared by the whole run. It combines the date with the show slug (`bar_jeder_vernunft:<date>-<show-slug>`),
    keeping upserts idempotent per performance.
 
 ### Undated Recurring Programmes — Derived Occurrences
 
 Most venues announce individual dated events. A few instead assert a **standing weekly programme**:
-the same resident nights every week, described once, with no dates published anywhere. Havanna is the first such source — its `/events` page is a static teaser
-linking to three undated pages (`/wednesday`, `/friday`, `/saturday`), each describing a night that simply runs every week.
+the same resident nights every week, described once, with no dates published anywhere. Havanna is the first such
+source. Its `/events` page is a static teaser that links to three undated pages (`/wednesday`, `/friday`,
+`/saturday`). Each page describes a night that runs every week.
 
-Skipping these venues would leave a real, regularly-running programme out of the calendar entirely. So the importer **derives** the dates: the venue-specific
-parser produces an undated recurrence model (`HavannaWeeklyNight`) and expands it into one `ScrapedEvent` per week over a rolling horizon (8 weeks). Three
-constraints make this safe:
+Skipping these venues would leave a real, regularly-running programme out of the calendar entirely. So the importer
+**derives** the dates. The venue-specific parser produces an undated recurrence model (`HavannaWeeklyNight`). The
+importer expands that model into one `ScrapedEvent` per week, over a rolling horizon of 8 weeks. Three constraints
+make this safe:
 
-1. **Stable dated `sourceId`** (`havanna:<date>-<night-slug>`) — every run regenerates the same window, so upserts are idempotent and occurrences rolling out of
-   it are removed by `removeStaleEvents()`, which already scopes cleanup to `today..maxScrapedDate`.
-2. **No conditional requests** — a derived horizon must advance daily, but these pages never change. A 304 would freeze the window and the calendar would
-   silently stop moving forward, so such importers fetch unconditionally and return `null` cache headers (same opt-out as AMT, for a different reason).
-3. **Honour announced closures** — a page carrying a closure notice with a start date ("… AB DEM 01.07.2026 IN DER SOMMERPAUSE!") suppresses that night's
-   occurrences from that date on. Without this, a derived schedule keeps asserting parties the venue has publicly called off. A notice with no parseable date is
-   logged rather than acted on: treating a bare "Pause" as an open-ended shutdown would erase the venue from the calendar on a single ambiguous word.
+1. **Stable dated `sourceId`** (`havanna:<date>-<night-slug>`) — every run regenerates the same window, so upserts
+   stay idempotent. `removeStaleEvents()` removes an occurrence that rolls out of the window, because it already
+   scopes cleanup to `today..maxScrapedDate`.
+2. **No conditional requests** — a derived horizon must advance daily, but these pages never change. A 304 would
+   freeze the window, and the calendar would silently stop moving forward. Such an importer therefore fetches
+   unconditionally and returns `null` cache headers. AMT opts out of the same thing for a different reason.
+3. **Honour announced closures** — a closure notice with a start date suppresses that night from that date on. Havanna
+   writes them as "… AB DEM 01.07.2026 IN DER SOMMERPAUSE!". Without this, a derived schedule keeps announcing parties
+   that the venue cancelled in public. A notice with no parseable date goes to the log instead. One ambiguous "Pause"
+   must not erase the venue from the calendar.
 
-Derived occurrences are a deliberate, bounded inference — never applied to a venue that publishes dates, and never extended past the horizon or across a page's
-announced break.
+Derived occurrences are a deliberate, bounded inference. They never apply to a venue that publishes dates. They never
+extend past the horizon, or across a break that a page announces.
 
 ### Per-Host Politeness Throttling
 
@@ -408,11 +430,11 @@ Loge detail pages:        ──▶ req1 ──[200ms]──▶ req2 ──[200m
 
 1. Each host gets a lazily-created throttle entry (`ConcurrentHashMap<String, HostThrottle>`)
    containing a coroutine `Mutex` and a `TimeSource.Monotonic.ValueTimeMark`.
-2. Before each request, the filter acquires the per-host mutex, checks elapsed time since the last request to that host, and suspends via `delay()` if the
-   minimum interval has not elapsed.
-3. The `filter()` method uses `kotlinx.coroutines.reactor.mono {}` to bridge between the reactive
-   `ExchangeFilterFunction` contract and coroutine-based `Mutex`/`delay`, then chains into
-   `next.exchange(request)` which stays fully reactive.
+2. Before each request, the filter acquires the per-host mutex. It then measures the time since the last request to
+   that host. If that time is below the minimum interval, it suspends with `delay()`.
+3. The `filter()` method uses `kotlinx.coroutines.reactor.mono {}` to bridge the reactive
+   `ExchangeFilterFunction` contract and the coroutine `Mutex` and `delay`. It then chains into
+   `next.exchange(request)`, which stays fully reactive.
 
 **Why an `ExchangeFilterFunction`:**
 
@@ -481,10 +503,11 @@ cohesive responsibility, keeping the codebase organized as the number of utiliti
 | `orderDoorsBeforeStart(doors, start)`  | Recovers a source's transposed doors/start labels by swapping them back             |
 | `stripRelocationPrefix(title)`         | Strips a `"verlegt in(s) <venue> –"` note a venue prepends to a moved show's title  |
 
-**`WixEventsWarmupData.kt`** — platform-level reader for venues on Wix with a Wix Events widget (currently Loge and MAXXIM). The widget renders client-side, but
-Wix server-side-injects the full event data as strict JSON in a `<script type="application/json" id="wix-warmup-data">` block, so that payload is the source
-(priority 1 below) rather than the rendered cards. Only the payload location and the two readers every Wix venue needs live here; the venue's field mapping
-stays in its own scraper.
+**`WixEventsWarmupData.kt`** — the platform-level reader for a venue on Wix with a Wix Events widget (Loge and MAXXIM
+today). The widget renders on the client, but Wix injects the full event data on the server. It arrives as strict JSON
+in a `<script type="application/json" id="wix-warmup-data">` block, so that payload is the source (priority 1 below)
+rather than the rendered cards. Only the payload location and the two readers every Wix venue needs live here. The
+venue's field mapping stays in its own scraper.
 
 | Extension / Function                      | Purpose                                                                                        |
 | ----------------------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -492,11 +515,13 @@ stays in its own scraper.
 | `JsonNode.stringOrNull(field)`            | Trimmed string field → null when missing, JSON `null`, or blank                                |
 | `parseWixSchedule(config)`                | UTC `startDate` + `timeZoneId` → Berlin-local `(LocalDate, LocalTime)`                         |
 
-**Design rationale**: A declarative selector-map approach (mapping field names to CSS selectors) was considered but rejected because each scraped field has
-different extraction logic — sibling traversal, regex extraction from `style` attributes, multi-element date assembly, visibility checks, fallback chains. A
-selector map would only cover the simplest cases (~3 of ~10 fields per scraper), creating a split architecture that is harder to maintain than the current
-consistent one-method-per-field pattern. Extension functions provide the right level of abstraction: they eliminate the repetitive
-`selectFirst(...)?.text()?.trim()?.takeIf { ... }` chains while leaving complex field-specific logic in dedicated methods.
+**Design rationale**: a declarative selector map, from field names to CSS selectors, is rejected here. Each scraped
+field needs different extraction logic: sibling traversal, regex extraction from a `style` attribute, multi-element
+date assembly, visibility checks, fallback chains. A selector map covers only the simplest cases, about 3 of the 10
+fields per scraper. The split architecture that results is harder to maintain than one consistent method per field.
+Extension functions sit at the right level: they remove the repetitive
+`selectFirst(...)?.text()?.trim()?.takeIf { ... }` chains and leave the complex field-specific logic in dedicated
+methods.
 
 ### Selector Strategy — Prefer Semantic Selectors
 
@@ -518,11 +543,12 @@ meaning of the content rarely changes even when styling does.
 
 **Concrete guidelines for `EventImporter` implementations:**
 
-1. **Structured data first**: Prefer a JSON source over rendered HTML wherever one exists (see
-   [Prefer a JSON / API Source over HTML](#prefer-a-json--api-source-over-html)). A standalone REST/GraphQL or calendar-widget API (fetched via `ApiClient`,
-   e.g. Festsaal, Neue Zukunft) is best; failing that,
-   `schema.org/MusicEvent` JSON-LD or Microdata embedded in the page (e.g. Astra Kulturhaus) — select
-   `script[type=application/ld+json]` with Jsoup and parse the JSON payload. Both are the most stable and self-documenting sources.
+1. **Structured data first**: prefer a JSON source over rendered HTML wherever one exists. See
+   [Prefer a JSON / API Source over HTML](#prefer-a-json--api-source-over-html). A standalone REST or GraphQL API, or
+   a calendar-widget API, is best. `ApiClient` fetches it, as for Festsaal and Neue Zukunft. Second best is
+   `schema.org/MusicEvent` JSON-LD or Microdata in the page, as for Astra Kulturhaus. Select
+   `script[type=application/ld+json]` with Jsoup and parse the JSON payload. Both are the most stable and
+   self-documenting sources.
 2. **Target semantic HTML elements**: Prefer `article`, `section`, `time[datetime]`, `h1`–`h6`,
    `a[href]` over generic `div`/`span`. For example, select `time[datetime]` to extract event dates rather than parsing text from a styled
    `<span class="small-text">`.
@@ -530,13 +556,15 @@ meaning of the content rarely changes even when styling does.
    `data-event-id`, `data-date`, etc. for their own JavaScript. These are more reliable than class names because they carry semantic meaning independent of
    styling.
 4. **Prefer class names that describe content over appearance**: `.event-card` and `.artist-name`
-   are better selector targets than `.col-md-4` or `.text-red`. Presentational classes change with CSS framework upgrades; content classes rarely do.
+   are better selector targets than `.col-md-4` or `.text-red`. Presentational classes change with a CSS framework
+   upgrade. Content classes rarely change.
 5. **Avoid deep positional selectors**: Selectors like `div.content > div:nth-child(2) > p:first-of-type`
    are extremely brittle. A single `<div>` wrapper added by a CMS update will break them.
-6. **Scope selectors to the narrowest useful container**: Start with a broad semantic container (e.g. `article.event`) and select children relative to it. This
-   isolates the scraper from changes elsewhere on the page (navigation, footer, ads).
-7. **Use `:has()` for contextual matching**: Jsoup supports the `:has()` pseudo-class — e.g.
-   `div:has(time[datetime])` selects only divs that contain a `<time>` element, combining structural and semantic targeting.
+6. **Scope selectors to the narrowest useful container**: start with a broad semantic container, such as
+   `article.event`. Select the children relative to it. The scraper is then safe from changes elsewhere on the page —
+   navigation, footer, ads.
+7. **Use `:has()` for contextual matching**: Jsoup supports the `:has()` pseudo-class. `div:has(time[datetime])`
+   selects only the divs that contain a `<time>` element, which combines structural and semantic targeting.
 
 ### Scraping Best Practices
 
@@ -546,40 +574,42 @@ web scraping pitfalls documented in industry literature (see References).
 1. **Respect `robots.txt`**: Before adding a new venue scraper, check the venue's `robots.txt` for crawling rules. If the site disallows scraping of specific
    paths, honour those directives. This avoids legal issues and maintains good relationships with venue operators.
 
-2. **Rate-limit requests — do not overload venue servers**: Venue websites are typically hosted on modest infrastructure (shared WordPress hosting, small VPS).
-   The scraper must introduce delays between requests to avoid overwhelming them. This is enforced globally via `PerHostThrottlingFilter`
-   — a WebClient `ExchangeFilterFunction` that introduces a configurable delay (default: 200ms)
-   between consecutive requests to the same host (see
-   [Per-Host Politeness Throttling](#per-host-politeness-throttling)). Combined with change detection (ETag / Last-Modified), this keeps the load on venue
-   servers negligible. Scraper implementations do not need to manage delays themselves.
+2. **Rate-limit requests**: a venue website usually runs on modest infrastructure — shared WordPress hosting, a small
+   VPS. The scraper must put a delay between requests and never overload the server. `PerHostThrottlingFilter`
+   enforces that globally. It is a WebClient `ExchangeFilterFunction` (see
+   [Per-Host Politeness Throttling](#per-host-politeness-throttling)). It waits a configurable time (200ms by default)
+   between consecutive requests to the same host. With change detection (ETag / Last-Modified) on top, the load on a
+   venue server stays negligible. A scraper implementation manages no delays of its own.
 
-3. **Set a descriptive `User-Agent` header**: Configure WebClient to send a transparent, identifying
-   `User-Agent` string (e.g. `EventJunkie/1.0 (+https://github.com/...)`) so that venue operators can identify the bot and reach out if needed. Do not
-   masquerade as a browser unless a venue specifically blocks non-browser agents and explicit permission has been obtained.
+3. **Set a descriptive `User-Agent` header**: configure WebClient to send a transparent, identifying
+   `User-Agent` string, for example `EventJunkie/1.0 (+https://github.com/...)`. A venue operator can then recognise
+   the bot and contact us. Do not masquerade as a browser. The one exception is a venue that blocks non-browser agents
+   and gives explicit permission.
 
-4. **Handle pattern changes with regression tests**: Venue website redesigns are the most common cause of scraper breakage. Each `EventImporter` should have
-   accompanying unit tests that parse sample HTML snapshots (stored as test resources) and assert the expected extracted data. These tests act as regression
-   guards — when a venue changes their markup, the test fails immediately, pinpointing the broken scraper. Run these tests in CI on every build.
+4. **Handle pattern changes with regression tests**: a venue website redesign is the most common cause of scraper
+   breakage. Each `EventImporter` needs unit tests that parse sample HTML snapshots from the test resources. They
+   assert the data the scraper must extract. When a venue changes its markup, the test fails at once and names the
+   broken scraper. Run these tests in CI on every build.
 
 5. **Validate data quality**: Never blindly persist scraped data. Each `EventImporter.importEvents()` call should validate extracted fields (non-blank title,
    parseable date, valid URL). Log warnings for events that fail validation and exclude them from the import rather than inserting garbage data. Data integrity
    is critical downstream for the BFF and frontend.
 
-6. **Use canonical URLs to avoid duplicate scraping**: Some venue sites expose multiple URLs for the same content (e.g. with/without trailing slash, query
-   parameters, locale prefixes). Normalise URLs before deduplication checks. The existing `sourceId`-based upsert already prevents duplicate events, but
-   canonical URL handling avoids wasting network requests on duplicate pages.
+6. **Use canonical URLs**: one venue site can serve the same content at several URLs. A trailing slash, a query
+   parameter or a locale prefix is enough. Normalise a URL before the deduplication check. The `sourceId`-based upsert
+   already prevents duplicate events, but a canonical URL also saves the network request.
 
 7. **Schedule scrapes during off-peak hours**: Berlin venue websites see most traffic in the evening (visitors checking tonight's events). Schedule imports
    during early-morning hours (e.g. 03:00–06:00 CET) to minimise load during peak visitor times. The per-source `import_interval_minutes` in the
    `event_source` table supports this — set import times via the scheduling mechanism (ADR-008).
 
-8. **Be aware of honeypot traps**: Some sites embed invisible links (hidden via CSS `display: none`
-   or matching the background colour) to detect bots. Scrapers should be cautious about following links discovered dynamically. The current design mitigates
-   this because `EventImporter`
-   implementations only parse known page structures rather than following arbitrary links.
+8. **Be aware of honeypot traps**: some sites embed invisible links to detect a bot. CSS `display: none` or the
+   background colour hides them. Be careful with any link the scraper discovers at run time. The current design is
+   safe, because an `EventImporter` parses known page structures and follows no arbitrary link.
 
-9. **Use the scraped data responsibly**: Event data is scraped for aggregation purposes (showing users what's on in Berlin), not for republishing raw content.
-   Respect venue copyright — store only the structured fields needed (title, date, artists, URL) and link back to the original source for full details.
+9. **Use the scraped data responsibly**: this project aggregates event data to show what is on in Berlin. It does not
+   republish raw content. Respect venue copyright: store only the structured fields you need — title, date, artists,
+   URL. Link to the original source for the full details.
 
 ### Alternatives Considered
 
