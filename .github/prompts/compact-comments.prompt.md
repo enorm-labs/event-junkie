@@ -31,13 +31,20 @@ changes is which of them an unwatched run is allowed to reach.
   repository by construction, and it is the single most attractive target for something optimising for line count.
 - **The baseline only moves down.** If the run cannot lower a number honestly, it leaves the number alone. An unattended run must never argue for a raise,
   because the argument is the part a human makes in the pull request.
-- **Cap the pull request at twelve files, and report the rest.** A whole-tree sweep can reach hundreds; a diff nobody watched being made is one a reviewer has
-  to re-derive from scratch, and past about a dozen files that stops happening. Take the highest-value twelve, list what was left, and let the next run take
-  it. A sweep that converges over four runs is worth more than one unreviewable pull request.
+- **Rank the whole tree, then read at most twenty files, then change at most twelve.** Those are three different numbers and only the last one is about the
+  diff. `--all` names hundreds of files, and reading all of them is how a run exhausts itself before it writes anything — rank first from
+  `comment-density.sh report`, which needs no file opened, and open only the top of that list. Report what was left, and let the next run take it: a sweep that
+  converges over four runs is worth more than one that plans a fifth and delivers none.
 - **`--dry-run`** on top of it opens no pull request and writes the report to the job summary. Use it first, and after any change to this section.
 
 The proof obligation is unchanged and is what makes the workload safe at all: `scripts/comment-density.sh check` and `scripts/comment-lint.sh check` measure the
 result mechanically, and a comment-only change that turns a test red went further than intended.
+
+**Your final message is the report, and there is no second turn.** The run ends the moment you stop calling tools, so a closing line like _"I'll compile the
+report once the checks finish"_ ends it with that sentence as the whole deliverable — and the job still reports success. There is nobody to hand off to and
+nothing to wait for: no reviewer reads the transcript, no follow-up prompt arrives, and any work you plan but do not do in this turn is simply lost. Finish the
+work, then write the Output section below as your last message. This has already happened once, on a `--all` sweep that ended waiting for classification agents
+it had no tool to spawn.
 
 ## Usage
 

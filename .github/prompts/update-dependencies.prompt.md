@@ -36,6 +36,12 @@ the failure worth a scheduled job: a green gate that has stopped meaning anythin
 The proof is the repository's own gates: every pin here is consumed by a workflow that lints or validates something, so a wrong version fails the pull request
 rather than merging quietly.
 
+**Your final message is the report, and there is no second turn.** The run ends the moment you stop calling tools, so a closing line like _"I'll compile the
+report once the checks finish"_ ends it with that sentence as the whole deliverable — and the job still reports success. There is nobody to hand off to and
+nothing to wait for: no reviewer reads the transcript, no follow-up prompt arrives, and any work you plan but do not do in this turn is simply lost. Finish the
+work, then write the Output section below as your last message. This has already happened once, on a `--all` sweep that ended waiting for classification agents
+it had no tool to spawn.
+
 ## Step 1: Generate the Dependency Update Report
 
 Run the Gradle Versions Plugin to detect available updates:
