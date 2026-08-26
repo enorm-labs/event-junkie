@@ -1,10 +1,9 @@
+# comment-lint: allow-file 33 overrides, each of which is a deviation from production that needs its reason.
 # k3d overrides for the local rehearsal (#263): k3d with `--port "8080:80@loadbalancer"`, images
-# side-loaded with `k3d image import`, PostgreSQL on the host in the repository's own compose stack.
-# The full loop is in docs/DEVELOPMENT.md.
-#
-# **The database port and name cannot be checked by rendering the chart.** Both are valid whatever
-# they are, and nothing in the chart knows what is actually listening — compare the rendered URL
-# against `compose.yaml` before installing.
+# side-loaded with `k3d image import`, PostgreSQL on the host in the repository's compose stack. The
+# full loop is in docs/DEVELOPMENT.md. **The database port and name cannot be checked by rendering
+# the chart** — both are valid whatever they are, and nothing in the chart knows what is listening,
+# so compare the rendered URL against `compose.yaml` before installing.
 
 image:
   # Images are side-loaded with `k3d image import`, so there is no registry to pull from. The
@@ -16,23 +15,20 @@ image:
   pullPolicy: "IfNotPresent"
 
 database:
-  # PostgreSQL runs on the host, in the same compose stack local development already uses.
   # `host.k3d.internal` is k3d's built-in name for the host from inside the cluster, injected into
-  # CoreDNS when the cluster is created.
+  # CoreDNS at cluster-create time.
   host: "host.k3d.internal"
   # The container listens on 5432; compose publishes it on the *host* as 56298, and the host is what
   # `host.k3d.internal` resolves to.
   port: 56298
-  # A database of its own, NOT the `event_junkie` that `bootRun` and `scripts/dev-env.sh` use.
-  # Installing this chart runs the importer's Flyway migrations, so pointing it at the development
-  # database would have two importers competing for one schema — over thousands of scraped rows
-  # nobody wants to re-scrape (ADR-007 on politeness). Create it once:
+  # A database of its own, NOT the `event_junkie` that `bootRun` and `scripts/dev-env.sh` use:
+  # installing this chart runs the importer's Flyway migrations, so pointing it at the development
+  # database would have two importers competing for one schema, over thousands of scraped rows
+  # nobody wants to re-scrape (ADR-007 on politeness). `events` is the *schema* inside it, set by
+  # each app via `spring.r2dbc.properties.schema` — a different thing from `database.name`, the
+  # database, which is created once with:
   #
-  #     docker exec event-junkie-postgres-1 psql -U admin -d postgres -c 'CREATE DATABASE event_junkie_k3d OWNER admin'
-  #
-  # `events` is the *schema* inside it, which each app sets itself via
-  # `spring.r2dbc.properties.schema` — the two are different things and the chart's `database.name`
-  # is the database.
+  #     docker exec event-junkie-postgres-1 psql -U admin -d postgres -c 'CREATE DATABASE event_junkie_k3d OWNER admin' 
   name: "event_junkie_k3d"
   # Created before the first install:
   #   kubectl create secret generic events-db \
@@ -43,9 +39,9 @@ bff:
   replicaCount: 1
   image:
     repository: "event-junkie/bff"
-    # A tag that is not `.Chart.AppVersion`, because a locally-built image has no release version.
-    # Not `latest`: the render assertions reject floating tags, and the reason they exist applies to
-    # a laptop too — `latest` is how you spend an afternoon debugging yesterday's build.
+    # Not `.Chart.AppVersion`, a locally-built image having no release version, and not `latest`:
+    # the render assertions reject floating tags, and `latest` is how a laptop spends an afternoon
+    # debugging yesterday's build.
     tag: "dev"
 
 importer:
@@ -70,9 +66,9 @@ ingress:
   # nginx served the mounted file rather than the one baked into the image.
   noindex: true
   tls:
-    # No TLS, and therefore no cert-manager: the rehearsal is about whether the workloads start,
-    # reach the database and route to each other. Certificate issuance would mean installing
-    # cert-manager into k3d and debugging ACME against a name that does not exist.
+    # No TLS, therefore no cert-manager: the rehearsal is about whether the workloads start, reach
+    # the database and route to each other, where issuance would mean installing cert-manager into
+    # k3d and debugging ACME against a name that does not exist.
     enabled: false
 
 certManager:
@@ -82,12 +78,10 @@ certManager:
     create: false
 
 # The rehearsal's PostgreSQL runs in a Docker container on the host, reached through
-# `host.k3d.internal` — an address k3d assigns at cluster-create time and writes into CoreDNS, so it
-# is not knowable when this file is written. `0.0.0.0/0` therefore stands in for it here, and the
-# rule still constrains the **port**: the two JVM services may open 5432 anywhere and nothing else.
-#
-# That is weaker than the /32 the real environments set, and it is the one policy the rehearsal
-# cannot prove tight. Everything else in the set — default-deny, DNS, the ingress controller's two
-# ports, the importer's internet egress, the test hook's pair — is exercised exactly as deployed.
+# `host.k3d.internal` — an address k3d assigns at cluster-create time, so it is not knowable when
+# this file is written. `0.0.0.0/0` stands in for it, and the rule still constrains the **port**: the
+# two JVM services may open 5432 anywhere and nothing else. That is weaker than the /32 the real
+# environments set and the one policy the rehearsal cannot prove tight; everything else in the set is
+# exercised exactly as deployed.
 networkPolicy:
   databaseCidr: "0.0.0.0/0"

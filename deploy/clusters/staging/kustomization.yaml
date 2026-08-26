@@ -1,22 +1,20 @@
 # What Flux syncs for the staging cluster. `flux bootstrap --path=deploy/clusters/staging` points
-# its own Kustomization at this directory, and bootstrap adds a generated `flux-system/` alongside
-# these files — that directory is machine-written, ~2 MB, and must never be hand-edited.
+# its own Kustomization here, and adds a generated `flux-system/` alongside these files — that
+# directory is machine-written, ~2 MB, and must never be hand-edited.
 #
-# Order here is presentational only. Kustomize applies these as one set and Flux does not read the
-# list as a sequence: what actually orders the installs is `dependsOn` inside the HelmReleases —
-# cert-manager, then the webhook, then the application.
+# Order here is presentational only: Kustomize applies these as one set, and what orders the
+# installs is `dependsOn` inside the HelmReleases — cert-manager, the webhook, then the application.
 #
 # **A FILE NOT NAMED IN `resources:` NEVER REACHES THE CLUSTER.** It still renders, still lints and
 # still merges, so the omission is silent. That applies to every entry below and is not repeated.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  # Listing flux-system/ is what makes the cluster self-managing, and it is the one entry the rule
-  # above is easiest to forget: a Flux Kustomization pointing at a directory with no
-  # kustomization.yaml walks it recursively and picks flux-system/ up for free, so adding an explicit
-  # list — as this file does — is what takes it away. Omit it and Flux's own Kustomization is
-  # reconciled by nothing but a `flux bootstrap` re-run, which is how #416's `decryption` patch
-  # merged without ever reaching the cluster.
+  # Listing flux-system/ is what makes the cluster self-managing, and the entry the rule above is
+  # easiest to forget: a Flux Kustomization pointing at a directory with no kustomization.yaml walks
+  # it recursively and picks flux-system/ up for free, so writing an explicit list is what takes it
+  # away. Omit it and Flux's own Kustomization is reconciled by nothing but a `flux bootstrap`
+  # re-run — which is how #416's `decryption` patch merged without ever reaching the cluster.
   - flux-system
   - namespace.yaml
   # The other namespaces, declared rather than left to `createNamespace: true` (#604). A HelmRelease
@@ -37,9 +35,8 @@ resources:
   # Default-deny plus one named allowance per conversation, for the two namespaces that had none
   # (#662). `observability-netpol.yaml` keeps its `openobserve-egress` object under the name
   # `openobserve-netpol.yaml` used, so the containment for `ZO_SKIP_SSRF_CHECKS` is updated in place
-  # rather than deleted and recreated — there is no window in which that flag is set and unbounded.
-  # These are the two entries where omission is worst: an absent policy leaves a namespace that looks
-  # hardened and is not.
+  # rather than recreated — there is no window in which that flag is set and unbounded. Omission is
+  # worst here: an absent policy leaves a namespace that looks hardened and is not.
   - observability-netpol.yaml
   - cert-manager-netpol.yaml
   # The Signal bridge, the collector and PostgreSQL metrics (#271, item 2 for the collector).

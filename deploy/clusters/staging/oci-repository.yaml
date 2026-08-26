@@ -1,3 +1,4 @@
+# comment-lint: allow-file 16 lines of OCIRepository, of which one field failed silently twice.
 # The chart source for staging. #264 publishes it here on every push to `main`.
 #
 # THE ONE FIELD THIS FILE EXISTS FOR IS `semver`, AND IT IS THE ONE THAT FAILS SILENTLY — twice, for
@@ -9,17 +10,15 @@
 # all. Nothing is logged; staging simply stops moving until somebody notices the site is a fortnight
 # old. The `-0` is what admits them. Two characters, and the entire mechanism.
 #
-# **Two: the versions have to order.** A correct range resolves nothing useful if what it ranks is
+# **Two: the versions have to order.** A correct range ranks nothing useful if what it ranks is
 # unordered. SemVer compares alphanumeric prerelease identifiers **lexically** and a short sha is
-# effectively random, so `0.1.0-snapshot.g<sha>` means "whichever sha sorts highest in ASCII" — once
-# resolving the sixth-oldest of ten, three days stale, with a 1-in-16 chance per commit of moving
-# again and every chance of moving backwards (#455). Snapshots are now
-# `0.1.1-snapshot.<utc-timestamp>.g<sha>`: a digits-only identifier compares **numerically**, so the
-# timestamp orders and the sha is a tie-break and a traceability aid. The base version had to move
-# 0.1.0 -> 0.1.1 at the same time, a numeric identifier ranking BELOW an alphanumeric one.
-# `scripts/version-test.sh` asserts the ordering against Helm's own solver and fails if the scheme
-# is reverted. Production needs neither fix: `>=0.1.0` with a numeric-triple filter, and release
-# versions order correctly.
+# effectively random, so `0.1.0-snapshot.g<sha>` meant "whichever sha sorts highest in ASCII" — once
+# resolving the sixth-oldest of ten, three days stale, with every chance of moving backwards (#455).
+# Snapshots are now `0.1.1-snapshot.<utc-timestamp>.g<sha>`: a digits-only identifier compares
+# **numerically**, so the timestamp orders and the sha is a tie-break. The base version had to move
+# 0.1.0 -> 0.1.1 at the same time, a numeric identifier ranking BELOW an alphanumeric one, and
+# `scripts/version-test.sh` asserts the ordering against Helm's own solver. Production needs neither
+# fix: `>=0.1.0` with a numeric-triple filter, and release versions order correctly.
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
 metadata:
@@ -44,9 +43,8 @@ spec:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   # No secretRef: the GHCR packages are public and pull anonymously, which is why the chart's
-  # `image.pullSecrets` is empty too. Making them private would put a classic PAT in this cluster —
-  # GitHub Packages does not support fine-grained tokens — and that token cannot be scoped to one
-  # package. See docs/ops/PLATFORM_SETUP.md §3.
+  # `image.pullSecrets` is empty too. Making them private would put a classic PAT in this cluster,
+  # unscopable to one package, GitHub Packages not supporting fine-grained tokens (PLATFORM_SETUP §3).
   #
   # No `verify:` yet either, and that is the interesting gap: Flux can refuse to reconcile a chart
   # that is not cosign-signed by our own workflow (`spec.verify.provider: cosign` plus

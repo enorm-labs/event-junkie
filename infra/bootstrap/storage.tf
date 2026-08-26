@@ -10,13 +10,10 @@
 # instinct rather than a bug.
 #
 # **An `import` block rather than `tofu import` on the command line.** The CLI form is a state edit
-# that happens immediately and leaves nothing to review; this one appears in `tofu plan` before
-# anything is written, is visible in the diff of this file, and has to be deleted deliberately to
-# stop applying.
-#
-# **Safe to delete once applied** — a block whose target is already in state is a no-op. What must
-# NOT happen is deleting the `resource` block below and leaving this one: that is a bucket nothing
-# manages and nothing reports.
+# that happens immediately and leaves nothing to review; this one shows in `tofu plan` before
+# anything is written and has to be deleted deliberately to stop applying. **Safe to delete once
+# applied** — a block whose target is already in state is a no-op. What must NOT happen is deleting
+# the `resource` block below and leaving this one: a bucket nothing manages and nothing reports.
 import {
   to = minio_s3_bucket.o2
   id = "event-junkie-o2"
@@ -40,13 +37,10 @@ resource "minio_s3_bucket" "o2" {
 #
 # **OpenObserve expires its own data** (`ZO_COMPACT_DATA_RETENTION_DAYS`, 14 days per #271),
 # deleting the Parquet and its file-list entry together. That is the control the privacy notice
-# rests on, and deliberately not this rule: a lifecycle rule alone deletes objects out from under
-# OpenObserve's file list, leaving queries pointing at files that are gone — corruption rather than
-# expiry.
-#
-# **So why have this at all?** The compactor only runs while OpenObserve does. A pod that is down or
-# crash-looping expires nothing and the window quietly becomes "forever" — the failure #586
-# describes for the backup sweep. This rule is the floor that holds then.
+# rests on, deliberately not this rule: a lifecycle rule alone deletes objects out from under
+# OpenObserve's file list, which is corruption rather than expiry. **So why have it?** The compactor
+# runs only while OpenObserve does, and a pod that is down expires nothing — the window quietly
+# becomes "forever", the failure #586 describes for the backup sweep. This is the floor that holds.
 #
 # **90 days, six times the application's 14**, and the gap is the point: it must never be the thing
 # that expires data in normal operation, only the thing that catches a stalled compactor. Narrowing
@@ -105,16 +99,12 @@ resource "minio_s3_bucket" "backups" {
 # #586 — an outage silently extends the window and nothing reports it.
 #
 # **Why 35 and not 30.** The sweep runs `wal-g delete before FIND_FULL <30 days ago>`, keeping the
-# last *full* backup before the cutoff and deleting only what precedes it, so with a daily base
-# backup (`walg-basebackup.timer`) the real window is about 31 days. A rule at exactly 30 would
-# delete that base backup while the WAL segments depending on it survived — not an expiry but an
-# unrestorable gap at the oldest end, which #270's restore drill cannot find because a drill restores
-# something recent.
-#
-# **Why 35 and not 90.** `-o2` affords 90 because OpenObserve's compactor is the control the notice
-# rests on. Here there is no second control, so every day of slack is a day the notice has to admit
-# to: five buys the chain its margin, which is why the notice states 30 ordinarily and 35 as the
-# ceiling.
+# last *full* backup before the cutoff, so with a daily base backup the real window is about 31 days.
+# A rule at exactly 30 would delete that base backup while the WAL segments depending on it survived
+# — an unrestorable gap at the oldest end, which #270's restore drill cannot find because a drill
+# restores something recent. **Why not 90**, as `-o2` affords: there the compactor is the control the
+# notice rests on, and here there is no second control, so every day of slack is a day the notice has
+# to admit to. Five buys the chain its margin; the notice states 30 ordinarily and 35 as the ceiling.
 #
 # **The number is duplicated across stacks and cannot be otherwise.** The sweep's window is
 # `backup_retention_days` in `modules/environment`; a bootstrap-stack rule cannot read it. Move one,

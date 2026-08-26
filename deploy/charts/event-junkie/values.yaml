@@ -1,13 +1,13 @@
-# Default values for the event-junkie chart — production-shaped, per the Helm guide's advice that
-# the defaults should be the ones you would actually run. Two exceptions, both deliberate:
-# `database.host` and `database.existingSecret` are empty because there is no safe default for
-# either, and `certManager.clusterIssuer.server` points at Let's Encrypt *staging* because the
-# default should never be the one that costs seven days when it is wrong (§3.6).
+# Default values for the event-junkie chart — production-shaped, per the Helm guide's advice that the
+# defaults should be the ones you would actually run. Two deliberate exceptions: `database.host` and
+# `database.existingSecret` are empty because there is no safe default for either, and
+# `certManager.clusterIssuer.server` points at Let's Encrypt *staging*, the default never being the
+# one that costs seven days when it is wrong (§3.6).
 #
-# Conventions: camelCase keys, no hyphens, strings quoted. Maps rather than arrays wherever `--set`
+# Conventions: camelCase keys, no hyphens, strings quoted, maps rather than arrays wherever `--set`
 # might touch a value. **A property gets a comment when it has something to say** — a constraint, a
-# trade-off, a failure it avoids — and not otherwise; a key whose name already explains it is left
-# alone. Where a comment could be read against more than one key, it names the one it applies to.
+# trade-off, a failure it avoids — naming the key it applies to where it could be read against more
+# than one.
 
 # nameOverride replaces the chart name in resource names and in `app.kubernetes.io/name`.
 nameOverride: ""
@@ -31,11 +31,11 @@ database:
   # database.name is the database, not the schema; the schema is `events` and is set in each app's
   # own application.yaml.
   name: "events"
-  # database.existingSecret names a Secret that already exists in the release namespace. Required,
-  # and the chart fails to render without it: there is no inline-password path, not even a guarded
-  # one, because a values key that *can* hold a password is one that eventually does, in a file that
-  # gets committed. SOPS-managed Secrets arrive in #416; until then create it out of band with
-  # `kubectl create secret generic <name> --from-literal=username=… --from-literal=password=…`.
+  # database.existingSecret names a Secret already in the release namespace. Required, and the chart
+  # fails to render without it: there is no inline-password path, not even a guarded one, because a
+  # values key that *can* hold a password is one that eventually does in a committed file. Until
+  # SOPS-managed Secrets arrive (#416), create it with `kubectl create secret generic <name>
+  # --from-literal=username=… --from-literal=password=…`.
   existingSecret: ""
   # The key *names* inside that Secret, not the values.
   secretKeys:
@@ -43,14 +43,11 @@ database:
     password: "password"
 
 security:
-  # security.runAsUser must match the UID the images actually run as (#426 builds them), and
+  # security.runAsUser must match the UID the images actually run as (#426), and
   # `scripts/uid-consistency.sh` fails the build when it does not — a mismatch is a pod that cannot
   # read its own files, which does not look like a values problem from the logs. A component may
-  # override it — the frontend's nginx base is the one most likely to differ.
-  #
-  # Above 10000 on purpose (#448): a UID inside the host's own user range lands as a real account if
-  # a container escapes its namespace, and 1000 is the first human user on a Debian-family node.
-  # Nothing maps to 10001, and Trivy's KSV-0020/KSV-0021 check exactly this.
+  # override it. Above 10000 on purpose (#448): a UID inside the host's own user range lands as a
+  # real account if a container escapes its namespace, and Trivy's KSV-0020/KSV-0021 check this.
   runAsUser: 10001
   # security.runAsGroup matches runAsUser for the same reason. It is also the pod's fsGroup.
   runAsGroup: 10001
@@ -93,9 +90,9 @@ bff:
     name: ""
   # bff.podAnnotations carries the Prometheus scrape config (#415, #271). OpenObserve's collector
   # discovers targets by these annotations and nothing else, so a pod without them is invisible to
-  # metrics collection while looking perfectly healthy. **`prometheus.io/port` must equal
-  # `bff.service.managementPort` above** — two values because the annotation is a string and the
-  # port an int, held together by `tests/metrics_test.yaml` so changing one alone fails the chart.
+  # metrics collection while looking healthy. **`prometheus.io/port` must equal
+  # `bff.service.managementPort` above** — two values, the annotation being a string and the port an
+  # int, held together by `tests/metrics_test.yaml`.
   podAnnotations:
     prometheus.io/scrape: "true"
     # The actuator lives on the management port, which no Ingress routes — that is what keeps
@@ -136,11 +133,8 @@ importer:
   serviceAccount:
     create: true
     name: ""
-  # importer.podAnnotations carries the Prometheus scrape config (#415, #271). OpenObserve's collector
-  # discovers targets by these annotations and nothing else, so a pod without them is invisible to
-  # metrics collection while looking perfectly healthy. **`prometheus.io/port` must equal
-  # `importer.service.managementPort` above** — two values because the annotation is a string and the
-  # port an int, held together by `tests/metrics_test.yaml` so changing one alone fails the chart.
+  # importer.podAnnotations carries the Prometheus scrape config, as `bff.podAnnotations` above does
+  # and for the same reasons. **`prometheus.io/port` must equal `importer.service.managementPort`.**
   podAnnotations:
     prometheus.io/scrape: "true"
     # The actuator lives on the management port, which no Ingress routes — that is what keeps
@@ -171,11 +165,10 @@ frontend:
       cpu: "200m"
       # Generous for nginx serving a static bundle.
       memory: "128Mi"
-  # frontend.runAsUser overrides security.runAsUser, and is deliberately left unset: #262's image
-  # is `nginxinc/nginx-unprivileged`, whose own default user is 101, but it was verified to run
-  # correctly as 10001 — read-only root, tmpfs /tmp, clean start, HTTP 200. It writes only to /tmp
-  # and reads only world-readable files. So all three workloads share one UID. This exists for the
-  # case where a future base image cannot.
+  # frontend.runAsUser overrides security.runAsUser and is deliberately unset: #262's
+  # `nginxinc/nginx-unprivileged` defaults to user 101 but was verified to run as 10001 — read-only
+  # root, tmpfs /tmp, HTTP 200 — so all three workloads share one UID. This exists for a future base
+  # image that cannot.
   runAsUser: null
   serviceAccount:
     create: true
@@ -198,38 +191,31 @@ ingress:
   className: "traefik"
   # ingress.host is the name the certificate is issued for and the only name routed to the apps.
   host: "event-junkie.de"
-  # ingress.redirectHosts get a 301 to `ingress.host` and their own certificate — a redirect, not
-  # an alias, and not a wildcard entry. The Middleware's regex is host-agnostic, so every name here
-  # lands on `ingress.host` with its path preserved.
-  #
-  # **`www.event-junkie.de` belongs in this list and not in DNS** — `infra/environments/production`
-  # publishes `www` at the apex's addresses because a CNAME cannot sit at an apex, so the redirect
-  # has to happen here (#634). A published name matching no rule gets Traefik's default 404 over a
-  # certificate never issued for it, and `www.` is a name visitors type.
-  #
-  # Every entry must resolve to this node before the certificate can issue: production solves
-  # HTTP-01, which reaches the host *by name*. The `.com` records are `publish_dns`-gated in the
-  # same apply as the `.de` ones, so all three appear together or not at all.
+  # ingress.redirectHosts get a 301 to `ingress.host` and their own certificate — a redirect, not an
+  # alias, and not a wildcard entry. The Middleware's regex is host-agnostic, so every name here
+  # lands on `ingress.host` with its path preserved. **`www.event-junkie.de` belongs in this list and
+  # not in DNS**: `infra/environments/production` publishes `www` at the apex's addresses, a CNAME
+  # being unable to sit at an apex, so the redirect has to happen here (#634) — and a published name
+  # matching no rule gets Traefik's default 404 over a certificate never issued for it. Every entry
+  # must resolve to this node before the certificate can issue, production solving HTTP-01, which
+  # reaches the host *by name*.
   redirectHosts:
     - "www.event-junkie.de"
     - "event-junkie.com"
     - "www.event-junkie.com"
   # ingress.annotations are merged in after the cert-manager annotation the chart adds itself.
   annotations: {}
-  # ingress.noindex marks an environment as not-production, and renders everything that follows
-  # from that: a Traefik Middleware adding `X-Robots-Tag: noindex, nofollow` to every response
-  # (#265), plus a ConfigMap mounted over the frontend's built `robots.txt` and `sitemap.xml` with
-  # a disallow-all and an empty urlset (#286). Off here because this file is the production
-  # configuration, and production is the one environment that must be indexed.
+  # ingress.noindex marks an environment as not-production and renders everything that follows: a
+  # Traefik Middleware adding `X-Robots-Tag: noindex, nofollow` to every response (#265), plus a
+  # ConfigMap mounted over the frontend's built `robots.txt` and `sitemap.xml` (#286). Off here
+  # because this file is the production configuration.
   #
   # One value rather than two: two switches meaning "not production" can disagree, and they disagree
   # as an environment carrying the header while serving an allow-all robots.txt naming production's
   # sitemap — configured-looking and wrong. The name says `ingress` while half of what it renders is
-  # a pod mount; that is the price of the single switch, and the cheaper mistake.
-  #
-  # Defence in depth rather than the control: staging has no public address, and a crawler cannot
-  # reach what does not resolve. This is for the day somebody adds an A record "just to check
-  # something", where the cost is one header and the failure is a staging site indexed for months.
+  # a pod mount, which is the price of the single switch and the cheaper mistake. It is defence in
+  # depth rather than the control — staging has no public address — for the day somebody adds an A
+  # record "just to check something".
   noindex: false
   tls:
     # ingress.tls.enabled asks cert-manager for a certificate via the ingress-shim annotation.
@@ -242,24 +228,20 @@ ingress:
   securityHeaders:
     enabled: true
     hsts:
-      # ingress.securityHeaders.hsts.maxAgeSeconds is one year, the value the preload list requires
-      # and the one every guide settles on. It is not a free number: for this long, a browser that
-      # has seen the header once will refuse plain HTTP for this host and offers the visitor no way
-      # through. That is the entire point — and it is also why losing TLS becomes an outage rather
-      # than a degradation, so it belongs on a host that has cert-manager renewing automatically,
-      # which this one does.
+      # ingress.securityHeaders.hsts.maxAgeSeconds is one year, what the preload list requires. Not a
+      # free number: for that long a browser that has seen the header once refuses plain HTTP for
+      # this host with no way through, which is the point — and also why losing TLS becomes an outage
+      # rather than a degradation, so it belongs on a host cert-manager renews automatically.
       maxAgeSeconds: 31536000
       # ingress.securityHeaders.hsts.includeSubdomains extends the promise to every subdomain,
       # including ones that do not exist yet. Cheap here because nothing else is served under
       # event-junkie.de; it would have to be reconsidered before putting anything on a subdomain
       # that cannot do TLS.
       includeSubdomains: true
-      # ingress.securityHeaders.hsts.preload is OFF, and this is the one setting here that is
-      # genuinely hard to undo. It asks browsers to ship the HSTS promise *baked in*, so it applies
-      # before the first request rather than after it — and removal takes months to propagate
-      # through browser releases. It also requires submitting the domain to hstspreload.org, which
-      # is a step outside this chart. Worth doing once the domain is settled; not worth doing by
-      # default in a values file.
+      # ingress.securityHeaders.hsts.preload is OFF, the one setting here genuinely hard to undo: it
+      # asks browsers to ship the HSTS promise *baked in*, applying before the first request, and
+      # removal takes months to propagate through browser releases. It also needs the domain
+      # submitted to hstspreload.org, outside this chart. Worth doing once the domain is settled.
       preload: false
     # ingress.securityHeaders.referrerPolicy keeps the origin on cross-site navigations and the full
     # URL on same-site ones. `no-referrer` would be stricter and would also break the one legitimate
@@ -274,11 +256,10 @@ ingress:
 networkPolicy:
   enabled: true
   # networkPolicy.databaseCidr is the /32 of `postgres_ip` from the matching infra stack. Required
-  # when enabled, and REQUIRED SEPARATELY FROM `database.host` because NetworkPolicy speaks CIDRs
-  # and cannot resolve a name. That duplication is the cost of the feature and worth stating: set
-  # the host and forget this, and the pods start, resolve the name, and hang on connect — which
-  # looks like the database being down. The template's `required` turns that into a render error.
-  # Empty here for the same reason `database.host` is: there is no safe default for an address.
+  # when enabled, and SEPARATELY FROM `database.host` because NetworkPolicy speaks CIDRs and cannot
+  # resolve a name — set the host and forget this and the pods start, resolve, then hang on connect,
+  # which looks like the database being down. The template's `required` makes it a render error.
+  # Empty here for the same reason `database.host` is.
   databaseCidr: ""
   dns:
     # networkPolicy.dns.namespaceSelector finds CoreDNS. `kubernetes.io/metadata.name` is set by the
@@ -296,12 +277,9 @@ networkPolicy:
       app.kubernetes.io/name: traefik
   metricsScrape:
     # networkPolicy.metricsScrape lets a metrics collector reach `/actuator/**` on the management
-    # port. Without it the meters are exposed, the pods are annotated, the collector discovers them
-    # — and every scrape is refused, which is the exact state this chart was in until #271 ran it.
-    #
-    # **Note the name.** `scrapeEgress` below is the importer scraping *venue websites*. This is the
-    # opposite direction: something scraping *us*. The two are unrelated despite the shared word, and
-    # confusing them costs an afternoon.
+    # port. Without it the meters are exposed, the pods annotated, the collector discovers them — and
+    # every scrape is refused, the exact state this chart was in until #271 ran it. **Note the
+    # name:** `scrapeEgress` below is the importer scraping *venue websites*, the opposite direction.
     enabled: true
     # The namespace the collector runs in.
     namespace: observability
@@ -311,11 +289,11 @@ networkPolicy:
     # management port to every pod in the cluster — and `/actuator/**` is private precisely because
     # nothing routes it.
     #
-    # `ipBlock` exists because the selector form is silently refused when collector and target sit
-    # on **different nodes**: cross-node pod traffic is SNAT'd, so the source address matches no pod
-    # or namespace selector and only a CIDR does. **Very likely a multi-node artifact rather than a
-    # production one** — ADR-012 puts everything on one node — so the switch is here to make
-    # discovering otherwise a values change rather than an investigation from "metrics stopped".
+    # `ipBlock` exists because the selector form is silently refused when collector and target sit on
+    # **different nodes**: cross-node pod traffic is SNAT'd, so the source matches no pod or namespace
+    # selector and only a CIDR does. Very likely a multi-node artifact — ADR-012 puts everything on
+    # one node — so the switch makes discovering otherwise a values change rather than an
+    # investigation from "metrics stopped".
     mode: namespaceSelector
     # Only read when mode is `ipBlock`. The cluster's pod CIDR.
     cidr: 10.42.0.0/16
@@ -341,11 +319,10 @@ certManager:
     # certManager.clusterIssuer.name is the issuer the ingress annotation points at. It must already
     # exist unless `create` is true.
     name: "letsencrypt-staging"
-    # certManager.clusterIssuer.create renders the ClusterIssuer from this chart. Off by default,
-    # and that is not timidity: a ClusterIssuer is a cluster-scoped singleton, so a chart that owns
-    # one cannot be installed twice on the same cluster — which is exactly what the k3d rehearsal
-    # (#263) wants to do. cert-manager itself is installed separately (#265); this chart ships no
-    # `crds/` directory and `helm install` fails outright if cert-manager is not already present.
+    # certManager.clusterIssuer.create renders the ClusterIssuer from this chart, off by default and
+    # not from timidity: a ClusterIssuer is a cluster-scoped singleton, so a chart owning one cannot
+    # be installed twice on a cluster — exactly what the k3d rehearsal (#263) does. cert-manager is
+    # installed separately (#265) and `helm install` fails outright without it.
     create: false
     # certManager.clusterIssuer.email receives Let's Encrypt expiry warnings.
     email: ""
@@ -358,13 +335,10 @@ certManager:
     dns01:
       tokenSecret:
         # certManager.clusterIssuer.dns01.tokenSecret.name holds a **Hetzner Cloud** API token with
-        # read+write, read by the webhook #265 installs. Not created by this chart, and — because
-        # this is a ClusterIssuer — it must live in cert-manager's own namespace rather than the
-        # release's. A ClusterIssuer resolves secret references against the cluster resource
+        # read+write (not a `dns.hetzner.com` one, that API having been shut down), read by the
+        # webhook #265 installs. Not created by this chart, and — this being a ClusterIssuer — it
+        # must live in cert-manager's own namespace: references resolve against the cluster resource
         # namespace, so a token sitting next to the workloads is simply not found.
-        #
-        # Not a `dns.hetzner.com` token: that API and its console were shut down in May 2026 and
-        # those tokens no longer work anywhere. Issue this one in the Hetzner Console.
         name: "hetzner"
         key: "token"
       # certManager.clusterIssuer.dns01.webhookGroupName is the webhook's API group. `.com`, which

@@ -109,7 +109,8 @@ Suppress it, with a reason, on the declaration:
 
 - `@Suppress("LongComment")` for Kotlin, on the declaration the block documents.
 - `// eslint-disable-next-line event-junkie/max-comment-lines — <reason>` for TS and Vue.
-- `# comment-lint: allow <reason>` on the line above the block, for Terraform, shell, YAML and Python. A bare directive is itself a violation.
+- `# comment-lint: allow <reason>` on the line above the block, for Terraform, shell, YAML and Python — or `# comment-lint: allow-file <reason>` anywhere in
+  the file to accept its density, for a declarative file whose every line needs a reason. A bare directive is itself a violation.
 
 A suppression is an explicit decision a reviewer can see. **Two or three across a sweep is a judgement call; a dozen means the sweep gave up** — say so plainly
 rather than shipping the count.

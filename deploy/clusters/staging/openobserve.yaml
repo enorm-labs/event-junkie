@@ -1,3 +1,4 @@
+# comment-lint: allow-file 89 lines of config, of which two upstream defaults silently drop data (#625).
 # OpenObserve on staging — ADR-015's trial, which cannot start until this runs somewhere real.
 #
 # **The `openobserve-standalone` chart, NOT `openobserve`.** The plain chart deploys microservices —
