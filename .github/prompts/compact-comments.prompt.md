@@ -51,9 +51,13 @@ exactly what cannot be checked after the fact. Show the command and its output �
 next run, can re-run it and get the same number. This is the rule [`/codebase-audit`](codebase-audit.prompt.md) already applies: every claim backed by a
 concrete file, count or command output.
 
-**A zero needs its evidence most of all.** "Nothing to do here" is the finding nobody checks and the one that ends the run early. Two runs of this prompt
-minutes apart once disagreed about whether a pattern still existed in the tree — both reports were confident, well formatted, and one of them was wrong. The
-command output is the only part of a report that cannot be plausible and false at the same time.
+**A zero needs its evidence, and so does every other number.** "Nothing to do here" is the finding nobody checks and the one that ends the run early. But the
+rule is not "prove the zeros" — a run that carried a command for each of its zeros and none for its one non-zero count reported three candidates where the tree
+held fifty-seven, and the count with no command behind it was the only one that was wrong. **A number you did not produce with a command is a guess, whatever
+its size**, and a guess in a section headed _"reported for a human"_ is the one a human acts on.
+
+Two runs of this prompt minutes apart once disagreed about whether a pattern still existed at all. Both reports were confident, well formatted, and one of them
+was wrong. The command output is the only part of a report that cannot be plausible and false at the same time.
 
 ## Usage
 
@@ -158,6 +162,16 @@ Suppress it, with a reason, on the declaration:
 
 A suppression is an explicit decision a reviewer can see. **Two or three across a sweep is a judgement call; a dozen means the sweep gave up** — say so plainly
 rather than shipping the count.
+
+### 7. Ship it
+
+**An edit that is not committed is an edit that did not happen.** This skill changes files, and a change left in the working tree is lost the moment the session
+ends — on a runner that is the end of the job, and the run still reports success. Every other acting prompt here ends this way for the same reason.
+
+Then [`/open-pr`](open-pr.prompt.md), with the bucket table from Output below as the body, and the baseline drop named in the subject when there is one.
+
+**If nothing was applied, ship nothing and say so.** A pull request with no diff is worse than no pull request: it costs a review and teaches the reader that
+these are noise. A sweep that found only RELOCATE and KEEP has done its job by reporting them.
 
 ## Output
 
