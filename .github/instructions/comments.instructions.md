@@ -78,9 +78,11 @@ Lint enforces the mechanical half of this; the rest is review.
     - **Adding or editing a rule in `:detekt-rules` needs `./gradlew --stop` before it will run.** The daemon caches the plugin classloader, so a new rule is
       silently absent and an edited one silently keeps its old behaviour — detekt passes, reports the previous verdict, and nothing says why. It is not a
       config error and no amount of `--rerun-tasks` clears it.
-    - **`LongComment` counts every line of the block except blank `*` separators** (#741). Charging a comment for its paragraph breaks made the same words
-      cheaper written as one wall of text, which is the rule rewarding the worse of two formattings. Delimiters and `@see` lines still count, so 25 is the
-      whole block a reader scrolls past, minus the breaks that make it scrollable.
+    - **A block's length is its lines that carry something.** Blank `*` and `#` separators between paragraphs do not count, in `LongComment` (#741) and in
+      `comment-lint.sh` (#750) alike: charging a comment for its paragraph breaks made the same words cheaper written as one wall of text, which is a rule
+      rewarding the worse of two formattings. Delimiters, indentation and `@see` lines still count, so 25 is the whole block a reader scrolls past minus the
+      breaks that make it scrollable. **Density is measured differently, deliberately** — all three implementations count a blank comment line in both halves
+      of the ratio, so paragraphing does not move it.
     - **The one place length is welcome is a deliberate trade-off — and even there, compress the words, not the reasoning.** Venue scraper KDoc carries the
       shape of a hand-authored source: the markup sample, the trap, the counterexample that made a rule necessary. That prose is load-bearing and a
       `@Suppress("LongComment")` with a reason is the right answer for it. What the venue does not publish is _not_ prose any more — it is a

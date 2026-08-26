@@ -36,6 +36,13 @@ jobs:
       - name: Check comment rules for Terraform, shell, YAML and Python
         run: scripts/comment-lint.sh check
 
+      # Runs after the check rather than before it, so a real violation is the first thing in the
+      # log. This asserts what the linter counts — a rule that silently starts measuring something
+      # else still reports zero findings, which is how the block cap spent months charging a comment
+      # for its own paragraph breaks (#750).
+      - name: Assert what comment-lint.sh counts
+        run: scripts/comment-lint-test.sh
+
       - name: Explain the fix
         if: failure()
         run: |
