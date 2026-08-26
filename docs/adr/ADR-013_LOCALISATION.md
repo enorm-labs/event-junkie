@@ -16,9 +16,9 @@ The site is English-only today. It targets Berlin, an audience that is heavily i
 a German controller operates it under German law. Two forces make German non-optional rather than a nice-to-have:
 
 1. **Audience.** A Berlin events guide that cannot be read in German excludes a large part of the city it is about.
-2. **Law.** [LEGAL.md §6.1](../LEGAL.md) chose English-only legal pages on one explicit condition: _German legal
-   pages ship in the same release as German UI_. Picture an English-only imprint on a site that presents itself in
-   German. That is where the Art. 12 GDPR "clear and plain language" argument turns against us.
+2. **Law.** [LEGAL.md §6.1](../LEGAL.md) chose English-only legal pages on one condition. _German legal pages ship in
+   the same release as German UI._ Picture an English-only imprint on a site that speaks German. That
+   is where the Art. 12 GDPR "clear and plain language" argument turns against us.
 
 The scale is what makes this ADR worth writing. 20 of 29 `.vue` files carry user-facing text (~145 literal strings),
 and 7 TypeScript modules do too. About 82 e2e assertions address elements by their English accessible name.

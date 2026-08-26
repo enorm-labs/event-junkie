@@ -111,7 +111,7 @@ Java bytecode is vendor-neutral and both are OpenJDK builds. BellSoft states Lib
 certified OpenJDK build and running on another is ordinary practice, not a compromise.
 
 **The cost of that split is stated plainly rather than waved away.** A JVM-level difference between the two vendors
-would appear only at runtime, in staging or production, and never in a local build or a unit test. That is a genuine
+would appear only at runtime, in staging or production, and never in a local build. That is a genuine
 new failure mode. It is why the implementation is gated on a k3d rehearsal that runs the real image, plus the chart's
 in-cluster `helm test`. A chart render would not do.
 
