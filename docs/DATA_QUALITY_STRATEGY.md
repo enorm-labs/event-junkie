@@ -1,11 +1,21 @@
 # Importer — Data Quality Strategy
 
-How we fix the data-quality gaps we have and prevent new ones from accumulating. This is the **strategy / plan**; the actionable backlog lives in the
-[issue tracker](https://github.com/enorm-labs/event-junkie/issues) and each importer's accepted limitations in its
-own scraper KDoc. Where this doc names work to do, **the authoritative task is the issue** and this doc points at it — the two must not drift.
+How we fix the data-quality gaps we have and prevent new ones from accumulating. This is the **strategy / plan**. The
+actionable backlog lives in the [issue tracker](https://github.com/enorm-labs/event-junkie/issues), and each
+importer's accepted limitations in its own scraper KDoc. Where this doc names work to do, **the authoritative task is
+the issue** and this doc points at it. The two must not drift.
 
 Related: [ADR-007 Web Scraping Strategy](adr/ADR-007_WEB_SCRAPING_STRATEGY.md) ·
 [EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md) · [DATA_MODEL.md](DATA_MODEL.md).
+
+## The short version
+
+Four pillars, in order: **Measure**, **Prevent**, **Fix**, **Systematize** (§5). Pillar 1 shipped, so the numbers now
+exist per source. Nothing yet _fails_ when a metric regresses, and that gate is the next thing worth building.
+
+The measuring came first on purpose, and §1.3 is why. This document asserted in prose that ~40% of concerts carried no
+artist. The first real query put it at **3.5%**. A strategy whose headline problem is ten times smaller than stated
+prioritises the wrong pillar.
 
 ---
 
@@ -24,15 +34,15 @@ Data quality is enforced by **deterministic, curated-list normalizers applied at
 This is sound, cheap, and fast — and it should stay the first pass. But it has three _structural_ weaknesses that adding more curated entries will never
 resolve:
 
-1. **It is reactive.** Every mechanism ("handled case-by-case as they surface",
-   "new ones need an entry", "slip through until denylisted") only catches values we have _already seen_. Newly-seen bad data always lands in the DB first and
-   is corrected later, if ever.
-2. **The feedback loop is open.** The curation signal already exists — the
-   `Dropping non-genre token '…'` logs (`GenreNormalizer.kt`), artist-less concerts, `OTHER`-typed events — but nothing routes it back to a human. The curation
+1. **It is reactive.** Every mechanism catches only a value we saw before. The phrasings give it away: "handled
+   case-by-case as they surface", "new ones need an entry", "slip through until denylisted". Newly-seen bad data
+   lands in the DB first, and is corrected later, if ever.
+2. **The feedback loop is open.** The curation signal already exists: the `Dropping non-genre token '…'` logs
+   (`GenreNormalizer.kt`), artist-less concerts, `OTHER`-typed events. Nothing routes it back to a human. The curation
    queue is invisible, so the curated lists only grow when someone happens to notice a bad row.
 3. ~~**There is no measurement and no gate.**~~ **Half-resolved 2026-08-19.** Pillar 1 shipped as
    `de.norm.events.dataquality`. The numbers exist per source, with a `data_quality_snapshot` history, so a trend is
-   visible. **The gate half is still open**: nothing fails when a change regresses a metric, so quality is now
+   visible. **The gate half is still open.** Nothing fails when a change regresses a metric, so quality is now
    _observed_ but still not _enforced_.
 
 ~~The single largest _fix_ opportunity is already identified: **~40% of `CONCERT` events carry no artist**~~ — **superseded by measurement, 2026-08-21.**
@@ -40,9 +50,10 @@ resolve:
 Counted against staging's 3,409 events, the number is **3.5%**: 74 artist-less concerts out of 2,128, with 119 events typed `OTHER`. Title-as-headliner
 extraction is now used by 49 scrapers rather than being disabled at the three venues this paragraph named.
 
-**The order-of-magnitude gap between the estimate and the measurement is the point of §1.3**, not a footnote to it. This document asserted ~40% in prose, that
-figure survived unchallenged into planning, and the first thing an actual query did was refute it. A strategy whose headline problem is ten times smaller than
-stated is one that prioritises the wrong pillar — which is precisely the argument for measuring first.
+**The order-of-magnitude gap between the estimate and the measurement is the point of §1.3**, not a footnote to it.
+This document asserted ~40% in prose, that figure survived unchallenged into planning, and the first thing an actual
+query did was refute it. A strategy whose headline problem is ten times smaller than stated prioritises the wrong
+pillar. That is precisely the argument for measuring first.
 
 ## 2. What data-quality issues _are_ — a shared taxonomy
 
@@ -92,7 +103,8 @@ Applied to the current catalogue:
 | 4    | Promoter/artist residual variants | Consistency  | 🟠     | low          | Curated map via curation queue          |
 | 5    | Missing price / time / promoter   | Completeness | 🟠🟢   | source-bound | Mostly _accept & document_ — low ROI    |
 
-The lesson: deterministic-and-ready work goes first (headliner); classifier-needed work waits for Pillar 4; source-limited items get _accepted_, not chased.
+The lesson: deterministic-and-ready work goes first, as the headliner extraction did. Classifier-needed work waits
+for Pillar 4. A source-limited item is _accepted_, not chased.
 
 ## 3. Principles
 
@@ -101,8 +113,8 @@ The lesson: deterministic-and-ready work goes first (headliner); classifier-need
 - **Measure before you change.** No normalizer change ships without a baseline number and a golden test that would catch its regression.
 - **Close the loop.** Every value the pipeline drops or can't classify becomes a visible curation item, not a silent log line.
 - **Preserve the raw.** Normalization is additive — the raw scraped text stays on the event (as `genre` already does), so re-processing is always possible.
-- **Fix at the boundary, backfill separately.** New imports are corrected at the mapping boundary; already-persisted bad rows are recovered by explicit backfill
-  passes, never by silently mutating on read.
+- **Fix at the boundary, backfill separately.** New imports are corrected at the mapping boundary. An
+  already-persisted bad row is recovered by an explicit backfill pass, never by silently mutating on read.
 
 ## 4. Tooling: patterns, not platforms
 
@@ -141,16 +153,17 @@ Ordered deliberately: get a baseline and a safety net _before_ changing extracti
 
 The keystone. Everything else is judged against these numbers.
 
-- **Data-quality report.** A `GET /api/admin/data-quality` endpoint (plus a scheduled summary log and Micrometer gauges) reporting, per event source:
-  concerts with no artist, events typed `OTHER`, events missing genre / promoter / price / start time, and titles that look like non-artist names still stored
-  as artists.
-- **Curation queue (API-first).** Promote the existing drop/degrade signals (`Dropping non-genre token`, artist-less events, detail-fetch fallbacks) into an
-  explicit, queryable **worklist endpoint** — the raw material for growing
-  `NON_ARTIST_NAMES`, `NAME_CORRECTIONS`, and the genre synonym map. No bespoke frontend yet (see §7): stewards act on the worklist via the existing
-  `PUT /api/admin/events/{id}` API / Swagger / `.http` files.
+- **Data-quality report.** A `GET /api/admin/data-quality` endpoint, plus a scheduled summary log and Micrometer
+  gauges. Per event source it reports concerts with no artist, events typed `OTHER`, and events missing genre,
+  promoter, price or start time. It also reports titles that look like non-artist names and are still stored as
+  artists.
+- **Curation queue (API-first).** Promote the existing drop and degrade signals into an explicit, queryable **worklist
+  endpoint** — `Dropping non-genre token`, artist-less events, detail-fetch fallbacks. That is the raw material for
+  growing `NON_ARTIST_NAMES`, `NAME_CORRECTIONS` and the genre synonym map. No bespoke frontend yet (see §7). A
+  steward acts on the worklist through the existing `PUT /api/admin/events/{id}` API, Swagger and `.http` files.
 
-_Exit criterion:_ a per-source number for each headline metric, chartable in an external BI tool (§4), so Pillars 3–4 can be judged by whether those numbers
-move.
+_Exit criterion:_ a per-source number for each headline metric, chartable in an external BI tool (§4). Pillars 3–4 are
+then judged by whether those numbers move.
 
 _Shipped 2026-08-19_ as `de.norm.events.dataquality` in `events-importer`, closing
 [#319](https://github.com/enorm-labs/event-junkie/issues/319). Three definitions were settled in the build and are
@@ -170,30 +183,33 @@ worth knowing before reading a number:
 - **Golden fixture tests.** Freeze real scraped HTML snippets whose current output is correct (`THE BUTLERS - 40 YEARS … → The Butlers`,
   `GREEN LUNG → Green Lung`,
   `Tango or NonTango → Tango`) so a normalizer tweak that breaks them fails CI. These become the regression net for all four normalizers.
-- **Validation gate at the boundary.** A lightweight check in the mapping boundary that flags/rejects obviously-bad output instead of persisting it silently:
-  empty artist after stripping, artist identical to a known non-artist pattern, a genre token that is a whole event title. Flagged rows feed the Pillar 1
-  curation queue.
+- **Validation gate at the boundary.** A lightweight check in the mapping boundary flags or rejects obviously-bad
+  output instead of persisting it silently. An empty artist after stripping, an artist identical to a known non-artist
+  pattern, a genre token that is a whole event title. Flagged rows feed the Pillar 1 curation queue.
 
 ### Pillar 3 — Fix (recover missing / bad data) 🔴 highest user-visible payoff
 
 - **Title-as-headliner extraction** for Privatclub, Cassiopeia, and Badehaus — the
   work in [issue #321](https://github.com/enorm-labs/event-junkie/issues/321) that reclaims the ~40% of artist-less concerts. Now safe:
   `isNonArtistName` + `stripArtistSuffix` guard against non-artist titles, and Astra/Lido already do exactly this via `buildArtistsForEventType`.
-- **One-off backfill pass** over existing rows for the same recoverable fields (artist from title, event type from title heuristics), run once after the
-  extraction ships so historical rows benefit too.
+- **One-off backfill pass** over existing rows for the same recoverable fields — artist from title, event type from
+  title heuristics. Run it once after the extraction ships, so historical rows benefit too.
 
 ### Pillar 4 — Systematize (escape the curated-list treadmill) 🔵 biggest lever
 
-The general answer to weakness #1. An **LLM-assisted enrichment stage that runs _after_ the deterministic normalizers**, handling only the long tail they can't:
-title → artist extraction, event-type validation, genre / missing-field enrichment, and bad-value correction (artist and promoter names).
+The general answer to weakness #1. An **LLM-assisted enrichment stage that runs _after_ the deterministic
+normalizers**, handling only the long tail they cannot. That tail is title → artist extraction, event-type validation,
+genre and missing-field enrichment, and bad-value correction for artist and promoter names.
 
-- Deterministic rules stay the fast, free, first pass; the model is the fallback, not the front door.
-- Human-in-the-loop: a steward confirms/corrects model output (via the API now, a frontend later — §7); confirmed corrections feed back into the curated
-  vocabulary — closing the loop Pillar 1 opened. This is where the _curated-vocab storage_ decision (§6) bites: live steward fixes need the vocab to be data.
-- **Requires its own ADR — _AI-Assisted Data Quality_** (unnumbered until written; see the numbering note in [AGENTS.md](../AGENTS.md)): it introduces a new
-  external dependency, per-import cost and latency, and non-deterministic output, all of which interact with the scraping-pipeline decisions in ADR-007. Scope
-  for the ADR: model/provider choice, where the stage sits in the pipeline, caching/idempotency, cost controls, and how model output is reconciled with the
-  deterministic layer and the human review step.
+- Deterministic rules stay the fast, free, first pass. The model is the fallback, not the front door.
+- Human-in-the-loop. A steward confirms or corrects model output, through the API now and a frontend later (§7). A
+  confirmed correction feeds back into the curated vocabulary, which closes the loop Pillar 1 opened. This is where
+  the _curated-vocab storage_ decision (§6) bites: a live steward fix needs the vocab to be data.
+- **Requires its own ADR — _AI-Assisted Data Quality_**, unnumbered until written (see the numbering note in
+  [AGENTS.md](../AGENTS.md)). It introduces a new external dependency, per-import cost and latency, and
+  non-deterministic output. All three interact with the scraping-pipeline decisions in ADR-007. The ADR's scope is
+  the model and provider choice, where the stage sits in the pipeline, caching and idempotency, and cost controls. It
+  also covers how model output is reconciled with the deterministic layer and the human review step.
 
 ## 6. Open decisions
 
@@ -201,22 +217,26 @@ These are recorded, not yet resolved — settle them before the pillar that need
 
 - **Curated-vocabulary storage — code vs. data (ADR candidate).** Today the denylists / synonym maps / corrections (`NON_ARTIST_NAMES`, `NAME_CORRECTIONS`,
   genre synonyms, `ACRONYMS`) are hardcoded Kotlin `Set`/`Map`s. A steward fixing an issue therefore means a code edit + PR + redeploy.
-    - _Keep as code:_ versioned, unit-tested, PR-reviewed — but every fix is a deploy.
-    - _Promote to DB tables (steward-editable):_ fixes land instantly and close the loop — but loses PR review/testing of vocab changes and adds
-      cache-invalidation.
-    - _Direction:_ undecided; spike + ADR before Pillar 4's human-in-the-loop needs live editing. Blocks nothing in Pillars 1–3.
-- **Fix / curation surface — API-only for now.** Ship the DQ report + worklist endpoints; stewards fix via the existing `PUT /api/admin/events/{id}` API,
-  Swagger, and `.http` files. A dedicated review frontend is deferred to the backlogged _"Admin frontend to review, enrich & fix event data"_ item — the DQ work
-  provides the _signal_, that frontend will provide the _fix surface_. Avoid building a second admin app.
-- **Dashboard — external BI tool, not a bespoke UI** (§4). Reuse the backlogged Superset/Grafana/Kibana item; Pillar 1 exposes metrics in a shape those tools
-  consume.
+    - _Keep as code:_ versioned, unit-tested and PR-reviewed, but every fix is a deploy.
+    - _Promote to DB tables (steward-editable):_ a fix lands instantly and closes the loop. It loses PR review and
+      testing of vocab changes, and it adds cache invalidation.
+    - _Direction:_ undecided. Spike and write the ADR before Pillar 4's human-in-the-loop needs live editing. Blocks
+      nothing in Pillars 1–3.
+- **Fix / curation surface — API-only for now.** Ship the DQ report and worklist endpoints. A steward fixes through
+  the existing `PUT /api/admin/events/{id}` API, Swagger and `.http` files. A dedicated review frontend is deferred to
+  the backlogged _"Admin frontend to review, enrich & fix event data"_ item. The DQ work provides the _signal_, and
+  that frontend will provide the _fix surface_. Avoid building a second admin app.
+- **Dashboard — external BI tool, not a bespoke UI** (§4). Reuse the backlogged Superset/Grafana/Kibana item. Pillar 1
+  exposes metrics in a shape those tools consume.
 
 ## 7. Sequencing
 
 1. **Pillar 1** — data-quality report + worklist endpoints. Fast, low-risk, and it baselines everything after it.
 2. **Pillar 2** — golden fixture tests + boundary validation gate. The safety net that de-risks touching the normalizers.
-3. **Pillar 3** — title-as-headliner extraction + backfill. Highest immediate user-visible gain; safe once Pillar 2 exists.
-4. **Pillar 4** — AI-assisted enrichment + steward review. Largest lever and most effort; gated on the _AI-Assisted Data Quality_ ADR (§5) and the §6
+3. **Pillar 3** — title-as-headliner extraction + backfill. The highest immediate user-visible gain, and safe once
+   Pillar 2 exists.
+4. **Pillar 4** — AI-assisted enrichment + steward review. The largest lever and the most effort. Gated on the
+   _AI-Assisted Data Quality_ ADR (§5) and the §6
    vocab-storage decision.
 
 ## 8. Success metrics
@@ -234,5 +254,6 @@ Tracked via the Pillar 1 report, per source and overall, and charted over time i
 The four pillars are issues [#319](https://github.com/enorm-labs/event-junkie/issues/319) (Measure),
 [#320](https://github.com/enorm-labs/event-junkie/issues/320) (Prevent), [#321](https://github.com/enorm-labs/event-junkie/issues/321) (Fix) and
 [#322](https://github.com/enorm-labs/event-junkie/issues/322) (Systematize). The admin review frontend and imports-status dashboard are
-[#340](https://github.com/enorm-labs/event-junkie/issues/340) and its sub-issues; the Superset/Grafana dashboard (§4) is
-[#386](https://github.com/enorm-labs/event-junkie/issues/386). This doc is the _why and in what order_; the issues are the _what_.
+[#340](https://github.com/enorm-labs/event-junkie/issues/340) and its sub-issues. The Superset/Grafana dashboard (§4)
+is [#386](https://github.com/enorm-labs/event-junkie/issues/386). This doc is the _why and in what order_, and the
+issues are the _what_.
