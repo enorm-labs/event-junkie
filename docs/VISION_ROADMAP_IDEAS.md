@@ -142,9 +142,9 @@ Turn discovery into a network and open the data up. → **[Phase 4 — Social & 
   includes **importing the artists someone already follows there** in one step, which is the fastest way to make a new
   account useful. Facebook Events and Pages were in the original idea list, from the era when the Graph API was open.
   Check what Facebook still permits before planning anything on it.
-- A club map showing events nearby. An iCal export, and **calendar subscriptions that stay in sync** — an ICS feed
-  per follow or saved search, so a new matching event lands in Google Calendar without a manual export. And a public
-  API with API management.
+- A club map showing events nearby. An iCal export, and **calendar subscriptions that stay in sync**. That is an ICS
+  feed per follow or saved search, so a new matching event lands in Google Calendar without a manual export. And a
+  public API with API management.
 
 ### Phase 5 — Beyond Berlin 🌍 _(bigger bets)_
 
