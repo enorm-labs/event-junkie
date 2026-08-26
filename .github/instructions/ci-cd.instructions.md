@@ -95,7 +95,13 @@ What each workflow is for, which checks are required, and the shapes that fail s
       which is the exposure the pull request body already carries by design — so it is a decision rather than an oversight, recorded here rather than four times. **A step summary has no REST API**, so each workflow also extracts the final
       report from the action's `execution_file` output and uploads it as an `agent-report` artifact — otherwise a weekly scheduled report would exist only as a
       browser page nobody opens. Only the final report is extracted, never the file itself: it holds every tool result, which is the thing
-      `show_full_output`'s warning is about. A shape change in that file produces an empty artifact with an explanatory line, not a red job.
+      `show_full_output`'s warning is about. A shape change in that file produces an empty artifact with an explanatory line, not a red job. **A run that produced no report then fails the job**, which is the
+      guard the rest of this family kept needing. The agent's turn ends when it stops calling tools, so a closing line — "I'll compile the report once the
+      checks finish" — reports success and delivers a sentence; that happened once, on an `--all` sweep that ended waiting for classification agents it had no
+      tool to spawn. The check is under 400 bytes or fewer than five lines, measured against real output: the observed stub was 105 bytes on one line and a real
+      report 5,207 bytes over 62. It runs **after** the upload so the stub survives for diagnosis, and only when the agent step itself succeeded, because a
+      failure above is already red for a better reason. Every prompt's unattended section now also states the contract directly — the final message _is_ the
+      report, and there is no second turn.
     - `agent-refactor.yml` — the `/refactor` workload, and the one whose prompt was written for this (#389, `.github/prompts/refactor.prompt.md`).
       Behaviour-preserving changes only, with the test suite as the proof. **`--unattended` fences it away from shared normalization** — `SlugGenerator`,
       `GenreNormalizer`, `ArtistNameMapping`, `MoneyExtensions` — because a change there compiles, passes the whole suite, and still changes the rows that land

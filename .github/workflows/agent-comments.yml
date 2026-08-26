@@ -119,3 +119,21 @@ jobs:
         with:
           name: agent-report
           path: agent-report.md
+
+      # **A run that produced no report is a failed run, whatever its exit code.** The agent's turn
+      # ends when it stops calling tools, so a closing line like "I'll compile the report once the
+      # checks finish" reports success and delivers a sentence. That has happened once already.
+      # This runs after the upload on purpose: the stub is preserved for diagnosis, then the job goes
+      # red. Guarded on the agent step succeeding, because a failure above is already red for a
+      # better reason.
+      - name: Fail if the report is a stub
+        if: steps.claude.outcome == 'success'
+        run: |
+          set -euo pipefail
+          bytes=$(wc -c < agent-report.md)
+          lines=$(wc -l < agent-report.md)
+          if [ "$bytes" -lt 400 ] || [ "$lines" -lt 5 ]; then
+            echo "::error::The agent reported success but wrote no report ($bytes bytes, $lines lines). See the agent-report artifact."
+            cat agent-report.md
+            exit 1
+          fi

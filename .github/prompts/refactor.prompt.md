@@ -105,6 +105,12 @@ made. Three of the rules above stop being advice and become hard limits.
 `--dry-run` on top of it opens no pull request and writes the whole report to the job summary. That is the mode to use first, and after any change to this
 section.
 
+**Your final message is the report, and there is no second turn.** The run ends the moment you stop calling tools, so a closing line like _"I'll compile the
+report once the checks finish"_ ends it with that sentence as the whole deliverable — and the job still reports success. There is nobody to hand off to and
+nothing to wait for: no reviewer reads the transcript, no follow-up prompt arrives, and any work you plan but do not do in this turn is simply lost. Finish the
+work, then write the Output section below as your last message. This has already happened once, on a `--all` sweep that ended waiting for classification agents
+it had no tool to spawn.
+
 ## Output
 
 Lead with the shape, not the file list:
