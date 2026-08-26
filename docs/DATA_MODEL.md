@@ -3,13 +3,17 @@
 The domain model: what is stored, and how the pieces relate. It exists to capture music events scraped from Berlin venue websites — every source is listed in
 [EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md).
 
-**The shape, in one paragraph.** An `event` belongs to one `venue` and links to `artist`, `promoter` and `genre_tag` through join tables. `event.sourceId` is
-what makes imports idempotent — an upsert keyed on it, not on the title. `event_source` holds the per-venue import configuration and the conditional-request
-headers (ETag, Last-Modified) that let an unchanged page cost one 304.
+## The short version
 
-**Everything lives in the `events` schema, never `public`**, and the name comes from the `EVENTS_SCHEMA` constant in `events-core` rather than from a YAML
-property — see [ADR-004](adr/ADR-004_DEDICATED_DATABASE_SCHEMA.md) and [.github/instructions/architecture.instructions.md](../.github/instructions/architecture.instructions.md). Migrations are owned by the importer
-([ADR-005](adr/ADR-005_MIGRATIONS_OWNED_BY_IMPORTER.md)).
+An `event` belongs to one `venue` and links to `artist`, `promoter` and `genre_tag` through join tables.
+`event.sourceId` is what makes imports idempotent — an upsert keyed on it, not on the title. `event_source` holds the
+per-venue import configuration and the conditional-request headers (ETag, Last-Modified) that let an unchanged page
+cost one 304.
+
+**Everything lives in the `events` schema, never `public`.** The name comes from the `EVENTS_SCHEMA` constant in
+`events-core`, not from a YAML property. See [ADR-004](adr/ADR-004_DEDICATED_DATABASE_SCHEMA.md) and
+[.github/instructions/architecture.instructions.md](../.github/instructions/architecture.instructions.md). Migrations
+are owned by the importer ([ADR-005](adr/ADR-005_MIGRATIONS_OWNED_BY_IMPORTER.md)).
 
 ## Class Diagram
 
@@ -234,8 +238,9 @@ Represents an event promoter or presenter. Shared across events and venues.
 
 ### event_artist (Join Table / LineupEntry)
 
-Links events to artists with role and billing order to model the lineup. In the domain model this is represented by the `LineupEntry` class which holds a full
-`Artist` object; the persistence layer (`EventArtistEntity`) maps to this join table using foreign keys.
+Links events to artists with role and billing order to model the lineup. In the domain model the `LineupEntry` class
+represents this, and it holds a full `Artist` object. The persistence layer (`EventArtistEntity`) maps to this join
+table with foreign keys.
 
 | Field           | Type        | Nullable | Description                         | Example     |
 | --------------- | ----------- | -------- | ----------------------------------- | ----------- |
@@ -261,7 +266,7 @@ Composite primary key `(event_id, promoter_id)`.
 ### GenreTag
 
 Represents a normalized music genre label used for structured filtering. Genre tags are auto-created during event imports from the raw genre text on events. The
-raw text is preserved for display; these tags enable frontend filtering.
+raw text is preserved for display, and these tags enable frontend filtering.
 
 | Field        | Type          | Nullable | Description                 | Example   |
 | ------------ | ------------- | -------- | --------------------------- | --------- |
@@ -328,7 +333,7 @@ normalized genre tags for structured filtering. This approach was chosen over an
 - Events frequently have multiple genres (e.g. "Indie, Rock, Folk")
 - A fixed enum would require constant updates as new venues produce new genre labels
 - The `GenreNormalizer` maps known synonyms to canonical names while preserving unknown genres as-is
-- The raw genre text is kept on the event for display; normalized tags enable structured filtering
+- The raw genre text is kept on the event for display, and normalized tags enable structured filtering
 - Genre tags are auto-created during imports — no manual curation required
 
 ### External Ticket URL
@@ -353,7 +358,7 @@ URL-friendly slugs are stored on venues, artists, promoters, genre tags, and eve
 
 - **`GENERATED ALWAYS AS IDENTITY`** for auto-incrementing IDs (SQL standard, preferred over `SERIAL`)
 - **`TIMESTAMPTZ`** for all timestamps (timezone-aware, avoids surprises with UTC conversions)
-- **`TEXT`** over `VARCHAR(n)` (PostgreSQL treats them identically; `TEXT` avoids arbitrary length limits)
+- **`TEXT`** over `VARCHAR(n)` (PostgreSQL treats them identically, and `TEXT` avoids arbitrary length limits)
 - **`DECIMAL(10,2)`** for prices (exact arithmetic, no floating-point rounding)
 - **`DECIMAL(9,6)`** for coordinates (6 decimal places ≈ ~11 cm precision)
 
