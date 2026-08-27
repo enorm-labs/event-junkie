@@ -40,6 +40,7 @@ only this file should follow the links.
 | [markdown](.github/instructions/markdown.instructions.md)           | `*.md`                                                | oxfmt, its pinned scope, and why it runs twice                 |
 | [vue](.github/instructions/vue.instructions.md)                     | `events-frontend/` `*.vue`, `*.css`                   | SFC structure, Tailwind v4 + shadcn-vue, accessibility         |
 | [testing](.github/instructions/testing.instructions.md)             | backend `src/test/`, frontend `e2e/`, `__tests__/`    | JUnit + Testcontainers, and Vitest + Playwright                |
+| [kubernetes](.github/instructions/kubernetes.instructions.md)       | `deploy/**/*.yaml`                                    | Audited API versions, the YAML boolean trap, PSS `restricted`  |
 | [ci-cd](.github/instructions/ci-cd.instructions.md)                 | `.github/workflows/`, `dependabot.yml`, `release.yml` | Every workflow, the nine required checks, Dependabot, fork PRs |
 
 **Sibling files, none of them optional in their own subtree:** [`infra/AGENTS.md`](infra/AGENTS.md) opens with the OpenTofu commands that must never be run ·
