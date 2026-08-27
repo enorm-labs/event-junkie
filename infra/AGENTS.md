@@ -37,6 +37,20 @@ will go green on a value the variable itself rejects.
 cloud-init that does not parse. To check it, render the template with sample data in a scratch directory and parse the result as YAML — the scripts should
 round-trip byte-identically through `indent()`. That check has caught real breakage; do not skip it after touching the templating.
 
+## Looking a provider or module up
+
+**Use the `opentofu` MCP server, not your memory and not a web search.** It is declared in [`.mcp.json`](../.mcp.json) at the repository root, so it is
+configured for everyone who clones this repository; Claude Code asks each person to approve it once, on first use in the project. It is the hosted service at
+`https://mcp.opentofu.org/mcp`, it needs no API key, and it reaches only the OpenTofu registry.
+
+It answers five things: search the registry, provider details, module details, resource docs, data-source docs. Reach for it before writing a `resource` block
+against a provider version you have not read the docs for — an argument that was renamed or removed is the failure `validate` catches late and `plan` catches
+only when somebody is allowed to run it.
+
+**It matches what this code actually resolves.** Every `.terraform.lock.hcl` under `infra/` pins providers from `registry.opentofu.org`, so a Terraform-registry
+answer can describe a version that was never published to the registry these stacks use. Where the two agree, either is fine; where they differ, this one is
+the one that is true here.
+
 ## What state this code is in
 
 **`bootstrap/` is applied and real, as of 2026-08-10.** Both DNS zones and their eight records exist on Hetzner and serve correctly; the SSH key is imported
