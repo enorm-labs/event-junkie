@@ -383,7 +383,8 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 drop to `gh api` — all of that is GitHub's own agent skill, vendored into [`.claude/skills/gh/`](.claude/skills/gh/SKILL.md) from
 [`cli/cli`](https://github.com/cli/cli/tree/trunk/skills/gh) so it is present for every contributor rather than only whoever installed it globally. It assumes
 `gh` is installed and authenticated. Keeping it current, and the rule that nothing repository-specific may be written into it, are in
-[`.claude/skills/gh/VENDORED.md`](.claude/skills/gh/VENDORED.md).
+[`.claude/skills/gh/VENDORED.md`](.claude/skills/gh/VENDORED.md). [`.github/skills/gh`](.github/skills) is a symlink onto the same directory, so Copilot's
+cloud agent finds it at its own documented path without a second copy.
 
 **What follows is the half upstream cannot know**: findings from this repository's own board, rulesets and bulk edits. Each looks like a bug in your script the
 first time you hit it. The workflow-file counterparts — fork pull requests, required checks, what CI may write to — are in
@@ -518,6 +519,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Compact comments prompt                     | `.github/prompts/compact-comments.prompt.md`                                                                                      |
 | Vendored Simplified Technical English skill | `.claude/skills/asd-ste100/`                                                                                                      |
 | Vendored GitHub CLI skill                   | `.claude/skills/gh/` — upstream `cli/cli`; see its `VENDORED.md` before touching it                                               |
+| Copilot's view of both vendored skills      | `.github/skills/` — one directory symlink each into `.claude/skills/`; never a copy                                               |
 | Skill and command parity check              | `scripts/skill-parity.sh`                                                                                                         |
 | Code review prompt                          | `.github/prompts/code-review.prompt.md`                                                                                           |
 | Security report prompt                      | `.github/prompts/security-report.prompt.md`                                                                                       |

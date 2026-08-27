@@ -2,12 +2,14 @@
   "$schema": "./events-frontend/node_modules/oxfmt/configuration_schema.json",
   "//": "Markdown only. oxfmt also claims YAML/JSON/CSS/TS/HTML, and pointing it at this repo root unscoped would rewrite .github/workflows and the Go-templated YAML in deploy/charts. The ignorePatterns deny-list makes that impossible by construction, so the config is safe even when invoked without a path. events-frontend/.oxfmtrc.json shadows this file entirely for anything under events-frontend/ (nested configs replace, they do not merge), which is why the format script passes --disable-nested-config.",
   "//rules": "`.claude/rules/` holds symlinks into `.github/instructions/`, so the glob reaches every rule twice — once by each path. oxfmt would then format one file through two names in a single run, and a formatter writing to its own input concurrently is not a shape worth relying on. The rules are formatted under their real names.",
+  "//skills": "`.github/skills/` holds directory symlinks into `.claude/skills/`, for Copilot's documented skill path. Measured on oxfmt 0.63.0, the `**/*.md` glob does not descend into them, so the count stays at 141 either way — but that is a property of the version, not a guarantee, and the vendored ignores below are path strings that would not match a file reached through the second name. Ignored here so a version bump cannot quietly start formatting a vendored file.",
   "//vendored": "`.claude/skills/asd-ste100/` and `.claude/skills/gh/` are third-party MIT skills kept byte-identical to upstream (see each one's VENDORED.md). Formatting them would fork the copies and turn every upstream update into a merge conflict, so they are out of scope here — our conventions do not apply to somebody else's repository.",
   "ignorePatterns": [
     "**/*.{yaml,yml,json,jsonc,json5,ts,tsx,mts,cts,js,jsx,mjs,cjs,css,scss,less,html,vue,svelte,toml,graphql,gql,hbs,mdx}",
     ".claude/skills/asd-ste100/**",
     ".claude/skills/gh/**",
-    ".claude/rules/**"
+    ".claude/rules/**",
+    ".github/skills/**"
   ],
   "overrides": [
     {
