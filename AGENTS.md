@@ -99,9 +99,12 @@ covers the SPA.
   reservation the numbering scheme does not honour: the next ADR actually written takes that number, and the reference silently starts pointing at an unrelated
   decision. This has already happened twice to the same planned ADR. **Refer to a future ADR by its title only** — _"needs an ADR: AI-Assisted Data Quality"_ —
   and assign the next free number from `docs/adr/` at the moment you create the file.
-- **GitHub CLI (`gh`)**: The `gh` CLI is installed (Homebrew) and authenticated for GitHub.com and enterprise instances. Use it for GitHub interactions such as
-  creating/viewing PRs, managing issues, checking CI status, and browsing repositories.
-  See [GitHub CLI quickstart](https://docs.github.com/en/github-cli/github-cli/quickstart) and
+- **GitHub CLI (`gh`)**: `gh` is a prerequisite, not an optional convenience — install it with `brew install gh` and authenticate with `gh auth login`; it is
+  set up for GitHub.com and enterprise instances. Use it for GitHub interactions such as creating/viewing PRs, managing issues, checking CI status, and browsing
+  repositories. **How to drive it is a skill**, vendored into [`.claude/skills/gh/`](.claude/skills/gh/SKILL.md) from
+  [`cli/cli`](https://github.com/cli/cli/tree/trunk/skills/gh); read [its `VENDORED.md`](.claude/skills/gh/VENDORED.md) before editing anything in that
+  directory, and [Automating GitHub with `gh`](#automating-github-with-gh) for what the skill does not know about this repository.
+  See also [GitHub CLI quickstart](https://docs.github.com/en/github-cli/github-cli/quickstart) and
   [CLI reference](https://docs.github.com/en/github-cli/github-cli/github-cli-reference).
 
 ## Privacy & GDPR — re-check when infrastructure or features change
@@ -376,8 +379,15 @@ Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk
 
 ## Automating GitHub with `gh`
 
-Each of these looks like a bug in your script the first time you hit it. The workflow-file counterparts — fork pull requests, required checks, what CI may
-write to — are in [.github/instructions/ci-cd.instructions.md](.github/instructions/ci-cd.instructions.md).
+**The mechanics of the tool are somebody else's document.** `--json` and `--jq`, the limits that truncate a list silently, `-R`, search versus list, when to
+drop to `gh api` — all of that is GitHub's own agent skill, vendored into [`.claude/skills/gh/`](.claude/skills/gh/SKILL.md) from
+[`cli/cli`](https://github.com/cli/cli/tree/trunk/skills/gh) so it is present for every contributor rather than only whoever installed it globally. It assumes
+`gh` is installed and authenticated. Keeping it current, and the rule that nothing repository-specific may be written into it, are in
+[`.claude/skills/gh/VENDORED.md`](.claude/skills/gh/VENDORED.md).
+
+**What follows is the half upstream cannot know**: findings from this repository's own board, rulesets and bulk edits. Each looks like a bug in your script the
+first time you hit it. The workflow-file counterparts — fork pull requests, required checks, what CI may write to — are in
+[.github/instructions/ci-cd.instructions.md](.github/instructions/ci-cd.instructions.md).
 
 - **A pull request's `mergeable_state` goes stale after a ruleset change, and polling never refreshes it** (2026-08-19). After the `main` ruleset was edited to
   drop a rule that had been blocking #579, the API kept answering `"blocked"` across five polls over three minutes — with every required context green. The
@@ -507,6 +517,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Open PR prompt                              | `.github/prompts/open-pr.prompt.md`                                                                                               |
 | Compact comments prompt                     | `.github/prompts/compact-comments.prompt.md`                                                                                      |
 | Vendored Simplified Technical English skill | `.claude/skills/asd-ste100/`                                                                                                      |
+| Vendored GitHub CLI skill                   | `.claude/skills/gh/` — upstream `cli/cli`; see its `VENDORED.md` before touching it                                               |
 | Skill and command parity check              | `scripts/skill-parity.sh`                                                                                                         |
 | Code review prompt                          | `.github/prompts/code-review.prompt.md`                                                                                           |
 | Security report prompt                      | `.github/prompts/security-report.prompt.md`                                                                                       |

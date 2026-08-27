@@ -55,6 +55,12 @@ scripts/format-markdown.sh                # any .md change
 | Docker       | any recent                                | Postgres is started for you by `bootRun`                          |
 | Node.js      | see [`.nvmrc`](../events-frontend/.nvmrc) | frontend only; `nvm use`                                          |
 | `pre-commit` | any                                       | for the commit hooks — `brew install pre-commit`                  |
+| `gh`         | any recent                                | GitHub from the CLI — `brew install gh`, then `gh auth login`     |
+
+The [GitHub CLI](https://cli.github.com/) is required, not optional. The agent prompts under [`.github/prompts/`](../.github/prompts) reach for it constantly.
+They open pull requests, file issues and read CI status. A vendored skill in [`.claude/skills/gh/`](../.claude/skills/gh/SKILL.md) documents how to drive it,
+copied from [`cli/cli`](https://github.com/cli/cli/tree/trunk/skills/gh). That skill documents the flags, not the install. Without the binary it is a page of
+commands that all fail the same way.
 
 Optional, for specific jobs: [`ijhttp`](https://www.jetbrains.com/help/idea/http-client-cli.html) to run `.http` files
 from the CLI, [`k6`](https://k6.io) for the performance tests, and [`tofu`](https://opentofu.org/) with `shellcheck`
