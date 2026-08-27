@@ -177,7 +177,15 @@ class AssociationSyncService(
             for ((index, scrapedArtist) in desiredArtists.withIndex()) {
                 val slug = SlugGenerator.slugify(canonicalArtistName(scrapedArtist.name))
                 val artistId = requireNotNull(artistCache[slug]?.id) { "Artist '$slug' must be resolved before syncing associations" }
-                desiredArtistIds.add(artistId)
+
+                // `add` returns false when this artist is already desired for this event, which
+                // happens whenever a lineup names one act twice or two spellings canonicalise
+                // together. The billing shown is the first mention's, and skipping is what keeps the
+                // pair out of `toInsert` twice — `existingByArtistId` reflects the database and
+                // stays null across both passes, so it cannot catch a duplicate on its own. The
+                // table's UNIQUE (event_id, artist_id) then rejects the batch and the whole run
+                // rolls back (#798).
+                if (!desiredArtistIds.add(artistId)) continue
 
                 val desired = scrapedArtist.toEventArtistEntity(eventId, artistId, billingOrder = index)
                 val current = existingByArtistId[artistId]
@@ -310,9 +318,11 @@ class AssociationSyncService(
                     requireNotNull(promoterCache[slug]?.id) {
                         "Promoter '$slug' must be resolved before syncing associations"
                     }
-                desiredPromoterIds.add(promoterId)
 
-                if (existingByPromoterId[promoterId] == null) {
+                // `add` first, and its result is the duplicate guard — see the same shape in
+                // [syncArtistAssociations]. This is the one that was actually observed: a full seed
+                // failed `frannz-club` outright, losing every event in the run (#798).
+                if (desiredPromoterIds.add(promoterId) && existingByPromoterId[promoterId] == null) {
                     toInsert.add(EventPromoterEntity(eventId = eventId, promoterId = promoterId))
                 }
             }
