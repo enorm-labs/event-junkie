@@ -1,5 +1,6 @@
 import { api, unwrap } from '@/api/client'
 import type { VenuePage, VenueSummary } from '@/api/types'
+import type { ErrorSubjectKey } from '@/i18n'
 import { useAsync } from './useAsync'
 
 /** Query parameters accepted by the venue list endpoint (`GET /venues`). */
@@ -15,10 +16,13 @@ export interface VenueSearchParams {
  * Paged venue search for the venues overview page. `params` is read lazily on each `run()`,
  * so callers re-run after changing the search term or the page.
  */
-export function useVenueSearch(params: () => VenueSearchParams, label = 'errors.subject.venues') {
+export function useVenueSearch(
+  params: () => VenueSearchParams,
+  subjectKey: ErrorSubjectKey = 'errors.subject.venues',
+) {
   return useAsync<VenuePage>(
     () => unwrap(api.GET('/venues', { params: { query: params() } })),
-    label,
+    subjectKey,
   )
 }
 

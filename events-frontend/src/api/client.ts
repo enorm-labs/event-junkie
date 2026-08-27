@@ -1,6 +1,6 @@
 import createClient from 'openapi-fetch'
 
-import { i18n } from '@/i18n'
+import { type ErrorSubjectKey, i18n } from '@/i18n'
 import type { paths } from './schema'
 
 /** Abort a request that has not responded within this window, so the UI never hangs forever. */
@@ -51,15 +51,17 @@ export async function unwrap<T>(request: Promise<FetchResult<T>>): Promise<T> {
 }
 
 /**
- * Maps a thrown request failure to a user-facing message about loading `subjectKey` — a key in
- * `errors.subject.*` naming what failed, e.g. "tonight's events". Transient problems (server
- * errors, rate limiting, timeouts, connectivity) are worth a reload and say so; other failures get
- * a plain message. Callers handle 404 separately via their own `notFound` state.
+ * Maps a thrown request failure to a user-facing message about loading `subjectKey`. Transient
+ * problems (server errors, rate limiting, timeouts, connectivity) are worth a reload and say so;
+ * other failures get a plain message. Callers handle 404 separately via their own `notFound` state.
  *
  * Translates via the global i18n instance rather than `useI18n()` because this runs inside an
  * async `catch`, long after any setup() context has gone.
  */
-export function describeError(e: unknown, subjectKey = 'errors.subject.generic'): string {
+export function describeError(
+  e: unknown,
+  subjectKey: ErrorSubjectKey = 'errors.subject.generic',
+): string {
   const t = i18n.global.t
   const subject = t(subjectKey)
   if (e instanceof ApiError) {

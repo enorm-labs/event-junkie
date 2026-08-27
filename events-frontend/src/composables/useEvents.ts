@@ -1,5 +1,6 @@
 import { api, unwrap } from '@/api/client'
 import type { EventPage, EventSummary } from '@/api/types'
+import type { ErrorSubjectKey } from '@/i18n'
 import { useAsync } from './useAsync'
 
 /** Query parameters accepted by the event search endpoint (`GET /events`). */
@@ -80,9 +81,12 @@ export function fetchCalendarEvents(
  * Paged event search for the events list and the venue/artist detail feeds. `params` is read
  * lazily on each `run()`, so callers re-run after changing filters or the page.
  */
-export function useEventSearch(params: () => EventSearchParams, label = 'events') {
+export function useEventSearch(
+  params: () => EventSearchParams,
+  subjectKey: ErrorSubjectKey = 'errors.subject.events',
+) {
   return useAsync<EventPage>(
     () => unwrap(api.GET('/events', { params: { query: params() } })),
-    label,
+    subjectKey,
   )
 }

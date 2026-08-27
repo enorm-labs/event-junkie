@@ -8,10 +8,14 @@
     "tonightsEvents": "Die Events für heute Abend",
     "upcomingEvents": "Die kommenden Events",
     "events": "Die Events",
+    "venueEvents": "Die Events in dieser Location",
+    "artistEvents": "Die Events dieses Acts",
+    "promoterEvents": "Die Events dieses Veranstalters",
     "venues": "Die Locations",
     "venue": "Diese Location",
     "event": "Dieses Event",
     "artist": "Dieser Act",
-    "promoter": "Dieser Veranstalter"
+    "promoter": "Dieser Veranstalter",
+    "calendar": "Die Kalenderdaten"
   }
 }

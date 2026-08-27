@@ -17,6 +17,9 @@ import { DEFAULT_LOCALE, type Locale } from './locales'
  */
 type MessageSchema = typeof en
 
+/** A key into `errors.subject.*`. vue-i18n echoes a miss, so prose only breaks German (#768). */
+export type ErrorSubjectKey = `errors.subject.${keyof (typeof en)['errors']['subject']}`
+
 // The generics matter: without them vue-i18n infers the locale type from the keys of `messages`,
 // which is `'en'` alone until German lands — so `setI18nLocale('de')` would not compile even
 // though switching is the whole point. Declaring `Locale` up front keeps the type honest about

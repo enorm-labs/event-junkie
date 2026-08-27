@@ -24,7 +24,7 @@ const {
   error: eventsError,
   loading: eventsLoading,
   run: loadEvents,
-} = useEventSearch(() => ({ promoter: slug.value, size: 50 }), 'events from this promoter')
+} = useEventSearch(() => ({ promoter: slug.value, size: 50 }), 'errors.subject.promoterEvents')
 // `to` with no `from` is every past event, newest first; the page size is what bounds it.
 const { data: pastEvents, run: loadPastEvents } = useEventSearch(() => ({
   promoter: slug.value,
