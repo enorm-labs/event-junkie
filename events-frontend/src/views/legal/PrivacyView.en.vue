@@ -9,7 +9,7 @@
  * happen: no cookie table, no consent withdrawal, no analytics section. A notice describing
  * imaginary processing is as inaccurate as one omitting real processing.
  *
- * Retention periods and the IP-logging decision are still open (§7.5.1); they depend on
+ * Log retention and the IP-logging decision are still open (§7.5.1); they depend on
  * infrastructure that does not exist yet, so the intent is stated and flagged as provisional
  * rather than invented.
  */
@@ -89,11 +89,11 @@ const { t } = useI18n()
         <strong>Backups:</strong> the database is backed up. Those backups are normally kept for
         <strong>30 days</strong> and then deleted automatically, and in every case they are deleted
         <strong>within 35 days</strong>. The two figures differ because two independent mechanisms
-        delete them: a daily sweep on the server, which keeps a backup for as long as the others need
-        it to remain restorable, and a rule on the storage service, which applies regardless — including
-        while the server is down. This period is separate from the one above: data already deleted
-        from the live system can still exist in a backup for up to 35 days. Backups are used solely to
-        recover from a failure — they are not searched and not analysed.
+        delete them: a daily sweep on the server, which keeps a backup for as long as the others
+        need it to remain restorable, and a rule on the storage service, which applies regardless —
+        including while the server is down. This period is separate from the one above: data already
+        deleted from the live system can still exist in a backup for up to 35 days. Backups are used
+        solely to recover from a failure — they are not searched and not analysed.
       </p>
     </section>
 
@@ -136,6 +136,13 @@ const { t } = useI18n()
         express purpose of promoting the event, and is limited to that professional context — we
         store no contact details, no private addresses and no information about anyone's private
         life.
+      </p>
+      <p>
+        <strong>Retention:</strong> event data is not deleted after a fixed period. Past events are
+        kept as an archive for as long as the calendar is operated; there is no automatic deletion
+        by age. The criterion is therefore the operation of the calendar rather than the passage of
+        time. Your name is removed independently of that as soon as you object to the processing
+        under Art. 21 GDPR — the email address in the next paragraph is all it takes.
       </p>
       <p>
         <strong>If you are an artist</strong> and would like your name removed or corrected, write
