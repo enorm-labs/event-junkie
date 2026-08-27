@@ -59,6 +59,10 @@ app:
   scraper:
     response-timeout: 30s
     polite-delay-millis: 200
+    # false until one import cycle has recorded which hosts disallow what (#790). Enforcing before
+    # that evidence exists could stop every import at once.
+    robots-enforced: false
+    robots-cache-ttl: 24h
   scheduling:
     # Reset sources stuck in RUNNING longer than this to FAILED (Duration format, e.g. 30m, 1h)
     staleness-timeout: 30m

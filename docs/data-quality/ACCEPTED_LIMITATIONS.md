@@ -20,6 +20,7 @@ says so.
 | `ARKAODA`             | `PRICE`            | a door price is written into the prose blurb, which has no reliable delimiter                                                                    | —     |
 | `ARKAODA`             | `SOLD_OUT`         | the venue runs no ticket integration and has no field for the sold-out state                                                                     | —     |
 | `ARKAODA`             | `GENRE`            | the venue has no structured genre field                                                                                                          | —     |
+| `BAR_JEDER_VERNUNFT`  | `DOORS_TIME`       | the calendar and the show pages state one Beginn time and never an Einlass                                                                       | —     |
 | `BADEHAUS`            | `ARTISTS`          | the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest                                   | —     |
 | `BADEHAUS`            | `EVENT_TYPE`       | the venue publishes no category; the type is inferred from the title and subtitle                                                                | —     |
 | `BINUU`               | `EVENT_TYPE`       | the SvelteKit payload carries no category field, and neither does anywhere else on the site                                                      | —     |
@@ -176,4 +177,4 @@ says so.
 
 These publish everything the model stores, as of the last review:
 
-`ALTE_KANTINE`, `ASTRA`, `BAR_JEDER_VERNUNFT`, `BERGHAIN`, `COLUMBIA_THEATER`, `GRETCHEN`, `HOLE44`, `JUNCTION_BAR`, `LIDO`, `MADAME_CLAUDE`, `MATRIX`, `MAX_SCHMELING_HALLE`, `METROPOL`, `MIKROPOL`, `MODUS`, `PRIVATCLUB`, `QUASIMODO`, `SCHOKOLADEN`, `TEMPODROM`, `THEATER_IM_DELPHI`, `UBER_ARENA`, `UBER_EATS_MUSIC_HALL`, `UFO_IM_VELODROM`, `URANIA`, `URBAN_SPREE`, `VELODROM`, `ZITADELLE`
+`ALTE_KANTINE`, `ASTRA`, `BERGHAIN`, `COLUMBIA_THEATER`, `GRETCHEN`, `HOLE44`, `JUNCTION_BAR`, `LIDO`, `MADAME_CLAUDE`, `MATRIX`, `MAX_SCHMELING_HALLE`, `METROPOL`, `MIKROPOL`, `MODUS`, `PRIVATCLUB`, `QUASIMODO`, `SCHOKOLADEN`, `TEMPODROM`, `THEATER_IM_DELPHI`, `UBER_ARENA`, `UBER_EATS_MUSIC_HALL`, `UFO_IM_VELODROM`, `URANIA`, `URBAN_SPREE`, `VELODROM`, `ZITADELLE`

@@ -35,6 +35,20 @@ data class EventSourceResponse(
                 "actually been broken."
     )
     val lastSuccessAt: Instant?,
+    @Schema(
+        description =
+            "Whether this source's own URL is permitted by its host's robots.txt, or null while " +
+                "no run has read the file yet. Null is meaningful: an unchecked source has to be " +
+                "visible as unchecked"
+    )
+    val robotsAllowed: Boolean?,
+    @Schema(description = "When the host's robots.txt was last read")
+    val robotsCheckedAt: Instant?,
+    @Schema(
+        description = "The robots.txt that answered, or null where the host serves none",
+        example = "https://example.com/robots.txt"
+    )
+    val robotsTxtUrl: String?,
     @Schema(description = "Number of events imported in the last successful run", example = "12")
     val lastEventCount: Int?,
     @Schema(description = "Error message from the last failed import")
@@ -70,6 +84,9 @@ data class EventSourceResponse(
                 status = entity.status,
                 lastImportAt = entity.lastImportAt,
                 lastSuccessAt = entity.lastSuccessAt,
+                robotsAllowed = entity.robotsAllowed,
+                robotsCheckedAt = entity.robotsCheckedAt,
+                robotsTxtUrl = entity.robotsTxtUrl,
                 lastEventCount = entity.lastEventCount,
                 lastError = entity.lastError,
                 flaggedAt = entity.flaggedAt,

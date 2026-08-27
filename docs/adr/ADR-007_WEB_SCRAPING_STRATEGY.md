@@ -571,8 +571,19 @@ meaning of the content rarely changes even when styling does.
 The following operational best practices ensure the scraping pipeline is ethical, resilient, and maintainable at scale. Several of these are informed by common
 web scraping pitfalls documented in industry literature (see References).
 
-1. **Respect `robots.txt`**: Before adding a new venue scraper, check the venue's `robots.txt` for crawling rules. If the site disallows scraping of specific
-   paths, honour those directives. This avoids legal issues and maintains good relationships with venue operators.
+1. **Respect `robots.txt`** — enforced by `RobotsTxtFilter`, not by memory. `RobotsRulesCache` reads a host's
+   `robots.txt` once per day, and `crawler-commons` parses it. The filter sits on the shared scraper `WebClient`, so
+   every request an importer makes is checked. A new venue is covered by its first fetch. This is the same shape as
+   [Per-Host Politeness Throttling](#per-host-politeness-throttling). A rule that nothing enforces is a rule that three
+   of eighty importers followed (#790).
+
+    **Reporting comes before enforcement.** `app.scraper.robots-enforced` is `false`, so a disallowed request is logged
+    and recorded on `event_source` and still sent. Nobody knows yet how many venues disallow the paths already read, and
+    enforcing blind could stop every import in one deploy. Read `event_source.robots_allowed` after a cycle, then turn
+    it on (#795).
+
+    Still check a venue's `robots.txt` when writing its importer. The filter stops a request the rules forbid, and only
+    a person can pick a permitted URL that carries the same programme.
 
 2. **Rate-limit requests**: a venue website usually runs on modest infrastructure — shared WordPress hosting, a small
    VPS. The scraper must put a delay between requests and never overload the server. `PerHostThrottlingFilter`

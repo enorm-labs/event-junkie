@@ -38,6 +38,14 @@ class EventImportService(
     private val metrics: ImporterMetrics,
     /** Per-field coverage against each source's own history (#472) — the partial-failure alarm. */
     private val fieldCoverageService: FieldCoverageService,
+    /**
+     * The `robots.txt` rules behind [RobotsTxtFilter], read again here to record what they said
+     * about this source's own entry URL (#790).
+     *
+     * A map read rather than a fetch, in every ordinary run: the filter has already read the host's
+     * file on the way to the listing page.
+     */
+    private val robotsRulesCache: RobotsRulesCache,
     /** Injected clock for deterministic time in tests. Defaults to system UTC clock in production. */
     private val clock: Clock = Clock.systemUTC(),
     /**
@@ -332,33 +340,41 @@ class EventImportService(
         eventCount: Int?,
         newEtag: String? = source.etag,
         newLastModified: String? = source.lastModified
-    ): EventSourceEntity =
-        saveWithVersionConflictRetry(source) {
+    ): EventSourceEntity {
+        val robots = robotsRulesCache.check(source.url)
+        return saveWithVersionConflictRetry(source) {
             val now = Instant.now(clock)
-            it.copy(
-                status = ImportStatus.SUCCESS.name,
-                lastImportAt = now,
-                lastSuccessAt = now,
-                lastEventCount = eventCount,
-                lastError = null,
-                etag = newEtag,
-                lastModified = newLastModified,
-                retryCount = 0
-            )
+            it
+                .copy(
+                    status = ImportStatus.SUCCESS.name,
+                    lastImportAt = now,
+                    lastSuccessAt = now,
+                    lastEventCount = eventCount,
+                    lastError = null,
+                    etag = newEtag,
+                    lastModified = newLastModified,
+                    retryCount = 0
+                ).withRobots(robots)
         }
+    }
 
     private suspend fun markFailed(
         source: EventSourceEntity,
         error: String
-    ): EventSourceEntity =
-        saveWithVersionConflictRetry(source) {
-            it.copy(
-                status = ImportStatus.FAILED.name,
-                lastImportAt = Instant.now(clock),
-                lastError = error.take(MAX_ERROR_LENGTH),
-                retryCount = it.retryCount + 1
-            )
+    ): EventSourceEntity {
+        // Recorded on failure too, and that is the case worth having: a source blocked by robots.txt
+        // fails every run, and the columns are what say which of the two it is.
+        val robots = robotsRulesCache.check(source.url)
+        return saveWithVersionConflictRetry(source) {
+            it
+                .copy(
+                    status = ImportStatus.FAILED.name,
+                    lastImportAt = Instant.now(clock),
+                    lastError = error.take(MAX_ERROR_LENGTH),
+                    retryCount = it.retryCount + 1
+                ).withRobots(robots)
         }
+    }
 
     /**
      * Marks a source as misconfigured — a permanent configuration error that
@@ -418,3 +434,16 @@ class EventImportService(
         internal const val DEFAULT_MAX_CONCURRENCY = 4
     }
 }
+
+/**
+ * Applies what the host's `robots.txt` said about a source's entry URL (#790).
+ *
+ * A file-level extension rather than a method: it maps one value onto another and holds no service
+ * state, and as a member it pushed [EventImportService] past detekt's `TooManyFunctions` cap.
+ */
+private fun EventSourceEntity.withRobots(check: RobotsCheck): EventSourceEntity =
+    copy(
+        robotsCheckedAt = check.checkedAt,
+        robotsAllowed = check.allowed,
+        robotsTxtUrl = check.robotsTxtUrl
+    )
