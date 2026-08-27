@@ -11,7 +11,7 @@ through [`.claude/rules/`](.claude/rules), which holds one symlink per topic —
 declares `paths:`, so Claude Code pulls it into context when you read a file it matches and leaves it out otherwise.
 
 The same file also carries an `applyTo:` line, which is what GitHub Copilot reads from `.github/instructions/` directly. One copy serves both agents, and
-`scripts/rules-parity.sh` fails when the two glob lists drift apart.
+`scripts/rules-parity.sh` fails when the two glob lists drift apart, and when either names a glob that matches no tracked file.
 
 **A rule body has to be inline.** An `@` pointer inside a rule file is expanded at launch whatever its `paths:` says, so a pointer-style rule loads its target
 into every session and the scoping buys nothing — silently, because the content is there, merely always there.

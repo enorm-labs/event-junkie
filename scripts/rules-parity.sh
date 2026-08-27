@@ -14,6 +14,9 @@
 #
 # An `@` pointer in a rule body is expanded at launch whatever `paths` says, so it loads every
 # session while appearing to be scoped. That is why a body must be inline.
+#
+# Every glob is also matched against the index. `deploy/**/*.yml` shipped in a first draft and hit
+# nothing — all 70 files there are `.yaml` — which no other check could see.
 
 set -euo pipefail
 
@@ -55,6 +58,16 @@ while read -r name; do
         diff <(copilot_globs "$rule") <(claude_globs "$rule") | sed 's/^/      /' >&2 || true
     fi
 
+    # A glob matching nothing is the quiet failure: the rule loads for no file, and every other
+    # check here still passes. `:(glob)` is git's own matcher, where `**/` spans zero or more
+    # directories exactly as both agents read it. Only `paths` is tested — `applyTo` is asserted
+    # equal to it above, so testing both would report one fault twice.
+    while read -r glob; do
+        [ -z "$glob" ] && continue
+        [ -n "$(git ls-files -- ":(glob)$glob" 2>/dev/null)" ] ||
+            note "$rule: \"$glob\" matches no tracked file"
+    done <<< "$(claude_globs "$rule")"
+
     # `@path` outside a code span is an import, and imports defeat path scoping.
     if grep -nE '^[[:space:]]*@[A-Za-z0-9_./~-]+[[:space:]]*$' "$rule" >/dev/null; then
         note "$rule contains an @ import; a rule body must be inline or it loads every session"
@@ -79,5 +92,5 @@ if [ "$problems" -ne 0 ]; then
     exit 1
 fi
 
-printf 'Rules agree: %s of them, every symlink resolves, applyTo matches paths, all linked from AGENTS.md.\n' \
+printf 'Rules agree: %s of them, every symlink resolves, applyTo matches paths, every glob hits a file.\n' \
     "$(echo "$names" | grep -c .)"
