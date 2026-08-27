@@ -43,6 +43,9 @@ jobs:
       - name: Assert what comment-lint.sh counts
         run: scripts/comment-lint-test.sh
 
+      - name: Assert what comment-density.sh counts
+        run: scripts/comment-density-test.sh
+
       - name: Explain the fix
         if: failure()
         run: |
