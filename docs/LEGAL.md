@@ -312,6 +312,12 @@ Two registers, deliberately not literal translations of each other:
 
 Treat these as a translation unit, not a legal constant: translate from intent, never word for word.
 
+**These two registers are the whole answer. There is no Terms of Use page** (#478). A visitor who never registers agrees
+to nothing, so terms would bind nobody. A third copy of the disclaimer would be drift risk, not protection. The
+database-maker's right (§§ 87a ff. UrhG) applies whether or not a page claims it. What limits bulk access is rate
+limiting (#268) and `robots.txt`, not a document. **This reverses when submissions or accounts land** (#399, #398).
+Then there is a contract, and user content the site hosts rather than links to.
+
 ### 7.7 Keeping the notice true
 
 A privacy notice describes what the system _actually does_, so it becomes false the moment the system changes. The
@@ -436,6 +442,7 @@ Settled questions, so they are not re-litigated. The reasoning is in the section
 | 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor | `ops/EMAIL.md`       |
 | 13  | Art. 28 contracts      | One: Hetzner's AVV, concluded. No third-country transfer to name at all                                           | §14                  |
 | 14  | Event-data retention   | Kept while the calendar operates, no deletion by age; erased on Art. 21 objection — #362                          | §7.3a                |
+| 15  | Terms of Use           | None. No accounts and no contract with the visitor, so the §7.6 disclaimer is the whole answer — #478             | §7.6                 |
 
 ## 14. Open items — what is **not** signed off
 
