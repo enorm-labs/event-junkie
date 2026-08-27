@@ -22,13 +22,15 @@ data class ScraperProperties(
     /**
      * Whether a `robots.txt` disallow **blocks** the request, or only records it.
      *
-     * `false` on purpose, and not a placeholder. Nobody knows yet how many of the configured hosts
-     * disallow the paths the importers already read, because producing that evidence is what #790
-     * exists to do. Enforcing on the first deploy could stop imports across the estate at once, and
-     * the failure would look like every venue breaking their markup on the same night. Report first,
-     * read `event_source.robots_allowed`, then enforce.
+     * `true`, so that honouring a venue's rules is the fail-safe: a deployment that configures
+     * nothing still obeys them, and ignoring them takes an explicit decision somebody wrote down.
+     *
+     * **It costs nothing today and buys the day a venue changes its mind.** A full import of every
+     * source found no disallowed URL, at a listing or at any detail page (#795). Enforcement is what
+     * turns a venue adding a rule into a loud `robots_disallowed` failure, rather than into us
+     * continuing to fetch what they now forbid.
      */
-    val robotsEnforced: Boolean = false,
+    val robotsEnforced: Boolean = true,
     /**
      * How long a parsed `robots.txt` is reused before it is read again.
      *

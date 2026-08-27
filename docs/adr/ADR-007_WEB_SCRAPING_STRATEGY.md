@@ -577,10 +577,12 @@ web scraping pitfalls documented in industry literature (see References).
    [Per-Host Politeness Throttling](#per-host-politeness-throttling). A rule that nothing enforces is a rule that three
    of eighty importers followed (#790).
 
-    **Reporting comes before enforcement.** `app.scraper.robots-enforced` is `false`, so a disallowed request is logged
-    and recorded on `event_source` and still sent. Nobody knows yet how many venues disallow the paths already read, and
-    enforcing blind could stop every import in one deploy. Read `event_source.robots_allowed` after a cycle, then turn
-    it on (#795).
+    **A disallow fails the run.** `app.scraper.robots-enforced` defaults to `true`, so honouring a venue's rules is the
+    fail-safe rather than a configured extra. The failure carries its own `robots_disallowed` tag. The response to it
+    is to change the URL or to stop importing the venue, not to repair a selector.
+
+    Setting it to `false` downgrades a disallow to a log line and sends the request. That mode is how the estate was
+    surveyed before enforcement went on (#790, #795). It is not a state to leave a deployment in.
 
     Still check a venue's `robots.txt` when writing its importer. The filter stops a request the rules forbid, and only
     a person can pick a permitted URL that carries the same programme.

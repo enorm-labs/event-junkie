@@ -30,11 +30,11 @@ class RobotsDisallowedException(
  * exactly as [PerHostThrottlingFilter] is for rate limiting, so a new venue is covered by its
  * importer's first request rather than by somebody remembering.
  *
- * **It reports before it enforces.** [ScraperProperties.robotsEnforced] is `false` by default, and
- * in that state a disallowed request is logged and still sent. That is deliberate: no one knows how
- * many of the 80 configured hosts disallow the paths we already read, and turning enforcement on
- * blind could stop imports across the estate in one deploy. Phase 1 produces the evidence, and
- * enforcement is flipped on once that evidence has been read (#790).
+ * **A disallow fails the request.** [ScraperProperties.robotsEnforced] is `true`, so a URL the venue
+ * forbids raises [RobotsDisallowedException] and the run fails with the `robots_disallowed` tag.
+ * Setting it to `false` downgrades that to a log line and sends the request anyway. That mode exists
+ * because it is how the estate was surveyed before enforcement went on (#790, #795), and it is not a
+ * state to leave a deployment in.
  *
  * **Registration order matters.** This filter sits *before* [PerHostThrottlingFilter] on the
  * builder, so the `robots.txt` fetch that [RobotsRulesCache] performs travels through a client that
