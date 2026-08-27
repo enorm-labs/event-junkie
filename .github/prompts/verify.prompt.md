@@ -76,6 +76,9 @@ a `paths` list for Claude Code; each agent reads only its own key, so neither ca
 `.claude/rules/` symlink resolves, that no rule body is an `@` pointer — which is expanded at launch whatever `paths` says, defeating the scoping silently —
 and that every rule is linked from the AGENTS.md table. `validate-docs.yml` runs it beside `skill-parity.sh`.
 
+**It also matches every glob against the index**, via `git ls-files -- ':(glob)…'`, because a glob that hits nothing is a rule that loads for no file while
+every other check passes. `deploy/**/*.yml` shipped in a first draft of the kubernetes rule and matched none of the 70 files there, all of which are `.yaml`.
+
 ### Infrastructure (from repo root, only when the diff touches `infra/`)
 
 ```bash
