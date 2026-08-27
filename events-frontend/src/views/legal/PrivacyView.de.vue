@@ -9,8 +9,8 @@
  * exactly that reason: a dropped element in one version is invisible from the other.
  *
  * Like the English version it deliberately does **not** describe processing that does not happen:
- * no cookie table, no consent withdrawal, no analytics section. Retention and the IP question are
- * still open (§7.5.1) and are stated as intent rather than invented.
+ * no cookie table, no consent withdrawal, no analytics section. Log retention and the IP question
+ * are still open (§7.5.1) and are stated as intent rather than invented.
  *
  * Register: `du`, for the reasons set out in `ImprintView.de.vue`.
  */
@@ -96,10 +96,11 @@ const { t } = useI18n()
         Angaben unterscheiden sich, weil zwei voneinander unabhängige Mechanismen löschen: die
         tägliche Bereinigung auf dem Server, die eine Sicherung so lange behält, wie sie zur
         Wiederherstellung der übrigen benötigt wird, und eine Regel des Speicherdienstes, die
-        unabhängig davon greift — auch dann, wenn der Server ausgefallen ist. Diese Frist ist von der
-        oben genannten unabhängig: Daten, die im laufenden Betrieb bereits gelöscht wurden, können in
-        einer Sicherung noch bis zu 35 Tage fortbestehen. Sicherungen dienen ausschließlich der
-        Wiederherstellung nach einem Ausfall — sie werden nicht durchsucht und nicht ausgewertet.
+        unabhängig davon greift — auch dann, wenn der Server ausgefallen ist. Diese Frist ist von
+        der oben genannten unabhängig: Daten, die im laufenden Betrieb bereits gelöscht wurden,
+        können in einer Sicherung noch bis zu 35 Tage fortbestehen. Sicherungen dienen
+        ausschließlich der Wiederherstellung nach einem Ausfall — sie werden nicht durchsucht und
+        nicht ausgewertet.
       </p>
     </section>
 
@@ -145,6 +146,14 @@ const { t } = useI18n()
         Veranstaltern bereits selbst veröffentlicht, und zwar ausdrücklich zur Bewerbung der
         Veranstaltung; sie beschränken sich auf diesen beruflichen Kontext — wir speichern keine
         Kontaktdaten, keine Privatanschriften und nichts über das Privatleben.
+      </p>
+      <p>
+        <strong>Speicherdauer:</strong> Veranstaltungsdaten werden nicht nach einer festen Frist
+        gelöscht. Vergangene Veranstaltungen bleiben als Archiv erhalten, solange der Kalender
+        betrieben wird; eine automatische Löschung nach Alter findet nicht statt. Das Kriterium ist
+        also der Betrieb des Kalenders und nicht der Zeitablauf. Dein Name wird davon unabhängig
+        entfernt, sobald du der Verarbeitung nach Art. 21 DSGVO widersprichst — dafür genügt die
+        E-Mail im nächsten Absatz.
       </p>
       <p>
         <strong>Wenn du Künstlerin oder Künstler bist</strong> und möchtest, dass dein Name entfernt

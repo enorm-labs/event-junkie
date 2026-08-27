@@ -204,6 +204,12 @@ That last row is the one to get right. The personal data here is overwhelmingly 
 were published by venues**, not about anyone who ever visited the site. That is also why §7.3's removal route matters
 more than a contact form would.
 
+**Event-data retention is a criterion, not a period, and §4 of the notice states it (#769).** Past events are kept for
+as long as the calendar operates. Nothing deletes them by age, and #350's housekeeping policy does not change that.
+Art. 13 (2) (a) accepts the criteria used to determine the period in place of a duration, which is what this is.
+Erasure is on objection under Art. 21, with no reason required — the same route §7.3 already offers. Decided in #362,
+jointly with the archive: keeping past events reachable is deciding not to delete them.
+
 **Two places this has to stay in step.** The backups in Hetzner Object Storage hold the same database, so they carry
 the same categories rather than being a separate question. And a processor's sub-processor annex is worth reading
 against §5. If any of them sits outside the EU for a service in use, the notice's "no third-country transfer" sentence
@@ -429,6 +435,7 @@ Settled questions, so they are not re-litigated. The reasoning is in the section
 | 11  | Version source         | Build-stamped from `gradle.properties`, never the GitHub API                                                      | §4.1                 |
 | 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor | `ops/EMAIL.md`       |
 | 13  | Art. 28 contracts      | One: Hetzner's AVV, concluded. No third-country transfer to name at all                                           | §14                  |
+| 14  | Event-data retention   | Kept while the calendar operates, no deletion by age; erased on Art. 21 objection — #362                          | §7.3a                |
 
 ## 14. Open items — what is **not** signed off
 

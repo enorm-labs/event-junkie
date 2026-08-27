@@ -113,9 +113,16 @@ const PRIVACY_ELEMENTS: Element[] = [
   // open an issue rather than write an email sends data to a US company.
   { what: 'third-country transfer — GitHub only', en: /US company/, de: /US-Unternehmen/ },
   {
-    what: 'retention period',
+    what: 'log retention period',
     en: /deleted after seven days/i,
     de: /nach sieben Tagen gelöscht/i,
+  },
+  // One match anywhere satisfies an item, so the log period above stood in for the one §4 lacked.
+  // This pins §4's own phrasing: §6's Art. 21 heading would survive §4's sentence being deleted.
+  {
+    what: 'event-data retention, as a criterion, tied to the Art. 21 route',
+    en: /no automatic deletion by age.*object to the processing\s+under Art\. 21 GDPR/s,
+    de: /automatische Löschung nach Alter findet nicht statt.*Verarbeitung nach Art\. 21 DSGVO widersprichst/s,
   },
   // Backup retention is a *separate* period from log retention and the notice has to carry both
   // (#277). The numbers are `backup_retention_days` in infra/modules/environment and
