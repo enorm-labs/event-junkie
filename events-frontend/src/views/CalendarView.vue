@@ -44,7 +44,7 @@ async function load() {
     }))
     error.value = null
   } catch (e) {
-    error.value = describeError(e, 'the calendar')
+    error.value = describeError(e, 'errors.subject.calendar')
   }
 }
 

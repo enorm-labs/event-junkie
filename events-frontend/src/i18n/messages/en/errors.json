@@ -8,10 +8,14 @@
     "tonightsEvents": "tonight's events",
     "upcomingEvents": "upcoming events",
     "events": "events",
+    "venueEvents": "events at this venue",
+    "artistEvents": "events for this artist",
+    "promoterEvents": "events from this promoter",
     "venues": "venues",
     "venue": "this venue",
     "event": "this event",
     "artist": "this artist",
-    "promoter": "this promoter"
+    "promoter": "this promoter",
+    "calendar": "the calendar"
   }
 }

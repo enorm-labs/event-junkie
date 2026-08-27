@@ -26,7 +26,7 @@ describe('describeError', () => {
   })
 
   it('names what failed to load via the label', () => {
-    expect(describeError(new ApiError(500, 'boom'), "tonight's events")).toContain(
+    expect(describeError(new ApiError(500, 'boom'), 'errors.subject.tonightsEvents')).toContain(
       "tonight's events",
     )
   })

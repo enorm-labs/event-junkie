@@ -23,7 +23,7 @@ const {
   error: eventsError,
   loading: eventsLoading,
   run: loadEvents,
-} = useEventSearch(() => ({ artist: slug.value, size: 50 }), 'events for this artist')
+} = useEventSearch(() => ({ artist: slug.value, size: 50 }), 'errors.subject.artistEvents')
 // `to` with no `from` is every past event, newest first; the page size is what bounds it.
 const { data: pastEvents, run: loadPastEvents } = useEventSearch(() => ({
   artist: slug.value,
