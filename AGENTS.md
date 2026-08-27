@@ -39,7 +39,7 @@ only this file should follow the links.
 | [documentation](.github/instructions/documentation.instructions.md) | `docs/**/*.md`                                        | Simplified Technical English: how the sentences are written    |
 | [markdown](.github/instructions/markdown.instructions.md)           | `*.md`                                                | oxfmt, its pinned scope, and why it runs twice                 |
 | [vue](.github/instructions/vue.instructions.md)                     | `events-frontend/` `*.vue`, `*.css`                   | SFC structure, Tailwind v4 + shadcn-vue, accessibility         |
-| [testing](.github/instructions/testing.instructions.md)             | `*/src/test/`, `*/src/testFixtures/`                  | JUnit, WebTestClient, Testcontainers, fixture factories        |
+| [testing](.github/instructions/testing.instructions.md)             | backend `src/test/`, frontend `e2e/`, `__tests__/`    | JUnit + Testcontainers, and Vitest + Playwright                |
 | [ci-cd](.github/instructions/ci-cd.instructions.md)                 | `.github/workflows/`, `dependabot.yml`, `release.yml` | Every workflow, the nine required checks, Dependabot, fork PRs |
 
 **Sibling files, none of them optional in their own subtree:** [`infra/AGENTS.md`](infra/AGENTS.md) opens with the OpenTofu commands that must never be run ·
