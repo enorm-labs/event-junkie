@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
  * Reports a file that is more comment than code.
  *
  * [LongComment] caps one comment; twenty individually reasonable ones still make a file that reads
- * as prose with code between it, and no per-comment cap sees that. This is the per-file backstop
- * under `scripts/comment-density.sh`, which ratchets the totals per area (#713).
+ * as prose with code between it, and no per-comment cap sees that. This is the per-file backstop;
+ * `scripts/comment-density.sh report` shows the same totals per area but gates nothing (#713).
  *
  * A line carrying both code and a trailing comment counts as code, as `cloc` does, so the figure
  * matches what the script reports. [minCommentLines] keeps a short file with one explanatory

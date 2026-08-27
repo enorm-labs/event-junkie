@@ -64,8 +64,8 @@ class AcceptedLimitationsTest {
     }
 
     /**
-     * The audit reads the rendered table, not the Kotlin, so the two have to agree — the same ratchet
-     * `scripts/comment-baseline.txt` uses, for the same reason: a doc nothing checks drifts.
+     * The audit reads the rendered table, not the Kotlin, so the two have to agree. A doc nothing
+     * checks drifts, and this is the check.
      *
      * Compared after [normalize], because `scripts/format-markdown.sh` pads the table's columns to
      * align them and the renderer does not. Padding is the formatter's business; content is this

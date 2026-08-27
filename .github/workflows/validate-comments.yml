@@ -1,7 +1,8 @@
 name: Validate Comments
 
-# The CI half of `scripts/comment-density.sh` and `scripts/comment-lint.sh` (#713). Both compare the
-# tree against a committed baseline and fail when a count rises.
+# The CI half of `scripts/comment-lint.sh` (#713). It fails when the tree carries any comment-lint
+# violation at all. There is no baseline and no per-area ceiling: both were removed once it became
+# clear the volume budget was failing builds over comment lines rather than over comments.
 #
 # **No `paths:` filter, deliberately.** Both checks are repository-wide, so a filter would be a hole
 # rather than an optimisation, and the job takes under a second. It is also not on the `main`
@@ -20,7 +21,7 @@ permissions:
 
 jobs:
   comments:
-    name: Check comment volume
+    name: Check comment rules
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -29,9 +30,6 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
-      - name: Check comment volume against the baseline
-        run: scripts/comment-density.sh check
 
       - name: Check comment rules for Terraform, shell, YAML and Python
         run: scripts/comment-lint.sh check
@@ -43,6 +41,8 @@ jobs:
       - name: Assert what comment-lint.sh counts
         run: scripts/comment-lint-test.sh
 
+      # comment-density.sh no longer gates anything, but /compact-comments and /code-review both
+      # steer by its report, and a miscount there sends a sweep at the wrong files.
       - name: Assert what comment-density.sh counts
         run: scripts/comment-density-test.sh
 
@@ -50,22 +50,19 @@ jobs:
         if: failure()
         run: |
           {
-            echo "## Comment volume"
+            echo "## Comment rules"
             echo
-            echo "A comment count rose above its baseline. The ratchet only turns one way:"
-            echo "compress or delete, rather than raise the number."
-            echo
-            echo '```bash'
-            echo "scripts/comment-density.sh report --top 20   # where the volume is"
-            echo "scripts/comment-lint.sh report               # every rule violation"
-            echo '```'
-            echo
-            echo "If the count went *down*, regenerate and commit the lower figure:"
+            echo "A comment broke one of the rules for .tf, .sh, .yaml or .py. The fix is to"
+            echo "compress or delete it, or to say why it has to stay:"
             echo
             echo '```bash'
-            echo "scripts/comment-density.sh update-baseline"
-            echo "scripts/comment-lint.sh update-baseline"
+            echo "scripts/comment-lint.sh report               # every violation, with its rule"
+            echo "scripts/comment-density.sh report --top 20   # where the volume is, if you want it"
             echo '```'
+            echo
+            echo "A block that genuinely has to stay takes '# comment-lint: allow <reason>' on the"
+            echo "line above it, or '# comment-lint: allow-file <reason>' for a whole file. The"
+            echo "reason is not optional, and a bare directive is itself a violation."
             echo
             echo "See .github/instructions/comments.instructions.md and #713."
           } >> "$GITHUB_STEP_SUMMARY"

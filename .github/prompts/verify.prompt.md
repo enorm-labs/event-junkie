@@ -42,7 +42,7 @@ never a "go and work out what is wrong" failure. The `pre-commit` hook runs the 
 local commit history means both pass; this step is here for the case where hooks were skipped with `--no-verify`. Do not reach for `oxfmt` directly — the script
 pins the version and the scope, both of which matter (.github/instructions/markdown.instructions.md).
 
-`ste-lint.sh` is the same ratchet over what the documents _say_, for `docs/**` only. It counts the structural ASD-STE100 findings — a sentence over 25 words
+`ste-lint.sh` holds `docs/**` to a per-area ceiling that only moves down, over what the documents _say_ rather than how much they say. It counts the structural ASD-STE100 findings — a sentence over 25 words
 (20 inside a numbered step), a semicolon, present perfect, a file over 150 lines with no `## The short version`, an `Amendment,` heading — against
 `scripts/ste-baseline.txt`, one number per rewrite phase. `scripts/ste-lint.sh report --top 20` shows where they are and `stats` gives the share of sentences
 over the cap. A sentence that has to stay long takes `<!-- ste-lint: allow <reason> -->` on the line above it, and the reason is not optional. Only the
@@ -50,20 +50,22 @@ structural half of the standard is checkable here — the lexical rules need a d
 document is STE-compliant. `validate-docs.yml` runs it in CI. See #733 and
 [.github/instructions/documentation.instructions.md](../instructions/documentation.instructions.md).
 
-### Comment volume (from repo root, always)
+### Comment rules (from repo root, always)
 
 ```bash
-scripts/comment-density.sh check
 scripts/comment-lint.sh check
 scripts/skill-parity.sh
 scripts/rules-parity.sh
 ```
 
-Exits 1 naming any area that carries more comment lines than `scripts/comment-baseline.txt` allows, and the ratchet only turns one way: the fix is to compress
-or delete, not to raise the number. An area that has dropped below its baseline is reported too and passes — regenerate with `scripts/comment-density.sh
-update-baseline` and commit the lower figure in the same PR. `comment-lint.sh` is the same ratchet over the rules detekt and ESLint cannot see — the block
-cap, file density, and markdown headings, date literals or change-narration inside a comment in `.tf`, `.sh`, `.yaml` and `.py`. Both take under a second
-and reach no network, and `validate-comments.yml` runs them on every pull request. See #713.
+Exits 1 on **any** violation of the rules detekt and ESLint cannot see — the block cap, file density, and markdown headings, date literals or
+change-narration inside a comment in `.tf`, `.sh`, `.yaml` and `.py`. There is no baseline to absorb one: the fix is to compress the comment, delete it, or say
+why it stays with `# comment-lint: allow <reason>`. It takes under a second, reaches no network, and `validate-comments.yml` runs it on every pull request.
+See #713.
+
+**The volume ceiling is gone.** `scripts/comment-density.sh` still measures — `report --top 20` is how `/compact-comments` and `/code-review` find the files
+worth opening — but it gates nothing and has no baseline. An area budget failed a build for the _count_ of comment lines rather than for a comment anybody
+would object to, which priced deleting a stale paragraph the same as adding a load-bearing one.
 
 `skill-parity.sh` is a third check riding along here because it is the same shape and the same cost: `.claude/skills/` and `.claude/commands/` are
 parallel trees of `@` pointers with nothing joining them, so a skill added to one and not the other is silently absent from the other. It also asserts
