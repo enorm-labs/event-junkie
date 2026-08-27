@@ -74,10 +74,10 @@ measure() {
             if (line == "") next
 
             if (st == "slash") {
-                if (block) { c++; if (line ~ /\*\//) block = 0; next }
-                if (line ~ /^<!--/) { c++; if (line !~ /-->/) block = 1; next }
+                if (block) { c++; if (line ~ closer) block = 0; next }
+                if (line ~ /^<!--/) { c++; if (line !~ /-->/) { block = 1; closer = "-->" } next }
                 if (line ~ /^\/\//) { c++; next }
-                if (line ~ /^\/\*/) { c++; if (line !~ /\*\//) block = 1; next }
+                if (line ~ /^\/\*/) { c++; if (line !~ /\*\//) { block = 1; closer = "\\*/" } next }
                 k++
                 next
             }

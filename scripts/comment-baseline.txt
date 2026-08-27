@@ -6,8 +6,8 @@ deploy	2424
 detekt-rules	137
 events-bff	897
 events-core	328
-events-frontend	3218
+events-frontend	2327
 events-importer	20097
 infra	734
 root	494
-scripts	1313
+scripts	1327
