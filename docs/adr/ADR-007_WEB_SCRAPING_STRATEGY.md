@@ -582,9 +582,14 @@ web scraping pitfalls documented in industry literature (see References).
    venue server stays negligible. A scraper implementation manages no delays of its own.
 
 3. **Set a descriptive `User-Agent` header**: configure WebClient to send a transparent, identifying
-   `User-Agent` string, for example `EventJunkie/1.0 (+https://github.com/...)`. A venue operator can then recognise
-   the bot and contact us. Do not masquerade as a browser. The one exception is a venue that blocks non-browser agents
-   and gives explicit permission.
+   `User-Agent` string. A venue operator can then recognise the bot and contact us. Do not masquerade as a browser. The
+   one exception is a venue that blocks non-browser agents and gives explicit permission.
+
+    `ScraperHttpClientConfig` sends `Mozilla/5.0 (compatible; EventJunkie/1.0; +https://github.com/enorm-labs/event-junkie)`.
+    The `Mozilla/5.0 (compatible; …)` prefix is the convention every well-behaved crawler follows, Googlebot and bingbot
+    included. It is not a masquerade: the string names the product and carries a contact URL, which is what a venue
+    operator needs. **Keep the product token and the URL** if the prefix ever changes — they are the transparency, not
+    the prefix.
 
 4. **Handle pattern changes with regression tests**: a venue website redesign is the most common cause of scraper
    breakage. Each `EventImporter` needs unit tests that parse sample HTML snapshots from the test resources. They
@@ -599,9 +604,12 @@ web scraping pitfalls documented in industry literature (see References).
    parameter or a locale prefix is enough. Normalise a URL before the deduplication check. The `sourceId`-based upsert
    already prevents duplicate events, but a canonical URL also saves the network request.
 
-7. **Schedule scrapes during off-peak hours**: Berlin venue websites see most traffic in the evening (visitors checking tonight's events). Schedule imports
-   during early-morning hours (e.g. 03:00–06:00 CET) to minimise load during peak visitor times. The per-source `import_interval_minutes` in the
-   `event_source` table supports this — set import times via the scheduling mechanism (ADR-008).
+7. **Schedule scrapes during off-peak hours** — wanted, and **not implemented**. Berlin venue websites see most traffic
+   in the evening, so early-morning imports would cost a venue least. `ScheduledImportService` fires when a source's
+   `lastImportAt` plus its `import_interval_minutes` expires, which is an interval and not a time of day. The hour
+   therefore drifts. `import_interval_minutes` alone cannot express a window, so a time-of-day column or a cron
+   expression is the change this needs (ADR-008). The load stays small either way: one entry page per source per day,
+   with conditional requests on top.
 
 8. **Be aware of honeypot traps**: some sites embed invisible links to detect a bot. CSS `display: none` or the
    background colour hides them. Be careful with any link the scraper discovers at run time. The current design is
@@ -610,6 +618,11 @@ web scraping pitfalls documented in industry literature (see References).
 9. **Use the scraped data responsibly**: this project aggregates event data to show what is on in Berlin. It does not
    republish raw content. Respect venue copyright: store only the structured fields you need — title, date, artists,
    URL. Link to the original source for the full details.
+
+    **Two fields go beyond that principle today.** The schema also stores `description` and `imageUrl`, and the site
+    displays neither. Storing a promotional text is already a reproduction, so this is a known gap.
+    [SCRAPING_POSITION.md](../SCRAPING_POSITION.md) §3.1 carries the reasoning. #283 adds the per-source licence status
+    that resolves it.
 
 ### Candidate options
 
