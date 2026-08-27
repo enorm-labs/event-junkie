@@ -51,6 +51,10 @@ only when somebody is allowed to run it.
 answer can describe a version that was never published to the registry these stacks use. Where the two agree, either is fine; where they differ, this one is
 the one that is true here.
 
+**The Terraform MCP plugin was enabled here and is not any more, on that reasoning** (2026-08-27). It answered from `registry.terraform.io`, and it wanted a
+`TFE_TOKEN` for a Terraform Cloud account this project does not have — the state backend is S3 on Hetzner's Ceph, in `backend.tf`. Re-adding it needs an
+argument for why a second registry is worth a second answer, not just the observation that the two registries usually agree.
+
 ## What state this code is in
 
 **`bootstrap/` is applied and real, as of 2026-08-10.** Both DNS zones and their eight records exist on Hetzner and serve correctly; the SSH key is imported
