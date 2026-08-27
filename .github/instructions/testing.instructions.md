@@ -1,14 +1,17 @@
 ---
-applyTo: "**/src/test/**,**/src/testFixtures/**"
+applyTo: "**/src/test/**,**/src/testFixtures/**,events-frontend/e2e/**,events-frontend/**/__tests__/**"
 paths:
     - "**/src/test/**"
     - "**/src/testFixtures/**"
+    - "events-frontend/e2e/**"
+    - "events-frontend/**/__tests__/**"
 ---
 
-# Backend Testing Patterns
+# Testing Patterns
 
-Extend what is already here rather than repeating its boilerplate. The frontend's testing conventions live in
-[events-frontend/AGENTS.md](../../events-frontend/AGENTS.md).
+Extend what is already here rather than repeating its boilerplate.
+
+## Backend (JUnit, WebTestClient, Testcontainers)
 
 - **JUnit 5** + **WebTestClient** for reactive endpoint tests (see `BaseControllerTest.kt`). Create the client via lazy delegate with `@LocalServerPort`:
     ```kotlin
@@ -41,3 +44,37 @@ Extend what is already here rather than repeating its boilerplate. The frontend'
   (create → list → get → update → delete), mirroring the `full-lifecycle.http` script. Extend this pattern for new cross-entity workflows.
 - `ModularityTests` in each module (core, BFF, importer) validates Spring Modulith structure and generates docs to `build/spring-modulith-docs/`.
 - `events-core` publishes test fixtures via `java-test-fixtures` plugin — consume with `testImplementation(testFixtures(project(":events-core")))`.
+
+## Frontend (Vitest, Playwright)
+
+### Unit tests (Vitest)
+
+- Test files are colocated with components: `src/components/__tests__/*.spec.ts`.
+- Uses **jsdom** as the DOM environment.
+- Use `@vue/test-utils` for component mounting and interaction.
+- Use **`data-testid` attributes** for test selectors — decoupled from CSS classes and DOM structure.
+- Test composables in isolation (no component mount needed — just call the function and assert on returned refs).
+- Run with: `npm run test:unit` (watch mode) or `npm run test:unit -- --run` (single run).
+- Run with coverage: `npm run test:unit:coverage` — prints summary to console and generates HTML report in `coverage/`.
+
+### End-to-end tests (Playwright)
+
+- Test files live in `e2e/` directory with `*.spec.ts` extension.
+- Tests run against **five projects**: Desktop Chromium, Firefox, WebKit, plus **Mobile Chrome (Pixel 5)
+  and Mobile Safari (iPhone 12)** — the last two use ~390px viewports.
+- Dev mode: runs against `http://localhost:5173` (Vite dev server, reuses existing).
+- CI mode: builds first, then runs against `http://localhost:4173` (Vite preview server).
+- Run with: `npm run test:e2e`. CI runs the **full matrix**; the `/verify` skill runs **chromium only** to stay fast.
+- **Locale strategy: every suite is pinned to `/en` except `e2e/i18n.spec.ts` and the axe sweep.** The other suites are behaviour tests that happen to use
+  English accessible names as stable handles; re-running them in German would double an already five-project matrix to re-assert the same behaviour. So put
+  anything that only exists in a second language — the URL contract, the switcher, date formats, the per-locale pages — in `i18n.spec.ts`, and leave the rest
+  in English.
+    - **Two exceptions, both deliberate.** The **axe sweep runs both locales**, because German is reliably longer and that is where a layout overflow or a
+      contrast regression actually appears. And **landmark names are translated**, so a selector like `getByRole('navigation', { name: 'Main' })` becomes
+      `'Haupt'` under `/de` — which is the concrete reason the other suites stay on `/en` rather than a stylistic one.
+- **Layout/responsive gotcha:** because `/verify` is chromium-only (desktop viewport), it will not catch
+  regressions that only appear on the mobile projects — e.g. a wider header nav overflowing a ~390px screen
+  and pushing a control off-screen (a real failure we hit). When touching the **app shell, header/nav, or any
+  layout**, run the mobile projects locally before pushing:
+  `npm run test:e2e -- --project="Mobile Chrome" --project="Mobile Safari"`. On CI such a break also _slows_
+  the run — a failing interaction burns the 30s action timeout × 2 retries × 5 projects.
