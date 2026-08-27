@@ -87,6 +87,21 @@ describe('message catalogues', () => {
     }
   })
 
+  it('keeps error subjects lowercase, so they read inside the sentence that carries them', () => {
+    for (const [locale, messages] of Object.entries(catalogues)) {
+      const capitalised = keyPaths(messages)
+        .filter((path) => path.startsWith('errors.subject.'))
+        .filter((path) => {
+          const value = valueAt(messages, path)
+          return typeof value === 'string' && value[0] !== value[0]?.toLowerCase()
+        })
+      expect(
+        capitalised,
+        `"${locale}" has error subjects that read as stand-alone phrases (#772)`,
+      ).toEqual([])
+    }
+  })
+
   it('keeps named interpolations consistent across locales', () => {
     // `{subject}` in one language and `{thing}` in another renders the literal placeholder to the
     // user. Compare the placeholder sets rather than the prose.

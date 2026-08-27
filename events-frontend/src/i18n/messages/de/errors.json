@@ -1,21 +1,21 @@
 {
-  "serverTrouble": "{subject} konnten nicht geladen werden. Der Server hat gerade Probleme — bitte lade die Seite gleich noch einmal neu.",
-  "reload": "{subject} konnten nicht geladen werden. Bitte lade die Seite neu.",
-  "timeout": "{subject} konnten nicht geladen werden. Die Anfrage hat zu lange gedauert — prüfe bitte deine Verbindung und lade neu.",
-  "connection": "{subject} konnten nicht geladen werden. Prüfe bitte deine Verbindung und lade neu.",
+  "serverTrouble": "Beim Laden {subject} ist etwas schiefgegangen. Der Server hat gerade Probleme — bitte lade die Seite gleich noch einmal neu.",
+  "reload": "Beim Laden {subject} ist etwas schiefgegangen. Bitte lade die Seite neu.",
+  "timeout": "Beim Laden {subject} hat die Anfrage zu lange gedauert. Prüfe bitte deine Verbindung und lade neu.",
+  "connection": "Beim Laden {subject} ist etwas schiefgegangen. Prüfe bitte deine Verbindung und lade neu.",
   "subject": {
-    "generic": "Diese Inhalte",
-    "tonightsEvents": "Die Events für heute Abend",
-    "upcomingEvents": "Die kommenden Events",
-    "events": "Die Events",
-    "venueEvents": "Die Events in dieser Location",
-    "artistEvents": "Die Events dieses Acts",
-    "promoterEvents": "Die Events dieses Veranstalters",
-    "venues": "Die Locations",
-    "venue": "Diese Location",
-    "event": "Dieses Event",
-    "artist": "Dieser Act",
-    "promoter": "Dieser Veranstalter",
-    "calendar": "Die Kalenderdaten"
+    "generic": "dieser Inhalte",
+    "tonightsEvents": "der Events für heute Abend",
+    "upcomingEvents": "der kommenden Events",
+    "events": "der Events",
+    "venueEvents": "der Events in dieser Location",
+    "artistEvents": "der Events dieses Acts",
+    "promoterEvents": "der Events dieses Veranstalters",
+    "venues": "der Locations",
+    "venue": "dieser Location",
+    "event": "dieses Events",
+    "artist": "dieses Acts",
+    "promoter": "dieses Veranstalters",
+    "calendar": "der Kalenderdaten"
   }
 }
