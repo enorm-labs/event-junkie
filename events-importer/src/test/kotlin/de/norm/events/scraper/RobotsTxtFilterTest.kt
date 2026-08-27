@@ -69,6 +69,17 @@ class RobotsTxtFilterTest {
     }
 
     @Nested
+    inner class Defaults {
+        @Test
+        fun `enforcement is on unless a deployment turns it off`() {
+            // The guard on the flag itself. Enforcement off is a survey mode (#790), and a default
+            // that drifts back to it would leave a deployment ignoring robots.txt while every other
+            // test here still passes — the filter would run, log, and forbid nothing.
+            ScraperProperties().robotsEnforced shouldBe true
+        }
+    }
+
+    @Nested
     inner class ReportOnly {
         @Test
         fun `still sends a disallowed request while enforcement is off`() =
