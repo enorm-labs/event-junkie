@@ -53,6 +53,12 @@ class EventImportServiceTest {
     private val eventPromoterRepository: EventPromoterRepository = mockk(relaxed = true)
     private val eventGenreTagRepository: EventGenreTagRepository = mockk(relaxed = true)
     private val artistRepository: ArtistRepository = mockk(relaxed = true)
+
+    /** Slug to stubbed artist id, so two different names never resolve to one artist. */
+    private val artistIdsBySlug = mutableMapOf<String, Long>()
+
+    /** Where those ids start. Any value works — distinctness is the point, not the number. */
+    private val firstArtistId = 200L
     private val promoterRepository: PromoterRepository = mockk(relaxed = true)
     private val genreTagRepository: GenreTagRepository = mockk(relaxed = true)
     private val venueRepository: VenueRepository = mockk(relaxed = true)
@@ -228,9 +234,15 @@ class EventImportServiceTest {
         }
         // Artist resolution uses a conflict-tolerant insert + read-back (not save()).
         coEvery { artistRepository.insertIfAbsent(any(), any()) } returns 1
+        // One id per distinct slug, because that is what a real repository gives. A constant here
+        // modelled two different artists sharing one id, which `UNIQUE (event_id, artist_id)` makes
+        // impossible — and it is what hid #798: the duplicate rows the old sync built looked correct
+        // against this stub and failed against Postgres.
+        artistIdsBySlug.clear()
         coEvery { artistRepository.findBySlug(any()) } answers {
             val slug = firstArg<String>()
-            ArtistEntity(id = 200L, name = slug, slug = slug)
+            val id = artistIdsBySlug.getOrPut(slug) { firstArtistId + artistIdsBySlug.size }
+            ArtistEntity(id = id, name = slug, slug = slug)
         }
         coEvery { eventArtistRepository.saveAll(any<Iterable<EventArtistEntity>>()) } answers {
             firstArg<Iterable<EventArtistEntity>>()
