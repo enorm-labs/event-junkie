@@ -506,6 +506,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Chart and images agree about the UID        | `scripts/uid-consistency.sh` — reads the three Dockerfiles' `USER` and the chart; enforces the >10000 floor                       |
 | What each cluster would deploy              | `scripts/deployed-versions.sh` — reproduces Flux's selection; no cluster and no credential needed                                 |
 | Infrastructure as code (OpenTofu)           | `infra/` — read `infra/AGENTS.md` first; `bootstrap/` is applied, `environments/` is not                                          |
+| Shared MCP servers                          | `.mcp.json` — `opentofu`, the hosted registry lookup; no key, one approval per contributor                                        |
 | Cloud-init for the Hetzner nodes            | `infra/modules/environment/cloud-init/`                                                                                           |
 | Helm chart (bff · importer · frontend)      | `deploy/charts/event-junkie/` — read `deploy/AGENTS.md` first; exercised on k3d, never on a real cluster                          |
 | Backend container images                    | `events-bff/Dockerfile`, `events-importer/Dockerfile` — no `RUN`, context is each module's `build/docker`                         |

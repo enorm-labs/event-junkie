@@ -62,6 +62,14 @@ They open pull requests, file issues and read CI status. A vendored skill in [`.
 copied from [`cli/cli`](https://github.com/cli/cli/tree/trunk/skills/gh). That skill documents the flags, not the install. Without the binary it is a page of
 commands that all fail the same way.
 
+**Agents get one shared MCP server.** [`.mcp.json`](../.mcp.json) declares `opentofu`, the
+[hosted OpenTofu registry service](https://github.com/opentofu/opentofu-mcp-server) at `https://mcp.opentofu.org/mcp`. It looks providers, modules and resource
+documentation up against the registry that `infra/` actually resolves against. It needs no API key and no install. Every clone gets it, because the file is
+checked in. Claude Code then asks each person to approve it once, on first use. That approval is per person by design, and nothing in the repository waives it.
+
+Adding one for yourself alone is `claude mcp add`, whose `--scope` **defaults to `local`**, meaning the directory you run it in and no other. Run it from your
+home directory and it applies to your home directory. `--scope project` is what writes `.mcp.json`, and that is a change to the repository.
+
 Optional, for specific jobs: [`ijhttp`](https://www.jetbrains.com/help/idea/http-client-cli.html) to run `.http` files
 from the CLI, [`k6`](https://k6.io) for the performance tests, and [`tofu`](https://opentofu.org/) with `shellcheck`
 for anything under `infra/`. The pre-commit hooks below need both of the last two.
