@@ -4,8 +4,7 @@
 #
 # Usage:
 #   scripts/comment-lint.sh report [--top N]   # list every violation
-#   scripts/comment-lint.sh check              # fail if an area has more than the baseline allows
-#   scripts/comment-lint.sh update-baseline    # accept the current counts
+#   scripts/comment-lint.sh check              # fail if there is any violation at all
 #
 # Covers .tf, .tfvars, .sh, .py, .yaml, .yml. Kotlin is detekt's LongComment; TS and Vue are
 # event-junkie/max-comment-lines. See .github/instructions/comments.instructions.md and #713.
@@ -17,15 +16,14 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BASELINE="$REPO_ROOT/scripts/comment-lint-baseline.txt"
 
 # A block's length is its lines that carry something, not its lines. Blank ` # ` separators between
 # paragraphs are structure and do not count (#750), matching `LongComment` since #741; delimiters and
 # indentation do. So 25 is what a reader scrolls past, minus the breaks that make it scrollable.
 MAX_BLOCK="${COMMENT_LINT_MAX_BLOCK:-25}"
 # A file header is the script's only `--help` in most of these files, and documents an interface
-# rather than reasoning interleaved with code. It gets a higher cap, not an exemption; density and
-# the area ratchet still bound it.
+# rather than reasoning interleaved with code. It gets a higher cap, not an exemption; the density
+# rule still bounds it.
 MAX_HEADER_BLOCK="${COMMENT_LINT_MAX_HEADER_BLOCK:-40}"
 HEADER_STARTS_BY=3
 # **55, where `CommentDensity` and the ESLint rule both cap at 70** (#721). The argument for parity
@@ -44,26 +42,9 @@ EXCLUDE='node_modules/|/build/|/dist/|/coverage/'
 # (zizmor.yml). These two are nothing but suppressions and their rationale; elsewhere a date in a
 # comment is describing when something changed, which git already holds. See the comments instructions.
 DATE_IS_POLICY='^(zizmor\.yml|\.trivyignore|\.github/dependabot\.yml)$'
-SOURCE_GLOBS=(*.tf *.tfvars *.sh *.py *.yaml *.yml)
 
 usage() {
     sed -n '3,15p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
-}
-
-# A baseline built from a half-tracked tree is worse than none: `git ls-files` cannot see a new
-# file, so its comments are missing from the number and CI fails on the commit that adds them.
-refuse_if_untracked() {
-    cd "$REPO_ROOT"
-    local pending
-    pending="$(git ls-files --others --exclude-standard -- "${SOURCE_GLOBS[@]}" | grep -vE "$EXCLUDE" || true)"
-    [ -z "$pending" ] && return 0
-    echo "Refusing to write a baseline while these files are untracked:" >&2
-    # shellcheck disable=SC2086  # One path per line is the intent.
-    printf "  %s\n" $pending >&2
-    echo >&2
-    echo "git ls-files cannot see them, so their comments would be missing from the baseline and CI" >&2
-    echo "would fail on the commit that adds them. Stage them first: git add -N <file>" >&2
-    exit 2
 }
 
 files() {
@@ -189,60 +170,30 @@ report() {
     fi
 }
 
-update_baseline() {
-    refuse_if_untracked
-    {
-        echo "# Comment-lint violations per area — a ceiling that only moves down. See #713."
-        echo "# Raise a number only with an argument in the PR; the ordinary fix is to compress the comment."
-        counts
-    } > "$BASELINE"
-    echo "Wrote $BASELINE"
-    grep -v '^#' "$BASELINE"
-}
-
 check() {
-    if [ ! -f "$BASELINE" ]; then
-        echo "No baseline at $BASELINE — run: scripts/comment-lint.sh update-baseline" >&2
-        exit 2
+    local violations total
+    violations="$(counts)"
+    total="$(awk -F'	' '{ n += $2 } END { print n + 0 }' <<< "$violations")"
+
+    if [ "$total" -eq 0 ]; then
+        echo "No comment-lint violations."
+        return 0
     fi
 
-    local current failed=0
-    current="$(counts)"
+    while IFS=$'	' read -r area n; do
+        case "$area" in "") continue ;; esac
+        printf '  %-18s %4d
+' "$area" "$n"
+    done <<< "$violations"
 
-    while IFS=$'\t' read -r area limit; do
-        [ -z "${area:-}" ] && continue
-        case "$area" in \#*) continue ;; esac
-        local now
-        now="$(echo "$current" | awk -F'\t' -v a="$area" '$1 == a { print $2 }')"
-        now="${now:-0}"
-        if [ "$now" -gt "$limit" ]; then
-            printf '  %-18s %4d > %-4d  (+%d)\n' "$area" "$now" "$limit" "$((now - limit))"
-            failed=1
-        elif [ "$now" -lt "$limit" ]; then
-            printf '  %-18s %4d < %-4d  (-%d, update the baseline)\n' "$area" "$now" "$limit" "$((limit - now))"
-        fi
-    done < "$BASELINE"
-
-    while IFS=$'\t' read -r area now; do
-        [ -z "${area:-}" ] && continue
-        if ! grep -q "^${area}	" "$BASELINE"; then
-            printf '  %-18s %4d  (no baseline entry)\n' "$area" "$now"
-            failed=1
-        fi
-    done <<< "$current"
-
-    if [ "$failed" -eq 1 ]; then
-        echo
-        echo "New comment-lint violations. See them with: scripts/comment-lint.sh report" >&2
-        exit 1
-    fi
-    echo "Comment-lint violations are at or below the baseline."
+    echo
+    echo "$total comment-lint violations. See them with: scripts/comment-lint.sh report" >&2
+    exit 1
 }
 
 case "${1:-report}" in
     report) shift || true; report "$@" ;;
     check) check ;;
-    update-baseline) update_baseline ;;
     -h | --help | help) usage ;;
     *) usage >&2; exit 2 ;;
 esac

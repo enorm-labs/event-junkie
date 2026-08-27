@@ -53,12 +53,13 @@ Lint enforces the mechanical half of this; the rest is review.
       byte-identical to upstream: `VENDORED.md` beside it records the commit and the update command, and `.oxfmtrc.json` keeps the formatter off it.
     - **[`/compact-comments`](../../.github/prompts/compact-comments.prompt.md) is how the backlog comes down.** It classifies each block DELETE → RENAME → EXTRACT →
       RELOCATE → KEEP and applies them in that order, so deletion is the default and rewriting the exception. Reach for it before hand-editing a dense file.
-    - **Volume is ratcheted, not merely capped.** `scripts/comment-density.sh check` fails when an area carries more comment lines than
-      `scripts/comment-baseline.txt` allows, and `/verify` runs it. The number only goes down — compress or delete rather than raise it, and commit the lower
-      figure when it drops.
-    - **Terraform, shell, YAML and Python are linted too, by `scripts/comment-lint.sh`.** It applies the block cap, a per-file density cap and the rules above
-      that are mechanical — a markdown heading inside a comment, a date literal, a comment narrating a change — and `check` ratchets the count per area the way
-      `comment-density.sh` does. Silence one block with `# comment-lint: allow <reason>` on the line above it, or a whole file's density with
+    - **Volume is measured, not capped.** `scripts/comment-density.sh report --top 20` says where the comment lines are, and that is all it does — it gates
+      nothing. The per-area ceiling it used to carry was removed: a budget on the count of comment lines fails the build for a number rather than for a comment
+      anybody would object to, so it charged the same price for deleting a stale paragraph and for adding a load-bearing one, and the fix it asked for was
+      always "write less here", never "write better here". The rules below are what is enforced, because each one names a defect in the comment itself.
+    - **Terraform, shell, YAML and Python are linted by `scripts/comment-lint.sh`.** It applies the block cap, a per-file density cap and the rules above that
+      are mechanical — a markdown heading inside a comment, a date literal, a comment narrating a change — and `check` fails on **any** violation, with no
+      baseline to absorb one. Silence one block with `# comment-lint: allow <reason>` on the line above it, or a whole file's density with
       `# comment-lint: allow-file <reason>`; the reason is not optional either way and a bare directive is itself a violation.
     - **The density budget is 70% for code and 55% for the declarative formats** (#721), which is the one place the three implementations differ on purpose.
       The argument for parity is real — in Kotlin one comment explains a twenty-line function, while in HCL and YAML one comment explains one assignment, so

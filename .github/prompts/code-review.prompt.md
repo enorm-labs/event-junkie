@@ -106,8 +106,9 @@ foo` boilerplate; commented-out code; and a new `TODO` (that is an issue).
 - **Never ask for a long comment to be deleted when it records a deliberate trade-off.** Ask for it in fewer words; the reasoning stays. detekt's `LongComment`
   rule caps a comment at 25 lines and excludes `**/scraper/**` for exactly that reason, so a long scraper KDoc is not a finding.
 - **Look at the ratio, not only at each comment.** Twenty individually reasonable comments still make a file that is more prose than code, and no per-comment cap
-  catches it. `scripts/comment-density.sh report --top 20` ranks the worst files; a diff that pushes an area above `scripts/comment-baseline.txt` fails
-  `/verify`, so raising the baseline instead of compressing is itself the finding. See #713.
+  catches it. `scripts/comment-density.sh report --top 20` ranks the worst files. Nothing fails a build on that number any more — the per-area ceiling was removed
+  because it priced a deleted paragraph the same as an added one — so **this is a judgement a reviewer has to make**, not a check that will make it for you.
+  See #713.
 - **A comment with document structure in it is a document in the wrong file.** Markdown headings (`## Why this exists`), bold section titles, or an argument
   built over several paragraphs belong in `docs/`, an ADR or the issue. Ask for a pointer and a sentence.
 - **The same rules apply to `.tf`, `.sh`, `.yaml` and `.py`, and that is where the volume is.** 84% of the comment lines added since #393 landed in languages

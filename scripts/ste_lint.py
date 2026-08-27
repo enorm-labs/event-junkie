@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Scan Markdown for the structural ASD-STE100 rules and print one finding per line.
 
-Run it through `ste-lint.sh`, which owns the verbs, the baseline and the ratchet.
+Run it through `ste-lint.sh`, which owns the verbs, the baseline and the comparison against it.
 This half only measures. It takes file paths as arguments, needs nothing outside
 the standard library, and writes `<area>\\t<file>:<line>\\t<type>\\t<detail>` to
 stdout.

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# ste-lint.sh — the sentence rules for docs/, ratcheted the way comment volume is.
+# ste-lint.sh — the sentence rules for docs/, against a per-area ceiling that only moves down.
 #
 # Usage:
 #   scripts/ste-lint.sh report [--top N]   # list every finding

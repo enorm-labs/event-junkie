@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 #
-# comment-density.sh — how much of this repository is comments, and whether that number is rising.
+# comment-density.sh — how much of this repository is comments, and where that volume sits.
 #
 # Usage:
 #   scripts/comment-density.sh report [--top N] [--json]   # measure, print
-#   scripts/comment-density.sh check                       # fail if any area exceeds the baseline
-#   scripts/comment-density.sh update-baseline             # accept the current numbers
 #
-# Reaches no network and writes nothing except the baseline. See #713.
+# Reaches no network and writes nothing. A diagnostic, not a gate: it reports where the comments
+# are so a sweep knows which files to open, and fails only when it cannot measure. See #713.
 #
 # A line carrying both code and a comment counts as code, as cloc does. Generated files are
 # excluded (see EXCLUDE): their comment count is not a thing anyone can act on.
@@ -15,29 +14,11 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BASELINE="$REPO_ROOT/scripts/comment-baseline.txt"
 
 EXCLUDE='node_modules/|/build/|/dist/|/coverage/|events-frontend/src/api/schema\.d\.ts|package-lock\.json'
-SOURCE_GLOBS=(*.kt *.kts *.ts *.tsx *.js *.mjs *.vue *.tf *.tfvars *.sh *.py *.yaml *.yml)
 
 usage() {
     sed -n '3,12p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
-}
-
-# A baseline built from a half-tracked tree is worse than none: `git ls-files` cannot see a new
-# file, so its comments are missing from the number and CI fails on the commit that adds them.
-refuse_if_untracked() {
-    cd "$REPO_ROOT"
-    local pending
-    pending="$(git ls-files --others --exclude-standard -- "${SOURCE_GLOBS[@]}" | grep -vE "$EXCLUDE" || true)"
-    [ -z "$pending" ] && return 0
-    echo "Refusing to write a baseline while these files are untracked:" >&2
-    # shellcheck disable=SC2086  # One path per line is the intent.
-    printf "  %s\n" $pending >&2
-    echo >&2
-    echo "git ls-files cannot see them, so their comments would be missing from the baseline and CI" >&2
-    echo "would fail on the commit that adds them. Stage them first: git add -N <file>" >&2
-    exit 2
 }
 
 # One line per file: "<area>\t<comment>\t<code>".
@@ -150,64 +131,8 @@ report() {
     fi
 }
 
-areas() {
-    measure | awk -F'\t' '{ c[$1] += $2 } END { for (a in c) print a "\t" c[a] }' | sort
-}
-
-update_baseline() {
-    refuse_if_untracked
-    {
-        echo "# Comment lines per area — a ceiling, not a target. See #713."
-        echo "# comment-density.sh check fails when any area rises above its number here."
-        echo "# Lowering a number is the point. Raising one is a decision to argue for in the PR."
-        areas
-    } > "$BASELINE"
-    echo "Wrote $BASELINE"
-    grep -v '^#' "$BASELINE"
-}
-
-check() {
-    if [ ! -f "$BASELINE" ]; then
-        echo "No baseline at $BASELINE — run: scripts/comment-density.sh update-baseline" >&2
-        exit 2
-    fi
-
-    local current failed=0
-    current="$(areas)"
-
-    while IFS=$'\t' read -r area limit; do
-        [ -z "${area:-}" ] && continue
-        case "$area" in \#*) continue ;; esac
-        local now
-        now="$(echo "$current" | awk -F'\t' -v a="$area" '$1 == a { print $2 }')"
-        now="${now:-0}"
-        if [ "$now" -gt "$limit" ]; then
-            printf '  %-18s %6d > %-6d  (+%d)\n' "$area" "$now" "$limit" "$((now - limit))"
-            failed=1
-        elif [ "$now" -lt "$limit" ]; then
-            printf '  %-18s %6d < %-6d  (-%d, update the baseline)\n' "$area" "$now" "$limit" "$((limit - now))"
-        fi
-    done < "$BASELINE"
-
-    while IFS=$'\t' read -r area now; do
-        if ! grep -q "^${area}	" "$BASELINE"; then
-            printf '  %-18s %6d  (no baseline entry)\n' "$area" "$now"
-            failed=1
-        fi
-    done <<< "$current"
-
-    if [ "$failed" -eq 1 ]; then
-        echo
-        echo "Comment volume rose. Compress or delete, or argue for the raise in the PR: #713" >&2
-        exit 1
-    fi
-    echo "Comment volume is at or below the baseline."
-}
-
 case "${1:-report}" in
     report) shift || true; report "$@" ;;
-    check) check ;;
-    update-baseline) update_baseline ;;
     -h | --help | help) usage ;;
     *) usage >&2; exit 2 ;;
 esac

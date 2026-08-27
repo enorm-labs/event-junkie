@@ -12,8 +12,8 @@ burn-down counterpart to the guards in #713: those stop the volume rising, this 
   delete what it says.** If a fact has to leave a comment, it moves somewhere reviewable first — a test name, an issue, an ADR.
 - **Re-wrapping is not compaction.** Re-flowing a comment to a wider column drops its line count without removing a word. The caps count lines, so this passes
   the lint and changes nothing — it is gaming the metric while claiming to fix it. Cut words, not line breaks.
-- **Never raise a baseline to go green.** `comment-baseline.txt` and `comment-lint-baseline.txt` move down. A genuinely new file adding genuinely new comments is
-  the one exception, and it is argued in the PR, not absorbed quietly.
+- **Never silence a rule to go green.** `# comment-lint: allow <reason>` and `@Suppress("LongComment")` are for a comment that has earned its length, argued in
+  the PR. Reaching for one because the check is red is the move this skill exists to avoid.
 - This skill edits code. Run [`/verify`](verify.prompt.md) before handing back, and never leave the tree red.
 
 ## Running unattended
@@ -37,8 +37,8 @@ changes is which of them an unwatched run is allowed to reach.
   converges over four runs is worth more than one that plans a fifth and delivers none.
 - **`--dry-run`** on top of it opens no pull request and writes the report to the job summary. Use it first, and after any change to this section.
 
-The proof obligation is unchanged and is what makes the workload safe at all: `scripts/comment-density.sh check` and `scripts/comment-lint.sh check` measure the
-result mechanically, and a comment-only change that turns a test red went further than intended.
+The proof obligation is what makes the workload safe at all: `scripts/comment-lint.sh check` has to pass, `scripts/comment-density.sh report` has to show the
+drop the run claims, and a comment-only change that turns a test red went further than intended.
 
 **Your final message is the report, and there is no second turn.** The run ends the moment you stop calling tools, so a closing line like _"I'll compile the
 report once the checks finish"_ ends it with that sentence as the whole deliverable — and the job still reports success. There is nobody to hand off to and
@@ -137,15 +137,14 @@ Work file by file and re-run the checks after each one — the caps are per comm
 ./gradlew detekt --console=plain -q
 cd events-frontend && npx eslint .
 scripts/comment-lint.sh check
-scripts/comment-density.sh check
 ```
 
-When a count has genuinely dropped, commit the lower ceiling in the same change:
+**Show the drop rather than asserting it.** There is no baseline to commit any more, so the report is the evidence — run it before and after, and put both
+totals in the report:
 
 ```bash
 git add -N <any new file>          # git ls-files cannot see an untracked one
-scripts/comment-density.sh update-baseline
-scripts/comment-lint.sh update-baseline
+scripts/comment-density.sh report  # the TOTAL line is the number to quote
 ```
 
 Then run [`/verify`](verify.prompt.md) in full. **A comment-only change must not alter behaviour**, so a failing test means an edit went further than intended —

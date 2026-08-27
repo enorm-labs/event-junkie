@@ -7,7 +7,7 @@ import type { Comment } from 'estree'
  *
  * `max-comment-lines` caps one comment; twenty individually reasonable ones still make a file that
  * reads as prose with code between it, and no per-comment cap sees that. This is the per-file
- * backstop under `scripts/comment-density.sh`, which ratchets the totals per area.
+ * backstop; `scripts/comment-density.sh report` shows the same totals per area but gates nothing.
  *
  * A line carrying both code and a trailing comment counts as code, as `cloc` does. `minCommentLines`
  * keeps a short file with one explanatory paragraph out of it — that ratio is meaningless.

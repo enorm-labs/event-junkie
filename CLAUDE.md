@@ -23,7 +23,7 @@ Slash commands available under `.claude/skills/`:
 - `/code-review` — review the current diff
 - `/codebase-audit` — comprehensive whole-repo review of code + architecture (size, duplication, conventions, simplification)
 - `/commit-message` — generate a commit message from staged changes
-- `/compact-comments` — pay down comment volume: classify each block DELETE → RENAME → EXTRACT → RELOCATE → KEEP, apply in that order, and prove the drop
+- `/compact-comments` — pay down comment volume: classify each block DELETE → RENAME → EXTRACT → RELOCATE → KEEP, apply in that order, and measure the drop
 - `/data-quality-audit` — read-only audit of the whole `events` database for data-quality issues
 - `/importer-smoke` — runtime smoke test of a single importer: seed, import, inspect the rows, check for regressions
 - `/k3d-rehearsal` — run the chart and all three images on a local k3d cluster and prove the stack works end to end, then tear it down
@@ -43,9 +43,9 @@ Slash commands available under `.claude/skills/`:
 - `/update-dependencies` — bump backend and frontend dependencies safely
 - `/update-docs` — find documentation that has stopped being true and correct, delete or leave it, with the check that proves each one
 - `/verify` — run the full pre-PR sequence: backend `ktlintCheck detekt build koverLog` + frontend `type-check`, `lint`, `test:unit`, `test:e2e` (chromium),
-  `scripts/comment-density.sh check` + `scripts/comment-lint.sh check` + `scripts/skill-parity.sh` + `scripts/rules-parity.sh` always,
-  `scripts/format-markdown.sh check` + `scripts/ste-lint.sh check` when the diff touches any `.md`, and `tofu fmt`/`validate` + ShellCheck when it touches
-  `infra/`, and `helm lint` + `helm unittest` + `scripts/cluster-assertions.sh` when it touches `deploy/`
+  `scripts/comment-lint.sh check` + `scripts/skill-parity.sh` + `scripts/rules-parity.sh` always, `scripts/format-markdown.sh check` +
+  `scripts/ste-lint.sh check` when the diff touches any `.md`, and `tofu fmt`/`validate` + ShellCheck when it touches `infra/`, and `helm lint` +
+  `helm unittest` + `scripts/cluster-assertions.sh` when it touches `deploy/`
 - `/write-adr` — turn a decision that has been made into the record of why; claims the next ADR number by writing the file
 
 `scripts/skill-parity.sh` fails when this list, `.claude/skills/` and `.claude/commands/` disagree.
