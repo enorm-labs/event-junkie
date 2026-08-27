@@ -31,6 +31,12 @@ curl -fsSL -o .claude/skills/gh/LICENSE https://raw.githubusercontent.com/cli/cl
 gh api 'repos/cli/cli/commits?path=skills/gh&sha=trunk&per_page=1' --jq '.[0].sha'
 ```
 
-The skill is excluded from `scripts/format-markdown.sh` and from `scripts/skill-parity.sh` for the
-same reason as `asd-ste100`: formatting it would fork the copy, and it is a directory skill invoked
-by name rather than a slash command anybody types.
+`.github/skills/gh` is a directory symlink onto this directory, so Copilot's cloud agent finds the
+skill at [its own documented path](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills)
+without a second copy to keep in step. `asd-ste100` is symlinked there the same way.
+`scripts/skill-parity.sh` asserts the symlink exists, points here, and is a symlink rather than a
+copy.
+
+The skill is excluded from `scripts/format-markdown.sh` and from `scripts/skill-parity.sh`'s
+slash-command counts for the same reason as `asd-ste100`: formatting it would fork the copy, and it
+is a directory skill invoked by name rather than a command anybody types.

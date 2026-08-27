@@ -16,8 +16,6 @@
 # The CLAUDE.md list is checked in the same pass because it is the third copy, and the one a
 # contributor reads first.
 #
-# Directory skills are not counted: `asd-ste100/` and `gh/` are vendored, invoked by name rather
-# than typed, and the `-maxdepth 1 -name '*.md'` below is what excludes them.
 
 set -euo pipefail
 
@@ -71,6 +69,27 @@ while read -r name; do
     [ -z "$name" ] && continue
     [ -f ".claude/skills/$name.md" ] || note "CLAUDE.md lists /$name, which is not a skill"
 done <<< "$listed"
+
+# Directory skills are not slash commands, so `-maxdepth 1` above leaves them out; `.github/skills/`
+# carries one resolving symlink each. `-e` follows a link, so a dangling one needs the `-L` beside it.
+for skill in .claude/skills/*/; do
+    target="${skill%/}"
+    link=".github/skills/$(basename "$target")"
+    [ -f "$skill/SKILL.md" ] || note "$target has no SKILL.md"
+    [ -e "$link" ] || [ -L "$link" ] || note "directory skill $target is not in .github/skills — add: ln -s ../../$target $link"
+done
+
+for link in .github/skills/*; do
+    [ -e "$link" ] || [ -L "$link" ] || continue
+    name="$(basename "$link")"
+    if [ ! -L "$link" ]; then
+        note "$link is a copy; it has to be a symlink into .claude/skills/, so there is one file"
+    elif [ "$(readlink "$link")" != "../../.claude/skills/$name" ]; then
+        note "$link points at $(readlink "$link"), not ../../.claude/skills/$name"
+    elif [ ! -f ".claude/skills/$name/SKILL.md" ]; then
+        note "$link resolves to nothing with a SKILL.md under .claude/skills/"
+    fi
+done
 
 if [ "$problems" -ne 0 ]; then
     echo >&2

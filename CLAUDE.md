@@ -61,6 +61,12 @@ Each directory has a `VENDORED.md` recording its upstream commit and the command
 silently reverted by the next update, and repository-specific `gh` findings belong in
 [AGENTS.md § Automating GitHub with `gh`](AGENTS.md#automating-github-with-gh) instead.
 
+**[`.github/skills/`](.github/skills) holds one directory symlink per vendored skill**, which is
+[Copilot's own documented skill path](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills) for its
+cloud agent. Copilot reads `.claude/skills/` too, so the symlinks are belt and braces rather than a requirement — they put the skills where a Copilot user
+looks for them, and make `.github/` say out loud which skills this repository ships, without a second copy to drift. Same trick as `.claude/rules/`, pointing
+the other way. `skill-parity.sh` asserts every directory skill has one, that it is a symlink and not a copy, and that it resolves to the right target.
+
 ## Multi-module note
 
 This is a Gradle multi-project build (`events-core`, `events-bff`, `events-importer`, plus `detekt-rules` for the repository's own static-analysis rules) plus a
