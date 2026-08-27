@@ -70,6 +70,17 @@ covers the SPA.
   `scripts/format-markdown.sh` (see [.github/instructions/markdown.instructions.md](.github/instructions/markdown.instructions.md)), which the commit hook
   runs anyway.
 - **No unsolicited git commits/pushes**: Never run `git commit`, `git push`, or `git rebase` (squash) unless explicitly asked to by the user.
+- **Amend by default on a feature branch, and land one commit.** Once the branch carries a commit of yours, the next change **amends it** —
+  `git commit --amend` — rather than adding a second. Push the result with `git push --force-with-lease`, never a bare `--force`. This matters more here than
+  in most repositories: `main` allows only **Rebase and merge**, so every commit on the branch replays onto `main` exactly as written. Three "fix the lint"
+  commits are three commits on `main` for good, and the branch's scratch history becomes the project's.
+    - **A pull request normally lands as one commit.** When a branch does end up with several — a review round, a correction that could not be folded in —
+      squash before merging. [`/squash-commit-message`](.github/prompts/squash-commit-message.prompt.md) writes the message for it.
+    - **Amending changes what the commit contains, so rewrite the message with it.** A subject that describes the first version of a change is wrong once the
+      change has grown, and it is the version that reaches `main`. The **PR title and description** are the same fact in two more places. Update all three
+      together, or the pull request stops describing its own diff.
+    - It is a default, not a prohibition. Keep commits separate when the user asks for that, or when a reviewer has already commented on one — rewriting a
+      commit under review throws away the thread's anchor.
 - **Documentation describes the current state. Replace, never append.** A document says what is true today, in the present tense. When something changes,
   **rewrite the affected passage** — do not add an "Update:" note, a dated banner, or a new section beside the old one. Two passages describing successive
   states of the same thing is a defect, not thoroughness: the reader cannot tell which one is live, and the older one is the one they will act on. This is the

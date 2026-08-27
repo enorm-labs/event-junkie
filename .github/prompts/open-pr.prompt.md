@@ -66,6 +66,7 @@ This is the standard "ship it" flow — the manual equivalent of
   PR is unverified.
 - **Multiple logical changes.** If the diff spans clearly unrelated concerns, say so and offer to split them across commits (or PRs) rather than bundling
   everything into one.
-- **Re-running on an existing PR branch.** If the branch already has an open PR, don't open a duplicate — commit and push the follow-up, then point at the
-  existing PR.
+- **Re-running on an existing PR branch.** If the branch already has an open PR, don't open a duplicate — **amend the existing commit**, push it with
+  `git push --force-with-lease`, and bring the PR title and body back in step with the diff. A branch normally lands as one commit here, because `main` allows
+  only **Rebase and merge** and replays every commit as written. See AGENTS.md § Agent Instructions.
 - **Draft PRs.** Add `--draft` when the user wants early feedback or CI signal before the work is final.
