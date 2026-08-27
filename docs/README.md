@@ -51,12 +51,13 @@ everything below — someone with a WireGuard tunnel open, not someone writing a
 
 ## Across all of it
 
-| Document                         | What it covers                                                                                                                                                |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [LEGAL.md](LEGAL.md)             | Licensing, privacy, accessibility, scraping obligations. Referenced from the product docs, the ops docs and the prompts alike — which is why it has no folder |
-| [CREDENTIALS.md](CREDENTIALS.md) | The credential inventory — what exists, what it unlocks and where it lives. **No secret values, ever**                                                        |
-| [LINKS.md](LINKS.md)             | Every external service, console and reference this project depends on, in one place                                                                           |
-| [adr/](adr)                      | Architecture decisions, with the reasoning. Flat and numbered; the numbering is the structure                                                                 |
+| Document                                     | What it covers                                                                                                                                                         |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [LEGAL.md](LEGAL.md)                         | Licensing, privacy, accessibility — the site's own legal surface. Referenced from the product docs, the ops docs and the prompts alike — which is why it has no folder |
+| [SCRAPING_POSITION.md](SCRAPING_POSITION.md) | Why we believe the import pipeline is lawful, and the risk we accept. Our own reasoning, checked by no lawyer                                                          |
+| [CREDENTIALS.md](CREDENTIALS.md)             | The credential inventory — what exists, what it unlocks and where it lives. **No secret values, ever**                                                                 |
+| [LINKS.md](LINKS.md)                         | Every external service, console and reference this project depends on, in one place                                                                                    |
+| [adr/](adr)                                  | Architecture decisions, with the reasoning. Flat and numbered; the numbering is the structure                                                                          |
 
 ## Elsewhere in the repository
 
