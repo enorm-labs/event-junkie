@@ -75,6 +75,11 @@ Most of the code in this repository was written by AI coding agents (primarily
 [Claude Code](https://claude.com/claude-code)), working from the prompts and skills in
 [`.github/prompts/`](./.github/prompts) and the conventions in [AGENTS.md](./AGENTS.md).
 
+Two third-party skills are vendored into [`.claude/skills/`](./.claude/skills) rather than left to each contributor's global install:
+[`gh`](./.claude/skills/gh/SKILL.md) from [`cli/cli`](https://github.com/cli/cli/tree/trunk/skills/gh), for driving the GitHub CLI, and
+[`asd-ste100`](./.claude/skills/asd-ste100/SKILL.md), for the Simplified Technical English the documentation is written in. Each carries a `VENDORED.md` with
+its upstream commit and the command that refreshes it.
+
 The vision, the product ideas, the architecture decisions and the priorities are mine. The agents implement against them; every change goes through review
 before it lands.
 
@@ -83,8 +88,8 @@ working is genuinely good at and where it still needs a human paying attention.
 
 ## Install
 
-Prerequisites: a JDK (see [`.sdkmanrc`](./.sdkmanrc), managed with [SDKMAN](https://sdkman.io/)), Docker, and Node.js (see [`.nvmrc`](./events-frontend/.nvmrc))
-if you want the frontend.
+Prerequisites: a JDK (see [`.sdkmanrc`](./.sdkmanrc), managed with [SDKMAN](https://sdkman.io/)), Docker, the
+[GitHub CLI](https://cli.github.com/), and Node.js (see [`.nvmrc`](./events-frontend/.nvmrc)) if you want the frontend.
 
 ```bash
 git clone git@github.com:enorm-labs/event-junkie.git
@@ -92,6 +97,7 @@ cd event-junkie
 
 sdk env                                   # the right Java version
 brew install pre-commit && pre-commit install    # gitleaks hook — before your first commit
+brew install gh && gh auth login          # the agent prompts drive GitHub through it
 ./gradlew clean build                     # compile, test, lint, coverage
 ```
 

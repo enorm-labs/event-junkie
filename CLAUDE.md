@@ -47,6 +47,19 @@ Slash commands available under `.claude/skills/`:
   `helm unittest` + `scripts/cluster-assertions.sh` when it touches `deploy/`
 - `/write-adr` — turn a decision that has been made into the record of why; claims the next ADR number by writing the file
 
+`scripts/skill-parity.sh` fails when this list, `.claude/skills/` and `.claude/commands/` disagree.
+
+**Two skills in `.claude/skills/` are not slash commands and are not in that list.** They are third-party directories, vendored so they are present for every
+contributor rather than only whoever installed them globally, and invoked by name instead of typed:
+
+- [`asd-ste100`](.claude/skills/asd-ste100/SKILL.md) — Simplified Technical English; `/compact-comments` and `/update-docs` call it by name.
+- [`gh`](.claude/skills/gh/SKILL.md) — how to drive the GitHub CLI from an agent, from
+  [`cli/cli`](https://github.com/cli/cli/tree/trunk/skills/gh). It assumes `gh` is installed (`brew install gh`) and authenticated (`gh auth login`).
+
+Each directory has a `VENDORED.md` recording its upstream commit and the command that refreshes it. **Do not edit anything else inside them** — an edit is
+silently reverted by the next update, and repository-specific `gh` findings belong in
+[AGENTS.md § Automating GitHub with `gh`](AGENTS.md#automating-github-with-gh) instead.
+
 ## Multi-module note
 
 This is a Gradle multi-project build (`events-core`, `events-bff`, `events-importer`, plus `detekt-rules` for the repository's own static-analysis rules) plus a

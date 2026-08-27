@@ -16,8 +16,8 @@
 # The CLAUDE.md list is checked in the same pass because it is the third copy, and the one a
 # contributor reads first.
 #
-# `.claude/skills/asd-ste100/` is deliberately not counted: it is a vendored directory skill
-# invoked by name, not a slash command anybody types.
+# Directory skills are not counted: `asd-ste100/` and `gh/` are vendored, invoked by name rather
+# than typed, and the `-maxdepth 1 -name '*.md'` below is what excludes them.
 
 set -euo pipefail
 
