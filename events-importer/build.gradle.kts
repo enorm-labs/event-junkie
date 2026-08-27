@@ -95,6 +95,10 @@ dependencies {
     implementation("tools.jackson.module:jackson-module-kotlin")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
 
+    // crawler-commons – robots.txt parsing for RobotsTxtFilter (ADR-007 best-practice #1).
+    // See: https://github.com/crawler-commons/crawler-commons
+    implementation("com.github.crawler-commons:crawler-commons:${property("crawler-commons.version")}")
+
     // Kotlin Logging – idiomatic Kotlin wrapper around SLF4J
     // See: https://github.com/oshai/kotlin-logging
     implementation("io.github.oshai:kotlin-logging-jvm:${property("kotlin-logging.version")}")

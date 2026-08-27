@@ -24,11 +24,7 @@ class ApiClientTest {
         ApiClient(
             // The real shared bean, built from the production config — no politeness delay so
             // tests aren't slowed by the per-host throttle.
-            webClient =
-                ScraperHttpClientConfig().scraperWebClient(
-                    webClientBuilder = WebClient.builder(),
-                    scraperProperties = ScraperProperties(politeDelayMillis = 0)
-                )
+            webClient = testScraperWebClient()
         )
     }
 
@@ -95,4 +91,23 @@ class ApiClientTest {
             exception.message!! shouldContain "HTTP 404"
             exception.message!! shouldContain url
         }
+}
+
+/**
+ * The production scraper client minus [RobotsTxtFilter].
+ *
+ * The filter is covered by its own test. Including it here would put a `robots.txt` round trip in
+ * front of every request, and these tests assert the request the fetcher itself made — against a
+ * [MockWebServer] that answers whatever was enqueued next.
+ *
+ * No politeness delay, so the per-host throttle does not slow the suite down.
+ */
+private fun testScraperWebClient(): WebClient {
+    val properties = ScraperProperties(politeDelayMillis = 0)
+    val config = ScraperHttpClientConfig()
+    return config.scraperBaseWebClient(
+        webClientBuilder = WebClient.builder(),
+        scraperProperties = properties,
+        throttle = config.perHostThrottlingFilter(properties)
+    )
 }

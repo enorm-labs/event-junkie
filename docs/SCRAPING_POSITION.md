@@ -56,8 +56,9 @@ the image, and `pageMeta.ts` puts the same URL in `og:image`.
 **The image is hotlinked and not copied.** The `src` attribute points at the venue's own server, so the visitor's
 browser fetches it from there. §3.6 covers what follows.
 
-**`robots.txt` is a manual check, not code.** ADR-007 best-practice #1 makes it a step before a new importer is written.
-No code reads a venue's `robots.txt` at run time. §4 records the gap that follows.
+**`robots.txt` is read on every request.** `RobotsTxtFilter` sits on the shared scraper client, so each outbound
+request is checked against the host's rules. `RobotsRulesCache` reads the file once per host per day. **It reports and
+does not yet block** — see §3.3.
 
 ## 3. The questions, and our answers
 
@@ -117,9 +118,17 @@ operator uses to state what a machine may fetch. It is also a machine-readable r
 recognises for text and data mining. We do not argue that § 44b covers what we do, because our purpose includes making
 the extracted facts available and not only analysing them. We honour the signal regardless.
 
-Two importers record the check in their KDoc, and both skip a disallowed path.
+**The check is in the code, and it is not yet enforced.** `RobotsTxtFilter` checks every outbound scraper request
+against the host's rules and writes the answer to `event_source`. `ScraperProperties.robotsEnforced` is `false`, so a
+disallowed request is recorded and still sent (#790).
+
+That is a deliberate order, not a half-measure. Nobody knows how many of the 80 configured hosts disallow the paths
+the importers already read. Enforcing on the first deploy could stop every import at once. The first cycle produces the
+evidence, and enforcement follows it.
+
+Two importers also record the check in their KDoc, and both skip a disallowed path.
 `BarJederVernunftWebsiteImporter.kt` leaves a disallowed iCal feed alone. `RitterButzkeWebsiteImporter.kt` never fetches
-the disallowed calendar links. §4 records why two is not enough.
+the disallowed calendar links. Those notes say **why a URL is not fetched**, which the filter does not.
 
 ### 3.4 Load on the venue's server (§ 823 BGB, § 4 Nr. 4 UWG)
 
@@ -171,9 +180,9 @@ other and need one decision.
 
 Five things weaken the position above. Each has an owner or needs one.
 
-1. **`robots.txt` has no systematic record.** The tree holds 80 importer packages and three of them record the check.
-   The practice looks real, and the evidence does not exist for the rest. A per-source record belongs with
-   [#283](https://github.com/enorm-labs/event-junkie/issues/283).
+1. **`robots.txt` is checked but not enforced.** `RobotsTxtFilter` records every decision on `event_source`, and
+   `robotsEnforced` is still `false`, so a disallowed request goes out anyway. The evidence arrives with the first
+   import cycle, and enforcement is #795.
 2. **The description is displayed without a per-source justification** (§3.1). Owned by
    [#283](https://github.com/enorm-labs/event-junkie/issues/283) and
    [#364](https://github.com/enorm-labs/event-junkie/issues/364).

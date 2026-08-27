@@ -25,6 +25,13 @@ import java.util.concurrent.TimeoutException
  */
 internal fun scrapeFailureReason(error: Throwable): String =
     when (error) {
+        // Its own reason for the same purpose as `http_forbidden`: a policy answer, not a parse
+        // failure, and no amount of scraper work fixes it. Merging the two hides the one case where
+        // the response is to stop importing the venue rather than to repair a selector (#790).
+        is RobotsDisallowedException -> {
+            "robots_disallowed"
+        }
+
         is HttpFetchException -> {
             when (error.statusCode) {
                 HTTP_TOO_MANY_REQUESTS -> "http_rate_limited"

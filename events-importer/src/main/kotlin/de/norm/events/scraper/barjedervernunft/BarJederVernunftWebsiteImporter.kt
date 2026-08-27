@@ -1,10 +1,12 @@
 package de.norm.events.scraper.barjedervernunft
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -97,5 +99,8 @@ class BarJederVernunftWebsiteImporter(
         }
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val BAR_JEDER_VERNUNFT_LIMITATIONS = VenueLimitations(EventSource.BAR_JEDER_VERNUNFT)
+val BAR_JEDER_VERNUNFT_LIMITATIONS =
+    VenueLimitations(
+        EventSource.BAR_JEDER_VERNUNFT,
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar and the show pages state one Beginn time and never an Einlass")
+    )

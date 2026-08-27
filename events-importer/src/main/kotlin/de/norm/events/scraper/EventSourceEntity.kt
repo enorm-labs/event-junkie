@@ -42,6 +42,18 @@ data class EventSourceEntity(
     /** Timestamp of the last completed import (successful or failed). */
     val lastImportAt: Instant? = null,
     /**
+     * When this source's host last had its `robots.txt` read, or `null` while it never has.
+     *
+     * The three `robots*` columns are the per-source evidence behind `docs/SCRAPING_POSITION.md`
+     * §3.3. Null is a meaningful value: an unchecked source has to be visible as unchecked, which is
+     * why none of them carries a default (#790).
+     */
+    val robotsCheckedAt: Instant? = null,
+    /** Whether [url] itself is permitted by those rules. `null` until the first check. */
+    val robotsAllowed: Boolean? = null,
+    /** The `robots.txt` that answered, or `null` where the host serves none or could not be reached. */
+    val robotsTxtUrl: String? = null,
+    /**
      * Timestamp of the last import that **succeeded**, which [lastImportAt] is not.
      *
      * The two differ exactly when they matter most: `lastImportAt` is written on failure as well, so

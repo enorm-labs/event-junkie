@@ -98,6 +98,16 @@ class EventImportServiceTest {
      */
     private val fieldCoverageService: FieldCoverageService = mockk(relaxed = true)
 
+    /**
+     * Stubbed rather than real: the cache would reach the network for a `robots.txt`, and what these
+     * tests assert is the import pipeline. [RobotsRulesCacheTest] covers the cache itself.
+     */
+    private val robotsRulesCache: RobotsRulesCache =
+        mockk<RobotsRulesCache>().also {
+            coEvery { it.check(any()) } returns
+                RobotsCheck(host = "example.com", robotsTxtUrl = null, allowed = true, checkedAt = Instant.EPOCH)
+        }
+
     /** Reusable event source entity with sensible defaults. */
     private fun source(
         id: Long = 1L,
@@ -180,6 +190,7 @@ class EventImportServiceTest {
                 transactionalOperator = transactionalOperator,
                 metrics = metrics,
                 fieldCoverageService = fieldCoverageService,
+                robotsRulesCache = robotsRulesCache,
                 maxConcurrency = EventImportService.DEFAULT_MAX_CONCURRENCY
             )
     }
@@ -292,6 +303,7 @@ class EventImportServiceTest {
                         transactionalOperator = transactionalOperator,
                         metrics = metrics,
                         fieldCoverageService = fieldCoverageService,
+                        robotsRulesCache = robotsRulesCache,
                         maxConcurrency = EventImportService.DEFAULT_MAX_CONCURRENCY
                     )
 
@@ -1223,6 +1235,7 @@ class EventImportServiceTest {
                         transactionalOperator = transactionalOperator,
                         metrics = metrics,
                         fieldCoverageService = fieldCoverageService,
+                        robotsRulesCache = robotsRulesCache,
                         maxConcurrency = maxConcurrency
                     )
 
