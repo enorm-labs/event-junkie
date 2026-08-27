@@ -162,7 +162,6 @@ class AssociationSyncService(
                 EventArtistEntity::eventId
             ) ?: return
 
-        // Build the desired associations from scraped data
         val artistsBySourceId = scrapedEvents.associate { it.sourceId to it.artists }
         val toInsert = mutableListOf<EventArtistEntity>()
         val toUpdate = mutableListOf<EventArtistEntity>()
@@ -183,26 +182,21 @@ class AssociationSyncService(
                 val desired = scrapedArtist.toEventArtistEntity(eventId, artistId, billingOrder = index)
                 val current = existingByArtistId[artistId]
                 if (current == null) {
-                    // New association — insert
                     toInsert.add(desired)
                 } else if (current.role != desired.role ||
                     current.billingOrder != desired.billingOrder ||
                     current.stage != desired.stage
                 ) {
-                    // Association exists but role, billing order or stage changed — update in place
                     toUpdate.add(current.copy(role = desired.role, billingOrder = desired.billingOrder, stage = desired.stage))
                 }
-                // else: association is already correct — no-op
             }
 
-            // Associations for artists no longer linked to this event — delete
             existing
                 .filter { it.artistId !in desiredArtistIds }
                 .mapNotNull { it.id }
                 .let { toDeleteIds.addAll(it) }
         }
 
-        // Apply all changes in bulk
         if (toDeleteIds.isNotEmpty()) {
             eventArtistRepository.deleteAllById(toDeleteIds)
         }
@@ -319,20 +313,16 @@ class AssociationSyncService(
                 desiredPromoterIds.add(promoterId)
 
                 if (existingByPromoterId[promoterId] == null) {
-                    // New association — insert
                     toInsert.add(EventPromoterEntity(eventId = eventId, promoterId = promoterId))
                 }
-                // else: association already exists — no-op
             }
 
-            // Associations for promoters no longer linked to this event — delete
             existing
                 .filter { it.promoterId !in desiredPromoterIds }
                 .mapNotNull { it.id }
                 .let { toDeleteIds.addAll(it) }
         }
 
-        // Apply all changes in bulk
         if (toDeleteIds.isNotEmpty()) {
             eventPromoterRepository.deleteAllById(toDeleteIds)
         }
@@ -411,7 +401,6 @@ class AssociationSyncService(
                 EventGenreTagEntity::eventId
             ) ?: return
 
-        // Build the desired associations from scraped genre strings
         val genresBySourceId = scrapedEvents.associate { it.sourceId to normalizeGenre(it.genre) }
         val toInsert = mutableListOf<EventGenreTagEntity>()
         val toDeleteIds = mutableListOf<Long>()
@@ -432,20 +421,16 @@ class AssociationSyncService(
                 desiredGenreTagIds.add(genreTagId)
 
                 if (existingByGenreTagId[genreTagId] == null) {
-                    // New association — insert
                     toInsert.add(EventGenreTagEntity(eventId = eventId, genreTagId = genreTagId))
                 }
-                // else: association already exists — no-op
             }
 
-            // Associations for genre tags no longer linked to this event — delete
             existing
                 .filter { it.genreTagId !in desiredGenreTagIds }
                 .mapNotNull { it.id }
                 .let { toDeleteIds.addAll(it) }
         }
 
-        // Apply all changes in bulk
         if (toDeleteIds.isNotEmpty()) {
             eventGenreTagRepository.deleteAllById(toDeleteIds)
         }
