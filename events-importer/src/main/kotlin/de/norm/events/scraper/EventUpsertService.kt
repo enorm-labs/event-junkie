@@ -2,6 +2,7 @@ package de.norm.events.scraper
 
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
+import de.norm.events.licence.SourceLicences
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
@@ -56,13 +57,14 @@ class EventUpsertService(
         scrapedEvents: List<ScrapedEvent>,
         venueId: Long,
         venueSlug: String,
-        eventSourceId: Long
+        eventSourceId: Long,
+        licences: SourceLicences = SourceLicences.UNKNOWN_SOURCE
     ): UpsertOutcome {
         val upcomingEvents = dropPastEvents(scrapedEvents, eventSourceId)
         val uniqueEvents = deduplicateScrapedEvents(upcomingEvents)
         // Cleanup runs BEFORE the upsert, and the order is load-bearing — see the KDoc note.
         removeStaleEvents(uniqueEvents, eventSourceId)
-        return upsertEvents(uniqueEvents, venueId, venueSlug, eventSourceId)
+        return upsertEvents(uniqueEvents, venueId, venueSlug, eventSourceId, licences)
     }
 
     /**
@@ -116,7 +118,8 @@ class EventUpsertService(
         scrapedEvents: List<ScrapedEvent>,
         venueId: Long,
         venueSlug: String,
-        eventSourceId: Long
+        eventSourceId: Long,
+        licences: SourceLicences
     ): UpsertOutcome {
         val existingBySourceId =
             eventRepository
@@ -135,7 +138,8 @@ class EventUpsertService(
                     venueSlug,
                     eventSourceId,
                     existingBySourceId[scraped.sourceId],
-                    discriminators[scraped.sourceId]
+                    discriminators[scraped.sourceId],
+                    licences
                 )
             }
         val (changed, unchanged) = partitionByChanged(entities, existingBySourceId)

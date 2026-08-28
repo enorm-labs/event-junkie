@@ -82,9 +82,9 @@ const localePath = useLocalePath()
       </p>
       <p>
         <strong>It does not have to be everything.</strong> If it is only the images you mind, or
-        only the description texts, we remove exactly that and leave the events in place. The dates
-        stay findable and the material you objected to goes. Tell us which part you would rather we
-        did not show.
+        only the description texts, we remove exactly that and leave the events in place. We delete
+        the material you objected to from our database and do not import it again. The dates stay
+        findable. Tell us which part you would rather we did not store.
       </p>
     </section>
 
