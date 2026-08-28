@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.licence.SourceLicence
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
@@ -60,5 +61,24 @@ data class EventSourceUpdateRequest(
     val importIntervalMinutes: Int? = null,
     @Schema(description = "Maximum retry attempts before giving up", example = "5")
     @field:Min(value = 0, message = "Max retries must not be negative")
-    val maxRetries: Int? = null
+    val maxRetries: Int? = null,
+    @Schema(
+        description =
+            "Whether this source's event descriptions may be republished. PROHIBITED withholds them " +
+                "from every public response. Null leaves the current value unchanged (#283)",
+        example = "UNCLEAR"
+    )
+    val descriptionLicence: SourceLicence? = null,
+    @Schema(
+        description = "The same question for this source's images, answered separately",
+        example = "PROHIBITED"
+    )
+    val imageLicence: SourceLicence? = null,
+    @Schema(
+        description = "The page the reviewer read. Worth recording even when the answer is UNCLEAR",
+        example = "https://example.com/presse"
+    )
+    val licenceSourceUrl: String? = null,
+    @Schema(description = "The sentence that decided it", example = "Pressefotos zur honorarfreien Verwendung")
+    val licenceNote: String? = null
 )

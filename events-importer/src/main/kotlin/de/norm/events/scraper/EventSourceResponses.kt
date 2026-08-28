@@ -49,6 +49,21 @@ data class EventSourceResponse(
         example = "https://example.com/robots.txt"
     )
     val robotsTxtUrl: String?,
+    @Schema(
+        description =
+            "What is known about republishing this source's descriptions, or null while nobody has " +
+                "reviewed it. Null and UNCLEAR are different states and both display",
+        example = "UNCLEAR"
+    )
+    val descriptionLicence: String?,
+    @Schema(description = "The same question for this source's images", example = "PROHIBITED")
+    val imageLicence: String?,
+    @Schema(description = "When the two above were last reviewed")
+    val licenceReviewedAt: Instant?,
+    @Schema(description = "The page the reviewer read", example = "https://example.com/presse")
+    val licenceSourceUrl: String?,
+    @Schema(description = "The sentence that decided it")
+    val licenceNote: String?,
     @Schema(description = "Number of events imported in the last successful run", example = "12")
     val lastEventCount: Int?,
     @Schema(description = "Error message from the last failed import")
@@ -87,6 +102,11 @@ data class EventSourceResponse(
                 robotsAllowed = entity.robotsAllowed,
                 robotsCheckedAt = entity.robotsCheckedAt,
                 robotsTxtUrl = entity.robotsTxtUrl,
+                descriptionLicence = entity.descriptionLicence,
+                imageLicence = entity.imageLicence,
+                licenceReviewedAt = entity.licenceReviewedAt,
+                licenceSourceUrl = entity.licenceSourceUrl,
+                licenceNote = entity.licenceNote,
                 lastEventCount = entity.lastEventCount,
                 lastError = entity.lastError,
                 flaggedAt = entity.flaggedAt,
