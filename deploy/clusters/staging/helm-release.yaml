@@ -96,6 +96,17 @@ spec:
       #     --from-literal=username=events --from-literal=password=…
       # SOPS-managed Secrets arrive in #416.
       existingSecret: "events-db"
+    # Cached venue images (ADR-019). On here first: staging is where the write path is exercised
+    # before anything serves from it. Nothing reads the bucket yet.
+    images:
+      enabled: true
+      storage:
+        # The only thing keeping staging's objects away from production's — the bucket is shared and
+        # the keys are content addressed. The chart refuses to render without it.
+        prefix: "staging"
+        # Out of band in the target namespace, scoped to this bucket and never the project-wide
+        # keypair (docs/ops/SECRETS.md §event-junkie-images).
+        existingSecret: "event-junkie-images"
     # One node with 4 GB shared between k3s, PostgreSQL, Flux's four controllers and three
     # workloads, so both stateless services drop to a single replica. This is the one place staging
     # is not production-shaped, and it is a capacity fact rather than a preference. Flux itself is
