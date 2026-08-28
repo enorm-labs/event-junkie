@@ -1,3 +1,7 @@
+# comment-lint: allow-file every bucket here carries why it exists and why it differs, and the file
+# sat at 54% before the images bucket. A fourth bucket documented like the other three reaches the
+# cap by arithmetic rather than by verbosity, and the alternative is deleting a reason.
+
 # Object Storage buckets that CAN be declared.
 #
 # `-tfstate` is not here and never will be: a state backend cannot be managed by the state it holds
@@ -132,3 +136,32 @@ resource "minio_s3_bucket_lifecycle" "backups" {
     }
   }
 }
+
+# --- the cached venue image bucket, and the one that must never expire ----------------------------
+
+# **Created, not adopted.** Its two neighbours above predate this configuration and carry `import`
+# blocks. This bucket has never existed, so there is nothing to take over.
+resource "minio_s3_bucket" "images" {
+  bucket = var.object_storage_bucket_images
+
+  # Private, and the reason differs from its neighbours. Theirs is disclosure; this bucket holds
+  # third-party material we serve, so a public bucket would also publish an origin we do not
+  # control the URLs of. The BFF streams from here and is the only reader (ADR-019 §2.2).
+  acl = "private"
+
+  # `false`, as for the other two. Losing these costs a refetch of every venue image rather than
+  # data, but a refetch is thousands of requests to venues that ADR-007 exists to avoid making.
+  force_destroy = false
+}
+
+# **There is deliberately no `minio_s3_bucket_lifecycle` here, and that is the point.**
+#
+# `-o2` and `-backups` expire because both hold history. This bucket holds live content, so an
+# expiry rule would delete an object out from under the page serving it (ADR-019 §2.7).
+#
+# An orphan sweep replaces the rule: it asks the database whether anything still points at an
+# object. Without it the bucket grows forever, so the sweep is load-bearing rather than tidy-up.
+#
+# The sweep must run under its own environment prefix. Content-addressed keys mean staging computes
+# the same key as production, so a sweep asking its own database about every key would delete the
+# other environment's objects — #270's shape, one bucket over.

@@ -253,6 +253,21 @@ ingress:
 # *on* means nothing while every pod may talk to every pod. One default-deny plus one named
 # allowance per real conversation — read the template's allowances as the architecture, because if
 # an arrow is not written down there, it does not happen.
+# Cached venue images (ADR-019). Off means the importer records what an image is and stores nothing.
+# Not a hotlink-versus-cache switch: the BFF has no such flag, so no value here reaches a browser.
+images:
+  enabled: false
+  storage:
+    endpoint: "https://fsn1.your-objectstorage.com"
+    # Hetzner enforces the region in the request signature and rejects a mismatch as bad credentials.
+    region: "fsn1"
+    bucket: "event-junkie-images"
+    # Separates this environment's objects from the other's. Empty on purpose — the importer
+    # deployment refuses to render without it, and says what a shared prefix costs.
+    prefix: ""
+    # Scoped to this bucket and nothing else (SECRETS.md §event-junkie-images).
+    existingSecret: "event-junkie-images"
+
 networkPolicy:
   enabled: true
   # networkPolicy.databaseCidr is the /32 of `postgres_ip` from the matching infra stack. Required

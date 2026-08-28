@@ -20,6 +20,7 @@ import java.time.Instant
 class ImageCacheService(
     private val repository: CachedImageRepository,
     private val fetcher: ImageFetcher,
+    private val storage: ImageStorage,
     private val properties: ImageProperties,
     private val clock: Clock = Clock.systemUTC()
 ) {
@@ -82,6 +83,16 @@ class ImageCacheService(
             }
 
             is ImageFetchResult.Success -> {
+                // Store first, record second. The other order would leave a row claiming an object
+                // that does not exist, and the serving path reads the row rather than the bucket.
+                val stored = storage.storeOriginal(result.contentHash, result.contentType, result.bytes)
+
+                // **A storage failure is not a bad URL, and must not be cached as one.** The venue
+                // answered correctly; our bucket did not take the bytes. Writing a row here would
+                // hide the URL behind a refresh window, so a transient outage would cost every image
+                // a month. Leaving no row means the next pass finds it again immediately.
+                if (storage.isEnabled() && stored == null) return CacheOutcome(failed = 1)
+
                 repository.save(
                     base.copy(
                         contentHash = result.contentHash,

@@ -99,6 +99,18 @@ dependencies {
     // See: https://github.com/crawler-commons/crawler-commons
     implementation("com.github.crawler-commons:crawler-commons:${property("crawler-commons.version")}")
 
+    // AWS SDK v2 S3 – writes cached venue images to Hetzner Object Storage, which is S3-compatible
+    // (ADR-019). The async client, because every call here is made from a coroutine on a Netty
+    // event loop and the blocking one would park it.
+    //
+    // `apache-client` is excluded deliberately: the `s3` artifact pulls both HTTP implementations,
+    // and shipping the synchronous one means a second HTTP stack in the image that nothing calls.
+    // See: https://github.com/aws/aws-sdk-java-v2
+    implementation("software.amazon.awssdk:s3:${property("awssdk.version")}") {
+        exclude(group = "software.amazon.awssdk", module = "apache-client")
+    }
+    implementation("software.amazon.awssdk:netty-nio-client:${property("awssdk.version")}")
+
     // Kotlin Logging – idiomatic Kotlin wrapper around SLF4J
     // See: https://github.com/oshai/kotlin-logging
     implementation("io.github.oshai:kotlin-logging-jvm:${property("kotlin-logging.version")}")

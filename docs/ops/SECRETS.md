@@ -18,7 +18,7 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 > decision. `github-dispatch` is the one place the "encrypt it, the value is a nuisance at worst" reasoning does not hold, because its scope is
 > `contents: write`. See the note under the table.
 
-## The six objects, and where each comes from
+## The seven objects, and where each comes from
 
 | Secret                    | Namespace                                         | Holds                                                 | Created at                                                     |
 | ------------------------- | ------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
@@ -28,8 +28,9 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 | `github-dispatch`         | `flux-system`                                     | a fine-grained PAT, **`contents: write`** on one repo | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8 — **after** §9 |
 | `postgres-exporter`       | `observability`                                   | the `metrics` role's DSN                              | §postgres-exporter, below                                      |
 | `sops-age`                | `flux-system`                                     | the age private key that decrypts `events-db`         | §3, below                                                      |
+| `event-junkie-images`     | `event-junkie`                                    | an S3 keypair for the cached image bucket **only**    | §event-junkie-images, below                                    |
 
-**All six belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
+**All seven belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
 four, which is exactly the failure mode a summary exists to prevent. Add a row here in the same change that adds a secret.
 
 **Only `github-dispatch` cannot be regenerated.** `hetzner` is the Keychain's `HCLOUD_TOKEN`, `sops-age` is `~/.config/sops/age/event-junkie.txt`, and
@@ -42,6 +43,33 @@ renewing at worst.
 
 `/etc/wal-g/credentials.env` is deliberately **not** in this list. It lives on the node rather than in the cluster, so SOPS does not reach it — see
 [HEALTHCHECKS.md](HEALTHCHECKS.md) and §8b.
+
+### `event-junkie-images` — and the one place a shared keypair must not be used
+
+The importer writes cached venue images to `event-junkie-images` (ADR-019). It needs an S3 keypair, and **it must not be
+given the project-wide one.**
+
+§92 above already makes this argument about OpenObserve: one keypair, `event-junkie-s3-access-key` in the Keychain,
+reaches every bucket including `-backups` and `-tfstate`. Here the same objection is sharper rather than merely equal.
+**The importer is the workload that fetches URLs taken out of scraped HTML.** A credential that reads the database
+backups and the OpenTofu state turns a server-side request forgery into an infrastructure compromise. `ImageUrlValidator`
+is a control and not a guarantee. It says so itself.
+
+**So create a keypair for this bucket and nothing else**, and scope it to `event-junkie-images` if Hetzner's bucket
+policies allow. This is a decision about what you type in, not a change to any manifest.
+
+```sh
+kubectl create secret generic event-junkie-images -n event-junkie \
+  --from-literal=IMAGE_STORAGE_ACCESS_KEY=<the images-bucket access key> \
+  --from-literal=IMAGE_STORAGE_SECRET_KEY=<the images-bucket secret key>
+```
+
+**Losing it costs a refetch, not data.** Every cached image can be fetched again from the venue, which is what ADR-019
+§2.1 means by the only re-derivable data here. So it is the least dangerous of the seven to lose. Its blast radius if
+leaked depends entirely on how narrowly it was scoped.
+
+**Without it the importer still runs.** No credentials means no client is built: images are recorded and not stored, and
+the log says so at startup. A local run needs no bucket access at all.
 
 ## Why SOPS + age, and not Sealed Secrets
 

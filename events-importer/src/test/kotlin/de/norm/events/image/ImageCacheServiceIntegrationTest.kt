@@ -98,6 +98,9 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
                     validator = ImageUrlValidator(),
                     properties = properties
                 ),
+            // No client, so `isEnabled()` is false: the service records rows and stores nothing,
+            // which is the state a local run without bucket credentials is in.
+            storage = ImageStorage(client = null, properties = ImageStorageProperties()),
             properties = properties,
             clock = Clock.systemUTC()
         )

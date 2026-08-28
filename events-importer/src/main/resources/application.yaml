@@ -78,6 +78,19 @@ app:
     refresh-after: 30d
     retry-failed-after: 7d
     batch-size: 200
+    storage:
+      # Hetzner Object Storage is S3-compatible. The region is enforced in the request signature and
+      # a mismatch fails as though the credentials were wrong, so it matches infra/bootstrap.
+      endpoint: ${IMAGE_STORAGE_ENDPOINT:https://fsn1.your-objectstorage.com}
+      region: ${IMAGE_STORAGE_REGION:fsn1}
+      bucket: ${IMAGE_STORAGE_BUCKET:event-junkie-images}
+      # One bucket serves both environments, so this is the only thing keeping their objects apart.
+      # Keys are content addressed: staging computes the same key as production for the same image.
+      prefix: ${IMAGE_STORAGE_PREFIX:local}
+      # Empty by default. Without credentials no client is built, images are recorded and not
+      # stored, and a local run needs no bucket access.
+      access-key: ${IMAGE_STORAGE_ACCESS_KEY:}
+      secret-key: ${IMAGE_STORAGE_SECRET_KEY:}
 
 ---
 # Local development only — activate with `--spring.profiles.active=local` (IntelliJ: run

@@ -120,6 +120,29 @@ variable "object_storage_bucket_backups" {
   }
 }
 
+variable "object_storage_bucket_images" {
+  description = <<-EOT
+    Object Storage bucket for cached venue images (ADR-019, #792).
+
+    **Created rather than adopted.** Its two neighbours predate the OpenTofu and carry `import`
+    blocks; this one has never existed, so `storage.tf` declares it plainly.
+
+    **One bucket for both environments, separated by a prefix the application derives from its own
+    environment.** The same reasoning `-backups` records: the subscription is billed per account and
+    a second bucket buys nothing. The hazard is sharper here, though — keys are content addressed,
+    so staging and production compute the *same* key for the same venue image, and a sweep that
+    ignored its prefix would delete an object the other environment still serves (#270).
+  EOT
+  type        = string
+  default     = "event-junkie-images"
+  nullable    = false
+
+  validation {
+    condition     = can(regex("^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$", var.object_storage_bucket_images))
+    error_message = "Bucket names are lower-case letters, digits and hyphens, 3-63 characters, not starting or ending with a hyphen."
+  }
+}
+
 variable "backup_retention_backstop_days" {
   description = <<-EOT
     The hard ceiling on how long a database backup can survive, enforced by a bucket lifecycle rule
