@@ -4,6 +4,7 @@ import de.norm.events.scraper.ScraperHttpClientConfig
 import de.norm.events.scraper.ScraperProperties
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
@@ -209,6 +210,25 @@ class ImageFetcherTest {
 
             result.shouldBeInstanceOf<ImageFetchResult.Rejected>()
             result.reason shouldContain "buffer limit"
+        }
+
+    @Test
+    fun `sends an already-encoded URL verbatim rather than re-encoding it`() =
+        runTest {
+            // Frannz Club proxies every image through `images.copilot.events/resize?url=…` with the
+            // whole target percent-encoded in the query. Passing that to `uri(String)` treats it as
+            // a URI template and turns `%3A` into `%253A`, which the proxy answers 400. Twenty-two
+            // images failed that way on staging before this was fixed. HtmlFetcher carries the same
+            // guard, from the same class of bug on a venue's non-ASCII slugs.
+            server.enqueue(imageResponse(pngBytes(width = 8, height = 8)))
+            val encoded = "${url().substringBefore("/poster.png")}/resize?url=https%3A%2F%2Fexample.test%2Fa.jpg"
+
+            fetcher().fetch(encoded).shouldBeInstanceOf<ImageFetchResult.Success>()
+
+            val requested = server.takeRequest().target
+            requested shouldContain "url=https%3A%2F%2Fexample.test%2Fa.jpg"
+            // The failure this pins: a re-encoded '%' arrives as %25.
+            requested shouldNotContain "%253A"
         }
 
     @Test
