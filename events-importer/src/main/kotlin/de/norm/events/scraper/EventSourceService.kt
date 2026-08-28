@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.map
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 
 /**
  * Service encapsulating event source CRUD business logic.
@@ -105,6 +106,11 @@ class EventSourceService(
      * Supports toggling `enabled`, changing `importIntervalMinutes`, and adjusting `maxRetries`.
      * Only non-null fields in the request are applied.
      *
+     * **A null field means "leave unchanged", which is this route's existing semantic and applies to
+     * the licence columns too.** So a status can be corrected but not cleared back to unreviewed.
+     * That is deliberate rather than an oversight: reverting a review to "nobody looked" discards
+     * the fact that somebody did, and the honest correction is `UNCLEAR` with a note (#283).
+     *
      * @throws EventSourceNotFoundException if no source with the given [slug] exists.
      */
     suspend fun update(
@@ -112,11 +118,20 @@ class EventSourceService(
         request: EventSourceUpdateRequest
     ): EventSourceResponse {
         val source = eventSourceRepository.findBySlug(slug) ?: throw EventSourceNotFoundException(slug)
+        // A licence field in the request means somebody reviewed the source, so the timestamp moves
+        // with it rather than being sent by the caller. Sending it separately would let the two
+        // disagree, and the whole value of the timestamp is that it cannot.
+        val licenceReviewed = request.descriptionLicence != null || request.imageLicence != null
         val updated =
             source.copy(
                 enabled = request.enabled ?: source.enabled,
                 importIntervalMinutes = request.importIntervalMinutes ?: source.importIntervalMinutes,
-                maxRetries = request.maxRetries ?: source.maxRetries
+                maxRetries = request.maxRetries ?: source.maxRetries,
+                descriptionLicence = request.descriptionLicence?.name ?: source.descriptionLicence,
+                imageLicence = request.imageLicence?.name ?: source.imageLicence,
+                licenceReviewedAt = if (licenceReviewed) Instant.now() else source.licenceReviewedAt,
+                licenceSourceUrl = request.licenceSourceUrl ?: source.licenceSourceUrl,
+                licenceNote = request.licenceNote ?: source.licenceNote
             )
         val saved = eventSourceRepository.save(updated)
         logger.info { "Updated event source '${saved.name}' (id=${saved.id})" }

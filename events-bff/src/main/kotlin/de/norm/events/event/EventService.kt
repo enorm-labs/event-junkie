@@ -9,6 +9,8 @@ import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagRepository
 import de.norm.events.promoter.PromoterRepository
 import de.norm.events.promoter.PromoterSummaryResponse
+import de.norm.events.sourcelicence.SourceLicenceGate
+import de.norm.events.sourcelicence.SourceLicences
 import de.norm.events.venue.VenueRepository
 import de.norm.events.venue.VenueSummaryResponse
 import kotlinx.coroutines.flow.toList
@@ -36,7 +38,8 @@ class EventService(
     private val venueRepository: VenueRepository,
     private val artistRepository: ArtistRepository,
     private val promoterRepository: PromoterRepository,
-    private val genreTagRepository: GenreTagRepository
+    private val genreTagRepository: GenreTagRepository,
+    private val sourceLicenceGate: SourceLicenceGate
 ) {
     /**
      * Searches events with optional filters and pagination, returning summaries with
@@ -87,7 +90,12 @@ class EventService(
      */
     @Transactional(readOnly = true)
     suspend fun findBySlug(slug: String): EventDetailResponse {
-        val event = eventRepository.findBySlug(slug) ?: throw EventNotFoundException(slug)
+        // The detail path does not go through hydrateOrdered, so it applies the gate itself. This is
+        // the endpoint that renders the description in full (EventDetailView.vue), which makes it
+        // the one that matters most.
+        val event =
+            eventRepository.findBySlug(slug)?.let { withLicenceApplied(listOf(it)).first() }
+                ?: throw EventNotFoundException(slug)
         val eventId = requireNotNull(event.id) { "Persisted event must have an ID" }
 
         val venue = venueRepository.findById(event.venueId)
@@ -124,11 +132,36 @@ class EventService(
         return EventDetailResponse.fromEntity(event, venueSummary, lineup, promoters, genreTags)
     }
 
-    /** Re-fetches events by ID via the CRUD repository, preserving the order of [ids]. */
+    /**
+     * Re-fetches events by ID via the CRUD repository, preserving the order of [ids].
+     *
+     * **Also applies the licence gate**, which is why every list path goes through here rather than
+     * mapping repository output directly. One choke point for `search`, `today` and `calendar`
+     * means a new list endpoint inherits the gate instead of having to remember it.
+     */
     private suspend fun hydrateOrdered(ids: List<Long>): List<EventEntity> {
         if (ids.isEmpty()) return emptyList()
         val byId = eventRepository.findAllById(ids).toList().associateBy { it.id }
-        return ids.mapNotNull { byId[it] }
+        return withLicenceApplied(ids.mapNotNull { byId[it] })
+    }
+
+    /**
+     * Blanks `description` and `imageUrl` on every event whose source prohibits that field.
+     *
+     * Done on the entity rather than in [EventResponses], so the summary and detail mappers cannot
+     * diverge and neither can forget. One query for the whole page, matching the batch-loading
+     * strategy the rest of this service uses.
+     */
+    private suspend fun withLicenceApplied(events: List<EventEntity>): List<EventEntity> {
+        if (events.isEmpty()) return events
+        val licences = sourceLicenceGate.forSources(events.mapNotNull { it.eventSourceId })
+        return events.map { event ->
+            val licence = event.eventSourceId?.let { licences[it] } ?: SourceLicences.UNKNOWN_SOURCE
+            event.copy(
+                description = if (licence.withholdsDescription()) null else event.description,
+                imageUrl = if (licence.withholdsImage()) null else event.imageUrl
+            )
+        }
     }
 
     /**

@@ -17,6 +17,11 @@ import java.time.LocalTime
 data class EventEntity(
     @Id val id: Long? = null,
     val venueId: Long,
+    /**
+     * The source that produced this event, or `null` where that source has since been deleted
+     * (`ON DELETE SET NULL`). Read only to resolve the per-source licence gate (#283).
+     */
+    val eventSourceId: Long? = null,
     val title: String,
     val subtitle: String? = null,
     val description: String? = null,

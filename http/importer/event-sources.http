@@ -91,6 +91,30 @@ Accept: application/json
     });
 %}
 
+### Record a licence review for one source (#283)
+# Sending either licence field stamps `licenceReviewedAt` server-side, so the status and the
+# timestamp cannot disagree. Record `licenceSourceUrl` even when the answer is UNCLEAR — it is what
+# stops the next reviewer repeating the search.
+PATCH {{importer-host}}/api/admin/event-sources/{{source_slug}}
+Content-Type: application/json
+Accept: application/json
+
+{
+    "descriptionLicence": "UNCLEAR",
+    "imageLicence": "PROHIBITED",
+    "licenceSourceUrl": "https://example.com/impressum",
+    "licenceNote": "No reuse terms anywhere; event photos carry an agency credit."
+}
+
+> {%
+    client.test("should return 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    client.test("should stamp the review timestamp", function () {
+        client.assert(response.body.licenceReviewedAt !== null, "Expected licenceReviewedAt to be set");
+    });
+%}
+
 ### Retry a single failed event source
 POST {{importer-host}}/api/admin/event-sources/{{source_slug}}/retry
 Accept: application/json

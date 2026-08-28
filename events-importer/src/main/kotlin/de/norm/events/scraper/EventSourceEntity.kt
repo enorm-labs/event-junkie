@@ -54,6 +54,29 @@ data class EventSourceEntity(
     /** The `robots.txt` that answered, or `null` where the host serves none or could not be reached. */
     val robotsTxtUrl: String? = null,
     /**
+     * What is known about republishing this source's event descriptions, or `null` while nobody has
+     * reviewed it.
+     *
+     * Stored as text rather than as the enum so an unrecognised value stays readable in the row
+     * instead of failing the mapping. `SourceLicence.parseOrProhibited` is what reads it, and a
+     * CHECK constraint keeps hand-edited rows to the vocabulary (#283).
+     */
+    val descriptionLicence: String? = null,
+    /** The same question for this source's images, answered separately. Agency photographs are common. */
+    val imageLicence: String? = null,
+    /**
+     * When the two columns above were last reviewed, or `null` while they never were.
+     *
+     * Null here and null in both status columns say the same thing today. They stop agreeing the
+     * moment a review is redone, which is why the timestamp is its own column — V005 §robots made
+     * the same split for the same reason.
+     */
+    val licenceReviewedAt: Instant? = null,
+    /** The page the reviewer read. Recorded even for `UNCLEAR`, so nobody repeats the search. */
+    val licenceSourceUrl: String? = null,
+    /** The sentence that decided it, in the reviewer's words. */
+    val licenceNote: String? = null,
+    /**
      * Timestamp of the last import that **succeeded**, which [lastImportAt] is not.
      *
      * The two differ exactly when they matter most: `lastImportAt` is written on failure as well, so
