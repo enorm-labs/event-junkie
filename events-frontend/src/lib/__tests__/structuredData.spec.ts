@@ -174,6 +174,14 @@ describe('eventJsonLd', () => {
   it('points at the canonical URL of the active locale', () => {
     expect(eventJsonLd(event, 'de')!.url).toBe(`${SITE_URL}/de/events/${event.slug}`)
   })
+
+  // A cached image is a path on our own origin (ADR-019), and Google fetches the `image` field
+  // without a page to resolve it against.
+  it('makes a cached image absolute', () => {
+    const cached = { ...event, imageUrl: '/api/images/abc/768.jpg' }
+
+    expect(eventJsonLd(cached, 'en')!.image).toBe(`${SITE_URL}/api/images/abc/768.jpg`)
+  })
 })
 
 describe('venueJsonLd', () => {

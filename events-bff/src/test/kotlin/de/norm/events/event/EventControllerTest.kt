@@ -2,7 +2,9 @@ package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -532,4 +534,47 @@ class EventControllerTest : BaseControllerTest() {
                 .jsonPath("$.totalElements")
                 .isEqualTo(2)
         }
+
+    @Test
+    @DisplayName("while image serving is off, the venue's own URL is handed out unchanged")
+    fun `an uncached image url survives the default configuration`(): Unit =
+        runBlocking {
+            // `app.images.serving.enabled` is false everywhere until an environment holds a full set
+            // of derivatives (ADR-019). If this ever returned null the cards would go blank on every
+            // environment that has not enabled serving yet, which is all of them today.
+            val venueId = insertVenue("Astra", "astra")
+            insertEvent(venueId, "Show", "show", LocalDate.now().plusDays(2), imageUrl = "https://venue.test/poster.jpg")
+
+            webTestClient
+                .get()
+                .uri("/events/show")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.imageUrl")
+                .isEqualTo("https://venue.test/poster.jpg")
+        }
+
+    @Test
+    @DisplayName("without bucket credentials the route reports the store unavailable, not the image missing")
+    fun `serving without a storage client is a 503`(): Unit =
+        runBlocking {
+            // A 404 here would tell a browser to remember an absence caused by our own
+            // configuration. The row says the object exists; the default context has no credentials,
+            // so no client is built — the state a local run and every not-yet-serving environment is
+            // in.
+            insertCachedImage("https://venue.test/poster.jpg", CONTENT_HASH, listOf(288))
+
+            webTestClient
+                .get()
+                .uri("/images/$CONTENT_HASH/288.jpg")
+                .exchange()
+                .expectStatus()
+                .isEqualTo(HttpStatus.SERVICE_UNAVAILABLE)
+        }
+
+    private companion object {
+        const val CONTENT_HASH = "0f4b2c1d5e6a7b8c9d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e"
+    }
 }

@@ -7,6 +7,7 @@ import de.norm.events.common.PageResponse
 import de.norm.events.event.EventService.Companion.MAX_CALENDAR_DAYS
 import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagRepository
+import de.norm.events.image.CachedImageGate
 import de.norm.events.licence.SourceLicences
 import de.norm.events.promoter.PromoterRepository
 import de.norm.events.promoter.PromoterSummaryResponse
@@ -39,7 +40,8 @@ class EventService(
     private val artistRepository: ArtistRepository,
     private val promoterRepository: PromoterRepository,
     private val genreTagRepository: GenreTagRepository,
-    private val sourceLicenceGate: SourceLicenceGate
+    private val sourceLicenceGate: SourceLicenceGate,
+    private val cachedImageGate: CachedImageGate
 ) {
     /**
      * Searches events with optional filters and pagination, returning summaries with
@@ -94,7 +96,7 @@ class EventService(
         // the endpoint that renders the description in full (EventDetailView.vue), which makes it
         // the one that matters most.
         val event =
-            eventRepository.findBySlug(slug)?.let { withLicenceApplied(listOf(it)).first() }
+            eventRepository.findBySlug(slug)?.let { withCachedImages(withLicenceApplied(listOf(it)), DETAIL_WIDTH).first() }
                 ?: throw EventNotFoundException(slug)
         val eventId = requireNotNull(event.id) { "Persisted event must have an ID" }
 
@@ -142,7 +144,7 @@ class EventService(
     private suspend fun hydrateOrdered(ids: List<Long>): List<EventEntity> {
         if (ids.isEmpty()) return emptyList()
         val byId = eventRepository.findAllById(ids).toList().associateBy { it.id }
-        return withLicenceApplied(ids.mapNotNull { byId[it] })
+        return withCachedImages(withLicenceApplied(ids.mapNotNull { byId[it] }), CARD_WIDTH)
     }
 
     /**
@@ -162,6 +164,24 @@ class EventService(
                 imageUrl = if (licence.withholdsImage()) null else event.imageUrl
             )
         }
+    }
+
+    /**
+     * Points `imageUrl` at our own copy of each venue image, at the width being rendered.
+     *
+     * Applied after [withLicenceApplied] and never before it: a source that prohibits its images has
+     * had the URL blanked already, so there is nothing here to look up and nothing to serve.
+     *
+     * Done on the entity for the same reason the licence gate is, and at the same choke point — the
+     * summary and detail mappers cannot diverge, and neither of them can forget.
+     */
+    private suspend fun withCachedImages(
+        events: List<EventEntity>,
+        renderedWidth: Int
+    ): List<EventEntity> {
+        if (events.isEmpty()) return events
+        val cached = cachedImageGate.forUrls(events.map { it.imageUrl })
+        return events.map { it.copy(imageUrl = cached.rewrite(it.imageUrl, renderedWidth)) }
     }
 
     /**
@@ -203,5 +223,20 @@ class EventService(
     companion object {
         /** Maximum span (inclusive) the calendar endpoint will return in a single request. */
         private const val MAX_CALENDAR_DAYS = 92L
+
+        /**
+         * How wide the image is actually drawn, which is what decides the derivative asked for.
+         *
+         * `EventCard` draws at 80 CSS px, so 288 covers it to 3x — the narrowest generated width
+         * that does. `EventDetailView` draws the image at the full width of a `max-w-3xl` column,
+         * 704 px after padding, which 768 covers ([#804](https://github.com/enorm-labs/event-junkie/issues/804)
+         * is why the detail page is on this list at all).
+         *
+         * Two numbers rather than one because one URL serves both: a list of twenty cards each
+         * carrying the 768 px file is roughly ten times the bytes it draws. A `srcset` removes the
+         * need to choose at all, and it is the next step rather than this one.
+         */
+        private const val CARD_WIDTH = 288
+        private const val DETAIL_WIDTH = 768
     }
 }

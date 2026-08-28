@@ -76,7 +76,8 @@ abstract class BaseControllerTest {
         runBlocking {
             databaseClient
                 .sql(
-                    "TRUNCATE TABLE events.event_source, events.event_genre_tag, events.event_promoter, events.event_artist, " +
+                    "TRUNCATE TABLE events.cached_image_variant, events.cached_image, events.event_source, " +
+                        "events.event_genre_tag, events.event_promoter, events.event_artist, " +
                         "events.event, events.genre_tag, events.promoter, events.artist, events.venue CASCADE"
                 ).await()
         }
@@ -153,15 +154,16 @@ abstract class BaseControllerTest {
         priceBoxOffice: BigDecimal? = null,
         genre: String? = null,
         soldOut: Boolean = false,
-        free: Boolean = false
+        free: Boolean = false,
+        imageUrl: String? = null
     ): Long =
         databaseClient
             .sql(
                 "INSERT INTO events.event " +
                     "(venue_id, title, subtitle, slug, event_date, start_time, source_id, event_type, " +
-                    "price_presale, price_box_office, genre, sold_out, free) " +
+                    "price_presale, price_box_office, genre, sold_out, free, image_url) " +
                     "VALUES (:venueId, :title, :subtitle, :slug, :eventDate, :startTime, :sourceId, :eventType, " +
-                    ":pricePresale, :priceBoxOffice, :genre, :soldOut, :free) " +
+                    ":pricePresale, :priceBoxOffice, :genre, :soldOut, :free, :imageUrl) " +
                     "RETURNING id"
             ).bind("venueId", venueId)
             .bind("title", title)
@@ -176,7 +178,46 @@ abstract class BaseControllerTest {
             .bindOrNull("genre", genre)
             .bind("soldOut", soldOut)
             .bind("free", free)
+            .bindOrNull("imageUrl", imageUrl)
             .mapId()
+
+    /**
+     * Seeds one cached venue image and one derivative per width, as the importer would have written
+     * them (ADR-019).
+     *
+     * [storageKey] is a function of the width so a caller can put the matching object in a bucket.
+     * The real keys carry an environment prefix; nothing on this side builds one, because a served
+     * key is read from the row.
+     */
+    protected suspend fun insertCachedImage(
+        sourceUrl: String,
+        contentHash: String,
+        widths: List<Int>,
+        deleted: Boolean = false,
+        storageKey: (Int) -> String = { "test/derived/$contentHash/$it.jpg" }
+    ): Long {
+        val imageId =
+            databaseClient
+                .sql(
+                    "INSERT INTO events.cached_image (source_url, content_hash, content_type, fetched_at, deleted_at) " +
+                        "VALUES (:sourceUrl, :contentHash, 'image/jpeg', NOW(), " +
+                        (if (deleted) "NOW()" else "NULL") + ") RETURNING id"
+                ).bind("sourceUrl", sourceUrl)
+                .bind("contentHash", contentHash)
+                .mapId()
+
+        widths.forEach { width ->
+            databaseClient
+                .sql(
+                    "INSERT INTO events.cached_image_variant (cached_image_id, width, format, storage_key, byte_size) " +
+                        "VALUES (:imageId, :width, 'jpg', :storageKey, 1)"
+                ).bind("imageId", imageId)
+                .bind("width", width)
+                .bind("storageKey", storageKey(width))
+                .await()
+        }
+        return imageId
+    }
 
     protected suspend fun linkArtist(
         eventId: Long,

@@ -1,6 +1,7 @@
 import type { ArtistDetail, EventDetail, PromoterDetail, VenueDetail } from '@/api/types'
 import { formatDate } from '@/lib/format'
 import { INTL_LOCALES, type Locale } from '@/i18n/locales'
+import { absoluteImageUrl } from '@/lib/seo'
 
 /**
  * What each page calls itself: the document title, a description, and a representative image.
@@ -92,7 +93,7 @@ export function eventPageMeta(event: EventDetail, locale: Locale): PageMeta {
   return {
     title: formatTitle(event.title),
     description: description ? truncate(description) : undefined,
-    image: event.imageUrl ?? undefined,
+    image: absoluteImageUrl(event.imageUrl),
   }
 }
 
@@ -109,7 +110,7 @@ export function venuePageMeta(venue: VenueDetail): PageMeta {
   return {
     title: formatTitle(venue.name),
     description: truncateOrUndefined(join(' — ', venue.description, address)),
-    image: venue.imageUrl ?? undefined,
+    image: absoluteImageUrl(venue.imageUrl),
   }
 }
 
@@ -118,7 +119,7 @@ export function artistPageMeta(artist: ArtistDetail): PageMeta {
   return {
     title: formatTitle(artist.name),
     description: truncateOrUndefined(artist.description),
-    image: artist.imageUrl ?? undefined,
+    image: absoluteImageUrl(artist.imageUrl),
   }
 }
 

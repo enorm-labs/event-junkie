@@ -65,6 +65,14 @@ describe('eventPageMeta', () => {
     expect(eventPageMeta(event, 'en').image).toBe('https://example.test/poster.jpg')
     expect(eventPageMeta({ ...event, imageUrl: null }, 'en').image).toBeUndefined()
   })
+
+  // A cached image comes back as a path on our own origin (ADR-019). `og:image` is read by a
+  // crawler with no page to resolve it against, so a path there is a preview that never loads.
+  it('makes a cached image absolute', () => {
+    const cached = { ...event, imageUrl: '/api/images/abc/768.jpg' }
+
+    expect(eventPageMeta(cached, 'en').image).toBe('https://event-junkie.de/api/images/abc/768.jpg')
+  })
 })
 
 describe('description length', () => {

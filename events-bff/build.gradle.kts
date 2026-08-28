@@ -84,6 +84,15 @@ dependencies {
         }
     }
 
+    // Object storage — the cached venue images the BFF serves from our own origin (ADR-019).
+    // `apache-client` is excluded for the same reason as in the importer: the `s3` artifact pulls
+    // both HTTP implementations, the async client uses Netty, and the unused one is dead weight that
+    // still has to be patched every time it takes a finding.
+    implementation("software.amazon.awssdk:s3:${property("awssdk.version")}") {
+        exclude(group = "software.amazon.awssdk", module = "apache-client")
+    }
+    implementation("software.amazon.awssdk:netty-nio-client:${property("awssdk.version")}")
+
     // Logging — idiomatic SLF4J wrapper (see: https://github.com/oshai/kotlin-logging)
     implementation("io.github.oshai:kotlin-logging-jvm:${property("kotlin-logging.version")}")
 
@@ -107,6 +116,9 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")
     testImplementation("org.testcontainers:testcontainers-postgresql")
     testImplementation("org.testcontainers:testcontainers-r2dbc")
+    // A real S3 API for the serving tests. A mocked client would prove the code compiles; what has
+    // to hold is that a key written by the importer reads back through this client's configuration.
+    testImplementation("org.testcontainers:testcontainers-minio")
 
     // Flyway (test only) — the BFF owns no migrations; integration tests provision the schema
     // by running the importer's existing migrations (via a filesystem location, see Test config below).

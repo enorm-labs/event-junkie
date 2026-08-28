@@ -1,0 +1,94 @@
+# What the BFF is given, and what it is not given until the release asks for it.
+#
+# `configmap.yaml` is in `templates:` and is not optional. `bff-deployment.yaml` computes its
+# `checksum/config` annotation with `include (print $.Template.BasePath "/configmap.yaml")`, and
+# helm-unittest renders *only* the templates a suite lists — omit it and the suite fails with
+# `no template "…/configmap.yaml" associated with template "gotpl"`, which points nowhere useful.
+#
+# Explicit values throughout: `scripts/cluster-assertions.sh` re-runs this suite against every
+# cluster's `spec.values`, so a case relying on a chart default fails the moment an environment
+# legitimately overrides it.
+suite: bff
+
+templates:
+  - bff-deployment.yaml
+  - configmap.yaml
+
+tests:
+  # --- Serving cached venue images (ADR-019) -----------------------------------------------------
+  #
+  # The switch a visitor sees. Off, the API hands out the venue's own URL and the browser fetches
+  # from the venue; on, it hands out a path on our own origin (#792).
+  - it: passes no storage configuration while it is not serving images
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: true
+      images.storage.prefix: "staging"
+      images.serving.enabled: false
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      # A bucket credential in the pod that is reachable from the internet, for a feature the
+      # release has not turned on, would be reach nothing is asking for.
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_IMAGES_SERVING_ENABLED
+            value: "true"
+      - notMatchRegex:
+          path: "$.spec.template.spec.containers[0].env[*].name"
+          pattern: "^IMAGE_STORAGE_"
+
+  # Serving needs the importer half as well: there is nothing to hand out until something has
+  # fetched and derived it.
+  - it: serves nothing while the importer is not caching
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: false
+      images.serving.enabled: true
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_IMAGES_SERVING_ENABLED
+            value: "true"
+
+  - it: takes the image bucket keypair from a Secret rather than a value
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: true
+      images.storage.prefix: "staging"
+      images.serving.enabled: true
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      # The chart never templates a credential, here as anywhere else.
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: IMAGE_STORAGE_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: "event-junkie-images"
+                key: IMAGE_STORAGE_SECRET_KEY
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_IMAGES_SERVING_ENABLED
+            value: "true"
+      # No prefix, and that is not an omission: a served key is read from the row that recorded it,
+      # so this workload never builds a key and cannot build one for the wrong environment.
+      - notMatchRegex:
+          path: "$.spec.template.spec.containers[0].env[*].name"
+          pattern: "^IMAGE_STORAGE_PREFIX$"

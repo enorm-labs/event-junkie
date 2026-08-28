@@ -89,6 +89,23 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/images/{contentHash}/{file}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get a cached venue image at one width and format */
+    get: operations['serve']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/genres': {
     parameters: {
       query?: never
@@ -937,6 +954,34 @@ export interface operations {
         }
         content: {
           '*/*': components['schemas']['MetaResponse']
+        }
+      }
+    }
+  }
+  serve: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        /** @description SHA-256 of the original bytes, lower-case hex. */
+        contentHash: string
+        /**
+         * @description Width and format, as `<width>.<format>`.
+         * @example 768.jpg
+         */
+        file: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          '*/*': string
         }
       }
     }

@@ -1,6 +1,7 @@
 {{- if .Values.networkPolicy.enabled }}
 {{- $np := .Values.networkPolicy }}
 {{- $importerSelector := include "event-junkie.selectorLabels" (dict "ctx" $ "component" "importer") }}
+{{- $bffSelector := include "event-junkie.selectorLabels" (dict "ctx" $ "component" "bff") }}
 {{- $testSelector := include "event-junkie.selectorLabels" (dict "ctx" $ "component" "test") }}
 {{- /* PLATFORM_SETUP §8 item 1 (#416): **NetworkPolicy enforcement being on means nothing while
        every pod may talk to every pod.** k3s ships the enforcement; the policies are ours.
@@ -23,6 +24,7 @@
          bff      -> PostgreSQL:5432
          importer -> PostgreSQL:5432
          importer -> the internet     scraping venue sites, which is the product
+         bff      -> the internet:443 reading cached images out of the bucket, while serving them
          all      -> CoreDNS:53
          test pod -> bff, frontend    the helm test hook, only while tests are enabled
 
@@ -187,6 +189,41 @@ spec:
               {{- toYaml $np.scrapeEgress.exceptCidrs | nindent 14 }}
       ports:
         {{- range $np.scrapeEgress.ports }}
+        - protocol: TCP
+          port: {{ . }}
+        {{- end }}
+{{- end }}
+{{- if and $np.objectStorageEgress.enabled .Values.images.enabled .Values.images.serving.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-allow-object-storage" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" (dict "ctx" $ "component" "networkpolicy") | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      The BFF reads cached venue images out of Object Storage. Rendered only while it is serving them, so the second workload with a route off the cluster
+      exists for exactly as long as it has a reason to.
+spec:
+  podSelector:
+    matchLabels:
+      {{- $bffSelector | nindent 6 }}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        {{- /* Hetzner publishes no stable address range for Object Storage, and NetworkPolicy cannot
+               resolve `fsn1.your-objectstorage.com` — so this is the internet minus the private
+               ranges, the same shape as `-allow-scraping` above and for the same reason. Narrower in
+               two ways: 443 only, and the BFF never fetches a URL a venue chose. Every key it asks
+               for comes out of a row the importer wrote. */}}
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              {{- toYaml $np.objectStorageEgress.exceptCidrs | nindent 14 }}
+      ports:
+        {{- range $np.objectStorageEgress.ports }}
         - protocol: TCP
           port: {{ . }}
         {{- end }}

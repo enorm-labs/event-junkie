@@ -69,6 +69,39 @@ spec:
             - name: JAVA_TOOL_OPTIONS
               value: "-XX:MaxRAMPercentage={{ .Values.bff.maxRamPercentage }}"
             {{- include "event-junkie.databaseEnv" $ | nindent 12 }}
+            {{- if and .Values.images.enabled .Values.images.serving.enabled }}
+            {{- /* The half of ADR-019 a visitor sees. With this set the API hands out a path on our
+                   own origin instead of the venue's URL, and the browser stops contacting the venue
+                   (#792). It needs `images.enabled` as well, because there is nothing to serve until
+                   the importer has fetched and derived it.
+
+                   No IMAGE_STORAGE_PREFIX here, and that is not an omission: a served key is read
+                   from the row that recorded it, so this workload never builds a key and cannot
+                   build one for the wrong environment. */}}
+            - name: APP_IMAGES_SERVING_ENABLED
+              value: "true"
+            - name: IMAGE_STORAGE_ENDPOINT
+              value: {{ .Values.images.storage.endpoint | quote }}
+            - name: IMAGE_STORAGE_REGION
+              value: {{ .Values.images.storage.region | quote }}
+            - name: IMAGE_STORAGE_BUCKET
+              value: {{ .Values.images.storage.bucket | quote }}
+            {{- /* The same Secret the importer reads, because it is the same bucket. This workload
+                   only ever gets objects, but the keypair can write — Hetzner scopes a keypair to a
+                   bucket and not to a verb. That is why the scoping matters twice over: it is now
+                   mounted into the pod that is reachable from the internet
+                   (SECRETS.md §event-junkie-images). */}}
+            - name: IMAGE_STORAGE_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.images.storage.existingSecret | quote }}
+                  key: IMAGE_STORAGE_ACCESS_KEY
+            - name: IMAGE_STORAGE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.images.storage.existingSecret | quote }}
+                  key: IMAGE_STORAGE_SECRET_KEY
+            {{- end }}
           {{- include "event-junkie.jvmProbes" $ | nindent 10 }}
           resources:
             {{- toYaml .Values.bff.resources | nindent 12 }}

@@ -72,6 +72,20 @@ export function canonicalUrl(locale: Locale, path: string): string {
 }
 
 /**
+ * An image URL a crawler can fetch, from whatever the API returned.
+ *
+ * The API returns two shapes. A cached image is a path on our own origin (`/api/images/…`), and a
+ * venue's own image is an absolute URL — which one arrives depends on whether the environment serves
+ * cached images yet (ADR-019). An `<img src>` resolves both against the page; `og:image` and the
+ * JSON-LD `image` field are read by a crawler that has no page to resolve against, so a path has to
+ * be made absolute before it goes into either.
+ */
+export function absoluteImageUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined
+  return url.startsWith('/') ? `${SITE_URL}${url}` : url
+}
+
+/**
  * The `hreflang` set for one page: every published locale, plus `x-default`.
  *
  * **`x-default` points at the default locale, not at the unprefixed path.** The unprefixed path is
