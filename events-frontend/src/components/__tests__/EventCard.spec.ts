@@ -42,6 +42,25 @@ describe('EventCard', () => {
     expect(wrapper.text()).toContain('Lido')
   })
 
+  it('offers the cached formats the API returned for the poster', () => {
+    // The wiring is what breaks silently: a card that dropped `imageSources` still renders a
+    // perfectly good <img>, and every visitor quietly downloads JPEG instead of AVIF (ADR-019).
+    const wrapper = mount(EventCard, {
+      props: {
+        event: {
+          ...event,
+          imageUrl: '/api/images/abc/192.jpg',
+          imageSources: [{ type: 'image/avif', srcset: '/api/images/abc/192.avif 192w' }],
+        },
+      },
+      global: { stubs },
+    })
+
+    expect(wrapper.get('source').attributes('type')).toBe('image/avif')
+    // 80 px is what the card actually draws, and it is how the browser reads those widths.
+    expect(wrapper.get('source').attributes('sizes')).toBe('80px')
+  })
+
   it('links to the event detail route', () => {
     const wrapper = mount(EventCard, { props: { event }, global: { stubs } })
     // Locale-prefixed: every in-app link carries the active locale (ADR-013 §Decision 2).

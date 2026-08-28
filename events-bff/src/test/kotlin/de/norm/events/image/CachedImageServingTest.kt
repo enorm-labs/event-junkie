@@ -37,7 +37,7 @@ class CachedImageServingTest : BaseControllerTest() {
     fun `serves the bytes behind a variant row`(): Unit =
         runBlocking {
             insertCachedImage(POSTER_URL, HASH, listOf(288))
-            putObject(derivedKey(HASH, 288), POSTER)
+            putObject(derivedKey(HASH, 288, "jpg"), POSTER)
 
             webTestClient
                 .get()
@@ -77,7 +77,7 @@ class CachedImageServingTest : BaseControllerTest() {
     fun `a deleted image is not served`(): Unit =
         runBlocking {
             insertCachedImage(POSTER_URL, HASH, listOf(288), deleted = true)
-            putObject(derivedKey(HASH, 288), POSTER)
+            putObject(derivedKey(HASH, 288, "jpg"), POSTER)
 
             webTestClient
                 .get()
@@ -130,7 +130,7 @@ class CachedImageServingTest : BaseControllerTest() {
         runBlocking {
             val venueId = insertVenue("Lido", "lido")
             insertEvent(venueId, "Show", "show", LocalDate.now().plusDays(3), imageUrl = POSTER_URL)
-            insertCachedImage(POSTER_URL, HASH, listOf(288, 768))
+            insertCachedImage(POSTER_URL, HASH, ALL_WIDTHS)
 
             webTestClient
                 .get()
@@ -139,9 +139,17 @@ class CachedImageServingTest : BaseControllerTest() {
                 .expectStatus()
                 .isOk
                 .expectBody()
-                // 768, because EventDetailView draws the image at the full width of its column.
+                // 768 first, because EventDetailView draws the image across a 704 px column.
                 .jsonPath("$.imageUrl")
                 .isEqualTo("/images/$HASH/768.jpg")
+                // Best format first, and the widths banded to the slot. The card list gets 192 and
+                // 288 from the same rows; nothing gets all four.
+                .jsonPath("$.imageSources[0].type")
+                .isEqualTo("image/avif")
+                .jsonPath("$.imageSources[0].srcset")
+                .isEqualTo("/images/$HASH/768.avif 768w, /images/$HASH/1536.avif 1536w")
+                .jsonPath("$.imageSources[2].type")
+                .isEqualTo("image/jpeg")
         }
 
     @Test
@@ -149,7 +157,7 @@ class CachedImageServingTest : BaseControllerTest() {
         runBlocking {
             val venueId = insertVenue("Lido", "lido")
             insertEvent(venueId, "Show", "show", LocalDate.now().plusDays(3), imageUrl = POSTER_URL)
-            insertCachedImage(POSTER_URL, HASH, listOf(288, 768))
+            insertCachedImage(POSTER_URL, HASH, ALL_WIDTHS)
 
             webTestClient
                 .get()
@@ -159,7 +167,9 @@ class CachedImageServingTest : BaseControllerTest() {
                 .isOk
                 .expectBody()
                 .jsonPath("$.content[0].imageUrl")
-                .isEqualTo("/images/$HASH/288.jpg")
+                .isEqualTo("/images/$HASH/192.jpg")
+                .jsonPath("$.content[0].imageSources[0].srcset")
+                .isEqualTo("/images/$HASH/192.avif 192w, /images/$HASH/288.avif 288w")
         }
 
     @Test
@@ -178,6 +188,8 @@ class CachedImageServingTest : BaseControllerTest() {
                 .expectBody()
                 .jsonPath("$.imageUrl")
                 .doesNotExist()
+                .jsonPath("$.imageSources")
+                .isEmpty()
         }
 
     private suspend fun putObject(
@@ -196,11 +208,6 @@ class CachedImageServingTest : BaseControllerTest() {
             ).await()
     }
 
-    private fun derivedKey(
-        contentHash: String,
-        width: Int
-    ) = "test/derived/$contentHash/$width.jpg"
-
     companion object {
         private const val BUCKET = "images"
         private const val POSTER_URL = "https://venue.test/poster.jpg"
@@ -211,6 +218,9 @@ class CachedImageServingTest : BaseControllerTest() {
 
         /** Not a real JPEG. Nothing here decodes it, and the assertion is byte equality. */
         private val POSTER = ByteArray(64) { it.toByte() }
+
+        /** What imgproxy generates: 96 px cards at 2x and 3x, then the detail column at 1x and 2x. */
+        private val ALL_WIDTHS = listOf(192, 288, 768, 1536)
 
         private val minio = MinIOContainer("minio/minio:RELEASE.2025-09-07T16-13-09Z")
 

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { EventSummary } from '@/api/types'
 import BaseBadge from '@/components/BaseBadge.vue'
+import CachedImage from '@/components/CachedImage.vue'
 import { eventLabel, formatPrice, formatTime, isPastEvent, todayIso } from '@/lib/format'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
@@ -54,12 +55,13 @@ const { t } = useI18n()
     :to="localePath(`/events/${event.slug}`)"
     :class="CARD_CLASS"
   >
-    <img
+    <CachedImage
       v-if="event.imageUrl"
-      :alt="event.title ?? ''"
       :src="event.imageUrl"
-      class="size-20 shrink-0 rounded-lg object-cover grayscale transition duration-300 group-hover:grayscale-0"
-      loading="lazy"
+      :sources="event.imageSources"
+      :alt="event.title ?? ''"
+      sizes="80px"
+      img-class="size-20 shrink-0 rounded-lg object-cover grayscale transition duration-300 group-hover:grayscale-0"
     />
     <div class="min-w-0 flex-1 space-y-1">
       <div class="flex items-start justify-between gap-2">

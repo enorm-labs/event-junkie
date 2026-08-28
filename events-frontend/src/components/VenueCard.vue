@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { VenueSummary } from '@/api/types'
+import CachedImage from '@/components/CachedImage.vue'
 import { districtLabel } from '@/lib/districts'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { CARD_CLASS } from '@/lib/utils'
@@ -28,12 +29,14 @@ const localePath = useLocalePath()
     :to="localePath(`/venues/${venue.slug}`)"
     :class="CARD_CLASS"
   >
-    <img
+    <!-- No `sources`: a venue's own image is never cached, so this is the plain <img> it has
+         always been (#833). -->
+    <CachedImage
       v-if="venue.imageUrl"
-      :alt="venue.name ?? ''"
       :src="venue.imageUrl"
-      class="size-20 shrink-0 rounded-lg object-cover grayscale transition duration-300 group-hover:grayscale-0"
-      loading="lazy"
+      :alt="venue.name ?? ''"
+      sizes="80px"
+      img-class="size-20 shrink-0 rounded-lg object-cover grayscale transition duration-300 group-hover:grayscale-0"
     />
     <div class="min-w-0 flex-1 space-y-1">
       <component :is="as" class="truncate leading-tight font-semibold">

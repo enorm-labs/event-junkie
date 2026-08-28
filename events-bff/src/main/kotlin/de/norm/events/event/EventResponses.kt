@@ -1,6 +1,8 @@
 package de.norm.events.event
 
 import de.norm.events.artist.ArtistSummaryResponse
+import de.norm.events.image.ImageSourceResponse
+import de.norm.events.image.ServedImage
 import de.norm.events.promoter.PromoterSummaryResponse
 import de.norm.events.venue.VenueSummaryResponse
 import io.swagger.v3.oas.annotations.media.Schema
@@ -34,8 +36,18 @@ data class EventSummaryResponse(
     val doorsTime: LocalTime?,
     @Schema(description = "Time when the show/performance starts", example = "20:00")
     val startTime: LocalTime?,
-    @Schema(description = "URL of the event's poster or flyer image")
+    @Schema(
+        description =
+            "Where the poster is fetched from. A path on this origin once the environment serves cached images, " +
+                "and the venue's own URL until then (ADR-019)."
+    )
     val imageUrl: String?,
+    @Schema(
+        description =
+            "Better formats of the same poster, best first, for a <picture> element. Empty when the image is not " +
+                "cached, in which case `imageUrl` is all there is."
+    )
+    val imageSources: List<ImageSourceResponse>,
     @Schema(description = "Presale ticket price (Vorverkauf)", example = "38.00")
     val pricePresale: BigDecimal?,
     @Schema(description = "Box office ticket price (Abendkasse)", example = "45.00")
@@ -60,7 +72,8 @@ data class EventSummaryResponse(
             entity: EventEntity,
             venue: VenueSummaryResponse,
             artistNames: List<String>,
-            genreTags: List<String>
+            genreTags: List<String>,
+            image: ServedImage
         ): EventSummaryResponse =
             EventSummaryResponse(
                 id = requireNotNull(entity.id) { "Persisted event must have an ID" },
@@ -72,7 +85,8 @@ data class EventSummaryResponse(
                 eventDate = entity.eventDate,
                 doorsTime = entity.doorsTime,
                 startTime = entity.startTime,
-                imageUrl = entity.imageUrl,
+                imageUrl = image.url,
+                imageSources = image.sources,
                 pricePresale = entity.pricePresale,
                 priceBoxOffice = entity.priceBoxOffice,
                 priceCurrency = entity.priceCurrency,
@@ -112,8 +126,18 @@ data class EventDetailResponse(
     val doorsTime: LocalTime?,
     @Schema(description = "Time when the show/performance starts", example = "20:00")
     val startTime: LocalTime?,
-    @Schema(description = "URL of the event's poster or flyer image")
+    @Schema(
+        description =
+            "Where the poster is fetched from. A path on this origin once the environment serves cached images, " +
+                "and the venue's own URL until then (ADR-019)."
+    )
     val imageUrl: String?,
+    @Schema(
+        description =
+            "Better formats of the same poster, best first, for a <picture> element. Empty when the image is not " +
+                "cached, in which case `imageUrl` is all there is."
+    )
+    val imageSources: List<ImageSourceResponse>,
     @Schema(description = "Original URL on the source venue's website")
     val sourceUrl: String?,
     @Schema(description = "URL to the external ticket shop")
@@ -149,7 +173,8 @@ data class EventDetailResponse(
             venue: VenueSummaryResponse,
             lineup: List<LineupEntryResponse>,
             promoters: List<PromoterSummaryResponse>,
-            genreTags: List<String>
+            genreTags: List<String>,
+            image: ServedImage
         ): EventDetailResponse =
             EventDetailResponse(
                 id = requireNotNull(entity.id) { "Persisted event must have an ID" },
@@ -162,7 +187,8 @@ data class EventDetailResponse(
                 eventDate = entity.eventDate,
                 doorsTime = entity.doorsTime,
                 startTime = entity.startTime,
-                imageUrl = entity.imageUrl,
+                imageUrl = image.url,
+                imageSources = image.sources,
                 sourceUrl = entity.sourceUrl,
                 ticketUrl = entity.ticketUrl,
                 facebookEventUrl = entity.facebookEventUrl,
