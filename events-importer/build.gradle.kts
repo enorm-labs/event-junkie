@@ -154,6 +154,10 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")
     testImplementation("org.testcontainers:testcontainers-postgresql")
     testImplementation("org.testcontainers:testcontainers-r2dbc")
+    // MinIO, so ImageStorage is exercised against a real S3 API rather than a mock. ADR-019 §2.9
+    // rejects a filesystem adapter for the same reason: key encoding, content type and streaming
+    // faults would then appear only after a deploy.
+    testImplementation("org.testcontainers:testcontainers-minio")
 }
 
 kotlin {

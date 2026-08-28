@@ -36,6 +36,28 @@ interface CachedImageRepository : CoroutineCrudRepository<CachedImageEntity, Lon
     fun findUncachedImageUrls(limit: Int): Flow<String>
 
     /**
+     * Stored images that have no derivative yet.
+     *
+     * A left join rather than `NOT EXISTS` on a count, because an image whose generation was
+     * interrupted has *some* variants and still needs the rest. Asking for images with none at all
+     * would skip it forever.
+     */
+    @Query(
+        """
+        SELECT c.* FROM $EVENTS_SCHEMA.cached_image c
+        WHERE c.content_hash IS NOT NULL
+          AND c.deleted_at IS NULL
+          AND (SELECT count(*) FROM $EVENTS_SCHEMA.cached_image_variant v WHERE v.cached_image_id = c.id) < :expectedVariants
+        ORDER BY c.fetched_at
+        LIMIT :limit
+        """
+    )
+    fun findNeedingDerivatives(
+        expectedVariants: Int,
+        limit: Int
+    ): Flow<CachedImageEntity>
+
+    /**
      * Rows worth asking about again: a success old enough to re-check, or a failure past its cooldown.
      *
      * A deleted row is never a candidate. That is what stops a takedown being undone by the next pass.

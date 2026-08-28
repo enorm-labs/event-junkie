@@ -191,3 +191,88 @@ tests:
       - failedTemplate:
           errorMessage: "images.storage.prefix is required when images.enabled — it is what separates this environment's objects from the other's."
 
+  # --- The imgproxy sidecar (ADR-020) -----------------------------------------------------------
+  #
+  # Explicit values throughout, for the reason the two tests above learned the hard way: this suite
+  # is re-run against every cluster's spec.values by scripts/cluster-assertions.sh.
+  - it: runs no sidecar until imgproxy is enabled
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: true
+      images.storage.prefix: "staging"
+      images.imgproxy.enabled: false
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+
+  - it: binds the sidecar to loopback and allows only the bucket as a source
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: true
+      images.storage.prefix: "staging"
+      images.imgproxy.enabled: true
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      # Nothing outside the pod may reach it. NetworkPolicy cannot express this — a policy selects
+      # pods and a sidecar shares the pod's network namespace — so the bind address is the control.
+      - contains:
+          path: spec.template.spec.containers[1].env
+          content:
+            name: IMGPROXY_BIND
+            value: "127.0.0.1:8080"
+      # And imgproxy may reach the bucket and nothing else. Letting it pull a venue URL would go
+      # around robots.txt, the throttle and the SSRF checks, all of which live in our own fetcher.
+      - contains:
+          path: spec.template.spec.containers[1].env
+          content:
+            name: IMGPROXY_ALLOWED_SOURCES
+            value: "s3://event-junkie-images/"
+      # EXIF can carry GPS coordinates and a camera serial. Stated rather than left to the default,
+      # because it is a legal step (LEGAL.md §7.3a) and not housekeeping.
+      - contains:
+          path: spec.template.spec.containers[1].env
+          content:
+            name: IMGPROXY_STRIP_METADATA
+            value: "true"
+
+  - it: pins the sidecar by digest and bounds what it will decode
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: true
+      images.storage.prefix: "staging"
+      images.imgproxy.enabled: true
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      # A third-party image we cannot rebuild when a finding has no fix, so the version is a
+      # decision rather than a tag that moves under us (ADR-017's argument, one image over).
+      - matchRegex:
+          path: spec.template.spec.containers[1].image
+          pattern: "^ghcr\\.io/imgproxy/imgproxy@sha256:[0-9a-f]{64}$"
+      # The decode bounds live here now, because ADR-020 moved decoding out of the JVM. Two limits,
+      # because a decompression bomb is small on the wire and enormous once decoded.
+      - contains:
+          path: spec.template.spec.containers[1].env
+          content:
+            name: IMGPROXY_MAX_SRC_RESOLUTION
+            value: "50"
+      - equal:
+          path: spec.template.spec.containers[1].resources.limits.memory
+          value: 512Mi
+      - equal:
+          path: spec.template.spec.containers[1].securityContext.readOnlyRootFilesystem
+          value: true
+

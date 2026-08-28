@@ -18,7 +18,7 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 > decision. `github-dispatch` is the one place the "encrypt it, the value is a nuisance at worst" reasoning does not hold, because its scope is
 > `contents: write`. See the note under the table.
 
-## The seven objects, and where each comes from
+## The eight objects, and where each comes from
 
 | Secret                    | Namespace                                         | Holds                                                 | Created at                                                     |
 | ------------------------- | ------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
@@ -29,8 +29,9 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 | `postgres-exporter`       | `observability`                                   | the `metrics` role's DSN                              | §postgres-exporter, below                                      |
 | `sops-age`                | `flux-system`                                     | the age private key that decrypts `events-db`         | §3, below                                                      |
 | `event-junkie-images`     | `event-junkie`                                    | an S3 keypair for the cached image bucket **only**    | §event-junkie-images, below                                    |
+| `event-junkie-imgproxy`   | `event-junkie`                                    | the key and salt that sign imgproxy URLs              | §event-junkie-imgproxy, below                                  |
 
-**All seven belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
+**All eight belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
 four, which is exactly the failure mode a summary exists to prevent. Add a row here in the same change that adds a secret.
 
 **Only `github-dispatch` cannot be regenerated.** `hetzner` is the Keychain's `HCLOUD_TOKEN`, `sops-age` is `~/.config/sops/age/event-junkie.txt`, and
@@ -70,6 +71,34 @@ leaked depends entirely on how narrowly it was scoped.
 
 **Without it the importer still runs.** No credentials means no client is built: images are recorded and not stored, and
 the log says so at startup. A local run needs no bucket access at all.
+
+### `event-junkie-imgproxy` — the one that is not a credential
+
+imgproxy runs as a sidecar in the importer pod and checks a signature on every URL it is asked to
+process. The key and salt are what produce that signature (ADR-020).
+
+**It reaches nothing.** The other seven are credentials to a service. This pair is not.
+
+It is a shared secret between two containers in one pod. Its job is to stop anything but the
+importer calling the sidecar. imgproxy also binds `127.0.0.1`. Nothing outside the pod reaches it at
+all, so the signature is the second lock rather than the only one.
+
+**So losing it costs nothing.** Generate a fresh pair, restart the pod, and both sides agree again.
+No stored object is signed, and no URL survives a restart. It is the least dangerous of the eight on
+every axis, which is worth stating so a rebuild does not treat it as precious.
+
+```sh
+kubectl create secret generic event-junkie-imgproxy -n event-junkie \
+  --from-literal=IMGPROXY_KEY="$(openssl rand -hex 32)" \
+  --from-literal=IMGPROXY_SALT="$(openssl rand -hex 32)"
+```
+
+**Both values are hex, and imgproxy decodes them.** Signing with the ASCII of the hex string produces
+a signature imgproxy rejects. The error is a `403 Forbidden`, which reads like a wrong key rather
+than a wrong encoding.
+
+**The sidecar also gets the images bucket keypair**, because it reads originals over S3 rather than
+being handed bytes. That is the same Secret as above and not a second one.
 
 ## Why SOPS + age, and not Sealed Secrets
 

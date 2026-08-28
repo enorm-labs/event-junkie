@@ -221,6 +221,67 @@ jobs:
           done
           exit $status
 
+      # imgproxy is not ours and is pinned by digest, so it cannot join the loop above — that one
+      # walks our three components across the versions currently deployed. It is scanned because
+      # ADR-020 named this the strongest argument against adopting it: a third-party image we cannot
+      # rebuild when a finding has no fix. `--ignore-unfixed` is what keeps that from being a nightly
+      # red build for something nobody can act on, exactly as it does for the JRE base.
+      - name: Scan the imgproxy sidecar
+        id: scan-imgproxy
+        if: success() || failure()
+        run: |
+          # **Render the chart rather than read the file.** An earlier version grepped values.yaml
+          # for a digest within three lines of the repository name, and adding a comment above the
+          # digest broke it — the scan then had nothing to examine and failed, correctly but for a
+          # silly reason. Rendering asks the chart what it actually deploys, so no comment, key
+          # order or second digest elsewhere in the file can change the answer.
+          #
+          # The --set values are only what the chart `required`s to render; none of them reach the
+          # scan. helm is already installed in this job.
+          ref="$(helm template scan deploy/charts/event-junkie \
+            --set database.host=10.0.0.1 \
+            --set database.existingSecret=scan \
+            --set networkPolicy.databaseCidr=10.0.0.1/32 \
+            --set images.enabled=true \
+            --set images.storage.prefix=scan \
+            --set images.imgproxy.enabled=true \
+            | grep -oE 'ghcr\.io/imgproxy/imgproxy@sha256:[0-9a-f]{64}' | sort -u)"
+          if [[ -z "$ref" ]]; then
+            echo "::error::The chart rendered no imgproxy image — the scan would silently examine nothing."
+            exit 1
+          fi
+          if [[ "$(wc -l <<<"$ref")" -ne 1 ]]; then
+            echo "::error::The chart rendered more than one imgproxy image, so the scan cannot say which one runs:"
+            echo "$ref"
+            exit 1
+          fi
+          # This step runs on `failure()` too, so it cannot assume the loop above got as far as
+          # creating the directory.
+          mkdir -p sarif
+          echo "::group::trivy ${ref}"
+          trivy image "$ref" \
+            --severity CRITICAL,HIGH \
+            --ignore-unfixed \
+            --list-all-pkgs \
+            --format json \
+            --output trivy-imgproxy.json \
+            --exit-code 1 || status=1
+          if [[ ! -s trivy-imgproxy.json ]]; then
+            echo "::error::Trivy produced no report for ${ref} — the scan failed, rather than finding vulnerabilities."
+            exit 1
+          fi
+          trivy convert --format table trivy-imgproxy.json
+          trivy convert --format sarif --output sarif/trivy-imgproxy.sarif trivy-imgproxy.json
+          echo "::endgroup::"
+          exit "${status:-0}"
+
+      - name: Upload Trivy SARIF (imgproxy)
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-imgproxy.sarif') != ''
+        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+        with:
+          sarif_file: sarif/trivy-imgproxy.sarif
+          category: trivy-deployed-imgproxy
+
       - name: Summarise
         if: success() || failure()
         env:
