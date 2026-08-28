@@ -72,7 +72,17 @@ data class SourceQualityMetrics(
                 "not events, which is why it has no percentage: one bad name on forty events is " +
                 "one thing to fix"
     )
-    val suspectNonArtistTitles: Long
+    val suspectNonArtistTitles: Long,
+    @Schema(
+        description =
+            "Events whose source has never had its copyright position reviewed (#283). Counts " +
+                "events rather than sources, because 200 unreviewed events and 2 are different " +
+                "findings. Events created by hand have no source and are excluded",
+        example = "1840"
+    )
+    val unreviewedLicence: Long,
+    @Schema(description = "unreviewedLicence as a percentage of totalEvents", example = "100.0")
+    val unreviewedLicencePct: Double
 )
 
 /** One event failing one metric, in the shape a steward needs to decide whether to open it. */

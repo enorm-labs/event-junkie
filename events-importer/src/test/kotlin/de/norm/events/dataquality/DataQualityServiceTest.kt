@@ -51,7 +51,8 @@ class DataQualityServiceTest {
     private fun row(
         sourceId: Long?,
         total: Long,
-        concerts: Long = 0
+        concerts: Long = 0,
+        unreviewed: Long = 0
     ) = SourceQualityRow(
         eventSourceId = sourceId,
         totalEvents = total,
@@ -60,8 +61,28 @@ class DataQualityServiceTest {
         missingGenre = 0,
         missingPromoter = 0,
         missingPrice = 0,
-        missingStartTime = 0
+        missingStartTime = 0,
+        unreviewedLicence = unreviewed
     )
+
+    /**
+     * The number #283's review is measured by. It has to roll up as a sum across sources, because a
+     * reviewer works through sources and the question "how much is left" is about all of them.
+     */
+    @Test
+    fun `unreviewed licence counts roll up across sources`() =
+        runTest {
+            coEvery { repository.aggregatePerSource() } returns
+                listOf(
+                    row(1L, total = 100, unreviewed = 100),
+                    row(2L, total = 40, unreviewed = 0)
+                ).asFlow()
+
+            val overall = service.report().overall
+
+            overall.unreviewedLicence shouldBe 100
+            overall.unreviewedLicencePct shouldBe 71.4
+        }
 
     @Test
     fun `percentages are rounded to one decimal, because that is what a human scans`() =

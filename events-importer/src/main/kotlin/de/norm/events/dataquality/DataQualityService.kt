@@ -119,7 +119,9 @@ class DataQualityService(
         missingPricePct = pct(row.missingPrice, row.totalEvents),
         missingStartTime = row.missingStartTime,
         missingStartTimePct = pct(row.missingStartTime, row.totalEvents),
-        suspectNonArtistTitles = suspectNames
+        suspectNonArtistTitles = suspectNames,
+        unreviewedLicence = row.unreviewedLicence,
+        unreviewedLicencePct = pct(row.unreviewedLicence, row.totalEvents)
     )
 
     private fun rollUp(perSource: List<SourceQualityMetrics>): SourceQualityMetrics {
@@ -130,6 +132,7 @@ class DataQualityService(
         val promoter = perSource.sumOf { it.missingPromoter }
         val price = perSource.sumOf { it.missingPrice }
         val startTime = perSource.sumOf { it.missingStartTime }
+        val unreviewed = perSource.sumOf { it.unreviewedLicence }
         return SourceQualityMetrics(
             source = OVERALL,
             totalEvents = total,
@@ -147,7 +150,9 @@ class DataQualityService(
             missingStartTimePct = pct(startTime, total),
             // Summed rather than re-derived: the same name on two sources is two names to fix, one
             // per source, and there is no cheaper truth available from the per-source counts alone.
-            suspectNonArtistTitles = perSource.sumOf { it.suspectNonArtistTitles }
+            suspectNonArtistTitles = perSource.sumOf { it.suspectNonArtistTitles },
+            unreviewedLicence = unreviewed,
+            unreviewedLicencePct = pct(unreviewed, total)
         )
     }
 
