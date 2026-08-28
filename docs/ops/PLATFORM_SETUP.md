@@ -234,6 +234,23 @@ different thing: Hetzner charges nothing for traffic within `eu-central`, so the
 `user_data` is a force-new attribute, so any edit under `infra/modules/environment/cloud-init/` replaces the node. So does a `server_type` change across
 architectures, and so does the destroy/apply cycle. Each is correct behaviour for a node meant to be disposable — and each used to take the database with it.
 
+**Hetzner recommends against this shape, and we do it anyway.**
+[Which storage is right for me](https://docs.hetzner.com/storage/general/which-storage-is-right-for-me/) marks _storing my
+database_ as not recommended for every product it compares, volumes included. A footnote gives the reason: latency, and
+file system and caching guarantees that network storage does not make. It names the local disk of the server as the
+alternative.
+
+We accept that, because the alternative is worse here. The local disk belongs to a node that `user_data` replaces on
+purpose. Losing `PGDATA` on every cloud-init edit costs more than the latency does, and the paragraph above is the
+evidence.
+
+**What we accept is not only speed.** A storage layer that ignores `fsync` corrupts a database rather than slowing it. We
+have no evidence that Hetzner volumes do that, and nobody measured it here. Our claim is that the durability of the node
+matters more, not that the footnote is wrong.
+
+**Revisit** if write latency appears in the R2DBC pool metrics, or if a restore drill finds damage that the volume
+explains.
+
 10 GB is Hetzner's minimum and deliberately the floor: growing a volume is online (`hcloud volume resize` plus `resize2fs`), shrinking one is impossible.
 **Volumes are location-bound, exactly like the Primary IPs** — moving an environment to another location means dealing with the volume first.
 
