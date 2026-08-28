@@ -256,8 +256,10 @@ cmd_db_reset() {
     need docker
     log "Tearing down Postgres including volumes"
     (cd "$REPO_ROOT" && docker compose down --volumes --remove-orphans)
-    log "Starting a fresh Postgres"
-    (cd "$REPO_ROOT" && docker compose up -d postgres)
+    log "Starting a fresh Postgres and object store"
+    # Both services, not just Postgres. `down --volumes` above takes MinIO with it, and starting
+    # Postgres alone would leave the image cache pointing at nothing until somebody noticed.
+    (cd "$REPO_ROOT" && docker compose up -d postgres minio minio-init)
     for _ in $(seq 1 60); do
         if db_ready; then
             log "Database ready on port $DB_PORT (empty — Flyway runs on importer start)"

@@ -184,6 +184,23 @@ updates:
   # A directory per Dockerfile, because the ecosystem discovers them per directory and each module
   # owns its own. All three are grouped into one PR: the two backends pin the same JRE, so a single
   # release would otherwise open two identical PRs, and the frontend's nginx is cheap to carry along.
+  # compose.yaml belonged to no ecosystem until #819. The `docker` updater above reads Dockerfiles
+  # only, so `postgres` sat unwatched here for as long as it has existed — the MinIO added for the
+  # image cache merely joined it. Docker Compose is its own ecosystem in dependabot-core, not a
+  # directory of the `docker` one, which is why this is a separate entry rather than another path.
+  #
+  # These are development services. A stale pin here never reaches production, and it does decide
+  # what a local run and a Testcontainers test exercise — so a Postgres that drifts from the
+  # cluster's is a difference nobody sees until a deploy.
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      compose-services:
+        patterns:
+          - "*"
+
   - package-ecosystem: "docker"
     directories:
       - "/events-bff"

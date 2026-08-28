@@ -50,7 +50,7 @@ const val SCRAPER_USER_AGENT = "Mozilla/5.0 (compatible; EventJunkie/1.0; +https
  * canonical `/portfolio/<slug>/` page (ADR-007 best-practice #6, canonical URLs); Reactor Netty
  * follows redirects on the same host transparently, so scrapers receive the final document. The
  * response body size limit is controlled by the standard `spring.http.codecs.max-in-memory-size`
- * property (defaults to 256KB; set to 2MB in application.yaml for large venue pages / API payloads).
+ * property (defaults to 256KB; set to 8MB in application.yaml for large venue pages, API payloads and images).
  */
 @Configuration
 class ScraperHttpClientConfig {

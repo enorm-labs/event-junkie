@@ -24,6 +24,38 @@ services:
       # `/var/lib/postgresql/data` instead, so this path changes on a major upgrade.)
       - 'postgres-data:/var/lib/postgresql'
 
+  # The image cache runs the real S3 path locally rather than a filesystem adapter chosen by
+  # profile (ADR-019 §2.9). A local path that differs from production hides key encoding, content
+  # type and streaming faults until after a deploy, and this repo already runs a k3d rehearsal
+  # rather than accept that class of trade.
+  minio:
+    image: 'minio/minio:RELEASE.2025-09-07T16-13-09Z'
+    command: 'server /data --console-address ":9001"'
+    environment:
+      - 'MINIO_ROOT_USER=minioadmin'
+      - 'MINIO_ROOT_PASSWORD=minioadmin'
+    ports:
+      - '${MINIO_HOST_PORT:-9000}:9000'
+      - '${MINIO_CONSOLE_PORT:-9090}:9001'
+    volumes:
+      # Named, for the same reason postgres-data is: an anonymous volume discards the cache on every
+      # container recreation, and refilling it means asking about 80 venues for their images again.
+      - 'minio-data:/data'
+
+  # Creates the bucket the importer writes to, then exits. A one-shot service rather than a step in
+  # `dev-env.sh`, so `docker compose up` alone gives a working environment and the two cannot drift.
+  # `mc mb --ignore-existing` is idempotent, which is what makes re-running compose free.
+  minio-init:
+    image: 'minio/mc:RELEASE.2025-08-13T08-35-41Z'
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 minioadmin minioadmin; do sleep 1; done;
+      mc mb --ignore-existing local/event-junkie-images;
+      "
+
 volumes:
   # `scripts/dev-env.sh db-reset` drops this deliberately via `docker compose down --volumes`.
   postgres-data:
+  minio-data:
