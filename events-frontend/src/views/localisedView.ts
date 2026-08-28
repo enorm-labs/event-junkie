@@ -7,8 +7,8 @@ import { DEFAULT_LOCALE, type Locale } from '@/i18n/locales'
  * Routes a page to a **separate component per language** rather than one component that swaps its
  * prose through the message catalogue.
  *
- * Everywhere else the catalogue is right, and the key-parity test keeps it honest. These four pages
- * — About plus the three legal ones, ~1,600 words with inline links, `<strong>` and `<code>` inside
+ * Everywhere else the catalogue is right, and the key-parity test keeps it honest. These five pages
+ * — About plus the four legal ones, ~1,600 words with inline links, `<strong>` and `<code>` inside
  * the paragraphs — would need HTML inside message strings or shattered sentences. The legal pages
  * carry the stronger reason: an imprint is a **document**, reviewed as one, and
  * `ImprintView.de.vue` reads start to finish as the German imprint.

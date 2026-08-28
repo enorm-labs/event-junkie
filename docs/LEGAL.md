@@ -49,15 +49,17 @@ The footer appears on every route (`AppFooter.vue`). It carries:
 - the brand line and tagline
 - the data disclaimer (§7.6)
 - a **Project** column — source, issues, contributing, changelog
-- a **Legal** column — imprint, privacy, open-source notices
+- a **Legal** column — imprint, privacy, open-source notices, and the venue opt-out page
 - the copyright and licence line (§3)
 - the version (§4)
 
-Legal content lives under `/{locale}/legal/*` — `imprint`, `privacy`, `notices` — nested so later additions (an
-accessibility statement, a data-sources page) have an obvious home. Each of the four long-form pages, including About,
-is a **separate component per language** rather than translated strings. A legal page is a document, reviewed as a
-document, possibly by someone who does not read Vue. The reasoning is recorded in `views/localisedView.ts`, and the
-rule that follows from it — _edit both language versions or neither_ — in `events-frontend/AGENTS.md`.
+Legal content lives under `/{locale}/legal/*`: `imprint`, `privacy`, `notices` and `for-venues`. The nesting means
+later additions, such as an accessibility statement, have an obvious home. `for-venues` is the first of those, and it
+publishes the opt-out route that [SCRAPING_POSITION.md](SCRAPING_POSITION.md) §5 defines. Each of the five long-form
+pages, including About, is a **separate component per language** rather than translated strings. A legal page is a
+document, reviewed as a document, possibly by someone who does not read Vue. The reasoning is recorded in
+`views/localisedView.ts`, and the rule that follows from it — _edit both language versions or neither_ — in
+`events-frontend/AGENTS.md`.
 
 German practice expects the imprint within a couple of clicks from any page, which the footer satisfies. An e2e test
 holds that property.
@@ -123,9 +125,9 @@ It comes off with `1.0.0` (§4.7).
 
 ### 6.1 Both languages, German authoritative
 
-The site publishes English and German. **The German versions of the imprint and privacy notice are authoritative.**
-That is stated on each page in both languages, through a `LegalPage` prop, so it cannot be forgotten on one of the
-four.
+The site publishes English and German. **The German versions of the imprint, the privacy notice and the venue page are
+authoritative.** That is stated on each page in both languages, through a `LegalPage` prop, so it cannot be forgotten
+on one of the six.
 
 The history is worth keeping, because it constrains future changes. The legal pages shipped English-only first, on the
 explicit condition that German ship _in the same release as the German UI_. An English-only imprint on a site

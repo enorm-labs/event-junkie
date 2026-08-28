@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { mount } from '@vue/test-utils'
+import ForVenuesDe from '@/views/legal/ForVenuesView.de.vue'
+import ForVenuesEn from '@/views/legal/ForVenuesView.en.vue'
 import ImprintDe from '@/views/legal/ImprintView.de.vue'
 import ImprintEn from '@/views/legal/ImprintView.en.vue'
 import PrivacyDe from '@/views/legal/PrivacyView.de.vue'
@@ -46,6 +48,7 @@ afterEach(() => {
 
 const IMPRINT = { en: ImprintEn, de: ImprintDe } as const
 const PRIVACY = { en: PrivacyEn, de: PrivacyDe } as const
+const FOR_VENUES = { en: ForVenuesEn, de: ForVenuesDe } as const
 
 /** Per-language wording for the same required element. */
 interface Element {
@@ -194,6 +197,44 @@ const PRIVACY_ELEMENTS: Element[] = [
   },
 ]
 
+// docs/SCRAPING_POSITION.md §5 is four steps and a deadline, and this page is where that
+// commitment gets published — an operator who cannot find it has not been made one. So the steps
+// are pinned the same way the statutory elements above are, per language.
+const FOR_VENUES_ELEMENTS: Element[] = [
+  {
+    what: 'that the source is switched off',
+    en: /disable the source/i,
+    de: /schalten die Quelle ab/i,
+  },
+  {
+    what: 'that the events already imported are deleted too',
+    en: /remove that venue's events/i,
+    de: /löschen die Veranstaltungen/i,
+  },
+  {
+    what: 'the seven-day answer',
+    en: /within seven days/i,
+    de: /innerhalb von sieben Tagen/i,
+  },
+  {
+    what: 'that no reason is asked for',
+    en: /do not ask for a reason/i,
+    de: /fragen nicht nach einem Grund/i,
+  },
+  // The second route, and the cheaper one for both sides: it costs the operator no message and us
+  // no inbox. Dropping it would leave the page describing only the slow half of §5.
+  {
+    what: 'a robots.txt rule as the route that needs no message',
+    en: /needs no message/i,
+    de: /braucht keine Nachricht/i,
+  },
+  {
+    what: 'that robots.txt is checked on every request',
+    en: /check every request against it/i,
+    de: /prüfen jede Anfrage dagegen/i,
+  },
+]
+
 for (const locale of ['en', 'de'] as const) {
   describe(`Imprint (${locale})`, () => {
     it('names the provider and a reachable postal address (§ 5 DDG)', () => {
@@ -212,6 +253,20 @@ for (const locale of ['en', 'de'] as const) {
     for (const element of IMPRINT_ELEMENTS) {
       it(`states ${element.what}`, () => {
         expect(textOf(IMPRINT[locale], locale)).toMatch(element[locale])
+      })
+    }
+  })
+
+  describe(`For venues (${locale})`, () => {
+    it('offers the mailbox the route runs through', () => {
+      i18n.global.locale.value = locale
+      const wrapper = mount(FOR_VENUES[locale], { global: { stubs } })
+      expect(wrapper.get(`a[href="mailto:${CONTROLLER.email}"]`)).toBeTruthy()
+    })
+
+    for (const element of FOR_VENUES_ELEMENTS) {
+      it(`states ${element.what}`, () => {
+        expect(textOf(FOR_VENUES[locale], locale)).toMatch(element[locale])
       })
     }
   })
@@ -242,11 +297,14 @@ for (const locale of ['en', 'de'] as const) {
 describe('across both language versions', () => {
   it('states which version prevails, on every page that has two', () => {
     // Two language versions with no stated precedence is worse than one language: it invites the
-    // reader to pick whichever suits them. Both pages, both languages — four places to forget it.
+    // reader to pick whichever suits them. Three pages, both languages — six places to forget it,
+    // which is why LegalPage takes it as a prop rather than each page typing the sentence.
     expect(textOf(IMPRINT.en, 'en')).toMatch(/the German version prevails/)
     expect(textOf(PRIVACY.en, 'en')).toMatch(/the German version prevails/)
+    expect(textOf(FOR_VENUES.en, 'en')).toMatch(/the German version prevails/)
     expect(textOf(IMPRINT.de, 'de')).toMatch(/deutsche Fassung maßgeblich/)
     expect(textOf(PRIVACY.de, 'de')).toMatch(/deutsche Fassung maßgeblich/)
+    expect(textOf(FOR_VENUES.de, 'de')).toMatch(/deutsche Fassung maßgeblich/)
   })
 
   it('carries one controller address across all four documents', () => {

@@ -3,7 +3,7 @@
  * Shared shell for the pages under `/legal/*`: one column width, one heading rhythm, one place
  * for the "last reviewed" line. Deliberately a hand-rolled prose scale on the same
  * `mx-auto max-w-3xl` measure the other static views use, rather than a typography plugin —
- * these are three pages of body copy, not a CMS.
+ * these are four pages of body copy, not a CMS.
  */
 import { LAST_REVIEWED } from '@/lib/legal'
 import { useI18n } from 'vue-i18n'
@@ -44,7 +44,7 @@ const { t } = useI18n()
     <!-- `[&_x]` selectors rather than a class on every element: the page bodies below are plain
          semantic markup, which keeps them readable as documents and easy to translate later. -->
     <div
-      class="space-y-6 text-muted-foreground [&_a]:text-foreground [&_a]:underline [&_a]:underline-offset-4 [&_dt]:font-medium [&_dt]:text-foreground [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:tracking-tight [&_h2]:text-foreground [&_h3]:font-medium [&_h3]:text-foreground [&_li]:my-1 [&_p]:my-2 [&_section]:space-y-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-6"
+      class="space-y-6 text-muted-foreground [&_a]:text-foreground [&_a]:underline [&_a]:underline-offset-4 [&_dt]:font-medium [&_dt]:text-foreground [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:tracking-tight [&_h2]:text-foreground [&_h3]:font-medium [&_h3]:text-foreground [&_li]:my-1 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-6 [&_p]:my-2 [&_section]:space-y-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-6"
     >
       <slot />
     </div>

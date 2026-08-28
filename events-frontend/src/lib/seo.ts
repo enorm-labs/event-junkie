@@ -47,6 +47,7 @@ export const INDEXABLE_PATHS = [
   '/legal/imprint',
   '/legal/privacy',
   '/legal/notices',
+  '/legal/for-venues',
 ] as const
 
 /**

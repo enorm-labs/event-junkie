@@ -112,6 +112,11 @@ const localePath = useLocalePath()
                 t('footer.notices')
               }}</RouterLink>
             </li>
+            <li>
+              <RouterLink :class="linkClass" :to="localePath('/legal/for-venues')">{{
+                t('footer.forVenues')
+              }}</RouterLink>
+            </li>
           </ul>
         </nav>
       </div>

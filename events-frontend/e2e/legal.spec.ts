@@ -24,6 +24,24 @@ test('reaches the privacy notice in one click from the footer', async ({ page })
   await expect(page.getByRole('heading', { level: 1, name: 'Privacy' })).toBeVisible()
 })
 
+test('reaches the venue opt-out route in one click from the footer, on any route', async ({
+  page,
+}) => {
+  // docs/SCRAPING_POSITION.md §5 is only a commitment if the operator can find it, and the page
+  // they arrive on has to carry the route rather than merely mention that one exists (#789).
+  await page.goto('/events')
+
+  await page.getByRole('contentinfo').getByRole('link', { name: 'For venues' }).click()
+
+  await expect(page).toHaveURL(/\/legal\/for-venues$/)
+  await expect(page.getByRole('heading', { level: 1, name: 'For venues' })).toBeVisible()
+
+  const main = page.getByRole('main')
+  await expect(main).toContainText('disable the source')
+  await expect(main).toContainText('within seven days')
+  await expect(main.getByRole('link', { name: /@/ })).toBeVisible()
+})
+
 test('scrolls to the top when opening a legal page from a scrolled position', async ({ page }) => {
   // Without a scrollBehavior the router keeps the previous offset, so a footer link opens the
   // imprint somewhere in its middle — which reads as a broken page.
@@ -87,6 +105,7 @@ test('sets a document title for each legal route', async ({ page }) => {
     ['/legal/imprint', 'Imprint · Event Junkie'],
     ['/legal/privacy', 'Privacy · Event Junkie'],
     ['/legal/notices', 'Open-source notices · Event Junkie'],
+    ['/legal/for-venues', 'For venues · Event Junkie'],
   ] as const
 
   for (const [path, title] of titles) {

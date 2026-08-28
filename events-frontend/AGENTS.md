@@ -236,7 +236,7 @@ The site is locale-routed: every page lives under `/<locale>/…`, and `src/i18n
 - **Adding a locale means adding it to `LOCALES`** _and_ shipping its message catalogue in the same change. The route matcher is built from that list, so a
   locale becomes routable the moment it is listed — and a `/de` URL rendering English is worse than no `/de` at all.
 - **User-facing strings belong in `src/i18n/messages/`**, not in templates.
-- **The four long-form pages are the documented exception**: About and the three under `/legal/*` have **one component per language**
+- **The five long-form pages are the documented exception**: About and the four under `/legal/*` have **one component per language**
   (`ImprintView.en.vue` / `ImprintView.de.vue`), wired through `localisedView()` in the router. Their prose carries inline links and `<strong>`/`<code>`
   _inside_ paragraphs, which JSON cannot hold without `v-html` or shattered sentences — and a legal page has to be reviewable as a document. **Editing one
   language version means editing the other in the same change**; facts that must not diverge (address, supervisory authority, review date) come from
