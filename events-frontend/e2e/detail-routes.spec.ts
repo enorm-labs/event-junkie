@@ -32,9 +32,17 @@ function json(route: Route, body: unknown, status = 200): Promise<void> {
 const emptyEventPage = { content: [], page: 0, size: 50, totalElements: 0, totalPages: 0 }
 
 /** An ISO date offset from today. A literal one changes what these tests assert once it passes. */
+/** Today in Berlin, the boundary the app treats as the start of "upcoming". */
+const todayInBerlin = () =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date())
+
 function isoDaysFromNow(days: number): string {
-  const date = new Date()
-  date.setDate(date.getDate() + days)
+  // Anchored on Berlin's calendar date rather than the runner's, because that is what the app
+  // computes from (`todayIso` in lib/format). The two agree until the runner is on UTC and Berlin
+  // has already turned over — between 22:00 and midnight UTC — and then every assertion built on
+  // this is a day out. The arithmetic runs on a midnight-UTC instant so no DST hour can move it.
+  const date = new Date(`${todayInBerlin()}T00:00:00Z`)
+  date.setUTCDate(date.getUTCDate() + days)
   return date.toISOString().slice(0, 10)
 }
 
