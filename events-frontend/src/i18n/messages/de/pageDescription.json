@@ -6,5 +6,6 @@
   "about": "Was Event Junkie ist, woher die Veranstaltungsdaten kommen und was das Beta-Label dafür bedeutet, wie sehr du ihnen trauen solltest.",
   "imprint": "Angaben gemäß § 5 DDG, Kontaktdaten sowie die Haftungs- und Urheberrechtshinweise für diese Seite.",
   "privacy": "Welche Daten Event Junkie verarbeitet und wozu: keine Cookies, keine Analyse-Tools, kein Tracking — und deine Rechte nach der DSGVO.",
-  "notices": "Die Open-Source-Komponenten, auf denen Event Junkie aufbaut, nach Lizenz gruppiert und aus dem Build erzeugt."
+  "notices": "Die Open-Source-Komponenten, auf denen Event Junkie aufbaut, nach Lizenz gruppiert und aus dem Build erzeugt.",
+  "forVenues": "Wie Event Junkie die Veranstaltungsseite einer Location liest, wie rücksichtsvoll — und wie eine Location ihre Einträge wieder loswird."
 }

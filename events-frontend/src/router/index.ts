@@ -98,7 +98,7 @@ const router = createRouter({
           name: 'promoter',
           component: () => import('../views/PromoterDetailView.vue'),
         },
-        // The four long-form pages have one component per language rather than one component
+        // The five long-form pages have one component per language rather than one component
         // reading translated prose — see views/localisedView.ts for why, and note that this is the
         // exception to the rule that user-facing text lives in the message catalogue.
         {
@@ -141,6 +141,18 @@ const router = createRouter({
           component: localisedView({
             en: () => import('../views/legal/NoticesView.en.vue'),
             de: () => import('../views/legal/NoticesView.de.vue'),
+          }),
+        },
+        // Venue-facing rather than visitor-facing: it publishes the opt-out route that
+        // docs/SCRAPING_POSITION.md §5 defines, and a commitment an operator cannot find is not
+        // one. Under /legal/* because that is where the site's promises live, not in Project.
+        {
+          path: 'legal/for-venues',
+          name: 'forVenues',
+          meta: { titleKey: 'pageTitle.forVenues', descriptionKey: 'pageDescription.forVenues' },
+          component: localisedView({
+            en: () => import('../views/legal/ForVenuesView.en.vue'),
+            de: () => import('../views/legal/ForVenuesView.de.vue'),
           }),
         },
       ],

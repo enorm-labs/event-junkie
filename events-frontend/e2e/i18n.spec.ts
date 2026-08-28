@@ -232,6 +232,18 @@ test('the notices page counts components in German too', async ({ page }) => {
   )
 })
 
+test('the venue opt-out page is German under /de, route and all', async ({ page }) => {
+  // The audience is a Berlin venue operator, so the German version is the one that actually gets
+  // read — and a silent fallback would hand them the opt-out route in the wrong language.
+  await page.goto('/de/legal/for-venues')
+  const main = page.getByRole('main')
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Für Locations' })).toBeVisible()
+  await expect(main).toContainText('schalten die Quelle ab')
+  await expect(main).toContainText('innerhalb von sieben Tagen')
+  await expect(main).not.toContainText('disable the source')
+})
+
 test('switching language on a legal page stays on that page', async ({ page }) => {
   // The case the switcher most needs to get right: someone reading the privacy notice in the wrong
   // language should land on the *notice*, not on the home page.
@@ -251,6 +263,7 @@ test('sets a German document title for each legal route', async ({ page }) => {
     ['/de/legal/imprint', 'Impressum · Event Junkie'],
     ['/de/legal/privacy', 'Datenschutz · Event Junkie'],
     ['/de/legal/notices', 'Open-Source-Lizenzen · Event Junkie'],
+    ['/de/legal/for-venues', 'Für Locations · Event Junkie'],
   ] as const
 
   for (const [path, title] of titles) {

@@ -59,6 +59,7 @@ describe('AppFooter', () => {
       '/en/legal/imprint',
       '/en/legal/privacy',
       '/en/legal/notices',
+      '/en/legal/for-venues',
     ])
     // A RouterLink, so no full page reload and no new tab.
     for (const link of legal) expect(link.attributes('target')).toBeUndefined()

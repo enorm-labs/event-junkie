@@ -179,15 +179,14 @@ other and need one decision.
 
 ## 4. The gaps we know about
 
-Four things weaken the position above. Each has an owner or needs one.
+Three things weaken the position above. Each has an owner or needs one.
 
 1. **The description is displayed without a per-source justification** (§3.1). Owned by
    [#283](https://github.com/enorm-labs/event-junkie/issues/283) and
    [#364](https://github.com/enorm-labs/event-junkie/issues/364).
 2. **The privacy notice does not mention hotlinked images** (§3.6). The visitor's IP address reaches a venue we do not
    operate, and the notice is silent about it.
-3. **No venue-facing page states the opt-out route.** §5 defines it. The site does not yet publish it.
-4. **Import time is an interval, not a window.** ADR-007 best-practice #7 asks for early-morning scrapes.
+3. **Import time is an interval, not a window.** ADR-007 best-practice #7 asks for early-morning scrapes.
    `ScheduledImportService` fires when `lastImportAt` plus the interval expires, which drifts across the day.
 
 ## 5. The venue opt-out route
@@ -200,6 +199,10 @@ Four things weaken the position above. Each has an owner or needs one.
 4. We answer to confirm, within seven days.
 
 A `robots.txt` rule that disallows the pages we read has the same effect and needs no message.
+
+**The site publishes this route.** `/{locale}/legal/for-venues` carries it in both languages, German authoritative,
+and the footer links it from every page. `ForVenuesView.de.vue` is the page. It also states in short form what §2 of
+this document describes. A change to the importer therefore reaches a venue operator, and not only this file.
 
 **Why this matters more than the arguments above.** Most disputes of this kind start with an annoyed operator and end
 when the data comes down. A route that works, and a fast answer, resolves more risk than §3 does.

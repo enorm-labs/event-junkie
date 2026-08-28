@@ -18,7 +18,7 @@ import venues from './venues.json'
  * Split rather than flat so a change to the filter labels does not sit in the same diff as a change
  * to the footer — and so a translator can be handed one area at a time.
  *
- * **Long-form prose is deliberately absent.** The About page and the three legal pages are ~1,600
+ * **Long-form prose is deliberately absent.** The About page and the four legal pages are ~1,600
  * words carrying 29 inline links, `<strong>` and `<code>` elements *inside* their paragraphs.
  * Putting that in JSON would mean HTML inside strings rendered with `v-html`, or shattering
  * sentences into fragments that no translator could work from. Those pages become per-locale

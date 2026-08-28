@@ -10,6 +10,7 @@
   "imprint": "Imprint",
   "privacy": "Privacy",
   "notices": "Open-source notices",
+  "forVenues": "For venues",
   "copyright": "© {year} Event Junkie",
   "licence": "Code under Apache-2.0"
 }

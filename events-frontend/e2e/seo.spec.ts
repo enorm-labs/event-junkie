@@ -19,8 +19,8 @@ test('serves a sitemap listing every static page in both locales', async ({ requ
   const xml = await response.text()
   expect(xml).toContain('<loc>https://event-junkie.de/en</loc>')
   expect(xml).toContain('<loc>https://event-junkie.de/de/legal/imprint</loc>')
-  // 8 static pages × 2 locales. A change here is a real change to what gets indexed.
-  expect(xml.match(/<url>/g)).toHaveLength(16)
+  // 9 static pages × 2 locales. A change here is a real change to what gets indexed.
+  expect(xml.match(/<url>/g)).toHaveLength(18)
 })
 
 test('serves a robots.txt that points at the sitemap', async ({ request }) => {
