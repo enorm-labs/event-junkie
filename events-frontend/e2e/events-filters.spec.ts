@@ -33,8 +33,12 @@ const todayInBerlin = () =>
 
 /** An ISO date offset from today, for ranges that have to stay relative to the clock. */
 function isoDaysFromNow(days: number): string {
-  const date = new Date()
-  date.setDate(date.getDate() + days)
+  // Anchored on Berlin's calendar date rather than the runner's, because that is what the app
+  // computes from (`todayIso` in lib/format). The two agree until the runner is on UTC and Berlin
+  // has already turned over — between 22:00 and midnight UTC — and then every assertion built on
+  // this is a day out. The arithmetic runs on a midnight-UTC instant so no DST hour can move it.
+  const date = new Date(`${todayInBerlin()}T00:00:00Z`)
+  date.setUTCDate(date.getUTCDate() + days)
   return date.toISOString().slice(0, 10)
 }
 
