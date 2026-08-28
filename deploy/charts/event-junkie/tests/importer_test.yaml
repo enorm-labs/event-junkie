@@ -122,13 +122,19 @@ tests:
 
   # --- Cached venue images (ADR-019) ------------------------------------------------------------
   #
-  # The switch is off in every environment until somebody turns it on, and off has to mean the
-  # importer carries no storage configuration at all — not empty values it might act on.
+  # Off has to mean the importer carries no storage configuration at all, rather than empty values
+  # it might act on.
+  #
+  # **`images.enabled: false` is set explicitly, and leaving it to the default was a real bug.**
+  # `cluster-assertions.sh` re-runs this suite against every cluster's `spec.values`, so a test that
+  # relies on a chart default fails the moment an environment legitimately overrides it — which is
+  # what deploy/AGENTS.md means by an assertion here having to hold under any values file.
   - it: passes no image storage configuration while images are disabled
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
+      images.enabled: false
     documentSelector:
       path: kind
       value: Deployment
@@ -177,6 +183,10 @@ tests:
       networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       images.enabled: true
+      # Empty explicitly, for the same reason the test above sets `enabled` explicitly: an
+      # environment that supplies a prefix would otherwise make this render succeed and the
+      # assertion fail, in a suite that has to hold under every cluster's values.
+      images.storage.prefix: ""
     asserts:
       - failedTemplate:
           errorMessage: "images.storage.prefix is required when images.enabled — it is what separates this environment's objects from the other's."
