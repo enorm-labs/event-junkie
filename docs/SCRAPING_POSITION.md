@@ -86,6 +86,23 @@ the page that was read, and the sentence that decided it.
 
 **The rule is that only `PROHIBITED` withholds.** `UNCLEAR` displays. An unreviewed source displays.
 
+**`PROHIBITED` also stops us storing the field, and not only serving it**
+([#807](https://github.com/enorm-labs/event-junkie/issues/807)). Withholding a field from a response answers § 19a UrhG.
+It leaves the § 16 UrhG reproduction in place. A source we recorded as prohibited is one we decided has no justification,
+so it gets neither act. Three mechanisms carry it, because no single one reaches every row:
+
+1. **The importer does not store the field.** `ScrapedEvent.toEventEntity` writes `null` for a prohibited field, so every
+   import repairs the events it touches.
+2. **Recording the prohibition clears what is already stored.** The admin `PATCH` deletes the field from that source's
+   events at once. A past event is never scraped again, so nothing else would reach it.
+3. **The gate still withholds on read.** It is not redundant. A licence can change between imports, and defence in depth
+   is cheap here.
+
+**`subtitle` is deliberately not covered** ([#817](https://github.com/enorm-labs/event-junkie/issues/817)). It is usually
+a support act or a series name, which is a fact rather than a personal intellectual creation under § 2 (2) UrhG. A
+prohibition therefore leaves it in place, and `structuredData.ts` may still use it where an event has no description.
+That publishes the subtitle, never the withheld description. Revisit this if a venue objects to a subtitle.
+
 We chose that knowingly, for one reason. **Silence from a venue is not a refusal.** To blank every source we did not
 read yet would remove material that no venue objects to.
 
@@ -222,8 +239,9 @@ Three things weaken the position above. Each has an owner or needs one.
 4. We answer to confirm, within seven days.
 
 **A narrower remedy exists, and it is often the one an operator wants.** An objection to the photographs alone, or to
-the description alone, sets `image_licence` or `description_licence` to `PROHIBITED` on that source (§3.1). The field
-stops being served and the events stay. Nobody has to lose a listing to remove one thing they mind.
+the description alone, sets `image_licence` or `description_licence` to `PROHIBITED` on that source (§3.1). We delete
+that field from the venue's stored events, and we do not import it again. The events stay. Nobody has to lose a listing
+to remove one thing they mind.
 
 A `robots.txt` rule that disallows the pages we read has the same effect and needs no message.
 

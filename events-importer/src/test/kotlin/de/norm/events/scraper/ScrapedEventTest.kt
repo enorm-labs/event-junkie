@@ -1,5 +1,7 @@
 package de.norm.events.scraper
 
+import de.norm.events.licence.SourceLicence
+import de.norm.events.licence.SourceLicences
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -16,7 +18,9 @@ class ScrapedEventTest {
         startTime: LocalTime? = null,
         title: String = "Berliner Weisse",
         eventType: String? = null,
-        genre: String? = null
+        genre: String? = null,
+        description: String? = null,
+        imageUrl: String? = null
     ) = ScrapedEvent(
         title = title,
         eventType = eventType,
@@ -25,7 +29,9 @@ class ScrapedEventTest {
         sourceId = "so36:98223",
         sourceUrl = "https://www.so36.com/produkte/98223",
         doorsTime = doorsTime,
-        startTime = startTime
+        startTime = startTime,
+        description = description,
+        imageUrl = imageUrl
     )
 
     private fun ScrapedEvent.toEntity() = toEventEntity(venueId = 1L, venueSlug = "so36", eventSourceId = 1L)
@@ -89,5 +95,71 @@ class ScrapedEventTest {
         scrapedEvent(title = "Berliner Weisse", eventType = "CONCERT", genre = "Spoken Word, Jazz, Fusion")
             .toEntity()
             .eventType shouldBe "CONCERT"
+    }
+
+    // #807: PROHIBITED stops the § 16 UrhG reproduction, not only the § 19a communication to the
+    // public. This is the point every import passes through, so it is where storage is refused.
+    private fun licensed(
+        description: SourceLicence?,
+        image: SourceLicence?
+    ) = SourceLicences(description = description, image = image)
+
+    @Test
+    fun `toEventEntity stores no description when the source prohibits it`() {
+        val entity =
+            scrapedEvent(description = "Ein Abend mit Aussicht", imageUrl = "https://example.test/a.jpg")
+                .toEventEntity(
+                    venueId = 1L,
+                    venueSlug = "so36",
+                    eventSourceId = 1L,
+                    licences = licensed(SourceLicence.PROHIBITED, SourceLicence.UNCLEAR)
+                )
+
+        entity.description shouldBe null
+        // Only the prohibited field goes. The other one is a separate answer for a separate right.
+        entity.imageUrl shouldBe "https://example.test/a.jpg"
+    }
+
+    @Test
+    fun `toEventEntity stores no image URL when the source prohibits it`() {
+        val entity =
+            scrapedEvent(description = "Ein Abend mit Aussicht", imageUrl = "https://example.test/a.jpg")
+                .toEventEntity(
+                    venueId = 1L,
+                    venueSlug = "so36",
+                    eventSourceId = 1L,
+                    licences = licensed(SourceLicence.UNCLEAR, SourceLicence.PROHIBITED)
+                )
+
+        entity.imageUrl shouldBe null
+        entity.description shouldBe "Ein Abend mit Aussicht"
+    }
+
+    @Test
+    fun `toEventEntity stores both fields for every licence that is not PROHIBITED`() {
+        // Fail-open, and it is the same rule the read gate applies (#283). UNCLEAR is not a refusal
+        // and neither is silence, so a source nobody reviewed keeps its content.
+        listOf(
+            licensed(SourceLicence.UNCLEAR, SourceLicence.UNCLEAR),
+            licensed(SourceLicence.PERMITTED, SourceLicence.PERMITTED),
+            licensed(null, null)
+        ).forEach { licences ->
+            val entity =
+                scrapedEvent(description = "Ein Abend mit Aussicht", imageUrl = "https://example.test/a.jpg")
+                    .toEventEntity(venueId = 1L, venueSlug = "so36", eventSourceId = 1L, licences = licences)
+
+            entity.description shouldBe "Ein Abend mit Aussicht"
+            entity.imageUrl shouldBe "https://example.test/a.jpg"
+        }
+    }
+
+    @Test
+    fun `toEventEntity defaults to storing both fields when no licence is passed`() {
+        // The default matters: every existing caller relies on it, and a default that withheld would
+        // blank the corpus on the next import.
+        val entity = scrapedEvent(description = "Ein Abend", imageUrl = "https://example.test/a.jpg").toEntity()
+
+        entity.description shouldBe "Ein Abend"
+        entity.imageUrl shouldBe "https://example.test/a.jpg"
     }
 }

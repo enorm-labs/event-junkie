@@ -6,6 +6,7 @@ import de.norm.events.event.EventEntity
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.event.normalizeMoneyScale
+import de.norm.events.licence.SourceLicences
 import de.norm.events.slug.SlugGenerator
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -94,7 +95,8 @@ data class ScrapedEvent(
         venueSlug: String,
         eventSourceId: Long,
         existing: EventEntity? = null,
-        slugDiscriminator: String? = null
+        slugDiscriminator: String? = null,
+        licences: SourceLicences = SourceLicences.UNKNOWN_SOURCE
     ): EventEntity {
         // Guard the doors ≤ start invariant: a source that lists them the wrong way round
         // (e.g. SO36's "Einlass: 19:30, Beginn: 19:00") has transposed the labels — swap back.
@@ -112,7 +114,10 @@ data class ScrapedEvent(
             eventSourceId = eventSourceId,
             title = title,
             subtitle = subtitle,
-            description = description,
+            // A source that forbids its prose gets none of it stored, not merely hidden (#807).
+            // Blanking on read would leave the § 16 reproduction in place, and this is the only
+            // point every import passes through.
+            description = if (licences.withholdsDescription()) null else description,
             // Fall back to OTHER (not CONCERT) when the source provided no category,
             // so unclassifiable events aren't silently labelled as concerts; then
             // promote an under-classified festival title (a "Konzert"-labelled festival
@@ -124,7 +129,7 @@ data class ScrapedEvent(
             eventDate = eventDate,
             doorsTime = doors,
             startTime = start,
-            imageUrl = imageUrl,
+            imageUrl = if (licences.withholdsImage()) null else imageUrl,
             sourceUrl = sourceUrl,
             ticketUrl = ticketUrl,
             genre = genre,

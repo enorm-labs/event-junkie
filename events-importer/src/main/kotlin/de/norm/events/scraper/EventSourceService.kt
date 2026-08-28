@@ -1,5 +1,7 @@
 package de.norm.events.scraper
 
+import de.norm.events.event.EventRepository
+import de.norm.events.licence.SourceLicences
 import de.norm.events.slug.SlugGenerator
 import de.norm.events.venue.VenueNotFoundException
 import de.norm.events.venue.VenueRepository
@@ -20,7 +22,8 @@ import java.time.Instant
 @Service
 class EventSourceService(
     private val eventSourceRepository: EventSourceRepository,
-    private val venueRepository: VenueRepository
+    private val venueRepository: VenueRepository,
+    private val eventRepository: EventRepository
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -134,8 +137,35 @@ class EventSourceService(
                 licenceNote = request.licenceNote ?: source.licenceNote
             )
         val saved = eventSourceRepository.save(updated)
+        clearProhibitedContent(saved)
         logger.info { "Updated event source '${saved.name}' (id=${saved.id})" }
         return EventSourceResponse.fromEntity(saved)
+    }
+
+    /**
+     * Deletes stored content the source now forbids.
+     *
+     * **Withholding a field and storing it are different acts, and `PROHIBITED` answers both (#807).**
+     * The gate stops the § 19a UrhG communication to the public. This stops the § 16 UrhG
+     * reproduction, at the moment the prohibition is recorded — which is what makes the promise on
+     * `ForVenuesView` true. Waiting for the next import would leave every past event untouched
+     * forever, because a past event is never scraped again.
+     *
+     * Runs on every update rather than only on a transition. Re-clearing an already-cleared source
+     * matches no rows, and a rule that fires only on a change is one stale read away from missing
+     * the case it exists for.
+     */
+    private suspend fun clearProhibitedContent(source: EventSourceEntity) {
+        val id = source.id ?: return
+        val licences = SourceLicences.of(source.descriptionLicence, source.imageLicence)
+        if (licences.withholdsDescription()) {
+            val cleared = eventRepository.clearDescriptions(id)
+            if (cleared > 0) logger.info { "Cleared $cleared stored description(s) for prohibited source '${source.slug}'" }
+        }
+        if (licences.withholdsImage()) {
+            val cleared = eventRepository.clearImageUrls(id)
+            if (cleared > 0) logger.info { "Cleared $cleared stored image URL(s) for prohibited source '${source.slug}'" }
+        }
     }
 
     /**

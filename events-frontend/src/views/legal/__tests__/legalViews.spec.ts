@@ -225,6 +225,14 @@ const FOR_VENUES_ELEMENTS: Element[] = [
     de: /nur die Bilder stören oder nur die\s+Beschreibungstexte/i,
   },
   {
+    // #807 decided that PROHIBITED stops storage and not only display. This page promised removal
+    // before that was true, so the assertion pins the half that costs something: the material is
+    // deleted from the database, not hidden behind a gate.
+    what: 'that the objected-to material is deleted rather than hidden',
+    en: /delete\s+the material you objected to from our database/i,
+    de: /löschen das beanstandete Material aus der Datenbank/i,
+  },
+  {
     what: 'that no reason is asked for',
     en: /do not ask for a reason/i,
     de: /fragen nicht nach einem Grund/i,

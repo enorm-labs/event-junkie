@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.licence.SourceLicences
 import de.norm.events.venue.VenueRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.async
@@ -232,10 +233,12 @@ class EventImportService(
                     // Uses TransactionalOperator instead of @Transactional to keep status updates
                     // (the claim, markSuccess/markFailed) outside the transaction boundary —
                     // they must always commit even if the upsert transaction rolls back.
+                    // What this source lets us keep. PROHIBITED means the field is never stored (#807).
+                    val licences = SourceLicences.of(runningSource.descriptionLicence, runningSource.imageLicence)
                     val upsert =
                         transactionalOperator.executeAndAwait {
                             val sourceId = requireNotNull(runningSource.id) { "Event source must be persisted before importing" }
-                            eventUpsertService.upsertAndCleanup(result.events, runningSource.venueId, venue.slug, sourceId)
+                            eventUpsertService.upsertAndCleanup(result.events, runningSource.venueId, venue.slug, sourceId, licences)
                         }
 
                     // After the transaction commits, deliberately: a counter incremented for writes

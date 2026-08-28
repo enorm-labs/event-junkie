@@ -7,10 +7,10 @@ import de.norm.events.common.PageResponse
 import de.norm.events.event.EventService.Companion.MAX_CALENDAR_DAYS
 import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagRepository
+import de.norm.events.licence.SourceLicences
 import de.norm.events.promoter.PromoterRepository
 import de.norm.events.promoter.PromoterSummaryResponse
 import de.norm.events.sourcelicence.SourceLicenceGate
-import de.norm.events.sourcelicence.SourceLicences
 import de.norm.events.venue.VenueRepository
 import de.norm.events.venue.VenueSummaryResponse
 import kotlinx.coroutines.flow.toList

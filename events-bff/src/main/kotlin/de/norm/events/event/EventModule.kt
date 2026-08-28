@@ -9,5 +9,5 @@ import org.springframework.modulith.ApplicationModule
  * It also depends on `sourcelicence`, which decides whether a description or an image may be shown
  * at all (#283). That edge is one-way: this module asks and applies the answer itself.
  */
-@ApplicationModule(allowedDependencies = ["common", "venue", "artist", "promoter", "genretag", "sourcelicence"])
+@ApplicationModule(allowedDependencies = ["common", "venue", "artist", "promoter", "genretag", "sourcelicence", "licence"])
 class EventModule

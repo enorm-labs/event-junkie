@@ -3,6 +3,7 @@ package de.norm.events.event
 import de.norm.events.EVENTS_SCHEMA
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.domain.Pageable
+import org.springframework.data.r2dbc.repository.Modifying
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import java.time.LocalDate
@@ -57,6 +58,26 @@ interface EventRepository : CoroutineCrudRepository<EventEntity, Long> {
         """
     )
     fun countFuturePerSource(date: LocalDate): Flow<SourceFutureEventsRow>
+
+    /**
+     * Clears the stored description for every event of [eventSourceId].
+     *
+     * Called when a source's `description_licence` becomes `PROHIBITED` (#807). Withholding the
+     * field from a response answers § 19a UrhG. Deleting it is what answers § 16 UrhG, and it has to
+     * happen when the prohibition is recorded rather than at the next import — a past event is never
+     * scraped again, so nothing else would reach it.
+     *
+     * `@Modifying` with raw SQL because Spring Data R2DBC derives no `updateBy*` form (ADR-002), and
+     * schema-prefixed with the interpolated constant rather than a literal (ADR-004, #540).
+     */
+    @Modifying
+    @Query("UPDATE $EVENTS_SCHEMA.event SET description = NULL WHERE event_source_id = :eventSourceId AND description IS NOT NULL")
+    suspend fun clearDescriptions(eventSourceId: Long): Int
+
+    /** The same for images, answered from the source's own column. */
+    @Modifying
+    @Query("UPDATE $EVENTS_SCHEMA.event SET image_url = NULL WHERE event_source_id = :eventSourceId AND image_url IS NOT NULL")
+    suspend fun clearImageUrls(eventSourceId: Long): Int
 
     /** Finds all events with pagination and sorting applied via [pageable]. */
     fun findAllBy(pageable: Pageable): Flow<EventEntity>
