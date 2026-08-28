@@ -183,9 +183,32 @@ tests:
       # `0.1.1-snapshot.<utc-timestamp>.g<sha>` (#455) — so a pattern anchored at the patch digit
       # passes every pull request and fails only in the release job, which is the worst place to
       # find out.
+      #
+      # **The imgproxy sidecar is the one image this chart does not build**, and it is the second
+      # alternative rather than an escape hatch: ours must carry a SemVer tag and never a digest, and
+      # it must carry a digest and never a tag (ADR-017, ADR-020). Renders with the sidecar off match
+      # only the first half, which is why `images.imgproxy.enabled` is set explicitly below — staging
+      # turned it on and this assertion had never seen a second container.
       - matchRegex:
           path: "$..image"
-          pattern: '^ghcr\.io/enorm-labs/event-junkie/(bff|importer|frontend):[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$'
+          pattern: '^(ghcr\.io/enorm-labs/event-junkie/(bff|importer|frontend):[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?|ghcr\.io/imgproxy/imgproxy@sha256:[0-9a-f]{64})$'
+
+  - it: control — the image path above reaches the imgproxy sidecar too
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: true
+      images.storage.prefix: "staging"
+      images.imgproxy.enabled: true
+    documentSelector:
+      path: kind
+      value: Deployment
+      matchMany: true
+    asserts:
+      - matchRegex:
+          path: "$..image"
+          pattern: '^(ghcr\.io/enorm-labs/event-junkie/(bff|importer|frontend):[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?|ghcr\.io/imgproxy/imgproxy@sha256:[0-9a-f]{64})$'
 
   - it: control — the ConfigMap data path above reaches the shared ConfigMap
     set:
