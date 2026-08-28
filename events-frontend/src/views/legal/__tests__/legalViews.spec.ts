@@ -217,6 +217,14 @@ const FOR_VENUES_ELEMENTS: Element[] = [
     de: /innerhalb von sieben Tagen/i,
   },
   {
+    // The narrower remedy #283 made possible: a per-field prohibition on the source. Before it, the
+    // only lever was disabling the whole source, so a venue objecting to its photographs alone had
+    // to lose its listing. The page has to offer what the system can actually do.
+    what: 'that only the images or only the descriptions can be removed',
+    en: /only the images you mind, or\s+only the description texts/i,
+    de: /nur die Bilder stören oder nur die\s+Beschreibungstexte/i,
+  },
+  {
     what: 'that no reason is asked for',
     en: /do not ask for a reason/i,
     de: /fragen nicht nach einem Grund/i,

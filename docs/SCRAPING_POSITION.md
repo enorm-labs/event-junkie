@@ -12,7 +12,8 @@
 1. **We aggregate and link back. We do not republish.** Every event carries a link to its source page.
 2. **We take facts.** A title, a date, a start time, a venue and an artist list are the fields the product needs.
 3. **We display the venue's description, and we hotlink the venue's image.** §3.1 and §3.6 explain why those two are
-   the weakest parts of this position. Neither has a per-source licence decision behind it yet.
+   the weakest parts of this position. **A source can now forbid either one**, and §3.1 says what we do until a source
+   is reviewed.
 4. **We are polite.** One entry page per source, once per day, with a delay between requests and conditional requests on
    top.
 5. **A venue can ask us to stop, and we stop.** §5 is the route.
@@ -49,9 +50,13 @@ a short page, or on a page that reaches the past. ADR-007 permits that as a per-
 **What we store per event:** title, date, start time, venue, artist list, source URL, ticket URL, event type,
 `description` and `imageUrl`.
 
-**What the site displays: all of it, including `description` and `imageUrl`.**
-`EventDetailView.vue` renders the full description. `EventCard.vue`, `VenueCard.vue` and `BaseDetailView.vue` render
-the image, and `pageMeta.ts` puts the same URL in `og:image`.
+**What the site displays: all of it, including `description` and `imageUrl`, unless the source forbids that field.**
+`EventDetailView.vue` renders the full description. `EventCard.vue`, `VenueCard.vue`, `BaseDetailView.vue` and
+`EventDetailView.vue` render the image, and `pageMeta.ts` puts the same URL in `og:image`.
+
+**Two columns on `event_source` decide it, per source and per field.** `description_licence` and `image_licence` each
+hold `PERMITTED`, `PROHIBITED`, `UNCLEAR` or nothing at all. The BFF withholds the matching field on `PROHIBITED` and
+shows it otherwise. §3.1 explains that rule and what it accepts.
 
 **The image is hotlinked and not copied.** The `src` attribute points at the venue's own server, so the visitor's
 browser fetches it from there. §3.6 covers what follows.
@@ -64,7 +69,7 @@ per day. A forbidden URL fails the run rather than being fetched — see §3.3.
 
 ### 3.1 Copyright in the listing itself (§§ 2, 16 UrhG)
 
-**Our position:** the factual fields are safe. The description is not, and we display it today.
+**Our position:** the factual fields are safe. The description is not, and we display it unless the source forbids it.
 
 A date, a start time, a door time, a venue name and an artist name are facts. German copyright protects a personal
 intellectual creation under § 2 (2) UrhG. A concert title is usually the name of the act, which carries no such
@@ -72,14 +77,24 @@ creation. That part of the set is the one we are most comfortable with.
 
 **The description is a different question.** A `description` is often a written promotional text, and such a text can
 reach the threshold. We store it under § 16 UrhG, and `EventDetailView.vue` also makes it available to the public under
-§ 19a UrhG. Both acts need a justification per source, and we do not have one yet.
+§ 19a UrhG. Both acts need a justification per source.
 
-**This is the weakest point in the whole document.** It is live rather than theoretical.
-[#283](https://github.com/enorm-labs/event-junkie/issues/283) adds a licence status on the `event_source` row.
-[#364](https://github.com/enorm-labs/event-junkie/issues/364) decides what the status permits. Until both land, we
-display a text we cannot justify displaying for every source.
+**The place to record that justification now exists.** `event_source` carries `description_licence` and `image_licence`
+([#283](https://github.com/enorm-labs/event-junkie/issues/283)), each holding one of `PERMITTED`, `PROHIBITED` or
+`UNCLEAR`, or nothing while the source stays unreviewed. Three more columns hold the evidence: the date of the review,
+the page that was read, and the sentence that decided it.
 
-**What we do about it now:** §5 remains the answer for a venue that objects. A source can be disabled the same day.
+**The rule is that only `PROHIBITED` withholds.** `UNCLEAR` displays. An unreviewed source displays.
+
+We chose that knowingly, for one reason. **Silence from a venue is not a refusal.** To blank every source we did not
+read yet would remove material that no venue objects to.
+
+**So this stays the weakest point in the document, and it stays live.** The mechanism does not close the gap. It gives
+the gap a shape, an owner per source, and a same-day remedy (§5). Until a source is reviewed we display a text we
+cannot justify displaying for that source.
+
+**What we do about it now:** §5 remains the answer for a venue that objects, and it is finer than it was. A venue that
+minds only its photographs no longer has to lose its whole listing.
 
 ### 3.2 The database right (§§ 87a–87c UrhG)
 
@@ -181,7 +196,9 @@ other and need one decision.
 
 Three things weaken the position above. Each has an owner or needs one.
 
-1. **The description is displayed without a per-source justification** (§3.1). Owned by
+1. **The description is displayed without a per-source justification** (§3.1). **Narrowed, not closed.** The
+   per-source field and the rule that reads it now exist. An unreviewed source displays, which was the decision. The
+   review itself remains, source by source, and every source is unreviewed today. Owned by
    [#283](https://github.com/enorm-labs/event-junkie/issues/283) and
    [#364](https://github.com/enorm-labs/event-junkie/issues/364).
 2. **The privacy notice does not mention hotlinked images** (§3.6). The visitor's IP address reaches a venue we do not
@@ -197,6 +214,10 @@ Three things weaken the position above. Each has an owner or needs one.
 2. We disable the source. `EventSourceEntity.enabled` is the switch and it stops the importer.
 3. We remove the venue's events from the database.
 4. We answer to confirm, within seven days.
+
+**A narrower remedy exists, and it is often the one an operator wants.** An objection to the photographs alone, or to
+the description alone, sets `image_licence` or `description_licence` to `PROHIBITED` on that source (§3.1). The field
+stops being served and the events stay. Nobody has to lose a listing to remove one thing they mind.
 
 A `robots.txt` rule that disallows the pages we read has the same effect and needs no message.
 
