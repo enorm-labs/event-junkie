@@ -44,7 +44,7 @@
 # the bump). 1.30-alpine — the stable branch, and what #437 proposed — was equally clean and is the
 # conservative alternative if mainline ever churns too fast. The reason to stay on mainline is that
 # it picks up refreshed Alpine packages sooner, which is exactly the failure above.
-FROM nginxinc/nginx-unprivileged:1.31-alpine@sha256:334d92979f15aaecd5dd50af5105e1230e2bb70765d45b1e2f964e7c5eda81c3
+FROM nginxinc/nginx-unprivileged:1.31-alpine@sha256:901e944d1f4fc2bd077e8f5568b98c1f6f8cdacf6b97a87747c43134a339b9a7
 
 ARG VERSION=unspecified
 ARG REVISION=unknown
