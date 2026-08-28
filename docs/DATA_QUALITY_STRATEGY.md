@@ -156,7 +156,7 @@ The keystone. Everything else is judged against these numbers.
 - **Data-quality report.** A `GET /api/admin/data-quality` endpoint, plus a scheduled summary log and Micrometer
   gauges. Per event source it reports concerts with no artist, events typed `OTHER`, and events missing genre,
   promoter, price or start time. It also reports titles that look like non-artist names and are still stored as
-  artists.
+  artists. A last metric counts events whose source has no copyright position yet.
 - **Curation queue (API-first).** Promote the existing drop and degrade signals into an explicit, queryable **worklist
   endpoint** — `Dropping non-genre token`, artist-less events, detail-fetch fallbacks. That is the raw material for
   growing `NON_ARTIST_NAMES`, `NAME_CORRECTIONS` and the genre synonym map. No bespoke frontend yet (see §7). A
@@ -177,6 +177,22 @@ worth knowing before reading a number:
 - **A source id that does not resolve gets its own `unresolved-source-<id>` label**, not `manual`.
   `ON DELETE SET NULL` means it should not happen. Folding it into `manual` would attribute a deleted source's events
   to hand curation, and nobody would question that number.
+
+**`unreviewedLicence` joined the pillar on 2026-08-28, and it is the odd one out.**
+[#283](https://github.com/enorm-labs/event-junkie/issues/283) added a per-source copyright position. This metric counts
+the events whose source has none yet.
+
+Every other metric here measures data a venue published and we mishandled. This one measures work of ours that nobody
+did yet. It lives here anyway, for two reasons. A second reporting mechanism for one number is worse than a slightly
+wider definition of the pillar. And [#790](https://github.com/enorm-labs/event-junkie/issues/790) showed the cost of an
+evidence gap that nothing counts: three of eighty importers recorded a `robots.txt` check, and nobody noticed the rest.
+
+**It counts events and not sources**, which makes it comparable with its neighbours and is the more useful number. A
+source with 200 unreviewed events is a different finding from one with 2. Events created by hand have no source, so
+they are excluded rather than counted as unreviewed.
+
+`?issue=unreviewedLicence` also works on the worklist endpoint, because the predicate lives on the enum. That answers
+"which events am I about to affect" before a review sets a source to `PROHIBITED`.
 
 ### Pillar 2 — Prevent (stop regressions) 🟠 medium effort, low risk
 

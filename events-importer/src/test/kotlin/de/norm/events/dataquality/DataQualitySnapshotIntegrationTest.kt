@@ -75,10 +75,13 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
 
             val rows = snapshots.findBySnapshotDate(today).toList()
             rows.map { it.sourceSlug }.toSet() shouldBe setOf("alpha")
-            // totalEvents + six QualityIssue metrics + suspectNonArtistTitles.
-            rows.size shouldBe 8
+            // totalEvents + seven QualityIssue metrics + suspectNonArtistTitles.
+            rows.size shouldBe 9
             rows.single { it.metric == "totalEvents" }.metricCount shouldBe 1L
             rows.single { it.metric == "concertsWithoutArtist" }.metricCount shouldBe 1L
+            // The seeded source has no licence_reviewed_at, which is the state every source is in
+            // until somebody reviews it (#283).
+            rows.single { it.metric == "unreviewedLicence" }.metricCount shouldBe 1L
             // Every row carries the denominator, so a percentage can be recomputed from history
             // alone without joining back to a second row.
             rows.all { it.totalEvents == 1L } shouldBe true

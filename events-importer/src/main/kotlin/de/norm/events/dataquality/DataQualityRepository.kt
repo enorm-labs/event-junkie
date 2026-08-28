@@ -46,7 +46,10 @@ interface DataQualityRepository : CoroutineCrudRepository<EventEntity, Long> {
                                                                            AS missing_promoter,
             COUNT(*) FILTER (WHERE e.price_presale IS NULL AND e.price_box_office IS NULL
                 AND e.free = false AND e.price_note IS NULL)               AS missing_price,
-            COUNT(*) FILTER (WHERE e.start_time IS NULL)                   AS missing_start_time
+            COUNT(*) FILTER (WHERE e.start_time IS NULL)                   AS missing_start_time,
+            COUNT(*) FILTER (WHERE EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_source es
+                WHERE es.id = e.event_source_id AND es.licence_reviewed_at IS NULL))
+                                                                           AS unreviewed_licence
         FROM $EVENTS_SCHEMA.event e
         GROUP BY e.event_source_id
         """
@@ -86,7 +89,8 @@ data class SourceQualityRow(
     val missingGenre: Long,
     val missingPromoter: Long,
     val missingPrice: Long,
-    val missingStartTime: Long
+    val missingStartTime: Long,
+    val unreviewedLicence: Long
 )
 
 /** One `(source, artist name)` pair — see [DataQualityRepository.artistNamesPerSource]. */

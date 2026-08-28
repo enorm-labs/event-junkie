@@ -53,7 +53,30 @@ enum class QualityIssue(
         "e.price_presale IS NULL AND e.price_box_office IS NULL AND e.free = false AND e.price_note IS NULL"
     ),
 
-    MISSING_START_TIME(Dimension.COMPLETENESS, "e.start_time IS NULL");
+    MISSING_START_TIME(Dimension.COMPLETENESS, "e.start_time IS NULL"),
+
+    /**
+     * Events whose source has never had its copyright position reviewed (#283).
+     *
+     * **The odd one out here, and deliberately so.** Every other metric measures data the venue
+     * published and we mishandled. This measures work of ours that has not happened. It sits in this
+     * pillar because the alternative was a second reporting mechanism for one number, and because
+     * #790 showed what an evidence gap costs when nothing counts it: three of eighty importers
+     * recorded a `robots.txt` check and nobody noticed the other seventy-seven.
+     *
+     * **Counted in events rather than in sources**, which is what makes it comparable with its
+     * neighbours and is also the more honest number. A source with 200 unreviewed events is not the
+     * same finding as one with 2, and `docs/SCRAPING_POSITION.md` §3.1 is about material on the site
+     * rather than about rows in a config table.
+     *
+     * Events with no source at all are excluded by the `EXISTS`. Those are hand-created through the
+     * admin API and report under the `manual` bucket, and our own data needs no licence review.
+     */
+    UNREVIEWED_LICENCE(
+        Dimension.COMPLETENESS,
+        "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_source es " +
+            "WHERE es.id = e.event_source_id AND es.licence_reviewed_at IS NULL)"
+    );
 
     /** The JSON name, and the `?issue=` value: `concertsWithoutArtist`. */
     val key: String =
