@@ -381,6 +381,32 @@ consumer can get it wrong. [`docs/SCRAPING_POSITION.md`](SCRAPING_POSITION.md) Â
 
 A `CHECK` constraint holds each column to the vocabulary, because the enum cannot reach a hand-edited row.
 
+### Cached Venue Images on `cached_image`
+
+`V008` adds two tables so a venue image can be served from our own origin, and the visitor's browser
+never contacts the venue ([ADR-019](adr/ADR-019_VENUE_IMAGE_DELIVERY.md)).
+
+| Table                  | Holds                                                                         |
+| ---------------------- | ----------------------------------------------------------------------------- |
+| `cached_image`         | One row per venue image URL: the hash, the type, the size, the intrinsic size |
+| `cached_image_variant` | One row per file we serve: a width, a format and its object key               |
+
+**Two tables rather than one.** A single row cannot hold several widths in several formats, and
+putting them in columns would fix the set of derivatives in the schema.
+
+**`event.image_url` is not touched.** It keeps the venue's URL, which is the provenance and what a
+refetch needs. The BFF substitutes our URL when it builds a response, so the venue's URL never
+reaches a browser.
+
+**`failed_at` and `failure_reason` are a negative cache, not an error log.** The import runs daily,
+so without them a dead URL is requested every night forever â€” load on a venue that returns nothing.
+`deleted_at` is set by the takedown route rather than by a `DELETE`. A removed image is therefore
+not fetched again by the next pass, which still sees the URL on the page.
+
+**A source that prohibits its images has no URL here to find.**
+[#807](https://github.com/enorm-labs/event-junkie/issues/807) made the importer store `null` for a
+prohibited `image_url`. The exclusion is structural.
+
 ### PostgreSQL-Specific Choices
 
 - **`GENERATED ALWAYS AS IDENTITY`** for auto-incrementing IDs (SQL standard, preferred over `SERIAL`)

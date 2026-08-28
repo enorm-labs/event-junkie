@@ -66,6 +66,18 @@ app:
   scheduling:
     # Reset sources stuck in RUNNING longer than this to FAILED (Duration format, e.g. 30m, 1h)
     staleness-timeout: 30m
+  images:
+    # Off until the storage client lands (PR 4). Off means nothing is fetched and nothing is stored.
+    # This is not a hotlink-versus-cache switch: the BFF has no such flag and can never emit a venue
+    # URL (ADR-019 §2.10).
+    fetch-enabled: false
+    tick-millis: 300000
+    # Security limits, not tuning. The URL comes out of scraped HTML and the bytes are untrusted.
+    max-bytes: 8388608
+    max-pixels: 50000000
+    refresh-after: 30d
+    retry-failed-after: 7d
+    batch-size: 200
 
 ---
 # Local development only — activate with `--spring.profiles.active=local` (IntelliJ: run
