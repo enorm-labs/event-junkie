@@ -30,14 +30,17 @@ copyright grounds. A reader who wants to reopen this must start from §Compariso
 [#792](https://github.com/enorm-labs/event-junkie/issues/792) found a defect in a document, not in code. The site sends every
 visitor's IP address to a server we do not operate, and the privacy notice does not say so.
 
-Four places produce that request today:
+These places carry the venue's URL today. The four `<img>` tags make the visitor's browser fetch the
+file. The two metadata writers publish the URL for a crawler to fetch instead.
 
-| Where                            | What it does                                                     |
-| -------------------------------- | ---------------------------------------------------------------- |
-| `EventCard.vue`, `VenueCard.vue` | `<img :src="…imageUrl">` at 80 px, on every list row             |
-| `BaseDetailView.vue`             | The same tag at 96 px, in the detail header                      |
-| `pageMeta.ts`                    | Puts the same URL in `og:image`                                  |
-| `EventResponses.kt`              | The BFF returns `imageUrl` unfiltered, so the URL is the venue's |
+| Where                            | What it does                                                              |
+| -------------------------------- | ------------------------------------------------------------------------- |
+| `EventCard.vue`, `VenueCard.vue` | `<img :src="…imageUrl">` at 80 px, on every list row                      |
+| `BaseDetailView.vue`             | The same tag at 96 px, in the venue, artist and promoter detail header    |
+| `EventDetailView.vue`            | Its own tag at full width, and not the one above. The largest on the site |
+| `pageMeta.ts`                    | Puts the same URL in `og:image`                                           |
+| `structuredData.ts`              | Puts the same URL in the JSON-LD `image` field                            |
+| `EventResponses.kt`              | The BFF returns `imageUrl` unfiltered, so the URL is the venue's          |
 
 The notice is worse than silent. §5 of both privacy pages states that no content delivery network, edge provider or proxy sits
 in front of the site. It then states that the visitor's request reaches our servers in Germany directly. For images that is not
