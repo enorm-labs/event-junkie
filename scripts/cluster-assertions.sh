@@ -40,6 +40,7 @@ INVARIANT_SUITES=(
   'tests/hardening_test.yaml'
   'tests/ingress_test.yaml'
   'tests/importer_test.yaml'
+  'tests/bff_test.yaml'
   'tests/seo_test.yaml'
   'tests/probes_test.yaml'
   'tests/network_test.yaml'

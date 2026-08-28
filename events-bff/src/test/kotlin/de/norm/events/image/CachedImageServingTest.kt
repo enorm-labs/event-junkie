@@ -1,0 +1,241 @@
+package de.norm.events.image
+
+import de.norm.events.BaseControllerTest
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
+import org.springframework.http.CacheControl
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
+import org.testcontainers.containers.MinIOContainer
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.core.async.AsyncRequestBody
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3AsyncClient
+import software.amazon.awssdk.services.s3.S3Configuration
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest
+import software.amazon.awssdk.services.s3.model.PutObjectRequest
+import java.net.URI
+import java.time.Duration
+import java.time.LocalDate
+import kotlin.test.assertContentEquals
+
+/**
+ * The serving path end to end, with serving switched on.
+ *
+ * **A real S3 API rather than a mocked client.** What has to hold is that a key the importer wrote
+ * reads back through this application's own configuration — path-style access, the signing region,
+ * the endpoint override — and a mock proves none of it. It is the same argument the importer's
+ * `ImageStorageIntegrationTest` makes from the writing side.
+ */
+class CachedImageServingTest : BaseControllerTest() {
+    @Test
+    fun `serves the bytes behind a variant row`(): Unit =
+        runBlocking {
+            insertCachedImage(POSTER_URL, HASH, listOf(288))
+            putObject(derivedKey(HASH, 288), POSTER)
+
+            webTestClient
+                .get()
+                .uri("/images/$HASH/288.jpg")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectHeader()
+                .contentType(MediaType.IMAGE_JPEG)
+                // Content addressed, so the URL can only ever return these bytes.
+                .expectHeader()
+                .cacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable())
+                .expectHeader()
+                .valueEquals("X-Content-Type-Options", "nosniff")
+                .expectHeader()
+                .valueEquals(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .expectBody()
+                .consumeWith { assertContentEquals(POSTER, it.responseBody) }
+        }
+
+    @Test
+    @DisplayName("a width the generator never produced is a 404, not a resize")
+    fun `an unknown variant is not found`(): Unit =
+        runBlocking {
+            insertCachedImage(POSTER_URL, HASH, listOf(288))
+
+            webTestClient
+                .get()
+                .uri("/images/$HASH/1536.jpg")
+                .exchange()
+                .expectStatus()
+                .isNotFound
+        }
+
+    @Test
+    @DisplayName("a takedown stops the bytes immediately, before any object is swept")
+    fun `a deleted image is not served`(): Unit =
+        runBlocking {
+            insertCachedImage(POSTER_URL, HASH, listOf(288), deleted = true)
+            putObject(derivedKey(HASH, 288), POSTER)
+
+            webTestClient
+                .get()
+                .uri("/images/$HASH/288.jpg")
+                .exchange()
+                .expectStatus()
+                .isNotFound
+        }
+
+    @Test
+    @DisplayName("a row pointing at an object that is gone is a 404, not a broken 200")
+    fun `a missing object is not found`(): Unit =
+        runBlocking {
+            // The shape of a sweep that deleted an object it should have kept. It has to read as
+            // absent rather than as a truncated image, and the warning it logs is what names it. Its
+            // own hash, because the bucket is not truncated between tests and the key derives from it.
+            insertCachedImage(POSTER_URL, ORPHAN_HASH, listOf(288))
+
+            webTestClient
+                .get()
+                .uri("/images/$ORPHAN_HASH/288.jpg")
+                .exchange()
+                .expectStatus()
+                .isNotFound
+        }
+
+    @Test
+    fun `a malformed file name never reaches the database`(): Unit =
+        runBlocking {
+            insertCachedImage(POSTER_URL, HASH, listOf(288))
+
+            // Each of these matches neither the hash nor the `<width>.<format>` shape, so the route
+            // refuses it before the query. A path segment is what an attacker would try first.
+            listOf("/images/$HASH/288.svg", "/images/$HASH/288", "/images/$HASH/-1.jpg", "/images/nothex/288.jpg")
+                .forEach {
+                    webTestClient
+                        .get()
+                        .uri(it)
+                        .exchange()
+                        .expectStatus()
+                        .isNotFound
+                }
+        }
+
+    // --- the substitution, which is what a browser actually sees --------------------------------
+
+    @Test
+    @DisplayName("an event's imageUrl becomes a path on our own origin")
+    fun `the detail response carries our url`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Lido", "lido")
+            insertEvent(venueId, "Show", "show", LocalDate.now().plusDays(3), imageUrl = POSTER_URL)
+            insertCachedImage(POSTER_URL, HASH, listOf(288, 768))
+
+            webTestClient
+                .get()
+                .uri("/events/show")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                // 768, because EventDetailView draws the image at the full width of its column.
+                .jsonPath("$.imageUrl")
+                .isEqualTo("/images/$HASH/768.jpg")
+        }
+
+    @Test
+    fun `the list response asks for the card width`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Lido", "lido")
+            insertEvent(venueId, "Show", "show", LocalDate.now().plusDays(3), imageUrl = POSTER_URL)
+            insertCachedImage(POSTER_URL, HASH, listOf(288, 768))
+
+            webTestClient
+                .get()
+                .uri("/events")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[0].imageUrl")
+                .isEqualTo("/images/$HASH/288.jpg")
+        }
+
+    @Test
+    @DisplayName("an image we do not hold is reported absent rather than hotlinked")
+    fun `an uncached image url is blanked`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Lido", "lido")
+            insertEvent(venueId, "Show", "show", LocalDate.now().plusDays(3), imageUrl = POSTER_URL)
+
+            webTestClient
+                .get()
+                .uri("/events/show")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.imageUrl")
+                .doesNotExist()
+        }
+
+    private suspend fun putObject(
+        key: String,
+        bytes: ByteArray
+    ) {
+        s3
+            .putObject(
+                PutObjectRequest
+                    .builder()
+                    .bucket(BUCKET)
+                    .key(key)
+                    .contentType("image/jpeg")
+                    .build(),
+                AsyncRequestBody.fromBytes(bytes)
+            ).await()
+    }
+
+    private fun derivedKey(
+        contentHash: String,
+        width: Int
+    ) = "test/derived/$contentHash/$width.jpg"
+
+    companion object {
+        private const val BUCKET = "images"
+        private const val POSTER_URL = "https://venue.test/poster.jpg"
+        private const val HASH = "0f4b2c1d5e6a7b8c9d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e"
+
+        /** A row whose object was never put in the bucket. */
+        private const val ORPHAN_HASH = "1a2b3c4d5e6f708192a3b4c5d6e7f8090f4b2c1d5e6a7b8c9d0e1f2a3b4c5d6e"
+
+        /** Not a real JPEG. Nothing here decodes it, and the assertion is byte equality. */
+        private val POSTER = ByteArray(64) { it.toByte() }
+
+        private val minio = MinIOContainer("minio/minio:RELEASE.2025-09-07T16-13-09Z")
+
+        private lateinit var s3: S3AsyncClient
+
+        @JvmStatic
+        @DynamicPropertySource
+        fun imageProperties(registry: DynamicPropertyRegistry) {
+            minio.start()
+            s3 =
+                S3AsyncClient
+                    .builder()
+                    .endpointOverride(URI(minio.s3URL))
+                    .region(Region.of("fsn1"))
+                    .credentialsProvider(
+                        StaticCredentialsProvider.create(AwsBasicCredentials.create(minio.userName, minio.password))
+                    ).serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
+                    .build()
+            s3.createBucket(CreateBucketRequest.builder().bucket(BUCKET).build()).join()
+
+            registry.add("app.images.serving.enabled") { true }
+            registry.add("app.images.storage.endpoint") { minio.s3URL }
+            registry.add("app.images.storage.bucket") { BUCKET }
+            registry.add("app.images.storage.access-key") { minio.userName }
+            registry.add("app.images.storage.secret-key") { minio.password }
+        }
+    }
+}

@@ -1,5 +1,5 @@
 import type { EventDetail, VenueDetail } from '@/api/types'
-import { canonicalUrl, SITE_URL } from '@/lib/seo'
+import { absoluteImageUrl, canonicalUrl, SITE_URL } from '@/lib/seo'
 import { isPastEvent } from '@/lib/format'
 import { APP_NAME } from '@/lib/pageMeta'
 import type { Locale } from '@/i18n/locales'
@@ -163,7 +163,7 @@ export function eventJsonLd(event: EventDetail, locale: Locale): JsonLd | null {
     location,
     url,
     description: event.description ?? event.subtitle ?? undefined,
-    image: event.imageUrl ?? undefined,
+    image: absoluteImageUrl(event.imageUrl),
     eventStatus: (event.status && EVENT_STATUS[event.status]) ?? undefined,
     // Every event in scope is a physical one; we list nothing online-only.
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
@@ -187,7 +187,7 @@ export function venueJsonLd(venue: VenueDetail, locale: Locale): JsonLd | null {
     name: venue.name,
     url: venue.slug ? canonicalUrl(locale, `/venues/${venue.slug}`) : undefined,
     description: venue.description ?? undefined,
-    image: venue.imageUrl ?? undefined,
+    image: absoluteImageUrl(venue.imageUrl),
     sameAs: venue.websiteUrl ?? undefined,
     address: {
       '@type': 'PostalAddress',

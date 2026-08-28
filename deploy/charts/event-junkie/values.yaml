@@ -253,10 +253,20 @@ ingress:
 # *on* means nothing while every pod may talk to every pod. One default-deny plus one named
 # allowance per real conversation — read the template's allowances as the architecture, because if
 # an arrow is not written down there, it does not happen.
-# Cached venue images (ADR-019). Off means the importer records what an image is and stores nothing.
-# Not a hotlink-versus-cache switch: the BFF has no such flag, so no value here reaches a browser.
+# Cached venue images (ADR-019). `enabled` is the importer half: off means nothing is fetched and
+# nothing is stored. `serving.enabled` is the half a visitor sees, and the two are ordered — there is
+# nothing to serve until something has fetched and derived it.
 images:
   enabled: false
+  # Off means the API hands out the venue's own URL and the browser fetches from the venue, which is
+  # what the site does today. On means it hands out a path on our own origin, and an image with no
+  # derivative yet is reported as absent rather than hotlinked (#792).
+  #
+  # **Turn it on only after imgproxy has worked through the backlog.** Enabling it while derivatives
+  # are still being generated shows blank cards for whatever is left, and the pass runs every five
+  # minutes over a batch rather than all at once.
+  serving:
+    enabled: false
   storage:
     endpoint: "https://fsn1.your-objectstorage.com"
     # Hetzner enforces the region in the request signature and rejects a mismatch as bad credentials.
@@ -361,6 +371,23 @@ networkPolicy:
     # means the internet and not also the cluster, the node and anything peered. 169.254.0.0/16 is
     # the sharpest: it is where a cloud metadata service lives, and the importer is the workload
     # that fetches attacker-influenced URLs and parses untrusted HTML.
+    exceptCidrs:
+      - "10.0.0.0/8"
+      - "172.16.0.0/12"
+      - "192.168.0.0/16"
+      - "169.254.0.0/16"
+  objectStorageEgress:
+    # networkPolicy.objectStorageEgress lets the BFF read cached images out of the bucket. Rendered
+    # only while `images.serving.enabled` is set, so the BFF has no route off the cluster until the
+    # release actually asks it to serve images.
+    #
+    # A CIDR and a port rather than a host, because NetworkPolicy cannot resolve a name and Hetzner
+    # publishes no stable address range for Object Storage. The private ranges are carved back out,
+    # exactly as for the importer, and only 443 is opened — narrower than `scrapeEgress`, which also
+    # needs 80.
+    enabled: true
+    ports:
+      - 443
     exceptCidrs:
       - "10.0.0.0/8"
       - "172.16.0.0/12"

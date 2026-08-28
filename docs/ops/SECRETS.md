@@ -47,8 +47,8 @@ renewing at worst.
 
 ### `event-junkie-images` — and the one place a shared keypair must not be used
 
-The importer writes cached venue images to `event-junkie-images` (ADR-019). It needs an S3 keypair, and **it must not be
-given the project-wide one.**
+The importer writes cached venue images to `event-junkie-images`, and the BFF reads them back to serve them (ADR-019).
+Both need an S3 keypair, and **neither may be given the project-wide one.**
 
 §92 above already makes this argument about OpenObserve: one keypair, `event-junkie-s3-access-key` in the Keychain,
 reaches every bucket including `-backups` and `-tfstate`. Here the same objection is sharper rather than merely equal.
@@ -58,6 +58,11 @@ is a control and not a guarantee. It says so itself.
 
 **So create a keypair for this bucket and nothing else**, and scope it to `event-junkie-images` if Hetzner's bucket
 policies allow. This is a decision about what you type in, not a change to any manifest.
+
+**One Secret, mounted into two workloads.** It is one bucket, so a second keypair is a second thing to rotate for no
+gain. The scoping matters twice over here. With `images.serving.enabled` the same keypair sits in the pod that Traefik
+can reach. Hetzner also scopes a keypair to a bucket and not to a verb. The BFF therefore holds a key that can write,
+although it only ever gets.
 
 ```sh
 kubectl create secret generic event-junkie-images -n event-junkie \
@@ -69,8 +74,8 @@ kubectl create secret generic event-junkie-images -n event-junkie \
 §2.1 means by the only re-derivable data here. So it is the least dangerous of the seven to lose. Its blast radius if
 leaked depends entirely on how narrowly it was scoped.
 
-**Without it the importer still runs.** No credentials means no client is built: images are recorded and not stored, and
-the log says so at startup. A local run needs no bucket access at all.
+**Without it both still run.** No credentials means no client is built. The importer records images and stores nothing,
+and the BFF answers 503 on the image route. Both say so at startup, and a local run needs no bucket access at all.
 
 ### `event-junkie-imgproxy` — the one that is not a credential
 

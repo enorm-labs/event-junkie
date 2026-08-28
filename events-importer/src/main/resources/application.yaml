@@ -67,9 +67,9 @@ app:
     # Reset sources stuck in RUNNING longer than this to FAILED (Duration format, e.g. 30m, 1h)
     staleness-timeout: 30m
   images:
-    # Off until the storage client lands (PR 4). Off means nothing is fetched and nothing is stored.
-    # This is not a hotlink-versus-cache switch: the BFF has no such flag and can never emit a venue
-    # URL (ADR-019 §2.10).
+    # Off means nothing is fetched and nothing is stored. This is not the hotlink-versus-cache
+    # switch: that one is `app.images.serving.enabled` in the BFF, and this has to be on first —
+    # there is nothing to serve until something has fetched it (ADR-019 §2.10).
     fetch-enabled: false
     tick-millis: 300000
     # Security limits, not tuning. The URL comes out of scraped HTML and the bytes are untrusted.

@@ -278,6 +278,14 @@ which is why this replaces the Storage Box the design first called for.
 one holds live content: an object a page is serving today would be deleted out from under it. An orphan sweep replaces
 the rule, and it is load-bearing rather than tidy-up — without it the bucket grows forever (ADR-019 §2.7).
 
+**Three switches, and they only work in this order.** `images.enabled` starts the importer fetching and storing.
+`images.imgproxy.enabled` starts it generating the derivatives, which needs an original to derive from.
+`images.serving.enabled` makes the API hand out our own URL instead of the venue's.
+
+**The third one has to be last.** An image with no derivative is reported as absent rather than hotlinked. Enabling it
+early therefore blanks every card the backlog still covers. The pass runs every five minutes over one batch, so a first
+backfill takes hours. Watch `cached_image_variant` stop growing before you turn the third switch on.
+
 **`…-tfstate` is the one genuinely hand-made resource**, because a state backend cannot be managed by the state it holds. `infra/README.md` says so where it
 matters.
 

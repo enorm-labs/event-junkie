@@ -118,6 +118,56 @@ tests:
           path: spec.podSelector.matchLabels["app.kubernetes.io/component"]
           value: importer
 
+  # --- The BFF's route off the cluster (ADR-019) -------------------------------------------------
+  #
+  # Explicit values throughout, because `cluster-assertions.sh` re-runs this suite against every
+  # cluster's `spec.values` — a case relying on a chart default fails the moment an environment
+  # legitimately overrides it.
+  - it: the BFF has no route off the cluster until it serves images
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: true
+      images.storage.prefix: "staging"
+      images.serving.enabled: false
+    templates:
+      - networkpolicy.yaml
+    asserts:
+      # The second workload with internet egress exists for exactly as long as it has a reason to.
+      - notMatchRegex:
+          path: "$..metadata.name"
+          pattern: "allow-object-storage$"
+
+  - it: the BFF reaches Object Storage on 443 and not the private ranges behind it
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: true
+      images.storage.prefix: "staging"
+      images.serving.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-event-junkie-allow-object-storage
+    asserts:
+      - equal:
+          path: spec.podSelector.matchLabels["app.kubernetes.io/component"]
+          value: bff
+      - equal:
+          path: spec.egress[0].to[0].ipBlock.cidr
+          value: "0.0.0.0/0"
+      - contains:
+          path: spec.egress[0].to[0].ipBlock.except
+          content: "169.254.0.0/16"
+      # 443 alone, and asserted as the whole list rather than as a member: the importer needs 80 as
+      # well and this must not quietly acquire it.
+      - equal:
+          path: spec.egress[0].ports
+          value:
+            - protocol: TCP
+              port: 443
+
   - it: nothing anywhere grants ingress to the importer
     set:
       database.host: "10.0.1.2"

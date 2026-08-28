@@ -5,6 +5,28 @@ spring:
     properties:
       schema: events
 
+app:
+  images:
+    serving:
+      # Off means a response carries the venue's own URL, which is what the site does today. On means
+      # it carries a path on our own origin, and an image with no derivative yet is reported as
+      # absent rather than hotlinked (ADR-019).
+      #
+      # **Do not turn this on before the derivatives exist.** An environment that enables it while
+      # imgproxy is still working through the backlog shows blank cards for whatever is left.
+      enabled: ${APP_IMAGES_SERVING_ENABLED:false}
+    storage:
+      # The same four settings, under the same environment variable names, as the importer — which is
+      # what lets one Secret serve both workloads. There is no prefix here: a served key is read from
+      # the row that recorded it, so this side never builds one.
+      endpoint: ${IMAGE_STORAGE_ENDPOINT:https://fsn1.your-objectstorage.com}
+      region: ${IMAGE_STORAGE_REGION:fsn1}
+      bucket: ${IMAGE_STORAGE_BUCKET:event-junkie-images}
+      # Empty by default. Without credentials no client is built and the route answers 503, which is
+      # the truth: the images exist and this instance cannot reach them.
+      access-key: ${IMAGE_STORAGE_ACCESS_KEY:}
+      secret-key: ${IMAGE_STORAGE_SECRET_KEY:}
+
 # `info` joins the default `health`, so operators can ask a running instance which build it is. It
 # must NOT be routed through the public ingress — the browser gets `GET /meta`, a curated
 # OpenAPI-documented contract rather than a framework-shaped payload (docs/LEGAL.md §4.4). The chart
