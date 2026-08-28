@@ -45,7 +45,8 @@ class ImageFetcher(
         etag: String? = null,
         lastModified: String? = null
     ): ImageFetchResult {
-        validator.reject(url)?.let { return ImageFetchResult.Rejected(it) }
+        val target = url.encodeLiteralSpaces()
+        validator.reject(target)?.let { return ImageFetchResult.Rejected(it) }
 
         return try {
             webClient
@@ -56,7 +57,7 @@ class ImageFetcher(
                 // this class reintroduced the bug: 22 of Frannz Club's images are proxied through
                 // `images.copilot.events/resize?url=…`, where the whole target is percent-encoded
                 // in a query parameter, and every one of them came back 400.
-                .uri(URI.create(url))
+                .uri(URI.create(target))
                 .apply {
                     etag?.let { header(HttpHeaders.IF_NONE_MATCH, it) }
                     lastModified?.let { header(HttpHeaders.IF_MODIFIED_SINCE, it) }
@@ -95,7 +96,7 @@ class ImageFetcher(
         ) {
             // The reason is logged, and never reaches a metric tag: a tag fed by an exception
             // message is unbounded cardinality.
-            logger.debug(e) { "Image fetch failed for $url" }
+            logger.debug(e) { "Image fetch failed for $target" }
             // The codec's own limit fires before `describe` ever sees the bytes, so without this an
             // oversized image is recorded as a transport fault. It is a size refusal and has to read
             // as one, or an operator debugging a missing image chases the network instead.
@@ -189,6 +190,20 @@ class ImageFetcher(
         }
 
     private fun sha256(bytes: ByteArray): String = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes))
+
+    /**
+     * Percent-encodes literal spaces, and nothing else.
+     *
+     * **A space is never legal in a URI**, so encoding one cannot double-encode anything that was
+     * already escaped — which is the failure the `URI.create` above exists to avoid. Nineteen Wild
+     * at Heart images are filenames like `R1783504681V8 Wankers.jpeg`; a browser encodes the space
+     * and fetches them, while `URI` rejects the raw string and we recorded them as malformed.
+     *
+     * Deliberately only the space. Other characters a URI forbids — `[`, `]`, `|`, `<`, `>` — have
+     * not been seen in this corpus, and a general re-encoder is the thing that would undo an
+     * already-escaped URL.
+     */
+    private fun String.encodeLiteralSpaces(): String = replace(" ", "%20")
 
     /** Whether this fault, or anything under it, is the codec refusing an oversized body. */
     private fun Throwable.isBufferLimit(): Boolean = generateSequence(this) { it.cause.takeIf { cause -> cause !== it } }.any { it is DataBufferLimitException }
