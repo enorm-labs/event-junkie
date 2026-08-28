@@ -13,6 +13,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.awaitBody
 import org.springframework.web.reactive.function.client.awaitExchange
 import java.io.ByteArrayInputStream
+import java.net.URI
 import java.security.MessageDigest
 import java.util.HexFormat
 import javax.imageio.ImageIO
@@ -49,7 +50,13 @@ class ImageFetcher(
         return try {
             webClient
                 .get()
-                .uri(url)
+                // A pre-built URI, so WebClient uses the already percent-encoded URL verbatim.
+                // Passing a String treats it as a URI template and re-encodes '%', which turns
+                // `%3A` into `%253A`. [HtmlFetcher] carries the same note for the same reason, and
+                // this class reintroduced the bug: 22 of Frannz Club's images are proxied through
+                // `images.copilot.events/resize?url=…`, where the whole target is percent-encoded
+                // in a query parameter, and every one of them came back 400.
+                .uri(URI.create(url))
                 .apply {
                     etag?.let { header(HttpHeaders.IF_NONE_MATCH, it) }
                     lastModified?.let { header(HttpHeaders.IF_MODIFIED_SINCE, it) }
