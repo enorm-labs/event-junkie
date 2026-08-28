@@ -89,6 +89,12 @@ the page that was read, and the sentence that decided it.
 We chose that knowingly, for one reason. **Silence from a venue is not a refusal.** To blank every source we did not
 read yet would remove material that no venue objects to.
 
+**All 86 sources were read on 2026-08-28, and the result is in
+[licence-review/](licence-review/README.md).** It found 83 `UNCLEAR`, 2 `PROHIBITED` and no
+`PERMITTED` at all. That document also records how the pages were read, which matters more than the
+counts. The standard German copyright boilerplate is `UNCLEAR` rather than `PROHIBITED`, and it
+decides most of the corpus.
+
 **So this stays the weakest point in the document, and it stays live.** The mechanism does not close the gap. It gives
 the gap a shape, an owner per source, and a same-day remedy (§5). Until a source is reviewed we display a text we
 cannot justify displaying for that source.
