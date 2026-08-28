@@ -73,6 +73,36 @@ spec:
                    sets a URL; in a cluster there is no compose file, and the JDBC half is the one
                    that gets forgotten. Its failure mode is a migration that never runs. */}}
             {{- include "event-junkie.flywayEnv" $ | nindent 12 }}
+            {{- if .Values.images.enabled }}
+            - name: APP_IMAGES_FETCH_ENABLED
+              value: "true"
+            - name: IMAGE_STORAGE_ENDPOINT
+              value: {{ .Values.images.storage.endpoint | quote }}
+            - name: IMAGE_STORAGE_REGION
+              value: {{ .Values.images.storage.region | quote }}
+            - name: IMAGE_STORAGE_BUCKET
+              value: {{ .Values.images.storage.bucket | quote }}
+            {{- /* One bucket serves both environments and the keys are content addressed, so this
+                   prefix is the only thing keeping their objects apart. Required rather than
+                   defaulted: a shared prefix lets one environment's orphan sweep delete an object
+                   the other still serves, which is #270's shape one bucket over. */}}
+            - name: IMAGE_STORAGE_PREFIX
+              value: {{ required "images.storage.prefix is required when images.enabled — it is what separates this environment's objects from the other's." .Values.images.storage.prefix | quote }}
+            {{- /* A keypair scoped to this bucket alone, never the project-wide one. The importer
+                   fetches URLs taken out of scraped HTML, so a credential reaching -backups or
+                   -tfstate would turn an SSRF into an infrastructure compromise (SECRETS.md
+                   §event-junkie-images). */}}
+            - name: IMAGE_STORAGE_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.images.storage.existingSecret | quote }}
+                  key: IMAGE_STORAGE_ACCESS_KEY
+            - name: IMAGE_STORAGE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.images.storage.existingSecret | quote }}
+                  key: IMAGE_STORAGE_SECRET_KEY
+            {{- end }}
           {{- include "event-junkie.jvmProbes" $ | nindent 10 }}
           resources:
             {{- toYaml .Values.importer.resources | nindent 12 }}

@@ -262,16 +262,21 @@ rehearsed on both a full replay and a point-in-time recovery past a `DROP TABLE`
 removes the volume. It removes the Primary IPs for the same reason. `lifecycle { prevent_destroy }` is the only lock OpenTofu enforces, and it is used on the DNS
 zones alone.
 
-### 1.7 Object Storage — one subscription, three buckets
+### 1.7 Object Storage — one subscription, four buckets
 
 | Bucket      | Holds                                |
 | ----------- | ------------------------------------ |
 | `…-tfstate` | OpenTofu state                       |
 | `…-o2`      | OpenObserve's Parquet data (ADR-015) |
 | `…-backups` | `wal-g` WAL and base backups         |
+| `…-images`  | Cached venue images (ADR-019)        |
 
-**€4.99/month base, 1 TB storage and 1 TB egress included**, no per-bucket or per-request charge — buckets are free, so use three. `wal-g` speaks S3 natively,
+**€4.99/month base, 1 TB storage and 1 TB egress included**, no per-bucket or per-request charge — buckets are free, so use four. `wal-g` speaks S3 natively,
 which is why this replaces the Storage Box the design first called for.
+
+**`…-images` is the only one with no expiry rule, and that is deliberate.** The other three hold history and expire. This
+one holds live content: an object a page is serving today would be deleted out from under it. An orphan sweep replaces
+the rule, and it is load-bearing rather than tidy-up — without it the bucket grows forever (ADR-019 §2.7).
 
 **`…-tfstate` is the one genuinely hand-made resource**, because a state backend cannot be managed by the state it holds. `infra/README.md` says so where it
 matters.

@@ -125,6 +125,7 @@ class ImageFetcher(
         }
 
         return ImageFetchResult.Success(
+            bytes = bytes,
             contentHash = sha256(bytes),
             contentType = contentType,
             byteSize = bytes.size.toLong(),
@@ -250,7 +251,12 @@ sealed interface ImageFetchResult {
         val reason: String
     ) : ImageFetchResult
 
-    data class Success(
+    /**
+     * A plain class rather than a `data` one: it carries the bytes, and an array in a data class
+     * gives it an `equals` that compares references. Nothing here is compared by value.
+     */
+    class Success(
+        val bytes: ByteArray,
         val contentHash: String,
         val contentType: String,
         val byteSize: Long,

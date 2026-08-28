@@ -119,3 +119,65 @@ tests:
       - equal:
           path: spec.type
           value: ClusterIP
+
+  # --- Cached venue images (ADR-019) ------------------------------------------------------------
+  #
+  # The switch is off in every environment until somebody turns it on, and off has to mean the
+  # importer carries no storage configuration at all — not empty values it might act on.
+  - it: passes no image storage configuration while images are disabled
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_IMAGES_FETCH_ENABLED
+            value: "true"
+
+  - it: takes the image bucket keypair from a Secret rather than a value
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: true
+      images.storage.prefix: "staging"
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      # The chart never templates a credential, here as anywhere else.
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: IMAGE_STORAGE_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: "event-junkie-images"
+                key: IMAGE_STORAGE_SECRET_KEY
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: IMAGE_STORAGE_PREFIX
+            value: "staging"
+
+  # One bucket serves both environments and the keys are content addressed, so a missing prefix
+  # would let one environment's sweep delete objects the other still serves (#270, ADR-019 §2.8).
+  # Failing the render is the only place that can be caught before it happens.
+  - it: refuses to render with images enabled and no environment prefix
+    # Scoped to one template: `failedTemplate` is asserted against every template the suite lists,
+    # and the configmap and service render perfectly well without a prefix.
+    template: importer-deployment.yaml
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "images.storage.prefix is required when images.enabled — it is what separates this environment's objects from the other's."
+

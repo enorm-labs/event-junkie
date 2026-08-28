@@ -133,7 +133,7 @@ Bucket usage, which the pricing API does not cover:
 
 ```sh
 cd infra
-for b in event-junkie-tfstate event-junkie-o2 event-junkie-backups; do
+for b in event-junkie-tfstate event-junkie-o2 event-junkie-backups event-junkie-images; do
     direnv exec . sh -c "aws s3 ls s3://$b --recursive --summarize" | tail -2 | tr '\n' ' ' \
       | awk -v b="$b" '{printf "%-24s %8s objects  %10.1f MB\n", b, $3, $6/1048576}'
 done
