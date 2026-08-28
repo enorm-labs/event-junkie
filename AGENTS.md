@@ -585,6 +585,8 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | ADR: GitOps delivery (Flux, pull)           | `docs/adr/ADR-016_GITOPS_DELIVERY.md`                                                                                             |
 | ADR: JRE base image (Liberica/Alpine)       | `docs/adr/ADR-017_JRE_BASE_IMAGE.md`                                                                                              |
 | ADR: Probe semantics (readiness/liveness)   | `docs/adr/ADR-018_PROBE_SEMANTICS.md`                                                                                             |
+| ADR: Venue image delivery (cached)          | `docs/adr/ADR-019_VENUE_IMAGE_DELIVERY.md` — cache in a bucket, not hotlink. Not implemented, #283 blocks it                      |
+| ADR: Image processing (imgproxy)            | `docs/adr/ADR-020_IMAGE_PROCESSING.md` — derivatives at import time, never on the request path                                    |
 | Plan: Hetzner + k3s setup, go-live          | `docs/ops/PLATFORM_SETUP.md`                                                                                                      |
 | Releasing & deploying, end to end           | `docs/ops/RELEASING.md` — the diagram; ADR-016 has the reasoning                                                                  |
 | Bootstrapping a cluster, once               | `docs/ops/CLUSTER_BOOTSTRAP.md` — ordered runbook, first run 2026-08-13; traps table at the bottom                                |
