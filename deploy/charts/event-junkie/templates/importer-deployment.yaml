@@ -130,11 +130,17 @@ spec:
               value: "127.0.0.1:8080"
             {{- /* The bounds that kill a decompression bomb, set explicitly rather than by default.
                    This is where the decode limits live now: ADR-020 moved decoding out of the JVM,
-                   so hostile bytes land in a Go process with a memory limit instead. */}}
+                   so hostile bytes land in a Go process with a memory limit instead.
+
+                   `| int64` is load-bearing, exactly as it is on the middleware's `stsSeconds`.
+                   Helm parses a values number as float64, so 8388608 quoted straight renders as
+                   "8.388608e+06" — which imgproxy refuses with
+                   `strconv.Atoi: parsing "8.388608e+06": invalid syntax` and exits, so the sidecar
+                   crash-loops and Flux rolls the release back. */}}
             - name: IMGPROXY_MAX_SRC_RESOLUTION
-              value: {{ .Values.images.imgproxy.maxSrcResolutionMp | quote }}
+              value: {{ .Values.images.imgproxy.maxSrcResolutionMp | int64 | quote }}
             - name: IMGPROXY_MAX_SRC_FILE_SIZE
-              value: {{ .Values.images.imgproxy.maxSrcFileSizeBytes | quote }}
+              value: {{ .Values.images.imgproxy.maxSrcFileSizeBytes | int64 | quote }}
             {{- /* Stated, not assumed. EXIF can carry GPS coordinates and a camera serial number,
                    which for photographs of venues and artists is personal data (LEGAL.md §7.3a), so
                    stripping it is a legal step rather than housekeeping. */}}

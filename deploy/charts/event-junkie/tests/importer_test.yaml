@@ -269,6 +269,16 @@ tests:
           content:
             name: IMGPROXY_MAX_SRC_RESOLUTION
             value: "50"
+      # **Asserted as a rendered value, not as a present key**, and that distinction is the whole
+      # test: this one shipped as "8.388608e+06" because Helm parses a values number as float64, and
+      # imgproxy exits on `strconv.Atoi: parsing "8.388608e+06": invalid syntax`. The sidecar
+      # crash-looped and Flux rolled the release back. The assertion above passed throughout, because
+      # 50 is small enough to render without an exponent.
+      - contains:
+          path: spec.template.spec.containers[1].env
+          content:
+            name: IMGPROXY_MAX_SRC_FILE_SIZE
+            value: "8388608"
       - equal:
           path: spec.template.spec.containers[1].resources.limits.memory
           value: 512Mi
