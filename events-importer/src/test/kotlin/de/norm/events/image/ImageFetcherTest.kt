@@ -232,6 +232,21 @@ class ImageFetcherTest {
         }
 
     @Test
+    fun `fetches a URL whose filename contains a literal space`() =
+        runTest {
+            // Wild at Heart names files `R1783504681V8 Wankers.jpeg`. A browser encodes the space
+            // and fetches them; `URI` rejects the raw string, so 19 of them were recorded as
+            // malformed URLs and never fetched. Encoding only the space cannot double-encode
+            // anything, because a space is never legal in a URI to begin with.
+            server.enqueue(imageResponse(pngBytes(width = 8, height = 8)))
+            val spaced = "${url().substringBefore("/poster.png")}/img/R178 Wankers.jpeg"
+
+            fetcher().fetch(spaced).shouldBeInstanceOf<ImageFetchResult.Success>()
+
+            server.takeRequest().target shouldContain "R178%20Wankers.jpeg"
+        }
+
+    @Test
     fun `refuses a body that is not an image at all`() =
         runTest {
             server.enqueue(imageResponse("<html><body>Not found</body></html>".toByteArray()))
