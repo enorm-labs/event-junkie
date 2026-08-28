@@ -8,7 +8,7 @@ The domain model: what is stored, and how the pieces relate. It exists to captur
 An `event` belongs to one `venue` and links to `artist`, `promoter` and `genre_tag` through join tables.
 `event.sourceId` is what makes imports idempotent — an upsert keyed on it, not on the title. `event_source` holds the
 per-venue import configuration and the conditional-request headers (ETag, Last-Modified) that let an unchanged page
-cost one 304.
+cost one 304. It also holds the licence status that decides whether an event's description and image are served.
 
 **Everything lives in the `events` schema, never `public`.** The name comes from the `EVENTS_SCHEMA` constant in
 `events-core`, not from a YAML property. See [ADR-004](adr/ADR-004_DEDICATED_DATABASE_SCHEMA.md) and
@@ -353,6 +353,33 @@ URL-friendly slugs are stored on venues, artists, promoters, genre tags, and eve
 - Clean REST API URLs (e.g. `/venues/astra-kulturhaus`)
 - Matching against source website URL patterns during import
 - Human-readable identifiers in logs and debugging
+
+### Per-Source Licence Status on `event_source`
+
+Five columns, added in `V006` for [#283](https://github.com/enorm-labs/event-junkie/issues/283):
+
+| Column                | Holds                                                                        |
+| --------------------- | ---------------------------------------------------------------------------- |
+| `description_licence` | `PERMITTED`, `PROHIBITED`, `UNCLEAR`, or null while the source is unreviewed |
+| `image_licence`       | The same question for images, answered separately                            |
+| `licence_reviewed_at` | The date of the review                                                       |
+| `licence_source_url`  | The page that was read                                                       |
+| `licence_note`        | The sentence that decided it                                                 |
+
+**Two status columns rather than one**, because a venue's own prose and its agency photographs are different answers. A
+single column would force the stricter one onto both.
+
+**Three evidence columns beside them**, for the reason `V005` gives about `robots.txt`. A status with no page behind it
+cannot be checked by the next person.
+
+**Null is a fourth state and it is not `UNCLEAR`.** Null means nobody reviewed the source. `UNCLEAR` means somebody read
+its pages and found nothing that decides it. Both display. To merge them would lose the only signal that says how much
+review work is left.
+
+**The read rule is fail-open: only `PROHIBITED` withholds.** It lives in the BFF rather than the frontend, so no API
+consumer can get it wrong. [`docs/SCRAPING_POSITION.md`](SCRAPING_POSITION.md) §3.1 records what that accepts.
+
+A `CHECK` constraint holds each column to the vocabulary, because the enum cannot reach a hand-edited row.
 
 ### PostgreSQL-Specific Choices
 

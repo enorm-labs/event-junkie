@@ -82,6 +82,12 @@ const localePath = useLocalePath()
         Wir fragen nicht nach einem Grund und diskutieren die Rechtslage nicht mit euch. Eine
         Location, die raus will, ist raus.
       </p>
+      <p>
+        <strong>Es muss aber nicht alles sein.</strong> Wenn euch nur die Bilder stören oder nur die
+        Beschreibungstexte, nehmen wir genau das heraus und lassen die Veranstaltungen stehen. Die
+        Termine bleiben dann auffindbar, das beanstandete Material verschwindet. Schreibt uns, was
+        genau ihr nicht angezeigt haben wollt.
+      </p>
     </section>
 
     <section>
