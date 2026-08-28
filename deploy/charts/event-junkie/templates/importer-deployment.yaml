@@ -109,9 +109,83 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+        {{- if and .Values.images.enabled .Values.images.imgproxy.enabled }}
+        {{- /* imgproxy generates the derivatives, at import time and never for a visitor (ADR-020).
+               A sidecar rather than a fourth Deployment: it is idle outside import windows, and the
+               importer is the only thing that may call it.
+
+               **NetworkPolicy cannot constrain it separately.** A policy selects pods, and a sidecar
+               shares this pod's network namespace — so it inherits the importer's egress, including
+               the open internet that `allow-scraping` grants. What actually keeps imgproxy off venue
+               URLs is IMGPROXY_ALLOWED_SOURCES below, which is configuration rather than network. */}}
+        - name: imgproxy
+          image: "{{ .Values.images.imgproxy.image.repository }}@{{ .Values.images.imgproxy.image.digest }}"
+          imagePullPolicy: {{ .Values.images.imgproxy.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.images.imgproxy.securityContext | nindent 12 }}
+          env:
+            {{- /* Loopback only. Nothing outside this pod can reach the sidecar, which is the first
+                   half of "imgproxy never serves a visitor" — URL signing is the second. */}}
+            - name: IMGPROXY_BIND
+              value: "127.0.0.1:8080"
+            {{- /* The bounds that kill a decompression bomb, set explicitly rather than by default.
+                   This is where the decode limits live now: ADR-020 moved decoding out of the JVM,
+                   so hostile bytes land in a Go process with a memory limit instead. */}}
+            - name: IMGPROXY_MAX_SRC_RESOLUTION
+              value: {{ .Values.images.imgproxy.maxSrcResolutionMp | quote }}
+            - name: IMGPROXY_MAX_SRC_FILE_SIZE
+              value: {{ .Values.images.imgproxy.maxSrcFileSizeBytes | quote }}
+            {{- /* Stated, not assumed. EXIF can carry GPS coordinates and a camera serial number,
+                   which for photographs of venues and artists is personal data (LEGAL.md §7.3a), so
+                   stripping it is a legal step rather than housekeeping. */}}
+            - name: IMGPROXY_STRIP_METADATA
+              value: "true"
+            {{- /* The bucket, and nothing else. This is what stops the sidecar being pointed at a
+                   venue: our fetcher owns robots.txt, throttling and the SSRF checks, and imgproxy
+                   pulling directly would go around all three (ADR-007). */}}
+            - name: IMGPROXY_ALLOWED_SOURCES
+              value: "s3://{{ .Values.images.storage.bucket }}/"
+            - name: IMGPROXY_USE_S3
+              value: "true"
+            - name: IMGPROXY_S3_ENDPOINT
+              value: {{ .Values.images.storage.endpoint | quote }}
+            - name: IMGPROXY_S3_REGION
+              value: {{ .Values.images.storage.region | quote }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.images.storage.existingSecret | quote }}
+                  key: IMAGE_STORAGE_ACCESS_KEY
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.images.storage.existingSecret | quote }}
+                  key: IMAGE_STORAGE_SECRET_KEY
+            {{- /* Signing, so nothing that reaches the sidecar can ask it to process anything. */}}
+            - name: IMGPROXY_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.images.imgproxy.existingSecret | quote }}
+                  key: IMGPROXY_KEY
+            - name: IMGPROXY_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.images.imgproxy.existingSecret | quote }}
+                  key: IMGPROXY_SALT
+          resources:
+            {{- toYaml .Values.images.imgproxy.resources | nindent 12 }}
+          volumeMounts:
+            - name: imgproxy-tmp
+              mountPath: /tmp
+        {{- end }}
       volumes:
         - name: tmp
           emptyDir: {}
+        {{- if and .Values.images.enabled .Values.images.imgproxy.enabled }}
+        {{- /* libvips writes temporary files, and the container runs read-only. */}}
+        - name: imgproxy-tmp
+          emptyDir: {}
+        {{- end }}
       {{- with .Values.importer.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

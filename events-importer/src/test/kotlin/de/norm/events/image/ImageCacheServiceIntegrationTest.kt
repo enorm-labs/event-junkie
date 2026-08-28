@@ -1,17 +1,30 @@
 package de.norm.events.image
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.scraper.ScraperHttpClientConfig
+import de.norm.events.scraper.ScraperProperties
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import okio.Buffer
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.awaitSingle
+import org.testcontainers.containers.MinIOContainer
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest
+import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
 import java.time.Clock
+import javax.imageio.ImageIO
 
 /**
  * [ImageCacheService] and its raw SQL, against a real database.
@@ -23,6 +36,48 @@ import java.time.Clock
 class ImageCacheServiceIntegrationTest : BaseControllerTest() {
     @Autowired
     private lateinit var repository: CachedImageRepository
+
+    private val servers = mutableListOf<MockWebServer>()
+    private val minio = MinIOContainer("minio/minio:RELEASE.2025-09-07T16-13-09Z")
+    private var minioStarted = false
+
+    @AfterEach
+    fun closeServers() {
+        servers.forEach { it.close() }
+        servers.clear()
+        if (minioStarted) minio.stop()
+        minioStarted = false
+    }
+
+    /** A real S3 API, started only for the tests that store — the others need no container. */
+    private fun minioStorage(): ImageStorage =
+        runBlocking {
+            if (!minioStarted) {
+                minio.start()
+                minioStarted = true
+            }
+            val properties =
+                ImageStorageProperties(bucket = "images", prefix = "staging", endpoint = minio.s3URL, accessKey = minio.userName, secretKey = minio.password)
+            val client = ImageStorageConfig().s3AsyncClient(properties)!!
+            runCatching { client.createBucket(CreateBucketRequest.builder().bucket("images").build()).await() }
+            ImageStorage(client, properties)
+        }
+
+    private suspend fun objectExists(key: String): Boolean {
+        val properties =
+            ImageStorageProperties(bucket = "images", prefix = "staging", endpoint = minio.s3URL, accessKey = minio.userName, secretKey = minio.password)
+        val client = ImageStorageConfig().s3AsyncClient(properties)!!
+        return runCatching {
+            client
+                .headObject(
+                    software.amazon.awssdk.services.s3.model.HeadObjectRequest
+                        .builder()
+                        .bucket("images")
+                        .key(key)
+                        .build()
+                ).await()
+        }.isSuccess
+    }
 
     private var venueId: Long = 0
     private var sourceId: Long = 0
@@ -104,6 +159,103 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
             properties = properties,
             clock = Clock.systemUTC()
         )
+
+    // --- the success path, which needs a server to fetch from and a bucket to store in -----------
+
+    @Test
+    fun `fetches, stores and records an image in one pass`(): Unit =
+        runBlocking {
+            // The path every other test here avoids, and the one that matters: a real HTTP response,
+            // a real S3 put, and the row that says both happened. It is why MinIO is a container
+            // rather than a mock (ADR-019 §2.9).
+            val png = pngBytes()
+            val server = MockWebServer().also { it.start() }
+            servers += server
+            server.enqueue(
+                MockResponse
+                    .Builder()
+                    .code(200)
+                    .setHeader("Content-Type", "image/png")
+                    .setHeader("ETag", "\"v1\"")
+                    .body(Buffer().write(png))
+                    .build()
+            )
+            insertEvent("e", server.url("/poster.png").toString())
+
+            val outcome = storingService().refreshBatch()
+
+            outcome.fetched shouldBe 1
+            val row = repository.findAll().toList().single { it.contentHash != null }
+            row.contentType shouldBe "image/png"
+            row.byteSize shouldBe png.size.toLong()
+            row.intrinsicWidth shouldBe 12
+            row.etag shouldBe "\"v1\""
+            row.failedAt.shouldBeNull()
+            // And the object is actually in the bucket, not merely claimed by the row.
+            objectExists("staging/originals/${row.contentHash}") shouldBe true
+        }
+
+    @Test
+    fun `a 304 leaves the row alone and counts as unchanged`(): Unit =
+        runBlocking {
+            val server = MockWebServer().also { it.start() }
+            servers += server
+            server.enqueue(MockResponse.Builder().code(304).build())
+            val url = server.url("/poster.png").toString()
+            repository.save(
+                CachedImageEntity(
+                    sourceUrl = url,
+                    contentHash = "kept",
+                    contentType = "image/png",
+                    etag = "\"v1\"",
+                    fetchedAt =
+                        java.time.Instant
+                            .now()
+                            .minusSeconds(60 * 60 * 24 * 400)
+                )
+            )
+
+            val outcome = storingService().refreshBatch()
+
+            outcome.unchanged shouldBe 1
+            // The hash must survive a 304, or an unchanged image would lose the object it points at.
+            repository.findBySourceUrl(url)!!.contentHash shouldBe "kept"
+        }
+
+    private fun storingService(): ImageCacheService {
+        val properties = ImageProperties(fetchEnabled = true)
+        val scraper = ScraperProperties(politeDelayMillis = 0)
+        val config = ScraperHttpClientConfig()
+        return ImageCacheService(
+            repository = repository,
+            fetcher =
+                ImageFetcher(
+                    webClient =
+                        config.scraperBaseWebClient(
+                            webClientBuilder =
+                                org.springframework.web.reactive.function.client.WebClient
+                                    .builder(),
+                            scraperProperties = scraper,
+                            throttle = config.perHostThrottlingFilter(scraper)
+                        ),
+                    ioDispatcher = kotlinx.coroutines.Dispatchers.IO,
+                    // MockWebServer listens on loopback, which the real guard refuses by design.
+                    validator =
+                        object : ImageUrlValidator() {
+                            override fun reject(url: String): String? = null
+                        },
+                    properties = properties
+                ),
+            storage = minioStorage(),
+            properties = properties,
+            clock = Clock.systemUTC()
+        )
+    }
+
+    private fun pngBytes(): ByteArray =
+        ByteArrayOutputStream()
+            .also { ImageIO.write(BufferedImage(12, 8, BufferedImage.TYPE_INT_RGB), "png", it) }
+            .toByteArray()
 
     // --- seeding -------------------------------------------------------------------------------
 

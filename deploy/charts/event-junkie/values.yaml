@@ -267,6 +267,44 @@ images:
     prefix: ""
     # Scoped to this bucket and nothing else (SECRETS.md §event-junkie-images).
     existingSecret: "event-junkie-images"
+  # imgproxy generates the derivatives at import time and never serves a visitor (ADR-020). Off
+  # separately from images.enabled, so originals can be stored before the sidecar is introduced.
+  imgproxy:
+    enabled: false
+    image:
+      repository: "ghcr.io/imgproxy/imgproxy"
+      # v4.0.14, on Ubuntu 24.04. Pinned by digest, like the JRE base (ADR-017): a third-party
+      # image we cannot rebuild when a finding has no fix, so the version is a decision rather than
+      # a tag that moves.
+      #
+      # **Read the whole tag list before bumping this.** GHCR paginates, and the first page ends at
+      # v3.22.0 — which is two majors behind, sits on Debian 12.5, and carries 94 fixable CRITICAL
+      # and HIGH findings. v4.0.14 carries none.
+      digest: "sha256:595fb82df2364e35711e4303c6de6ad412bbd93963db47be58354a4d52dd1f17"
+      pullPolicy: IfNotPresent
+    # A Secret holding IMGPROXY_KEY and IMGPROXY_SALT, both hex.
+    existingSecret: "event-junkie-imgproxy"
+    # The decode bounds. Megapixels and bytes — a bomb is small on the wire and enormous decoded, so
+    # the two limits catch different things.
+    maxSrcResolutionMp: 50
+    maxSrcFileSizeBytes: 8388608
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        # libvips wants a ceiling. Without one a hostile image decides how much the node gives it.
+        memory: 512Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 999
+      capabilities:
+        drop:
+          - ALL
+      seccompProfile:
+        type: RuntimeDefault
 
 networkPolicy:
   enabled: true

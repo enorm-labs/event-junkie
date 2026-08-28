@@ -91,6 +91,20 @@ app:
       # stored, and a local run needs no bucket access.
       access-key: ${IMAGE_STORAGE_ACCESS_KEY:}
       secret-key: ${IMAGE_STORAGE_SECRET_KEY:}
+    imgproxy:
+      # The sidecar that generates derivatives (ADR-020). Off means originals are stored and nothing
+      # is derived, which is what a local run without the sidecar needs.
+      enabled: ${APP_IMAGES_IMGPROXY_ENABLED:false}
+      # Loopback: the sidecar shares this pod's network namespace and nothing outside reaches it.
+      base-url: ${IMGPROXY_BASE_URL:http://127.0.0.1:8080}
+      # Hex, as imgproxy requires. Signing with the ASCII of the hex string fails as a 403 that
+      # reads like a wrong key rather than a wrong encoding.
+      key: ${IMGPROXY_KEY:}
+      salt: ${IMGPROXY_SALT:}
+      # 192 and 288 cover the 80 px and 96 px cards at 2x and 3x. 768 covers EventDetailView's
+      # full-width image in a max-w-3xl column, and 1536 covers it at 2x (#804).
+      widths: 192,288,768,1536
+      formats: avif,webp,jpg
 
 ---
 # Local development only — activate with `--spring.profiles.active=local` (IntelliJ: run

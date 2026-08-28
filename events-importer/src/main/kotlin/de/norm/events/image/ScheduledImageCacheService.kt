@@ -17,7 +17,8 @@ import org.springframework.stereotype.Service
  */
 @Service
 class ScheduledImageCacheService(
-    private val imageCacheService: ImageCacheService
+    private val imageCacheService: ImageCacheService,
+    private val derivativeService: ImageDerivativeService
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -25,7 +26,13 @@ class ScheduledImageCacheService(
     fun tick() {
         // Nothing here may throw: an uncaught exception silently cancels a @Scheduled task for the
         // life of the process, and the next symptom is images that stopped updating weeks ago.
-        runCatching { runBlocking { imageCacheService.refreshBatch() } }
-            .onFailure { logger.error(it) { "Image cache pass failed" } }
+        runCatching {
+            runBlocking {
+                // Fetch first, then derive. A derivative needs an original, so deriving first would
+                // simply find nothing on the pass that fetched it.
+                imageCacheService.refreshBatch()
+                derivativeService.generateBatch()
+            }
+        }.onFailure { logger.error(it) { "Image cache pass failed" } }
     }
 }

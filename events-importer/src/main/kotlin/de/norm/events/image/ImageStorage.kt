@@ -49,9 +49,14 @@ class ImageStorage(
         contentHash: String,
         contentType: String,
         bytes: ByteArray
+    ): String? = put(originalKey(contentHash), contentType, bytes)
+
+    private suspend fun put(
+        key: String,
+        contentType: String,
+        bytes: ByteArray
     ): String? {
         val s3 = client ?: return null
-        val key = originalKey(contentHash)
 
         return try {
             s3
@@ -68,8 +73,7 @@ class ImageStorage(
             key
         } catch (
             // The SDK wraps transport, signature and permission faults in different types, and the
-            // caller does the same thing with all of them: record the image without an object and
-            // try again on the next pass. Nothing is rethrown, so one bad object cannot stop a run.
+            // caller does the same thing with all of them: record nothing and try again next pass.
             @Suppress("TooGenericExceptionCaught")
             e: Exception
         ) {
@@ -85,4 +89,25 @@ class ImageStorage(
      * rather than a filter — which is what lets the sweep stay inside its own environment.
      */
     fun originalKey(contentHash: String): String = "${properties.prefix}/originals/$contentHash"
+
+    /**
+     * The key a derivative lives at.
+     *
+     * The hash comes before the width, so every derivative of one original shares a prefix. That is
+     * what lets the orphan sweep delete an image's whole family with one listing rather than
+     * reconstructing the width and format set it was generated with.
+     */
+    fun derivativeKey(
+        contentHash: String,
+        width: Int,
+        format: String
+    ): String = "${properties.prefix}/derived/$contentHash/$width.$format"
+
+    /** Stores a derivative and returns its key, or null when there is no client or the put failed. */
+    suspend fun storeDerivative(
+        contentHash: String,
+        width: Int,
+        format: String,
+        bytes: ByteArray
+    ): String? = put(derivativeKey(contentHash, width, format), "image/$format", bytes)
 }
