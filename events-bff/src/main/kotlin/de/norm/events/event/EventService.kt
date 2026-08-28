@@ -96,7 +96,7 @@ class EventService(
         // the endpoint that renders the description in full (EventDetailView.vue), which makes it
         // the one that matters most.
         val event =
-            eventRepository.findBySlug(slug)?.let { withCachedImages(withLicenceApplied(listOf(it)), DETAIL_WIDTH).first() }
+            eventRepository.findBySlug(slug)?.let { withLicenceApplied(listOf(it)).first() }
                 ?: throw EventNotFoundException(slug)
         val eventId = requireNotNull(event.id) { "Persisted event must have an ID" }
 
@@ -131,20 +131,21 @@ class EventService(
         val genreTags =
             if (genreTagIds.isEmpty()) emptyList() else genreTagRepository.findAllById(genreTagIds).toList().map { it.name }
 
-        return EventDetailResponse.fromEntity(event, venueSummary, lineup, promoters, genreTags)
+        val image = cachedImageGate.forUrls(listOf(event.imageUrl)).serve(event.imageUrl, DETAIL_WIDTH)
+        return EventDetailResponse.fromEntity(event, venueSummary, lineup, promoters, genreTags, image)
     }
 
     /**
      * Re-fetches events by ID via the CRUD repository, preserving the order of [ids].
      *
-     * **Also applies the licence gate**, which is why every list path goes through here rather than
-     * mapping repository output directly. One choke point for `search`, `today` and `calendar`
-     * means a new list endpoint inherits the gate instead of having to remember it.
+     * Ordering only. The licence gate and the image rewrite live in [summariesFor], because `today`
+     * does not come through here — it reads the repository directly, and while the gate lived here
+     * the Home page was the one list endpoint neither was applied to.
      */
     private suspend fun hydrateOrdered(ids: List<Long>): List<EventEntity> {
         if (ids.isEmpty()) return emptyList()
         val byId = eventRepository.findAllById(ids).toList().associateBy { it.id }
-        return withCachedImages(withLicenceApplied(ids.mapNotNull { byId[it] }), CARD_WIDTH)
+        return ids.mapNotNull { byId[it] }
     }
 
     /**
@@ -167,29 +168,20 @@ class EventService(
     }
 
     /**
-     * Points `imageUrl` at our own copy of each venue image, at the width being rendered.
-     *
-     * Applied after [withLicenceApplied] and never before it: a source that prohibits its images has
-     * had the URL blanked already, so there is nothing here to look up and nothing to serve.
-     *
-     * Done on the entity for the same reason the licence gate is, and at the same choke point — the
-     * summary and detail mappers cannot diverge, and neither of them can forget.
-     */
-    private suspend fun withCachedImages(
-        events: List<EventEntity>,
-        renderedWidth: Int
-    ): List<EventEntity> {
-        if (events.isEmpty()) return events
-        val cached = cachedImageGate.forUrls(events.map { it.imageUrl })
-        return events.map { it.copy(imageUrl = cached.rewrite(it.imageUrl, renderedWidth)) }
-    }
-
-    /**
      * Maps a page of events to summaries, batch-loading venue, artist, and genre tag
      * associations in a fixed number of queries regardless of page size.
+     *
+     * **This is the choke point every list endpoint goes through**, so the licence gate and the image
+     * rewrite are applied here. A new list endpoint inherits both by building its summaries the only
+     * way there is, rather than by remembering to call something first.
+     *
+     * The image step runs after the licence gate and never before it: a source that prohibits its
+     * images has had the URL blanked already, so there is nothing left to look up.
      */
-    private suspend fun summariesFor(events: List<EventEntity>): List<EventSummaryResponse> {
-        if (events.isEmpty()) return emptyList()
+    private suspend fun summariesFor(unlicensed: List<EventEntity>): List<EventSummaryResponse> {
+        if (unlicensed.isEmpty()) return emptyList()
+        val events = withLicenceApplied(unlicensed)
+        val images = cachedImageGate.forUrls(events.map { it.imageUrl })
         val eventIds = events.map { requireNotNull(it.id) { "Persisted event must have an ID" } }
 
         val venuesById = venueRepository.findByIdIn(events.map { it.venueId }.distinct()).toList().associateBy { it.id }
@@ -211,7 +203,13 @@ class EventService(
             val artistNames =
                 artistLinksByEvent[event.id].orEmpty().sortedBy { it.billingOrder }.mapNotNull { artistsById[it.artistId]?.name }
             val genreTags = genreLinksByEvent[event.id].orEmpty().mapNotNull { genreNamesById[it.genreTagId] }
-            EventSummaryResponse.fromEntity(event, VenueSummaryResponse.fromEntity(venue), artistNames, genreTags)
+            EventSummaryResponse.fromEntity(
+                event,
+                VenueSummaryResponse.fromEntity(venue),
+                artistNames,
+                genreTags,
+                images.serve(event.imageUrl, CARD_WIDTH)
+            )
         }
     }
 
@@ -225,18 +223,18 @@ class EventService(
         private const val MAX_CALENDAR_DAYS = 92L
 
         /**
-         * How wide the image is actually drawn, which is what decides the derivative asked for.
+         * How wide the image is drawn, in CSS pixels, which is what decides the derivatives offered.
          *
-         * `EventCard` draws at 80 CSS px, so 288 covers it to 3x — the narrowest generated width
-         * that does. `EventDetailView` draws the image at the full width of a `max-w-3xl` column,
-         * 704 px after padding, which 768 covers ([#804](https://github.com/enorm-labs/event-junkie/issues/804)
-         * is why the detail page is on this list at all).
+         * `EventCard` and `VenueCard` draw at 80 px and `BaseDetailView` at 96 px, so 96 covers the
+         * cards. `EventDetailView` draws the image at the full width of a `max-w-3xl` column, 704 px
+         * after padding ([#804](https://github.com/enorm-labs/event-junkie/issues/804) is why the
+         * detail page is on this list at all).
          *
-         * Two numbers rather than one because one URL serves both: a list of twenty cards each
-         * carrying the 768 px file is roughly ten times the bytes it draws. A `srcset` removes the
-         * need to choose at all, and it is the next step rather than this one.
+         * **CSS pixels, not file widths.** The device pixel ratio is the browser's to know, and it
+         * picks from the `srcset` this produces; a number here that already had a ratio baked in
+         * would multiply it twice.
          */
-        private const val CARD_WIDTH = 288
-        private const val DETAIL_WIDTH = 768
+        private const val CARD_WIDTH = 96
+        private const val DETAIL_WIDTH = 704
     }
 }

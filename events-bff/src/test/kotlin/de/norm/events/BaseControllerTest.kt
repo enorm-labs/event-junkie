@@ -182,19 +182,19 @@ abstract class BaseControllerTest {
             .mapId()
 
     /**
-     * Seeds one cached venue image and one derivative per width, as the importer would have written
-     * them (ADR-019).
+     * Seeds one cached venue image and one derivative per width and format, as the importer would
+     * have written them (ADR-019).
      *
-     * [storageKey] is a function of the width so a caller can put the matching object in a bucket.
-     * The real keys carry an environment prefix; nothing on this side builds one, because a served
-     * key is read from the row.
+     * Keys come from [derivedKey], so a caller can put the matching object in a bucket. The real
+     * keys carry an environment prefix; nothing on this side builds one, because a served key is
+     * read from the row.
      */
     protected suspend fun insertCachedImage(
         sourceUrl: String,
         contentHash: String,
         widths: List<Int>,
-        deleted: Boolean = false,
-        storageKey: (Int) -> String = { "test/derived/$contentHash/$it.jpg" }
+        formats: List<String> = listOf("avif", "webp", "jpg"),
+        deleted: Boolean = false
     ): Long {
         val imageId =
             databaseClient
@@ -207,17 +207,27 @@ abstract class BaseControllerTest {
                 .mapId()
 
         widths.forEach { width ->
-            databaseClient
-                .sql(
-                    "INSERT INTO events.cached_image_variant (cached_image_id, width, format, storage_key, byte_size) " +
-                        "VALUES (:imageId, :width, 'jpg', :storageKey, 1)"
-                ).bind("imageId", imageId)
-                .bind("width", width)
-                .bind("storageKey", storageKey(width))
-                .await()
+            formats.forEach { format ->
+                databaseClient
+                    .sql(
+                        "INSERT INTO events.cached_image_variant (cached_image_id, width, format, storage_key, byte_size) " +
+                            "VALUES (:imageId, :width, :format, :storageKey, 1)"
+                    ).bind("imageId", imageId)
+                    .bind("width", width)
+                    .bind("format", format)
+                    .bind("storageKey", derivedKey(contentHash, width, format))
+                    .await()
+            }
         }
         return imageId
     }
+
+    /** Where [insertCachedImage] claims a derivative lives. */
+    protected fun derivedKey(
+        contentHash: String,
+        width: Int,
+        format: String
+    ): String = "test/derived/$contentHash/$width.$format"
 
     protected suspend fun linkArtist(
         eventId: Long,

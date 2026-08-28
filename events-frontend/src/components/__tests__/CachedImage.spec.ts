@@ -1,0 +1,74 @@
+import { describe, expect, it } from 'vitest'
+
+import { mount } from '@vue/test-utils'
+import CachedImage from '@/components/CachedImage.vue'
+import type { ImageSource } from '@/api/types'
+
+// Named rather than indexed, so an assertion can refer to one without `sources[0]` — which is
+// `ImageSource | undefined` under `noUncheckedIndexedAccess`.
+const avif: ImageSource = {
+  type: 'image/avif',
+  srcset: '/api/images/abc/192.avif 192w, /api/images/abc/288.avif 288w',
+}
+const webp: ImageSource = {
+  type: 'image/webp',
+  srcset: '/api/images/abc/192.webp 192w, /api/images/abc/288.webp 288w',
+}
+const jpeg: ImageSource = {
+  type: 'image/jpeg',
+  srcset: '/api/images/abc/192.jpg 192w, /api/images/abc/288.jpg 288w',
+}
+const sources: ImageSource[] = [avif, webp, jpeg]
+
+const mount_ = (props: Partial<InstanceType<typeof CachedImage>['$props']> = {}) =>
+  mount(CachedImage, {
+    props: { src: '/api/images/abc/192.jpg', alt: 'A poster', sizes: '80px', ...props },
+  })
+
+describe('CachedImage', () => {
+  // The uncached case is every environment that does not serve cached images yet, and every venue,
+  // artist and promoter image on the ones that do (#833). It has to stay a plain <img>.
+  it('renders a bare image when the API offered no formats', () => {
+    const wrapper = mount_({ src: 'https://venue.test/poster.jpg' })
+
+    expect(wrapper.findAll('source')).toHaveLength(0)
+    expect(wrapper.get('img').attributes('src')).toBe('https://venue.test/poster.jpg')
+  })
+
+  it('offers each format the API returned, in the order it returned them', () => {
+    // <picture> takes the first source the browser can decode, so the order is the preference and
+    // sorting or grouping them would silently serve JPEG to a browser that reads AVIF.
+    const wrapper = mount_({ sources })
+
+    expect(wrapper.findAll('source').map((s) => s.attributes('type'))).toEqual([
+      'image/avif',
+      'image/webp',
+      'image/jpeg',
+    ])
+    expect(wrapper.get('source').attributes('srcset')).toBe(avif.srcset)
+  })
+
+  it('puts sizes on every source, because srcset widths mean nothing without it', () => {
+    const wrapper = mount_({ sources })
+
+    expect(wrapper.findAll('source').every((s) => s.attributes('sizes') === '80px')).toBe(true)
+  })
+
+  it('keeps the caller classes on the image rather than on the picture', () => {
+    // `contents` takes the <picture> out of the layout, so the <img> is still the flex item the
+    // card's classes were written for. Moving them up would resize the wrapper and not the image.
+    const wrapper = mount_({ sources, imgClass: 'size-20 shrink-0' })
+
+    expect(wrapper.get('picture').classes()).toContain('contents')
+    expect(wrapper.get('img').classes()).toEqual(['size-20', 'shrink-0'])
+  })
+
+  it('leaves the fallback image without a srcset of its own', () => {
+    // The last source is JPEG and matches every browser, so this <img> is only reached by one with
+    // no <picture> support at all — where a srcset would be equally unsupported.
+    const wrapper = mount_({ sources })
+
+    expect(wrapper.get('img').attributes('srcset')).toBeUndefined()
+    expect(wrapper.get('img').attributes('loading')).toBe('lazy')
+  })
+})

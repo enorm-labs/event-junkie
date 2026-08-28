@@ -1,8 +1,10 @@
 package de.norm.events.image
 
+import io.swagger.v3.oas.annotations.media.Schema
 import kotlinx.coroutines.flow.toList
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.util.SortedSet
 
 /**
  * Answers, for a page of events at once, which venue images we can serve ourselves.
@@ -41,30 +43,21 @@ class CachedImageGate(
         repository
             .findServableBySourceUrlIn(sourceUrls)
             .toList()
-            .filter { it.format == SERVED_FORMAT }
             .groupBy { it.sourceUrl }
             .mapValues { (_, variants) ->
-                ServableImage(contentHash = variants.first().contentHash, widths = variants.map { it.width }.toSortedSet())
+                ServableImage(
+                    contentHash = variants.first().contentHash,
+                    widthsByFormat = variants.groupBy { it.format }.mapValues { (_, rows) -> rows.map { it.width }.toSortedSet() }
+                )
             }
-
-    companion object {
-        /**
-         * The one format a bare `imageUrl` may name.
-         *
-         * JPEG, because a single URL in an `<img src>` cannot negotiate and every browser reads it.
-         * The AVIF and WebP derivatives are generated and stored, and they reach a visitor through a
-         * `<picture>` element rather than through this field.
-         */
-        const val SERVED_FORMAT = "jpg"
-    }
 }
 
 /**
  * What is servable for one page's worth of venue image URLs, and the rule for using it.
  *
  * A value rather than a map of strings, because the answer depends on the size being rendered: the
- * same image is a 288 px card and a 768 px detail header, and picking one width for both would give
- * either a blurred detail page or a card list that downloads ten times what it draws.
+ * same image is a 96 px card and a 704 px detail header, and one width for both would give either a
+ * blurred detail page or a card list that downloads ten times what it draws.
  */
 class CachedImages private constructor(
     private val byUrl: Map<String, ServableImage>,
@@ -74,21 +67,22 @@ class CachedImages private constructor(
     constructor(byUrl: Map<String, ServableImage>, urlPrefix: String) : this(byUrl, urlPrefix, serving = true)
 
     /**
-     * What the API should report for [sourceUrl] when the image is drawn at [renderedWidth].
+     * What the API should report for [sourceUrl] when the image is drawn [renderedWidth] CSS pixels wide.
      *
      * **The whole of ADR-019's decision is these three lines.** While serving is off the venue's own
      * URL is returned unchanged, which is what the site does today. While it is on, an image we hold
-     * becomes a path on our own origin, and one we do not hold becomes null — reported as absent
-     * rather than hotlinked, because falling back to the venue would reinstate exactly the disclosure
-     * that caching exists to remove ([#792](https://github.com/enorm-labs/event-junkie/issues/792)).
+     * becomes a set of URLs on our own origin, and one we do not hold becomes null — reported as
+     * absent rather than hotlinked, because falling back to the venue would reinstate exactly the
+     * disclosure that caching exists to remove
+     * ([#792](https://github.com/enorm-labs/event-junkie/issues/792)).
      */
-    fun rewrite(
+    fun serve(
         sourceUrl: String?,
         renderedWidth: Int
-    ): String? {
-        if (!serving) return sourceUrl
+    ): ServedImage {
+        if (!serving) return ServedImage(sourceUrl, emptyList())
         val image = sourceUrl?.let { byUrl[it] }
-        return image?.widthFor(renderedWidth)?.let { "$urlPrefix/${image.contentHash}/$it.${CachedImageGate.SERVED_FORMAT}" }
+        return image?.serve(urlPrefix, renderedWidth) ?: ServedImage.ABSENT
     }
 
     companion object {
@@ -97,17 +91,105 @@ class CachedImages private constructor(
     }
 }
 
-/** One image we hold, and the widths it exists at. */
+/** One image we hold, and the widths it exists at in each format. */
 data class ServableImage(
     val contentHash: String,
-    val widths: Set<Int>
+    val widthsByFormat: Map<String, SortedSet<Int>>
 ) {
     /**
-     * The narrowest width that is at least [minimumWidth], or the widest we have.
+     * The URLs to offer for a slot [renderedWidth] CSS pixels wide.
      *
-     * Falling back to the widest rather than to null: an image whose largest derivative is narrower
-     * than the slot is upscaled by the browser and looks soft. Refusing to show it at all would look
-     * like the image is missing, and it is not.
+     * Empty unless a JPEG derivative exists. JPEG is the one format every browser reads, so an image
+     * without it has no safe `<img src>` — and offering only AVIF and WebP would be a blank space on
+     * anything that cannot decode them.
      */
-    fun widthFor(minimumWidth: Int): Int? = widths.firstOrNull { it >= minimumWidth } ?: widths.maxOrNull()
+    fun serve(
+        urlPrefix: String,
+        renderedWidth: Int
+    ): ServedImage {
+        val widths = candidateWidths(renderedWidth)
+        val fallback = widthsByFormat[ImageFormats.FALLBACK].orEmpty().filter { it in widths }
+        return if (fallback.isEmpty()) {
+            ServedImage.ABSENT
+        } else {
+            ServedImage(
+                url = url(urlPrefix, fallback.first(), ImageFormats.FALLBACK),
+                sources = ImageFormats.ORDERED.mapNotNull { source(urlPrefix, it, widths) }
+            )
+        }
+    }
+
+    /**
+     * The generated widths worth offering for a slot [renderedWidth] CSS pixels wide.
+     *
+     * From the slot itself up to three times it, because a device pixel ratio above 3 is rarer than
+     * the bytes it would cost every other device. Narrower than the slot is upscaling the browser
+     * would have to do anyway, and wider is a file nothing will draw.
+     *
+     * Falls back to the widest we hold when the band is empty. Soft rather than absent: an image
+     * whose largest derivative is narrower than the slot still shows, and refusing it would look like
+     * the image is missing.
+     */
+    private fun candidateWidths(renderedWidth: Int): Set<Int> {
+        val all = widthsByFormat.values.flatten().toSortedSet()
+        return all.filterTo(sortedSetOf()) { it in renderedWidth..(renderedWidth * MAX_PIXEL_RATIO) }.ifEmpty {
+            listOfNotNull(all.maxOrNull()).toSortedSet()
+        }
+    }
+
+    /** One `<source>`, or null when this format has no derivative among [widths]. */
+    private fun source(
+        urlPrefix: String,
+        format: String,
+        widths: Set<Int>
+    ): ImageSourceResponse? {
+        val available = widthsByFormat[format].orEmpty().filter { it in widths }
+        val mediaType = ImageFormats.mediaType(format)
+        return if (available.isEmpty() || mediaType == null) {
+            null
+        } else {
+            ImageSourceResponse(
+                type = mediaType,
+                srcset = available.joinToString(", ") { "${url(urlPrefix, it, format)} ${it}w" }
+            )
+        }
+    }
+
+    private fun url(
+        urlPrefix: String,
+        width: Int,
+        format: String
+    ) = "$urlPrefix/$contentHash/$width.$format"
+
+    private companion object {
+        const val MAX_PIXEL_RATIO = 3
+    }
 }
+
+/**
+ * What one image field carries: a URL to put in `src`, and the formats to offer above it.
+ *
+ * Both together rather than two independent lookups, so a caller cannot fill one field and forget
+ * the other — which would be a `<picture>` that always falls through to JPEG, and nothing would fail.
+ */
+data class ServedImage(
+    val url: String?,
+    val sources: List<ImageSourceResponse>
+) {
+    companion object {
+        /** Nothing to serve: the image is reported absent rather than fetched from the venue. */
+        val ABSENT = ServedImage(null, emptyList())
+    }
+}
+
+/** One format of a cached image, shaped as the `<source>` element that selects it. */
+@Schema(description = "One format of a cached image, for a <source> element inside <picture>")
+data class ImageSourceResponse(
+    @Schema(description = "Media type for the `type` attribute", example = "image/avif")
+    val type: String,
+    @Schema(
+        description = "Candidate URLs and their widths, for the `srcset` attribute",
+        example = "/api/images/0f4b…/192.avif 192w, /api/images/0f4b…/288.avif 288w"
+    )
+    val srcset: String
+)

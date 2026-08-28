@@ -2,6 +2,7 @@
 import { RouterLink } from 'vue-router'
 import type { EventPage } from '@/api/types'
 import { Button } from '@/components/ui/button'
+import CachedImage from '@/components/CachedImage.vue'
 import EventCard from '@/components/EventCard.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { useLocalePath } from '@/composables/useLocalePath'
@@ -70,12 +71,13 @@ const { t } = useI18n()
 
     <template v-else-if="ready">
       <header class="flex gap-4">
-        <img
+        <!-- No `sources`: a venue, artist or promoter image is never cached (#833). -->
+        <CachedImage
           v-if="imageUrl"
-          :alt="name ?? ''"
           :src="imageUrl"
-          class="size-24 shrink-0 rounded-lg border border-border object-cover"
-          loading="lazy"
+          :alt="name ?? ''"
+          sizes="96px"
+          img-class="size-24 shrink-0 rounded-lg border border-border object-cover"
         />
         <div class="space-y-2">
           <SectionLabel as="p">{{ kind }}</SectionLabel>

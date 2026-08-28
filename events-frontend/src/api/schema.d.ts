@@ -524,8 +524,10 @@ export interface components {
        * @example 20:00
        */
       startTime?: string | null
-      /** @description URL of the event's poster or flyer image */
+      /** @description Where the poster is fetched from. A path on this origin once the environment serves cached images, and the venue's own URL until then (ADR-019). */
       imageUrl?: string | null
+      /** @description Better formats of the same poster, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+      imageSources?: components['schemas']['ImageSourceResponse'][]
       /**
        * @description Presale ticket price (Vorverkauf)
        * @example 38
@@ -570,6 +572,19 @@ export interface components {
        *     ]
        */
       genreTags?: string[]
+    }
+    /** @description One format of a cached image, for a <source> element inside <picture> */
+    ImageSourceResponse: {
+      /**
+       * @description Media type for the `type` attribute
+       * @example image/avif
+       */
+      type?: string
+      /**
+       * @description Candidate URLs and their widths, for the `srcset` attribute
+       * @example /api/images/0f4b…/192.avif 192w, /api/images/0f4b…/288.avif 288w
+       */
+      srcset?: string
     }
     /** @description A page of results with pagination metadata */
     PageResponseEventSummaryResponse: {
@@ -681,8 +696,10 @@ export interface components {
        * @example 20:00
        */
       startTime?: string | null
-      /** @description URL of the event's poster or flyer image */
+      /** @description Where the poster is fetched from. A path on this origin once the environment serves cached images, and the venue's own URL until then (ADR-019). */
       imageUrl?: string | null
+      /** @description Better formats of the same poster, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+      imageSources?: components['schemas']['ImageSourceResponse'][]
       /** @description Original URL on the source venue's website */
       sourceUrl?: string | null
       /** @description URL to the external ticket shop */

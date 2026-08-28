@@ -3,6 +3,7 @@ import { computed, onMounted, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import BaseBadge from '@/components/BaseBadge.vue'
+import CachedImage from '@/components/CachedImage.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { useEvent } from '@/composables/useEvent'
 import { usePageMeta } from '@/composables/usePageMeta'
@@ -125,12 +126,18 @@ useStructuredData((): JsonLd[] => {
         </p>
       </header>
 
-      <img
+      <!--
+        The widest image on the site, drawn across a `max-w-3xl` column: 704 px once `sm:p-8` is
+        subtracted, and the viewport minus its padding below that. Those three lengths are what turn
+        `srcset`'s pixel widths into a choice, so they track the `<main>` classes above.
+      -->
+      <CachedImage
         v-if="event.imageUrl"
-        :alt="event.title ?? ''"
         :src="event.imageUrl"
-        class="w-full rounded-lg border border-border object-cover"
-        loading="lazy"
+        :sources="event.imageSources"
+        :alt="event.title ?? ''"
+        sizes="(min-width: 768px) 704px, (min-width: 640px) calc(100vw - 4rem), calc(100vw - 2rem)"
+        img-class="w-full rounded-lg border border-border object-cover"
       />
 
       <p v-if="event.description" class="whitespace-pre-line text-foreground/90">

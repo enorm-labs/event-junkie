@@ -121,22 +121,14 @@ class CachedImageController(
 
         val CONTENT_HASH = Regex("^[0-9a-f]{64}$")
 
-        /** Four digits caps the width at 9999, well above the widest derivative generated. */
-        val FILE_NAME = Regex("^([0-9]{1,4})\\.(avif|webp|jpg)$")
-
         /**
-         * The `Content-Type` each format is sent as.
-         *
-         * A fixed table rather than a guess from the extension, and the extensions are the ones the
-         * regular expression above allows — so the header can only ever be one of three image types,
-         * whatever a request asks for. `image/jpg` is not a media type: the header has to say
-         * `image/jpeg`, and building it as `"image/$format"` would get that wrong.
+         * The formats come from [ImageFormats], which is also what the `<picture>` sources are built
+         * from — so a format cannot be offered to a browser and refused here. Four digits caps the
+         * width at 9999, well above the widest derivative generated.
          */
-        val MEDIA_TYPES =
-            mapOf(
-                "avif" to MediaType.parseMediaType("image/avif"),
-                "webp" to MediaType.parseMediaType("image/webp"),
-                "jpg" to MediaType.IMAGE_JPEG
-            )
+        val FILE_NAME = Regex("^([0-9]{1,4})\\.(${ImageFormats.ORDERED.joinToString("|")})$")
+
+        /** Parsed once. The header can only ever be one of the types [ImageFormats] names. */
+        val MEDIA_TYPES = ImageFormats.ORDERED.associateWith { MediaType.parseMediaType(ImageFormats.mediaType(it)!!) }
     }
 }
