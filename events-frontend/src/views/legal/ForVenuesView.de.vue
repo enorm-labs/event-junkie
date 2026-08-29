@@ -46,8 +46,9 @@ const localePath = useLocalePath()
         Bild, das ihr selbst veröffentlicht.
       </p>
       <p>
-        Das Bild bleibt auf eurem Server. Wir kopieren es nicht, sondern binden es ein — der Browser
-        unserer Besucher holt es direkt bei euch.
+        Das Bild laden wir herunter und speichern eine Kopie, damit euer Server es nicht bei jedem
+        Seitenaufruf erneut ausliefern muss. Die Kopie liegt bei uns, nicht bei einem Dritten, und
+        sie geht mit, wenn ihr aussteigt.
       </p>
     </section>
 
@@ -76,6 +77,7 @@ const localePath = useLocalePath()
         </li>
         <li>Wir schalten die Quelle ab. Der Importer liest sie danach nicht mehr.</li>
         <li>Wir löschen die Veranstaltungen dieser Location aus der Datenbank.</li>
+        <li>Wir löschen die gespeicherten Kopien eurer Bilder von unseren Servern.</li>
         <li>Wir antworten innerhalb von sieben Tagen und bestätigen euch das.</li>
       </ol>
       <p>
@@ -85,8 +87,9 @@ const localePath = useLocalePath()
       <p>
         <strong>Es muss aber nicht alles sein.</strong> Wenn euch nur die Bilder stören oder nur die
         Beschreibungstexte, nehmen wir genau das heraus und lassen die Veranstaltungen stehen. Wir
-        löschen das beanstandete Material aus der Datenbank und importieren es nicht erneut. Die
-        Termine bleiben auffindbar. Schreibt uns, was genau ihr nicht gespeichert haben wollt.
+        löschen das beanstandete Material aus der Datenbank, bei Bildern auch die gespeicherten
+        Kopien, und importieren es nicht erneut. Die Termine bleiben auffindbar. Schreibt uns, was
+        genau ihr nicht gespeichert haben wollt.
       </p>
     </section>
 
@@ -117,7 +120,8 @@ const localePath = useLocalePath()
         Beschreibungen, Bilder und anderes Material von Locations, Veranstaltern und Künstlerinnen
         bleiben Eigentum der jeweiligen Rechteinhaber. Wer Rechte an etwas hält, das hier zu sehen
         ist, und die Entfernung möchte, findet den Weg im
-        <RouterLink :to="localePath('/legal/imprint')">Impressum</RouterLink>.
+        <RouterLink :to="localePath('/legal/imprint')">Impressum</RouterLink>. Bei einem Bild
+        löschen wir dabei auch die Kopie, die auf unseren Servern liegt.
       </p>
     </section>
   </LegalPage>

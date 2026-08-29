@@ -70,7 +70,7 @@ export const INFRASTRUCTURE_IS_PROPOSED = true
 export const PROCESSOR_CONTRACTS_PENDING = false
 
 /** Date the legal pages were last reviewed against what the system actually does (§7.7). */
-export const LAST_REVIEWED = '2026-08-08'
+export const LAST_REVIEWED = '2026-08-29'
 
 /** The supervisory authority for a controller established in Berlin (Art. 13 (2) (d) GDPR). */
 export const SUPERVISORY_AUTHORITY = {

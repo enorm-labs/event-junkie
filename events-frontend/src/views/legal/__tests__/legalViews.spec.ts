@@ -112,6 +112,23 @@ const PRIVACY_ELEMENTS: Element[] = [
     en: /no content delivery network/i,
     de: /kein Content-Delivery-Netzwerk/i,
   },
+  // The reproduction is a *separate* act from displaying a URL, and only §4 can carry its legal
+  // basis and its retention. ADR-019 chose it knowing it gives up the embedding position under
+  // § 16 UrhG, so a notice that describes the storage is the price of that decision.
+  {
+    what: 'that images are downloaded and stored, not only linked',
+    en: /downloads those images and stores a copy/i,
+    de: /lädt diese Bilder herunter und speichert eine Kopie/i,
+  },
+  // #792. The claim above it — no CDN, no proxy, your request reaches us directly — is what makes
+  // this necessary: without it the notice reads as though nothing else is ever contacted, while
+  // four render sites still point a browser at a venue's server (#833). Delete this item when that
+  // stops being true, not before.
+  {
+    what: 'that some images are still fetched from a third-party server, and what that discloses',
+    en: /loaded directly\s+from the servers of venues, promoters and ticket sellers/i,
+    de: /direkt von\s+den Servern der Locations, Veranstalter und Ticketanbieter geladen/i,
+  },
   // GitHub, not a processor: the notice still has to address a third country, because choosing to
   // open an issue rather than write an email sends data to a US company.
   { what: 'third-country transfer — GitHub only', en: /US company/, de: /US-Unternehmen/ },
@@ -231,6 +248,14 @@ const FOR_VENUES_ELEMENTS: Element[] = [
     what: 'that the objected-to material is deleted rather than hidden',
     en: /delete\s+the material you objected to from our database/i,
     de: /löschen das beanstandete Material aus der Datenbank/i,
+  },
+  // PR 6 built the route that makes this true (`DELETE /api/admin/images/venues/{slug}`). Under
+  // hotlinking a takedown propagated by itself; now a stored object outlives it unless something
+  // deletes it, so the page may only promise this while that endpoint exists.
+  {
+    what: 'that the stored copies of a venue\'s images are deleted too',
+    en: /delete the stored copies of your images/i,
+    de: /löschen die gespeicherten Kopien eurer Bilder/i,
   },
   {
     what: 'that no reason is asked for',

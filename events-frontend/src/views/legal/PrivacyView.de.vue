@@ -42,6 +42,11 @@ const { t } = useI18n()
         ausgeliefert und geschützt werden kann, und dein Browser merkt sich, ob du helle oder dunkle
         Darstellung gewählt hast.
       </p>
+      <p>
+        <strong>Bilder sind die eine Ausnahme.</strong> Ein Teil von ihnen wird direkt von den
+        Servern der Locations und Veranstalter geladen, die dabei deine IP-Adresse erfahren.
+        Abschnitt 5 sagt, welche das sind und was wir dagegen tun.
+      </p>
     </section>
 
     <section>
@@ -156,6 +161,15 @@ const { t } = useI18n()
         E-Mail im nächsten Absatz.
       </p>
       <p>
+        <strong>Bilder:</strong> Zu ihren Veranstaltungen veröffentlichen Locations und Veranstalter
+        Bilder. Event Junkie lädt diese Bilder herunter und speichert eine Kopie auf eigenen Servern
+        bei Hetzner, statt sie bei jedem Seitenaufruf erneut beim Anbieter anzufragen.
+        Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Das berechtigte Interesse ist eine
+        Auslieferung ohne Beteiligung Dritter und eine geringere Last für die Server der Locations.
+        Die Kopie wird gelöscht, sobald die Location aussteigt oder eine Rechteinhaberin das
+        verlangt, und danach nicht erneut geladen.
+      </p>
+      <p>
         <strong>Wenn du Künstlerin oder Künstler bist</strong> und möchtest, dass dein Name entfernt
         oder korrigiert wird, schreib an
         <a :href="`mailto:${CONTROLLER.email}`">{{ CONTROLLER.email }}</a>
@@ -181,6 +195,19 @@ const { t } = useI18n()
         Deine Anfrage erreicht unsere Server in Deutschland direkt. An der Auslieferung dieser Seite
         ist damit kein Drittland beteiligt, und es gibt keinen Übermittlungsmechanismus, den wir
         offenlegen müssten.
+      </p>
+      <p>
+        <strong>Für Bilder gilt das nicht durchgängig.</strong> Ein Teil der Bilder wird direkt von
+        den Servern der Locations, Veranstalter und Ticketanbieter geladen. Dein Browser fragt sie
+        dort an, und der jeweilige Server erfährt dabei deine IP-Adresse sowie über den Referer,
+        welche Seite du gerade ansiehst. Diese Anbieter sind keine Auftragsverarbeiter: Wir
+        beauftragen sie nicht, sondern verweisen auf ihre Bilder.
+      </p>
+      <p>
+        Für Veranstaltungsbilder speichern wir inzwischen eine eigene Kopie (Abschnitt 4), damit sie
+        künftig von unseren Servern kommen. Bilder von Locations, Künstlerinnen und Künstlern sowie
+        Veranstaltern werden weiterhin bei den Anbietern geholt. Wenn du das vermeiden willst,
+        blockiert ein Inhaltsblocker im Browser diese Anfragen.
       </p>
       <p>
         Wenn du uns per E-Mail schreibst oder ein Issue auf GitHub eröffnest, werden diese Daten zur

@@ -11,9 +11,9 @@
 
 1. **We aggregate and link back. We do not republish.** Every event carries a link to its source page.
 2. **We take facts.** A title, a date, a start time, a venue and an artist list are the fields the product needs.
-3. **We display the venue's description, and we hotlink the venue's image.** §3.1 and §3.6 explain why those two are
-   the weakest parts of this position. **A source can now forbid either one**, and §3.1 says what we do until a source
-   is reviewed.
+3. **We display the venue's description, and we keep a copy of the venue's event image.** §3.1 and §3.6 explain why
+   those two are the weakest parts of this position. The copy is a reproduction, which embedding was not. **A source
+   can now forbid either one**, and §3.1 says what we do until a source is reviewed.
 4. **We are polite.** One entry page per source, once per day, with a delay between requests and conditional requests on
    top.
 5. **A venue can ask us to stop, and we stop.** §5 is the route.
@@ -58,8 +58,13 @@ a short page, or on a page that reaches the past. ADR-007 permits that as a per-
 hold `PERMITTED`, `PROHIBITED`, `UNCLEAR` or nothing at all. The BFF withholds the matching field on `PROHIBITED` and
 shows it otherwise. §3.1 explains that rule and what it accepts.
 
-**The image is hotlinked and not copied.** The `src` attribute points at the venue's own server, so the visitor's
-browser fetches it from there. §3.6 covers what follows.
+**Event images are copied, not hotlinked.** The importer downloads each one and stores it in a bucket. The site
+serves it from our own origin wherever the copy is in use. That is a reproduction under § 16 UrhG, which embedding is
+not. [ADR-019](adr/ADR-019_VENUE_IMAGE_DELIVERY.md) made that trade deliberately, and §3.6 sets out what we gave up.
+
+**Venue, artist and promoter images are still hotlinked**, because the importer only ever offers `event.image_url` to
+the fetcher. Four render sites therefore still point a visitor's browser at a server we do not operate. That is the
+remaining half of the gap in §4, and [#833](https://github.com/enorm-labs/event-junkie/issues/833) owns it.
 
 **`robots.txt` is read on every request, and a disallow blocks it.** `RobotsTxtFilter` sits on the shared scraper
 client, so each outbound request is checked against the host's rules. `RobotsRulesCache` reads the file once per host
@@ -190,30 +195,35 @@ An artist name is personal data when it identifies a person, and many do.
 [LEGAL.md §7.3](LEGAL.md#73-artists-are-people) carries that analysis, the Art. 6 (1) (f) balancing, and the Art. 21
 objection route. This document does not repeat it.
 
-### 3.6 Hotlinked images
+### 3.6 Images — a reproduction, on purpose
 
-**Our position:** embedding is weaker ground than the rest of this document. It also raises a privacy question we do
-not answer today.
+**Our position:** we copy an event image to our own servers, and this is the weakest ground in this document. We took
+it knowingly, because the alternative was worse for the visitor.
 
-The image is not copied to our server. The page carries an `<img>` tag whose `src` is the venue's URL, so the venue
-serves the file to the visitor.
+**What we do.** The importer downloads the file, stores it under a content hash, and derives the sizes the site
+renders. The visitor's browser then fetches it from us. `event.image_url` keeps the venue's URL as provenance, and a
+browser never receives it while the copy is in use.
 
-**Copyright.** The CJEU treats an embedded image from a freely accessible page as no new communication to the public,
-following _Svensson_ (C-466/12) and _BestWater_ (C-348/13). _VG Bild-Kunst_ (C-392/19) limits that where the rights
-holder applies technical protection measures. We apply none of our own and we circumvent none, so we read the
-embedding as permitted. We do not treat that reading as settled.
+**The switch-over runs per environment**, so a deployment that stores no images yet still embeds them. Both privacy
+notices describe the two states, because a notice has to be true of the deployment a reader is looking at.
 
-**Load on the venue.** Hotlinking sends every visitor request for the image to the venue's server. That is the one
-place where our traffic scales with our own popularity rather than with the import schedule. It is the opposite of the
-politeness §3.4 claims.
+**Copyright, and what we gave up.** Embedding is not a communication to the public, following _Svensson_ (C-466/12)
+and _BestWater_ (C-348/13). Copying is a reproduction under § 16 UrhG, and no case law makes it free. **We had the
+stronger copyright position and left it.** A licence question per source replaces it. `image_licence` on
+`event_source` records whether a venue permits the field, and `PROHIBITED` stops both the storage and the display. An
+unreviewed source is treated as permitted, and §3.1 sets out what that accepts.
 
-**Privacy.** The visitor's browser discloses their IP address to the venue, and we never told the visitor that.
-[AGENTS.md](../AGENTS.md) treats any outbound frontend request to a domain we do not operate as a trigger to update the
-privacy notice. That update did not happen, so the notice is incomplete today.
+**Why we took the trade.** Hotlinking sent every visitor request to the venue's server, so our load on a venue grew
+with our own popularity. That is the opposite of the politeness §3.4 claims. It also disclosed the visitor's IP
+address, and the page they read, to a party they never chose. A copy removes both, and ADR-019 compares the two in
+full.
 
-**A cache or a proxy resolves the load and the privacy point, and it weakens the copyright point.** Serving the file
-ourselves is a reproduction under § 16 UrhG, which embedding avoids. The three questions therefore trade against each
-other and need one decision.
+**What the copy obliges.** A takedown no longer propagates by itself. Under hotlinking the venue deleted the file and
+it was gone everywhere. Now something of ours has to delete it, and §5 is that route — a working endpoint rather than
+an intention.
+
+**It is not finished.** Venue, artist and promoter images are never offered to the fetcher, so they are still embedded
+and still disclose the visitor's IP address. §4 carries that as a gap.
 
 ## 4. The gaps we know about
 
@@ -224,8 +234,11 @@ Three things weaken the position above. Each has an owner or needs one.
    review itself remains, source by source, and every source is unreviewed today. Owned by
    [#283](https://github.com/enorm-labs/event-junkie/issues/283) and
    [#364](https://github.com/enorm-labs/event-junkie/issues/364).
-2. **The privacy notice does not mention hotlinked images** (§3.6). The visitor's IP address reaches a venue we do not
-   operate, and the notice is silent about it.
+2. **Some images are still embedded, and the visitor's IP address still reaches a venue** (§3.6). **Narrowed, not
+   closed.** The notice now says so in both languages, which is what
+   [#792](https://github.com/enorm-labs/event-junkie/issues/792) asked for. The disclosure itself continues for venue,
+   artist and promoter images, because the fetcher reads `event.image_url` and no other column. Owned by
+   [#833](https://github.com/enorm-labs/event-junkie/issues/833).
 3. **Import time is an interval, not a window.** ADR-007 best-practice #7 asks for early-morning scrapes.
    `ScheduledImportService` fires when `lastImportAt` plus the interval expires, which drifts across the day.
 
@@ -234,14 +247,19 @@ Three things weaken the position above. Each has an owner or needs one.
 **A venue operator who wants out gets out.** We do not ask for a reason and we do not argue the law with them.
 
 1. The operator writes to `hello@event-junkie.de` and names the venue.
-2. We disable the source. `EventSourceEntity.enabled` is the switch and it stops the importer.
-3. We remove the venue's events from the database.
-4. We answer to confirm, within seven days.
+2. We delete the stored copies of that venue's images, with `DELETE /api/admin/images/venues/{slug}`.
+3. We disable the source. `EventSourceEntity.enabled` is the switch and it stops the importer.
+4. We remove the venue's events from the database.
+5. We answer to confirm, within seven days.
+
+**Step 2 comes before steps 3 and 4, and the order is not cosmetic.** The stored images are found through the venue's
+events, so clearing `image_url` or deleting the events first leaves nothing to join on. The orphan sweep collects them
+either way, on its own schedule rather than now. `docs/ops/DAILY_COMMANDS.md` carries the commands.
 
 **A narrower remedy exists, and it is often the one an operator wants.** An objection to the photographs alone, or to
 the description alone, sets `image_licence` or `description_licence` to `PROHIBITED` on that source (§3.1). We delete
-that field from the venue's stored events, and we do not import it again. The events stay. Nobody has to lose a listing
-to remove one thing they mind.
+that field from the venue's stored events, and we do not import it again. For images that includes the stored copies.
+The events stay. Nobody has to lose a listing to remove one thing they mind.
 
 A `robots.txt` rule that disallows the pages we read has the same effect and needs no message.
 
