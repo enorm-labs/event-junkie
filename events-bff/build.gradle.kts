@@ -93,6 +93,11 @@ dependencies {
     }
     implementation("software.amazon.awssdk:netty-nio-client:${property("awssdk.version")}")
 
+    // The read-through cache in front of that bucket (#847). Version-managed by Boot's BOM, so this
+    // pin does not exist and cannot go stale. Hetzner Object Storage is Ceph on spinning disks, so a
+    // miss is a seek — and without a cache every first visitor to a page pays one per image.
+    implementation("com.github.ben-manes.caffeine:caffeine")
+
     // Logging — idiomatic SLF4J wrapper (see: https://github.com/oshai/kotlin-logging)
     implementation("io.github.oshai:kotlin-logging-jvm:${property("kotlin-logging.version")}")
 

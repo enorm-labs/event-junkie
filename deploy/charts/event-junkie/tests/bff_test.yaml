@@ -92,3 +92,28 @@ tests:
       - notMatchRegex:
           path: "$.spec.template.spec.containers[0].env[*].name"
           pattern: "^IMAGE_STORAGE_PREFIX$"
+      # The read-through cache in front of the bucket (#847). The name is one word on both sides:
+      # Boot maps a dashed property by removing the dash, so `max-size` would need
+      # APP_IMAGES_CACHE_MAXSIZE and the obvious spelling would bind to nothing.
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_IMAGES_CACHE_SIZE
+            value: "32MB"
+
+  # A cache sized for a workload that is not running is heap taken from everything else.
+  - it: sizes no image cache while serving is off
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: true
+      images.storage.prefix: "staging"
+      images.serving.enabled: false
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - notMatchRegex:
+          path: "$.spec.template.spec.containers[0].env[*].name"
+          pattern: "^APP_IMAGES_CACHE_SIZE$"

@@ -80,6 +80,10 @@ spec:
                    build one for the wrong environment. */}}
             - name: APP_IMAGES_SERVING_ENABLED
               value: "true"
+            {{- /* Only set where serving is on: nothing reads the bucket otherwise, and a cache
+                   sized for a workload that is not running is memory taken from the heap. */}}
+            - name: APP_IMAGES_CACHE_SIZE
+              value: {{ .Values.images.cacheSize | quote }}
             - name: IMAGE_STORAGE_ENDPOINT
               value: {{ .Values.images.storage.endpoint | quote }}
             - name: IMAGE_STORAGE_REGION

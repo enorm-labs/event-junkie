@@ -18,6 +18,7 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.S3Configuration
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import java.net.URI
 import java.time.Duration
@@ -273,6 +274,46 @@ class CachedImageServingTest : BaseControllerTest() {
                 .isEmpty()
         }
 
+    @Test
+    @DisplayName("a second request for the same object never reaches the bucket")
+    fun `the object is served from memory once it has been read`(): Unit =
+        runBlocking {
+            val key = derivedKey(CACHED_HASH, 288, "jpg")
+            insertCachedImage(CACHED_URL, CACHED_HASH, listOf(288))
+            putObject(key, POSTER)
+
+            webTestClient
+                .get()
+                .uri("/images/$CACHED_HASH/288.jpg")
+                .exchange()
+                .expectStatus()
+                .isOk
+
+            // Taking the object away is the assertion. A read-through answers 404 here, so the
+            // test fails loudly. Counting `getObject` calls would only prove a number.
+            deleteObject(key)
+
+            webTestClient
+                .get()
+                .uri("/images/$CACHED_HASH/288.jpg")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .consumeWith { assertContentEquals(POSTER, it.responseBody) }
+        }
+
+    private suspend fun deleteObject(key: String) {
+        s3
+            .deleteObject(
+                DeleteObjectRequest
+                    .builder()
+                    .bucket(BUCKET)
+                    .key(key)
+                    .build()
+            ).await()
+    }
+
     private suspend fun putObject(
         key: String,
         bytes: ByteArray
@@ -296,6 +337,10 @@ class CachedImageServingTest : BaseControllerTest() {
 
         private const val LOGO_URL = "https://venue.test/logo.jpg"
         private const val LOGO_HASH = "9e8d7c6b5a4938271605f4e3d2c1b0a99e8d7c6b5a4938271605f4e3d2c1b0a9"
+
+        /** Its own hash, because the cache outlives one test method and a shared key would leak. */
+        private const val CACHED_URL = "https://venue.test/cached.jpg"
+        private const val CACHED_HASH = "5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c"
 
         /** A row whose object was never put in the bucket. */
         private const val ORPHAN_HASH = "1a2b3c4d5e6f708192a3b4c5d6e7f8090f4b2c1d5e6a7b8c9d0e1f2a3b4c5d6e"

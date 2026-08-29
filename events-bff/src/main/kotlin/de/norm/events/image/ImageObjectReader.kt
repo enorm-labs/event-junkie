@@ -20,16 +20,26 @@ import software.amazon.awssdk.services.s3.model.NoSuchKeyException
  * **Only derivatives are ever read.** The key comes from a `cached_image_variant` row, and nothing
  * in this module can name the `originals/` prefix — which is what keeps an original's EXIF, and the
  * bytes a venue actually served, off the wire (ADR-020 §"What this obliges").
+ *
+ * **The bucket is behind [ImageObjectCache]**, so a key served recently costs no round trip at all.
+ * Object Storage is Ceph on hard disks, so a miss is a seek (#847).
  */
 @Component
 class ImageObjectReader(
     private val client: S3AsyncClient?,
-    private val properties: ImageServingProperties
+    private val properties: ImageServingProperties,
+    private val cache: ImageObjectCache
 ) {
     private val logger = KotlinLogging.logger {}
 
-    /** Fetches [storageKey], distinguishing the three outcomes a caller has to answer differently. */
-    suspend fun read(storageKey: String): ImageObject {
+    /**
+     * Returns [storageKey], distinguishing the three outcomes a caller has to answer differently.
+     *
+     * Reads through [ImageObjectCache], so a key this process served recently costs no round trip.
+     */
+    suspend fun read(storageKey: String): ImageObject = cache.get(storageKey, ::fetch)
+
+    private suspend fun fetch(storageKey: String): ImageObject {
         val s3 = client ?: return ImageObject.Unavailable
 
         return try {
