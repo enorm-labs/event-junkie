@@ -39,8 +39,23 @@ collide. Overlapping ranges fail in a way that looks like a firewall problem for
 (#270) — and the firewall admits nothing. So it is reached through the k3s node, and every command against it needs a jump:
 
 ```sh
-ssh -i ~/.ssh/id_ed25519_hetzner -J ops@10.10.0.1 ops@10.0.1.20
+ssh -J ops@10.10.0.1 ops@10.0.1.20
 ```
+
+**`-i` does not reach the jump host, so put the key in `~/.ssh/config` instead.** ProxyJump opens a second, separate connection to `10.10.0.1`, and
+`ssh(1)` says that command-line options apply to the destination host and not to a jump host. So `ssh -i <key> -J ops@10.10.0.1 ops@10.0.1.20` offers the key
+to the database node and never to the jump. The result is `ops@10.10.0.1: Permission denied (publickey)`, which reads as a key problem on the wrong machine.
+
+This block fixes it for every command on this page, and is why the jump above carries no `-i`:
+
+```
+Host 10.10.0.1 10.10.1.1 10.0.1.20
+    User ops
+    IdentityFile ~/.ssh/id_ed25519_hetzner
+    IdentitiesOnly yes
+```
+
+`ssh-add ~/.ssh/id_ed25519_hetzner` also works, because the agent offers the key to both hops. It lasts until the agent forgets the key.
 
 **Production is dark, and that is a state rather than a stage.** `publish_dns` in `infra/environments/production/variables.tf` defaults to `false`. The apex and
 `www` therefore resolve to nothing. A throwaway `prod-check` record points at the node, so you can exercise TLS before launch. Flipping that variable is the launch.
@@ -448,7 +463,8 @@ was selected before. That mattered less when the only clusters were local. It ma
 |                                                |                                                                                                                                                                                                                   |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`kubectl` fails right after `ssh`**          | You are in the ssh session on the node. The kubeconfig is on your laptop. Symptom is `localhost:8080 connection refused` plus `permission denied` on `config.yaml.d`. On the node itself it is `sudo k3s kubectl` |
-| **`Permission denied (publickey)`**            | ssh is offering the wrong key. Needs `-i`; check with `ssh-add -l`                                                                                                                                                |
+| **`Permission denied (publickey)`**            | ssh is offering the wrong key. Needs `-i`, and `ssh-add -l` says what the agent holds                                                                                                                             |
+| **`ops@10.10.0.1: Permission denied`**         | The **jump** host refused, not the target. `-i` applies to the destination only, so a jump host never sees it. The `~/.ssh/config` block in §_Two environments_ is the fix                                        |
 | **Everything hangs**                           | The tunnel, not the cluster. `sudo wg show` — no `latest handshake` means no tunnel                                                                                                                               |
 | **`staging.event-junkie.de` does not resolve** | Correct — it has no public record. Map it to `10.10.1.1` in `/etc/hosts`                                                                                                                                          |
 | **Certificate warning in the browser**         | Also correct. Staging issues from Let's Encrypt's _staging_ CA so the production rate limit is not burned — see CLUSTER_BOOTSTRAP §11                                                                             |
