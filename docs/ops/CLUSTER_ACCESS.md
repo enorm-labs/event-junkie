@@ -232,17 +232,22 @@ content-type: text/html
 
 ### What each path should do
 
-Worth knowing, because two of these look wrong and are not:
+Worth knowing, because three of these look wrong and are not:
 
 |                    |                                                                                                                                       |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `/`                | `200` — the frontend                                                                                                                  |
 | `/api/events`      | `200` — the BFF, which serves under `/api` itself; there is no rewrite                                                                |
 | `/api/admin`       | **`404`** — correct. The importer's admin API has no ingress backend at all                                                           |
+| `/events`          | **`200`, but from nginx** — a BFF path without `/api` is the SPA catch-all again, not the BFF. See the note below                     |
 | `/actuator/health` | **`200`, but from nginx** — the SPA catch-all, _not_ the actuator. Check `server:` and the body before concluding anything is exposed |
 
-That last row is the one that looks alarming. Actuator lives on its own port, which no ingress rule names. Any unmatched path falls through to the frontend's
-SPA fallback and returns the index page with a `200`.
+The last two rows are the ones that look alarming. Actuator lives on its own port, which no ingress rule names. Any unmatched path falls through to the
+frontend's SPA fallback and returns the index page with a `200`.
+
+**That fallback is why a missing `/api` is so hard to see.** The BFF serves the prefix itself, so `/events` matches no BFF route and no `/api` ingress rule. It
+matches `/` instead, reaches the frontend, and answers `200` with the SPA shell. A client that only reads the status code cannot tell that from a working API.
+A client that parses the body gets HTML where it expected JSON. Check `content-type` before you believe a `200` from this host.
 
 ## 6a · The importer's admin API, and seeding staging
 
@@ -267,8 +272,16 @@ staging unchanged:
 cd http && ijhttp --env-file http-client.env.json --env staging importer/dev-seed.http
 ```
 
-`bff-host` in the same environment is the real `https://staging.event-junkie.de`, through Traefik. The read path _does_ have an ingress, so there is no reason
-to bypass it. It needs `/etc/hosts` (§6) and **`ijhttp --insecure`**, because the certificate comes from Let's Encrypt's staging CA.
+`bff-host` in the same environment is the real `https://staging.event-junkie.de/api`, through Traefik. The read path _does_ have an ingress, so there is no
+reason to bypass it. It needs `/etc/hosts` (§6) and **`ijhttp --insecure`**, because the certificate comes from Let's Encrypt's staging CA.
+
+**The `/api` on the end is load-bearing, and it is the one difference between the two environments.** On a cluster the BFF serves that prefix itself —
+`spring.webflux.base-path`, set from `bff.basePath` in the chart — so the ingress needs no rewrite. A local `bootRun` has no prefix at all. Putting it in the
+host variable keeps every file under `http/bff/` identical for both environments. Do not add `/api` to the request lines as well, or the staging environment
+asks for `/api/api/events`.
+
+One request is local-only even so: `http/bff/health-and-openapi.http` reaches the actuator, and the chart moves that to a port no ingress names (§7 of
+PLATFORM_SETUP). The file says so where the request is.
 
 `scripts/dev-env.sh seed-all` is deliberately not the way to do this. It hardcodes `--env local` and health-checks a local importer first, which is what keeps
 it from ever reaching a real cluster.

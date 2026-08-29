@@ -1,8 +1,18 @@
 ### ============================================================
 ### Health & OpenAPI — events-bff (port 8080)
+###
+### `bff-host` already carries the base path, so no request here
+### spells one. It is empty locally and `/api` on a cluster,
+### because Spring serves the prefix there and not locally.
 ### ============================================================
 
-### Health check (Actuator)
+### Health check (Actuator) — LOCAL ONLY
+###
+### The chart moves the actuator to MANAGEMENT_SERVER_PORT=9001, which no
+### ingress rule names, so this cannot answer on a cluster by design. Against
+### `staging` it returns 404 from the BFF, which is the honest answer — before
+### `bff-host` carried `/api` the same request fell through to the frontend's
+### SPA fallback and returned 200, which read as a healthy actuator.
 GET {{bff-host}}/actuator/health
 Accept: application/json
 
