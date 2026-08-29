@@ -144,9 +144,15 @@ The hooks live in the shared `.git` directory, so they are already active in eve
 ./gradlew :events-bff:bootRun
 ```
 
-`bootRun` also starts the services in [`compose.yaml`](../compose.yaml) — currently just PostgreSQL — via Spring
-Boot's [Docker Compose support](https://docs.spring.io/spring-boot/reference/features/dev-services.html#features.dev-services.docker-compose). IntelliJ run
-configurations work the same way.
+`bootRun` also starts the services in [`compose.yaml`](../compose.yaml) — PostgreSQL and MinIO — via Spring
+Boot's [Docker Compose support](https://docs.spring.io/spring-boot/reference/features/dev-services.html#features.dev-services.docker-compose).
+
+**`bootRun` runs with the module as its working directory, and `compose.yaml` is at the repository root.** Spring therefore cannot find it on its own. The root
+`build.gradle.kts` sets `spring.docker.compose.file` on every `bootRun` task, which is what makes the commands above work. Do not remove it: without it the
+application stops at startup with `No Docker Compose file found in directory '.../events-importer/.'`.
+
+An IntelliJ run configuration that starts the application directly does not go through Gradle, so it does not get that setting. If it stops with the same
+message, set its working directory to the repository root.
 
 Ports: importer `8081`, BFF `8080`, frontend `5173`, Postgres `56298`.
 

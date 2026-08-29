@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import org.springframework.boot.gradle.dsl.SpringBootExtension
 import org.springframework.boot.gradle.tasks.bundling.BootJar
+import org.springframework.boot.gradle.tasks.run.BootRun
 
 // Centralized dependency versions live in `gradle.properties` – change them there to update
 // all subprojects at once.
@@ -285,6 +286,19 @@ subprojects {
     }
     tasks.withType<JavaExec> {
         jvmArgs("--enable-native-access=ALL-UNNAMED")
+    }
+    // `bootRun` runs with the *module* as its working directory, and `compose.yaml` is at the repo
+    // root, so Spring's Docker Compose support looked one directory too deep and the app died at
+    // startup with "No Docker Compose file found in directory '.../events-importer/.'". Pointing it
+    // at the root file is what makes the documented `./gradlew :events-importer:bootRun` start its
+    // own database, which is what README.md and DEVELOPMENT.md have always claimed it does.
+    //
+    // A system property rather than `args(...)`, because Gradle's `--args=` *replaces* configured
+    // arguments. `scripts/dev-env.sh` passes its own `--spring.docker.compose.file`, and a command
+    // line argument outranks a system property, so the script keeps full control and anyone else
+    // passing unrelated `--args` does not silently lose the database.
+    tasks.withType<BootRun>().configureEach {
+        systemProperty("spring.docker.compose.file", rootProject.file("compose.yaml").absolutePath)
     }
 }
 
