@@ -102,6 +102,16 @@ helm unittest --strict deploy/charts/event-junkie
 scripts/cluster-assertions.sh
 ```
 
+### The Content-Security-Policy (when the diff touches `deploy/`, `events-frontend/index.html` or `events-frontend/scripts/csp.ts`)
+
+```bash
+scripts/csp-parity.sh
+```
+
+The policy is written twice — the chart sends the header, and `events-frontend/scripts/csp.ts` applies the same one to `npm run preview` so the Playwright
+suite runs against it. The script compares the two lists and recomputes the `script-src` hash from the inline theme script in `index.html`. Editing that
+script without the policy blocks it, and the only symptom is a light-mode flash on every load (#846).
+
 `helm unittest` needs the plugin, which is not installed by default:
 
 ```bash

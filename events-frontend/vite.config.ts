@@ -13,6 +13,7 @@ import vueI18n from '@intlify/unplugin-vue-i18n/vite'
 // Those three imports carry an extension and the rest of the repo does not; see
 // events-frontend/AGENTS.md §Config-loader imports.
 import { seoFiles } from './scripts/seoFiles.ts'
+import { contentSecurityPolicy } from './scripts/csp.ts'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -31,6 +32,20 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  // **`preview`, not `server`.** `npm run preview` serves the real `dist/`, and it is what
+  // Playwright starts on CI (`playwright.config.ts` switches on `process.env.CI`) — so the e2e
+  // suite runs against the policy the cluster will send. The dev server is deliberately left
+  // without it: `@vitejs/plugin-vue` injects styles inline there, which no correct policy allows,
+  // so applying it to `npm run dev` would test the dev server rather than the site.
+  //
+  // `'self'` rather than the `'self' https:` a serving-off deployment sends, on purpose. The strict
+  // value is the one worth failing on, and a test that is stricter than production is the right way
+  // round. See `scripts/csp.ts`, and `values.yaml` for what the chart derives.
+  preview: {
+    headers: {
+      'Content-Security-Policy': contentSecurityPolicy("'self'"),
     },
   },
   server: {

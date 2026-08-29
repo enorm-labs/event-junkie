@@ -31,10 +31,19 @@
 
        - **X-XSS-Protection** (`browserXssFilter`). Removed from every current browser, and in its
          last implementations it introduced vulnerabilities of its own. Setting it is cargo cult.
-       - **Content-Security-Policy.** It belongs here eventually and it is not a header you add
-         blind: the SPA's own inline styles and the exact set of origins it may talk to have to be
-         enumerated first, and a wrong CSP is a blank page rather than a warning. It needs its own
-         issue and a report-only period, not a line in this file. */}}
+       THE ONE HERE THAT DEPENDS ON SOMETHING ELSE BEING TRUE:
+
+       - **Content-Security-Policy.** `img-src` is the directive that costs something. A site that
+         hotlinks can name any venue domain in an `<img src>`, so its only workable rule permits the
+         whole web. Caching the images (ADR-019) is what makes a strict one reachable, and #845
+         fixes which origin it names.
+
+         **It renders from a list rather than being written out here**, because a second copy lives
+         in `events-frontend/scripts/csp.ts` and applies the policy to `npm run preview` — the server
+         the Playwright suite runs against. `scripts/csp-parity.sh` holds the two together, and
+         recomputes the `script-src` hash from `index.html`.
+
+         values.yaml carries the report-only default and the reason for it. */}}
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -43,7 +52,7 @@ metadata:
     {{- include "event-junkie.labels" $args | nindent 4 }}
   annotations:
     kubernetes.io/description: >-
-      HSTS, nosniff, frame-deny and a referrer policy on every response. Response headers have no Ingress API equivalent.
+      A content security policy, HSTS, nosniff, frame-deny and a referrer policy on every response. Response headers have no Ingress API equivalent.
 spec:
   headers:
     {{- /* `stsSeconds: 0` means "do not send the header at all", which is why the value is
@@ -62,4 +71,19 @@ spec:
     contentTypeNosniff: true
     frameDeny: true
     referrerPolicy: {{ .Values.ingress.securityHeaders.referrerPolicy | quote }}
+    {{- with .Values.ingress.securityHeaders.contentSecurityPolicy }}
+    {{- if .enabled }}
+    {{- /* `img-src` is composed here and configured nowhere, so the header cannot contradict the
+           deployment it is sent from. With serving off, `CachedImageGate` returns the venue's own
+           URL and a `'self'` policy would blank every image on the site — a failure that would look
+           like the image cache being broken rather than like a header being wrong. */}}
+    {{- $imgSrc := ternary "'self'" "'self' https:" $.Values.images.serving.enabled }}
+    {{- $policy := printf "%s; img-src %s" (join "; " .directives) $imgSrc }}
+    {{- if .reportOnly }}
+    contentSecurityPolicyReportOnly: {{ $policy | quote }}
+    {{- else }}
+    contentSecurityPolicy: {{ $policy | quote }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
 {{- end }}

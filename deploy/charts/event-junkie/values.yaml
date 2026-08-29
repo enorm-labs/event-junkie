@@ -248,6 +248,48 @@ ingress:
     # use — knowing that a visitor arrived from another site at all. Event URLs carry slugs that
     # describe what somebody was looking at, so this is a privacy setting as much as a security one.
     referrerPolicy: "strict-origin-when-cross-origin"
+    # ingress.securityHeaders.contentSecurityPolicy is the header the image cache made possible
+    # (#846). While the site hotlinked, any venue domain could appear in an `<img src>`, so the only
+    # workable `img-src` was one that permitted the whole web — which is not a rule. ADR-019 named a
+    # strict one as a thing caching buys, and #845 settled which origin it names.
+    contentSecurityPolicy:
+      enabled: true
+      # ingress.securityHeaders.contentSecurityPolicy.reportOnly sends
+      # `Content-Security-Policy-Report-Only` instead, which a browser evaluates and complains about
+      # without blocking anything. **On by default, and the default is the cautious one on purpose**:
+      # a wrong CSP is a blank page rather than a warning, and the middleware template has asked for
+      # a report-only period since it was written. Turn it off per environment once a release has
+      # been loaded in a browser with the console open.
+      reportOnly: true
+      # The directives, in one list because a header is one string. **`img-src` is not here** — it is
+      # the one directive that depends on whether this deployment serves its own images, so the
+      # template derives it from `images.serving.enabled` below rather than letting the two disagree.
+      # With serving off the API hands out the venue's own URL, and `'self'` would blank every image
+      # on the site.
+      #
+      # **The second copy is `events-frontend/scripts/csp.ts`**, which applies the same list to
+      # `npm run preview` so the e2e suite runs against it. `scripts/csp-parity.sh` fails when the
+      # two drift, and when the `sha256-` below stops matching the inline script in
+      # `events-frontend/index.html`.
+      directives:
+        - "default-src 'self'"
+        - "base-uri 'self'"
+        - "object-src 'none'"
+        - "frame-src 'none'"
+        # What `frameDeny` above says, to browsers that stopped reading X-Frame-Options.
+        - "frame-ancestors 'none'"
+        - "form-action 'self'"
+        # The hash is of the theme script in `events-frontend/index.html`, which runs before first
+        # paint so a reload never flashes the wrong mode. A nonce cannot work here: this header is
+        # one static string on every response, and a nonce has to be new on each one.
+        - "script-src 'self' 'sha256-tbzDDqTc7a2d6gVi/Drd9uDCYWdCxXMJEWzje2jcSrQ='"
+        # No `'unsafe-inline'`, which is rare enough to be worth stating: the SPA has no `:style`
+        # bindings and no literal `style` attributes, and the build emits one stylesheet.
+        - "style-src 'self'"
+        # Both self-hosted, which is the same fact the privacy notice states as embedding no fonts
+        # and contacting no third party.
+        - "font-src 'self'"
+        - "connect-src 'self'"
 
 # networkPolicy closes PLATFORM_SETUP §8 item 1: k3s enforces NetworkPolicy, and enforcement being
 # *on* means nothing while every pod may talk to every pod. One default-deny plus one named
