@@ -204,7 +204,7 @@ tests:
 
   # --- Response headers -------------------------------------------------------------------------
 
-  - it: the security headers middleware sets all four, and none of the ones that are wrong to set
+  - it: the security headers middleware sets the four it always sent, and none of the ones that are wrong to set
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
@@ -245,6 +245,69 @@ tests:
       # place that fails rather than in a comment that does not.
       - notExists:
           path: spec.headers.browserXssFilter
+
+  # The policy is report-only by default, and `img-src` is derived rather than configured (#846).
+  # Both halves are here because both are ways to blank a live site: an enforced policy nobody has
+  # watched in a browser, and a strict `img-src` on a deployment that still hands out venue URLs.
+  - it: the content security policy reports rather than blocks, and permits venue images while serving is off
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-event-junkie-security-headers
+    asserts:
+      - notExists:
+          path: spec.headers.contentSecurityPolicy
+      - matchRegex:
+          path: spec.headers.contentSecurityPolicyReportOnly
+          pattern: "img-src 'self' https:$"
+      # The hash allows the theme script in events-frontend/index.html. A policy that lost it stays
+      # valid, renders, and drops the site to a light-mode flash on every load.
+      - matchRegex:
+          path: spec.headers.contentSecurityPolicyReportOnly
+          pattern: "script-src 'self' 'sha256-[A-Za-z0-9+/]+='"
+      - matchRegex:
+          path: spec.headers.contentSecurityPolicyReportOnly
+          pattern: "^default-src 'self';"
+
+  - it: turning report-only off enforces it, and serving our own images narrows img-src to self
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.serving.enabled: true
+      ingress.securityHeaders.contentSecurityPolicy.reportOnly: false
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-event-junkie-security-headers
+    asserts:
+      - notExists:
+          path: spec.headers.contentSecurityPolicyReportOnly
+      - matchRegex:
+          path: spec.headers.contentSecurityPolicy
+          pattern: "img-src 'self'$"
+
+  # The rest of the middleware has to survive it, because the policy is the one header here that a
+  # deployment might reasonably switch off in a hurry.
+  - it: turning the policy off leaves the other headers alone
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      ingress.securityHeaders.contentSecurityPolicy.enabled: false
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-event-junkie-security-headers
+    asserts:
+      - notExists:
+          path: spec.headers.contentSecurityPolicy
+      - notExists:
+          path: spec.headers.contentSecurityPolicyReportOnly
+      - equal:
+          path: spec.headers.contentTypeNosniff
+          value: true
 
   # --- Metrics scraping (#271) --------------------------------------------------------------------
   #

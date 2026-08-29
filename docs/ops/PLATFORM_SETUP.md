@@ -689,10 +689,35 @@ What had to be added — all of it now in place except where noted:
 | 6   | **Non-root, read-only rootfs, drop ALL capabilities**                    | In the Helm chart's `securityContext`. The JVM and nginx images both cope                                                                                                                  |
 | 7   | **A ServiceAccount per workload, `automountServiceAccountToken: false`** | Default is the namespace's SA with a mounted token — a container escape becomes an API credential                                                                                          |
 | 8   | **SOPS + age for secrets**                                               | Encrypted in git, decrypted at apply. Simpler than Sealed Secrets for one developer, and it survives a cluster rebuild — which Sealed Secrets does not, since the key lives in the cluster |
-| 9   | **Traefik security headers + rate limiting**                             | HSTS, `X-Content-Type-Options`, frame options. **The rate-limit half is still open** — [#268](https://github.com/enorm-labs/event-junkie/issues/268)                                       |
+| 9   | **Traefik security headers + rate limiting**                             | A content security policy, HSTS, `X-Content-Type-Options`, frame options — below. **The rate-limit half is still open** — [#268](https://github.com/enorm-labs/event-junkie/issues/268)    |
 | 10  | **`unattended-upgrades` in cloud-init**                                  | Nobody patches the OS by hand on a Sunday                                                                                                                                                  |
 | 11  | **Trivy in CI on the built images**                                      | Dependabot and OWASP cover dependencies; neither looks at the base image                                                                                                                   |
 | 12  | **Resource requests _and_ limits on every workload**                     | On a single node, one leak takes down everything. This is a security control, not a tuning one                                                                                             |
+
+**Item 9's headers each carry their reason in `deploy/charts/event-junkie/templates/security-headers-middleware.yaml`.** The Content-Security-Policy is the
+one that had to wait for something else to be true, and [#846](https://github.com/enorm-labs/event-junkie/issues/846) added it. While the site hotlinked, any
+venue domain could appear in an `<img src>`. The only workable rule permitted the whole web, which is not a rule. Caching the images
+([ADR-019](../adr/ADR-019_VENUE_IMAGE_DELIVERY.md)) made a strict one reachable.
+
+| Directive                                    | Value                      | Why                                                                                              |
+| -------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------ |
+| `default-src`                                | `'self'`                   | The floor that every directive below narrows                                                     |
+| `script-src`                                 | `'self'` and one `sha256-` | The theme script in `index.html` runs before first paint. A nonce cannot work in a static header |
+| `style-src`                                  | `'self'`                   | No `'unsafe-inline'`. The SPA has no `:style` bindings and no `style` attributes                 |
+| `img-src`                                    | derived                    | `'self'` where the site serves its own images, `'self' https:` where it hands out venue URLs     |
+| `font-src`, `connect-src`                    | `'self'`                   | The fonts are self-hosted, and the only `fetch` is same-origin                                   |
+| `base-uri`, `form-action`                    | `'self'`                   | A relative URL keeps meaning what it says                                                        |
+| `object-src`, `frame-src`, `frame-ancestors` | `'none'`                   | Nothing here embeds anything, and nothing embeds this                                            |
+
+**`img-src` is derived from `images.serving.enabled` and configured nowhere.** With serving off, the API hands out the venue's own URL. A fixed `'self'` would
+blank every image on the site, and the symptom looks like a broken image cache rather than a wrong header.
+
+**The policy is report-only by default.** A wrong policy is a blank page rather than a warning. An environment enforces it after somebody loads the site with
+the browser console open.
+
+**It is written twice, and `scripts/csp-parity.sh` is the gate.** The chart sends the header to a visitor. `events-frontend/scripts/csp.ts` applies the same
+policy to `npm run preview`, which is the server Playwright runs against on CI. The script also recomputes the `script-src` hash from `index.html`, because an
+edit to that script blocks it and the only symptom is a light-mode flash.
 
 **Not needed here:** a service mesh (two services), Falco (no capacity to respond to its findings), and OPA/Kyverno. PSA covers the realistic cases at a
 fraction of the effort.
