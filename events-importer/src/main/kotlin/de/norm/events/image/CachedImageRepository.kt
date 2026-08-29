@@ -77,6 +77,75 @@ interface CachedImageRepository : CoroutineCrudRepository<CachedImageEntity, Lon
         retryBefore: Instant,
         limit: Int
     ): Flow<CachedImageEntity>
+
+    /**
+     * The images one venue's events point at, for the opt-out route in `SCRAPING_POSITION.md` §5.
+     *
+     * Joined through `event` rather than through the source, because a venue can have several
+     * sources and an operator objects to the venue. Already-deleted rows are skipped, so running the
+     * takedown twice is not two deletions.
+     */
+    @Query(
+        """
+        SELECT c.* FROM $EVENTS_SCHEMA.cached_image c
+        WHERE c.deleted_at IS NULL
+          AND EXISTS (
+              SELECT 1 FROM $EVENTS_SCHEMA.event e
+              JOIN $EVENTS_SCHEMA.venue v ON v.id = e.venue_id
+              WHERE e.image_url = c.source_url AND v.slug = :venueSlug
+          )
+        """
+    )
+    fun findByVenueSlug(venueSlug: String): Flow<CachedImageEntity>
+
+    /**
+     * Rows no event points at any more, which is what makes their objects orphans.
+     *
+     * Stale-event cleanup and the `PROHIBITED` licence route both leave these behind, and neither
+     * knows this table exists. A tombstoned row is excluded: a takedown is a decision, and dropping
+     * the row would let the next import fetch the image again.
+     */
+    @Query(
+        """
+        SELECT c.* FROM $EVENTS_SCHEMA.cached_image c
+        WHERE c.deleted_at IS NULL
+          AND NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event e WHERE e.image_url = c.source_url)
+        ORDER BY c.id
+        LIMIT :limit
+        """
+    )
+    fun findUnreferenced(limit: Int): Flow<CachedImageEntity>
+
+    /**
+     * Every content hash still claimed by a row, which is the sweep's whole answer for the bucket.
+     *
+     * A tombstone claims nothing — its objects are meant to be gone — so `deleted_at` is excluded
+     * here even though [findUnreferenced] preserves it.
+     */
+    @Query(
+        """
+        SELECT DISTINCT content_hash FROM $EVENTS_SCHEMA.cached_image
+        WHERE content_hash IS NOT NULL AND deleted_at IS NULL
+        """
+    )
+    fun findLiveContentHashes(): Flow<String>
+
+    /**
+     * Whether another live row still holds [contentHash].
+     *
+     * Keys are the hash of the bytes, so two venues publishing the same file share one object.
+     * Deleting it for one of them would blank the other's card, and the row would go on claiming it.
+     */
+    @Query(
+        """
+        SELECT count(*) FROM $EVENTS_SCHEMA.cached_image
+        WHERE content_hash = :contentHash AND deleted_at IS NULL AND id <> :excludingId
+        """
+    )
+    suspend fun countOtherLiveWithHash(
+        contentHash: String,
+        excludingId: Long
+    ): Long
 }
 
 @Repository

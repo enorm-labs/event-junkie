@@ -78,6 +78,14 @@ app:
     refresh-after: 30d
     retry-failed-after: 7d
     batch-size: 200
+    sweep:
+      # Off means the pass runs every query and logs what it would delete, and deletes nothing. A
+      # deletion rule is watched before it is trusted; the takedown route deletes either way.
+      enabled: ${APP_IMAGES_SWEEP_ENABLED:false}
+      tick-millis: 21600000
+      # An object is stored before its row is written, so it is briefly unreferenced by design.
+      grace-period: 1d
+      max-deletes: 500
     storage:
       # Hetzner Object Storage is S3-compatible. The region is enforced in the request signature and
       # a mismatch fails as though the credentials were wrong, so it matches infra/bootstrap.

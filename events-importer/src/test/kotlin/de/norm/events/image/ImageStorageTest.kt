@@ -39,6 +39,26 @@ class ImageStorageTest {
     }
 
     @Test
+    fun `names the content hash of every key it writes`() {
+        val storage = ImageStorage(client = null, properties = properties)
+
+        storage.contentHashOf(storage.originalKey("abc123")) shouldBe "abc123"
+        storage.contentHashOf(storage.derivativeKey("abc123", 192, "avif")) shouldBe "abc123"
+    }
+
+    @Test
+    fun `names nothing for a key it did not write, so the sweep leaves it alone`() {
+        // The sweep deletes what this names. A key of an unknown shape belongs to something else,
+        // and guessing at it is how a sweep reaches an object it does not own.
+        val storage = ImageStorage(client = null, properties = properties)
+
+        storage.contentHashOf("production/originals/abc123").shouldBeNull()
+        storage.contentHashOf("staging/something-else/file.bin").shouldBeNull()
+        storage.contentHashOf("staging/originals/abc123/extra").shouldBeNull()
+        storage.contentHashOf("staging/originals/").shouldBeNull()
+    }
+
+    @Test
     fun `credentials decide whether a client is configured`() {
         ImageStorageProperties().isConfigured() shouldBe false
         ImageStorageProperties(accessKey = "a", secretKey = "").isConfigured() shouldBe false

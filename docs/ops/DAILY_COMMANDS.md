@@ -115,6 +115,38 @@ event. A run that wrote 29 and a site that shows 0 is a venue publishing only pa
 **This replaces the older recipe** of `scp`-ing a `.sql` file to the node and running `sudo -u postgres psql`. That still works and is below, but it needs the
 superuser shell for a read-only question and it stops at the database.
 
+## A venue asks to be taken down
+
+The route [`SCRAPING_POSITION.md`](../SCRAPING_POSITION.md) §5 promises and `ForVenuesView` publishes. **Order matters, and only in one place.** The cached
+images are found through the venue's events. Deleting the events first leaves nothing to join on.
+
+```sh
+kubectl --context event-junkie-staging -n event-junkie port-forward svc/event-junkie-importer 8081:8081
+
+# 1. The images, first, while the events still point at them.
+curl -s -X DELETE localhost:8081/api/admin/images/venues/quasimodo | jq
+
+# 2. The source, so nothing imports it again.
+curl -s -X PATCH localhost:8081/api/admin/event-sources/quasimodo \
+  -H 'Content-Type: application/json' -d '{"enabled": false}' | jq
+```
+
+Then remove the venue's events, and answer the operator within seven days.
+
+**A narrower objection takes a narrower remedy.** An objection to the photographs alone is `{"imageLicence": "PROHIBITED"}` on the same `PATCH`. That clears
+every stored `image_url` for the source, and stops the field being imported again. Run the image takedown first there too, for the same reason.
+
+**The takedown deletes whatever `images.sweep.enabled` says.** That switch governs the scheduled orphan sweep, which reports before it is trusted to act. An
+operator asking for their images to go is not a rule being watched.
+
+The sweep runs itself every six hours. To see what it would do now:
+
+```sh
+curl -s -X POST localhost:8081/api/admin/images/sweep | jq
+```
+
+`deleted: false` in the answer means the counts are a report and nothing was removed.
+
 ## Database
 
 ```sh

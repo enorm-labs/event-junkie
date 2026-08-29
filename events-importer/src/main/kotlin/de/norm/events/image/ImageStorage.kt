@@ -5,7 +5,10 @@ import kotlinx.coroutines.future.await
 import org.springframework.stereotype.Component
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.services.s3.S3AsyncClient
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
+import java.time.Instant
 
 /**
  * Writes a cached image to object storage, and says where it went.
@@ -88,7 +91,7 @@ class ImageStorage(
      * The environment prefix comes first, so a listing scoped to one environment is a prefix query
      * rather than a filter — which is what lets the sweep stay inside its own environment.
      */
-    fun originalKey(contentHash: String): String = "${properties.prefix}/originals/$contentHash"
+    fun originalKey(contentHash: String): String = "${keyPrefix()}$ORIGINALS/$contentHash"
 
     /**
      * The key a derivative lives at.
@@ -101,7 +104,7 @@ class ImageStorage(
         contentHash: String,
         width: Int,
         format: String
-    ): String = "${properties.prefix}/derived/$contentHash/$width.$format"
+    ): String = "${keyPrefix()}$DERIVED/$contentHash/$width.$format"
 
     /** Stores a derivative and returns its key, or null when there is no client or the put failed. */
     suspend fun storeDerivative(
@@ -110,4 +113,91 @@ class ImageStorage(
         format: String,
         bytes: ByteArray
     ): String? = put(derivativeKey(contentHash, width, format), "image/$format", bytes)
+
+    /**
+     * Everything this environment has stored.
+     *
+     * The prefix is applied here rather than passed in, so a caller cannot list the other
+     * environment's objects and then decide they are unreferenced (ADR-019 §2.8).
+     */
+    suspend fun listAll(): List<StoredObject> {
+        val s3 = client ?: return emptyList()
+        val found = mutableListOf<StoredObject>()
+        var token: String? = null
+
+        do {
+            val page =
+                s3
+                    .listObjectsV2(
+                        ListObjectsV2Request
+                            .builder()
+                            .bucket(properties.bucket)
+                            .prefix(keyPrefix())
+                            .continuationToken(token)
+                            .build()
+                    ).await()
+            page.contents().forEach { found += StoredObject(it.key(), it.lastModified()) }
+            token = page.nextContinuationToken()
+        } while (token != null)
+
+        return found
+    }
+
+    /**
+     * Deletes [keys] and returns how many went.
+     *
+     * One request per object rather than a batch delete. The batch API reports per-key failures in
+     * the response body instead of the status, so a partial failure reads as success; passes here
+     * are hundreds of objects, which is small enough that the simpler call costs nothing.
+     */
+    suspend fun delete(keys: Collection<String>): Int {
+        val s3 = client ?: return 0
+        var deleted = 0
+
+        keys.forEach { key ->
+            runCatching {
+                s3
+                    .deleteObject(
+                        DeleteObjectRequest
+                            .builder()
+                            .bucket(properties.bucket)
+                            .key(key)
+                            .build()
+                    ).await()
+            }.onSuccess { deleted++ }
+                .onFailure { logger.warn(it) { "Could not delete $key" } }
+        }
+
+        return deleted
+    }
+
+    /** The prefix every key of this environment starts with, trailing slash included. */
+    fun keyPrefix(): String = "${properties.prefix}/"
+
+    /**
+     * The content hash a key belongs to, or null when the key is not one this class writes.
+     *
+     * The sweep never deletes a key this cannot name. A key of an unknown shape belongs to
+     * something else, and guessing at it is how a sweep reaches an object it does not own.
+     */
+    fun contentHashOf(key: String): String? {
+        val relative = key.removePrefix(keyPrefix()).takeIf { it != key } ?: return null
+
+        return when {
+            relative.startsWith("$ORIGINALS/") -> relative.removePrefix("$ORIGINALS/").takeIf { "/" !in it }
+            relative.startsWith("$DERIVED/") -> relative.removePrefix("$DERIVED/").substringBefore("/")
+            else -> null
+        }?.ifBlank { null }
+    }
+
+    companion object {
+        private const val ORIGINALS = "originals"
+        private const val DERIVED = "derived"
+    }
 }
+
+/** One object in the bucket, as a listing sees it. */
+data class StoredObject(
+    val key: String,
+    val lastModified: Instant
+)

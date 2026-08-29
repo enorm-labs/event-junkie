@@ -18,7 +18,8 @@ import org.springframework.stereotype.Service
 @Service
 class ScheduledImageCacheService(
     private val imageCacheService: ImageCacheService,
-    private val derivativeService: ImageDerivativeService
+    private val derivativeService: ImageDerivativeService,
+    private val removalService: ImageRemovalService
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -34,5 +35,18 @@ class ScheduledImageCacheService(
                 derivativeService.generateBatch()
             }
         }.onFailure { logger.error(it) { "Image cache pass failed" } }
+    }
+
+    /**
+     * The orphan sweep, on a much slower tick than the fetch.
+     *
+     * Six hours because it lists the whole bucket, and because nothing it deletes is urgent — the
+     * takedown route is what answers a venue now. Running it every five minutes would spend a
+     * listing to find nothing, most times.
+     */
+    @Scheduled(fixedDelayString = "\${app.images.sweep.tick-millis:21600000}")
+    fun sweepTick() {
+        runCatching { runBlocking { removalService.sweep() } }
+            .onFailure { logger.error(it) { "Image sweep failed" } }
     }
 }
