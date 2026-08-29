@@ -57,6 +57,13 @@ data class EventSummaryResponse(
     val intrinsicWidth: Int?,
     @Schema(description = "Pixel height of the original image, for the `height` attribute", example = "630")
     val intrinsicHeight: Int?,
+    @Schema(
+        description =
+            "True when a licence prohibition removed the image. False both when the venue " +
+                "published none and when one is shown — a placeholder renders either way.",
+        example = "false"
+    )
+    val imageWithheld: Boolean,
     @Schema(description = "Presale ticket price (Vorverkauf)", example = "38.00")
     val pricePresale: BigDecimal?,
     @Schema(description = "Box office ticket price (Abendkasse)", example = "45.00")
@@ -82,7 +89,8 @@ data class EventSummaryResponse(
             venue: VenueSummaryResponse,
             artistNames: List<String>,
             genreTags: List<String>,
-            image: ServedImage
+            image: ServedImage,
+            imageWithheld: Boolean
         ): EventSummaryResponse =
             EventSummaryResponse(
                 id = requireNotNull(entity.id) { "Persisted event must have an ID" },
@@ -98,6 +106,7 @@ data class EventSummaryResponse(
                 imageSources = image.sources,
                 intrinsicWidth = image.intrinsicWidth,
                 intrinsicHeight = image.intrinsicHeight,
+                imageWithheld = imageWithheld,
                 pricePresale = entity.pricePresale,
                 priceBoxOffice = entity.priceBoxOffice,
                 priceCurrency = entity.priceCurrency,
@@ -158,6 +167,20 @@ data class EventDetailResponse(
     val intrinsicWidth: Int?,
     @Schema(description = "Pixel height of the original image, for the `height` attribute", example = "630")
     val intrinsicHeight: Int?,
+    @Schema(
+        description =
+            "True when a licence prohibition removed the image. False both when the venue " +
+                "published none and when one is shown — a placeholder renders either way.",
+        example = "false"
+    )
+    val imageWithheld: Boolean,
+    @Schema(
+        description =
+            "True when a licence prohibition removed the description. False when the venue " +
+                "simply wrote none, which is far more common and needs no explanation.",
+        example = "false"
+    )
+    val descriptionWithheld: Boolean,
     @Schema(description = "Original URL on the source venue's website")
     val sourceUrl: String?,
     @Schema(description = "URL to the external ticket shop")
@@ -194,7 +217,9 @@ data class EventDetailResponse(
             lineup: List<LineupEntryResponse>,
             promoters: List<PromoterSummaryResponse>,
             genreTags: List<String>,
-            image: ServedImage
+            image: ServedImage,
+            imageWithheld: Boolean,
+            descriptionWithheld: Boolean
         ): EventDetailResponse =
             EventDetailResponse(
                 id = requireNotNull(entity.id) { "Persisted event must have an ID" },
@@ -211,6 +236,8 @@ data class EventDetailResponse(
                 imageSources = image.sources,
                 intrinsicWidth = image.intrinsicWidth,
                 intrinsicHeight = image.intrinsicHeight,
+                imageWithheld = imageWithheld,
+                descriptionWithheld = descriptionWithheld,
                 sourceUrl = entity.sourceUrl,
                 ticketUrl = entity.ticketUrl,
                 facebookEventUrl = entity.facebookEventUrl,

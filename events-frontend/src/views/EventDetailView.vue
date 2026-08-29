@@ -132,7 +132,6 @@ useStructuredData((): JsonLd[] => {
         `srcset`'s pixel widths into a choice, so they track the `<main>` classes above.
       -->
       <CachedImage
-        v-if="event.imageUrl"
         :src="event.imageUrl"
         :sources="event.imageSources"
         :intrinsic-width="event.intrinsicWidth"
@@ -144,6 +143,18 @@ useStructuredData((): JsonLd[] => {
 
       <p v-if="event.description" class="whitespace-pre-line text-foreground/90">
         {{ event.description }}
+      </p>
+      <!--
+        Only where a licence removed a description, never where the venue wrote none. On a seeded
+        database that is 56 events against 1,072, so a note keyed on `description` being null would
+        be wrong twenty times more often than right — which is why the API reports the reason (#811).
+
+        It says where the text is and nothing about what the venue wants. Both prohibitions were
+        read off an Impressum rather than sent to us (#809), so "at the venue's request" would be a
+        position we invented for them.
+      -->
+      <p v-else-if="event.descriptionWithheld" class="text-sm text-muted-foreground">
+        {{ t('events.detail.descriptionElsewhere') }}
       </p>
 
       <section v-if="lineup.length" class="space-y-3">

@@ -56,7 +56,6 @@ const { t } = useI18n()
     :class="CARD_CLASS"
   >
     <CachedImage
-      v-if="event.imageUrl"
       :src="event.imageUrl"
       :sources="event.imageSources"
       :intrinsic-width="event.intrinsicWidth"

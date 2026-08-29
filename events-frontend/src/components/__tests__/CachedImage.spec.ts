@@ -35,6 +35,25 @@ describe('CachedImage', () => {
     expect(wrapper.get('img').attributes('src')).toBe('https://venue.test/poster.jpg')
   })
 
+  // 328 of 3,251 seeded events have no image, and with serving on an image whose derivative is not
+  // generated yet is reported absent too. Rendering nothing closes the layout up and reads as
+  // broken rather than as sparse (#811).
+  it('draws a placeholder when there is no image', () => {
+    const wrapper = mount_({ src: null })
+
+    expect(wrapper.find('img').exists()).toBe(false)
+    expect(wrapper.find('picture').exists()).toBe(false)
+    expect(wrapper.find('svg').exists()).toBe(true)
+  })
+
+  // The placeholder has to occupy the box the image would have, or it fixes nothing: the caller's
+  // classes are what set that box.
+  it('gives the placeholder the same classes the image would have had', () => {
+    const wrapper = mount_({ src: undefined, imgClass: 'size-20 shrink-0' })
+
+    expect(wrapper.get('div').classes()).toEqual(expect.arrayContaining(['size-20', 'shrink-0']))
+  })
+
   it('offers each format the API returned, in the order it returned them', () => {
     // <picture> takes the first source the browser can decode, so the order is the preference and
     // sorting or grouping them would silently serve JPEG to a browser that reads AVIF.
