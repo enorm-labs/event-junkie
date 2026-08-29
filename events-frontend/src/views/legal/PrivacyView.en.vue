@@ -40,6 +40,11 @@ const { t } = useI18n()
         can be delivered and defended, and your browser remembers whether you chose light or dark
         mode.
       </p>
+      <p>
+        <strong>Images are the one exception.</strong> Some of them are loaded directly from the
+        servers of venues and promoters, which learn your IP address in the process. Section 5 says
+        which ones, and what we are doing about it.
+      </p>
     </section>
 
     <section>
@@ -145,6 +150,14 @@ const { t } = useI18n()
         under Art. 21 GDPR — the email address in the next paragraph is all it takes.
       </p>
       <p>
+        <strong>Images:</strong> venues and promoters publish images with their events. Event Junkie
+        downloads those images and stores a copy on its own servers at Hetzner, rather than asking
+        the provider for the file again on every page view. The legal basis is Art. 6 (1) (f) GDPR.
+        The legitimate interest is delivering the site without involving a third party, and placing
+        less load on a venue's server. The copy is deleted as soon as the venue opts out or a rights
+        holder asks for it, and it is not fetched again.
+      </p>
+      <p>
         <strong>If you are an artist</strong> and would like your name removed or corrected, write
         to
         <a :href="`mailto:${CONTROLLER.email}`">{{ CONTROLLER.email }}</a>
@@ -169,6 +182,18 @@ const { t } = useI18n()
         There is no content delivery network, no edge provider and no traffic proxy in front of the
         site. Your request reaches our servers in Germany directly, so no third country is involved
         in delivering this site to you and there is no transfer mechanism to disclose.
+      </p>
+      <p>
+        <strong>That does not yet hold for every image.</strong> Some images are loaded directly
+        from the servers of venues, promoters and ticket sellers. Your browser requests them there,
+        and that server learns your IP address — and, through the referer, which page you are
+        looking at. These providers are not processors: we do not instruct them, we point at their
+        images.
+      </p>
+      <p>
+        For event images we now store a copy of our own (section 4), so that they will come from our
+        servers. Images of venues, artists and promoters are still fetched from the providers. A
+        content blocker in your browser will stop those requests if you would rather avoid them.
       </p>
       <p>
         If you contact us by email, or open an issue on GitHub, that data is processed to handle

@@ -44,8 +44,9 @@ const localePath = useLocalePath()
         the image you publish yourself.
       </p>
       <p>
-        The image stays on your server. We do not copy it, we embed it — our visitors' browsers
-        fetch it from you directly.
+        We download the image and keep a copy, so your server does not have to serve it again on
+        every page view. The copy sits with us rather than with a third party, and it goes when you
+        opt out.
       </p>
     </section>
 
@@ -74,6 +75,7 @@ const localePath = useLocalePath()
         </li>
         <li>We disable the source. The importer stops reading it.</li>
         <li>We remove that venue's events from the database.</li>
+        <li>We delete the stored copies of your images from our servers.</li>
         <li>We answer to confirm, within seven days.</li>
       </ol>
       <p>
@@ -83,8 +85,9 @@ const localePath = useLocalePath()
       <p>
         <strong>It does not have to be everything.</strong> If it is only the images you mind, or
         only the description texts, we remove exactly that and leave the events in place. We delete
-        the material you objected to from our database and do not import it again. The dates stay
-        findable. Tell us which part you would rather we did not store.
+        the material you objected to from our database — for images, the stored copies too — and do
+        not import it again. The dates stay findable. Tell us which part you would rather we did not
+        store.
       </p>
     </section>
 
@@ -115,7 +118,7 @@ const localePath = useLocalePath()
         remain the property of their respective rights holders. If you hold rights in something
         shown here and would like it removed, the
         <RouterLink :to="localePath('/legal/imprint')">imprint</RouterLink>
-        has the route.
+        has the route. For an image, that deletes the copy on our servers as well.
       </p>
     </section>
   </LegalPage>

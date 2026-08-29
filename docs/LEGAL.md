@@ -185,6 +185,7 @@ change everyone remembers, and the contract behind it is the one nobody does.
 | Category                        | Applies                      | What it actually is here                                                                                                                                                                                               |
 | ------------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Personal master data**        | **yes**                      | Artist names, and each artist's `description`, `imageUrl`, `websiteUrl`, `facebookUrl`, `instagramUrl`, `youtubeUrl`. The largest category by far, and see §7.3 for why it counts                                      |
+| **Image files**                 | **yes**                      | Copies of the images venues publish with their events, stored in `event-junkie-images` at Hetzner (ADR-019). A photograph can show an identifiable person, so this is personal data in its own right — see below       |
 | **Communication data**          | **yes, on a strict reading** | No phone numbers and no email addresses are stored anywhere. The artist profile and social URLs are what a strict reading catches. Declared deliberately: the cost was nil and omitting it would have left a scope gap |
 | Contractual master data         | no                           | There is no contract with any data subject                                                                                                                                                                             |
 | **Log data**                    | **yes**                      | Timestamp, requested path, HTTP status, bytes transferred, referrer, browser and OS. **No IP address** since §7.5 was settled on 2026-08-19. Retention is a size bound, not a period — see §7.5.1                      |
@@ -211,6 +212,21 @@ as long as the calendar operates. Nothing deletes them by age, and #350's housek
 Art. 13 (2) (a) accepts the criteria used to determine the period in place of a duration, which is what this is.
 Erasure is on objection under Art. 21, with no reason required — the same route §7.3 already offers. Decided in #362,
 jointly with the archive: keeping past events reachable is deciding not to delete them.
+
+**A stored image is a different question from a stored URL, and the row above is new because of it.** Until ADR-019
+the site embedded the venue's URL and held no file. It now downloads the file and keeps it, which is a reproduction
+under § 16 UrhG and a processing operation under the DSGVO. Two consequences follow.
+
+- **The bucket is inside the AVV scope, and it is a third one.** `event-junkie-images` sits beside `event-junkie-o2`
+  and `event-junkie-backups` under the Hetzner contract of 2026-08-19. It adds no processor, which is what
+  [ADR-019](adr/ADR-019_VENUE_IMAGE_DELIVERY.md) weighed. It is a new bucket all the same.
+- **Erasure has to reach the file, not only the row.** A database row deletes its own image and an object does not.
+  The takedown route in `SCRAPING_POSITION.md` §5 deletes the objects, and an orphan sweep finds what nothing
+  references. Art. 17 is answerable here only because that endpoint exists.
+
+**The images carry no retention period either**, for the same reason event data carries none. They live as long as the
+event they belong to. What removes one is an objection, a venue opting out, or the sweep finding that nothing
+references it.
 
 **Two places this has to stay in step.** The backups in Hetzner Object Storage hold the same database, so they carry
 the same categories rather than being a separate question. And a processor's sub-processor annex is worth reading
