@@ -147,6 +147,50 @@ cat >"/etc/systemd/system/${SERVICE}.service.d/10-event-junkie-volume.conf" <<EO
 [Unit]
 RequiresMountsFor=${DATA_ROOT}
 EOF
+
+# ---------------------------------------------------------------------------
+# Binding the private address must not depend on interface timing (#813)
+# ---------------------------------------------------------------------------
+#
+# PostgreSQL binds what it can and carries on. Asked for 'localhost,<private ip>' when the private
+# address is not assigned yet, it takes 127.0.0.1 and ::1, logs one line, and reports success:
+#
+#   LOG:  could not bind IPv4 address "10.1.1.10": Cannot assign requested address
+#
+# The unit stays `active (running)`, the configuration is intact, and `pg_settings` still reports
+# the address it was asked for, because that is what the file says. Only `ss` shows the truth, so
+# nothing on the node detects this state and every client gets `connection refused`. See #813.
+#
+# **`ip_nonlocal_bind` is the fix, and the ordering below is not a substitute for it.** It lets the
+# bind succeed against an address that does not exist yet, which removes the race rather than
+# ordering around it — the standard setting for VIP failover, and correct here for the same reason:
+# the address is ours, it is simply not up yet. The race is not hypothetical. needrestart is
+# configured `$nrconf{restart} = 'a'`, so a libssl upgrade restarts systemd-networkd and PostgreSQL
+# together, and PostgreSQL can win.
+#
+# The IPv6 line is inert today, because the private network is IPv4 only. It is set so the guard
+# stays true if that ever changes, rather than silently covering half the case.
+cat >/etc/sysctl.d/99-event-junkie-postgres.conf <<'EOF'
+# See postgres.sh: PostgreSQL must be able to bind the private address before the link is up.
+net.ipv4.ip_nonlocal_bind = 1
+net.ipv6.ip_nonlocal_bind = 1
+EOF
+sysctl -p /etc/sysctl.d/99-event-junkie-postgres.conf >/dev/null
+
+# Ordering as well, because a normal boot should not rely on the sysctl above to paper over a unit
+# that starts too early. `network.target` — all this unit had — means networking has been *started*;
+# `network-online.target` means an address is *assigned*, and systemd-networkd-wait-online is
+# already enabled on this node.
+#
+# **This alone would not have prevented the outage, which is why it is not the whole fix.** Ordering
+# holds within a systemd transaction, and when needrestart restarts networkd there is no guarantee
+# that network-online.target is deactivated first. So this makes a cold boot honest; the sysctl is
+# what covers the restart.
+cat >"/etc/systemd/system/${SERVICE}.service.d/20-event-junkie-network.conf" <<'EOF'
+[Unit]
+Wants=network-online.target
+After=network-online.target
+EOF
 systemctl daemon-reload
 
 # ---------------------------------------------------------------------------
