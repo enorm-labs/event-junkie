@@ -1,21 +1,25 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { ImageOff } from '@lucide/vue'
 import type { ImageSource } from '@/api/types'
 
 /**
  * An image the API may hold better formats of.
  *
- * The BFF returns `imageUrl` plus an `imageSources` list — one entry per format, best first — once
- * the environment serves cached images (ADR-019). Given the list, this renders a `<picture>` and the
- * browser picks the first format it can decode at the width it needs. Given none, it renders the
- * plain `<img>` the site has always rendered, which is what a venue's own URL still gets.
+ * The BFF returns `imageUrl` plus an `imageSources` list, best format first, once the environment
+ * serves cached images (ADR-019). Given the list this renders a `<picture>`. Given none it renders
+ * the plain `<img>` a venue's own URL still gets.
  *
- * `sizes` is the caller's, because only the caller knows the layout. It is how the browser turns
- * `srcset`'s pixel widths into a choice, and a wrong one silently downloads the wrong file.
+ * `sizes` is the caller's, because only the caller knows the layout. A wrong one silently downloads
+ * the wrong file.
+ *
+ * **With no `src` it draws a placeholder rather than nothing**, so callers pass the URL rather than
+ * guarding on it. A card that closes up over a missing picture reads as broken, and that is 10% of
+ * the corpus (#811).
  */
 const props = defineProps<{
   /** The `src`, and the fallback for a browser that reads none of the offered formats. */
-  src: string
+  src?: string | null
   sources?: ImageSource[] | null
   alt: string
   /** How wide the image is drawn, as CSS. For a fixed slot that is a length: `80px`. */
@@ -50,7 +54,7 @@ const dimensions = computed(() =>
     so the <img> stays the flex item its classes were written for. Without it every caller would
     have to split its classes across two elements.
   -->
-  <picture class="contents">
+  <picture v-if="src" class="contents">
     <source
       v-for="source in sources ?? []"
       :key="source.type"
@@ -62,4 +66,20 @@ const dimensions = computed(() =>
          fallback for one that does not support <picture> at all. -->
     <img v-bind="dimensions" :src="src" :alt="alt" :class="imgClass" loading="lazy" />
   </picture>
+  <!--
+    One placeholder for both kinds of nothing. A viewer gains nothing from telling an image the
+    venue never published from one a licence withholds, and a second "withheld" variant would have
+    to word a position no venue has actually taken (#811).
+
+    `aspect-[3/2]` only does something where the caller's classes leave the height open, which is
+    the detail header. The cards pass `size-20`/`size-24`, where both dimensions are already set and
+    an aspect ratio is inert.
+  -->
+  <div
+    v-else
+    :class="imgClass"
+    class="flex aspect-[3/2] items-center justify-center bg-muted text-muted-foreground"
+  >
+    <ImageOff aria-hidden="true" class="size-1/4 max-h-12 min-h-4 min-w-4 max-w-12" />
+  </div>
 </template>

@@ -95,9 +95,10 @@ class EventService(
         // The detail path does not go through hydrateOrdered, so it applies the gate itself. This is
         // the endpoint that renders the description in full (EventDetailView.vue), which makes it
         // the one that matters most.
-        val event =
+        val licensed =
             eventRepository.findBySlug(slug)?.let { withLicenceApplied(listOf(it)).first() }
                 ?: throw EventNotFoundException(slug)
+        val event = licensed.event
         val eventId = requireNotNull(event.id) { "Persisted event must have an ID" }
 
         val venue =
@@ -143,7 +144,9 @@ class EventService(
             lineup,
             promoters,
             genreTags,
-            images.serve(event.imageUrl, DETAIL_WIDTH)
+            images.serve(event.imageUrl, DETAIL_WIDTH),
+            descriptionWithheld = licensed.descriptionWithheld,
+            imageWithheld = licensed.imageWithheld
         )
     }
 
@@ -167,17 +170,41 @@ class EventService(
      * diverge and neither can forget. One query for the whole page, matching the batch-loading
      * strategy the rest of this service uses.
      */
-    private suspend fun withLicenceApplied(events: List<EventEntity>): List<EventEntity> {
-        if (events.isEmpty()) return events
+    private suspend fun withLicenceApplied(events: List<EventEntity>): List<LicensedEvent> {
+        if (events.isEmpty()) return emptyList()
         val licences = sourceLicenceGate.forSources(events.mapNotNull { it.eventSourceId })
         return events.map { event ->
             val licence = event.eventSourceId?.let { licences[it] } ?: SourceLicences.UNKNOWN_SOURCE
-            event.copy(
-                description = if (licence.withholdsDescription()) null else event.description,
-                imageUrl = if (licence.withholdsImage()) null else event.imageUrl
+            // Withheld means something was taken away, not that the source would have withheld it.
+            // A prohibited source with no description had nothing removed, and reporting one would
+            // point a reader at a venue page that has nothing more to show (#811).
+            val descriptionWithheld = licence.withholdsDescription() && event.description != null
+            val imageWithheld = licence.withholdsImage() && event.imageUrl != null
+            LicensedEvent(
+                event =
+                    event.copy(
+                        description = if (descriptionWithheld) null else event.description,
+                        imageUrl = if (imageWithheld) null else event.imageUrl
+                    ),
+                descriptionWithheld = descriptionWithheld,
+                imageWithheld = imageWithheld
             )
         }
     }
+
+    /**
+     * An event as it may be shown, and what the licence took out of it.
+     *
+     * **The response has to say why a field is absent, because `null` cannot.** A description a
+     * venue never wrote and one a prohibition removed are the same `null`, and on a seeded database
+     * that is 1,072 against 56 — so a note shown for every `null` would be wrong twenty times more
+     * often than right (#811).
+     */
+    private data class LicensedEvent(
+        val event: EventEntity,
+        val descriptionWithheld: Boolean,
+        val imageWithheld: Boolean
+    )
 
     /**
      * Maps a page of events to summaries, batch-loading venue, artist, and genre tag
@@ -192,7 +219,8 @@ class EventService(
      */
     private suspend fun summariesFor(unlicensed: List<EventEntity>): List<EventSummaryResponse> {
         if (unlicensed.isEmpty()) return emptyList()
-        val events = withLicenceApplied(unlicensed)
+        val licensed = withLicenceApplied(unlicensed)
+        val events = licensed.map { it.event }
         val eventIds = events.map { requireNotNull(it.id) { "Persisted event must have an ID" } }
 
         val venuesById = venueRepository.findByIdIn(events.map { it.venueId }.distinct()).toList().associateBy { it.id }
@@ -211,7 +239,8 @@ class EventService(
             }
         val genreLinksByEvent = genreLinks.groupBy { it.eventId }
 
-        return events.map { event ->
+        return licensed.map { licensedEvent ->
+            val event = licensedEvent.event
             val venue =
                 requireNotNull(venuesById[event.venueId]) { "Event ${event.id} references missing venue ${event.venueId}" }
             val artistNames =
@@ -222,7 +251,8 @@ class EventService(
                 VenueSummaryResponse.fromEntity(venue, images.serve(venue.imageUrl, CARD_WIDTH)),
                 artistNames,
                 genreTags,
-                images.serve(event.imageUrl, CARD_WIDTH)
+                images.serve(event.imageUrl, CARD_WIDTH),
+                imageWithheld = licensedEvent.imageWithheld
             )
         }
     }

@@ -27,7 +27,6 @@ const localePath = useLocalePath()
 <template>
   <RouterLink :to="localePath(`/venues/${venue.slug}`)" :class="CARD_CLASS">
     <CachedImage
-      v-if="venue.imageUrl"
       :src="venue.imageUrl"
       :sources="venue.imageSources"
       :intrinsic-width="venue.intrinsicWidth"

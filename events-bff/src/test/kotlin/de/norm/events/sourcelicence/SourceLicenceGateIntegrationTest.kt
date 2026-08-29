@@ -38,6 +38,35 @@ class SourceLicenceGateIntegrationTest : BaseControllerTest() {
                 // Facts are never gated. They are the part SCRAPING_POSITION.md §3.1 calls safe.
                 .jsonPath("$.title")
                 .isEqualTo("Gated Event")
+                // Why it is absent, because `null` alone cannot say. A note keyed on the null would
+                // be right 56 times and wrong 1,072 on a seeded database (#811).
+                .jsonPath("$.descriptionWithheld")
+                .isEqualTo(true)
+                .jsonPath("$.imageWithheld")
+                .isEqualTo(false)
+        }
+
+    // A prohibition over a field the venue never filled removed nothing, so there is nothing to
+    // explain — and a note would point a reader at a page with no more to show.
+    @Test
+    @DisplayName("a prohibition over an empty description is not reported as withheld")
+    fun `reports nothing withheld when there was nothing to withhold`(): Unit =
+        runBlocking {
+            val venueId = insertVenue(name = "Silent Venue", slug = "silent-venue")
+            val sourceId = insertSource(venueId, slug = "silent-src", descriptionLicence = "PROHIBITED")
+            insertGatedEvent(venueId, sourceId, slug = "silent-event", description = null)
+
+            webTestClient
+                .get()
+                .uri("/events/silent-event")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.description")
+                .doesNotExist()
+                .jsonPath("$.descriptionWithheld")
+                .isEqualTo(false)
         }
 
     @Test
@@ -59,6 +88,10 @@ class SourceLicenceGateIntegrationTest : BaseControllerTest() {
                 .doesNotExist()
                 .jsonPath("$.description")
                 .isEqualTo("A description the venue never objected to.")
+                .jsonPath("$.imageWithheld")
+                .isEqualTo(true)
+                .jsonPath("$.descriptionWithheld")
+                .isEqualTo(false)
         }
 
     @Test
@@ -121,6 +154,8 @@ class SourceLicenceGateIntegrationTest : BaseControllerTest() {
                 // property, which reads as present. This test has exactly one event.
                 .jsonPath("$.content[0].slug")
                 .isEqualTo("list-event")
+                .jsonPath("$.content[0].imageWithheld")
+                .isEqualTo(true)
                 .jsonPath("$.content[0].imageUrl")
                 .doesNotExist()
         }
@@ -165,14 +200,16 @@ class SourceLicenceGateIntegrationTest : BaseControllerTest() {
     private suspend fun insertGatedEvent(
         venueId: Long,
         sourceId: Long?,
-        slug: String
+        slug: String,
+        description: String? = "A description the venue never objected to."
     ): Long =
         databaseClient
             .sql(
                 "INSERT INTO events.event (venue_id, event_source_id, title, slug, event_date, source_id, description, image_url) " +
                     "VALUES (:venueId, :sourceId, 'Gated Event', :slug, :eventDate, :sourceKey, " +
-                    "'A description the venue never objected to.', 'https://example.com/poster.jpg') RETURNING id"
+                    ":description, 'https://example.com/poster.jpg') RETURNING id"
             ).bind("venueId", venueId)
+            .let { spec -> description?.let { spec.bind("description", it) } ?: spec.bindNull("description", String::class.java) }
             .let { spec -> sourceId?.let { spec.bind("sourceId", it) } ?: spec.bindNull("sourceId", Long::class.javaObjectType) }
             .bind("slug", slug)
             .bind("eventDate", LocalDate.now().plusDays(7))

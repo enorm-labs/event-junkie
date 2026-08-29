@@ -610,6 +610,11 @@ export interface components {
        */
       intrinsicHeight?: number | null
       /**
+       * @description True when a licence prohibition removed the image. False both when the venue published none and when one is shown — a placeholder renders either way.
+       * @example false
+       */
+      imageWithheld?: boolean
+      /**
        * @description Presale ticket price (Vorverkauf)
        * @example 38
        */
@@ -794,6 +799,16 @@ export interface components {
        * @example 630
        */
       intrinsicHeight?: number | null
+      /**
+       * @description True when a licence prohibition removed the image. False both when the venue published none and when one is shown — a placeholder renders either way.
+       * @example false
+       */
+      imageWithheld?: boolean
+      /**
+       * @description True when a licence prohibition removed the description. False when the venue simply wrote none, which is far more common and needs no explanation.
+       * @example false
+       */
+      descriptionWithheld?: boolean
       /** @description Original URL on the source venue's website */
       sourceUrl?: string | null
       /** @description URL to the external ticket shop */

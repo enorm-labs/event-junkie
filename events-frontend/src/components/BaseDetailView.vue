@@ -77,7 +77,6 @@ const { t } = useI18n()
     <template v-else-if="ready">
       <header class="flex gap-4">
         <CachedImage
-          v-if="imageUrl"
           :src="imageUrl"
           :sources="imageSources"
           :intrinsic-width="intrinsicWidth"
