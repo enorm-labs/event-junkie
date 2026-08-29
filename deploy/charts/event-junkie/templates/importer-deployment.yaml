@@ -103,6 +103,31 @@ spec:
                   name: {{ .Values.images.storage.existingSecret | quote }}
                   key: IMAGE_STORAGE_SECRET_KEY
             {{- end }}
+            {{- if and .Values.images.enabled .Values.images.imgproxy.enabled }}
+            {{- /* **The client half of the sidecar, and it is easy to leave out.** The container
+                   below runs imgproxy; this is what makes the JVM call it. Without these the
+                   sidecar starts, passes every probe, is never asked for anything, and no
+                   derivative is ever generated — a failure with no error in it anywhere. */}}
+            - name: APP_IMAGES_IMGPROXY_ENABLED
+              value: "true"
+            {{- /* The other end of IMGPROXY_BIND below. Two values that have to agree, so they are
+                   written next to each other rather than left to two defaults. */}}
+            - name: IMGPROXY_BASE_URL
+              value: "http://127.0.0.1:8080"
+            {{- /* The same key and salt the sidecar checks. A JVM without them signs nothing, and
+                   the sidecar answers 403 to every request — which reads as a broken sidecar
+                   rather than as a missing secret. */}}
+            - name: IMGPROXY_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.images.imgproxy.existingSecret | quote }}
+                  key: IMGPROXY_KEY
+            - name: IMGPROXY_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.images.imgproxy.existingSecret | quote }}
+                  key: IMGPROXY_SALT
+            {{- end }}
           {{- include "event-junkie.jvmProbes" $ | nindent 10 }}
           resources:
             {{- toYaml .Values.importer.resources | nindent 12 }}

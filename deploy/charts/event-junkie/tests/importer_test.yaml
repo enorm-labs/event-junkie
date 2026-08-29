@@ -245,6 +245,63 @@ tests:
             name: IMGPROXY_STRIP_METADATA
             value: "true"
 
+  # **The sidecar and the client that calls it are two halves, and only one of them was asserted.**
+  # PR 4a wired the container and never wired the JVM, so staging ran a sidecar nothing ever called:
+  # every probe passed, no error appeared anywhere, and no derivative was generated. These assert
+  # `containers[0]`, which had no imgproxy assertion of any kind before.
+  - it: tells the importer to call the sidecar, and how to sign for it
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: true
+      images.storage.prefix: "staging"
+      images.imgproxy.enabled: true
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_IMAGES_IMGPROXY_ENABLED
+            value: "true"
+      # The other end of the sidecar's IMGPROXY_BIND. A pair that has to agree.
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: IMGPROXY_BASE_URL
+            value: "http://127.0.0.1:8080"
+      # Without the same key and salt the sidecar checks, the JVM signs nothing and every request
+      # comes back 403 — which reads as a broken sidecar rather than as a missing secret.
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: IMGPROXY_SALT
+            valueFrom:
+              secretKeyRef:
+                name: "event-junkie-imgproxy"
+                key: IMGPROXY_SALT
+
+  - it: leaves the importer no imgproxy configuration while the sidecar is off
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: true
+      images.storage.prefix: "staging"
+      images.imgproxy.enabled: false
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - notMatchRegex:
+          path: "$.spec.template.spec.containers[0].env[*].name"
+          pattern: "^IMGPROXY_"
+      - notMatchRegex:
+          path: "$.spec.template.spec.containers[0].env[*].name"
+          pattern: "^APP_IMAGES_IMGPROXY_ENABLED$"
+
   - it: pins the sidecar by digest and bounds what it will decode
     set:
       database.host: "10.0.1.2"
