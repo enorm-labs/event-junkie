@@ -34,6 +34,8 @@ defineProps<{
   name?: string | null
   imageUrl?: string | null
   imageSources?: ImageSource[] | null
+  intrinsicWidth?: number | null
+  intrinsicHeight?: number | null
   /** Upcoming-events feed state (from `useEventSearch`). */
   events: EventPage | null
   eventsLoading: boolean
@@ -78,6 +80,8 @@ const { t } = useI18n()
           v-if="imageUrl"
           :src="imageUrl"
           :sources="imageSources"
+          :intrinsic-width="intrinsicWidth"
+          :intrinsic-height="intrinsicHeight"
           :alt="name ?? ''"
           sizes="96px"
           img-class="size-24 shrink-0 rounded-lg border border-border object-cover"

@@ -25,7 +25,7 @@ interface CachedImageRepository : CoroutineCrudRepository<CachedImageVariantEnti
      */
     @Query(
         """
-        SELECT c.source_url, c.content_hash, v.width, v.format
+        SELECT c.source_url, c.content_hash, c.intrinsic_width, c.intrinsic_height, v.width, v.format
         FROM $EVENTS_SCHEMA.cached_image c
         JOIN $EVENTS_SCHEMA.cached_image_variant v ON v.cached_image_id = c.id
         WHERE c.deleted_at IS NULL

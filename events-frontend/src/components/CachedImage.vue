@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { ImageSource } from '@/api/types'
 
 /**
@@ -12,7 +13,7 @@ import type { ImageSource } from '@/api/types'
  * `sizes` is the caller's, because only the caller knows the layout. It is how the browser turns
  * `srcset`'s pixel widths into a choice, and a wrong one silently downloads the wrong file.
  */
-defineProps<{
+const props = defineProps<{
   /** The `src`, and the fallback for a browser that reads none of the offered formats. */
   src: string
   sources?: ImageSource[] | null
@@ -21,7 +22,26 @@ defineProps<{
   sizes: string
   /** Goes on the `<img>`, never on the wrapper — see the `contents` note in the template. */
   imgClass?: string
+  /** The original's pixel size. Both or neither — the API reports them together. */
+  intrinsicWidth?: number | null
+  intrinsicHeight?: number | null
 }>()
+
+/**
+ * `width` and `height`, or nothing at all.
+ *
+ * They give the browser the aspect ratio before the bytes arrive, so a `loading="lazy"` image
+ * reserves its space instead of reflowing the page when it lands. CSS still decides the drawn size.
+ *
+ * **One of the pair is as bad as neither**, so this returns an empty object rather than half an
+ * answer. The API reports them together, and 16% of the stored images have no dimensions at all —
+ * a stock JVM reads neither WebP nor AVIF, so nothing measured them at import (#848).
+ */
+const dimensions = computed(() =>
+  props.intrinsicWidth != null && props.intrinsicHeight != null
+    ? { width: props.intrinsicWidth, height: props.intrinsicHeight }
+    : {},
+)
 </script>
 
 <template>
@@ -40,6 +60,6 @@ defineProps<{
     />
     <!-- No `srcset` here: the last <source> is JPEG and matches every browser, so this is the
          fallback for one that does not support <picture> at all. -->
-    <img :src="src" :alt="alt" :class="imgClass" loading="lazy" />
+    <img v-bind="dimensions" :src="src" :alt="alt" :class="imgClass" loading="lazy" />
   </picture>
 </template>

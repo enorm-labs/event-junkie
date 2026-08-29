@@ -63,6 +63,36 @@ describe('CachedImage', () => {
     expect(wrapper.get('img').classes()).toEqual(['size-20', 'shrink-0'])
   })
 
+  // Without these a lazy image reserves no space and the page reflows as each one lands. `srcset`
+  // is what makes it live: every render site sets `loading="lazy"` and offers several widths (#848).
+  it('reserves the space with the intrinsic dimensions', () => {
+    const wrapper = mount_({ sources, intrinsicWidth: 1200, intrinsicHeight: 630 })
+
+    expect(wrapper.get('img').attributes('width')).toBe('1200')
+    expect(wrapper.get('img').attributes('height')).toBe('630')
+  })
+
+  // 16% of the stored images have no dimensions: a stock JVM reads neither WebP nor AVIF, so
+  // nothing measured them at import.
+  it('omits both attributes when it has no dimensions', () => {
+    const wrapper = mount_({ sources })
+
+    expect(wrapper.get('img').attributes('width')).toBeUndefined()
+    expect(wrapper.get('img').attributes('height')).toBeUndefined()
+  })
+
+  // One of the pair reserves nothing, so half an answer is the same layout shift as no answer —
+  // reached less obviously. The API sends them together and this is the belt to that braces.
+  it.each([
+    ['width only', { intrinsicWidth: 1200, intrinsicHeight: null }],
+    ['height only', { intrinsicWidth: null, intrinsicHeight: 630 }],
+  ])('emits neither attribute given %s', (_label, dimensions) => {
+    const wrapper = mount_({ sources, ...dimensions })
+
+    expect(wrapper.get('img').attributes('width')).toBeUndefined()
+    expect(wrapper.get('img').attributes('height')).toBeUndefined()
+  })
+
   it('leaves the fallback image without a srcset of its own', () => {
     // The last source is JPEG and matches every browser, so this <img> is only reached by one with
     // no <picture> support at all — where a srcset would be equally unsupported.

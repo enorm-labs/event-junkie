@@ -22,7 +22,16 @@ data class ArtistSummaryResponse(
             "Alternative formats of the same image, best first, for a <picture> element. Empty " +
                 "when the image is not cached, in which case `imageUrl` is all there is."
     )
-    val imageSources: List<ImageSourceResponse>
+    val imageSources: List<ImageSourceResponse>,
+    @Schema(
+        description =
+            "Pixel width of the original image, for the `width` attribute. Null together with " +
+                "`intrinsicHeight` when the dimensions are unknown.",
+        example = "1200"
+    )
+    val intrinsicWidth: Int?,
+    @Schema(description = "Pixel height of the original image, for the `height` attribute", example = "630")
+    val intrinsicHeight: Int?
 ) {
     companion object {
         fun fromEntity(
@@ -34,7 +43,9 @@ data class ArtistSummaryResponse(
                 slug = entity.slug,
                 name = entity.name,
                 imageUrl = image.url,
-                imageSources = image.sources
+                imageSources = image.sources,
+                intrinsicWidth = image.intrinsicWidth,
+                intrinsicHeight = image.intrinsicHeight
             )
     }
 }
@@ -63,6 +74,15 @@ data class ArtistDetailResponse(
                 "when the image is not cached, in which case `imageUrl` is all there is."
     )
     val imageSources: List<ImageSourceResponse>,
+    @Schema(
+        description =
+            "Pixel width of the original image, for the `width` attribute. Null together with " +
+                "`intrinsicHeight` when the dimensions are unknown.",
+        example = "1200"
+    )
+    val intrinsicWidth: Int?,
+    @Schema(description = "Pixel height of the original image, for the `height` attribute", example = "630")
+    val intrinsicHeight: Int?,
     @Schema(description = "URL of the artist's official homepage")
     val websiteUrl: String?,
     @Schema(description = "URL of the artist's Facebook page")
@@ -84,6 +104,8 @@ data class ArtistDetailResponse(
                 description = entity.description,
                 imageUrl = image.url,
                 imageSources = image.sources,
+                intrinsicWidth = image.intrinsicWidth,
+                intrinsicHeight = image.intrinsicHeight,
                 websiteUrl = entity.websiteUrl,
                 facebookUrl = entity.facebookUrl,
                 instagramUrl = entity.instagramUrl,

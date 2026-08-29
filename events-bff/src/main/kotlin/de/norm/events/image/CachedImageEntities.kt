@@ -28,6 +28,16 @@ data class CachedImageVariantEntity(
 data class ServableVariant(
     val sourceUrl: String,
     val contentHash: String,
+    /**
+     * The original's own pixel dimensions, which are the aspect ratio every derivative keeps.
+     *
+     * **Null is a real answer**, not a defect. A stock JVM reads neither WebP nor AVIF, so
+     * `ImageFetcher` measures nothing for those — 16% of staging's corpus at import. imgproxy
+     * decodes them and the numbers arrive with the derivatives, so the gap closes but is never
+     * guaranteed closed.
+     */
+    val intrinsicWidth: Int?,
+    val intrinsicHeight: Int?,
     val width: Int,
     val format: String
 )
