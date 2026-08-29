@@ -29,6 +29,9 @@ ALIASES = {
 
 
 LOCAL_HOST = "http://localhost:8081"
+# Present on every EventSourceResponse from a build carrying V006. Its absence means the target
+# predates the licence review, and every PATCH below would be a silent no-op.
+LICENCE_FIELD = "descriptionLicence"
 PAGE_SIZE = 100
 MAX_PAGES = 100
 
@@ -94,6 +97,13 @@ def main():
         sources = fetch_all_sources(args.host)
     except (urllib.error.URLError, OSError) as e:
         sys.exit(f"Cannot reach the importer at {args.host}: {e}\nStart it with scripts/dev-env.sh up")
+    if sources and not any(LICENCE_FIELD in s for s in sources):
+        sys.exit(
+            f"\n{args.host} does not serve '{LICENCE_FIELD}', so it predates the licence columns (#283).\n"
+            "Every PATCH would be accepted and write nothing. Deploy a build with V006 or later first.\n"
+            "This is exactly how a run once reported 'Wrote 85 of 85' against a database where the\n"
+            "columns did not exist."
+        )
     by_name = {s["name"]: s["slug"] for s in sources}
     by_fold = {fold(s["name"]): s["slug"] for s in sources}
     print(f"{len(by_name)} sources on {args.host}\n")
@@ -138,7 +148,7 @@ def main():
             f"It holds {len(by_name)} sources and this run would write {len(planned)} of them."
         )
 
-    ok = 0
+    ok, wrong = 0, []
     for name, slug, row in planned:
         body = {
             "descriptionLicence": row["description_licence"],
@@ -147,12 +157,24 @@ def main():
             "licenceNote": row["licence_note"],
         }
         try:
-            request(f"{args.host}/api/admin/event-sources/{slug}", method="PATCH", body=body)
-            ok += 1
+            got = request(f"{args.host}/api/admin/event-sources/{slug}", method="PATCH", body=body)
         except urllib.error.HTTPError as e:
             print(f"  FAILED {slug}: {e.code} {e.read().decode()[:200]}")
-    print(f"\nWrote {ok} of {len(planned)}.")
+            continue
+        # Verify from the row that came back, not from the status code. A 200 says the request was
+        # understood; only the body says the verdict was stored (#814).
+        mismatch = [f"{k}: sent {v!r}, got {got.get(k)!r}" for k, v in body.items() if v and got.get(k) != v]
+        if not got.get("licenceReviewedAt"):
+            mismatch.append("licenceReviewedAt: not stamped")
+        if mismatch:
+            wrong.append((slug, mismatch))
+            print(f"  NOT WRITTEN {slug}: {'; '.join(mismatch)}")
+        else:
+            ok += 1
+    print(f"\nWrote {ok} of {len(planned)}, confirmed from the response of each PATCH.")
     print("licenceReviewedAt is stamped server-side, so re-running moves it. The verdicts do not change.")
+    if wrong:
+        sys.exit(f"\n{len(wrong)} source(s) did not come back holding what was sent. Nothing above is safe to trust.")
 
 
 if __name__ == "__main__":

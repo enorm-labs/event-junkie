@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.bind.support.WebExchangeBindException
 import org.springframework.web.server.ServerWebInputException
+import tools.jackson.databind.exc.UnrecognizedPropertyException
 
 /**
  * Global exception handler that translates domain exceptions into
@@ -153,9 +154,21 @@ class GlobalExceptionHandler {
      *
      * A type mismatch names the rejected value and the type expected — the raw
      * `"Type mismatch."` reason alone leaves the caller guessing which of several parameters
-     * was wrong. Anything else falls back to the exception's own reason.
+     * was wrong. An unknown property names the field and what the endpoint does accept, because
+     * the whole point of rejecting it is that the caller can see the typo (#814). Anything else
+     * falls back to the exception's own reason.
      */
     private fun describeInvalidInput(ex: ServerWebInputException): String {
+        val unknownProperty = ex.findCause<UnrecognizedPropertyException>()
+        if (unknownProperty != null) {
+            val known =
+                unknownProperty.knownPropertyIds
+                    .orEmpty()
+                    .map { it.toString() }
+                    .sorted()
+            return "Unknown field '${unknownProperty.propertyName}'." +
+                if (known.isEmpty()) "" else " Accepted: ${known.joinToString(", ")}."
+        }
         val mismatch = ex.cause as? TypeMismatchException
         // Capitalised so a Kotlin `Long` id reads as its declared type, not the JVM primitive "long".
         val requiredType = mismatch?.requiredType?.simpleName?.replaceFirstChar { it.uppercase() }
@@ -164,6 +177,20 @@ class GlobalExceptionHandler {
         } else {
             ex.reason ?: "Request input is invalid."
         }
+    }
+
+    /**
+     * Walks the cause chain for [T]. Jackson's failure arrives wrapped — WebFlux's decoder sits
+     * between it and the handler — so `cause as?` alone finds nothing.
+     */
+    private inline fun <reified T : Throwable> Throwable.findCause(): T? {
+        var current: Throwable? = this
+        val seen = mutableSetOf<Throwable>()
+        while (current != null && seen.add(current)) {
+            if (current is T) return current
+            current = current.cause
+        }
+        return null
     }
 
     /**

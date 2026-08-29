@@ -109,13 +109,19 @@ class EventSourceController(
     /**
      * Partially updates an event source's configuration.
      *
-     * Supports toggling `enabled`, changing `importIntervalMinutes`, and adjusting `maxRetries`.
-     * Only non-null fields in the request body are applied.
+     * Accepts `enabled`, `importIntervalMinutes`, `maxRetries`, and the four licence fields added
+     * by #283: `descriptionLicence`, `imageLicence`, `licenceSourceUrl` and `licenceNote`.
+     * `licenceReviewedAt` is **not** accepted — it is stamped server-side when a licence verdict
+     * arrives, so the timestamp cannot disagree with the verdict it belongs to.
+     *
+     * Only non-null fields are applied; a null means "leave unchanged". A field this request does
+     * not declare is a `400` rather than a silent no-op (#814), so keep this list in step with
+     * [EventSourceUpdateRequest] — a caller now reads it from the error message.
      *
      * @throws EventSourceNotFoundException if no source with the given slug exists.
      */
     @PatchMapping("/{slug}")
-    @Operation(summary = "Update event source configuration (enable/disable, interval, retries)")
+    @Operation(summary = "Update event source configuration (enable/disable, interval, retries, licence verdicts)")
     suspend fun updateSource(
         @PathVariable slug: String,
         @Valid @RequestBody request: EventSourceUpdateRequest
