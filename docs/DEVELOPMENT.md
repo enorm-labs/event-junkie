@@ -691,7 +691,7 @@ There is a [`/update-dependencies`](../.github/prompts/update-dependencies.promp
 
 ```bash
 ./gradlew wrapper --gradle-version latest
-./gradlew wrapper --gradle-version 9.7.0     # or a specific version
+./gradlew wrapper --gradle-version 9.7.1     # or a specific version
 ```
 
 ### Licences and open-source notices

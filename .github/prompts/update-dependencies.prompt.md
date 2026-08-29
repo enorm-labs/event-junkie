@@ -365,20 +365,26 @@ Step 12's pins rot in CI. **These rot in production**, and Dependabot cannot see
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
 | `openobserve-standalone`       | `deploy/clusters/staging/openobserve.yaml`                                                                   | `charts.openobserve.ai` — `helm search repo --versions` |
 | `openobserve-collector`        | `deploy/clusters/staging/collector.yaml`                                                                     | same repository                                         |
-| `opentelemetry-operator`       | `deploy/clusters/staging/collector.yaml`                                                                     | `open-telemetry/opentelemetry-helm-charts` releases     |
+| `opentelemetry-operator`       | `deploy/clusters/staging/collector.yaml`                                                                     | `open-telemetry/opentelemetry-helm-charts` **tags**     |
 | `cert-manager`                 | `deploy/clusters/staging/cert-manager.yaml` **and** `production/cert-manager.yaml` — both must move together | `cert-manager/cert-manager` releases                    |
-| `cert-manager-webhook-hetzner` | `deploy/clusters/staging/cert-manager-webhook.yaml`                                                          | `mittwald/cert-manager-webhook-hetzner` releases        |
+| `cert-manager-webhook-hetzner` | `deploy/clusters/staging/cert-manager-webhook.yaml`                                                          | `charts.hetzner.cloud` — `helm search repo --versions`  |
 | `signal-cli-rest-api`          | `deploy/clusters/staging/signal-bridge.yaml` — **image, digest-pinned**                                      | `bbernhard/signal-cli-rest-api` releases                |
 
 ```sh
-helm repo add openobserve https://charts.openobserve.ai >/dev/null && helm repo update >/dev/null
-for c in openobserve/openobserve-standalone openobserve/openobserve-collector; do
+helm repo add openobserve https://charts.openobserve.ai >/dev/null
+helm repo add hetzner https://charts.hetzner.cloud >/dev/null
+helm repo update >/dev/null
+for c in openobserve/openobserve-standalone openobserve/openobserve-collector hetzner/cert-manager-webhook-hetzner; do
     printf '%-40s %s\n' "$c" "$(helm search repo "$c" --versions -o json | python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["version"])')"
 done
-for repo in cert-manager/cert-manager mittwald/cert-manager-webhook-hetzner \
-            open-telemetry/opentelemetry-helm-charts bbernhard/signal-cli-rest-api; do
+for repo in cert-manager/cert-manager bbernhard/signal-cli-rest-api; do
     printf '%-40s %s\n' "$repo" "$(gh api "repos/$repo/releases/latest" --jq .tag_name)"
 done
+# The operator chart is one of many in its repository, so `releases/latest` names whichever chart
+# shipped last — usually the collector. Filter the tags by this chart's own prefix instead.
+printf '%-40s %s\n' opentelemetry-operator \
+    "$(gh api 'repos/open-telemetry/opentelemetry-helm-charts/tags?per_page=100' \
+        --jq '[.[].name|select(startswith("opentelemetry-operator-"))][0]')"
 ```
 
 **Four things make this list different from Step 12's, and each one is a reason not to sweep them casually.**
