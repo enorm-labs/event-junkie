@@ -1,5 +1,7 @@
 package de.norm.events.artist
 
+import de.norm.events.image.ImageSourceResponse
+import de.norm.events.image.ServedImage
 import io.swagger.v3.oas.annotations.media.Schema
 
 /**
@@ -14,15 +16,25 @@ data class ArtistSummaryResponse(
     @Schema(description = "Stage name or band name", example = "The Adicts")
     val name: String,
     @Schema(description = "URL of the artist's photo or band logo")
-    val imageUrl: String?
+    val imageUrl: String?,
+    @Schema(
+        description =
+            "Alternative formats of the same image, best first, for a <picture> element. Empty " +
+                "when the image is not cached, in which case `imageUrl` is all there is."
+    )
+    val imageSources: List<ImageSourceResponse>
 ) {
     companion object {
-        fun fromEntity(entity: ArtistEntity): ArtistSummaryResponse =
+        fun fromEntity(
+            entity: ArtistEntity,
+            image: ServedImage
+        ): ArtistSummaryResponse =
             ArtistSummaryResponse(
                 id = requireNotNull(entity.id) { "Persisted artist must have an ID" },
                 slug = entity.slug,
                 name = entity.name,
-                imageUrl = entity.imageUrl
+                imageUrl = image.url,
+                imageSources = image.sources
             )
     }
 }
@@ -45,6 +57,12 @@ data class ArtistDetailResponse(
     val description: String?,
     @Schema(description = "URL of the artist's photo or band logo")
     val imageUrl: String?,
+    @Schema(
+        description =
+            "Alternative formats of the same image, best first, for a <picture> element. Empty " +
+                "when the image is not cached, in which case `imageUrl` is all there is."
+    )
+    val imageSources: List<ImageSourceResponse>,
     @Schema(description = "URL of the artist's official homepage")
     val websiteUrl: String?,
     @Schema(description = "URL of the artist's Facebook page")
@@ -55,13 +73,17 @@ data class ArtistDetailResponse(
     val youtubeUrl: String?
 ) {
     companion object {
-        fun fromEntity(entity: ArtistEntity): ArtistDetailResponse =
+        fun fromEntity(
+            entity: ArtistEntity,
+            image: ServedImage
+        ): ArtistDetailResponse =
             ArtistDetailResponse(
                 id = requireNotNull(entity.id) { "Persisted artist must have an ID" },
                 slug = entity.slug,
                 name = entity.name,
                 description = entity.description,
-                imageUrl = entity.imageUrl,
+                imageUrl = image.url,
+                imageSources = image.sources,
                 websiteUrl = entity.websiteUrl,
                 facebookUrl = entity.facebookUrl,
                 instagramUrl = entity.instagramUrl,

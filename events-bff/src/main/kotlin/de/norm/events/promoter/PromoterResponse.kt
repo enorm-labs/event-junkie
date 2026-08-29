@@ -1,5 +1,7 @@
 package de.norm.events.promoter
 
+import de.norm.events.image.ImageSourceResponse
+import de.norm.events.image.ServedImage
 import io.swagger.v3.oas.annotations.media.Schema
 
 /**
@@ -16,16 +18,26 @@ data class PromoterSummaryResponse(
     @Schema(description = "URL of the promoter's website or social page")
     val websiteUrl: String?,
     @Schema(description = "URL of the promoter's logo image")
-    val imageUrl: String?
+    val imageUrl: String?,
+    @Schema(
+        description =
+            "Alternative formats of the same image, best first, for a <picture> element. Empty " +
+                "when the image is not cached, in which case `imageUrl` is all there is."
+    )
+    val imageSources: List<ImageSourceResponse>
 ) {
     companion object {
-        fun fromEntity(entity: PromoterEntity): PromoterSummaryResponse =
+        fun fromEntity(
+            entity: PromoterEntity,
+            image: ServedImage
+        ): PromoterSummaryResponse =
             PromoterSummaryResponse(
                 id = requireNotNull(entity.id) { "Persisted promoter must have an ID" },
                 slug = entity.slug,
                 name = entity.name,
                 websiteUrl = entity.websiteUrl,
-                imageUrl = entity.imageUrl
+                imageUrl = image.url,
+                imageSources = image.sources
             )
     }
 }
@@ -47,16 +59,26 @@ data class PromoterDetailResponse(
     @Schema(description = "URL of the promoter's website or social page")
     val websiteUrl: String?,
     @Schema(description = "URL of the promoter's logo image")
-    val imageUrl: String?
+    val imageUrl: String?,
+    @Schema(
+        description =
+            "Alternative formats of the same image, best first, for a <picture> element. Empty " +
+                "when the image is not cached, in which case `imageUrl` is all there is."
+    )
+    val imageSources: List<ImageSourceResponse>
 ) {
     companion object {
-        fun fromEntity(entity: PromoterEntity): PromoterDetailResponse =
+        fun fromEntity(
+            entity: PromoterEntity,
+            image: ServedImage
+        ): PromoterDetailResponse =
             PromoterDetailResponse(
                 id = requireNotNull(entity.id) { "Persisted promoter must have an ID" },
                 slug = entity.slug,
                 name = entity.name,
                 websiteUrl = entity.websiteUrl,
-                imageUrl = entity.imageUrl
+                imageUrl = image.url,
+                imageSources = image.sources
             )
     }
 }

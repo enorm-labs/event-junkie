@@ -122,12 +122,14 @@ abstract class BaseControllerTest {
 
     protected suspend fun insertPromoter(
         name: String,
-        slug: String
+        slug: String,
+        imageUrl: String? = null
     ): Long =
         databaseClient
-            .sql("INSERT INTO events.promoter (name, slug) VALUES (:name, :slug) RETURNING id")
+            .sql("INSERT INTO events.promoter (name, slug, image_url) VALUES (:name, :slug, :imageUrl) RETURNING id")
             .bind("name", name)
             .bind("slug", slug)
+            .bindOrNull("imageUrl", imageUrl)
             .mapId()
 
     protected suspend fun insertGenreTag(

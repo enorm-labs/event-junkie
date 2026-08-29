@@ -100,39 +100,51 @@ class EventService(
                 ?: throw EventNotFoundException(slug)
         val eventId = requireNotNull(event.id) { "Persisted event must have an ID" }
 
-        val venue = venueRepository.findById(event.venueId)
-        val venueSummary =
-            requireNotNull(venue) { "Event $eventId references missing venue ${event.venueId}" }
-                .let { VenueSummaryResponse.fromEntity(it) }
+        val venue =
+            requireNotNull(venueRepository.findById(event.venueId)) {
+                "Event $eventId references missing venue ${event.venueId}"
+            }
 
         val artistLinks = eventArtistRepository.findByEventId(eventId).toList().sortedBy { it.billingOrder }
         val artistsById = fetchArtists(artistLinks.map { it.artistId })
+
+        val promoterIds = eventPromoterRepository.findByEventId(eventId).toList().map { it.promoterId }
+        val promoterEntities =
+            if (promoterIds.isEmpty()) emptyList() else promoterRepository.findByIdIn(promoterIds).toList()
+
+        val genreTagIds = eventGenreTagRepository.findByEventId(eventId).toList().map { it.genreTagId }
+        val genreTags =
+            if (genreTagIds.isEmpty()) emptyList() else genreTagRepository.findAllById(genreTagIds).toList().map { it.name }
+
+        // One lookup for every image this response carries, not only the event's. An embedded venue
+        // or artist summary holds an `imageUrl` too, and leaving those unrewritten would hand out a
+        // venue's own URL from an endpoint that had just stopped doing it for the event (#833).
+        val images =
+            cachedImageGate.forUrls(
+                listOf(event.imageUrl, venue.imageUrl) + artistsById.values.map { it.imageUrl } + promoterEntities.map { it.imageUrl }
+            )
+        val venueSummary = VenueSummaryResponse.fromEntity(venue, images.serve(venue.imageUrl, CARD_WIDTH))
         val lineup =
             artistLinks.mapNotNull { link ->
                 artistsById[link.artistId]?.let { artist ->
                     LineupEntryResponse(
-                        artist = ArtistSummaryResponse.fromEntity(artist),
+                        artist = ArtistSummaryResponse.fromEntity(artist, images.serve(artist.imageUrl, CARD_WIDTH)),
                         role = ArtistRole.parseOrDefault(link.role),
                         billingOrder = link.billingOrder,
                         stage = link.stage
                     )
                 }
             }
+        val promoters = promoterEntities.map { PromoterSummaryResponse.fromEntity(it, images.serve(it.imageUrl, CARD_WIDTH)) }
 
-        val promoterIds = eventPromoterRepository.findByEventId(eventId).toList().map { it.promoterId }
-        val promoters =
-            if (promoterIds.isEmpty()) {
-                emptyList()
-            } else {
-                promoterRepository.findByIdIn(promoterIds).toList().map { PromoterSummaryResponse.fromEntity(it) }
-            }
-
-        val genreTagIds = eventGenreTagRepository.findByEventId(eventId).toList().map { it.genreTagId }
-        val genreTags =
-            if (genreTagIds.isEmpty()) emptyList() else genreTagRepository.findAllById(genreTagIds).toList().map { it.name }
-
-        val image = cachedImageGate.forUrls(listOf(event.imageUrl)).serve(event.imageUrl, DETAIL_WIDTH)
-        return EventDetailResponse.fromEntity(event, venueSummary, lineup, promoters, genreTags, image)
+        return EventDetailResponse.fromEntity(
+            event,
+            venueSummary,
+            lineup,
+            promoters,
+            genreTags,
+            images.serve(event.imageUrl, DETAIL_WIDTH)
+        )
     }
 
     /**
@@ -181,10 +193,12 @@ class EventService(
     private suspend fun summariesFor(unlicensed: List<EventEntity>): List<EventSummaryResponse> {
         if (unlicensed.isEmpty()) return emptyList()
         val events = withLicenceApplied(unlicensed)
-        val images = cachedImageGate.forUrls(events.map { it.imageUrl })
         val eventIds = events.map { requireNotNull(it.id) { "Persisted event must have an ID" } }
 
         val venuesById = venueRepository.findByIdIn(events.map { it.venueId }.distinct()).toList().associateBy { it.id }
+        // The embedded venue summary carries an `imageUrl` of its own, so it is looked up here
+        // rather than left as the venue's URL on an endpoint that rewrote the event's (#833).
+        val images = cachedImageGate.forUrls(events.map { it.imageUrl } + venuesById.values.map { it.imageUrl })
 
         val artistLinks = eventArtistRepository.findByEventIdIn(eventIds).toList()
         val artistsById = fetchArtists(artistLinks.map { it.artistId })
@@ -205,7 +219,7 @@ class EventService(
             val genreTags = genreLinksByEvent[event.id].orEmpty().mapNotNull { genreNamesById[it.genreTagId] }
             EventSummaryResponse.fromEntity(
                 event,
-                VenueSummaryResponse.fromEntity(venue),
+                VenueSummaryResponse.fromEntity(venue, images.serve(venue.imageUrl, CARD_WIDTH)),
                 artistNames,
                 genreTags,
                 images.serve(event.imageUrl, CARD_WIDTH)

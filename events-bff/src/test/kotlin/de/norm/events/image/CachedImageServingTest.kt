@@ -173,6 +173,87 @@ class CachedImageServingTest : BaseControllerTest() {
         }
 
     @Test
+    @DisplayName("a venue's own image is served from our origin, not the venue's")
+    fun `the venue response carries our url`(): Unit =
+        runBlocking {
+            // The three columns #833 was raised about. None is scraped, so no `event_source` licence
+            // reaches them, and nothing offered them to the fetcher until now.
+            insertVenue("Lido", "lido", imageUrl = LOGO_URL)
+            insertCachedImage(LOGO_URL, LOGO_HASH, ALL_WIDTHS)
+
+            webTestClient
+                .get()
+                .uri("/venues/lido")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.imageUrl")
+                .isEqualTo("/images/$LOGO_HASH/192.jpg")
+                .jsonPath("$.imageSources[0].type")
+                .isEqualTo("image/avif")
+        }
+
+    @Test
+    fun `an artist photograph is served from our origin`(): Unit =
+        runBlocking {
+            insertArtist("Act", "act", imageUrl = LOGO_URL)
+            insertCachedImage(LOGO_URL, LOGO_HASH, ALL_WIDTHS)
+
+            webTestClient
+                .get()
+                .uri("/artists/act")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.imageUrl")
+                .isEqualTo("/images/$LOGO_HASH/192.jpg")
+        }
+
+    @Test
+    fun `a promoter logo is served from our origin, in the list as well as the detail`(): Unit =
+        runBlocking {
+            insertPromoter("Promo", "promo", imageUrl = LOGO_URL)
+            insertCachedImage(LOGO_URL, LOGO_HASH, ALL_WIDTHS)
+
+            webTestClient
+                .get()
+                .uri("/promoters")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[0].imageUrl")
+                .isEqualTo("/images/$LOGO_HASH/192.jpg")
+        }
+
+    @Test
+    @DisplayName("the venue embedded in an event response is rewritten too")
+    fun `an embedded venue summary carries our url`(): Unit =
+        runBlocking {
+            // The one an earlier draft missed. Rewriting the event's image and leaving the venue
+            // summary's beside it would hand out a venue URL from the endpoint that had just
+            // stopped doing exactly that.
+            val venueId = insertVenue("Lido", "lido", imageUrl = LOGO_URL)
+            insertEvent(venueId, "Show", "show", LocalDate.now().plusDays(3), imageUrl = POSTER_URL)
+            insertCachedImage(POSTER_URL, HASH, ALL_WIDTHS)
+            insertCachedImage(LOGO_URL, LOGO_HASH, ALL_WIDTHS)
+
+            webTestClient
+                .get()
+                .uri("/events/show")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.imageUrl")
+                .isEqualTo("/images/$HASH/768.jpg")
+                .jsonPath("$.venue.imageUrl")
+                .isEqualTo("/images/$LOGO_HASH/192.jpg")
+        }
+
+    @Test
     @DisplayName("an image we do not hold is reported absent rather than hotlinked")
     fun `an uncached image url is blanked`(): Unit =
         runBlocking {
@@ -212,6 +293,9 @@ class CachedImageServingTest : BaseControllerTest() {
         private const val BUCKET = "images"
         private const val POSTER_URL = "https://venue.test/poster.jpg"
         private const val HASH = "0f4b2c1d5e6a7b8c9d0e1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e"
+
+        private const val LOGO_URL = "https://venue.test/logo.jpg"
+        private const val LOGO_HASH = "9e8d7c6b5a4938271605f4e3d2c1b0a99e8d7c6b5a4938271605f4e3d2c1b0a9"
 
         /** A row whose object was never put in the bucket. */
         private const val ORPHAN_HASH = "1a2b3c4d5e6f708192a3b4c5d6e7f8090f4b2c1d5e6a7b8c9d0e1f2a3b4c5d6e"

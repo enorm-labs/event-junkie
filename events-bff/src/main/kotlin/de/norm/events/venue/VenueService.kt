@@ -2,6 +2,7 @@ package de.norm.events.venue
 
 import de.norm.events.common.PageResponse
 import de.norm.events.common.sanitizeSort
+import de.norm.events.image.CachedImageGate
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -13,7 +14,8 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Service
 class VenueService(
-    private val venueRepository: VenueRepository
+    private val venueRepository: VenueRepository,
+    private val cachedImageGate: CachedImageGate
 ) {
     /**
      * Lists venues with pagination, optionally filtered by a case-insensitive name [query]
@@ -50,7 +52,12 @@ class VenueService(
                         venueRepository.countByNameContainingIgnoreCaseAndDistrict(name, borough)
                 }
             }
-        return PageResponse.of(entities.map { VenueSummaryResponse.fromEntity(it) }, safePageable, total)
+        val images = cachedImageGate.forUrls(entities.map { it.imageUrl })
+        return PageResponse.of(
+            entities.map { VenueSummaryResponse.fromEntity(it, images.serve(it.imageUrl, RENDERED_WIDTH)) },
+            safePageable,
+            total
+        )
     }
 
     /**
@@ -61,10 +68,19 @@ class VenueService(
     @Transactional(readOnly = true)
     suspend fun findBySlug(slug: String): VenueDetailResponse {
         val entity = venueRepository.findBySlug(slug) ?: throw VenueNotFoundException(slug)
-        return VenueDetailResponse.fromEntity(entity)
+        val image = cachedImageGate.forUrls(listOf(entity.imageUrl)).serve(entity.imageUrl, RENDERED_WIDTH)
+        return VenueDetailResponse.fromEntity(entity, image)
     }
 
     companion object {
+        /**
+         * What the site draws one of these at, in CSS pixels.
+         *
+         * `VenueCard` uses 80 and `BaseDetailView`'s header 96, so one number covers both — the
+         * gate offers everything from the slot up to three times it either way.
+         */
+        private const val RENDERED_WIDTH = 96
+
         /** Entity properties a client may sort the venue list by; anything else is ignored. */
         private val SORTABLE_PROPERTIES = setOf("name", "slug", "city")
         private val DEFAULT_SORT = Sort.by("name")

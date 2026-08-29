@@ -150,12 +150,13 @@ const { t } = useI18n()
         under Art. 21 GDPR — the email address in the next paragraph is all it takes.
       </p>
       <p>
-        <strong>Images:</strong> venues and promoters publish images with their events. Event Junkie
-        downloads those images and stores a copy on its own servers at Hetzner, rather than asking
-        the provider for the file again on every page view. The legal basis is Art. 6 (1) (f) GDPR.
-        The legitimate interest is delivering the site without involving a third party, and placing
-        less load on a venue's server. The copy is deleted as soon as the venue opts out or a rights
-        holder asks for it, and it is not fetched again.
+        <strong>Images:</strong> venues, promoters and artists publish images — with individual
+        events, and of themselves. Event Junkie downloads those images and stores a copy on its own
+        servers at Hetzner, rather than asking the provider for the file again on every page view.
+        The legal basis is Art. 6 (1) (f) GDPR. The legitimate interest is delivering the site
+        without involving a third party, and placing less load on a venue's server. The copy is
+        deleted as soon as the venue opts out or a rights holder asks for it, and it is not fetched
+        again.
       </p>
       <p>
         <strong>If you are an artist</strong> and would like your name removed or corrected, write
@@ -191,9 +192,9 @@ const { t } = useI18n()
         images.
       </p>
       <p>
-        For event images we now store a copy of our own (section 4), so that they will come from our
-        servers. Images of venues, artists and promoters are still fetched from the providers. A
-        content blocker in your browser will stop those requests if you would rather avoid them.
+        We now store a copy of each of these images of our own (section 4), so that they will come
+        from our servers. Until that is switched over everywhere, a content blocker in your browser
+        will stop those requests if you would rather avoid them.
       </p>
       <p>
         If you contact us by email, or open an issue on GitHub, that data is processed to handle

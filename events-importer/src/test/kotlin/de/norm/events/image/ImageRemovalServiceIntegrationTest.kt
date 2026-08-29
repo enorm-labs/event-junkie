@@ -143,6 +143,35 @@ class ImageRemovalServiceIntegrationTest : BaseControllerTest() {
         }
 
     @Test
+    fun `the sweep leaves a venue, artist or promoter image alone`(): Unit =
+        runBlocking {
+            // **The regression this pins is a loop, not a one-off.** The fetcher offers all four
+            // columns; a sweep that asks only `event` calls every one of the other three an orphan,
+            // deletes it, and the next pass stores it again (#833).
+            emptyBucket()
+            val venue = seedVenue("cassiopeia")
+            seedImage("vvv", "https://mine.test/logo.jpg", venue, withEvent = false)
+            databaseClient.sql("UPDATE events.venue SET image_url = 'https://mine.test/logo.jpg' WHERE id = $venue").await()
+
+            service().sweep().images shouldBe 0
+
+            objectExists("staging/originals/vvv") shouldBe true
+        }
+
+    @Test
+    fun `a takedown covers the venue's own image, not only its events'`(): Unit =
+        runBlocking {
+            emptyBucket()
+            val venue = seedVenue("cassiopeia")
+            seedImage("vvv", "https://mine.test/logo.jpg", venue, withEvent = false)
+            databaseClient.sql("UPDATE events.venue SET image_url = 'https://mine.test/logo.jpg' WHERE id = $venue").await()
+
+            service().takeDown("cassiopeia").images shouldBe 1
+
+            objectExists("staging/originals/vvv") shouldBe false
+        }
+
+    @Test
     fun `the sweep never drops a tombstone, so a takedown is not undone`(): Unit =
         runBlocking {
             emptyBucket()
@@ -292,16 +321,19 @@ class ImageRemovalServiceIntegrationTest : BaseControllerTest() {
         contentHash: String,
         sourceUrl: String,
         venueId: Long,
-        storeObjects: Boolean = true
+        storeObjects: Boolean = true,
+        withEvent: Boolean = true
     ): Long {
-        databaseClient
-            .sql(
-                """
-                INSERT INTO events.event (venue_id, source_id, title, slug, event_date, image_url, event_type, status)
-                VALUES ($venueId, '$sourceUrl', 'Show', 'show-$venueId-${contentHash.hashCode()}',
-                        CURRENT_DATE + 10, '$sourceUrl', 'CONCERT', 'SCHEDULED')
-                """.trimIndent()
-            ).await()
+        if (withEvent) {
+            databaseClient
+                .sql(
+                    """
+                    INSERT INTO events.event (venue_id, source_id, title, slug, event_date, image_url, event_type, status)
+                    VALUES ($venueId, '$sourceUrl', 'Show', 'show-$venueId-${contentHash.hashCode()}',
+                            CURRENT_DATE + 10, '$sourceUrl', 'CONCERT', 'SCHEDULED')
+                    """.trimIndent()
+                ).await()
+        }
         val saved = repository.save(CachedImageEntity(sourceUrl = sourceUrl, contentHash = contentHash, fetchedAt = Instant.now()))
         val id = saved.id!!
 

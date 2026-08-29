@@ -102,6 +102,36 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
         }
 
     @Test
+    fun `offers the venue, artist and promoter images too, not only the events'`(): Unit =
+        runBlocking {
+            // These three columns are written by the admin API and no scraper touches them, so no
+            // `event_source` licence applies (#833). Missing them left four render sites hotlinking
+            // after the event path had stopped.
+            databaseClient.sql("UPDATE events.venue SET image_url = 'https://venue.test/logo.jpg'").await()
+            insertArtist("https://artist.test/photo.jpg")
+            insertPromoter("https://promoter.test/logo.jpg")
+
+            repository.findUncachedImageUrls(100).toList() shouldContainExactlyInAnyOrder
+                listOf(
+                    "https://venue.test/poster-one.jpg",
+                    "https://venue.test/poster-two.jpg",
+                    "https://venue.test/logo.jpg",
+                    "https://artist.test/photo.jpg",
+                    "https://promoter.test/logo.jpg"
+                )
+        }
+
+    @Test
+    fun `one URL on an event and on its venue is a single fetch`(): Unit =
+        runBlocking {
+            // `UNION` rather than `UNION ALL`, so the same file under two columns is one object.
+            databaseClient.sql("UPDATE events.venue SET image_url = 'https://venue.test/poster-one.jpg'").await()
+
+            repository.findUncachedImageUrls(100).toList() shouldContainExactlyInAnyOrder
+                listOf("https://venue.test/poster-one.jpg", "https://venue.test/poster-two.jpg")
+        }
+
+    @Test
     fun `a URL already cached is not offered again`(): Unit =
         runBlocking {
             repository.save(CachedImageEntity(sourceUrl = "https://venue.test/poster-one.jpg"))
@@ -276,6 +306,16 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
                 """.trimIndent()
             ).map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
             .awaitSingle()
+
+    private suspend fun insertArtist(imageUrl: String) =
+        databaseClient
+            .sql("INSERT INTO events.artist (name, slug, image_url) VALUES ('Act', 'act', '$imageUrl')")
+            .await()
+
+    private suspend fun insertPromoter(imageUrl: String) =
+        databaseClient
+            .sql("INSERT INTO events.promoter (name, slug, image_url) VALUES ('Promo', 'promo', '$imageUrl')")
+            .await()
 
     private suspend fun insertEvent(
         key: String,

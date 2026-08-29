@@ -69,6 +69,7 @@ usePageMeta(() =>
     :events-error="eventsError"
     :events-loading="eventsLoading"
     :image-url="artist?.imageUrl"
+    :image-sources="artist?.imageSources"
     :kind="kind"
     :loading="loading"
     :name="artist?.name"
