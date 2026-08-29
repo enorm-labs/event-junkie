@@ -22,8 +22,27 @@ the same images run on Hetzner k3s. That is what makes this worth the minutes it
 ## The fast path
 
 ```bash
-scripts/k3d-rehearsal.sh all      # up → verify → import → chain → test → down
+scripts/k3d-rehearsal.sh all      # up → verify → import → chain → images → test → down
 ```
+
+## The image path — `K3D_IMAGES=1`
+
+```bash
+K3D_IMAGES=1 scripts/k3d-rehearsal.sh all
+```
+
+Adds [`values-k3d-images.yaml`](../../deploy/charts/event-junkie/values-k3d-images.yaml) on top of the ordinary overrides, creates the two Secrets, and points
+object storage at the compose stack's MinIO. The `images` step then asserts the whole of ADR-019 and ADR-020: derivatives generated, AVIF among the formats, one
+of them served through Traefik, and `imageUrl` pointing at our own origin.
+
+It also **seeds Cassiopeia rather than AMT**, which is not cosmetic. AMT often publishes nothing upcoming, and an event that is never persisted carries no
+`image_url` — so the image step skips for a reason that has nothing to do with images. It is still one import of one venue.
+
+**Off by default**, because it needs MinIO on the host and the plain rehearsal must work without it.
+
+**This exists because nothing exercised the path.** Three defects reached staging from one pull request: an invariant that had never rendered a second
+container, a decode limit rendered in scientific notation, and a sidecar the importer was never told to call. `helm template` passed for all three. This run
+fails on any of them.
 
 Use the individual commands when something fails and you want to keep the cluster to look at it:
 
@@ -32,6 +51,7 @@ scripts/k3d-rehearsal.sh up       # build, create, install
 scripts/k3d-rehearsal.sh verify   # ingress routing, positive and negative
 scripts/k3d-rehearsal.sh import   # seed one source, run a real import
 scripts/k3d-rehearsal.sh chain    # the acceptance criterion
+scripts/k3d-rehearsal.sh images   # the image path, with K3D_IMAGES=1
 scripts/k3d-rehearsal.sh test     # helm test
 scripts/k3d-rehearsal.sh status
 scripts/k3d-rehearsal.sh down     # always, eventually

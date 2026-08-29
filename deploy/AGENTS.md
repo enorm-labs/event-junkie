@@ -110,6 +110,7 @@ deploy/
 │   ├── Chart.yaml            apiVersion v2 — see below
 │   ├── values.yaml           production-shaped; cannot render alone
 │   ├── values-k3d.yaml       #263 · locally built images; two of its blind guesses were wrong
+│   ├── values-k3d-images.yaml  the image path, on top of the file above · K3D_IMAGES=1 only
 │   ├── values.schema.json    required keys, enums, and the importer's replica pin
 │   └── templates/            flat, one resource per file, kind in the filename
 ├── clusters/                 #414 · what Flux reconciles, one directory per cluster

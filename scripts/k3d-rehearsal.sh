@@ -47,6 +47,10 @@ CONTEXT="k3d-${CLUSTER}"
 RELEASE=event-junkie
 CHART=deploy/charts/event-junkie
 VALUES="${CHART}/values-k3d.yaml"
+# Applied on top of VALUES when K3D_IMAGES=1. Off by default: it needs the compose stack's MinIO and
+# two Secrets, and the plain rehearsal must keep working on a machine that has neither.
+IMAGES_VALUES="${CHART}/values-k3d-images.yaml"
+IMAGES="${K3D_IMAGES:-0}"
 # The rehearsal gets a database of its own. Never the development one: installing the chart runs the
 # importer's Flyway migrations, and pointing that at `event_junkie` would have the in-cluster
 # importer competing with a local `bootRun` over one schema — with ~86 sources and thousands of
@@ -425,6 +429,24 @@ prepare_database() {
   k -n "$namespace" create secret generic events-db \
     --from-literal=username=admin --from-literal=password=admin >/dev/null
   info "database $DB created empty; secret events-db created in namespace $namespace"
+
+  [ "$IMAGES" = 1 ] || return 0
+  # The two Secrets the image path needs. Both are created out of band in every real environment
+  # (SECRETS.md), which is exactly why the chart has no path that invents them and why they have to
+  # exist before the install rather than after it — `secretKeyRef` is not optional, so values that
+  # land ahead of a Secret leave the pod in CreateContainerConfigError.
+  k -n "$namespace" create secret generic event-junkie-images \
+    --from-literal=IMAGE_STORAGE_ACCESS_KEY=minioadmin \
+    --from-literal=IMAGE_STORAGE_SECRET_KEY=minioadmin >/dev/null
+  # A shared secret between two containers rather than a credential to anything, so a value fixed
+  # here costs nothing. It is still 64 hex characters, because imgproxy parses it as hex and a
+  # shorter one would fail in a way this rehearsal is not trying to discover.
+  local key salt
+  key="$(printf '61%.0s' $(seq 1 32))"
+  salt="$(printf '62%.0s' $(seq 1 32))"
+  k -n "$namespace" create secret generic event-junkie-imgproxy \
+    --from-literal="IMGPROXY_KEY=$key" --from-literal="IMGPROXY_SALT=$salt" >/dev/null
+  info "secrets event-junkie-images and event-junkie-imgproxy created"
 }
 
 cmd_up() {
@@ -471,7 +493,12 @@ cmd_up() {
   # release rather than a single object — nothing is installed at all, and the message says so in a
   # sentence that scrolls away behind whatever ran next.
   log "Installing the chart"
-  h install "$RELEASE" "$CHART" --values "$VALUES" --wait --timeout 5m >/dev/null \
+  local values_args=(--values "$VALUES")
+  if [ "$IMAGES" = 1 ]; then
+    values_args+=(--values "$IMAGES_VALUES")
+    info "image caching enabled — imgproxy sidecar, MinIO on the host, serving on"
+  fi
+  h install "$RELEASE" "$CHART" "${values_args[@]}" --wait --timeout 5m >/dev/null \
     || die "the release did not install — nothing below this point would be measuring the chart"
   # Informational, and deliberately before the assertion below: it succeeds whether or not anything
   # is running, so its status must never be what this function returns. Every step above exits on
@@ -631,7 +658,24 @@ cmd_verify() {
 
 cmd_import() {
   guard_context
-  local slug="${1:-amt}"
+  # One import of one venue, once — ADR-007, whichever venue that is.
+  #
+  # AMT by default: a small club, and the one the rehearsal has always used. Under K3D_IMAGES it is
+  # Cassiopeia instead, because AMT frequently publishes nothing upcoming — which is a fine result
+  # for the chain (#693 says so) and useless for the image path, since an event that is never
+  # persisted has no `image_url` to cache. The image rehearsal needs a venue that reliably has both.
+  local slug name venue_url source_url source_type
+  if [ "$IMAGES" = 1 ]; then
+    slug="${1:-cassiopeia}"
+    name="Cassiopeia"; source_type="CASSIOPEIA"
+    venue_url="https://cassiopeia-berlin.de"
+    source_url="https://cassiopeia-berlin.de/club"
+  else
+    slug="${1:-amt}"
+    name="AMT"; source_type="AMT"
+    venue_url="https://www.club-amt.berlin"
+    source_url="https://www.club-amt.berlin/events"
+  fi
   log "Seeding one source and running a real import (one small venue, once — ADR-007)"
   k port-forward "svc/${RELEASE}-importer" 18081:8081 >/dev/null 2>&1 &
   local pf=$!
@@ -656,17 +700,17 @@ cmd_import() {
   done
   info "importer answering on :18081 after ${waited}s"
 
+  # The address is the venue's own and is not what is under test; the slug the importer derives from
+  # `name` is, because every later call addresses the source by it.
   local vid
-  vid="$(curl -sS -X POST "$api/venues" -H 'Content-Type: application/json' -d '{
-    "name":"AMT","address":"Dircksenstr. 114","city":"Berlin","postalCode":"10178","district":"mitte",
-    "latitude":52.5137,"longitude":13.418,"websiteUrl":"https://www.club-amt.berlin",
-    "description":"Small club under the S-Bahn arches at Alexanderplatz."}' | yq -p json '.id')"
+  vid="$(curl -sS -X POST "$api/venues" -H 'Content-Type: application/json' -d "{
+    \"name\":\"$name\",\"city\":\"Berlin\",\"websiteUrl\":\"$venue_url\"}" | yq -p json '.id')"
   if [ -z "$vid" ] || [ "$vid" = "null" ]; then die "venue POST failed"; fi
-  info "venue id $vid"
+  info "venue id $vid ($name)"
 
   curl -sS -X POST "$api/event-sources" -H 'Content-Type: application/json' -d "{
-    \"venueId\":$vid,\"name\":\"AMT\",\"url\":\"https://www.club-amt.berlin/events\",
-    \"sourceType\":\"AMT\",\"enabled\":true,\"importIntervalMinutes\":1440,\"maxRetries\":3}" >/dev/null
+    \"venueId\":$vid,\"name\":\"$name\",\"url\":\"$source_url\",
+    \"sourceType\":\"$source_type\",\"enabled\":true,\"importIntervalMinutes\":1440,\"maxRetries\":3}" >/dev/null
   curl -sS -X POST "$api/event-sources/$slug/import" -o /dev/null
   info "import triggered for '$slug'"
 
@@ -730,6 +774,74 @@ cmd_chain() {
   fi
   curl -s -H "$HOST_HEADER" "$BASE/api/events?size=3" \
     | yq -p json '.content[] | "     - " + .title' 2>/dev/null || true
+}
+
+# The image path, end to end: the importer fetches a venue's poster, stores it in MinIO, asks the
+# imgproxy sidecar for each width and format, and the BFF serves one back through Traefik.
+#
+# **This is the step the three staging defects would each have failed** — a sidecar that would not
+# start, a sidecar nothing called, and an invariant that had never rendered a second container.
+# `helm template` passed for all three, which is the whole argument for running the thing.
+cmd_images() {
+  guard_context
+  if [ "$IMAGES" != 1 ]; then
+    skip "image caching not enabled — re-run with K3D_IMAGES=1"
+    return 0
+  fi
+  log "The image path: fetch, store, derive, serve"
+
+  # The importer's pass is on a five-minute tick and the import above only just seeded the events it
+  # reads, so the first pass with anything to do is up to that far away. Polled rather than slept:
+  # a fixed wait is either wrong or wasteful, and this prints what it is waiting for.
+  local i variants=0
+  for i in $(seq 1 40); do
+    variants="$(psql_ -d "$DB" -tAc 'select count(*) from events.cached_image_variant' | tr -d ' ')"
+    [ "${variants:-0}" -gt 0 ] && break
+    sleep 15
+  done
+
+  if [ "${variants:-0}" -eq 0 ]; then
+    local cached failed
+    cached="$(psql_ -d "$DB" -tAc 'select count(*) from events.cached_image where content_hash is not null' | tr -d ' ')"
+    failed="$(psql_ -d "$DB" -tAc 'select count(*) from events.cached_image where failed_at is not null' | tr -d ' ')"
+    if [ "${cached:-0}" -eq 0 ] && [ "${failed:-0}" -eq 0 ]; then
+      skip "the seeded venue published no image URLs, so there was nothing to cache"
+      return 0
+    fi
+    bad "$cached image(s) stored and $failed refused, and no derivative was generated — the importer is not reaching its sidecar"
+    return 1
+  fi
+  ok "$variants derivative(s) generated by the imgproxy sidecar"
+
+  # Every format, not just the count. A run that produced only JPEG means imgproxy answered and the
+  # formats this design exists for did not arrive.
+  local formats
+  formats="$(psql_ -d "$DB" -tAc "select string_agg(distinct format, ',' order by format) from events.cached_image_variant" | tr -d ' ')"
+  case "$formats" in
+    *avif*) ok "formats generated: $formats" ;;
+    *) bad "only $formats generated — imgproxy answered but produced no AVIF, which is what ADR-020 chose it for" ;;
+  esac
+
+  # And the other end: one of those objects, served from our own origin through a real Traefik.
+  local hash width type
+  hash="$(psql_ -d "$DB" -tAc "select c.content_hash from events.cached_image c join events.cached_image_variant v on v.cached_image_id = c.id where v.format = 'jpg' limit 1" | tr -d ' ')"
+  width="$(psql_ -d "$DB" -tAc "select v.width from events.cached_image c join events.cached_image_variant v on v.cached_image_id = c.id where v.format = 'jpg' and c.content_hash = '$hash' order by v.width limit 1" | tr -d ' ')"
+  type="$(curl -s -o /dev/null -w '%{content_type}' -H "$HOST_HEADER" "$BASE/api/images/$hash/$width.jpg")"
+  if [ "$type" = "image/jpeg" ]; then
+    ok "a derivative served through the ingress as image/jpeg"
+  else
+    bad "GET /api/images/$hash/$width.jpg returned '$type' rather than image/jpeg — the serving path is broken"
+  fi
+
+  # The substitution, which is what actually stops the browser contacting the venue. A URL still
+  # pointing at a venue here means the BFF found no derivative and reported the source instead.
+  local served
+  served="$(curl -s -H "$HOST_HEADER" "$BASE/api/events?size=20" | yq -p json '[.content[] | select(.imageUrl == "/api/images/*")] | length')"
+  if [ "${served:-0}" -gt 0 ]; then
+    ok "$served event(s) served an imageUrl on our own origin"
+  else
+    bad "no event carried an imageUrl under /api/images — the BFF is still handing out venue URLs"
+  fi
 }
 
 # The output is piped, so `pipefail` carries helm's exit status out of this function and errexit
@@ -979,6 +1091,7 @@ main() {
     verify) cmd_verify ;;
     import) shift; cmd_import "$@" ;;
     chain)  cmd_chain ;;
+    images) cmd_images ;;
     test)   cmd_test ;;
     status) cmd_status ;;
     down)   cmd_down ;;
@@ -1005,7 +1118,7 @@ main() {
       # `up` builds a precondition and must stop the run, while `verify` and friends measure and are
       # MEANT to keep going and report at the end through FAILURES. Real errexit here would abort
       # `verify` on its first failed curl, which is the opposite of what it is for.
-      cmd_up && cmd_verify && cmd_import && cmd_chain && cmd_test
+      cmd_up && cmd_verify && cmd_import && cmd_chain && cmd_images && cmd_test
       ;;
     # The Flux path is its own `all`, and must not share a cluster with the one above: both install a
     # release called event-junkie against the same database, so running them together would put two
