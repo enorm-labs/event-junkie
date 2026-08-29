@@ -76,6 +76,8 @@ spec:
             {{- if .Values.images.enabled }}
             - name: APP_IMAGES_FETCH_ENABLED
               value: "true"
+            - name: APP_IMAGES_SWEEP_ENABLED
+              value: {{ .Values.images.sweep.enabled | quote }}
             - name: IMAGE_STORAGE_ENDPOINT
               value: {{ .Values.images.storage.endpoint | quote }}
             - name: IMAGE_STORAGE_REGION

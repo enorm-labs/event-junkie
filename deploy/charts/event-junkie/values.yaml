@@ -267,6 +267,14 @@ images:
   # minutes over a batch rather than all at once.
   serving:
     enabled: false
+  # The orphan sweep. This bucket carries no lifecycle rule, unlike -o2 and -backups, because its
+  # objects are live content — so the sweep is what stops it growing forever (ADR-019).
+  #
+  # Off means the pass runs, logs what it would delete, and deletes nothing. Turn it on once a
+  # release has reported counts that look right. The venue takedown route deletes either way: it is
+  # an operator's decision rather than a rule being watched.
+  sweep:
+    enabled: false
   storage:
     endpoint: "https://fsn1.your-objectstorage.com"
     # Hetzner enforces the region in the request signature and rejects a mismatch as bad credentials.
