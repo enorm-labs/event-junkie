@@ -121,6 +121,36 @@ class CachedImagesTest {
         assertEquals("/images/$HASH/192.jpg", local.serve(poster, CARD).url)
     }
 
+    // Both or neither, decided here so a template can trust the pair. Reporting one reserves no
+    // space and is the same layout shift as reporting none (#848).
+    @Test
+    fun `an image measured on both axes reports both`() {
+        val measured = imageWith(intrinsicWidth = 1200, intrinsicHeight = 630).serve(poster, CARD)
+
+        assertEquals(1200, measured.intrinsicWidth)
+        assertEquals(630, measured.intrinsicHeight)
+    }
+
+    @Test
+    @DisplayName("an image measured on one axis reports neither")
+    fun `a half-measured image reports nothing`() {
+        val half = imageWith(intrinsicWidth = 1200, intrinsicHeight = null).serve(poster, CARD)
+
+        assertNull(half.intrinsicWidth)
+        assertNull(half.intrinsicHeight)
+    }
+
+    private fun imageWith(
+        intrinsicWidth: Int?,
+        intrinsicHeight: Int?
+    ) = CachedImages(
+        mapOf(
+            poster to
+                ServableImage(HASH, mapOf("jpg" to sortedSetOf(192)), intrinsicWidth, intrinsicHeight)
+        ),
+        "/api/images"
+    )
+
     private fun srcsetFor(
         served: ServedImage,
         type: String

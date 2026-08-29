@@ -196,16 +196,23 @@ abstract class BaseControllerTest {
         contentHash: String,
         widths: List<Int>,
         formats: List<String> = listOf("avif", "webp", "jpg"),
-        deleted: Boolean = false
+        deleted: Boolean = false,
+        // Null by default because null is the common case worth defaulting to: a stock JVM measures
+        // neither WebP nor AVIF, so 16% of the real rows carry no dimensions (#848).
+        intrinsicWidth: Int? = null,
+        intrinsicHeight: Int? = null
     ): Long {
         val imageId =
             databaseClient
                 .sql(
-                    "INSERT INTO events.cached_image (source_url, content_hash, content_type, fetched_at, deleted_at) " +
-                        "VALUES (:sourceUrl, :contentHash, 'image/jpeg', NOW(), " +
+                    "INSERT INTO events.cached_image " +
+                        "(source_url, content_hash, content_type, intrinsic_width, intrinsic_height, fetched_at, deleted_at) " +
+                        "VALUES (:sourceUrl, :contentHash, 'image/jpeg', :intrinsicWidth, :intrinsicHeight, NOW(), " +
                         (if (deleted) "NOW()" else "NULL") + ") RETURNING id"
                 ).bind("sourceUrl", sourceUrl)
                 .bind("contentHash", contentHash)
+                .bindOrNull("intrinsicWidth", intrinsicWidth, Int::class.java)
+                .bindOrNull("intrinsicHeight", intrinsicHeight, Int::class.java)
                 .mapId()
 
         widths.forEach { width ->

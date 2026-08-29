@@ -303,6 +303,50 @@ class CachedImageServingTest : BaseControllerTest() {
                 .consumeWith { assertContentEquals(POSTER, it.responseBody) }
         }
 
+    // What reserves the space a lazy image will take. `srcset` is what makes it necessary: without
+    // dimensions the browser cannot know the shape until the bytes land, and the page reflows (#848).
+    @Test
+    fun `the response carries the intrinsic dimensions`(): Unit =
+        runBlocking {
+            insertCachedImage(POSTER_URL, HASH, ALL_WIDTHS, intrinsicWidth = 1200, intrinsicHeight = 630)
+            val venueId = insertVenue("Lido", "lido")
+            insertEvent(venueId, "Show", "show", LocalDate.now().plusDays(3), imageUrl = POSTER_URL)
+
+            webTestClient
+                .get()
+                .uri("/events/show")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.intrinsicWidth")
+                .isEqualTo(1200)
+                .jsonPath("$.intrinsicHeight")
+                .isEqualTo(630)
+        }
+
+    // 16% of staging's images had no dimensions at import, because a stock JVM reads neither WebP
+    // nor AVIF. Reporting one of the pair would reserve nothing and look like it had worked.
+    @Test
+    @DisplayName("an image measured on only one axis reports neither")
+    fun `a half-measured image reports no dimensions`(): Unit =
+        runBlocking {
+            insertCachedImage(LOGO_URL, LOGO_HASH, ALL_WIDTHS, intrinsicWidth = 1200)
+            insertVenue("Astra", "astra", imageUrl = LOGO_URL)
+
+            webTestClient
+                .get()
+                .uri("/venues/astra")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.intrinsicWidth")
+                .doesNotExist()
+                .jsonPath("$.intrinsicHeight")
+                .doesNotExist()
+        }
+
     private suspend fun deleteObject(key: String) {
         s3
             .deleteObject(

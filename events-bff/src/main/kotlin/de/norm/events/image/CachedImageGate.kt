@@ -47,7 +47,9 @@ class CachedImageGate(
             .mapValues { (_, variants) ->
                 ServableImage(
                     contentHash = variants.first().contentHash,
-                    widthsByFormat = variants.groupBy { it.format }.mapValues { (_, rows) -> rows.map { it.width }.toSortedSet() }
+                    widthsByFormat = variants.groupBy { it.format }.mapValues { (_, rows) -> rows.map { it.width }.toSortedSet() },
+                    intrinsicWidth = variants.first().intrinsicWidth,
+                    intrinsicHeight = variants.first().intrinsicHeight
                 )
             }
 }
@@ -91,10 +93,13 @@ class CachedImages private constructor(
     }
 }
 
-/** One image we hold, and the widths it exists at in each format. */
+/** One image we hold, its shape, and the widths it exists at in each format. */
 data class ServableImage(
     val contentHash: String,
-    val widthsByFormat: Map<String, SortedSet<Int>>
+    val widthsByFormat: Map<String, SortedSet<Int>>,
+    /** Null by default, because null is what most rows carry — see [ServableVariant.intrinsicWidth]. */
+    val intrinsicWidth: Int? = null,
+    val intrinsicHeight: Int? = null
 ) {
     /**
      * The URLs to offer for a slot [renderedWidth] CSS pixels wide.
@@ -114,10 +119,23 @@ data class ServableImage(
         } else {
             ServedImage(
                 url = url(urlPrefix, fallback.first(), ImageFormats.FALLBACK),
-                sources = ImageFormats.ORDERED.mapNotNull { source(urlPrefix, it, widths) }
+                sources = ImageFormats.ORDERED.mapNotNull { source(urlPrefix, it, widths) },
+                // The original's dimensions rather than the derivative's, because what the browser
+                // takes from them is the ratio, and imgproxy resizes on width alone.
+                intrinsicWidth = intrinsicWidth.takeIf { hasBothDimensions },
+                intrinsicHeight = intrinsicHeight.takeIf { hasBothDimensions }
             )
         }
     }
+
+    /**
+     * Whether this image can report a shape at all.
+     *
+     * **Dropped to neither rather than reported as one**, and normalised here rather than asserted
+     * in [ServedImage], because a single odd row must not fail a page of twenty events. The two
+     * columns are written together, so this is a guard and not an expected state.
+     */
+    private val hasBothDimensions: Boolean get() = intrinsicWidth != null && intrinsicHeight != null
 
     /**
      * The generated widths worth offering for a slot [renderedWidth] CSS pixels wide.
@@ -174,7 +192,16 @@ data class ServableImage(
  */
 data class ServedImage(
     val url: String?,
-    val sources: List<ImageSourceResponse>
+    val sources: List<ImageSourceResponse>,
+    /**
+     * The image's own pixel dimensions, or null.
+     *
+     * **Both or neither**, which [ServableImage] guarantees. They reserve the space a lazy image
+     * will occupy, and a browser given one of the pair reserves nothing — so half an answer is the
+     * same layout shift as no answer, arrived at less obviously (#848).
+     */
+    val intrinsicWidth: Int? = null,
+    val intrinsicHeight: Int? = null
 ) {
     companion object {
         /** Nothing to serve: the image is reported absent rather than fetched from the venue. */

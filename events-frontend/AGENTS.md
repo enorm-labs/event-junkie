@@ -209,7 +209,10 @@ The generator reads the _running_ BFF's live OpenAPI document over HTTP; there i
 # 2. Regenerate (from events-frontend/)
 npm run generate:api        # npx openapi-typescript http://localhost:8080/v3/api-docs -o src/api/schema.d.ts
 
-# 3. See what actually moved, then follow it through
+# 3. Format it, BEFORE reading the diff — see below
+npx oxfmt src/api/schema.d.ts
+
+# 4. See what actually moved, then follow it through
 git diff src/api/schema.d.ts
 npm run type-check
 ```
@@ -218,6 +221,9 @@ Things worth knowing:
 
 - **The failure mode is silent and confusing.** With the BFF down, `npm run generate:api` fails on the fetch — noisy and obvious. With the BFF running _stale
   code_, it succeeds and writes a schema for the API you didn't change. Restart the BFF after editing a controller or DTO.
+- **The generator writes double quotes and semicolons, and the committed file has neither.** So an unformatted regeneration reads as a rewrite of all 1,200
+  lines, and the real change is invisible inside it. Two added fields showed as 1,304 insertions and 1,228 deletions until `oxfmt` ran, after which the same
+  change was 96 insertions and nothing else. **Format before you read the diff**, or the step that exists to show you what moved shows you nothing.
 - **A rename lands as a delete plus an add.** `src/api/types.ts` addresses schemas by name (`Schemas['EventDetailResponse']`), so a renamed BFF DTO surfaces as
   a type error there, not in the diff. That is the intended tripwire — fix the alias, don't widen it.
 - **Removing or narrowing a field is a breaking change for the site, not just for the types.** Regenerating makes it compile; it does not make the view render.

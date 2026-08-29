@@ -48,6 +48,15 @@ data class EventSummaryResponse(
                 "cached, in which case `imageUrl` is all there is."
     )
     val imageSources: List<ImageSourceResponse>,
+    @Schema(
+        description =
+            "Pixel width of the original image, for the `width` attribute. Null together with " +
+                "`intrinsicHeight` when the dimensions are unknown.",
+        example = "1200"
+    )
+    val intrinsicWidth: Int?,
+    @Schema(description = "Pixel height of the original image, for the `height` attribute", example = "630")
+    val intrinsicHeight: Int?,
     @Schema(description = "Presale ticket price (Vorverkauf)", example = "38.00")
     val pricePresale: BigDecimal?,
     @Schema(description = "Box office ticket price (Abendkasse)", example = "45.00")
@@ -87,6 +96,8 @@ data class EventSummaryResponse(
                 startTime = entity.startTime,
                 imageUrl = image.url,
                 imageSources = image.sources,
+                intrinsicWidth = image.intrinsicWidth,
+                intrinsicHeight = image.intrinsicHeight,
                 pricePresale = entity.pricePresale,
                 priceBoxOffice = entity.priceBoxOffice,
                 priceCurrency = entity.priceCurrency,
@@ -138,6 +149,15 @@ data class EventDetailResponse(
                 "cached, in which case `imageUrl` is all there is."
     )
     val imageSources: List<ImageSourceResponse>,
+    @Schema(
+        description =
+            "Pixel width of the original image, for the `width` attribute. Null together with " +
+                "`intrinsicHeight` when the dimensions are unknown.",
+        example = "1200"
+    )
+    val intrinsicWidth: Int?,
+    @Schema(description = "Pixel height of the original image, for the `height` attribute", example = "630")
+    val intrinsicHeight: Int?,
     @Schema(description = "Original URL on the source venue's website")
     val sourceUrl: String?,
     @Schema(description = "URL to the external ticket shop")
@@ -189,6 +209,8 @@ data class EventDetailResponse(
                 startTime = entity.startTime,
                 imageUrl = image.url,
                 imageSources = image.sources,
+                intrinsicWidth = image.intrinsicWidth,
+                intrinsicHeight = image.intrinsicHeight,
                 sourceUrl = entity.sourceUrl,
                 ticketUrl = entity.ticketUrl,
                 facebookEventUrl = entity.facebookEventUrl,

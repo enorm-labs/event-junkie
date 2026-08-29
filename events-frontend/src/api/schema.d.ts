@@ -308,6 +308,18 @@ export interface components {
       imageUrl?: string | null
       /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
       imageSources?: components['schemas']['ImageSourceResponse'][]
+      /**
+       * Format: int32
+       * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+       * @example 1200
+       */
+      intrinsicWidth?: number | null
+      /**
+       * Format: int32
+       * @description Pixel height of the original image, for the `height` attribute
+       * @example 630
+       */
+      intrinsicHeight?: number | null
     }
     /** @description Full venue detail */
     VenueDetailResponse: {
@@ -363,6 +375,18 @@ export interface components {
       imageUrl?: string | null
       /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
       imageSources?: components['schemas']['ImageSourceResponse'][]
+      /**
+       * Format: int32
+       * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+       * @example 1200
+       */
+      intrinsicWidth?: number | null
+      /**
+       * Format: int32
+       * @description Pixel height of the original image, for the `height` attribute
+       * @example 630
+       */
+      intrinsicHeight?: number | null
       /** @description Short prose description of the venue */
       description?: string | null
     }
@@ -419,6 +443,18 @@ export interface components {
       imageUrl?: string | null
       /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
       imageSources?: components['schemas']['ImageSourceResponse'][]
+      /**
+       * Format: int32
+       * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+       * @example 1200
+       */
+      intrinsicWidth?: number | null
+      /**
+       * Format: int32
+       * @description Pixel height of the original image, for the `height` attribute
+       * @example 630
+       */
+      intrinsicHeight?: number | null
     }
     /** @description Full promoter detail */
     PromoterDetailResponse: {
@@ -444,6 +480,18 @@ export interface components {
       imageUrl?: string | null
       /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
       imageSources?: components['schemas']['ImageSourceResponse'][]
+      /**
+       * Format: int32
+       * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+       * @example 1200
+       */
+      intrinsicWidth?: number | null
+      /**
+       * Format: int32
+       * @description Pixel height of the original image, for the `height` attribute
+       * @example 630
+       */
+      intrinsicHeight?: number | null
     }
     /** @description Version and commit of the running backend, for the frontend footer */
     MetaResponse: {
@@ -550,6 +598,18 @@ export interface components {
       /** @description Better formats of the same poster, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
       imageSources?: components['schemas']['ImageSourceResponse'][]
       /**
+       * Format: int32
+       * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+       * @example 1200
+       */
+      intrinsicWidth?: number | null
+      /**
+       * Format: int32
+       * @description Pixel height of the original image, for the `height` attribute
+       * @example 630
+       */
+      intrinsicHeight?: number | null
+      /**
        * @description Presale ticket price (Vorverkauf)
        * @example 38
        */
@@ -645,6 +705,18 @@ export interface components {
       imageUrl?: string | null
       /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
       imageSources?: components['schemas']['ImageSourceResponse'][]
+      /**
+       * Format: int32
+       * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+       * @example 1200
+       */
+      intrinsicWidth?: number | null
+      /**
+       * Format: int32
+       * @description Pixel height of the original image, for the `height` attribute
+       * @example 630
+       */
+      intrinsicHeight?: number | null
     }
     /** @description Full event detail with embedded associations */
     EventDetailResponse: {
@@ -710,6 +782,18 @@ export interface components {
       imageUrl?: string | null
       /** @description Better formats of the same poster, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
       imageSources?: components['schemas']['ImageSourceResponse'][]
+      /**
+       * Format: int32
+       * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+       * @example 1200
+       */
+      intrinsicWidth?: number | null
+      /**
+       * Format: int32
+       * @description Pixel height of the original image, for the `height` attribute
+       * @example 630
+       */
+      intrinsicHeight?: number | null
       /** @description Original URL on the source venue's website */
       sourceUrl?: string | null
       /** @description URL to the external ticket shop */
@@ -837,6 +921,18 @@ export interface components {
       imageUrl?: string | null
       /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
       imageSources?: components['schemas']['ImageSourceResponse'][]
+      /**
+       * Format: int32
+       * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+       * @example 1200
+       */
+      intrinsicWidth?: number | null
+      /**
+       * Format: int32
+       * @description Pixel height of the original image, for the `height` attribute
+       * @example 630
+       */
+      intrinsicHeight?: number | null
       /** @description URL of the artist's official homepage */
       websiteUrl?: string | null
       /** @description URL of the artist's Facebook page */
