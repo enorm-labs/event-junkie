@@ -338,6 +338,11 @@ kover {
 // IntelliJ HTTP Client CLI – runs .http request files from the command line.
 // Requires `ijhttp` to be installed (e.g. `brew install ijhttp` on macOS).
 // Usage: `./gradlew httpTest` to run the full lifecycle scenario against a running importer.
+//
+// The path is `importer/full-lifecycle.http`, not `full-lifecycle.http`. The `http/` directory was
+// split into `importer/` and `bff/` and this task kept the flat name, so it failed on a file that
+// does not exist — and because it needs a running importer, nothing in CI ran it to notice. Keep
+// the subdirectory in the argument whenever the scenario moves.
 tasks.register<Exec>("httpTest") {
     group = "verification"
     description = "Runs IntelliJ HTTP Client .http files against the local importer (requires ijhttp CLI and a running importer on port 8081)"
@@ -360,7 +365,7 @@ tasks.register<Exec>("httpTest") {
         "local",
         "-L",
         "VERBOSE",
-        "full-lifecycle.http"
+        "importer/full-lifecycle.http"
     )
 }
 
