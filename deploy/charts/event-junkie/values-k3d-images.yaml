@@ -1,0 +1,47 @@
+# comment-lint: allow-file every override here is a deviation from production that needs its reason
+# The image-caching half of the k3d rehearsal, applied on top of values-k3d.yaml when
+# `K3D_IMAGES=1`. Separate rather than merged into that file because it needs two Secrets and a
+# reachable object store, and the plain rehearsal must keep working on a machine that has neither.
+#
+# **It exists because nothing exercised this path.** Three defects reached staging from one pull
+# request — an invariant that had never seen a second container, a limit rendered in scientific
+# notation, and a sidecar with no caller — and every one of them would have failed here.
+
+images:
+  enabled: true
+  # The switch a visitor sees. On here and off everywhere else, because this is the only place the
+  # whole path can be walked end to end: fetch, store, derive, serve, through a real Traefik.
+  serving:
+    enabled: true
+  storage:
+    # The compose stack's MinIO, published on the host. Plain HTTP, unlike Hetzner — that difference
+    # is in the client's endpoint handling and not in anything this rehearsal is asking about.
+    endpoint: "http://host.k3d.internal:9000"
+    # MinIO does not enforce it. Kept at the production value so the request signing that Hetzner
+    # does enforce is exercised with the same input.
+    region: "fsn1"
+    bucket: "event-junkie-images"
+    prefix: "k3d"
+    # Created by the rehearsal script, which knows the compose credentials.
+    existingSecret: "event-junkie-images"
+  imgproxy:
+    enabled: true
+    existingSecret: "event-junkie-imgproxy"
+
+# Both stores this rehearsal needs live on the host, which the policies below deliberately exclude in
+# production. 9000 is MinIO, and only 169.254.0.0/16 is kept — the sharpest of the carve-outs, and
+# the one that matters most for a workload that fetches URLs out of scraped HTML. Like
+# `databaseCidr` in values-k3d.yaml, this is a rule the rehearsal cannot prove tight.
+networkPolicy:
+  scrapeEgress:
+    ports:
+      - 80
+      - 443
+      - 9000
+    exceptCidrs:
+      - "169.254.0.0/16"
+  objectStorageEgress:
+    ports:
+      - 9000
+    exceptCidrs:
+      - "169.254.0.0/16"
