@@ -136,6 +136,15 @@ class EventSourceService(
                 licenceSourceUrl = request.licenceSourceUrl ?: source.licenceSourceUrl,
                 licenceNote = request.licenceNote ?: source.licenceNote
             )
+        // **Do not claim an update that did not happen (#814).** Every field of the request is
+        // nullable, so a body carrying nothing this endpoint recognises copies the row to itself and
+        // used to log an update all the same — leaving the server's own record of a failed apply
+        // saying it succeeded. Unknown fields are now a 400, but an explicitly empty body still
+        // reaches here and is still a no-op, so the log has to tell the two apart.
+        if (updated == source) {
+            logger.info { "No change for event source '${source.name}' (id=${source.id}): the request set nothing" }
+            return EventSourceResponse.fromEntity(source)
+        }
         val saved = eventSourceRepository.save(updated)
         clearProhibitedContent(saved)
         logger.info { "Updated event source '${saved.name}' (id=${saved.id})" }
