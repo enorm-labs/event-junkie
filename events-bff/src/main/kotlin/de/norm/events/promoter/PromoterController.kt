@@ -1,6 +1,7 @@
 package de.norm.events.promoter
 
 import de.norm.events.common.PageResponse
+import de.norm.events.common.QueryParameters
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.server.ServerWebExchange
 
 /**
  * Public read API for promoters.
@@ -30,8 +32,12 @@ class PromoterController(
         q: String?,
         @ParameterObject
         @PageableDefault(size = 20, sort = ["name"])
-        pageable: Pageable
-    ): PageResponse<PromoterSummaryResponse> = promoterService.list(q, pageable)
+        pageable: Pageable,
+        exchange: ServerWebExchange
+    ): PageResponse<PromoterSummaryResponse> {
+        LIST_PARAMS.rejectUnknownIn(exchange)
+        return promoterService.list(q, pageable)
+    }
 
     @GetMapping("/{slug}")
     @Operation(summary = "Get a single promoter by slug")
@@ -39,4 +45,9 @@ class PromoterController(
         @Parameter(description = "Unique promoter slug.", example = "36-concerts", required = true)
         @PathVariable slug: String
     ): PromoterDetailResponse = promoterService.findBySlug(slug)
+
+    private companion object {
+        /** Declared rather than derived: these parameters are on the method, not on a filter object. */
+        val LIST_PARAMS = QueryParameters.accepting(QueryParameters.PAGEABLE, QueryParameters.named("q"))
+    }
 }

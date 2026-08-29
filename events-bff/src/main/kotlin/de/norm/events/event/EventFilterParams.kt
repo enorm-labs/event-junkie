@@ -14,6 +14,10 @@ import java.time.LocalDate
  *
  * `from`/`to` deliberately stay on the controller methods: they are optional on the search endpoint
  * but required and range-checked on the calendar, so they are not part of the shared contract.
+ *
+ * **A name that is not here is a `400`, not a silently ignored parameter** (#815). The endpoints
+ * derive their accepted set from this class, so adding a filter needs no second edit — see
+ * [de.norm.events.common.QueryParameters] for why rejecting is worth its cost.
  */
 @Suppress("LongParameterList")
 data class EventFilterParams(

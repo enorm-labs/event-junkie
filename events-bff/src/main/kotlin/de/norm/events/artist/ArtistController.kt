@@ -1,6 +1,7 @@
 package de.norm.events.artist
 
 import de.norm.events.common.PageResponse
+import de.norm.events.common.QueryParameters
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.server.ServerWebExchange
 
 /**
  * Public read API for artists.
@@ -30,8 +32,12 @@ class ArtistController(
         q: String?,
         @ParameterObject
         @PageableDefault(size = 20, sort = ["name"])
-        pageable: Pageable
-    ): PageResponse<ArtistSummaryResponse> = artistService.list(q, pageable)
+        pageable: Pageable,
+        exchange: ServerWebExchange
+    ): PageResponse<ArtistSummaryResponse> {
+        LIST_PARAMS.rejectUnknownIn(exchange)
+        return artistService.list(q, pageable)
+    }
 
     @GetMapping("/{slug}")
     @Operation(summary = "Get a single artist by slug")
@@ -39,4 +45,9 @@ class ArtistController(
         @Parameter(description = "Unique artist slug.", example = "actors", required = true)
         @PathVariable slug: String
     ): ArtistDetailResponse = artistService.findBySlug(slug)
+
+    private companion object {
+        /** Declared rather than derived: these parameters are on the method, not on a filter object. */
+        val LIST_PARAMS = QueryParameters.accepting(QueryParameters.PAGEABLE, QueryParameters.named("q"))
+    }
 }
