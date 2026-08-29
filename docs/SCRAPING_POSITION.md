@@ -62,9 +62,10 @@ shows it otherwise. §3.1 explains that rule and what it accepts.
 serves it from our own origin wherever the copy is in use. That is a reproduction under § 16 UrhG, which embedding is
 not. [ADR-019](adr/ADR-019_VENUE_IMAGE_DELIVERY.md) made that trade deliberately, and §3.6 sets out what we gave up.
 
-**Venue, artist and promoter images are still hotlinked**, because the importer only ever offers `event.image_url` to
-the fetcher. Four render sites therefore still point a visitor's browser at a server we do not operate. That is the
-remaining half of the gap in §4, and [#833](https://github.com/enorm-labs/event-junkie/issues/833) owns it.
+**Venue, artist and promoter images are copied too.** The fetcher reads all four `image_url` columns
+([#833](https://github.com/enorm-labs/event-junkie/issues/833)). A venue logo and an artist photograph are stored the
+way an event poster is. Those three columns are written by the admin API rather than by a scraper, so no
+`event_source` licence reaches them. §3.6 says what stands in for one.
 
 **`robots.txt` is read on every request, and a disallow blocks it.** `RobotsTxtFilter` sits on the shared scraper
 client, so each outbound request is checked against the host's rules. `RobotsRulesCache` reads the file once per host
@@ -222,8 +223,10 @@ full.
 it was gone everywhere. Now something of ours has to delete it, and §5 is that route — a working endpoint rather than
 an intention.
 
-**It is not finished.** Venue, artist and promoter images are never offered to the fetcher, so they are still embedded
-and still disclose the visitor's IP address. §4 carries that as a gap.
+**Three of the four columns carry no licence, and that is a different question rather than a gap.** `venue.image_url`,
+`artist.image_url` and `promoter.image_url` are written through the admin API. No venue's terms are interpreted here,
+because nothing scraped them. A maintainer chose the URL, and that choice is the justification a per-source column
+records for the other column. An image nobody can justify is one nobody enters.
 
 ## 4. The gaps we know about
 
@@ -234,11 +237,11 @@ Three things weaken the position above. Each has an owner or needs one.
    review itself remains, source by source, and every source is unreviewed today. Owned by
    [#283](https://github.com/enorm-labs/event-junkie/issues/283) and
    [#364](https://github.com/enorm-labs/event-junkie/issues/364).
-2. **Some images are still embedded, and the visitor's IP address still reaches a venue** (§3.6). **Narrowed, not
-   closed.** The notice now says so in both languages, which is what
-   [#792](https://github.com/enorm-labs/event-junkie/issues/792) asked for. The disclosure itself continues for venue,
-   artist and promoter images, because the fetcher reads `event.image_url` and no other column. Owned by
-   [#833](https://github.com/enorm-labs/event-junkie/issues/833).
+2. **The visitor's IP address still reaches a venue** (§3.6). **Narrowed twice.** The notice says so in both
+   languages, which is what [#792](https://github.com/enorm-labs/event-junkie/issues/792) asked for. The fetcher now
+   covers all four `image_url` columns ([#833](https://github.com/enorm-labs/event-junkie/issues/833)). What remains
+   is a rollout. `images.serving.enabled` is off everywhere, so the API still hands out the venue's own URL. Owned by
+   [#843](https://github.com/enorm-labs/event-junkie/issues/843).
 3. **Import time is an interval, not a window.** ADR-007 best-practice #7 asks for early-morning scrapes.
    `ScheduledImportService` fires when `lastImportAt` plus the interval expires, which drifts across the day.
 

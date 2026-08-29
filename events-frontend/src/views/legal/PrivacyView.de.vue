@@ -161,13 +161,13 @@ const { t } = useI18n()
         E-Mail im nächsten Absatz.
       </p>
       <p>
-        <strong>Bilder:</strong> Zu ihren Veranstaltungen veröffentlichen Locations und Veranstalter
-        Bilder. Event Junkie lädt diese Bilder herunter und speichert eine Kopie auf eigenen Servern
-        bei Hetzner, statt sie bei jedem Seitenaufruf erneut beim Anbieter anzufragen.
-        Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Das berechtigte Interesse ist eine
-        Auslieferung ohne Beteiligung Dritter und eine geringere Last für die Server der Locations.
-        Die Kopie wird gelöscht, sobald die Location aussteigt oder eine Rechteinhaberin das
-        verlangt, und danach nicht erneut geladen.
+        <strong>Bilder:</strong> Locations, Veranstalter und Künstlerinnen und Künstler
+        veröffentlichen Bilder — zu einzelnen Veranstaltungen und zu sich selbst. Event Junkie lädt
+        diese Bilder herunter und speichert eine Kopie auf eigenen Servern bei Hetzner, statt sie
+        bei jedem Seitenaufruf erneut beim Anbieter anzufragen. Rechtsgrundlage ist Art. 6 Abs. 1
+        lit. f DSGVO. Das berechtigte Interesse ist eine Auslieferung ohne Beteiligung Dritter und
+        eine geringere Last für die Server der Locations. Die Kopie wird gelöscht, sobald die
+        Location aussteigt oder eine Rechteinhaberin das verlangt, und danach nicht erneut geladen.
       </p>
       <p>
         <strong>Wenn du Künstlerin oder Künstler bist</strong> und möchtest, dass dein Name entfernt
@@ -204,10 +204,9 @@ const { t } = useI18n()
         beauftragen sie nicht, sondern verweisen auf ihre Bilder.
       </p>
       <p>
-        Für Veranstaltungsbilder speichern wir inzwischen eine eigene Kopie (Abschnitt 4), damit sie
-        künftig von unseren Servern kommen. Bilder von Locations, Künstlerinnen und Künstlern sowie
-        Veranstaltern werden weiterhin bei den Anbietern geholt. Wenn du das vermeiden willst,
-        blockiert ein Inhaltsblocker im Browser diese Anfragen.
+        Wir speichern inzwischen von jedem dieser Bilder eine eigene Kopie (Abschnitt 4), damit sie
+        künftig von unseren Servern kommen. Solange das noch nicht überall umgestellt ist, blockiert
+        ein Inhaltsblocker im Browser diese Anfragen.
       </p>
       <p>
         Wenn du uns per E-Mail schreibst oder ein Issue auf GitHub eröffnest, werden diese Daten zur

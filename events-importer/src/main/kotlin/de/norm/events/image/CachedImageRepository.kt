@@ -7,29 +7,43 @@ import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.stereotype.Repository
 import java.time.Instant
 
+/**
+ * Every column an image URL can live in.
+ *
+ * **The fetcher reads this and the sweep asks its reverse, so they must not drift.** A column the
+ * fetcher covers and the sweep does not is an image deleted moments after it is stored, on a loop.
+ * One definition is what makes that impossible rather than merely unlikely.
+ *
+ * `UNION` rather than `UNION ALL`: two events sharing a poster must be one fetch, and the same URL
+ * on a venue and on its event is one object.
+ */
+private const val IMAGE_URL_SOURCES = """
+    SELECT image_url FROM $EVENTS_SCHEMA.event WHERE image_url IS NOT NULL
+    UNION SELECT image_url FROM $EVENTS_SCHEMA.venue WHERE image_url IS NOT NULL
+    UNION SELECT image_url FROM $EVENTS_SCHEMA.artist WHERE image_url IS NOT NULL
+    UNION SELECT image_url FROM $EVENTS_SCHEMA.promoter WHERE image_url IS NOT NULL
+"""
+
 @Repository
 interface CachedImageRepository : CoroutineCrudRepository<CachedImageEntity, Long> {
     suspend fun findBySourceUrl(sourceUrl: String): CachedImageEntity?
 
     /**
-     * Venue image URLs that no [CachedImageEntity] covers yet.
+     * Image URLs that no [CachedImageEntity] covers yet, from all four tables.
      *
-     * Raw SQL over `event` rather than a call into the event module, because all this needs is one
-     * column — see [ImageModule]. Schema-prefixed with the interpolated constant rather than a
-     * literal (ADR-004, #540).
+     * Raw SQL rather than calls into four modules, because all this needs is one column — see
+     * [ImageModule]. Schema-prefixed with the interpolated constant rather than a literal
+     * (ADR-004, #540).
      *
      * **A source that prohibits its images has no URL here to find.** #807 made the importer store
      * `null` for a prohibited `image_url`, so the exclusion is structural rather than a predicate
-     * somebody has to remember to write.
-     *
-     * `DISTINCT` because two events sharing a poster must not be two fetches.
+     * somebody has to remember to write. That reasoning covers `event` alone: the other three
+     * columns are written by the admin API and no `event_source` licence applies to them (#833).
      */
     @Query(
         """
-        SELECT DISTINCT e.image_url
-        FROM $EVENTS_SCHEMA.event e
-        WHERE e.image_url IS NOT NULL
-          AND NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.cached_image c WHERE c.source_url = e.image_url)
+        SELECT u.image_url FROM ($IMAGE_URL_SOURCES) u
+        WHERE NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.cached_image c WHERE c.source_url = u.image_url)
         LIMIT :limit
         """
     )
@@ -79,20 +93,32 @@ interface CachedImageRepository : CoroutineCrudRepository<CachedImageEntity, Lon
     ): Flow<CachedImageEntity>
 
     /**
-     * The images one venue's events point at, for the opt-out route in `SCRAPING_POSITION.md` §5.
+     * Everything one venue's takedown covers, for the opt-out route in `SCRAPING_POSITION.md` §5.
      *
-     * Joined through `event` rather than through the source, because a venue can have several
-     * sources and an operator objects to the venue. Already-deleted rows are skipped, so running the
-     * takedown twice is not two deletions.
+     * Two sources: the images its events point at, and the venue's own `image_url`. Joined through
+     * `event` rather than through the source, because a venue can have several sources and an
+     * operator objects to the venue.
+     *
+     * **Artist and promoter images are deliberately absent.** An artist plays many venues, so
+     * deleting their photograph on one venue's request would remove it from every other venue's
+     * listing. Their route is the Art. 21 objection in §7.3 of `docs/LEGAL.md`, not this one.
+     *
+     * Already-deleted rows are skipped, so running the takedown twice is not two deletions.
      */
     @Query(
         """
         SELECT c.* FROM $EVENTS_SCHEMA.cached_image c
         WHERE c.deleted_at IS NULL
-          AND EXISTS (
-              SELECT 1 FROM $EVENTS_SCHEMA.event e
-              JOIN $EVENTS_SCHEMA.venue v ON v.id = e.venue_id
-              WHERE e.image_url = c.source_url AND v.slug = :venueSlug
+          AND (
+              EXISTS (
+                  SELECT 1 FROM $EVENTS_SCHEMA.event e
+                  JOIN $EVENTS_SCHEMA.venue v ON v.id = e.venue_id
+                  WHERE e.image_url = c.source_url AND v.slug = :venueSlug
+              )
+              OR EXISTS (
+                  SELECT 1 FROM $EVENTS_SCHEMA.venue v
+                  WHERE v.image_url = c.source_url AND v.slug = :venueSlug
+              )
           )
         """
     )
@@ -109,7 +135,7 @@ interface CachedImageRepository : CoroutineCrudRepository<CachedImageEntity, Lon
         """
         SELECT c.* FROM $EVENTS_SCHEMA.cached_image c
         WHERE c.deleted_at IS NULL
-          AND NOT EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event e WHERE e.image_url = c.source_url)
+          AND NOT EXISTS (SELECT 1 FROM ($IMAGE_URL_SOURCES) u WHERE u.image_url = c.source_url)
         ORDER BY c.id
         LIMIT :limit
         """

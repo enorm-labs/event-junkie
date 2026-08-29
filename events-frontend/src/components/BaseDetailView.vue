@@ -2,6 +2,8 @@
 import { RouterLink } from 'vue-router'
 import type { EventPage } from '@/api/types'
 import { Button } from '@/components/ui/button'
+import type { ImageSource } from '@/api/types'
+
 import CachedImage from '@/components/CachedImage.vue'
 import EventCard from '@/components/EventCard.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
@@ -31,6 +33,7 @@ defineProps<{
   /** Resolved entity display fields. */
   name?: string | null
   imageUrl?: string | null
+  imageSources?: ImageSource[] | null
   /** Upcoming-events feed state (from `useEventSearch`). */
   events: EventPage | null
   eventsLoading: boolean
@@ -71,10 +74,10 @@ const { t } = useI18n()
 
     <template v-else-if="ready">
       <header class="flex gap-4">
-        <!-- No `sources`: a venue, artist or promoter image is never cached (#833). -->
         <CachedImage
           v-if="imageUrl"
           :src="imageUrl"
+          :sources="imageSources"
           :alt="name ?? ''"
           sizes="96px"
           img-class="size-24 shrink-0 rounded-lg border border-border object-cover"

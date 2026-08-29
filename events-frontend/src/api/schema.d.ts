@@ -229,6 +229,19 @@ export interface paths {
 export type webhooks = Record<string, never>
 export interface components {
   schemas: {
+    /** @description One format of a cached image, for a <source> element inside <picture> */
+    ImageSourceResponse: {
+      /**
+       * @description Media type for the `type` attribute
+       * @example image/avif
+       */
+      type?: string
+      /**
+       * @description Candidate URLs and their widths, for the `srcset` attribute
+       * @example /api/images/0f4b…/192.avif 192w, /api/images/0f4b…/288.avif 288w
+       */
+      srcset?: string
+    }
     /** @description A page of results with pagination metadata */
     PageResponseVenueSummaryResponse: {
       /** @description The items on this page */
@@ -293,6 +306,8 @@ export interface components {
       district?: string | null
       /** @description URL of the venue's logo or photo */
       imageUrl?: string | null
+      /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+      imageSources?: components['schemas']['ImageSourceResponse'][]
     }
     /** @description Full venue detail */
     VenueDetailResponse: {
@@ -346,6 +361,8 @@ export interface components {
       websiteUrl?: string | null
       /** @description URL of the venue's logo or photo */
       imageUrl?: string | null
+      /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+      imageSources?: components['schemas']['ImageSourceResponse'][]
       /** @description Short prose description of the venue */
       description?: string | null
     }
@@ -400,6 +417,8 @@ export interface components {
       websiteUrl?: string | null
       /** @description URL of the promoter's logo image */
       imageUrl?: string | null
+      /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+      imageSources?: components['schemas']['ImageSourceResponse'][]
     }
     /** @description Full promoter detail */
     PromoterDetailResponse: {
@@ -423,6 +442,8 @@ export interface components {
       websiteUrl?: string | null
       /** @description URL of the promoter's logo image */
       imageUrl?: string | null
+      /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+      imageSources?: components['schemas']['ImageSourceResponse'][]
     }
     /** @description Version and commit of the running backend, for the frontend footer */
     MetaResponse: {
@@ -573,19 +594,6 @@ export interface components {
        */
       genreTags?: string[]
     }
-    /** @description One format of a cached image, for a <source> element inside <picture> */
-    ImageSourceResponse: {
-      /**
-       * @description Media type for the `type` attribute
-       * @example image/avif
-       */
-      type?: string
-      /**
-       * @description Candidate URLs and their widths, for the `srcset` attribute
-       * @example /api/images/0f4b…/192.avif 192w, /api/images/0f4b…/288.avif 288w
-       */
-      srcset?: string
-    }
     /** @description A page of results with pagination metadata */
     PageResponseEventSummaryResponse: {
       /** @description The items on this page */
@@ -635,6 +643,8 @@ export interface components {
       name?: string
       /** @description URL of the artist's photo or band logo */
       imageUrl?: string | null
+      /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+      imageSources?: components['schemas']['ImageSourceResponse'][]
     }
     /** @description Full event detail with embedded associations */
     EventDetailResponse: {
@@ -825,6 +835,8 @@ export interface components {
       description?: string | null
       /** @description URL of the artist's photo or band logo */
       imageUrl?: string | null
+      /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+      imageSources?: components['schemas']['ImageSourceResponse'][]
       /** @description URL of the artist's official homepage */
       websiteUrl?: string | null
       /** @description URL of the artist's Facebook page */

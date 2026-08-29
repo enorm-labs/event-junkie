@@ -2,6 +2,7 @@ package de.norm.events.artist
 
 import de.norm.events.common.PageResponse
 import de.norm.events.common.sanitizeSort
+import de.norm.events.image.CachedImageGate
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -13,7 +14,8 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Service
 class ArtistService(
-    private val artistRepository: ArtistRepository
+    private val artistRepository: ArtistRepository,
+    private val cachedImageGate: CachedImageGate
 ) {
     /**
      * Lists artists with pagination, optionally filtered by a case-insensitive name [query].
@@ -31,7 +33,12 @@ class ArtistService(
                 artistRepository.findByNameContainingIgnoreCase(query, safePageable).toList() to
                     artistRepository.countByNameContainingIgnoreCase(query)
             }
-        return PageResponse.of(entities.map { ArtistSummaryResponse.fromEntity(it) }, safePageable, total)
+        val images = cachedImageGate.forUrls(entities.map { it.imageUrl })
+        return PageResponse.of(
+            entities.map { ArtistSummaryResponse.fromEntity(it, images.serve(it.imageUrl, RENDERED_WIDTH)) },
+            safePageable,
+            total
+        )
     }
 
     /**
@@ -42,10 +49,19 @@ class ArtistService(
     @Transactional(readOnly = true)
     suspend fun findBySlug(slug: String): ArtistDetailResponse {
         val entity = artistRepository.findBySlug(slug) ?: throw ArtistNotFoundException(slug)
-        return ArtistDetailResponse.fromEntity(entity)
+        val image = cachedImageGate.forUrls(listOf(entity.imageUrl)).serve(entity.imageUrl, RENDERED_WIDTH)
+        return ArtistDetailResponse.fromEntity(entity, image)
     }
 
     companion object {
+        /**
+         * What the site draws one of these at, in CSS pixels.
+         *
+         * `BaseDetailView`'s header draws 96, and the list renders no image today. The gate offers
+         * everything from the slot up to three times it, so this covers a card if one arrives.
+         */
+        private const val RENDERED_WIDTH = 96
+
         /** Entity properties a client may sort the artist list by; anything else is ignored. */
         private val SORTABLE_PROPERTIES = setOf("name", "slug")
         private val DEFAULT_SORT = Sort.by("name")

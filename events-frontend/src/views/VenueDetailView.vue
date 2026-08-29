@@ -90,6 +90,7 @@ usePageMeta(() =>
     :events-error="eventsError"
     :events-loading="eventsLoading"
     :image-url="venue?.imageUrl"
+    :image-sources="venue?.imageSources"
     :kind="kind"
     :loading="loading"
     :name="venue?.name"

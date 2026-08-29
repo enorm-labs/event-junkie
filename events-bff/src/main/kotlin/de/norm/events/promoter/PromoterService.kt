@@ -2,6 +2,7 @@ package de.norm.events.promoter
 
 import de.norm.events.common.PageResponse
 import de.norm.events.common.sanitizeSort
+import de.norm.events.image.CachedImageGate
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -13,7 +14,8 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Service
 class PromoterService(
-    private val promoterRepository: PromoterRepository
+    private val promoterRepository: PromoterRepository,
+    private val cachedImageGate: CachedImageGate
 ) {
     /**
      * Lists promoters with pagination, optionally filtered by a case-insensitive name [query].
@@ -31,7 +33,12 @@ class PromoterService(
                 promoterRepository.findByNameContainingIgnoreCase(query, safePageable).toList() to
                     promoterRepository.countByNameContainingIgnoreCase(query)
             }
-        return PageResponse.of(entities.map { PromoterSummaryResponse.fromEntity(it) }, safePageable, total)
+        val images = cachedImageGate.forUrls(entities.map { it.imageUrl })
+        return PageResponse.of(
+            entities.map { PromoterSummaryResponse.fromEntity(it, images.serve(it.imageUrl, RENDERED_WIDTH)) },
+            safePageable,
+            total
+        )
     }
 
     /**
@@ -42,10 +49,19 @@ class PromoterService(
     @Transactional(readOnly = true)
     suspend fun findBySlug(slug: String): PromoterDetailResponse {
         val entity = promoterRepository.findBySlug(slug) ?: throw PromoterNotFoundException(slug)
-        return PromoterDetailResponse.fromEntity(entity)
+        val image = cachedImageGate.forUrls(listOf(entity.imageUrl)).serve(entity.imageUrl, RENDERED_WIDTH)
+        return PromoterDetailResponse.fromEntity(entity, image)
     }
 
     companion object {
+        /**
+         * What the site draws one of these at, in CSS pixels.
+         *
+         * `BaseDetailView`'s header draws 96, and the list renders no image today. The gate offers
+         * everything from the slot up to three times it, so this covers a card if one arrives.
+         */
+        private const val RENDERED_WIDTH = 96
+
         /** Entity properties a client may sort the promoter list by; anything else is ignored. */
         private val SORTABLE_PROPERTIES = setOf("name", "slug")
         private val DEFAULT_SORT = Sort.by("name")

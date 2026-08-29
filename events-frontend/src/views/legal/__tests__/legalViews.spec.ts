@@ -118,12 +118,13 @@ const PRIVACY_ELEMENTS: Element[] = [
   {
     what: 'that images are downloaded and stored, not only linked',
     en: /downloads those images and stores a copy/i,
-    de: /lädt diese Bilder herunter und speichert eine Kopie/i,
+    de: /lädt\s+diese Bilder herunter und speichert eine Kopie/i,
   },
   // #792. The claim above it — no CDN, no proxy, your request reaches us directly — is what makes
-  // this necessary: without it the notice reads as though nothing else is ever contacted, while
-  // four render sites still point a browser at a venue's server (#833). Delete this item when that
-  // stops being true, not before.
+  // this necessary: without it the notice reads as though nothing else is ever contacted, while the
+  // browser is still sent to a venue's server for every image. **The copies now exist for all four
+  // columns (#833); what keeps this true is `app.images.serving.enabled`, which is off everywhere.**
+  // Delete this item when that switch is on in production (#843), not before.
   {
     what: 'that some images are still fetched from a third-party server, and what that discloses',
     en: /loaded directly\s+from the servers of venues, promoters and ticket sellers/i,
@@ -253,7 +254,7 @@ const FOR_VENUES_ELEMENTS: Element[] = [
   // hotlinking a takedown propagated by itself; now a stored object outlives it unless something
   // deletes it, so the page may only promise this while that endpoint exists.
   {
-    what: 'that the stored copies of a venue\'s images are deleted too',
+    what: "that the stored copies of a venue's images are deleted too",
     en: /delete the stored copies of your images/i,
     de: /löschen die gespeicherten Kopien eurer Bilder/i,
   },

@@ -1,5 +1,7 @@
 package de.norm.events.venue
 
+import de.norm.events.image.ImageSourceResponse
+import de.norm.events.image.ServedImage
 import io.swagger.v3.oas.annotations.media.Schema
 import java.math.BigDecimal
 
@@ -21,10 +23,19 @@ data class VenueSummaryResponse(
     @Schema(description = "Berlin borough (Bezirk) as a canonical slug", example = "friedrichshain-kreuzberg")
     val district: String?,
     @Schema(description = "URL of the venue's logo or photo")
-    val imageUrl: String?
+    val imageUrl: String?,
+    @Schema(
+        description =
+            "Alternative formats of the same image, best first, for a <picture> element. Empty " +
+                "when the image is not cached, in which case `imageUrl` is all there is."
+    )
+    val imageSources: List<ImageSourceResponse>
 ) {
     companion object {
-        fun fromEntity(entity: VenueEntity): VenueSummaryResponse =
+        fun fromEntity(
+            entity: VenueEntity,
+            image: ServedImage
+        ): VenueSummaryResponse =
             VenueSummaryResponse(
                 id = requireNotNull(entity.id) { "Persisted venue must have an ID" },
                 slug = entity.slug,
@@ -32,7 +43,8 @@ data class VenueSummaryResponse(
                 city = entity.city,
                 address = entity.address,
                 district = entity.district,
-                imageUrl = entity.imageUrl
+                imageUrl = image.url,
+                imageSources = image.sources
             )
     }
 }
@@ -67,11 +79,20 @@ data class VenueDetailResponse(
     val websiteUrl: String?,
     @Schema(description = "URL of the venue's logo or photo")
     val imageUrl: String?,
+    @Schema(
+        description =
+            "Alternative formats of the same image, best first, for a <picture> element. Empty " +
+                "when the image is not cached, in which case `imageUrl` is all there is."
+    )
+    val imageSources: List<ImageSourceResponse>,
     @Schema(description = "Short prose description of the venue")
     val description: String?
 ) {
     companion object {
-        fun fromEntity(entity: VenueEntity): VenueDetailResponse =
+        fun fromEntity(
+            entity: VenueEntity,
+            image: ServedImage
+        ): VenueDetailResponse =
             VenueDetailResponse(
                 id = requireNotNull(entity.id) { "Persisted venue must have an ID" },
                 slug = entity.slug,
@@ -83,7 +104,8 @@ data class VenueDetailResponse(
                 latitude = entity.latitude,
                 longitude = entity.longitude,
                 websiteUrl = entity.websiteUrl,
-                imageUrl = entity.imageUrl,
+                imageUrl = image.url,
+                imageSources = image.sources,
                 description = entity.description
             )
     }

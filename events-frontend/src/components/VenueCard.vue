@@ -25,15 +25,11 @@ const localePath = useLocalePath()
 </script>
 
 <template>
-  <RouterLink
-    :to="localePath(`/venues/${venue.slug}`)"
-    :class="CARD_CLASS"
-  >
-    <!-- No `sources`: a venue's own image is never cached, so this is the plain <img> it has
-         always been (#833). -->
+  <RouterLink :to="localePath(`/venues/${venue.slug}`)" :class="CARD_CLASS">
     <CachedImage
       v-if="venue.imageUrl"
       :src="venue.imageUrl"
+      :sources="venue.imageSources"
       :alt="venue.name ?? ''"
       sizes="80px"
       img-class="size-20 shrink-0 rounded-lg object-cover grayscale transition duration-300 group-hover:grayscale-0"
