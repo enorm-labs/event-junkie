@@ -309,6 +309,11 @@ images:
   # minutes over a batch rather than all at once.
   serving:
     enabled: false
+  # images.cacheSize is how much of the bucket the BFF holds in memory (#847). Object Storage is Ceph
+  # on hard disks, so a miss is a seek, and `immutable` only protects a page's second visitor.
+  # 32 MB is one card-sized variant per image staging holds. Raise it against the hit ratio the pod
+  # reports. `ImageServingProperties.Cache` carries the arithmetic.
+  cacheSize: "32MB"
   # The orphan sweep. This bucket carries no lifecycle rule, unlike -o2 and -backups, because its
   # objects are live content — so the sweep is what stops it growing forever (ADR-019).
   #
