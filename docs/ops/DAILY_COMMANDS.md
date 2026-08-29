@@ -199,8 +199,11 @@ Operating it, including the stream-count trap that causes ingestion to stop: [OP
 
 ```sh
 ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 'sudo -u postgres walg check'
-ssh -i ~/.ssh/id_ed25519_hetzner -J ops@10.10.0.1 ops@10.0.1.20 'sudo -u postgres walg check'
+ssh -J ops@10.10.0.1 ops@10.0.1.20 'sudo -u postgres walg check'
 ```
+
+The second line carries no `-i` on purpose. A jump host never receives it, so the key belongs in `~/.ssh/config` —
+[CLUSTER_ACCESS.md](CLUSTER_ACCESS.md) §_Two environments_ has the block.
 
 Expect `ok: newest <timestamp>, disk N%`. **`systemctl status` is not the check** — the timers can be green while every archive fails.
 [BACKUPS.md](BACKUPS.md), [HEALTHCHECKS.md](HEALTHCHECKS.md).
