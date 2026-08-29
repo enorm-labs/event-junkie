@@ -5,6 +5,10 @@
 **Accepted (2026-08-28) — cache each venue image on our own origin, in a bucket. The site stops hotlinking, and the
 visitor's browser never contacts the venue.**
 
+**Amended (2026-08-29): "our own origin" is this domain, and not an image host of its own**
+([#845](https://github.com/enorm-labs/event-junkie/issues/845)). The decision below is unaffected. §Decision records why
+`img.event-junkie.de` was weighed and rejected, and §When to revisit records what would reverse it.
+
 **How the derivatives get generated is [ADR-020](ADR-020_IMAGE_PROCESSING.md).** That question follows from this one and
 reverses independently, so it has its own record.
 
@@ -152,6 +156,16 @@ exposure, and that is why it now blocks.
 **What did not decide it.** Format control, image freshness and broken-image behaviour all favour B. None of them would
 justify the copyright cost on its own.
 
+**"Our own origin" is this domain, and not an image host of its own.** `img.event-junkie.de` was the first plan. It buys
+one thing: an SVG that reached the bucket could not run script against the site. The site sets no cookies, so the other
+usual reason to split an image host does not apply.
+
+Five controls already stand between a hostile file and that outcome, and three are structural rather than checks.
+`ImageFetcher` reads the magic bytes and refuses SVG. Every derivative is imgproxy output in AVIF, WebP or JPEG.
+`ImageObjectReader` cannot name the `originals/` prefix, so an original never reaches the wire. The route admits those
+three formats alone, and the `Content-Type` comes from a fixed table under `nosniff`. A second hostname adds a sixth
+control, and with it a DNS record, a certificate to renew and an ingress rule.
+
 ## Consequences
 
 ### What this obliges
@@ -196,6 +210,9 @@ justify the copyright cost on its own.
   test it.
 - **If a legal opinion arrives.** [#282](https://github.com/enorm-labs/event-junkie/issues/282) deferred one. § 16 UrhG is
   the question to put first.
+- **If a derivative could ever carry script.** The single origin rests on five controls rather than on one. A servable
+  original, or a format in `app.images.imgproxy.formats` that a browser executes, removes three of them together.
+  `img.event-junkie.de` becomes the right answer that day.
 
 ## References
 
@@ -203,6 +220,7 @@ justify the copyright cost on its own.
 - [#364](https://github.com/enorm-labs/event-junkie/issues/364) — decide whether to display descriptions and source images
 - [#283](https://github.com/enorm-labs/event-junkie/issues/283) — per-source licence status
 - [#282](https://github.com/enorm-labs/event-junkie/issues/282) — the deferred legal opinion
+- [#845](https://github.com/enorm-labs/event-junkie/issues/845) — same origin, or an image host of its own
 - [`docs/SCRAPING_POSITION.md`](../SCRAPING_POSITION.md) §3.6 and §4
 - [`docs/LEGAL.md`](../LEGAL.md) §7.3a, §7.7 and §14
 - [ADR-007](ADR-007_WEB_SCRAPING_STRATEGY.md), [ADR-012](ADR-012_CLOUD_PLATFORM.md), [ADR-013](ADR-013_LOCALISATION.md)
