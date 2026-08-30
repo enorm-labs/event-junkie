@@ -29,7 +29,7 @@ deploy goes wrong is the page to read when they diverge.
 flowchart TB
     subgraph dev["Development"]
         pr["Pull request"] -->|"checks: build · test · lint · render assertions"| main["merge to main"]
-        rel["GitHub Release<br/>tag v0.3.0"]
+        rel["GitHub Release<br/>tag v0.3.1"]
     end
 
     subgraph ci["GitHub Actions — release.yml"]
@@ -79,8 +79,8 @@ there is nothing for it to hold.
 
 | Trigger                                      | Version                                 | Published                                      | Reconciled onto |
 | -------------------------------------------- | --------------------------------------- | ---------------------------------------------- | --------------- |
-| push to `main`                               | `0.3.0-snapshot.<utc-timestamp>.g<sha>` | images + chart                                 | **staging**     |
-| **publish a GitHub Release** tagged `v0.3.0` | `0.3.0`                                 | images + chart, **and** `latest` on the images | **production**  |
+| push to `main`                               | `0.3.1-snapshot.<utc-timestamp>.g<sha>` | images + chart                                 | **staging**     |
+| **publish a GitHub Release** tagged `v0.3.1` | `0.3.1`                                 | images + chart, **and** `latest` on the images | **production**  |
 | PR touching `release.yml` or `version.sh`    | snapshot                                | **nothing** — dry run                          | —               |
 | `workflow_dispatch`                          | as above                                | nothing, unless `publish` is ticked            | —               |
 
@@ -94,11 +94,11 @@ keeps the Releases page the single record of what shipped.
 `gradle.properties` is the source of truth. Everything derives from it via [`scripts/version.sh`](../../scripts/version.sh).
 
 ```
-gradle.properties  0.3.0-SNAPSHOT
+gradle.properties  0.3.1-SNAPSHOT
         │
-        └── scripts/version.sh compute ──► 0.3.0-snapshot.20260814122042.gdf18a02
+        └── scripts/version.sh compute ──► 0.3.1-snapshot.20260814122042.gdf18a02
                      │
-                     ├── docker build -t ghcr.io/…/bff:0.3.0-snapshot.20260814122042.gdf18a02
+                     ├── docker build -t ghcr.io/…/bff:0.3.1-snapshot.20260814122042.gdf18a02
                      ├── docker build -t ghcr.io/…/importer:…
                      ├── docker build -t ghcr.io/…/frontend:…
                      └── Chart.yaml  version: … / appVersion: …
@@ -173,13 +173,13 @@ production (`enabled`).
 scripts/version.sh check
 
 # 2. publish the release — this is what triggers the workflow
-gh release create v0.3.0 --target main --generate-notes
+gh release create v0.3.1 --target main --generate-notes
 
-# 3. afterwards, bump all four files to 0.3.1-SNAPSHOT / 0.3.1 in a PR
+# 3. afterwards, bump all four files to 0.3.2-SNAPSHOT / 0.3.2 in a PR
 ```
 
 A release version is **never committed**: `release.yml` passes `-Pversion=` from the tag, so the tag and the artifacts cannot disagree. Tagging `v0.4.0` on a tree
-that says `0.3.0-SNAPSHOT` fails before anything is built.
+that says `0.3.1-SNAPSHOT` fails before anything is built.
 
 ## Rehearsing the whole thing locally
 

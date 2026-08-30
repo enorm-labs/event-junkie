@@ -296,7 +296,7 @@ The site is locale-routed: every page lives under `/<locale>/…`, and `src/i18n
 The application version lives in **`version` in the root `gradle.properties`** — that is the single source of truth.
 
 - `events-frontend/package.json` **mirrors** it, kept in step **by hand**. Nothing generates or verifies it, so a version bump is one change touching two files.
-- The mirror is deliberately **without** the `-SNAPSHOT` suffix that `gradle.properties` carries: npm's SemVer has no such convention, and `0.3.0-SNAPSHOT`
+- The mirror is deliberately **without** the `-SNAPSHOT` suffix that `gradle.properties` carries: npm's SemVer has no such convention, and `0.3.1-SNAPSHOT`
   reads as a malformed prerelease. The two files are _intentionally_ not byte-identical — do not "fix" this.
 - **Do not bump `version` in `package.json` on its own.** It is `private: true` and never published, so nothing breaks visibly if it drifts — which is exactly
   why it needs the discipline.
