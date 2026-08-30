@@ -104,31 +104,49 @@ And a longer period is the one that cannot produce a false alarm. Change it deli
 
 ## Creating a check for the site probe
 
-| Field        | Value                | Why exactly this                                                                                                                                        |
-| ------------ | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**     | `site-<environment>` | Same per-environment rule as the backup check, and for the same reason                                                                                  |
-| **Schedule** | Simple               | As above                                                                                                                                                |
-| **Period**   | `15m`                | Matches the workflow's cron. The probe is cheap and the thing it watches is the serving path, so latency matters here in a way it does not for a backup |
-| **Grace**    | `30m` or more        | **The load-bearing number** — see below                                                                                                                 |
-| **Channel**  | the shared one       | See above                                                                                                                                               |
+| Field        | Value                | Why exactly this                                                                                                  |
+| ------------ | -------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Name**     | `site-<environment>` | Same per-environment rule as the backup check, and for the same reason                                            |
+| **Schedule** | Simple               | As above                                                                                                          |
+| **Period**   | `3h`                 | **Not the workflow's cron.** It tracks what GitHub actually does, which is not what the cron asks for — see below |
+| **Grace**    | `3h`                 | **The load-bearing number** — see below                                                                           |
+| **Channel**  | the shared one       | See above                                                                                                         |
 
 Then add the ping URL as the **`HEALTHCHECKS_PING_URL`** repository secret. Nothing else activates it.
 
-### Why the grace is double the period, and must not be tightened to match it
+### The cron is a request, and GitHub refuses it
 
-**GitHub's scheduler is not punctual, and it skips runs outright.** During the 2026-08-06 Actions
-incident it dropped roughly 85% of webhooks. Scheduled workflows are also delayed under load as a matter
-of routine, not of incident. A grace equal to the period would therefore alarm on GitHub's timekeeping
-rather than on the site.
+`site-probe.yml` asks for a run every 15 minutes. **It does not get one.** Measured over 30 scheduled
+runs on 2026-08-30:
 
-At `15m`/`30m` a single missed run is absorbed and two are not. A genuine outage is therefore reported
-within about 45 minutes, and a late run is not reported at all. **That asymmetry is the whole point.**
-This check exists to catch the case where nothing else can report. A channel that cries wolf about its
-own scheduler gets muted long before the outage it was for.
+| Interval between scheduled runs | Value       |
+| ------------------------------- | ----------- |
+| Asked for                       | 15 min      |
+| Shortest actual                 | 29 min      |
+| **Median actual**               | **129 min** |
+| Longest actual                  | 678 min     |
+| Gaps longer than 30 min         | 28 of 29    |
 
-Contrast the backup check's `26h`/`2h`, where the period tracks an assertion the check itself makes about
-data age. Here the period tracks a cron and the grace absorbs the platform. Different reasoning, and
-worth not copying one onto the other.
+This page prescribed `15m`/`30m` before, on the reasoning that a grace of double the period absorbs one
+missed run. **The reasoning is sound. The numbers were 4 to 20 times too small.** The check went live on
+2026-08-30 and alarmed within hours. The site was healthy for all of that time: no pod restarts, the
+node at 25% CPU, and ten `200` responses in sequence.
+
+`site-probe.yml` is the only high-frequency schedule in this repository. The others are daily or weekly.
+None of them shows this. A 15-minute cron on shared runners is what GitHub holds back.
+
+**`3h`/`3h` is a holding position, not an answer.** It stops the flapping. It also delays the report of
+an outage by up to six hours. That is an alarm for a dead server, not availability monitoring, and it
+puts the figure in _Availability, as a number_ out of reach.
+
+**The problem is the shape, not the numbers.** A monitor with less reliable liveness than the thing it
+watches teaches you to ignore it. [#889](https://github.com/enorm-labs/event-junkie/issues/889) carries
+the options. The likely answer is an external HTTP uptime monitor. A fetch of a URL and an assertion on
+the result is what those do. No cron can hold them back.
+
+**None of this applies to the backup checks.** `walg-<environment>` pings from a systemd timer on a node
+we control, for a job that pings on success. That is the shape healthchecks.io is for, and its `26h`/`2h`
+reasoning stands. The site probe borrowed the shape for a job it does not fit.
 
 ## Wiring a node to its check
 

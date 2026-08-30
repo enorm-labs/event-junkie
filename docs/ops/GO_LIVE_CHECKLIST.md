@@ -79,19 +79,25 @@ before go-live. The drill covers staging only, so far.
 
 ### Monitoring and alerting
 
-| Done       | Item                                          | Evidence          |
-| ---------- | --------------------------------------------- | ----------------- |
-| 2026-08-21 | `walg-production` fires                       | drill log         |
-| 2026-08-30 | Production records its deploys                | #872              |
-|            | `site-production` created and pinging         | `HEALTHCHECKS.md` |
-|            | **Production has any in-cluster monitoring**  | #880              |
-|            | Alerts reach a person                         | #877              |
-|            | An alert proven by breaking something on prod | #285              |
+| Done       | Item                                                       | Evidence  |
+| ---------- | ---------------------------------------------------------- | --------- |
+| 2026-08-21 | `walg-production` fires                                    | drill log |
+| 2026-08-30 | Production records its deploys                             | #872      |
+|            | `site-production` reports the site, not GitHub's scheduler | #889      |
+|            | **Production has any in-cluster monitoring**               | #880      |
+|            | Alerts reach a person                                      | #877      |
+|            | An alert proven by breaking something on prod              | #285      |
 
 **Production has no observability of its own.** OpenObserve, the collector and the nine alert rules
 run on staging and nowhere else. So the only thing that watches production is the external
 healthchecks.io layer. It notices total death and nothing less than that. #880 is the port, and the
 largest single item on this list.
+
+**The external layer is degraded too, and that is new.** `site-production` went live on 2026-08-30 and
+alarmed within hours with the site healthy. GitHub does not run the probe's 15-minute cron: the median
+interval measured 129 minutes. The check now sits at `3h`/`3h`. That stops the flapping. It also delays
+a real outage report by up to six hours. #889 has the measurement and the options. **So neither layer
+watches production properly today.**
 
 ### Content and data
 
