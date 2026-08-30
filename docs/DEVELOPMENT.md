@@ -561,22 +561,22 @@ is authoritative:
 
 | File                           | Holds            | Why it is not the source                                                       |
 | ------------------------------ | ---------------- | ------------------------------------------------------------------------------ |
-| `gradle.properties`            | `0.1.1-SNAPSHOT` | **The source of truth.** `bootBuildInfo` stamps it, `/actuator/info` serves it |
-| `events-frontend/package.json` | `0.1.1`          | npm has no `-SNAPSHOT` convention, so it mirrors the bare number               |
-| `Chart.yaml` `version`         | `0.1.1`          | A placeholder — the release workflow stamps the computed version over it       |
-| `Chart.yaml` `appVersion`      | `0.1.1`          | The same placeholder, and also the default image tag for all three components  |
+| `gradle.properties`            | `0.3.0-SNAPSHOT` | **The source of truth.** `bootBuildInfo` stamps it, `/actuator/info` serves it |
+| `events-frontend/package.json` | `0.3.0`          | npm has no `-SNAPSHOT` convention, so it mirrors the bare number               |
+| `Chart.yaml` `version`         | `0.3.0`          | A placeholder — the release workflow stamps the computed version over it       |
+| `Chart.yaml` `appVersion`      | `0.3.0`          | The same placeholder, and also the default image tag for all three components  |
 
 [`scripts/version.sh`](../scripts/version.sh) is the only thing that knows the rules, so CI and a laptop always agree:
 
 ```bash
-scripts/version.sh base       # 0.1.1 — the released number this tree is heading for
-scripts/version.sh compute    # 0.1.1-snapshot.20260814122042.g33fd32g on a branch; 0.1.1 from the tag v0.1.1
+scripts/version.sh base       # 0.3.0 — the released number this tree is heading for
+scripts/version.sh compute    # 0.3.0-snapshot.20260814122042.g33fd32g on a branch; 0.3.0 from the tag v0.3.0
 scripts/version.sh check      # fails if the four files disagree — also a pre-commit hook
 scripts/version-test.sh       # fails if snapshot versions stop ordering — needs helm
 ```
 
 **Snapshots are prereleases _of the coming release_, not of the last one.** SemVer sorts
-`0.1.1-snapshot.20260814122042.g33fd32g` _before_ `0.1.1`. Naming a snapshot after the released version would have it
+`0.3.0-snapshot.20260814122042.g33fd32g` _before_ `0.3.0`. Naming a snapshot after the released version would have it
 claim to be older than code it is newer than. Same semantics as Maven's `-SNAPSHOT`.
 
 **The timestamp is there so that snapshots _order_, and that is not a detail**
@@ -611,8 +611,8 @@ run means the artifacts exist, not that they are live.
 
 | Trigger                                         | Version                                 | Published                                         |
 | ----------------------------------------------- | --------------------------------------- | ------------------------------------------------- |
-| every push to `main`                            | `0.1.1-snapshot.<utc-timestamp>.g<sha>` | images + chart                                    |
-| **publishing a GitHub Release** tagged `v0.1.1` | `0.1.1`                                 | images + chart, **and** `latest` on the images    |
+| every push to `main`                            | `0.3.0-snapshot.<utc-timestamp>.g<sha>` | images + chart                                    |
+| **publishing a GitHub Release** tagged `v0.3.0` | `0.3.0`                                 | images + chart, **and** `latest` on the images    |
 | a PR touching `release.yml` or `version.sh`     | snapshot                                | **nothing**                                       |
 | `workflow_dispatch`                             | as above                                | **nothing**, unless the `publish` input is ticked |
 
@@ -632,19 +632,19 @@ none of it. Three images built and scanned, and the chart stamped, linted and pa
 the notes `.github/release.yml` generates from the merged PRs' labels.
 
 ```bash
-# 1. main is at the version you intend to release — gradle.properties says 0.1.1-SNAPSHOT
+# 1. main is at the version you intend to release — gradle.properties says 0.3.0-SNAPSHOT
 scripts/version.sh check
 
 # 2. publish the release, creating the tag from main. The v prefix is required, and the
 #    number must match gradle.properties. Or do the same in the UI: Releases → Draft a new
 #    release → choose a tag → Create new tag → Generate release notes → Publish.
-gh release create v0.1.1 --target main --generate-notes
+gh release create v0.3.0 --target main --generate-notes
 
-# 3. afterwards, open a PR bumping all four files to 0.1.2-SNAPSHOT / 0.1.2
+# 3. afterwards, open a PR bumping all four files to 0.3.1-SNAPSHOT / 0.3.1
 ```
 
-A release version is **never committed** — `release.yml` passes `-Pversion=` from the tag, so the tag and the built artifacts cannot disagree. Tagging `v0.2.0`
-on a tree that still says `0.1.1-SNAPSHOT` fails immediately in `scripts/version.sh compute`, before anything is built.
+A release version is **never committed** — `release.yml` passes `-Pversion=` from the tag, so the tag and the built artifacts cannot disagree. Tagging `v0.4.0`
+on a tree that still says `0.3.0-SNAPSHOT` fails immediately in `scripts/version.sh compute`, before anything is built.
 
 Triggering on `published` rather than on the tag has two consequences. A **draft** release creates no tag and
 publishes nothing until you publish it, which makes drafting notes safe. And a release cut from a tag that already
