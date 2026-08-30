@@ -351,12 +351,22 @@ kover {
 
 // IntelliJ HTTP Client CLI – runs .http request files from the command line.
 // Requires `ijhttp` to be installed (e.g. `brew install ijhttp` on macOS).
-// Usage: `./gradlew httpTest` to run the full lifecycle scenario against a running importer.
+// Usage: `./gradlew httpTest` against a running importer (`scripts/dev-env.sh up importer`).
 //
 // The path is `importer/full-lifecycle.http`, not `full-lifecycle.http`. The `http/` directory was
 // split into `importer/` and `bff/` and this task kept the flat name, so it failed on a file that
 // does not exist — and because it needs a running importer, nothing in CI ran it to notice. Keep
-// the subdirectory in the argument whenever the scenario moves.
+// the subdirectory in the argument whenever a scenario moves.
+//
+// **Two files under `http/importer/` are deliberately absent, and both for the same reason.**
+// `dev-seed.http` (86 import triggers) and `event-sources.http` (5) POST to `/import` and `/retry`,
+// which make the importer scrape live venue websites. A task people run on demand must not put
+// traffic on a venue's site — the same argument ADR-007 makes, and why `scripts/dev-env.sh` starts
+// the importer with scheduling off. Run those two by hand when that is what you want.
+//
+// `events.http` is absent for a duller reason: it addresses a venue, artist and promoter it does
+// not create, and every file now deletes its own fixtures, so nothing leaves rows for it to use.
+// Giving it fixtures would duplicate `full-lifecycle.http`, which already covers that path.
 tasks.register<Exec>("httpTest") {
     group = "verification"
     description = "Runs IntelliJ HTTP Client .http files against the local importer (requires ijhttp CLI and a running importer on port 8081)"
@@ -379,6 +389,20 @@ tasks.register<Exec>("httpTest") {
         "local",
         "-L",
         "VERBOSE",
+        // Order is not significant, and the task is repeatable: every file now deletes the rows it
+        // creates, so each runs alone, in any order, and any number of times against one database.
+        // Before this they each left one fixture behind, and `full-lifecycle.http` then failed on a
+        // duplicate slug — which is why the task could only ever run a single file.
+        //
+        // One exception, and it cannot be helped from here: an event carrying a genre auto-creates
+        // a genre tag, and genre tags have no delete endpoint on purpose. So a `punk` tag survives.
+        // It is inert — nothing asserts on the tag list's contents.
+        "importer/health-and-openapi.http",
+        "importer/venues.http",
+        "importer/artists.http",
+        "importer/promoters.http",
+        "importer/genre-tags.http",
+        "importer/data-quality.http",
         "importer/full-lifecycle.http"
     )
 }

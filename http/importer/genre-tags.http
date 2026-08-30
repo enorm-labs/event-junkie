@@ -11,10 +11,24 @@
 GET {{importer-host}}/api/admin/genre-tags
 Accept: application/json
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
 ### List genre tags — page 0, 50 per page
 GET {{importer-host}}/api/admin/genre-tags?page=0&size=50&sort=name,asc
 Accept: application/json
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
+### Deliberately unasserted: which row holds id 1 depends on what the database already contains,
+### so any fixed expectation here is wrong somewhere. The list endpoints above carry the assertions.
 ### Get genre tag by ID
 GET {{importer-host}}/api/admin/genre-tags/1
 Accept: application/json
@@ -22,3 +36,10 @@ Accept: application/json
 ### Get non-existent genre tag (expect 404)
 GET {{importer-host}}/api/admin/genre-tags/999999
 Accept: application/json
+
+> {%
+    client.test("status is 404", function () {
+        client.assert(response.status === 404, "Expected 404 but got " + response.status);
+    });
+%}
+

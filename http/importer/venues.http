@@ -6,10 +6,24 @@
 GET {{importer-host}}/api/admin/venues
 Accept: application/json
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
 ### List venues — page 0, 10 per page, sorted by name ascending
 GET {{importer-host}}/api/admin/venues?page=0&size=10&sort=name,asc
 Accept: application/json
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
+### Deliberately unasserted: which row holds id 1 depends on what the database already contains,
+### so any fixed expectation here is wrong somewhere. The list endpoints above carry the assertions.
 ### Get venue by ID
 GET {{importer-host}}/api/admin/venues/1
 Accept: application/json
@@ -47,6 +61,13 @@ Content-Type: application/json
     "websiteUrl": "https://so36.com"
 }
 
+> {%
+    client.global.set("second_venue_id", response.body.id);
+    client.test("status is 201", function () {
+        client.assert(response.status === 201, "Expected 201 Created");
+    });
+%}
+
 ### Update venue
 PUT {{importer-host}}/api/admin/venues/{{venue_id}}
 Content-Type: application/json
@@ -62,9 +83,37 @@ Content-Type: application/json
     "imageUrl": "https://example.com/astra-logo.jpg"
 }
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
 ### Delete venue
 DELETE {{importer-host}}/api/admin/venues/{{venue_id}}
+
+> {%
+    client.test("status is 204", function () {
+        client.assert(response.status === 204, "Expected 204 but got " + response.status);
+    });
+%}
+
+### Delete SO36 — leaves the database as this file found it
+DELETE {{importer-host}}/api/admin/venues/{{second_venue_id}}
+
+> {%
+    client.test("status is 204", function () {
+        client.assert(response.status === 204, "Expected 204 but got " + response.status);
+    });
+%}
 
 ### Get non-existent venue (expect 404)
 GET {{importer-host}}/api/admin/venues/999999
 Accept: application/json
+
+> {%
+    client.test("status is 404", function () {
+        client.assert(response.status === 404, "Expected 404 but got " + response.status);
+    });
+%}
+

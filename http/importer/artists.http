@@ -6,10 +6,24 @@
 GET {{importer-host}}/api/admin/artists
 Accept: application/json
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
 ### List artists — page 0, 10 per page, sorted by name ascending
 GET {{importer-host}}/api/admin/artists?page=0&size=10&sort=name,asc
 Accept: application/json
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
+### Deliberately unasserted: which row holds id 1 depends on what the database already contains,
+### so any fixed expectation here is wrong somewhere. The list endpoints above carry the assertions.
 ### Get artist by ID
 GET {{importer-host}}/api/admin/artists/1
 Accept: application/json
@@ -46,6 +60,9 @@ Content-Type: application/json
 
 > {%
     client.global.set("support_artist_id", response.body.id);
+    client.test("status is 201", function () {
+        client.assert(response.status === 201, "Expected 201 Created");
+    });
 %}
 
 ### Update artist
@@ -62,9 +79,37 @@ Content-Type: application/json
     "imageUrl": "https://example.com/adicts.jpg"
 }
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
 ### Delete artist
 DELETE {{importer-host}}/api/admin/artists/{{artist_id}}
+
+> {%
+    client.test("status is 204", function () {
+        client.assert(response.status === 204, "Expected 204 but got " + response.status);
+    });
+%}
+
+### Delete Maid of Ace — leaves the database as this file found it
+DELETE {{importer-host}}/api/admin/artists/{{support_artist_id}}
+
+> {%
+    client.test("status is 204", function () {
+        client.assert(response.status === 204, "Expected 204 but got " + response.status);
+    });
+%}
 
 ### Get non-existent artist (expect 404)
 GET {{importer-host}}/api/admin/artists/999999
 Accept: application/json
+
+> {%
+    client.test("status is 404", function () {
+        client.assert(response.status === 404, "Expected 404 but got " + response.status);
+    });
+%}
+

@@ -14,14 +14,32 @@
 GET {{importer-host}}/api/admin/data-quality
 Accept: application/json
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
 ### The worklist — the events failing one metric, so they can be fixed
 ### The headline gap: CONCERT events with nothing in the lineup.
 GET {{importer-host}}/api/admin/data-quality/worklist?issue=concertsWithoutArtist
 Accept: application/json
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
 ### Worklist for one source only
 GET {{importer-host}}/api/admin/data-quality/worklist?issue=concertsWithoutArtist&source=badehaus
 Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
 
 ### Worklist for hand-created events
 ### `manual` is the synthetic bucket for events with no `event_source_id` —
@@ -30,23 +48,53 @@ Accept: application/json
 GET {{importer-host}}/api/admin/data-quality/worklist?issue=missingGenre&source=manual
 Accept: application/json
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
 ### Worklist, paged
 ### `limit` is capped at 500. Ordered newest-first by event date with the id
 ### as a tie-break, so a page boundary is stable across requests.
 GET {{importer-host}}/api/admin/data-quality/worklist?issue=missingPrice&limit=20&offset=20
 Accept: application/json
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
 ### Every other metric
 GET {{importer-host}}/api/admin/data-quality/worklist?issue=eventsTypedOther
 Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
 
 ###
 GET {{importer-host}}/api/admin/data-quality/worklist?issue=missingPromoter
 Accept: application/json
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
 ###
 GET {{importer-host}}/api/admin/data-quality/worklist?issue=missingStartTime
 Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
 
 ### An unknown issue is a 400 naming the valid values — NOT an empty list
 ### An empty list is the honest answer to "this metric has no offenders", so
@@ -54,6 +102,16 @@ Accept: application/json
 ### that does not exist.
 GET {{importer-host}}/api/admin/data-quality/worklist?issue=missingArtist
 Accept: application/json
+
+> {%
+    client.test("status is 400", function () {
+        client.assert(response.status === 400, "Expected 400 but got " + response.status);
+    });
+    client.test("names the valid values", function () {
+        client.assert(/concertsWithoutArtist/.test(response.body.detail || ""),
+            "The 400 should list the metrics that do exist, was: " + JSON.stringify(response.body));
+    });
+%}
 
 ### The gauges the same numbers publish, for Prometheus
 ### Not reachable on `importer-host`: actuator lives on the management port

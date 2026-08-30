@@ -6,9 +6,21 @@
 GET {{importer-host}}/api/admin/promoters
 Accept: application/json
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
 ### List promoters — page 0, 10 per page, sorted by name ascending
 GET {{importer-host}}/api/admin/promoters?page=0&size=10&sort=name,asc
 Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
 
 ### Get promoter by ID
 GET {{importer-host}}/api/admin/promoters/1
@@ -40,6 +52,13 @@ Content-Type: application/json
     "imageUrl": "https://example.com/puschen-logo.jpg"
 }
 
+> {%
+    client.global.set("second_promoter_id", response.body.id);
+    client.test("status is 201", function () {
+        client.assert(response.status === 201, "Expected 201 Created");
+    });
+%}
+
 ### Update promoter
 PUT {{importer-host}}/api/admin/promoters/{{promoter_id}}
 Content-Type: application/json
@@ -50,9 +69,37 @@ Content-Type: application/json
     "imageUrl": "https://example.com/36-concerts-logo.jpg"
 }
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
 ### Delete promoter
 DELETE {{importer-host}}/api/admin/promoters/{{promoter_id}}
+
+> {%
+    client.test("status is 204", function () {
+        client.assert(response.status === 204, "Expected 204 but got " + response.status);
+    });
+%}
+
+### Delete Puschen Concerts — leaves the database as this file found it
+DELETE {{importer-host}}/api/admin/promoters/{{second_promoter_id}}
+
+> {%
+    client.test("status is 204", function () {
+        client.assert(response.status === 204, "Expected 204 but got " + response.status);
+    });
+%}
 
 ### Get non-existent promoter (expect 404)
 GET {{importer-host}}/api/admin/promoters/999999
 Accept: application/json
+
+> {%
+    client.test("status is 404", function () {
+        client.assert(response.status === 404, "Expected 404 but got " + response.status);
+    });
+%}
+
