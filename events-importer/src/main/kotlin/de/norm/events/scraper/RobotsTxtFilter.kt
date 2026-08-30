@@ -14,11 +14,31 @@ import reactor.core.publisher.Mono
  * A policy answer rather than a parse failure, which is why it carries its own
  * [scrapeFailureReason] tag: more code will not fix it, and the response is to change the URL or to
  * stop importing that venue.
+ *
+ * **Two causes reach here and they are not the same news** ([unreadableStatus], #887). A venue that
+ * published a `Disallow` has told us no, and somebody has to decide what to do about it. A venue
+ * whose server answers 5xx has told us nothing — RFC 9309 §2.3.1.4 makes an unreadable `robots.txt`
+ * a complete disallow, so we correctly stay out, and it resolves itself when their server recovers.
+ * The message says which, because the first thing anyone does with this error is go and look for the
+ * rule that caused it.
  */
 class RobotsDisallowedException(
     val url: String,
-    val robotsTxtUrl: String?
-) : RuntimeException("robots.txt disallows $url (rules from ${robotsTxtUrl ?: "none"})")
+    val robotsTxtUrl: String?,
+    val unreadableStatus: Int? = null
+) : RuntimeException(describe(url, robotsTxtUrl, unreadableStatus))
+
+private fun describe(
+    url: String,
+    robotsTxtUrl: String?,
+    unreadableStatus: Int?
+): String =
+    if (unreadableStatus != null) {
+        "robots.txt could not be read (HTTP $unreadableStatus), which RFC 9309 treats as a complete " +
+            "disallow, so $url was not fetched. The venue has forbidden nothing."
+    } else {
+        "robots.txt disallows $url (rules from ${robotsTxtUrl ?: "none"})"
+    }
 
 /**
  * WebClient [ExchangeFilterFunction] that checks every outbound scraper request against the target
@@ -60,7 +80,7 @@ class RobotsTxtFilter(
                     next.exchange(request)
                 } else if (enforced) {
                     logger.warn { "Blocked by robots.txt: $url" }
-                    Mono.error(RobotsDisallowedException(url, check.robotsTxtUrl))
+                    Mono.error(RobotsDisallowedException(url, check.robotsTxtUrl, check.unreadableStatus))
                 } else {
                     // Report-only. The line is the finding; the request still goes out, because the
                     // alternative is discovering the blast radius in production.

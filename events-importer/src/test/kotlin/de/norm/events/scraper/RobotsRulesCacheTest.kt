@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -129,6 +130,31 @@ class RobotsRulesCacheTest {
                 server.enqueue(MockResponse.Builder().code(500).build())
 
                 cache().check(url("/anything")).allowed shouldBe false
+            }
+
+        @Test
+        fun `a 5xx reports the status, so the refusal is not mistaken for a venue's rule`() =
+            runTest {
+                server.enqueue(MockResponse.Builder().code(503).build())
+
+                val check = cache().check(url("/anything"))
+
+                check.allowed shouldBe false
+                // The whole point of the field: the venue forbade nothing, its server is broken.
+                check.unreadableStatus shouldBe 503
+                check.robotsTxtUrl shouldBe null
+            }
+
+        @Test
+        fun `a real Disallow reports no status, because a file was read`() =
+            runTest {
+                enqueueRobots("User-agent: *\nDisallow: /private\n")
+
+                val check = cache().check(url("/private"))
+
+                check.allowed shouldBe false
+                check.unreadableStatus shouldBe null
+                check.robotsTxtUrl shouldNotBe null
             }
     }
 

@@ -25,7 +25,14 @@ data class RobotsCheck(
     /** Whether this specific URL is permitted. */
     val allowed: Boolean,
     /** When the rules behind this answer were read. */
-    val checkedAt: Instant
+    val checkedAt: Instant,
+    /**
+     * The status that made `robots.txt` unreadable, or `null` where it was read and parsed.
+     *
+     * Set only on the error-status path. It is what separates a venue that forbids us from one whose
+     * server is broken, and the two want different responses (#887).
+     */
+    val unreadableStatus: Int? = null
 )
 
 /**
@@ -82,7 +89,8 @@ class RobotsRulesCache(
                 host = host,
                 robotsTxtUrl = cached.robotsTxtUrl,
                 allowed = cached.rules.isAllowed(url),
-                checkedAt = cached.fetchedAt
+                checkedAt = cached.fetchedAt,
+                unreadableStatus = cached.unreadableStatus
             )
         }.getOrElse { error ->
             // This never throws, and owning that promise here is what lets the import pipeline call
@@ -144,7 +152,14 @@ class RobotsRulesCache(
 
                 if (response.statusCode().isError) {
                     logger.info { "No usable robots.txt for $host (HTTP $status)" }
-                    CachedRules(parser.failedFetch(status), robotsTxtUrl = null, fetchedAt = now())
+                    // A 4xx lands here too and is harmless: failedFetch treats it as allow-all, so
+                    // it never reaches the disallowed branch and the status is never reported.
+                    CachedRules(
+                        parser.failedFetch(status),
+                        robotsTxtUrl = null,
+                        fetchedAt = now(),
+                        unreadableStatus = status
+                    )
                 } else {
                     val contentType =
                         response
@@ -181,7 +196,9 @@ class RobotsRulesCache(
 internal data class CachedRules(
     val rules: SimpleRobotRules,
     val robotsTxtUrl: String?,
-    val fetchedAt: Instant
+    val fetchedAt: Instant,
+    /** The status behind [rules] where they came from a failed fetch rather than a parsed file. */
+    val unreadableStatus: Int? = null
 )
 
 /** Per-host cache slot: the rules, and the lock that stops a stampede of concurrent fetches. */

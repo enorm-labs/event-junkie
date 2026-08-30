@@ -578,8 +578,9 @@ web scraping pitfalls documented in industry literature (see References).
    of eighty importers followed (#790).
 
     **A disallow fails the run.** `app.scraper.robots-enforced` defaults to `true`, so honouring a venue's rules is the
-    fail-safe rather than a configured extra. The failure carries its own `robots_disallowed` tag. The response to it
-    is to change the URL or to stop importing the venue, not to repair a selector.
+    fail-safe rather than a configured extra. The failure carries its own tag. `robots_disallowed` is a rule the venue
+    published. `robots_unreadable` is a server that could not answer, which RFC 9309 §2.3.1.4 makes a complete disallow
+    (#887). The first needs the URL changed or the venue dropped. The second is a venue outage that recovers.
 
     Setting it to `false` downgrades a disallow to a log line and sends the request. That mode is how the estate was
     surveyed before enforcement went on (#790, #795). It is not a state to leave a deployment in.

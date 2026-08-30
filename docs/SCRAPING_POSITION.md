@@ -164,12 +164,20 @@ the extracted facts available and not only analysing them. We honour the signal 
 
 **The check is in the code, and it is enforced.** `RobotsTxtFilter` checks every outbound scraper request against the
 host's rules and writes the answer to `event_source`. A forbidden URL raises an error and the source's run fails. That
-failure carries its own `robots_disallowed` tag, rather than being filed with ordinary scraper breakage.
+failure carries its own tag, rather than being filed with ordinary scraper breakage. `robots_disallowed` is a rule the
+venue published. `robots_unreadable` is a server that could not answer (#887).
 
-**The claim is measured, not asserted.** A full import of every source read 65 `robots.txt` files across 81 hosts. It
-found **no disallowed URL**, at a listing or at any detail page (#795). Enforcement therefore costs nothing today. What
-it buys is the day a venue adds a rule. That turns into a loud failure, instead of into us fetching what they now
-forbid.
+**The claim is measured, and the measurement changed on 2026-08-30.** Production's first full import read 71 hosts'
+`robots.txt`. It could not read 27 more. Of those 27, 26 answered 4xx, which means no rules exist and everything is
+permitted. One answered 503. RFC 9309 makes an unreadable file a complete disallow, so that source did not import.
+
+**Two URLs were refused, and one is a true prohibition.** `soda.disco2app.com` publishes `Disallow: /`, and it serves one
+venue's event images. Eleven image fetches stopped there. That venue's listing pages are on a different host, and they
+imported correctly. The other refusal is `zenner.berlin`, whose server answers 503 to every request.
+
+**Enforcement now costs something, and that is the point.** The earlier survey found no disallowed URL because it read
+listing and detail pages only (#795). The image cache fetches from venues' image CDNs, and the first true prohibition
+was there. The day a venue adds a rule, it becomes a loud failure. It does not become us fetching what they forbid.
 
 Two importers also record the check in their KDoc, and both skip a disallowed path.
 `BarJederVernunftWebsiteImporter.kt` leaves a disallowed iCal feed alone. `RitterButzkeWebsiteImporter.kt` never fetches

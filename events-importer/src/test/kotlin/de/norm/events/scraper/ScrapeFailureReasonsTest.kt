@@ -96,6 +96,31 @@ class ScrapeFailureReasonsTest {
      * exception message would let a remote site grow the metrics backend without limit. This asserts
      * the property directly rather than trusting that nobody will reach for `error.message`.
      */
+    @Nested
+    inner class RobotsRefusals {
+        @Test
+        fun `a venue's own Disallow is reported as a prohibition`() {
+            val error = RobotsDisallowedException("https://venue.example/events", "https://venue.example/robots.txt")
+
+            scrapeFailureReason(error) shouldBe "robots_disallowed"
+        }
+
+        @Test
+        fun `an unreadable robots txt is its own reason, because it is a venue outage rather than a decision`() {
+            val error = RobotsDisallowedException("https://venue.example/events", null, unreadableStatus = 503)
+
+            scrapeFailureReason(error) shouldBe "robots_unreadable"
+        }
+
+        @Test
+        fun `the unreadable case says the venue forbade nothing, so nobody hunts for a rule`() {
+            val error = RobotsDisallowedException("https://venue.example/events", null, unreadableStatus = 503)
+
+            error.message!!.contains("could not be read (HTTP 503)") shouldBe true
+            error.message!!.contains("forbidden nothing") shouldBe true
+        }
+    }
+
     @Test
     fun `no reason ever contains anything from the exception message or URL`() {
         val hostile = "a-very-distinctive-string-only-this-test-uses"
@@ -104,7 +129,10 @@ class ScrapeFailureReasonsTest {
                 scrapeFailureReason(HttpFetchException(404, "https://venue.example/$hostile")),
                 scrapeFailureReason(IllegalStateException(hostile)),
                 scrapeFailureReason(RuntimeException(hostile)),
-                scrapeFailureReason(IOException(hostile))
+                scrapeFailureReason(IOException(hostile)),
+                // The robots message carries the URL, so it is the likeliest of these to leak one.
+                scrapeFailureReason(RobotsDisallowedException("https://venue.example/$hostile", null, 503)),
+                scrapeFailureReason(RobotsDisallowedException("https://venue.example/$hostile", hostile))
             )
         reasons.forEach { it.contains(hostile) shouldBe false }
     }
