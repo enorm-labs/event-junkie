@@ -14,6 +14,7 @@ everything below — someone with a WireGuard tunnel open, not someone writing a
 | [ops/PLATFORM_SETUP.md](ops/PLATFORM_SETUP.md)       | The plan for running this in production: Hetzner, k3s, TLS, observability, go-live                                  |
 | [ops/CLUSTER_BOOTSTRAP.md](ops/CLUSTER_BOOTSTRAP.md) | Nothing to a reconciling cluster, in order — the once-per-cluster runbook, with the traps that actually cost time   |
 | [ops/RELEASING.md](ops/RELEASING.md)                 | What happens on every commit afterwards: build, publish, and Flux pulling it onto the cluster                       |
+| [ops/GO_LIVE_CHECKLIST.md](ops/GO_LIVE_CHECKLIST.md) | Launch day, in order, for someone who is tired: the two changes that are the launch, and what must be true first    |
 | [ops/CLUSTER_ACCESS.md](ops/CLUSTER_ACCESS.md)       | Day-to-day access to a running cluster: tunnel, kubeconfig, contexts, k9s                                           |
 | [ops/BACKUPS.md](ops/BACKUPS.md)                     | What protects the database, what each layer survives, and how you know it works                                     |
 | [ops/RESTORE_RUNBOOK.md](ops/RESTORE_RUNBOOK.md)     | **Restoring it** — written for someone who is reading it because something has already gone wrong                   |

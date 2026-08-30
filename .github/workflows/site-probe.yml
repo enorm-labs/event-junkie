@@ -13,16 +13,19 @@ name: Public Site Probe
 # check also catches DNS failure, an expired certificate, ingress misrouting and an application
 # error — none of which a heartbeat would notice.
 #
-# **Why it is inert today, and how it wakes up.**
-# **There is nothing public to probe yet.** Staging is deliberately not on the internet at all
-# (PLATFORM_SETUP §4a: no public `A` record, no public 80/443, Ingress on the WireGuard tunnel), and
-# production is #285, still blocked. Scheduling a probe against a host that does not resolve would
-# fail every fifteen minutes forever and teach everyone to ignore it.
+# **Why it is inert until somebody arms it, and how.**
+# Staging is deliberately not on the internet at all (PLATFORM_SETUP §4a: no public `A` record, no
+# public 80/443, Ingress on the WireGuard tunnel), so it can never be probed from here. Production
+# can: it serves a rehearsal hostname over a real certificate while the domain stays dark.
 #
-# So the probe **skips when `HEALTHCHECKS_PING_URL` is unset**, and says so in the job summary rather
+# The probe **skips when `HEALTHCHECKS_PING_URL` is unset**, and says so in the job summary rather
 # than passing quietly — a silent skip is the failure mode this repository has been bitten by twice
-# (`hashFiles` in build-backend.yml, the Kustomize resource list in #416). Add the secret when the
-# production deploy lands and it starts working with no change here.
+# (`hashFiles` in build-backend.yml, the Kustomize resource list in #416).
+#
+# **Arming it is two settings and no change to this file:** the `HEALTHCHECKS_PING_URL` secret, and
+# the `SITE_URL` variable below pointed at whatever production currently serves. Setting the secret
+# without the variable probes the apex, which does not resolve until go-live — a failure every
+# fifteen minutes, which is precisely how a monitor gets muted.
 #
 # **Do not self-host the other end.**
 # healthchecks.io is external on purpose. A dead-man's switch on the infrastructure it monitors
@@ -54,7 +57,15 @@ env:
   # Pinned and visible, like every other tool version and endpoint here. This is `ingress.host` from
   # the chart's values.yaml and the repository's homepage field — if it changes, it changes there
   # first and here second.
-  SITE_URL: https://event-junkie.de
+  #
+  # **A repository variable overrides it, and that is what lets this run before go-live.** Production
+  # serves a rehearsal hostname while `publish_dns` is false, so the apex resolves to nothing and a
+  # probe against it would fail every fifteen minutes for ever. Set `SITE_URL` to the name production
+  # actually serves; delete the variable at go-live and the default below is correct again.
+  #
+  # The default is the canonical host rather than the rehearsal one on purpose: the value that
+  # survives someone forgetting this workflow exists should be the one that is right at launch.
+  SITE_URL: ${{ vars.SITE_URL || 'https://event-junkie.de' }}
   # Asserted in the body. Chosen because it is the product name rather than a layout detail: a
   # redesign should not page anyone, but a page that no longer says what it is should.
   EXPECTED_CONTENT: Event Junkie
