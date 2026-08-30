@@ -82,8 +82,8 @@ destroy`.
 **The PGDATA volume is applied and proven on staging, as of 2026-08-17 (#460).** The node was replaced and the database came back: a sentinel row written at
 20:11:27 was read back on a machine that booted at 20:14:41, and every table matched a dump taken beforehand exactly — zero rows lost. `postgres.sh` logged
 `adopting the existing cluster on the volume`, and `hcloud_volume.postgres` did not appear in the plan at all, which is the check that matters. A subsequent
-reboot confirmed the fstab entry and the `RequiresMountsFor` drop-in hold when the script does not run. Production still has no volume, because production has
-never been applied.
+reboot confirmed the fstab entry and the `RequiresMountsFor` drop-in hold when the script does not run. Production has its own volume, and a reboot of that node
+remounted it and brought PostgreSQL back on the private address.
 
 **One thing it is still fair to call unproven**, so do not describe it as verified: the destroy/apply cycle has not been run. The 2026-08-17 rebuild was a server
 _replacement_, which is a different thing and does not tick #424's box — a `destroy` would take the volume with it, which is exactly what a replacement does not.
@@ -98,8 +98,28 @@ workloads serve the database that survived the node. Two things about that bring
   are project-scoped with no finer grain, so it is the same power either way — but revoking that token now breaks `tofu apply` _and_ DNS-01 together, which is
   the cost of the choice and the thing to remember when rotating.
 
-**`environments/production` has never been applied.** No server, network, firewall or Primary IP described there exists, and `cax21` cannot currently be bought
-anywhere in `eu-central`. "Declared" is still the accurate word for that half.
+**`environments/production` is applied and real.** One `cx33` k3s node and one `cx23` PostgreSQL node in
+`nbg1`, both x86 because `cax21` cannot be bought anywhere in `eu-central`. The network, the firewall,
+four Primary IPs and the PGDATA volume all exist. Flux reconciles it, cert-manager has issued a real
+Let's Encrypt certificate, and the workloads serve.
+
+**It is dark rather than public.** `publish_dns` is `false`, so the apex and `www` resolve to nothing
+and one throwaway `prod-check` record points at the node. Flipping that variable is the launch, and
+[docs/ops/GO_LIVE_CHECKLIST.md](../docs/ops/GO_LIVE_CHECKLIST.md) is what to read first.
+
+> **`user_data` has drifted on both production nodes, and an apply REPLACES THEM.** The same trap
+> staging carries, now armed here. `private-net.sh` differs on both nodes, and `postgres.sh` differs on
+> the database node.
+>
+> **There is no targeted way out.** `hcloud_volume_attachment.postgres` names both servers in one
+> ternary, so OpenTofu's graph makes it depend on both and `-target` pulls the k3s node in. The address
+> records depend on the k3s node too, because `k3s_ipv4` and `k3s_ipv6` read `hcloud_server.k3s`
+> attributes rather than the Primary IPs that own the addresses. So even the go-live DNS flip replaces
+> the nodes unless those outputs are changed first.
+>
+> The #813 fix therefore reached the running database node by hand, through
+> `CLUSTER_BOOTSTRAP.md` § Applying a `cloud-init` fix without rebuilding. The script in this
+> repository is correct, so a future rebuild converges.
 
 ## Layout, and why it is not by environment
 

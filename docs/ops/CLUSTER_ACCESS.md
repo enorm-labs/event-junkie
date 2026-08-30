@@ -28,7 +28,7 @@ this table:
 | Tunnel address  | `10.10.1.1`                                      | `10.10.0.1`                                                    |
 | kubectl context | `event-junkie-staging`                           | `event-junkie-production`                                      |
 | PostgreSQL      | **on the k3s node**, `10.1.1.10`                 | a **separate node**, `10.0.1.20`, reached through the k3s node |
-| Public web      | none — no `A` record, no 80/443                  | 80/443 open, but **nothing resolves yet**                      |
+| Public web      | none — no `A` record, no 80/443                  | 80/443 open; only `prod-check` resolves, the apex does not     |
 | TLS             | Let's Encrypt **staging** CA, so `-k` is correct | real certificates, via HTTP-01                                 |
 | Observability   | OpenObserve, see §6b                             | **none yet**                                                   |
 

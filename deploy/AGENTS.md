@@ -88,14 +88,14 @@ Flyway applied its migrations against PostgreSQL over the private network, and t
 [docs/ops/CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md).
 
 **Most of the k3d gap is now closed — but say which parts.** TLS, cert-manager, DNS, git-sync, a real private-network database and genuine resource pressure are
-all exercised on staging. Still not: **NetworkPolicies** (#416), **production** (no cluster exists), and **a certificate that has actually issued** — DNS-01 was
-still resolving when this was written. One thing is also true only of staging: it is x86 where production is meant to be arm64 (#424).
+all exercised on staging. **Production now runs the chart too**, dark: it serves a rehearsal hostname over a real Let's Encrypt certificate while `publish_dns`
+keeps the domain unresolvable. Both environments are x86, because `cax21` cannot be bought in `eu-central` (#424).
 
 **Staging follows `main` again as of #455**, having been pinned to a fixed tag while snapshot versions were unordered. The `OCIRepository` is back on
 `semver: ">=0.0.0-0"`. That it _does_ move is the part still to be confirmed on the cluster after the first post-#455 merge publishes a chart — the ordering
 itself is asserted in CI by `scripts/version-test.sh`.
 
-So: the chart may now be described as **deployed to staging**. It is still not _production-ready_, and "installed and exercised locally" remains the accurate
+So: the chart may now be described as **deployed to production**. What is still unproven is the chart under real traffic, and "installed and exercised locally" remains the accurate
 phrase for anything that has only met k3d.
 
 The runbook for re-running the rehearsal is in `docs/DEVELOPMENT.md`. Two things it will not let you skip: the rehearsal uses its **own database**
