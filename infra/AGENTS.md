@@ -111,11 +111,13 @@ and one throwaway `prod-check` record points at the node. Flipping that variable
 > staging carries, now armed here. `private-net.sh` differs on both nodes, and `postgres.sh` differs on
 > the database node.
 >
-> **There is no targeted way out.** `hcloud_volume_attachment.postgres` names both servers in one
-> ternary, so OpenTofu's graph makes it depend on both and `-target` pulls the k3s node in. The address
-> records depend on the k3s node too, because `k3s_ipv4` and `k3s_ipv6` read `hcloud_server.k3s`
-> attributes rather than the Primary IPs that own the addresses. So even the go-live DNS flip replaces
-> the nodes unless those outputs are changed first.
+> **There is no targeted way out of a rebuild.** `hcloud_volume_attachment.postgres` names both servers
+> in one ternary, so OpenTofu's graph makes it depend on both and `-target` pulls the k3s node in.
+>
+> **The address records no longer share that problem** (#883). `k3s_ipv4`, `k3s_ipv6` and
+> `k3s_ipv6_network` read the Primary IPs, so `-target=hcloud_zone_rrset.address` — the go-live flip —
+> touches DNS alone. They read `hcloud_server.k3s` attributes before, which made the flip replace both
+> nodes on any pending `user_data` drift.
 >
 > The #813 fix therefore reached the running database node by hand, through
 > `CLUSTER_BOOTSTRAP.md` § Applying a `cloud-init` fix without rebuilding. The script in this
