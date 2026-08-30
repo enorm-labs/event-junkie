@@ -1,6 +1,8 @@
 package de.norm.events.venue
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.DecimalMax
+import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 import java.math.BigDecimal
@@ -35,8 +37,20 @@ data class VenueRequest(
         example = "friedrichshain-kreuzberg"
     )
     val district: District? = null,
+    // Bounded to Berlin and a little beyond it (#329). **This would have caught none of the 32 wrong
+    // coordinates the geo audit found** -- every one of them was already inside the city, wrong by
+    // 207 m to 1810 m. It catches a different class, and a cheaper one to make: a decimal point in
+    // the wrong place, a latitude and longitude swapped (13.4 is not a Berlin latitude), or a zero
+    // pair from a field nobody filled in.
+    //
+    // Only external comparison finds a plausible-but-wrong coordinate, which is why the audit had to
+    // be done and why #357 re-checks it when the map makes an error visible.
+    @field:DecimalMin(value = "52.30", message = "Latitude is outside Berlin")
+    @field:DecimalMax(value = "52.70", message = "Latitude is outside Berlin")
     @Schema(description = "Geographic latitude for map display", example = "52.507242")
     val latitude: BigDecimal? = null,
+    @field:DecimalMin(value = "13.05", message = "Longitude is outside Berlin")
+    @field:DecimalMax(value = "13.80", message = "Longitude is outside Berlin")
     @Schema(description = "Geographic longitude for map display", example = "13.451803")
     val longitude: BigDecimal? = null,
     @field:Size(max = 2048, message = "Website URL must not exceed 2048 characters")
