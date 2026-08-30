@@ -69,7 +69,7 @@ class ReadinessWithoutSchemaTest {
     @Autowired
     private lateinit var context: ApplicationContext
 
-    private val webTestClient: WebTestClient by lazy {
+    private val rootClient: WebTestClient by lazy {
         WebTestClient
             .bindToServer()
             .baseUrl("http://localhost:$port")
@@ -83,7 +83,7 @@ class ReadinessWithoutSchemaTest {
             // 503 is the contract Kubernetes actually reads: a DOWN readiness group takes the pod out
             // of the Service's endpoints, so Traefik answers with no healthy backend instead of the
             // pod answering 200-framed query errors. Before #438 this was a 200.
-            webTestClient
+            rootClient
                 .get()
                 .uri("/actuator/health/readiness")
                 .exchange()
@@ -107,7 +107,7 @@ class ReadinessWithoutSchemaTest {
             // ADR-018. A pod waiting for migrations is not a wedged pod. If liveness failed here the
             // startup probe would kill the container after 30 × 5s and a first install would
             // crash-loop.
-            webTestClient
+            rootClient
                 .get()
                 .uri("/actuator/health/liveness")
                 .exchange()

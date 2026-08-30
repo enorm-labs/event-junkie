@@ -4,5 +4,5 @@ import { useAsync } from './useAsync'
 
 /** Loads all genre tags (alphabetical) for the events filter dropdown. */
 export function useGenres() {
-  return useAsync<GenreTag[]>(() => unwrap(api.GET('/genres')))
+  return useAsync<GenreTag[]>(() => unwrap(api.GET('/api/genres')))
 }

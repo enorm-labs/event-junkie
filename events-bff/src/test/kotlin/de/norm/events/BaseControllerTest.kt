@@ -58,13 +58,23 @@ abstract class BaseControllerTest {
      * them would produce a suite that is flaky in one module and not the other, for a reason nobody
      * would think to compare.
      */
-    protected val webTestClient: WebTestClient by lazy {
+    protected val webTestClient: WebTestClient by lazy { clientAt("/api") }
+
+    /**
+     * The same client without the API prefix, for the routes that are deliberately not under it.
+     *
+     * The actuator is the whole reason this exists. Deployed it answers on its own management port,
+     * and locally it shares this one — so a health path that moved with the API would be a second
+     * divergence created while closing the first (#857).
+     */
+    protected val rootClient: WebTestClient by lazy { clientAt("") }
+
+    private fun clientAt(prefix: String): WebTestClient =
         WebTestClient
             .bindToServer()
-            .baseUrl("http://localhost:$port")
+            .baseUrl("http://localhost:$port$prefix")
             .responseTimeout(RESPONSE_TIMEOUT)
             .build()
-    }
 
     private companion object {
         val RESPONSE_TIMEOUT: Duration = Duration.ofSeconds(30)

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
  * IP address to a US third party. See docs/LEGAL.md §4.1.
  */
 @RestController
-@RequestMapping("/meta")
+@RequestMapping("/api/meta")
 @Tag(name = "Meta", description = "Public endpoint reporting the running build")
 class MetaController(
     /**

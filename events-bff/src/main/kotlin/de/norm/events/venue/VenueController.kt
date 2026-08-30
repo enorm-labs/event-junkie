@@ -19,7 +19,7 @@ import org.springframework.web.server.ServerWebExchange
  * Public read API for venues.
  */
 @RestController
-@RequestMapping("/venues")
+@RequestMapping("/api/venues")
 @Tag(name = "Venues", description = "Public endpoints for browsing venues")
 class VenueController(
     private val venueService: VenueService

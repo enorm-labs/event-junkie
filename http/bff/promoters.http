@@ -6,7 +6,7 @@
 ### ============================================================
 
 ### List promoters (default page 0, size 20, sort name)
-GET {{bff-host}}/promoters
+GET {{bff-host}}/api/promoters
 Accept: application/json
 
 > {%
@@ -19,21 +19,21 @@ Accept: application/json
 %}
 
 ### List promoters — pagination + sort (name desc)
-GET {{bff-host}}/promoters?page=0&size=5&sort=name,desc
+GET {{bff-host}}/api/promoters?page=0&size=5&sort=name,desc
 Accept: application/json
 
 ### Search promoters by name (case-insensitive substring)
-GET {{bff-host}}/promoters?q=concerts
+GET {{bff-host}}/api/promoters?q=concerts
 Accept: application/json
 
 ### Unknown/malicious sort is ignored (falls back to default order, not a 500)
-GET {{bff-host}}/promoters?sort=name;DROP TABLE events.promoter;--
+GET {{bff-host}}/api/promoters?sort=name;DROP TABLE events.promoter;--
 Accept: application/json
 
 ### Get promoter by slug (uses the slug captured from the list request above)
-GET {{bff-host}}/promoters/{{promoter_slug}}
+GET {{bff-host}}/api/promoters/{{promoter_slug}}
 Accept: application/json
 
 ### Get promoter by unknown slug (expect 404)
-GET {{bff-host}}/promoters/does-not-exist
+GET {{bff-host}}/api/promoters/does-not-exist
 Accept: application/json

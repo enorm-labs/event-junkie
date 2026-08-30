@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.time.Duration
 
-/** Where the serving route is mounted, below whatever `spring.webflux.base-path` is. */
-const val IMAGES_PATH = "/images"
+/** Where the serving route is mounted. The prefix is here rather than in a base path (#857). */
+const val IMAGES_PATH = "/api/images"
 
 /**
  * Serves our own copy of a venue image, so a visitor's browser never contacts the venue (ADR-019).

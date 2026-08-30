@@ -61,8 +61,6 @@ spec:
                    no rewrite and the chart needs no Traefik Middleware CRD (§3.1). This does not
                    move the actuator paths: the management port runs its own context whose base path
                    is `/` regardless of what webflux's is. */}}
-            - name: SPRING_WEBFLUX_BASE_PATH
-              value: {{ .Values.bff.basePath | quote }}
             {{- /* A JVM that reads the container limit and then sizes its heap at 25% of it is the
                    other way memory goes wrong here — the pod does not OOM, it just runs in a
                    quarter of what it was given. */}}

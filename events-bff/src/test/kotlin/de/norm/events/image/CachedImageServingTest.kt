@@ -112,7 +112,7 @@ class CachedImageServingTest : BaseControllerTest() {
 
             // Each of these matches neither the hash nor the `<width>.<format>` shape, so the route
             // refuses it before the query. A path segment is what an attacker would try first.
-            listOf("/images/$HASH/288.svg", "/images/$HASH/288", "/images/$HASH/-1.jpg", "/images/nothex/288.jpg")
+            listOf("/api/images/$HASH/288.svg", "/api/images/$HASH/288", "/api/images/$HASH/-1.jpg", "/api/images/nothex/288.jpg")
                 .forEach {
                     webTestClient
                         .get()
@@ -142,13 +142,13 @@ class CachedImageServingTest : BaseControllerTest() {
                 .expectBody()
                 // 768 first, because EventDetailView draws the image across a 704 px column.
                 .jsonPath("$.imageUrl")
-                .isEqualTo("/images/$HASH/768.jpg")
+                .isEqualTo("/api/images/$HASH/768.jpg")
                 // Best format first, and the widths banded to the slot. The card list gets 192 and
                 // 288 from the same rows; nothing gets all four.
                 .jsonPath("$.imageSources[0].type")
                 .isEqualTo("image/avif")
                 .jsonPath("$.imageSources[0].srcset")
-                .isEqualTo("/images/$HASH/768.avif 768w, /images/$HASH/1536.avif 1536w")
+                .isEqualTo("/api/images/$HASH/768.avif 768w, /api/images/$HASH/1536.avif 1536w")
                 .jsonPath("$.imageSources[2].type")
                 .isEqualTo("image/jpeg")
         }
@@ -168,9 +168,9 @@ class CachedImageServingTest : BaseControllerTest() {
                 .isOk
                 .expectBody()
                 .jsonPath("$.content[0].imageUrl")
-                .isEqualTo("/images/$HASH/192.jpg")
+                .isEqualTo("/api/images/$HASH/192.jpg")
                 .jsonPath("$.content[0].imageSources[0].srcset")
-                .isEqualTo("/images/$HASH/192.avif 192w, /images/$HASH/288.avif 288w")
+                .isEqualTo("/api/images/$HASH/192.avif 192w, /api/images/$HASH/288.avif 288w")
         }
 
     @Test
@@ -190,7 +190,7 @@ class CachedImageServingTest : BaseControllerTest() {
                 .isOk
                 .expectBody()
                 .jsonPath("$.imageUrl")
-                .isEqualTo("/images/$LOGO_HASH/192.jpg")
+                .isEqualTo("/api/images/$LOGO_HASH/192.jpg")
                 .jsonPath("$.imageSources[0].type")
                 .isEqualTo("image/avif")
         }
@@ -209,7 +209,7 @@ class CachedImageServingTest : BaseControllerTest() {
                 .isOk
                 .expectBody()
                 .jsonPath("$.imageUrl")
-                .isEqualTo("/images/$LOGO_HASH/192.jpg")
+                .isEqualTo("/api/images/$LOGO_HASH/192.jpg")
         }
 
     @Test
@@ -226,7 +226,7 @@ class CachedImageServingTest : BaseControllerTest() {
                 .isOk
                 .expectBody()
                 .jsonPath("$.content[0].imageUrl")
-                .isEqualTo("/images/$LOGO_HASH/192.jpg")
+                .isEqualTo("/api/images/$LOGO_HASH/192.jpg")
         }
 
     @Test
@@ -249,9 +249,9 @@ class CachedImageServingTest : BaseControllerTest() {
                 .isOk
                 .expectBody()
                 .jsonPath("$.imageUrl")
-                .isEqualTo("/images/$HASH/768.jpg")
+                .isEqualTo("/api/images/$HASH/768.jpg")
                 .jsonPath("$.venue.imageUrl")
-                .isEqualTo("/images/$LOGO_HASH/192.jpg")
+                .isEqualTo("/api/images/$LOGO_HASH/192.jpg")
         }
 
     @Test

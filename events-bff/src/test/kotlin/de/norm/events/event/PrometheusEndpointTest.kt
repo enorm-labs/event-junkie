@@ -30,7 +30,7 @@ class PrometheusEndpointTest : BaseControllerTest() {
     @Test
     fun `the prometheus endpoint is exposed`(): Unit =
         runBlocking {
-            webTestClient
+            rootClient
                 .get()
                 .uri("/actuator/prometheus")
                 .exchange()
@@ -42,7 +42,7 @@ class PrometheusEndpointTest : BaseControllerTest() {
     fun `the free JVM and HTTP meters are present, so the registry is really wired up`(): Unit =
         runBlocking {
             val body =
-                webTestClient
+                rootClient
                     .get()
                     .uri("/actuator/prometheus")
                     .exchange()
@@ -79,7 +79,7 @@ class PrometheusEndpointTest : BaseControllerTest() {
                 .isOk
 
             val body =
-                webTestClient
+                rootClient
                     .get()
                     .uri("/actuator/prometheus")
                     .exchange()
