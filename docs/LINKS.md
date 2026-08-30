@@ -216,6 +216,7 @@ The docs actually consulted while working on this repository, rather than a link
 | [`docs/ops/BACKUPS.md`](ops/BACKUPS.md)                     | `wal-g`, retention, and how you know it is working                                 |
 | [`docs/ops/RESTORE_RUNBOOK.md`](ops/RESTORE_RUNBOOK.md)     | Restoring, including PITR                                                          |
 | [`docs/ops/HEALTHCHECKS.md`](ops/HEALTHCHECKS.md)           | The dead-man's switch, and how to prove one fires                                  |
+| [`docs/ops/GO_LIVE_CHECKLIST.md`](ops/GO_LIVE_CHECKLIST.md) | What must be true before the domain resolves, and the two changes that make it     |
 | [`docs/ops/RELEASING.md`](ops/RELEASING.md)                 | Commit → image → chart → cluster                                                   |
 | [`docs/LEGAL.md`](LEGAL.md)                                 | Processors, the AVV, the imprint, what is not signed off                           |
 | [`infra/README.md`](../infra/README.md)                     | The OpenTofu operator's guide, and the three things only a human can do            |
