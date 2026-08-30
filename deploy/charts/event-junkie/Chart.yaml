@@ -14,12 +14,12 @@ type: application
 # lockstep (#264): separate versioning suits a public chart with many consumers, and this one has
 # exactly one and ships from the same commit as the code. The cost is that a template-only fix
 # still consumes a version.
-version: 0.3.2
+version: 0.3.3
 
 # appVersion is also the default image tag for all three workloads (`<component>.image.tag`
 # overrides it, and no published values file may), which is what keeps the chart and the images in
 # step: one number, stamped once per build, reaches all four artifacts. Never `latest`.
-appVersion: "0.3.2"
+appVersion: "0.3.3"
 
 # No `dependencies:` block, a decision rather than an omission: PostgreSQL runs on its own VM per
 # ADR-012, so vendoring the Bitnami subchart would put the database inside the blast radius of a
