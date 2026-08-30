@@ -37,6 +37,10 @@ correctly, and its own failure is silent by construction.
 | `walg-<environment>` | PostgreSQL backups are healthy                          | `walg check`, hourly via `walg-check.timer`, on success               | #518  |
 | `site-<environment>` | DNS, TLS, the ingress and the application, from outside | `.github/workflows/site-probe.yml`, every 15 minutes, on success only | #271  |
 
+`site-staging` is not a check anybody should create. Staging has no public `A` record and no public
+80/443, so nothing outside can probe it. `site-production` is the only one of that row that can
+exist before go-live.
+
 **The site probe is built and deliberately dormant.** It skips, and says so in its job summary, while
 `HEALTHCHECKS_PING_URL` is unset. That is the state today, because there is nothing public to probe.
 Staging is not on the internet by design ([PLATFORM_SETUP](PLATFORM_SETUP.md) §4a), and production is
@@ -236,13 +240,18 @@ rest.
 
 **Neither half is live yet, and each waits on something different:**
 
-| Part                     | Waits on                                                                  |
-| ------------------------ | ------------------------------------------------------------------------- |
-| The probe running at all | `HEALTHCHECKS_PING_URL`, unset because nothing is public yet (#285)       |
-| Writing the metric       | OpenObserve reachable from outside the cluster, and running on production |
+| Part                     | Waits on                                                                           |
+| ------------------------ | ---------------------------------------------------------------------------------- |
+| The probe running at all | `HEALTHCHECKS_PING_URL`, which nobody has set. **Nothing else blocks it any more** |
+| Writing the metric       | OpenObserve on production, which does not run there at all (#880)                  |
 
 Until both are true there is no figure, and this section describes the design rather than a thing you
 can read today.
+
+**The first row stopped being blocked on 2026-08-30.** It used to wait on a public site. Production
+now serves `prod-check.event-junkie.de` over a real certificate, and the `SITE_URL` repository
+variable points the workflow at that name. So the probe is one secret away from running, and the
+section below is how to create the check that produces it.
 
 **This does not re-open the LEGAL.md §14 assessment.** That assessment holds because the ping to
 healthchecks.io carries no body. The metric goes to OpenObserve, which is ours, so the ping stays a
