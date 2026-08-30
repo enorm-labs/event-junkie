@@ -19,18 +19,19 @@ stream. A firing therefore becomes a queryable row rather than a message nobody
 receives, which is what makes these rules exercised rather than hypothetical
 while #271 item 4 waits on a phone number.
 
-**It cannot yet post to the Signal bridge, and not because of the phone number.**
-OpenObserve refuses any destination whose URL resolves inside the cluster:
+**Switching to the Signal bridge now needs only a registered number.** It once
+also needed a way past OpenObserve's SSRF guard, which rejected any destination
+resolving inside the cluster:
 
     signal-cli.observability.svc.cluster.local
       -> 400 Destination URL blocked by SSRF guard
 
-That is #271 item 4's whole architecture, blocked by a control that has nothing
-to do with registration. Loopback is permitted (`ZO_SSRF_ALLOW_LOOPBACK`, set in
-the HelmRelease) and is what this destination uses; reaching another pod needs
-`ZO_SKIP_SSRF_CHECKS`, which removes the check for every destination in a
-namespace that currently has no NetworkPolicies. See README.md — that is a
-decision to take with the Signal route, not a detail of this script.
+That is gone. `ZO_SKIP_SSRF_CHECKS` is set in the HelmRelease, and the control
+moved to the network: `observability-netpol.yaml` permits this pod to reach
+CoreDNS, the internet on 443 and the Signal bridge, and nothing else. So the
+remaining work for #271 item 4 is to point DESTINATION_NAME at
+`http://signal-cli.observability.svc.cluster.local:8080/v2/send` once the
+number exists.
 """
 import json
 import subprocess
