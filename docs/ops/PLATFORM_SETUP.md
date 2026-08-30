@@ -286,6 +286,24 @@ the rule, and it is load-bearing rather than tidy-up — without it the bucket g
 early therefore blanks every card the backlog still covers. The pass runs every five minutes over one batch, so a first
 backfill takes hours. Watch `cached_image_variant` stop growing before you turn the third switch on.
 
+**When each switch moved, per environment.** A switch that moved without a date is a switch nobody can reason about
+later.
+
+| Switch                    | staging    | production | Note                                                   |
+| ------------------------- | ---------- | ---------- | ------------------------------------------------------ |
+| `images.enabled`          | 2026-08-28 | 2026-08-30 | Production before its sources were enabled — see below |
+| `images.imgproxy.enabled` | 2026-08-28 | 2026-08-30 | Same release as `images.enabled` on both               |
+| `images.serving.enabled`  | 2026-08-30 | 2026-08-30 | Staging first, because it had never been true anywhere |
+| `images.sweep.enabled`    | off        | off        | Reports only. It needs days of counts that look right  |
+
+**Production never served a hotlinked image.** The cache was turned on before its 86 sources were enabled. The fetch
+pass then ran five minutes behind the first import, rather than hours behind a backlog. That order was available only
+because the sources were seeded disabled (#876). Repeat it on any new environment.
+
+**The backfill took about two hours** for 2,284 images at twelve derivatives each. 52 of the 2,336 distinct images are
+not cached. Most are refused rather than failed: one venue's image CDN publishes `Disallow: /`. Those cards show no
+image, which is the design.
+
 **`…-tfstate` is the one genuinely hand-made resource**, because a state backend cannot be managed by the state it holds. `infra/README.md` says so where it
 matters.
 
