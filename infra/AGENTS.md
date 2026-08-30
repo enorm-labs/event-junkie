@@ -28,6 +28,25 @@ shellcheck -x infra/modules/environment/cloud-init/*.sh
 `<stack>` is one of `bootstrap`, `environments/production`, `environments/staging`. Run all three: they share a module, so a change to it can break one and not
 the others. CI runs exactly these commands in `.github/workflows/validate-infra.yml`.
 
+**`-chdir` works above because none of those commands needs a credential.** Do not extend the pattern to anything that reaches the state backend. `.envrc` is
+loaded by direnv **on entering `infra/`**, and `-chdir` moves OpenTofu's working directory without moving the shell's — so direnv never fires and the
+environment holds no keys.
+
+What that looks like is not an empty-credential message. It is:
+
+```
+Error: error loading state: operation error S3: ListObjectsV2, https response error StatusCode: 403 ...
+api error InvalidAccessKeyId: UnknownError
+```
+
+**`InvalidAccessKeyId` here means no key, not a wrong one**, and it reads like a rotated secret. So a command that reaches the backend has to put the shell
+inside `infra/`. When handing one to a person, write it that way:
+
+```sh
+cd infra/environments/production && tofu plan     # direnv loads on entry, unloads on leaving
+direnv exec infra tofu -chdir=infra/environments/production plan   # equivalent, one shot
+```
+
 **`validate` does not evaluate variable `validation` blocks either** (measured 2026-08-20). A `default` that breaks its own rule — a bucket name of
 `Bad_Name-` against a regex that forbids it — passes `validate` cleanly. The rules still fire, but at plan time, which is the one command nobody may run
 unasked. **So a `validation` block is documentation until somebody applies the stack**, and it cannot be treated as a gate CI enforces: `validate-infra.yml`
