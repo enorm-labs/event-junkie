@@ -291,6 +291,10 @@ tests:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
+      # Forced, because cluster-assertions.sh re-runs this suite against each cluster's own values
+      # and staging now serves cached images. Without it this case asserts the serving-off policy
+      # against a serving-on render, and fails for being right about the wrong environment.
+      images.serving.enabled: false
     documentSelector:
       path: metadata.name
       value: RELEASE-NAME-event-junkie-security-headers
@@ -308,6 +312,26 @@ tests:
       - matchRegex:
           path: spec.headers.contentSecurityPolicyReportOnly
           pattern: "^default-src 'self';"
+
+  # The other half of the same switch. `serving.enabled` swaps where images come from, and the policy
+  # has to follow it in the same render -- a policy still naming `https:` would keep permitting the
+  # venues' servers after we stopped using them, which is the disclosure ADR-019 removes. `https:`
+  # must be absent rather than merely unused.
+  - it: the content security policy stops permitting venue images once serving is on
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: true
+      images.storage.prefix: "test"
+      images.serving.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-event-junkie-security-headers
+    asserts:
+      - matchRegex:
+          path: spec.headers.contentSecurityPolicyReportOnly
+          pattern: "img-src 'self'$"
 
   - it: turning report-only off enforces it, and serving our own images narrows img-src to self
     set:
