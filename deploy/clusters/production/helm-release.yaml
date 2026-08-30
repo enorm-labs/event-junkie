@@ -72,6 +72,20 @@ spec:
       host: "10.0.1.20"
       # Committed encrypted and decrypted by Flux with the `sops-age` key (docs/ops/SECRETS.md).
       existingSecret: "events-db"
+    # Cached venue images (ADR-019), on before the sources import rather than after. Serving stays
+    # off: it is the switch a visitor sees, and there is nothing derived to serve yet (#843).
+    images:
+      enabled: true
+      storage:
+        # Required by the chart, and the only thing separating these objects from staging's -- one
+        # bucket, content-addressed keys, so a shared prefix would let one environment's sweep
+        # delete objects the other still serves.
+        prefix: "production"
+        # Out of band in this namespace, scoped to the images bucket alone and never the
+        # project-wide keypair (docs/ops/SECRETS.md §event-junkie-images).
+        existingSecret: "event-junkie-images"
+      imgproxy:
+        enabled: true
     # No replica counts and no resources: `values.yaml`'s defaults are already production-shaped by
     # design, so repeating them here would create a second place to look with nothing to say. The
     # ingress below is the one exception, and only for as long as the domain stays dark.
