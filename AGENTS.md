@@ -69,6 +69,12 @@ covers the SPA.
   (`events-frontend/`) were changed — the Gradle build covers the backend modules only. A Markdown-only change is not check-free, though: run
   `scripts/format-markdown.sh` (see [.github/instructions/markdown.instructions.md](.github/instructions/markdown.instructions.md)), which the commit hook
   runs anyway.
+- **Write a plan to `temp/`, which `.gitignore` covers.** The same goes for an audit, a draft release note, or anything else produced for a person to read
+  rather than for the repository to keep. Use another location only when the user names one.
+    - **Two reasons, and the second is the one that bites.** A plan committed to the tree becomes documentation nobody updates, and this repository already
+      spends effort deleting those. A plan that exists only in the terminal is gone at the next compaction, and the reasoning behind it goes with it.
+    - **Delete it when the work lands.** A finished plan is spent: its decisions belong in the code, the docs, or an issue. `temp/` is a workbench, not an
+      archive.
 - **No unsolicited git commits/pushes**: Never run `git commit`, `git push`, or `git rebase` (squash) unless explicitly asked to by the user.
 - **Amend by default on a feature branch, and land one commit.** Once the branch carries a commit of yours, the next change **amends it** —
   `git commit --amend` — rather than adding a second. Push the result with `git push --force-with-lease`, never a bare `--force`. This matters more here than
