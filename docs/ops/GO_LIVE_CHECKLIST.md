@@ -79,33 +79,45 @@ before go-live. The drill covers staging only, so far.
 
 ### Monitoring and alerting
 
-| Done       | Item                                  | Evidence           |
-| ---------- | ------------------------------------- | ------------------ |
-| 2026-08-21 | `walg-production` fires               | drill log          |
-|            | `site-production` created and pinging | `HEALTHCHECKS.md`  |
-|            | Alerts reach a person                 | #271 items 3 and 4 |
-|            | Production records its deploys        | #872               |
-|            | The availability figure is decided    | #271               |
+| Done       | Item                                          | Evidence          |
+| ---------- | --------------------------------------------- | ----------------- |
+| 2026-08-21 | `walg-production` fires                       | drill log         |
+| 2026-08-30 | Production records its deploys                | #872              |
+|            | `site-production` created and pinging         | `HEALTHCHECKS.md` |
+|            | **Production has any in-cluster monitoring**  | #880              |
+|            | Alerts reach a person                         | #877              |
+|            | An alert proven by breaking something on prod | #285              |
+
+**Production has no observability of its own.** OpenObserve, the collector and the nine alert rules
+run on staging and nowhere else. So the only thing that watches production is the external
+healthchecks.io layer. It notices total death and nothing less than that. #880 is the port, and the
+largest single item on this list.
 
 ### Content and data
 
 | Done | Item                                                                  | Evidence |
 | ---- | --------------------------------------------------------------------- | -------- |
-|      | Event sources registered, so the site has content                     | #876     |
+|      | Event sources registered **and enabled**, so the site has content     | #876     |
 |      | Venue addresses, districts and coordinates audited                    | #329     |
 |      | Every page read in both languages, About and the legal texts included | #280     |
 |      | Images served from our own cache, not hotlinked                       | #843     |
 
-**Production serves an empty site today.** The schema is migrated and the importer runs, but no event
-source is registered, so it has nothing to import. Every check is green and a visitor sees nothing.
+**Production serves an empty site today, and the last step is deliberate.** All 86 sources are
+registered and carry their licence verdicts. Every one is disabled. A source with no import history
+is always due, so enabling them starts 86 scrapes within a minute. Two venues forbid their
+descriptions and images, and that had to be recorded first. Enabling them is the remaining step.
+Do #843 before it — see below.
 
 **Nothing has ever audited the venue data.** District, address and coordinates were filled in as
 venues were added, with varying care. A wrong coordinate puts a pin in the wrong place, and it drops
 the venue out of a radius search without saying so. The second failure is the quiet one.
 
 **The image cache has six ordered steps, and two of them must not be combined.** #843 has the order.
-Turning serving on before the backfill finishes shows a visitor broken images. Until it is on, the
-site hotlinks from venue websites. That spends their bandwidth and leaks a referer on every load.
+Turning serving on before the backfill finishes shows a visitor broken images.
+
+**Do it before enabling the sources, and production never hotlinks at all.** That option exists only
+because the sources were left disabled. Until the cache is on, the site fetches from venue websites.
+That spends their bandwidth. It also leaks a referer on every load.
 
 **The prose is two independent documents in two languages.** The key-parity test proves every German
 key exists. It cannot tell you a translation is good, or that a claim is still true.
