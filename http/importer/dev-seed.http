@@ -1174,8 +1174,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10119",
     "district": "pankow",
-    "latitude": 52.53210,
-    "longitude": 13.41300,
+    "latitude": 52.5298,
+    "longitude": 13.41,
     "websiteUrl": "https://comedyclubberlin.com",
     "description": "One of Berlin's longest-running English-language stand-up clubs, running showcase and open-mic nights alongside touring comedy specials."
 }
@@ -2059,8 +2059,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "13357",
     "district": "mitte",
-    "latitude": 52.54494,
-    "longitude": 13.38617,
+    "latitude": 52.54435,
+    "longitude": 13.37859,
     "websiteUrl": "https://www.humboldthain.com",
     "description": "A techno club in Wedding with an indoor floor and a large garden, running collective-booked house, techno and trance nights."
 }
@@ -2413,8 +2413,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "12435",
     "district": "treptow-koepenick",
-    "latitude": 52.48694,
-    "longitude": 13.46944,
+    "latitude": 52.48741,
+    "longitude": 13.48136,
     "websiteUrl": "https://www.inselberlin.de",
     "description": "The concert house on the Insel der Jugend, a Spree island in Treptower Park, with a hall, a summer garden and a free Sunday matinee series."
 }
@@ -2472,8 +2472,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "13088",
     "district": "pankow",
-    "latitude": 52.55583,
-    "longitude": 13.46083,
+    "latitude": 52.55092,
+    "longitude": 13.46157,
     "websiteUrl": "https://www.peteredel.de",
     "description": "The Bildungs- und Kulturzentrum in Weissensee, programming concerts, comedy, theatre, readings, children's shows and dance teas."
 }
@@ -3475,8 +3475,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10245",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.50110,
-    "longitude": 13.47320,
+    "latitude": 52.49842,
+    "longitude": 13.46674,
     "websiteUrl": "https://neue-zukunft.org",
     "description": "A cultural venue and club on the Stralau peninsula by the Spree in Friedrichshain, blending concerts, club nights and arts events."
 }
@@ -3829,8 +3829,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10245",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.50250,
-    "longitude": 13.46528,
+    "latitude": 52.49739,
+    "longitude": 13.46531,
     "websiteUrl": "https://www.renate.cc",
     "description": "A warren of a techno club in a derelict Friedrichshain apartment house, with several named floors and a garden that opens in summer."
 }
@@ -4124,8 +4124,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "13347",
     "district": "mitte",
-    "latitude": 52.54550,
-    "longitude": 13.37450,
+    "latitude": 52.54569,
+    "longitude": 13.36649,
     "websiteUrl": "https://www.silent-green.net",
     "description": "A cultural quarter in a 1911 crematorium in Wedding, programming experimental concerts, exhibitions, film and talks across its Kuppelhalle, Betonhalle and ateliers."
 }
@@ -4478,8 +4478,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "13086",
     "district": "pankow",
-    "latitude": 52.55390,
-    "longitude": 13.45770,
+    "latitude": 52.5519,
+    "longitude": 13.43116,
     "websiteUrl": "https://theater-im-delphi.de",
     "description": "A 1929 silent-cinema building in Weißensee, run as a theatre and concert hall for dance, music theatre, chamber music and talks."
 }
@@ -5068,8 +5068,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "12435",
     "district": "treptow-koepenick",
-    "latitude": 52.48970,
-    "longitude": 13.46660,
+    "latitude": 52.48731,
+    "longitude": 13.47748,
     "websiteUrl": "https://zenner.berlin",
     "description": "A riverside venue in Treptower Park combining a historic ballroom (Saal), a club, a beer garden and a wine garden, programming electronic concerts, club nights and open-air day parties."
 }
@@ -5128,8 +5128,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "13599",
     "district": "spandau",
-    "latitude": 52.54100,
-    "longitude": 13.21770,
+    "latitude": 52.54103,
+    "longitude": 13.21274,
     "websiteUrl": "https://www.zitadelle-berlin.de",
     "description": "Renaissance fortress in Spandau whose courtyard hosts the Citadel Music Festival, an open-air concert series running through the summer."
 }
