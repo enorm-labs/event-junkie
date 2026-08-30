@@ -72,10 +72,14 @@ spec:
       host: "10.0.1.20"
       # Committed encrypted and decrypted by Flux with the `sops-age` key (docs/ops/SECRETS.md).
       existingSecret: "events-db"
-    # Cached venue images (ADR-019), on before the sources import rather than after. Serving stays
-    # off: it is the switch a visitor sees, and there is nothing derived to serve yet (#843).
+    # Cached venue images (ADR-019). Serving is on: the backfill finished, and 2,284 of the 2,336
+    # distinct images the events reference are cached and derived. The rest are images we are not
+    # allowed to hold -- one venue's CDN publishes `Disallow: /` -- so those cards show no image
+    # rather than a hotlink, which is the point (#843).
     images:
       enabled: true
+      serving:
+        enabled: true
       storage:
         # Required by the chart, and the only thing separating these objects from staging's -- one
         # bucket, content-addressed keys, so a shared prefix would let one environment's sweep
