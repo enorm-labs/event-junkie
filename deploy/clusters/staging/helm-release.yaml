@@ -103,6 +103,11 @@ spec:
       enabled: true
       serving:
         enabled: true
+      # The orphan sweep, on here and nowhere else (#902). Reporting mode showed 5 unreferenced
+      # images and 65 objects -- 13 each, an original and twelve derivatives -- and no stray. A small
+      # number is what made it safe to move; a large one would mean the reference query is wrong.
+      sweep:
+        enabled: true
       storage:
         # The only thing keeping staging's objects away from production's — the bucket is shared and
         # the keys are content addressed. The chart refuses to render without it.
