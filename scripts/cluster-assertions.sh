@@ -207,9 +207,15 @@ whole release fails on an unknown kind, not just the issuer"
 # distinguish from a deliberate choice. Only the set of clusters shows it, which is why this is here
 # and not in a suite.
 #
-# The direction that matters is the omission on a non-production cluster: production is loudly wrong
-# the moment it is not in Google, while a staging environment that quietly is stays that way for
-# months (#265, #286).
+# The direction that matters is the omission on a non-production cluster: a staging environment that
+# quietly is indexable stays that way for months (#265, #286).
+#
+# Production is the pair, not a constant. While the domain is dark it serves a rehearsal hostname and
+# MUST carry noindex; once `publish_dns` publishes the apex it serves the canonical host and must
+# not. Going live is therefore two edits in two repositories, and getting one without the other is
+# the failure this ties together: the apex indexed with noindex still on is an invisible launch, and
+# a rehearsal host without it is an unfinished site in Google. The canonical host comes from the
+# chart's own default rather than a literal here, so there is one place the domain is written down.
 check_noindex() {
   printf '\n== only production is indexable ==\n'
 
@@ -221,7 +227,15 @@ check_noindex() {
 
     noindex="$(yq -N '.spec.values.ingress.noindex // false' "$file")"
     if [[ "$cluster" == "production" ]]; then
-      assert_equals "production is indexable, which is the whole point of it" "false" "$noindex"
+      local canonical host
+      canonical="$(yq -N '.ingress.host' "$CHART_DIR/values.yaml")"
+      host="$(yq -N ".spec.values.ingress.host // \"$canonical\"" "$file")"
+
+      if [[ "$host" == "$canonical" ]]; then
+        assert_equals "serves the canonical host ($canonical), so it is indexable" "false" "$noindex"
+      else
+        assert_equals "serves the rehearsal host ($host) while dark, so it is not indexable" "true" "$noindex"
+      fi
     else
       if [[ "$noindex" == "true" ]]; then
         pass "not production, and not indexable"

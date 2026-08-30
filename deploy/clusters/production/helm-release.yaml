@@ -1,14 +1,12 @@
 # Production's release of the event-junkie chart.
 #
-# **SUSPENDED, AND IT MUST STAY THAT WAY UNTIL PRODUCTION EXISTS.** #424 has not been applied: there
-# is no production cluster, no database, and therefore no address to point this at. The file is here
-# because production's *version policy* is half of what #414 is about, and because
-# `scripts/cluster-assertions.sh` should gate it from the day it is written rather than the day it is first
-# used. `suspend: true` is what makes that safe — Flux will not reconcile this object at all, so a
-# bootstrap against a real cluster cannot deploy a half-configured release by accident.
+# **Live, and deliberately dark.** The apex and `www` resolve to nothing while `publish_dns` is
+# `false` in `infra/environments/production/variables.tf`; only the throwaway `prod-check` name
+# points at this cluster. The three `ingress` overrides below are what make that state serveable
+# rather than merely reachable, and all three revert together at go-live (#284).
 #
-# To bring production up: apply #424, fill in the address below, and delete the `suspend` line in a
-# reviewed commit. Three steps, in that order, none of them silent.
+# `oci-repository.yaml` admits release tags only, so this resolves nothing at all until a version
+# like `0.3.0` is published.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -16,9 +14,8 @@ metadata:
   namespace: flux-system
   annotations:
     kubernetes.io/description: >-
-      The BFF, importer and frontend on the production cluster. Suspended until #424 provisions it.
+      The BFF, importer and frontend on the production cluster. Serving prod-check while the domain stays dark.
 spec:
-  suspend: true
   releaseName: event-junkie
   targetNamespace: event-junkie
   # This release renders a ClusterIssuer, a `cert-manager.io/v1` kind, so it cannot install onto a
@@ -58,36 +55,43 @@ spec:
     mode: enabled
   values:
     networkPolicy:
-      # DELIBERATELY NOT A PLAUSIBLE CIDR, for the same reason `database.host` below is not a
-      # plausible address: a realistic-looking value here reads as configured and is not.
+      # The database node's private address in CIDR form. **Two settings for one address is the
+      # unavoidable cost of the feature** — NetworkPolicy speaks CIDRs and cannot resolve a name —
+      # and this is the pairing most likely to be left half-done.
+      # `scripts/cluster-assertions.sh` fails the build on a real host beside a placeholder CIDR,
+      # which is the one combination that is silently wrong.
       #
-      # Replace with the /32 of `tofu -chdir=infra/environments/production output postgres_ip` — the same address as `database.host` below, in CIDR form, because NetworkPolicy speaks CIDRs and cannot resolve a name.
-      #
-      # **Two settings for one address is the unavoidable cost of the feature** — NetworkPolicy
-      # speaks CIDRs and cannot resolve a name — and this is the pairing most likely to be
-      # half-done. `scripts/cluster-assertions.sh` fails the build when a cluster has a real host
-      # and a placeholder CIDR, which is the only combination that is silently wrong: both
-      # placeholders (here) is an un-deployed environment, and both real is correct.
-      #
-      # **A placeholder does NOT fail the render.** The value is a string, so this templates
-      # perfectly and is then rejected by the API server as an invalid `ipBlock.cidr` — failing the
-      # HelmRelease and rolling the release back, several steps from anything that mentions a CIDR.
-      # Fill both in together before the first production reconcile.
+      # **A wrong value does NOT fail the render.** It is a string, so it templates perfectly and is
+      # then rejected by the API server as an invalid `ipBlock.cidr` — failing the release and
+      # rolling it back, several steps from anything that mentions a CIDR.
       databaseCidr: "10.0.1.20/32"
     database:
-      # DELIBERATELY NOT A PLAUSIBLE ADDRESS. #424 has not run, so the real value does not exist yet,
-      # and a realistic-looking IP here is exactly the failure #263 found in `values-k3d.yaml` —
-      # values that were perfectly valid and simply not what was listening, which no amount of
-      # rendering can catch. This one cannot be mistaken for configured.
-      #
-      # Replace with `tofu -chdir=infra/environments/production output postgres_ip`.
+      # The dedicated PostgreSQL node, on the private network. Reachable from this cluster and
+      # from nowhere else: that node carries no inbound firewall rule of any kind, and its public
+      # address exists so it can reach out rather than so anything can reach back.
       host: "10.0.1.20"
-      # Created out of band in the target namespace before the first reconcile; SOPS in #416.
+      # Committed encrypted and decrypted by Flux with the `sops-age` key (docs/ops/SECRETS.md).
       existingSecret: "events-db"
-    # No replica counts, no resources, no ingress host: `values.yaml`'s defaults are already
-    # production-shaped by design, so overriding them here would create a second place to look with
-    # nothing to say. The chart's defaults are the production configuration — that is the whole
-    # reason they were written that way.
+    # No replica counts and no resources: `values.yaml`'s defaults are already production-shaped by
+    # design, so repeating them here would create a second place to look with nothing to say. The
+    # ingress below is the one exception, and only for as long as the domain stays dark.
+    # Dark-mode ingress. All three revert at go-live, together and in one commit — half of this is a
+    # site holding a certificate for a name nobody resolves (#284 §0).
+    ingress:
+      # The apex does not resolve while `publish_dns` is false, and production solves **HTTP-01**,
+      # which needs Let's Encrypt to reach the host BY NAME. Pointing at `event-junkie.de` now would
+      # leave the Certificate pending for ever and Traefik serving its own default cert — #634's
+      # shape. `prod-check` is the one name that does resolve, so it is the one that can be certified.
+      host: "prod-check.event-junkie.de"
+      # Emptied for the same reason, not as a simplification. Every redirect host gets its OWN
+      # certificate, and none of `www.event-junkie.de`, `event-junkie.com` or `www.event-junkie.com`
+      # resolves yet — so each would stall its own issuance while looking configured.
+      redirectHosts: []
+      # `X-Robots-Tag: noindex, nofollow` plus a robots.txt override. **This is the control, not
+      # decoration:** a real Let's Encrypt certificate puts `prod-check.event-junkie.de` into the
+      # public Certificate Transparency logs within minutes, so the name is discoverable and crawlers
+      # will find it. Keeping an unfinished site out of the index is the whole job here.
+      noindex: true
     certManager:
       clusterIssuer:
         create: true
