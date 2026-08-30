@@ -57,9 +57,9 @@ They fail differently, and none of them substitutes for another. This is the tab
 **A volume is not a backup, and a backup is not a volume.** The volume ([#460](https://github.com/enorm-labs/event-junkie/issues/460)) means a node rebuild is
 routine. It means nothing at all about a `DROP TABLE`.
 
-**Server snapshots are configured but not running.** `enable_backups = true` in `infra/environments/production/main.tf`, and `false` in staging on
-purpose. Production was never applied, so the column above is a promise rather than a fact. Staging stays off because it is the environment whose whole job is to be
-destroyed and rebuilt.
+**Server snapshots are on for production and off for staging, both deliberately.** `enable_backups = true` in
+`infra/environments/production/main.tf`, and `false` in staging. Production is applied, so the column above describes what runs rather than what is intended.
+Staging stays off because it is the environment whose whole job is to be destroyed and rebuilt.
 
 **Nothing survives losing the Hetzner account**, and that is an accepted risk, not an unnoticed one. Off-provider replication is not in ADR-012's budget and
 would bring its own key management. If it ever becomes justified, it is a new decision, not a config change.
@@ -258,11 +258,11 @@ reflects the database's current size, rather than the day it was first small.
 - **No alerting yet.** §6 — [#518](https://github.com/enorm-labs/event-junkie/issues/518).
 - **The drill recurs, but only one has ever run.** §9 — the reminder workflow exists and is idempotent. What it cannot prove is that a quarter's issue gets
   worked rather than closed. That is what the open-issue-on-the-board visibility is for.
-- **Production has none of this running**, because production was never applied ([#285](https://github.com/enorm-labs/event-junkie/issues/285)). Everything
-  above is declared for it and proven only on staging.
-- **The cloud-init delivery path is unproven.** `backups.sh` was installed and run by hand on the live staging node rather than through a node replacement.
-  That was deliberate: a replacement takes k3s, Flux and both secrets with it, and none of that was needed to prove a restore. **The script is proven.**
-  `user_data` carrying it to a fresh node is not. The first real rebuild settles it.
+- **Production runs all of this.** The gap that used to sit here is closed. `walg check` passes on its database node. Base backups run nightly on the timer,
+  not by hand. The dead-man's switch points at a URL that fired in a drill.
+- **The cloud-init delivery path is proven, on production.** This was a gap because `backups.sh` reached the staging node by hand rather than through
+  `user_data`. Production booted with the script in `user_data`, and takes nightly backups that nobody installed. The gap closed quietly, which is why it stays
+  written down rather than deleted.
 - **Nobody ever performed a full in-place restore**, only restores into a scratch cluster. RESTORE_RUNBOOK.md §6 says so at the point where it matters.
 - **Nothing survives losing the Hetzner account.** §2.
 
