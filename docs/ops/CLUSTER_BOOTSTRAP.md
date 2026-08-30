@@ -656,11 +656,12 @@ tofu plan -target=module.environment.hcloud_volume_attachment.postgres \
 Dropping the attachment from the target list does not help. The volume detaches when its server is
 deleted, and the replacement boots with no data device.
 
-**The address records depend on the k3s node as well.** `k3s_ipv4` and `k3s_ipv6` read
-`hcloud_server.k3s` attributes rather than the Primary IPs that own the addresses. So
-`-target=hcloud_zone_rrset.address` — the go-live flip — replaces the nodes too. `servers.tf` says
-the Primary IPs exist so that a rebuilt server keeps its address and DNS never churns. The addresses
-do survive. The **dependency** does not.
+**The address records used to depend on the k3s node as well, and no longer do** (#883). `k3s_ipv4`,
+`k3s_ipv6` and `k3s_ipv6_network` read `hcloud_server.k3s` attributes before, so
+`-target=hcloud_zone_rrset.address` — the go-live flip — replaced the nodes too. `servers.tf` says the
+Primary IPs exist so that a rebuilt server keeps its address and DNS never churns. The addresses did
+survive. The **dependency** did not. Those three outputs now read the Primary IPs, so the flip is a
+DNS-only apply. **Read the plan and confirm that before you trust it.**
 
 #### So patch the running node instead
 
