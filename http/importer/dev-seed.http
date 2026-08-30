@@ -1232,7 +1232,7 @@ Content-Type: application/json
     "address": "Revaler Str. 99",
     "city": "Berlin",
     "postalCode": "10245",
-    "district": "friedrichshain",
+    "district": "friedrichshain-kreuzberg",
     "latitude": 52.50770,
     "longitude": 13.45070,
     "websiteUrl": "https://www.crackbellmer.de",
@@ -1291,7 +1291,7 @@ Content-Type: application/json
     "address": "Revaler Str. 99",
     "city": "Berlin",
     "postalCode": "10245",
-    "district": "friedrichshain",
+    "district": "friedrichshain-kreuzberg",
     "latitude": 52.50700,
     "longitude": 13.45330,
     "websiteUrl": "https://derweissehase.club",
@@ -1456,7 +1456,7 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Festsaal Kreuzberg (Am Flutgraben 2, Berlin-Kreuzberg)
+### Festsaal Kreuzberg (Am Flutgraben 2, Berlin-Treptow — it moved and kept the name)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Festsaal Kreuzberg venue ---
@@ -1468,11 +1468,11 @@ Content-Type: application/json
     "address": "Am Flutgraben 2",
     "city": "Berlin",
     "postalCode": "12435",
-    "district": "friedrichshain-kreuzberg",
+    "district": "treptow-koepenick",
     "latitude": 52.49660,
     "longitude": 13.44980,
     "websiteUrl": "https://festsaal-kreuzberg.de",
-    "description": "A concert hall and event space by the Flutgraben on the Spree in Kreuzberg, with a wide-ranging programme of concerts, club nights and cultural events."
+    "description": "A concert hall and event space by the Flutgraben on the Spree in Treptow, with a wide-ranging programme of concerts, club nights and cultural events."
 }
 
 > {%
