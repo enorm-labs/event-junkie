@@ -550,9 +550,77 @@ Then **§3 onward**, in full: cloud-init, the _new_ server key, your client conf
 Two things are cheaper the second time. Nothing in `cloud-init/` is architecture-specific, and [#264](https://github.com/enorm-labs/event-junkie/issues/264)
 publishes **multi-arch** images. So the chart, its tags and its digests-per-platform need no attention at all, which is what makes the architecture reversible.
 
-**Production is different and this section does not cover it.** Its PostgreSQL is a dedicated node, and a _rebuild_ there keeps its data. That is #460, and it
-is why the volume was declared before production was ever applied, rather than migrated onto one afterwards. A **destroy** is still data loss, because
-nothing off the volume exists yet: backups and a rehearsed restore are [#270](https://github.com/enorm-labs/event-junkie/issues/270). Do that one first.
+### Production has two nodes, and you cannot rebuild one of them
+
+Everything above is written for staging's single node. Production runs PostgreSQL on its own machine,
+and that changes three things.
+
+**The volume is attached to the database node, not the k3s node.** A rebuild there keeps the data
+(#460). A `tofu destroy` still loses it, because the provider lifts its own locks. Restore from the
+bucket is [RESTORE_RUNBOOK.md](RESTORE_RUNBOOK.md). That drill covers staging only.
+
+**Which node drifts is checkable without a credential.** Each node keeps its scripts at
+`/opt/event-junkie/`. Compare them against the repository:
+
+```sh
+shasum -a 256 infra/modules/environment/cloud-init/*.sh
+ssh -J ops@10.10.0.1 ops@10.0.1.20 "sudo sh -c 'sha256sum /opt/event-junkie/*.sh'"
+```
+
+The directory is `0750` and owned by root, so the glob must expand inside the root shell. A plain
+`sudo sha256sum /opt/event-junkie/*.sh` passes the pattern through unexpanded.
+
+#### You cannot replace the database node on its own
+
+This looks like a job for `-target` and is not. Two edges in the graph prevent it, and both are easy
+to miss because neither is visible in the file you are editing.
+
+**`hcloud_volume_attachment.postgres` names both servers in one ternary.** OpenTofu builds the graph
+from the expression, not from the branch it evaluates. So the attachment depends on the k3s node too,
+and `-target` pulls in a target's dependencies:
+
+```
+tofu plan -target=module.environment.hcloud_volume_attachment.postgres \
+          -target=module.environment.hcloud_server.postgres
+  ->  Plan: 3 to add, 0 to change, 3 to destroy
+      module.environment.hcloud_server.k3s must be replaced
+```
+
+Dropping the attachment from the target list does not help. The volume detaches when its server is
+deleted, and the replacement boots with no data device.
+
+**The address records depend on the k3s node as well.** `k3s_ipv4` and `k3s_ipv6` read
+`hcloud_server.k3s` attributes rather than the Primary IPs that own the addresses. So
+`-target=hcloud_zone_rrset.address` — the go-live flip — replaces the nodes too. `servers.tf` says
+the Primary IPs exist so that a rebuilt server keeps its address and DNS never churns. The addresses
+do survive. The **dependency** does not.
+
+#### So patch the running node instead
+
+For a defect that is already causing harm, use § Applying a `cloud-init` fix without rebuilding above.
+Correct the script and apply the same change by hand. The repository stays right, so a later rebuild
+converges. #813 reached production this way.
+
+#### When you do rebuild both
+
+Expect `4 to add, 0 to change, 4 to destroy`: both servers and the volume attachment, each replaced.
+Stop if `hcloud_volume.postgres`, a `hcloud_primary_ip`, the network or the firewall appears.
+
+Then §3 onward, with four differences from staging:
+
+1. **The tunnel dies with the k3s node.** Open `admin_cidrs` for the duration, as staging does.
+2. **The database node needs no break-glass.** Its firewall admits nothing inbound at any address, so
+   it is reached by jump through the k3s node either way.
+3. **Both nodes get a new SSH host key.** Run `ssh-keygen -R 10.0.1.20` before the first connection.
+4. **`hetzner` is not needed.** Production solves HTTP-01 and holds no Hetzner token.
+
+**`flux bootstrap` hits a deadlock on a rebuilt cluster, every time.** The repository already carries
+the encrypted Secret, the `flux-system` entry and the decryption patch. They arrive in one reconcile
+against a live Kustomization that has no `decryption` block, so Flux applies none of them. Break it
+with the one command in [SECRETS.md](SECRETS.md) §4.
+
+**`github-dispatch` is the only object nothing can re-derive.** Read it out of the cluster before you
+destroy it. Verify its scope afterwards rather than its presence — see §8.
 
 ### Proving the volume actually survives — the drill
 
