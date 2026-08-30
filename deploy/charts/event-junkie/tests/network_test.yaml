@@ -45,6 +45,43 @@ tests:
       - notExists:
           path: spec.egress
 
+  - it: the ACME HTTP-01 solver is reachable from the ingress controller
+    # Regression guard. cert-manager creates the solver pod itself, carrying only its own labels, so
+    # the default-deny policy caught it and every HTTP-01 challenge failed with `wrong status code
+    # '502', expected '200'` — a symptom several steps from anything that mentions a NetworkPolicy.
+    # Nothing caught it earlier because production is the only environment that solves HTTP-01:
+    # staging uses DNS-01 and k3d runs with tls.enabled false.
+    #
+    # This governs renewal as much as issuance, so deleting the policy breaks nothing for sixty days
+    # and then stops the certificate renewing.
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      # Forced rather than assumed. `cluster-assertions.sh` re-runs this suite against every
+      # cluster's spec.values, and k3d turns TLS off — so without these two the policy would not
+      # render there and the assertion would fail on a configuration it was never about.
+      ingress.enabled: true
+      ingress.tls.enabled: true
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-event-junkie-allow-acme-solver
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+      # cert-manager's own label on the pod it creates. Selecting anything of ours would match
+      # nothing, which is exactly the bug this replaces.
+      - equal:
+          path: spec.podSelector.matchLabels["acme.cert-manager.io/http01-solver"]
+          value: "true"
+      # 8089 is cert-manager's solver port and the target of the Ingress it creates. Not ours to
+      # configure, so it is asserted as the constant it is.
+      - contains:
+          path: spec.ingress[0].ports
+          content:
+            protocol: TCP
+            port: 8089
+
   - it: the ingress controller reaches the service ports and neither management port
     set:
       database.host: "10.0.1.2"
