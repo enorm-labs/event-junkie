@@ -3593,8 +3593,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "13347",
     "district": "mitte",
-    "latitude": 52.54387,
-    "longitude": 13.37669,
+    "latitude": 52.545,
+    "longitude": 13.37424,
     "websiteUrl": "https://www.pankeculture.com",
     "description": "A club, café and gallery in a Wedding backyard, programming club nights, live music, markets and exhibitions."
 }
@@ -3947,8 +3947,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10405",
     "district": "pankow",
-    "latitude": 52.53060,
-    "longitude": 13.41850,
+    "latitude": 52.52953,
+    "longitude": 13.41259,
     "websiteUrl": "http://www.roadrunners-paradise.de",
     "description": "A rock'n'roll club in a courtyard in Prenzlauer Berg, specialising in rockabilly, psychobilly, punk and garage live shows and parties."
 }
@@ -4950,8 +4950,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10365",
     "district": "lichtenberg",
-    "latitude": 52.50650,
-    "longitude": 13.47950,
+    "latitude": 52.50754,
+    "longitude": 13.47581,
     "websiteUrl": "https://www.void-club.de",
     "description": "A two-room techno club in a Lichtenberg backyard, programming drum & bass, hardtechno, trance and bass nights across the VOID Club and VOID Hall floors."
 }
