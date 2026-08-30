@@ -385,6 +385,73 @@ kubectl --context event-junkie-staging get secret event-junkie-staging-tls -n ev
 
 ---
 
+## 11b · Seeding the event sources — three steps, and the order is load-bearing
+
+A cluster with a certificate still serves an empty site. Nothing seeds the sources: no migration
+inserts a row, and `dev-seed.http` is written for a local run. Production ran green and empty for
+nine days before anybody noticed (#876).
+
+`http/importer/dev-seed.http` is the source of truth for the 86 venues and their sources.
+`scripts/seed-sources.py` reads that file and writes it to any host, so there is no second copy to
+drift.
+
+**The admin API has no authentication, and the tunnel is what keeps it private.** The importer has
+no ingress backend on any cluster. So every command here goes through a port-forward
+([CLUSTER_ACCESS.md](CLUSTER_ACCESS.md) §6a):
+
+```sh
+kubectl --context <your-context> -n event-junkie \
+  port-forward svc/event-junkie-importer 18081:8081
+```
+
+**Forward to 18081, not 8081.** A local importer owns 8081, and a forward that lands on a local
+stack writes to the wrong database without saying so. Both scripts refuse to write to a non-default
+host until you pass `--yes`, and the refusal prints the host and the row count.
+
+### The three steps
+
+```sh
+python3 scripts/seed-sources.py         --host http://localhost:18081 --apply --yes  # 1
+python3 scripts/apply-licence-review.py --host http://localhost:18081 --apply --yes  # 2
+python3 scripts/seed-sources.py         --host http://localhost:18081 --enable --yes # 3
+```
+
+**Step 1 creates every source disabled, and that is the point of the order.** A source with no
+import history is always due, and `ScheduledImportService` ticks every 60 seconds. An enabled source
+is therefore imported about a minute after you create it.
+
+**Step 2 writes the licence verdicts** from `docs/licence-review/RESULTS.tsv` (#283). Two venues
+forbid their descriptions and images. A source with `NULL` licence columns displays everything, so
+those two must carry `PROHIBITED` before any import runs. `V007` cleared prohibited material once,
+in the migration, and it does not run again — material stored after that stays stored.
+
+**Step 3 hands the sources to the scheduler.** It refuses while any source is unreviewed. One
+source is expected to stay unreviewed: the venue whose site answers our user agent with `406`, which
+`docs/licence-review/README.md` §6 records. `--allow-unreviewed` acknowledges that one.
+
+Step 3 also makes production fetch 86 third-party websites for the first time. Do it deliberately.
+
+### The dry run is the drift report
+
+Omit `--apply` and nothing is written. The output names what the target is missing, and what the
+target holds that the file does not:
+
+```
+http/importer/dev-seed.http: 86 venues, 86 event sources
+http://localhost:18081 holds 86 venues and 86 sources
+  to create: 0 venues, 0 sources
+```
+
+That is how you compare two environments. Run it against each context and read the two reports.
+Nothing is ever deleted: a row the file does not carry is drift to explain, not to remove.
+
+### The source list is data, and this is the decision
+
+It could have been a migration or a manifest the importer applies at startup. It is neither. The
+list changes when a person adds a venue, which is not a schema change and not a deploy. Keeping it
+as data, with one checked-in record and one script that applies it, gives the same repeatability
+without tying a venue to a release.
+
 ## 12 · Standing an environment up dark — and rehearsing TLS before go-live
 
 Production was applied this way: everything running, nothing resolving.
