@@ -213,6 +213,49 @@ human types it is not a clear. The point of the drill is that the mechanism reco
 
 No request body was sent, so the §Privacy assessment below is unaffected.
 
+## Availability, as a number
+
+The site probe is already an availability measurement, not only an alert. It resolves the hostname,
+fetches the site over the internet, and asserts the status and the body. A record of those outcomes
+answers "how much of the month was the site up". That is a different question from "is it down now". An alert tells you about the outage you are having. A number tells you whether the
+platform is getting better or worse (#271).
+
+**The window is a rolling 30 days, and a figure per calendar month.** The rolling number is the
+operational one. The monthly one is the trend, and it is the reason the history has to outlive the
+probe's own.
+
+### healthchecks.io keeps about a day of it, so it cannot be the record
+
+The free plan keeps **100 log entries per check**. The site probe pings every 15 minutes, which is 96
+pings a day. So its history covers about **25 hours**. That is enough to see the outage you are in and
+far too little for a monthly figure.
+
+The long-term store is therefore OpenObserve, which already retains metrics in the Object Storage
+bucket under a retention policy (ADR-015). The probe writes its outcome there as a metric, beside the
+rest.
+
+**Neither half is live yet, and each waits on something different:**
+
+| Part                     | Waits on                                                                  |
+| ------------------------ | ------------------------------------------------------------------------- |
+| The probe running at all | `HEALTHCHECKS_PING_URL`, unset because nothing is public yet (#285)       |
+| Writing the metric       | OpenObserve reachable from outside the cluster, and running on production |
+
+Until both are true there is no figure, and this section describes the design rather than a thing you
+can read today.
+
+**This does not re-open the LEGAL.md §14 assessment.** That assessment holds because the ping to
+healthchecks.io carries no body. The metric goes to OpenObserve, which is ours, so the ping stays a
+bare `GET` to an opaque UUID. Sending the number to healthchecks.io instead **would** re-open it.
+
+### It is measured, not published
+
+Availability is for operators. There is no public status page and no uptime badge, and that is a
+decision rather than an omission. Publishing a number is a transparency commitment to venues and
+visitors, and it is worth making deliberately rather than discovering it when somebody asks.
+
+**Revisit at launch** (#285). A figure nobody reads yet is a poor basis for a public promise.
+
 ## The two ways this quietly stops working
 
 - **A node rebuild.** `/etc/wal-g/credentials.env` dies with the disk, exactly like the S3 key. A rebuilt node comes back with both timers enabled, wal-g

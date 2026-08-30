@@ -195,8 +195,8 @@ A healthy system writes into the current hour. Hours that trail off are a backlo
 
 ## What it does not do yet
 
-- **No alerting.** The rules and the Signal route are [#271](https://github.com/enorm-labs/event-junkie/issues/271) items 3 and 4, blocked on the eSIM. Today
-  the dashboard is something a human looks at, which is a worse guarantee than it appears.
+- **A firing reaches no person.** Nine rules evaluate, and each one posts into the `alert_history` stream instead of to somebody
+  ([#271](https://github.com/enorm-labs/event-junkie/issues/271) item 4). So a firing is a row you must go and look at. That is a worse guarantee than it
+  sounds, and it is the shape of the eight hours in #813. The Signal route waits only on a registered number now. The SSRF guard that also blocked it is
+  gone, traded for the egress policy in `observability-netpol.yaml`.
 - **Nothing on production.** Standing it up there needs the memory budget re-checked against a node that also runs the application — and #625 answered first.
-- **Nothing watches shedding.** `otelcol_exporter_send_failed_metric_points` is collected and unused. A dropped metric looks exactly like a quiet
-  period, which is the same blindness [#618](https://github.com/enorm-labs/event-junkie/issues/618) records for importers.
