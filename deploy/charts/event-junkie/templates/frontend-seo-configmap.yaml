@@ -24,7 +24,7 @@ metadata:
   name: {{ printf "%s-seo" (include "event-junkie.fullname" $) }}
   annotations:
     kubernetes.io/description: >-
-      A disallow-all robots.txt and an empty sitemap, mounted over the ones baked into the frontend image. Gated on ingress.noindex, which is off in production.
+      A disallow-all robots.txt and an empty sitemap, mounted over the ones baked into the frontend image. Gated on ingress.noindex, which is on wherever the environment is not the canonical host -- staging always, and production while the domain is dark.
   labels:
     {{- include "event-junkie.labels" $args | nindent 4 }}
 data:
@@ -34,8 +34,8 @@ data:
          and the environment quietly keeps the image's allow-all copy. The render assertions check
          the two lists against each other for exactly that reason. */}}
   robots.txt: |
-    # This is not the production site. Nothing here should be indexed, and the real
-    # control is that this host has no public address at all — see PLATFORM_SETUP §4a.
+    # This host is not the Event Junkie site. Nothing here should be indexed.
+    # This file and the X-Robots-Tag header are the control, so do not weaken either.
     User-agent: *
     Disallow: /
   {{- /* No `Sitemap:` line, deliberately. The image's copy has one and it names production, which
