@@ -123,6 +123,48 @@ spec:
         - protocol: TCP
           port: {{ .Values.frontend.service.port }}
 ---
+{{- if and .Values.ingress.enabled .Values.ingress.tls.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-allow-acme-solver" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" (dict "ctx" $ "component" "networkpolicy") | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      Lets the ingress controller reach cert-manager's HTTP-01 solver pod. Without it the default-deny policy blocks the challenge and no certificate can issue or renew.
+spec:
+  {{- /* cert-manager creates this pod itself, in the release namespace, carrying only its own
+         labels — so it matches none of the component selectors above and the default-deny policy
+         catches it. The symptom is a challenge stuck on `wrong status code '502', expected '200'`,
+         several steps from anything that mentions a NetworkPolicy.
+
+         **Only an HTTP-01 cluster has this pod at all**, which is why nothing caught it earlier:
+         staging solves DNS-01 and k3d runs with `tls.enabled: false`. Production is the first
+         environment where the ingress controller has to reach into this namespace for ACME.
+
+         This governs RENEWAL as much as issuance. Removing it does not break anything for sixty
+         days, and then the certificate quietly fails to renew. */}}
+  podSelector:
+    matchLabels:
+      acme.cert-manager.io/http01-solver: "true"
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{- toYaml $np.ingressController.namespaceSelector | nindent 14 }}
+          podSelector:
+            matchLabels:
+              {{- toYaml $np.ingressController.podSelector | nindent 14 }}
+      ports:
+        {{- /* cert-manager's solver listens on 8089 and the Ingress it creates targets that port.
+               Not a value: it is cert-manager's own constant, not ours to configure. */}}
+        - protocol: TCP
+          port: 8089
+{{- end }}
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
