@@ -276,7 +276,7 @@ must not acquire one to gain a wildcard certificate.
 
 `Chart.yaml`'s `version` and `appVersion` are **placeholders**. `.github/workflows/release.yml` computes one number from `gradle.properties` and stamps it into
 both before packaging, so bumping them by hand does not decide what gets published — it only creates drift, and `scripts/version.sh check` fails the build when
-it does. Both must equal the base version `gradle.properties` declares (`0.1.1-SNAPSHOT` → `0.1.1`). If a change genuinely needs a new version, the bump belongs
+it does. Both must equal the base version `gradle.properties` declares (`0.3.0-SNAPSHOT` → `0.3.0`). If a change genuinely needs a new version, the bump belongs
 in `gradle.properties`, `events-frontend/package.json` and both chart fields together.
 
 **And no published values file may set `<component>.image.tag`.** The default `""` falls back to `.Chart.AppVersion`, and that fallback is the whole mechanism
