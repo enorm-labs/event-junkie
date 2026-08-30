@@ -6,9 +6,28 @@
 GET {{importer-host}}/actuator/health
 Accept: application/json
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
 ### OpenAPI spec (JSON)
 GET {{importer-host}}/v3/api-docs
 Accept: application/json
 
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
 ### Swagger UI (open in browser)
 GET {{importer-host}}/webjars/swagger-ui/index.html
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+

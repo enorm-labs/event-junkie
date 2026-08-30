@@ -8,13 +8,35 @@ Accept: application/json
     });
 %}
 
+### Create the venue this file's sources hang off
+###
+### Its own, rather than a hardcoded `venueId: 1`. Nothing guarantees an id 1 exists, and a source
+### create against a missing venue answers 404 — which reads as a broken endpoint rather than a
+### missing fixture. Deleted at the end, so the file leaves the database as it found it.
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Event Source Fixture Venue",
+    "address": "Skalitzer Str. 1",
+    "city": "Berlin",
+    "postalCode": "10999"
+}
+
+> {%
+    client.global.set("source_venue_id", response.body.id);
+    client.test("status is 201", function () {
+        client.assert(response.status === 201, "Expected 201 Created");
+    });
+%}
+
 ### Create a new event source
 POST {{importer-host}}/api/admin/event-sources
 Content-Type: application/json
 Accept: application/json
 
 {
-    "venueId": 1,
+    "venueId": {{source_venue_id}},
     "name": "Privatclub Website",
     "url": "https://privatclub-berlin.de/",
     "sourceType": "PRIVATCLUB",
@@ -27,6 +49,10 @@ Accept: application/json
     client.test("should return 201", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
+    // The slug is server-generated, and every request below addresses the source by it. Nothing
+    // set source_slug before, so those requests sent the template placeholder itself and failed
+    // with "Illegal character in path".
+    client.global.set("source_slug", response.body.slug);
 %}
 
 ### Get a single event source by slug
@@ -136,7 +162,6 @@ Accept: application/json
 %}
 
 ### Create Cassiopeia event source
-# Requires a venue with the given ID to already exist in the database.
 # The sourceType "CASSIOPEIA" matches EventSource.CASSIOPEIA.
 # The URL points to the /club page where events are listed.
 POST {{importer-host}}/api/admin/event-sources
@@ -144,7 +169,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-    "venueId": 1,
+    "venueId": {{source_venue_id}},
     "name": "Cassiopeia",
     "url": "https://cassiopeia-berlin.de/club",
     "sourceType": "CASSIOPEIA",
@@ -157,6 +182,7 @@ Accept: application/json
     client.test("should return 201", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
+    client.global.set("cassiopeia_slug", response.body.slug);
 %}
 
 ### Trigger Cassiopeia import
@@ -177,6 +203,14 @@ DELETE {{importer-host}}/api/admin/event-sources/{{source_slug}}
         client.assert(response.status === 204, "Expected 204 but got " + response.status);
     });
 %}
+
+### Delete the Cassiopeia source
+DELETE {{importer-host}}/api/admin/event-sources/{{cassiopeia_slug}}
+
+### Delete the fixture venue — leaves the database as this file found it
+###
+### Last, because a venue cannot go while a source still references it.
+DELETE {{importer-host}}/api/admin/venues/{{source_venue_id}}
 
 ### Sources currently flagged for a coverage drop (#472)
 ### `flaggedAt` and `flagReason` are on every source response. A flagged source
