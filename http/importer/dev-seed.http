@@ -584,8 +584,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10719",
     "district": "charlottenburg-wilmersdorf",
-    "latitude": 52.49540,
-    "longitude": 13.32860,
+    "latitude": 52.49801,
+    "longitude": 13.32959,
     "websiteUrl": "https://www.bar-jeder-vernunft.de",
     "description": "A 1912 mirror tent (Spiegelzelt) in Wilmersdorf staging cabaret, chanson, musical revues and variety shows around candlelit café tables."
 }
@@ -820,8 +820,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10961",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.49170,
-    "longitude": 13.38550,
+    "latitude": 52.49196,
+    "longitude": 13.38856,
     "websiteUrl": "https://clash-berlin.de",
     "description": "A punk, ska and rock'n'roll bar and concert spot near Mehringdamm in Kreuzberg, hosting loud, no-frills live shows and DJ nights."
 }
@@ -938,8 +938,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10245",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.50080,
-    "longitude": 13.46800,
+    "latitude": 52.49707,
+    "longitude": 13.46503,
     "websiteUrl": "https://clubost.de",
     "description": "A techno club at the western tip of the Stralau peninsula on the Rummelsburger Bucht, programming raves and club nights that run from late evening into the next morning."
 }
@@ -1233,8 +1233,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10245",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.50770,
-    "longitude": 13.45070,
+    "latitude": 52.50759,
+    "longitude": 13.45477,
     "websiteUrl": "https://www.crackbellmer.de",
     "description": "A microclub and dance bar on the RAW-Gelände, programming house and techno nights alongside drag shows, swing dance parties and live jazz."
 }
@@ -1764,8 +1764,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10963",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.49483,
-    "longitude": 13.38387,
+    "latitude": 52.49556,
+    "longitude": 13.38792,
     "websiteUrl": "https://www.gretchen-club.de",
     "description": "A club set in the vaulted former stables of a 19th-century barracks in Kreuzberg, known for bass-driven electronic nights — drum & bass, house, techno and hip-hop — plus live shows."
 }
@@ -1941,8 +1941,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "12043",
     "district": "neukoelln",
-    "latitude": 52.47956,
-    "longitude": 13.43918,
+    "latitude": 52.47702,
+    "longitude": 13.43992,
     "websiteUrl": "https://heimathafen-neukoelln.de",
     "description": "A Neukolln Saal and Studio venue in a historic ballroom, programming concerts, theatre, comedy, readings and its own productions."
 }
@@ -2000,8 +2000,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "12051",
     "district": "neukoelln",
-    "latitude": 52.47993,
-    "longitude": 13.42565,
+    "latitude": 52.46435,
+    "longitude": 13.43338,
     "websiteUrl": "https://hole-berlin.de",
     "description": "A concert hall in Neukölln geared towards touring bands, with a programme leaning on rock, metal, punk and alternative live acts."
 }
@@ -2177,8 +2177,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10961",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.49076,
-    "longitude": 13.38969,
+    "latitude": 52.49149,
+    "longitude": 13.39325,
     "websiteUrl": "https://www.junction-bar.de",
     "description": "A basement live-music and DJ bar near Mehringdamm in Kreuzberg, offering nightly concerts and DJ sets across jazz, soul, funk, rock and pop."
 }
@@ -2354,8 +2354,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "12043",
     "district": "neukoelln",
-    "latitude": 52.47917,
-    "longitude": 13.43583,
+    "latitude": 52.48196,
+    "longitude": 13.43277,
     "websiteUrl": "https://klunkerkranich.org",
     "description": "The rooftop culture garden above the Neukoelln Arcaden: a bar, stage and club running a nightly programme."
 }
@@ -2531,8 +2531,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10179",
     "district": "mitte",
-    "latitude": 52.51361,
-    "longitude": 13.41889,
+    "latitude": 52.51302,
+    "longitude": 13.42278,
     "websiteUrl": "https://larkberlin.com",
     "description": "A live-music club in the railway arches on Holzmarktstrasse, programming indie, folk, pop and singer-songwriter shows."
 }
@@ -2590,8 +2590,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10997",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.49778,
-    "longitude": 13.43782,
+    "latitude": 52.49922,
+    "longitude": 13.44507,
     "websiteUrl": "https://www.lido-berlin.de",
     "description": "A former 1950s cinema turned concert venue on the Spree in Kreuzberg, staging touring indie, rock and electronic acts as well as club nights."
 }
@@ -3062,8 +3062,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "13347",
     "district": "mitte",
-    "latitude": 52.54186,
-    "longitude": 13.36684,
+    "latitude": 52.54374,
+    "longitude": 13.36771,
     "websiteUrl": "https://migas.berlin",
     "description": "A listening bar in Wedding where booked selectors play records to a seated audience, alongside nights spent listening to a single album from start to finish."
 }
@@ -3298,8 +3298,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10243",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.50830,
-    "longitude": 13.44890,
+    "latitude": 52.50519,
+    "longitude": 13.44842,
     "websiteUrl": "https://www.karaokemonster.de",
     "description": "A Friedrichshain karaoke bar with a big open stage and private karaoke boxes. Drag and cabaret MCs host a different singalong night every evening of the week."
 }
@@ -3416,8 +3416,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "12435",
     "district": "treptow-koepenick",
-    "latitude": 52.49560,
-    "longitude": 13.45140,
+    "latitude": 52.49751,
+    "longitude": 13.45476,
     "websiteUrl": "https://hoppetosse.berlin",
     "description": "A moored Spree salon boat run by Club der Visionäre as its winter location, with a lower-deck club floor and an upper-deck bar programming house and minimal techno."
 }
@@ -3652,8 +3652,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "12459",
     "district": "treptow-koepenick",
-    "latitude": 52.46177,
-    "longitude": 13.56405,
+    "latitude": 52.46234,
+    "longitude": 13.5454,
     "websiteUrl": "https://www.wuhlheide.de",
     "description": "A large open-air amphitheatre in the Wuhlheide park, running a seasonal summer programme of touring concerts."
 }
@@ -3711,8 +3711,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10997",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.49985,
-    "longitude": 13.43112,
+    "latitude": 52.50007,
+    "longitude": 13.43485,
     "websiteUrl": "https://privatclub-berlin.de",
     "description": "A club below the Markthalle near Schlesisches Tor in Kreuzberg, presenting concerts and DJ nights across soul, funk, indie, hip-hop and electronic music."
 }
@@ -3770,8 +3770,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10623",
     "district": "charlottenburg-wilmersdorf",
-    "latitude": 52.50597,
-    "longitude": 13.32332,
+    "latitude": 52.50593,
+    "longitude": 13.32837,
     "websiteUrl": "https://quasimodo.club",
     "description": "Berlin's oldest jazz cellar, off the Ku'damm, programming jazz, blues and soul concerts alongside themed DJ nights."
 }
@@ -4065,8 +4065,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10115",
     "district": "mitte",
-    "latitude": 52.53264,
-    "longitude": 13.39897,
+    "latitude": 52.52974,
+    "longitude": 13.39718,
     "websiteUrl": "https://www.schokoladen-mitte.de",
     "description": "A historic, collectively run cultural venue in Mitte with roots in the post-Wende squat scene, hosting intimate concerts, readings and club nights across many styles."
 }
@@ -5009,8 +5009,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10999",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.49770,
-    "longitude": 13.43700,
+    "latitude": 52.49749,
+    "longitude": 13.43111,
     "websiteUrl": "https://www.wildatheartberlin.de",
     "description": "A rock'n'roll bar and live club near Schlesisches Tor in Kreuzberg, hosting raucous concerts and DJ nights spanning rockabilly, punk, garage and surf."
 }
