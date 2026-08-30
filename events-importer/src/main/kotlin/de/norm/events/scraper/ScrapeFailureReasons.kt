@@ -28,8 +28,11 @@ internal fun scrapeFailureReason(error: Throwable): String =
         // Its own reason for the same purpose as `http_forbidden`: a policy answer, not a parse
         // failure, and no amount of scraper work fixes it. Merging the two hides the one case where
         // the response is to stop importing the venue rather than to repair a selector (#790).
+        // Split because the two causes want opposite responses (#887). A real prohibition is a
+        // decision somebody has to take; an unreadable robots.txt is a venue outage that fixes
+        // itself. One alert for both fires on every bad day a venue has, and gets muted.
         is RobotsDisallowedException -> {
-            "robots_disallowed"
+            if (error.unreadableStatus != null) "robots_unreadable" else "robots_disallowed"
         }
 
         is HttpFetchException -> {
