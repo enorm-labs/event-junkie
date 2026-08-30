@@ -7,7 +7,7 @@
 ### ============================================================
 
 ### List upcoming events (default page 0, size 20, sort eventDate)
-GET {{bff-host}}/events
+GET {{bff-host}}/api/events
 Accept: application/json
 
 > {%
@@ -21,73 +21,73 @@ Accept: application/json
 %}
 
 ### List events — pagination + sort (eventDate desc)
-GET {{bff-host}}/events?page=0&size=5&sort=eventDate,desc
+GET {{bff-host}}/api/events?page=0&size=5&sort=eventDate,desc
 Accept: application/json
 
 ### List events — sort by presale price ascending
-GET {{bff-host}}/events?sort=pricePresale,asc
+GET {{bff-host}}/api/events?sort=pricePresale,asc
 Accept: application/json
 
 ### Filter by date range
-GET {{bff-host}}/events?from=2026-06-19&to=2026-07-15
+GET {{bff-host}}/api/events?from=2026-06-19&to=2026-07-15
 Accept: application/json
 
 ### Filter by venue slug
-GET {{bff-host}}/events?venue=lido
+GET {{bff-host}}/api/events?venue=lido
 Accept: application/json
 
 ### Filter by district (Berlin borough)
-GET {{bff-host}}/events?district=friedrichshain-kreuzberg
+GET {{bff-host}}/api/events?district=friedrichshain-kreuzberg
 Accept: application/json
 
 ### Filter by artist slug
-GET {{bff-host}}/events?artist=actors
+GET {{bff-host}}/api/events?artist=actors
 Accept: application/json
 
 ### Filter by genre slug
-GET {{bff-host}}/events?genre=punk
+GET {{bff-host}}/api/events?genre=punk
 Accept: application/json
 
 ### Filter by price range
-GET {{bff-host}}/events?minPrice=10&maxPrice=40
+GET {{bff-host}}/api/events?minPrice=10&maxPrice=40
 Accept: application/json
 
 ### Free-text search over title + subtitle
-GET {{bff-host}}/events?q=punk
+GET {{bff-host}}/api/events?q=punk
 Accept: application/json
 
 ### Exclude sold-out events
-GET {{bff-host}}/events?excludeSoldOut=true
+GET {{bff-host}}/api/events?excludeSoldOut=true
 Accept: application/json
 
 ### Only free events
-GET {{bff-host}}/events?free=true
+GET {{bff-host}}/api/events?free=true
 Accept: application/json
 
 ### Combined filters + pagination
-GET {{bff-host}}/events?venue=lido&from=2026-06-19&page=0&size=10&sort=eventDate,asc
+GET {{bff-host}}/api/events?venue=lido&from=2026-06-19&page=0&size=10&sort=eventDate,asc
 Accept: application/json
 
 ### Today's events
-GET {{bff-host}}/events/today
+GET {{bff-host}}/api/events/today
 Accept: application/json
 
 ### Calendar — events within an inclusive date range (max 92 days)
-GET {{bff-host}}/events/calendar?from=2026-06-19&to=2026-07-15
+GET {{bff-host}}/api/events/calendar?from=2026-06-19&to=2026-07-15
 Accept: application/json
 
 ### Calendar — inverted range (expect 400)
-GET {{bff-host}}/events/calendar?from=2026-07-15&to=2026-06-19
+GET {{bff-host}}/api/events/calendar?from=2026-07-15&to=2026-06-19
 Accept: application/json
 
 ### Calendar — same optional filters as the search endpoint
-GET {{bff-host}}/events/calendar?from=2026-06-19&to=2026-07-15&district=friedrichshain-kreuzberg&genre=punk&maxPrice=20&excludeSoldOut=true
+GET {{bff-host}}/api/events/calendar?from=2026-06-19&to=2026-07-15&district=friedrichshain-kreuzberg&genre=punk&maxPrice=20&excludeSoldOut=true
 Accept: application/json
 
 ### Get event by slug (uses the slug captured from the list request above)
-GET {{bff-host}}/events/{{event_slug}}
+GET {{bff-host}}/api/events/{{event_slug}}
 Accept: application/json
 
 ### Get event by unknown slug (expect 404)
-GET {{bff-host}}/events/does-not-exist
+GET {{bff-host}}/api/events/does-not-exist
 Accept: application/json

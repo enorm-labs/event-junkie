@@ -21,7 +21,7 @@ export function useVenueSearch(
   subjectKey: ErrorSubjectKey = 'errors.subject.venues',
 ) {
   return useAsync<VenuePage>(
-    () => unwrap(api.GET('/venues', { params: { query: params() } })),
+    () => unwrap(api.GET('/api/venues', { params: { query: params() } })),
     subjectKey,
   )
 }
@@ -32,7 +32,7 @@ export function useVenueSearch(
  */
 export function useAllVenues() {
   return useAsync<VenueSummary[]>(async () => {
-    const page = await unwrap(api.GET('/venues', { params: { query: { size: 500 } } }))
+    const page = await unwrap(api.GET('/api/venues', { params: { query: { size: 500 } } }))
     return page.content ?? []
   }, 'errors.subject.venues')
 }

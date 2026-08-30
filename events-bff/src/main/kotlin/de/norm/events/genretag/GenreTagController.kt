@@ -12,7 +12,7 @@ import org.springframework.web.server.ServerWebExchange
  * Public read API exposing the genre tag list for the frontend event filter.
  */
 @RestController
-@RequestMapping("/genres")
+@RequestMapping("/api/genres")
 @Tag(name = "Genres", description = "Public endpoint listing genre tags for filtering")
 class GenreTagController(
     private val genreTagService: GenreTagService

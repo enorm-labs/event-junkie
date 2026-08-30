@@ -21,7 +21,7 @@ import java.time.LocalDate
  * Public read API for events: filtered search, today's events, calendar range, and detail by slug.
  */
 @RestController
-@RequestMapping("/events")
+@RequestMapping("/api/events")
 @Tag(name = "Events", description = "Public endpoints for browsing, filtering, and viewing events")
 class EventController(
     private val eventService: EventService,

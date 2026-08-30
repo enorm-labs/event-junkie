@@ -34,7 +34,7 @@ class ReadinessProbeTest : BaseControllerTest() {
             // and a probe query that returns no rows there would reach Health.Builder with no status
             // set and report UNKNOWN, blocking readiness on a perfectly healthy deployment. See
             // EventsSchemaHealthIndicator for why the query is an EXISTS rather than a LIMIT 1.
-            webTestClient
+            rootClient
                 .get()
                 .uri("/actuator/health/readiness")
                 .exchange()
@@ -57,7 +57,7 @@ class ReadinessProbeTest : BaseControllerTest() {
             // ADR-018: a database-dependent liveness probe restarts every replica during an outage,
             // turning a recoverable outage into a crash-loop that recovers more slowly than the
             // database does. The group split is the thing being asserted here.
-            webTestClient
+            rootClient
                 .get()
                 .uri("/actuator/health/liveness")
                 .exchange()

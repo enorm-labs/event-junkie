@@ -4,1347 +4,1327 @@
  */
 
 export interface paths {
-  '/venues': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** List venues with pagination and optional name search */
-    get: operations['list']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/venues/{slug}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** Get a single venue by slug */
-    get: operations['findBySlug']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/promoters': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** List promoters with pagination and optional name search */
-    get: operations['list_1']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/promoters/{slug}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** Get a single promoter by slug */
-    get: operations['findBySlug_1']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/meta': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** Report the version and commit of the running backend */
-    get: operations['meta']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/images/{contentHash}/{file}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** Get a cached venue image at one width and format */
-    get: operations['serve']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/genres': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** List all genre tags alphabetically */
-    get: operations['list_2']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/events': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** Search events with optional filters and pagination */
-    get: operations['list_3']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/events/{slug}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** Get a single event by slug */
-    get: operations['findBySlug_2']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/events/today': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** Get today's events */
-    get: operations['today']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/events/calendar': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** Get events within an inclusive date range for the calendar view, with the same optional filters as the search endpoint */
-    get: operations['calendar']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/artists': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** List artists with pagination and optional name search */
-    get: operations['list_4']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/artists/{slug}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** Get a single artist by slug */
-    get: operations['findBySlug_3']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
+    "/api/venues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List venues with pagination and optional name search */
+        get: operations["list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/venues/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a single venue by slug */
+        get: operations["findBySlug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/promoters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List promoters with pagination and optional name search */
+        get: operations["list_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/promoters/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a single promoter by slug */
+        get: operations["findBySlug_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/meta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Report the version and commit of the running backend */
+        get: operations["meta"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/images/{contentHash}/{file}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a cached venue image at one width and format */
+        get: operations["serve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/genres": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all genre tags alphabetically */
+        get: operations["list_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search events with optional filters and pagination */
+        get: operations["list_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/events/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a single event by slug */
+        get: operations["findBySlug_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/events/today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get today's events */
+        get: operations["today"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/events/calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get events within an inclusive date range for the calendar view, with the same optional filters as the search endpoint */
+        get: operations["calendar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/artists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List artists with pagination and optional name search */
+        get: operations["list_4"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/artists/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a single artist by slug */
+        get: operations["findBySlug_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
-export type webhooks = Record<string, never>
+export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    /** @description One format of a cached image, for a <source> element inside <picture> */
-    ImageSourceResponse: {
-      /**
-       * @description Media type for the `type` attribute
-       * @example image/avif
-       */
-      type?: string
-      /**
-       * @description Candidate URLs and their widths, for the `srcset` attribute
-       * @example /api/images/0f4b…/192.avif 192w, /api/images/0f4b…/288.avif 288w
-       */
-      srcset?: string
-    }
-    /** @description A page of results with pagination metadata */
-    PageResponseVenueSummaryResponse: {
-      /** @description The items on this page */
-      content?: components['schemas']['VenueSummaryResponse'][]
-      /**
-       * Format: int32
-       * @description Zero-based index of this page
-       * @example 0
-       */
-      page?: number
-      /**
-       * Format: int32
-       * @description Requested page size
-       * @example 20
-       */
-      size?: number
-      /**
-       * Format: int64
-       * @description Total number of matching items across all pages
-       * @example 137
-       */
-      totalElements?: number
-      /**
-       * Format: int32
-       * @description Total number of pages
-       * @example 7
-       */
-      totalPages?: number
-    }
-    /** @description Compact venue summary */
-    VenueSummaryResponse: {
-      /**
-       * Format: int64
-       * @description Database primary key
-       * @example 42
-       */
-      id?: number
-      /**
-       * @description URL-friendly identifier
-       * @example astra-kulturhaus
-       */
-      slug?: string
-      /**
-       * @description Display name of the venue
-       * @example Astra Kulturhaus
-       */
-      name?: string
-      /**
-       * @description City where the venue is located
-       * @example Berlin
-       */
-      city?: string
-      /**
-       * @description Street address of the venue
-       * @example Revaler Str. 99
-       */
-      address?: string | null
-      /**
-       * @description Berlin borough (Bezirk) as a canonical slug
-       * @example friedrichshain-kreuzberg
-       */
-      district?: string | null
-      /** @description URL of the venue's logo or photo */
-      imageUrl?: string | null
-      /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
-      imageSources?: components['schemas']['ImageSourceResponse'][]
-      /**
-       * Format: int32
-       * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
-       * @example 1200
-       */
-      intrinsicWidth?: number | null
-      /**
-       * Format: int32
-       * @description Pixel height of the original image, for the `height` attribute
-       * @example 630
-       */
-      intrinsicHeight?: number | null
-    }
-    /** @description Full venue detail */
-    VenueDetailResponse: {
-      /**
-       * Format: int64
-       * @description Database primary key
-       * @example 42
-       */
-      id?: number
-      /**
-       * @description URL-friendly identifier
-       * @example astra-kulturhaus
-       */
-      slug?: string
-      /**
-       * @description Display name of the venue
-       * @example Astra Kulturhaus
-       */
-      name?: string
-      /**
-       * @description Street address of the venue
-       * @example Revaler Str. 99
-       */
-      address?: string | null
-      /**
-       * @description City where the venue is located
-       * @example Berlin
-       */
-      city?: string
-      /**
-       * @description Postal code of the venue's address
-       * @example 10245
-       */
-      postalCode?: string | null
-      /**
-       * @description Berlin borough (Bezirk) as a canonical slug
-       * @example friedrichshain-kreuzberg
-       */
-      district?: string | null
-      /**
-       * @description Geographic latitude for map display
-       * @example 52.507242
-       */
-      latitude?: number | null
-      /**
-       * @description Geographic longitude for map display
-       * @example 13.451803
-       */
-      longitude?: number | null
-      /** @description URL of the venue's official website */
-      websiteUrl?: string | null
-      /** @description URL of the venue's logo or photo */
-      imageUrl?: string | null
-      /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
-      imageSources?: components['schemas']['ImageSourceResponse'][]
-      /**
-       * Format: int32
-       * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
-       * @example 1200
-       */
-      intrinsicWidth?: number | null
-      /**
-       * Format: int32
-       * @description Pixel height of the original image, for the `height` attribute
-       * @example 630
-       */
-      intrinsicHeight?: number | null
-      /** @description Short prose description of the venue */
-      description?: string | null
-    }
-    /** @description A page of results with pagination metadata */
-    PageResponsePromoterSummaryResponse: {
-      /** @description The items on this page */
-      content?: components['schemas']['PromoterSummaryResponse'][]
-      /**
-       * Format: int32
-       * @description Zero-based index of this page
-       * @example 0
-       */
-      page?: number
-      /**
-       * Format: int32
-       * @description Requested page size
-       * @example 20
-       */
-      size?: number
-      /**
-       * Format: int64
-       * @description Total number of matching items across all pages
-       * @example 137
-       */
-      totalElements?: number
-      /**
-       * Format: int32
-       * @description Total number of pages
-       * @example 7
-       */
-      totalPages?: number
-    }
-    /** @description Compact promoter summary */
-    PromoterSummaryResponse: {
-      /**
-       * Format: int64
-       * @description Database primary key
-       * @example 3
-       */
-      id?: number
-      /**
-       * @description URL-friendly identifier
-       * @example 36-concerts
-       */
-      slug?: string
-      /**
-       * @description Display name of the promoter
-       * @example 36 Concerts
-       */
-      name?: string
-      /** @description URL of the promoter's website or social page */
-      websiteUrl?: string | null
-      /** @description URL of the promoter's logo image */
-      imageUrl?: string | null
-      /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
-      imageSources?: components['schemas']['ImageSourceResponse'][]
-      /**
-       * Format: int32
-       * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
-       * @example 1200
-       */
-      intrinsicWidth?: number | null
-      /**
-       * Format: int32
-       * @description Pixel height of the original image, for the `height` attribute
-       * @example 630
-       */
-      intrinsicHeight?: number | null
-    }
-    /** @description Full promoter detail */
-    PromoterDetailResponse: {
-      /**
-       * Format: int64
-       * @description Database primary key
-       * @example 3
-       */
-      id?: number
-      /**
-       * @description URL-friendly identifier
-       * @example 36-concerts
-       */
-      slug?: string
-      /**
-       * @description Display name of the promoter
-       * @example 36 Concerts
-       */
-      name?: string
-      /** @description URL of the promoter's website or social page */
-      websiteUrl?: string | null
-      /** @description URL of the promoter's logo image */
-      imageUrl?: string | null
-      /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
-      imageSources?: components['schemas']['ImageSourceResponse'][]
-      /**
-       * Format: int32
-       * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
-       * @example 1200
-       */
-      intrinsicWidth?: number | null
-      /**
-       * Format: int32
-       * @description Pixel height of the original image, for the `height` attribute
-       * @example 630
-       */
-      intrinsicHeight?: number | null
-    }
-    /** @description Version and commit of the running backend, for the frontend footer */
-    MetaResponse: {
-      /**
-       * @description Application version. `dev` when the build did not stamp one — i.e. running from the IDE or `bootRun`.
-       * @example 0.1.0
-       */
-      version?: string
-      /**
-       * @description Full commit SHA the running artifact was built from; null when unavailable.
-       * @example 9f1a2b3c4d5e6f708192a3b4c5d6e7f809a1b2c3
-       */
-      commit?: string | null
-      /**
-       * @description First seven characters of `commit`, for display; null when the commit is unavailable.
-       * @example 9f1a2b3
-       */
-      commitShort?: string | null
-      /**
-       * @description When the running artifact was built (ISO-8601); null when the build did not stamp one.
-       * @example 2026-08-07T12:49:19Z
-       */
-      buildTime?: string | null
-    }
-    /** @description A normalized genre tag */
-    GenreTagResponse: {
-      /**
-       * Format: int64
-       * @description Database primary key
-       * @example 1
-       */
-      id?: number
-      /**
-       * @description URL-friendly identifier
-       * @example hip-hop
-       */
-      slug?: string
-      /**
-       * @description Canonical display name
-       * @example Hip Hop
-       */
-      name?: string
-    }
-    /** @description Compact event summary for lists and calendar */
-    EventSummaryResponse: {
-      /**
-       * Format: int64
-       * @description Database primary key
-       * @example 101
-       */
-      id?: number
-      /**
-       * @description URL-friendly identifier (format: {date}-{venue}-{title})
-       * @example 2026-06-18-lido-sam-prekop-john-mcentire
-       */
-      slug?: string
-      /**
-       * @description Main headline or name of the event
-       * @example THE ADICTS
-       */
-      title?: string
-      /** @description Secondary line, often a tour name or support acts */
-      subtitle?: string | null
-      /**
-       * @description Kind of event
-       * @example CONCERT
-       * @enum {string}
-       */
-      eventType?:
-        | 'CONCERT'
-        | 'FESTIVAL'
-        | 'PARTY'
-        | 'QUIZ'
-        | 'CLUB_NIGHT'
-        | 'SHOW'
-        | 'SCREENING'
-        | 'EXHIBITION'
-        | 'READING'
-        | 'OTHER'
-      /**
-       * @description Scheduling status of the event
-       * @example SCHEDULED
-       * @enum {string}
-       */
-      status?: 'SCHEDULED' | 'RELOCATED' | 'CANCELLED' | 'POSTPONED'
-      /**
-       * Format: date
-       * @description Calendar date of the event
-       * @example 2026-06-12
-       */
-      eventDate?: string
-      /**
-       * @description Time when doors open to the public
-       * @example 19:00
-       */
-      doorsTime?: string | null
-      /**
-       * @description Time when the show/performance starts
-       * @example 20:00
-       */
-      startTime?: string | null
-      /** @description Where the poster is fetched from. A path on this origin once the environment serves cached images, and the venue's own URL until then (ADR-019). */
-      imageUrl?: string | null
-      /** @description Better formats of the same poster, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
-      imageSources?: components['schemas']['ImageSourceResponse'][]
-      /**
-       * Format: int32
-       * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
-       * @example 1200
-       */
-      intrinsicWidth?: number | null
-      /**
-       * Format: int32
-       * @description Pixel height of the original image, for the `height` attribute
-       * @example 630
-       */
-      intrinsicHeight?: number | null
-      /**
-       * @description True when a licence prohibition removed the image. False both when the venue published none and when one is shown — a placeholder renders either way.
-       * @example false
-       */
-      imageWithheld?: boolean
-      /**
-       * @description Presale ticket price (Vorverkauf)
-       * @example 38
-       */
-      pricePresale?: number | null
-      /**
-       * @description Box office ticket price (Abendkasse)
-       * @example 45
-       */
-      priceBoxOffice?: number | null
-      /**
-       * @description ISO 4217 currency code for prices
-       * @example EUR
-       */
-      priceCurrency?: string
-      /** @description Free-form pricing note for non-standard pricing */
-      priceNote?: string | null
-      /**
-       * @description Whether all tickets for this event are sold out
-       * @example false
-       */
-      soldOut?: boolean
-      /**
-       * @description Whether the event is free to attend (free entry)
-       * @example false
-       */
-      free?: boolean
-      /** @description The venue where this event takes place */
-      venue?: components['schemas']['VenueSummaryResponse']
-      /**
-       * @description Artist names in billing order (headliner first)
-       * @example [
-       *       "The Adicts",
-       *       "Maid Of Ace"
-       *     ]
-       */
-      artistNames?: string[]
-      /**
-       * @description Normalized genre tags
-       * @example [
-       *       "Punk"
-       *     ]
-       */
-      genreTags?: string[]
-    }
-    /** @description A page of results with pagination metadata */
-    PageResponseEventSummaryResponse: {
-      /** @description The items on this page */
-      content?: components['schemas']['EventSummaryResponse'][]
-      /**
-       * Format: int32
-       * @description Zero-based index of this page
-       * @example 0
-       */
-      page?: number
-      /**
-       * Format: int32
-       * @description Requested page size
-       * @example 20
-       */
-      size?: number
-      /**
-       * Format: int64
-       * @description Total number of matching items across all pages
-       * @example 137
-       */
-      totalElements?: number
-      /**
-       * Format: int32
-       * @description Total number of pages
-       * @example 7
-       */
-      totalPages?: number
-    }
-    /** @description Compact artist summary */
-    ArtistSummaryResponse: {
-      /**
-       * Format: int64
-       * @description Database primary key
-       * @example 7
-       */
-      id?: number
-      /**
-       * @description URL-friendly identifier
-       * @example the-adicts
-       */
-      slug?: string
-      /**
-       * @description Stage name or band name
-       * @example The Adicts
-       */
-      name?: string
-      /** @description URL of the artist's photo or band logo */
-      imageUrl?: string | null
-      /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
-      imageSources?: components['schemas']['ImageSourceResponse'][]
-      /**
-       * Format: int32
-       * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
-       * @example 1200
-       */
-      intrinsicWidth?: number | null
-      /**
-       * Format: int32
-       * @description Pixel height of the original image, for the `height` attribute
-       * @example 630
-       */
-      intrinsicHeight?: number | null
-    }
-    /** @description Full event detail with embedded associations */
-    EventDetailResponse: {
-      /**
-       * Format: int64
-       * @description Database primary key
-       * @example 101
-       */
-      id?: number
-      /**
-       * @description URL-friendly identifier (format: {date}-{venue}-{title})
-       * @example 2026-06-18-lido-sam-prekop-john-mcentire
-       */
-      slug?: string
-      /**
-       * @description Main headline or name of the event
-       * @example THE ADICTS
-       */
-      title?: string
-      /** @description Secondary line, often a tour name or support acts */
-      subtitle?: string | null
-      /** @description Longer description or artist biography */
-      description?: string | null
-      /**
-       * @description Kind of event
-       * @example CONCERT
-       * @enum {string}
-       */
-      eventType?:
-        | 'CONCERT'
-        | 'FESTIVAL'
-        | 'PARTY'
-        | 'QUIZ'
-        | 'CLUB_NIGHT'
-        | 'SHOW'
-        | 'SCREENING'
-        | 'EXHIBITION'
-        | 'READING'
-        | 'OTHER'
-      /**
-       * @description Scheduling status of the event
-       * @example SCHEDULED
-       * @enum {string}
-       */
-      status?: 'SCHEDULED' | 'RELOCATED' | 'CANCELLED' | 'POSTPONED'
-      /**
-       * Format: date
-       * @description Calendar date of the event
-       * @example 2026-06-12
-       */
-      eventDate?: string
-      /**
-       * @description Time when doors open to the public
-       * @example 19:00
-       */
-      doorsTime?: string | null
-      /**
-       * @description Time when the show/performance starts
-       * @example 20:00
-       */
-      startTime?: string | null
-      /** @description Where the poster is fetched from. A path on this origin once the environment serves cached images, and the venue's own URL until then (ADR-019). */
-      imageUrl?: string | null
-      /** @description Better formats of the same poster, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
-      imageSources?: components['schemas']['ImageSourceResponse'][]
-      /**
-       * Format: int32
-       * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
-       * @example 1200
-       */
-      intrinsicWidth?: number | null
-      /**
-       * Format: int32
-       * @description Pixel height of the original image, for the `height` attribute
-       * @example 630
-       */
-      intrinsicHeight?: number | null
-      /**
-       * @description True when a licence prohibition removed the image. False both when the venue published none and when one is shown — a placeholder renders either way.
-       * @example false
-       */
-      imageWithheld?: boolean
-      /**
-       * @description True when a licence prohibition removed the description. False when the venue simply wrote none, which is far more common and needs no explanation.
-       * @example false
-       */
-      descriptionWithheld?: boolean
-      /** @description Original URL on the source venue's website */
-      sourceUrl?: string | null
-      /** @description URL to the external ticket shop */
-      ticketUrl?: string | null
-      /** @description Direct link to the Facebook event page */
-      facebookEventUrl?: string | null
-      /**
-       * @description Music genre or style tag (raw text from source)
-       * @example Punk
-       */
-      genre?: string | null
-      /**
-       * @description Presale ticket price (Vorverkauf)
-       * @example 38
-       */
-      pricePresale?: number | null
-      /**
-       * @description Box office ticket price (Abendkasse)
-       * @example 45
-       */
-      priceBoxOffice?: number | null
-      /**
-       * @description ISO 4217 currency code for prices
-       * @example EUR
-       */
-      priceCurrency?: string
-      /** @description Free-form pricing note for non-standard pricing */
-      priceNote?: string | null
-      /**
-       * @description Whether all tickets for this event are sold out
-       * @example false
-       */
-      soldOut?: boolean
-      /**
-       * @description Whether the event is free to attend (free entry)
-       * @example false
-       */
-      free?: boolean
-      /** @description The venue where this event takes place */
-      venue?: components['schemas']['VenueSummaryResponse']
-      /** @description Lineup in billing order (headliner first) */
-      lineup?: components['schemas']['LineupEntryResponse'][]
-      /** @description Promoters or presenters responsible for this event */
-      promoters?: components['schemas']['PromoterSummaryResponse'][]
-      /**
-       * @description Normalized genre tags
-       * @example [
-       *       "Punk"
-       *     ]
-       */
-      genreTags?: string[]
-    }
-    /** @description An artist's participation in an event lineup */
-    LineupEntryResponse: {
-      /** @description The performing artist */
-      artist?: components['schemas']['ArtistSummaryResponse']
-      /**
-       * @description The artist's role in the lineup
-       * @example HEADLINER
-       * @enum {string}
-       */
-      role?: 'HEADLINER' | 'SUPPORT' | 'DJ'
-      /**
-       * Format: int32
-       * @description Position in the lineup — lower numbers appear first
-       * @example 0
-       */
-      billingOrder?: number
-      /**
-       * @description Room / stage the artist plays (multi-room venues), or null
-       * @example Panorama Bar
-       */
-      stage?: string | null
-    }
-    /** @description A page of results with pagination metadata */
-    PageResponseArtistSummaryResponse: {
-      /** @description The items on this page */
-      content?: components['schemas']['ArtistSummaryResponse'][]
-      /**
-       * Format: int32
-       * @description Zero-based index of this page
-       * @example 0
-       */
-      page?: number
-      /**
-       * Format: int32
-       * @description Requested page size
-       * @example 20
-       */
-      size?: number
-      /**
-       * Format: int64
-       * @description Total number of matching items across all pages
-       * @example 137
-       */
-      totalElements?: number
-      /**
-       * Format: int32
-       * @description Total number of pages
-       * @example 7
-       */
-      totalPages?: number
-    }
-    /** @description Full artist detail */
-    ArtistDetailResponse: {
-      /**
-       * Format: int64
-       * @description Database primary key
-       * @example 7
-       */
-      id?: number
-      /**
-       * @description URL-friendly identifier
-       * @example the-adicts
-       */
-      slug?: string
-      /**
-       * @description Stage name or band name
-       * @example The Adicts
-       */
-      name?: string
-      /** @description Biography or description text */
-      description?: string | null
-      /** @description URL of the artist's photo or band logo */
-      imageUrl?: string | null
-      /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
-      imageSources?: components['schemas']['ImageSourceResponse'][]
-      /**
-       * Format: int32
-       * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
-       * @example 1200
-       */
-      intrinsicWidth?: number | null
-      /**
-       * Format: int32
-       * @description Pixel height of the original image, for the `height` attribute
-       * @example 630
-       */
-      intrinsicHeight?: number | null
-      /** @description URL of the artist's official homepage */
-      websiteUrl?: string | null
-      /** @description URL of the artist's Facebook page */
-      facebookUrl?: string | null
-      /** @description URL of the artist's Instagram profile */
-      instagramUrl?: string | null
-      /** @description URL of the artist's YouTube channel */
-      youtubeUrl?: string | null
-    }
-  }
-  responses: never
-  parameters: never
-  requestBodies: never
-  headers: never
-  pathItems: never
+    schemas: {
+        /** @description One format of a cached image, for a <source> element inside <picture> */
+        ImageSourceResponse: {
+            /**
+             * @description Media type for the `type` attribute
+             * @example image/avif
+             */
+            type?: string;
+            /**
+             * @description Candidate URLs and their widths, for the `srcset` attribute
+             * @example /api/images/0f4b…/192.avif 192w, /api/images/0f4b…/288.avif 288w
+             */
+            srcset?: string;
+        };
+        /** @description A page of results with pagination metadata */
+        PageResponseVenueSummaryResponse: {
+            /** @description The items on this page */
+            content?: components["schemas"]["VenueSummaryResponse"][];
+            /**
+             * Format: int32
+             * @description Zero-based index of this page
+             * @example 0
+             */
+            page?: number;
+            /**
+             * Format: int32
+             * @description Requested page size
+             * @example 20
+             */
+            size?: number;
+            /**
+             * Format: int64
+             * @description Total number of matching items across all pages
+             * @example 137
+             */
+            totalElements?: number;
+            /**
+             * Format: int32
+             * @description Total number of pages
+             * @example 7
+             */
+            totalPages?: number;
+        };
+        /** @description Compact venue summary */
+        VenueSummaryResponse: {
+            /**
+             * Format: int64
+             * @description Database primary key
+             * @example 42
+             */
+            id?: number;
+            /**
+             * @description URL-friendly identifier
+             * @example astra-kulturhaus
+             */
+            slug?: string;
+            /**
+             * @description Display name of the venue
+             * @example Astra Kulturhaus
+             */
+            name?: string;
+            /**
+             * @description City where the venue is located
+             * @example Berlin
+             */
+            city?: string;
+            /**
+             * @description Street address of the venue
+             * @example Revaler Str. 99
+             */
+            address?: string | null;
+            /**
+             * @description Berlin borough (Bezirk) as a canonical slug
+             * @example friedrichshain-kreuzberg
+             */
+            district?: string | null;
+            /** @description URL of the venue's logo or photo */
+            imageUrl?: string | null;
+            /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+            imageSources?: components["schemas"]["ImageSourceResponse"][];
+            /**
+             * Format: int32
+             * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+             * @example 1200
+             */
+            intrinsicWidth?: number | null;
+            /**
+             * Format: int32
+             * @description Pixel height of the original image, for the `height` attribute
+             * @example 630
+             */
+            intrinsicHeight?: number | null;
+        };
+        /** @description Full venue detail */
+        VenueDetailResponse: {
+            /**
+             * Format: int64
+             * @description Database primary key
+             * @example 42
+             */
+            id?: number;
+            /**
+             * @description URL-friendly identifier
+             * @example astra-kulturhaus
+             */
+            slug?: string;
+            /**
+             * @description Display name of the venue
+             * @example Astra Kulturhaus
+             */
+            name?: string;
+            /**
+             * @description Street address of the venue
+             * @example Revaler Str. 99
+             */
+            address?: string | null;
+            /**
+             * @description City where the venue is located
+             * @example Berlin
+             */
+            city?: string;
+            /**
+             * @description Postal code of the venue's address
+             * @example 10245
+             */
+            postalCode?: string | null;
+            /**
+             * @description Berlin borough (Bezirk) as a canonical slug
+             * @example friedrichshain-kreuzberg
+             */
+            district?: string | null;
+            /**
+             * @description Geographic latitude for map display
+             * @example 52.507242
+             */
+            latitude?: number | null;
+            /**
+             * @description Geographic longitude for map display
+             * @example 13.451803
+             */
+            longitude?: number | null;
+            /** @description URL of the venue's official website */
+            websiteUrl?: string | null;
+            /** @description URL of the venue's logo or photo */
+            imageUrl?: string | null;
+            /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+            imageSources?: components["schemas"]["ImageSourceResponse"][];
+            /**
+             * Format: int32
+             * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+             * @example 1200
+             */
+            intrinsicWidth?: number | null;
+            /**
+             * Format: int32
+             * @description Pixel height of the original image, for the `height` attribute
+             * @example 630
+             */
+            intrinsicHeight?: number | null;
+            /** @description Short prose description of the venue */
+            description?: string | null;
+        };
+        /** @description A page of results with pagination metadata */
+        PageResponsePromoterSummaryResponse: {
+            /** @description The items on this page */
+            content?: components["schemas"]["PromoterSummaryResponse"][];
+            /**
+             * Format: int32
+             * @description Zero-based index of this page
+             * @example 0
+             */
+            page?: number;
+            /**
+             * Format: int32
+             * @description Requested page size
+             * @example 20
+             */
+            size?: number;
+            /**
+             * Format: int64
+             * @description Total number of matching items across all pages
+             * @example 137
+             */
+            totalElements?: number;
+            /**
+             * Format: int32
+             * @description Total number of pages
+             * @example 7
+             */
+            totalPages?: number;
+        };
+        /** @description Compact promoter summary */
+        PromoterSummaryResponse: {
+            /**
+             * Format: int64
+             * @description Database primary key
+             * @example 3
+             */
+            id?: number;
+            /**
+             * @description URL-friendly identifier
+             * @example 36-concerts
+             */
+            slug?: string;
+            /**
+             * @description Display name of the promoter
+             * @example 36 Concerts
+             */
+            name?: string;
+            /** @description URL of the promoter's website or social page */
+            websiteUrl?: string | null;
+            /** @description URL of the promoter's logo image */
+            imageUrl?: string | null;
+            /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+            imageSources?: components["schemas"]["ImageSourceResponse"][];
+            /**
+             * Format: int32
+             * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+             * @example 1200
+             */
+            intrinsicWidth?: number | null;
+            /**
+             * Format: int32
+             * @description Pixel height of the original image, for the `height` attribute
+             * @example 630
+             */
+            intrinsicHeight?: number | null;
+        };
+        /** @description Full promoter detail */
+        PromoterDetailResponse: {
+            /**
+             * Format: int64
+             * @description Database primary key
+             * @example 3
+             */
+            id?: number;
+            /**
+             * @description URL-friendly identifier
+             * @example 36-concerts
+             */
+            slug?: string;
+            /**
+             * @description Display name of the promoter
+             * @example 36 Concerts
+             */
+            name?: string;
+            /** @description URL of the promoter's website or social page */
+            websiteUrl?: string | null;
+            /** @description URL of the promoter's logo image */
+            imageUrl?: string | null;
+            /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+            imageSources?: components["schemas"]["ImageSourceResponse"][];
+            /**
+             * Format: int32
+             * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+             * @example 1200
+             */
+            intrinsicWidth?: number | null;
+            /**
+             * Format: int32
+             * @description Pixel height of the original image, for the `height` attribute
+             * @example 630
+             */
+            intrinsicHeight?: number | null;
+        };
+        /** @description Version and commit of the running backend, for the frontend footer */
+        MetaResponse: {
+            /**
+             * @description Application version. `dev` when the build did not stamp one — i.e. running from the IDE or `bootRun`.
+             * @example 0.1.0
+             */
+            version?: string;
+            /**
+             * @description Full commit SHA the running artifact was built from; null when unavailable.
+             * @example 9f1a2b3c4d5e6f708192a3b4c5d6e7f809a1b2c3
+             */
+            commit?: string | null;
+            /**
+             * @description First seven characters of `commit`, for display; null when the commit is unavailable.
+             * @example 9f1a2b3
+             */
+            commitShort?: string | null;
+            /**
+             * @description When the running artifact was built (ISO-8601); null when the build did not stamp one.
+             * @example 2026-08-07T12:49:19Z
+             */
+            buildTime?: string | null;
+        };
+        /** @description A normalized genre tag */
+        GenreTagResponse: {
+            /**
+             * Format: int64
+             * @description Database primary key
+             * @example 1
+             */
+            id?: number;
+            /**
+             * @description URL-friendly identifier
+             * @example hip-hop
+             */
+            slug?: string;
+            /**
+             * @description Canonical display name
+             * @example Hip Hop
+             */
+            name?: string;
+        };
+        /** @description Compact event summary for lists and calendar */
+        EventSummaryResponse: {
+            /**
+             * Format: int64
+             * @description Database primary key
+             * @example 101
+             */
+            id?: number;
+            /**
+             * @description URL-friendly identifier (format: {date}-{venue}-{title})
+             * @example 2026-06-18-lido-sam-prekop-john-mcentire
+             */
+            slug?: string;
+            /**
+             * @description Main headline or name of the event
+             * @example THE ADICTS
+             */
+            title?: string;
+            /** @description Secondary line, often a tour name or support acts */
+            subtitle?: string | null;
+            /**
+             * @description Kind of event
+             * @example CONCERT
+             * @enum {string}
+             */
+            eventType?: "CONCERT" | "FESTIVAL" | "PARTY" | "QUIZ" | "CLUB_NIGHT" | "SHOW" | "SCREENING" | "EXHIBITION" | "READING" | "OTHER";
+            /**
+             * @description Scheduling status of the event
+             * @example SCHEDULED
+             * @enum {string}
+             */
+            status?: "SCHEDULED" | "RELOCATED" | "CANCELLED" | "POSTPONED";
+            /**
+             * Format: date
+             * @description Calendar date of the event
+             * @example 2026-06-12
+             */
+            eventDate?: string;
+            /**
+             * @description Time when doors open to the public
+             * @example 19:00
+             */
+            doorsTime?: string | null;
+            /**
+             * @description Time when the show/performance starts
+             * @example 20:00
+             */
+            startTime?: string | null;
+            /** @description Where the poster is fetched from. A path on this origin once the environment serves cached images, and the venue's own URL until then (ADR-019). */
+            imageUrl?: string | null;
+            /** @description Better formats of the same poster, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+            imageSources?: components["schemas"]["ImageSourceResponse"][];
+            /**
+             * Format: int32
+             * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+             * @example 1200
+             */
+            intrinsicWidth?: number | null;
+            /**
+             * Format: int32
+             * @description Pixel height of the original image, for the `height` attribute
+             * @example 630
+             */
+            intrinsicHeight?: number | null;
+            /**
+             * @description True when a licence prohibition removed the image. False both when the venue published none and when one is shown — a placeholder renders either way.
+             * @example false
+             */
+            imageWithheld?: boolean;
+            /**
+             * @description Presale ticket price (Vorverkauf)
+             * @example 38
+             */
+            pricePresale?: number | null;
+            /**
+             * @description Box office ticket price (Abendkasse)
+             * @example 45
+             */
+            priceBoxOffice?: number | null;
+            /**
+             * @description ISO 4217 currency code for prices
+             * @example EUR
+             */
+            priceCurrency?: string;
+            /** @description Free-form pricing note for non-standard pricing */
+            priceNote?: string | null;
+            /**
+             * @description Whether all tickets for this event are sold out
+             * @example false
+             */
+            soldOut?: boolean;
+            /**
+             * @description Whether the event is free to attend (free entry)
+             * @example false
+             */
+            free?: boolean;
+            /** @description The venue where this event takes place */
+            venue?: components["schemas"]["VenueSummaryResponse"];
+            /**
+             * @description Artist names in billing order (headliner first)
+             * @example [
+             *       "The Adicts",
+             *       "Maid Of Ace"
+             *     ]
+             */
+            artistNames?: string[];
+            /**
+             * @description Normalized genre tags
+             * @example [
+             *       "Punk"
+             *     ]
+             */
+            genreTags?: string[];
+        };
+        /** @description A page of results with pagination metadata */
+        PageResponseEventSummaryResponse: {
+            /** @description The items on this page */
+            content?: components["schemas"]["EventSummaryResponse"][];
+            /**
+             * Format: int32
+             * @description Zero-based index of this page
+             * @example 0
+             */
+            page?: number;
+            /**
+             * Format: int32
+             * @description Requested page size
+             * @example 20
+             */
+            size?: number;
+            /**
+             * Format: int64
+             * @description Total number of matching items across all pages
+             * @example 137
+             */
+            totalElements?: number;
+            /**
+             * Format: int32
+             * @description Total number of pages
+             * @example 7
+             */
+            totalPages?: number;
+        };
+        /** @description Compact artist summary */
+        ArtistSummaryResponse: {
+            /**
+             * Format: int64
+             * @description Database primary key
+             * @example 7
+             */
+            id?: number;
+            /**
+             * @description URL-friendly identifier
+             * @example the-adicts
+             */
+            slug?: string;
+            /**
+             * @description Stage name or band name
+             * @example The Adicts
+             */
+            name?: string;
+            /** @description URL of the artist's photo or band logo */
+            imageUrl?: string | null;
+            /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+            imageSources?: components["schemas"]["ImageSourceResponse"][];
+            /**
+             * Format: int32
+             * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+             * @example 1200
+             */
+            intrinsicWidth?: number | null;
+            /**
+             * Format: int32
+             * @description Pixel height of the original image, for the `height` attribute
+             * @example 630
+             */
+            intrinsicHeight?: number | null;
+        };
+        /** @description Full event detail with embedded associations */
+        EventDetailResponse: {
+            /**
+             * Format: int64
+             * @description Database primary key
+             * @example 101
+             */
+            id?: number;
+            /**
+             * @description URL-friendly identifier (format: {date}-{venue}-{title})
+             * @example 2026-06-18-lido-sam-prekop-john-mcentire
+             */
+            slug?: string;
+            /**
+             * @description Main headline or name of the event
+             * @example THE ADICTS
+             */
+            title?: string;
+            /** @description Secondary line, often a tour name or support acts */
+            subtitle?: string | null;
+            /** @description Longer description or artist biography */
+            description?: string | null;
+            /**
+             * @description Kind of event
+             * @example CONCERT
+             * @enum {string}
+             */
+            eventType?: "CONCERT" | "FESTIVAL" | "PARTY" | "QUIZ" | "CLUB_NIGHT" | "SHOW" | "SCREENING" | "EXHIBITION" | "READING" | "OTHER";
+            /**
+             * @description Scheduling status of the event
+             * @example SCHEDULED
+             * @enum {string}
+             */
+            status?: "SCHEDULED" | "RELOCATED" | "CANCELLED" | "POSTPONED";
+            /**
+             * Format: date
+             * @description Calendar date of the event
+             * @example 2026-06-12
+             */
+            eventDate?: string;
+            /**
+             * @description Time when doors open to the public
+             * @example 19:00
+             */
+            doorsTime?: string | null;
+            /**
+             * @description Time when the show/performance starts
+             * @example 20:00
+             */
+            startTime?: string | null;
+            /** @description Where the poster is fetched from. A path on this origin once the environment serves cached images, and the venue's own URL until then (ADR-019). */
+            imageUrl?: string | null;
+            /** @description Better formats of the same poster, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+            imageSources?: components["schemas"]["ImageSourceResponse"][];
+            /**
+             * Format: int32
+             * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+             * @example 1200
+             */
+            intrinsicWidth?: number | null;
+            /**
+             * Format: int32
+             * @description Pixel height of the original image, for the `height` attribute
+             * @example 630
+             */
+            intrinsicHeight?: number | null;
+            /**
+             * @description True when a licence prohibition removed the image. False both when the venue published none and when one is shown — a placeholder renders either way.
+             * @example false
+             */
+            imageWithheld?: boolean;
+            /**
+             * @description True when a licence prohibition removed the description. False when the venue simply wrote none, which is far more common and needs no explanation.
+             * @example false
+             */
+            descriptionWithheld?: boolean;
+            /** @description Original URL on the source venue's website */
+            sourceUrl?: string | null;
+            /** @description URL to the external ticket shop */
+            ticketUrl?: string | null;
+            /** @description Direct link to the Facebook event page */
+            facebookEventUrl?: string | null;
+            /**
+             * @description Music genre or style tag (raw text from source)
+             * @example Punk
+             */
+            genre?: string | null;
+            /**
+             * @description Presale ticket price (Vorverkauf)
+             * @example 38
+             */
+            pricePresale?: number | null;
+            /**
+             * @description Box office ticket price (Abendkasse)
+             * @example 45
+             */
+            priceBoxOffice?: number | null;
+            /**
+             * @description ISO 4217 currency code for prices
+             * @example EUR
+             */
+            priceCurrency?: string;
+            /** @description Free-form pricing note for non-standard pricing */
+            priceNote?: string | null;
+            /**
+             * @description Whether all tickets for this event are sold out
+             * @example false
+             */
+            soldOut?: boolean;
+            /**
+             * @description Whether the event is free to attend (free entry)
+             * @example false
+             */
+            free?: boolean;
+            /** @description The venue where this event takes place */
+            venue?: components["schemas"]["VenueSummaryResponse"];
+            /** @description Lineup in billing order (headliner first) */
+            lineup?: components["schemas"]["LineupEntryResponse"][];
+            /** @description Promoters or presenters responsible for this event */
+            promoters?: components["schemas"]["PromoterSummaryResponse"][];
+            /**
+             * @description Normalized genre tags
+             * @example [
+             *       "Punk"
+             *     ]
+             */
+            genreTags?: string[];
+        };
+        /** @description An artist's participation in an event lineup */
+        LineupEntryResponse: {
+            /** @description The performing artist */
+            artist?: components["schemas"]["ArtistSummaryResponse"];
+            /**
+             * @description The artist's role in the lineup
+             * @example HEADLINER
+             * @enum {string}
+             */
+            role?: "HEADLINER" | "SUPPORT" | "DJ";
+            /**
+             * Format: int32
+             * @description Position in the lineup — lower numbers appear first
+             * @example 0
+             */
+            billingOrder?: number;
+            /**
+             * @description Room / stage the artist plays (multi-room venues), or null
+             * @example Panorama Bar
+             */
+            stage?: string | null;
+        };
+        /** @description A page of results with pagination metadata */
+        PageResponseArtistSummaryResponse: {
+            /** @description The items on this page */
+            content?: components["schemas"]["ArtistSummaryResponse"][];
+            /**
+             * Format: int32
+             * @description Zero-based index of this page
+             * @example 0
+             */
+            page?: number;
+            /**
+             * Format: int32
+             * @description Requested page size
+             * @example 20
+             */
+            size?: number;
+            /**
+             * Format: int64
+             * @description Total number of matching items across all pages
+             * @example 137
+             */
+            totalElements?: number;
+            /**
+             * Format: int32
+             * @description Total number of pages
+             * @example 7
+             */
+            totalPages?: number;
+        };
+        /** @description Full artist detail */
+        ArtistDetailResponse: {
+            /**
+             * Format: int64
+             * @description Database primary key
+             * @example 7
+             */
+            id?: number;
+            /**
+             * @description URL-friendly identifier
+             * @example the-adicts
+             */
+            slug?: string;
+            /**
+             * @description Stage name or band name
+             * @example The Adicts
+             */
+            name?: string;
+            /** @description Biography or description text */
+            description?: string | null;
+            /** @description URL of the artist's photo or band logo */
+            imageUrl?: string | null;
+            /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+            imageSources?: components["schemas"]["ImageSourceResponse"][];
+            /**
+             * Format: int32
+             * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+             * @example 1200
+             */
+            intrinsicWidth?: number | null;
+            /**
+             * Format: int32
+             * @description Pixel height of the original image, for the `height` attribute
+             * @example 630
+             */
+            intrinsicHeight?: number | null;
+            /** @description URL of the artist's official homepage */
+            websiteUrl?: string | null;
+            /** @description URL of the artist's Facebook page */
+            facebookUrl?: string | null;
+            /** @description URL of the artist's Instagram profile */
+            instagramUrl?: string | null;
+            /** @description URL of the artist's YouTube channel */
+            youtubeUrl?: string | null;
+        };
+    };
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
-export type $defs = Record<string, never>
+export type $defs = Record<string, never>;
 export interface operations {
-  list: {
-    parameters: {
-      query?: {
-        /** @description Case-insensitive substring filter on the venue name. Omitted/blank returns all venues. */
-        q?: string
-        /** @description District filter — only venues in the matching Berlin borough (e.g. friedrichshain-kreuzberg). Omitted/blank returns all districts. */
-        district?: string
-        /** @description Zero-based page index (0..N) */
-        page?: number
-        /** @description The size of the page to be returned */
-        size?: number
-        /** @description Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. */
-        sort?: string[]
-      }
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          '*/*': components['schemas']['PageResponseVenueSummaryResponse']
-        }
-      }
-    }
-  }
-  findBySlug: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        /**
-         * @description Unique venue slug.
-         * @example lido
-         */
-        slug: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          '*/*': components['schemas']['VenueDetailResponse']
-        }
-      }
-    }
-  }
-  list_1: {
-    parameters: {
-      query?: {
-        /** @description Case-insensitive substring filter on the promoter name. Omitted/blank returns all promoters. */
-        q?: string
-        /** @description Zero-based page index (0..N) */
-        page?: number
-        /** @description The size of the page to be returned */
-        size?: number
-        /** @description Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. */
-        sort?: string[]
-      }
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          '*/*': components['schemas']['PageResponsePromoterSummaryResponse']
-        }
-      }
-    }
-  }
-  findBySlug_1: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        /**
-         * @description Unique promoter slug.
-         * @example 36-concerts
-         */
-        slug: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          '*/*': components['schemas']['PromoterDetailResponse']
-        }
-      }
-    }
-  }
-  meta: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          '*/*': components['schemas']['MetaResponse']
-        }
-      }
-    }
-  }
-  serve: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        /** @description SHA-256 of the original bytes, lower-case hex. */
-        contentHash: string
-        /**
-         * @description Width and format, as `<width>.<format>`.
-         * @example 768.jpg
-         */
-        file: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          '*/*': string
-        }
-      }
-    }
-  }
-  list_2: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          '*/*': components['schemas']['GenreTagResponse'][]
-        }
-      }
-    }
-  }
-  list_3: {
-    parameters: {
-      query?: {
-        /** @description Earliest event date (inclusive), ISO-8601 (e.g. 2026-06-19). Defaults to today when both from/to are omitted. */
-        from?: string
-        /** @description Latest event date (inclusive), ISO-8601 (e.g. 2026-06-30). */
-        to?: string
-        /** @description Event type filter, e.g. CONCERT (case-insensitive). */
-        eventType?: string
-        /** @description Venue slug filter — only events at the matching venue. */
-        venue?: string
-        /** @description District filter — only events at venues in the matching Berlin borough (e.g. friedrichshain-kreuzberg). */
-        district?: string
-        /** @description Artist slug filter — only events featuring the matching artist. */
-        artist?: string
-        /** @description Promoter slug filter — only events from the matching promoter. */
-        promoter?: string
-        /** @description Genre tag slug filter — only events tagged with the matching genre. */
-        genre?: string
-        /** @description Minimum presale price (inclusive). Excludes events with an unknown (null) price. */
-        minPrice?: number
-        /** @description Maximum presale price (inclusive). Excludes events with an unknown (null) price. */
-        maxPrice?: number
-        /** @description Case-insensitive substring search over the event title and subtitle. */
-        q?: string
-        /** @description When true, excludes events flagged as sold out. Defaults to false (include all). */
-        excludeSoldOut?: boolean
-        /** @description When true, returns only events flagged as free to attend. Defaults to false. */
-        free?: boolean
-        /** @description Zero-based page index (0..N) */
-        page?: number
-        /** @description The size of the page to be returned */
-        size?: number
-        /** @description Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. */
-        sort?: string[]
-      }
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          '*/*': components['schemas']['PageResponseEventSummaryResponse']
-        }
-      }
-    }
-  }
-  findBySlug_2: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        /**
-         * @description Unique event slug (format: {date}-{venue}-{title}).
-         * @example 2026-06-18-lido-sam-prekop-john-mcentire
-         */
-        slug: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          '*/*': components['schemas']['EventDetailResponse']
-        }
-      }
-    }
-  }
-  today: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          '*/*': components['schemas']['EventSummaryResponse'][]
-        }
-      }
-    }
-  }
-  calendar: {
-    parameters: {
-      query: {
-        /** @description Range start date (inclusive), ISO-8601. */
-        from: string
-        /** @description Range end date (inclusive), ISO-8601. Must not precede 'from' or exceed 92 days from it. */
-        to: string
-        /** @description Event type filter, e.g. CONCERT (case-insensitive). */
-        eventType?: string
-        /** @description Venue slug filter — only events at the matching venue. */
-        venue?: string
-        /** @description District filter — only events at venues in the matching Berlin borough (e.g. friedrichshain-kreuzberg). */
-        district?: string
-        /** @description Artist slug filter — only events featuring the matching artist. */
-        artist?: string
-        /** @description Promoter slug filter — only events from the matching promoter. */
-        promoter?: string
-        /** @description Genre tag slug filter — only events tagged with the matching genre. */
-        genre?: string
-        /** @description Minimum presale price (inclusive). Excludes events with an unknown (null) price. */
-        minPrice?: number
-        /** @description Maximum presale price (inclusive). Excludes events with an unknown (null) price. */
-        maxPrice?: number
-        /** @description Case-insensitive substring search over the event title and subtitle. */
-        q?: string
-        /** @description When true, excludes events flagged as sold out. Defaults to false (include all). */
-        excludeSoldOut?: boolean
-        /** @description When true, returns only events flagged as free to attend. Defaults to false. */
-        free?: boolean
-      }
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          '*/*': components['schemas']['EventSummaryResponse'][]
-        }
-      }
-    }
-  }
-  list_4: {
-    parameters: {
-      query?: {
-        /** @description Case-insensitive substring filter on the artist name. Omitted/blank returns all artists. */
-        q?: string
-        /** @description Zero-based page index (0..N) */
-        page?: number
-        /** @description The size of the page to be returned */
-        size?: number
-        /** @description Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. */
-        sort?: string[]
-      }
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          '*/*': components['schemas']['PageResponseArtistSummaryResponse']
-        }
-      }
-    }
-  }
-  findBySlug_3: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        /**
-         * @description Unique artist slug.
-         * @example actors
-         */
-        slug: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          '*/*': components['schemas']['ArtistDetailResponse']
-        }
-      }
-    }
-  }
+    list: {
+        parameters: {
+            query?: {
+                /** @description Case-insensitive substring filter on the venue name. Omitted/blank returns all venues. */
+                q?: string;
+                /** @description District filter — only venues in the matching Berlin borough (e.g. friedrichshain-kreuzberg). Omitted/blank returns all districts. */
+                district?: string;
+                /** @description Zero-based page index (0..N) */
+                page?: number;
+                /** @description The size of the page to be returned */
+                size?: number;
+                /** @description Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. */
+                sort?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseVenueSummaryResponse"];
+                };
+            };
+        };
+    };
+    findBySlug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Unique venue slug.
+                 * @example lido
+                 */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VenueDetailResponse"];
+                };
+            };
+        };
+    };
+    list_1: {
+        parameters: {
+            query?: {
+                /** @description Case-insensitive substring filter on the promoter name. Omitted/blank returns all promoters. */
+                q?: string;
+                /** @description Zero-based page index (0..N) */
+                page?: number;
+                /** @description The size of the page to be returned */
+                size?: number;
+                /** @description Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. */
+                sort?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponsePromoterSummaryResponse"];
+                };
+            };
+        };
+    };
+    findBySlug_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Unique promoter slug.
+                 * @example 36-concerts
+                 */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PromoterDetailResponse"];
+                };
+            };
+        };
+    };
+    meta: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MetaResponse"];
+                };
+            };
+        };
+    };
+    serve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description SHA-256 of the original bytes, lower-case hex. */
+                contentHash: string;
+                /**
+                 * @description Width and format, as `<width>.<format>`.
+                 * @example 768.jpg
+                 */
+                file: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    list_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GenreTagResponse"][];
+                };
+            };
+        };
+    };
+    list_3: {
+        parameters: {
+            query?: {
+                /** @description Earliest event date (inclusive), ISO-8601 (e.g. 2026-06-19). Defaults to today when both from/to are omitted. */
+                from?: string;
+                /** @description Latest event date (inclusive), ISO-8601 (e.g. 2026-06-30). */
+                to?: string;
+                /** @description Event type filter, e.g. CONCERT (case-insensitive). */
+                eventType?: string;
+                /** @description Venue slug filter — only events at the matching venue. */
+                venue?: string;
+                /** @description District filter — only events at venues in the matching Berlin borough (e.g. friedrichshain-kreuzberg). */
+                district?: string;
+                /** @description Artist slug filter — only events featuring the matching artist. */
+                artist?: string;
+                /** @description Promoter slug filter — only events from the matching promoter. */
+                promoter?: string;
+                /** @description Genre tag slug filter — only events tagged with the matching genre. */
+                genre?: string;
+                /** @description Minimum presale price (inclusive). Excludes events with an unknown (null) price. */
+                minPrice?: number;
+                /** @description Maximum presale price (inclusive). Excludes events with an unknown (null) price. */
+                maxPrice?: number;
+                /** @description Case-insensitive substring search over the event title and subtitle. */
+                q?: string;
+                /** @description When true, excludes events flagged as sold out. Defaults to false (include all). */
+                excludeSoldOut?: boolean;
+                /** @description When true, returns only events flagged as free to attend. Defaults to false. */
+                free?: boolean;
+                /** @description Zero-based page index (0..N) */
+                page?: number;
+                /** @description The size of the page to be returned */
+                size?: number;
+                /** @description Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. */
+                sort?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseEventSummaryResponse"];
+                };
+            };
+        };
+    };
+    findBySlug_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Unique event slug (format: {date}-{venue}-{title}).
+                 * @example 2026-06-18-lido-sam-prekop-john-mcentire
+                 */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EventDetailResponse"];
+                };
+            };
+        };
+    };
+    today: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EventSummaryResponse"][];
+                };
+            };
+        };
+    };
+    calendar: {
+        parameters: {
+            query: {
+                /** @description Range start date (inclusive), ISO-8601. */
+                from: string;
+                /** @description Range end date (inclusive), ISO-8601. Must not precede 'from' or exceed 92 days from it. */
+                to: string;
+                /** @description Event type filter, e.g. CONCERT (case-insensitive). */
+                eventType?: string;
+                /** @description Venue slug filter — only events at the matching venue. */
+                venue?: string;
+                /** @description District filter — only events at venues in the matching Berlin borough (e.g. friedrichshain-kreuzberg). */
+                district?: string;
+                /** @description Artist slug filter — only events featuring the matching artist. */
+                artist?: string;
+                /** @description Promoter slug filter — only events from the matching promoter. */
+                promoter?: string;
+                /** @description Genre tag slug filter — only events tagged with the matching genre. */
+                genre?: string;
+                /** @description Minimum presale price (inclusive). Excludes events with an unknown (null) price. */
+                minPrice?: number;
+                /** @description Maximum presale price (inclusive). Excludes events with an unknown (null) price. */
+                maxPrice?: number;
+                /** @description Case-insensitive substring search over the event title and subtitle. */
+                q?: string;
+                /** @description When true, excludes events flagged as sold out. Defaults to false (include all). */
+                excludeSoldOut?: boolean;
+                /** @description When true, returns only events flagged as free to attend. Defaults to false. */
+                free?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EventSummaryResponse"][];
+                };
+            };
+        };
+    };
+    list_4: {
+        parameters: {
+            query?: {
+                /** @description Case-insensitive substring filter on the artist name. Omitted/blank returns all artists. */
+                q?: string;
+                /** @description Zero-based page index (0..N) */
+                page?: number;
+                /** @description The size of the page to be returned */
+                size?: number;
+                /** @description Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. */
+                sort?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseArtistSummaryResponse"];
+                };
+            };
+        };
+    };
+    findBySlug_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Unique artist slug.
+                 * @example actors
+                 */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ArtistDetailResponse"];
+                };
+            };
+        };
+    };
 }

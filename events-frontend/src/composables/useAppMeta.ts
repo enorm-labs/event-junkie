@@ -15,7 +15,7 @@ const meta = ref<AppMeta | null>(null)
 let inFlight: Promise<void> | null = null
 
 function load(): Promise<void> {
-  inFlight ??= unwrap(api.GET('/meta'))
+  inFlight ??= unwrap(api.GET('/api/meta'))
     .then((result) => {
       meta.value = result
     })

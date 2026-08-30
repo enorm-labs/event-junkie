@@ -51,7 +51,7 @@ export type EventFilterValues = Pick<
 /** Today's events for the Home "Tonight" section. */
 export function useTodayEvents() {
   return useAsync<EventSummary[]>(
-    () => unwrap(api.GET('/events/today')),
+    () => unwrap(api.GET('/api/events/today')),
     'errors.subject.tonightsEvents',
   )
 }
@@ -59,7 +59,7 @@ export function useTodayEvents() {
 /** First page of upcoming events from a given start date (inclusive), for the Home feed. */
 export function useUpcomingEvents(from: string, size = 12) {
   return useAsync<EventSummary[]>(async () => {
-    const page = await unwrap(api.GET('/events', { params: { query: { from, size } } }))
+    const page = await unwrap(api.GET('/api/events', { params: { query: { from, size } } }))
     return page.content ?? []
   }, 'errors.subject.upcomingEvents')
 }
@@ -74,7 +74,7 @@ export function fetchCalendarEvents(
   to: string,
   filters: EventFilterValues = {},
 ): Promise<EventSummary[]> {
-  return unwrap(api.GET('/events/calendar', { params: { query: { ...filters, from, to } } }))
+  return unwrap(api.GET('/api/events/calendar', { params: { query: { ...filters, from, to } } }))
 }
 
 /**
@@ -86,7 +86,7 @@ export function useEventSearch(
   subjectKey: ErrorSubjectKey = 'errors.subject.events',
 ) {
   return useAsync<EventPage>(
-    () => unwrap(api.GET('/events', { params: { query: params() } })),
+    () => unwrap(api.GET('/api/events', { params: { query: params() } })),
     subjectKey,
   )
 }

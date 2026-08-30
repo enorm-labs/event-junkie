@@ -2,7 +2,6 @@ package de.norm.events.image
 
 import io.swagger.v3.oas.annotations.media.Schema
 import kotlinx.coroutines.flow.toList
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.SortedSet
 
@@ -16,15 +15,7 @@ import java.util.SortedSet
 @Service
 class CachedImageGate(
     private val repository: CachedImageRepository,
-    private val properties: ImageServingProperties,
-    /**
-     * The prefix Spring itself serves this application under.
-     *
-     * Read from the framework's own property rather than configured a second time, so the URL this
-     * hands out and the path [CachedImageController] is mapped at cannot disagree. In a cluster it is
-     * `/api`; locally and in the tests it is empty, and both are correct.
-     */
-    @Value("\${spring.webflux.base-path:}") private val basePath: String
+    private val properties: ImageServingProperties
 ) {
     /**
      * Resolves [sourceUrls] to what can be served for each.
@@ -36,7 +27,7 @@ class CachedImageGate(
     suspend fun forUrls(sourceUrls: Collection<String?>): CachedImages {
         if (!properties.serving.enabled) return CachedImages.disabled()
         val distinct = sourceUrls.filterNotNull().distinct()
-        return CachedImages(if (distinct.isEmpty()) emptyMap() else lookUp(distinct), "$basePath$IMAGES_PATH")
+        return CachedImages(if (distinct.isEmpty()) emptyMap() else lookUp(distinct), IMAGES_PATH)
     }
 
     private suspend fun lookUp(sourceUrls: List<String>): Map<String, ServableImage> =

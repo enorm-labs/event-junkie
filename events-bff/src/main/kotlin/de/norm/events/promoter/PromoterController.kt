@@ -19,7 +19,7 @@ import org.springframework.web.server.ServerWebExchange
  * Public read API for promoters.
  */
 @RestController
-@RequestMapping("/promoters")
+@RequestMapping("/api/promoters")
 @Tag(name = "Promoters", description = "Public endpoints for browsing promoters")
 class PromoterController(
     private val promoterService: PromoterService

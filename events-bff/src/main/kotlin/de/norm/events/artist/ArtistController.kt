@@ -19,7 +19,7 @@ import org.springframework.web.server.ServerWebExchange
  * Public read API for artists.
  */
 @RestController
-@RequestMapping("/artists")
+@RequestMapping("/api/artists")
 @Tag(name = "Artists", description = "Public endpoints for browsing and searching artists")
 class ArtistController(
     private val artistService: ArtistService

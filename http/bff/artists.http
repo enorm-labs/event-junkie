@@ -6,7 +6,7 @@
 ### ============================================================
 
 ### List artists (default page 0, size 20, sort name)
-GET {{bff-host}}/artists
+GET {{bff-host}}/api/artists
 Accept: application/json
 
 > {%
@@ -19,21 +19,21 @@ Accept: application/json
 %}
 
 ### List artists — pagination + sort (name desc)
-GET {{bff-host}}/artists?page=0&size=5&sort=name,desc
+GET {{bff-host}}/api/artists?page=0&size=5&sort=name,desc
 Accept: application/json
 
 ### Search artists by name (case-insensitive substring)
-GET {{bff-host}}/artists?q=actors
+GET {{bff-host}}/api/artists?q=actors
 Accept: application/json
 
 ### Unknown/malicious sort is ignored (falls back to default order, not a 500)
-GET {{bff-host}}/artists?sort=name;DROP TABLE events.artist;--
+GET {{bff-host}}/api/artists?sort=name;DROP TABLE events.artist;--
 Accept: application/json
 
 ### Get artist by slug (uses the slug captured from the list request above)
-GET {{bff-host}}/artists/{{artist_slug}}
+GET {{bff-host}}/api/artists/{{artist_slug}}
 Accept: application/json
 
 ### Get artist by unknown slug (expect 404)
-GET {{bff-host}}/artists/does-not-exist
+GET {{bff-host}}/api/artists/does-not-exist
 Accept: application/json

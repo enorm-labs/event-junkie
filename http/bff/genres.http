@@ -6,5 +6,5 @@
 ### ============================================================
 
 ### List all genre tags
-GET {{bff-host}}/genres
+GET {{bff-host}}/api/genres
 Accept: application/json
