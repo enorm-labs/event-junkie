@@ -163,6 +163,65 @@ spec:
       valuesKey: O2_BASIC_AUTH_HEADER
       targetPath: exporters.otlphttp/openobserve_k8s_events.headers.Authorization
 
+  # comment-lint: allow the JSON-6902 choice and the staging-only scope are the two things a reader will want argued.
+  # **Giving the agent somewhere to remember how far it read (#950).** `filelog` has
+  # `start_at: beginning` and no checkpoint, so every restart re-reads every pod log file: the part
+  # older than 24h is refused by OpenObserve in bursts of ~2,000, and the part newer is ingested
+  # twice. Measured before this change on a window spanning no restart of its own: **617 of 2,066
+  # rows duplicated, 29.9%**, every duplicated pair at exactly 2 copies.
+  #
+  # **The chart hardcodes the agent's volumes**, with no `.Values.agent.volumes`, so the extension
+  # cannot be given a directory through values alone. This patches the rendered
+  # `OpenTelemetryCollector`; the operator propagates `spec.volumes` to the DaemonSet it creates.
+  #
+  # **JSON 6902 `add` rather than a strategic merge, and that is the trap.** kustomize has no
+  # schema for a custom resource, so a merge patch REPLACES a list rather than appending to it — a
+  # `volumes:` block here would silently drop the chart's `hostfs`, `varlog` and
+  # `varlibdockercontainers` mounts, and the agent would stop reading logs entirely while looking
+  # healthy. `/-` appends. `openobserve.yaml` uses a strategic merge for the opposite reason: its
+  # target is a StatefulSet, which kustomize does have a schema for.
+  #
+  # **The initContainer exists because a `hostPath` is created root-owned and the collector runs as
+  # UID 10001** — `fsGroup` does not apply to `hostPath`, so something has to chown it. Running the
+  # agent as root would be one line instead, and is the thing #709 is open about; this keeps the
+  # collector unprivileged and pays one 4MB image for it.
+  #
+  # **Staging only, deliberately.** The duplicate rate is measurable here and this is a first run of
+  # a mechanism with three moving parts. Production gets it once the number moves.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: OpenTelemetryCollector
+              name: o2c-openobserve-collector-agent
+            patch: |
+              - op: add
+                path: /spec/volumes/-
+                value:
+                  name: otelcol-state
+                  hostPath:
+                    path: /var/lib/otelcol-agent
+                    type: DirectoryOrCreate
+              - op: add
+                path: /spec/volumeMounts/-
+                value:
+                  name: otelcol-state
+                  mountPath: /var/lib/otelcol
+              - op: add
+                path: /spec/initContainers
+                value:
+                  - name: chown-state
+                    image: busybox:1.37.0
+                    securityContext:
+                      runAsUser: 0
+                    command:
+                      - sh
+                      - -c
+                      - chown 10001:10001 /var/lib/otelcol
+                    volumeMounts:
+                      - name: otelcol-state
+                        mountPath: /var/lib/otelcol
+
   values:
     k8sCluster: staging
     # The operator is installed above, as its own release. Leaving this true would make the chart
@@ -219,6 +278,12 @@ spec:
     # **Requests are steady state, not the ceiling** — what the scheduler needs, and what a "floor
     # before observability" sum misses entirely, an unrequested pod being invisible to it.
     agent:
+      # The offsets themselves. `directory` is the mount added by the postRenderer above, not a path
+      # the chart knows about — the two halves are useless apart.
+      extensions:
+        file_storage:
+          directory: /var/lib/otelcol
+
       # **OpenObserve indexing its own indexer, and the biggest log producer in the cluster.** The
       # chart excludes `openobserve-ingester`, which is the container name in the clustered
       # deployment. This runs `ZO_LOCAL_MODE`, where the container is `openobserve-standalone`, so
@@ -236,6 +301,8 @@ spec:
       # them re-opens a collector-logs-about-collector loop in its place.
       receivers:
         filelog/std:
+          # What makes `start_at: beginning` mean "from where I stopped" instead of "from line one".
+          storage: file_storage
           exclude:
             - /var/log/pods/*/otel-collector/*.log
             - /var/log/pods/*/otc-container/*.log
@@ -300,6 +367,17 @@ spec:
                 - set(log.body, log.cache["message"]) where log.cache["message"] != nil
 
       service:
+        # **One `service:` key, and the reason is a bug this file already produced once.** A second
+        # `service:` under `agent:` is a duplicate YAML key: the later mapping wins outright and the
+        # earlier one is dropped without a warning. `helm template` showed `extensions` back at the
+        # chart's two while every other part of the change looked right.
+        #
+        # Restated because Helm replaces lists. The first two are the chart's; without them the
+        # health probe has no endpoint and the pod never goes Ready.
+        extensions:
+          - health_check
+          - zpages
+          - file_storage
         pipelines:
           logs:
             # Restated because Helm replaces lists rather than merging them — the same trap the
