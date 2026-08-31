@@ -60,6 +60,27 @@ class CachedImageServingTest : BaseControllerTest() {
         }
 
     @Test
+    @DisplayName("two rows on one content hash still serve, rather than 500")
+    fun `a content hash held by more than one row is served`(): Unit =
+        runBlocking {
+            // What 24 of production's 1118 images looked like: a row is keyed by `source_url`, so
+            // byte-identical files published under two URLs get two live rows on one hash. The
+            // variant key derives from the hash alone, so both rows name the same object.
+            insertCachedImage(POSTER_URL, DUPLICATE_HASH, listOf(288))
+            insertCachedImage(ALTERNATE_URL, DUPLICATE_HASH, listOf(288))
+            putObject(derivedKey(DUPLICATE_HASH, 288, "jpg"), POSTER)
+
+            webTestClient
+                .get()
+                .uri("/images/$DUPLICATE_HASH/288.jpg")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .consumeWith { assertContentEquals(POSTER, it.responseBody) }
+        }
+
+    @Test
     @DisplayName("a width the generator never produced is a 404, not a resize")
     fun `an unknown variant is not found`(): Unit =
         runBlocking {
@@ -385,6 +406,10 @@ class CachedImageServingTest : BaseControllerTest() {
         /** Its own hash, because the cache outlives one test method and a shared key would leak. */
         private const val CACHED_URL = "https://venue.test/cached.jpg"
         private const val CACHED_HASH = "5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c"
+
+        /** Two source URLs on one hash, which is what makes `findStorageKey` return two rows. */
+        private const val ALTERNATE_URL = "https://venue.test/poster-copy.jpg"
+        private const val DUPLICATE_HASH = "3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f7081920"
 
         /** A row whose object was never put in the bucket. */
         private const val ORPHAN_HASH = "1a2b3c4d5e6f708192a3b4c5d6e7f8090f4b2c1d5e6a7b8c9d0e1f2a3b4c5d6e"
