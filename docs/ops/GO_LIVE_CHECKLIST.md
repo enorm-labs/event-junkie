@@ -99,13 +99,31 @@ before go-live. The drill covers staging only, so far.
 | 2026-08-31 | That monitor proven by inducing a failure                    | HEALTHCHECKS.md drill log                       |
 |            | The monitor and `SITE_URL` both name the apex                | Section 0, changes 3 and 4                      |
 |            | **Decide whether to publish an uptime badge** in `README.md` | HEALTHCHECKS.md § It is measured, not published |
-|            | **Production has any in-cluster monitoring**                 | #880                                            |
+| 2026-08-31 | **Production has any in-cluster monitoring**                 | #880, and the dashboard push below              |
 |            | Alerts reach a person                                        | #877                                            |
 |            | An alert proven by breaking something on prod                | #285                                            |
 
-**Production has no observability of its own.** OpenObserve, the collector and the nine alert rules
-run on staging and nowhere else. So the only thing that watches production is the external layer below.
-It knows that the site answers, and nothing about why. #880 is the port, and the largest single item on this list.
+**Production has its own observability now** (#880, closed). It runs OpenObserve, the collector agent and gateway,
+the OTel operator and `postgres-exporter`. It carries all eleven alert rules. So the external layer below is no
+longer the only thing watching production. That layer still gives one thing an in-cluster stack cannot: a view from
+**outside** the cluster.
+
+**Two layers are pushed by hand, and one of them was silently missing for eleven days.** OpenObserve dashboards and
+alert rules are API objects rather than Kubernetes ones, so Flux cannot reconcile them. `OPENOBSERVE.md` calls this
+the seam where GitOps stops. Production had the alert rules and **not** the dashboard, from #880 until 2026-08-31.
+Nothing reported it. A missing dashboard is not an error, it is an empty list. Someone opened the console and asked
+why it was empty.
+
+**So after any production rebuild, and after any change to either file, run both.** `EJ_NODE` selects the cluster
+and defaults to **staging**, so omitting it succeeds against the wrong one and says nothing:
+
+```sh
+cd deploy/dashboards && EJ_NODE=ops@10.10.0.1 ./apply.sh --diff   # is production running this file at all?
+cd deploy/alerts     && EJ_NODE=ops@10.10.0.1 ./apply.sh --diff   # the same question, for the rules
+```
+
+`--diff` answers "is it there", `--check` answers "do its queries return data", and neither substitutes for the
+other. Drop the flag to push. Both are idempotent — the dashboard import matches on title and replaces.
 
 **The external layer works, and a drill proved it on 2026-08-31.** `site-production` went live on 2026-08-30 and
 alarmed within hours with the site healthy. GitHub delivers about 8% of a 15-minute cron, at a median interval of 129
