@@ -2,6 +2,16 @@
 app:
   scheduling:
     enabled: false
+  metrics:
+    # **`app.scheduling.enabled` above does not reach the gauge refreshers** (#934). It gates beans
+    # that opt in, and `MetricsRefreshService` and `ImageMetricsRefreshService` are plain services.
+    # At the 60s default each queries the database every minute in every cached context, the R2DBC
+    # pools behind them accumulate, and one arbitrary test per run died on the transient exception
+    # that `53300 too_many_connections` maps to.
+    #
+    # An hour is "never" here, and **the beans stay**: two integration tests autowire them and call
+    # `refreshGauges()` themselves.
+    refresh-interval-ms: 3600000
 
 spring:
   flyway:
