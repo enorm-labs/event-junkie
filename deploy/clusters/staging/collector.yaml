@@ -69,10 +69,25 @@ spec:
       autoGenerateCert:
         enabled: true
     manager:
-      collectorImage:
-        # The `-k8s` distribution rather than `-contrib`: it carries the Kubernetes and Prometheus
-        # receivers this needs and leaves out the several hundred exporters it does not.
-        repository: otel/opentelemetry-collector-k8s
+      # comment-lint: allow an inert setting removed needs its argument recorded, or it comes back.
+      # **No `collectorImage` here, and its absence is a correction rather than an omission.** This
+      # set `otel/opentelemetry-collector-k8s`, on the argument that the `-k8s` distribution carries
+      # the Kubernetes and Prometheus receivers this needs and leaves out the several hundred
+      # exporters it does not. The argument is sound. The setting did nothing.
+      #
+      # `manager.collectorImage` supplies a **default** for collectors that do not name their own,
+      # and the OpenObserve chart pins `spec.image` on both `OpenTelemetryCollector` resources —
+      # `…/opentelemetry-collector-contrib:0.138.0`, from its own top-level `image.repository`. A
+      # default that is always overridden is never read, so both pods have run `-contrib` the whole
+      # time, which is what `kubectl -n observability get pod -o jsonpath='{.spec.containers[0].image}'`
+      # answers and what this file used to claim they did not.
+      #
+      # **The switch would be the chart's `image.repository`, not this — and it does not work
+      # today.** The gateway's `traces` pipeline uses the `servicegraph` **connector**, which is
+      # contrib-only; on `-k8s` the collector fails to start on an unknown component rather than
+      # skipping it. Nothing sends traces to that pipeline — the NetworkPolicy deliberately opens no
+      # ingress for 4317/4318 — so retiring it is what unblocks the smaller image. That is a real
+      # footprint saving and its own change, not a line to slip in here.
       resources:
         requests:
           memory: "64Mi"
