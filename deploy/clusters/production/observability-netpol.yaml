@@ -1,4 +1,4 @@
-# comment-lint: allow 13 of these lines are the arrow inventory, and the rest are silent-failure traps
+# comment-lint: allow 15 of these lines are the arrow inventory, and the rest are silent-failure traps
 # Default-deny for the `observability` namespace, plus one named allowance per real conversation
 # (#662). This replaces `openobserve-netpol.yaml`, whose egress rules are folded in below.
 #
@@ -25,6 +25,7 @@
 #     gateway          -> event-junkie:9001         prometheus-autodiscovery, the app's meters
 #     gateway          -> postgres-exporter:9187    the database's meters
 #     gateway          -> collectors:8888           the collectors' own meters
+#     gateway          -> kube-state-metrics:8080   `kube_*`, which `ej-site-down` reads
 #     agent            -> apiserver:6443            the k8sattributes processor
 #     otel-operator    -> apiserver:6443            reconciling the two collector CRs
 #     postgres-exporter-> 10.0.1.20:5432            the only pod here that may reach the private network
@@ -55,11 +56,17 @@
 # NetworkPolicy in k3s — the chart records the same, and `kubectl port-forward` arrives that way,
 # which is how anyone reaches the OpenObserve UI. Were that wrong, probes would fail and pods never
 # go Ready, which is loud. No ingress for the gateway's `otlp` receiver on 4317/4318, because nothing
-# sends to it today. No allowance for `kube-state-metrics`, which the collector chart references and
-# does not install, so that scrape has failed every cycle since #271 — an allowance would make a
-# permanently-red target look intentional. And `prometheus-autodiscovery` is bounded to
+# sends to it today. And `prometheus-autodiscovery` is bounded to
 # `event-junkie` and this namespace rather than the cluster: something annotated in `kube-system`
 # will go red, and widening is a deliberate decision naming the namespace, like every arrow above.
+# Traefik and the four `flux-system` controllers are red for exactly that reason and stay red.
+#
+# **`kube-state-metrics` was in that list and should not have been** (#926). The claim was that the
+# collector chart references it without installing it, so there was nothing to reach. The chart ships
+# it as a subchart and it runs in `kube-system` on both clusters. The allowance below is therefore a
+# correction rather than a widening: without it every `kube_*` metric is dropped at the network, and
+# `ej-site-down` — the rule #271 asked for first — cannot even be created, because OpenObserve
+# refuses an alert naming a stream that has never received a row.
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -244,6 +251,22 @@ spec:
       ports:
         - protocol: TCP
           port: 8888
+
+    # `kube-state-metrics`, the collector chart's own subchart, in `kube-system` rather than here.
+    # **This is what `ej-site-down` runs on**: `kube_deployment_status_replicas_available` arrives
+    # through this scrape and nowhere else, so the rule is not merely blind without it — it cannot be
+    # created at all. Selected by name rather than by the `o2c` release instance, so renaming the
+    # release does not silently take the alert with it.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: kube-state-metrics
+      ports:
+        - protocol: TCP
+          port: 8080
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
