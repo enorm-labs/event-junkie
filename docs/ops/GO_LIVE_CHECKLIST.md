@@ -95,8 +95,8 @@ before go-live. The drill covers staging only, so far.
 | 2026-08-21 | `walg-production` fires                                      | drill log                                       |
 | 2026-08-30 | Production records its deploys                               | #872                                            |
 | 2026-08-31 | A decision on how the site is watched from outside           | ADR-021                                         |
-|            | **The Better Stack monitor exists and polls production**     | ADR-021, HEALTHCHECKS.md                        |
-|            | That monitor proven by inducing a failure                    | HEALTHCHECKS.md drill log                       |
+| 2026-08-31 | **The Better Stack monitor exists and polls production**     | ADR-021, HEALTHCHECKS.md                        |
+| 2026-08-31 | That monitor proven by inducing a failure                    | HEALTHCHECKS.md drill log                       |
 |            | The monitor and `SITE_URL` both name the apex                | Section 0, changes 3 and 4                      |
 |            | **Decide whether to publish an uptime badge** in `README.md` | HEALTHCHECKS.md § It is measured, not published |
 |            | **Production has any in-cluster monitoring**                 | #880                                            |
@@ -105,14 +105,18 @@ before go-live. The drill covers staging only, so far.
 
 **Production has no observability of its own.** OpenObserve, the collector and the nine alert rules
 run on staging and nowhere else. So the only thing that watches production is the external layer below.
-It notices total death and nothing less than that. #880 is the port, and the largest single item on this list.
+It knows that the site answers, and nothing about why. #880 is the port, and the largest single item on this list.
 
-**The external layer is fixed in the repository and not yet in the console.** `site-production` went live on
-2026-08-30 and alarmed within hours with the site healthy. GitHub delivers about 8% of a 15-minute cron, at a median
-interval of 129 minutes. #889 replaced the shape rather than the numbers. A Better Stack monitor polls every three
-minutes and alerts in about six. The probe stays as a daily dead-man's switch at `24h`/`24h`. ADR-021 has the
-reasoning. **The probe change is in this repository. Creating the monitor is a console step**, and it is the row above
-that carries no date.
+**The external layer works, and a drill proved it on 2026-08-31.** `site-production` went live on 2026-08-30 and
+alarmed within hours with the site healthy. GitHub delivers about 8% of a 15-minute cron, at a median interval of 129
+minutes. #889 replaced the shape rather than the numbers. A Better Stack monitor polls every three minutes and alerts
+in about six. The probe stays as a daily dead-man's switch at `24h`/`24h`, and it asserts the monitor's own settings
+against the repository once a day. ADR-021 has the reasoning.
+
+**One hop was genuinely in doubt and is now measured.** The free plan carries no on-call schedule, so nothing
+established that an alert routed to a human. The drill changed the monitor's keyword to a string the site does not
+serve, and the e-mail arrived. **The row _Alerts reach a person_ above still refers to the in-cluster path** (#877,
+OpenObserve to Signal). That is a different chain, and it stays unbuilt.
 
 ### Content and data
 
