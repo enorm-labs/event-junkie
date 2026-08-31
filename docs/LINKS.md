@@ -111,7 +111,9 @@ Two layers, and the second is not optional: an alerting path that runs on the no
 
 | Link                                               | What it is                                                                                   | Status                                                                            |
 | -------------------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| <https://healthchecks.io>                          | **The dead-man's switch**, deliberately off Hetzner. One account, one project, one channel   | Live — `walg-staging`, `walg-production`                                          |
+| <https://uptime.betterstack.com>                   | **The site monitor**, off Hetzner. Polls every 3 min, alerts on a failure (ADR-021)          | Live — `site-production`, monitor `4876693`                                       |
+| <https://betterstack.com/docs/uptime/api/>         | The Uptime API. `BETTERSTACK_API_TOKEN` reads the monitor back, so CI can assert it          | Live — asserted daily by `site-probe.yml`                                         |
+| <https://healthchecks.io>                          | **The dead-man's switches.** Silence is the alarm, so it survives what it watches            | Live — `walg-staging`, `walg-production`, `site-production`                       |
 | `https://hc-ping.com/<uuid>`                       | The ping endpoint. **Every ping URL is a credential** — see CREDENTIALS.md                   | Live                                                                              |
 | <https://github.com/openobserve/openobserve>       | OpenObserve — logs, metrics, dashboards, alerting. AGPL-3.0, in-cluster, Parquet to `-o2`    | **Deployed on staging.** Operating it: [`ops/OPENOBSERVE.md`](ops/OPENOBSERVE.md) |
 | <https://github.com/bbernhard/signal-cli-rest-api> | The Signal alert bridge — OpenObserve webhook → signal-cli. Needs its own prepaid number     | **Deployed, unregistered** — no number yet (#271)                                 |
@@ -203,20 +205,20 @@ The docs actually consulted while working on this repository, rather than a link
 
 ## 10. Where the detail lives, in this repository
 
-| Document                                                    | Answers                                                                            |
-| ----------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| [`docs/ops/PLATFORM_SETUP.md`](ops/PLATFORM_SETUP.md)       | The whole platform plan — sizing, what to order, what runs where                   |
-| [`docs/ops/CLUSTER_BOOTSTRAP.md`](ops/CLUSTER_BOOTSTRAP.md) | Standing a cluster up from nothing, including every hand-made secret               |
-| [`docs/ops/CLUSTER_ACCESS.md`](ops/CLUSTER_ACCESS.md)       | Day-to-day access: WireGuard, kubeconfig, the database                             |
-| [`docs/ops/DAILY_COMMANDS.md`](ops/DAILY_COMMANDS.md)       | The same commands with the reasoning stripped out, plus `scripts/shell-aliases.sh` |
-| [`docs/ops/OPENOBSERVE.md`](ops/OPENOBSERVE.md)             | Operating OpenObserve — streams, filters, dashboards, upgrades                     |
-| [`docs/ops/COSTS.md`](ops/COSTS.md)                         | What it costs to run, measured from the API rather than the price list             |
-| [`docs/ops/EMAIL.md`](ops/EMAIL.md)                         | Ordering the role mailboxes at Hetzner, and the DNS records that change with them  |
-| [`docs/ops/SECRETS.md`](ops/SECRETS.md)                     | SOPS + age, and why two of three secrets are encrypted into a public repo          |
-| [`docs/ops/BACKUPS.md`](ops/BACKUPS.md)                     | `wal-g`, retention, and how you know it is working                                 |
-| [`docs/ops/RESTORE_RUNBOOK.md`](ops/RESTORE_RUNBOOK.md)     | Restoring, including PITR                                                          |
-| [`docs/ops/HEALTHCHECKS.md`](ops/HEALTHCHECKS.md)           | The dead-man's switch, and how to prove one fires                                  |
-| [`docs/ops/GO_LIVE_CHECKLIST.md`](ops/GO_LIVE_CHECKLIST.md) | What must be true before the domain resolves, and the two changes that make it     |
-| [`docs/ops/RELEASING.md`](ops/RELEASING.md)                 | Commit → image → chart → cluster                                                   |
-| [`docs/LEGAL.md`](LEGAL.md)                                 | Processors, the AVV, the imprint, what is not signed off                           |
-| [`infra/README.md`](../infra/README.md)                     | The OpenTofu operator's guide, and the three things only a human can do            |
+| Document                                                    | Answers                                                                                       |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [`docs/ops/PLATFORM_SETUP.md`](ops/PLATFORM_SETUP.md)       | The whole platform plan — sizing, what to order, what runs where                              |
+| [`docs/ops/CLUSTER_BOOTSTRAP.md`](ops/CLUSTER_BOOTSTRAP.md) | Standing a cluster up from nothing, including every hand-made secret                          |
+| [`docs/ops/CLUSTER_ACCESS.md`](ops/CLUSTER_ACCESS.md)       | Day-to-day access: WireGuard, kubeconfig, the database                                        |
+| [`docs/ops/DAILY_COMMANDS.md`](ops/DAILY_COMMANDS.md)       | The same commands with the reasoning stripped out, plus `scripts/shell-aliases.sh`            |
+| [`docs/ops/OPENOBSERVE.md`](ops/OPENOBSERVE.md)             | Operating OpenObserve — streams, filters, dashboards, upgrades                                |
+| [`docs/ops/COSTS.md`](ops/COSTS.md)                         | What it costs to run, measured from the API rather than the price list                        |
+| [`docs/ops/EMAIL.md`](ops/EMAIL.md)                         | Ordering the role mailboxes at Hetzner, and the DNS records that change with them             |
+| [`docs/ops/SECRETS.md`](ops/SECRETS.md)                     | SOPS + age, and why two of three secrets are encrypted into a public repo                     |
+| [`docs/ops/BACKUPS.md`](ops/BACKUPS.md)                     | `wal-g`, retention, and how you know it is working                                            |
+| [`docs/ops/RESTORE_RUNBOOK.md`](ops/RESTORE_RUNBOOK.md)     | Restoring, including PITR                                                                     |
+| [`docs/ops/HEALTHCHECKS.md`](ops/HEALTHCHECKS.md)           | Watching from outside: the site monitor, the dead-man's switches, and how to prove each fires |
+| [`docs/ops/GO_LIVE_CHECKLIST.md`](ops/GO_LIVE_CHECKLIST.md) | What must be true before the domain resolves, and the four changes that make it               |
+| [`docs/ops/RELEASING.md`](ops/RELEASING.md)                 | Commit → image → chart → cluster                                                              |
+| [`docs/LEGAL.md`](LEGAL.md)                                 | Processors, the AVV, the imprint, what is not signed off                                      |
+| [`infra/README.md`](../infra/README.md)                     | The OpenTofu operator's guide, and the three things only a human can do                       |

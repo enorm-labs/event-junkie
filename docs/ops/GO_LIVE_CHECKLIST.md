@@ -21,12 +21,23 @@ flux --context event-junkie-production reconcile source oci event-junkie -n flux
 
 ## 0 · The launch itself
 
-Going live is **two changes in two places**. Neither works alone.
+Going live is **four changes in four places**. The first two serve the site. The last two stop the monitoring from
+alarming about it.
 
-| #   | Change                                                                      | File                                           |
+| #   | Change                                                                      | Where                                          |
 | --- | --------------------------------------------------------------------------- | ---------------------------------------------- |
 | 1   | `publish_dns` from `false` to `true`, then apply                            | `infra/environments/production/variables.tf`   |
 | 2   | `ingress.host` back to the apex, `redirectHosts` restored, `noindex: false` | `deploy/clusters/production/helm-release.yaml` |
+| 3   | **Delete the `SITE_URL` repository variable**                               | GitHub → Settings → Variables                  |
+| 4   | **Point the Better Stack monitor at the apex**                              | the Better Stack console, monitor `4876693`    |
+
+**Changes 3 and 4 are not tidying, and forgetting them alarms you on launch day.** `prod-check.event-junkie.de` stops
+resolving the moment change 1 applies. The daily probe then fails against a name that is gone and pings
+healthchecks.io `/fail`. The Better Stack monitor reports the site down while it is up. Two false alarms, in the hour
+you least want them.
+
+Change 3 is a **deletion**, not an edit. `site-probe.yml` falls back to the apex when the variable is absent, and that
+is the value that should survive somebody forgetting this page exists.
 
 `scripts/cluster-assertions.sh` fails the build if you do half of change 2. It ties `noindex` to the
 hostname. The apex with `noindex` on is an invisible launch. The rehearsal host without it is an
@@ -79,25 +90,29 @@ before go-live. The drill covers staging only, so far.
 
 ### Monitoring and alerting
 
-| Done       | Item                                                       | Evidence  |
-| ---------- | ---------------------------------------------------------- | --------- |
-| 2026-08-21 | `walg-production` fires                                    | drill log |
-| 2026-08-30 | Production records its deploys                             | #872      |
-|            | `site-production` reports the site, not GitHub's scheduler | #889      |
-|            | **Production has any in-cluster monitoring**               | #880      |
-|            | Alerts reach a person                                      | #877      |
-|            | An alert proven by breaking something on prod              | #285      |
+| Done       | Item                                                         | Evidence                                        |
+| ---------- | ------------------------------------------------------------ | ----------------------------------------------- |
+| 2026-08-21 | `walg-production` fires                                      | drill log                                       |
+| 2026-08-30 | Production records its deploys                               | #872                                            |
+| 2026-08-31 | A decision on how the site is watched from outside           | ADR-021                                         |
+|            | **The Better Stack monitor exists and polls production**     | ADR-021, HEALTHCHECKS.md                        |
+|            | That monitor proven by inducing a failure                    | HEALTHCHECKS.md drill log                       |
+|            | The monitor and `SITE_URL` both name the apex                | Section 0, changes 3 and 4                      |
+|            | **Decide whether to publish an uptime badge** in `README.md` | HEALTHCHECKS.md § It is measured, not published |
+|            | **Production has any in-cluster monitoring**                 | #880                                            |
+|            | Alerts reach a person                                        | #877                                            |
+|            | An alert proven by breaking something on prod                | #285                                            |
 
 **Production has no observability of its own.** OpenObserve, the collector and the nine alert rules
-run on staging and nowhere else. So the only thing that watches production is the external
-healthchecks.io layer. It notices total death and nothing less than that. #880 is the port, and the
-largest single item on this list.
+run on staging and nowhere else. So the only thing that watches production is the external layer below.
+It notices total death and nothing less than that. #880 is the port, and the largest single item on this list.
 
-**The external layer is degraded too, and that is new.** `site-production` went live on 2026-08-30 and
-alarmed within hours with the site healthy. GitHub does not run the probe's 15-minute cron: the median
-interval measured 129 minutes. The check now sits at `3h`/`3h`. That stops the flapping. It also delays
-a real outage report by up to six hours. #889 has the measurement and the options. **So neither layer
-watches production properly today.**
+**The external layer is fixed in the repository and not yet in the console.** `site-production` went live on
+2026-08-30 and alarmed within hours with the site healthy. GitHub delivers about 8% of a 15-minute cron, at a median
+interval of 129 minutes. #889 replaced the shape rather than the numbers. A Better Stack monitor polls every three
+minutes and alerts in about six. The probe stays as a daily dead-man's switch at `24h`/`24h`. ADR-021 has the
+reasoning. **The probe change is in this repository. Creating the monitor is a console step**, and it is the row above
+that carries no date.
 
 ### Content and data
 

@@ -1,6 +1,11 @@
-# Dead-man's switches on healthchecks.io
+# Watching from outside the cluster
 
-How the external alerting works, how to add a check when an environment appears, and how to prove one actually fires.
+How the external alerting works, how to add a check or a monitor when an environment appears, and how to prove each one
+actually fires.
+
+**Two mechanisms live here, and they are not interchangeable.** healthchecks.io holds the dead-man's switches, which
+alarm on silence. Better Stack polls the public site and alarms on a failure. [ADR-021](../adr/ADR-021_PUBLIC_SITE_MONITORING.md)
+records why the site needs both and the backups need only one.
 
 ## The short version
 
@@ -9,7 +14,8 @@ sudo -u postgres /usr/local/bin/walg check     # on the node: pings on success, 
 sudo grep -c '^HEALTHCHECK_URL=' /etc/wal-g/credentials.env   # expect exactly 1, never 2
 ```
 
-- **Two checks per environment**, `walg-<environment>` and `site-<environment>`. One account, one project, one channel.
+- **Two healthchecks.io checks per environment**, `walg-<environment>` and `site-<environment>`. One account, one project, one channel.
+- **One Better Stack monitor per public environment**, `site-<environment>`. It polls every three minutes and alerts in about six.
 - **The node pings out on success.** Silence is the alarm, so the alerting survives the thing it watches.
 - **A ping URL is a credential.** It lives on the node and nowhere else.
 - **A check nobody saw fire proves nothing.** Induce the disk assertion — §Proving it fires.
@@ -30,22 +36,30 @@ when the thing it watches does not. healthchecks.io is deliberately off Hetzner 
 **One account, one project, one notification channel** for all of these. A second notification stack is the avoidable mistake: it is one more thing to configure
 correctly, and its own failure is silent by construction.
 
+**Better Stack is a second stack, and it is the deliberate exception.** The rule above is about notification paths that
+duplicate each other. This one does not duplicate. healthchecks.io can only alarm on silence, so it can never report an
+outage faster than the period it waits out. [ADR-021](../adr/ADR-021_PUBLIC_SITE_MONITORING.md) has the argument.
+**Point it at the same destination as the healthchecks.io channel.** Two senders and one inbox keeps the cost of the
+exception to configuration, and does not add a second place to look.
+
 ## What is watched
 
-| Check                | Watches                                                 | Pinged by                                                             | Issue |
-| -------------------- | ------------------------------------------------------- | --------------------------------------------------------------------- | ----- |
-| `walg-<environment>` | PostgreSQL backups are healthy                          | `walg check`, hourly via `walg-check.timer`, on success               | #518  |
-| `site-<environment>` | DNS, TLS, the ingress and the application, from outside | `.github/workflows/site-probe.yml`, every 15 minutes, on success only | #271  |
+| Check                | Watches                                                 | Pinged by                                                      | Issue |
+| -------------------- | ------------------------------------------------------- | -------------------------------------------------------------- | ----- |
+| `walg-<environment>` | PostgreSQL backups are healthy                          | `walg check`, hourly via `walg-check.timer`, on success        | #518  |
+| `site-<environment>` | DNS, TLS, the ingress and the application, from outside | `.github/workflows/site-probe.yml`, **daily**, on success only | #889  |
+
+**A third row is not a healthchecks.io check at all.** The Better Stack monitor watches the same things as
+`site-<environment>`, every three minutes instead of once a day. It alerts on a failure rather than on silence. It is
+the path that reports a real outage. The daily check is the path that does not share a fate with it.
 
 `site-staging` is not a check anybody should create. Staging has no public `A` record and no public
 80/443, so nothing outside can probe it. `site-production` is the only one of that row that can
 exist before go-live.
 
-**The site probe is built and deliberately dormant.** It skips, and says so in its job summary, while
-`HEALTHCHECKS_PING_URL` is unset. That is the state today, because there is nothing public to probe.
-Staging is not on the internet by design ([PLATFORM_SETUP](PLATFORM_SETUP.md) §4a), and production is
-[#285](https://github.com/enorm-labs/event-junkie/issues/285). Setting the secret is the whole
-activation, and the workflow needs no change.
+**The site probe is armed.** `HEALTHCHECKS_PING_URL` was set on 2026-08-30, and `SITE_URL` points the workflow at
+`prod-check.event-junkie.de`. The probe still skips when the secret is absent, which is the state any new environment
+starts in. Staging is not on the internet by design ([PLATFORM_SETUP](PLATFORM_SETUP.md) §4a), so it never gets one.
 
 A silent skip would be the wrong shape here, because this repository was bitten twice by one.
 So the skip is loud in the Actions tab, rather than a green tick that means nothing.
@@ -102,47 +116,129 @@ its assertions is reported after **26h + 2h ≈ 28 hours**. At `1h`/`2h` it woul
 Neither is wrong. **28 hours is well inside the window that matters for a backup.** The thing being protected is a restore nobody needed yet, not a serving path.
 And a longer period is the one that cannot produce a false alarm. Change it deliberately, and change it in both places: here and the check.
 
-## Creating a check for the site probe
+## Watching the site: two paths, created separately
+
+The site needs both. Create the monitor first, because it is the one that reports a real outage.
+
+### 1. The Better Stack monitor — the fast path
+
+**Set _Alert us when_ to `URL doesn't contain keyword` first.** The monitor type defaults to
+`URL becomes unavailable`, and the keyword field stays hidden and disabled until you change it. Nothing on the page
+says the field is one dropdown away, so it reads as a missing feature.
+
+**The keyword type does not replace the availability check.** It raises an incident when the page does not contain the
+keyword **or** when the URL becomes unavailable. So one monitor still covers DNS failure, a bad certificate, ingress
+misrouting and a non-200.
+
+| Field                           | Value                                             | Why exactly this                                                                                                           |
+| ------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Alert us when**               | `URL doesn't contain keyword`                     | **Do this first.** The keyword field is hidden under every other type                                                      |
+| **Keyword to find on the page** | `Event Junkie`                                    | The product name, not a layout detail. A redesign must not alert, a wrong page must. Matching is case insensitive          |
+| **URL**                         | what production actually serves                   | `prod-check.event-junkie.de` today. The apex at go-live — change it in both places                                         |
+| **Pronounceable monitor name**  | `site-<environment>`                              | Defaults to the hostname. Rename it to match the healthchecks.io check                                                     |
+| **Check frequency**             | `3 minutes`                                       | The floor on the free plan. Everything faster is disabled. An outage reaches somebody in about six minutes                 |
+| **Confirmation period**         | `3 minutes`                                       | Defaults to immediate. One blip must never alert, or the alert gets muted. This is the probe's `--retry 3`, in their words |
+| **HTTP method**                 | `GET`                                             | As the probe does                                                                                                          |
+| **Request timeout**             | `30 seconds`                                      |                                                                                                                            |
+| **SSL/TLS verification**        | `On`                                              | Free. An expired or untrusted certificate then fails the check                                                             |
+| **Regions**                     | Europe                                            |                                                                                                                            |
+| **Notify**                      | E-mail, to the same address as the shared channel | **Never the in-cluster Signal bridge**, or both layers die together                                                        |
+
+**Two things the free plan does not give, and neither is a gap worth paying for today.**
+
+- **Advance warning of certificate expiry.** _SSL expiration_ and _Domain expiration_ are upgrade-only. Leave both at
+  "Don't check". The certificate is still watched, because _SSL/TLS verification_ is on and an expired certificate
+  fails the check. What is missing is the warning **before** it expires, and `ej-certificate-expiry` in OpenObserve is
+  the rule that does that.
+- **Call, SMS and push.** E-mail is the only free channel, and it is the one this project uses.
+
+**No drill proved that the alert reaches a person. That is the open question.** _Notify the primary responder_ reads
+the primary on-call schedule. **On-call scheduling is a Responder feature.** The free plan does not carry it, and the
+console warns that there is no one to notify. So where the e-mail lands stays a guess until somebody receives one.
+
+**A monitor that alerts nobody is the exact failure this whole page exists to prevent**, and it is indistinguishable
+from a working one. Only the drill below settles it. Run it before ticking any go-live row.
+
+### The console is checked against the repository, once a day
+
+The settings above live in a form, and a form is not reviewed. So `site-probe.yml` reads the monitor back over the
+Better Stack API and asserts ten of its fields, `SITE_URL` and the keyword included. **Drift turns the workflow red and
+leaves the check green.** The site is up, and the console moved. Those are different facts, and they are reported
+differently.
+
+`BETTERSTACK_API_TOKEN` is the repository secret that permits it. **Use an Uptime API token, scoped to the team, not a
+global one.** The API offers no read-only scope, so the token that reads a monitor can also delete it. It is therefore
+used for exactly one `GET`, in a job that checks out no code. The probe says so in its job summary when the secret is
+absent, rather than passing quietly.
+
+The monitor's id is `4876693`, and `BETTERSTACK_MONITOR_ID` overrides it for a new environment.
+
+**Proven on 2026-08-31, because a check nobody saw fire proves nothing.** The drill changed one expected value in the
+workflow, from a 180-second check frequency to 300. The probe step stayed green and pinged as usual. The assertion step
+failed with `Monitor 4876693: check_frequency is '180', this repository says '300'`. That is the split this design
+wants: the site was up, and only the comparison failed. The change was then reverted.
+
+### 2. The healthchecks.io check — the slow path
 
 | Field        | Value                | Why exactly this                                                                                                  |
 | ------------ | -------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| **Name**     | `site-<environment>` | Same per-environment rule as the backup check, and for the same reason                                            |
+| **Name**     | `site-<environment>` | The same name as the monitor above, on purpose. They watch the same thing                                         |
 | **Schedule** | Simple               | As above                                                                                                          |
-| **Period**   | `3h`                 | **Not the workflow's cron.** It tracks what GitHub actually does, which is not what the cron asks for — see below |
-| **Grace**    | `3h`                 | **The load-bearing number** — see below                                                                           |
+| **Period**   | `24h`                | **Not the workflow's cron.** It tracks what GitHub actually does, which is not what the cron asks for — see below |
+| **Grace**    | `24h`                | 48 hours of tolerance against a 34-hour worst observed gap. **The load-bearing number** — see below               |
 | **Channel**  | the shared one       | See above                                                                                                         |
 
 Then add the ping URL as the **`HEALTHCHECKS_PING_URL`** repository secret. Nothing else activates it.
 
+**Run `gh workflow run site-probe.yml` after you change either number.** The check then goes green within seconds,
+rather than a day later. Do not wait for the schedule to tell you whether you typed the period correctly.
+
 ### The cron is a request, and GitHub refuses it
 
-`site-probe.yml` asks for a run every 15 minutes. **It does not get one.** Measured over 30 scheduled
-runs on 2026-08-30:
+`site-probe.yml` asked for a run every 15 minutes. **It did not get one.** Measured first over 30 scheduled runs on
+2026-08-30, and again over five days to 2026-08-31:
 
-| Interval between scheduled runs | Value       |
-| ------------------------------- | ----------- |
-| Asked for                       | 15 min      |
-| Shortest actual                 | 29 min      |
-| **Median actual**               | **129 min** |
-| Longest actual                  | 678 min     |
-| Gaps longer than 30 min         | 28 of 29    |
+| Interval between scheduled runs | Value                       |
+| ------------------------------- | --------------------------- |
+| Asked for                       | 15 min                      |
+| Shortest actual                 | 29 min                      |
+| **Median actual**               | **129 min**                 |
+| Longest actual                  | 678 min                     |
+| Gaps longer than 30 min         | 37 of 38                    |
+| Runs delivered                  | **39 of 480 requested, 8%** |
 
 This page prescribed `15m`/`30m` before, on the reasoning that a grace of double the period absorbs one
 missed run. **The reasoning is sound. The numbers were 4 to 20 times too small.** The check went live on
 2026-08-30 and alarmed within hours. The site was healthy for all of that time: no pod restarts, the
 node at 25% CPU, and ten `200` responses in sequence.
 
-`site-probe.yml` is the only high-frequency schedule in this repository. The others are daily or weekly.
-None of them shows this. A 15-minute cron on shared runners is what GitHub holds back.
+**The second measurement is the one that decided it.** A single bad day is an Actions incident. Five days is a policy.
 
-**`3h`/`3h` is a holding position, not an answer.** It stops the flapping. It also delays the report of
-an outage by up to six hours. That is an alarm for a dead server, not availability monitoring, and it
-puts the figure in _Availability, as a number_ out of reach.
+### The daily schedules are honoured, and that is where `24h` comes from
 
-**The problem is the shape, not the numbers.** A monitor with less reliable liveness than the thing it
-watches teaches you to ignore it. [#889](https://github.com/enorm-labs/event-junkie/issues/889) carries
-the options. The likely answer is an external HTTP uptime monitor. A fetch of a URL and an assertion on
-the result is what those do. No cron can hold them back.
+The same repository, measured the same way:
+
+| Workflow                         | Cron         | Median gap | Worst gap |
+| -------------------------------- | ------------ | ---------- | --------- |
+| `dependency-check-scheduled.yml` | `17 3 * * *` | 24.0 h     | 34.2 h    |
+| `image-scan-scheduled.yml`       | `41 4 * * *` | 25.5 h     | 34.3 h    |
+
+GitHub holds back the high-frequency cron and delivers the daily ones. So the probe now runs daily, and its check sits
+at `24h`/`24h`. That is 48 hours of tolerance against a 34-hour worst case.
+
+**Derive both numbers from this table, never from the cron line.** Reading the cron and doubling it is what produced
+the flapping.
+
+### The daily check is no longer the thing that reports an outage
+
+A 48-hour tolerance is an alarm for a dead server, and it is not availability monitoring. That is why
+[ADR-021](../adr/ADR-021_PUBLIC_SITE_MONITORING.md) put a Better Stack monitor in front of it. **A monitor with less
+reliable liveness than the thing it watches teaches you to ignore it.** That was the real defect in the 15-minute
+cron. The site was up for every one of the intervals that breached the old grace.
+
+The daily check keeps its place for one reason. It runs on different infrastructure, on a different schedule, and it
+alarms in a different direction. **It watches the site, and not the monitor.** Nothing detects Better Stack going quiet
+except Better Stack. What the second path buys is independence of fate.
 
 **None of this applies to the backup checks.** `walg-<environment>` pings from a systemd timer on a node
 we control, for a job that pings on success. That is the shape healthchecks.io is for, and its `26h`/`2h`
@@ -237,43 +333,56 @@ No request body was sent, so the §Privacy assessment below is unaffected.
 
 ## Availability, as a number
 
-The site probe is already an availability measurement, not only an alert. It resolves the hostname,
-fetches the site over the internet, and asserts the status and the body. A record of those outcomes
-answers "how much of the month was the site up". That is a different question from "is it down now". An alert tells you about the outage you are having. A number tells you whether the
-platform is getting better or worse (#271).
+An alert tells you about the outage you are having. A number tells you whether the platform is getting better or worse
+([#271](https://github.com/enorm-labs/event-junkie/issues/271)). **The window is a rolling 30 days, and a figure per
+calendar month.** The rolling number is the operational one. The monthly one is the trend, and it is the reason the
+history has to outlive any one tool's own.
 
-**The window is a rolling 30 days, and a figure per calendar month.** The rolling number is the
-operational one. The monthly one is the trend, and it is the reason the history has to outlive the
-probe's own.
+### The Better Stack monitor is the source, and the daily probe is not
 
-### healthchecks.io keeps about a day of it, so it cannot be the record
+A check that runs once a day cannot measure availability. It samples 1 point where the monitor samples 480. So the
+daily probe answers "is it dead" and never "how much of the month was it up".
 
-The free plan keeps **100 log entries per check**. The site probe pings every 15 minutes, which is 96
-pings a day. So its history covers about **25 hours**. That is enough to see the outage you are in and
-far too little for a monthly figure.
+**The monitor produces the figure directly.** It polls every three minutes, records each outcome, and reports uptime
+per period in its own console. So the figure stopped waiting on anything inside the cluster.
 
-The long-term store is therefore OpenObserve, which already retains metrics in the Object Storage
-bucket under a retention policy (ADR-015). The probe writes its outcome there as a metric, beside the
-rest.
+### healthchecks.io could never have been the record
 
-**Neither half is live yet, and each waits on something different:**
+The free plan keeps **100 log entries per check**. That covered about 25 hours when the probe pinged every 15 minutes,
+and it covers about 100 days now that it pings daily. Neither is a monthly figure. The check records that a ping
+arrived, and not what the site was doing between pings.
 
-| Part                     | Waits on                                                                           |
-| ------------------------ | ---------------------------------------------------------------------------------- |
-| The probe running at all | `HEALTHCHECKS_PING_URL`, which nobody has set. **Nothing else blocks it any more** |
-| Writing the metric       | OpenObserve on production, which does not run there at all (#880)                  |
+### What is still open
 
-Until both are true there is no figure, and this section describes the design rather than a thing you
-can read today.
+| Part                                  | Waits on                                                        |
+| ------------------------------------- | --------------------------------------------------------------- |
+| The figure existing at all            | **Nothing. Create the monitor**                                 |
+| Retention past the free plan's window | Confirm the plan's history window in the console, and see below |
 
-**The first row stopped being blocked on 2026-08-30.** It used to wait on a public site. Production
-now serves `prod-check.event-junkie.de` over a real certificate, and the `SITE_URL` repository
-variable points the workflow at that name. So the probe is one secret away from running, and the
-section below is how to create the check that produces it.
+**The free plan's uptime-history window is not documented, and the number in circulation is the wrong one.** Better
+Stack's pricing page states 3-day retention for **logs, traces and web events**, which are the Telemetry product.
+It states nothing for monitor and incident history. Comparison articles repeat the 3-day figure as though it covered
+uptime, and that is a conflation rather than a source.
 
-**This does not re-open the LEGAL.md §14 assessment.** That assessment holds because the ping to
-healthchecks.io carries no body. The metric goes to OpenObserve, which is ours, so the ping stays a
-bare `GET` to an opaque UUID. Sending the number to healthchecks.io instead **would** re-open it.
+**Settle it by measurement on 2026-09-04, not by reading.** The monitor started on 2026-08-31, so four days later this
+either still reports that first day or it does not:
+
+```sh
+curl -sS -H "Authorization: Bearer $TOKEN" \
+  "https://uptime.betterstack.com/api/v2/monitors/4876693/sla?from=2026-08-31&to=2026-08-31"
+```
+
+Record the answer here. If the window is shorter than a rolling 30 days, the long-term store is OpenObserve. OpenObserve already retains metrics in the Object
+Storage bucket under a retention policy ([ADR-015](../adr/ADR-015_OBSERVABILITY_STACK.md)). That path needs
+OpenObserve on production, which does not run there at all
+([#880](https://github.com/enorm-labs/event-junkie/issues/880)).
+
+**#880 therefore changed shape.** It used to block the figure. It now only blocks keeping the figure for longer than
+the monitor keeps it.
+
+**This does not re-open the LEGAL.md §14 assessment**, and §14 records the reasoning for both services. The
+healthchecks.io ping stays a bare `GET` to an opaque UUID with no body. The monitor fetches a public page and receives
+no personal data. Sending a number to either as a payload **would** re-open it.
 
 ### It is measured, not published
 
@@ -281,7 +390,19 @@ Availability is for operators. There is no public status page and no uptime badg
 decision rather than an omission. Publishing a number is a transparency commitment to venues and
 visitors, and it is worth making deliberately rather than discovering it when somebody asks.
 
-**Revisit at launch** (#285). A figure nobody reads yet is a poor basis for a public promise.
+**Revisit at launch** (#285), and the go-live checklist carries the row. A figure nobody reads yet is a poor basis for
+a public promise.
+
+**Better Stack makes publishing a one-line change, which is the reason to decide it on purpose.** The monitor offers a
+README badge that renders live uptime:
+
+```markdown
+[![Better Stack Badge](https://uptime.betterstack.com/status-badges/v3/monitor/2wivp.svg)](https://uptime.betterstack.com/?utm_source=status_badge)
+```
+
+Pasting that into a public README publishes the number. **It is a commitment to venues and visitors, not a
+decoration**, and it also tells every reader which vendor watches the site. Decide it at launch, and record the
+decision either way.
 
 ## The two ways this quietly stops working
 

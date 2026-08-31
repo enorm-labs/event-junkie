@@ -2,6 +2,12 @@ name: Public Site Probe
 
 # The outer half of #271's two-layer alerting, and the half that is not optional.
 #
+# **This is the slower of two outer paths, and ADR-021 records why there are two.** A Better Stack
+# monitor polls the site every three minutes and alerts in about six. This file runs once a day and
+# pings a dead-man's switch, so silence is what raises the alarm. The two share no infrastructure,
+# and neither runs on Hetzner. **Do not restore a fast cron here** — the schedule block says what
+# happened the last time this asked GitHub for one.
+#
 # **An alerting path that runs on the node it monitors cannot report that node's death.** If the
 # Hetzner box is gone, OpenObserve and the Signal bridge are gone with it, and the silence is
 # indistinguishable from health. So this runs on GitHub's infrastructure — off Hetzner, notifying
@@ -34,14 +40,22 @@ name: Public Site Probe
 
 on:
   schedule:
-    # Every fifteen minutes, off-the-hour for the reason every other scheduled workflow here gives:
-    # the top of the hour is a stampede on shared runners, and a delayed probe is a false alarm.
+    # **Daily, because GitHub refuses a faster cron here.** This asked for every fifteen minutes
+    # until #889. It did not get one. Measured over five days, against 480 requested runs:
     #
-    # **GitHub's scheduler is not punctual and occasionally skips runs entirely** — an Actions
-    # incident can drop most webhooks outright. The healthchecks.io *grace period* is
-    # what absorbs that, and it belongs on the check rather than here: set the period to 15 minutes
-    # and the grace to at least 30, so one missed run is tolerated and two are not.
-    - cron: '7,22,37,52 * * * *'
+    #   asked 15 min | shortest 29 min | median 129 min | longest 678 min | 39 runs delivered, 8%
+    #
+    # The daily schedules in this repository *are* honoured, and that is what sets the number below.
+    # `dependency-check-scheduled.yml` and `image-scan-scheduled.yml` both measure a median gap of
+    # about 24 hours and a worst gap of about 34. So the check that receives this ping wants a
+    # 24-hour period and a 24-hour grace, which leaves real headroom over that worst gap.
+    #
+    # **Derive those two numbers from the measurement, never from this line.** Reading the cron and
+    # doubling it is exactly what produced #889.
+    #
+    # Off-the-hour, and clear of 03:17 and 04:41, for the reason every scheduled workflow here gives:
+    # the top of the hour is a stampede on shared runners.
+    - cron: '37 5 * * *'
   workflow_dispatch:
 
 permissions:
@@ -93,8 +107,8 @@ jobs:
               echo "This is expected until the production deploy (#285) lands: staging is not on the"
               echo "public internet by design (PLATFORM_SETUP §4a), so there is nothing to probe yet."
               echo
-              echo "**To activate:** create a check on healthchecks.io with a 15-minute period and a"
-              echo "grace of at least 30 minutes, then add its ping URL as the \`HEALTHCHECKS_PING_URL\`"
+              echo "**To activate:** create a check on healthchecks.io with a 24-hour period and a"
+              echo "24-hour grace, then add its ping URL as the \`HEALTHCHECKS_PING_URL\`"
               echo "repository secret. No change to this workflow is needed."
             } >> "$GITHUB_STEP_SUMMARY"
             echo "HEALTHCHECKS_PING_URL unset — skipping the probe."
@@ -152,4 +166,99 @@ jobs:
             echo "## ✅ Site healthy"
             echo
             echo "\`${SITE_URL}\` answered 200 and contains '${EXPECTED_CONTENT}'. healthchecks.io pinged."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # **This step must never ping healthchecks.io, in either direction.** Configuration drift is
+      # not an outage. The site can be perfectly healthy while the console has moved, and the check
+      # above has already reported that truthfully. So drift turns the *workflow* red and leaves the
+      # *check* green, which is what each of them means.
+      #
+      # It exists because ADR-021 conceded that half the assertions left git. The status code and
+      # the body string now live in a console form as well as in this file, and nothing compared
+      # them. This is the comparison. `SITE_URL` and `EXPECTED_CONTENT` above are the single source
+      # of truth, and the console is what gets checked against them.
+      - name: Assert the Better Stack monitor still matches this file
+        if: always()
+        env:
+          BS_TOKEN: ${{ secrets.BETTERSTACK_API_TOKEN }}
+          MONITOR_ID: ${{ vars.BETTERSTACK_MONITOR_ID || '4876693' }}
+        run: |
+          set -uo pipefail
+
+          if [ -z "${BS_TOKEN}" ]; then
+            {
+              echo "## ⏸️ Not checking the monitor — \`BETTERSTACK_API_TOKEN\` is not set"
+              echo
+              echo "The fast path is unverified. Nothing compares the console against this workflow."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "BETTERSTACK_API_TOKEN unset — skipping the configuration check."
+            exit 0
+          fi
+
+          # A read-only GET. The token has no read-only scope, so this is the only call made with it,
+          # and the job checks out no code that could reach it.
+          response="$(mktemp)"
+          code="$(curl -sS -m 20 --retry 3 --retry-delay 3 --retry-all-errors \
+                    -o "${response}" -w '%{http_code}' \
+                    -H "Authorization: Bearer ${BS_TOKEN}" \
+                    "https://uptime.betterstack.com/api/v2/monitors/${MONITOR_ID}")"
+
+          # **Failing to check is a state worth a red run.** A revoked token that skipped quietly
+          # would leave the console unwatched and everything looking green — the failure mode this
+          # repository has been bitten by twice.
+          if [ "${code}" != "200" ]; then
+            echo "::error::Better Stack API answered HTTP ${code} for monitor ${MONITOR_ID}. The monitor is unverified."
+            {
+              echo "## 🔴 Could not read the monitor"
+              echo
+              echo "The API answered HTTP ${code}. Check that \`BETTERSTACK_API_TOKEN\` is valid and is an Uptime token."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          drifted=0
+          findings="$(mktemp)"
+
+          expect() { # field, actual, wanted
+            if [ "$2" != "$3" ]; then
+              echo "::error::Monitor ${MONITOR_ID}: $1 is '$2', this repository says '$3'."
+              printf -- '- **%s** — console `%s`, repository `%s`\n' "$1" "$2" "$3" >> "${findings}"
+              drifted=1
+            fi
+          }
+
+          a() { jq -r "$1" < "${response}"; }
+
+          # The two that matter most: they are the same values the probe above asserts.
+          expect url                 "$(a '.data.attributes.url')"                 "${SITE_URL}"
+          expect required_keyword    "$(a '.data.attributes.required_keyword')"    "${EXPECTED_CONTENT}"
+          # A keyword monitor also alerts when the URL is unavailable, so this type is a superset.
+          # Any other type silently stops asserting the body.
+          expect monitor_type        "$(a '.data.attributes.monitor_type')"        'keyword'
+          expect check_frequency     "$(a '.data.attributes.check_frequency')"     '180'
+          expect confirmation_period "$(a '.data.attributes.confirmation_period')" '180'
+          expect http_method         "$(a '.data.attributes.http_method')"         'get'
+          expect verify_ssl          "$(a '.data.attributes.verify_ssl')"          'true'
+          expect email               "$(a '.data.attributes.email')"               'true'
+          expect regions             "$(a '.data.attributes.regions | join(",")')"   'eu'
+          # `paused_at` is a timestamp, so null is the only healthy value. A paused monitor reports
+          # nothing and looks exactly like a passing one from outside.
+          expect paused_at           "$(a '.data.attributes.paused_at')"           'null'
+
+          if [ "${drifted}" -ne 0 ]; then
+            {
+              echo "## 🔴 The Better Stack monitor no longer matches this repository"
+              echo
+              cat "${findings}"
+              echo
+              echo "The site may well be up — see above. **This is the console drifting from \`site-probe.yml\`.**"
+              echo "Fix it in the console, or change this workflow and \`docs/ops/HEALTHCHECKS.md\` if the console is right."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          {
+            echo "## ✅ Monitor matches"
+            echo
+            echo "Ten fields on monitor \`${MONITOR_ID}\` agree with this workflow, \`${SITE_URL}\` and '${EXPECTED_CONTENT}' included."
           } >> "$GITHUB_STEP_SUMMARY"
