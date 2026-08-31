@@ -53,7 +53,8 @@ Usage: `/start-issue 313`
     The type comes from the issue's own type and area: `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`. Including the issue number makes the branch
     self-documenting in `git branch` and in the PR list.
 
-6. **Write the plan.** Cover:
+6. **Write the plan to `temp/<n>-<slug>.md`**, which `.gitignore` covers. [AGENTS.md](../../AGENTS.md) § Agent Instructions carries the rule and the two
+   reasons it exists. Name the file for the issue, so the next session finds the plan for #313 without reading all of `temp/`. Cover:
     - **What changes** — the files, and what happens in each
     - **How it will be verified** — which tests, and whether [`/verify`](verify.prompt.md) is needed in full or in part
     - **Whether it needs a `--full` re-seed and a diff.** Any change to shared normalization does. The issue's own form asks this; confirm the answer still
@@ -68,6 +69,8 @@ Usage: `/start-issue 313`
 - Implement, then [`/verify`](verify.prompt.md) — or the relevant subset.
 - For an importer change, [`/importer-smoke`](importer-smoke.prompt.md) is the runtime check: seed, import, inspect the rows, diff against a snapshot.
 - Ship with [`/open-pr`](open-pr.prompt.md), which puts **`Closes #<n>`** in the PR body.
+- **Delete `temp/<n>-<slug>.md` once the PR merges.** A finished plan is spent, and its decisions now live in the code, the docs or an issue. Keep it while
+  the branch is open, because it is the one record of the reasoning that survives a compaction.
 - Move the board on as you go: `scripts/issue-board.sh status <n> 'In review'` once the PR is open. Merging the PR closes the issue and the board follows,
   via the project's `Item closed` workflow — see [`/open-pr`](open-pr.prompt.md) for why that is worth remembering rather than trusting.
 - **Setting a card to `Done` now closes its issue**, because `Auto-close issue` is enabled too. The two workflows are inverses and agree, so either end works
