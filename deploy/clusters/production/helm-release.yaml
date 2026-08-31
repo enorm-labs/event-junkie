@@ -80,6 +80,13 @@ spec:
       enabled: true
       serving:
         enabled: true
+      # The orphan sweep, on in both environments now (#843). Reporting mode found 3 unreferenced
+      # images and 26 objects: two full sets of thirteen, an original and twelve derivatives, plus
+      # one row that owns nothing -- no content hash, or a hash a live row still shares, and
+      # `discard` skips both. No stray. A small number is what makes this safe to move; a large one
+      # would mean the reference query is wrong.
+      sweep:
+        enabled: true
       storage:
         # Required by the chart, and the only thing separating these objects from staging's -- one
         # bucket, content-addressed keys, so a shared prefix would let one environment's sweep
