@@ -10,10 +10,11 @@
 # It reaches the cluster over the WireGuard tunnel via the node, like the rest of
 # docs/ops/CLUSTER_ACCESS.md. There is no ingress route to OpenObserve, deliberately.
 #
-#   ./apply.sh                       # import is-it-healthy.json
+#   ./apply.sh                       # import is-it-healthy.json, on staging
 #   ./apply.sh --check               # validate every panel query returns data, change nothing
 #   ./apply.sh --diff                # compare the cluster's copy to this file, change nothing
 #   ./apply.sh other.json            # some other dashboard in this directory
+#   EJ_NODE=ops@10.10.0.1 ./apply.sh # any of the above, against production
 #
 # `--check` and `--diff` answer different questions and neither substitutes for the other:
 # `--check` asks whether the panels in THIS FILE would return data, `--diff` asks whether the
@@ -28,6 +29,15 @@ set -euo pipefail
 readonly NODE="${EJ_NODE:-ops@10.10.1.1}"
 readonly SSH_KEY="${EJ_SSH_KEY:-$HOME/.ssh/id_ed25519_hetzner}"
 readonly ORG="${EJ_O2_ORG:-default}"
+
+# **Which cluster this writes to is `EJ_NODE` and nothing else** (#880). Both environments run an
+# OpenObserve now, this dashboard is one file imported into each, and the default is staging — so a
+# production run that forgets the variable succeeds against staging and says nothing. The context is
+# derived here only to print an accurate hint at the end; the tunnel address is what selects.
+case "$NODE" in
+    *10.10.0.1*) readonly CONTEXT="event-junkie-production" ;;
+    *) readonly CONTEXT="event-junkie-staging" ;;
+esac
 
 cd "$(dirname "$0")"
 
@@ -58,6 +68,7 @@ python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$file" || {
 ssh_node() { ssh -o ConnectTimeout=10 -o BatchMode=yes -i "$SSH_KEY" "$NODE" "$@"; }
 
 echo "dashboard: $(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["title"])' "$file")  (from $file)"
+echo "cluster: $CONTEXT ($NODE)"
 
 ssh_node 'cat > /tmp/ej-dashboard.json' < "$file"
 
@@ -97,9 +108,9 @@ ssh_node "
     python3 /tmp/ej-import.py \"\$AUTH\" \"\$SVC\" '$ORG' /tmp/ej-dashboard.json
 "
 
-cat <<'EOF'
+cat <<EOF
 
 Open it — OpenObserve is not routed through the ingress, so port-forward:
-  kubectl --context event-junkie-staging -n observability port-forward svc/openobserve-openobserve-standalone 5080:5080
+  kubectl --context $CONTEXT -n observability port-forward svc/openobserve-openobserve-standalone 5080:5080
   http://localhost:5080/web/dashboards
 EOF

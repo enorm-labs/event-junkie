@@ -30,7 +30,7 @@ this table:
 | PostgreSQL      | **on the k3s node**, `10.1.1.10`                 | a **separate node**, `10.0.1.20`, reached through the k3s node |
 | Public web      | none — no `A` record, no 80/443                  | 80/443 open; only `prod-check` resolves, the apex does not     |
 | TLS             | Let's Encrypt **staging** CA, so `-k` is correct | real certificates, via HTTP-01                                 |
-| Observability   | OpenObserve, see §6b                             | **none yet**                                                   |
+| Observability   | OpenObserve, see §6b                             | OpenObserve too, since #880 — same §, different context        |
 
 **Both tunnels can be up at once.** That is why the subnets differ — separate keypairs on `10.10.1.x` and `10.10.0.x`, chosen so the routing tables do not
 collide. Overlapping ranges fail in a way that looks like a firewall problem for an hour.
@@ -303,7 +303,7 @@ it from ever reaching a real cluster.
 
 ## 6b · OpenObserve, for logs and metrics
 
-The service is `ClusterIP` on port 5080 in the `observability` namespace, and staging is not on the public internet. So there is no URL, and that is
+The service is `ClusterIP` on port 5080 in the `observability` namespace, and neither cluster routes it. So there is no URL on either, and that is
 deliberate. **`/metrics` and `/api/metrics` are blocked for public access whenever OpenObserve's own ingress is enabled.** That is one more reason not to give it one
 here. Reach it through the tunnel and a port-forward:
 
@@ -318,6 +318,9 @@ Then `http://localhost:5080/` and log in with the root credentials from the pass
 **A port-forward is the right tool here, unlike for the site below.** §6a rejects it for the application because it skips TLS, the ingress rules and the
 middlewares — the very things being tested. Reaching OpenObserve tests nothing about it. It is an operator console, so the shortest path is the
 correct one.
+
+**Production is the same two commands with `--context event-junkie-production`, over that cluster's tunnel.** Its root credential is a different one, and
+so is its S3 keypair — see [SECRETS.md](SECRETS.md). Both tunnels can be up at once, so nothing but the context tells you which store you are reading.
 
 **If the page does not load, check the release before the tunnel:**
 

@@ -1,0 +1,38 @@
+# comment-lint: allow-file 10 lines of Namespace, and the reason it enforces nothing does not fit in 12.
+# The observability namespace, declared here so it can carry Pod Security Admission labels (#604).
+#
+# **This namespace enforces nothing, and that is the honest state rather than an oversight.** The
+# **collector agent DaemonSet** collects every log line in the cluster by mounting the node —
+# rendering `openobserve-collector` 0.4.6, the version `collector.yaml` pins, gives `hostPath`
+# mounts of `/`, `/var/log` and `/var/lib/docker/containers`. `hostPath` is restricted in **both**
+# `restricted` and `baseline`, so neither level admits this pod. `privileged` is not a preference
+# here; it is the only level that does not reject the agent, and a rejected agent is a log pipeline
+# that stops quietly, the way #625 did.
+#
+# **`audit` and `warn` are what this file buys.** They record and report every violation without
+# rejecting it, so the collector keeps its mounts while the **next** workload added here arrives
+# with its violations named rather than silent. A bare namespace gives neither.
+#
+# **Getting to real enforcement** means moving the agent to a namespace of its own, PSA being
+# namespace-scoped with no per-workload exemption — a live DaemonSet with its own RBAC, service
+# references and NetworkPolicies (#662), so its own change. See #709.
+#
+# **On production, which is the cluster #709 is actually about.** Porting the stack ports the
+# exemption, and the node it lands on serves the public site and holds the credentials for the
+# live database. Nothing about the argument changes — the agent still cannot run under `baseline`
+# — but the cost of the ungoverned namespace does, and this line is here so that is a recorded
+# consequence of #880 rather than something discovered by reading a label later.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability
+  labels:
+    # NOT ENFORCING. See the header — the collector agent's hostPath mounts are inadmissible under
+    # every level except this one, and rejecting it costs the cluster its logs.
+    pod-security.kubernetes.io/enforce: privileged
+    # The half that does work. Every violation is recorded and reported without being rejected, so a
+    # workload added here is visible on arrival instead of after an incident.
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+    app.kubernetes.io/part-of: event-junkie
+    app.kubernetes.io/managed-by: flux

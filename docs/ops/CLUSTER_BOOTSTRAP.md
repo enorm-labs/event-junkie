@@ -176,6 +176,11 @@ printf "CREATE ROLE events WITH LOGIN PASSWORD '%s';\nCREATE DATABASE events OWN
 # files apart.
 kubectl --context event-junkie-staging create namespace event-junkie
 
+# The observability stack's namespace, on both clusters since #880. Created here because the two
+# Secrets below land in it before Flux exists to declare it — the declaration in the cluster's
+# kustomization.yaml then adopts it, labels and all.
+kubectl --context event-junkie-staging create namespace observability
+
 # staging only — production solves HTTP-01 and holds no Hetzner token at all.
 # In `cert-manager`, NOT the release namespace: a ClusterIssuer resolves secret refs there.
 kubectl --context event-junkie-staging create namespace cert-manager
@@ -201,14 +206,18 @@ unset PGPASS                                                          # expect: 
 `events-db` is committed encrypted and restored by Flux ([SECRETS.md](SECRETS.md)). **Six hand-made objects are left.** A rebuild that restores fewer than
 all six brings the cluster back with part of the observability stack dead and no obvious cause:
 
-| Secret                    | Namespace       | Recreated from                                   | In this document                                  |
-| ------------------------- | --------------- | ------------------------------------------------ | ------------------------------------------------- |
-| `hetzner`                 | `cert-manager`  | `HCLOUD_TOKEN` — Keychain                        | below                                             |
-| `github-dispatch`         | `flux-system`   | **the PAT, and nothing can re-derive it**        | below                                             |
-| `sops-age`                | `flux-system`   | `~/.config/sops/age/event-junkie.txt`            | [SECRETS.md](SECRETS.md) §3                       |
-| `openobserve-credentials` | `flux-system`   | a **fresh** root password + the `-o2` S3 keypair | [SECRETS.md](SECRETS.md) §openobserve-credentials |
-| `openobserve-credentials` | `observability` | the same values again — see SECRETS.md on why    | as above                                          |
-| `postgres-exporter`       | `observability` | `ALTER ROLE metrics` + a new DSN                 | as above                                          |
+| Secret                    | Namespace       | Recreated from                                  | In this document                                  |
+| ------------------------- | --------------- | ----------------------------------------------- | ------------------------------------------------- |
+| `hetzner`                 | `cert-manager`  | `HCLOUD_TOKEN` — Keychain                       | below                                             |
+| `github-dispatch`         | `flux-system`   | **the PAT, and nothing can re-derive it**       | below                                             |
+| `sops-age`                | `flux-system`   | `~/.config/sops/age/event-junkie.txt`           | [SECRETS.md](SECRETS.md) §3                       |
+| `openobserve-credentials` | `flux-system`   | a **fresh** root password + an `-o2` S3 keypair | [SECRETS.md](SECRETS.md) §openobserve-credentials |
+| `openobserve-credentials` | `observability` | the same values again — see SECRETS.md on why   | as above                                          |
+| `postgres-exporter`       | `observability` | `ALTER ROLE metrics` + a new DSN                | as above                                          |
+
+**Production's `openobserve-credentials` is not staging's, and that is deliberate** ([#880](https://github.com/enorm-labs/event-junkie/issues/880)). Its own
+root password and its own `-o2` S3 keypair, so either can be rotated without touching the other cluster. Copying staging's across is the shortcut that
+undoes it, and nothing would report it — both clusters would work.
 
 **Only `github-dispatch` has to be carried across a rebuild.** Everything else is derivable from the Keychain, a local file, or a role you can re-password.
 That is worth knowing before you start copying secrets out of a cluster you are about to destroy. OpenObserve's root password can be new, because its PVC is
@@ -740,6 +749,9 @@ cd deploy/alerts     && ./apply.sh && ./apply.sh --check   # the template and de
 cd deploy/dashboards && ./apply.sh --diff                  # and prove the push landed: both must say they match
 cd deploy/alerts     && ./apply.sh --diff
 ```
+
+**Both scripts default to staging's node, so a production rebuild needs `EJ_NODE=ops@10.10.0.1` in front of each of the four.** Without it every command
+succeeds, reports that the push landed, and writes to the cluster you were not rebuilding.
 
 **The fourteenth query is not slow. It is absent by design**, and the difference matters when you
 are staring at a fresh cluster wondering what else did not come back. The one that returns nothing is

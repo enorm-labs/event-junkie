@@ -3,10 +3,16 @@
 The rules [#271](https://github.com/enorm-labs/event-junkie/issues/271) requires, as OpenObserve v2 alert objects.
 
 ```sh
-./apply.sh            # create or update every rule
-./apply.sh --check    # evaluate each rule's query against live data, change nothing
-./apply.sh --diff     # compare the cluster's rules to alerts.json, change nothing
+./apply.sh                          # create or update every rule, on staging
+./apply.sh --check                  # evaluate each rule's query against live data, change nothing
+./apply.sh --diff                   # compare the cluster's rules to alerts.json, change nothing
+EJ_NODE=ops@10.10.0.1 ./apply.sh    # any of the three, against production
 ```
+
+**`EJ_NODE` selects the cluster and defaults to staging.** Both environments run an OpenObserve since
+[#880](https://github.com/enorm-labs/event-junkie/issues/880), and this is one file applied to each — nothing reconciles them, so the two can differ.
+Forget the variable on a production run and the command succeeds, reports what it pushed, and writes to staging again. Each run prints the cluster it
+resolved before it does anything.
 
 **Edit `gen_alerts.py`, not `alerts.json`.** The JSON is generated, `apply.sh` regenerates it before doing anything, and the same argument the dashboards make
 applies here: forty lines of scaffolding per rule, and a typo in one copy is invisible.
