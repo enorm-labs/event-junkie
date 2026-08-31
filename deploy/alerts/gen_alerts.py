@@ -178,13 +178,25 @@ def rule(
 # an alerting path that runs on the node it monitors cannot report that node's
 # death, which is #271's central caveat. The external probe (#584) is the other
 # half and stays dormant until production has DNS.
+#
+# **This rule has now fired on every deploy twice, for two different reasons** —
+# first with `up`, then with a bare instant availability read (#937). The importer
+# is `Recreate` at one replica because two of it would double-write, so a deploy
+# takes it to a real zero for about a minute. Both fixes are the same lesson: a
+# deploy is indistinguishable from an outage at an instant, and separable over a
+# window. Anything added here needs the same treatment before #877 makes a firing
+# wake somebody.
 rule(
     "ej-site-down",
-    "One of the application's Deployments has **zero available replicas** — the BFF, the frontend "
-    "or the importer. Availability rather than scrape health, because a rolling deploy is not an "
-    "outage: `up` goes to 0 for the pod being replaced and stays there for about five minutes "
-    "while the target ages out of service discovery.",
-    'sum(max by (deployment) (kube_deployment_status_replicas_available{deployment=~"event-junkie.*"}) == bool 0)',
+    "One of the application's Deployments has had **zero available replicas for five solid "
+    "minutes** — the BFF, the frontend or the importer. Availability rather than scrape health, "
+    "because a rolling deploy is not an outage: `up` goes to 0 for the pod being replaced and "
+    "stays there for about five minutes while the target ages out of service discovery. "
+    "`max_over_time` rather than the instant value, because the importer is `Recreate` at one "
+    "replica, so its availability does not merely look like zero during a deploy — it is zero.",
+    "sum(max by (deployment) (max_over_time("
+    'kube_deployment_status_replicas_available{deployment=~"event-junkie.*"}[5m]'
+    ")) == bool 0)",
     ">",
     0,
     stream_name="kube_deployment_status_replicas_available",
