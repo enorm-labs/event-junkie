@@ -47,9 +47,9 @@ data class ImageServingProperties(
          * Detail-page variants are several times larger and evict cards, which is the right trade.
          * A card list draws many images at once. A detail page draws one.
          *
-         * The 20 kB is the one input estimated rather than measured. The `cache_size` meter that
-         * [ImageObjectCache] registers reports the real figure per environment. It is heap, inside
-         * `bff.maxRamPercentage` of the container limit. Raise it against the hit ratio.
+         * The 20 kB is the one input estimated rather than measured. `bff_images_cache_weight` reports
+         * the bytes actually held, and `cache_gets{cache="images"}` the hit ratio to raise it
+         * against. It is heap, inside `bff.maxRamPercentage` of the container limit.
          *
          * **One word rather than `maxSize`, because the chart sets it from the environment.** Boot
          * maps a dashed name by removing the dash. So `max-size` needs `APP_IMAGES_CACHE_MAXSIZE`,

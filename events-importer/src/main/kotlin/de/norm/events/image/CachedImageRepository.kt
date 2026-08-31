@@ -172,7 +172,68 @@ interface CachedImageRepository : CoroutineCrudRepository<CachedImageEntity, Lon
         contentHash: String,
         excludingId: Long
     ): Long
+
+    /**
+     * Every referenced image URL, split into the four states one can be in.
+     *
+     * One query rather than four: the universe is the same four-table `UNION` the fetcher walks, and
+     * the gauges behind this refresh every minute. **The counts are disjoint and sum to every image
+     * URL the site references**, which is what makes them safe to stack on a graph.
+     *
+     * A tombstoned row is `withheld` rather than `pending`, and the difference is not cosmetic — a
+     * taken-down URL is never fetched again ([findUncachedImageUrls] excludes any URL with a row),
+     * so counting it as outstanding work would show a backlog that can never drain.
+     *
+     * `FILTER` rather than four queries or four `CASE` sums, and `LEFT JOIN` rather than `EXISTS`
+     * because `cached_image.source_url` is unique: at most one row joins, so nothing is counted
+     * twice.
+     *
+     * **The column aliases are the contract** — R2DBC maps a projection by label, nothing checks it
+     * at compile time, and `ImageMetricsIntegrationTest` is what runs this against a real database.
+     */
+    @Query(
+        """
+        SELECT
+            count(*) FILTER (WHERE c.deleted_at IS NULL AND c.content_hash IS NOT NULL) AS cached,
+            count(*) FILTER (WHERE c.deleted_at IS NULL AND c.content_hash IS NULL AND c.failed_at IS NOT NULL) AS failed,
+            count(*) FILTER (WHERE c.id IS NULL OR (c.deleted_at IS NULL AND c.content_hash IS NULL AND c.failed_at IS NULL)) AS pending,
+            count(*) FILTER (WHERE c.deleted_at IS NOT NULL) AS withheld
+        FROM ($IMAGE_URL_SOURCES) u
+        LEFT JOIN $EVENTS_SCHEMA.cached_image c ON c.source_url = u.image_url
+        """
+    )
+    suspend fun countUrlStates(): ImageUrlCountsRow
+
+    /**
+     * Stored images still short of their derivatives — [findNeedingDerivatives] asked as a number.
+     *
+     * The predicate is that query's, deliberately duplicated rather than derived: the two answer the
+     * same question, and a count that drifts from the batch it describes reports a backlog draining
+     * while the pass works on something else.
+     */
+    @Query(
+        """
+        SELECT count(*) FROM $EVENTS_SCHEMA.cached_image c
+        WHERE c.content_hash IS NOT NULL
+          AND c.deleted_at IS NULL
+          AND (SELECT count(*) FROM $EVENTS_SCHEMA.cached_image_variant v WHERE v.cached_image_id = c.id) < :expectedVariants
+        """
+    )
+    suspend fun countNeedingDerivatives(expectedVariants: Int): Long
 }
+
+/**
+ * The four states a referenced image URL can be in, as one row.
+ *
+ * Field names are the query's column aliases. Renaming one here without renaming it there compiles
+ * and returns zeros.
+ */
+data class ImageUrlCountsRow(
+    val cached: Long,
+    val failed: Long,
+    val pending: Long,
+    val withheld: Long
+)
 
 @Repository
 interface CachedImageVariantRepository : CoroutineCrudRepository<CachedImageVariantEntity, Long> {

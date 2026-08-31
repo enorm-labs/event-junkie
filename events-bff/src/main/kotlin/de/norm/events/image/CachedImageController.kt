@@ -36,7 +36,8 @@ const val IMAGES_PATH = "/api/images"
 @Tag(name = "Images", description = "Cached venue imagery, served from our own origin")
 class CachedImageController(
     private val repository: CachedImageRepository,
-    private val reader: ImageObjectReader
+    private val reader: ImageObjectReader,
+    private val metrics: ImageServingMetrics
 ) {
     /**
      * Returns one derivative.
@@ -55,21 +56,39 @@ class CachedImageController(
     ): ResponseEntity<ByteArray> {
         val request = parse(contentHash, file)
         val storageKey = request?.let { repository.findStorageKey(it.contentHash, it.width, it.format) }
-        return if (request == null || storageKey == null) notFound() else respond(reader.read(storageKey), request.format)
+        if (request == null || storageKey == null) {
+            metrics.record(ImageServingMetrics.Outcome.UNKNOWN)
+            return notFound()
+        }
+        return respond(reader.read(storageKey), request.format)
     }
 
+    /**
+     * **The metric is recorded here rather than derived from the status code**, because two of these
+     * three are 404s that mean opposite things: a path nobody ever published, and a row promising an
+     * object the bucket does not have. `http_server_requests` cannot tell them apart.
+     */
     private fun respond(
         image: ImageObject,
         format: String
     ): ResponseEntity<ByteArray> =
         when (image) {
-            is ImageObject.Found -> ok(image.bytes, format)
+            is ImageObject.Found -> {
+                metrics.record(ImageServingMetrics.Outcome.FOUND)
+                ok(image.bytes, format)
+            }
 
-            ImageObject.Missing -> notFound()
+            ImageObject.Missing -> {
+                metrics.record(ImageServingMetrics.Outcome.MISSING)
+                notFound()
+            }
 
             // Not a 404. The object exists as far as anything here knows, and telling a browser to
             // remember an absence caused by our own bucket being unreachable would outlast the fault.
-            ImageObject.Unavailable -> ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build()
+            ImageObject.Unavailable -> {
+                metrics.record(ImageServingMetrics.Outcome.UNAVAILABLE)
+                ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build()
+            }
         }
 
     private fun ok(

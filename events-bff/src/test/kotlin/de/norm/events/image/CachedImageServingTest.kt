@@ -1,10 +1,12 @@
 package de.norm.events.image
 
 import de.norm.events.BaseControllerTest
+import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -24,6 +26,7 @@ import java.net.URI
 import java.time.Duration
 import java.time.LocalDate
 import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
 
 /**
  * The serving path end to end, with serving switched on.
@@ -34,6 +37,9 @@ import kotlin.test.assertContentEquals
  * `ImageStorageIntegrationTest` makes from the writing side.
  */
 class CachedImageServingTest : BaseControllerTest() {
+    @Autowired
+    private lateinit var registry: MeterRegistry
+
     @Test
     fun `serves the bytes behind a variant row`(): Unit =
         runBlocking {
@@ -126,6 +132,38 @@ class CachedImageServingTest : BaseControllerTest() {
                 .isNotFound
         }
 
+    /**
+     * **Two of these are 404s and they mean opposite things**, which is why the outcome is recorded
+     * in the controller rather than derived from `http_server_requests`: a path nobody published,
+     * and a row promising an object the bucket does not have. Only the second is a defect.
+     *
+     * Counted as deltas, because the registry belongs to the shared context and the other tests in
+     * this class serve images through it too.
+     */
+    @Test
+    fun `each ending is counted under its own outcome`(): Unit =
+        runBlocking {
+            insertCachedImage(POSTER_URL, HASH, listOf(288))
+            // A second URL, because `cached_image.source_url` is unique — the same property the
+            // repository's counting query relies on to join at most one row per URL.
+            insertCachedImage(ALTERNATE_URL, ORPHAN_HASH, listOf(288))
+            putObject(derivedKey(HASH, 288, "jpg"), POSTER)
+            val before = OUTCOMES.associateWith { served(it) }
+
+            listOf("/images/$HASH/288.jpg", "/images/$ORPHAN_HASH/288.jpg", "/images/nothex/288.jpg").forEach {
+                webTestClient.get().uri(it).exchange()
+            }
+
+            OUTCOMES.forEach { assertEquals(1.0, served(it) - before.getValue(it), "outcome=$it") }
+        }
+
+    private fun served(outcome: String): Double =
+        registry
+            .find("bff.images.served")
+            .tag("outcome", outcome)
+            .counter()
+            ?.count() ?: 0.0
+
     @Test
     fun `a malformed file name never reaches the database`(): Unit =
         runBlocking {
@@ -133,7 +171,7 @@ class CachedImageServingTest : BaseControllerTest() {
 
             // Each of these matches neither the hash nor the `<width>.<format>` shape, so the route
             // refuses it before the query. A path segment is what an attacker would try first.
-            listOf("/api/images/$HASH/288.svg", "/api/images/$HASH/288", "/api/images/$HASH/-1.jpg", "/api/images/nothex/288.jpg")
+            listOf("/images/$HASH/288.svg", "/images/$HASH/288", "/images/$HASH/-1.jpg", "/images/nothex/288.jpg")
                 .forEach {
                     webTestClient
                         .get()
@@ -413,6 +451,9 @@ class CachedImageServingTest : BaseControllerTest() {
 
         /** A row whose object was never put in the bucket. */
         private const val ORPHAN_HASH = "1a2b3c4d5e6f708192a3b4c5d6e7f8090f4b2c1d5e6a7b8c9d0e1f2a3b4c5d6e"
+
+        /** The three endings the requests below produce, one each. `unavailable` needs a broken bucket. */
+        private val OUTCOMES = listOf("found", "missing", "unknown")
 
         /** Not a real JPEG. Nothing here decodes it, and the assertion is byte equality. */
         private val POSTER = ByteArray(64) { it.toByte() }

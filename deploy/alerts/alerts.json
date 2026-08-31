@@ -259,5 +259,63 @@
     "destinations": [
       "record-only"
     ]
+  },
+  {
+    "name": "ej-image-objects-missing",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "bff_images_served_total",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "A variant row named an object the bucket does not have. **This is the shape of a sweep that deleted something it should have kept** \u2014 the visitor gets a 404 where a card should be, and until now the only trace was a warning in a log nobody reads.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(rate(bff_images_served_total{outcome=\"missing\"}[15m]))",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0
+      }
+    },
+    "trigger_condition": {
+      "period": 15,
+      "frequency": 5,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 360
+    },
+    "destinations": [
+      "record-only"
+    ]
+  },
+  {
+    "name": "ej-image-store-unreachable",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "bff_images_served_total",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "The BFF cannot read Object Storage, so every image that is not already in memory is a 503. Serving degrades quietly: cards already cached keep working, which is what makes this hard to notice from the outside.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(rate(bff_images_served_total{outcome=\"unavailable\"}[15m]))",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0
+      }
+    },
+    "trigger_condition": {
+      "period": 15,
+      "frequency": 5,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 120
+    },
+    "destinations": [
+      "record-only"
+    ]
   }
 ]

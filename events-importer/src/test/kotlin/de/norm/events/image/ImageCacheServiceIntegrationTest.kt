@@ -7,6 +7,7 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
@@ -187,6 +188,7 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
             // which is the state a local run without bucket credentials is in.
             storage = ImageStorage(client = null, properties = ImageStorageProperties()),
             properties = properties,
+            metrics = ImageCacheMetrics(SimpleMeterRegistry()),
             clock = Clock.systemUTC()
         )
 
@@ -278,6 +280,7 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
                 ),
             storage = minioStorage(),
             properties = properties,
+            metrics = ImageCacheMetrics(SimpleMeterRegistry()),
             clock = Clock.systemUTC()
         )
     }

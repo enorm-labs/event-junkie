@@ -39,6 +39,15 @@ data class ImgproxyProperties(
 ) {
     fun isSigned(): Boolean = key.isNotBlank() && salt.isNotBlank()
 
+    /**
+     * How many files one original should end up with.
+     *
+     * Here rather than in [ImageDerivativeService] because two callers need it: the pass that
+     * generates the missing ones, and the gauge that counts what is still missing. Two copies of
+     * this product would let a backlog read as empty while the pass still had work.
+     */
+    val expectedVariants: Int get() = widths.size * formats.size
+
     companion object {
         /** 96 px at 2x and 3x for the cards, then the detail column at 1x and 2x. */
         val DEFAULT_WIDTHS = listOf(192, 288, 768, 1536)

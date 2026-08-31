@@ -60,7 +60,7 @@ ej-site-down                   DIFFERS     1 field
         cluster:     up
 ej-importer-stale              in sync
 …
-8/9 rules match this repository
+10/11 rules match this repository
 ```
 
 **It covers the delivery path as well as the rules, and reports it first** (#704). A rule that matches this repository perfectly still tells nobody anything if
@@ -71,7 +71,7 @@ written anywhere.
 event-junkie (template)        in sync
 record-only (destination)      in sync
 …
-11/11 objects match this repository (9 rules, the template and the destination)
+13/13 objects match this repository (11 rules, the template and the destination)
 ```
 
 **The destination's header values are compared by fingerprint and cannot be printed.** It carries the OpenObserve root credential, and the API returns it in

@@ -56,8 +56,29 @@ class ImageObjectCache(
         return load(storageKey).also { if (it is ImageObject.Found) cache.put(storageKey, it.bytes) }
     }
 
+    /**
+     * Bytes currently held, which is the unit [ImageServingProperties.Cache.size] is set in.
+     *
+     * **`cache_size` from `CaffeineCacheMetrics` is the entry count, not this.** For a cache bounded
+     * by weight the two answer different questions, and only this one says whether the ceiling is
+     * reached. [ImageServingMetrics] publishes it as a gauge.
+     *
+     * Reading it is in-memory work, so unlike the importer's gauges this one is safe to evaluate at
+     * scrape time. **`cleanUp()` first, because the accumulated weight is only approximate until
+     * Caffeine drains its write buffer** — that buffer is bounded, so the cost is a few entries at
+     * most, and without it a freshly filled cache reports zero bytes.
+     *
+     * `weightedSize()` is empty on a cache with no weigher, which cannot happen here — the zero is
+     * for the type, not for a case that occurs.
+     */
+    fun weightedBytes(): Long {
+        cache.cleanUp()
+        val eviction = cache.policy().eviction().orElse(null) ?: return 0L
+        return eviction.weightedSize().orElse(0L)
+    }
+
     private companion object {
-        /** The meter tag. `cache_size` and `cache_gets` below it report what the ceiling is worth. */
+        /** The meter tag. `cache_gets` below it reports the hit ratio the ceiling buys. */
         const val NAME = "images"
     }
 }

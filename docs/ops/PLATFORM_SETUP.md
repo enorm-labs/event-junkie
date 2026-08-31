@@ -640,22 +640,30 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 
 **The ones that had to be written, because they are the ones that matter.** Infrastructure metrics tell you the pod is alive. These tell you it is _working_:
 
-| Metric                                         | Type                                  | Why                                                                               |
-| ---------------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------- |
-| `importer.run.duration`                        | Timer, tagged `source`                | Detects a venue that got slow before it gets fatal                                |
-| `importer.run.outcome`                         | Counter, tagged `source`, `outcome`   | success / not_modified / failed / misconfigured / skipped                         |
-| `importer.events.written`                      | Counter, tagged `source`, `operation` | inserted / updated / skipped                                                      |
-| `importer.scrape.failures`                     | Counter, tagged `source`, `reason`    | Distinguishes HTTP 403 from a parse failure                                       |
-| `importer.source.last_success`                 | Gauge, tagged `source`                | Age of the last good run; alert past ~3× its schedule                             |
-| `importer.source.has_succeeded`                | Gauge, tagged `source`                | 1/0 — **exists for a source that has never worked**, which the row above does not |
-| `importer.source.running`                      | Gauge                                 | Catches the ADR-008 `RUNNING`-forever state a restart can strand                  |
-| `importer.source.events_future{source}`        | Gauge                                 | Future events held per source — **the silently-broken-scraper alarm** (#700)      |
-| `importer.source.field_coverage{source,field}` | Gauge                                 | The partial-failure alarm — alert on a **drop against history**, not a floor      |
-| `bff.events.served`                            | Counter, tagged endpoint              | Is anyone actually using it                                                       |
-| `db.events{horizon="all"\|"future"}`           | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end      |
-| `data_quality{source=…,metric=…}`              | Gauge                                 | Per-source quality, refreshed daily. Alert on a metric that starts rising         |
+| Metric                                         | Type                                  | Why                                                                                |
+| ---------------------------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------- |
+| `importer.run.duration`                        | Timer, tagged `source`                | Detects a venue that got slow before it gets fatal                                 |
+| `importer.run.outcome`                         | Counter, tagged `source`, `outcome`   | success / not_modified / failed / misconfigured / skipped                          |
+| `importer.events.written`                      | Counter, tagged `source`, `operation` | inserted / updated / skipped                                                       |
+| `importer.scrape.failures`                     | Counter, tagged `source`, `reason`    | Distinguishes HTTP 403 from a parse failure                                        |
+| `importer.source.last_success`                 | Gauge, tagged `source`                | Age of the last good run; alert past ~3× its schedule                              |
+| `importer.source.has_succeeded`                | Gauge, tagged `source`                | 1/0 — **exists for a source that has never worked**, which the row above does not  |
+| `importer.source.running`                      | Gauge                                 | Catches the ADR-008 `RUNNING`-forever state a restart can strand                   |
+| `importer.source.events_future{source}`        | Gauge                                 | Future events held per source — **the silently-broken-scraper alarm** (#700)       |
+| `importer.source.field_coverage{source,field}` | Gauge                                 | The partial-failure alarm — alert on a **drop against history**, not a floor       |
+| `bff.events.served`                            | Counter, tagged endpoint              | Is anyone actually using it                                                        |
+| `db.events{horizon="all"\|"future"}`           | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end       |
+| `data_quality{source=…,metric=…}`              | Gauge                                 | Per-source quality, refreshed daily. Alert on a metric that starts rising          |
+| `images.urls{state}`                           | Gauge                                 | cached / failed / pending / withheld — the backfill, as a query rather than a grep |
+| `images.derivatives.backlog`                   | Gauge                                 | Stored images still short of their variants. **No alert** — see below              |
+| `images.fetch{outcome}`                        | Counter                               | fetched / unchanged / failed                                                       |
+| `images.derivatives{outcome}`                  | Counter                               | written / refused, counted in files rather than images                             |
+| `images.sweep.candidates{kind}`                | Gauge                                 | What the last sweep would delete, whether or not it may. rows / strays             |
+| `images.sweep.deleted{kind}`                   | Counter                               | What it removed. Moves only while `app.images.sweep.enabled` is on                 |
+| `bff.images.served{outcome}`                   | Counter                               | found / unknown / missing / unavailable — two 404s that mean opposite things       |
+| `bff.images.cache.weight`                      | Gauge                                 | Bytes the serving cache holds. `cache_size` beside it counts entries               |
 
-**Seven things to know before writing a rule against these:**
+**Nine things to know before writing a rule against these:**
 
 - **`db.events.total` could not exist.** `_total` is Prometheus' reserved suffix for counters, so Micrometer strips it. The meter published as `db_events`,
   silently, while anything written against the documented name matched nothing. It is one gauge with a `horizon` label — `db_events{horizon="future"}`.
@@ -681,6 +689,14 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 - **`field_coverage` must never be alerted on with a threshold.** A venue that never published a price sits at `0` forever without anything being wrong. The
   signal is a **drop against that source's own history**. That is why the flagging lives in the importer, where the history is, rather than in an alert rule.
   `event_source.flagged_at` is the alertable thing. Alerting on `field_coverage < 0.5` would page on half the corpus on day one.
+- **A counter that never incremented is not in the exposition, and an absent series cannot fire a rule** (#880). This is `has_succeeded`'s failure one
+  layer down. It bites hardest on the outcome a rule is written for: `bff_images_served_total{outcome="missing"}` counts a row promising an object the
+  bucket does not have. On a healthy origin it never increments, so the series never appears. Every counter under `images.` and `bff.images.` is therefore
+  **registered at zero when the application starts**. That is what makes `rate()` over it return 0 rather than nothing, and `ImageCacheMetricsTest` and
+  `ImageServingMetricsTest` assert the property directly.
+- **The image backfill gauges are deliberately not alerted on.** `images_urls{state="pending"}` and `images_derivatives_backlog` are large and falling for
+  days after a rollout, by design. A threshold therefore either pages through normal operation, or is set high enough to mean nothing. They answer "is the
+  backfill done" as a query — which #843 had to answer by counting lines in a log the node rotated mid-run.
 - **`importer.run.outcome` has no `partial`.** This pipeline cannot produce one. A run completes and upserts, is skipped, or throws, and the upserts are in one
   transaction, so there is no half-written state. A bucket nothing can emit would be a panel that is always zero, which reads as "never happens" rather than
   "cannot happen".
