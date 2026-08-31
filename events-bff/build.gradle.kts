@@ -105,6 +105,11 @@ dependencies {
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    // Micrometer's ContextRegistry, which is how a request's log context survives the reactive
+    // chain (#380). It arrives transitively at runtime through Reactor, but is not on the compile
+    // classpath, and LogContextConfiguration names the type — so it is declared rather than assumed.
+    // The version comes from the Boot BOM.
+    implementation("io.micrometer:context-propagation")
     implementation("tools.jackson.module:jackson-module-kotlin")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
 

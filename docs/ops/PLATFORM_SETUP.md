@@ -607,34 +607,60 @@ public Ingress with `basicAuth`.
 
 ## 7. Instrumentation — logging and metrics in the applications
 
-**The metrics half is done** ([#415](https://github.com/enorm-labs/event-junkie/issues/415)): both apps carry `micrometer-registry-prometheus`, expose
-`health,info,prometheus`, and emit every business meter below. **The logging half is not** — there is no `logback.xml` and no structured logging configuration
-yet. Deliberately **backend-agnostic**: all of it works unchanged whichever backend ADR-015's trial ends on.
+**Both halves are done.** Metrics in [#415](https://github.com/enorm-labs/event-junkie/issues/415): both apps carry `micrometer-registry-prometheus`, expose
+`health,info,prometheus`, and emit every business meter below. Logging in [#380](https://github.com/enorm-labs/event-junkie/issues/380), described next. There
+is still no `logback.xml` and there does not need to be. Deliberately **backend-agnostic**: all of it works unchanged whichever backend ADR-015's trial ends
+on.
 
 **What is deliberately not done, because it cannot be here:** the zero-events alert. An alert needs somewhere to evaluate it, which is
 [#271](https://github.com/enorm-labs/event-junkie/issues/271). The meters exist. The rule does not, and _"an alert that never fired is a hypothesis"_ still
 stands.
 
-### JSON structured logging — still to build
+### JSON structured logging
 
-Spring Boot ships structured logging, so no Logback JSON encoder dependency is needed:
+Spring Boot ships structured logging, so no Logback JSON encoder dependency is needed. It is on through **`LOGGING_STRUCTURED_FORMAT_CONSOLE: ecs` in the
+chart's ConfigMap**, not through each module's `application.yaml`, and there is no container profile to look for. `envFrom` becomes an environment variable and
+an environment variable outranks `application.yaml`, so the ConfigMap is container-only by construction and a terminal keeps Spring's console layout.
 
-```yaml
-logging:
-  structured:
-    format:
-      console: ecs # or logstash / gelf — ECS is the most widely parsed
-```
+**Three parts, and none of them works alone.** This is the part worth reading before changing any of it:
 
-Turn it on **only in the container profile**, never locally — plain console logs are what a terminal wants.
+| Part                | Where                                        | Without it                                                        |
+| ------------------- | -------------------------------------------- | ----------------------------------------------------------------- |
+| ECS JSON at the app | the chart's ConfigMap                        | the level stays inside a text `body`                              |
+| The context         | `EventImportService.importFromSource`        | every line is structured and none says which source produced it   |
+| The parse           | `transform/parse_structured_logs`, the agent | the JSON arrives as an unparsed **string** and nothing can filter |
 
-**The WebFlux trap, which is the one that will actually cost time.** MDC does not propagate across reactive operators by default. A `traceId` put into MDC in a
-filter is simply absent by the time the log statement runs on another thread. It fails silently: you get logs, they just have no correlation fields, and it
-looks like a configuration problem rather than a threading one. The fix is `Hooks.enableAutomaticContextPropagation()` at startup, plus Micrometer's
-`ContextRegistry`. Both apps are WebFlux, so both need it, and it needs a test that asserts a `traceId` actually appears.
+**The third is the one that surprises.** `filelog` moves a container line into `body` as a string. Neither it nor OpenObserve looks inside. The proof was
+already in the cluster before any of this. Flux logs JSON by default, and its rows carried perfect unparsed JSON with `severity` still `0`. JSON at the source
+is necessary and not sufficient.
 
-**What every log line should carry:** `traceId`, `spanId`, service name, and version (already stamped from `gradle.properties`). The importer adds
-`sourceId`, `venueSlug` and `importRunId`, because the question asked of importer logs is always "what happened to _this venue_ on _this run_".
+**Set once, never at call sites.** `EventImportService.importFromSource` is the funnel every import path reaches. One
+`withContext(LogContext.forImportRun(…))` there puts the context on the output of all forty-odd scrapers. None of them knows it exists. Use `MDCContext` and
+not `MDC.put`. MDC is thread-local and a coroutine changes threads, so a plain put is gone by the next line. It fails silently, as an absent field.
+
+**The WebFlux trap, which did cost the time it was predicted to.** MDC does not propagate across reactive operators by default. It fails silently. You get
+logs, they simply have no correlation fields, and it reads as a configuration problem rather than a threading one. `LogContextConfiguration` in the BFF is the
+fix: `Hooks.enableAutomaticContextPropagation()` plus Micrometer's `ContextRegistry`. **It has a boundary, and a test asserts that boundary.** The restored MDC
+reaches Reactor's own operators. It does not reach inside a coroutine started by the `mono { }` builder, which is how Spring invokes a `suspend` handler. So a
+line logged in a suspend controller carries no `requestId` today. Threading a `CoroutineContext` through the Reactor context is the fix, if it is ever wanted.
+
+**What every log line actually carries:**
+
+| Field                        | Source                                                         |
+| ---------------------------- | -------------------------------------------------------------- |
+| `severity` / `severity_text` | `log.level`, mapped to real OTLP severity numbers by the agent |
+| `sourceSlug`, `importRunId`  | MDC, set once per import run                                   |
+| `requestId`                  | MDC, one per BFF request                                       |
+| `logger`                     | `log.logger` — exclude a noisy class without excluding its pod |
+| `errorType`, `stackTrace`    | one field each, rather than forty unparented lines             |
+| `service_version`            | the collector's `k8sattributes`, read off the pod's own label  |
+
+**No `traceId`, and it is not an oversight.** Neither module has Micrometer Tracing, so nothing issues a W3C trace context. `importRunId` and `requestId` are
+correlation ids the applications generate. To name one `traceId` would invite joins that cannot work. Real distributed tracing is a separate decision.
+
+**`service_version` is deliberately not set by the application.** `k8sattributes` already puts it on every log row from the pod's own
+`app.kubernetes.io/version` label. Two writers on one field resolve by parser order. The pod label is also the better source during a rollout, because it is
+per-pod. The two versions running at once stay distinguishable.
 
 **Do not log client IPs without deciding to.** [LEGAL.md](../LEGAL.md) §7.5 — the origin sees real addresses, and nginx's access log is on by default.
 `RequestLoggingFilter` is IP-free today by design. Keep it that way.
@@ -932,7 +958,6 @@ Every decision in this document is made. What remains is work, tracked in the
 |                                                                                                     |                                                                             |
 | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | **Monitoring and alerting** — [#271](https://github.com/enorm-labs/event-junkie/issues/271)         | The zero-events alert is a **go-live blocker**, not a nice-to-have          |
-| **Structured logging** — §7                                                                         | No `logback.xml` yet, and the WebFlux context-propagation fix with it       |
 | **Rate limiting and abuse control** — [#268](https://github.com/enorm-labs/event-junkie/issues/268) | §8 item 9's other half                                                      |
 | **Reboot-pending alert** — [#419](https://github.com/enorm-labs/event-junkie/issues/419)            | Blocked on #271 for somewhere to send it                                    |
 | **Deploy to production** — [#285](https://github.com/enorm-labs/event-junkie/issues/285)            | The application is installed; go-live is flipping `publish_dns`             |
