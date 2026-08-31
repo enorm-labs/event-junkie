@@ -42,13 +42,16 @@
 # ---------------------------------------------------------------------------------------------
 
 # 2026-08-26 — CVE-2026-14456, an unbounded-allocation DoS in OpenSSL's QUIC *server* listener.
-# No digest to bump to. Alpine published the fix (openssl 3.5.8-r0 is in v3.24/main), but neither
-# base has rebuilt onto it: nginx-unprivileged:1.31-alpine rebuilt too early (digest 901e944d still
-# carries 3.5.7-r0) and liberica-openjre-alpine:25 has not rebuilt at all — its current digest is
-# byte-identical to the one pinned here.
-# Not reachable in any of the three images. The frontend declares a single `listen 8080;` with no
-# ssl, quic or http3 directive, so nginx never creates a QUIC listener; and in the JRE images the
-# only binaries linking libssl.so.3 are BusyBox's ssl_client and apk, neither of which runs.
-# Delete on the next rebuild of either base — this clears itself, unlike the pebble entries above.
-# Tracked by #770, which is what stops it becoming permanent.
+# 2026-08-31 — **half of this entry is now gone.** nginx-unprivileged:1.31-alpine rebuilt onto
+# openssl 3.5.8-r0 (digest d9083fe4, Alpine 3.24.1) and the frontend Dockerfile is pinned to it, so
+# the frontend image no longer carries the finding — `trivy image ... --ignorefile /dev/null` returns
+# 0 HIGH/CRITICAL on d9083fe4 and 2 on the 901e944d it replaced. What is left is the JRE half:
+# liberica-openjre-alpine:25 still has not rebuilt (its current digest is byte-identical to the one
+# pinned in events-bff/ and events-importer/) and still ships libssl3/libcrypto3 3.5.7-r0.
+# Not reachable in the two JRE images: the only binaries linking libssl.so.3 are BusyBox's
+# ssl_client and apk, neither of which runs. (The frontend argument, kept because the pin can move
+# back: it declares a single `listen 8080;` with no ssl, quic or http3 directive, so nginx never
+# creates a QUIC listener.)
+# Delete on the next rebuild of the Liberica base — this clears itself, unlike the pebble entries
+# above. Tracked by #770, which is what stops it becoming permanent.
 CVE-2026-14456
