@@ -19,13 +19,14 @@
 #     agent            -> OpenObserve:5080          otlphttp export
 #     agent            -> kubelet:10250             the kubeletstats receiver
 #     gateway          -> OpenObserve:5080          otlphttp export
-#     gateway          -> apiserver:443             27 k8sobjects receivers
+#     gateway          -> apiserver:6443            27 k8sobjects receivers, through the node
 #     gateway          -> node:10250/6443/…         the cadvisor and control-plane scrape jobs
 #     gateway          -> coredns:9153              the coredns scrape job
 #     gateway          -> event-junkie:9001         prometheus-autodiscovery, the app's meters
 #     gateway          -> postgres-exporter:9187    the database's meters
 #     gateway          -> collectors:8888           the collectors' own meters
-#     otel-operator    -> apiserver:443             reconciling the two collector CRs
+#     agent            -> apiserver:6443            the k8sattributes processor
+#     otel-operator    -> apiserver:6443            reconciling the two collector CRs
 #     postgres-exporter-> 10.0.1.20:5432            the only pod here that may reach the private network
 #     OpenObserve      -> the internet:443          Hetzner Object Storage, where the data lives
 #     everything       -> CoreDNS:53
@@ -40,6 +41,14 @@
 # Verify with `kubectl -n observability get pods --show-labels`, not by reading this file. Second:
 # **the node is reached by port, not address** — its address is public here and changed once when
 # #271 resized it, so `ipBlock: 0.0.0.0/0` bounded by port names no host and survives a rebuild.
+#
+# **The API server is reached on the NODE's address and port 6443, never on `10.43.0.1:443`.**
+# `kubernetes.default` is a ClusterIP with no pods behind it, kube-proxy DNATs it to the API server's
+# real endpoint, and a policy is evaluated after that translation. The service-address form matches
+# nothing, and the pod that tries it reports `connection refused` — which reads like a dead API
+# server rather than a blocked one. It cost the whole observability rollout on production, because
+# **every pod in this namespace on staging predates these policies** and keeps its API connection
+# through conntrack, so the set had never once been exercised from a cold start.
 #
 # **Deliberately absent.** No ingress for the API server reaching the otel-operator webhook on 9443,
 # nor for kubelet probes: both originate on the node, and node-to-pod traffic is not subject to
@@ -120,14 +129,19 @@ spec:
         - protocol: TCP
           port: 5080
 
-    # The `kubeletstats` receiver. By port rather than by address, because the node's is public on
-    # this cluster and has already changed once.
+    # The `kubeletstats` receiver on 10250, and the API server on 6443 for `k8sattributes` — the
+    # processor that names the pod every log line came from, and which the chart puts in all three of
+    # the agent's pipelines. By port rather than by address, because the node's is public on this
+    # cluster and has already changed once, and because 6443 is where the `kubernetes` service DNATs
+    # to. **An allowance on the service address would not work**; the operator's policy has why.
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
       ports:
         - protocol: TCP
           port: 10250
+        - protocol: TCP
+          port: 6443
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -245,12 +259,31 @@ spec:
   policyTypes:
     - Egress
   egress:
+    # **The service address is not what a policy sees, and this rule alone is why the operator could
+    # not start on production.** `kubernetes.default` is a ClusterIP with no pods behind it: kube-proxy
+    # DNATs it to the API server's real endpoint, which here is the node's own public address on
+    # **6443**, and NetworkPolicy is evaluated after that translation. So an allowance naming
+    # `10.43.0.1:443` matches nothing the kernel ever sees. The pod fails with `dial tcp 10.43.0.1:443:
+    # connect: connection refused` — a rejection, not a timeout, which reads like a dead API server
+    # rather than a policy.
+    #
+    # **Both forms are kept.** The rule below is what carries the traffic; this one costs nothing and
+    # stays correct on a cluster whose API server has an in-cluster endpoint.
     - to:
         - ipBlock:
             cidr: 10.43.0.1/32
       ports:
         - protocol: TCP
           port: 443
+
+    # By port rather than by address, exactly as the agent reaches the kubelet and the gateway reaches
+    # the control plane: the node's address is public here and has already changed once.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 6443
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
