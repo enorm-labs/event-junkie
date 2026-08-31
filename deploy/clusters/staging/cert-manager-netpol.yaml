@@ -86,7 +86,7 @@ metadata:
   annotations:
     kubernetes.io/description: >-
       Every pod here talks to the API server — the controller watches Certificates and takes a lease, cainjector patches webhook configurations, and both
-      webhooks are admission or extension servers that must authorise their callers.
+      webhooks are admission or extension servers that must authorise their callers. Named by port on the node, never by the service address.
 spec:
   # All four, deliberately: the alternative is four near-identical policies whose only difference is
   # a selector, and a list of arrows is only reviewable while it is short.
@@ -94,12 +94,17 @@ spec:
   policyTypes:
     - Egress
   egress:
+    # **Was `10.43.0.1/32:443`, which matched nothing** (#940). `kubernetes.default` is a ClusterIP
+    # with no pods behind it, kube-proxy DNATs it to the real endpoint, and a policy is evaluated
+    # after that translation. Nothing failed because these pods predate the policy by three days and
+    # hold their connections through conntrack — so the set had never been exercised from a cold
+    # start, exactly as #923 found for the observability namespace.
     - to:
         - ipBlock:
-            cidr: 10.43.0.1/32
+            cidr: 0.0.0.0/0
       ports:
         - protocol: TCP
-          port: 443
+          port: 6443
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
