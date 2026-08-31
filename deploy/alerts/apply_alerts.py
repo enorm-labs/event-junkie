@@ -40,6 +40,9 @@ import sys
 from alert_objects import DESTINATION_NAME, TEMPLATE_NAME, destination_payload, template_payload
 
 auth, svc, org, path = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+# The cluster this is being applied to, for the template's `environment` field (#928).
+# `apply.sh` derives it from `EJ_NODE`; the default keeps a hand-run against staging working.
+environment = sys.argv[5] if len(sys.argv) > 5 else "staging"
 base = "http://%s:5080/api/%s" % (svc, org)
 
 
@@ -54,9 +57,9 @@ def call(method, url, payload=None):
 
 
 def ensure_template():
-    code, _ = call("POST", base + "/alerts/templates", template_payload())
+    code, _ = call("POST", base + "/alerts/templates", template_payload(environment))
     if code in (409, 400):  # already exists — update it, so an edit here lands
-        code, body = call("PUT", "%s/alerts/templates/%s" % (base, TEMPLATE_NAME), template_payload())
+        code, body = call("PUT", "%s/alerts/templates/%s" % (base, TEMPLATE_NAME), template_payload(environment))
         print("template %s updated (%s)" % (TEMPLATE_NAME, code))
     else:
         print("template %s created (%s)" % (TEMPLATE_NAME, code))
