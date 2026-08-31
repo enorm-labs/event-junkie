@@ -55,9 +55,15 @@ const dimensions = computed(() =>
     have to split its classes across two elements.
   -->
   <picture v-if="src" class="contents">
+    <!--
+      `contents` dissolves the <picture> box and promotes every child into the caller's flex
+      container. The <source>s land there too: zero-width flex items that each still claim a `gap`.
+      Unhidden, three formats push the image 48 px right of a placeholder card's.
+    -->
     <source
       v-for="source in sources ?? []"
       :key="source.type"
+      class="hidden"
       :type="source.type"
       :srcset="source.srcset"
       :sizes="sizes"
