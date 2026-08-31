@@ -244,21 +244,30 @@ spec:
         memory: "512Mi"
         cpu: "100m"
       limits:
-        # Measured, not guessed: a k3d rehearsal put standalone at 634Mi under load and the whole
-        # metrics path — this, the collector gateway, two agents and the operator — at 938Mi against
-        # ADR-015's ~1.5 GB ceiling. **1Gi is deliberately tighter than that ceiling**, because
-        # criterion 2 is a real test only if breaching it is observable and an OOMKill says so
-        # immediately. Raise it as a decision and record the number: 1.5 GB is where ADR-015's
-        # fallback triggers.
+        # **1Gi became 1536Mi, and this is the recorded number.** A k3d rehearsal put
+        # standalone at 634Mi and the whole metrics path at 938Mi, so 1Gi was set deliberately under
+        # ADR-015's ~1.5 GB ceiling: criterion 2 is a real test only if a breach is observable, and
+        # an OOMKill says so immediately. The breach arrived — six OOMKills in twenty minutes, each
+        # about three minutes after start, every one of them mid-compaction.
+        #
+        # **The backlog came from #924.** Its one-second probe timeout crash-looped this pod for
+        # eight days. `ZO_MAX_FILE_SIZE_IN_MEMORY: 32` above trades many small Parquet files for
+        # never rejecting a write, on the argument that the compactor merges them every 10s — and a
+        # pod that never stays up long enough to compact turns that trade into a debt it then cannot
+        # pay off inside 1Gi.
         #
         # **This number is not only a limit — it sizes two things inside the process**, which cost
-        # #625 a wrong diagnosis: the memtable ceiling is a quarter of it (`config.rs:3612`), so 1Gi
-        # means 256 MiB, and `config.rs:3060` caps worker threads at one core per GiB floored at two
-        # (`cpu_num = min(real_cpu, mem_total / 1GiB)`), which sizes the persist and file-move pools
-        # — so raising `cpu` below buys nothing while this stays at 1Gi. Both are why #625's fix is
-        # the rotation threshold in `config` above and not a bigger number here: the memtable sat at
-        # 759Mi of 1Gi while rejecting writes, bounded by its own 256 MiB ceiling, not the cgroup.
-        memory: "1Gi"
+        # #625 a wrong diagnosis. The memtable ceiling is a quarter of it (`config.rs:3612`), so
+        # 1536Mi means 384 MiB against a worst case of six writers at 32 MB: #625's fix survives the
+        # raise with room to spare. `config.rs:3060` caps worker threads at one core per GiB floored
+        # at two (`cpu_num = min(real_cpu, mem_total / 1GiB)`), and `cpu: "1"` below pins that at two
+        # whatever this says — so the compactor does not get more parallel. That is what makes the
+        # raise safe, and why it was still not the fix for #625: rejected writes were bounded by the
+        # 256 MiB ceiling rather than by the cgroup.
+        #
+        # **Production stays at 1Gi**, where it sits at 621Mi with no backlog and no restart. It
+        # never had #924's crash loop, so it is still the live test of the tighter number.
+        memory: "1536Mi"
         cpu: "1"
 
   # **The chart cannot express this, and the default kills the pod** (#924). Its `probes:` block
