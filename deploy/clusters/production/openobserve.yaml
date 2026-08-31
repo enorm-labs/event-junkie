@@ -275,3 +275,42 @@ spec:
         # 759Mi of 1Gi while rejecting writes, bounded by its own 256 MiB ceiling, not the cgroup.
         memory: "1Gi"
         cpu: "1"
+
+  # **The chart cannot express this, and the default kills the pod** (#924). Its `probes:` block
+  # offers `enabled`, `initialDelaySeconds`, `failureThreshold` and `path` — and no
+  # `timeoutSeconds` — so both probes render with Kubernetes' default of **one second**. This
+  # process compacts Parquet on its own schedule, `/healthz` occasionally answers slower than that
+  # while it does, and three in a row are a SIGKILL: staging restarted 124 times in 8 days, roughly
+  # every half hour, with no error in any log and every restart reported as `Exit Code: 137`.
+  #
+  # **Raising `failureThreshold` was available and is not the fix.** It multiplies a wrong timeout
+  # rather than correcting it, and it would trade a kill every half hour for a kill every hour.
+  #
+  # **Readiness is patched as well as liveness, and that half is what broke tooling rather than the
+  # pod.** A failing readiness probe takes this pod out of its Service, so `deploy/alerts/apply.sh`
+  # reached nothing and reported all eleven rules as returning no data — a dead server reading
+  # exactly like a metrics problem.
+  #
+  # 5s against a 10s period, keeping `failureThreshold: 3`: the pod is killed after 30 seconds of a
+  # genuinely unresponsive process, which is what liveness is for. A strategic merge patch rather
+  # than JSON 6902, so the container is matched by name and not by index.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: StatefulSet
+              name: openobserve-openobserve-standalone
+            patch: |
+              apiVersion: apps/v1
+              kind: StatefulSet
+              metadata:
+                name: openobserve-openobserve-standalone
+              spec:
+                template:
+                  spec:
+                    containers:
+                      - name: openobserve-standalone
+                        livenessProbe:
+                          timeoutSeconds: 5
+                        readinessProbe:
+                          timeoutSeconds: 5
