@@ -82,6 +82,15 @@ describe('CachedImage', () => {
     expect(wrapper.get('img').classes()).toEqual(['size-20', 'shrink-0'])
   })
 
+  // `contents` promotes the <source>s into the caller's flex container too. Each one is a
+  // zero-width flex item that still claims a `gap`. Unhidden, three formats push the image 48 px
+  // right of a placeholder card's.
+  it('keeps the sources out of the layout the picture was dissolved into', () => {
+    const wrapper = mount_({ sources })
+
+    expect(wrapper.findAll('source').every((s) => s.classes().includes('hidden'))).toBe(true)
+  })
+
   // Without these a lazy image reserves no space and the page reflows as each one lands. `srcset`
   // is what makes it live: every render site sets `loading="lazy"` and offers several widths (#848).
   it('reserves the space with the intrinsic dimensions', () => {
