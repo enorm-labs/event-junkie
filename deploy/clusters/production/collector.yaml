@@ -246,6 +246,73 @@ spec:
             - /var/log/pods/*/openobserve-ingester/*.log
             # This deployment's own, the one the chart's list does not reach.
             - /var/log/pods/*/openobserve-standalone/*.log
+
+      # comment-lint: allow the allowlist argument and the two silent-failure traps are the whole reason this processor is not three lines.
+      # **Lifting the application's JSON into fields, which is the half that is not obvious.** The
+      # apps now emit ECS JSON (the chart's ConfigMap sets `LOGGING_STRUCTURED_FORMAT_CONSOLE`), and
+      # that on its own changes nothing here: `filelog` moves the container line into `body` as a
+      # **string** and neither it nor OpenObserve looks inside. The proof was already in the cluster
+      # before this change — Flux logs JSON by default, and its rows carry a `body` of perfect
+      # unparsed JSON with `severity` still 0. So JSON at the source is necessary and not sufficient;
+      # something has to parse it, and this is that something.
+      #
+      # **An allowlist, not a flatten**, and #624 is why. A blind merge of arbitrary JSON into
+      # attributes gives every key any container ever logs its own column, which is precisely the
+      # unbounded-stream problem that took staging down. Named fields cost nothing and cannot run
+      # away. Adding one is a line here.
+      #
+      # **`error_mode: ignore` and the `where` guards are both load-bearing.** Every container's logs
+      # pass through this, most of them plain text: without the guards each one is a failed
+      # statement, and without `ignore` a failed statement takes the whole pipeline with it — the
+      # agent is the only thing shipping logs, so that is a total outage of them.
+      processors:
+        transform/parse_structured_logs:
+          error_mode: ignore
+          log_statements:
+            - context: log
+              statements:
+                # Parse once into the shared cache; every statement below reads from it. Guarded on
+                # a leading brace so a plain-text line is skipped rather than attempted.
+                - set(cache, ParseJSON(body)) where IsMatch(body, "^\\{")
+                # The level, as both an OTLP severity and a plain field. `severity_text` is what
+                # OpenObserve shows; `severity_number` is what its level filter sorts on, and it is
+                # 0 (UNSPECIFIED) on every row today.
+                - set(severity_text, cache["log"]["level"]) where cache["log"]["level"] != nil
+                - set(severity_number, SEVERITY_NUMBER_TRACE) where severity_text == "TRACE"
+                - set(severity_number, SEVERITY_NUMBER_DEBUG) where severity_text == "DEBUG"
+                - set(severity_number, SEVERITY_NUMBER_INFO) where severity_text == "INFO"
+                - set(severity_number, SEVERITY_NUMBER_WARN) where severity_text == "WARN"
+                - set(severity_number, SEVERITY_NUMBER_ERROR) where severity_text == "ERROR"
+                # The logger, so a noisy class can be excluded without excluding its pod.
+                - set(attributes["logger"], cache["log"]["logger"]) where cache["log"]["logger"] != nil
+                # The MDC fields — what #380 is for. Spring copies every MDC entry to the top level
+                # of the ECS object, so these arrive as siblings of `message` rather than nested.
+                - set(attributes["sourceSlug"], cache["sourceSlug"]) where cache["sourceSlug"] != nil
+                - set(attributes["importRunId"], cache["importRunId"]) where cache["importRunId"] != nil
+                - set(attributes["requestId"], cache["requestId"]) where cache["requestId"] != nil
+                # The stack trace as one field rather than forty unparented lines, which is the
+                # other thing a text log cannot give.
+                - set(attributes["errorType"], cache["error"]["type"]) where cache["error"]["type"] != nil
+                - set(attributes["stackTrace"], cache["error"]["stack_trace"]) where cache["error"]["stack_trace"] != nil
+                # Last: replace the JSON blob with the human-readable message. After this the `body`
+                # column reads like a log again and the structure lives in the fields beside it.
+                - set(body, cache["message"]) where cache["message"] != nil
+
+      service:
+        pipelines:
+          logs:
+            # Restated because Helm replaces lists rather than merging them — the same trap the
+            # gateway's pipelines carry below, and the reason `receivers` and `exporters` are absent
+            # here: those are maps' worth of defaults this does not change.
+            processors:
+              - memory_limiter
+              # Before the enrichers, so a dropped or malformed line is not enriched first, and
+              # before `batch` because everything must be.
+              - transform/parse_structured_logs
+              - resourcedetection
+              - attributes
+              - k8sattributes
+              - batch
       resources:
         requests:
           memory: "128Mi"

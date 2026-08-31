@@ -92,6 +92,10 @@ dependencies {
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    // MDCContext, which is what carries the import run's log context across a suspension point.
+    // A bare MDC.put does not: MDC is thread-local, a coroutine changes threads, and the field is
+    // then simply absent from the JSON rather than wrong — the silent half of #380.
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-slf4j")
     implementation("tools.jackson.module:jackson-module-kotlin")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
 

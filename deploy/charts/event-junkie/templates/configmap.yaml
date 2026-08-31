@@ -48,3 +48,23 @@ data:
   # The banner is six lines of ASCII art at the top of every container log, repeated on every
   # restart. Harmless locally, pure noise in an aggregated log.
   SPRING_MAIN_BANNER_MODE: "off"
+  {{- /* Structured logs, and this ConfigMap rather than application.yaml because it is the
+         definition of a setting that belongs to running in a cluster: a terminal wants Spring's
+         console layout, an aggregated log store wants fields. There is no `container` profile to
+         hang it on, and there does not need to be — envFrom becomes an environment variable, which
+         outranks application.yaml, so setting it here is container-only by construction. That same
+         precedence is what silently kept /actuator/prometheus at 404 in #538; here it is the
+         mechanism being used on purpose rather than the one that bit.
+
+         ECS because Spring Boot copies every MDC entry into the JSON object it writes, which is what
+         makes `sourceSlug` and `importRunId` filterable rather than merely present (#380). The other
+         two formats Boot ships, logstash and gelf, would do as well; ECS is the one #380 settled on.
+
+         DELIBERATELY NOT SET: logging.structured.ecs.service.version. `service_version` already
+         arrives on every log row from the collector's k8sattributes processor, read off the pod's
+         own `app.kubernetes.io/version` label — verified on production, where an importer line
+         carries `"service_version":"0.3.7"`. Setting it here would put a second writer on one field
+         and the winner would depend on parser order. The pod label is also the better source during
+         a rollout, which is the case #380 cares about: it is per-pod, so the two versions running
+         at once are distinguishable, and it cannot drift from what was actually deployed. */}}
+  LOGGING_STRUCTURED_FORMAT_CONSOLE: "ecs"

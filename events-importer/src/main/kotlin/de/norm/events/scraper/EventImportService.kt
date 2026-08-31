@@ -9,6 +9,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.stereotype.Service
@@ -146,7 +147,14 @@ class EventImportService(
      */
     internal suspend fun importFromSource(source: EventSourceEntity): ImportResultResponse {
         requireNotNull(source.id) { "Event source must be persisted (have a non-null id) before importing" }
-        return importSemaphore.withPermit { timedImportPipeline(source) }
+        // The one place the log context for a run is established (#380). Every line any scraper,
+        // the upsert or the coverage check writes below this point carries the slug and run id,
+        // because MDCContext travels with the coroutine rather than with the thread. Outside the
+        // semaphore deliberately: a run that spends a minute waiting for a permit should still say
+        // which source it is waiting for.
+        return withContext(LogContext.forImportRun(source.slug)) {
+            importSemaphore.withPermit { timedImportPipeline(source) }
+        }
     }
 
     /**
