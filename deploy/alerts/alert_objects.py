@@ -13,28 +13,39 @@ import json
 TEMPLATE_NAME = "event-junkie"
 DESTINATION_NAME = "record-only"
 
-# One line per firing, with the fields an incident actually needs. `{alert_name}`
-# and friends are OpenObserve's substitutions, not Python's — hence the doubled
-# braces below being absent and the string being a plain literal.
-TEMPLATE_BODY = json.dumps(
-    {
-        "alert": "{alert_name}",
-        "stream": "{stream_name}",
-        "org": "{org_name}",
-        "value": "{value}",
-        # No `{timestamp}`: it is not a substitution OpenObserve knows, so it
-        # arrived as the literal string "{timestamp}" in every row. The ingest
-        # timestamp is already on the row as `_timestamp`, which is the one a
-        # query would use anyway. Verified substitutions: `{alert_name}`,
-        # `{stream_name}`, `{org_name}`, `{value}`.
-        "environment": "staging",
-    }
-)
+def template_body(environment):
+    """One line per firing, with the fields an incident actually needs.
+
+    `{alert_name}` and friends are OpenObserve's substitutions, not Python's —
+    hence the braces below being single and the strings plain literals.
+
+    **`environment` is ours and is passed in, because OpenObserve has no
+    substitution for it** (#928). It was written here as the literal `"staging"`
+    when staging was the only cluster running OpenObserve, and #880 made that
+    wrong without touching this file: the first alert ever to fire on production
+    recorded itself as staging. Both clusters write to a stream of the same name
+    in an org of the same name, so this field is the only thing that says which
+    one is broken.
+    """
+    return json.dumps(
+        {
+            "alert": "{alert_name}",
+            "stream": "{stream_name}",
+            "org": "{org_name}",
+            "value": "{value}",
+            # No `{timestamp}`: it is not a substitution OpenObserve knows, so it
+            # arrived as the literal string "{timestamp}" in every row. The ingest
+            # timestamp is already on the row as `_timestamp`, which is the one a
+            # query would use anyway. Verified substitutions: `{alert_name}`,
+            # `{stream_name}`, `{org_name}`, `{value}`.
+            "environment": environment,
+        }
+    )
 
 
-def template_payload():
+def template_payload(environment):
     """The notification body. No secret in it, so it is compared by value."""
-    return {"name": TEMPLATE_NAME, "body": TEMPLATE_BODY, "type": "http"}
+    return {"name": TEMPLATE_NAME, "body": template_body(environment), "type": "http"}
 
 
 def destination_payload(org, auth):

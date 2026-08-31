@@ -40,6 +40,11 @@ case "$NODE" in
     *) readonly CONTEXT="event-junkie-staging" ;;
 esac
 
+# The same answer without the `event-junkie-` prefix, for the template's `environment`
+# field (#928). OpenObserve has no substitution for it, so it is baked into the body at
+# apply time — and it is the only field in a firing that says which cluster is broken.
+readonly ENVIRONMENT="${CONTEXT#event-junkie-}"
+
 cd "$(dirname "$0")"
 
 check_only=false
@@ -83,7 +88,7 @@ if $diff_only; then
     ssh_node "
         AUTH=\$(sudo k3s kubectl -n flux-system get secret openobserve-credentials -o jsonpath='{.data.O2_BASIC_AUTH_HEADER}' | base64 -d)
         SVC=\$(sudo k3s kubectl -n observability get svc openobserve-openobserve-standalone -o jsonpath='{.spec.clusterIP}')
-        python3 /tmp/ej-diff-alerts.py \"\$AUTH\" \"\$SVC\" '$ORG' /tmp/ej-alerts.json
+        python3 /tmp/ej-diff-alerts.py \"\$AUTH\" \"\$SVC\" '$ORG' /tmp/ej-alerts.json '$ENVIRONMENT'
     "
     exit $?
 fi
@@ -103,7 +108,7 @@ ssh_node 'cat > /tmp/ej-apply-alerts.py' < apply_alerts.py
 ssh_node "
     AUTH=\$(sudo k3s kubectl -n flux-system get secret openobserve-credentials -o jsonpath='{.data.O2_BASIC_AUTH_HEADER}' | base64 -d)
     SVC=\$(sudo k3s kubectl -n observability get svc openobserve-openobserve-standalone -o jsonpath='{.spec.clusterIP}')
-    python3 /tmp/ej-apply-alerts.py \"\$AUTH\" \"\$SVC\" '$ORG' /tmp/ej-alerts.json
+    python3 /tmp/ej-apply-alerts.py \"\$AUTH\" \"\$SVC\" '$ORG' /tmp/ej-alerts.json '$ENVIRONMENT'
 "
 
 cat <<EOF

@@ -78,6 +78,10 @@ from alert_objects import DESTINATION_NAME, TEMPLATE_NAME, destination_payload, 
 # property is tested rather than asserted.
 auth, svc, org = (sys.argv + ["", "", ""])[1:4]
 path = sys.argv[4] if len(sys.argv) > 4 else "/tmp/ej-alerts.json"
+# Must match what `apply_alerts.py` pushed, or the template reports as drifted on
+# whichever cluster it was not generated for — a false positive in the one check
+# that exists to find real drift (#928).
+environment = sys.argv[5] if len(sys.argv) > 5 else "staging"
 
 BASE = "http://%s:5080/api/v2/%s/alerts" % (svc, org)
 # The template and destination endpoints are v1: there is no v2 for them.
@@ -195,7 +199,7 @@ def main():
     template, destination = delivery_objects()
     drifted += report(
         TEMPLATE_NAME + " (template)",
-        template_payload(),
+        template_payload(environment),
         template,
         "no notification template — firings would arrive shapeless, with no alert name or value",
     )
