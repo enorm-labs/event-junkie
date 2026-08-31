@@ -208,6 +208,29 @@ spec:
     # **Requests are steady state, not the ceiling** — what the scheduler needs, and what a "floor
     # before observability" sum misses entirely, an unrequested pod being invisible to it.
     agent:
+      # **OpenObserve indexing its own indexer, and the biggest log producer in the cluster.** The
+      # chart excludes `openobserve-ingester`, which is the container name in the clustered
+      # deployment. This runs `ZO_LOCAL_MODE`, where the container is `openobserve-standalone`, so
+      # the exclusion misses it: every `generated tantivy index file` line the pod writes about a
+      # Parquet file is shipped back, indexed, and written to another Parquet file. Measured on
+      # staging, which runs the same standalone mode: **102,974 of ~104,200 log lines in one hour,
+      # 99%** — against 820 from the BFF and 685 from the frontend, which is why the application's
+      # own logs read as absent while being present the whole time.
+      #
+      # Same shape as the `pg_*` streams in #624, and it lands on #625's memtable: ~2.5M rows a day
+      # of a pod describing writes nobody will read.
+      #
+      # **Restated in full because Helm replaces lists rather than merging them** — the same trap the
+      # gateway's pipelines carry below. The first three are the chart's own, and dropping any of
+      # them re-opens a collector-logs-about-collector loop in its place.
+      receivers:
+        filelog/std:
+          exclude:
+            - /var/log/pods/*/otel-collector/*.log
+            - /var/log/pods/*/otc-container/*.log
+            - /var/log/pods/*/openobserve-ingester/*.log
+            # This deployment's own, the one the chart's list does not reach.
+            - /var/log/pods/*/openobserve-standalone/*.log
       resources:
         requests:
           memory: "128Mi"
