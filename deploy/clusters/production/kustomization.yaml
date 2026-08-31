@@ -31,10 +31,11 @@ resources:
   - observability-netpol.yaml
   - collector.yaml
   - postgres-exporter.yaml
-  # **Two of staging's files are absent, for opposite reasons.** `signal-bridge.yaml` has no
-  # destination until #877, so the bridge and the route into it arrive together or not at all.
-  # `cert-manager-netpol.yaml` is a real gap (#920): staging's allows a DNS01 solver reaching the
-  # Hetzner API, production solves HTTP01, and a copied policy is a certificate that stops renewing.
+  # Its own file rather than staging's, and shorter (#920): this cluster solves HTTP01, so the DNS01
+  # self-check and the Hetzner webhook are arrows it does not have.
+  - cert-manager-netpol.yaml
+  # **One of staging's files is still absent.** `signal-bridge.yaml` has no destination until #877,
+  # so the bridge and the route into it arrive together or not at all.
   - oci-repository.yaml
   - helm-release.yaml
   - notification.yaml
