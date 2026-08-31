@@ -42,10 +42,17 @@ interface CachedImageRepository : CoroutineCrudRepository<CachedImageVariantEnti
      * out of a row the importer wrote, so a request can only ever name an object we generated — it
      * cannot reach the `originals/` prefix, another environment's prefix, or anything outside the
      * bucket, whatever the path variables contain.
+     *
+     * **`DISTINCT`, because `content_hash` is not unique.** A row is keyed by `source_url` and the
+     * objects are content addressed, so byte-identical files published under two URLs get two live
+     * rows on one hash, each with its own variants — 24 of production's 1118 images. The key is
+     * `derivativeKey(hash, width, format)` and carries no row id, so those rows name one object and
+     * `DISTINCT` collapses them. Two rows that disagreed on the key would still fail here, which is
+     * the case worth failing on.
      */
     @Query(
         """
-        SELECT v.storage_key
+        SELECT DISTINCT v.storage_key
         FROM $EVENTS_SCHEMA.cached_image_variant v
         JOIN $EVENTS_SCHEMA.cached_image c ON c.id = v.cached_image_id
         WHERE c.deleted_at IS NULL
