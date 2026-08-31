@@ -152,12 +152,14 @@ misrouting and a non-200.
   the rule that does that.
 - **Call, SMS and push.** E-mail is the only free channel, and it is the one this project uses.
 
-**No drill proved that the alert reaches a person. That is the open question.** _Notify the primary responder_ reads
-the primary on-call schedule. **On-call scheduling is a Responder feature.** The free plan does not carry it, and the
-console warns that there is no one to notify. So where the e-mail lands stays a guess until somebody receives one.
+**The alert reaches a person, and this was measured rather than assumed.** _Notify the primary responder_ reads the
+primary on-call schedule, and **on-call scheduling is a Responder feature the free plan does not carry**. The console
+warns that there is no one to notify. That warning is about escalation policies, and it does not describe the simple
+path: the e-mail arrived. The drill log records the date.
 
 **A monitor that alerts nobody is the exact failure this whole page exists to prevent**, and it is indistinguishable
-from a working one. Only the drill below settles it. Run it before ticking any go-live row.
+from a working one. Run the drill again whenever the notification settings change, because nothing else can tell the
+two apart.
 
 ### The console is checked against the repository, once a day
 
@@ -305,12 +307,23 @@ Three things that catch people out:
 
 ### Drill log
 
-| Date       | Environment | Induced          | Notification arrived            |
-| ---------- | ----------- | ---------------- | ------------------------------- |
-| 2026-08-19 | staging     | disk past 85%    | yes                             |
-| 2026-08-21 | production  | explicit `/fail` | yes — within seconds, 06:06 UTC |
+| Date       | Environment | Induced                                                          | Notification arrived            |
+| ---------- | ----------- | ---------------------------------------------------------------- | ------------------------------- |
+| 2026-08-19 | staging     | disk past 85%                                                    | yes                             |
+| 2026-08-21 | production  | explicit `/fail`                                                 | yes — within seconds, 06:06 UTC |
+| 2026-08-31 | production  | Better Stack keyword pointed at a string the page does not serve | yes — e-mail, within minutes    |
 
-**The two rows induced different things, and the second is the weaker drill.** The disk assertion makes the check go _silent_, so the notification comes from
+**The third row is a different mechanism, and it answered the question the other two cannot.** It drilled the Better
+Stack monitor rather than a healthchecks.io check, by changing the keyword to `EVENT-JUNKIE-DRILL-DO-NOT-SHIP` and
+reverting it. It is the strongest of the three, because it exercised the whole chain: the assertion failed, an incident
+opened, and a human received the e-mail. **That last hop was genuinely in doubt** — the free plan has no on-call
+schedule, so nothing established that the alert routed anywhere.
+
+The drill also proved the drift check against a real console change rather than a synthetic one. `site-probe.yml`
+reported `required_keyword is 'EVENT-JUNKIE-DRILL-DO-NOT-SHIP', this repository says 'Event Junkie'` and failed, while
+the probe step stayed green and pinged as usual. **Workflow red, check green** — the site was up throughout.
+
+**The first two rows induced different things, and the second is the weaker drill.** The disk assertion makes the check go _silent_, so the notification comes from
 healthchecks.io noticing an absence after the grace period. That is what a dead-man's switch actually is, and what a real backup failure looks like. An
 explicit `/fail` is a signal we send, so it alerts immediately and never exercises the timeout at all.
 
