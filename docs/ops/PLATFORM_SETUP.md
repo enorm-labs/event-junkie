@@ -478,11 +478,21 @@ So alerting is **two layers, and the second is not optional**:
 | OpenObserve → Signal                            | In the cluster  | The app misbehaving: zero-event imports, error rates, disk filling, pod restarts | The cluster being gone         |
 | **External uptime monitor + dead-man's switch** | **Off Hetzner** | The node, k3s, or the whole site being down; alerting itself having died         | Nuance — it only knows up/down |
 
-The second layer is healthchecks.io, and the way it is used is the interesting part — [HEALTHCHECKS.md](HEALTHCHECKS.md) is the full picture. It is **passive**:
-it never polls the site, it waits for a ping and raises the alarm when one fails to arrive. So the ping is made **conditional on a real end-to-end check
-performed the way a visitor would**. Resolve the name via public DNS, fetch over the internet, assert 200, valid TLS and expected content, and only then ping.
-Anything that breaks the visitor path suppresses the ping, and silence raises the alarm. One check covers DNS failure, certificate expiry, ingress misrouting,
-application errors and the node being dead.
+The second layer is two mechanisms rather than one, and [HEALTHCHECKS.md](HEALTHCHECKS.md) is the full picture.
+[ADR-021](../adr/ADR-021_PUBLIC_SITE_MONITORING.md) records why it takes both.
+
+**A Better Stack monitor polls the site every three minutes** and alerts on a failure, so a real outage reaches somebody
+in about six minutes. It resolves the name via public DNS, fetches over the internet, and asserts 200, valid TLS and
+expected content. One monitor therefore covers DNS failure, certificate expiry, ingress misrouting, application errors
+and the node being dead.
+
+**A daily probe pings healthchecks.io**, which is **passive**. It never polls the site. It waits for a ping, and
+raises the alarm when one fails to arrive. So the ping is made **conditional on the same end-to-end check**, performed
+the way a visitor would. Anything that breaks the visitor path suppresses the ping, and silence raises the alarm.
+
+The two share no host, no scheduler and no failure. The monitor is the path that reports an outage. The probe is the
+path that keeps the assertions in git and does not share a fate with the monitor. **It was every 15 minutes until
+[#889](https://github.com/enorm-labs/event-junkie/issues/889) measured that GitHub delivers 8% of a 15-minute cron.**
 
 **Two things to get right:**
 

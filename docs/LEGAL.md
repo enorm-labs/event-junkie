@@ -513,6 +513,24 @@ of a data subject. That is not processing on our behalf, so there is no Art. 28 
 this the moment a ping gains a body**, because `/fail` and `/log` accept one, and a payload is where this stops
 holding.
 
+**Better Stack needs no entry in §5 either.** The reasoning differs from healthchecks.io's. The monitor makes an
+HTTPS `GET` to a public page of ours every three minutes. It asserts the status and one string in the body
+([ADR-021](adr/ADR-021_PUBLIC_SITE_MONITORING.md)). It sends us a request. We send it no data. What it holds about us
+is a public URL, our server's IP, response timings and the account email. That is not processing on our behalf, so
+there is no Art. 28 relationship, no DPA and no entry.
+
+**Better Stack, Inc. is a Delaware corporation, and it says it processes personal data primarily in the European
+Union.** The US incorporation is recorded here because it was weighed and not skipped. It changes nothing, for one
+reason. The monitor receives no personal data at all. So no transfer of personal data occurs, and a transfer mechanism
+has nothing to protect. An EU-incorporated vendor was preferred at first and rejected on the evidence. Two of the
+candidates run on Hetzner, which is the infrastructure this layer exists to outlive.
+
+**The privacy notice does not change, and that is a decision rather than an omission.** §Rule 1 requires a notice
+update for a new third-party request. That rule means a request the visitor's browser makes. This is a request made
+**to** us, by a machine, for a page that is already public. No visitor is involved and nothing reaches the visitor's
+device. **Re-open this if the monitor is ever pointed at a page behind a login, or at a URL carrying a query string
+with visitor data.**
+
 **Processor forms are answered from
 [§7.3a](#73a-what-is-processed-and-about-whom--the-answer-every-processor-form-asks-for)** — categories of data, and
 categories of data subject. Every agreement, this document and §5 of the notice therefore describe the same
