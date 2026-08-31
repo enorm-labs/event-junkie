@@ -632,15 +632,32 @@ none of it. Three images built and scanned, and the chart stamped, linted and pa
 the notes `.github/release.yml` generates from the merged PRs' labels.
 
 ```bash
-# 1. main is at the version you intend to release — gradle.properties says 0.3.1-SNAPSHOT
+# Dry run first: resolves the version, creates nothing.
+gh workflow run cut-release.yml -f dry_run=true
+
+# Then for real. `bump` is patch by default.
+gh workflow run cut-release.yml -f dry_run=false -f bump=patch
+```
+
+[`cut-release.yml`](../.github/workflows/cut-release.yml) reads the version from `gradle.properties`. It does both
+halves. First it publishes the release. Then it opens the pull request that moves `main` to the next snapshot. **The
+version is never typed**, so the tag cannot claim a number the tree does not carry.
+
+The second half is the one that matters, and it was the step a person could skip without noticing. Until `main` carries
+the next snapshot, staging stops following it. Snapshots of the just-released version sort _below_ the release, so the
+`>=0.0.0-0` range keeps resolving the release itself, and nothing reports it
+([#455](https://github.com/enorm-labs/event-junkie/issues/455)).
+
+`bump` takes `minor` or `major` for a release that earned one. **`patch` is the default because it assumes least.** A
+snapshot is a prerelease of the coming release. So `0.4.0-SNAPSHOT` decides the next release is a minor one, before
+anybody knows what is in it.
+
+By hand, if the workflow is unavailable:
+
+```bash
 scripts/version.sh check
-
-# 2. publish the release, creating the tag from main. The v prefix is required, and the
-#    number must match gradle.properties. Or do the same in the UI: Releases → Draft a new
-#    release → choose a tag → Create new tag → Generate release notes → Publish.
 gh release create v0.3.1 --target main --generate-notes
-
-# 3. afterwards, open a PR bumping all four files to 0.3.2-SNAPSHOT / 0.3.2
+scripts/version.sh bump patch      # writes all four files; commit them on a branch
 ```
 
 A release version is **never committed** — `release.yml` passes `-Pversion=` from the tag, so the tag and the built artifacts cannot disagree. Tagging `v0.4.0`

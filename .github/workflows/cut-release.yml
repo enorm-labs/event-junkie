@@ -1,0 +1,197 @@
+name: Cut release
+
+# Publish a GitHub Release from `gradle.properties`, then open the pull request that moves `main` on
+# to the next snapshot. This does not build anything: creating the release fires `release.yml`,
+# which is what produces the four artifacts (#868).
+#
+# **The version is never typed.** It comes from `scripts/version.sh base`, so the tag cannot claim a
+# number the tree has not been bumped to. The same script writes the four files for the bump, which
+# is why the logic lives there rather than here — a workflow and a person at a terminal then edit
+# them the same way.
+#
+# **The second step is the one that matters.** Until `main` carries the next snapshot, staging stops
+# following it: snapshots of the just-released version sort *below* the release, so the
+# `>=0.0.0-0` range keeps resolving the release itself and nothing reports it (#455). Doing both
+# halves in one run is the whole point.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: >-
+          How far to move main afterwards. `patch` assumes least: a snapshot is a prerelease of the
+          coming release, so `minor` commits the next release to being one before anybody knows what
+          is in it.
+        type: choice
+        options: [ patch, minor, major ]
+        default: patch
+      notes:
+        description: >-
+          Prepended to the generated release notes, for a release that needs a paragraph of its own.
+          The categories below it come from .github/release.yml.
+        type: string
+        default: ''
+      dry_run:
+        description: >-
+          Resolve the version and print the notes, creating nothing. On by default, the same posture
+          as release.yml's `publish: false`.
+        type: boolean
+        default: true
+
+# Two runs would race for one tag, and the loser fails after the winner has already published.
+concurrency:
+  group: cut-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  cut:
+    name: Cut the release and open the bump
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      # The gate that makes everything after it safe. A tree whose four files disagree would publish
+      # a chart whose appVersion names image tags that were never built.
+      - name: Check that every file agrees about the version
+        run: scripts/version.sh check
+
+      - name: Resolve the version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          {
+            echo "version=$(scripts/version.sh base)"
+            echo "next=$(scripts/version.sh next "$BUMP")"
+          } >>"$GITHUB_OUTPUT"
+
+      # **Not `GITHUB_TOKEN`, and this is the whole design risk.** GitHub suppresses the events its
+      # own token triggers, so a release created with it fires no `release: published` — `release.yml`
+      # would never run, no images and no chart would be published, and every job here would report
+      # green. The same rule stops a pull request it opens from running any check, which would leave
+      # the bump unmergeable. A GitHub App installation token is a different identity, so both fire.
+      #
+      # It is minted per run and expires in an hour. The App holds `contents: write` and
+      # `pull-requests: write` on this repository alone (docs/CREDENTIALS.md §2, #25).
+      - name: Mint an App installation token
+        id: app-token
+        if: ${{ !inputs.dry_run }}
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          # Narrowed to the two the job uses. Without these the token inherits everything the
+          # installation holds, which today is the same two — and would silently widen the moment
+          # anybody granted the App a third.
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Refuse a tag that already exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "::error::v$VERSION is already released. Bump gradle.properties first."
+            exit 1
+          fi
+          echo "v$VERSION is free"
+
+      # `generate-notes` renders what `gh release create --generate-notes` would produce and creates
+      # nothing, so a dry run can show the notes rather than only the number. The categories come
+      # from `.github/release.yml`.
+      - name: Preview the release notes
+        if: ${{ inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          {
+            echo "### Notes for v$VERSION"
+            echo
+            if [ -n "$NOTES" ]; then printf '%s\n\n' "$NOTES"; fi
+            gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+              -f tag_name="v$VERSION" -f target_commitish=main --jq .body
+          } >>"$GITHUB_STEP_SUMMARY"
+
+      # Written outside the working tree, so it cannot be swept into the bump commit below.
+      - name: Create the release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          if [ -n "$NOTES" ]; then
+            printf '%s\n' "$NOTES" >"$RUNNER_TEMP/notes.md"
+            gh release create "v$VERSION" --target main --generate-notes --notes-file "$RUNNER_TEMP/notes.md"
+          else
+            gh release create "v$VERSION" --target main --generate-notes
+          fi
+
+      # A branch, not a push to main: main is protected, and the bump has to run the checks like any
+      # other change.
+      #
+      # The committer is the App's own bot account, and the address needs that account's numeric id
+      # rather than the App id — the two differ, and a wrong one leaves the commit attributed to
+      # nobody. `gh api` is the only place the id is available.
+      - name: Open the bump pull request
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          SLUG: ${{ steps.app-token.outputs.app-slug }}
+          VERSION: ${{ steps.version.outputs.version }}
+          NEXT: ${{ steps.version.outputs.next }}
+        run: |
+          branch="chore/version-${NEXT//./-}-snapshot"
+          bot_id="$(gh api "/users/$SLUG[bot]" --jq .id)"
+          git config user.name "$SLUG[bot]"
+          git config user.email "$bot_id+$SLUG[bot]@users.noreply.github.com"
+
+          git switch -c "$branch"
+          scripts/version.sh set "$NEXT"
+          git commit -am "chore(release): open the next development version at $NEXT-SNAPSHOT"
+          # Pushed to an explicit URL rather than through the remote, so the token is never written
+          # into `.git/config` — the same reason every checkout here sets `persist-credentials: false`.
+          git push "https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY.git" "$branch"
+
+          cat >"$RUNNER_TEMP/pr-body.md" <<BODY
+          v$VERSION is published, so \`main\` moves on to the next number. All four files together,
+          because \`scripts/version.sh check\` accepts nothing else.
+
+          Opened by \`cut-release.yml\` (#868).
+          BODY
+
+          gh pr create --base main --head "$branch" \
+            --title "chore(release): open the next development version at $NEXT-SNAPSHOT" \
+            --body-file "$RUNNER_TEMP/pr-body.md"
+
+      - name: Summary
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          NEXT: ${{ steps.version.outputs.next }}
+          BUMP: ${{ inputs.bump }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          {
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "### Dry run — nothing was created"
+            else
+              echo "### Cut v$VERSION"
+            fi
+            echo
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| Release | \`v$VERSION\` |"
+            echo "| Bump | \`$NEXT-SNAPSHOT\` ($BUMP) |"
+          } >>"$GITHUB_STEP_SUMMARY"
