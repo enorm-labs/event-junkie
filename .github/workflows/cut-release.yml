@@ -82,9 +82,11 @@ jobs:
       #
       # It is minted per run and expires in an hour. The App holds `contents: write` and
       # `pull-requests: write` on this repository alone (docs/CREDENTIALS.md §2, #25).
+      # Minted on a dry run too, and deliberately: it creates nothing, and it is the only thing that
+      # proves the App can authenticate before a run that publishes. `generate-notes` below is the
+      # cheapest call that exercises it.
       - name: Mint an App installation token
         id: app-token
-        if: ${{ !inputs.dry_run }}
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: ${{ vars.RELEASE_APP_ID }}
@@ -109,10 +111,13 @@ jobs:
       # `generate-notes` renders what `gh release create --generate-notes` would produce and creates
       # nothing, so a dry run can show the notes rather than only the number. The categories come
       # from `.github/release.yml`.
+      #
+      # **It needs the App token, not `github.token`.** The endpoint is a POST and asks for
+      # `contents: write`, which this workflow does not grant its own token and should not.
       - name: Preview the release notes
         if: ${{ inputs.dry_run }}
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           VERSION: ${{ steps.version.outputs.version }}
           NOTES: ${{ inputs.notes }}
         run: |
