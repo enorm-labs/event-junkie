@@ -644,16 +644,23 @@ fix: `Hooks.enableAutomaticContextPropagation()` plus Micrometer's `ContextRegis
 reaches Reactor's own operators. It does not reach inside a coroutine started by the `mono { }` builder, which is how Spring invokes a `suspend` handler. So a
 line logged in a suspend controller carries no `requestId` today. Threading a `CoroutineContext` through the Reactor context is the fix, if it is ever wanted.
 
-**What every log line actually carries:**
+**What every log line actually carries.** The first column is what you type into OpenObserve, and it is **not** always what the
+code writes — see the warning below the table:
 
-| Field                        | Source                                                         |
-| ---------------------------- | -------------------------------------------------------------- |
-| `severity` / `severity_text` | `log.level`, mapped to real OTLP severity numbers by the agent |
-| `sourceSlug`, `importRunId`  | MDC, set once per import run                                   |
-| `requestId`                  | MDC, one per BFF request                                       |
-| `logger`                     | `log.logger` — exclude a noisy class without excluding its pod |
-| `errorType`, `stackTrace`    | one field each, rather than forty unparented lines             |
-| `service_version`            | the collector's `k8sattributes`, read off the pod's own label  |
+| Column in OpenObserve        | Written as                  | Source                                                         |
+| ---------------------------- | --------------------------- | -------------------------------------------------------------- |
+| `severity` / `severity_text` | —                           | `log.level`, mapped to real OTLP severity numbers by the agent |
+| `sourceslug`, `importrunid`  | `sourceSlug`, `importRunId` | MDC, set once per import run                                   |
+| `requestid`                  | `requestId`                 | MDC, one per BFF request                                       |
+| `logger`                     | —                           | `log.logger` — exclude a noisy class without excluding its pod |
+| `errortype`, `stacktrace`    | `errorType`, `stackTrace`   | one field each, rather than forty unparented lines             |
+| `service_version`            | —                           | the collector's `k8sattributes`, read off the pod's own label  |
+
+**OpenObserve lower-cases field names, and a query with the wrong case matches nothing.** It does not error — it returns an
+empty result, which reads like "no such data" rather than "no such column". So `sourceSlug` is written in the MDC, appears
+as `sourceSlug` in the JSON the pod writes, and is queried as **`sourceslug`**. Verified on staging on 2026-08-31: the row
+carried `requestid`, never `requestId`. The camelCase in the Kotlin and in the collector's allowlist is correct and stays —
+only the query is lower-case.
 
 **No `traceId`, and it is not an oversight.** Neither module has Micrometer Tracing, so nothing issues a W3C trace context. `importRunId` and `requestId` are
 correlation ids the applications generate. To name one `traceId` would invite joins that cannot work. Real distributed tracing is a separate decision.
