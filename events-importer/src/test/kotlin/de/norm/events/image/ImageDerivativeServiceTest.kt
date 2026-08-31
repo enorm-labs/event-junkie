@@ -1,6 +1,7 @@
 package de.norm.events.image
 
 import io.kotest.matchers.shouldBe
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -28,7 +29,7 @@ class ImageDerivativeServiceTest {
         storageEnabled: Boolean = true
     ): ImageDerivativeService {
         every { storage.isEnabled() } returns storageEnabled
-        return ImageDerivativeService(repository, variants, client, storage, properties, ImageProperties())
+        return ImageDerivativeService(repository, variants, client, storage, properties, ImageProperties(), ImageCacheMetrics(SimpleMeterRegistry()))
     }
 
     private val stored = CachedImageEntity(id = 1, sourceUrl = "https://venue.test/a.jpg", contentHash = "abc123")

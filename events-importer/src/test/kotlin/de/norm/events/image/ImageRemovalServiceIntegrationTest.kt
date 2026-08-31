@@ -5,6 +5,7 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
@@ -295,6 +296,7 @@ class ImageRemovalServiceIntegrationTest : BaseControllerTest() {
         variantRepository = variantRepository,
         storage = storage(),
         properties = ImageSweepProperties(enabled = enabled),
+        metrics = ImageCacheMetrics(SimpleMeterRegistry()),
         clock = Clock.fixed(now, java.time.ZoneOffset.UTC)
     )
 

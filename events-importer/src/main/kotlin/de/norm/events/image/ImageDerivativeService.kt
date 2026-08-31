@@ -23,12 +23,10 @@ class ImageDerivativeService(
     private val client: ImgproxyClient,
     private val storage: ImageStorage,
     private val properties: ImgproxyProperties,
-    private val imageProperties: ImageProperties
+    private val imageProperties: ImageProperties,
+    private val metrics: ImageCacheMetrics
 ) {
     private val logger = KotlinLogging.logger {}
-
-    /** How many files one original should end up with. */
-    private val expectedVariants: Int get() = properties.widths.size * properties.formats.size
 
     /**
      * Generates the missing derivatives for one batch of originals.
@@ -40,12 +38,13 @@ class ImageDerivativeService(
     suspend fun generateBatch(): DerivativeOutcome {
         if (!properties.enabled || !storage.isEnabled()) return DerivativeOutcome()
 
-        val pending = repository.findNeedingDerivatives(expectedVariants, imageProperties.batchSize).toList()
+        val pending = repository.findNeedingDerivatives(properties.expectedVariants, imageProperties.batchSize).toList()
         if (pending.isEmpty()) return DerivativeOutcome()
 
         var outcome = DerivativeOutcome()
         pending.forEach { outcome = outcome + generateFor(it) }
 
+        metrics.recordDerivativePass(outcome)
         logger.info { "Derivative pass: $outcome" }
         return outcome
     }

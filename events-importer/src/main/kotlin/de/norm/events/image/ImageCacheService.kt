@@ -22,6 +22,7 @@ class ImageCacheService(
     private val fetcher: ImageFetcher,
     private val storage: ImageStorage,
     private val properties: ImageProperties,
+    private val metrics: ImageCacheMetrics,
     private val clock: Clock = Clock.systemUTC()
 ) {
     private val logger = KotlinLogging.logger {}
@@ -58,6 +59,7 @@ class ImageCacheService(
         fresh.forEach { outcome = outcome + record(existing = null, url = it, now = now) }
         stale.forEach { outcome = outcome + record(existing = it, url = it.sourceUrl, now = now) }
 
+        metrics.recordFetchPass(outcome)
         if (outcome.total > 0) logger.info { "Image cache pass: $outcome" }
         return outcome
     }

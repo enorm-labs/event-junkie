@@ -136,7 +136,7 @@ cd deploy/alerts
 EJ_NODE=ops@10.10.0.1 ./apply.sh            # the same, against production
 ```
 
-**The rules are one file applied twice, so both clusters run the same nine.** Nothing reconciles them: a rule edited here reaches a cluster when somebody
+**The rules are one file applied twice, so both clusters run the same eleven.** Nothing reconciles them: a rule edited here reaches a cluster when somebody
 runs this, and `--diff` is the only thing that reports the gap ([#702](https://github.com/enorm-labs/event-junkie/issues/702)). Run it against both.
 
 `alerts.json` is **generated** by `gen_alerts.py`, exactly like the dashboard. `--check` answers the question the UI cannot: whether a rule's query matches any
@@ -237,9 +237,9 @@ A healthy system writes into the current hour. Hours that trail off are a backlo
 
 ## What it does not do yet
 
-- **A firing reaches no person.** Nine rules evaluate, and each one posts into the `alert_history` stream instead of to somebody
+- **A firing reaches no person.** Eleven rules evaluate, and each one posts into the `alert_history` stream instead of to somebody
   ([#271](https://github.com/enorm-labs/event-junkie/issues/271) item 4). So a firing is a row you must go and look at. That is a worse guarantee than it
   sounds, and it is the shape of the eight hours in #813. The Signal route waits only on a registered number now. The SSRF guard that also blocked it is
   gone, traded for the egress policy in `observability-netpol.yaml`.
-- **The two instances are copies, not one source.** Nine rules, one dashboard and two collector filter lists exist twice, kept in step by hand. `--diff`
+- **The two instances are copies, not one source.** Eleven rules, one dashboard and two collector filter lists exist twice, kept in step by hand. `--diff`
   catches a cluster that drifts from the repository. Nothing catches the two clusters drifting from each other.

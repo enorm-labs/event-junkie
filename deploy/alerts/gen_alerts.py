@@ -373,4 +373,58 @@ rule(
 )
 
 
+# --- The image cache, which shipped with no instrumentation at all ------------
+#
+# ADR-019 and ADR-020 built the whole subsystem and #880 added its meters. Two of
+# them are alertable and the rest are deliberately not; the split is worth stating
+# because the absence looks like an oversight otherwise.
+#
+# **The backfill gauges get no rule.** `images_urls{state="pending"}` and
+# `images_derivatives_backlog` are large and falling for days after a rollout, by
+# design — that IS the backfill — so any threshold either pages through normal
+# operation or is set so high it means nothing. #880's ask was that "is the
+# backfill done" become a query rather than a log grep, and a query is what those
+# two are. The dashboard is where they belong.
+#
+# **Both rules below survive trap 2 only because their counters are registered at
+# zero.** A Micrometer counter is absent from the exposition until it first
+# increments, and `missing` on a healthy origin never increments at all — so
+# without `ImageServingMetrics` creating all four outcomes up front, `rate()` over
+# an absent series is empty, the comparison yields nothing, and the rule is
+# un-fireable in exactly the state it exists to watch. That is `ej-ingest-shedding`'s
+# lesson applied before it could cost anything.
+
+rule(
+    "ej-image-objects-missing",
+    "A variant row named an object the bucket does not have. **This is the shape of a sweep "
+    "that deleted something it should have kept** — the visitor gets a 404 where a card should "
+    "be, and until now the only trace was a warning in a log nobody reads.",
+    'sum(rate(bff_images_served_total{outcome="missing"}[15m]))',
+    ">",
+    0,
+    stream_name="bff_images_served_total",
+    period_minutes=15,
+    frequency_minutes=5,
+    silence_minutes=6 * 60,
+)
+
+# Separate from the rule above rather than one rule over both outcomes, because the
+# two need different responses: that one is our data being wrong, this one is the
+# bucket being unreachable while the data is fine. Conflating them is the mistake
+# #618 records for `last_success` and `has_succeeded`.
+rule(
+    "ej-image-store-unreachable",
+    "The BFF cannot read Object Storage, so every image that is not already in memory is a "
+    "503. Serving degrades quietly: cards already cached keep working, which is what makes "
+    "this hard to notice from the outside.",
+    'sum(rate(bff_images_served_total{outcome="unavailable"}[15m]))',
+    ">",
+    0,
+    stream_name="bff_images_served_total",
+    period_minutes=15,
+    frequency_minutes=5,
+    silence_minutes=2 * 60,
+)
+
+
 print(json.dumps(_rules, indent=2))

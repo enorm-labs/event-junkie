@@ -22,6 +22,7 @@ class ImageRemovalService(
     private val variantRepository: CachedImageVariantRepository,
     private val storage: ImageStorage,
     private val properties: ImageSweepProperties,
+    private val metrics: ImageCacheMetrics,
     private val clock: Clock = Clock.systemUTC()
 ) {
     private val logger = KotlinLogging.logger {}
@@ -69,6 +70,7 @@ class ImageRemovalService(
         }
 
         val outcome = RemovalOutcome(images = unreferenced.size, objects = objects, strays = sweepBucket())
+        metrics.recordSweep(outcome, deleting = properties.enabled)
         if (outcome.total > 0) logger.info { "${if (properties.enabled) "Sweep" else "Sweep (reporting only)"}: $outcome" }
         return outcome
     }
