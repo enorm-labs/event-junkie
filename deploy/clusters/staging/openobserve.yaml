@@ -38,6 +38,12 @@ spec:
   # disagrees with reality for anyone debugging.
   storageNamespace: observability
   interval: 1h
+  # **How long Helm waits for the rollout, and it has to exceed the startup window below** (#924).
+  # The default is five minutes. A pod that needs longer than that to answer is marked `Failed`,
+  # remediation rolls the release back to the template that caused the problem, and the release
+  # stalls — which is exactly what happened on staging: the fix could not deploy because deploying
+  # it required the pod it fixes to already be healthy.
+  timeout: 10m
   install:
     createNamespace: true
     remediation:
@@ -293,3 +299,21 @@ spec:
                           timeoutSeconds: 5
                         readinessProbe:
                           timeoutSeconds: 5
+                        # **Neither of the two above runs until this one succeeds**, which is the
+                        # whole point. On start the process replays its write-ahead log and merges
+                        # whatever small Parquet files it left behind, and until that work lets it
+                        # answer, a liveness probe measures the backlog rather than the health.
+                        # Staging turned that into a spiral: every kill left more to catch up on,
+                        # so the next start was slower and the kills moved from every half hour to
+                        # every sixty seconds — 146 restarts and counting.
+                        #
+                        # 30 x 10s is five minutes to become responsive, against a release timeout
+                        # of ten. A process that cannot answer inside five minutes is genuinely
+                        # wedged, which is when a restart is the right answer rather than the cause.
+                        startupProbe:
+                          httpGet:
+                            path: /healthz
+                            port: 5080
+                          periodSeconds: 10
+                          timeoutSeconds: 5
+                          failureThreshold: 30
