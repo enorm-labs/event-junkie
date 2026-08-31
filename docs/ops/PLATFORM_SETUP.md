@@ -294,7 +294,7 @@ later.
 | `images.enabled`          | 2026-08-28 | 2026-08-30 | Production before its sources were enabled — see below |
 | `images.imgproxy.enabled` | 2026-08-28 | 2026-08-30 | Same release as `images.enabled` on both               |
 | `images.serving.enabled`  | 2026-08-30 | 2026-08-30 | Staging first, because it had never been true anywhere |
-| `images.sweep.enabled`    | off        | off        | Reports only. It needs days of counts that look right  |
+| `images.sweep.enabled`    | 2026-08-30 | 2026-08-31 | Reporting mode ran on both first — see below           |
 
 **Production never served a hotlinked image.** The cache was turned on before its 86 sources were enabled. The fetch
 pass then ran five minutes behind the first import, rather than hours behind a backlog. That order was available only
@@ -303,6 +303,11 @@ because the sources were seeded disabled (#876). Repeat it on any new environmen
 **The backfill took about two hours** for 2,284 images at twelve derivatives each. 52 of the 2,336 distinct images are
 not cached. Most are refused rather than failed: one venue's image CDN publishes `Disallow: /`. Those cards show no
 image, which is the design.
+
+**Reporting mode came first on both clusters, and the count is the check.** Staging reported 5 unreferenced images and
+65 objects. Production reported 3 images and 26 objects. Neither found a stray object. A sweep that suddenly claims
+hundreds of images shows a wrong reference query, not a full bucket. `maxDeletes` bounds one pass at 500 objects. A
+one-day grace period keeps a freshly fetched object out of reach. A wrong count costs a tick rather than the cache.
 
 **`…-tfstate` is the one genuinely hand-made resource**, because a state backend cannot be managed by the state it holds. `infra/README.md` says so where it
 matters.
