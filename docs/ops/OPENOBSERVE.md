@@ -1,7 +1,10 @@
 # Operating OpenObserve
 
-Logs, metrics and dashboards for staging. **Getting in is [CLUSTER_ACCESS.md](CLUSTER_ACCESS.md) §6b** — port-forward and the root credentials. This page is
-what to know once you are in, and what to do when it misbehaves.
+Logs, metrics and dashboards, on both clusters. **Getting in is [CLUSTER_ACCESS.md](CLUSTER_ACCESS.md) §6b** — port-forward and the root credentials. This
+page is what to know once you are in, and what to do when it misbehaves.
+
+**Two instances, not one**, and they share nothing but a bucket. Each holds its own root credential, metadata DB and copy of the rules. So every command
+below takes a `--context`, and against the other cluster each one is wrong. Where a value differs, §Two instances has it.
 
 Why OpenObserve at all, and what the alternatives cost, is [ADR-015](../adr/ADR-015_OBSERVABILITY_STACK.md). This page assumes that decision and does not
 re-argue it.
@@ -14,10 +17,13 @@ kubectl --context event-junkie-staging -n observability \
 flux --context event-junkie-staging get helmrelease openobserve -n flux-system
 ```
 
+The production forms are the same commands with `--context event-junkie-production`, over that cluster's tunnel (`10.10.0.1`, CLUSTER_ACCESS.md §Two
+environments). Both tunnels can be up at once, so the context is the only thing that says which store answered.
+
 - **Cost tracks the number of metric _names_, not the volume.** A thousand idle names is expensive. §The one thing that will bite you.
 - **The metadata DB dies with the node.** Dashboards and alerts live in git and are pushed by hand after every rebuild.
 - **Changing the Secret restarts nothing**, and both `flux reconcile` and `rollout status` report success anyway.
-- **Staging only.** Production runs no observability stack.
+- **Both clusters, one bucket.** Production writes under a `production/` key prefix. Staging writes at the root. §Two instances.
 
 ## The shape of it
 
@@ -26,10 +32,29 @@ flux --context event-junkie-staging get helmrelease openobserve -n flux-system
 | Chart        | `openobserve-standalone` **0.92.2**, pinned. A trial whose subject changes under it is not a trial                            |
 | Mode         | `ZO_LOCAL_MODE=true` — **single-node, not single-disk**. The flag chooses standalone-vs-cluster; storage is the line below it |
 | Storage      | `ZO_LOCAL_MODE_STORAGE=s3` → `event-junkie-o2` in `fsn1`. The corpus is in the bucket                                         |
+| Key prefix   | `ZO_S3_BUCKET_PREFIX=production/` on production. **Staging has none** and writes at the root                                  |
 | Local disk   | A 5 GB PVC for the write-ahead log, cache and metadata DB — **not** the corpus                                                |
 | Retention    | `ZO_COMPACT_DATA_RETENTION_DAYS=14`                                                                                           |
 | Ingestion    | The OTel collector gateway, over OTLP. Nothing writes to it directly                                                          |
-| Environments | **Staging only.** Production runs no observability stack yet                                                                  |
+| Environments | **Both**, since [#880](https://github.com/enorm-labs/event-junkie/issues/880). Separate instances, one shared bucket          |
+
+### Two instances, and where they differ
+
+|                       | Staging                                | Production                                                                       |
+| --------------------- | -------------------------------------- | -------------------------------------------------------------------------------- |
+| Bucket keys           | the root of `event-junkie-o2`          | `production/` (`ZO_S3_BUCKET_PREFIX`)                                            |
+| S3 credential         | the project keypair, all three buckets | its own keypair, rotatable without touching staging                              |
+| Alert destination     | `record-only`, into `alert_history`    | the same — no bridge here either                                                 |
+| Signal bridge         | deployed, unregistered                 | **not deployed** ([#877](https://github.com/enorm-labs/event-junkie/issues/877)) |
+| `ZO_SKIP_SSRF_CHECKS` | set, for the bridge destination        | **not set** — nothing in-cluster to allow yet                                    |
+| Database metrics      | `postgres-exporter` → the k3s node     | `postgres-exporter` → the dedicated node, `10.0.1.20`                            |
+
+**Why one bucket rather than two.** The same separation `s3://event-junkie-backups/<environment>/` and the images bucket already make. It keeps one
+lifecycle backstop covering both, which is what [LEGAL.md](../LEGAL.md) §7.5 rests on when a compactor stops running.
+
+**Staging is not being given a prefix.** Its file list is sqlite on the PVC. Whether that stores keys absolute or relative to the prefix is not worth
+answering against a live store. A wrong guess makes every Parquet already in that list unreadable. The 90-day backstop clears the root of what staging
+leaves behind.
 
 **The metadata DB is on that PVC, which means it dies with the node.** Users, dashboards and saved views are metadata. The data is not. A rebuild therefore
 comes back with an empty console and a full bucket. That is why the root password can be regenerated freely: the Secret re-seeds it at first boot. It is
@@ -54,7 +79,8 @@ deleting 362 idle `pg_*` streams that `postgres-exporter` was producing for one 
 
 ## What is filtered, and why each rule exists
 
-Everything is dropped at the **collector gateway**, not at OpenObserve — `deploy/clusters/staging/collector.yaml`, processor `filter/drop_infrastructure_noise`.
+Everything is dropped at the **collector gateway**, not at OpenObserve — `deploy/clusters/*/collector.yaml`, processor `filter/drop_infrastructure_noise`.
+Both clusters carry the same rules. The files are copies rather than one templated source, so a rule added to one misses the other.
 Dropping at the edge means the bytes never cross the network and never occupy a memtable slot.
 
 | Rule                                                                           | Why                                                     | Issue |
@@ -84,9 +110,14 @@ Extract the rules into a minimal config first. The HelmRelease values are not a 
 
 ```sh
 cd deploy/dashboards
-./apply.sh              # import (or replace) is-it-healthy.json
-./apply.sh --check      # run every panel query against live data, change nothing
+./apply.sh                                  # import (or replace) is-it-healthy.json, on staging
+./apply.sh --check                          # run every panel query against live data, change nothing
+EJ_NODE=ops@10.10.0.1 ./apply.sh            # the same, against production
 ```
+
+**`EJ_NODE` is what selects the cluster, and it defaults to staging.** Both scripts reach the API over the node's SSH tunnel rather than through an
+ingress, because nothing routes OpenObserve. Forget the variable and the command pushes staging's copy to staging again, with no sign that you meant
+production.
 
 `is-it-healthy.json` is **generated** by `gen_dashboard.py` — edit the generator, never the JSON. The README there records the PromQL limitations that cost the
 most time. `time()` is frozen at the window start, `sort_desc` is unimplemented, and `or vector(0)` does not backfill a missing series.
@@ -99,9 +130,14 @@ most time. `time()` is frozen at the window start, `sort_desc` is unimplemented,
 
 ```sh
 cd deploy/alerts
-./apply.sh              # create or update every rule in alerts.json
-./apply.sh --check      # evaluate each rule's query against live data, change nothing
+./apply.sh                                  # create or update every rule in alerts.json, on staging
+./apply.sh --check                          # evaluate each rule's query against live data, change nothing
+./apply.sh --diff                           # compare the cluster's rules to alerts.json
+EJ_NODE=ops@10.10.0.1 ./apply.sh            # the same, against production
 ```
+
+**The rules are one file applied twice, so both clusters run the same nine.** Nothing reconciles them: a rule edited here reaches a cluster when somebody
+runs this, and `--diff` is the only thing that reports the gap ([#702](https://github.com/enorm-labs/event-junkie/issues/702)). Run it against both.
 
 `alerts.json` is **generated** by `gen_alerts.py`, exactly like the dashboard. `--check` answers the question the UI cannot: whether a rule's query matches any
 series at all. One that matches none never fires, and is indistinguishable from health. It caught a rule summing two counters that was silently
@@ -111,10 +147,13 @@ un-fireable whenever either counter was quiet.
 
 - [#271](https://github.com/enorm-labs/event-junkie/issues/271) item 4's Signal bridge is unregistered, and
 - **OpenObserve's SSRF guard rejects an alert destination inside the cluster**, including
-  `signal-cli.observability.svc.cluster.local`. `ZO_SKIP_SSRF_CHECKS` is therefore set, **and paired with an egress NetworkPolicy**
-  (`deploy/clusters/staging/openobserve-netpol.yaml`). That policy lets this pod reach CoreDNS, the public internet on 443 and the Signal bridge. Nothing
+  `signal-cli.observability.svc.cluster.local`. On staging `ZO_SKIP_SSRF_CHECKS` is therefore set, **and paired with an egress NetworkPolicy**
+  (`deploy/clusters/staging/observability-netpol.yaml`). That policy lets this pod reach CoreDNS, the public internet on 443 and the Signal bridge. Nothing
   else — not the database, not the Kubernetes API. `deploy/alerts/README.md` has the reasoning. So the remaining blocker on delivery really is just the phone
   number.
+
+**Production sets neither the flag nor the allowance.** It has no bridge to reach. Its rules use the same loopback `record-only` destination, which needs
+only `ZO_SSRF_ALLOW_LOOPBACK`. The bridge, the flag and the egress rule arrive together in #877, or not at all.
 
 **Re-apply after any rebuild**, for the same reason as the dashboard: alerts, destinations and templates are all metadata.
 
@@ -191,6 +230,9 @@ cd infra && direnv exec . sh -c \
   | tr '\t' '\n' | grep -oE '2026/[0-9]{2}/[0-9]{2}/[0-9]{2}' | sort | uniq -c | tail -6
 ```
 
+**`--prefix production/files/default/` for the other cluster.** The prefix is also the check that the production instance is configured at all. Objects at
+the root, written after it started, mean the setting was dropped.
+
 A healthy system writes into the current hour. Hours that trail off are a backlog. Hours that stop are a refusal.
 
 ## What it does not do yet
@@ -199,4 +241,5 @@ A healthy system writes into the current hour. Hours that trail off are a backlo
   ([#271](https://github.com/enorm-labs/event-junkie/issues/271) item 4). So a firing is a row you must go and look at. That is a worse guarantee than it
   sounds, and it is the shape of the eight hours in #813. The Signal route waits only on a registered number now. The SSRF guard that also blocked it is
   gone, traded for the egress policy in `observability-netpol.yaml`.
-- **Nothing on production.** Standing it up there needs the memory budget re-checked against a node that also runs the application — and #625 answered first.
+- **The two instances are copies, not one source.** Nine rules, one dashboard and two collector filter lists exist twice, kept in step by hand. `--diff`
+  catches a cluster that drifts from the repository. Nothing catches the two clusters drifting from each other.

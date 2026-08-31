@@ -1,5 +1,5 @@
-# What Flux syncs for the production cluster — `flux bootstrap --path=deploy/clusters/production`,
-# once #424 has provisioned one. Bootstrap adds a generated `flux-system/` alongside these files.
+# What Flux syncs for the production cluster — `flux bootstrap --path=deploy/clusters/production`.
+# Bootstrap adds a generated `flux-system/` alongside these files.
 #
 # Order here is presentational only; `dependsOn` inside the HelmReleases orders the installs.
 # cert-manager is NOT suspended while `helm-release.yaml` is, so bootstrapping brings certificate
@@ -16,16 +16,25 @@ resources:
   - namespace.yaml
   # Declared rather than left to `createNamespace: true` (#604): a HelmRelease creating its own
   # namespace creates a bare one, and Pod Security Admission is enforced by namespace label, so an
-  # undeclared namespace is silently ungoverned. **There is no `namespace-observability.yaml` here
-  # and that is not an omission** — production does not run that stack, and when #271 item 6 copies
-  # it across the declaration goes with it or the namespace arrives bare as staging's did.
+  # undeclared namespace is silently ungoverned. That is why `namespace-observability.yaml` is in
+  # this list rather than left to the OpenObserve release, which sets `createNamespace: true`.
   - namespace-cert-manager.yaml
+  - namespace-observability.yaml
   - namespace-default.yaml
   # Encrypted; decrypted by the sops-age patch in flux-system/kustomization.yaml, which is exactly
   # why that patch has to actually reach the cluster.
   - secrets/events-db.yaml
   - helm-repository-jetstack.yaml
   - cert-manager.yaml
+  # The observability stack (#880). Each file argues its own difference from staging's copy.
+  - openobserve.yaml
+  - observability-netpol.yaml
+  - collector.yaml
+  - postgres-exporter.yaml
+  # **Two of staging's files are absent, for opposite reasons.** `signal-bridge.yaml` has no
+  # destination until #877, so the bridge and the route into it arrive together or not at all.
+  # `cert-manager-netpol.yaml` is a real gap (#920): staging's allows a DNS01 solver reaching the
+  # Hetzner API, production solves HTTP01, and a copied policy is a certificate that stops renewing.
   - oci-repository.yaml
   - helm-release.yaml
   - notification.yaml

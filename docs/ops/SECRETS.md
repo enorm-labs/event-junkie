@@ -24,7 +24,7 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 | ------------------------- | ------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
 | `events-db`               | `event-junkie`                                    | the `events` role's password                          | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8                |
 | `hetzner`                 | `cert-manager`                                    | an hcloud API token, **read+write** — staging only    | §8                                                             |
-| `openobserve-credentials` | `flux-system` **and** `observability` — see below | the root login and the `-o2` S3 keypair               | [SECRETS.md](SECRETS.md) §openobserve-credentials              |
+| `openobserve-credentials` | `flux-system` **and** `observability` — see below | the root login and an `-o2` S3 keypair                | [SECRETS.md](SECRETS.md) §openobserve-credentials              |
 | `github-dispatch`         | `flux-system`                                     | a fine-grained PAT, **`contents: write`** on one repo | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8 — **after** §9 |
 | `postgres-exporter`       | `observability`                                   | the `metrics` role's DSN                              | §postgres-exporter, below                                      |
 | `sops-age`                | `flux-system`                                     | the age private key that decrypts `events-db`         | §3, below                                                      |
@@ -33,6 +33,10 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 
 **All eight belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
 four, which is exactly the failure mode a summary exists to prevent. Add a row here in the same change that adds a secret.
+
+**Every one of these is per cluster.** The table lists eight objects, not eight values. Staging and production each hold their own copy. Two of them hold
+_different_ values on purpose: `github-dispatch`, so revoking one does not take both clusters down, and `openobserve-credentials`, since
+[#880](https://github.com/enorm-labs/event-junkie/issues/880).
 
 **Only `github-dispatch` cannot be regenerated.** `hetzner` is the Keychain's `HCLOUD_TOKEN`, `sops-age` is `~/.config/sops/age/event-junkie.txt`, and
 `postgres-exporter` is an `ALTER ROLE` away. OpenObserve's root password can be brand new, because its PVC is `local-path` on the node's disk. The metadata DB
@@ -160,6 +164,11 @@ backups and the OpenTofu state. Encrypting that into a public repository is the 
 > breaking the state backend. Scope it to `-o2` if Hetzner's bucket policies allow. The Secret below takes whatever keys it is given. This is a decision about
 > what you type into it, not a change to any manifest.
 
+**Production took that advice and staging has not yet** ([#880](https://github.com/enorm-labs/event-junkie/issues/880)). Production's instance holds a
+keypair created for it alone. Staging still holds the project-wide one. Hetzner issues credentials per project rather than per bucket, so this does
+**not** narrow what the production key reaches. It buys independent rotation, and stops one cluster's compromise from being both. Narrowing the reach
+needs a bucket policy denying that key on `-backups` and `-tfstate`, which is a separate question.
+
 **What hand-made means here**, same as `github-dispatch` above: nothing in this repository creates it and no deploy will bring it. Four keys in one Secret,
 because the chart reads two directly (`auth.existingRootUserSecret`) and Flux merges the other two in through `valuesFrom`:
 
@@ -204,6 +213,13 @@ same change.
 other release here. The chart's `existingRootUserSecret` reads from the release's _target_ namespace instead. **So this Secret has to exist in both**: the same
 contents, created twice, until that asymmetry is worth solving properly.
 
+**Production is the same five commands with `--context event-junkie-production`**, and two of the values are deliberately different: its own root password,
+and its own `-o2` keypair. Four copies in total across the two clusters, which is the cost of `valuesFrom` and `existingRootUserSecret` resolving in
+different namespaces.
+
+**Nothing there needs a bucket name or a prefix.** Production writes under `production/` in the shared `event-junkie-o2`, and that is set in
+`deploy/clusters/production/openobserve.yaml` where it is reviewable — not in the Secret. A credential decides _whether_ it can write, never _where_.
+
 Until it exists the release reconciles into a failed state, which is the intended shape. A missing credential should stop the deploy, rather than produce a
 running server nobody can log into. Once it exists, helm-controller picks it up on the next reconcile and nothing needs restarting.
 
@@ -230,6 +246,14 @@ ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1
 sudo -u postgres psql
 ```
 
+**On production the database is a second machine with no inbound rules.** So it is reached through the k3s node. `-i` does not reach a jump host, and
+CLUSTER_ACCESS.md §Two environments has the `~/.ssh/config` block that fixes it:
+
+```sh
+ssh -J ops@10.10.0.1 ops@10.0.1.20
+sudo -u postgres psql
+```
+
 ```sql
 CREATE ROLE metrics WITH LOGIN PASSWORD '<generated, stored in the password manager>';
 GRANT pg_monitor TO metrics;
@@ -247,6 +271,17 @@ kubectl --context event-junkie-staging create secret generic postgres-exporter -
 
 unset PGPW
 ```
+
+Production, with its own role password and its own address:
+
+```sh
+kubectl --context event-junkie-production create secret generic postgres-exporter -n observability \
+  --from-literal=DATA_SOURCE_NAME="postgresql://metrics:${PGPW}@10.0.1.20:5432/events?sslmode=require"
+```
+
+**That address appears twice on production and both copies must agree**: here, and as an `ipBlock` in
+`deploy/clusters/production/observability-netpol.yaml`. NetworkPolicy speaks CIDRs and cannot resolve a name. Get the DSN right and the policy wrong, and
+the exporter starts and stays Ready. Its probe only asks whether `/metrics` answers, so the symptom is no database metrics at all.
 
 **`DATA_SOURCE_NAME` is a URI, so the password has to be percent-encoded**, and the line above does not do it. A generated password containing `@`, `#`, `%`
 or `&` silently yields a DSN that parses as something else. A generator satisfying OpenObserve's policy will happily produce all four. `@` starts the host,

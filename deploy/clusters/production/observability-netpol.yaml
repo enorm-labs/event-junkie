@@ -1,0 +1,390 @@
+# comment-lint: allow 13 of these lines are the arrow inventory, and the rest are silent-failure traps
+# Default-deny for the `observability` namespace, plus one named allowance per real conversation
+# (#662). This replaces `openobserve-netpol.yaml`, whose egress rules are folded in below.
+#
+# This namespace holds the pod with every log line and metric in the system, and a Postgres exporter
+# carrying database credentials — either of which could otherwise reach the private-network
+# database, the Kubernetes API, each other, or the node.
+#
+# **Two arrows staging has are absent here, and both absences are decisions** (#880): the Signal
+# bridge is not deployed until it has a destination (#877), so neither it nor the route into it is
+# written down. **The arrows below are the whole of what production allows.**
+#
+# The shape is the chart's (`templates/networkpolicy.yaml`): **one deny-all plus one narrow allowance
+# per conversation, the only ordering that produces a reviewable list.** With allow-only policies the
+# absence of a rule is invisible — `flux-system` ships three `allow-*` policies and no deny, so they
+# document intent and enforce nothing. Read the allowances as the architecture: **an arrow not written
+# down does not happen**, and every one was read off the pinned charts rather than guessed.
+#
+#     agent            -> OpenObserve:5080          otlphttp export
+#     agent            -> kubelet:10250             the kubeletstats receiver
+#     gateway          -> OpenObserve:5080          otlphttp export
+#     gateway          -> apiserver:443             27 k8sobjects receivers
+#     gateway          -> node:10250/6443/…         the cadvisor and control-plane scrape jobs
+#     gateway          -> coredns:9153              the coredns scrape job
+#     gateway          -> event-junkie:9001         prometheus-autodiscovery, the app's meters
+#     gateway          -> postgres-exporter:9187    the database's meters
+#     gateway          -> collectors:8888           the collectors' own meters
+#     otel-operator    -> apiserver:443             reconciling the two collector CRs
+#     postgres-exporter-> 10.0.1.20:5432            the only pod here that may reach the private network
+#     OpenObserve      -> the internet:443          Hetzner Object Storage, where the data lives
+#     everything       -> CoreDNS:53
+#
+# **Two selector hazards, both silent.** The operator labels both collector pods
+# `app.kubernetes.io/name: openobserve-collector` — the *chart* name — so `name` cannot tell agent
+# from gateway. The discriminator is `app.kubernetes.io/instance`, set to `<namespace>.<collector>`,
+# which embeds **both the namespace and the Helm release name (`o2c`)**: renaming the release, or
+# moving the agent to its own namespace as #709 proposes, invalidates these selectors without
+# erroring — a `podSelector` matching nothing just leaves the pod under the deny-all, and a collector
+# that cannot reach OpenObserve queues, retries and drops, which is what #625 looked like for days.
+# Verify with `kubectl -n observability get pods --show-labels`, not by reading this file. Second:
+# **the node is reached by port, not address** — its address is public here and changed once when
+# #271 resized it, so `ipBlock: 0.0.0.0/0` bounded by port names no host and survives a rebuild.
+#
+# **Deliberately absent.** No ingress for the API server reaching the otel-operator webhook on 9443,
+# nor for kubelet probes: both originate on the node, and node-to-pod traffic is not subject to
+# NetworkPolicy in k3s — the chart records the same, and `kubectl port-forward` arrives that way,
+# which is how anyone reaches the OpenObserve UI. Were that wrong, probes would fail and pods never
+# go Ready, which is loud. No ingress for the gateway's `otlp` receiver on 4317/4318, because nothing
+# sends to it today. No allowance for `kube-state-metrics`, which the collector chart references and
+# does not install, so that scrape has failed every cycle since #271 — an allowance would make a
+# permanently-red target look intentional. And `prometheus-autodiscovery` is bounded to
+# `event-junkie` and this namespace rather than the cluster: something annotated in `kube-system`
+# will go red, and widening is a deliberate decision naming the namespace, like every arrow above.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: observability-default-deny
+  namespace: observability
+  annotations:
+    kubernetes.io/description: >-
+      Denies all ingress and egress in this namespace. Every allowance is a separate, named policy — so an arrow that is not written down does not exist.
+spec:
+  # An empty podSelector selects every pod in the namespace, including ones no manifest here
+  # creates. That is intended: a policy covering only the known workloads would leave a debug pod
+  # someone kubectl-runs with unrestricted egress, which is the exact hole this closes.
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: observability-allow-dns
+  namespace: observability
+  annotations:
+    kubernetes.io/description: Every pod resolves names. Without this nothing else in this file works, and the failures are slow rather than sharp.
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: observability-allow-agent-egress
+  namespace: observability
+  annotations:
+    kubernetes.io/description: >-
+      The collector agent DaemonSet — the pod that reads every container log on the node. It ships them to OpenObserve and reads the kubelet, and needs nothing
+      else.
+spec:
+  podSelector:
+    matchLabels:
+      # NOT app.kubernetes.io/name — see the header. That label is the chart name and both
+      # collectors share it.
+      app.kubernetes.io/instance: observability.o2c-openobserve-collector-agent
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: openobserve-standalone
+      ports:
+        - protocol: TCP
+          port: 5080
+
+    # The `kubeletstats` receiver. By port rather than by address, because the node's is public on
+    # this cluster and has already changed once.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 10250
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: observability-allow-gateway-egress
+  namespace: observability
+  annotations:
+    kubernetes.io/description: >-
+      The collector gateway — 27 k8sobjects receivers against the API server, the Prometheus scrape jobs, and the export to OpenObserve. The widest egress in
+      this namespace, and the one to re-read when a scrape job is added.
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: observability.o2c-openobserve-collector-gateway
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: openobserve-standalone
+      ports:
+        - protocol: TCP
+          port: 5080
+
+    # The Kubernetes API, for every `k8sobjects/*` receiver. A /32 on the service address rather
+    # than a port-bounded internet rule: this one has a stable address and naming it is stricter.
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.1/32
+      ports:
+        - protocol: TCP
+          port: 443
+
+    # The scrape jobs that target the node: `cadvisor` through the kubelet, and k3s's in-process
+    # apiserver, scheduler and controller-manager on their metrics ports.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 10250
+        - protocol: TCP
+          port: 6443
+        - protocol: TCP
+          port: 10257
+        - protocol: TCP
+          port: 10259
+
+    # The `coredns` scrape job — its metrics port, not its DNS port, which the DNS policy covers.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: TCP
+          port: 9153
+
+    # `prometheus-autodiscovery` reaching the application's meters. The other half of this arrow is
+    # the chart's own `-allow-metrics-scrape` ingress policy, which #271 added for exactly this and
+    # which is why the scrape works today; without the rule here it would stop working the moment
+    # the deny-all above lands. 9001 is both workloads' management port, and the only port the
+    # chart opens to a collector.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: event-junkie
+      ports:
+        - protocol: TCP
+          port: 9001
+
+    # cert-manager's meters, on the annotated port its three upstream pods expose. **This is what
+    # feeds `ej-certificate-expiry`** — the rule reads
+    # `certmanager_certificate_expiration_timestamp_seconds`, which arrives only through this
+    # scrape. Its matching half is `cert-manager-allow-metrics-scrape`; the two are required
+    # together, and removing either disables an alert rather than a panel.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cert-manager
+      ports:
+        - protocol: TCP
+          port: 9402
+
+    # The database's meters, and the collectors' own.
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgres-exporter
+      ports:
+        - protocol: TCP
+          port: 9187
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: opentelemetry-collector
+      ports:
+        - protocol: TCP
+          port: 8888
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: observability-allow-operator-egress
+  namespace: observability
+  annotations:
+    kubernetes.io/description: The OpenTelemetry operator reconciling the two collector CRs. The API server and nothing else.
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: opentelemetry-operator
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.1/32
+      ports:
+        - protocol: TCP
+          port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: observability-allow-postgres-exporter-egress
+  namespace: observability
+  annotations:
+    kubernetes.io/description: >-
+      The one pod in this namespace that may reach the private network, and the one holding database credentials. PostgreSQL and nothing else.
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: postgres-exporter
+  policyTypes:
+    - Egress
+  egress:
+    # The same address the application's own policy uses, and the same duplication: NetworkPolicy
+    # speaks CIDRs and cannot resolve a name (#416). Kept in step with `database.host` by hand here,
+    # because this namespace is not templated by the chart that asserts the pairing.
+    #
+    # **`10.0.1.20`, not staging's `10.1.1.10`, and this is the line most likely to be ported
+    # wrong** (#880). Production's PostgreSQL is on a dedicated node rather than co-located on the
+    # k3s one, so a copied policy points at an address that exists in the other environment: the
+    # exporter starts, resolves, and hangs on connect. It reports itself healthy the whole time —
+    # its liveness probe only asks whether `/metrics` answers — so the symptom is an empty
+    # `pg_*` namespace in OpenObserve, not a failing pod. Keep it in step with `databaseCidr` in
+    # this cluster's `helm-release.yaml`.
+    - to:
+        - ipBlock:
+            cidr: 10.0.1.20/32
+      ports:
+        - protocol: TCP
+          port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: openobserve-egress
+  namespace: observability
+  annotations:
+    kubernetes.io/description: >-
+      Bounds what OpenObserve may connect to. Object storage and nothing else — the Signal bridge staging also allows is not deployed here (#877).
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: openobserve-standalone
+  policyTypes:
+    - Egress
+  egress:
+    # **What this replaces, kept from #661 because the reasoning still holds.** OpenObserve refuses alert destinations that resolve inside the cluster, which is a sensible
+    # default and also blocks #271 item 4's architecture — a webhook into `signal-cli-rest-api`. The
+    # only switch that unblocks it, `ZO_SKIP_SSRF_CHECKS`, removes the check for **every**
+    # destination. That guard exists because an authenticated user can point a "destination" at an
+    # arbitrary URL and make the server fetch it. Removing it moves the control from the application
+    # to the network, which is where it belongs: **a URL allowlist inside a process is advisory, an
+    # egress policy is not.**
+    #
+    # **On production that switch is not set** (`openobserve.yaml`, `extraEnv`), because there is no
+    # in-cluster destination to unblock yet. So both controls are in force here and this policy is
+    # the one that stays true when #877 sets the flag — which is the point of writing the boundary
+    # in the network rather than in the application.
+    #
+    # Hetzner Object Storage — `fsn1.your-objectstorage.com`, the store this deployment is backed by
+    # (ADR-015). **By exclusion rather than by address**, because the endpoint is a CDN name whose
+    # addresses change and a policy pinned to today's IP would fail silently on the day they do.
+    # What is excluded is every RFC1918 range — the pod CIDR, the service CIDR and the private
+    # network carrying PostgreSQL, in one rule — plus link-local, which is where cloud metadata
+    # services live and therefore the first thing an SSRF attempt reaches for.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+
+    # **No in-cluster destination, deliberately.** Staging allows `signal-cli:8080` here. Production
+    # has no bridge to allow, and an allowance pointing at a pod that does not exist is an arrow
+    # nobody can read: it looks like the route works. #877 adds the bridge, this rule and the
+    # `ZO_SKIP_SSRF_CHECKS` flag in one change, or none of them.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: observability-allow-ingest
+  namespace: observability
+  annotations:
+    kubernetes.io/description: >-
+      The write path into OpenObserve. Both collectors and nothing else — port-forward to the UI arrives from the node and is not subject to policy.
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: openobserve-standalone
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: opentelemetry-collector
+      ports:
+        - protocol: TCP
+          port: 5080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: observability-allow-scrape-ingress
+  namespace: observability
+  annotations:
+    kubernetes.io/description: >-
+      The gateway reaching the meters it collects inside this namespace — the Postgres exporter's, and the collectors' own. The matching half of its egress
+      policy; both are required, and omitting either produces a target that is silently unreachable.
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          - postgres-exporter
+          - openobserve-collector
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: observability.o2c-openobserve-collector-gateway
+      ports:
+        - protocol: TCP
+          port: 9187
+        - protocol: TCP
+          port: 8888

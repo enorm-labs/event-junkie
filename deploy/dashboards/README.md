@@ -4,10 +4,16 @@
 _"a dashboard that answers 'is it healthy' in one screen"_.
 
 ```sh
-./apply.sh            # import it, replacing any dashboard with the same title
-./apply.sh --check    # run every panel's query against live data, change nothing
-./apply.sh --diff     # compare the cluster's copy to this file, change nothing
+./apply.sh                          # import it, replacing any dashboard with the same title
+./apply.sh --check                  # run every panel's query against live data, change nothing
+./apply.sh --diff                   # compare the cluster's copy to this file, change nothing
+EJ_NODE=ops@10.10.0.1 ./apply.sh    # any of the three, against production
 ```
+
+**`EJ_NODE` selects the cluster and defaults to staging.** Both environments run an OpenObserve since
+[#880](https://github.com/enorm-labs/event-junkie/issues/880), and this is one file applied to each — nothing reconciles them, so the two can differ.
+Forget the variable on a production run and the command succeeds, reports what it pushed, and writes to staging again. Each run prints the cluster it
+resolved before it does anything.
 
 **`--check` validates this file; `--diff` validates the deployment**, and they read alike. The first `--diff` run found the cluster serving **9 panels against
 this file's 12** — "Sources that have never succeeded" ([#618](https://github.com/enorm-labs/event-junkie/issues/618)) and both OpenObserve ingest panels
