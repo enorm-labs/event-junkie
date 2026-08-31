@@ -128,6 +128,14 @@ What each workflow is for, which checks are required, and the shapes that fail s
       model is `claude-opus-4-8` rather than Opus 5, which is a measured preference about verbosity at comment work rather than a cost decision — the input
       exists so 4.6 and 4.8 can be compared on one prompt. Last to earn a schedule, per #387's ordering. It sets up a JDK and Gradle, because the proof
       obligation is a full build and a missing toolchain reads to a model as a broken one.
+    - `cut-release.yml` — publishes the GitHub Release that `release.yml` keys on, then opens the pull request that moves `main` to the next snapshot (#868).
+      `workflow_dispatch` only, `dry_run` on by default. Three things about it are decisions. **The version is never typed** — it comes from
+      `scripts/version.sh base`, so a tag cannot claim a number the tree does not carry, and the same script writes the four files for the bump so a workflow
+      and a person edit them identically. **It mints a GitHub App token rather than using `GITHUB_TOKEN`**, because GitHub suppresses the events its own token
+      raises: a release created with it fires no `release: published`, so nothing is published and every job is green, and a pull request it opens starts no
+      check, so the bump never merges. The token is narrowed with `permission-contents` and `permission-pull-requests` rather than inheriting the
+      installation's, which zizmor's `github-app` audit is what enforces. **And it does both halves in one run**, because the bump is the step nobody notices
+      missing: until `main` carries the next snapshot, staging keeps resolving the release itself (#455).
     - `validate-workflows.yml` — **actionlint** (correctness) and **zizmor** (security) over `.github/workflows/`, since #383. It is the only gate that looks at
       the workflows themselves, and on its first run zizmor found a template injection in `release.yml`, a cache-poisoning path into it, and two workflow-level
       permission grants that belonged to a single job. zizmor blocks at `--min-severity medium`; suppressions live in `zizmor.yml` or as inline

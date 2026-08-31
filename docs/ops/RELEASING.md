@@ -17,7 +17,8 @@ flux --context event-junkie-staging get helmreleases -A          # did it land?
 flux --context event-junkie-staging reconcile helmrelease event-junkie -n flux-system --with-source   # impatient
 gh api repos/enorm-labs/event-junkie/deployments --jq '.[0] | {environment, ref, created_at}'         # what GitHub thinks
 
-# Cut a release: publish a GitHub Release whose tag matches gradle.properties, v-prefixed.
+# Cut a release: one dispatch. It publishes the release and opens the bump PR.
+gh workflow run cut-release.yml -f dry_run=false -f bump=patch
 ```
 
 **Nothing here deploys from CI, and nothing can.** A green Actions run means "the artifact was published", not "it is live" — those are minutes apart. §When a
@@ -88,6 +89,15 @@ Publishing is decided by an **allowlist** (`push`, `release`, or a dispatch that
 
 **Releases are cut through GitHub Releases, not by pushing a tag.** The workflow triggers on `release: published`, so a hand-pushed tag publishes nothing — which
 keeps the Releases page the single record of what shipped.
+
+**[`cut-release.yml`](../../.github/workflows/cut-release.yml) is what publishes that release**, on a `workflow_dispatch` with `dry_run` on by default. It reads
+the version from `gradle.properties` and refuses a tag that already exists. Then it creates the release, and opens the pull request that moves `main` to the
+next snapshot. Both halves in one run, because the second is the one a person skips without noticing (#868).
+
+**It cannot use `GITHUB_TOKEN`.** GitHub suppresses the events its own token raises. A release created with it fires no `release: published`, so `release.yml`
+never runs, nothing reaches GHCR, and every job reports green. The same rule leaves a pull request it opens with no checks, so the bump could never merge. The
+workflow mints a GitHub App installation token instead, narrowed to `contents: write` and `pull requests: write` and valid for an hour
+([CREDENTIALS.md](../CREDENTIALS.md) §2, #25).
 
 ## One version, four artifacts
 

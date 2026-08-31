@@ -12,12 +12,19 @@
 #   scripts/version.sh base                              # 0.1.1 — the released number this tree is heading for
 #   scripts/version.sh compute [ref] [sha] [timestamp]   # 0.1.1-snapshot.20260814122042.g33fd32g, or 0.1.1 from refs/tags/v0.1.1
 #   scripts/version.sh check                             # fails if the four places disagree
+#   scripts/version.sh next <patch|minor|major>          # 0.1.2 — the next base, printed, nothing written
+#   scripts/version.sh set <x.y.z>                       # write that version to all four files
+#   scripts/version.sh bump <patch|minor|major>          # next + set, which is the post-release bump
 #
 # `compute` defaults to $GITHUB_REF / $GITHUB_SHA and falls back to the working tree, so it produces
 # the same answer in CI and on a laptop. The third argument exists for `scripts/version-test.sh`,
 # which needs to drive the timestamp rather than read it from a commit.
 #
-# Requires: yq (for Chart.yaml). Reaches no network and writes nothing.
+# `set` and `bump` are the only commands that write, and both end by running `check`. The four files
+# are edited from one place so that a workflow and a person at a terminal cannot bump them
+# differently (#868).
+#
+# Requires: yq (for Chart.yaml). Reaches no network.
 
 set -euo pipefail
 
@@ -85,6 +92,78 @@ commit_timestamp() {
   [[ "$stamp" =~ ^[1-9][0-9]{13}$ ]] ||
     die "committer date of '$sha' produced '$stamp', which is not a 14-digit timestamp"
   printf '%s\n' "$stamp"
+}
+
+# Replaces the one line matching [pattern] in [file], and fails if it matched nothing.
+#
+# `sed -i` is not portable — BSD sed demands an argument that GNU sed reads as the next expression —
+# so the file is rewritten through a temporary. A silent no-match is the failure worth naming: every
+# caller here would then leave the file at its old version while reporting success.
+replace_line() {
+  local file="$1" pattern="$2" replacement="$3" tmp
+  grep -qE "$pattern" "$file" || die "no line matching /$pattern/ in $file"
+  tmp="$(mktemp)"
+  sed -E "s|$pattern|$replacement|" "$file" >"$tmp"
+  # Copied back rather than moved, so the file keeps its own mode. `mktemp` creates at 600, and a
+  # `mv` would carry that onto a file the whole repository reads.
+  cat "$tmp" >"$file"
+  rm -f "$tmp"
+}
+
+# The next base version after this tree's, for `patch`, `minor` or `major`.
+#
+# **`patch` is the default the release flow uses.** A snapshot is a prerelease of the coming release,
+# so bumping to `0.4.0-SNAPSHOT` commits the next release to being a minor one before anybody knows
+# what is in it. `patch` assumes least; the other two are there for a release that has earned one.
+next_version() {
+  local part="$1" base major minor patch
+  base="$(base_version)"
+  IFS=. read -r major minor patch <<<"$base"
+
+  case "$part" in
+    major) printf '%s.0.0\n' "$((major + 1))" ;;
+    minor) printf '%s.%s.0\n' "$major" "$((minor + 1))" ;;
+    patch) printf '%s.%s.%s\n' "$major" "$minor" "$((patch + 1))" ;;
+    *) die "'$part' is not one of patch, minor, major" ;;
+  esac
+}
+
+cmd_next() {
+  local part="${1:-}"
+  [[ -n "$part" ]] || die "usage: version.sh next <patch|minor|major>"
+  next_version "$part"
+}
+
+# Writes [version] to all four files, then proves it landed.
+#
+# The suffix is added here rather than passed in, so a caller cannot write a release number into
+# `gradle.properties` — which `base_version` refuses to read and which would make every later
+# snapshot claim to be a release.
+cmd_set() {
+  local version="${1:-}"
+  [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
+    die "'$version' is not a three-part SemVer version"
+
+  replace_line "$GRADLE_PROPERTIES" '^version=.*$' "version=$version-SNAPSHOT"
+  # The same two-space anchor `package_json_version` reads, and the trailing comma is kept because
+  # `version` is not the last key.
+  replace_line "$PACKAGE_JSON" '^  "version": ".*",$' "  \"version\": \"$version\","
+  replace_line "$CHART_YAML" '^version: .*$' "version: $version"
+  # Quoted, because an unquoted `appVersion: 1.10` is a YAML float and loses its trailing zero.
+  replace_line "$CHART_YAML" '^appVersion: .*$' "appVersion: \"$version\""
+
+  # `check` compares the other three against gradle.properties, so four files left untouched would
+  # still agree with each other and pass. This is the assertion that the write happened at all.
+  [[ "$(base_version)" == "$version" ]] ||
+    die "gradle.properties still says $(declared_version) after setting $version"
+
+  cmd_check
+}
+
+cmd_bump() {
+  local part="${1:-}"
+  [[ -n "$part" ]] || die "usage: version.sh bump <patch|minor|major>"
+  cmd_set "$(next_version "$part")"
 }
 
 cmd_base() {
@@ -182,8 +261,11 @@ main() {
     base) cmd_base ;;
     compute) cmd_compute "$@" ;;
     check) cmd_check ;;
+    next) cmd_next "$@" ;;
+    set) cmd_set "$@" ;;
+    bump) cmd_bump "$@" ;;
     *)
-      printf 'usage: version.sh {base|compute [ref] [sha]|check}\n' >&2
+      printf 'usage: version.sh {base|compute [ref] [sha]|check|next <part>|set <x.y.z>|bump <part>}\n' >&2
       exit 2
       ;;
   esac
