@@ -1,68 +1,46 @@
 #!/usr/bin/env python3
-"""Adapt openobserve/dashboards' "OpenObserve Internals" to this deployment.
+"""Adapt dashboards from openobserve/dashboards to this deployment.
 
-    python3 adapt_upstream.py <upstream.json> > openobserve-internals.json
+    git clone --depth 1 https://github.com/openobserve/dashboards.git /tmp/o2dash
+    python3 adapt_upstream.py /tmp/o2dash        # rewrites every file in DASHBOARDS
 
-**A script rather than a hand-edited file, so the adaptation survives a refresh.** Upstream keeps
+**A script rather than hand-edited files, so the adaptation survives a refresh.** Upstream keeps
 changing and the edits below are mechanical; written down they are a re-run, and hand-applied they
 are archaeology. Same reasoning as the `VENDORED.md` files under `.claude/skills/`, which record the
-upstream commit and the command that refreshes it. `VENDORED.md` beside this script holds both.
+upstream commit and the command that refreshes it. `VENDORED.md` beside this script holds both, and
+says which upstream dashboards are deliberately not here.
 
-Four things have to change, and each was established against the live instance:
+Two changes apply to every dashboard, and both are invisible until someone looks at the rendered
+page:
 
   1. **The layout is on a 48-column grid and the UI draws on 192.** Upstream is schema v5. The UI
      initialises GridStack with `column:192` unconditionally — there is no version check — so a v5
      layout renders in the left quarter of the screen. Since the layout has to be rewritten anyway,
-     the file also declares v8, which costs nothing and keeps `lint_dashboard.py` simple. Heights
-     double, matching the ratio between v5 and v8 dashboards upstream.
+     the files also declare v8, which costs nothing and keeps `lint_dashboard.py` simple. Heights
+     and `y` both double, matching the ratio between v5 and v8 dashboards upstream. `y` scales with
+     `h` for the obvious reason: doubling a row's height without moving the row below it drops every
+     panel onto the one above it.
 
-  2. **The namespace variable reads a stream we do not have.** It takes its values from
-     `container_cpu_utilization`; the collector here emits `container_cpu_usage`. Left alone the
-     variable offers nothing, every query filtering `namespace="$namespace"` gets an empty value,
-     and the whole dashboard is blank in a way that reads as a metrics fault. It now reads a `zo_*`
-     stream, so it can only ever offer namespaces where OpenObserve actually runs.
+  2. **Dropping a panel leaves its row short of the right edge**, so short rows are re-flowed. Only
+     short rows, and proportionally — upstream puts a wide panel beside a narrow one deliberately.
 
-  3. **`pod=~".*querier.*"` matches nothing here.** That is a distributed deployment's querier pods.
-     This one runs `ZO_LOCAL_MODE=true`: one pod, `role="all"`.
-
-  5. **Some panels resolve and are still empty**, because they describe a topology this deployment
-     does not have. `DISTRIBUTED_ONLY_PANELS` carries them and the measurement behind each.
-
-  4. **The memory-cache gauges do not exist.** Measured, not assumed: after a real search through
-     the API the *disk* cache gauges are present and `zo_query_memory_cache_used_bytes` and
-     `_files` are still absent, so the memory cache is not in use. `..._limit_bytes` is present and
-     reports the configured limit, which is what makes this look like a scrape gap. The disk-cache
-     panels in the same tab answer the same question, so the memory ones are dropped rather than
-     left to render blank.
+The rest is per dashboard, in DASHBOARDS below. Every drop is there because the panel cannot have
+data here, measured against the live instance rather than assumed, and the note beside it says what
+was measured. A panel that renders blank is worse than an absent one: it teaches people that blank
+panels are normal, which is the argument `README.md` makes at length.
 """
 import json
+import os
 import re
 import sys
 
-# Upstream's grid, and the one the UI actually draws on. See point 1.
+# Upstream's grid, and the one the UI actually draws on.
 UPSTREAM_GRID = 48
 TARGET_GRID = 192
 SCALE = TARGET_GRID // UPSTREAM_GRID
 HEIGHT_SCALE = 2
 
-# The stream the namespace variable reads instead of `container_cpu_utilization`. Any always-present
-# `zo_*` metric would do; this one is a gauge the ingest path writes continuously.
-VARIABLE_STREAM = "zo_ingest_wal_used_bytes"
-VARIABLE_FIELD = "namespace"
-
-# Gauges this build does not export. See point 4.
-ABSENT_METRICS = ("zo_query_memory_cache_used_bytes", "zo_query_memory_cache_files")
-
-# Panels whose metrics exist and whose queries resolve, and which are still empty here. gRPC is the
-# hot path BETWEEN OpenObserve nodes; with one pod it carries almost nothing, so `irate` over its
-# histogram is flat and `histogram_quantile` of a flat histogram is NaN. Measured over six hours:
-# the p95 series had **1 real point in 73**, against 73 of 73 for the HTTP panel beside it. A panel
-# that is NaN 99% of the time is a blank panel with extra steps.
-DISTRIBUTED_ONLY_PANELS = ("gRPC API latency",)
-
-ROLE_FILTER = re.compile(r',\s*pod=~"\.\*[a-z]+\.\*"')
-
-BANNER = """### OpenObserve internals
+INTERNALS_BANNER = """### OpenObserve internals
 
 The process's own view of itself — write-ahead log, compaction, storage, ingestion, query cache and
 API. Adapted from [openobserve/dashboards](https://github.com/openobserve/dashboards) by
@@ -74,15 +52,72 @@ per-role panels have been removed rather than left to draw nothing.
 _"Is it healthy?" answers whether anything is wrong. This answers why, when the answer is
 OpenObserve itself._"""
 
+DASHBOARDS = [
+    {
+        "source": "OpenObserve/OpenObserve Internals.dashboard.json",
+        "output": "openobserve-internals.json",
+        "banner": INTERNALS_BANNER,
+        "description": (
+            "OpenObserve's own internals. Adapted from openobserve/dashboards by "
+            "deploy/dashboards/adapt_upstream.py — edit that, not this."
+        ),
+        # The namespace variable reads `container_cpu_utilization`; the collector here emits
+        # `container_cpu_usage`. Left alone the variable offers nothing, every query filtering
+        # `namespace="$namespace"` gets an empty value, and the dashboard is blank in a way that
+        # reads as a metrics fault rather than a variable one. Any always-present `zo_*` stream
+        # does; this one is a gauge the ingest path writes continuously.
+        "variable_source": ("zo_ingest_wal_used_bytes", "namespace"),
+        # Gauges this build does not export. Measured: after a real search through the API the disk
+        # cache gauges are present and these are still absent, so the memory cache is not in use.
+        # `..._limit_bytes` is present and reports the configured limit, which is what makes this
+        # look like a scrape gap.
+        "absent_metrics": ("zo_query_memory_cache_used_bytes", "zo_query_memory_cache_files"),
+        # Metrics exist, queries resolve, panel is still empty. gRPC is the hot path BETWEEN
+        # OpenObserve nodes; with one pod it carries almost nothing, so `irate` over its histogram
+        # is flat and `histogram_quantile` of a flat histogram is NaN. Over six hours the p95 series
+        # had 1 real point in 73, against 73 of 73 for the HTTP panel beside it.
+        "drop_panels": ("gRPC API latency",),
+        # `pod=~".*querier.*"` is a distributed deployment's querier pods.
+        "drop_role_filter": True,
+    },
+    {
+        "source": "Kubernetes(openobserve-collector)/Kubernetes _ Events.dashboard.json",
+        "output": "kubernetes-events.json",
+        "title": "Kubernetes / Events",
+        "description": (
+            "What Kubernetes itself is complaining about. Adapted from openobserve/dashboards by "
+            "deploy/dashboards/adapt_upstream.py — edit that, not this."
+        ),
+    },
+    {
+        "source": "Kubernetes(openobserve-collector)/Kubernetes  _ Namespaces.dashboard.json",
+        "output": "kubernetes-namespaces.json",
+        "title": "Kubernetes / Namespaces",
+        "description": (
+            "Which namespace is using the node. Adapted from openobserve/dashboards by "
+            "deploy/dashboards/adapt_upstream.py — edit that, not this."
+        ),
+        # Both filter `container_fs_*` by a device regex for SD cards and eMMC, which is not what
+        # this node boots from, and both are the only queries carrying Grafana's `__rate_interval`.
+        # Neither returned a series over six hours.
+        "drop_panels": ("Storage: IOPS(Reads+Writes)", "Storage: ThroughPut(Read+Write)"),
+    },
+]
+
+
+# `pod=~".*querier.*"` and its siblings, which name a distributed deployment's roles.
+ROLE_FILTER = re.compile(r',\s*pod=~"\.\*[a-z]+\.\*"')
+
+
+def drop_role_filter(query):
+    return ROLE_FILTER.sub("", query)
+
 
 def scale_layout(layout):
-    """48-column coordinates to 192, and heights to the taller v8 rows."""
+    """48-column coordinates to 192, and rows to the taller v8 grid."""
     out = dict(layout)
     out["x"] = layout["x"] * SCALE
     out["w"] = layout["w"] * SCALE
-    # `y` scales with `h` and for the same reason. Doubling a row's height without moving the row
-    # below it down by the same amount drops every panel onto the one above it — caught by
-    # lint_dashboard.py's overlap rule rather than by looking at the rendered page.
     out["y"] = layout["y"] * HEIGHT_SCALE
     out["h"] = layout["h"] * HEIGHT_SCALE
     # Upstream's banner is `w: 47` where every other full-width row is 48 — its own rounding slip,
@@ -93,31 +128,11 @@ def scale_layout(layout):
     return out
 
 
-def adapt_query(query):
-    """Drop the role filter from a query."""
-    out = dict(query)
-    out["query"] = ROLE_FILTER.sub("", query.get("query") or "")
-    return out
-
-
-def is_dead(panel):
-    """True when any query needs a metric this build does not export.
-
-    **Any, not all.** A panel is a designed comparison — cache limit against cache used — and
-    keeping the half that resolves leaves a flat line at a constant, which reads as a working panel
-    reporting nothing wrong. Dropping the whole panel is the honest half of the same choice.
-    """
-    return any(
-        m in (q.get("query") or "") for q in panel.get("queries") or [] for m in ABSENT_METRICS
-    )
-
-
 def reflow(panels):
     """Widen a row whose panels no longer fill the grid, after one of them was dropped.
 
-    Only a short row is touched, and its panels keep their proportions to each other — upstream
-    puts a wide panel beside a narrow one deliberately, and squaring them all off would lose that.
-    Rows are keyed on `y`, which holds because upstream lays out in clean rows; where it does not,
+    Only a short row is touched, and its panels keep their proportions to each other. Rows are keyed
+    on `y`, which holds because upstream lays out in clean rows; where it does not,
     `lint_dashboard.py`'s overlap rule is what says so.
     """
     rows = {}
@@ -137,43 +152,83 @@ def reflow(panels):
     return panels
 
 
-def adapt(dash):
+def strip_unstored_keys(panel):
+    """Remove field keys OpenObserve drops when it stores the dashboard.
+
+    `aggregationFunction` on a SQL panel's x/y fields is not persisted — the panel round-trips
+    without it. Keeping it in the file makes `apply.sh --diff` report the dashboard as differing
+    from the cluster **immediately after importing it**, for ever, which is precisely how a check
+    teaches people to ignore it. The generated `query` string is what the panel actually runs.
+    """
+    for query in panel.get("queries") or []:
+        for axis in ("x", "y", "z", "breakdown"):
+            for field in (query.get("fields") or {}).get(axis) or []:
+                field.pop("aggregationFunction", None)
+    return panel
+
+
+def is_dead(panel, absent):
+    """True when any query needs a metric this build does not export.
+
+    **Any, not all.** A panel is a designed comparison — cache limit against cache used — and
+    keeping the half that resolves leaves a flat line at a constant, which reads as a working panel
+    reporting nothing wrong. Dropping the whole panel is the honest half of the same choice.
+    """
+    return any(m in (q.get("query") or "") for q in panel.get("queries") or [] for m in absent)
+
+
+def adapt(dash, spec):
     dash = json.loads(json.dumps(dash))
     dash["version"] = 8
+    if spec.get("title"):
+        dash["title"] = spec["title"]
+    dash["description"] = spec["description"]
 
-    for variable in (dash.get("variables") or {}).get("list") or []:
-        data = variable.get("query_data") or {}
-        if data.get("stream"):
-            data["stream"] = VARIABLE_STREAM
-            data["field"] = VARIABLE_FIELD
+    source = spec.get("variable_source")
+    if source:
+        for variable in (dash.get("variables") or {}).get("list") or []:
+            data = variable.get("query_data") or {}
+            if data.get("stream"):
+                data["stream"], data["field"] = source
 
+    absent = spec.get("absent_metrics", ())
+    dropped = spec.get("drop_panels", ())
     for tab in dash.get("tabs") or []:
         kept = []
         for panel in tab.get("panels") or []:
             panel["layout"] = scale_layout(panel["layout"])
             if panel.get("type") == "markdown":
-                panel["markdownContent"] = BANNER
+                if spec.get("banner"):
+                    panel["markdownContent"] = spec["banner"]
                 kept.append(panel)
                 continue
-            if is_dead(panel) or panel.get("title") in DISTRIBUTED_ONLY_PANELS:
+            if panel.get("title") in dropped or is_dead(panel, absent):
                 continue
-            panel["queries"] = [adapt_query(q) for q in panel.get("queries") or []]
-            kept.append(panel)
+            if spec.get("drop_role_filter"):
+                for query in panel.get("queries") or []:
+                    query["query"] = drop_role_filter(query.get("query") or "")
+            kept.append(strip_unstored_keys(panel))
         tab["panels"] = reflow(kept)
-
-    dash["description"] = (
-        "OpenObserve's own internals. Adapted from openobserve/dashboards by "
-        "deploy/dashboards/adapt_upstream.py — edit that, not this."
-    )
     return dash
 
 
 def main(argv):
     if len(argv) != 2:
-        print("usage: adapt_upstream.py <upstream.json>", file=sys.stderr)
+        print("usage: adapt_upstream.py <path to an openobserve/dashboards clone>", file=sys.stderr)
         return 2
-    with open(argv[1]) as f:
-        print(json.dumps(adapt(json.load(f)), indent=2))
+    root, here = argv[1], os.path.dirname(os.path.abspath(__file__))
+    for spec in DASHBOARDS:
+        path = os.path.join(root, spec["source"])
+        if not os.path.exists(path):
+            print("missing upstream file: %s" % path, file=sys.stderr)
+            return 2
+        with open(path) as f:
+            adapted = adapt(json.load(f), spec)
+        out = os.path.join(here, spec["output"])
+        with open(out, "w") as f:
+            f.write(json.dumps(adapted, indent=2) + "\n")
+        panels = sum(len(t["panels"]) for t in adapted["tabs"])
+        print("%-30s %2d panels  <- %s" % (spec["output"], panels, spec["source"]))
     return 0
 
 

@@ -1,11 +1,16 @@
 # OpenObserve dashboards
 
-Two, and they answer different questions.
+Four, and each answers a question the others do not.
 
 | File                         | Question                                                                                        | Origin                                                                                                                         |
 | ---------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `is-it-healthy.json`         | **Is anything wrong?** One screen, mostly this project's own signals                            | ours — [#271](https://github.com/enorm-labs/event-junkie/issues/271)                                                           |
 | `openobserve-internals.json` | **Why, when the answer is OpenObserve itself?** WAL, compaction, storage, ingestion, cache, API | [upstream](https://github.com/openobserve/dashboards), adapted — [#971](https://github.com/enorm-labs/event-junkie/issues/971) |
+| `kubernetes-events.json`     | **What is Kubernetes complaining about?** OOMKills, evictions, failed probes, scheduling        | upstream, adapted — [#974](https://github.com/enorm-labs/event-junkie/issues/974)                                              |
+| `kubernetes-namespaces.json` | **Which namespace is using the node?** CPU, memory and network per namespace                    | upstream, adapted — [#974](https://github.com/enorm-labs/event-junkie/issues/974)                                              |
+
+**`kubernetes-events.json` reads a stream nothing else here does.** `k8s_events` has been collected all along — 2,777 rows in a day on production — and
+until now nothing read it. A probe failing repeatedly appears there as `Unhealthy`, and nowhere else.
 
 ```sh
 ./apply.sh                          # import every *.json here, replacing by title
@@ -46,16 +51,15 @@ kubectl --context event-junkie-staging -n observability \
 
 ## Neither JSON file is edited by hand
 
-**`is-it-healthy.json` comes from `gen_dashboard.py`. `openobserve-internals.json` comes from
-`adapt_upstream.py`** run over the upstream file — see [`VENDORED.md`](VENDORED.md) for the commit it
-was taken at and the command that refreshes it. The second is a transformation rather than a
-generator because the content is upstream's; writing the changes down is what keeps the file
+**`is-it-healthy.json` comes from `gen_dashboard.py`. The other three come from `adapt_upstream.py`** run over an upstream clone — see [`VENDORED.md`](VENDORED.md) for the commit they
+were taken at, the command that refreshes them, and which upstream dashboards were deliberately left
+behind. They are a transformation rather than a generator because the content is upstream's; writing the changes down is what keeps the file
 re-pullable instead of turning every refresh into archaeology.
 
 What the adaptation does, and why each part is needed, is in that script's docstring. The short
 version: upstream is schema v5 on a 48-column grid, filters on `pod=~".*querier.*"` for a
-distributed deployment we do not run, sources its namespace variable from a stream we do not have,
-and includes panels whose metrics this build never exports.
+distributed deployment we do not run, sources one variable from a stream we do not have, and
+includes panels whose metrics this build never exports.
 
 **Edit `gen_dashboard.py`, not `is-it-healthy.json`.** The JSON is generated. The schema repeats
 about forty lines of boilerplate per panel, and a typo in one copy of it is invisible — the panel
