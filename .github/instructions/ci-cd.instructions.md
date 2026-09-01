@@ -68,8 +68,8 @@ What each workflow is for, which checks are required, and the shapes that fail s
       authenticates as the Claude GitHub App — Actions does not trigger workflows on `GITHUB_TOKEN` commits, and a pull request whose pushes start no run sits
       Pending against nine required checks forever. **`--allowedTools` is load-bearing**: these prompts carry no frontmatter, so without it the agent has no
       shell and no GitHub API and the run reads the repository and does nothing. And **Dependabot alerts are expected to `403`** — neither `GITHUB_TOKEN` nor the
-      Claude App carries a permission for them — so its honest scope is code scanning. `workflow_dispatch` only, and `dry_run` defaults to true; a schedule is a
-      line to add once a run has been watched end to end.
+      Claude App carries a permission for them — so its honest scope is code scanning. It runs on the nightly schedule below, and `dry_run` defaults to true only
+      on a manual dispatch — a scheduled run is live.
     - `agent-docs.yml` — the `/update-docs` workload, and **the one #387 puts last on purpose**: a wrong answer is a plausible-looking paragraph nobody
       notices for months. `--unattended` limits it to detecting and **correcting facts** — a path that does not resolve, a command that fails, a number that
       disagrees with its named source of truth, an issue whose state is wrong. It rewrites no argument, simplifies nothing and deletes no paragraph; those are
@@ -77,9 +77,11 @@ What each workflow is for, which checks are required, and the shapes that fail s
       is a **Status** line rather than a rewrite of the argument that would destroy the only record of why the old choice was made. `BRANDING.md` and
       `LOGO_IDEAS.md` are exempt as voice-carrying copy, and `ACCEPTED_LIMITATIONS.md` is generated. It installs Node and the frontend's lockfile, because
       `format-markdown.sh` needs the **pinned** oxfmt rather than one on `PATH` — the same reason `validate-docs.yml` does it.
-    - **All five are weekly, staggered one per weekday, and a scheduled run is live.** Security Monday, refactor Tuesday, dependency pins Wednesday, comments
-      Thursday, documentation Friday, each off-the-hour like every other schedule here. One workload per day means a bad week is one pull request to close rather than four, and the
-      `concurrency` group on each stops a manual dispatch racing its own cron. **A schedule cannot pass inputs, and this is the trap**: the `inputs` context is
+    - **All five run nightly, staggered across one overnight window, and a scheduled run is live.** Security 04:23, refactor 04:41, dependency pins 05:52,
+      comments 06:14, documentation 06:35 UTC, each off-the-hour like every other schedule here. They were one per weekday until the cadence moved: nightly buys
+      a finding on the day it appears rather than up to a week later, and costs up to five open agent pull requests a day rather than five a week. The
+      staggered start times are what remains of the weekday spread, and the `concurrency` group on each stops a manual dispatch racing its own cron and stops a
+      long run being lapped by the next night's. **A schedule cannot pass inputs, and this is the trap**: the `inputs` context is
       populated only for `workflow_dispatch` and `workflow_call`, so on a cron `inputs.model` is the empty string and `--model` reaches the CLI with no value,
       while `inputs.dry_run` is falsy and the run goes live by accident rather than by decision. Every input is therefore read as `inputs.x || '<default>'`, and
       the dry-run flag is additionally gated on `github.event_name == 'workflow_dispatch'` so that "scheduled runs open pull requests" is written down rather
@@ -93,7 +95,7 @@ What each workflow is for, which checks are required, and the shapes that fail s
       publishes the agent's final report to the job summary; `show_full_output` dumps every intermediate tool result, and the action's own description warns it
       "may contain secrets, API keys, or other sensitive information" in a publicly visible log. The report itself is public in the step summary either way,
       which is the exposure the pull request body already carries by design — so it is a decision rather than an oversight, recorded here rather than four times. **A step summary has no REST API**, so each workflow also extracts the final
-      report from the action's `execution_file` output and uploads it as an `agent-report` artifact — otherwise a weekly scheduled report would exist only as a
+      report from the action's `execution_file` output and uploads it as an `agent-report` artifact — otherwise a nightly scheduled report would exist only as a
       browser page nobody opens. Only the final report is extracted, never the file itself: it holds every tool result, which is the thing
       `show_full_output`'s warning is about. A shape change in that file produces an empty artifact with an explanatory line, not a red job. **A run that produced no report then fails the job**, which is the
       guard the rest of this family kept needing. The agent's turn ends when it stops calling tools, so a closing line — "I'll compile the report once the

@@ -23,13 +23,14 @@
 name: Agent — Compact Comments
 
 on:
-  # Weekly, Thursdays, off-the-hour like every other schedule here, and **`--all` rather than
+  # Nightly, off-the-hour like every other schedule here, and **`--all` rather than
   # `--worst N`**: ranking by comment lines times ratio selects for files that are dense on purpose,
   # where the least is removable. Boilerplate is a few lines each across many files and ranks
   # nowhere, so only a whole-tree walk reaches it. The prompt caps the pull request at twelve files
-  # and reports the rest, so a sweep converges over several runs instead of arriving unreviewable.
+  # and reports the rest, so a sweep converges over several runs instead of arriving unreviewable —
+  # nightly rather than weekly is what makes "several runs" a week rather than a month.
   schedule:
-    - cron: '14 6 * * 4'
+    - cron: '14 6 * * *'
   workflow_dispatch:
     inputs:
       model:
