@@ -217,8 +217,9 @@ contents, created twice, until that asymmetry is worth solving properly.
 and its own `-o2` keypair. Four copies in total across the two clusters, which is the cost of `valuesFrom` and `existingRootUserSecret` resolving in
 different namespaces.
 
-**Nothing there needs a bucket name or a prefix.** Production writes under `production/` in the shared `event-junkie-o2`, and that is set in
-`deploy/clusters/production/openobserve.yaml` where it is reviewable — not in the Secret. A credential decides _whether_ it can write, never _where_.
+**Nothing there needs a bucket name or a prefix.** Each cluster writes under its own key prefix in the shared `event-junkie-o2`: `production/` and
+`staging/`. Each is set in that cluster's `openobserve.yaml`, where it is reviewable, rather than in the Secret. A credential decides _whether_ it can
+write, never _where_.
 
 Until it exists the release reconciles into a failed state, which is the intended shape. A missing credential should stop the deploy, rather than produce a
 running server nobody can log into. Once it exists, helm-controller picks it up on the next reconcile and nothing needs restarting.

@@ -111,6 +111,29 @@ spec:
       # `us-east-2`, which is never right here.
       ZO_S3_REGION_NAME: "fsn1"
       ZO_S3_BUCKET_NAME: "event-junkie-o2"
+
+      # **One bucket, two environments, and this line is what keeps them apart.** The same
+      # separation `s3://event-junkie-backups/<environment>/` and the images bucket's
+      # `storage.prefix` already make, rather than a third bucket needing its own lifecycle rule to
+      # keep LEGAL.md §7.5 true.
+      #
+      # **Staging held the bucket root until this landed, because nobody had answered whether the
+      # file list stores keys absolute or relative to the prefix.** It stores them **relative**, and
+      # production is the proof: it runs `ZO_S3_BUCKET_PREFIX: "production/"` and still records
+      # `files/default/metrics/<name>/…` internally, identical in form to what this instance
+      # recorded with no prefix at all. The prefix is applied at the S3 client, below the file list.
+      #
+      # **So this line cannot be changed on its own.** Adding it points every entry already in the
+      # list at a key that does not exist: the corpus goes unreadable in one reconcile while new
+      # ingest carries on normally, so it fails while looking healthy. It was landed together with a
+      # wipe of the PVC that holds the file list — docs/ops/OPENOBSERVE.md §Changing the prefix has
+      # the sequence. **Never edit it without that.**
+      #
+      # **In `config:` rather than `extraEnv`, unlike the flags below** — the chart drops an unknown
+      # key without a word, and `helm show values openobserve-standalone --version 0.92.2` lists
+      # this one directly under `ZO_S3_BUCKET_NAME`. **Verify the objects, not this comment**:
+      # nothing new should appear at the root after the first ingest.
+      ZO_S3_BUCKET_PREFIX: "staging/"
       # Path style, not virtual-hosted. Hetzner's endpoint serves `<endpoint>/<bucket>`, which is
       # exactly what `bucket_domain_name` came back as on the import.
       ZO_S3_FEATURE_FORCE_HOSTED_STYLE: "false"
