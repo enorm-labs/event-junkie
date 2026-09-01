@@ -44,5 +44,31 @@ class LogContextConfiguration {
          * that cannot work.
          */
         const val REQUEST_ID = "requestId"
+
+        /**
+         * The access line's own values, named at the call site rather than carried in MDC (#945).
+         *
+         * [REQUEST_ID] above is per-request context and belongs to every line the request produces.
+         * These three describe one line — [RequestLoggingFilter]'s — and reach the ECS JSON through
+         * `logger.at(…) { payload = … }` instead. Both land at the top level of the same object.
+         *
+         * **Every name here is also written in `transform/parse_structured_logs`, in both cluster
+         * collector files, and nothing checks that the two agree.** A name that drifts produces no
+         * error and no row — see `docs/ops/PLATFORM_SETUP.md` §7 for the full set.
+         */
+        const val HTTP_METHOD = "httpMethod"
+
+        /** The endpoint, without the query string. See [RequestLoggingFilter] for why. */
+        const val PATH = "path"
+
+        /**
+         * The status we returned, as an **Int** — a string here would settle the OpenObserve column
+         * as a string and break every later range query on it.
+         *
+         * **The importer spells this same name**, in `LogContext.Fields`, for the status a venue's
+         * server returned to *us*. One name, two directions: `httpstatus = 500` matches both "we are
+         * broken" and "a venue is broken", and `service_name` is what separates them.
+         */
+        const val HTTP_STATUS = "httpStatus"
     }
 }

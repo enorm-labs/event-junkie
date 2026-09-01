@@ -2,6 +2,7 @@ package de.norm.events
 
 import de.norm.events.LogContextConfiguration.Companion.REQUEST_ID
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
@@ -60,7 +61,21 @@ class RequestLoggingFilter(
                     val durationMs = (System.nanoTime() - startNanos) / 1_000_000
                     val query = request.uri.rawQuery?.let { "?$it" } ?: ""
                     val status = exchange.response.statusCode?.value() ?: 0
-                    logger.info { "${request.method} ${request.path.value()}$query -> $status (${durationMs}ms)" }
+                    // Fields, not prose (#945) — the only per-request line the read API produces.
+                    // Two values deliberately stay in the text: `durationMs`, because
+                    // `http.server.requests` already carries latency as a histogram, and the query
+                    // string, because `?q=astra` is user-typed input and a column is a different act
+                    // from a line (LEGAL.md §7.5). Both are asserted, so a tidy-up has to choose
+                    // them rather than drift into them.
+                    logger.at(Level.INFO) {
+                        message = "${request.path.value()}$query (${durationMs}ms)"
+                        payload =
+                            mapOf(
+                                LogContextConfiguration.HTTP_METHOD to request.method.name(),
+                                LogContextConfiguration.PATH to request.path.value(),
+                                LogContextConfiguration.HTTP_STATUS to status
+                            )
+                    }
                 }
             }.contextWrite { it.put(REQUEST_ID, UUID.randomUUID().toString()) }
     }

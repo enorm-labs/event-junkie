@@ -46,13 +46,23 @@ class RequestLoggingFilterTest {
         .filter(MockServerWebExchange.from(MockServerHttpRequest.get(path))) { Mono.empty() }
         .block()
 
-    private fun loggedPaths() = appender.list.map { it.formattedMessage }
+    /**
+     * The `path` field of every line captured, which is what this filter's suppression decides.
+     *
+     * Read from `keyValuePairs` rather than from the rendered message (#945). The values moved out
+     * of the sentence and into fields, and an assertion on the text would now be asserting the
+     * wording — which is how a wording change breaks a test about routing.
+     */
+    private fun loggedPaths() =
+        appender.list.mapNotNull { event ->
+            event.keyValuePairs?.firstOrNull { it.key == LogContextConfiguration.PATH }?.value as String?
+        }
 
     @Test
     fun `logs an ordinary request`() {
         get("/venues?q=astra")
 
-        assertEquals(1, loggedPaths().count { it.startsWith("GET /venues") })
+        assertEquals(listOf("/venues"), loggedPaths())
     }
 
     @ParameterizedTest
@@ -80,7 +90,7 @@ class RequestLoggingFilterTest {
     fun `logs a path that merely begins like the base path`() {
         get("/actuatorial")
 
-        assertEquals(1, loggedPaths().count { it.startsWith("GET /actuatorial") })
+        assertEquals(listOf("/actuatorial"), loggedPaths())
     }
 
     @Test
@@ -90,8 +100,7 @@ class RequestLoggingFilterTest {
 
         // The second call is not an actuator request under this configuration, so it is logged and
         // the first is not — which is the assertion that the property is read at all.
-        assertEquals(1, loggedPaths().size)
-        assertEquals(1, loggedPaths().count { it.startsWith("GET /actuator/health") })
+        assertEquals(listOf("/actuator/health"), loggedPaths())
     }
 
     @Test

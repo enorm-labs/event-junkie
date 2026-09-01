@@ -5,6 +5,7 @@ import de.norm.events.event.EventRepository
 import de.norm.events.licence.SourceLicences
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 import java.time.Clock
@@ -155,7 +156,10 @@ class EventUpsertService(
         changed.forEach { saved ->
             val existed = existingBySourceId.containsKey(saved.sourceId)
             if (!existed) inserted++
-            logger.debug { "${if (existed) "Updated" else "Created"} event '${saved.title}' (sourceId=${saved.sourceId}, id=${saved.id})" }
+            logger.at(Level.DEBUG) {
+                message = "${if (existed) "Updated" else "Created"} event '${saved.title}'"
+                payload = mapOf(LogContext.Fields.EVENT_ID to saved.id, LogContext.Fields.EVENT_SOURCE_ID to saved.sourceId)
+            }
         }
         return UpsertOutcome(inserted = inserted, updated = changed.size - inserted, skipped = unchanged.size)
     }
@@ -191,7 +195,10 @@ class EventUpsertService(
         return events.filter { event ->
             val isNew = seenIds.add(event.sourceId) && seenKeys.add(dedupKey(event))
             if (!isNew) {
-                logger.warn { "Skipping duplicate event '${event.title}' on ${event.eventDate} (sourceId=${event.sourceId})" }
+                logger.at(Level.WARN) {
+                    message = "Skipping duplicate event '${event.title}' on ${event.eventDate}"
+                    payload = mapOf(LogContext.Fields.EVENT_SOURCE_ID to event.sourceId)
+                }
             }
             isNew
         }
@@ -273,7 +280,10 @@ class EventUpsertService(
             val staleIds = staleEvents.mapNotNull { it.id }
             eventRepository.deleteByIdIn(staleIds)
             staleEvents.forEach { event ->
-                logger.info { "Removed stale event '${event.title}' on ${event.eventDate} (sourceId=${event.sourceId}, id=${event.id})" }
+                logger.at(Level.INFO) {
+                    message = "Removed stale event '${event.title}' on ${event.eventDate}"
+                    payload = mapOf(LogContext.Fields.EVENT_ID to event.id, LogContext.Fields.EVENT_SOURCE_ID to event.sourceId)
+                }
             }
             logger.info { "Removed ${staleEvents.size} stale event(s) no longer listed on event source $eventSourceId" }
         }
