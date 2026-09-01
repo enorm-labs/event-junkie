@@ -39,33 +39,12 @@ object LogContext {
     const val IMPORT_RUN_ID = "importRunId"
 
     /**
-     * Field names for values named at a **call site** rather than carried by the run (#945).
+     * The context for parsing **one page** (#982) — [forImportRun]'s argument, one level down.
      *
-     * Passed as `logger.at(Level.INFO) { payload = … }`, carried by SLF4J as key-value pairs, and
-     * written by Spring's ECS formatter to the same top level [SOURCE_SLUG] lands in —
-     * `LogContextTest.LoggedPayload` asserts that position rather than assuming it.
-     *
-     * **Constants because every failure here is silent**: a misspelt name is no compile error and no
-     * log error, so the line appears without the field. These strings are repeated in
-     * `transform/parse_structured_logs` in both cluster files and in the BFF's
-     * `LogContextConfiguration`, and nothing checks they agree — see `PLATFORM_SETUP.md` §7.
+     * **Scope it around the parse, never a fetch.** [HtmlFetcher] writes [LogFields.URL] as a
+     * payload, and Boot's ECS formatter *throws* on a line that sets one key both ways.
      */
-    object Fields {
-        const val URL = "url"
-
-        /**
-         * The HTTP status, as an **Int** — OpenObserve types a column from its first row, so one
-         * logged as a string breaks every later range query. Spans both directions: here a venue
-         * answering us, in the BFF us answering a browser, separated by `service_name`.
-         */
-        const val HTTP_STATUS = "httpStatus"
-
-        /** Our database id for an event, on the write path. */
-        const val EVENT_ID = "eventId"
-
-        /** The **source's** id for an event — the venue's, not ours. What #380's title asked for. */
-        const val EVENT_SOURCE_ID = "eventSourceId"
-    }
+    fun forPage(url: String): MDCContext = MDCContext((MDC.getCopyOfContextMap() ?: emptyMap()) + mapOf(LogFields.URL to url))
 
     /**
      * The context for one source's import run, merged over whatever the caller already carries so a

@@ -2,6 +2,7 @@ package de.norm.events.scraper
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
+import kotlinx.coroutines.withContext
 import org.jsoup.nodes.Document
 
 /**
@@ -61,8 +62,14 @@ abstract class AbstractTwoPageWebsiteImporter(
             is FetchResult.Success -> {
                 val overviewEvents = scrapeOverview(fetchResult.document, url)
                 logger.info { "Scraped ${overviewEvents.size} event(s) from ${eventSource.name} overview" }
-                val events = overviewEvents.map { parseDetailOrFallback(it) }.let(::dropUnresolvedDates)
-                ImportResult.Success(events, fetchResult.etag, fetchResult.lastModified)
+                val merged = overviewEvents.map { parseDetailOrFallback(it) }
+                val events = dropUnresolvedDates(merged)
+                ImportResult.Success(
+                    events,
+                    fetchResult.etag,
+                    fetchResult.lastModified,
+                    droppedUnresolvedDate = merged.size - events.size
+                )
             }
         }
 
@@ -77,7 +84,7 @@ abstract class AbstractTwoPageWebsiteImporter(
         unresolved.forEach { event ->
             logger.at(Level.WARN) {
                 message = "Dropping '${event.title}': no event date resolved from overview or detail page"
-                payload = mapOf(LogContext.Fields.URL to event.sourceUrl, LogContext.Fields.EVENT_SOURCE_ID to event.sourceId)
+                payload = mapOf(LogFields.URL to event.sourceUrl, LogFields.EVENT_SOURCE_ID to event.sourceId)
             }
         }
         return resolved
@@ -87,13 +94,18 @@ abstract class AbstractTwoPageWebsiteImporter(
     private suspend fun parseDetailOrFallback(overview: ScrapedEvent): ScrapedEvent =
         try {
             val detailDoc = htmlFetcher.fetchDocument(overview.sourceUrl)
-            val detail = scrapeDetail(detailDoc, overview.sourceUrl)
-            if (detail != null) fillGapsFromOverview(primary = detail, fallback = overview) else overview
+            // The scope opens AFTER the fetch, deliberately: the fetch already writes `url` as a
+            // payload field, and a line inside both would carry the key twice (#982). Everything
+            // inside is the scraper's own parsing, which is what needed the URL and never had it.
+            withContext(LogContext.forPage(overview.sourceUrl)) {
+                val detail = scrapeDetail(detailDoc, overview.sourceUrl)
+                if (detail != null) fillGapsFromOverview(primary = detail, fallback = overview) else overview
+            }
         } catch (e: Exception) {
             logger.at(Level.WARN) {
                 message = "Failed to fetch detail page for '${overview.title}', using overview data"
                 cause = e
-                payload = mapOf(LogContext.Fields.URL to overview.sourceUrl, LogContext.Fields.EVENT_SOURCE_ID to overview.sourceId)
+                payload = mapOf(LogFields.URL to overview.sourceUrl, LogFields.EVENT_SOURCE_ID to overview.sourceId)
             }
             overview
         }

@@ -171,6 +171,55 @@ class ImporterMetricsTest {
     }
 
     @Nested
+    inner class EventsDropped {
+        @Test
+        fun `drops are split by reason, because the three want different responses`() {
+            metrics.recordUpsertOutcome(
+                "lido",
+                UpsertOutcome(inserted = 0, updated = 0, skipped = 0, droppedPast = 4, droppedDuplicate = 2),
+                droppedUnresolvedDate = 1
+            )
+
+            fun count(reason: String) =
+                registry
+                    .find("importer.events.dropped")
+                    .tags("source", "lido", "reason", reason)
+                    .counter()!!
+                    .count()
+
+            // `past` is the scraper working — a calendar source republishing last month. The other
+            // two are data we could have had: one is a scraper keying on the show rather than the
+            // session (#333), the other a page that published no date. Summed, they are one number
+            // that means nothing.
+            count("past") shouldBe 4.0
+            count("duplicate") shouldBe 2.0
+            count("unresolved_date") shouldBe 1.0
+        }
+
+        @Test
+        fun `a zero count creates no series at all`() {
+            metrics.recordUpsertOutcome("quiet", UpsertOutcome(inserted = 0, updated = 0, skipped = 0), droppedUnresolvedDate = 0)
+
+            registry.find("importer.events.dropped").tag("source", "quiet").counter() shouldBe null
+        }
+
+        /**
+         * The cardinality rule, asserted rather than only written down. `scrapeFailureReason`'s KDoc
+         * is where it is argued: a tag fed by a title or a URL is unbounded, and exhausting the
+         * metrics backend reads as slow monitoring rather than as a bug here.
+         */
+        @Test
+        fun `every reason tag is a constant from the enum`() {
+            ImporterMetrics.DropReason.entries.forEach { it.tag shouldBe it.tag.lowercase() }
+            ImporterMetrics.DropReason.entries
+                .map { it.tag }
+                .toSet()
+                .size shouldBe
+                ImporterMetrics.DropReason.entries.size
+        }
+    }
+
+    @Nested
     inner class ScrapeFailures {
         @Test
         fun `failures are tagged with their reason so a block and a parse error are distinguishable`() {

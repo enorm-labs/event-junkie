@@ -682,11 +682,11 @@ and nothing downstream has to tell them apart.
 
 **Not `logger.info("… {} …", value)`.** SLF4J's placeholders format the argument _into the message string_.
 They produce exactly the unfilterable line they look like they are fixing. The laziness argument for them does
-not apply either. All 467 call sites here use kotlin-logging's lambda form, and `at` checks the level before
+not apply either. All 580 call sites here use kotlin-logging's lambda form, and `at` checks the level before
 it invokes the block. `LogContextTest.LoggedPayload` asserts that. A future version that stopped would fail
 the test rather than quietly allocate a map per suppressed line.
 
-**Ten lines carry a payload, not 467.** Every field name costs an entry in `transform/parse_structured_logs`
+**Ten lines carry a payload, not 580.** Every field name costs an entry in `transform/parse_structured_logs`
 in **both** cluster files. A name that is not there produces no error and no column, only an empty result.
 #624 is what a flatten costs. The names above are meant to match `LogContext.Fields` and
 `LogContextConfiguration` exactly. **Nothing checks that they do.**
@@ -726,6 +726,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `importer.run.duration`                        | Timer, tagged `source`                | Detects a venue that got slow before it gets fatal                                 |
 | `importer.run.outcome`                         | Counter, tagged `source`, `outcome`   | success / not_modified / failed / misconfigured / skipped                          |
 | `importer.events.written`                      | Counter, tagged `source`, `operation` | inserted / updated / skipped                                                       |
+| `importer.events.dropped`                      | Counter, tagged `source`, `reason`    | past / duplicate / unresolved_date — **what a run threw away**, see below          |
 | `importer.scrape.failures`                     | Counter, tagged `source`, `reason`    | Distinguishes HTTP 403 from a parse failure                                        |
 | `importer.source.last_success`                 | Gauge, tagged `source`                | Age of the last good run; alert past ~3× its schedule                              |
 | `importer.source.has_succeeded`                | Gauge, tagged `source`                | 1/0 — **exists for a source that has never worked**, which the row above does not  |
@@ -758,6 +759,16 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
   for **every** enabled row, so it survives the restart that a per-run counter does not. **`never worked` and `worked and went stale` need different
   responses**, so keep them separate in rules. `importer_source_has_succeeded == 0` is a scraper that never once worked. An old
   `importer_source_last_success` is one that stopped.
+- **`importer.events.dropped` counts only what shared code drops, and the gap is deliberate** (#982). Each reason is computed in one shared place. It therefore
+  holds for every importer that reaches it: `past` in `EventUpsertService.dropPastEvents`, `duplicate` in `deduplicateScrapedEvents`, and `unresolved_date`
+  in `AbstractTwoPageWebsiteImporter`. **Roughly 93 further drops happen inside individual overview and API scrapers and are not counted.**
+  Counting those needs each scraper to report rows-seen against events-returned, which is per-scraper work. So a low number here does not mean little was
+  discarded. `past` is usually the scraper working rather than failing — a calendar source republishing last month.
+
+- **A detail scraper that gives up does not drop the event.** `AbstractTwoPageWebsiteImporter` falls back to the overview record, so those ~50
+  `"…skipping"` warnings are a **field-coverage** loss, which `field_coverage{source,field}` already measures. Reading them as lost events overstates the
+  damage by roughly a factor of two.
+
 - **The silently-broken-scraper alarm is a gauge, not the counter this table used to name** (#700). `importer.events.written = 0 for N runs` was the obvious
   form and cannot work. A Micrometer counter lives in the process, so it resets on every deploy and is absent from the exposition until it first increments.
   Against a 24h import interval, `increase(...[48h]) == 0` cannot tell _wrote nothing_ from _was restarted_. `importer.source.events_future` is the same

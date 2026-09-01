@@ -55,6 +55,8 @@ sealed interface ImportResult {
         /** New ETag header from the response, if present. */
         val etag: String?,
         /** New Last-Modified header from the response, if present. */
-        val lastModified: String?
+        val lastModified: String?,
+        /** Discarded for want of a date (#982). Zero means "not measured", not "none dropped". */
+        val droppedUnresolvedDate: Int = 0
     ) : ImportResult
 }
