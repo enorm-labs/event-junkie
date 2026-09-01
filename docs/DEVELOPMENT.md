@@ -235,8 +235,46 @@ BFF's public API means regenerating them in the same PR.
 
 - [`http/importer/`](../http/importer) — the admin CRUD endpoints (venues, artists, promoters, events, sources, dev seed) plus health and OpenAPI checks.
 - [`http/bff/`](../http/bff) — the public read API (events, venues, artists, genres) plus health and OpenAPI checks.
+- [`http/google/`](../http/google) — the Google Geocoding lookups behind `scripts/geocode-venues.py`. Billed, and they need the key below.
+- [`http/osm/`](../http/osm) — OpenStreetMap, in two files because they are two services. `nominatim.http` searches by name or address, and reverse-geocodes a
+  point. `overpass.http` asks what is tagged at a place. That is how "does house number 114 exist on this street" gets answered. No key, and **results are
+  ODbL**. The coordinates in the `venue` table therefore come from here, and Google is only ever the detector (V013–V015).
 
-The shared `http-client.env.json` sits at the `http/` root (IntelliJ resolves it from parent directories) and defines `importer-host` and `bff-host`.
+The `google/` and `osm/` files are the only ones that leave the machine, and none of the three is in `./gradlew httpTest`.
+
+The shared `http-client.env.json` sits at the `http/` root (IntelliJ resolves it from parent directories) and defines `importer-host` and `bff-host` for three
+environments. **`local` is the only one that points at something on this machine.** `staging` and `production` point
+`importer-host` at `localhost:18081` and `localhost:28081`. Those are the two port-forwards in [CLUSTER_ACCESS.md](ops/CLUSTER_ACCESS.md) §6a. The ports differ
+on purpose: a forward that lands on the wrong stack is how you seed the wrong database. Nothing listens on either port until you open that tunnel. Both
+environments are therefore inert by default, not one dropdown away from a live write.
+
+### The private environment file
+
+`google-maps-api-key` appears in no tracked file except the template below. A secret's name belongs with the secret, so the public env file holds hosts only.
+The value goes in `http-client.private.env.json` beside it, which merges over the public file by environment name:
+
+```bash
+cp http/http-client.private.env.json.example http/http-client.private.env.json
+```
+
+Three things about that file are easy to get wrong, and two of them fail silently:
+
+- **It is gitignored here, and IntelliJ does not do that for you.** JetBrains' own documentation says the file "is not tracked by Git. However, it is not added
+  to the `.gitignore` file" — the IDE hides it from its own commit dialog and nothing else. A `git add` from the terminal would have committed it, so
+  `.gitignore` carries the entry explicitly.
+- **The IDE picks the file up automatically. `ijhttp` does not.** Without `--private-env-file` nothing defines the variable. The request then goes out with a
+  literal `key={{google-maps-api-key}}`, which the logged request line shows and Google refuses.
+- **One key covers all three environments.** Geocoding is a lookup you run while adding a venue, not something the deployed stack calls. Separate keys are
+  worth having only for separate quota, billing or revocation.
+
+```bash
+cd http
+ijhttp --env-file http-client.env.json --private-env-file http-client.private.env.json \
+       --env local google/geocoding.http
+```
+
+`scripts/geocode-venues.py` reads the same file directly, so the key is stored once for both tools. Restrict it in the Cloud console to the Geocoding API, and
+by IP address rather than by HTTP referrer. The key is used from a shell, not a browser.
 
 **From IntelliJ:** start the service, open a `.http` file, select the **local** environment, click ▶. Create requests store their response IDs (e.g.
 `{{venue_id}}`), so later update/delete/event requests reference them without copy-paste.
@@ -249,8 +287,8 @@ brew install ijhttp
 ./gradlew httpTest      # the full CRUD lifecycle scenario; needs the importer on :8081
 
 cd http
-ijhttp --env-file http-client.env.json --env local venues.http
-ijhttp --env-file http-client.env.json --env local -L VERBOSE full-lifecycle.http
+ijhttp --env-file http-client.env.json --env local importer/venues.http
+ijhttp --env-file http-client.env.json --env local -L VERBOSE importer/full-lifecycle.http
 ```
 
 ## Quality checks

@@ -21,3 +21,12 @@ temp
 # Eight of these were tracked until 2026-08-24; every local run of the scripts re-dirtied the tree.
 __pycache__/
 *.pyc
+
+# The IntelliJ HTTP Client's private env file, which is where http/google/geocoding.http and
+# scripts/geocode-venues.py both read the Google Maps API key. Its `.example` template is tracked
+# and is the only place in git that names the variable; the public env file holds hosts only.
+#
+# The entry is explicit because IntelliJ does not write one. Its own documentation says the file
+# "is not tracked by Git. However, it is not added to the .gitignore file" — the IDE hides it from
+# its commit dialog and nothing else, so a `git add` from a terminal would have committed the key.
+http/http-client.private.env.json

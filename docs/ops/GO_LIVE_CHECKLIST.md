@@ -142,6 +142,7 @@ OpenObserve to Signal). That is a different chain, and it stays unbuilt.
 | ---- | --------------------------------------------------------------------- | -------- |
 |      | Event sources registered **and enabled**, so the site has content     | #876     |
 |      | Venue addresses, districts and coordinates audited                    | #329     |
+|      | Venue descriptions read against the venue they describe               | #986     |
 |      | Every page read in both languages, About and the legal texts included | #280     |
 |      | Images served from our own cache, not hotlinked                       | #843     |
 
@@ -154,6 +155,13 @@ Do #843 before it — see below.
 **Nothing has ever audited the venue data.** District, address and coordinates were filled in as
 venues were added, with varying care. A wrong coordinate puts a pin in the wrong place, and it drops
 the venue out of a radius search without saying so. The second failure is the quiet one.
+
+**The descriptions are hand-written prose, and no check reads them.** #986 found two that were
+wrong, and both failed the same way. They repeated something the row's address said. Sonnenraum was
+described as "next to Club der Visionäre" because it carried that club's address, and it stands
+196 m away. Heideglühen was "in a former nursery off Beusselstraße", which is the wrong street.
+A corrected address does not correct the sentence that quotes it. Read each description against the
+venue, and look twice at any that names a street, a neighbour or a distance.
 
 **The image cache has six ordered steps, and two of them must not be combined.** #843 has the order.
 Turning serving on before the backfill finishes shows a visitor broken images.

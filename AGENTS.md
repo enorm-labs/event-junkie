@@ -605,5 +605,6 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Issue board helper                          | `scripts/issue-board.sh` — Status and Priority are project fields, not labels                                                     |
 | Frontend entry point                        | `events-frontend/src/main.ts`                                                                                                     |
 | IntelliJ HTTP Client requests               | `http/importer/` (admin) and `http/bff/` (public read) `.http` files + shared `http/http-client.env.json`                         |
+| Venue coordinates, and checking them        | `scripts/geocode-venues.py` + `http/google/` (detector) and `http/osm/` (the ODbL source) — read the script's docstring           |
 | Local dev environment control script        | `scripts/dev-env.sh` (start/stop the stack, seed sources, trigger imports, inspect + diff the data)                               |
 | Performance tests (k6)                      | `perf/` — `smoke.js` · `load.js` · `spike.js`, endpoints in `perf/lib/api.js`                                                     |

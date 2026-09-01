@@ -1,0 +1,85 @@
+### ============================================================
+### Nominatim — OpenStreetMap's geocoder (#357)
+###
+### **This is the source, where Google is only the detector.** Every coordinate in
+### the `venue` table is OpenStreetMap's, ODbL, which permits the stored value and
+### requires credit where it is displayed. Google's terms do not permit storing one
+### past 30 days on a map that is not Google's, and #357 draws an open-source map —
+### so a value copied from here is one we may keep, and a value copied from
+### `../google/geocoding.http` is not. V013 to V015 record which is which.
+###
+### No key, no billing, and therefore a usage policy instead: **at most one request a
+### second, and a User-Agent that identifies the caller**. Both are on every request
+### below. Do not run these in a loop from a script without the delay —
+### `scripts/geocode-venues.py` is deliberately Google-only for that reason.
+###
+### Not in `./gradlew httpTest`. These leave the machine and hit a volunteer service.
+###
+### **Two traps, both silent.** A free-form `q` may not be combined with the
+### structured parameters (`city`, `street`, `postalcode`) — the pair answers 400 with
+### no hint that mixing them is what did it. And a name search will happily match
+### something else entirely: `Alte Kantine` returns an allotment in Tegel, 8.5 km from
+### the venue. **Always check the distance before believing a name match.**
+### ============================================================
+
+### Search by name — what OpenStreetMap calls this venue, and where
+### The query that settled `Mikropol`: its node carries `addr:housenumber=5`,
+### `addr:street=Nollendorfplatz` **and this venue's own website**, so the match is by
+### identity rather than by proximity. `extratags=1` is what returns the website.
+GET https://nominatim.openstreetmap.org/search?q=Mikropol, Berlin&format=jsonv2&addressdetails=1&extratags=1&limit=3
+User-Agent: event-junkie-venue-audit/1.0 (https://github.com/enorm-labs/event-junkie)
+Accept-Language: de
+Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    client.test("the name resolves to something", function () {
+        client.assert(response.body.length > 0, "no results");
+    });
+    for (const hit of response.body.slice(0, 3)) {
+        const a = hit.address || {};
+        client.log(`${hit.lat},${hit.lon}  ${hit.osm_type}/${hit.osm_id}  ${hit.type}`);
+        client.log(`   ${a.road || ""} ${a.house_number || ""} | ${a.postcode || ""} | ${(hit.extratags || {}).website || ""}`);
+    }
+%}
+
+### Reverse — what OpenStreetMap says is at a coordinate we store
+### The other direction, and the one that convicted `AMT`: its stored point came back
+### as `Brückenstraße 5-6a, 10179`, a different street and a different postal code
+### from the row's own `Dircksenstr. 114, 10178`. The row disagreed with itself.
+###
+### `city_district` is the Bezirk and `suburb` is the Ortsteil. **They can disagree at
+### a boundary** — on Hasenheide, two points 90 m apart returned the same Bezirk and
+### different Ortsteile — so neither settles the `district` column on its own.
+GET https://nominatim.openstreetmap.org/reverse?lat=52.5137&lon=13.418&format=jsonv2&addressdetails=1
+User-Agent: event-junkie-venue-audit/1.0 (https://github.com/enorm-labs/event-junkie)
+Accept-Language: de
+Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    const a = response.body.address || {};
+    client.log(response.body.display_name);
+    client.log(`Bezirk ${a.city_district || a.borough || "—"} · Ortsteil ${a.suburb || "—"} · ${a.postcode || "—"}`);
+%}
+
+### Search by address — structured, and never mixed with `q`
+### Each component is its own parameter. Combining any of these with a free-form `q`
+### is the 400 the header warns about.
+GET https://nominatim.openstreetmap.org/search?street=Revaler Straße 99&city=Berlin&postalcode=10245&country=Germany&format=jsonv2&addressdetails=1&limit=3
+User-Agent: event-junkie-venue-audit/1.0 (https://github.com/enorm-labs/event-junkie)
+Accept-Language: de
+Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    for (const hit of response.body.slice(0, 3)) {
+        client.log(`${hit.lat},${hit.lon}  ${hit.type}  ${hit.display_name}`);
+    }
+%}

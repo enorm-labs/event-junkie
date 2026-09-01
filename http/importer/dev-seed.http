@@ -289,8 +289,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10178",
     "district": "mitte",
-    "latitude": 52.51370,
-    "longitude": 13.41800,
+    "latitude": 52.520329,
+    "longitude": 13.413313,
     "websiteUrl": "https://www.club-amt.berlin",
     "description": "A techno club tucked into the S-Bahn arches near Alexanderplatz, running late-night electronic nights focused on techno and house."
 }
@@ -348,8 +348,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10965",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.48800,
-    "longitude": 13.38900,
+    "latitude": 52.488006,
+    "longitude": 13.386809,
     "websiteUrl": "https://www.ssi-media.com/arcanoa/",
     "description": "A tiny Kreuzberg bar near Platz der Luftbrücke, running since 1988 and billing itself as the discovery bar for musicians: independent live acts on Fridays and Saturdays plus open stages and jam sessions the rest of the week."
 }
@@ -466,8 +466,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10245",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.50724,
-    "longitude": 13.45180,
+    "latitude": 52.507383,
+    "longitude": 13.451895,
     "websiteUrl": "https://www.astra-berlin.de",
     "description": "One of Berlin's larger concert venues, set in a converted hall on the RAW-Gelände in Friedrichshain. It hosts touring rock, pop, indie and electronic acts alongside club nights."
 }
@@ -525,8 +525,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10245",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.50780,
-    "longitude": 13.45250,
+    "latitude": 52.507582,
+    "longitude": 13.45515,
     "websiteUrl": "https://badehaus-berlin.com",
     "description": "An intimate live-music venue and club on the RAW-Gelände in Friedrichshain, mixing concerts, singer-songwriter sessions and eclectic DJ nights."
 }
@@ -689,7 +689,7 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Bi Nuu (Schlesisches Tor, Skalitzer Str. 134, Berlin-Kreuzberg)
+### Bi Nuu (U-Bahnhof Schlesisches Tor, Berlin-Kreuzberg)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Bi Nuu venue ---
@@ -698,9 +698,9 @@ Content-Type: application/json
 
 {
     "name": "Bi Nuu",
-    "address": "Skalitzer Str. 134",
+    "address": "Schlesisches Tor",
     "city": "Berlin",
-    "postalCode": "10999",
+    "postalCode": "10997",
     "district": "friedrichshain-kreuzberg",
     "latitude": 52.50083,
     "longitude": 13.44192,
@@ -1056,8 +1056,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10965",
     "district": "tempelhof-schoeneberg",
-    "latitude": 52.48380,
-    "longitude": 13.38920,
+    "latitude": 52.48473,
+    "longitude": 13.391437,
     "websiteUrl": "https://columbia-theater.de",
     "description": "A mid-sized concert hall at Tempelhofer Feld, next door to the Columbiahalle, programming touring rock, metal, hip hop and pop acts."
 }
@@ -1115,8 +1115,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10965",
     "district": "tempelhof-schoeneberg",
-    "latitude": 52.48452,
-    "longitude": 13.39052,
+    "latitude": 52.484738,
+    "longitude": 13.392546,
     "websiteUrl": "https://www.columbiahalle.berlin",
     "description": "A 3,500-capacity concert hall at Tempelhofer Feld, next door to the Columbia Theater, hosting touring rock, metal, hip hop and pop acts."
 }
@@ -1292,8 +1292,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10245",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.50700,
-    "longitude": 13.45330,
+    "latitude": 52.507583,
+    "longitude": 13.454532,
     "websiteUrl": "https://derweissehase.club",
     "description": "A techno club in the RAW-Gelaende arches on Revaler Strasse, running raves, DJ nights and an open-air garden."
 }
@@ -1349,7 +1349,7 @@ Content-Type: application/json
     "name": "Duncker Club",
     "address": "Dunckerstr. 64",
     "city": "Berlin",
-    "postalCode": "10437",
+    "postalCode": "10439",
     "district": "pankow",
     "latitude": 52.54703,
     "longitude": 13.42116,
@@ -1469,8 +1469,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "12435",
     "district": "treptow-koepenick",
-    "latitude": 52.49660,
-    "longitude": 13.44980,
+    "latitude": 52.496823,
+    "longitude": 13.451556,
     "websiteUrl": "https://festsaal-kreuzberg.de",
     "description": "A concert hall and event space by the Flutgraben on the Spree in Treptow, with a wide-ranging programme of concerts, club nights and cultural events."
 }
@@ -1528,8 +1528,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10435",
     "district": "pankow",
-    "latitude": 52.53923,
-    "longitude": 13.41266,
+    "latitude": 52.538211,
+    "longitude": 13.412688,
     "websiteUrl": "https://frannz.eu",
     "description": "A club and concert venue in the Kulturbrauerei in Prenzlauer Berg, presenting live gigs and party nights across pop, indie, hip-hop and electronic music."
 }
@@ -1646,8 +1646,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "12685",
     "district": "marzahn-hellersdorf",
-    "latitude": 52.53726,
-    "longitude": 13.57492,
+    "latitude": 52.538103,
+    "longitude": 13.569622,
     "websiteUrl": "https://www.gaertenderwelt.de",
     "description": "Marzahn landscape park of international themed gardens, whose open-air Arena stages concerts, park festivals and open-air cinema."
 }
@@ -1823,8 +1823,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10827",
     "district": "tempelhof-schoeneberg",
-    "latitude": 52.48540,
-    "longitude": 13.35510,
+    "latitude": 52.48527,
+    "longitude": 13.353449,
     "websiteUrl": "https://www.havanna-berlin.de",
     "description": "A large Latin dance club in Schöneberg spread over several floors, running the same resident nights every week — salsa, merengue and bachata alongside reggaeton, hip hop and chart floors — plus dance lessons before the party."
 }
@@ -1869,7 +1869,7 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Heideglühen (Beusselstraße, Berlin-Moabit — former nursery, coordinates only)
+### Heideglühen (Seestraße 1, Berlin-Charlottenburg-Nord — former nursery, coordinates only)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Heideglühen venue ---
@@ -1878,14 +1878,14 @@ Content-Type: application/json
 
 {
     "name": "Heideglühen",
-    "address": "Beusselstraße",
+    "address": "Seestraße 1",
     "city": "Berlin",
-    "postalCode": "10553",
+    "postalCode": "13353",
     "district": "mitte",
     "latitude": 52.53808,
     "longitude": 13.32822,
     "websiteUrl": "https://heidegluehen.berlin",
-    "description": "An open-air techno party in a former nursery off Beusselstraße, running one long Saturday-into-Sunday session a week through the season."
+    "description": "An open-air techno party in a former nursery off Seestraße, running one long Saturday-into-Sunday session a week through the season."
 }
 
 > {%
@@ -2118,8 +2118,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10967",
     "district": "neukoelln",
-    "latitude": 52.48542,
-    "longitude": 13.42361,
+    "latitude": 52.486865,
+    "longitude": 13.422321,
     "websiteUrl": "https://huxleysneuewelt.de",
     "description": "A 1,600-capacity concert hall in a former ballroom on the Hasenheide, hosting touring rock, metal, hip hop, pop and electronic acts."
 }
@@ -2708,8 +2708,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10245",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.50775,
-    "longitude": 13.45247,
+    "latitude": 52.507297,
+    "longitude": 13.452741,
     "websiteUrl": "https://maaya.de",
     "description": "An Afro-diasporic cultural venue on the RAW-Gelände built around a heated open-air pool, combining a gallery, garden, backyard market and a programme of club nights, concerts and workshops."
 }
@@ -2872,7 +2872,7 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Max-Schmeling-Halle (Am Falkplatz, Berlin — Velomax)
+### Max-Schmeling-Halle (Falkplatz 1, Berlin — Velomax)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Max-Schmeling-Halle venue ---
@@ -2881,12 +2881,12 @@ Content-Type: application/json
 
 {
     "name": "Max-Schmeling-Halle",
-    "address": "Am Falkplatz",
+    "address": "Falkplatz 1",
     "city": "Berlin",
     "postalCode": "10437",
     "district": "pankow",
-    "latitude": 52.54556,
-    "longitude": 13.40361,
+    "latitude": 52.5448,
+    "longitude": 13.404494,
     "websiteUrl": "https://www.max-schmeling-halle.de",
     "description": "A multi-purpose arena at Falkplatz in Prenzlauer Berg, hosting arena concerts alongside the handball and basketball fixtures that are not imported."
 }
@@ -2944,8 +2944,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10719",
     "district": "charlottenburg-wilmersdorf",
-    "latitude": 52.50287,
-    "longitude": 13.32924,
+    "latitude": 52.501906,
+    "longitude": 13.330836,
     "websiteUrl": "https://www.maxxim-berlin.de",
     "description": "A party club off the Ku'damm, open nightly with a 90s/2000s, pop and house DJ programme."
 }
@@ -3003,8 +3003,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10777",
     "district": "tempelhof-schoeneberg",
-    "latitude": 52.49939,
-    "longitude": 13.35408,
+    "latitude": 52.49894,
+    "longitude": 13.352705,
     "websiteUrl": "https://metropol-berlin.de",
     "description": "A historic concert hall at Nollendorfplatz, programming touring concerts alongside occasional club parties."
 }
@@ -3108,7 +3108,7 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Mikropol (Naumannstr. 33, Berlin-Schöneberg)
+### Mikropol (Nollendorfplatz 5, Berlin-Schöneberg)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Mikropol venue ---
@@ -3117,12 +3117,12 @@ Content-Type: application/json
 
 {
     "name": "Mikropol",
-    "address": "Naumannstr. 33",
+    "address": "Nollendorfplatz 5",
     "city": "Berlin",
-    "postalCode": "10829",
+    "postalCode": "10777",
     "district": "tempelhof-schoeneberg",
-    "latitude": 52.47360,
-    "longitude": 13.35970,
+    "latitude": 52.498979,
+    "longitude": 13.352977,
     "websiteUrl": "https://mikropol-berlin.de",
     "description": "A small underground club in Schöneberg with a varied programme of concerts and club nights across rock, metal, electronic and alternative styles."
 }
@@ -3176,12 +3176,12 @@ Content-Type: application/json
 
 {
     "name": "Modus Berlin",
-    "address": "Ritterstr. 26",
+    "address": "Ritterstr. 24-27",
     "city": "Berlin",
     "postalCode": "10969",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.50438,
-    "longitude": 13.40707,
+    "latitude": 52.50304,
+    "longitude": 13.407845,
     "websiteUrl": "https://modus-berlin.de",
     "description": "A Kreuzberg club and concert room on the Ritter Butzke grounds, programming touring acts and spoken-word nights."
 }
@@ -3888,8 +3888,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10969",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.50438,
-    "longitude": 13.40707,
+    "latitude": 52.503012,
+    "longitude": 13.408136,
     "websiteUrl": "https://club.ritterbutzke.com",
     "description": "A long-running Kreuzberg techno club in a former factory, running several floors a night."
 }
@@ -4006,8 +4006,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10243",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.51157,
-    "longitude": 13.42479,
+    "latitude": 52.511725,
+    "longitude": 13.426338,
     "websiteUrl": "https://www.holzmarkt.com",
     "description": "The concert hall on the Holzmarkt riverside grounds, programming concerts and cultural events beside the Spree."
 }
@@ -4183,8 +4183,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10999",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.50169,
-    "longitude": 13.42256,
+    "latitude": 52.500391,
+    "longitude": 13.422161,
     "websiteUrl": "https://www.so36.com",
     "description": "A legendary Kreuzberg club on Oranienstraße, central to Berlin's punk and new-wave history since the late 1970s. Today it runs a diverse programme of punk, rock, queer parties and club nights."
 }
@@ -4242,8 +4242,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10435",
     "district": "pankow",
-    "latitude": 52.53951,
-    "longitude": 13.41180,
+    "latitude": 52.539523,
+    "longitude": 13.414245,
     "websiteUrl": "https://www.soda-berlin.de",
     "description": "A large discotheque in the Kulturbrauerei in Prenzlauer Berg, running resident nights across five floors — R'n'B, urban dance, charts and 90s/2000s — plus salsa evenings and summer open airs."
 }
@@ -4288,7 +4288,7 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Sonnenraum (Am Flutgraben 1, Berlin-Alt-Treptow — next to Club der Visionäre)
+### Sonnenraum (Eichenstr. 4a, Berlin-Alt-Treptow — run by Club der Visionäre)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Sonnenraum venue ---
@@ -4297,14 +4297,14 @@ Content-Type: application/json
 
 {
     "name": "Sonnenraum",
-    "address": "Am Flutgraben 1",
+    "address": "Eichenstr. 4a",
     "city": "Berlin",
     "postalCode": "12435",
     "district": "treptow-koepenick",
-    "latitude": 52.49640,
-    "longitude": 13.45030,
+    "latitude": 52.496224,
+    "longitude": 13.453188,
     "websiteUrl": "https://clubdervisionaere.com/sonnenraum/",
-    "description": "The indoor concert room next to Club der Visionäre, hosting the resident Monday live-band night alongside occasional jazz concerts and label parties."
+    "description": "The indoor concert room run by Club der Visionäre, hosting the resident Monday live-band night alongside occasional jazz concerts and label parties."
 }
 
 > {%
@@ -4360,8 +4360,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10247",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.51190,
-    "longitude": 13.47080,
+    "latitude": 52.510611,
+    "longitude": 13.471417,
     "websiteUrl": "https://www.supamolly.de",
     "description": "A former squat turned collectively run venue near Traveplatz in Friedrichshain, with a donation-based programme of punk, ska, hardcore and experimental concerts alongside theatre, film and neighbourhood socials."
 }
@@ -4419,8 +4419,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10963",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.50250,
-    "longitude": 13.38167,
+    "latitude": 52.501606,
+    "longitude": 13.381191,
     "websiteUrl": "https://www.tempodrom.de",
     "description": "A tented concert hall by the former Anhalter Bahnhof, with a Grosse and a Kleine Arena hosting concerts, comedy, shows and congresses."
 }
@@ -4596,8 +4596,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10243",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.50506,
-    "longitude": 13.44339,
+    "latitude": 52.506369,
+    "longitude": 13.443765,
     "websiteUrl": "https://www.uber-arena.de",
     "description": "Berlin's largest indoor arena on the Spree, hosting touring concerts, shows and comedy alongside its resident sport teams."
 }
@@ -4832,8 +4832,8 @@ Content-Type: application/json
     "city": "Berlin",
     "postalCode": "10245",
     "district": "friedrichshain-kreuzberg",
-    "latitude": 52.50750,
-    "longitude": 13.45220,
+    "latitude": 52.507612,
+    "longitude": 13.451645,
     "websiteUrl": "https://www.urbanspree.com",
     "description": "An artist space on the RAW-Gelände combining a gallery, shop and beer garden with a concert hall, programming post-punk, dark wave, metal and indie shows alongside exhibitions."
 }

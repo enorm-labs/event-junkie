@@ -1,0 +1,175 @@
+### ============================================================
+### Google Geocoding — an address to a coordinate, and back (#357)
+###
+### The key lives in `http/http-client.private.env.json`, beside the public env file
+### and gitignored. Copy the template and fill in one environment:
+###
+###     cp http/http-client.private.env.json.example http/http-client.private.env.json
+###
+### **The IDE finds that copy on its own. ijhttp does not** — without the flag nothing
+### defines the variable, the request goes out carrying a literal
+### `key={{google-maps-api-key}}`, and Google refuses it with REQUEST_DENIED:
+###
+###     cd http && ijhttp --env-file http-client.env.json \
+###         --private-env-file http-client.private.env.json --env local google/geocoding.http
+###
+### `scripts/geocode-venues.py` reads the same file, so the key is stored once.
+### The script is the better tool for all 86 venues at once — it caches, compares
+### against what we store, and ranks by distance. This file is for the single
+### lookup while adding a venue, and for reading a full response.
+###
+### Deliberately not in `./gradlew httpTest`. Every other .http file there talks to
+### a local importer; these leave the machine, are billed, and need a key CI has no
+### reason to hold.
+###
+### **Two syntax traps, both silent.** A comma in an `@variable` value makes ijhttp
+### skip the request and still report `RUN SUCCESSFUL` with 0 requests completed, so
+### the address goes in the request line, where spaces, umlauts and `ß` are all safe
+### — the client encodes the URL it builds. And a request is named after the *first*
+### `###` line above it, not the last, so each block below opens with its title and
+### explains itself underneath.
+###
+### **Do not paste a coordinate straight into the database without reading
+### `scripts/geocode-venues.py`'s module docstring.** Storing a Google latitude and
+### longitude for longer than 30 days, on a map that is not Google's, is outside the
+### Maps Platform terms. Everything in the `venue` table today is OpenStreetMap's,
+### ODbL, attributed where it is displayed.
+### ============================================================
+
+### Geocode one venue address
+### Replace the address and run. `components` names the country as a restriction and
+### Berlin only as a hint: adding `postal_code:10245` would force the answer into the
+### postal code we already believe, and the disagreement between ours and Google's is
+### the signal that an *address* is wrong rather than a coordinate. #329 closed with
+### `Mikropol` unresolved for exactly that reason, so the filter stays loose.
+GET https://maps.googleapis.com/maps/api/geocode/json?address=Revaler Str. 99, 10245 Berlin&components=country:DE|locality:Berlin&language=de&region=de&key={{google-maps-api-key}}
+Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    client.test("Google found the address", function () {
+        client.assert(response.body.status === "OK",
+            response.body.status + " " + (response.body.error_message || ""));
+    });
+
+    // location_type is the field that decides whether to believe the pair. ROOFTOP is the
+    // building; APPROXIMATE is Google shrugging at the district, and the distance from what
+    // we store then measures its vagueness rather than our error.
+    if (response.body.status === "OK") {
+        const top = response.body.results[0];
+        client.log(top.geometry.location.lat.toFixed(6) + ", " + top.geometry.location.lng.toFixed(6));
+        client.log(top.geometry.location_type + (top.partial_match ? " (partial match)" : ""));
+        client.log(top.formatted_address);
+        client.log(response.body.results.length + " result(s)");
+    }
+%}
+
+### Reverse — what is actually at a coordinate we already store?
+### The other direction of the same question, and the quicker one when a pin looks
+### wrong on a map: hand it the stored pair and read back the address it points at.
+GET https://maps.googleapis.com/maps/api/geocode/json?latlng=52.507242,13.451803&language=de&result_type=street_address&key={{google-maps-api-key}}
+Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    client.test("the point resolves to an address", function () {
+        client.assert(response.body.status === "OK",
+            response.body.status + " " + (response.body.error_message || ""));
+    });
+    if (response.body.status === "OK") {
+        client.log(response.body.results[0].formatted_address);
+    }
+%}
+
+### Setup check — proves the key, the quota and the request shape
+### Astra Kulturhaus, Revaler Str. 99, a venue we hold. If this fails, the failure is
+### the setup rather than the venue. The bound is deliberately loose: it asserts
+### Berlin, not a doorway — the same bound `VenueRequest` carries.
+GET https://maps.googleapis.com/maps/api/geocode/json?address=Revaler Str. 99, 10245 Berlin&components=country:DE|locality:Berlin&language=de&region=de&key={{google-maps-api-key}}
+Accept: application/json
+
+> {%
+    client.test("the key works", function () {
+        client.assert(response.body.status === "OK",
+            response.body.status + " " + (response.body.error_message || ""));
+    });
+
+    // Guarded on the result existing. Without it a denied key fails all three tests with a
+    // TypeError, and the one that says why scrolls away behind two that cannot say anything.
+    if (response.body.status === "OK") {
+        client.test("the result is inside Berlin", function () {
+            const p = response.body.results[0].geometry.location;
+            client.assert(p.lat > 52.30 && p.lat < 52.70, "latitude outside Berlin: " + p.lat);
+            client.assert(p.lng > 13.05 && p.lng < 13.80, "longitude outside Berlin: " + p.lng);
+        });
+        client.test("the match is precise enough to store", function () {
+            const t = response.body.results[0].geometry.location_type;
+            client.assert(t === "ROOFTOP" || t === "RANGE_INTERPOLATED", "location_type is " + t);
+        });
+    }
+%}
+
+### v4 — an unstructured string, which may be a venue name rather than an address
+### The path form. **This is the query that settled three venues #329 could not.** Asking
+### for `Club AMT Berlin` comes back as a `night_club` point of interest, which answers a
+### different question than asking for its address — and #329 found exactly this with
+### OpenStreetMap, where a name pass caught three venues the address pass had excused.
+###
+### Non-ASCII is the trap. The client percent-encodes a query string but sends a path
+### segment's umlaut or `ß` raw, so write those by hand as `%C3%9F` — or use the structured
+### request below, where the query string does the encoding for you.
+###
+### The key goes in a header here, not in the URL. ijhttp logs the request line it sends, so
+### a `key=` query parameter ends up in the run log; a header does not.
+GET https://geocode.googleapis.com/v4/geocode/address/Club AMT Berlin?languageCode=de
+X-Goog-Api-Key: {{google-maps-api-key}}
+Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+
+    // v4 answers in different words than v3: `location.latitude`, `granularity` where v3 says
+    // `location_type`, and no top-level `status` at all — a bad request is an HTTP 400 carrying
+    // an `error` object, so the status check above is the one that matters.
+    if (response.status === 200 && response.body.results && response.body.results.length) {
+        const top = response.body.results[0];
+        client.log(top.location.latitude.toFixed(6) + ", " + top.location.longitude.toFixed(6));
+        client.log(top.granularity + "  " + JSON.stringify(top.types));
+        client.log(top.formattedAddress);
+        client.test("a name lookup returns the venue, not just its street", function () {
+            client.assert((top.types || []).indexOf("point_of_interest") >= 0,
+                "types are " + JSON.stringify(top.types));
+        });
+    }
+%}
+
+### v4 — the same address as structured components
+### The query-string form. Every component is prefixed `address.`, which is the one part that
+### is not guessable: `addressLines`, `locality` and `postalCode` on their own are rejected as
+### unknown fields, and so is a `postalAddress.` or `structuredAddress.` prefix.
+###
+### Prefer this whenever the street is already in separate fields, as it is on `VenueRequest`.
+### It encodes umlauts for you and it never has to guess where the house number ends.
+GET https://geocode.googleapis.com/v4/geocode/address?address.addressLines=Oranienstraße 190&address.locality=Berlin&address.postalCode=10999&address.regionCode=DE&languageCode=de
+X-Goog-Api-Key: {{google-maps-api-key}}
+Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    client.test("the structured components resolve to a building", function () {
+        const top = response.body.results[0];
+        client.assert(top.granularity === "ROOFTOP" || top.granularity === "RANGE_INTERPOLATED",
+            "granularity is " + top.granularity);
+    });
+    if (response.status === 200 && response.body.results && response.body.results.length) {
+        client.log(response.body.results[0].formattedAddress);
+    }
+%}
