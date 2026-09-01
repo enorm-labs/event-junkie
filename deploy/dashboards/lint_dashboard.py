@@ -62,76 +62,83 @@ def lint(dash):
     if dash.get("version") != SCHEMA_VERSION:
         problems.append("dashboard version is %r, expected %d" % (dash.get("version"), SCHEMA_VERSION))
 
-    panels = [(t.get("name", "?"), p) for t in dash.get("tabs") or [] for p in t.get("panels") or []]
-    if not panels:
+    tabs = dash.get("tabs") or []
+    if not any(t.get("panels") for t in tabs):
         problems.append("dashboard has no panels")
 
     seen_ids = {}
-    placed = []
 
-    for tab, p in panels:
-        name = p.get("title") or p.get("id") or "<untitled>"
-        where = "%s / %s" % (tab, name)
+    # **Per tab, because each tab is its own grid.** A dashboard's tabs all start at y=0 and share
+    # coordinates, so a check that accumulates across them reports every tab overlapping every other
+    # one. `is-it-healthy.json` has a single tab and never exposed this; the first eight-tab
+    # dashboard produced 116 false findings (#971). `layout.i` repeats across tabs for the same
+    # reason and is deliberately not checked for uniqueness — `id` is, and that one is global.
+    for tab_data in tabs:
+        tab = tab_data.get("name", "?")
+        placed = []
+        for p in tab_data.get("panels") or []:
+            name = p.get("title") or p.get("id") or "<untitled>"
+            where = "%s / %s" % (tab, name)
 
-        typ = p.get("type")
-        if typ not in PANEL_TYPES:
-            hint = " (OpenObserve calls it 'metric')" if typ == "stat" else ""
-            problems.append("%s: panel type %r is not one OpenObserve draws%s" % (where, typ, hint))
+            typ = p.get("type")
+            if typ not in PANEL_TYPES:
+                hint = " (OpenObserve calls it 'metric')" if typ == "stat" else ""
+                problems.append("%s: panel type %r is not one OpenObserve draws%s" % (where, typ, hint))
 
-        if p.get("id") in seen_ids:
-            problems.append("%s: duplicate panel id %r, already used by %r" % (where, p.get("id"), seen_ids[p["id"]]))
-        else:
-            seen_ids[p.get("id")] = name
+            if p.get("id") in seen_ids:
+                problems.append("%s: duplicate panel id %r, already used by %r" % (where, p.get("id"), seen_ids[p["id"]]))
+            else:
+                seen_ids[p.get("id")] = name
 
-        layout = p.get("layout") or {}
-        missing = [k for k in ("x", "y", "w", "h", "i") if not isinstance(layout.get(k), int)]
-        if missing:
-            problems.append("%s: layout is missing integer %s" % (where, ", ".join(missing)))
-        else:
-            if layout["w"] < 1 or layout["h"] < 1:
-                problems.append("%s: layout w=%d h=%d, both must be positive" % (where, layout["w"], layout["h"]))
-            if layout["x"] < 0 or layout["y"] < 0:
-                problems.append("%s: layout x=%d y=%d, neither may be negative" % (where, layout["x"], layout["y"]))
-            right = layout["x"] + layout["w"]
-            if right > GRID_WIDTH:
-                problems.append(
-                    "%s: layout reaches column %d, past the %d-column grid (x=%d w=%d)"
-                    % (where, right, GRID_WIDTH, layout["x"], layout["w"])
-                )
-            for other_where, other in placed:
-                if overlaps(layout, other):
-                    problems.append("%s: layout overlaps %s" % (where, other_where))
-            placed.append((where, layout))
-
-        if typ in CONTENT_TYPES:
-            continue
-
-        queries = p.get("queries") or []
-        if not queries:
-            problems.append("%s: has no queries" % where)
-        for n, q in enumerate(queries):
-            if not (q.get("query") or "").strip():
-                problems.append("%s: query %d is empty" % (where, n))
-            if p.get("queryType") == "promql":
-                stream_type = (q.get("fields") or {}).get("stream_type")
-                if stream_type != "metrics":
+            layout = p.get("layout") or {}
+            missing = [k for k in ("x", "y", "w", "h", "i") if not isinstance(layout.get(k), int)]
+            if missing:
+                problems.append("%s: layout is missing integer %s" % (where, ", ".join(missing)))
+            else:
+                if layout["w"] < 1 or layout["h"] < 1:
+                    problems.append("%s: layout w=%d h=%d, both must be positive" % (where, layout["w"], layout["h"]))
+                if layout["x"] < 0 or layout["y"] < 0:
+                    problems.append("%s: layout x=%d y=%d, neither may be negative" % (where, layout["x"], layout["y"]))
+                right = layout["x"] + layout["w"]
+                if right > GRID_WIDTH:
                     problems.append(
-                        "%s: query %d is promql but stream_type is %r, expected 'metrics'" % (where, n, stream_type)
+                        "%s: layout reaches column %d, past the %d-column grid (x=%d w=%d)"
+                        % (where, right, GRID_WIDTH, layout["x"], layout["w"])
                     )
+                for other_where, other in placed:
+                    if overlaps(layout, other):
+                        problems.append("%s: layout overlaps %s" % (where, other_where))
+                placed.append((where, layout))
 
-    # The check that catches a layout built for the OLD grid, which the overflow
-    # rule cannot: 48 columns fit inside 192 perfectly well, and so does the 174 a
-    # hand-dragged dashboard drifts to. What separates a v8 layout from a v5 one is
-    # that a v8 layout REACHES the right edge — every reference v7/v8 dashboard
-    # ends at exactly 192, every v3/v5 one at exactly 48.
-    if placed:
-        rightmost = max(l["x"] + l["w"] for _, l in placed)
-        if rightmost != GRID_WIDTH:
-            problems.append(
-                "widest panel reaches column %d, not %d — a layout that does not reach the right edge "
-                "is built for a different grid, and renders at %d%% width"
-                % (rightmost, GRID_WIDTH, round(100 * rightmost / GRID_WIDTH))
-            )
+            if typ in CONTENT_TYPES:
+                continue
+
+            queries = p.get("queries") or []
+            if not queries:
+                problems.append("%s: has no queries" % where)
+            for n, q in enumerate(queries):
+                if not (q.get("query") or "").strip():
+                    problems.append("%s: query %d is empty" % (where, n))
+                if p.get("queryType") == "promql":
+                    stream_type = (q.get("fields") or {}).get("stream_type")
+                    if stream_type != "metrics":
+                        problems.append(
+                            "%s: query %d is promql but stream_type is %r, expected 'metrics'" % (where, n, stream_type)
+                        )
+
+        # The check that catches a layout built for the OLD grid, which the overflow
+        # rule cannot: 48 columns fit inside 192 perfectly well, and so does the 174 a
+        # hand-dragged dashboard drifts to. What separates a v8 layout from a v5 one is
+        # that a v8 layout REACHES the right edge — every reference v7/v8 dashboard
+        # ends at exactly 192, every v3/v5 one at exactly 48.
+        if placed:
+            rightmost = max(l["x"] + l["w"] for _, l in placed)
+            if rightmost != GRID_WIDTH:
+                problems.append(
+                    "%s: widest panel reaches column %d, not %d — a layout that does not reach the "
+                    "right edge is built for a different grid, and renders at %d%% width"
+                    % (tab, rightmost, GRID_WIDTH, round(100 * rightmost / GRID_WIDTH))
+                )
 
     return problems
 

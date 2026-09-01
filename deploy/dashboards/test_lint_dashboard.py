@@ -45,6 +45,14 @@ def dashboard(*panels):
     return {"version": 8, "tabs": [{"tabId": "default", "name": "Overview", "panels": list(panels)}]}
 
 
+def tabbed(**tabs):
+    """A dashboard of several named tabs, for the rules that are scoped per tab."""
+    return {
+        "version": 8,
+        "tabs": [{"tabId": n, "name": n, "panels": list(ps)} for n, ps in tabs.items()],
+    }
+
+
 def a_panel(pid="p", typ="line", x=0, y=0, w=192, h=10, queries=None, query_type="promql"):
     return {
         "id": pid, "type": typ, "title": pid, "queryType": query_type,
@@ -60,6 +68,9 @@ def problems(dash):
 print("the dashboard this repository ships")
 shipped = json.loads((HERE / "is-it-healthy.json").read_text())
 check("is-it-healthy.json passes with no problems", problems(shipped) == [])
+internals = json.loads((HERE / "openobserve-internals.json").read_text())
+check("openobserve-internals.json passes with no problems", problems(internals) == [])
+check("...and it is the multi-tab case the per-tab rules exist for", len(internals["tabs"]) > 1)
 
 print("\npanel type")
 stat = problems(dashboard(a_panel(typ="stat")))
@@ -88,6 +99,21 @@ check("two panels in the same place are rejected",
 check("a partial overlap is rejected",
       any("overlaps" in p for p in problems(dashboard(a_panel(pid="a", x=0, y=0, w=192, h=10),
                                                       a_panel(pid="b", x=0, y=5, w=192, h=10)))))
+
+print("\ntabs are separate grids")
+# Every tab starts at y=0 and shares coordinates with the others. Checking overlap across a whole
+# dashboard reported 116 findings on the first eight-tab dashboard, none of them real (#971).
+same_place = tabbed(one=[a_panel(pid="a")], two=[a_panel(pid="b")])
+check("identical coordinates in different tabs do not overlap", problems(same_place) == [])
+check("overlap within one tab is still caught",
+      any("overlaps" in p for p in problems(tabbed(one=[a_panel(pid="a"), a_panel(pid="b")], two=[a_panel(pid="c")]))))
+short = tabbed(wide=[a_panel(pid="a", w=192)], narrow=[a_panel(pid="b", w=96)])
+check("a tab that does not reach the right edge is caught", any("different grid" in p for p in problems(short)))
+check("...and the message names which tab", any(p.startswith("narrow:") for p in problems(short)))
+check("every tab reaching the edge passes",
+      problems(tabbed(one=[a_panel(pid="a")], two=[a_panel(pid="b", x=0, w=96), a_panel(pid="c", x=96, w=96)])) == [])
+check("a duplicate id across tabs is still caught",
+      any("duplicate panel id" in p for p in problems(tabbed(one=[a_panel(pid="same")], two=[a_panel(pid="same")]))))
 
 print("\nqueries")
 check("a panel with no queries is rejected", any("no queries" in p for p in problems(dashboard(a_panel(queries=[])))))
