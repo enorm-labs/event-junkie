@@ -30,6 +30,16 @@ Extend what is already here rather than repeating its boilerplate.
 - Use backtick function names for readable test descriptions: `` `GET hello returns Hello world`() ``.
 - **BaseControllerTest** (importer only): Abstract base class for integration tests that extends Testcontainers setup, provides a `WebTestClient`, and truncates
   all domain tables via `@BeforeEach` so each test starts with a clean database. Extend this instead of repeating boilerplate.
+- **Nothing scheduled may run in a backend test, and two separate things are needed to get that (#949).** `SchedulingConfiguration` in the importer carries
+  `@EnableScheduling` behind `app.scheduling.enabled`, and the test `application.yaml` also sets `spring.modulith.moments.enabled: false`. The second one is
+  not optional: `spring-modulith-moments` carries its own `@EnableScheduling`, so a dependency registers the `ScheduledAnnotationBeanPostProcessor` whatever
+  this application asks for, and every `@Scheduled` method keeps firing with the switch off.
+- **Assert the effect, never the switch.** `SchedulingDisabledInTestsTest` asserts that no `ScheduledAnnotationBeanPostProcessor` bean exists. A test that
+  asserted the condition instead passed for hours while the suite still deadlocked. Any dependency that starts enabling scheduling fails there.
+- **A long interval does not disable a scheduled task.** `fixedDelayString` carries no `initialDelay`, so the first execution runs at context refresh whatever
+  the interval says. #934 set an interval of one hour, and each cached Spring context still fired every gauge refresher once on startup. Those queries raced
+  the `TRUNCATE` in `BaseControllerTest.cleanUp`, taking the same tables in the opposite order, and one arbitrary test per run died on `40P01
+deadlock_detected`.
 - **Kotest assertions**: The importer uses `io.kotest:kotest-assertions-core` for expressive test matchers (e.g. `shouldBe`, `shouldContain`).
 - **MockK**: The importer uses `io.mockk:mockk` for mocking in Kotlin tests (preferred over Mockito). Used for unit-testing services with injected dependencies.
 - **MockWebServer**: `ApiClientTest` and `HtmlFetcherTest` drive the real `WebClient` pipeline against a local server rather than mocking HTTP. Use the **

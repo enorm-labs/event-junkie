@@ -16,7 +16,8 @@ import java.time.LocalDate
  * argument the whole strategy rests on.
  *
  * `@ConditionalOnProperty` on `app.scheduling.enabled` follows `ScheduledImportService`, so the test
- * suite does not race a background write against its own assertions.
+ * suite does not race a background write against its own assertions. The property also gates
+ * [de.norm.events.SchedulingConfiguration], which is what stops the untagged `@Scheduled` beans (#949).
  */
 @Service
 @ConditionalOnProperty(name = ["app.scheduling.enabled"], havingValue = "true", matchIfMissing = true)
