@@ -1,23 +1,32 @@
 # OpenObserve dashboards
 
-`is-it-healthy.json` is [#271](https://github.com/enorm-labs/event-junkie/issues/271)'s
-_"a dashboard that answers 'is it healthy' in one screen"_.
+Two, and they answer different questions.
+
+| File                         | Question                                                                                        | Origin                                                                                                                         |
+| ---------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `is-it-healthy.json`         | **Is anything wrong?** One screen, mostly this project's own signals                            | ours — [#271](https://github.com/enorm-labs/event-junkie/issues/271)                                                           |
+| `openobserve-internals.json` | **Why, when the answer is OpenObserve itself?** WAL, compaction, storage, ingestion, cache, API | [upstream](https://github.com/openobserve/dashboards), adapted — [#971](https://github.com/enorm-labs/event-junkie/issues/971) |
 
 ```sh
-./apply.sh                          # import it, replacing any dashboard with the same title
+./apply.sh                          # import every *.json here, replacing by title
 ./apply.sh --check                  # run every panel's query against live data, change nothing
-./apply.sh --diff                   # compare the cluster's copy to this file, change nothing
-EJ_NODE=ops@10.10.0.1 ./apply.sh    # any of the three, against production
+./apply.sh --diff                   # compare the cluster's copies to these files, change nothing
+./apply.sh is-it-healthy.json       # just one of them, for iterating
+EJ_NODE=ops@10.10.0.1 ./apply.sh    # any of the above, against production
 
 python3 lint_dashboard.py is-it-healthy.json    # can OpenObserve draw this? offline, no cluster
 python3 test_lint_dashboard.py                  # the linter's own checks
 ```
 
+**No argument means every dashboard in this directory, deliberately.** With more than one file, the
+one that is not named is the one that drifts — which is the failure `--diff` exists to catch, given
+somewhere to hide.
+
 **`lint_dashboard.py` runs on every `apply.sh` invocation, before anything touches the network** —
 there is no way to reach a cluster without it, including `--check` and `--diff`.
 
 **`EJ_NODE` selects the cluster and defaults to staging.** Both environments run an OpenObserve since
-[#880](https://github.com/enorm-labs/event-junkie/issues/880), and this is one file applied to each — nothing reconciles them, so the two can differ.
+[#880](https://github.com/enorm-labs/event-junkie/issues/880), and these are files applied to each — nothing reconciles them, so the two can differ.
 Forget the variable on a production run and the command succeeds, reports what it pushed, and writes to staging again. Each run prints the cluster it
 resolved before it does anything.
 
@@ -35,7 +44,18 @@ kubectl --context event-junkie-staging -n observability \
 # http://localhost:5080/web/dashboards
 ```
 
-## The one thing to know before editing
+## Neither JSON file is edited by hand
+
+**`is-it-healthy.json` comes from `gen_dashboard.py`. `openobserve-internals.json` comes from
+`adapt_upstream.py`** run over the upstream file — see [`VENDORED.md`](VENDORED.md) for the commit it
+was taken at and the command that refreshes it. The second is a transformation rather than a
+generator because the content is upstream's; writing the changes down is what keeps the file
+re-pullable instead of turning every refresh into archaeology.
+
+What the adaptation does, and why each part is needed, is in that script's docstring. The short
+version: upstream is schema v5 on a 48-column grid, filters on `pod=~".*querier.*"` for a
+distributed deployment we do not run, sources its namespace variable from a stream we do not have,
+and includes panels whose metrics this build never exports.
 
 **Edit `gen_dashboard.py`, not `is-it-healthy.json`.** The JSON is generated. The schema repeats
 about forty lines of boilerplate per panel, and a typo in one copy of it is invisible — the panel
