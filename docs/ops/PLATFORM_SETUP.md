@@ -658,7 +658,16 @@ code writes — see the warning below the table:
 | `url`                        | `url`                       | the page being fetched or parsed — `HtmlFetcher`, the importers |
 | `httpstatus`                 | `httpStatus`                | **both directions** — see the warning below the next paragraph  |
 | `httpmethod`, `path`         | `httpMethod`, `path`        | the BFF's access line, one per request                          |
-| `eventid`, `eventsourceid`   | `eventId`, `eventSourceId`  | our id and the venue's, on the write path                       |
+| `eventid`                    | `eventId`                   | our id — in practice only ever an event **removed**, see below  |
+| `eventsourceid`              | `eventSourceId`             | the venue's id — a duplicate skipped, and a stale removal       |
+
+**`eventid` never means "an event we wrote", and the table above used to say it did (#984).** It is written on two lines. The created-or-updated line is
+**DEBUG**, and the cluster runs at INFO, so it never arrives. The stale-removal line is INFO, so it always does. Anyone querying `eventid` to see what a run
+wrote gets deletions only.
+
+**The DEBUG level is deliberate and should stay.** That line is written once per event. `admiralspalast` alone would add 227 lines to one run, which is the
+noise `RequestLoggingFilter`'s actuator suppression exists to avoid. A removal is also the better moment for the id: it is the one operation that leaves no row
+to look up afterwards. Around five removals a day is not volume worth reclaiming.
 
 **OpenObserve lower-cases field names, and a query with the wrong case matches nothing.** It does not error — it returns an
 empty result, which reads like "no such data" rather than "no such column". So `sourceSlug` is written in the MDC, appears
