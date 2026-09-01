@@ -30,8 +30,8 @@ metadata:
   namespace: flux-system
   annotations:
     kubernetes.io/description: >-
-      Logs, metrics and alerting for production. Backed by the same event-junkie-o2 bucket staging writes to, under a production/ key prefix — the
-      separation the backups and images buckets already make between the two environments.
+      Logs, metrics and alerting for production. Backed by the same event-junkie-o2 bucket staging writes to, under a production/ key prefix against
+      staging's staging/ — the separation the backups and images buckets already make between the two environments.
 spec:
   releaseName: openobserve
   targetNamespace: observability
@@ -119,11 +119,15 @@ spec:
       # `storage.prefix` already make, rather than a fourth bucket needing a second lifecycle rule
       # to keep LEGAL.md §7.5 true.
       #
-      # **Staging has no prefix and is not being given one.** Its file list is sqlite on the PVC,
-      # and whether that stores keys absolute or relative to the prefix is not a question to answer
-      # against a live store — a wrong guess makes every Parquet it has already indexed unreadable
-      # rather than merely untidy. So staging keeps the root, production takes `production/`, and
-      # the 90-day backstop in `infra/bootstrap/storage.tf` clears the root of what staging leaves.
+      # **Staging now takes `staging/` too, and the question that kept it at the root is answered.**
+      # The file list stores keys **relative** to the prefix, and this instance is the proof: it
+      # records `files/default/…` internally while writing under `production/`. So adding a prefix
+      # to a store that already holds indexed Parquet is what breaks it, and staging's move was
+      # therefore paired with a wipe of the PVC holding that list.
+      #
+      # **Nothing writes at the root any more**, which makes the root the assertion rather than
+      # staging's address: an object appearing there is a dropped setting on either cluster. The
+      # 90-day backstop in `infra/bootstrap/storage.tf` still clears what staging left behind.
       #
       # **In `config:` rather than `extraEnv`, unlike the flags below** — checked rather than
       # assumed, because the chart drops an unknown key without a word: `helm show values

@@ -23,7 +23,7 @@ environments). Both tunnels can be up at once, so the context is the only thing 
 - **Cost tracks the number of metric _names_, not the volume.** A thousand idle names is expensive. §The one thing that will bite you.
 - **The metadata DB dies with the node.** Dashboards and alerts live in git and are pushed by hand after every rebuild.
 - **Changing the Secret restarts nothing**, and both `flux reconcile` and `rollout status` report success anyway.
-- **Both clusters, one bucket.** Production writes under a `production/` key prefix. Staging writes at the root. §Two instances.
+- **Both clusters, one bucket**, each under its own key prefix. Nothing writes at the root any more. §Two instances.
 
 ## The shape of it
 
@@ -32,7 +32,7 @@ environments). Both tunnels can be up at once, so the context is the only thing 
 | Chart        | `openobserve-standalone` **0.92.2**, pinned. A trial whose subject changes under it is not a trial                            |
 | Mode         | `ZO_LOCAL_MODE=true` — **single-node, not single-disk**. The flag chooses standalone-vs-cluster; storage is the line below it |
 | Storage      | `ZO_LOCAL_MODE_STORAGE=s3` → `event-junkie-o2` in `fsn1`. The corpus is in the bucket                                         |
-| Key prefix   | `ZO_S3_BUCKET_PREFIX=production/` on production. **Staging has none** and writes at the root                                  |
+| Key prefix   | `ZO_S3_BUCKET_PREFIX` — `production/` and `staging/`. **Changing it needs the PVC wiped**, §Changing the prefix               |
 | Local disk   | A 5 GB PVC for the write-ahead log, cache and metadata DB — **not** the corpus                                                |
 | Retention    | `ZO_COMPACT_DATA_RETENTION_DAYS=14`                                                                                           |
 | Ingestion    | The OTel collector gateway, over OTLP. Nothing writes to it directly                                                          |
@@ -42,7 +42,7 @@ environments). Both tunnels can be up at once, so the context is the only thing 
 
 |                       | Staging                                | Production                                                                       |
 | --------------------- | -------------------------------------- | -------------------------------------------------------------------------------- |
-| Bucket keys           | the root of `event-junkie-o2`          | `production/` (`ZO_S3_BUCKET_PREFIX`)                                            |
+| Bucket keys           | `staging/` (`ZO_S3_BUCKET_PREFIX`)     | `production/` (`ZO_S3_BUCKET_PREFIX`)                                            |
 | S3 credential         | the project keypair, all three buckets | its own keypair, rotatable without touching staging                              |
 | Alert destination     | `record-only`, into `alert_history`    | the same — no bridge here either                                                 |
 | Signal bridge         | deployed, unregistered                 | **not deployed** ([#877](https://github.com/enorm-labs/event-junkie/issues/877)) |
@@ -52,9 +52,36 @@ environments). Both tunnels can be up at once, so the context is the only thing 
 **Why one bucket rather than two.** The same separation `s3://event-junkie-backups/<environment>/` and the images bucket already make. It keeps one
 lifecycle backstop covering both, which is what [LEGAL.md](../LEGAL.md) §7.5 rests on when a compactor stops running.
 
-**Staging is not being given a prefix.** Its file list is sqlite on the PVC. Whether that stores keys absolute or relative to the prefix is not worth
-answering against a live store. A wrong guess makes every Parquet already in that list unreadable. The 90-day backstop clears the root of what staging
-leaves behind.
+### Changing the prefix
+
+**The file list stores keys relative to the prefix, so the prefix cannot be changed on its own.** Staging held the bucket root for months because nobody
+answered that question against a live store. Production answered it: it runs `ZO_S3_BUCKET_PREFIX: "production/"` and still records
+`files/default/metrics/<name>/…` in its own logs, identical in form to what a prefix-less instance records. The prefix is applied at the S3 client, below
+the file list.
+
+**So editing the value alone points every indexed Parquet at a key that does not exist.** The corpus goes unreadable in one reconcile while new ingest
+carries on normally — it fails while looking healthy, which is the worst shape available. The value moves only together with a wipe of the PVC that holds
+the file list:
+
+```sh
+kubectl --context event-junkie-staging -n observability delete statefulset \
+  openobserve-openobserve-standalone --cascade=orphan
+kubectl --context event-junkie-staging -n observability delete pod \
+  openobserve-openobserve-standalone-0
+kubectl --context event-junkie-staging -n observability delete pvc \
+  data-openobserve-openobserve-standalone-0
+flux --context event-junkie-staging reconcile helmrelease openobserve -n flux-system
+```
+
+Then re-apply both, because they are metadata and metadata was on that PVC:
+
+```sh
+cd deploy/dashboards && ./apply.sh
+cd deploy/alerts && ./apply.sh
+```
+
+**The old objects are not deleted and do not need to be.** They are orphaned at their old keys, no longer referenced by any file list, and the 90-day
+lifecycle backstop in `infra/bootstrap/storage.tf` clears them. Retention is 14 days, so the history actually lost is at most a fortnight.
 
 **The metadata DB is on that PVC, which means it dies with the node.** Users, dashboards and saved views are metadata. The data is not. A rebuild therefore
 comes back with an empty console and a full bucket. That is why the root password can be regenerated freely: the Secret re-seeds it at first boot. It is
@@ -226,12 +253,12 @@ Bucket-side check, which is the one that settles "is it actually storing anythin
 
 ```sh
 cd infra && direnv exec . sh -c \
-  'aws s3api list-objects-v2 --bucket event-junkie-o2 --prefix files/default/ --query "Contents[].Key" --output text' \
+  'aws s3api list-objects-v2 --bucket event-junkie-o2 --prefix staging/files/default/ --query "Contents[].Key" --output text' \
   | tr '\t' '\n' | grep -oE '2026/[0-9]{2}/[0-9]{2}/[0-9]{2}' | sort | uniq -c | tail -6
 ```
 
-**`--prefix production/files/default/` for the other cluster.** The prefix is also the check that the production instance is configured at all. Objects at
-the root, written after it started, mean the setting was dropped.
+**`--prefix production/files/default/` for the other cluster.** The prefix is also the check that each instance is configured at all. Both clusters now
+have one, so **any** object at the root means a dropped setting. Which cluster wrote it is a separate question.
 
 A healthy system writes into the current hour. Hours that trail off are a backlog. Hours that stop are a refusal.
 
