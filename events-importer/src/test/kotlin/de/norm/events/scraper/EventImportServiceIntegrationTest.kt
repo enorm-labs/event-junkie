@@ -46,6 +46,13 @@ import java.util.concurrent.atomic.AtomicInteger
  * A mock [EventImporter] is injected via [TestConfiguration] to control
  * what the scraper "returns" without making real HTTP requests — the focus
  * is on the database pipeline, not the scraping logic.
+ *
+ * **This is the one context fork in the module that was kept (#965)**, and the `@Import` is why: it
+ * puts a `@Primary` mock in the context, which is a different context configuration and so a second
+ * cached context and container. The alternative is to build [EventImportService] by hand, the way
+ * `DataQualitySnapshotIntegrationTest` builds its logger — but that test needs one collaborator and
+ * this one autowires six, so hand-wiring them would trade a container for a constructor call nobody
+ * can read. A fork that earns its keep is not a defect.
  */
 @Import(EventImportServiceIntegrationTest.MockImporterConfiguration::class)
 class EventImportServiceIntegrationTest : BaseControllerTest() {

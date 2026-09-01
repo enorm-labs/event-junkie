@@ -7,7 +7,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.micrometer.metrics.test.autoconfigure.AutoConfigureMetrics
 import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.awaitSingle
 import org.springframework.test.web.reactive.server.expectBody
@@ -26,7 +25,6 @@ import org.springframework.test.web.reactive.server.expectBody
  *    `db.events.total` reached the exposition as `db_events` and broke every rule written from the
  *    documented name. Only the exposition text settles what an alert can select on.
  */
-@AutoConfigureMetrics
 class ImageMetricsIntegrationTest : BaseControllerTest() {
     @Autowired
     private lateinit var refreshService: ImageMetricsRefreshService

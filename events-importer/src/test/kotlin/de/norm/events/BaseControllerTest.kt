@@ -3,6 +3,7 @@ package de.norm.events
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.micrometer.metrics.test.autoconfigure.AutoConfigureMetrics
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
 import org.springframework.boot.test.web.server.LocalServerPort
@@ -18,8 +19,17 @@ import java.time.Duration
  * Provides a running server with a Testcontainers-backed PostgreSQL database,
  * a pre-configured [WebTestClient], and a [BeforeEach] hook that truncates all
  * tables so every test starts with a clean database.
+ *
+ * **`@AutoConfigureMetrics` is here rather than on the tests that need it (#965).** Spring Boot
+ * disables metrics *export* in tests by default — `management.defaults.metrics.export.enabled` is
+ * forced false by the test context customiser, so `PrometheusMetricsExportAutoConfiguration` never
+ * applies and no amount of exposure configuration produces the endpoint. A test carrying the
+ * annotation itself forks a second cached context, with its own container and its own pool, for one
+ * property. On the base it costs nothing measurable: the importer suite got ~6s *faster* when the
+ * fork went away. It affects tests only; production is unaffected.
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@AutoConfigureMetrics
 @Import(PostgresTestcontainersConfiguration::class)
 abstract class BaseControllerTest {
     @LocalServerPort

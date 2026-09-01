@@ -3,7 +3,6 @@ package de.norm.events.event
 import de.norm.events.BaseControllerTest
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
-import org.springframework.boot.micrometer.metrics.test.autoconfigure.AutoConfigureMetrics
 import org.springframework.test.web.reactive.server.expectBody
 
 /**
@@ -14,18 +13,15 @@ import org.springframework.test.web.reactive.server.expectBody
  * symptom is an empty dashboard, discovered whenever somebody next looks at it. Asserting it here
  * costs a request.
  *
- * **`@AutoConfigureMetrics` is not decoration.** Spring Boot disables metrics *export* in tests by
- * default — `management.defaults.metrics.export.enabled` is forced false by the test context
- * customiser, so `PrometheusMetricsExportAutoConfiguration` never applies and no amount of exposure
- * configuration produces the endpoint. Without the annotation this test fails with a 404 that looks
- * exactly like a wrong exposure list, which is a slow hour. It affects tests only; production is
- * unaffected.
+ * **This test cannot pass without `@AutoConfigureMetrics`, which now sits on [BaseControllerTest]
+ * (#965).** Spring Boot forces metrics *export* off in tests, so without it the endpoint 404s in a
+ * way that looks exactly like a wrong exposure list — a slow hour. Do not remove it from the base
+ * class on the grounds that nothing there obviously uses it: this is what uses it.
  *
  * It also pins the **exposition names**, which are not the meter names: Micrometer converts
  * `bff.events.served` to `bff_events_served_total`, and a Prometheus rule is written against the
  * latter. Testing only the Java-side name would leave the half the alerts actually match unchecked.
  */
-@AutoConfigureMetrics
 class PrometheusEndpointTest : BaseControllerTest() {
     @Test
     fun `the prometheus endpoint is exposed`(): Unit =
