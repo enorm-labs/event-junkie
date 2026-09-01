@@ -79,11 +79,42 @@ for f in failures:
 
 
 def fill(query):
-    """Substitute resolved variables. A markdown panel carries a query entry whose text is null."""
+    """Substitute resolved variables. A markdown panel carries a query entry whose text is null.
+
+    **Longest name first.** One variable's name can be a prefix of another's — `$k8s_cluster` and
+    `$k8s_cluster_name` are both real — and substituting in dictionary order turns the longer into
+    `production_name`, which matches nothing and reads as a dashboard with no data (#974).
+    """
     query = query or ""
-    for name, value in variables.items():
-        query = query.replace("$" + name, value)
+    for name in sorted(variables, key=len, reverse=True):
+        query = query.replace("$" + name, variables[name])
     return query
+
+
+def run_sql(query, stream_type):
+    """A SQL panel goes to the search API, not the Prometheus one.
+
+    Returns (rows, error). The Prometheus endpoint answers 200 with an empty result for SQL, so
+    without this every panel on a SQL dashboard reports NO DATA and the check is worse than absent.
+    """
+    body = json.dumps({"query": {
+        "sql": query, "start_time": start * 1_000_000, "end_time": end * 1_000_000,
+        "from": 0, "size": 1,
+    }})
+    out = subprocess.run(
+        ["curl", "-sS", "-m", "60", "-H", "Authorization: " + auth,
+         "-H", "Content-Type: application/json", "-X", "POST",
+         "http://%s:5080/api/default/_search?type=%s" % (svc, stream_type or "logs"),
+         "--data-binary", body],
+        capture_output=True, text=True,
+    ).stdout
+    try:
+        d = json.loads(out)
+    except ValueError:
+        return None, "PARSE-FAIL %s" % out[:90]
+    if "hits" not in d:
+        return None, "ERROR %s" % str(d.get("message") or d)[:100]
+    return d["hits"], None
 
 
 for p in panels:
@@ -97,6 +128,16 @@ for p in panels:
         # nothing a reader can act on.
         name = p.get("title") or p["id"]
         label = name if len(p["queries"]) == 1 else "%s[%d]" % (name, n)
+        if p.get("queryType") == "sql":
+            rows, err = run_sql(q, (query.get("fields") or {}).get("stream_type"))
+            if err:
+                print("%-40s %s" % (label[:40], err))
+                failures.append(label)
+                continue
+            print("%-40s rows=%-4d%s" % (label[:40], len(rows), "" if rows else "   <-- NO DATA"))
+            if not rows:
+                failures.append(label)
+            continue
         url = "http://%s:5080/api/default/prometheus/api/v1/query_range?%s" % (
             svc,
             urllib.parse.urlencode({"query": q, "start": start, "end": end, "step": 300}),
