@@ -60,15 +60,24 @@ LAST_SUCCESS = "max by (source) (importer_source_last_success)"
 # Seconds since each source last succeeded. See gotcha 1 for why not `time()`.
 AGE = "(timestamp(%s) - %s)" % (LAST_SUCCESS, LAST_SUCCESS)
 
+# The ceiling `p_certs` clamps to, in days. Just above a one-year certificate, which is the
+# longest-lived thing anyone here renews; above that line is self-signed internal PKI that renews
+# itself. A judgement call rather than a derived number, and the reason for it is in #972.
+CERT_CEILING_DAYS = 400
+
 _next_i = iter(range(1, 1000))
 
 
-def panel(pid, title, description, typ, promql, x, y, w, h, unit=None, decimals=2):
+def panel(pid, title, description, typ, promql, x, y, w, h, unit=None, decimals=2, y_axis_min=None):
     """One panel. `promql` may be a single query or a list of them."""
     queries = promql if isinstance(promql, list) else [promql]
     cfg = {"show_legends": True, "decimals": decimals}
     if unit:
         cfg["unit"] = unit
+    # `y_axis_min` and `y_axis_max` are real keys the chart builder reads. The axis TYPE is not:
+    # it is hard-coded to "value", so there is no logarithmic option however much a panel wants one.
+    if y_axis_min is not None:
+        cfg["y_axis_min"] = y_axis_min
     return {
         "id": pid,
         "type": typ,
@@ -191,13 +200,22 @@ panels = [
     ),
     panel(
         "p_certs",
-        "Certificate expiry (days)",
+        "Certificate expiry (days, capped at %d)" % CERT_CEILING_DAYS,
         "cert-manager's own view, per certificate. Expiry is one of #271's five required alerts and the one that "
-        "breaks the site without anything crashing.",
+        "breaks the site without anything crashing.\n\n"
+        "**A line resting exactly on %d is a certificate too far out to care about, not one that expires in %d "
+        "days.** Without the clamp a single series sets the axis for all of them: staging's self-signed webhook CA "
+        "runs for five years, which pushed the Let's Encrypt certificate that actually serves the site into the "
+        "bottom 4%% of the panel (#972).\n\n"
+        "**Clamped, not filtered, and the distinction is the whole point.** Adding `< %d` to the expression reads "
+        "as the obvious fix and silently drops the CA's series instead of flattening it — a certificate missing "
+        "from the one panel that watches certificates. `clamp_max` keeps every series: a new certificate always "
+        "appears, a long-lived one pins to the ceiling, a short-lived one lands where it can be read."
+        % (CERT_CEILING_DAYS, CERT_CEILING_DAYS, CERT_CEILING_DAYS),
         "line",
-        "(min by (name) (certmanager_certificate_expiration_timestamp_seconds) - timestamp("
-        "min by (name) (certmanager_certificate_expiration_timestamp_seconds))) / 86400",
-        x=144, y=28, w=48, h=16, decimals=1,
+        "clamp_max((min by (name) (certmanager_certificate_expiration_timestamp_seconds) - timestamp("
+        "min by (name) (certmanager_certificate_expiration_timestamp_seconds))) / 86400, %d)" % CERT_CEILING_DAYS,
+        x=144, y=28, w=48, h=16, decimals=1, y_axis_min=0,
     ),
 
     # --- Row 4: whether any of the above can be believed -------------------
