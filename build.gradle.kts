@@ -279,10 +279,14 @@ subprojects {
     // future release. See: https://openjdk.org/jeps/472
     tasks.withType<Test> {
         jvmArgs("--enable-native-access=ALL-UNNAMED")
-        // The scraper suite parses several hundred KB of HTML fixtures into Jsoup DOMs while the
-        // Testcontainers-backed integration tests hold their Spring contexts in the same worker JVM,
-        // which outgrew Gradle's 512 MB default.
-        maxHeapSize = "1g"
+        // Measured over 21 runs of `:events-importer:test`, not guessed (#975). At 1g the suite ran
+        // its second half against the ceiling: 21 `Evacuation Failure: Allocation` events, 1023M of
+        // 1024M. 2g is not enough either — 5 of 11 runs still failed, and exactly the ones where G1
+        // expanded into the full 2048M. At 3g, 10 of 10 runs were clean and the heap settled at
+        // 1508-1786M, so it stops being sized by its own ceiling. `events-bff` peaks at 322M and is
+        // unaffected either way, which is why one shared value is cheaper than two to keep in step.
+        // `-Xmx` is a ceiling, not a reservation: a suite needing 600 MB still uses 600 MB here.
+        maxHeapSize = "3g"
     }
     tasks.withType<JavaExec> {
         jvmArgs("--enable-native-access=ALL-UNNAMED")
