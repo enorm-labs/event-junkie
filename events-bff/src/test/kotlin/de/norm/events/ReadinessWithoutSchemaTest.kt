@@ -47,11 +47,11 @@ class ReadinessWithoutSchemaTest {
     /**
      * A PostgreSQL nothing has ever migrated.
      *
-     * Deliberately **not** the shared [PostgresTestcontainersConfiguration]: that one carries
-     * `withReuse(true)`, so whether it hands back a container some other context already ran Flyway
-     * against depends on `testcontainers.reuse.enable` in the developer's environment. This test's
-     * whole premise is that `events.event` does not exist, and a premise that holds on one machine
-     * and not another is not a premise — it is a flake waiting for CI.
+     * Deliberately **not** the shared [PostgresTestcontainersConfiguration]: every context using it
+     * gets a database Flyway has migrated. This test's whole premise is that `events.event` does not
+     * exist, so it cannot share one. `withReuse(false)` stays explicit even though the shared
+     * configuration no longer asks for reuse (#954): the annotation is the guarantee, and it must
+     * not depend on a decision made in another file.
      */
     @TestConfiguration(proxyBeanMethods = false)
     class UnmigratedPostgres {
