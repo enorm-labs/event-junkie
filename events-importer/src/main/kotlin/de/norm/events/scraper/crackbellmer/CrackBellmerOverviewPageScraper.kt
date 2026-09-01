@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
@@ -81,7 +82,9 @@ class CrackBellmerOverviewPageScraper(
                 }
             }
 
-        return dropPastEvents(events)
+        return events.dropPastEvents(clock) { dropped ->
+            logger.info { "Dropped $dropped past event(s) from the Crack Bellmer listing" }
+        }
     }
 
     /** Parses one `.event-item` into a [ScrapedEvent], or `null` when it is unusable or not an event. */
@@ -124,23 +127,6 @@ class CrackBellmerOverviewPageScraper(
         } catch (_: DateTimeParseException) {
             null
         }
-    }
-
-    /**
-     * Keeps only events dated today or later, dropping the recently-passed ones the listing carries.
-     *
-     * Same-day events are kept — the night may still be happening — matching the persistence layer's
-     * cutoff (`EventUpsertService`), which enforces the same rule regardless. Applying it here spares
-     * the importer a detail-page fetch per past event, which is roughly half the listing; it is an
-     * optimization, not the source of truth.
-     */
-    private fun dropPastEvents(events: List<ScrapedEvent>): List<ScrapedEvent> {
-        val today = LocalDate.now(clock)
-        val (upcoming, past) = events.partition { !it.eventDate.isBefore(today) }
-        if (past.isNotEmpty()) {
-            logger.info { "Dropped ${past.size} past event(s) from the Crack Bellmer listing" }
-        }
-        return upcoming
     }
 
     /**

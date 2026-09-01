@@ -91,14 +91,10 @@ class EventUpsertService(
     private fun dropPastEvents(
         scrapedEvents: List<ScrapedEvent>,
         eventSourceId: Long
-    ): List<ScrapedEvent> {
-        val today = LocalDate.now(clock)
-        val (upcoming, past) = scrapedEvents.partition { !it.eventDate.isBefore(today) }
-        if (past.isNotEmpty()) {
-            logger.info { "Dropped ${past.size} past event(s) from event source $eventSourceId" }
+    ): List<ScrapedEvent> =
+        scrapedEvents.dropPastEvents(clock) { dropped ->
+            logger.info { "Dropped $dropped past event(s) from event source $eventSourceId" }
         }
-        return upcoming
-    }
 
     /**
      * Upserts pre-deduplicated scraped events into the database.

@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseTime
@@ -13,7 +14,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
-import java.time.LocalDate
 
 /**
  * Pure HTML parser for Berghain's server-rendered programme (overview) page.
@@ -68,16 +68,9 @@ class BerghainOverviewPageScraper(
                 }
             }
 
-        return dropPastEvents(events)
-    }
-
-    private fun dropPastEvents(events: List<ScrapedEvent>): List<ScrapedEvent> {
-        val today = LocalDate.now(clock)
-        val (upcoming, past) = events.partition { !it.eventDate.isBefore(today) }
-        if (past.isNotEmpty()) {
-            logger.info { "Dropped ${past.size} past event(s) from Berghain listing" }
+        return events.dropPastEvents(clock) { dropped ->
+            logger.info { "Dropped $dropped past event(s) from Berghain listing" }
         }
-        return upcoming
     }
 
     @Suppress("ReturnCount") // Guard clauses for missing title/date are clearer than nesting

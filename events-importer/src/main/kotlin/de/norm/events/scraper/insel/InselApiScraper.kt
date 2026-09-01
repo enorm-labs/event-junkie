@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
@@ -15,7 +16,6 @@ import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.kotlinModule
 import java.time.Clock
-import java.time.LocalDate
 import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -118,7 +118,9 @@ class InselApiScraper(
                 }
             }
 
-        return dropPastEvents(events)
+        return events.dropPastEvents(clock) { dropped ->
+            logger.info { "Dropped $dropped past event(s) from the Insel archive" }
+        }
     }
 
     /**
@@ -255,15 +257,6 @@ class InselApiScraper(
         title: String,
         cmsType: String?
     ): String = if (isClosedFunction(title, cmsType)) EventType.OTHER.name else inferConcertVenueType(title)
-
-    private fun dropPastEvents(events: List<ScrapedEvent>): List<ScrapedEvent> {
-        val today = LocalDate.now(clock)
-        val (upcoming, past) = events.partition { !it.eventDate.isBefore(today) }
-        if (past.isNotEmpty()) {
-            logger.info { "Dropped ${past.size} past event(s) from the Insel archive" }
-        }
-        return upcoming
-    }
 
     /** Converts the node's offset-stamped `time` to the venue's own [BERLIN] wall clock, or null when unparseable. */
     private fun parseInstant(raw: String?): ZonedDateTime? {
