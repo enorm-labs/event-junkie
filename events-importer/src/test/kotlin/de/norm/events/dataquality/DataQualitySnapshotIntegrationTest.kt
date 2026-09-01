@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.awaitSingle
-import org.springframework.test.context.TestPropertySource
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -18,15 +17,17 @@ import java.time.ZoneOffset
 /**
  * The history half of Pillar 1: the daily row that makes a trend possible.
  *
- * `app.scheduling.enabled` is `true` here and `false` for every other test, so the bean exists and
- * can be invoked directly — the cron expression is not what is under test, the write is.
+ * **It builds its own [DataQualityReportLogger]** rather than autowiring one, because it needs a
+ * fixed [Clock] anyway. That is also what keeps this class inside the shared Spring context: it used
+ * to set `app.scheduling.enabled=true` so the bean would exist, which forked a whole context and a
+ * container for a bean it never asked for (#965). The cron expression is not what is under test, the
+ * write is.
  *
  * **Idempotence is the assertion that matters.** The unique constraint is
  * `(snapshot_date, source_slug, metric)`, so a second run on the same day either updates the row or
  * fails the whole job — and the job has to be safe to trigger by hand, because that is how a missing
  * day gets backfilled after an outage.
  */
-@TestPropertySource(properties = ["app.scheduling.enabled=true"])
 class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
     @Autowired
     private lateinit var snapshots: DataQualitySnapshotRepository

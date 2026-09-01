@@ -28,6 +28,12 @@ Extend what is already here rather than repeating its boilerplate.
   Testcontainers 2.x artifacts (`org.testcontainers:testcontainers-postgresql`, `testcontainers-r2dbc`, `testcontainers-junit-jupiter`)
   with modular package imports (`org.testcontainers.postgresql.PostgreSQLContainer`).
 - Use backtick function names for readable test descriptions: `` `GET hello returns Hello world`() ``.
+- **Every distinct test-context configuration costs a cached Spring context, a PostgreSQL container and an R2DBC pool, for the whole test task.** The count
+  today is **2 for `events-importer` and 3 for `events-bff`**, down from 5 and 4 (#965). Count them with
+  `./gradlew :events-importer:test --rerun-tasks 2>&1 | grep -c 'Commencing graceful shutdown'`, which counts `RANDOM_PORT` contexts without instrumenting
+  anything. **A change to that number is a real change** — a `@TestPropertySource`, an `@Import`, an `@AutoConfigureMetrics` or a different `webEnvironment` on
+  a test class all fork one. Put the annotation on `BaseControllerTest` where the whole suite can share it, or say in the KDoc why this class needs its own.
+  `EventImportServiceIntegrationTest` is the one that kept its fork, and its KDoc says why.
 - **BaseControllerTest** (importer only): Abstract base class for integration tests that extends Testcontainers setup, provides a `WebTestClient`, and truncates
   all domain tables via `@BeforeEach` so each test starts with a clean database. Extend this instead of repeating boilerplate.
 - **Nothing scheduled may run in a backend test, and two separate things are needed to get that (#949).** `SchedulingConfiguration` in the importer carries
