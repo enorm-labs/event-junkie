@@ -395,6 +395,18 @@ spec:
                 - set(log.attributes["sourceSlug"], log.cache["sourceSlug"]) where log.cache["sourceSlug"] != nil
                 - set(log.attributes["importRunId"], log.cache["importRunId"]) where log.cache["importRunId"] != nil
                 - set(log.attributes["requestId"], log.cache["requestId"]) where log.cache["requestId"] != nil
+                # The payload fields — #945. Written at a call site rather than carried by the run,
+                # but the same position in the JSON, so the same flat read works. **A name absent
+                # here is silently absent from the column**: match `LogContext.Fields` and the BFF's
+                # `LogContextConfiguration`, which nothing else checks.
+                - set(log.attributes["url"], log.cache["url"]) where log.cache["url"] != nil
+                - set(log.attributes["eventId"], log.cache["eventId"]) where log.cache["eventId"] != nil
+                - set(log.attributes["eventSourceId"], log.cache["eventSourceId"]) where log.cache["eventSourceId"] != nil
+                - set(log.attributes["httpMethod"], log.cache["httpMethod"]) where log.cache["httpMethod"] != nil
+                - set(log.attributes["path"], log.cache["path"]) where log.cache["path"] != nil
+                # **One name, both directions**: a venue's status to us, and ours to a browser.
+                # `httpstatus = 500` matches both; `service_name` is what separates them.
+                - set(log.attributes["httpStatus"], log.cache["httpStatus"]) where log.cache["httpStatus"] != nil
                 # The stack trace as one field rather than forty unparented lines, which is the
                 # other thing a text log cannot give. `IsMap` here is the fix described above.
                 - set(log.attributes["errorType"], log.cache["error"]["type"]) where IsMap(log.cache["error"]) and log.cache["error"]["type"] != nil

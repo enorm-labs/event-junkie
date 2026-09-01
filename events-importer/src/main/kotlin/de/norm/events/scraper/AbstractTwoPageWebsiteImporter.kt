@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
 import org.jsoup.nodes.Document
 
 /**
@@ -74,7 +75,10 @@ abstract class AbstractTwoPageWebsiteImporter(
     private fun dropUnresolvedDates(events: List<ScrapedEvent>): List<ScrapedEvent> {
         val (resolved, unresolved) = events.partition { it.eventDate != UNRESOLVED_EVENT_DATE }
         unresolved.forEach { event ->
-            logger.warn { "Dropping '${event.title}' (${event.sourceUrl}): no event date resolved from overview or detail page" }
+            logger.at(Level.WARN) {
+                message = "Dropping '${event.title}': no event date resolved from overview or detail page"
+                payload = mapOf(LogContext.Fields.URL to event.sourceUrl, LogContext.Fields.EVENT_SOURCE_ID to event.sourceId)
+            }
         }
         return resolved
     }
@@ -86,7 +90,11 @@ abstract class AbstractTwoPageWebsiteImporter(
             val detail = scrapeDetail(detailDoc, overview.sourceUrl)
             if (detail != null) fillGapsFromOverview(primary = detail, fallback = overview) else overview
         } catch (e: Exception) {
-            logger.warn(e) { "Failed to fetch detail page for '${overview.title}' (${overview.sourceUrl}), using overview data" }
+            logger.at(Level.WARN) {
+                message = "Failed to fetch detail page for '${overview.title}', using overview data"
+                cause = e
+                payload = mapOf(LogContext.Fields.URL to overview.sourceUrl, LogContext.Fields.EVENT_SOURCE_ID to overview.sourceId)
+            }
             overview
         }
 }

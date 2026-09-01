@@ -5,10 +5,13 @@ import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldNotContain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -26,6 +29,7 @@ import org.springframework.boot.logging.logback.StructuredLogEncoder
 import org.springframework.core.env.Environment
 import org.springframework.mock.env.MockEnvironment
 import tools.jackson.databind.json.JsonMapper
+import ch.qos.logback.classic.Level as LogbackLevel
 
 private val logger = KotlinLogging.logger {}
 
@@ -41,16 +45,21 @@ private val logger = KotlinLogging.logger {}
 class LogContextTest {
     private lateinit var appender: ListAppender<ILoggingEvent>
     private lateinit var root: Logger
+    private var originalLevel: LogbackLevel? = null
 
     @BeforeEach
     fun attachAppender() {
         root = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as Logger
+        originalLevel = root.level
         appender = ListAppender<ILoggingEvent>().apply { start() }
         root.addAppender(appender)
     }
 
     @AfterEach
     fun detachAppender() {
+        // Restored, not assumed: one test lowers it to prove `at` is lazy, and a leaked level would
+        // silence a later test into passing for the wrong reason.
+        root.level = originalLevel
         root.detachAppender(appender)
         appender.stop()
         MDC.clear()
@@ -141,6 +150,90 @@ class LogContextTest {
 
                 appender.list shouldHaveSize 2
                 appender.list.last().mdcPropertyMap[LogContext.SOURCE_SLUG] shouldBe null
+            }
+    }
+
+    /**
+     * The payload half of the same guarantee (#945).
+     *
+     * [LogContext] puts the *run's* context on every line through MDC. This asserts the other
+     * mechanism: values named at the call site, through kotlin-logging's `at`/`payload`, which
+     * SLF4J carries as key-value pairs rather than formatting into the message. Both end up in the
+     * same place — a top-level key in the ECS object — and only that position makes them a column
+     * the log store can filter on.
+     *
+     * Asserted here rather than in a fetcher's own test because the thing under test is the
+     * mechanism, not any one call site.
+     */
+    @Nested
+    inner class LoggedPayload {
+        @Test
+        fun `reaches the ECS JSON as a top-level field, beside the MDC ones`() =
+            runTest {
+                withContext(LogContext.forImportRun("berghain")) {
+                    logger.at(Level.INFO) {
+                        message = "Page not modified"
+                        payload = mapOf("url" to "https://example.test/events", "httpStatus" to 304)
+                    }
+                }
+
+                val json = JsonMapper.builder().build().readTree(encodeAsEcs(appender.list.single()))
+
+                // Siblings of `message`, exactly where `sourceSlug` lands — so one collector rule
+                // shape lifts both, and the two mechanisms need no different handling downstream.
+                json.get("url").stringValue() shouldBe "https://example.test/events"
+                json.get("message").stringValue() shouldBe "Page not modified"
+                json.get(LogContext.SOURCE_SLUG).stringValue() shouldBe "berghain"
+            }
+
+        @Test
+        fun `keeps a numeric value a JSON number rather than a quoted string`() =
+            runTest {
+                logger.at(Level.INFO) {
+                    message = "Page not modified"
+                    payload = mapOf("httpStatus" to 304)
+                }
+
+                val json = JsonMapper.builder().build().readTree(encodeAsEcs(appender.list.single()))
+
+                // OpenObserve infers a column's type from the first row it sees, so a status logged
+                // as a string once would settle the column as a string and break every later range
+                // query on it. `304`, not `"304"`.
+                json.get("httpStatus").isNumber shouldBe true
+                json.get("httpStatus").intValue() shouldBe 304
+            }
+
+        @Test
+        fun `leaves the value out of the message text, which is the regression this exists for`() =
+            runTest {
+                logger.at(Level.INFO) {
+                    message = "Page not modified"
+                    payload = mapOf("url" to "https://example.test/events")
+                }
+
+                // The failure mode is not an absent field — it is a field that is *also* welded into
+                // the sentence, which reads as working and leaves the prose to drift out of step
+                // with it. An assertion on the field alone passes in both worlds.
+                appender.list.single().formattedMessage shouldNotContain "example.test"
+            }
+
+        @Test
+        fun `does not build the payload when the level is off`() =
+            runTest {
+                root.level = LogbackLevel.WARN
+                var built = false
+
+                logger.at(Level.INFO) {
+                    built = true
+                    message = "should not be logged"
+                }
+
+                // The laziness argument the issue makes against SLF4J's `{}` only holds if `at`
+                // checks the level before invoking the lambda. It does — and if a future version
+                // stopped, every converted call site would start allocating a map per suppressed
+                // line, silently.
+                built shouldBe false
+                appender.list.shouldBeEmpty()
             }
     }
 

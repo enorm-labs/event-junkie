@@ -647,20 +647,63 @@ line logged in a suspend controller carries no `requestId` today. Threading a `C
 **What every log line actually carries.** The first column is what you type into OpenObserve, and it is **not** always what the
 code writes — see the warning below the table:
 
-| Column in OpenObserve        | Written as                  | Source                                                         |
-| ---------------------------- | --------------------------- | -------------------------------------------------------------- |
-| `severity` / `severity_text` | —                           | `log.level`, mapped to real OTLP severity numbers by the agent |
-| `sourceslug`, `importrunid`  | `sourceSlug`, `importRunId` | MDC, set once per import run                                   |
-| `requestid`                  | `requestId`                 | MDC, one per BFF request                                       |
-| `logger`                     | —                           | `log.logger` — exclude a noisy class without excluding its pod |
-| `errortype`, `stacktrace`    | `errorType`, `stackTrace`   | one field each, rather than forty unparented lines             |
-| `service_version`            | —                           | the collector's `k8sattributes`, read off the pod's own label  |
+| Column in OpenObserve        | Written as                  | Source                                                          |
+| ---------------------------- | --------------------------- | --------------------------------------------------------------- |
+| `severity` / `severity_text` | —                           | `log.level`, mapped to real OTLP severity numbers by the agent  |
+| `sourceslug`, `importrunid`  | `sourceSlug`, `importRunId` | MDC, set once per import run                                    |
+| `requestid`                  | `requestId`                 | MDC, one per BFF request                                        |
+| `logger`                     | —                           | `log.logger` — exclude a noisy class without excluding its pod  |
+| `errortype`, `stacktrace`    | `errorType`, `stackTrace`   | one field each, rather than forty unparented lines              |
+| `service_version`            | —                           | the collector's `k8sattributes`, read off the pod's own label   |
+| `url`                        | `url`                       | the page being fetched or parsed — `HtmlFetcher`, the importers |
+| `httpstatus`                 | `httpStatus`                | **both directions** — see the warning below the next paragraph  |
+| `httpmethod`, `path`         | `httpMethod`, `path`        | the BFF's access line, one per request                          |
+| `eventid`, `eventsourceid`   | `eventId`, `eventSourceId`  | our id and the venue's, on the write path                       |
 
 **OpenObserve lower-cases field names, and a query with the wrong case matches nothing.** It does not error — it returns an
 empty result, which reads like "no such data" rather than "no such column". So `sourceSlug` is written in the MDC, appears
 as `sourceSlug` in the JSON the pod writes, and is queried as **`sourceslug`**. Verified on staging on 2026-08-31: the row
 carried `requestid`, never `requestId`. The camelCase in the Kotlin and in the collector's allowlist is correct and stays —
 only the query is lower-case.
+
+**The bottom four rows arrive by a different mechanism (#945).** The first three rows are MDC. They are set
+once and carried by every line of a run. The rest are written at the call site:
+
+```kotlin
+logger.at(Level.INFO) {
+    message = "Page not modified"
+    payload = mapOf("url" to url, "httpStatus" to 304)
+}
+```
+
+SLF4J carries a payload as key-value pairs rather than formatting it into the message. Boot's ECS formatter
+writes those to the **same top level** the MDC entries land in. One collector rule shape therefore lifts both,
+and nothing downstream has to tell them apart.
+
+**Not `logger.info("… {} …", value)`.** SLF4J's placeholders format the argument _into the message string_.
+They produce exactly the unfilterable line they look like they are fixing. The laziness argument for them does
+not apply either. All 467 call sites here use kotlin-logging's lambda form, and `at` checks the level before
+it invokes the block. `LogContextTest.LoggedPayload` asserts that. A future version that stopped would fail
+the test rather than quietly allocate a map per suppressed line.
+
+**Ten lines carry a payload, not 467.** Every field name costs an entry in `transform/parse_structured_logs`
+in **both** cluster files. A name that is not there produces no error and no column, only an empty result.
+#624 is what a flatten costs. The names above are meant to match `LogContext.Fields` and
+`LogContextConfiguration` exactly. **Nothing checks that they do.**
+
+> **`httpstatus` spans inbound and outbound, and a query that forgets it gets a misleading answer.** The
+> importer writes the status a **venue's server returned to us**. The BFF writes the status **we returned to a
+> browser**. `httpstatus = 500` matches both. "A venue is broken" and "we are broken" are opposite incidents in
+> one result set. Filter by `service_name` alongside it. One name is still right, because the value means the
+> same thing. Only the subject differs.
+
+**The access line keeps two values as prose on purpose.** `durationMs` stays in the text because
+`http.server.requests` already carries latency as a histogram tagged by templated URI. A real percentile beats
+one aggregated out of log rows. The **query string** stays in the text for a different reason. `?q=astra` is
+user-typed input, and making it a column is a different act from having it in a line. See §7.5 of
+[LEGAL.md](../LEGAL.md), the same standing instruction as the one about client IPs. Nothing about what is
+_collected_ changes either way. A test asserts both, so a later tidy-up has to choose them rather than drift
+into them.
 
 **No `traceId`, and it is not an oversight.** Neither module has Micrometer Tracing, so nothing issues a W3C trace context. `importRunId` and `requestId` are
 correlation ids the applications generate. To name one `traceId` would invite joins that cannot work. Real distributed tracing is a separate decision.

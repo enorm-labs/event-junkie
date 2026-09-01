@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
@@ -63,7 +64,13 @@ class HtmlFetcher(
         etag: String? = null,
         lastModified: String? = null
     ): FetchResult {
-        logger.info { "Fetching $url (etag=$etag, lastModified=$lastModified)" }
+        // `url` as a payload field rather than inside the sentence (#945): it is the value the
+        // "did this source 304 or actually change" question filters on. The two validators stay in
+        // the text — opaque per-page hashes make a high-cardinality field nothing aggregates on.
+        logger.at(Level.INFO) {
+            message = "Fetching source page (etag=$etag, lastModified=$lastModified)"
+            payload = mapOf(LogContext.Fields.URL to url)
+        }
         return webClient
             .get()
             // Pass a pre-built URI so WebClient uses the (already percent-encoded) URL verbatim.
@@ -141,7 +148,10 @@ class HtmlFetcher(
         url: String
     ): FetchResult {
         if (response.statusCode() == HttpStatus.NOT_MODIFIED) {
-            logger.info { "Page not modified: $url" }
+            logger.at(Level.INFO) {
+                message = "Page not modified"
+                payload = mapOf(LogContext.Fields.URL to url, LogContext.Fields.HTTP_STATUS to HttpStatus.NOT_MODIFIED.value())
+            }
             return FetchResult.NotModified
         }
 
@@ -154,7 +164,10 @@ class HtmlFetcher(
         val newEtag = response.headers().asHttpHeaders().eTag
         val newLastModified = response.headers().asHttpHeaders().getFirst("Last-Modified")
 
-        logger.info { "Fetched ${body.bytes.size} bytes from $url (newEtag=$newEtag, newLastModified=$newLastModified)" }
+        logger.at(Level.INFO) {
+            message = "Fetched ${body.bytes.size} bytes (newEtag=$newEtag, newLastModified=$newLastModified)"
+            payload = mapOf(LogContext.Fields.URL to url, LogContext.Fields.HTTP_STATUS to response.statusCode().value())
+        }
 
         val document = parseHtml(body, url)
         return FetchResult.Success(

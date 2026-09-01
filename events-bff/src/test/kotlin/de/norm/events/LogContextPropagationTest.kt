@@ -8,10 +8,12 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
+import org.springframework.http.HttpStatus
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest
 import org.springframework.mock.web.server.MockServerWebExchange
 import reactor.core.publisher.Mono
@@ -109,8 +111,60 @@ class LogContextPropagationTest {
 
         RequestLoggingFilter("/actuator").filter(exchange) { Mono.empty() }.block()
 
-        val event = appender.list.single { it.formattedMessage.startsWith("GET /venues") }
+        // Found by its `path` field rather than by its text (#945). Matching on the message was
+        // what this assertion did before the values became fields, and it is precisely the coupling
+        // that made a wording change break an unrelated test.
+        val event = appender.list.single { it.field(LogContextConfiguration.PATH) == "/venues" }
         assertFalse(event.mdcPropertyMap[LogContextConfiguration.REQUEST_ID].isNullOrBlank())
+    }
+
+    @Test
+    fun `carries the method, path and status as fields rather than inside the sentence`() {
+        val exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/venues?q=astra"))
+
+        // The status is set by the chain, not by the mock — an unset one reads back as 0, which
+        // would let the Int assertion below pass without proving the real value ever arrives.
+        RequestLoggingFilter("/actuator")
+            .filter(exchange) {
+                exchange.response.statusCode = HttpStatus.OK
+                Mono.empty()
+            }.block()
+
+        val event = appender.list.single()
+        assertEquals("GET", event.field(LogContextConfiguration.HTTP_METHOD))
+        assertEquals("/venues", event.field(LogContextConfiguration.PATH))
+        // An Int, not "200". OpenObserve types a column from its first row, so one string here
+        // would make every later range query on the status impossible.
+        assertEquals(200, event.field(LogContextConfiguration.HTTP_STATUS))
+
+        // The other half of the same guarantee: a value that is a field AND still welded into the
+        // sentence reads as working while leaving the prose to drift out of step with it.
+        assertFalse(event.formattedMessage.startsWith("GET "))
+    }
+
+    @Test
+    fun `keeps the query string out of the fields, which is a decision and not an oversight`() {
+        val exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/venues?q=astra"))
+
+        RequestLoggingFilter("/actuator").filter(exchange) { Mono.empty() }.block()
+
+        val event = appender.list.single()
+        // `q=astra` is user-typed input. It stays in the message, where it already was — making it
+        // a filterable column is a different act, and LEGAL.md §7.5 says not to widen what request
+        // data is collected without deciding to. Asserted so a later "tidy-up" has to choose it.
+        assertTrue(event.formattedMessage.contains("?q=astra"))
+        assertEquals("/venues", event.field(LogContextConfiguration.PATH))
+    }
+
+    @Test
+    fun `logs no access line at all for an actuator request`() {
+        val exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/actuator/health"))
+
+        RequestLoggingFilter("/actuator").filter(exchange) { Mono.empty() }.block()
+
+        // The suppression predates this change; asserted here because the conversion rewrote the
+        // line it guards and a silently-restored probe line is 1,437 rows an hour.
+        assertTrue(appender.list.none { it.field(LogContextConfiguration.PATH) != null })
     }
 
     @Test
@@ -124,4 +178,13 @@ class LogContextPropagationTest {
         assertEquals(2, ids.size)
         assertEquals(2, ids.toSet().size)
     }
+
+    /**
+     * The value SLF4J carries for [key] as a key-value pair, or `null` when the line has none.
+     *
+     * `keyValuePairs` is what `logger.at(…) { payload = … }` writes and what Spring's ECS formatter
+     * serialises to the top level of the JSON — so this reads the same list the shipped log line is
+     * built from, rather than a rendered string.
+     */
+    private fun ILoggingEvent.field(key: String): Any? = keyValuePairs?.firstOrNull { it.key == key }?.value
 }
