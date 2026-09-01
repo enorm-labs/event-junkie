@@ -753,14 +753,19 @@ cd deploy/alerts     && ./apply.sh --diff
 **Both scripts default to staging's node, so a production rebuild needs `EJ_NODE=ops@10.10.0.1` in front of each of the four.** Without it every command
 succeeds, reports that the push landed, and writes to the cluster you were not rebuilding.
 
-**The fourteenth query is not slow. It is absent by design**, and the difference matters when you
-are staring at a fresh cluster wondering what else did not come back. The one that returns nothing is
-the `enqueue_failed` half of _Metrics dropped before storage_. A collector exports that series only
-once something has actually failed to enqueue, so a healthy one has no series at all.
+**All fourteen dashboard queries should return data. A `NO DATA` is a finding.** That is worth
+stating, because it was not always true. The `enqueue_failed` half of _Metrics dropped before
+storage_ returned nothing on a healthy cluster. A collector exports that series only after something
+fails to enqueue. Anyone rebuilding a cluster had to know which blank was expected.
 
-That is the same trap [`deploy/alerts/README.md`](../../deploy/alerts/README.md) records for
-`ej-ingest-shedding`. There, a rule summing two counters was un-fireable during the normal operation
-it was meant to watch. Waiting for that panel to fill in is waiting for an outage.
+It is now `receiver_refused`, which exists from start-up
+([#969](https://github.com/enorm-labs/event-junkie/issues/969)). There is no longer a blank to
+memorise. [`deploy/alerts/README.md`](../../deploy/alerts/README.md) records the same trap for
+`ej-ingest-shedding`. There, a rule summing two counters could not fire during the normal operation
+it watched. **One query per always-present series** is the rule both landed on.
+
+`apply.sh` also runs `lint_dashboard.py` before it reaches the network. A dashboard that would render
+blank or quarter-width fails there, rather than on the screen you rebuilt it for.
 
 **`--diff` is what turns "I ran the apply" into "the cluster has it".** It is worth the two extra commands here of all places. A rebuild is exactly when an
 apply gets half-run. And a rule that silently did not land looks identical to one that did, until the incident it was written for (#702).

@@ -13,7 +13,7 @@
       "panels": [
         {
           "id": "p_stale_worst",
-          "type": "stat",
+          "type": "metric",
           "title": "Oldest source (hours since last success)",
           "description": "The single worst venue, against a 24h import interval (`import_interval_minutes = 1440`) \u2014 so anything under 24 is routine and the number climbing past ~36 is the signal. ADR-015's zero-events alert uses this series.",
           "config": {
@@ -49,14 +49,14 @@
           "layout": {
             "x": 0,
             "y": 0,
-            "w": 12,
-            "h": 4,
+            "w": 48,
+            "h": 10,
             "i": 1
           }
         },
         {
           "id": "p_stale_count",
-          "type": "stat",
+          "type": "metric",
           "title": "Sources stale > 36h",
           "description": "Venues that have missed a whole import cycle and half of the next. **36h, not 12h** \u2014 the interval is 24h, so a 12h threshold flags all 84 every single day as a matter of routine, which is how a panel teaches people to ignore it. Uses `> bool` so it shows 0 rather than going blank. A source that has never succeeded is not counted here and cannot be \u2014 it has no age. The panel next to it is where those live.",
           "config": {
@@ -90,16 +90,16 @@
             }
           ],
           "layout": {
-            "x": 12,
+            "x": 48,
             "y": 0,
-            "w": 12,
-            "h": 4,
+            "w": 48,
+            "h": 10,
             "i": 2
           }
         },
         {
           "id": "p_never_succeeded",
-          "type": "stat",
+          "type": "metric",
           "title": "Sources that have never succeeded",
           "description": "**The blind spot #618 closed.** `last_success` only exists once a source has worked, so a venue that has never imported had no series at all \u2014 not stale, not late, absent. On 2026-08-20 that was 86 sources and 84 series, and the two missing were the only two that were broken while this dashboard read \"0 sources stale\". `importer_source_has_succeeded` exists for every enabled row from the first refresh after start-up. **Anything but 0 is a scraper that has never once worked** \u2014 a different fact from a stale one, and a different response: fix the importer, do not wait for a retry.",
           "config": {
@@ -133,16 +133,16 @@
             }
           ],
           "layout": {
-            "x": 24,
+            "x": 96,
             "y": 0,
-            "w": 12,
-            "h": 4,
+            "w": 48,
+            "h": 10,
             "i": 3
           }
         },
         {
           "id": "p_future_events",
-          "type": "stat",
+          "type": "metric",
           "title": "Future events in the database",
           "description": "What the site can actually show. A fall here is the failure mode no HTTP check sees: the importer runs, reports success, and the listings quietly empty out.",
           "config": {
@@ -176,55 +176,11 @@
             }
           ],
           "layout": {
-            "x": 36,
+            "x": 144,
             "y": 0,
-            "w": 12,
-            "h": 4,
+            "w": 48,
+            "h": 10,
             "i": 4
-          }
-        },
-        {
-          "id": "p_node_mem",
-          "type": "stat",
-          "title": "Node memory available",
-          "description": "The node is a cpx22 \u2014 2 vCPU / 4 GB running k3s, two JVMs, PostgreSQL and this observability stack. It global-OOMed on 2026-08-20 with load at 99. This panel is the one that would have seen it coming.",
-          "config": {
-            "show_legends": true,
-            "decimals": 2,
-            "unit": "bytes"
-          },
-          "queryType": "promql",
-          "queries": [
-            {
-              "query": "min(k8s_node_memory_available)",
-              "vrlFunctionQuery": null,
-              "customQuery": true,
-              "fields": {
-                "stream": "",
-                "stream_type": "metrics",
-                "x": [],
-                "y": [],
-                "z": [],
-                "breakdown": [],
-                "filter": {
-                  "filterType": "group",
-                  "logicalOperator": "AND",
-                  "conditions": []
-                }
-              },
-              "config": {
-                "promql_legend": "",
-                "layer_type": "scatter",
-                "weight_fixed": 1
-              }
-            }
-          ],
-          "layout": {
-            "x": 24,
-            "y": 12,
-            "w": 12,
-            "h": 7,
-            "i": 5
           }
         },
         {
@@ -264,10 +220,10 @@
           ],
           "layout": {
             "x": 0,
-            "y": 4,
-            "w": 24,
-            "h": 8,
-            "i": 6
+            "y": 10,
+            "w": 96,
+            "h": 18,
+            "i": 5
           }
         },
         {
@@ -306,11 +262,11 @@
             }
           ],
           "layout": {
-            "x": 24,
-            "y": 4,
-            "w": 24,
-            "h": 8,
-            "i": 7
+            "x": 96,
+            "y": 10,
+            "w": 96,
+            "h": 18,
+            "i": 6
           }
         },
         {
@@ -351,10 +307,10 @@
           ],
           "layout": {
             "x": 0,
-            "y": 12,
-            "w": 12,
-            "h": 7,
-            "i": 8
+            "y": 28,
+            "w": 48,
+            "h": 16,
+            "i": 7
           }
         },
         {
@@ -416,10 +372,54 @@
             }
           ],
           "layout": {
-            "x": 12,
-            "y": 12,
-            "w": 12,
-            "h": 7,
+            "x": 48,
+            "y": 28,
+            "w": 48,
+            "h": 16,
+            "i": 8
+          }
+        },
+        {
+          "id": "p_node_mem",
+          "type": "metric",
+          "title": "Node memory available",
+          "description": "The node is a cpx22 \u2014 2 vCPU / 4 GB running k3s, two JVMs, PostgreSQL and this observability stack. It global-OOMed on 2026-08-20 with load at 99. This panel is the one that would have seen it coming.",
+          "config": {
+            "show_legends": true,
+            "decimals": 2,
+            "unit": "bytes"
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "min(k8s_node_memory_available)",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 96,
+            "y": 28,
+            "w": 48,
+            "h": 16,
             "i": 9
           }
         },
@@ -459,10 +459,10 @@
             }
           ],
           "layout": {
-            "x": 36,
-            "y": 12,
-            "w": 12,
-            "h": 7,
+            "x": 144,
+            "y": 28,
+            "w": 48,
+            "h": 16,
             "i": 10
           }
         },
@@ -470,7 +470,7 @@
           "id": "p_shedding",
           "type": "line",
           "title": "Metrics dropped before storage (points/sec)",
-          "description": "**Two ways a metric dies on the way in, and neither raises anything.** `send_failed` is OpenObserve returning 503 \u2014 the memtable overflow of #625. `enqueue_failed` is the collector's own queue full, so the point was never even attempted. Measured 2026-08-23, before the fix: 4.44M and 8.45M respectively in 48h, against 12.2M delivered \u2014 **about half of everything scraped**. Anything but a flat zero here means the panels above are sampling, not reporting.",
+          "description": "**Two ways a metric dies on the way in, and neither raises anything.** `send_failed` is OpenObserve returning 503 \u2014 the memtable overflow of #625. `receiver_refused` is the collector declining a point it cannot place, which is where queue pressure surfaces once the exporter stops accepting. Measured 2026-08-23, before the fix: 4.44M rejected by OpenObserve and 8.45M never queued by the collector, in 48h against 12.2M delivered \u2014 **about half of everything scraped**. Anything but a flat zero here means the panels above are sampling, not reporting.\n\n**Both series exist on a healthy collector, and that is the whole requirement.** This panel's second half was `otelcol_exporter_enqueue_failed_metric_points_total`, which a collector creates only after something has already failed to enqueue \u2014 so it was blank in exactly the case it was meant to certify, and read as a broken panel rather than a calm one (#969). `deploy/alerts/README.md` records `ej-ingest-shedding` reaching the same conclusion first: one query per always-present series.",
           "config": {
             "show_legends": true,
             "decimals": 2
@@ -501,7 +501,7 @@
               }
             },
             {
-              "query": "sum(rate(otelcol_exporter_enqueue_failed_metric_points_total[5m]))",
+              "query": "sum(rate(otelcol_receiver_refused_metric_points_total[5m]))",
               "vrlFunctionQuery": null,
               "customQuery": true,
               "fields": {
@@ -526,9 +526,9 @@
           ],
           "layout": {
             "x": 0,
-            "y": 19,
-            "w": 24,
-            "h": 7,
+            "y": 44,
+            "w": 96,
+            "h": 16,
             "i": 11
           }
         },
@@ -569,10 +569,10 @@
             }
           ],
           "layout": {
-            "x": 24,
-            "y": 19,
-            "w": 24,
-            "h": 7,
+            "x": 96,
+            "y": 44,
+            "w": 96,
+            "h": 16,
             "i": 12
           }
         }
