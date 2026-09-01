@@ -22,9 +22,9 @@ object LogFields {
      */
     const val HTTP_STATUS = "httpStatus"
 
-    /** Our database id for an event, on the write path. */
+    /** Our database id, and in practice always an event we **removed** — see §7 (#984). */
     const val EVENT_ID = "eventId"
 
-    /** The **source's** id for an event — the venue's, not ours. What #380's title asked for. */
+    /** The venue's id for an event, not ours. On a duplicate skipped and a stale removal (#984). */
     const val EVENT_SOURCE_ID = "eventSourceId"
 }
