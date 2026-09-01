@@ -252,9 +252,7 @@ class EventImportService(
                     // After the transaction commits, deliberately: a counter incremented for writes
                     // that then rolled back would overstate what is in the database, and there is no
                     // way to take an increment back.
-                    metrics.recordEventsWritten(runningSource.slug, ImporterMetrics.WriteOperation.INSERTED, upsert.inserted)
-                    metrics.recordEventsWritten(runningSource.slug, ImporterMetrics.WriteOperation.UPDATED, upsert.updated)
-                    metrics.recordEventsWritten(runningSource.slug, ImporterMetrics.WriteOperation.SKIPPED, upsert.skipped)
+                    metrics.recordUpsertOutcome(runningSource.slug, upsert, result.droppedUnresolvedDate)
 
                     // Per-field coverage, BEFORE markSuccess and after the transaction (#472).
                     //

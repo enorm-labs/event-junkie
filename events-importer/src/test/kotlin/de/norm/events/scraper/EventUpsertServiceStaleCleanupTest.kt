@@ -35,6 +35,7 @@ class EventUpsertServiceStaleCleanupTest {
     /** Fixed "today" for all tests — 2026-06-15. */
     private val today = LocalDate.of(2026, 6, 15)
     private val tomorrow = today.plusDays(1)
+    private val yesterday = today.minusDays(1)
     private val fixedClock: Clock = Clock.fixed(today.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
 
     private lateinit var service: EventUpsertService
@@ -490,6 +491,58 @@ class EventUpsertServiceStaleCleanupTest {
                     eventRepository.deleteByIdIn(listOf(7L))
                     eventRepository.saveAll(any<Iterable<EventEntity>>())
                 }
+            }
+    }
+
+    /**
+     * The counts `importer.events.dropped` is built from (#982).
+     *
+     * Asserted on [UpsertOutcome] rather than on a `MeterRegistry`, because that is where the
+     * boundary is: this service computes the numbers and deliberately does **not** hold the source
+     * slug the tag needs, so `EventImportService` is what records them. A test that reached for a
+     * registry here would be testing the wrong object.
+     */
+    @Nested
+    inner class DropCounts {
+        @Test
+        fun `reports past and duplicate drops separately`() =
+            runTest {
+                val scrapedEvents =
+                    listOf(
+                        scrapedEvent(title = "Over", eventDate = yesterday, sourceId = "src:over"),
+                        scrapedEvent(title = "Gig", eventDate = tomorrow, sourceId = "src:gig"),
+                        // Same sourceId as the line above — one row by identity, whatever the title.
+                        scrapedEvent(title = "Gig again", eventDate = tomorrow, sourceId = "src:gig")
+                    )
+                coEvery {
+                    eventRepository.findByEventSourceIdAndEventDateBetween(any(), any(), any())
+                } returns emptyList<EventEntity>().asFlow()
+
+                val outcome = service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
+
+                outcome.droppedPast shouldBe 1
+                outcome.droppedDuplicate shouldBe 1
+                outcome.dropped shouldBe 2
+            }
+
+        @Test
+        fun `keeps drops out of total, which feeds lastEventCount`() =
+            runTest {
+                val scrapedEvents =
+                    listOf(
+                        scrapedEvent(title = "Over", eventDate = yesterday, sourceId = "src:over"),
+                        scrapedEvent(title = "Gig", eventDate = tomorrow, sourceId = "src:gig")
+                    )
+                coEvery {
+                    eventRepository.findByEventSourceIdAndEventDateBetween(any(), any(), any())
+                } returns emptyList<EventEntity>().asFlow()
+
+                val outcome = service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
+
+                // `total` means "events this source holds" and reaches event_source.last_event_count.
+                // Folding a dropped event into it would move a number every dashboard reads.
+                outcome.total shouldBe 1
+                outcome.droppedPast shouldBe 1
             }
     }
 }

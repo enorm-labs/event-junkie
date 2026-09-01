@@ -66,6 +66,12 @@ class EventUpsertService(
         // Cleanup runs BEFORE the upsert, and the order is load-bearing — see the KDoc note.
         removeStaleEvents(uniqueEvents, eventSourceId)
         return upsertEvents(uniqueEvents, venueId, venueSlug, eventSourceId, licences)
+            // Counted here rather than incremented where they are dropped, because the tag needs the
+            // source *slug* and this service only holds the numeric id (#982). The caller has both.
+            .copy(
+                droppedPast = scrapedEvents.size - upcomingEvents.size,
+                droppedDuplicate = upcomingEvents.size - uniqueEvents.size
+            )
     }
 
     /**
@@ -158,7 +164,7 @@ class EventUpsertService(
             if (!existed) inserted++
             logger.at(Level.DEBUG) {
                 message = "${if (existed) "Updated" else "Created"} event '${saved.title}'"
-                payload = mapOf(LogContext.Fields.EVENT_ID to saved.id, LogContext.Fields.EVENT_SOURCE_ID to saved.sourceId)
+                payload = mapOf(LogFields.EVENT_ID to saved.id, LogFields.EVENT_SOURCE_ID to saved.sourceId)
             }
         }
         return UpsertOutcome(inserted = inserted, updated = changed.size - inserted, skipped = unchanged.size)
@@ -197,7 +203,7 @@ class EventUpsertService(
             if (!isNew) {
                 logger.at(Level.WARN) {
                     message = "Skipping duplicate event '${event.title}' on ${event.eventDate}"
-                    payload = mapOf(LogContext.Fields.EVENT_SOURCE_ID to event.sourceId)
+                    payload = mapOf(LogFields.EVENT_SOURCE_ID to event.sourceId)
                 }
             }
             isNew
@@ -282,7 +288,7 @@ class EventUpsertService(
             staleEvents.forEach { event ->
                 logger.at(Level.INFO) {
                     message = "Removed stale event '${event.title}' on ${event.eventDate}"
-                    payload = mapOf(LogContext.Fields.EVENT_ID to event.id, LogContext.Fields.EVENT_SOURCE_ID to event.sourceId)
+                    payload = mapOf(LogFields.EVENT_ID to event.id, LogFields.EVENT_SOURCE_ID to event.sourceId)
                 }
             }
             logger.info { "Removed ${staleEvents.size} stale event(s) no longer listed on event source $eventSourceId" }
@@ -355,7 +361,18 @@ data class UpsertOutcome(
     /** Events that existed and whose content had changed. */
     val updated: Int,
     /** Events that existed and were byte-identical, so no UPDATE was issued. */
-    val skipped: Int
+    val skipped: Int,
+    /**
+     * Scraped events discarded as already past (#982).
+     *
+     * **Carried out rather than counted in place**, because `importer.events.dropped` is tagged by
+     * source slug and this service is given only the numeric id. `EventImportService` holds both and
+     * records all three counters together, which is the idiom `inserted`/`updated`/`skipped` already
+     * established.
+     */
+    val droppedPast: Int = 0,
+    /** Scraped events discarded as duplicates within one scrape (#982). */
+    val droppedDuplicate: Int = 0
 ) {
     /**
      * Every event the run touched.
@@ -365,4 +382,13 @@ data class UpsertOutcome(
      * did.
      */
     val total: Int get() = inserted + updated + skipped
+
+    /**
+     * Everything the run threw away before writing.
+     *
+     * Deliberately **not** added to [total]: `total` feeds `event_source.last_event_count`, which
+     * means "events this source holds". A dropped event holds nothing, and folding it in would move
+     * a number every dashboard already reads.
+     */
+    val dropped: Int get() = droppedPast + droppedDuplicate
 }

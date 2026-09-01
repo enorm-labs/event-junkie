@@ -69,7 +69,7 @@ class HtmlFetcher(
         // the text — opaque per-page hashes make a high-cardinality field nothing aggregates on.
         logger.at(Level.INFO) {
             message = "Fetching source page (etag=$etag, lastModified=$lastModified)"
-            payload = mapOf(LogContext.Fields.URL to url)
+            payload = mapOf(LogFields.URL to url)
         }
         return webClient
             .get()
@@ -150,7 +150,7 @@ class HtmlFetcher(
         if (response.statusCode() == HttpStatus.NOT_MODIFIED) {
             logger.at(Level.INFO) {
                 message = "Page not modified"
-                payload = mapOf(LogContext.Fields.URL to url, LogContext.Fields.HTTP_STATUS to HttpStatus.NOT_MODIFIED.value())
+                payload = mapOf(LogFields.URL to url, LogFields.HTTP_STATUS to HttpStatus.NOT_MODIFIED.value())
             }
             return FetchResult.NotModified
         }
@@ -166,7 +166,7 @@ class HtmlFetcher(
 
         logger.at(Level.INFO) {
             message = "Fetched ${body.bytes.size} bytes (newEtag=$newEtag, newLastModified=$newLastModified)"
-            payload = mapOf(LogContext.Fields.URL to url, LogContext.Fields.HTTP_STATUS to response.statusCode().value())
+            payload = mapOf(LogFields.URL to url, LogFields.HTTP_STATUS to response.statusCode().value())
         }
 
         val document = parseHtml(body, url)

@@ -138,6 +138,41 @@ class ImporterMetrics(
     }
 
     /**
+     * Every meter one upsert produces — three writes and three drops (#982).
+     *
+     * **One call rather than six at the call site**, because the mapping from an outcome to its
+     * meters is this class's job and `EventImportService` was carrying it — detekt said so, at the
+     * point that method passed sixty lines. [droppedUnresolvedDate] is separate because it is
+     * dropped before the upsert ever sees it.
+     *
+     * The `reason` values are constants, and that rule is [scrapeFailureReason]'s: a tag fed by a
+     * title or a URL is unbounded, and exhausting the backend reads as slow monitoring, not a bug.
+     */
+    fun recordUpsertOutcome(
+        sourceSlug: String,
+        upsert: UpsertOutcome,
+        droppedUnresolvedDate: Int
+    ) {
+        recordEventsWritten(sourceSlug, WriteOperation.INSERTED, upsert.inserted)
+        recordEventsWritten(sourceSlug, WriteOperation.UPDATED, upsert.updated)
+        recordEventsWritten(sourceSlug, WriteOperation.SKIPPED, upsert.skipped)
+
+        // A loop rather than three more calls, so this stays one function: the class is at detekt's
+        // eleven and a fourth `record…` helper would push it over. The `> 0` guard is the same one
+        // recordEventsWritten applies — a counter incremented by zero still creates the series,
+        // which would make "this source dropped events" true of every source.
+        mapOf(
+            DropReason.PAST to upsert.droppedPast,
+            DropReason.DUPLICATE to upsert.droppedDuplicate,
+            DropReason.UNRESOLVED_DATE to droppedUnresolvedDate
+        ).forEach { (reason, count) ->
+            if (count > 0) {
+                registry.counter(EVENTS_DROPPED, TAG_SOURCE, sourceSlug, TAG_REASON, reason.tag).increment(count.toDouble())
+            }
+        }
+    }
+
+    /**
      * Records a scrape failure with its cause, because **a 403 is not a parse failure** and the two
      * need different responses: one is the venue blocking us, the other is the venue's markup having
      * moved. Aggregated into a single counter they are indistinguishable.
@@ -344,11 +379,33 @@ class ImporterMetrics(
         SKIPPED("skipped")
     }
 
+    /**
+     * Why an event the run scraped never reached the database.
+     *
+     * **Only reasons computed in shared code appear here**, so every value is counted for every
+     * importer that reaches it rather than for whichever venue remembered to increment. The ~93
+     * per-venue parse drops are deliberately absent: counting those needs each overview scraper to
+     * report rows-seen against events-returned, which is per-scraper work (#982).
+     */
+    enum class DropReason(
+        val tag: String
+    ) {
+        /** Dated before today, so already over by the time the run saw it. */
+        PAST("past"),
+
+        /** A repeated `sourceId` or date+title+time within one scrape. */
+        DUPLICATE("duplicate"),
+
+        /** Neither the overview nor the detail page yielded a date. */
+        UNRESOLVED_DATE("unresolved_date")
+    }
+
     companion object {
         const val RUN_DURATION = "importer.run.duration"
         const val RUN_OUTCOME = "importer.run.outcome"
         const val EVENTS_WRITTEN = "importer.events.written"
         const val SCRAPE_FAILURES = "importer.scrape.failures"
+        const val EVENTS_DROPPED = "importer.events.dropped"
         const val SOURCE_LAST_SUCCESS = "importer.source.last_success"
 
         /**

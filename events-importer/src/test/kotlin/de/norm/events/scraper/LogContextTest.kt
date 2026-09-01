@@ -6,11 +6,13 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -234,6 +236,62 @@ class LogContextTest {
                 // line, silently.
                 built shouldBe false
                 appender.list.shouldBeEmpty()
+            }
+    }
+
+    /**
+     * The page scope (#982), and above all the collision it could cause.
+     *
+     * `url` is written two ways now: as MDC by [LogContext.forPage], and as a payload by
+     * [HtmlFetcher]. Spring's ECS formatter serialises MDC entries and key-value pairs from the same
+     * event, so a line inside both would emit the key twice — valid JSON that most parsers resolve
+     * by last-write-wins, and therefore a silent one.
+     */
+    @Nested
+    inner class ForPage {
+        @Test
+        fun `puts the page url on a line that never mentions it`() =
+            runTest {
+                withContext(LogContext.forImportRun("berghain")) {
+                    withContext(LogContext.forPage("https://example.test/e/1")) {
+                        logger.warn { "detail page has no title, skipping" }
+                    }
+                }
+
+                val mdc = appender.list.single().mdcPropertyMap
+                mdc[LogFields.URL] shouldBe "https://example.test/e/1"
+                // Still inside the run: the page scope merges rather than replaces.
+                mdc[LogContext.SOURCE_SLUG] shouldBe "berghain"
+            }
+
+        @Test
+        fun `throws rather than duplicating the key when MDC and payload both set url`() =
+            runTest {
+                withContext(LogContext.forPage("https://example.test/e/1")) {
+                    logger.at(Level.INFO) {
+                        message = "both at once"
+                        payload = mapOf(LogFields.URL to "https://example.test/payload")
+                    }
+                }
+
+                // **Boot's ECS formatter throws here — it does not emit a duplicate key.** So the
+                // cost of putting `url` in MDC and in a payload on one line is a log line that fails
+                // to serialise, not an ambiguous one. That is why the scope in
+                // AbstractTwoPageWebsiteImporter opens after the fetch rather than around it, and
+                // this test is the tripwire that stops anyone discovering it in production instead.
+                val thrown = shouldThrow<IllegalStateException> { encodeAsEcs(appender.list.single()) }
+                thrown.message!! shouldContain "url"
+            }
+
+        @Test
+        fun `leaves no page url behind once the page is parsed`() =
+            runTest {
+                withContext(LogContext.forImportRun("renate")) {
+                    withContext(LogContext.forPage("https://example.test/e/1")) { logger.info { "during" } }
+                    logger.info { "after" }
+                }
+
+                appender.list.last().mdcPropertyMap[LogFields.URL] shouldBe null
             }
     }
 
