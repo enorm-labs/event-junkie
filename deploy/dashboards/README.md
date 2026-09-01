@@ -8,15 +8,21 @@ _"a dashboard that answers 'is it healthy' in one screen"_.
 ./apply.sh --check                  # run every panel's query against live data, change nothing
 ./apply.sh --diff                   # compare the cluster's copy to this file, change nothing
 EJ_NODE=ops@10.10.0.1 ./apply.sh    # any of the three, against production
+
+python3 lint_dashboard.py is-it-healthy.json    # can OpenObserve draw this? offline, no cluster
+python3 test_lint_dashboard.py                  # the linter's own checks
 ```
+
+**`lint_dashboard.py` runs on every `apply.sh` invocation, before anything touches the network** —
+there is no way to reach a cluster without it, including `--check` and `--diff`.
 
 **`EJ_NODE` selects the cluster and defaults to staging.** Both environments run an OpenObserve since
 [#880](https://github.com/enorm-labs/event-junkie/issues/880), and this is one file applied to each — nothing reconciles them, so the two can differ.
 Forget the variable on a production run and the command succeeds, reports what it pushed, and writes to staging again. Each run prints the cluster it
 resolved before it does anything.
 
-**`--check` validates this file; `--diff` validates the deployment**, and they read alike. The first `--diff` run found the cluster serving **9 panels against
-this file's 12** — "Sources that have never succeeded" ([#618](https://github.com/enorm-labs/event-junkie/issues/618)) and both OpenObserve ingest panels
+**`--check` validates this file, `--diff` validates the deployment, and `lint_dashboard.py` validates that OpenObserve can draw either.** The first two read
+alike and the third answers a question neither asks — see below. The first `--diff` run found the cluster serving **9 panels against this file's 12** — "Sources that have never succeeded" ([#618](https://github.com/enorm-labs/event-junkie/issues/618)) and both OpenObserve ingest panels
 ([#625](https://github.com/enorm-labs/event-junkie/issues/625)) were in git and had never been imported. `--check` was green throughout, because the panels it
 checks are the ones in the file. See [#702](https://github.com/enorm-labs/event-junkie/issues/702) and `../alerts/README.md`, where the same gap cost 17 false
 alert firings.
@@ -38,6 +44,40 @@ renders blank rather than erroring.
 ```sh
 python3 gen_dashboard.py > is-it-healthy.json && ./apply.sh && ./apply.sh --check
 ```
+
+## Two schema facts OpenObserve does not document, and both fail silently
+
+Neither is in the documentation, neither raises anything, and between them they cost six panels
+([#969](https://github.com/enorm-labs/event-junkie/issues/969)). Both are derived from the 69
+dashboards in [openobserve/dashboards](https://github.com/openobserve/dashboards), which is the only
+corpus of known-good OpenObserve JSON there is.
+
+**1. The single-value panel type is `metric`. `stat` is Grafana's name for it.** OpenObserve accepts
+`stat`, stores it, returns it, and draws nothing. Across those 69 dashboards — over 1,100 panels —
+`stat` appears **zero** times and `metric` appears **201**. Five panels here were `stat` from the
+day they were written; every one of their queries returned data the whole time.
+
+The corpus is suggestive; the UI is proof. The instance serves its own bundle, and it carries the
+enumeration:
+
+```sh
+curl -s http://localhost:5080/web/assets/index-*.js | grep -oE '\["area","line",[^]]*\]'
+["area","line","bar","scatter","area-stacked","donut","pie","h-bar","stacked","h-stacked",
+ "heatmap","metric","gauge","geomap","maps","table","sankey","custom_chart","html","markdown"]
+```
+
+Twenty types, no `stat`. That list is what `lint_dashboard.py` checks against, and **re-reading it
+after an OpenObserve upgrade is the maintenance this file asks for** — it is the only authority, since
+the documentation does not enumerate them.
+
+**2. The v8 grid is 192 columns wide, not 48.** It widened between schema v5 and v7: every reference
+v3/v5 dashboard ends at exactly `x + w == 48`, every v7/v8 one at exactly `192`, and row heights
+roughly doubled with it (median 9 -> 18). A 48-column layout in a v8 dashboard is _valid_ — it
+renders, in the left **quarter** of the screen.
+
+The second is the reason `lint_dashboard.py` checks that the widest panel **reaches** the right edge
+rather than merely fitting inside it. Fitting catches nothing: 48 fits in 192, and so does the 174
+that production drifted to after someone resized panels in the UI.
 
 ## This is where GitOps stops, and that is not an oversight
 
@@ -80,10 +120,20 @@ metric points were being dropped** before they reached storage — 4.44M rejecte
 8.45M never queued by the collector, in 48 hours. A dashboard that cannot distinguish "quiet" from
 "blind" is the thing #625 fixed; these two are how it stays fixed.
 
-**`p_memtable` is empty until the release carrying `ZO_PROMETHEUS_ENABLED: "true"` reconciles**, so
-`apply.sh --check` reports 12/13 rather than 13/13 until then. That is the expected state, not a
-broken panel — the chart ships the setting off, which is why the outage had to be diagnosed from log
-lines in the first place.
+**Both of `p_shedding`'s series have to exist on a healthy collector, or the panel cannot do that
+job.** Its second half was `otelcol_exporter_enqueue_failed_metric_points_total`, which a collector
+creates only once something has already failed to enqueue — so the half meant to certify calm was
+blank whenever things were calm, and read as a broken panel. It is now
+`otelcol_receiver_refused_metric_points_total`, which is present from start-up and carries the same
+signal: queue pressure surfaces at the receiver once the exporter stops accepting.
+[`../alerts/README.md`](../alerts/README.md) records `ej-ingest-shedding` reaching this conclusion
+first, for the same metric and the same reason — **one query per always-present series**.
+
+**`apply.sh --check` reports 14/14 on production.** It has not always: `p_memtable` was blank until
+the release carrying `ZO_PROMETHEUS_ENABLED: "true"` reconciled — the chart ships that setting off,
+which is why the outage had to be diagnosed from log lines — and `p_shedding`'s second query was on
+a series a healthy collector never creates. Both are resolved, so **a `NO DATA` here is now a
+finding rather than a known gap**, which is the state a check is worth having in.
 
 **"Node memory available" was added after the fact.** On 2026-08-20 the node global-OOMed — load
 99 on two cores, `openobserve` killed by the kernel, the API server flapping — and nothing was

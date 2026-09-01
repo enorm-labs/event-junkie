@@ -16,10 +16,12 @@
 #   ./apply.sh other.json            # some other dashboard in this directory
 #   EJ_NODE=ops@10.10.0.1 ./apply.sh # any of the above, against production
 #
-# `--check` and `--diff` answer different questions and neither substitutes for the other:
-# `--check` asks whether the panels in THIS FILE would return data, `--diff` asks whether the
-# cluster is running this file at all. The alerts directory grew the same pair for the same
-# reason — see ../alerts/diff_alerts.py and #702.
+# Three checks, three questions, and no two of them substitute for each other. `--check` asks
+# whether the panels in THIS FILE would return data, `--diff` asks whether the cluster is running
+# this file at all, and `lint_dashboard.py` — which runs unconditionally, below — asks whether
+# OpenObserve can DRAW what the other two are validating. The alerts directory grew the first pair
+# for the same reason; see ../alerts/diff_alerts.py and #702. The third is #969, where every query
+# returned data and five panels still rendered nothing.
 #
 # The real work happens in two Python files that are copied to the node and run there. That is
 # deliberate: an earlier version inlined it as a remote shell script and the nested quoting was
@@ -60,10 +62,12 @@ done
     echo "no such dashboard file: $file" >&2
     exit 2
 }
-python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$file" || {
-    echo "$file is not valid JSON" >&2
-    exit 2
-}
+# Static, offline, and BEFORE the network — it runs for `--check` and `--diff` too, so there is no
+# invocation that reaches a cluster without it. This is the check `--check` is not: it validates
+# what OpenObserve will DRAW, where `--check` validates what the queries RETURN. #969 was five
+# panels typed `stat` whose queries all returned data, on a grid a quarter of the right width;
+# `--check` was green for both. It also reads the JSON, so a parse error surfaces here.
+python3 lint_dashboard.py "$file" || exit $?
 
 ssh_node() { ssh -o ConnectTimeout=10 -o BatchMode=yes -i "$SSH_KEY" "$NODE" "$@"; }
 

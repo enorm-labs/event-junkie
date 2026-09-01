@@ -4,6 +4,20 @@
 Written as a generator rather than by hand because the schema repeats a lot of
 boilerplate per panel, and a typo in one copy of it is invisible.
 
+Two things about the SCHEMA, neither documented by OpenObserve, both of which
+draw a blank or quarter-sized panel rather than raising anything (#969):
+
+  A. The single-value panel type is `metric`. `stat` is Grafana's name for it,
+     and OpenObserve accepts it, stores it and draws nothing. The running
+     instance's own UI bundle enumerates twenty panel types and `stat` is not
+     among them: it contains `"metric"` 31 times and `"stat"` zero.
+     `lint_dashboard.py` carries the list, and is what stops it coming back.
+
+  B. The v8 grid is 192 columns wide, not 48. It widened between schema v5 and
+     v7 — every reference v3/v5 dashboard ends at `x + w == 48`, every v7/v8 one
+     at 192 — and row heights roughly doubled with it. A 48-column layout is
+     valid, renders, and fills the left QUARTER of the screen.
+
 Three things about OpenObserve's PromQL were established by running queries
 against the live instance, not by reading documentation, and each one silently
 produces a wrong or blank panel rather than an error:
@@ -28,10 +42,18 @@ arrives carrying ~29 OTel resource labels including `k8s_pod_name`,
 starts a BRAND NEW series. Every query below aggregates those away with
 `max by (<real label>)` first; without it a bare selector returns one series per
 pod generation and an instant query can return nothing at all.
+
+No panel sets `no_value_replacement`. Drawing a zero where there is no series
+would defeat row 4, whose whole job is telling "nothing happened" apart from
+"nothing was recorded". A query that cannot report zero on its own is the wrong
+query — see `p_shedding`.
 """
 import json
 
 STREAM_TYPE = "metrics"
+
+# Schema v8's grid. Panels are placed in these units, not in pixels or fractions.
+GRID_WIDTH = 192
 
 # The importer's last-success gauge, with the pod-generation labels collapsed.
 LAST_SUCCESS = "max by (source) (importer_source_last_success)"
@@ -75,14 +97,15 @@ def panel(pid, title, description, typ, promql, x, y, w, h, unit=None, decimals=
 
 panels = [
     # --- Row 1: the four numbers that answer the question -----------------
+    # Quarter width each, on the 192 grid of fact B.
     panel(
         "p_stale_worst",
         "Oldest source (hours since last success)",
         "The single worst venue, against a 24h import interval (`import_interval_minutes = 1440`) — so anything under "
         "24 is routine and the number climbing past ~36 is the signal. ADR-015's zero-events alert uses this series.",
-        "stat",
+        "metric",
         "max(%s) / 3600" % AGE,
-        x=0, y=0, w=12, h=4, decimals=1,
+        x=0, y=0, w=48, h=10, decimals=1,
     ),
     panel(
         "p_stale_count",
@@ -91,9 +114,9 @@ panels = [
         "so a 12h threshold flags all 84 every single day as a matter of routine, which is how a panel teaches people "
         "to ignore it. Uses `> bool` so it shows 0 rather than going blank. A source that has never succeeded is not "
         "counted here and cannot be — it has no age. The panel next to it is where those live.",
-        "stat",
+        "metric",
         "sum(%s > bool 129600)" % AGE,
-        x=12, y=0, w=12, h=4, decimals=0,
+        x=48, y=0, w=48, h=10, decimals=0,
     ),
     panel(
         "p_never_succeeded",
@@ -104,27 +127,18 @@ panels = [
         "`importer_source_has_succeeded` exists for every enabled row from the first refresh after start-up. "
         "**Anything but 0 is a scraper that has never once worked** — a different fact from a stale one, and a "
         "different response: fix the importer, do not wait for a retry.",
-        "stat",
+        "metric",
         "sum(max by (source) (importer_source_has_succeeded) == bool 0)",
-        x=24, y=0, w=12, h=4, decimals=0,
+        x=96, y=0, w=48, h=10, decimals=0,
     ),
     panel(
         "p_future_events",
         "Future events in the database",
         "What the site can actually show. A fall here is the failure mode no HTTP check sees: the importer runs, "
         "reports success, and the listings quietly empty out.",
-        "stat",
+        "metric",
         'max(db_events{horizon="future"})',
-        x=36, y=0, w=12, h=4, decimals=0,
-    ),
-    panel(
-        "p_node_mem",
-        "Node memory available",
-        "The node is a cpx22 — 2 vCPU / 4 GB running k3s, two JVMs, PostgreSQL and this observability stack. "
-        "It global-OOMed on 2026-08-20 with load at 99. This panel is the one that would have seen it coming.",
-        "stat",
-        "min(k8s_node_memory_available)",
-        x=24, y=12, w=12, h=7, unit="bytes",
+        x=144, y=0, w=48, h=10, decimals=0,
     ),
 
     # --- Row 2: the importer, which is what the project is for ------------
@@ -136,7 +150,7 @@ panels = [
         "the database.",
         "bar",
         "topk(20, %s / 3600)" % AGE,
-        x=0, y=4, w=24, h=8, decimals=1,
+        x=0, y=10, w=96, h=18, decimals=1,
     ),
     panel(
         "p_events_trend",
@@ -144,7 +158,7 @@ panels = [
         "Both horizons. `all` only ever grows; `future` is the one that matters and the one that can fall.",
         "line",
         "max by (horizon) (db_events)",
-        x=24, y=4, w=24, h=8, decimals=0,
+        x=96, y=10, w=96, h=18, decimals=0,
     ),
 
     # --- Row 3: the platform underneath -----------------------------------
@@ -155,7 +169,7 @@ panels = [
         "the disk with everything else.",
         "line",
         "max by (datname) (pg_database_size_bytes)",
-        x=0, y=12, w=12, h=7, unit="bytes",
+        x=0, y=28, w=48, h=16, unit="bytes",
     ),
     panel(
         "p_node_pressure",
@@ -164,7 +178,16 @@ panels = [
         "Load alone reads as a CPU problem; load next to memory utilisation is what identifies it as stalling.",
         "line",
         ["max(system_cpu_load_average_5m)", "max(system_memory_utilization)"],
-        x=12, y=12, w=12, h=7,
+        x=48, y=28, w=48, h=16,
+    ),
+    panel(
+        "p_node_mem",
+        "Node memory available",
+        "The node is a cpx22 — 2 vCPU / 4 GB running k3s, two JVMs, PostgreSQL and this observability stack. "
+        "It global-OOMed on 2026-08-20 with load at 99. This panel is the one that would have seen it coming.",
+        "metric",
+        "min(k8s_node_memory_available)",
+        x=96, y=28, w=48, h=16, unit="bytes",
     ),
     panel(
         "p_certs",
@@ -174,7 +197,7 @@ panels = [
         "line",
         "(min by (name) (certmanager_certificate_expiration_timestamp_seconds) - timestamp("
         "min by (name) (certmanager_certificate_expiration_timestamp_seconds))) / 86400",
-        x=36, y=12, w=12, h=7, decimals=1,
+        x=144, y=28, w=48, h=16, decimals=1,
     ),
 
     # --- Row 4: whether any of the above can be believed -------------------
@@ -182,18 +205,23 @@ panels = [
     panel(
         "p_shedding",
         "Metrics dropped before storage (points/sec)",
-        "**Two ways a metric dies on the way in, and neither raises anything.** `send_failed` is "
-        "OpenObserve returning 503 — the memtable overflow of #625. `enqueue_failed` is the "
-        "collector's own queue full, so the point was never even attempted. Measured 2026-08-23, "
-        "before the fix: 4.44M and 8.45M respectively in 48h, against 12.2M delivered — **about "
-        "half of everything scraped**. Anything but a flat zero here means the panels above are "
-        "sampling, not reporting.",
+        "**Two ways a metric dies on the way in, and neither raises anything.** `send_failed` is OpenObserve "
+        "returning 503 — the memtable overflow of #625. `receiver_refused` is the collector declining a point it "
+        "cannot place, which is where queue pressure surfaces once the exporter stops accepting. Measured "
+        "2026-08-23, before the fix: 4.44M rejected by OpenObserve and 8.45M never queued by the collector, in 48h "
+        "against 12.2M delivered — **about half of everything scraped**. Anything but a flat zero here means the "
+        "panels above are sampling, not reporting.\n\n"
+        "**Both series exist on a healthy collector, and that is the whole requirement.** This panel's second half "
+        "was `otelcol_exporter_enqueue_failed_metric_points_total`, which a collector creates only after something "
+        "has already failed to enqueue — so it was blank in exactly the case it was meant to certify, and read as a "
+        "broken panel rather than a calm one (#969). `deploy/alerts/README.md` records `ej-ingest-shedding` reaching "
+        "the same conclusion first: one query per always-present series.",
         "line",
         [
             "sum(rate(otelcol_exporter_send_failed_metric_points_total[5m]))",
-            "sum(rate(otelcol_exporter_enqueue_failed_metric_points_total[5m]))",
+            "sum(rate(otelcol_receiver_refused_metric_points_total[5m]))",
         ],
-        x=0, y=19, w=24, h=7, decimals=2,
+        x=0, y=44, w=96, h=16, decimals=2,
     ),
     panel(
         "p_memtable",
@@ -206,7 +234,7 @@ panels = [
         "because the fix without it is unfalsifiable.",
         "line",
         "max(zo_ingest_memtable_arrow_bytes)",
-        x=24, y=19, w=24, h=7, unit="bytes",
+        x=96, y=44, w=96, h=16, unit="bytes",
     ),
 ]
 
