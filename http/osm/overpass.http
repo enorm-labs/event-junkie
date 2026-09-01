@@ -1,0 +1,104 @@
+### ============================================================
+### Overpass — raw OpenStreetMap elements and their tags (#357)
+###
+### Nominatim answers "where is this place". Overpass answers "what is tagged here",
+### which is a different question and the one that settles an argument. It is how
+### `AMT` was resolved: Overpass showed Dircksenstraße carrying house numbers 2 to 46
+### around Alexanderplatz and **no 114 at all**, which is why that row's coordinate is
+### the one value in the table Google had to supply.
+###
+### Same licence and the same reason to prefer it: results are ODbL, so a value taken
+### from here may be stored with credit where it is displayed. See `nominatim.http`.
+###
+### No key. A two-slot-per-IP limit instead. Not in `./gradlew httpTest`.
+###
+### **Run these one at a time. A "Run All" fails, and not because of the queries.**
+### `https://overpass-api.de/api/status` reports `Rate limit: 2`, and ijhttp sends a
+### file back to back with no pause, so the third request finds no free slot and dies
+### on a read timeout. It fails at the third position whatever query is sitting there —
+### swapping it changes nothing. Each of the three below returns 200 in 0.7 s to 10 s
+### when sent on its own.
+###
+### **Do not ask Overpass for a name.** `["name"~…]` timed out at 2000 m, 150 m and
+### 60 m alike, so it is not the radius. Names are Nominatim's job and it has an index
+### for them; Overpass is fast at `["addr:street"]` and `["addr:housenumber"]`, which
+### is the "what is tagged here" question it exists for.
+###
+### **And do not resolve an area first.** `area["name"="Berlin"]["admin_level"="4"]->.b`
+### then `nwr(area.b)[...]` is a 504 on this dataset. Every query below is bounded from
+### the start with `around:<radius>,<lat>,<lon>`.
+###
+### The query is the raw request body. Overpass also accepts `?data=…` on a GET, which
+### means percent-encoding the whole query by hand — a POST avoids that entirely.
+### ============================================================
+
+### Every house number on one street near a point
+### The `AMT` question. Change the street and the centre; the radius is metres.
+POST https://overpass-api.de/api/interpreter
+Content-Type: text/plain
+Accept: application/json
+
+[out:json][timeout:60];nwr(around:900,52.520329,13.413313)["addr:street"~"Dircksen"];out center tags;
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    client.test("Overpass answered rather than timing out", function () {
+        client.assert(response.body.elements !== undefined, "no elements array — a 504 body?");
+    });
+
+    // Sorted by house number so a gap in the range is visible, which is the actual finding:
+    // Dircksenstraße runs 2 to 46 here and there is no 114 for OpenStreetMap to place.
+    const seen = response.body.elements
+        .map(e => (e.tags || {})["addr:housenumber"])
+        .filter(Boolean)
+        .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+    client.log(`${response.body.elements.length} elements · house numbers: ${seen.join(", ")}`);
+%}
+
+### Everything with an address around one point
+### Used to work out what building a venue's own coordinate sits in — `Bi Nuu`'s
+### neighbours came back as Schlesische Straße 1-2 and Skalitzer Straße 72-74, none of
+### which is the Skalitzer Str. 134 the row claimed.
+POST https://overpass-api.de/api/interpreter
+Content-Type: text/plain
+Accept: application/json
+
+[out:json][timeout:60];nwr(around:60,52.500756,13.441461)["addr:housenumber"];out center tags;
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    for (const e of (response.body.elements || []).slice(0, 10)) {
+        const t = e.tags || {};
+        const c = e.center || e;
+        client.log(`${c.lat},${c.lon}  ${t["addr:street"] || ""} ${t["addr:housenumber"] || ""} | ${t.name || ""}`);
+    }
+%}
+
+### One address, and everything mapped under it
+### The RAW-Gelände: five venues in this table give their address as Revaler Str. 99,
+### so no geocoder can tell them apart and V015 had to place them from a survey. This
+### is how to see what OpenStreetMap holds on the site — `out center tags` gives a way
+### or relation a single point, so buildings and nodes come back comparable.
+###
+### `nwr` is node, way and relation together. Asking only for `node` is how a venue
+### mapped as a building is missed.
+POST https://overpass-api.de/api/interpreter
+Content-Type: text/plain
+Accept: application/json
+
+[out:json][timeout:60];nwr(around:250,52.507464,13.454618)["addr:street"~"Revaler"];out center tags;
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    for (const e of (response.body.elements || [])) {
+        const t = e.tags || {};
+        const c = e.center || e;
+        client.log(`${e.type}/${e.id}  ${c.lat},${c.lon}  ${t.name || ""}  ${t["addr:street"] || ""} ${t["addr:housenumber"] || ""}`);
+    }
+%}
