@@ -1,4 +1,4 @@
-# comment-lint: allow 15 of these lines are the arrow inventory, and the rest are silent-failure traps
+# comment-lint: allow 17 of these lines are the arrow inventory, and the rest are silent-failure traps
 # Default-deny for the `observability` namespace, plus one named allowance per real conversation
 # (#662). This replaces `openobserve-netpol.yaml`, whose egress rules are folded in below.
 #
@@ -26,6 +26,8 @@
 #     gateway          -> postgres-exporter:9187    the database's meters
 #     gateway          -> collectors:8888           the collectors' own meters
 #     gateway          -> kube-state-metrics:8080   `kube_*`, which `ej-site-down` reads
+#     gateway          -> flux-system:8080          `gotk_*` and the reconcile meters
+#     gateway          -> traefik:9100              the edge's request counts and latencies
 #     agent            -> apiserver:6443            the k8sattributes processor
 #     otel-operator    -> apiserver:6443            reconciling the two collector CRs
 #     postgres-exporter-> 10.0.1.20:5432            the only pod here that may reach the private network
@@ -56,10 +58,22 @@
 # NetworkPolicy in k3s — the chart records the same, and `kubectl port-forward` arrives that way,
 # which is how anyone reaches the OpenObserve UI. Were that wrong, probes would fail and pods never
 # go Ready, which is loud. No ingress for the gateway's `otlp` receiver on 4317/4318, because nothing
-# sends to it today. And `prometheus-autodiscovery` is bounded to
-# `event-junkie` and this namespace rather than the cluster: something annotated in `kube-system`
-# will go red, and widening is a deliberate decision naming the namespace, like every arrow above.
-# Traefik and the four `flux-system` controllers are red for exactly that reason and stay red.
+# sends to it today. And `prometheus-autodiscovery` is bounded to the namespaces named below rather
+# than to the cluster: something annotated anywhere else will go red, and widening is a deliberate
+# decision naming the namespace, like every arrow above.
+#
+# **Traefik and the four `flux-system` controllers were red for that reason, and the two rules below
+# are the decision that admits them.** Both were annotated and scraped all along; only the egress
+# half was missing, so every attempt was refused at the network — 300 warnings per thirty minutes in
+# the gateway's log, which was 97% of what that log contained.
+#
+# **What found it was staging reading `up=1` where production read `up=0`, and production being the
+# correct one.** The two policy sets were identical; staging's gateway pod predated them (started
+# 08-23, policies created 08-24) and went on scraping over connections conntrack had already
+# established. So staging was serving `traefik_*` and `controller_runtime_*` that this file did not
+# allow, and would have lost them silently at its next restart. That is the conntrack trap the
+# API-server paragraph above describes, arriving a second time: **a policy never exercised from a
+# cold start has not been tested**, and the environment that looks worse is the one telling the truth.
 #
 # **`kube-state-metrics` was in that list and should not have been** (#926). The claim was that the
 # collector chart references it without installing it, so there was nothing to reach. The chart ships
@@ -267,6 +281,47 @@ spec:
       ports:
         - protocol: TCP
           port: 8080
+
+    # The four `flux-system` controllers. `gotk_*` and `controller_runtime_*` — how far behind
+    # a reconcile is, and whether a source has stopped fetching — which is the one part of the
+    # delivery path nothing else here measures. Selected by `part-of: flux` rather than by the four
+    # controller names, so a controller a later Flux version adds arrives already allowed.
+    #
+    # **Only this half was missing.** `flux-system` ships `allow-scraping`, which already admits any
+    # namespace on 8080, so the refusals were all outbound. The collector's own
+    # `filter/drop_infrastructure_noise` still drops `controller_runtime_reconcile_time_seconds` and
+    # `gotk_reconcile_duration_seconds` (#615) — so this widens the network without giving the
+    # memtable back the two histograms that put those rules there.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: flux-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: flux
+      ports:
+        - protocol: TCP
+          port: 8080
+
+    # Traefik's meters, on 9100 — the `metrics` container port. **Not 8080**, which on this
+    # pod is the dashboard and API and is a different conversation entirely: the annotation says 9100
+    # and this rule has to agree with it, or the scrape stays red while the policy reads correct.
+    # `traefik_entrypoint_*` and `traefik_service_*` are the request counts and latencies as the edge
+    # sees them — before routing, so they count what the application never receives, which is exactly
+    # what the application's own meters on 9001 cannot tell you.
+    #
+    # `kube-system` runs no NetworkPolicy of its own, so as with `kube-state-metrics` above this rule
+    # is the whole of the arrow rather than half of it.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 9100
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
