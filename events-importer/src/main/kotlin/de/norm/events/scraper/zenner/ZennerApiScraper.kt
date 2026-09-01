@@ -7,6 +7,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isFestivalTitle
@@ -20,7 +21,6 @@ import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.kotlinModule
 import java.time.Clock
-import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -109,7 +109,9 @@ class ZennerApiScraper(
                 }
             }
 
-        return dropPastEvents(events)
+        return events.dropPastEvents(clock) { dropped ->
+            logger.info { "Dropped $dropped past event(s) from Zenner page-data" }
+        }
     }
 
     /** Parses the response body and returns its `result.data` object, or null when unparseable or absent. */
@@ -312,15 +314,6 @@ class ZennerApiScraper(
             }?.joinToString("\n")
             ?.trim()
             ?.takeIf { text -> text.any { it.isLetterOrDigit() } }
-
-    private fun dropPastEvents(events: List<ScrapedEvent>): List<ScrapedEvent> {
-        val today = LocalDate.now(clock)
-        val (upcoming, past) = events.partition { !it.eventDate.isBefore(today) }
-        if (past.isNotEmpty()) {
-            logger.info { "Dropped ${past.size} past event(s) from Zenner page-data" }
-        }
-        return upcoming
-    }
 
     private companion object {
         /** The page-data GraphQL alias holding the programme nodes. */

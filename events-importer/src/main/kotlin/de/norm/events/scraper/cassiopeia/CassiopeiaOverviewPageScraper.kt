@@ -2,6 +2,7 @@ package de.norm.events.scraper.cassiopeia
 
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.hasVisibleWebflowFlag
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.mapEventType
@@ -80,23 +81,9 @@ class CassiopeiaOverviewPageScraper(
                 }
             }
 
-        return dropPastEvents(deduplicateEvents(events))
-    }
-
-    /**
-     * Keeps only events dated today or later, dropping recently-passed ones the listing
-     * still carries. Same-day events are kept — the show may still be happening — matching
-     * the persistence layer's cutoff (`EventUpsertService`), which enforces the same rule
-     * regardless. Applying it here spares the detail-page fetch for events that would be
-     * discarded anyway; it is an optimization, not the source of truth.
-     */
-    private fun dropPastEvents(events: List<ScrapedEvent>): List<ScrapedEvent> {
-        val today = LocalDate.now(clock)
-        val (upcoming, past) = events.partition { !it.eventDate.isBefore(today) }
-        if (past.isNotEmpty()) {
-            logger.info { "Dropped ${past.size} past event(s) from Cassiopeia listing" }
+        return deduplicateEvents(events).dropPastEvents(clock) { dropped ->
+            logger.info { "Dropped $dropped past event(s) from Cassiopeia listing" }
         }
-        return upcoming
     }
 
     /**

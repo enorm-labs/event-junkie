@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.parseTime
@@ -76,21 +77,11 @@ class MonsterRonsonsOverviewPageScraper(
                 }
             }
 
-        return dropPastEvents(events)
-    }
-
-    /**
-     * Keeps events dated today or later. The listing window starts at today, so this normally drops
-     * nothing; it guards the case where a card lingers past midnight and mirrors the cutoff
-     * `EventUpsertService` enforces anyway, sparing a detail fetch for a row that would be discarded.
-     */
-    private fun dropPastEvents(events: List<ScrapedEvent>): List<ScrapedEvent> {
-        val today = LocalDate.now(clock)
-        val (upcoming, past) = events.partition { !it.eventDate.isBefore(today) }
-        if (past.isNotEmpty()) {
-            logger.info { "Dropped ${past.size} past event(s) from Monster Ronson's listing" }
+        // The listing window starts at today, so this normally drops nothing; it guards a card
+        // that lingers past midnight.
+        return events.dropPastEvents(clock) { dropped ->
+            logger.info { "Dropped $dropped past event(s) from Monster Ronson's listing" }
         }
-        return upcoming
     }
 
     /**

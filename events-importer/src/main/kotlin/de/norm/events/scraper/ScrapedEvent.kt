@@ -9,6 +9,7 @@ import de.norm.events.event.normalizeMoneyScale
 import de.norm.events.licence.SourceLicences
 import de.norm.events.slug.SlugGenerator
 import java.math.BigDecimal
+import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -175,6 +176,24 @@ private fun resolveEventType(
             else -> genre?.let { classifyByGenreKeyword(it) }?.let { EventType.parseOrDefault(it) }
         }
     return override ?: resolved
+}
+
+/**
+ * Returns the events dated today or later, passing the number dropped to [onDropped].
+ *
+ * Same-day events are kept because the show may still be happening, and [EventUpsertService]
+ * is the source of truth — a scraper applies the same cutoff earlier only to spare a
+ * detail-page fetch. The callback keeps the log statement at the call site, so each caller
+ * logs under its own logger and names its own source.
+ */
+fun List<ScrapedEvent>.dropPastEvents(
+    clock: Clock,
+    onDropped: (Int) -> Unit
+): List<ScrapedEvent> {
+    val today = LocalDate.now(clock)
+    val (upcoming, past) = partition { !it.eventDate.isBefore(today) }
+    if (past.isNotEmpty()) onDropped(past.size)
+    return upcoming
 }
 
 /**
