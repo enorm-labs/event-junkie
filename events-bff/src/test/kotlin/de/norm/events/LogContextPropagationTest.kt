@@ -107,7 +107,7 @@ class LogContextPropagationTest {
     fun `gives the access-log line a request id`() {
         val exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/venues?q=astra"))
 
-        RequestLoggingFilter().filter(exchange) { Mono.empty() }.block()
+        RequestLoggingFilter("/actuator").filter(exchange) { Mono.empty() }.block()
 
         val event = appender.list.single { it.formattedMessage.startsWith("GET /venues") }
         assertFalse(event.mdcPropertyMap[LogContextConfiguration.REQUEST_ID].isNullOrBlank())
@@ -117,7 +117,7 @@ class LogContextPropagationTest {
     fun `gives two requests different ids`() {
         repeat(2) {
             val exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/venues"))
-            RequestLoggingFilter().filter(exchange) { Mono.empty() }.block()
+            RequestLoggingFilter("/actuator").filter(exchange) { Mono.empty() }.block()
         }
 
         val ids = appender.list.mapNotNull { it.mdcPropertyMap[LogContextConfiguration.REQUEST_ID] }
