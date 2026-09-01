@@ -19,11 +19,11 @@
 name: Agent — Refactor
 
 on:
-  # Weekly, Tuesdays, off-the-hour for the reason every other schedule here gives: the top of the
-  # hour is a stampede on shared runners. One workload per weekday, so a bad week is one pull request
-  # to close rather than four.
+  # Nightly, off-the-hour for the reason every other schedule here gives: the top of the hour is
+  # a stampede on shared runners. The five agent workloads keep the staggered start times they
+  # had as one-per-weekday, so a night is a queue rather than five runners at once.
   schedule:
-    - cron: '41 4 * * 2'
+    - cron: '41 4 * * *'
   workflow_dispatch:
     inputs:
       model:
