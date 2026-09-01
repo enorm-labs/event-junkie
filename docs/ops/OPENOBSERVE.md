@@ -59,9 +59,8 @@ answered that question against a live store. Production answered it: it runs `ZO
 `files/default/metrics/<name>/…` in its own logs, identical in form to what a prefix-less instance records. The prefix is applied at the S3 client, below
 the file list.
 
-**So editing the value alone points every indexed Parquet at a key that does not exist.** The corpus goes unreadable in one reconcile while new ingest
-carries on normally — it fails while looking healthy, which is the worst shape available. The value moves only together with a wipe of the PVC that holds
-the file list:
+**So editing the value alone points every indexed Parquet at a key that does not exist.** The corpus goes unreadable while new ingest carries on normally —
+it fails while looking healthy, which is the worst shape available. The value moves only together with a wipe of the PVC that holds the file list:
 
 ```sh
 kubectl --context event-junkie-staging -n observability delete statefulset \
@@ -70,8 +69,19 @@ kubectl --context event-junkie-staging -n observability delete pod \
   openobserve-openobserve-standalone-0
 kubectl --context event-junkie-staging -n observability delete pvc \
   data-openobserve-openobserve-standalone-0
-flux --context event-junkie-staging reconcile helmrelease openobserve -n flux-system
+flux --context event-junkie-staging reconcile helmrelease openobserve -n flux-system --force
 ```
+
+**`--force` is the word that matters, and leaving it out costs an outage.** A plain `flux reconcile helmrelease` re-evaluates the release, finds the stored
+revision already equal to the desired chart and values, and does nothing. It then prints `applied revision 0.92.2` and exits 0.
+
+Drift detection would notice the missing StatefulSet. It is not enabled on either cluster — `spec.driftDetection.mode` is unset. So nothing puts the
+workload back. The Service keeps answering with `ENDPOINTS: <none>`, and the collectors retry into it. Measured on 2026-09-01: four minutes of refused
+ingest, which began with a success message.
+
+**The pod restarts on its own when the prefix changes**, so the broken window opens before you reach the commands. The chart puts a `checksum/config`
+annotation on the pod template, and a ConfigMap change therefore rolls the StatefulSet. This is the opposite of the Secret behaviour in §Credentials below.
+The two are easy to conflate: the Secret reaches the pod through `envFrom` with nothing watching it, and the ConfigMap is in the checksum.
 
 Then re-apply both, because they are metadata and metadata was on that PVC:
 
@@ -79,6 +89,9 @@ Then re-apply both, because they are metadata and metadata was on that PVC:
 cd deploy/dashboards && ./apply.sh
 cd deploy/alerts && ./apply.sh
 ```
+
+Expect one burst of `ArrowJsonEncodeError` a few seconds after boot. The Arrow schema for a stream is still being inferred while its first rows arrive. It
+resolves on the retry and does not recur. Seen once on 2026-09-01: four lines in one second, and none after.
 
 **The old objects are not deleted and do not need to be.** They are orphaned at their old keys, no longer referenced by any file list, and the 90-day
 lifecycle backstop in `infra/bootstrap/storage.tf` clears them. Retention is 14 days, so the history actually lost is at most a fortnight.
