@@ -29,7 +29,10 @@ import kotlin.math.pow
  * - **Misconfiguration detection**: sources with status = MISCONFIGURED are skipped entirely
  *   (they have a permanent config error that requires manual intervention).
  *
- * Scheduling can be disabled via `app.scheduling.enabled=false` (e.g. in tests).
+ * Scheduling can be disabled via `app.scheduling.enabled=false` (e.g. in tests). The `@ConditionalOnProperty`
+ * below is belt and braces: [de.norm.events.SchedulingConfiguration] carries the same condition and stops the
+ * scheduler itself, so this bean would never tick even if it existed. It stays because removing the bean is
+ * also what keeps a test from reaching it by accident.
  *
  * @see EventSourceEntity for scheduling fields
  * @see EventImportService for the import pipeline

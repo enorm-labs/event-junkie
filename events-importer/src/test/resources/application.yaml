@@ -1,19 +1,34 @@
-# Disable scheduled imports during tests to avoid interference with integration tests
+# **Scheduling is off for the whole suite, and `SchedulingConfiguration` is what makes that true.**
+# `@EnableScheduling` sits on that gated class rather than on the application class, so this one
+# property stops every `@Scheduled` method — including the gauge refreshers, which no per-bean
+# condition could gate because two integration tests autowire them. `SchedulingConfigurationTest`
+# guards both ends.
+#
+# **A long interval is not a switch (#949).** `fixedDelayString` carries no `initialDelay`, so the
+# first execution runs at context refresh whatever the interval says. #934 read the hour below as a
+# fix and it was not: every cached context still fired each refresher once on startup, racing the
+# `TRUNCATE` in `BaseControllerTest.cleanUp`. That is `40P01 deadlock_detected`, not the
+# `53300 too_many_connections` #934 named — r2dbc maps class 53 to a *non*-transient exception.
+#
+# The intervals below stay as belt and braces for `DataQualitySnapshotIntegrationTest`, the one
+# context that switches scheduling back on.
 app:
   scheduling:
     enabled: false
   metrics:
-    # **`app.scheduling.enabled` above does not reach the gauge refreshers** (#934). It gates beans
-    # that opt in, and `MetricsRefreshService` and `ImageMetricsRefreshService` are plain services.
-    # At the 60s default each queries the database every minute in every cached context, the R2DBC
-    # pools behind them accumulate, and one arbitrary test per run died on the transient exception
-    # that `53300 too_many_connections` maps to.
-    #
-    # An hour is "never" here, and **the beans stay**: two integration tests autowire them and call
-    # `refreshGauges()` themselves.
     refresh-interval-ms: 3600000
+  images:
+    tick-millis: 3600000
+    sweep:
+      tick-millis: 3600000
 
 spring:
+  modulith:
+    moments:
+      # Spring Modulith's Moments auto-configuration carries `@EnableScheduling` (#949). Without this
+      # the `@Scheduled` beans run whatever `SchedulingConfiguration` above decides, because the
+      # scheduler is switched on by a dependency rather than by this application.
+      enabled: false
   flyway:
     schemas: events
   r2dbc:
