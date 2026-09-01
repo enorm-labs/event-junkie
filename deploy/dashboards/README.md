@@ -79,6 +79,13 @@ The second is the reason `lint_dashboard.py` checks that the widest panel **reac
 rather than merely fitting inside it. Fitting catches nothing: 48 fits in 192, and so does the 174
 that production drifted to after someone resized panels in the UI.
 
+**3. There is no logarithmic axis, and asking for one is silent.** The chart builder hard-codes
+`yAxis:{type:"value"}` and exposes no key for the type. ECharts' log scale is bundled — `t.type="log"`,
+`logBase` — so the code is present and unreachable. `y_axis_min` and `y_axis_max` _are_ real keys and
+do work. This matters whenever one series is orders of magnitude larger than the rest, which is
+[#972](https://github.com/enorm-labs/event-junkie/issues/972): the answer there was `clamp_max` in the
+query, because the axis could not be asked to help.
+
 ## This is where GitOps stops, and that is not an oversight
 
 Dashboards are **OpenObserve API objects, not Kubernetes ones**, so Flux cannot reconcile them.

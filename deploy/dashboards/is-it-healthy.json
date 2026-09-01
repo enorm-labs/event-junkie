@@ -426,16 +426,17 @@
         {
           "id": "p_certs",
           "type": "line",
-          "title": "Certificate expiry (days)",
-          "description": "cert-manager's own view, per certificate. Expiry is one of #271's five required alerts and the one that breaks the site without anything crashing.",
+          "title": "Certificate expiry (days, capped at 400)",
+          "description": "cert-manager's own view, per certificate. Expiry is one of #271's five required alerts and the one that breaks the site without anything crashing.\n\n**A line resting exactly on 400 is a certificate too far out to care about, not one that expires in 400 days.** Without the clamp a single series sets the axis for all of them: staging's self-signed webhook CA runs for five years, which pushed the Let's Encrypt certificate that actually serves the site into the bottom 4% of the panel (#972).\n\n**Clamped, not filtered, and the distinction is the whole point.** Adding `< 400` to the expression reads as the obvious fix and silently drops the CA's series instead of flattening it \u2014 a certificate missing from the one panel that watches certificates. `clamp_max` keeps every series: a new certificate always appears, a long-lived one pins to the ceiling, a short-lived one lands where it can be read.",
           "config": {
             "show_legends": true,
-            "decimals": 1
+            "decimals": 1,
+            "y_axis_min": 0
           },
           "queryType": "promql",
           "queries": [
             {
-              "query": "(min by (name) (certmanager_certificate_expiration_timestamp_seconds) - timestamp(min by (name) (certmanager_certificate_expiration_timestamp_seconds))) / 86400",
+              "query": "clamp_max((min by (name) (certmanager_certificate_expiration_timestamp_seconds) - timestamp(min by (name) (certmanager_certificate_expiration_timestamp_seconds))) / 86400, 400)",
               "vrlFunctionQuery": null,
               "customQuery": true,
               "fields": {
