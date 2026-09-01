@@ -24,7 +24,9 @@ Extend what is already here rather than repeating its boilerplate.
   `spring-boot-starter-data-r2dbc-test`). Always add the `-test` variant alongside the main starter.
 - Tests requiring PostgreSQL import `PostgresTestcontainersConfiguration` via `@Import` — this provides a reusable Testcontainers `@ServiceConnection` bean.
   Both `events-bff` and `events-importer` have their own copy.
-- Testcontainers use `PostgreSQLContainer("postgres:18.3-alpine").withReuse(true)` to match the dev compose image and speed up repeated test runs. Uses modular
+- Testcontainers use `PostgreSQLContainer("postgres:18.3-alpine")` to match the dev compose image. **Reuse is deliberately not enabled (#954):** it saved about
+  13 seconds across a full backend cycle locally and nothing in CI, and every context builds an identical container, so they would all share one database.
+  Uses modular
   Testcontainers 2.x artifacts (`org.testcontainers:testcontainers-postgresql`, `testcontainers-r2dbc`, `testcontainers-junit-jupiter`)
   with modular package imports (`org.testcontainers.postgresql.PostgreSQLContainer`).
 - Use backtick function names for readable test descriptions: `` `GET hello returns Hello world`() ``.
