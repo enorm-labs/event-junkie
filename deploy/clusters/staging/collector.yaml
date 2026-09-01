@@ -329,6 +329,43 @@ spec:
       # statement, and without `ignore` a failed statement takes the whole pipeline with it — the
       # agent is the only thing shipping logs, so that is a total outage of them.
       processors:
+        # comment-lint: allow every rule here is a measured line count and a reason it is safe to lose.
+        # **What is left of the log volume once the application stops logging its own health checks
+        # (#959).** Both of these are a control loop reporting that it did nothing, on a timer.
+        # Measured on production over one hour, against a post-#959 baseline of ~406 rows an hour:
+        # **198 from coredns** (one warning, repeating, 100% of that container's output) and **88
+        # from flux** (out of 132). About 70% of what remains, leaving Flux at ~44 an hour — the
+        # lines that say something happened.
+        #
+        # **Matched on the body alone, so this rule's position is not load-bearing.** Scoping by
+        # `k8s.container.name` would be more precise and would silently stop matching if the
+        # processor were moved ahead of `k8sattributes`, which sets it. Both strings below are
+        # unmistakable on their own, so the attribute buys nothing and costs a failure mode. A
+        # pattern that matches nothing still looks identical to one that works (#615), so check a
+        # new rule against the store rather than trusting it.
+        filter/drop_log_noise:
+          # A condition that fails to evaluate skips rather than tearing down the pipeline. The
+          # agent is the only thing shipping logs, so a torn-down pipeline is a total outage of them.
+          error_mode: ignore
+          logs:
+            # A log record is DROPPED when any condition here is true.
+            log_record:
+              # CoreDNS looking for the optional custom-config directory that k3s never creates, at
+              # startup and on every config reload. Two alternating lines, 198 an hour, and the
+              # container has produced nothing else in any window sampled. Scoped to the message
+              # rather than the container so a real CoreDNS error still arrives.
+              - 'IsString(log.body) and IsMatch(log.body, "No files matching import glob pattern")'
+              # Flux saying the cluster already matches git. `no changes since last reconciliation`
+              # is the bulk of it at 57 an hour, and the other four are the same statement made by
+              # the other controllers. **`server-side apply completed`, `garbage collected N
+              # artifacts` and the HelmChart lines are deliberately absent** — those record work
+              # actually done, and they are what a failed reconcile is diagnosed against.
+              - 'IsString(log.body) and IsMatch(log.body, "\"msg\":\"no changes since last reconciliation")'
+              - 'IsString(log.body) and IsMatch(log.body, "\"msg\":\"release in-sync with desired state\"")'
+              - 'IsString(log.body) and IsMatch(log.body, "\"msg\":\"all dependencies are ready\"")'
+              - 'IsString(log.body) and IsMatch(log.body, "\"msg\":\"checking [0-9]+ dependencies\"")'
+              - 'IsString(log.body) and IsMatch(log.body, "\"msg\":\"artifact up-to-date with remote revision")'
+
         transform/parse_structured_logs:
           error_mode: ignore
           log_statements:
@@ -391,6 +428,9 @@ spec:
               - resourcedetection
               - attributes
               - k8sattributes
+              # After `k8sattributes` rather than before, so the dropped records are the only thing
+              # this ordering costs. Before `batch`, so a dropped record never occupies a slot in one.
+              - filter/drop_log_noise
               - batch
       resources:
         requests:
