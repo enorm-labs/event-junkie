@@ -153,22 +153,52 @@ jobs:
       # --strict promotes the chart guide's own conventions — chart name, SemVer, unknown fields —
       # from warnings to failures.
       #
-      # The base values.yaml cannot render on its own: database.host and database.existingSecret
-      # have no safe default and the helpers `required` them, which is the point. So the default
-      # case gets the two on the command line and the environment cases get theirs from their file.
+      # The base values.yaml cannot render on its own: database.host, database.existingSecret and
+      # networkPolicy.databaseCidr have no safe default and the helpers `required` them, which is the
+      # point. So the default case gets the three on the command line, and the environment cases get
+      # theirs from their file.
+      #
+      # **`values-k3d-images.yaml` is an overlay, not a configuration.** Its own header says it is
+      # applied on top of `values-k3d.yaml`, and `k3d-rehearsal.sh` passes both. Rendering it alone
+      # can never succeed, so it is layered here the way it is used (#691). The guard above is what
+      # stops a third values file quietly inheriting the wrong one of those two shapes.
+      # Enumerated rather than globbed, because the two files compose differently and a glob cannot
+      # know that. This assertion is what keeps enumeration honest: add a values file and the gate
+      # fails here until somebody says how it composes, instead of rendering it standalone and
+      # reporting success — which is exactly what #691 was.
+      - name: Assert the values files are the ones this job knows how to compose
+        run: |
+          set -euo pipefail
+          expected='values-k3d-images.yaml values-k3d.yaml'
+          actual="$(cd "$CHART" && echo values-*.yaml | tr ' ' '\n' | sort | tr '\n' ' ')"
+          actual="${actual% }"
+          if [ "$actual" != "$expected" ]; then
+            echo "values files changed: expected '$expected', found '$actual'" >&2
+            echo "Add it to the Lint and render steps below, layered or standalone as it is used." >&2
+            exit 1
+          fi
+
       - name: Lint
         run: |
+          set -euo pipefail
           helm lint --strict "$CHART" \
-            --set database.host=10.0.1.2 --set database.existingSecret=events-db
-          for values in "$CHART"/values-*.yaml; do
-            echo "== $values =="
-            helm lint --strict "$CHART" --values "$values"
-          done
+            --set database.host=10.0.1.2 --set database.existingSecret=events-db \
+            --set networkPolicy.databaseCidr=10.0.1.2/32
+          echo "== values-k3d.yaml =="
+          helm lint --strict "$CHART" --values "$CHART/values-k3d.yaml"
+          echo "== values-k3d.yaml + values-k3d-images.yaml =="
+          helm lint --strict "$CHART" \
+            --values "$CHART/values-k3d.yaml" --values "$CHART/values-k3d-images.yaml"
 
       # `ecosystem` is the catalog carrying the CRDs this chart renders instances of but does not
       # ship — cert-manager's ClusterIssuer, Traefik's Middleware, Flux's own. Every render below
       # reports **Skipped: 0**, and that number is the one to watch: a resource nothing can check is
       # a resource nothing checks, which is why `--skip-missing-schemas` is deliberately not used.
+      #
+      # **`Skipped: 0` says nothing on its own, which is what #691 was.** It is equally true of an
+      # empty stream: `helm template` failing on the left of the pipe wrote nothing, `flux schema
+      # validate` reported `Valid: 0, Invalid: 0, Skipped: 0` on it, and the step passed. `set -o
+      # pipefail` is what makes the number mean something — read the `Valid:` count with it.
       #
       # The HelmRelease loop (#265) closed a gap #414 opened unnoticed: once per-environment
       # configuration moved out of `values-staging.yaml` into each cluster's `spec.values`, this step
@@ -177,14 +207,16 @@ jobs:
       # and cannot tell you a Middleware is malformed.
       - name: Validate rendered manifests
         run: |
+          set -euo pipefail
           render() {
             helm template validate "$CHART" "$@" | flux schema validate - -s ecosystem --verbose
           }
-          render --set database.host=10.0.1.2 --set database.existingSecret=events-db
-          for values in "$CHART"/values-*.yaml; do
-            echo "== $values =="
-            render --values "$values"
-          done
+          render --set database.host=10.0.1.2 --set database.existingSecret=events-db \
+            --set networkPolicy.databaseCidr=10.0.1.2/32
+          echo "== values-k3d.yaml =="
+          render --values "$CHART/values-k3d.yaml"
+          echo "== values-k3d.yaml + values-k3d-images.yaml =="
+          render --values "$CHART/values-k3d.yaml" --values "$CHART/values-k3d-images.yaml"
           # A HelmRelease is not a values document, so `spec.values` is extracted the same way
           # scripts/cluster-assertions.sh does it.
           for release in deploy/clusters/*/helm-release.yaml; do
