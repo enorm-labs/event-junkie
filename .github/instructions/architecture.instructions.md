@@ -45,6 +45,15 @@ The decisions the three backend modules are built on. Each one has a failure mod
     Migrations stay **unqualified**: Flyway sets `search_path` from `spring.flyway.schemas` before running them, so an unqualified migration follows the
     configuration and a qualified one pins itself to a schema the configuration no longer controls (ADR-004).
 
+    **A `slug` literal in a migration is checked, because a wrong one fails open.** A guarded `UPDATE venue ... WHERE slug = '...'` with a misspelt slug updates
+    no row, and Flyway still records the migration as applied — the row stays wrong and nothing says so. `MigrationSlugTest` slugifies every venue name in
+    `http/importer/dev-seed.http` through `SlugGenerator` and asserts that every slug literal under `db/migration/` is in that set, naming the file and the line
+    of any that is not. It runs in `./gradlew build`.
+
+    **When a venue is renamed or removed, add its old slug to `RETIRED_VENUE_SLUGS` in that test, with the reason.** An older migration then keeps naming a
+    venue that no longer exists, which is correct and is what the entry records. A second assertion deletes the entry again once it is stale, so the escape
+    hatch cannot silently grow. Never reach for `@Disabled` here: the check exists because this class of defect is invisible without it (#987).
+
 - **Docker Compose dev services**: `bootRun` auto-starts PostgreSQL via Spring Docker Compose support (`compose.yaml` at root).
 - **SpringDoc OpenAPI** enabled in both BFF and importer — Swagger UI available at `/webjars/swagger-ui/index.html`; OpenAPI spec (JSON) at `/v3/api-docs`.
   Controllers are annotated with `@Tag(name = "Admin: <Entity>")` to group endpoints by entity type in Swagger UI (e.g. `"Admin: Venues"`, `"Admin: Events"`).
