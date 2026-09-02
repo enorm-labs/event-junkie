@@ -284,8 +284,6 @@ class PrivatclubOverviewPageScraper(
      *
      * Uses [URI] for robust path extraction — works regardless of scheme,
      * host, or port, unlike manual string prefix stripping.
-     *
-     * Example: `https://privatclub-berlin.de/event/sean-rowe-2/` → `sean-rowe-2`
      */
     private fun extractSlug(url: String): String = URI(url).path.removePrefix("/event/").trimEnd('/')
 

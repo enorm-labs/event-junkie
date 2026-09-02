@@ -13,7 +13,8 @@ import java.time.format.DateTimeFormatter
 
 // Field mapping shared by the Gärten der Welt overview and detail scrapers: the park's own
 // category vocabulary and the breadth filter built on it, the status/sold-out badges it writes
-// into titles, and the identity, date and start time all read out of the detail URL.
+// into titles, and the identity, date and start time all read out of the detail URL. Every case
+// is asserted in GaertenDerWeltFieldMappingTest, which is where the examples live.
 
 /**
  * The park's category labels, passed to [mapEventType][de.norm.events.scraper.mapEventType] as
@@ -63,14 +64,6 @@ private val PARK_ACTIVITY_PATTERN =
  * Whether a listing row's raw [category] text is part of the park's staged programme rather than
  * one of its participation formats (see [PARK_ACTIVITY_PATTERN]). A blank or absent category is
  * in scope.
- *
- * Example:
- * ```kotlin
- * isProgrammeCategory("Konzerte")    // true
- * isProgrammeCategory(null)          // true  — the park's uncategorised evening events
- * isProgrammeCategory("Führungen")   // false
- * isProgrammeCategory("Sport/Tanz")  // false
- * ```
  */
 fun isProgrammeCategory(category: String?): Boolean = category.isNullOrBlank() || !PARK_ACTIVITY_PATTERN.containsMatchIn(category)
 
@@ -95,15 +88,7 @@ private fun titleBadge(title: String): String? =
         ?.get(1)
         ?.lowercase()
 
-/**
- * Whether [title] is badged as fully booked.
- *
- * Example:
- * ```kotlin
- * isSoldOutTitle("AUSGEBUCHT: Sonderführungen Japan")  // true
- * isSoldOutTitle("Agnes Obel")                          // false
- * ```
- */
+/** Whether [title] is badged as fully booked. */
 fun isSoldOutTitle(title: String): Boolean = titleBadge(title) in SOLD_OUT_BADGES
 
 /**
@@ -112,12 +97,6 @@ fun isSoldOutTitle(title: String): Boolean = titleBadge(title) in SOLD_OUT_BADGE
  * A sold-out badge is a flag, not a status (the shared [parseEventStatus] contract), and
  * `NEUER TERMIN!` announces a move that has *already happened* — the event is listed under its
  * new date — so neither changes the status.
- *
- * Example:
- * ```kotlin
- * gaertenDerWeltStatus("ABGESAGT: Mondfest")                     // "CANCELLED"
- * gaertenDerWeltStatus("NEUER TERMIN! Tobi Krell live in Berlin") // "SCHEDULED"
- * ```
  */
 fun gaertenDerWeltStatus(title: String): String = titleBadge(title)?.let { parseEventStatus(it) } ?: EventStatus.SCHEDULED.name
 
@@ -125,13 +104,6 @@ fun gaertenDerWeltStatus(title: String): String = titleBadge(title)?.let { parse
  * Strips the leading [TITLE_BADGE_PATTERN] badge and applies the shared [cleanEventTitle] tidy-up,
  * so the stored title — and the headliner derived from it — is the act's name alone. A title that
  * is nothing but a badge is returned unchanged rather than emptied.
- *
- * Example:
- * ```kotlin
- * cleanGaertenDerWeltTitle("AUSGEBUCHT: Sonderführungen Japan")    // "Sonderführungen Japan"
- * cleanGaertenDerWeltTitle("NEUER TERMIN! Tobi Krell live in Berlin") // "Tobi Krell live in Berlin"
- * cleanGaertenDerWeltTitle("Agnes Obel")                            // "Agnes Obel"
- * ```
  */
 fun cleanGaertenDerWeltTitle(title: String): String {
     val stripped = title.replaceFirst(TITLE_BADGE_PATTERN, "").trim().ifBlank { title.trim() }
@@ -169,13 +141,6 @@ data class GaertenDerWeltEventPath(
  * The flip side is that a rescheduled event changes stamp and therefore `sourceId` — the old row
  * is cleaned up as stale and the new date inserted, which is the correct outcome for what is
  * genuinely a different date.
- *
- * Example:
- * ```kotlin
- * // (2026-08-15, 19:00, "2026-08-15_1900/agnes-obel")
- * parseEventPath("https://www.gaertenderwelt.de/events/veranstaltungen/detail/2026-08-15_1900/agnes-obel/")
- * parseEventPath("https://www.gaertenderwelt.de/events/veranstaltungen/")  // null
- * ```
  */
 fun parseEventPath(sourceUrl: String): GaertenDerWeltEventPath? =
     EVENT_PATH_PATTERN.find(URI(sourceUrl).path)?.destructured?.let { (stamp, time, slug) ->

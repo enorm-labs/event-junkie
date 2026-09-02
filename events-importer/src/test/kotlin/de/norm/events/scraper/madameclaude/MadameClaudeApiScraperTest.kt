@@ -82,6 +82,14 @@ class MadameClaudeApiScraperTest {
     }
 
     @Test
+    fun `splits co-DJs on the conjunction, never on a slash inside one act name`() {
+        djSetArtistsFromTitle("Lichene & Neue K (DJ-Set)") shouldContainExactly
+            listOf(ScrapedArtist("Lichene", "DJ"), ScrapedArtist("Neue K", "DJ"))
+        djSetArtistsFromTitle("Matthew Ryals + Morimoto / Wong duo (DJ-Set)") shouldContainExactly
+            listOf(ScrapedArtist("Matthew Ryals", "DJ"), ScrapedArtist("Morimoto / Wong duo", "DJ"))
+    }
+
+    @Test
     fun `types an open mic as CONCERT and drops the denylisted series name from its lineup`() {
         // "Open Mic L. J. Fox + M Love (DJ-Set)" — the recurring series name is not an artist.
         val openMic = event("madame_claude:open-mic-l-j-fox-m-love-dj-set")

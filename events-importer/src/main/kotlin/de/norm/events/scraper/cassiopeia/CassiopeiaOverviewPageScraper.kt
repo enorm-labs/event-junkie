@@ -302,10 +302,7 @@ class CassiopeiaOverviewPageScraper(
         /** Regex to extract the URL from a CSS `background-image: url(...)` property. */
         private val IMAGE_URL_PATTERN = Regex("""url\(([^)]+)\)""")
 
-        /**
-         * Regex matching a Webflow CMS numeric ID suffix at the end of a slug.
-         * Example: `doell-111601080` matches, `doll` does not.
-         */
+        /** Regex matching a Webflow CMS numeric ID suffix at the end of a slug. */
         private val CMS_NUMERIC_SUFFIX = Regex("""-\d{6,}$""")
     }
 }

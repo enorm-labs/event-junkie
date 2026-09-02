@@ -384,9 +384,6 @@ internal fun isDjSetTitle(title: String): Boolean = DJ_SET_TITLE_MARKER.contains
  * then on guarded `&`/`and`/`und` ([splitSegmentOnConjunctions]) — never on `/` —
  * per-act tour/format suffixes are stripped, and non-artists (placeholders, `Open Mic
  * L. J. Fox`, `DJ-Set / Berlin`) are dropped. All are role `DJ`, in billing order.
- *
- * Example: `"Lichene & Neue K (DJ-Set)"` → `[Lichene(DJ), Neue K(DJ)]`;
- * `"Matthew Ryals + Morimoto / Wong duo (DJ-Set)"` → `[Matthew Ryals(DJ), Morimoto / Wong duo(DJ)]`.
  */
 internal fun djSetArtistsFromTitle(title: String): List<ScrapedArtist> =
     stripArtistSuffix(title)

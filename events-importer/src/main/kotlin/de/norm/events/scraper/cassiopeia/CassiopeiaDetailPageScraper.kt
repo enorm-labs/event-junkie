@@ -116,12 +116,7 @@ class CassiopeiaDetailPageScraper {
         )
     }
 
-    /**
-     * Extracts the event slug from the detail page URL path.
-     *
-     * Example: `https://cassiopeia-berlin.de/event/super-tuesday-111639689`
-     * → `super-tuesday-111639689`
-     */
+    /** Extracts the event slug from the detail page URL path. */
     private fun extractEventSlug(sourceUrl: String): String {
         val path = URI(sourceUrl).path
         return path.removePrefix("/event/").trimEnd('/')

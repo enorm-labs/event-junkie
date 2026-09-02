@@ -13,7 +13,8 @@ import de.norm.events.scraper.stripArtistSuffix
 // render the *same* event block markup (a `<b>` header run, an `<h6>` title and a
 // `<p>` body), so every rule below is used by both — keeping them here is what stops
 // ArkaodaOverviewPageScraper and ArkaodaDetailPageScraper from drifting apart. The
-// header run itself is parsed in ArkaodaHeader.kt.
+// header run itself is parsed in ArkaodaHeader.kt. Every case is asserted in
+// ArkaodaFieldMappingTest, which is where the examples live.
 
 /**
  * Cleans a raw arkaoda title for storage: undoes the site's leaked PHP escapes
@@ -30,12 +31,6 @@ fun arkaodaTitle(rawTitle: String): String = cleanEventTitle(unescapeAddslashes(
  *
  * Only the three sequences `addslashes` produces are undone (`\'`, `\"`, `\\`), so a
  * backslash that is genuinely part of a name is left alone.
- *
- * Example:
- * ```kotlin
- * unescapeAddslashes("""7\" Vinyl Release Party""")  // 7" Vinyl Release Party
- * unescapeAddslashes("""\'A Day Behind the Scenes\'""") // 'A Day Behind the Scenes'
- * ```
  */
 fun unescapeAddslashes(text: String): String = text.replace(ADDSLASHES_ESCAPE, "$1")
 

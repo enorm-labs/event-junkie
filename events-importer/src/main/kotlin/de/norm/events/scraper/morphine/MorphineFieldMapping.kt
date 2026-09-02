@@ -9,7 +9,8 @@ import java.time.LocalTime
 // Field mapping shared by the Morphine Raum overview and detail scrapers: the venue's own "Live
 // Recording" billing framing, the one-line `.block.day` header, and the free-text pricing line in
 // `.block.priceevent`. Both pages state the date in the same `DD.MM.YY` spelling and are read the
-// same way, so the overview's fallback data stays usable when a detail-page fetch fails.
+// same way, so the overview's fallback data stays usable when a detail-page fetch fails. Every
+// case is asserted in MorphineFieldMappingTest, which is where the examples live.
 
 /**
  * Morphine's own "… - Live Recording" billing framing, stripped from a **derived artist name**
@@ -29,8 +30,6 @@ private val LIVE_RECORDING_SUFFIX = Regex("""\s*[-–—]?\s*live\s+recording\s*
 /**
  * Strips a trailing [LIVE_RECORDING_SUFFIX] from a billed name, keeping the input unchanged when
  * there is no such tail or when stripping would leave nothing.
- *
- * Example: `"Invisible Weather - Live Recording"` → `"Invisible Weather"`; `"VINYL REDUCTION"` is unchanged.
  */
 fun stripLiveRecordingSuffix(name: String): String {
     val stripped = name.trim().replace(LIVE_RECORDING_SUFFIX, "").trim()
@@ -47,18 +46,10 @@ private val DAY_LINE_DATE = Regex("""\d{1,2}\.\d{1,2}\.\d{2}\b""")
 /** The door time in the same header line — the venue labels it `door`, never `Einlass`. */
 private val DAY_LINE_DOORS = Regex("""doors?\s*:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
 
-/**
- * Reads the event date from a `.block.day` header line, or `null` when the line carries none.
- *
- * Example: `"Friday, 07.08.26, door  20:00"` → `2026-08-07`.
- */
+/** Reads the event date from a `.block.day` header line, or `null` when the line carries none. */
 fun parseDayLineDate(dayLine: String?): LocalDate? = parseGermanShortDate(dayLine?.let { DAY_LINE_DATE.find(it)?.value })
 
-/**
- * Reads the door time from a `.block.day` header line, or `null` when the line carries none.
- *
- * Example: `"Friday, 07.08.26, door  20:00"` → `20:00`.
- */
+/** Reads the door time from a `.block.day` header line, or `null` when the line carries none. */
 fun parseDayLineDoors(dayLine: String?): LocalTime? = parseTime(dayLine?.let { DAY_LINE_DOORS.find(it)?.groupValues?.get(1) })
 
 /**
@@ -78,8 +69,6 @@ private val PRICE_MARKER =
 /**
  * Returns the `.block.priceevent` [text] when it reads as a pricing line ([PRICE_MARKER]), or
  * `null` when it is blank or carries no pricing signal at all.
- *
- * Example: `"10 - 15 Euro donation"` is kept; `"Concert starts at 20:00 sharp."` yields `null`.
  */
 fun readPriceNote(text: String?): String? = text?.trim()?.takeIf { it.isNotBlank() && PRICE_MARKER.containsMatchIn(it) }
 
@@ -98,8 +87,6 @@ private val PRICE_AMOUNT = Regex("""\d+(?:[.,]\d{1,2})?""")
  * [priceBoxOffice][de.norm.events.scraper.ScrapedEvent.priceBoxOffice]. A note carrying any second
  * number — a range bound, a set count — is ambiguous and returns `null`, so the rule errs toward
  * storing no price rather than a wrong one.
- *
- * Example: `"10 Euro At The Door"` → `10`; `"10 - 15 Euro donation"` → `null`, being a range.
  */
 fun parseDoorPrice(note: String?): BigDecimal? {
     if (note.isNullOrBlank()) return null

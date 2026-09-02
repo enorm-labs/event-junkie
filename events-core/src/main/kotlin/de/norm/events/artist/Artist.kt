@@ -9,23 +9,23 @@ import java.time.Instant
  * and enriched with metadata (bio, social links, images) over time.
  */
 data class Artist(
-    /** Database primary key, `null` before persistence. Example: `7` */
+    /** Database primary key, `null` before persistence. */
     val id: Long? = null,
-    /** Stage name or band name. Example: `"The Adicts"` */
+    /** Stage name or band name. */
     val name: String,
     /** URL-friendly identifier, derived from the name. Example: `"the-adicts"` */
     val slug: String,
-    /** Biography or description text, often imported from venue pages. Example: `"Formed in Ipswich in the late 1970s…"` */
+    /** Biography or description text, often imported from venue pages. */
     val description: String? = null,
-    /** URL of the artist's photo or band logo. Example: `"https://example.com/adicts.jpg"` */
+    /** URL of the artist's photo or band logo. */
     val imageUrl: String? = null,
-    /** URL of the artist's official homepage. Example: `"https://theadicts.net/"` */
+    /** URL of the artist's official homepage. */
     val websiteUrl: String? = null,
-    /** URL of the artist's Facebook page. Example: `"https://www.facebook.com/theadicts"` */
+    /** URL of the artist's Facebook page. */
     val facebookUrl: String? = null,
-    /** URL of the artist's Instagram profile. Example: `"https://www.instagram.com/theadictsofficial/"` */
+    /** URL of the artist's Instagram profile. */
     val instagramUrl: String? = null,
-    /** URL of the artist's YouTube channel. Example: `"https://www.youtube.com/@theadictsofficial"` */
+    /** URL of the artist's YouTube channel. */
     val youtubeUrl: String? = null,
     /** Timestamp when this record was first created. Set by the database. */
     val createdAt: Instant? = null,
