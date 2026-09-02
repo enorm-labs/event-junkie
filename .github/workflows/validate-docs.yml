@@ -18,6 +18,11 @@ on:
       - 'scripts/format-markdown.sh'
       - 'scripts/skill-parity.sh'
       - 'scripts/rules-parity.sh'
+      - 'scripts/collector-parity.sh'
+      - 'events-importer/src/main/kotlin/de/norm/events/scraper/LogContext.kt'
+      - 'events-importer/src/main/kotlin/de/norm/events/scraper/LogFields.kt'
+      - 'events-bff/src/main/kotlin/de/norm/events/LogContextConfiguration.kt'
+      - 'deploy/clusters/base/collector.yaml'
       - 'scripts/ste-lint.sh'
       - 'scripts/ste_lint.py'
       - 'scripts/ste-baseline.txt'
@@ -36,6 +41,11 @@ on:
       - 'scripts/format-markdown.sh'
       - 'scripts/skill-parity.sh'
       - 'scripts/rules-parity.sh'
+      - 'scripts/collector-parity.sh'
+      - 'events-importer/src/main/kotlin/de/norm/events/scraper/LogContext.kt'
+      - 'events-importer/src/main/kotlin/de/norm/events/scraper/LogFields.kt'
+      - 'events-bff/src/main/kotlin/de/norm/events/LogContextConfiguration.kt'
+      - 'deploy/clusters/base/collector.yaml'
       - 'scripts/ste-lint.sh'
       - 'scripts/ste_lint.py'
       - 'scripts/ste-baseline.txt'
@@ -49,10 +59,12 @@ permissions:
 jobs:
   # `.claude/skills/` and `.claude/commands/` are parallel `@`-pointer trees with nothing joining
   # them, and `.github/instructions/` carries one glob key per agent — nothing reports either pair
-  # drifting apart. The `**.md` filter above already covers every input they read. No Node, so this
-  # does not wait on the setup the formatting job needs.
+  # drifting apart. A log field name is written in four places with nothing joining those either
+  # (#992), and that one reads Kotlin and YAML as well, which is why the filter above names them:
+  # renaming a constant touches no Markdown, and it is the change most likely to break the check.
+  # No Node, so this does not wait on the setup the formatting job needs.
   parity:
-    name: Check skill and rule parity
+    name: Check skill, rule and log field parity
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -66,6 +78,9 @@ jobs:
 
       - name: Check rule parity
         run: scripts/rules-parity.sh
+
+      - name: Check log field parity
+        run: scripts/collector-parity.sh
 
   # The sentence rules, held per area to a ceiling that only moves down (scripts/ste-baseline.txt,
   # #733). python3 is preinstalled on the runner and the scanner imports nothing outside the standard
