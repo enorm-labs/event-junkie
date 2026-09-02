@@ -16,18 +16,14 @@ resources:
   # away. Omit it and Flux's own Kustomization is reconciled by nothing but a `flux bootstrap`
   # re-run — which is how #416's `decryption` patch merged without ever reaching the cluster.
   - flux-system
-  - namespace.yaml
-  # The other namespaces, declared rather than left to `createNamespace: true` (#604). A HelmRelease
-  # creating its own namespace creates a bare one, and Pod Security Admission is enforced by
-  # namespace label, so an undeclared namespace is an ungoverned one. Each file carries the reasoning
-  # for the level it sets.
-  - namespace-cert-manager.yaml
-  - namespace-observability.yaml
-  - namespace-default.yaml
+  # The four namespaces, cert-manager's chart repository, PostgreSQL metrics and the collector —
+  # identical on both clusters, so `../base` holds them and this reference is what applies them here
+  # (#953). The rule above covers the reference itself: drop this line and eleven objects leave the
+  # cluster at once. `base/kustomization.yaml` says what is admitted there and what is not.
+  - ../base
   # SOPS-encrypted, decrypted by kustomize-controller with the `sops-age` key (#416,
   # docs/ops/SECRETS.md). Flux applies by kind, so the namespace exists before the Secret lands.
   - secrets/events-db.yaml
-  - helm-repository-jetstack.yaml
   - helm-repository-hetzner.yaml
   - cert-manager.yaml
   - cert-manager-webhook.yaml
@@ -39,10 +35,20 @@ resources:
   # worst here: an absent policy leaves a namespace that looks hardened and is not.
   - observability-netpol.yaml
   - cert-manager-netpol.yaml
-  # The Signal bridge, the collector and PostgreSQL metrics (#271, item 2 for the collector).
+  # The Signal bridge (#271, item 2 for the collector, which is in `../base`).
   - signal-bridge.yaml
-  - collector.yaml
-  - postgres-exporter.yaml
   - oci-repository.yaml
   - helm-release.yaml
   - notification.yaml
+
+# The one field `../base/collector.yaml` leaves for each cluster to set (#953). `replace` rather
+# than `add` on purpose: the path has to already exist, so removing the key from the base fails
+# this build loudly instead of shipping an untagged collector.
+patches:
+  - target:
+      kind: HelmRelease
+      name: openobserve-collector
+    patch: |
+      - op: replace
+        path: /spec/values/k8sCluster
+        value: staging
