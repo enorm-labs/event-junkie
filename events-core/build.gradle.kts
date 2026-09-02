@@ -20,9 +20,20 @@ repositories {
     mavenCentral()
 }
 
+// This module applies `io.spring.dependency-management` but NOT the Spring Boot plugin (it is a
+// library, not an app), so no Boot BOM reaches it and Modulith's transitives choose the versions.
+// That gap is easy to miss: events-bff and events-importer resolve what Boot pins while this
+// module quietly keeps the older artifact, and the CVE scan reads every module.
+//
+// Importing the Boot BOM here is NOT the fix. Without the Boot plugin nothing aligns the BOM's
+// `kotlin.version` with the Kotlin plugin's, so the BOM forces its own Kotlin onto the
+// compiler-plugin classpath and `compileKotlin` dies with a null plugin classpath.
+// `spring-framework-bom` carries no such risk: it manages `org.springframework:spring-*` and
+// nothing else, so it raises the whole Framework family without naming each artifact.
 dependencyManagement {
     imports {
         mavenBom("org.springframework.modulith:spring-modulith-bom:${property("spring-modulith.version")}")
+        mavenBom("org.springframework:spring-framework-bom:${property("spring-framework-bom.version")}")
     }
 }
 
@@ -37,18 +48,10 @@ dependencies {
 
     testImplementation(kotlin("test"))
 
-    // This module applies `io.spring.dependency-management` but NOT the Spring Boot plugin (it is
-    // a library, not an app), so the Spring Boot BOM — and with it every CVE override in
-    // gradle.properties — does not reach it. That gap is easy to miss: the overrides took effect
-    // in events-bff and events-importer while this module quietly kept resolving log4j-api 2.25.4.
-    //
-    // Importing the Boot BOM here is NOT the fix. Without the Boot plugin nothing aligns the BOM's
-    // `kotlin.version` with the Kotlin plugin's, so the BOM forces its own Kotlin onto the
-    // compiler-plugin classpath and `compileKotlin` dies with a null plugin classpath. Pin the
-    // affected transitive directly instead, reusing the same property so the two cannot drift.
-    //
-    // Consumers of the published artifact resolve log4j through their own BOM; this constraint is
-    // about this module's own classpath, which is what the CVE scan sees.
+    // Pinned one artifact at a time because no BOM above manages it, reusing the gradle.properties
+    // property so the two cannot drift. Consumers of the published artifact resolve log4j through
+    // their own BOM; this constraint is about this module's own classpath, which is what the CVE
+    // scan sees.
     constraints {
         implementation("org.apache.logging.log4j:log4j-api:${property("log4j-api.version")}") {
             because("2.25.4 (via spring-modulith-starter-core) is affected by CVE-2026-49844, fixed in 2.25.5")
