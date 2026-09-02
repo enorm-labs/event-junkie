@@ -123,8 +123,9 @@ deleting 362 idle `pg_*` streams that `postgres-exporter` was producing for one 
 
 ## What is filtered, and why each rule exists
 
-Everything is dropped at the **collector gateway**, not at OpenObserve — `deploy/clusters/*/collector.yaml`, processor `filter/drop_infrastructure_noise`.
-Both clusters carry the same rules. The files are copies rather than one templated source, so a rule added to one misses the other.
+Everything is dropped at the **collector gateway**, not at OpenObserve — `deploy/clusters/base/collector.yaml`, processor `filter/drop_infrastructure_noise`.
+One file serves both clusters since [#953](https://github.com/enorm-labs/event-junkie/issues/953), so a rule added here reaches each of them.
+`openobserve.yaml` and `observability-netpol.yaml` are still copies, and a rule added to one of those does still miss the other.
 Dropping at the edge means the bytes never cross the network and never occupy a memtable slot.
 
 | Rule                                                                           | Why                                                     | Issue |

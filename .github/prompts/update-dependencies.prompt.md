@@ -364,8 +364,8 @@ Step 12's pins rot in CI. **These rot in production**, and Dependabot cannot see
 | Component                      | Where                                                                                                        | Check against                                           |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
 | `openobserve-standalone`       | `deploy/clusters/staging/openobserve.yaml`                                                                   | `charts.openobserve.ai` — `helm search repo --versions` |
-| `openobserve-collector`        | `deploy/clusters/staging/collector.yaml`                                                                     | same repository                                         |
-| `opentelemetry-operator`       | `deploy/clusters/staging/collector.yaml`                                                                     | `open-telemetry/opentelemetry-helm-charts` **tags**     |
+| `openobserve-collector`        | `deploy/clusters/base/collector.yaml` — shared, so one edit moves both clusters                              | same repository                                         |
+| `opentelemetry-operator`       | `deploy/clusters/base/collector.yaml` — the same file                                                        | `open-telemetry/opentelemetry-helm-charts` **tags**     |
 | `cert-manager`                 | `deploy/clusters/staging/cert-manager.yaml` **and** `production/cert-manager.yaml` — both must move together | `cert-manager/cert-manager` releases                    |
 | `cert-manager-webhook-hetzner` | `deploy/clusters/staging/cert-manager-webhook.yaml`                                                          | `charts.hetzner.cloud` — `helm search repo --versions`  |
 | `signal-cli-rest-api`          | `deploy/clusters/staging/signal-bridge.yaml` — **image, digest-pinned**                                      | `bbernhard/signal-cli-rest-api` releases                |

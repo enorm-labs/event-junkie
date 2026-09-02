@@ -114,6 +114,8 @@ deploy/
 │   ├── values.schema.json    required keys, enums, and the importer's replica pin
 │   └── templates/            flat, one resource per file, kind in the filename
 ├── clusters/                 #414 · what Flux reconciles, one directory per cluster
+│   ├── base/                 #953 · what staging and production both apply, via `- ../base`
+│   │                         admission rule: zero config differences between the two copies
 │   ├── staging/              the `flux bootstrap --path` target · snapshots · prereleases ADMITTED
 │   │                         + cert-manager and the Hetzner DNS-01 webhook (#265)
 │   ├── production/           releases only · SUSPENDED until #424 provisions a cluster
@@ -266,8 +268,8 @@ rules, all of them things that fail quietly rather than loudly.
 - **Use Hetzner's own DNS webhook, never a community fork.** The old `dns.hetzner.com` API was shut down in May 2026 and the forks still speak it; they install
   cleanly, report Ready, and fail at challenge time. Official chart: `cert-manager-webhook-hetzner` from `charts.hetzner.cloud`, `groupName`
   `acme.hetzner.com`, solver config `tokenSecretKeyRef`.
-- **Bump staging before production, and expect to edit two files.** There is no `base/`, so cert-manager's `HelmRepository` and `HelmRelease` exist once per
-  cluster. ADR-016 accepted that duplication and named the drift between these two copies as the trigger for revisiting it.
+- **Bump staging before production, and expect to edit two files.** cert-manager's `HelmRelease` still exists once per cluster, because the two copies differ
+  in what they do. Its `HelmRepository` does not: `base/helm-repository-jetstack.yaml` is shared, and one edit moves both (#953).
 
 **The hcloud token DNS-01 needs is project-wide** — it cannot be scoped to a zone, so it could delete the servers. It exists on staging only, and production
 must not acquire one to gain a wildcard certificate.

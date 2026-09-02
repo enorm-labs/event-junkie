@@ -163,32 +163,31 @@ spec:
       valuesKey: O2_BASIC_AUTH_HEADER
       targetPath: exporters.otlphttp/openobserve_k8s_events.headers.Authorization
 
-  # comment-lint: allow the JSON-6902 choice and the measured result are what a reader needs to not undo this.
+  # comment-lint: allow the JSON-6902 choice and the two measurements are what a reader needs to not undo this.
   # **Giving the agent somewhere to remember how far it read (#950).** `filelog` has
   # `start_at: beginning` and no checkpoint, so every restart re-reads every pod log file: the part
-  # older than 24h is refused by OpenObserve, and the part newer is ingested twice.
+  # older than 24h is refused by OpenObserve in bursts, and the part newer is ingested twice.
+  # Measured across a restart without it: **617 of 2,066 rows duplicated, 29.9%**.
   #
-  # **Staging ran this first, and both numbers went to zero** — 10 rejection batches per restart to
-  # 0, and 29.9% duplicated rows across a restart to 0.0%. The check that the second number is real
-  # rather than an outage: the row rate over the measured window matched the baseline, 249 against
-  # an expected ~258.
+  # **Measured again on staging with it, both numbers go to zero** — 10 rejection batches per
+  # restart to 0, 29.9% to 0.0%. The check that the second number is real rather than an outage: the
+  # row rate over the window matched the baseline, 249 against an expected ~258. A restart with no
+  # saved offsets still re-reads everything, which is only the first restart after the extension
+  # arrives.
   #
-  # **The first restart after this lands will still re-read everything, and that is not a failure.**
-  # The extension has no saved offsets at that moment. Every restart after it is clean.
-  #
-  # The chart hardcodes the agent's volumes, with no `.Values.agent.volumes`, so the mount arrives
-  # by patch on the rendered `OpenTelemetryCollector`; the operator propagates it to the DaemonSet.
+  # The chart hardcodes the agent's volumes, so the mount arrives by patch on the rendered
+  # `OpenTelemetryCollector` and the operator propagates it to the DaemonSet.
   #
   # **JSON 6902 `add` rather than a strategic merge, and that is the trap.** kustomize has no schema
   # for a custom resource, so a merge patch REPLACES a list rather than appending. Tested both ways:
   # the form below yields `hostfs, varlog, varlibdockercontainers, otelcol-state`, the merge form
-  # yields `otelcol-state` alone — which drops /var/log and stops the agent reading logs at all,
-  # while it looks healthy. `openobserve.yaml` uses a strategic merge for the opposite reason: its
+  # yields `otelcol-state` alone — dropping /var/log, so the agent stops reading logs and looks
+  # healthy doing it. `openobserve.yaml` uses a strategic merge for the opposite reason: its
   # target is a StatefulSet, which kustomize does have a schema for.
   #
   # **The initContainer is what keeps the collector unprivileged.** A hostPath is created
   # root-owned, the image runs as UID 10001, and `fsGroup` does not apply to hostPath. Running the
-  # agent as root would be one line instead, and is what #709 is open about.
+  # agent as root is the one-line alternative, and what #709 is open about.
   postRenderers:
     - kustomize:
         patches:
@@ -224,11 +223,13 @@ spec:
                         mountPath: /var/lib/otelcol
 
   values:
-    # **The one value that differs from staging's copy of this file** (#880). It tags every
-    # metric, log and trace with the cluster it came from, and the two instances are separate
-    # stores rather than one shared one — so this is not what keeps the environments apart, it is
-    # what makes a screenshot or an exported panel say which cluster you were looking at.
-    k8sCluster: production
+    # **The only field either cluster patches** (#880, #953). It tags every metric, log and trace
+    # with the cluster it came from. Separate stores keep the environments apart, so this is what
+    # makes an exported panel say which cluster you were looking at, not what divides them.
+    #
+    # **No overlay may leave `unset` in place.** A cluster added without the patch then tags its
+    # data `unset` rather than claiming to be an environment it is not.
+    k8sCluster: unset
     # The operator is installed above, as its own release. Leaving this true would make the chart
     # try to install a second copy as a subchart.
     opentelemetry-operator:
@@ -421,10 +422,10 @@ spec:
                 - set(log.body, log.cache["message"]) where log.cache["message"] != nil
 
       service:
-        # **One `service:` key, and staging's copy of this file produced the bug that proves why.** A
-        # second `service:` under `agent:` is a duplicate YAML mapping key: the later wins outright
-        # and the earlier is dropped without a warning. `helm template` showed `extensions` back at
-        # the chart's two while every other part of the change looked right.
+        # **One `service:` key, and the reason is a bug this file already produced once.** A second
+        # `service:` under `agent:` is a duplicate YAML mapping key: the later wins outright and the
+        # earlier is dropped without a warning. `helm template` showed `extensions` back at the
+        # chart's two while every other part of the change looked right.
         #
         # Restated because Helm replaces lists. The first two are the chart's; without them the
         # health probe has no endpoint and the pod never goes Ready.
@@ -458,11 +459,11 @@ spec:
           # allowance, not headroom for growth — if the agent ever needs this much, the limiter has
           # been refusing data for some time and that is the thing to look at.
           #
-          # **The measurement is staging's and production is busier**: 86 live sources here
-          # against a mostly idle importer there (#876). The limiter is what makes that safe to
-          # carry over rather than re-measure first — it sheds countably instead of letting the
-          # kernel decide — but `otelcol_processor_refused_*` is the series to look at once this
-          # has run a few import cycles, and the number to revise if it is non-zero.
+          # **The measurement is staging's and production is busier**: 86 live sources on
+          # production against a mostly idle importer on staging (#876). The limiter is what makes
+          # one number safe for both — it sheds countably instead of letting the kernel decide — but
+          # `otelcol_processor_refused_*` is the series to look at after a few production import
+          # cycles, and the number to revise if it is non-zero.
           memory: "640Mi"
           cpu: "500m"
 

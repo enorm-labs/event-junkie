@@ -306,9 +306,19 @@ check_namespace_governance() {
   printf '\n== namespaces are declared, not conjured by createNamespace ==\n'
 
   local release cluster_dir name target declared
+  local -a search
   for release in "$CLUSTERS_DIR"/*/*.yaml; do
     [[ -e "$release" ]] || continue
     cluster_dir="$(dirname "$release")"
+
+    # `base/` holds the namespaces both clusters apply (#953), so a cluster searches it as well as
+    # its own directory — but only when its `kustomization.yaml` actually names `../base`. Reading
+    # the reference rather than assuming it is the whole point: a Namespace manifest that no
+    # `resources:` list names never reaches the cluster, which is the failure this check exists for.
+    search=("$cluster_dir"/*.yaml)
+    if grep -qE '^[[:space:]]*-[[:space:]]*\.\./base[[:space:]]*$' "$cluster_dir/kustomization.yaml" 2>/dev/null; then
+      search+=("$CLUSTERS_DIR"/base/*.yaml)
+    fi
 
     # Per document, for the reason check_version_pins records — every observability manifest holds a
     # HelmRepository beside its HelmRelease, and those are exactly the releases this is about.
@@ -316,11 +326,11 @@ check_namespace_governance() {
       [[ -n "$target" ]] || continue
       current_case="$(basename "$cluster_dir")/$(basename "$release"):$name"
 
-      # Every Namespace declared anywhere in this cluster's directory that carries an enforce label.
-      # Recomputed per release rather than hoisted: the set is small, and a stale cache here would
-      # be a check that passes on a file someone deleted.
+      # Every Namespace this cluster applies that carries an enforce label. Recomputed per release
+      # rather than hoisted: the set is small, and a stale cache here would be a check that passes
+      # on a file someone deleted.
       declared="$(yq -N 'select(.kind=="Namespace" and .metadata.labels["pod-security.kubernetes.io/enforce"] != null) | .metadata.name' \
-        "$cluster_dir"/*.yaml 2>/dev/null || true)"
+        "${search[@]}" 2>/dev/null || true)"
 
       if grep -qxF "$target" <<<"$declared"; then
         pass "namespace '$target' is declared with a Pod Security Admission level"

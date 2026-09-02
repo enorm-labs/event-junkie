@@ -10,6 +10,9 @@ Decided on 2026-08-10 in [PLATFORM_SETUP §4](../ops/PLATFORM_SETUP.md#4-how-dep
 [#414](https://github.com/enorm-labs/event-junkie/issues/414). This ADR records it properly for three reasons. The
 reasoning is load-bearing, it _reverses_ an earlier decision, and one of its consequences is easy to state backwards.
 
+**Partially superseded by [ADR-022](ADR-022_SHARED_CLUSTER_BASE.md) (2026-09-02).** The _When to revisit_ entry below fired, and #953 answered it: seven
+files moved to a shared `deploy/clusters/base/`. The rest of this decision stands, and the flat layout was right for the size the repository had here.
+
 **Partially supersedes [ADR-012](ADR-012_CLOUD_PLATFORM.md).** That ADR chose Hetzner and accepted a known weakness.
 _"GitHub Actions cannot use OIDC against Hetzner. A deploy authenticates with a scoped kubeconfig or deploy key, held
 as a repository secret and rotated deliberately. This is a genuine step down from AWS/GCP OIDC, and deserves to be

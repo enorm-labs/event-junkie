@@ -1,0 +1,22 @@
+# What staging and production both apply, referenced as `../base` from each cluster's
+# `kustomization.yaml`. Not a cluster directory: nothing bootstraps here.
+#
+# **A file earns a place here by having zero config differences between the two copies**, comments
+# aside — which is what keeps this directory free of patches. `collector.yaml` is the one exception,
+# differing in a single field each cluster patches. `openobserve.yaml`, `observability-netpol.yaml`,
+# `cert-manager.yaml` and `notification.yaml` stay duplicated: a patch that large reads worse than
+# the second copy (#953).
+#
+# **A FILE NOT NAMED IN `resources:` NEVER REACHES THE CLUSTER**, and an entry dropped here is
+# dropped from both clusters at once. `kubectl kustomize deploy/clusters/<env>` is what shows it.
+# k3d does not use this directory — `scripts/k3d-rehearsal.sh` applies four files of its own.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - namespace-cert-manager.yaml
+  - namespace-observability.yaml
+  - namespace-default.yaml
+  - helm-repository-jetstack.yaml
+  - postgres-exporter.yaml
+  - collector.yaml
