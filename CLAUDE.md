@@ -28,6 +28,7 @@ Slash commands available under `.claude/skills/`:
 - `/importer-smoke` — runtime smoke test of a single importer: seed, import, inspect the rows, check for regressions
 - `/k3d-rehearsal` — run the chart and all three images on a local k3d cluster and prove the stack works end to end, then tear it down
 - `/improve-test-coverage` — find and fill coverage gaps
+- `/milestone-plan` — take a whole milestone from a list of open issues to a plan: correct the stale ones, decide what belongs in it, and order the rest
 - `/new-issue` — draft and file an issue on the tracker (duplicate check first, then the right form, labels, milestone and board fields)
 - `/next-importer` — take one venue from 🔨 Ready in `docs/EVENT_DATA_SOURCES.md` to an open PR (scaffold → smoke-test → fix → ship); repeat, or run under
   `/loop`, to work through the backlog
