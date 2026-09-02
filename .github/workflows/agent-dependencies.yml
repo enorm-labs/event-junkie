@@ -11,6 +11,14 @@
 # **There is no `github_token:` input.** See agent-security.yml — passing one makes the pull request
 # unmergeable in a way that reads as a hung check.
 #
+# **This is the one workload that edits `.github/workflows/`, and it could not until #996.** Nine of
+# Step 12's eleven pins live there, so every run that found something failed at the push with
+# `refusing to allow a GitHub App to create or update workflow ... without `workflows` permission`.
+# The Claude App now carries `workflows: write`, which is a **repository-wide grant**: every agent
+# workload here gained it, not only this one. Weighed and accepted in #996 — a workflow file is the
+# one file where a bad edit changes what CI itself is allowed to do, so the review of a pull request
+# touching this directory is the control, not the credential.
+#
 # **`display_report: true` is what makes the run readable**, and is not interchangeable with
 # `show_full_output`. ci-cd.instructions.md has the difference and why it matters here.
 #

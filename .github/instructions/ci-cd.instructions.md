@@ -70,6 +70,13 @@ What each workflow is for, which checks are required, and the shapes that fail s
       shell and no GitHub API and the run reads the repository and does nothing. And **Dependabot alerts are expected to `403`** — neither `GITHUB_TOKEN` nor the
       Claude App carries a permission for them — so its honest scope is code scanning. It runs on the nightly schedule below, and `dry_run` defaults to true only
       on a manual dispatch — a scheduled run is live.
+    - **The Claude App carries `workflows: write`, and every agent workload has it** (#996). Granted because `agent-dependencies.yml` exists to sweep tool
+      pins and nine of its eleven live in `.github/workflows/` — so the one job that workload has was the one its credential forbade, and every run that found
+      something failed at the push after doing all the work. **`GITHUB_TOKEN` is not an alternative**, for the reason `agent-security.yml` already records: a
+      pull request it pushes starts no check run and sits Pending against nine required checks forever. A scoped token minted per run was the narrower option
+      and was not taken, so the grant is repository-wide. **A workflow file is the one file where a bad edit changes what CI itself may do**, which makes review
+      of any agent pull request touching that directory the actual control. Nothing else changed: the agents still open pull requests and still never push to
+      `main`.
     - `agent-docs.yml` — the `/update-docs` workload, and **the one #387 puts last on purpose**: a wrong answer is a plausible-looking paragraph nobody
       notices for months. `--unattended` limits it to detecting and **correcting facts** — a path that does not resolve, a command that fails, a number that
       disagrees with its named source of truth, an issue whose state is wrong. It rewrites no argument, simplifies nothing and deletes no paragraph; those are

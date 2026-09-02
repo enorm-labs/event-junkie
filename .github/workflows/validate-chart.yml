@@ -61,7 +61,7 @@ env:
   HELM_VERSION: v3.21.4
   # `flux schema validate` replaced kubeconform in #414. Both pinned, both invisible to Dependabot —
   # they are strings in YAML, not a manifest — so /update-dependencies step 12 sweeps them.
-  FLUX_VERSION: 2.9.4
+  FLUX_VERSION: 2.9.5
   FLUX_SCHEMA_VERSION: 0.12.1
   # Pinned for the reason validate-scripts.yml sets out at length: `ubuntu-latest` preinstalls an
   # older ShellCheck than a current local install, old enough to disagree about SC2015. **This pin

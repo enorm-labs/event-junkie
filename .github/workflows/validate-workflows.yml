@@ -38,7 +38,7 @@ permissions:
 env:
   # Pinned and visible, like every other tool version here — and invisible to Dependabot for the same
   # reason, so `/update-dependencies` step 12 sweeps them.
-  ZIZMOR_VERSION: 1.29.0
+  ZIZMOR_VERSION: 1.30.0
   ACTIONLINT_VERSION: 1.7.12
 
 jobs:
