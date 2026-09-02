@@ -44,14 +44,20 @@ export const CONTROLLER = {
 export const CONTACT_DETAILS_ARE_PROVISIONAL = false
 
 /**
- * The deployment the privacy notice describes (Hetzner in Germany, nothing in front of it) is
- * **decided but not built** — ADR-012 was accepted on 2026-08-10 and amended the same day to drop
- * Cloudflare, which settled the architecture and changed nothing about what is running. Nothing is
- * deployed. Until it exists, the notice describes an intent, and says so. Set to `false` when the
- * platform is actually provisioned and the notice has been re-checked against what runs — accepting
- * the ADR is not that moment.
+ * The deployment the privacy notice describes — Hetzner in Germany, nothing in front of it, per
+ * ADR-012 as amended to drop Cloudflare — is built and running (#285).
+ *
+ * `false` since the notice was re-read against what actually runs rather than against the plan
+ * (#278): §5's processors are the real ones, §2 no longer hedges on whether an IP address is logged
+ * (it is not — `nginx.conf`'s `ej_no_ip` omits it and Traefik logs nothing), and §2's retention is
+ * the volume bound it is instead of a period. **Provisioning alone was not the moment to flip
+ * this**; re-reading the prose was, which is why it did not move with the deployment.
+ *
+ * **Set it back to `true` if the notice stops describing what runs** — a new processor, an edge
+ * provider in front of the origin, an environment the notice does not cover. Move
+ * {@link LAST_REVIEWED} in the same change: the flag and the date are one claim in two places.
  */
-export const INFRASTRUCTURE_IS_PROPOSED = true
+export const INFRASTRUCTURE_IS_PROPOSED = false
 
 /**
  * While `true`, the notice says the Art. 28 processor contract is **not yet concluded** (#275).
@@ -69,8 +75,13 @@ export const INFRASTRUCTURE_IS_PROPOSED = true
  */
 export const PROCESSOR_CONTRACTS_PENDING = false
 
-/** Date the legal pages were last reviewed against what the system actually does (§7.7). */
-export const LAST_REVIEWED = '2026-08-29'
+/**
+ * Date the legal pages were last reviewed against what the system actually does (§7.7).
+ *
+ * 2026-09-02 — the first review against a **running production deployment** rather than against an
+ * intended one (#278). Everything before this date was checked against the plan.
+ */
+export const LAST_REVIEWED = '2026-09-02'
 
 /** The supervisory authority for a controller established in Berlin (Art. 13 (2) (d) GDPR). */
 export const SUPERVISORY_AUTHORITY = {

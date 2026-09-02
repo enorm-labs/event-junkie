@@ -64,9 +64,15 @@ describe('legal contact details', () => {
     expect(LAST_REVIEWED).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
 
-  it('still flags the infrastructure as proposed while ADR-012 is not executed', () => {
-    // A reminder rather than an assertion about correctness: when the platform is actually
-    // deployed, flip this flag and re-check the privacy notice's processor list against reality.
-    expect(INFRASTRUCTURE_IS_PROPOSED).toBe(true)
+  it('no longer flags the infrastructure as proposed, because it is deployed and re-checked', () => {
+    // #278. Production was deployed on 2026-08-31 (#285) and the notice was re-read against it on
+    // 2026-09-02: the processors are real, no IP address is logged, and §2's retention is a volume
+    // bound rather than the seven days it used to claim.
+    //
+    // Flipping this back to `true` is a statement that the notice has stopped being accurate, which
+    // is a real thing that can happen — a new processor, an edge provider in front of the origin, a
+    // second environment the notice does not describe. **Re-read §2 and §5 before touching it**, and
+    // move `LAST_REVIEWED` in the same change; the flag and the date are one claim in two places.
+    expect(INFRASTRUCTURE_IS_PROPOSED).toBe(false)
   })
 })

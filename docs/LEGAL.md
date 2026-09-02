@@ -265,12 +265,12 @@ The notice must state truthfully which logs hold personal data, what is in them,
 until 2026-08-19. They were closed by **reading the running system rather than the configuration**. A k3d rehearsal,
 requests driven through the real ingress, and the resulting log lines read out of the pods.
 
-| #   | Decision                                                | Answer                                                                                       |
-| --- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| 1   | Do Traefik and the nginx container log real client IPs? | **Traefik: no, it logs nothing at all.** **nginx: it did, and no longer does**               |
-| 2   | Is any logged IP truncated?                             | **Moot — none is logged.** Truncation was rejected as the weaker lever                       |
-| 3   | What is the retention period per stream?                | **A size bound, not a duration**: `container-log-max-size=10Mi`, `container-log-max-files=3` |
-| 4   | Where is retention actually enforced?                   | **The kubelet, today.** OpenObserve's bucket policy once #271 deploys it (ADR-015)           |
+| #   | Decision                                                | Answer                                                                                 |
+| --- | ------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| 1   | Do Traefik and the nginx container log real client IPs? | **Traefik: no, it logs nothing at all.** **nginx: it did, and no longer does**         |
+| 2   | Is any logged IP truncated?                             | **Moot — none is logged.** Truncation was rejected as the weaker lever                 |
+| 3   | What is the retention period per stream?                | **14 days** in the log store; a size bound on the node, which usually bites first      |
+| 4   | Where is retention actually enforced?                   | The kubelet on the node, and OpenObserve's compactor in **both** clusters (#271, #880) |
 
 **On 1 — the mechanism was not the one this section predicted, and the difference matters.** The earlier text reasoned
 that removing Cloudflare left no proxy between visitor and origin, so nginx would write real addresses from the first
@@ -290,6 +290,23 @@ not trusting a header. This one is solved by choosing a log format. `events-fron
 `$remote_addr` is harmless only while a proxy sits in front, which is a property of the topology rather than of the
 file. Logging no address is the version that stays true if that changes. **Verified after the change: zero IP
 addresses in the pod's entire log stream.**
+
+**Rows 3 and 4 changed on 2026-09-02: the duration is now real, and the notice states it (#278).** This section used
+to end by forbidding a number of days until OpenObserve's retention policy existed. It exists. #271 shipped it and
+**#880 gave production the same stack on 2026-08-31**, so both clusters run `ZO_COMPACT_DATA_RETENTION_DAYS: "14"`.
+
+**Both bounds are real, and the notice states both.** The collector's `filelog` agent reads every container's stdout
+and stderr from `/var/log`, so nginx's access log reaches OpenObserve like everything else. On the node the kubelet
+rotates by volume, and a line often disappears sooner. In the log store nothing survives 14 days. Art. 13 (2) (a)
+needs the maximum, so the notice leads with 14 days. The rotation comes second.
+
+**`ZO_COMPACT_DATA_RETENTION_DAYS` is a published claim.** Its own comment in `openobserve.yaml` says so. Change it
+without changing the privacy notice and the notice becomes false. `legalViews.spec.ts` asserts the number in both
+languages, so the two cannot drift apart quietly.
+
+**The trap this replaces, recorded because it nearly shipped.** #877's body says production does not run OpenObserve.
+That was true when written, and #880 closed it a day later. Reading the issue instead of the tree gave a notice that
+claimed no fixed period. That is a second false retention statement in place of the first.
 
 **On 3 and 4 — the honest answer is a size, and it must not be rounded into a duration.** The notice previously
 stated an _intended_ seven days, enforced by nothing. `k3s.sh` set no container-log limits, so the kubelet defaults

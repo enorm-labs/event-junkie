@@ -133,10 +133,19 @@ const PRIVACY_ELEMENTS: Element[] = [
   // GitHub, not a processor: the notice still has to address a third country, because choosing to
   // open an issue rather than write an email sends data to a US company.
   { what: 'third-country transfer — GitHub only', en: /US company/, de: /US-Unternehmen/ },
+  // #278. The notice claimed "seven days" until 2026-09-02 — a period enforced by nothing, which
+  // LEGAL.md §7.5 calls worse than an honest longer one. The real bound is **14 days**:
+  // `ZO_COMPACT_DATA_RETENTION_DAYS` in both clusters' `openobserve.yaml`, whose own comment says
+  // this notice must state whatever it says. The node's kubelet rotation is a second, usually
+  // shorter bound on volume, which §2 describes but does not lead with.
+  //
+  // **The number is the assertion.** It is a published claim under Art. 13 (2) (a), so changing the
+  // Helm value without changing the notice is the failure this pins — and it fails here in both
+  // languages, which is also what keeps the two files in step.
   {
-    what: 'log retention period',
-    en: /deleted after seven days/i,
-    de: /nach sieben Tagen gelöscht/i,
+    what: 'log retention, as the 14 days actually configured',
+    en: /14 days/,
+    de: /14 Tage/,
   },
   // One match anywhere satisfies an item, so the log period above stood in for the one §4 lacked.
   // This pins §4's own phrasing: §6's Art. 21 heading would survive §4's sentence being deleted.
@@ -365,15 +374,28 @@ describe('across both language versions', () => {
     }
   })
 
-  // This asserted "not final ... placeholders" until 2026-08-21, when the Postflex address was
-  // rented and CONTACT_DETAILS_ARE_PROVISIONAL went false. The banner is still there — nothing is
-  // deployed — but it no longer claims the contact details are fake, so the old regex failed. That
-  // is the tripwire working: it caught a page and a test disagreeing about reality.
-  it('still says the pages are not final, because nothing is deployed', () => {
-    expect(textOf(IMPRINT.en, 'en')).toMatch(/This page is not final.*not deployed yet/s)
-    expect(textOf(PRIVACY.en, 'en')).toMatch(/This page is not final.*not deployed yet/s)
-    expect(textOf(IMPRINT.de, 'de')).toMatch(/Diese Seite ist noch nicht final.*nicht in Betrieb/s)
-    expect(textOf(PRIVACY.de, 'de')).toMatch(/Diese Seite ist noch nicht final.*nicht in Betrieb/s)
+  // This has inverted twice, and both flips were the tripwire working rather than failing: first
+  // when the rented address cleared CONTACT_DETAILS_ARE_PROVISIONAL, then when production was
+  // deployed (#285) and the notice re-read against it (#278), clearing the last of the three.
+  //
+  // **All three flags are false, which is the go-live state ProvisionalNotice.vue describes**, so
+  // this asserts the banner's *absence*. A page still calling itself provisional after the facts
+  // became real is wrong in the direction a reader acts on — the same failure as the
+  // placeholder-address case below, pointing the other way.
+  //
+  // A flag legitimately re-armed — a new processor, an edge provider, an undescribed environment —
+  // means inverting this again, deliberately, alongside re-reading the notice.
+  it('no longer calls the pages provisional, now that all three flags are settled', () => {
+    for (const [component, locale] of [
+      [IMPRINT.en, 'en'],
+      [IMPRINT.de, 'de'],
+      [PRIVACY.en, 'en'],
+      [PRIVACY.de, 'de'],
+    ] as const) {
+      expect(textOf(component, locale)).not.toMatch(
+        /This page is not final|Diese Seite ist noch nicht final/,
+      )
+    }
   })
 
   // The direction that now matters more. A page calling a real rented address a placeholder is
