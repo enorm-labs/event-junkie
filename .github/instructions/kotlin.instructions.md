@@ -35,18 +35,21 @@ How code here is written, and where its versions and thresholds live. Comments h
   `springdoc.version`), read in the module build scripts via `property("…")`; plugin versions in `settings.gradle.kts`
   `pluginManagement`. They live in `gradle.properties` rather than root `extra[...]` because Gradle 10 removes the implicit lookup of parent-project properties
   that the `extra[...]` form depended on.
-    - **`gradle.properties` also holds a second, different kind of entry** — `log4j-api.version` and `scram.version`, under "Pins that are not ordinary project
-      versions". Neither is BOM-managed and neither may be bumped on sight. **`scram`** is a transitive of `r2dbc-postgresql`, which pins the vulnerable version
-      in every release, and is raised by a `constraints` block in both Boot modules. **`log4j-api`** is a direct dependency of `events-core`, which applies
-      `io.spring.dependency-management` but **not** the Boot plugin — so no BOM reaches it and that property is the only thing choosing a version. Importing the
-      Boot BOM there is not a fix: without the Boot plugin nothing aligns the BOM's `kotlin.version`, and `compileKotlin` fails with a null plugin classpath.
+    - **`gradle.properties` also holds a second, different kind of entry** — `log4j-api.version`, `scram.version` and `spring-framework-bom.version`, under
+      "Pins that are not ordinary project versions". None is BOM-managed and none may be bumped on sight. **`scram`** is a transitive of `r2dbc-postgresql`,
+      which pins the vulnerable version in every release, and is raised by a `constraints` block in both Boot modules. **`log4j-api`** and
+      **`spring-framework-bom`** both exist because `events-core` applies `io.spring.dependency-management` but **not** the Boot plugin — so no Boot BOM reaches
+      it and Spring Modulith's transitives choose the versions. Importing the Boot BOM there is not a fix: without the Boot plugin nothing aligns the BOM's
+      `kotlin.version`, and `compileKotlin` fails with a null plugin classpath. **`spring-framework-bom` is the exception that can be imported**, because it
+      manages `org.springframework:spring-*` and nothing else — which is how the whole Framework family is raised without naming each artifact.
     - **A CVE-remediation override is temporary by design: delete it once a Spring Boot release ships an equal or newer version.** Setting a BOM property name
       in `gradle.properties` overrides it for every module applying the Boot plugin, which is how such an override is written — and an override kept past its
       purpose pins the project _behind_ the BOM, so later Boot upgrades stop raising that dependency and the staleness is invisible. `/update-dependencies`
       checks this on every run. Boot 4.1.1 emptied the block, so there is nothing here overriding the BOM today.
-    - **`log4j-api.version` is deliberately not called `log4j2.version`.** That is the BOM's own property, and a pin `events-core` needs would silently become
-      an override every Boot module resolves — the trap above, entered by naming rather than by intent. **When pinning for `events-core`, check whether the name
-      collides with a BOM property**; verifying only the two Boot modules reports success either way.
+    - **`log4j-api.version` is deliberately not called `log4j2.version`, and `spring-framework-bom.version` not `spring-framework.version`.** Each is the BOM's
+      own property, and a pin `events-core` needs would silently become an override every Boot module resolves — the trap above, entered by naming rather than
+      by intent. **When pinning for `events-core`, check whether the name collides with a BOM property**; verifying only the two Boot modules reports success
+      either way.
 - Use `val` for injected dependencies; constructor injection only (no field injection).
 - Application config files use **`.yaml`** extension (not `.yml`).
 - Kotlin compiler flags: `-Xjsr305=strict` (all modules) and `-Xannotation-default-target=param-property` (BFF + importer) are set in `compilerOptions`.
