@@ -660,6 +660,7 @@ code writes — see the warning below the table:
 | `httpmethod`, `path`         | `httpMethod`, `path`        | the BFF's access line, one per request                          |
 | `eventid`                    | `eventId`                   | our id — in practice only ever an event **removed**, see below  |
 | `eventsourceid`              | `eventSourceId`             | the venue's id — a duplicate skipped, and a stale removal       |
+| `storagekey`                 | `storageKey`                | the object the BFF could not read — two lines only, see below   |
 
 **`eventid` never means "an event we wrote", and the table above used to say it did (#984).** It is written on two lines. The created-or-updated line is
 **DEBUG**, and the cluster runs at INFO, so it never arrives. The stale-removal line is INFO, so it always does. Anyone querying `eventid` to see what a run
@@ -668,6 +669,10 @@ wrote gets deletions only.
 **The DEBUG level is deliberate and should stay.** That line is written once per event. `admiralspalast` alone would add 227 lines to one run, which is the
 noise `RequestLoggingFilter`'s actuator suppression exists to avoid. A removal is also the better moment for the id: it is the one operation that leaves no row
 to look up afterwards. Around five removals a day is not volume worth reclaiming.
+
+**`storagekey` is high cardinality, and only two log lines write it (#980).** Both report an object the BFF could not
+read. Neither line runs per request. The count and the alarm stay with `images.urls{state}`. The field answers the
+question that comes after the alarm. Are the objects under one bucket prefix, or are they scattered?
 
 **OpenObserve lower-cases field names, and a query with the wrong case matches nothing.** It does not error — it returns an
 empty result, which reads like "no such data" rather than "no such column". So `sourceSlug` is written in the MDC, appears
@@ -695,9 +700,10 @@ not apply either. All 580 call sites here use kotlin-logging's lambda form, and 
 it invokes the block. `LogContextTest.LoggedPayload` asserts that. A future version that stopped would fail
 the test rather than quietly allocate a map per suppressed line.
 
-**Ten lines carry a payload, not 580.** Every field name costs an entry in `transform/parse_structured_logs`
-in **both** cluster files. A name that is not there produces no error and no column, only an empty result.
-#624 is what a flatten costs. The names above are meant to match `LogContext.Fields` and
+**Twelve lines carry a payload, not 580.** Every field name costs an entry in `transform/parse_structured_logs`.
+Since #953 one copy in `deploy/clusters/base/` serves both clusters. A name that is not there produces no error and
+no column, only an empty result.
+#624 is what a flatten costs. The names above are meant to match `LogFields` and
 `LogContextConfiguration` exactly. **Nothing checks that they do.**
 
 > **`httpstatus` spans inbound and outbound, and a query that forgets it gets a misleading answer.** The

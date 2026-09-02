@@ -9,7 +9,7 @@ package de.norm.events.scraper
  *
  * **Constants because every failure here is silent**: a misspelt name is no compile error and no
  * log error, so the line appears without the field. These strings are repeated in
- * `transform/parse_structured_logs` in both cluster files and in the BFF's
+ * `transform/parse_structured_logs` in `deploy/clusters/base/collector.yaml` and in the BFF's
  * `LogContextConfiguration`, and nothing checks they agree — see `PLATFORM_SETUP.md` §7.
  */
 object LogFields {

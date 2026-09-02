@@ -1,6 +1,8 @@
 package de.norm.events.image
 
+import de.norm.events.LogContextConfiguration
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
 import kotlinx.coroutines.future.await
 import org.springframework.stereotype.Component
 import software.amazon.awssdk.core.async.AsyncResponseTransformer
@@ -58,7 +60,11 @@ class ImageObjectReader(
             // A row promised an object that is not there. Worth a warning rather than a debug line:
             // the sweep deletes objects and the row is what it asks, so this is the shape of a sweep
             // that deleted something it should have kept.
-            logger.warn(e) { "Variant row points at missing object $storageKey" }
+            logger.at(Level.WARN) {
+                message = "Variant row points at missing object"
+                cause = e
+                payload = mapOf(LogContextConfiguration.STORAGE_KEY to storageKey)
+            }
             ImageObject.Missing
         } catch (
             // The SDK wraps transport, signature and permission faults in unrelated types, and the
@@ -67,7 +73,11 @@ class ImageObjectReader(
             @Suppress("TooGenericExceptionCaught")
             e: Exception
         ) {
-            logger.warn(e) { "Could not read $storageKey" }
+            logger.at(Level.WARN) {
+                message = "Could not read the object"
+                cause = e
+                payload = mapOf(LogContextConfiguration.STORAGE_KEY to storageKey)
+            }
             ImageObject.Unavailable
         }
     }
