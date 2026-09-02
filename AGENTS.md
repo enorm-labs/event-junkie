@@ -69,10 +69,17 @@ covers the SPA.
   (`events-frontend/`) were changed — the Gradle build covers the backend modules only. A Markdown-only change is not check-free, though: run
   `scripts/format-markdown.sh` (see [.github/instructions/markdown.instructions.md](.github/instructions/markdown.instructions.md)), which the commit hook
   runs anyway.
-- **Write a plan to `temp/`, which `.gitignore` covers.** The same goes for an audit, a draft release note, or anything else produced for a person to read
-  rather than for the repository to keep. Use another location only when the user names one.
+- **Write a plan to `temp/`, which `.gitignore` covers.** Always a Markdown file, never the terminal alone and never a path outside the repository. The same
+  goes for an audit, a draft release note, or anything else produced for a person to read rather than for the repository to keep. Use another location only
+  when the user names one.
     - **Two reasons, and the second is the one that bites.** A plan committed to the tree becomes documentation nobody updates, and this repository already
       spends effort deleting those. A plan that exists only in the terminal is gone at the next compaction, and the reasoning behind it goes with it.
+    - **Name it for what it is about**, so the next session finds one plan without reading all of `temp/`: `temp/<issue>-<slug>.md` for issue work
+      (`temp/278-privacy-notice-recheck.md`), `temp/<topic>.md` otherwise (`temp/v0.3-plan.md`).
+    - **Format it: `scripts/format-markdown.sh temp/<file>.md`.** The formatter's default scope is the tracked tree, so a file under `temp/` is never reached
+      by the commit hook, by CI, or by a bare `scripts/format-markdown.sh` — **it has to be named on the command line.** Skipping it costs nothing today and
+      everything the moment a plan is pasted into an issue, a PR body or a document, which is where most of them end up: unformatted tables are the tell, and
+      reformatting prose after the fact re-wraps every line it touches.
     - **Delete it when the work lands.** A finished plan is spent: its decisions belong in the code, the docs, or an issue. `temp/` is a workbench, not an
       archive.
 - **No unsolicited git commits/pushes**: Never run `git commit`, `git push`, or `git rebase` (squash) unless explicitly asked to by the user.
