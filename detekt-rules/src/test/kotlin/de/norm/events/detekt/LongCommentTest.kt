@@ -2,9 +2,10 @@ package de.norm.events.detekt
 
 import dev.detekt.test.TestConfig
 import dev.detekt.test.lint
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.string.shouldContain
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class LongCommentTest {
     private val rule = LongComment(TestConfig("maxLines" to 3))
@@ -23,8 +24,8 @@ class LongCommentTest {
                 """.trimIndent()
             )
 
-        assertEquals(1, findings.size)
-        assertTrue(findings.single().message.contains("5 lines"), findings.single().message)
+        findings shouldHaveSize 1
+        findings.single().message shouldContain "5 lines"
     }
 
     @Test
@@ -39,7 +40,7 @@ class LongCommentTest {
                 """.trimIndent()
             )
 
-        assertEquals(0, findings.size)
+        findings.shouldBeEmpty()
     }
 
     // Otherwise the rule charges a comment for being paragraphed, and the same words written as one
@@ -59,8 +60,8 @@ class LongCommentTest {
                 """.trimIndent()
             )
 
-        assertEquals(1, findings.size)
-        assertTrue(findings.single().message.contains("5 lines"), findings.single().message)
+        findings shouldHaveSize 1
+        findings.single().message shouldContain "5 lines"
     }
 
     @Test
@@ -76,7 +77,7 @@ class LongCommentTest {
                 """.trimIndent()
             )
 
-        assertEquals(1, findings.size)
+        findings shouldHaveSize 1
     }
 
     @Test
@@ -93,7 +94,7 @@ class LongCommentTest {
                 """.trimIndent()
             )
 
-        assertEquals(0, findings.size)
+        findings.shouldBeEmpty()
     }
 
     @Test
@@ -110,7 +111,7 @@ class LongCommentTest {
                 """.trimIndent()
             )
 
-        assertEquals(1, findings.size)
+        findings shouldHaveSize 1
     }
 
     @Test
@@ -128,6 +129,6 @@ class LongCommentTest {
                 """.trimIndent()
             )
 
-        assertEquals(0, findings.size)
+        findings.shouldBeEmpty()
     }
 }

@@ -1,7 +1,12 @@
 package de.norm.events
 
-import org.assertj.core.api.Assertions.assertThat
+import io.kotest.assertions.withClue
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.file.shouldExist
+import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
+import org.springframework.boot.test.context.assertj.AssertableApplicationContext
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import java.io.File
 
@@ -24,30 +29,40 @@ import java.io.File
 class SchedulingConfigurationTest {
     private val runner = ApplicationContextRunner().withUserConfiguration(SchedulingConfiguration::class.java)
 
+    // Spring Boot's `hasSingleBean` is an AssertJ extension on the context, with no Kotest
+    // equivalent (#946). Reading the names directly costs one thing worth keeping: on a context
+    // that failed to start it throws naming only the exception *type*, where AssertJ reported the
+    // cause. Checking `startupFailure` first puts the cause back, chained.
+    private fun AssertableApplicationContext.beans(): List<String> {
+        startupFailure?.let { throw AssertionError("the application context failed to start", it) }
+        return getBeanNamesForType(SchedulingConfiguration::class.java).toList()
+    }
+
     @Test
     fun `scheduling is on when nothing sets the property`() {
         runner.run { context ->
-            assertThat(context).hasSingleBean(SchedulingConfiguration::class.java)
+            context.beans() shouldHaveSize 1
         }
     }
 
     @Test
     fun `scheduling is off when the property is false`() {
         runner.withPropertyValues("app.scheduling.enabled=false").run { context ->
-            assertThat(context).doesNotHaveBean(SchedulingConfiguration::class.java)
+            context.beans().shouldBeEmpty()
         }
     }
 
     @Test
     fun `the test configuration switches scheduling off for the whole suite`() {
         val yaml = File("src/test/resources/application.yaml")
-        assertThat(yaml).exists()
+        yaml.shouldExist()
 
-        assertThat(yaml.readText())
-            .`as`(
-                "the importer test suite must run with scheduling off (#949): a @Scheduled task fires once at " +
-                    "context refresh whatever its interval says, and a gauge query racing cleanUp's TRUNCATE " +
-                    "deadlocks one arbitrary test per run"
-            ).contains("enabled: false")
+        withClue(
+            "the importer test suite must run with scheduling off (#949): a @Scheduled task fires once at " +
+                "context refresh whatever its interval says, and a gauge query racing cleanUp's TRUNCATE " +
+                "deadlocks one arbitrary test per run"
+        ) {
+            yaml.readText() shouldContain "enabled: false"
+        }
     }
 }

@@ -35,6 +35,10 @@ dependencies {
     testImplementation(detektVersion.map { "dev.detekt:detekt-api:$it" })
     testImplementation(detektVersion.map { "dev.detekt:detekt-test:$it" })
     testImplementation(kotlin("test"))
+
+    // Kotest assertions – expressive matchers for readable test assertions
+    // See: https://kotest.io/docs/assertions/assertions.html
+    testImplementation("io.kotest:kotest-assertions-core:${property("kotest.version")}")
 }
 
 // Prints the version the module compiled against — the answer to "which detekt is this rule built

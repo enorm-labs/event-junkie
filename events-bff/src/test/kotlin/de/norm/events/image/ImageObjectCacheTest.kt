@@ -1,15 +1,13 @@
 package de.norm.events.image
 
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.util.unit.DataSize
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
-import kotlin.test.assertTrue
 
 /**
  * What the cache promises the serving route.
@@ -29,7 +27,7 @@ class ImageObjectCacheTest {
 
             repeat(2) { cache.get(KEY) { counted(loads, ImageObject.Found(BYTES)) } }
 
-            assertEquals(1, loads.get())
+            loads.get() shouldBe 1
         }
 
     @Test
@@ -40,7 +38,7 @@ class ImageObjectCacheTest {
 
             val second = cache.get(KEY) { ImageObject.Found(ByteArray(0)) }
 
-            assertContentEquals(BYTES, assertIs<ImageObject.Found>(second).bytes)
+            second.shouldBeInstanceOf<ImageObject.Found>().bytes shouldBe BYTES
         }
 
     @Test
@@ -51,7 +49,7 @@ class ImageObjectCacheTest {
 
             val other = cache.get("$KEY-other") { ImageObject.Found(OTHER_BYTES) }
 
-            assertContentEquals(OTHER_BYTES, assertIs<ImageObject.Found>(other).bytes)
+            other.shouldBeInstanceOf<ImageObject.Found>().bytes shouldBe OTHER_BYTES
         }
 
     // A row promising an object that is not there can be fixed by a re-import, and a store we cannot
@@ -65,7 +63,7 @@ class ImageObjectCacheTest {
 
             repeat(2) { cache.get(KEY) { counted(loads, ImageObject.Missing) } }
 
-            assertEquals(2, loads.get())
+            loads.get() shouldBe 2
         }
 
     @Test
@@ -77,7 +75,7 @@ class ImageObjectCacheTest {
 
             repeat(2) { cache.get(KEY) { counted(loads, ImageObject.Unavailable) } }
 
-            assertEquals(2, loads.get())
+            loads.get() shouldBe 2
         }
 
     // The issue's own requirement: it is a cache and not a store, so a ceiling that holds nothing
@@ -91,7 +89,7 @@ class ImageObjectCacheTest {
 
             val second = cache.get(KEY) { ImageObject.Found(BYTES) }
 
-            assertContentEquals(BYTES, assertIs<ImageObject.Found>(second).bytes)
+            second.shouldBeInstanceOf<ImageObject.Found>().bytes shouldBe BYTES
         }
 
     // The meters are how the default size stops being an estimate. A binding that silently stopped
@@ -103,7 +101,7 @@ class ImageObjectCacheTest {
             ImageObjectCache(propertiesOf(DataSize.ofMegabytes(1)), registry)
                 .get(KEY) { ImageObject.Found(BYTES) }
 
-            assertTrue(registry.meters.any { it.id.getTag("cache") == "images" })
+            (registry.meters.any { it.id.getTag("cache") == "images" }) shouldBe true
         }
 
     private fun cacheOf(maxSize: DataSize) = ImageObjectCache(propertiesOf(maxSize), SimpleMeterRegistry())

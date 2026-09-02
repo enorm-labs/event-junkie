@@ -1,7 +1,7 @@
 package de.norm.events.event
 
+import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -37,10 +37,10 @@ class BffMetricsTest {
         metrics.recordServed(BffMetrics.ENDPOINT_CALENDAR, 130)
         metrics.recordServed(BffMetrics.ENDPOINT_DETAIL, 1)
 
-        assertEquals(20.0, served("search"))
-        assertEquals(7.0, served("today"))
-        assertEquals(130.0, served("calendar"))
-        assertEquals(1.0, served("detail"))
+        served("search") shouldBe 20.0
+        served("today") shouldBe 7.0
+        served("calendar") shouldBe 130.0
+        served("detail") shouldBe 1.0
     }
 
     @Test
@@ -51,7 +51,7 @@ class BffMetricsTest {
 
         // 43, not 3: `http.server.requests` already counts requests for free, and duplicating it here
         // would add nothing. What no free meter can say is how much data went out.
-        assertEquals(43.0, served("search"))
+        served("search") shouldBe 43.0
     }
 
     /**
@@ -63,6 +63,6 @@ class BffMetricsTest {
     fun `an empty response still creates the series`() {
         metrics.recordServed(BffMetrics.ENDPOINT_TODAY, 0)
 
-        assertEquals(0.0, served("today"))
+        served("today") shouldBe 0.0
     }
 }

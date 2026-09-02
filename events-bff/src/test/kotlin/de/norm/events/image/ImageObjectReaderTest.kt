@@ -5,6 +5,9 @@ import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import de.norm.events.LogContextConfiguration
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
@@ -23,10 +26,6 @@ import software.amazon.awssdk.services.s3.model.NoSuchKeyException
 import tools.jackson.databind.json.JsonMapper
 import java.io.IOException
 import java.util.concurrent.CompletableFuture
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertIs
-import kotlin.test.assertNotNull
 
 /**
  * What the two storage warnings carry, asserted on the **ECS JSON** rather than on the log event
@@ -63,8 +62,8 @@ class ImageObjectReaderTest {
         runTest {
             val outcome = readerFor(NoSuchKeyException.builder().build()).read(KEY)
 
-            assertIs<ImageObject.Missing>(outcome)
-            assertEquals(KEY, loggedJson().get(LogContextConfiguration.STORAGE_KEY).stringValue())
+            outcome.shouldBeInstanceOf<ImageObject.Missing>()
+            loggedJson().get(LogContextConfiguration.STORAGE_KEY).stringValue() shouldBe KEY
         }
 
     @Test
@@ -73,8 +72,8 @@ class ImageObjectReaderTest {
         runTest {
             val outcome = readerFor(IOException("connection reset")).read(KEY)
 
-            assertIs<ImageObject.Unavailable>(outcome)
-            assertEquals(KEY, loggedJson().get(LogContextConfiguration.STORAGE_KEY).stringValue())
+            outcome.shouldBeInstanceOf<ImageObject.Unavailable>()
+            loggedJson().get(LogContextConfiguration.STORAGE_KEY).stringValue() shouldBe KEY
         }
 
     // The failure mode is not an absent field. It is a field that is *also* in the sentence, which
@@ -86,7 +85,7 @@ class ImageObjectReaderTest {
 
             val message = appender.list.single().formattedMessage
 
-            assertFalse(message.contains(KEY))
+            message.contains(KEY) shouldBe false
         }
 
     /**
@@ -102,8 +101,8 @@ class ImageObjectReaderTest {
         runTest {
             readerFor(IOException("connection reset")).read(KEY)
 
-            val error = assertNotNull(loggedJson().get("error"))
-            assertEquals(IOException::class.java.name, error.get("type").stringValue())
+            val error = loggedJson().get("error").shouldNotBeNull()
+            error.get("type").stringValue() shouldBe IOException::class.java.name
         }
 
     private fun readerFor(failure: Exception): ImageObjectReader {

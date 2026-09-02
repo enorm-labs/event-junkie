@@ -1,7 +1,7 @@
 package de.norm.events
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
+import io.kotest.assertions.withClue
+import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.springframework.boot.env.YamlPropertySourceLoader
 import org.springframework.core.io.FileSystemResource
@@ -25,10 +25,12 @@ class ReadinessGroupConfigTest {
     fun `the shipped readiness group includes both database indicators`() {
         val readiness = probeGroup(MAIN_CONFIG, "readiness")
 
-        assertEquals(setOf("readinessState", "r2dbc", "eventsSchema"), readiness) {
+        withClue(
             "readiness must mean `can serve`, not `Spring started` (#438, ADR-018). `r2dbc` proves the " +
                 "database is reachable and `eventsSchema` proves the schema is migrated and readable; " +
                 "neither alone closes the window #263 measured. Found: $readiness"
+        ) {
+            readiness shouldBe setOf("readinessState", "r2dbc", "eventsSchema")
         }
     }
 
@@ -36,9 +38,11 @@ class ReadinessGroupConfigTest {
     fun `liveness never depends on the database`() {
         val liveness = probeGroup(MAIN_CONFIG, "liveness")
 
-        assertEquals(setOf("livenessState"), liveness) {
+        withClue(
             "a database-dependent liveness probe restarts every replica during a database outage and " +
                 "makes recovery slower than the outage (ADR-018). Found: $liveness"
+        ) {
+            liveness shouldBe setOf("livenessState")
         }
     }
 
@@ -48,9 +52,11 @@ class ReadinessGroupConfigTest {
             val main = probeGroup(MAIN_CONFIG, group)
             val test = probeGroup(TEST_CONFIG, group)
 
-            assertEquals(main, test) {
+            withClue(
                 "the test application.yaml shadows the main one, so the `$group` group must match or " +
                     "the tests are exercising probe semantics that are never shipped.\n  main: $main\n  test: $test"
+            ) {
+                test shouldBe main
             }
         }
     }
@@ -63,10 +69,12 @@ class ReadinessGroupConfigTest {
                 .removeSuffix("HealthIndicator")
                 .replaceFirstChar { it.lowercase() }
 
-        assertTrue(derived in probeGroup(MAIN_CONFIG, "readiness")) {
+        withClue(
             "Spring derives the health component name from the bean name with the `HealthIndicator` " +
                 "suffix removed, so renaming the class renames the component. `$derived` is not in the " +
                 "readiness group — the context would fail to start on group-membership validation."
+        ) {
+            (derived in probeGroup(MAIN_CONFIG, "readiness")) shouldBe true
         }
     }
 
@@ -75,7 +83,7 @@ class ReadinessGroupConfigTest {
         group: String
     ): Set<String> {
         val resource = FileSystemResource(path)
-        assertTrue(resource.exists()) { "expected $path to exist — has the module layout moved?" }
+        withClue("expected $path to exist — has the module layout moved?") { resource.exists() shouldBe true }
 
         val key = "management.endpoint.health.group.$group.include"
         val value =

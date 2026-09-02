@@ -2,9 +2,10 @@ package de.norm.events.detekt
 
 import dev.detekt.test.TestConfig
 import dev.detekt.test.lint
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.string.shouldContain
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class CommentDensityTest {
     private val rule = CommentDensity(TestConfig("maxPercent" to 50, "minCommentLines" to 3))
@@ -22,8 +23,8 @@ class CommentDensityTest {
                 """.trimIndent()
             )
 
-        assertEquals(1, findings.size)
-        assertTrue(findings.single().message.contains("80% comment"), findings.single().message)
+        findings shouldHaveSize 1
+        findings.single().message shouldContain "80% comment"
     }
 
     @Test
@@ -40,7 +41,7 @@ class CommentDensityTest {
                 """.trimIndent()
             )
 
-        assertEquals(0, findings.size)
+        findings.shouldBeEmpty()
     }
 
     @Test
@@ -53,7 +54,7 @@ class CommentDensityTest {
                 """.trimIndent()
             )
 
-        assertEquals(0, findings.size)
+        findings.shouldBeEmpty()
     }
 
     @Test
@@ -70,7 +71,7 @@ class CommentDensityTest {
                 """.trimIndent()
             )
 
-        assertEquals(0, findings.size)
+        findings.shouldBeEmpty()
     }
 
     @Test
@@ -90,6 +91,6 @@ class CommentDensityTest {
                 """.trimIndent()
             )
 
-        assertEquals(0, findings.size)
+        findings.shouldBeEmpty()
     }
 }

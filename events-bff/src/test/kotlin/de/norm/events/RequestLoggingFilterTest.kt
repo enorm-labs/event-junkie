@@ -3,8 +3,8 @@ package de.norm.events
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -62,7 +62,7 @@ class RequestLoggingFilterTest {
     fun `logs an ordinary request`() {
         get("/venues?q=astra")
 
-        assertEquals(listOf("/venues"), loggedPaths())
+        loggedPaths() shouldBe listOf("/venues")
     }
 
     @ParameterizedTest
@@ -78,7 +78,7 @@ class RequestLoggingFilterTest {
     fun `stays quiet about actuator traffic`(path: String) {
         get(path)
 
-        assertEquals(emptyList<String>(), loggedPaths())
+        loggedPaths() shouldBe emptyList<String>()
     }
 
     /**
@@ -90,7 +90,7 @@ class RequestLoggingFilterTest {
     fun `logs a path that merely begins like the base path`() {
         get("/actuatorial")
 
-        assertEquals(listOf("/actuatorial"), loggedPaths())
+        loggedPaths() shouldBe listOf("/actuatorial")
     }
 
     @Test
@@ -100,13 +100,13 @@ class RequestLoggingFilterTest {
 
         // The second call is not an actuator request under this configuration, so it is logged and
         // the first is not — which is the assertion that the property is read at all.
-        assertEquals(listOf("/actuator/health"), loggedPaths())
+        loggedPaths() shouldBe listOf("/actuator/health")
     }
 
     @Test
     fun `tolerates a base path written with a trailing slash`() {
         get("/actuator/health", basePath = "/actuator/")
 
-        assertEquals(emptyList<String>(), loggedPaths())
+        loggedPaths() shouldBe emptyList<String>()
     }
 }

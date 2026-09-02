@@ -2,9 +2,10 @@ package de.norm.events.detekt
 
 import dev.detekt.test.TestConfig
 import dev.detekt.test.lint
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.string.shouldContain
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class CommentSmellTest {
     private val rule = CommentSmell(TestConfig())
@@ -23,8 +24,8 @@ class CommentSmellTest {
                 """.trimIndent()
             )
 
-        assertEquals(1, findings.size)
-        assertTrue(findings.single().message.contains("document in the wrong file"), findings.single().message)
+        findings shouldHaveSize 1
+        findings.single().message shouldContain "document in the wrong file"
     }
 
     @Test
@@ -37,8 +38,8 @@ class CommentSmellTest {
                 """.trimIndent()
             )
 
-        assertEquals(1, findings.size)
-        assertTrue(findings.single().message.contains("git blame"), findings.single().message)
+        findings shouldHaveSize 1
+        findings.single().message shouldContain "git blame"
     }
 
     @Test
@@ -51,7 +52,7 @@ class CommentSmellTest {
                 """.trimIndent()
             )
 
-        assertEquals(0, findings.size)
+        findings.shouldBeEmpty()
     }
 
     @Test
@@ -64,7 +65,7 @@ class CommentSmellTest {
                 """.trimIndent()
             )
 
-        assertEquals(0, findings.size)
+        findings.shouldBeEmpty()
     }
 
     @Test
@@ -83,7 +84,7 @@ class CommentSmellTest {
                 """.trimIndent()
             )
 
-        assertEquals(0, findings.size)
+        findings.shouldBeEmpty()
     }
 
     @Test
@@ -96,8 +97,8 @@ class CommentSmellTest {
                 """.trimIndent()
             )
 
-        assertEquals(1, findings.size)
-        assertTrue(findings.single().message.contains("present tense"), findings.single().message)
+        findings shouldHaveSize 1
+        findings.single().message shouldContain "present tense"
     }
 
     @Test
@@ -110,7 +111,7 @@ class CommentSmellTest {
                 """.trimIndent()
             )
 
-        assertEquals(0, findings.size)
+        findings.shouldBeEmpty()
     }
 
     @Test
@@ -123,8 +124,8 @@ class CommentSmellTest {
                 """.trimIndent()
             )
 
-        assertEquals(1, findings.size)
-        assertTrue(findings.single().message.contains("issue"), findings.single().message)
+        findings shouldHaveSize 1
+        findings.single().message shouldContain "issue"
     }
 
     @Test
@@ -137,6 +138,6 @@ class CommentSmellTest {
                 """.trimIndent()
             )
 
-        assertEquals(0, findings.size)
+        findings.shouldBeEmpty()
     }
 }

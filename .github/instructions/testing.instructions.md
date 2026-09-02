@@ -48,7 +48,14 @@ Extend what is already here rather than repeating its boilerplate.
   the interval says. #934 set an interval of one hour, and each cached Spring context still fired every gauge refresher once on startup. Those queries raced
   the `TRUNCATE` in `BaseControllerTest.cleanUp`, taking the same tables in the opposite order, and one arbitrary test per run died on `40P01
 deadlock_detected`.
-- **Kotest assertions**: The importer uses `io.kotest:kotest-assertions-core` for expressive test matchers (e.g. `shouldBe`, `shouldContain`).
+- **Kotest assertions, in every module**: `io.kotest:kotest-assertions-core` is the one assertion library here (#946) — `shouldBe`, `shouldContain`,
+  `shouldHaveSize` and the rest. It is declared in all four `build.gradle.kts` files, versioned from `kotest.version`. Do not add JUnit's `Assertions`,
+  AssertJ or `kotlin.test` assertions back: the modules held four different libraries until #946, and the tax was a test that failed to _compile_ when
+  its author crossed a module boundary. The JUnit **lifecycle** (`@Test`, `@Nested`, `@BeforeEach`, `@ParameterizedTest`) stays — Kotest is used here for
+  assertions only, never as the runner.
+- **Carry a failure message across as `withClue`**, not as a dropped argument. JUnit and AssertJ take a message; `shouldBe` does not, so an assertion
+  whose message explains _why_ the invariant exists wraps in `withClue("…") { … }`. Group several assertions with `assertSoftly` so one failure does not
+  hide the rest — it is the replacement for `assertAll`.
 - **MockK**: The importer uses `io.mockk:mockk` for mocking in Kotlin tests (preferred over Mockito). Used for unit-testing services with injected dependencies.
 - **MockWebServer**: `ApiClientTest` and `HtmlFetcherTest` drive the real `WebClient` pipeline against a local server rather than mocking HTTP. Use the **
   `com.squareup.okhttp3:mockwebserver3`** artifact (package `mockwebserver3`), _not_ the legacy `com.squareup.okhttp3:mockwebserver` — the latter still ships at

@@ -1,39 +1,39 @@
 package de.norm.events.event
 
+import io.kotest.matchers.shouldBe
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class EventStatusTest {
     @Test
     fun `parseOrDefault returns SCHEDULED for exact match`() {
-        assertEquals(EventStatus.SCHEDULED, EventStatus.parseOrDefault("SCHEDULED"))
+        EventStatus.parseOrDefault("SCHEDULED") shouldBe EventStatus.SCHEDULED
     }
 
     @Test
     fun `parseOrDefault is case-insensitive`() {
-        assertEquals(EventStatus.SCHEDULED, EventStatus.parseOrDefault("scheduled"))
-        assertEquals(EventStatus.RELOCATED, EventStatus.parseOrDefault("Relocated"))
-        assertEquals(EventStatus.CANCELLED, EventStatus.parseOrDefault("cAnCeLlEd"))
+        EventStatus.parseOrDefault("scheduled") shouldBe EventStatus.SCHEDULED
+        EventStatus.parseOrDefault("Relocated") shouldBe EventStatus.RELOCATED
+        EventStatus.parseOrDefault("cAnCeLlEd") shouldBe EventStatus.CANCELLED
     }
 
     @Test
     fun `parseOrDefault trims whitespace`() {
-        assertEquals(EventStatus.POSTPONED, EventStatus.parseOrDefault("  POSTPONED  "))
-        assertEquals(EventStatus.CANCELLED, EventStatus.parseOrDefault("\tCANCELLED\n"))
+        EventStatus.parseOrDefault("  POSTPONED  ") shouldBe EventStatus.POSTPONED
+        EventStatus.parseOrDefault("\tCANCELLED\n") shouldBe EventStatus.CANCELLED
     }
 
     @Test
     fun `parseOrDefault returns all valid enum values`() {
-        assertEquals(EventStatus.SCHEDULED, EventStatus.parseOrDefault("SCHEDULED"))
-        assertEquals(EventStatus.RELOCATED, EventStatus.parseOrDefault("RELOCATED"))
-        assertEquals(EventStatus.CANCELLED, EventStatus.parseOrDefault("CANCELLED"))
-        assertEquals(EventStatus.POSTPONED, EventStatus.parseOrDefault("POSTPONED"))
+        EventStatus.parseOrDefault("SCHEDULED") shouldBe EventStatus.SCHEDULED
+        EventStatus.parseOrDefault("RELOCATED") shouldBe EventStatus.RELOCATED
+        EventStatus.parseOrDefault("CANCELLED") shouldBe EventStatus.CANCELLED
+        EventStatus.parseOrDefault("POSTPONED") shouldBe EventStatus.POSTPONED
     }
 
     @Test
     fun `parseOrDefault returns SCHEDULED for unknown values`() {
-        assertEquals(EventStatus.SCHEDULED, EventStatus.parseOrDefault("UNKNOWN"))
-        assertEquals(EventStatus.SCHEDULED, EventStatus.parseOrDefault("verlegt"))
-        assertEquals(EventStatus.SCHEDULED, EventStatus.parseOrDefault(""))
+        EventStatus.parseOrDefault("UNKNOWN") shouldBe EventStatus.SCHEDULED
+        EventStatus.parseOrDefault("verlegt") shouldBe EventStatus.SCHEDULED
+        EventStatus.parseOrDefault("") shouldBe EventStatus.SCHEDULED
     }
 }

@@ -1,10 +1,8 @@
 package de.norm.events.image
 
+import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 /**
  * Pins the rule ADR-019 comes down to, in the one place it is written.
@@ -37,20 +35,20 @@ class CachedImagesTest {
     fun `disabled passes the source url through`() {
         val images = CachedImages.disabled()
 
-        assertEquals(poster, images.serve(poster, CARD).url)
-        assertTrue(images.serve(poster, CARD).sources.isEmpty())
-        assertNull(images.serve(null, CARD).url)
+        images.serve(poster, CARD).url shouldBe poster
+        images.serve(poster, CARD).sources.isEmpty() shouldBe true
+        images.serve(null, CARD).url shouldBe null
     }
 
     @Test
     @DisplayName("an image we do not hold is reported absent, not hotlinked")
     fun `a miss is null rather than the source url`() {
-        assertEquals(ServedImage.ABSENT, serving().serve("https://venue.test/other.jpg", CARD))
+        serving().serve("https://venue.test/other.jpg", CARD) shouldBe ServedImage.ABSENT
     }
 
     @Test
     fun `a null source url stays null`() {
-        assertEquals(ServedImage.ABSENT, serving().serve(null, CARD))
+        serving().serve(null, CARD) shouldBe ServedImage.ABSENT
     }
 
     // --- which widths a slot is offered ------------------------------------------------------
@@ -62,16 +60,16 @@ class CachedImagesTest {
         // cards carrying them is ten times the bytes anything will draw.
         val served = serving().serve(poster, CARD)
 
-        assertEquals("/api/images/$HASH/192.jpg", served.url)
-        assertEquals("/api/images/$HASH/192.jpg 192w, /api/images/$HASH/288.jpg 288w", srcsetFor(served, "image/jpeg"))
+        served.url shouldBe "/api/images/$HASH/192.jpg"
+        srcsetFor(served, "image/jpeg") shouldBe "/api/images/$HASH/192.jpg 192w, /api/images/$HASH/288.jpg 288w"
     }
 
     @Test
     fun `the detail band covers the column at one and two times`() {
         val served = serving().serve(poster, DETAIL)
 
-        assertEquals("/api/images/$HASH/768.jpg", served.url)
-        assertEquals("/api/images/$HASH/768.jpg 768w, /api/images/$HASH/1536.jpg 1536w", srcsetFor(served, "image/jpeg"))
+        served.url shouldBe "/api/images/$HASH/768.jpg"
+        srcsetFor(served, "image/jpeg") shouldBe "/api/images/$HASH/768.jpg 768w, /api/images/$HASH/1536.jpg 1536w"
     }
 
     @Test
@@ -81,7 +79,7 @@ class CachedImagesTest {
         // upscaled by the browser; refusing it would look like the image is missing, and it is not.
         val served = serving(widths = setOf(192)).serve(poster, DETAIL)
 
-        assertEquals("/api/images/$HASH/192.jpg", served.url)
+        served.url shouldBe "/api/images/$HASH/192.jpg"
     }
 
     // --- which formats a browser is offered --------------------------------------------------
@@ -91,8 +89,8 @@ class CachedImagesTest {
     fun `sources are ordered`() {
         val served = serving().serve(poster, CARD)
 
-        assertEquals(listOf("image/avif", "image/webp", "image/jpeg"), served.sources.map { it.type })
-        assertEquals("/api/images/$HASH/192.avif 192w, /api/images/$HASH/288.avif 288w", srcsetFor(served, "image/avif"))
+        served.sources.map { it.type } shouldBe listOf("image/avif", "image/webp", "image/jpeg")
+        srcsetFor(served, "image/avif") shouldBe "/api/images/$HASH/192.avif 192w, /api/images/$HASH/288.avif 288w"
     }
 
     @Test
@@ -101,15 +99,15 @@ class CachedImagesTest {
         // AVIF and WebP alone would be a blank space on anything that cannot decode them, and the
         // `<img src>` inside `<picture>` has no safe value. A half-generated image waits for the
         // next pass instead.
-        assertEquals(ServedImage.ABSENT, serving(formats = listOf("avif", "webp")).serve(poster, CARD))
+        serving(formats = listOf("avif", "webp")).serve(poster, CARD) shouldBe ServedImage.ABSENT
     }
 
     @Test
     fun `a format missing one width offers only the widths it has`() {
         val served = serving(mapOf("avif" to setOf(288), "jpg" to setOf(192, 288))).serve(poster, CARD)
 
-        assertEquals("/api/images/$HASH/288.avif 288w", srcsetFor(served, "image/avif"))
-        assertEquals("/api/images/$HASH/192.jpg 192w, /api/images/$HASH/288.jpg 288w", srcsetFor(served, "image/jpeg"))
+        srcsetFor(served, "image/avif") shouldBe "/api/images/$HASH/288.avif 288w"
+        srcsetFor(served, "image/jpeg") shouldBe "/api/images/$HASH/192.jpg 192w, /api/images/$HASH/288.jpg 288w"
     }
 
     @Test
@@ -118,7 +116,7 @@ class CachedImagesTest {
         val local =
             CachedImages(mapOf(poster to ServableImage(HASH, mapOf("jpg" to sortedSetOf(192)))), "/images")
 
-        assertEquals("/images/$HASH/192.jpg", local.serve(poster, CARD).url)
+        local.serve(poster, CARD).url shouldBe "/images/$HASH/192.jpg"
     }
 
     // Both or neither, decided here so a template can trust the pair. Reporting one reserves no
@@ -127,8 +125,8 @@ class CachedImagesTest {
     fun `an image measured on both axes reports both`() {
         val measured = imageWith(intrinsicWidth = 1200, intrinsicHeight = 630).serve(poster, CARD)
 
-        assertEquals(1200, measured.intrinsicWidth)
-        assertEquals(630, measured.intrinsicHeight)
+        measured.intrinsicWidth shouldBe 1200
+        measured.intrinsicHeight shouldBe 630
     }
 
     @Test
@@ -136,8 +134,8 @@ class CachedImagesTest {
     fun `a half-measured image reports nothing`() {
         val half = imageWith(intrinsicWidth = 1200, intrinsicHeight = null).serve(poster, CARD)
 
-        assertNull(half.intrinsicWidth)
-        assertNull(half.intrinsicHeight)
+        half.intrinsicWidth shouldBe null
+        half.intrinsicHeight shouldBe null
     }
 
     private fun imageWith(

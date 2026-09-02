@@ -1,9 +1,9 @@
 package de.norm.events
 
+import io.kotest.assertions.withClue
+import io.kotest.matchers.shouldBe
 import java.io.File
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 /**
  * The enforcement ADR-004 never had (#540).
@@ -41,19 +41,20 @@ class SchemaConfigurationTest {
 
     private fun repoRoot(): File {
         val root = File("..").absoluteFile.normalize()
-        assertTrue(
-            File(root, "settings.gradle.kts").isFile,
+        withClue(
             "expected the repository root at $root — this test scans sideways into the sibling modules " +
                 "and would silently check nothing if the layout moved"
-        )
+        ) {
+            File(root, "settings.gradle.kts").isFile shouldBe true
+        }
         return root
     }
 
     private fun mainSources(): List<File> {
         val modules = MODULES.map { File(repoRoot(), "$it/src/main/kotlin") }
-        modules.forEach { assertTrue(it.isDirectory, "expected Kotlin sources at $it") }
+        modules.forEach { withClue("expected Kotlin sources at $it") { it.isDirectory shouldBe true } }
         val sources = modules.flatMap { it.walkTopDown().filter { f -> f.isFile && f.extension == "kt" }.toList() }
-        assertTrue(sources.size > MIN_SOURCE_FILES, "only ${sources.size} Kotlin files found — the scan below would prove little")
+        withClue("only ${sources.size} Kotlin files found — the scan below would prove little") { (sources.size > MIN_SOURCE_FILES) shouldBe true }
         return sources
     }
 
@@ -64,14 +65,14 @@ class SchemaConfigurationTest {
                 .filter { literalSchemaInSql.containsMatchIn(it.readText()) }
                 .map { it.relativeTo(repoRoot()).path }
 
-        assertEquals(
-            emptyList(),
-            offenders,
+        withClue(
             "these files name the schema as a literal in SQL instead of interpolating EVENTS_SCHEMA:\n" +
                 offenders.joinToString("\n") { "  - $it" } +
                 "\n\nA Kotlin `const val` is usable inside an annotation, so even a @Query can carry it — which is " +
                 "the whole reason the constant exists rather than a property (#540)."
-        )
+        ) {
+            offenders shouldBe emptyList()
+        }
     }
 
     /**
@@ -83,11 +84,12 @@ class SchemaConfigurationTest {
     fun `the constant is actually interpolated into raw SQL, so the check above has something to guard`() {
         val users = mainSources().count { it.readText().contains("\$EVENTS_SCHEMA.") }
 
-        assertTrue(
-            users >= EXPECTED_RAW_SQL_FILES,
+        withClue(
             "only $users file(s) interpolate EVENTS_SCHEMA into SQL, expected at least $EXPECTED_RAW_SQL_FILES. " +
                 "Either the raw SQL moved, or this guard is now watching nothing."
-        )
+        ) {
+            (users >= EXPECTED_RAW_SQL_FILES) shouldBe true
+        }
     }
 
     @Test
@@ -100,10 +102,11 @@ class SchemaConfigurationTest {
                         .map { File(repoRoot(), "$module/$it") }
                 }.filter { it.isFile }
 
-        assertTrue(
-            yamls.size >= EXPECTED_YAML_FILES,
+        withClue(
             "found only ${yamls.size} application.yaml files, expected at least $EXPECTED_YAML_FILES"
-        )
+        ) {
+            (yamls.size >= EXPECTED_YAML_FILES) shouldBe true
+        }
 
         val wrong =
             yamls.flatMap { file ->
@@ -114,13 +117,13 @@ class SchemaConfigurationTest {
                     .toList()
             }
 
-        assertEquals(
-            emptyList(),
-            wrong,
+        withClue(
             "these declarations name a schema the code does not resolve to ('$EVENTS_SCHEMA'):\n" +
                 wrong.joinToString("\n") { (file, value) -> "  - $file -> $value" } +
                 "\n\nThe application would start cleanly and query a schema Flyway never created."
-        )
+        ) {
+            wrong shouldBe emptyList()
+        }
     }
 
     /**
@@ -129,23 +132,23 @@ class SchemaConfigurationTest {
     @Test
     fun `migration SQL stays unqualified, because Flyway sets the search_path`() {
         val migrations = File(repoRoot(), "events-importer/src/main/resources/db/migration")
-        assertTrue(migrations.isDirectory, "expected the migrations at $migrations")
+        withClue("expected the migrations at $migrations") { migrations.isDirectory shouldBe true }
 
         val files = migrations.listFiles { f: File -> f.extension == "sql" }?.toList().orEmpty()
-        assertTrue(files.isNotEmpty(), "no migrations found — this check would prove nothing")
+        withClue("no migrations found — this check would prove nothing") { files.isNotEmpty() shouldBe true }
 
         val qualified =
             files
                 .filter { literalSchemaInSql.containsMatchIn(it.readText()) }
                 .map { it.name }
 
-        assertEquals(
-            emptyList(),
-            qualified,
+        withClue(
             "these migrations qualify their tables with the schema name: $qualified. Flyway sets the " +
                 "search_path from spring.flyway.schemas before running them, so qualifying pins a migration " +
                 "to a schema the configuration no longer controls (ADR-004)."
-        )
+        ) {
+            qualified shouldBe emptyList()
+        }
     }
 
     private companion object {
