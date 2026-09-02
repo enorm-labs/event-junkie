@@ -1,16 +1,16 @@
 <script lang="ts" setup>
 /**
- * Datenschutzerklärung nach Art. 13 DSGVO — die **maßgebliche Fassung** (LEGAL.md
- * §6.1).
+ * Datenschutzerklärung nach Art. 13 DSGVO — die **maßgebliche Fassung** (LEGAL.md §6.1).
  *
- * Follows the same twelve mandatory items as `PrivacyView.en.vue` (docs/LEGAL.md
- * §7.2), section for section, and cites them in German form — *Art. 6 Abs. 1 lit. f DSGVO*, not
- * *Art. 6 (1) (f) GDPR*. The unit test runs the checklist against both languages separately for
- * exactly that reason: a dropped element in one version is invisible from the other.
+ * Follows the same twelve mandatory items as `PrivacyView.en.vue` (docs/LEGAL.md §7.2), section for
+ * section, and cites them in German form — *Art. 6 Abs. 1 lit. f DSGVO*, not *Art. 6 (1) (f) GDPR*.
+ * The unit test runs the checklist against both languages separately: a dropped element in one
+ * version is invisible from the other. Like the English version it describes no processing that
+ * does not happen — no cookie table, no consent withdrawal, no analytics section.
  *
- * Like the English version it deliberately does **not** describe processing that does not happen:
- * no cookie table, no consent withdrawal, no analytics section. Log retention and the IP question
- * are still open (§7.5.1) and are stated as intent rather than invented.
+ * Retention and IP logging are settled (§7.5.1): no IP address is logged, and §2 states **14 Tage**.
+ * That is `ZO_COMPACT_DATA_RETENTION_DAYS` in both clusters, whose own comment says this notice must
+ * state whatever it says — the two move together.
  *
  * Register: `du`, for the reasons set out in `ImprintView.de.vue`.
  */
@@ -75,8 +75,9 @@ const { t } = useI18n()
         Eine Webseite auszuliefern bedeutet zwangsläufig, dass dein Browser eine Anfrage sendet und
         die beteiligten Server sie protokollieren. Dabei können verarbeitet werden: Datum und
         Uhrzeit der Anfrage, die angeforderte Seite oder Datei, der HTTP-Status und die übertragene
-        Datenmenge, die zuvor besuchte Seite sowie Angaben zu Browser und Betriebssystem. Je nach
-        endgültiger Infrastruktur kann auch deine IP-Adresse protokolliert werden.
+        Datenmenge, die zuvor besuchte Seite sowie Angaben zu Browser und Betriebssystem. Deine
+        IP-Adresse gehört nicht dazu: Der Webserver verwendet ein Log-Format, das sie auslässt, sodass
+        gar keine Adresse geschrieben wird.
       </p>
       <p>
         <strong>Zweck:</strong> Auslieferung der Seite, Aufrechterhaltung von Verfügbarkeit und
@@ -89,10 +90,13 @@ const { t } = useI18n()
         identifizieren oder ein Profil zu bilden, und führen sie mit keinen anderen Daten zusammen.
       </p>
       <p>
-        <strong>Speicherdauer:</strong> Logdaten sollen nach sieben Tagen gelöscht werden;
-        ausgenommen sind Einträge, die wegen eines konkreten Sicherheitsvorfalls länger aufbewahrt
-        werden müssen. Diese Frist wird gemeinsam mit dem Hosting-Setup festgelegt und diese Seite
-        entsprechend angepasst — genannt wird hier immer die tatsächlich konfigurierte Frist.
+        <strong>Speicherdauer:</strong> Logdaten werden <strong>14 Tage</strong> aufbewahrt und
+        danach automatisch gelöscht. Zwei unabhängige Mechanismen begrenzen sie, und meist greift der
+        kürzere: Auf dem Server selbst werden Einträge nach Volumen verdrängt — es wird eine feste
+        Menge vorgehalten und der jeweils älteste Eintrag überschrieben —, sodass eine Zeile oft
+        früher verschwindet; im Log-Speicher wird unabhängig davon alles gelöscht, was älter als 14
+        Tage ist. Ausgenommen sind Einträge, die wegen eines konkreten Sicherheitsvorfalls länger
+        aufbewahrt werden müssen. Genannt wird hier immer die tatsächlich konfigurierte Frist.
       </p>
       <p>
         <strong>Sicherungskopien:</strong> Die Datenbank wird gesichert. Diese Sicherungen werden im

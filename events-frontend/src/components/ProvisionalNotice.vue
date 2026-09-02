@@ -1,17 +1,18 @@
 <script lang="ts" setup>
 /**
- * Says out loud that the legal pages are not final yet.
+ * Says out loud that the legal pages are not final yet — and currently renders nothing.
  *
- * The contact details are placeholders (§8.3), the infrastructure the privacy notice describes is
- * decided rather than built (ADR-012 is `Accepted`, but nothing is deployed), and the Art. 28
- * contract with the one processor named there is not concluded yet (#275). A legal page that
- * presents any of the three as settled fact is inaccurate — and an inaccurate notice is the defect
- * these pages exist to avoid. All three flags must be `false` before go-live; a unit test keeps
- * them honest.
+ * Three facts could each make a legal page state something untrue: placeholder contact details
+ * (§8.3), infrastructure that is decided rather than built (ADR-012), and an Art. 28 contract not
+ * concluded with the processor named there (#275). A page presenting any of them as settled fact is
+ * inaccurate, and an inaccurate notice is the defect these pages exist to avoid.
  *
- * Shared by both language versions of the pages, which is why its copy lives in the message
- * catalogue while the pages around it do not: these are two flat sentences with no inline markup,
- * exactly the shape JSON handles well.
+ * **All three flags are `false`**, so this emits no element at all. That is the go-live state.
+ *
+ * **It is kept rather than deleted.** Every flag is re-armable and the failure each guards is
+ * silent — a new processor, an edge provider in front of the origin, a lapsed address rental. Set
+ * one back to `true` and the banner returns with nothing to rebuild;
+ * `views/legal/__tests__/legalViews.spec.ts` holds the pages and the flags in step both ways.
  */
 import { useI18n } from 'vue-i18n'
 

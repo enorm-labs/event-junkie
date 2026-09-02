@@ -1,17 +1,18 @@
 <script lang="ts" setup>
 /**
  * Privacy notice under Art. 13 GDPR — English version. `PrivacyView.de.vue` is the authoritative
- * one (LEGAL.md §6.1); **change both files or neither**, and take shared facts from
- * `@/lib/legal` rather than typing them twice.
+ * one (LEGAL.md §6.1); **change both files or neither**, and take shared facts from `@/lib/legal`
+ * rather than typing them twice.
  *
- * Structured against the twelve mandatory items in docs/LEGAL.md §7.2 — missing
- * one of them is the usual defect. It deliberately does **not** describe processing that does not
- * happen: no cookie table, no consent withdrawal, no analytics section. A notice describing
- * imaginary processing is as inaccurate as one omitting real processing.
+ * Structured against the twelve mandatory items in docs/LEGAL.md §7.2 — missing one is the usual
+ * defect. It deliberately does **not** describe processing that does not happen: no cookie table,
+ * no consent withdrawal, no analytics section. Describing imaginary processing is as inaccurate as
+ * omitting real processing.
  *
- * Log retention and the IP-logging decision are still open (§7.5.1); they depend on
- * infrastructure that does not exist yet, so the intent is stated and flagged as provisional
- * rather than invented.
+ * Retention and IP logging are settled (§7.5.1): no IP address is logged, and §2 states **14 days**.
+ * That number is `ZO_COMPACT_DATA_RETENTION_DAYS` in both clusters' `openobserve.yaml`, whose own
+ * comment says this notice must state whatever it says — so changing it there changes a published
+ * claim, and the two move together.
  */
 import { useI18n } from 'vue-i18n'
 
@@ -72,8 +73,8 @@ const { t } = useI18n()
         Delivering a web page necessarily means your browser sends a request, and the servers
         involved record it. The following may be processed: date and time of the request, the page
         or file requested, the HTTP status and amount of data transferred, the referring page, and
-        your browser and operating system identification. Depending on the final infrastructure,
-        your IP address may also be recorded.
+        your browser and operating system identification. Your IP address is not among them: the
+        web server uses a log format that omits it, so no address is written in the first place.
       </p>
       <p>
         <strong>Purpose:</strong> delivering the site, keeping it available and secure, defending
@@ -85,10 +86,12 @@ const { t } = useI18n()
         data to identify you or to build a profile, and it is not combined with anything else.
       </p>
       <p>
-        <strong>Retention:</strong> log data is intended to be deleted after seven days, other than
-        entries retained longer where a specific security incident requires it. This period is
-        finalised together with the hosting setup and this page is updated to match; the notice will
-        always state the period actually configured.
+        <strong>Retention:</strong> log data is kept for <strong>14 days</strong> and then deleted
+        automatically. Two independent mechanisms bound it, and the shorter one usually wins: on the
+        server itself entries rotate by volume — a fixed amount is held and the oldest overwritten —
+        so a line often disappears sooner, while the log store deletes everything older than 14 days
+        regardless. Entries are kept longer where a specific security incident requires it. This
+        page always states the period actually configured.
       </p>
       <p>
         <strong>Backups:</strong> the database is backed up. Those backups are normally kept for

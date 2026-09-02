@@ -79,12 +79,15 @@ test('the privacy notice states its legal basis, rights and supervisory authorit
   await expect(main).toContainText('§ 25 (2) 2 TDDDG')
 })
 
-// Renamed 2026-08-21. The contact details stopped being placeholders when the Postflex address was
-// rented; the banner stayed, because nothing is deployed. Two flags, and only one of them moved.
-test('legal pages still say they are not final, because nothing is deployed', async ({ page }) => {
+// Inverted with #278, when the last of the three provisional flags cleared: the address was rented,
+// the AVV concluded, and the notice re-read against a running production deployment. The banner now
+// renders nothing, so this asserts its absence — a page still calling itself provisional after the
+// facts became real is wrong in the direction a reader acts on. The unit test in
+// `views/legal/__tests__/legalViews.spec.ts` guards the same thing one layer down.
+test('legal pages no longer call themselves provisional', async ({ page }) => {
   for (const path of ['/legal/imprint', '/legal/privacy']) {
     await page.goto(path)
-    await expect(page.getByRole('main')).toContainText('This page is not final')
+    await expect(page.getByRole('main')).not.toContainText('This page is not final')
     await expect(page.getByRole('main')).not.toContainText('placeholder')
   }
 })
