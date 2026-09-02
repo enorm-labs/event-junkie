@@ -1,6 +1,7 @@
 package de.norm.events.event
 
-import org.junit.jupiter.api.Assertions.assertTrue
+import io.kotest.assertions.withClue
+import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.io.File
 
@@ -32,7 +33,7 @@ import java.io.File
 class MetricsExposureConfigTest {
     private fun exposureLine(path: String): String {
         val file = File(path)
-        assertTrue(file.exists()) { "expected $path to exist — has the module layout moved?" }
+        withClue("expected $path to exist — has the module layout moved?") { file.exists() shouldBe true }
         return file
             .readLines()
             .firstOrNull { it.trimStart().startsWith("include:") }
@@ -43,8 +44,10 @@ class MetricsExposureConfigTest {
     fun `the shipped configuration exposes the prometheus endpoint`() {
         val line = exposureLine("src/main/resources/application.yaml")
 
-        assertTrue(line.contains("prometheus")) {
+        withClue(
             "the main application.yaml must expose `prometheus` or nothing can scrape this service; found: $line"
+        ) {
+            line.contains("prometheus") shouldBe true
         }
     }
 
@@ -53,9 +56,11 @@ class MetricsExposureConfigTest {
         val main = exposureLine("src/main/resources/application.yaml").substringAfter("include:").trim()
         val test = exposureLine("src/test/resources/application.yaml").substringAfter("include:").trim()
 
-        assertTrue(main == test) {
+        withClue(
             "the test application.yaml shadows the main one, so the two exposure lists must match " +
                 "or the tests are exercising a configuration that is never shipped.\n  main: $main\n  test: $test"
+        ) {
+            (main == test) shouldBe true
         }
     }
 }

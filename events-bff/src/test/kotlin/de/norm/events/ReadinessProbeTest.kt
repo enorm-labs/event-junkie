@@ -1,12 +1,13 @@
 package de.norm.events
 
+import io.kotest.assertions.withClue
+import io.kotest.matchers.shouldBe
 import io.r2dbc.spi.Connection
 import io.r2dbc.spi.ConnectionFactory
 import io.r2dbc.spi.ConnectionFactoryMetadata
 import io.r2dbc.spi.R2dbcNonTransientResourceException
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.reactivestreams.Publisher
 import org.springframework.boot.health.contributor.Status
@@ -93,8 +94,10 @@ class ReadinessProbeTest : BaseControllerTest() {
                 }
             val health = EventsSchemaHealthIndicator(DatabaseClient.create(unreachable)).health().awaitSingle()
 
-            assertEquals(Status.DOWN, health.status) {
+            withClue(
                 "a query that cannot run must fail readiness, or the BFF is Ready before it can serve again (#438)"
+            ) {
+                health.status shouldBe Status.DOWN
             }
         }
 }

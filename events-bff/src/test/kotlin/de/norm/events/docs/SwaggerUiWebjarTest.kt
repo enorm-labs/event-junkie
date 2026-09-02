@@ -1,8 +1,8 @@
 package de.norm.events.docs
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import io.kotest.assertions.withClue
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 
@@ -29,9 +29,11 @@ class SwaggerUiWebjarTest {
         val found =
             PathMatchingResourcePatternResolver()
                 .getResources("classpath*:/META-INF/resources/webjars/swagger-ui/*/swagger-ui-bundle.js")
-        assertEquals(1, found.size) {
+        withClue(
             "expected exactly one swagger-ui-bundle.js on the runtime classpath, found ${found.size} — two webjars would " +
                 "make which one springdoc serves a matter of classpath order"
+        ) {
+            found.size shouldBe 1
         }
 
         val version =
@@ -45,10 +47,12 @@ class SwaggerUiWebjarTest {
                 )?.groupValues
                 ?.get(1)
 
-        assertNotNull(version) { "no DOMPurify version literal in the shipped swagger-ui bundle — has the bundle's build changed?" }
-        assertTrue(atLeast(version!!, FIXED_DOM_PURIFY)) {
+        withClue("no DOMPurify version literal in the shipped swagger-ui bundle — has the bundle's build changed?") { version.shouldNotBeNull() }
+        withClue(
             "the shipped swagger-ui bundle carries DOMPurify $version, which is affected by GHSA-55q2-fjhq-7xh7; " +
                 "$FIXED_DOM_PURIFY or later is required. Has the swagger-ui constraint been dropped from events-bff?"
+        ) {
+            atLeast(version!!, FIXED_DOM_PURIFY) shouldBe true
         }
     }
 

@@ -1,6 +1,8 @@
 package de.norm.events.image
 
 import de.norm.events.BaseControllerTest
+import io.kotest.assertions.withClue
+import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
@@ -25,8 +27,6 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import java.net.URI
 import java.time.Duration
 import java.time.LocalDate
-import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
 
 /**
  * The serving path end to end, with serving switched on.
@@ -62,7 +62,7 @@ class CachedImageServingTest : BaseControllerTest() {
                 .expectHeader()
                 .valueEquals(HttpHeaders.CONTENT_DISPOSITION, "inline")
                 .expectBody()
-                .consumeWith { assertContentEquals(POSTER, it.responseBody) }
+                .consumeWith { it.responseBody shouldBe POSTER }
         }
 
     @Test
@@ -83,7 +83,7 @@ class CachedImageServingTest : BaseControllerTest() {
                 .expectStatus()
                 .isOk
                 .expectBody()
-                .consumeWith { assertContentEquals(POSTER, it.responseBody) }
+                .consumeWith { it.responseBody shouldBe POSTER }
         }
 
     @Test
@@ -154,7 +154,7 @@ class CachedImageServingTest : BaseControllerTest() {
                 webTestClient.get().uri(it).exchange()
             }
 
-            OUTCOMES.forEach { assertEquals(1.0, served(it) - before.getValue(it), "outcome=$it") }
+            OUTCOMES.forEach { withClue("outcome=$it") { served(it) - before.getValue(it) shouldBe 1.0 } }
         }
 
     private fun served(outcome: String): Double =
@@ -359,7 +359,7 @@ class CachedImageServingTest : BaseControllerTest() {
                 .expectStatus()
                 .isOk
                 .expectBody()
-                .consumeWith { assertContentEquals(POSTER, it.responseBody) }
+                .consumeWith { it.responseBody shouldBe POSTER }
         }
 
     // What reserves the space a lazy image will take. `srcset` is what makes it necessary: without

@@ -1,45 +1,45 @@
 package de.norm.events.event
 
+import io.kotest.matchers.shouldBe
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class EventTypeTest {
     @Test
     fun `parseOrDefault returns CONCERT for exact match`() {
-        assertEquals(EventType.CONCERT, EventType.parseOrDefault("CONCERT"))
+        EventType.parseOrDefault("CONCERT") shouldBe EventType.CONCERT
     }
 
     @Test
     fun `parseOrDefault is case-insensitive`() {
-        assertEquals(EventType.CONCERT, EventType.parseOrDefault("concert"))
-        assertEquals(EventType.FESTIVAL, EventType.parseOrDefault("Festival"))
-        assertEquals(EventType.PARTY, EventType.parseOrDefault("pArTy"))
+        EventType.parseOrDefault("concert") shouldBe EventType.CONCERT
+        EventType.parseOrDefault("Festival") shouldBe EventType.FESTIVAL
+        EventType.parseOrDefault("pArTy") shouldBe EventType.PARTY
     }
 
     @Test
     fun `parseOrDefault trims whitespace`() {
-        assertEquals(EventType.QUIZ, EventType.parseOrDefault("  QUIZ  "))
-        assertEquals(EventType.CLUB_NIGHT, EventType.parseOrDefault("\tCLUB_NIGHT\n"))
+        EventType.parseOrDefault("  QUIZ  ") shouldBe EventType.QUIZ
+        EventType.parseOrDefault("\tCLUB_NIGHT\n") shouldBe EventType.CLUB_NIGHT
     }
 
     @Test
     fun `parseOrDefault returns all valid enum values`() {
-        assertEquals(EventType.CONCERT, EventType.parseOrDefault("CONCERT"))
-        assertEquals(EventType.FESTIVAL, EventType.parseOrDefault("FESTIVAL"))
-        assertEquals(EventType.PARTY, EventType.parseOrDefault("PARTY"))
-        assertEquals(EventType.QUIZ, EventType.parseOrDefault("QUIZ"))
-        assertEquals(EventType.CLUB_NIGHT, EventType.parseOrDefault("CLUB_NIGHT"))
-        assertEquals(EventType.SHOW, EventType.parseOrDefault("SHOW"))
-        assertEquals(EventType.SCREENING, EventType.parseOrDefault("SCREENING"))
-        assertEquals(EventType.EXHIBITION, EventType.parseOrDefault("EXHIBITION"))
-        assertEquals(EventType.READING, EventType.parseOrDefault("READING"))
-        assertEquals(EventType.OTHER, EventType.parseOrDefault("OTHER"))
+        EventType.parseOrDefault("CONCERT") shouldBe EventType.CONCERT
+        EventType.parseOrDefault("FESTIVAL") shouldBe EventType.FESTIVAL
+        EventType.parseOrDefault("PARTY") shouldBe EventType.PARTY
+        EventType.parseOrDefault("QUIZ") shouldBe EventType.QUIZ
+        EventType.parseOrDefault("CLUB_NIGHT") shouldBe EventType.CLUB_NIGHT
+        EventType.parseOrDefault("SHOW") shouldBe EventType.SHOW
+        EventType.parseOrDefault("SCREENING") shouldBe EventType.SCREENING
+        EventType.parseOrDefault("EXHIBITION") shouldBe EventType.EXHIBITION
+        EventType.parseOrDefault("READING") shouldBe EventType.READING
+        EventType.parseOrDefault("OTHER") shouldBe EventType.OTHER
     }
 
     @Test
     fun `parseOrDefault returns OTHER for unknown values`() {
-        assertEquals(EventType.OTHER, EventType.parseOrDefault("UNKNOWN"))
-        assertEquals(EventType.OTHER, EventType.parseOrDefault("rave"))
-        assertEquals(EventType.OTHER, EventType.parseOrDefault(""))
+        EventType.parseOrDefault("UNKNOWN") shouldBe EventType.OTHER
+        EventType.parseOrDefault("rave") shouldBe EventType.OTHER
+        EventType.parseOrDefault("") shouldBe EventType.OTHER
     }
 }

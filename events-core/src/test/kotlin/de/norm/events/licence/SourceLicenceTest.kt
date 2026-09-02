@@ -1,6 +1,7 @@
 package de.norm.events.licence
 
-import org.assertj.core.api.Assertions.assertThat
+import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -14,8 +15,8 @@ class SourceLicenceTest {
     @ParameterizedTest
     @EnumSource(SourceLicence::class)
     fun `every member round-trips, case-insensitively and trimmed`(licence: SourceLicence) {
-        assertThat(SourceLicence.parseOrProhibited(licence.name)).isEqualTo(licence)
-        assertThat(SourceLicence.parseOrProhibited(" ${licence.name.lowercase()} ")).isEqualTo(licence)
+        SourceLicence.parseOrProhibited(licence.name) shouldBe licence
+        SourceLicence.parseOrProhibited(" ${licence.name.lowercase()} ") shouldBe licence
     }
 
     @Test
@@ -24,9 +25,9 @@ class SourceLicenceTest {
         // Deliberately the opposite direction from the fail-open display rule, and the KDoc on
         // parseOrProhibited says why: silence from a venue is not a prohibition, but a value that is
         // neither null nor a member of this enum is corrupted data rather than silence.
-        assertThat(SourceLicence.parseOrProhibited("permited")).isEqualTo(SourceLicence.PROHIBITED)
-        assertThat(SourceLicence.parseOrProhibited("")).isEqualTo(SourceLicence.PROHIBITED)
-        assertThat(SourceLicence.parseOrProhibited("yes")).isEqualTo(SourceLicence.PROHIBITED)
+        SourceLicence.parseOrProhibited("permited") shouldBe SourceLicence.PROHIBITED
+        SourceLicence.parseOrProhibited("") shouldBe SourceLicence.PROHIBITED
+        SourceLicence.parseOrProhibited("yes") shouldBe SourceLicence.PROHIBITED
     }
 
     @Test
@@ -34,7 +35,6 @@ class SourceLicenceTest {
     fun `the vocabulary does not grow by accident`() {
         // The CHECK constraint in V006 lists these by name and cannot see this enum. A fourth member
         // added here without the migration would be rejected by the database at write time.
-        assertThat(SourceLicence.entries)
-            .containsExactly(SourceLicence.PERMITTED, SourceLicence.PROHIBITED, SourceLicence.UNCLEAR)
+        SourceLicence.entries.shouldContainExactly(SourceLicence.PERMITTED, SourceLicence.PROHIBITED, SourceLicence.UNCLEAR)
     }
 }

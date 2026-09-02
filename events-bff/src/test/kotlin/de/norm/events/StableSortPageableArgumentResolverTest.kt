@@ -1,5 +1,6 @@
 package de.norm.events
 
+import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.springframework.core.MethodParameter
 import org.springframework.data.domain.Pageable
@@ -8,8 +9,6 @@ import org.springframework.data.web.PageableDefault
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest
 import org.springframework.mock.web.server.MockServerWebExchange
 import org.springframework.web.reactive.BindingContext
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 /**
  * Unit tests for [StableSortPageableArgumentResolver].
@@ -18,8 +17,7 @@ import kotlin.test.assertTrue
  * client `sort` — the latter being the one the SPA actually uses, and the one a
  * default-only fix would have missed.
  *
- * The importer carries the same resolver and an equivalent test; this copy uses
- * `kotlin.test` assertions because Kotest is an importer-only test dependency.
+ * The importer carries the same resolver and an equivalent test.
  */
 class StableSortPageableArgumentResolverTest {
     private val resolver = StableSortPageableArgumentResolver()
@@ -40,38 +38,38 @@ class StableSortPageableArgumentResolverTest {
 
     @Test
     fun `appends id to the declared default sort`() {
-        assertEquals(Sort.by("name").and(Sort.by("id")), resolve("").sort)
+        resolve("").sort shouldBe Sort.by("name").and(Sort.by("id"))
     }
 
     @Test
     fun `appends id to an explicit client sort`() {
         // The SPA sends `sort`, which replaces @PageableDefault entirely — so this is the
         // path that actually has to be stabilised.
-        assertEquals(Sort.by(Sort.Direction.ASC, "name").and(Sort.by("id")), resolve("?sort=name,asc").sort)
+        resolve("?sort=name,asc").sort shouldBe Sort.by(Sort.Direction.ASC, "name").and(Sort.by("id"))
     }
 
     @Test
     fun `keeps the tiebreaker ascending regardless of the primary direction`() {
         val sort = resolve("?sort=eventDate,desc").sort
-        assertTrue(sort.getOrderFor("eventDate")!!.isDescending)
-        assertTrue(sort.getOrderFor("id")!!.isAscending)
+        sort.getOrderFor("eventDate")!!.isDescending shouldBe true
+        sort.getOrderFor("id")!!.isAscending shouldBe true
     }
 
     @Test
     fun `appends id after every requested sort key`() {
-        assertEquals(listOf("eventDate", "title", "id"), properties("?sort=eventDate,desc&sort=title,asc"))
+        properties("?sort=eventDate,desc&sort=title,asc") shouldBe listOf("eventDate", "title", "id")
     }
 
     @Test
     fun `does not append a second id order when the caller already sorts by id`() {
-        assertEquals(listOf("id"), properties("?sort=id,desc"))
-        assertEquals(listOf("name", "id"), properties("?sort=name,asc&sort=id,desc"))
+        properties("?sort=id,desc") shouldBe listOf("id")
+        properties("?sort=name,asc&sort=id,desc") shouldBe listOf("name", "id")
     }
 
     @Test
     fun `preserves the requested page and size`() {
         val pageable = resolve("?page=3&size=50")
-        assertEquals(3, pageable.pageNumber)
-        assertEquals(50, pageable.pageSize)
+        pageable.pageNumber shouldBe 3
+        pageable.pageSize shouldBe 50
     }
 }

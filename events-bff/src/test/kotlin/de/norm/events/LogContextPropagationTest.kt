@@ -3,12 +3,10 @@ package de.norm.events
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.reactor.mono
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
@@ -65,10 +63,10 @@ class LogContextPropagationTest {
             }.contextWrite { it.put(LogContextConfiguration.REQUEST_ID, "req-42") }
             .block()
 
-        assertEquals("req-42", seen.get())
+        seen.get() shouldBe "req-42"
         // Guards the guard: if the read happened on the writing thread, a plain MDC.put would also
         // have passed and the test would prove nothing.
-        assertNotEquals(writer, readerThread.get())
+        readerThread.get() shouldNotBe writer
     }
 
     @Test
@@ -102,7 +100,7 @@ class LogContextPropagationTest {
                 .contextWrite { it.put(LogContextConfiguration.REQUEST_ID, "req-99") }
 
         StepVerifier.create(chain).expectNext("handled").verifyComplete()
-        assertEquals("req-99", seen.get())
+        seen.get() shouldBe "req-99"
     }
 
     @Test
@@ -115,7 +113,7 @@ class LogContextPropagationTest {
         // what this assertion did before the values became fields, and it is precisely the coupling
         // that made a wording change break an unrelated test.
         val event = appender.list.single { it.field(LogContextConfiguration.PATH) == "/venues" }
-        assertFalse(event.mdcPropertyMap[LogContextConfiguration.REQUEST_ID].isNullOrBlank())
+        event.mdcPropertyMap[LogContextConfiguration.REQUEST_ID].isNullOrBlank() shouldBe false
     }
 
     @Test
@@ -131,15 +129,15 @@ class LogContextPropagationTest {
             }.block()
 
         val event = appender.list.single()
-        assertEquals("GET", event.field(LogContextConfiguration.HTTP_METHOD))
-        assertEquals("/venues", event.field(LogContextConfiguration.PATH))
+        event.field(LogContextConfiguration.HTTP_METHOD) shouldBe "GET"
+        event.field(LogContextConfiguration.PATH) shouldBe "/venues"
         // An Int, not "200". OpenObserve types a column from its first row, so one string here
         // would make every later range query on the status impossible.
-        assertEquals(200, event.field(LogContextConfiguration.HTTP_STATUS))
+        event.field(LogContextConfiguration.HTTP_STATUS) shouldBe 200
 
         // The other half of the same guarantee: a value that is a field AND still welded into the
         // sentence reads as working while leaving the prose to drift out of step with it.
-        assertFalse(event.formattedMessage.startsWith("GET "))
+        event.formattedMessage.startsWith("GET ") shouldBe false
     }
 
     @Test
@@ -152,8 +150,8 @@ class LogContextPropagationTest {
         // `q=astra` is user-typed input. It stays in the message, where it already was — making it
         // a filterable column is a different act, and LEGAL.md §7.5 says not to widen what request
         // data is collected without deciding to. Asserted so a later "tidy-up" has to choose it.
-        assertTrue(event.formattedMessage.contains("?q=astra"))
-        assertEquals("/venues", event.field(LogContextConfiguration.PATH))
+        event.formattedMessage.contains("?q=astra") shouldBe true
+        event.field(LogContextConfiguration.PATH) shouldBe "/venues"
     }
 
     @Test
@@ -164,7 +162,7 @@ class LogContextPropagationTest {
 
         // The suppression predates this change; asserted here because the conversion rewrote the
         // line it guards and a silently-restored probe line is 1,437 rows an hour.
-        assertTrue(appender.list.none { it.field(LogContextConfiguration.PATH) != null })
+        (appender.list.none { it.field(LogContextConfiguration.PATH) != null }) shouldBe true
     }
 
     @Test
@@ -175,8 +173,8 @@ class LogContextPropagationTest {
         }
 
         val ids = appender.list.mapNotNull { it.mdcPropertyMap[LogContextConfiguration.REQUEST_ID] }
-        assertEquals(2, ids.size)
-        assertEquals(2, ids.toSet().size)
+        ids.size shouldBe 2
+        ids.toSet().size shouldBe 2
     }
 
     /**

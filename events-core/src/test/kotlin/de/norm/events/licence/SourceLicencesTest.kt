@@ -1,6 +1,6 @@
 package de.norm.events.licence
 
-import org.assertj.core.api.Assertions.assertThat
+import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -30,7 +30,7 @@ class SourceLicencesTest {
         licence: SourceLicence,
         expected: Boolean
     ) {
-        assertThat(SourceLicences(description = licence, image = null).withholdsDescription()).isEqualTo(expected)
+        SourceLicences(description = licence, image = null).withholdsDescription() shouldBe expected
     }
 
     @ParameterizedTest(name = "image {0} -> withheld={1}")
@@ -45,47 +45,47 @@ class SourceLicencesTest {
         licence: SourceLicence,
         expected: Boolean
     ) {
-        assertThat(SourceLicences(description = null, image = licence).withholdsImage()).isEqualTo(expected)
+        SourceLicences(description = null, image = licence).withholdsImage() shouldBe expected
     }
 
     @Test
     @DisplayName("an unreviewed source displays, because silence is not a refusal")
     fun `null withholds nothing`() {
         val unreviewed = SourceLicences(description = null, image = null)
-        assertThat(unreviewed.withholdsDescription()).isFalse()
-        assertThat(unreviewed.withholdsImage()).isFalse()
+        unreviewed.withholdsDescription() shouldBe false
+        unreviewed.withholdsImage() shouldBe false
     }
 
     @Test
     @DisplayName("an event whose source was deleted displays")
     fun `unknown source withholds nothing`() {
-        assertThat(SourceLicences.UNKNOWN_SOURCE.withholdsDescription()).isFalse()
-        assertThat(SourceLicences.UNKNOWN_SOURCE.withholdsImage()).isFalse()
+        SourceLicences.UNKNOWN_SOURCE.withholdsDescription() shouldBe false
+        SourceLicences.UNKNOWN_SOURCE.withholdsImage() shouldBe false
     }
 
     @Test
     fun `the two fields are answered independently`() {
         val imagesOnly = SourceLicences(description = SourceLicence.PERMITTED, image = SourceLicence.PROHIBITED)
-        assertThat(imagesOnly.withholdsDescription()).isFalse()
-        assertThat(imagesOnly.withholdsImage()).isTrue()
+        imagesOnly.withholdsDescription() shouldBe false
+        imagesOnly.withholdsImage() shouldBe true
     }
 
     @Test
     @DisplayName("of() reads the two columns of a source row")
     fun `of parses both columns`() {
         val licences = SourceLicences.of("PROHIBITED", "unclear")
-        assertThat(licences.description).isEqualTo(SourceLicence.PROHIBITED)
+        licences.description shouldBe SourceLicence.PROHIBITED
         // Case-insensitive, because the column is text and a hand-edited row is a real source of it.
-        assertThat(licences.image).isEqualTo(SourceLicence.UNCLEAR)
+        licences.image shouldBe SourceLicence.UNCLEAR
     }
 
     @Test
     @DisplayName("of() keeps a null column null rather than reading it as a verdict")
     fun `of keeps nulls`() {
         val licences = SourceLicences.of(null, null)
-        assertThat(licences.description).isNull()
-        assertThat(licences.image).isNull()
-        assertThat(licences).isEqualTo(SourceLicences.UNKNOWN_SOURCE)
+        licences.description shouldBe null
+        licences.image shouldBe null
+        licences shouldBe SourceLicences.UNKNOWN_SOURCE
     }
 
     @Test
@@ -93,6 +93,6 @@ class SourceLicencesTest {
     fun `of fails closed on an unrecognised value`() {
         // The opposite of the display rule, and deliberately so: a value that is neither null nor a
         // member of the enum is corrupted data, not silence from a venue.
-        assertThat(SourceLicences.of("PERMITED", null).withholdsDescription()).isTrue()
+        SourceLicences.of("PERMITED", null).withholdsDescription() shouldBe true
     }
 }

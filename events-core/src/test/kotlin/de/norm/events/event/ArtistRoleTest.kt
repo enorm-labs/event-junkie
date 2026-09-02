@@ -1,38 +1,38 @@
 package de.norm.events.event
 
+import io.kotest.matchers.shouldBe
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class ArtistRoleTest {
     @Test
     fun `parseOrDefault returns HEADLINER for exact match`() {
-        assertEquals(ArtistRole.HEADLINER, ArtistRole.parseOrDefault("HEADLINER"))
+        ArtistRole.parseOrDefault("HEADLINER") shouldBe ArtistRole.HEADLINER
     }
 
     @Test
     fun `parseOrDefault is case-insensitive`() {
-        assertEquals(ArtistRole.HEADLINER, ArtistRole.parseOrDefault("headliner"))
-        assertEquals(ArtistRole.SUPPORT, ArtistRole.parseOrDefault("Support"))
-        assertEquals(ArtistRole.DJ, ArtistRole.parseOrDefault("dj"))
+        ArtistRole.parseOrDefault("headliner") shouldBe ArtistRole.HEADLINER
+        ArtistRole.parseOrDefault("Support") shouldBe ArtistRole.SUPPORT
+        ArtistRole.parseOrDefault("dj") shouldBe ArtistRole.DJ
     }
 
     @Test
     fun `parseOrDefault trims whitespace`() {
-        assertEquals(ArtistRole.SUPPORT, ArtistRole.parseOrDefault("  SUPPORT  "))
-        assertEquals(ArtistRole.DJ, ArtistRole.parseOrDefault("\tDJ\n"))
+        ArtistRole.parseOrDefault("  SUPPORT  ") shouldBe ArtistRole.SUPPORT
+        ArtistRole.parseOrDefault("\tDJ\n") shouldBe ArtistRole.DJ
     }
 
     @Test
     fun `parseOrDefault returns all valid enum values`() {
-        assertEquals(ArtistRole.HEADLINER, ArtistRole.parseOrDefault("HEADLINER"))
-        assertEquals(ArtistRole.SUPPORT, ArtistRole.parseOrDefault("SUPPORT"))
-        assertEquals(ArtistRole.DJ, ArtistRole.parseOrDefault("DJ"))
+        ArtistRole.parseOrDefault("HEADLINER") shouldBe ArtistRole.HEADLINER
+        ArtistRole.parseOrDefault("SUPPORT") shouldBe ArtistRole.SUPPORT
+        ArtistRole.parseOrDefault("DJ") shouldBe ArtistRole.DJ
     }
 
     @Test
     fun `parseOrDefault returns HEADLINER for unknown values`() {
-        assertEquals(ArtistRole.HEADLINER, ArtistRole.parseOrDefault("UNKNOWN"))
-        assertEquals(ArtistRole.HEADLINER, ArtistRole.parseOrDefault("vocalist"))
-        assertEquals(ArtistRole.HEADLINER, ArtistRole.parseOrDefault(""))
+        ArtistRole.parseOrDefault("UNKNOWN") shouldBe ArtistRole.HEADLINER
+        ArtistRole.parseOrDefault("vocalist") shouldBe ArtistRole.HEADLINER
+        ArtistRole.parseOrDefault("") shouldBe ArtistRole.HEADLINER
     }
 }

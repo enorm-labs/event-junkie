@@ -1,12 +1,13 @@
 package de.norm.events.image
 
+import io.kotest.assertions.withClue
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.util.unit.DataSize
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 
 /**
  * The two questions the Caffeine meters cannot answer, asserted by the strings a rule selects on.
@@ -27,7 +28,7 @@ class ImageServingMetricsTest {
      */
     @Test
     fun `every outcome exists at zero before a single request`() {
-        listOf("found", "unknown", "missing", "unavailable").forEach { assertEquals(0.0, counter(it), "outcome=$it") }
+        listOf("found", "unknown", "missing", "unavailable").forEach { withClue("outcome=$it") { counter(it) shouldBe 0.0 } }
     }
 
     @Test
@@ -36,9 +37,9 @@ class ImageServingMetricsTest {
         metrics.record(ImageServingMetrics.Outcome.FOUND)
         metrics.record(ImageServingMetrics.Outcome.MISSING)
 
-        assertEquals(2.0, counter("found"))
-        assertEquals(1.0, counter("missing"))
-        assertEquals(0.0, counter("unavailable"))
+        counter("found") shouldBe 2.0
+        counter("missing") shouldBe 1.0
+        counter("unavailable") shouldBe 0.0
     }
 
     /**
@@ -54,19 +55,30 @@ class ImageServingMetricsTest {
             cache.get("one") { ImageObject.Found(ByteArray(BIG)) }
             cache.get("two") { ImageObject.Found(ByteArray(SMALL)) }
 
-            assertEquals((BIG + SMALL).toDouble(), weight())
-            assertEquals(2.0, assertNotNull(registry.find("cache.size").tag("cache", "images").gauge()).value())
+            weight() shouldBe (BIG + SMALL).toDouble()
+            registry
+                .find("cache.size")
+                .tag("cache", "images")
+                .gauge()
+                .shouldNotBeNull()
+                .value() shouldBe 2.0
         }
 
     @Test
     fun `an empty cache weighs nothing`() {
-        assertEquals(0.0, weight())
+        weight() shouldBe 0.0
     }
 
     private fun counter(outcome: String): Double =
-        assertNotNull(registry.find("bff.images.served").tag("outcome", outcome).counter(), "no counter for $outcome").count()
+        withClue("no counter for $outcome") {
+            registry
+                .find("bff.images.served")
+                .tag("outcome", outcome)
+                .counter()
+                .shouldNotBeNull()
+        }.count()
 
-    private fun weight(): Double = assertNotNull(registry.find("bff.images.cache.weight").gauge(), "no weight gauge").value()
+    private fun weight(): Double = withClue("no weight gauge") { registry.find("bff.images.cache.weight").gauge().shouldNotBeNull() }.value()
 
     private companion object {
         const val BIG = 40_000
