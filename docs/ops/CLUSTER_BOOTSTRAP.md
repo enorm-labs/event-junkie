@@ -239,6 +239,48 @@ The two below are hand-made for the same deliberate reason. This repository is p
 
 **Order matters for `github-dispatch` and only for it.** It lives in `flux-system`, which does not exist until `flux bootstrap` runs in §9. So create it after that step, not with the others. Until it exists, the `github-dispatch` Provider reconciles into a failed state and records no deployment. Nothing else is affected, and nothing needs restarting once it lands.
 
+### Prove the dispatch token's scope, because existence is not the check
+
+**That paragraph covers a _missing_ Secret, which fails loudly.** It has no answer for one that is present and read-only. That is the case that stays
+invisible, and production ran nine days that way ([#872](https://github.com/enorm-labs/event-junkie/issues/872)). The Environments tab stayed empty. An
+environment that never deployed looks the same.
+
+A write is the only thing that separates the two, because the read path succeeds under both:
+
+```sh
+TOKEN=$(kubectl --context event-junkie-staging get secret github-dispatch -n flux-system \
+  -o jsonpath='{.data.token}' | base64 -d)
+curl -sS -o /dev/null -w '%{http_code}\n' -X POST \
+  -H "Authorization: Bearer $TOKEN" -H 'Accept: application/vnd.github+json' \
+  https://api.github.com/repos/enorm-labs/event-junkie/dispatches \
+  -d '{"event_type":"token-scope-probe"}'; unset TOKEN
+```
+
+`204` is the answer. `403` is [#872](https://github.com/enorm-labs/event-junkie/issues/872) again.
+
+**Both tokens passed this check** — production when #872 was fixed, staging in
+[#875](https://github.com/enorm-labs/event-junkie/issues/875), which returned `204`. So this is a
+check for a new cluster, a rotation or a regeneration, not something the current pair still owes.
+
+**Use a probe event type nothing listens for, and never the real one.** `repository_dispatch` starts only a workflow whose `types:` list matches.
+`token-scope-probe` therefore reaches the API and runs nothing. The real type is `HelmRelease/event-junkie.flux-system`. Send that one by hand, and
+`deployment-status.yml` writes a **GitHub deployment for a rollout that never happened.** It is permanent, on the one page this repository maintains to state
+what is running. That trap is one word away from this command.
+
+**`GET /repos/{owner}/{repo}` is not a substitute, and its `permissions` object is a trap.** It returns `200` for a read-only token. The object reads
+`{"admin": true, "push": true}`, which is the **authenticating user's role** and not the token's granted scopes. It looks like the answer while it describes
+something else.
+
+**Re-run this after every regeneration, not only at first creation.** Regeneration of a fine-grained PAT can reset its permissions. #872's token was correct
+when it was checked before regeneration. The regenerated one was read-only, and GitHub's interface does not make that obvious.
+
+**This is a different failure from expiry**, which `credential-expiry-reminder.yml` already watches. An expired token stops working on a known date. A
+wrongly scoped one never worked, and it has no date attached.
+
+**What `204` does not prove:** that the token is scoped to this repository alone. Nor that it is this cluster's own PAT and not a copy of the other
+cluster's. Both matter, because per-cluster tokens keep "which cluster wrote that" answerable at the API level. Only the token's page in the GitHub UI shows
+them.
+
 ## 8b · The backup credential — _the node is not backing anything up until you do this_
 
 `backups.sh` installed wal-g, turned on `archive_mode` and started two timers. Every one of them is failing right now. It could not do otherwise. The S3 access key
