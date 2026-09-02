@@ -56,6 +56,7 @@ document is STE-compliant. `validate-docs.yml` runs it in CI. See #733 and
 scripts/comment-lint.sh check
 scripts/skill-parity.sh
 scripts/rules-parity.sh
+scripts/collector-parity.sh
 ```
 
 Exits 1 on **any** violation of the rules detekt and ESLint cannot see — the block cap, file density, and markdown headings, date literals or
@@ -75,6 +76,13 @@ every pointer resolves and every skill is listed in `CLAUDE.md`. `validate-docs.
 a `paths` list for Claude Code; each agent reads only its own key, so neither can notice the two describing different globs. It also asserts every
 `.claude/rules/` symlink resolves, that no rule body is an `@` pointer — which is expanded at launch whatever `paths` says, defeating the scoping silently —
 and that every rule is linked from the AGENTS.md table. `validate-docs.yml` runs it beside `skill-parity.sh`.
+
+`collector-parity.sh` is the third of the same shape, over a fact written in four places: the importer's `LogFields` and `LogContext`, the BFF's
+`LogContextConfiguration`, the collector's OTTL allowlist in `deploy/clusters/base/collector.yaml`, and the table in `docs/ops/PLATFORM_SETUP.md` §7. Two
+constant objects rather than one is deliberate — a shared package in `events-core` becomes a Spring Modulith module of its own (#945) — so a check is the
+substitute for sharing them. **The failure it prevents is an empty query result, not an error**: a name missing from the allowlist produces no column, and
+OpenObserve answers "no rows" rather than "no such column". It also asserts that the paths and `Log*` symbols those four files cite still exist, which is the
+half with a history: #982 and #953 each left pointers at something that had been renamed or deleted, and both were caught by eye.
 
 **It also matches every glob against the index**, via `git ls-files -- ':(glob)…'`, because a glob that hits nothing is a rule that loads for no file while
 every other check passes. `deploy/**/*.yml` shipped in a first draft of the kubernetes rule and matched none of the 70 files there, all of which are `.yaml`.
