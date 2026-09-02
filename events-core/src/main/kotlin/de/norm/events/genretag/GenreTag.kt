@@ -13,9 +13,9 @@ import java.time.Instant
  * tags enable structured filtering in the frontend.
  */
 data class GenreTag(
-    /** Database primary key, `null` before persistence. Example: `1` */
+    /** Database primary key, `null` before persistence. */
     val id: Long? = null,
-    /** Canonical display name. Example: `"Hip Hop"` */
+    /** Canonical display name. */
     val name: String,
     /** URL-friendly identifier, derived from the name. Example: `"hip-hop"` */
     val slug: String,

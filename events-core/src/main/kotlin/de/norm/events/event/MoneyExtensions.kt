@@ -17,8 +17,6 @@ private const val MONEY_SCALE = 2
 /**
  * Normalizes this [BigDecimal] to [MONEY_SCALE] decimal places using [RoundingMode.HALF_UP].
  *
- * Example: `BigDecimal("10").normalizeMoneyScale()` → `BigDecimal("10.00")`
- *
  * Intended for price fields entering the domain — call at mapping boundaries
  * (scraper → entity, request DTO → entity) so all persisted prices have
  * a uniform scale.

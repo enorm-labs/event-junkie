@@ -125,10 +125,8 @@ class EventUpsertServiceStaleCleanupTest {
 
                 service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
 
-                // Verify the query lower bound is tomorrow, not today
                 fromDateSlot.captured shouldBe tomorrow
 
-                // Today's event should NOT be deleted
                 coVerify(exactly = 0) {
                     eventRepository.deleteByIdIn(match { 1L in it })
                 }
@@ -160,7 +158,6 @@ class EventUpsertServiceStaleCleanupTest {
 
                 service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
 
-                // Tomorrow's stale event should be deleted
                 coVerify {
                     eventRepository.deleteByIdIn(match { 1L in it && 2L !in it })
                 }
@@ -253,7 +250,6 @@ class EventUpsertServiceStaleCleanupTest {
 
                 service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
 
-                // Upper bound should be the max scraped date (tomorrow), not far future
                 toDateSlot.captured shouldBe scrapedDate
 
                 // No deletions — the only event in range is still in the scraped list
@@ -287,7 +283,6 @@ class EventUpsertServiceStaleCleanupTest {
 
                 service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
 
-                // Only the stale event should be deleted
                 coVerify {
                     eventRepository.deleteByIdIn(match { it == listOf(3L) })
                 }
@@ -372,7 +367,6 @@ class EventUpsertServiceStaleCleanupTest {
                 fromDateSlot.captured shouldBe tomorrow
                 toDateSlot.captured shouldBe today
 
-                // No deletions should occur
                 coVerify(exactly = 0) {
                     eventRepository.deleteByIdIn(any())
                 }

@@ -138,8 +138,6 @@ fun resolveUrl(
  * Extracts the event slug from a Kulturhäuser-platform detail URL by stripping
  * the path [prefix] (default `/events/`) and any trailing slash.
  *
- * Example: `https://www.lido-berlin.de/events/2026-06-15-sorry` → `2026-06-15-sorry`.
- *
  * The slug is the stable URL identity even when its embedded date is stale (the
  * platform keeps the original slug when an event is rescheduled), so it is used
  * to build a stable `sourceId`. Shared by Astra and Lido.

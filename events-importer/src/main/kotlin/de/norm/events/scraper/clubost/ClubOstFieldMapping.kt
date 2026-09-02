@@ -11,7 +11,8 @@ import java.time.Month
 //
 // Both pages state the same date and start time, so both scrapers parse them the same way —
 // the overview so its fallback data is usable when a detail page fetch fails, the detail
-// page because it is the primary source for the stored event.
+// page because it is the primary source for the stored event. Every case is asserted in
+// ClubOstFieldMappingTest, which is where the examples live.
 
 /**
  * Placeholder sentences the templates print in place of an absent value — an empty
@@ -34,12 +35,6 @@ private val PLACEHOLDER_VALUES =
 /**
  * Returns [text] trimmed, or `null` when it is blank or one of the templates'
  * [PLACEHOLDER_VALUES].
- *
- * Example:
- * ```kotlin
- * withoutPlaceholder("No description available")  // null
- * withoutPlaceholder("Doors 23:00, RA presale")   // "Doors 23:00, RA presale"
- * ```
  */
 fun withoutPlaceholder(text: String?): String? =
     text
@@ -98,14 +93,6 @@ private const val HALF_DAY_HOURS = 12
  * The year is stated in full on every listing, so no weekday-based year inference is needed
  * here — unlike the retro venue pages that omit it. Returns `null` for null, blank,
  * differently-shaped, or calendrically impossible input ("Feb. 30, 2026").
- *
- * Example:
- * ```kotlin
- * parseClubOstDate("Aug. 7, 2026")    // LocalDate.of(2026, 8, 7)
- * parseClubOstDate("Sept. 18, 2026")  // LocalDate.of(2026, 9, 18)
- * parseClubOstDate("March 3, 2027")   // LocalDate.of(2027, 3, 3)
- * parseClubOstDate("7. August 2026")  // null (the German rendering — see DJANGO_MONTH_NAMES)
- * ```
  */
 fun parseClubOstDate(text: String?): LocalDate? {
     val match = DJANGO_DATE_PATTERN.find(text?.trim().orEmpty()) ?: return null
@@ -127,15 +114,6 @@ fun parseClubOstDate(text: String?): LocalDate? {
  * 12 p.m. — so those two are matched before the numeric pattern rather than left to fall
  * through as unparseable. A club whose nights start at midnight makes that a live case, not
  * a hypothetical one. Returns `null` for null, blank, or unparseable input.
- *
- * Example:
- * ```kotlin
- * parseClubOstTime("11 p.m.")    // LocalTime.of(23, 0)
- * parseClubOstTime("11:55 p.m.") // LocalTime.of(23, 55)
- * parseClubOstTime("midnight")   // LocalTime.MIDNIGHT
- * parseClubOstTime("noon")       // LocalTime.NOON
- * parseClubOstTime("TBA")        // null
- * ```
  */
 fun parseClubOstTime(text: String?): LocalTime? {
     val normalized = text?.trim()?.lowercase().orEmpty()

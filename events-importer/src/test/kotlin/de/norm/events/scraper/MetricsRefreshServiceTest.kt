@@ -126,12 +126,10 @@ class MetricsRefreshServiceTest {
         }
 
     /**
-     * #618: the source that has never worked is the one the monitoring could not see.
+     * #618: `last_success` appears only on a source's first success, so a never-run venue has no series.
      *
-     * `last_success` springs into existence on a source's first success, so a venue that has never
-     * imported had no series at all — and something with no series cannot be stale, late or failing.
-     * Measured on staging 2026-08-20: 86 sources, 84 series, and the two absent ones were the only
-     * two that were broken, while the dashboard read "0 sources stale".
+     * A source with no series cannot read as stale, late or failing on any dashboard.
+     * `has_succeeded` therefore exists for every enabled source, and holds 0 until the first success.
      */
     @Test
     fun `every source publishes has_succeeded, including one that never has`() =

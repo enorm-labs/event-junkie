@@ -10,17 +10,17 @@ import java.time.Instant
  * serves as the anchor for importing events from that venue's website.
  */
 data class Venue(
-    /** Database primary key, `null` before persistence. Example: `42` */
+    /** Database primary key, `null` before persistence. */
     val id: Long? = null,
-    /** Display name of the venue. Example: `"Astra Kulturhaus"` */
+    /** Display name of the venue. */
     val name: String,
     /** URL-friendly identifier, derived from the name. Example: `"astra-kulturhaus"` */
     val slug: String,
-    /** Street address of the venue. Example: `"Revaler Str. 99"` */
+    /** Street address of the venue. */
     val address: String? = null,
-    /** City where the venue is located. Example: `"Berlin"` */
+    /** City where the venue is located. */
     val city: String = "Berlin",
-    /** Postal code of the venue's address. Example: `"10245"` */
+    /** Postal code of the venue's address. */
     val postalCode: String? = null,
     /** Berlin borough (Bezirk) as a canonical slug. Example: `"friedrichshain-kreuzberg"` */
     val district: String? = null,
@@ -28,11 +28,11 @@ data class Venue(
     val latitude: BigDecimal? = null,
     /** Geographic longitude for map display. Example: `13.451803` */
     val longitude: BigDecimal? = null,
-    /** URL of the venue's official website. Example: `"https://www.astra-berlin.de"` */
+    /** URL of the venue's official website. */
     val websiteUrl: String? = null,
-    /** URL of the venue's logo or photo. Example: `"https://example.com/astra-logo.jpg"` */
+    /** URL of the venue's logo or photo. */
     val imageUrl: String? = null,
-    /** Short prose description of the venue, shown on the detail page. Example: `"A former power plant turned techno institution…"` */
+    /** Short prose description of the venue, shown on the detail page. */
     val description: String? = null,
     /** Timestamp when this record was first created. Set by the database. */
     val createdAt: Instant? = null,

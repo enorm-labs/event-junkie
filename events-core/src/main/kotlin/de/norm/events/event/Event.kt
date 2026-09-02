@@ -69,58 +69,58 @@ enum class EventStatus {
  * Core domain entity representing a music event at a venue.
  *
  * The [sourceId] field uniquely identifies this event from its import source,
- * enabling idempotent imports (upsert semantics). Format example: "astra:2026-06-12-the-adicts".
+ * enabling idempotent imports (upsert semantics).
  */
 data class Event(
-    /** Database primary key, `null` before persistence. Example: `101` */
+    /** Database primary key, `null` before persistence. */
     val id: Long? = null,
-    /** The venue where this event takes place. Example: Astra Kulturhaus */
+    /** The venue where this event takes place. */
     val venue: Venue,
     /** Artists performing at this event, with their roles and billing order. */
     val lineup: List<LineupEntry>,
-    /** Promoters or presenters responsible for this event. Example: 36 Concerts */
+    /** Promoters or presenters responsible for this event. */
     val promoters: List<Promoter>,
-    /** Main headline or name of the event. Example: `"THE ADICTS"` */
+    /** Main headline or name of the event. */
     val title: String,
-    /** Secondary line, often a tour name or support acts. Example: `"„Adios Amigos Tour 2026" + Support: MAID OF ACE + KAOS"` */
+    /** Secondary line, often a tour name or support acts. */
     val subtitle: String? = null,
-    /** Longer description or artist biography. Example: `"Formed in Ipswich in the late 1970s…"` */
+    /** Longer description or artist biography. */
     val description: String? = null,
-    /** Kind of event as categorized by the source venue. Example: [EventType.CONCERT] */
+    /** Kind of event as categorized by the source venue. */
     val eventType: EventType = EventType.CONCERT,
     /** URL-friendly identifier, typically derived from date and title. Example: `"2026-06-12-the-adicts"` */
     val slug: String,
-    /** Calendar date of the event. Example: `2026-06-12` */
+    /** Calendar date of the event. */
     val eventDate: LocalDate,
-    /** Time when doors open to the public. Example: `19:00` */
+    /** Time when doors open to the public. */
     val doorsTime: LocalTime? = null,
-    /** Time when the show/performance starts. Example: `20:00` */
+    /** Time when the show/performance starts. */
     val startTime: LocalTime? = null,
-    /** URL of the event's poster or flyer image. Example: `"https://example.com/adicts-poster.jpg"` */
+    /** URL of the event's poster or flyer image. */
     val imageUrl: String? = null,
-    /** Original URL on the source venue's website. Example: `"https://www.astra-berlin.de/events/2026-06-12-the-adicts"` */
+    /** Original URL on the source venue's website. */
     val sourceUrl: String? = null,
     /** Unique identifier from the import source for idempotent upserts. Example: `"astra:2026-06-12-the-adicts"` */
     val sourceId: String,
-    /** URL to the external ticket shop (eventim, ticketshop.live, etc.). Example: `"https://www.eventim.de/event/..."` */
+    /** URL to the external ticket shop (eventim, ticketshop.live, etc.). */
     val ticketUrl: String? = null,
-    /** Direct link to the Facebook event page. Example: `"https://fb.me/e/60JFqXAUr"` */
+    /** Direct link to the Facebook event page. */
     val facebookEventUrl: String? = null,
     /** Music genre or style tag as labelled by the source venue. Example: `"Punk"`, `"80s & 90s"` */
     val genre: String? = null,
-    /** Scheduling status of the event (handles relocated/cancelled events). Example: [EventStatus.RELOCATED] */
+    /** Scheduling status of the event (handles relocated/cancelled events). */
     val status: EventStatus = EventStatus.SCHEDULED,
-    /** Presale ticket price (Vorverkauf), `null` if not available. Example: `38.00` */
+    /** Presale ticket price (Vorverkauf), `null` if not available. */
     val pricePresale: BigDecimal? = null,
-    /** Box office ticket price (Abendkasse), `null` if not available. Example: `45.00` */
+    /** Box office ticket price (Abendkasse), `null` if not available. */
     val priceBoxOffice: BigDecimal? = null,
-    /** ISO 4217 currency code for prices. Example: `"EUR"` */
+    /** ISO 4217 currency code for prices. */
     val priceCurrency: String = "EUR",
     /** Free-form pricing note for non-standard pricing (e.g. "donation 2-5€", "free entry"). */
     val priceNote: String? = null,
-    /** Whether all tickets for this event are sold out. Example: `true` */
+    /** Whether all tickets for this event are sold out. */
     val soldOut: Boolean = false,
-    /** Whether this event is free to attend (no ticket needed / free entry). Example: `true` */
+    /** Whether this event is free to attend (no ticket needed / free entry). */
     val free: Boolean = false,
     /** Timestamp when this record was first created. Set by the database. */
     val createdAt: Instant? = null,
@@ -138,7 +138,7 @@ data class Event(
  */
 data class LineupEntry(
     val artist: Artist,
-    /** The artist's role in the event lineup. Example: [ArtistRole.SUPPORT] */
+    /** The artist's role in the event lineup. */
     val role: ArtistRole = ArtistRole.HEADLINER,
     /** Position in the lineup, lower numbers appear first. Example: `0` for headliner, `1` for first support */
     val billingOrder: Int = 0,

@@ -13,7 +13,8 @@ import de.norm.events.scraper.parseEventStatus
 // Urban Spree Berlin") and prefixes a cancelled show with a status marker ("CANCELLED -
 // SOM - Berlin - Urban Spree"). Both scrapers need the same cleanup: the overview so its
 // fallback data is usable when a detail page fails, the detail page because it is the
-// primary source for the stored title and the title-derived headliner.
+// primary source for the stored title and the title-derived headliner. Every case is asserted
+// in UrbanSpreeFieldMappingTest, which is where the examples live.
 
 /**
  * Urban Spree's own category labels, passed to
@@ -103,13 +104,6 @@ private val BILLING_NOTE_PATTERN =
  * the acts out of it with the shared
  * [extractSupportFromSubtitle][de.norm.events.scraper.extractSupportFromSubtitle]. Returns
  * the title unchanged with a `null` note when there is no such billing.
- *
- * Example:
- * ```kotlin
- * // ("WISBORG Phantomschmerz Tour - BERLIN", "| Special Guest: The Fright")
- * splitUrbanSpreeBilling("WISBORG Phantomschmerz Tour - BERLIN | Special Guest: The Fright")
- * splitUrbanSpreeBilling("JUD | Urban Spree Berlin")  // ("JUD | Urban Spree Berlin", null)
- * ```
  */
 fun splitUrbanSpreeBilling(title: String): Pair<String, String?> {
     val match = BILLING_NOTE_PATTERN.find(title)
@@ -121,12 +115,6 @@ fun splitUrbanSpreeBilling(title: String): Pair<String, String?> {
 /**
  * Reads the [EventStatus] an Urban Spree title announces via its leading status marker,
  * defaulting to [EventStatus.SCHEDULED] when there is none.
- *
- * Example:
- * ```kotlin
- * urbanSpreeStatus("CANCELLED - SOM - Berlin - Urban Spree")  // "CANCELLED"
- * urbanSpreeStatus("MÚR - Berlin")                            // "SCHEDULED"
- * ```
  */
 fun urbanSpreeStatus(title: String): String =
     STATUS_PREFIX_PATTERN
@@ -141,15 +129,6 @@ fun urbanSpreeStatus(title: String): String =
  * chains its tokens across several delimiters ("Coilguns - Berlin - Urban Spree"), and
  * each pass is guarded so a title that is *only* decoration is returned unchanged rather
  * than emptied.
- *
- * Example:
- * ```kotlin
- * cleanUrbanSpreeTitle("Coilguns - Berlin - Urban Spree")               // "Coilguns"
- * cleanUrbanSpreeTitle("JUD | Urban Spree Berlin")                      // "JUD"
- * cleanUrbanSpreeTitle("New Candys (IT Fuzz Club) live at Urban Spree") // "New Candys (IT Fuzz Club)"
- * cleanUrbanSpreeTitle("CANCELLED - SOM - Berlin - Urban Spree")        // "SOM"
- * cleanUrbanSpreeTitle("Isolation Berlin")                              // "Isolation Berlin"
- * ```
  */
 fun cleanUrbanSpreeTitle(title: String): String {
     var current = title.replaceFirst(STATUS_PREFIX_PATTERN, "").trim().ifBlank { title.trim() }

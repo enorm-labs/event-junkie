@@ -63,7 +63,6 @@ class EventImportServiceTest {
     private val genreTagRepository: GenreTagRepository = mockk(relaxed = true)
     private val venueRepository: VenueRepository = mockk(relaxed = true)
 
-    // Create a mock importer for CASSIOPEIA
     private val cassiopeiaImporter: EventImporter =
         mockk {
             coEvery { eventSource } returns EventSource.CASSIOPEIA
@@ -222,7 +221,6 @@ class EventImportServiceTest {
                 slug = "test-venue"
             )
 
-        // saveAll() returns a flow of entities with assigned IDs
         coEvery { eventRepository.saveAll(any<Iterable<EventEntity>>()) } answers {
             firstArg<Iterable<EventEntity>>()
                 .mapIndexed { index, entity ->
@@ -305,7 +303,6 @@ class EventImportServiceTest {
         @Test
         fun `no importer registered records misconfiguration`() =
             runTest {
-                // Create a service with no importers registered
                 val emptyService =
                     EventImportService(
                         eventSourceRepository = eventSourceRepository,
@@ -684,7 +681,6 @@ class EventImportServiceTest {
 
                 service.importFromSource(src)
 
-                // Verify artist was auto-created via the conflict-tolerant insert
                 coVerify {
                     artistRepository.insertIfAbsent("New Band", "new-band")
                 }
@@ -712,12 +708,10 @@ class EventImportServiceTest {
 
                 service.importFromSource(src)
 
-                // Should NOT create a new artist — reuse existing (no insert attempted)
                 coVerify(exactly = 0) {
                     artistRepository.insertIfAbsent(any(), any())
                 }
 
-                // Should create the event-artist association using the existing artist's ID
                 coVerify {
                     eventArtistRepository.saveAll(
                         match<Iterable<EventArtistEntity>> { entities ->
@@ -758,7 +752,6 @@ class EventImportServiceTest {
 
                 service.importFromSource(src)
 
-                // Verify saveAll was called with the existing event's ID (update, not insert)
                 coVerify {
                     eventRepository.saveAll(
                         match<Iterable<EventEntity>> { entities ->
@@ -806,7 +799,6 @@ class EventImportServiceTest {
                 result.imported shouldBe true
                 result.eventCount shouldBe 1
 
-                // saveAll should NOT be called — the event hasn't changed
                 coVerify(exactly = 0) {
                     eventRepository.saveAll(any<Iterable<EventEntity>>())
                 }
@@ -867,7 +859,6 @@ class EventImportServiceTest {
 
                 val result = service.importFromSource(src)
 
-                // Only 1 event should be upserted (duplicate dropped)
                 result.eventCount shouldBe 1
             }
     }
@@ -916,7 +907,6 @@ class EventImportServiceTest {
 
                 service.importFromSource(src)
 
-                // Stale event (id=2) should be deleted
                 coVerify {
                     eventRepository.deleteByIdIn(match { 2L in it })
                 }
@@ -932,7 +922,6 @@ class EventImportServiceTest {
 
                 service.importFromSource(src)
 
-                // No deletion should occur for empty import results
                 coVerify(exactly = 0) {
                     eventRepository.deleteByIdIn(any())
                 }
@@ -962,7 +951,6 @@ class EventImportServiceTest {
                 val results = service.importConcurrently(listOf(src1, src2, src3))
 
                 results.size shouldBe 3
-                // Result ordering must match input source ordering
                 results[0].sourceSlug shouldBe "source-1"
                 results[1].sourceSlug shouldBe "source-2"
                 results[2].sourceSlug shouldBe "source-3"
@@ -1147,7 +1135,6 @@ class EventImportServiceTest {
 
                 service.importFromSource(src)
 
-                // markSuccess should save with new etag/lastModified
                 coVerify {
                     eventSourceRepository.save(
                         match {
@@ -1187,9 +1174,7 @@ class EventImportServiceTest {
                 val result = service.importFromSource(src)
 
                 result.imported shouldBe true
-                // Verify re-fetch happened
                 coVerify { eventSourceRepository.findById(1L) }
-                // The retry save should have succeeded.
                 coVerify(atLeast = 2) { eventSourceRepository.save(any()) }
             }
 
