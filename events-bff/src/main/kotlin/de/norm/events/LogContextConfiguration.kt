@@ -52,9 +52,9 @@ class LogContextConfiguration {
          * These three describe one line — [RequestLoggingFilter]'s — and reach the ECS JSON through
          * `logger.at(…) { payload = … }` instead. Both land at the top level of the same object.
          *
-         * **Every name here is also written in `transform/parse_structured_logs`, in both cluster
-         * collector files, and nothing checks that the two agree.** A name that drifts produces no
-         * error and no row — see `docs/ops/PLATFORM_SETUP.md` §7 for the full set.
+         * **Every name here is also written in `transform/parse_structured_logs`, in the shared
+         * `deploy/clusters/base/collector.yaml`, and nothing checks that the two agree.** A name that
+         * drifts produces no error and no row — see `docs/ops/PLATFORM_SETUP.md` §7 for the full set.
          */
         const val HTTP_METHOD = "httpMethod"
 
@@ -65,10 +65,18 @@ class LogContextConfiguration {
          * The status we returned, as an **Int** — a string here would settle the OpenObserve column
          * as a string and break every later range query on it.
          *
-         * **The importer spells this same name**, in `LogContext.Fields`, for the status a venue's
+         * **The importer spells this same name**, in `LogFields`, for the status a venue's
          * server returned to *us*. One name, two directions: `httpstatus = 500` matches both "we are
          * broken" and "a venue is broken", and `service_name` is what separates them.
          */
         const val HTTP_STATUS = "httpStatus"
+
+        /**
+         * The object a storage warning is about, written only when one cannot be read (#980).
+         *
+         * High cardinality by construction, and acceptable only because the lines are rare. They
+         * fire on a missing or unreadable object, never per request.
+         */
+        const val STORAGE_KEY = "storageKey"
     }
 }
