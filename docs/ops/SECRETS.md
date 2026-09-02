@@ -150,6 +150,9 @@ Until it exists, the `github-dispatch` Provider reconciles into a failed state a
 credential to use. Once it exists, notification-controller picks it up on its next reconcile, and **nothing needs restarting**. The order does not matter, only that
 both eventually exist.
 
+**Existence is not the check, and a rotation is exactly when this bites.** A present but read-only token looks identical from here — see
+[CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8 for the probe that separates them, and run it after every regeneration.
+
 **On `openobserve-credentials` (#271): hand-made.** Two assets in one Secret, and the second is the one that decides it.
 
 The root login buys the observability stack: every log line and metric staging holds. LEGAL.md §7.5 is explicit that log content can carry personal data, so
