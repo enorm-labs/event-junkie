@@ -8,6 +8,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.labelledTime
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime

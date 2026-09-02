@@ -69,6 +69,17 @@ fun parseTime(
 }
 
 /**
+ * Extracts the `HH:mm` time that [label] introduces in [text], or `null` when the label is absent.
+ *
+ * Venues flatten doors and start onto one line, so the label is the only thing separating them
+ * (`"Einlass: 19:00 Beginn: 20:00"`). The colon is optional and the match ignores case.
+ */
+fun labelledTime(
+    text: String,
+    label: String
+): String? = Regex("""$label\s*:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE).find(text)?.groupValues?.get(1)
+
+/**
  * Parses the date portion from an ISO 8601 date-time string.
  *
  * Handles both full datetime (`"2026-05-16T20:00"`) and date-only

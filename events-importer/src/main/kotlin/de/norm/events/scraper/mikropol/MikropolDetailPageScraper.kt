@@ -9,6 +9,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.labelledTime
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseIsoDate
@@ -97,9 +98,3 @@ class MikropolDetailPageScraper {
         private const val SOLD_OUT_TEXT = "ausverkauft"
     }
 }
-
-/** Matches a `HH:mm` time following a German [label] (e.g. `"Beginn: 20:00"` → `"20:00"`), or `null`. */
-private fun labelledTime(
-    text: String,
-    label: String
-): String? = Regex("""$label\s*:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE).find(text)?.groupValues?.get(1)
