@@ -6,6 +6,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.labelledTime
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
@@ -214,15 +215,6 @@ class ColumbiahalleOverviewPageScraper {
         private val FROM_PRICE_PATTERN = Regex("""\b(ab|an)\b\s*\d""", RegexOption.IGNORE_CASE)
     }
 }
-
-/**
- * Matches the `HH:mm` time introduced by [label] in the flattened `.zeit` column
- * (`"Einlass: 18:30 Uhr Beginn: 20:00 Uhr"`), or `null` when the label is absent.
- */
-private fun labelledTime(
-    text: String,
-    label: String
-): String? = Regex("""$label\s*:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE).find(text)?.groupValues?.get(1)
 
 /**
  * Parses a German month heading ("August 2026", "März 2027") into a [YearMonth], or `null` when it

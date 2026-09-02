@@ -7,6 +7,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.labelledTime
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
@@ -126,12 +127,3 @@ private const val START_LABEL = "Beginn"
  */
 internal fun parseHuxleysStatus(card: Element): String =
     parseEventStatus("${card.className()} ${card.textAt(".canceledsoldout").orEmpty()} ${card.textAt(".anderungen").orEmpty()}")
-
-/**
- * Matches the `HH:mm` time introduced by [label] on a `Beginn: 20:00 | Einlass: 19:00` line, or
- * `null` when the label is absent.
- */
-internal fun labelledTime(
-    text: String,
-    label: String
-): String? = Regex("""$label\s*:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE).find(text)?.groupValues?.get(1)
