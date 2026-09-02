@@ -202,10 +202,16 @@ key exists. It cannot tell you a translation is good, or that a claim is still t
 
 ### Product
 
-| Done | Item                              | Evidence |
-| ---- | --------------------------------- | -------- |
-|      | The beta badge decision           | #295     |
-|      | Maintenance mode, if wanted first | #296     |
+| Done | Item                              | Evidence    |
+| ---- | --------------------------------- | ----------- |
+|      | The beta badge decision           | #295        |
+|      | Maintenance mode, if wanted first | #296        |
+|      | The README says the site is live  | `README.md` |
+
+**The README claims a status in two places, and both are wrong the moment the apex serves.** The badge near the top
+reads `Status-In Development`, and § Status opens with "In development — deployed, but not public yet." Change the
+badge to `Status-Live-brightgreen`, and rewrite the section around what production serves. One without the other
+leaves the page contradicting itself.
 
 ## 2 · What is deliberately not here
 
