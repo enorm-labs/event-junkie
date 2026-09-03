@@ -118,7 +118,7 @@ const localePath = useLocalePath()
       <h2>Rechte an Texten und Bildern</h2>
       <p>
         Beschreibungen, Bilder und anderes Material von Locations, Veranstaltern und Künstlerinnen
-        bleiben Eigentum der jeweiligen Rechteinhaber. Wer Rechte an etwas hält, das hier zu sehen
+        und Künstlern bleiben Eigentum der jeweiligen Rechteinhaber. Wer Rechte an etwas hält, das hier zu sehen
         ist, und die Entfernung möchte, findet den Weg im
         <RouterLink :to="localePath('/legal/imprint')">Impressum</RouterLink>. Bei einem Bild
         löschen wir dabei auch die Kopie, die auf unseren Servern liegt.

@@ -80,7 +80,7 @@ const { t } = useI18n()
     </section>
 
     <section>
-      <!-- „Alle Angaben ohne Gewähr" im förmlichen Register (§7.6). Die Fußzeile trägt die
+      <!-- „Alle Angaben ohne Gewähr“ im förmlichen Register (§7.6). Die Fußzeile trägt die
            umgangssprachliche Fassung, die tatsächlich gelesen wird. -->
       <h2>Haftung für Inhalte</h2>
       <p>
