@@ -37,10 +37,7 @@ class ImageFetcherTest {
         ImageFetcher(
             webClient = testWebClient(),
             ioDispatcher = Dispatchers.IO,
-            validator =
-                object : ImageUrlValidator() {
-                    override fun reject(url: String): String? = null
-                },
+            validator = permissiveValidator(),
             properties = properties
         )
 
