@@ -31,9 +31,13 @@ rises means something is serialising: an exhausted R2DBC connection pool, a bloc
 well until it doesn't, which is precisely why this test exists.
 
 **`ratelimit.js` measures the middleware, not the application**, so it is the one script that says nothing at all against a laptop. It exercises
-`ingress.rateLimit.perSource` (#268) and fails a run two ways: a 429 during ordinary browsing, and **no** 429 under abuse. Either alone is worthless — a limit
-nobody meets and a limit that never engages look identical from the outside. Its unit is a whole page view, images and fonts included, because one Ingress
-carries the site and they all spend the same budget.
+`ingress.rateLimit.perSource` (#268) and fails a run three ways: **any response that is neither 200 nor 429**, a 429 during ordinary browsing, and **no** 429
+under abuse. Its unit is a whole page view, images and fonts included, because one Ingress carries the site and they all spend the same budget.
+
+**Read the three in that order, because the first invalidates the other two.** A rejection is a 429, and a site that is not routing answers 404 — so a dead
+environment scores zero rejections in both scenarios and the verdict reads as a limit that never engages. That is not a hypothetical: this script reported
+`ordinary browsing rejected ... 0` for the whole 45 minutes staging spent answering Traefik's own 404 on every path, and an external probe is what caught it.
+`rl_broken` now fails that run and names the status it saw.
 
 ```bash
 k6 run -e BFF_HOST=https://staging.event-junkie.de \

@@ -19,8 +19,10 @@
  *
  * **The scenarios run in sequence, never together**, because they share a source address — this
  * machine's — and therefore one token bucket. `abuse` starts after `browsing` has finished and the
- * bucket has had time to refill; overlapping them would fail `browsing` for the obvious wrong
- * reason. Do not "speed it up" by removing `startTime`.
+ * bucket has had time to refill. Do not "speed it up" by shortening `startTime`: cutting it to 12
+ * seconds against healthy staging put the flood on top of the visitor and reported
+ * `visitor rejected ... 10  → TOO TIGHT`, which is a verdict about the schedule rather than the
+ * limit.
  *
  * **The unit is a page view, not an API call.** One Ingress carries the whole site, so the budget
  * is spent by the HTML, the JS chunks, the fonts and every venue image as well as the queries.
@@ -63,6 +65,20 @@ const ABUSE_STREAMS = Number(__ENV.ABUSE_STREAMS || 10)
  */
 const browsingRejected = new Counter('rl_rejected_browsing')
 const abuseRejected = new Counter('rl_rejected_abuse')
+
+/**
+ * Anything that answered neither 200 nor 429, which is **the counter that stops this script lying.**
+ *
+ * The two above ask whether a request was *rejected by the limit*, and a 404 is not a 429. So a site
+ * that is not routing at all scores zero rejections in both scenarios, and the verdict reads as a
+ * limit nobody meets. That is exactly what happened while staging was down for 45 minutes (#268):
+ * this script reported `ordinary browsing rejected ... 0` against a site answering Traefik's own 404
+ * on every path, and only an external probe caught it.
+ *
+ * A dead site now fails on `rl_broken`, and the summary names the status it saw.
+ */
+const broken = new Counter('rl_broken')
+const brokenStatus = {}
 
 /**
  * `RESOLVE` is `host:ip`, for reaching an environment whose name does not resolve publicly.
@@ -111,6 +127,10 @@ export const options = {
         // and no acceptable version of a limit that lets a flood through untouched.
         rl_rejected_browsing: ['count==0'],
         rl_rejected_abuse: ['count>0'],
+        // **Read these two before either finding above.** A site that is not serving scores zero on
+        // both counters, so without them the verdict on a dead site is "the limit never engaged".
+        rl_broken: ['count==0'],
+        checks: ['rate==1'],
     },
     // A 429 is the point of this script, so k6's default "4xx and 5xx are failures" would report a
     // successful run as a catastrophe. The counters above carry the verdict instead.
@@ -127,8 +147,19 @@ function imageUrls(body, limit) {
     return [...new Set(body.match(/\/api\/images\/[A-Za-z0-9/._-]+/g) || [])].slice(0, limit)
 }
 
-function countRejections(response, counter) {
-    if (response.status === 429) counter.add(1)
+/**
+ * Sort one response into the only three outcomes this script accepts.
+ *
+ * 200 is a served request, 429 is the limit doing its job, and **everything else means the run has
+ * not measured what it claims to measure** — a 404 from a dropped router, a 502 from a pod that is
+ * not ready, a 0 from a connection that never opened.
+ */
+function record(response, rejected) {
+    if (response.status === 429) rejected.add(1)
+    else if (response.status !== 200) {
+        broken.add(1)
+        brokenStatus[response.status] = (brokenStatus[response.status] || 0) + 1
+    }
     return response.status
 }
 
@@ -141,24 +172,29 @@ function countRejections(response, counter) {
  */
 export function browsing() {
     const index = http.get(`${ORIGIN}/`, {tags: {group: 'page', name: '/'}})
-    countRejections(index, browsingRejected)
-    check(index, {'document is served': (r) => r.status === 200})
+    record(index, browsingRejected)
+    // The document is checked rather than merely counted, because a first visit that fetched no
+    // HTML has no assets and no images to fetch either — so every later counter reads zero and the
+    // run looks quiet instead of broken.
+    check(index, {'the document is served': (r) => r.status === 200})
 
-    for (const asset of preloadedAssets(index.body || '')) {
-        countRejections(http.get(`${ORIGIN}${asset}`, {tags: {group: 'page', name: '/assets/*'}}), browsingRejected)
+    const assets = preloadedAssets(index.body || '')
+    check(assets, {'the document preloads its assets': (list) => list.length > 0})
+    for (const asset of assets) {
+        record(http.get(`${ORIGIN}${asset}`, {tags: {group: 'page', name: '/assets/*'}}), browsingRejected)
     }
 
     const events = http.get(`${BASE_URL}/events?size=20`, {tags: {group: 'list', name: '/events'}})
-    countRejections(events, browsingRejected)
+    record(events, browsingRejected)
+    check(events, {'the events query is answered': (r) => r.status === 200})
 
     // Capped at 20 because that is a full page of cards, each rendering one `<picture>`. The real
     // browser fetches fewer — the `<img>` is `loading="lazy"` — so this is the worst case, which is
     // the only case worth setting a limit against.
     for (const image of imageUrls(events.body || '', 20)) {
-        countRejections(http.get(`${ORIGIN}${image}`, {tags: {group: 'image', name: '/api/images/*'}}), browsingRejected)
+        record(http.get(`${ORIGIN}${image}`, {tags: {group: 'image', name: '/api/images/*'}}), browsingRejected)
     }
 
-    check(browsingRejected, {'no request was rejected during ordinary browsing': () => true})
     sleep(5)
 }
 
@@ -170,7 +206,7 @@ export function browsing() {
  * from one address is not.
  */
 export function abuse() {
-    countRejections(http.get(`${BASE_URL}/meta`, {tags: {group: 'detail', name: '/meta'}}), abuseRejected)
+    record(http.get(`${BASE_URL}/meta`, {tags: {group: 'detail', name: '/meta'}}), abuseRejected)
 }
 
 /**
@@ -181,17 +217,32 @@ export function handleSummary(data) {
     const count = (name) => (data.metrics[name] && data.metrics[name].values.count) || 0
     const browsingHits = count('rl_rejected_browsing')
     const abuseHits = count('rl_rejected_abuse')
-    const verdict = [
+    const brokenHits = count('rl_broken')
+    const seen = Object.keys(brokenStatus)
+        .map((status) => `${status}×${brokenStatus[status]}`)
+        .join(' ')
+
+    // Every line carries the same `| ` marker. The verdict was once lost to a `grep -v` on a word
+    // one line happened to start with, and a summary that a filter can silently halve is not a
+    // summary. Nothing here starts with a scenario name for the same reason.
+    const lines = [
         '',
-        '  Rate limit — the two questions',
-        `    ordinary browsing rejected ... ${browsingHits}  (must be 0)`,
-        `    abuse rejected ............... ${abuseHits}  (must be above 0)`,
-        browsingHits === 0 && abuseHits > 0
-            ? '    → the limit engages, and a visitor never meets it.'
-            : browsingHits > 0
-              ? '    → TOO TIGHT. A visitor is being rejected; raise burst before anything else.'
-              : '    → NOT ENGAGING. Nothing was limited, so this is indistinguishable from no limit.',
-        '',
-    ].join('\n')
-    return {stdout: verdict}
+        '| Rate limit — the questions, in the order they invalidate each other',
+        `|   neither 200 nor 429 .... ${brokenHits}  (must be 0)${seen ? `   saw: ${seen}` : ''}`,
+        `|   visitor rejected ....... ${browsingHits}  (must be 0)`,
+        `|   flood rejected ......... ${abuseHits}  (must be above 0)`,
+    ]
+
+    if (brokenHits > 0) {
+        lines.push('| → MEASURED NOTHING. The site is not answering, so both counts below it are')
+        lines.push('|   silence rather than evidence. Fix the environment, then re-run.')
+    } else if (browsingHits > 0) {
+        lines.push('| → TOO TIGHT. A visitor is being rejected; raise burst before anything else.')
+    } else if (abuseHits === 0) {
+        lines.push('| → NOT ENGAGING. Nothing was limited, which is indistinguishable from no limit.')
+    } else {
+        lines.push('| → The limit engages, and a visitor never meets it.')
+    }
+
+    return {stdout: `${lines.join('\n')}\n\n`}
 }
