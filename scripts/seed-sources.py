@@ -76,19 +76,23 @@ def parse_seed(path):
 
 
 def fetch_all(host, path):
-    """Read every page. The listings answer with a bare array, so a short page is the only end
-    marker a caller gets (#810). Reading one page looks exactly like reading all of them."""
-    out, page = [], 0
+    """Read every page, and check the count against the total the API reports.
+
+    The listings carry `totalElements` since #810, so a partial read is detectable rather than
+    indistinguishable from a small table."""
+    out, page, total = [], 0, 0
     while True:
-        batch = request(f"{host}{path}?page={page}&size={PAGE_SIZE}&sort=name,asc")
-        if isinstance(batch, dict):
-            batch = batch.get("content", [])
-        out.extend(batch)
-        if len(batch) < PAGE_SIZE:
-            return out
+        body = request(f"{host}{path}?page={page}&size={PAGE_SIZE}&sort=name,asc")
+        total = body["totalElements"]
+        out.extend(body["content"])
+        if len(out) >= total:
+            break
         page += 1
         if page > MAX_PAGES:
             sys.exit(f"Stopped after {MAX_PAGES} pages of {path}. The listing is not terminating.")
+    if len(out) != total:
+        sys.exit(f"Read {len(out)} of {total} from {path}. Refusing to act on a partial listing.")
+    return out
 
 
 def request(url, method="GET", body=None):

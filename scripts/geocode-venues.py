@@ -167,22 +167,26 @@ def venues_from_seed(path):
 
 
 def venues_from_host(host):
-    """Read the live rows, which is the only place a slug exists."""
-    out, page = [], 0
+    """Read the live rows, which is the only place a slug exists.
+
+    The count is checked against the total the listing reports (#810), so reading part of the table
+    fails here rather than producing a geocode run that quietly covers a fraction of the venues."""
+    out, page, total = [], 0, 0
     while True:
         url = f"{host}/api/admin/venues?page={page}&size={PAGE_SIZE}&sort=name,asc"
         req = urllib.request.Request(url, headers={"Accept": "application/json"})
         with urllib.request.urlopen(req, timeout=30) as r:
-            batch = json.loads(r.read().decode() or "[]")
-        if isinstance(batch, dict):
-            batch = batch.get("content", [])
-        out.extend(batch)
-        # A short page is the only end marker the listing gives (#810).
-        if len(batch) < PAGE_SIZE:
-            return out
+            body = json.loads(r.read().decode() or "{}")
+        total = body["totalElements"]
+        out.extend(body["content"])
+        if len(out) >= total:
+            break
         page += 1
         if page > MAX_PAGES:
             sys.exit(f"Stopped after {MAX_PAGES} pages of venues. The listing is not terminating.")
+    if len(out) != total:
+        sys.exit(f"Read {len(out)} of {total} venues. Refusing to act on a partial listing.")
+    return out
 
 
 def query_for(venue):

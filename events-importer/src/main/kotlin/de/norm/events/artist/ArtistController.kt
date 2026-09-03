@@ -1,9 +1,9 @@
 package de.norm.events.artist
 
+import de.norm.events.common.PageResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import kotlinx.coroutines.flow.Flow
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -28,9 +28,9 @@ class ArtistController(
 ) {
     @GetMapping
     @Operation(summary = "List all artists with pagination")
-    fun findAll(
+    suspend fun findAll(
         @PageableDefault(size = 20, sort = ["name"]) pageable: Pageable
-    ): Flow<ArtistResponse> = artistService.findAll(pageable)
+    ): PageResponse<ArtistResponse> = artistService.findAll(pageable)
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a single artist by ID")

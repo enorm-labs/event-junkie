@@ -8,5 +8,5 @@ import org.springframework.modulith.ApplicationModule
  * Genre tags are standalone entities with no dependencies on other modules.
  * The slug module is used for generating URL-friendly slugs from genre names.
  */
-@ApplicationModule(allowedDependencies = ["slug"])
+@ApplicationModule(allowedDependencies = ["slug", "common"])
 class GenreTagModule

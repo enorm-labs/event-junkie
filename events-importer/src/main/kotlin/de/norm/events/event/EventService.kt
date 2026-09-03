@@ -2,6 +2,7 @@ package de.norm.events.event
 
 import de.norm.events.artist.ArtistNotFoundException
 import de.norm.events.artist.ArtistRepository
+import de.norm.events.common.PageResponse
 import de.norm.events.genretag.EventGenreTagEntity
 import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagEntity
@@ -52,9 +53,10 @@ class EventService(
      * of the number of events.
      */
     @Transactional(readOnly = true)
-    suspend fun findAll(pageable: Pageable): List<EventResponse> {
+    suspend fun findAll(pageable: Pageable): PageResponse<EventResponse> {
+        val total = eventRepository.count()
         val entities = eventRepository.findAllBy(pageable).toList()
-        if (entities.isEmpty()) return emptyList()
+        if (entities.isEmpty()) return PageResponse.of(emptyList(), pageable, total)
 
         val eventIds = entities.map { requireNotNull(it.id) { "Persisted event must have an ID" } }
 
@@ -76,13 +78,15 @@ class EventService(
                 emptyMap()
             }
 
-        return entities.map { entity ->
-            val artists = artistsByEventId[entity.id]?.map { EventArtistResponse.fromEntity(it) } ?: emptyList()
-            val promoters = promotersByEventId[entity.id]?.map { it.promoterId } ?: emptyList()
-            val genreTags = genreTagsByEventId[entity.id]?.mapNotNull { genreTagNamesById[it.genreTagId] } ?: emptyList()
+        val content =
+            entities.map { entity ->
+                val artists = artistsByEventId[entity.id]?.map { EventArtistResponse.fromEntity(it) } ?: emptyList()
+                val promoters = promotersByEventId[entity.id]?.map { it.promoterId } ?: emptyList()
+                val genreTags = genreTagsByEventId[entity.id]?.mapNotNull { genreTagNamesById[it.genreTagId] } ?: emptyList()
 
-            toResponse(entity, artists, promoters, genreTags)
-        }
+                toResponse(entity, artists, promoters, genreTags)
+            }
+        return PageResponse.of(content, pageable, total)
     }
 
     /**

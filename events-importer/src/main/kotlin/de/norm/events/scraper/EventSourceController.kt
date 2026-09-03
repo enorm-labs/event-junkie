@@ -1,9 +1,9 @@
 package de.norm.events.scraper
 
+import de.norm.events.common.PageResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import kotlinx.coroutines.flow.Flow
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -76,9 +76,9 @@ class EventSourceController(
      */
     @GetMapping
     @Operation(summary = "List all event sources with their status")
-    fun listSources(
+    suspend fun listSources(
         @PageableDefault(size = 20, sort = ["name"]) pageable: Pageable
-    ): Flow<EventSourceResponse> = eventSourceService.findAll(pageable)
+    ): PageResponse<EventSourceResponse> = eventSourceService.findAll(pageable)
 
     /**
      * Creates a new event source.

@@ -1,9 +1,9 @@
 package de.norm.events.venue
 
+import de.norm.events.common.PageResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import kotlinx.coroutines.flow.Flow
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -32,9 +32,9 @@ class VenueController(
     /** Lists venues with pagination and sorting. */
     @GetMapping
     @Operation(summary = "List all venues with pagination")
-    fun findAll(
+    suspend fun findAll(
         @PageableDefault(size = 20, sort = ["name"]) pageable: Pageable
-    ): Flow<VenueResponse> = venueService.findAll(pageable)
+    ): PageResponse<VenueResponse> = venueService.findAll(pageable)
 
     /** Retrieves a single venue by its database ID. */
     @GetMapping("/{id}")

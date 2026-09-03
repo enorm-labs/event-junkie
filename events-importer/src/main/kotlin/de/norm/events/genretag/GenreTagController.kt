@@ -1,5 +1,6 @@
 package de.norm.events.genretag
 
+import de.norm.events.common.PageResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.data.domain.Pageable
@@ -25,8 +26,12 @@ class GenreTagController(
     @GetMapping
     @Operation(summary = "List all genre tags with pagination")
     suspend fun findAll(
+        // 100 rather than the 20 the other admin lists default to, and deliberately so: genre tags
+        // are a small bounded table read to fill a dropdown, so one request usually returns all of
+        // them. The envelope reports the total either way, which is what makes the difference a
+        // convenience rather than a trap (#810).
         @PageableDefault(size = 100, sort = ["name"]) pageable: Pageable
-    ): List<GenreTagResponse> = genreTagService.findAll(pageable)
+    ): PageResponse<GenreTagResponse> = genreTagService.findAll(pageable)
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a single genre tag by ID")

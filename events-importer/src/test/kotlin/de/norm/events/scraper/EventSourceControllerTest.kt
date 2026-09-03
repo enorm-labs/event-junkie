@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.common.PageResponse
 import de.norm.events.venue.VenueRequest
 import de.norm.events.venue.VenueRequestFixtures
 import de.norm.events.venue.VenueResponse
@@ -128,12 +129,16 @@ class EventSourceControllerTest : BaseControllerTest() {
                 .exchange()
                 .expectStatus()
                 .isOk
-                .expectBody<List<EventSourceResponse>>()
+                .expectBody<PageResponse<EventSourceResponse>>()
                 .returnResult()
                 .responseBody!!
 
-        sources.size shouldBeGreaterThanOrEqual 1
-        sources.map { it.id } shouldContain created.id
+        // `.content`, never `.size`: on the envelope that field is the *page* size, so an assertion
+        // written against it passes whatever the listing returned (#810).
+        sources.content.size shouldBeGreaterThanOrEqual 1
+        sources.content.map { it.id } shouldContain created.id
+        // Everything created here fits on one page, so the total must equal what came back.
+        sources.totalElements shouldBe sources.content.size.toLong()
     }
 
     @Test

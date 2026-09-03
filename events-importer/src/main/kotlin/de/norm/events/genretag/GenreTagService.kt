@@ -1,5 +1,6 @@
 package de.norm.events.genretag
 
+import de.norm.events.common.PageResponse
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -22,11 +23,12 @@ class GenreTagService(
      * Intended for frontend filter dropdowns. Default sort is by `name`.
      */
     @Transactional(readOnly = true)
-    suspend fun findAll(pageable: Pageable): List<GenreTagResponse> =
-        genreTagRepository
-            .findAllBy(pageable)
-            .toList()
-            .map { GenreTagResponse.fromDomain(it.toDomain()) }
+    suspend fun findAll(pageable: Pageable): PageResponse<GenreTagResponse> =
+        PageResponse.of(
+            genreTagRepository.findAllBy(pageable).toList().map { GenreTagResponse.fromDomain(it.toDomain()) },
+            pageable,
+            genreTagRepository.count()
+        )
 
     /**
      * Finds a single genre tag by its database [id].
