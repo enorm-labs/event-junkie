@@ -19,12 +19,22 @@
 # the board for something meant to stay open — and if a card fails to move after a merge, those
 # workflow settings are the first place to look, not this script.
 #
-# **`batch` exists because the single-issue path re-resolves everything on every call** — four to
-# five GraphQL requests each, the item list being the expensive one. Sixteen back-to-back calls trip
-# GitHub's **secondary** rate limiter, the one governing mutations, and it fails in a way that reads
-# as a bug: `gh` reports "API rate limit exceeded" while `gh api rate_limit` still shows thousands of
-# points, because the two budgets are counted separately. `batch` resolves once, then issues at most
-# two mutations per issue.
+# **`batch` exists because the single-issue path re-resolves everything on every call.** It resolves
+# the project and both fields once for the run, then issues at most two mutations per issue.
+#
+# **Every lookup here is a targeted query, and that is not a style preference (#1040).** GitHub
+# prices a GraphQL request by the nodes it could return, against 5,000 points per hour per user. The
+# obvious `gh project` subcommands are enormous at that scale — `item-list --limit 500` costs 405
+# points to find one id, and `field-list --limit 50` costs 102 to read two fields — so one board
+# update cost 512 points and nine of them exhausted the hourly budget for every other `gh` command
+# too. The two queries below cost 1 point each. **Do not replace them with `gh project item-list` or
+# `gh project field-list` for readability.**
+#
+# **`gh api rate_limit` lies about GraphQL**, which is what made this hard to see: it reported
+# `remaining=5000/5000, used=0` while writes were being refused, so the failures read as GitHub's
+# secondary limiter and were treated as one for most of a day. The truth is in the response headers
+# of a real GraphQL call — `X-Ratelimit-Used` on `gh api graphql --include`. There is no secondary
+# limit involved here; measure with the header, never with `rate_limit`.
 #
 # Batch input is one issue per line, `<issue> [status] [priority]`. A status may contain spaces ("In
 # progress"), so the priority is recognised **by shape from the end of the line** rather than by
@@ -51,16 +61,80 @@ need() { command -v "$1" >/dev/null 2>&1 || die "'$1' is required but not instal
 need gh
 need jq
 
-project_id() { gh project view "$PROJECT_NUMBER" --owner "$PROJECT_OWNER" --format json --jq '.id'; }
-fields() { gh project field-list "$PROJECT_NUMBER" --owner "$PROJECT_OWNER" --limit 50 --format json; }
+# The project id and every single-select field with its options, in one 1-point query. `first: 20`
+# is a real ceiling rather than a large number chosen for safety: the board has three fields, and a
+# query that could return 500 of anything is what made the old path cost 405 points.
+#
+# The shape is `{fields: [{id, name, options: [{id, name}]}]}`, which is what the `*_of` helpers
+# below expect: they take one payload and print from it, so every caller pays for a single query.
+PROJECT_PAYLOAD=""
+project_payload() {
+    [[ -n "$PROJECT_PAYLOAD" ]] && { printf '%s' "$PROJECT_PAYLOAD"; return 0; }
+    # shellcheck disable=SC2016
+    # `$org` and `$number` are GraphQL variables bound by the `-F` flags below, not shell ones.
+    PROJECT_PAYLOAD="$(gh api graphql -f query='
+      query($org:String!,$number:Int!){
+        organization(login:$org){
+          projectV2(number:$number){
+            id
+            fields(first:20){
+              nodes{ ... on ProjectV2SingleSelectField{ id name options{ id name } } }
+            }
+          }
+        }
+      }' -F org="$PROJECT_OWNER" -F number="$PROJECT_NUMBER" --jq '
+        {id: .data.organization.projectV2.id,
+         fields: [.data.organization.projectV2.fields.nodes[] | select(.name)]}')" ||
+        die "could not read project #$PROJECT_NUMBER for $PROJECT_OWNER"
+    printf '%s' "$PROJECT_PAYLOAD"
+}
+
+project_id() { project_payload | jq -r '.id'; }
+fields() { project_payload; }
+
+# One issue's board item, with the field values already on it, in one 1-point query. It replaces a
+# 405-point `item-list --limit 500` and it is what makes `show` cheap as well as the writes.
+#
+# It emits the item object or nothing, so callers test for empty rather than for an exit code —
+# an issue that is not on the board is a normal result here, not an error.
+#
+# `projectItems(first: 20)` because an issue can sit on several boards; the filter picks ours by
+# number rather than trusting the order.
+item_lookup() {
+    local number="$1"
+    # shellcheck disable=SC2016
+    # GraphQL variables again — bound by `-F`, and single quotes are what keep the shell out of them.
+    gh api graphql -f query='
+      query($owner:String!,$repo:String!,$number:Int!){
+        repository(owner:$owner,name:$repo){
+          issue(number:$number){
+            projectItems(first:20){
+              nodes{
+                id
+                project{ number }
+                fieldValues(first:20){
+                  nodes{
+                    ... on ProjectV2ItemFieldSingleSelectValue{
+                      name
+                      field{ ... on ProjectV2SingleSelectField{ name } }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }' -F owner="${REPO%%/*}" -F repo="${REPO#*/}" -F number="$number" \
+        --jq ".data.repository.issue.projectItems.nodes[]
+              | select(.project.number == $PROJECT_NUMBER)" 2>/dev/null || true
+}
 
 # The board item for an issue, adding the issue to the board if it is not there yet. `item-add`
 # is idempotent on the API side, but calling it unconditionally would churn the item's updatedAt
 # on every status change, so it only runs when the lookup misses.
 item_id() {
     local number="$1" id
-    id="$(gh project item-list "$PROJECT_NUMBER" --owner "$PROJECT_OWNER" --limit 500 --format json |
-        jq -r --argjson n "$number" '.items[] | select(.content.number == $n) | .id')"
+    id="$(item_lookup "$number" | jq -r '.id // empty')"
     if [[ -z "$id" ]]; then
         id="$(gh project item-add "$PROJECT_NUMBER" --owner "$PROJECT_OWNER" \
             --url "https://github.com/$REPO/issues/$number" --format json --jq '.id')"
@@ -115,7 +189,7 @@ priority_option() {
 # The item list is fetched once into BATCH_ITEMS and then treated as a local index. An issue that
 # is not on the board is added, and the new id is folded back into the index so a second line for
 # the same issue is a lookup rather than another `item-add`.
-BATCH_ITEMS=""
+BATCH_ITEMS='{"items":[]}'
 
 # The field separator for a parsed row. It must NOT be a tab: tab is IFS *whitespace*, so `read`
 # collapses runs of it and discards empty fields — which silently shifts every column after an
@@ -133,8 +207,12 @@ US=$'\037'
 BATCH_ITEM_ID=""
 batch_item_id() {
     local number="$1"
+    # The cache is consulted first and holds only ids this run added, so a repeated issue costs
+    # nothing. A lookup miss on a board of any size is one point, which is why there is no longer a
+    # pre-fetched index to consult.
     BATCH_ITEM_ID="$(jq -r --argjson n "$number" \
         'first(.items[] | select(.content.number == $n) | .id) // empty' <<<"$BATCH_ITEMS")"
+    [[ -n "$BATCH_ITEM_ID" ]] || BATCH_ITEM_ID="$(item_lookup "$number" | jq -r '.id // empty')"
     if [[ -z "$BATCH_ITEM_ID" ]]; then
         BATCH_ITEM_ID="$(gh project item-add "$PROJECT_NUMBER" --owner "$PROJECT_OWNER" \
             --url "https://github.com/$REPO/issues/$number" --format json --jq '.id')"
@@ -223,8 +301,6 @@ batch() {
 
     # Pass 2 — apply. Two ids resolved for the whole run, two mutations per issue at most.
     pid="$(project_id)"
-    BATCH_ITEMS="$(gh project item-list "$PROJECT_NUMBER" --owner "$PROJECT_OWNER" \
-        --limit 500 --format json)"
 
     local row number s_opt p_opt s_label p_label item
     for row in "${rows[@]}"; do
@@ -258,9 +334,10 @@ show() {
   milestone \(.milestone.title // "—")
   labels    \([.labels[].name] | join(", "))
   assignee  \([.assignees[].login] | join(", ") | if . == "" then "—" else . end)"'
-    gh project item-list "$PROJECT_NUMBER" --owner "$PROJECT_OWNER" --limit 500 --format json |
-        jq -r --argjson n "$number" '.items[] | select(.content.number == $n) |
-          "  status    \(.status // "—")\n  priority  \(.priority // "—")"'
+    # The same 1-point query the writes use. This printed two lines for 405 points before #1040.
+    item_lookup "$number" | jq -r '
+        (.fieldValues.nodes | map(select(.field.name) | {key: .field.name, value: .name}) | from_entries) as $v |
+        "  status    \($v.Status // "—")\n  priority  \($v.Priority // "—")"'
 }
 
 main() {
