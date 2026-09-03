@@ -53,6 +53,15 @@ management:
 
 # Application configuration for import pipeline, scraping, and scheduling
 app:
+  api:
+    # The largest page any admin list returns. `@PageableDefault` sets a default and never a
+    # maximum, and `spring.data.web.pageable.max-page-size` is servlet-only — see
+    # StableSortPageableArgumentResolver, which is the only place this can be applied.
+    #
+    # 100 is what the three scripts under `scripts/` already ask for, and the largest table an
+    # operator reads whole (86 event sources) fits inside it. Since #810 a clamped response says so,
+    # because the listing reports `totalElements`.
+    max-page-size: 100
   import:
     # Maximum number of event sources imported concurrently (bounded by coroutine Semaphore)
     max-concurrency: 4

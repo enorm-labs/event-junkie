@@ -18,7 +18,7 @@ import org.springframework.web.reactive.BindingContext
  * default-only fix would have missed.
  */
 class StableSortPageableArgumentResolverTest {
-    private val resolver = StableSortPageableArgumentResolver()
+    private val resolver = StableSortPageableArgumentResolver(MAX_PAGE_SIZE)
 
     /** Stand-in controller method supplying the `@PageableDefault` metadata the resolver reads. */
     @Suppress("UnusedParameter", "unused")
@@ -68,5 +68,25 @@ class StableSortPageableArgumentResolverTest {
         val pageable = resolve("?page=3&size=50")
         pageable.pageNumber shouldBe 3
         pageable.pageSize shouldBe 50
+    }
+
+    @Test
+    fun `clamps a page size above the cap instead of rejecting it`() {
+        // Spring Data's own default is 2000, and it applies whenever nothing sets a cap. The request
+        // still succeeds, and the listing's `totalElements` is what says it was clamped (#810).
+        resolve("?size=5000").pageSize shouldBe MAX_PAGE_SIZE
+        resolve("?size=2000").pageSize shouldBe MAX_PAGE_SIZE
+    }
+
+    @Test
+    fun `leaves the page number alone when the size is clamped`() {
+        val pageable = resolve("?page=2&size=5000")
+        pageable.pageNumber shouldBe 2
+        pageable.pageSize shouldBe MAX_PAGE_SIZE
+    }
+
+    private companion object {
+        /** The cap under test. `MaxPageSizeConfigTest` is what checks the shipped file sets one. */
+        const val MAX_PAGE_SIZE = 100
     }
 }
