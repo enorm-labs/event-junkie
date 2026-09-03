@@ -13,6 +13,13 @@
 # has no shell and no GitHub API, and the run reads the repository and does nothing. Bash is
 # unrestricted because the fix half runs Gradle and npm. The runner is ephemeral and main is ruled.
 #
+# **`ACTIONS_GITHUB_TOKEN` is the only way the `security-events: read` below reaches the agent.**
+# The action overwrites both `GITHUB_TOKEN` and `GH_TOKEN` in the process environment with its App
+# installation token, which holds no `security_events` permission, so `gh` authenticates as the App
+# and the code-scanning API answers `403`. A differently named variable survives, and the prompt
+# reads code scanning through it. Renaming it here without renaming it there restores the 403 —
+# silently, because a blind inventory and a clean one produce the same empty list (#1021).
+#
 # **`display_report: true` is what makes the run readable**, and is not interchangeable with
 # `show_full_output`. ci-cd.instructions.md has the difference and why it matters here.
 #
@@ -44,7 +51,8 @@ on:
 
 permissions:
   contents: read
-  # Reading code scanning alerts. Never `write`: dismissal is the thing this workflow must not do.
+  # Reading code scanning alerts, and reaching the agent as `ACTIONS_GITHUB_TOKEN` rather than
+  # `GITHUB_TOKEN` — see the header. Never `write`: dismissal is the thing this workflow must not do.
   security-events: read
   # Required by the action's default GitHub App authentication, per its own documentation.
   id-token: write
@@ -74,6 +82,10 @@ jobs:
       - name: Run /security-triage
         id: claude
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
+        env:
+          # The Actions token, under a name the action does not overwrite. Read-only, and the whole
+          # of what the `permissions:` block above grants.
+          ACTIONS_GITHUB_TOKEN: ${{ github.token }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           display_report: true

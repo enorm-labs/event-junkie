@@ -39,6 +39,9 @@ tier above has nobody to ask. **Unattended, that tier does not collapse into the
 - **Report the reachability of each surface, not just its findings.** Dependabot alerts are expected to return `403` from Actions: neither `GITHUB_TOKEN` nor
   the Claude GitHub App carries a permission for them. Say which surfaces answered, because the Notes below are exactly right that a quiet inventory and a
   clean one look identical.
+- **Code scanning answers only through `ACTIONS_GITHUB_TOKEN`**, and the inventory command in Step 1 already does that. The ambient `GITHUB_TOKEN` and
+  `GH_TOKEN` are both the Claude App's, which has no `security_events` permission — so a bare `gh api …/code-scanning/alerts` returns `403` here even though
+  the workflow grants the permission (#1021). If that variable is unset, say the surface was unreachable rather than reporting an empty list.
 
 The output contract is unchanged; it lands in the pull request body rather than a terminal. **What was dismissed** becomes _what a human should consider
 dismissing_, and keeps the evidence either way.
@@ -85,7 +88,12 @@ gh api repos/enorm-labs/event-junkie/dependabot/alerts --paginate \
         .dependency.package.name, .dependency.manifest_path,
         (.security_vulnerability.first_patched_version.identifier // "none")] | @tsv'
 
-# Code scanning — open, all tools
+# Code scanning — open, all tools.
+# `GH_TOKEN` is set here because unattended the ambient one is the Claude App's, which holds no
+# `security_events` permission and answers 403. `ACTIONS_GITHUB_TOKEN` is the Actions token that
+# `agent-security.yml` grants `security-events: read` to; run by hand it is unset and `gh` falls
+# back to your own credentials, which is why the assignment is guarded rather than unconditional.
+GH_TOKEN="${ACTIONS_GITHUB_TOKEN:-$GH_TOKEN}" \
 gh api "repos/enorm-labs/event-junkie/code-scanning/alerts?state=open&per_page=100" --paginate \
   --jq '.[] | [.number, .tool.name, (.rule.security_severity_level // .rule.severity), .rule.id,
         (.most_recent_instance.location.path // "-")] | @tsv'
