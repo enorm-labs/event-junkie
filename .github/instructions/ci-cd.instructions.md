@@ -62,7 +62,7 @@ What each workflow is for, which checks are required, and the shapes that fail s
       together** — reading them from GitHub instead would need `admin:org`, which `GITHUB_TOKEN` cannot hold, so that route would watch an expiring token with
       a stronger expiring token. Only `github-dispatch` has a date today (2027-08-20); nothing else here expires.
     - `agent-security.yml` — **the only workflow that runs an agent**, and the first of #387's four workloads. Claude, driven by this repository's own
-      [`/security-triage`](../prompts/security-triage.prompt.md) prompt, opening a pull request and never pushing to `main`. Four things about it are decisions.
+      [`/security-triage`](../prompts/security-triage.prompt.md) prompt, opening a pull request and never pushing to `main`. Five things about it are decisions.
       **It invokes the prompt as `--unattended`**, which is a clause in the prompt rather than a hint: the "ask first" tier has nobody to ask from a runner, so
       unattended it dismisses nothing and files nothing, and the candidates go into the pull request body. **It never passes `github_token`**, so the action
       authenticates as the Claude GitHub App — Actions does not trigger workflows on `GITHUB_TOKEN` commits, and a pull request whose pushes start no run sits
@@ -70,6 +70,15 @@ What each workflow is for, which checks are required, and the shapes that fail s
       shell and no GitHub API and the run reads the repository and does nothing. And **Dependabot alerts are expected to `403`** — neither `GITHUB_TOKEN` nor the
       Claude App carries a permission for them — so its honest scope is code scanning. It runs on the nightly schedule below, and `dry_run` defaults to true only
       on a manual dispatch — a scheduled run is live.
+
+        The fifth decision is **`ACTIONS_GITHUB_TOKEN`**, and it is the one that makes the fourth true. `security-events: read` is granted to the Actions token,
+        but the action overwrites `GITHUB_TOKEN` and `GH_TOKEN` in the environment the agent inherits with its App installation token — so `gh` authenticated as
+        the App and code scanning answered `403` as well, and every scheduled run from the workload's creation to #1021 inventoried neither surface. The workflow
+        now passes `${{ github.token }}` as `ACTIONS_GITHUB_TOKEN`, a name the action leaves alone, and Step 1 of the prompt reads code scanning through it.
+        **The two names must agree**, and nothing fails loudly if they stop: a blind inventory and a clean one both return an empty list. Requesting
+        `security_events` on the App token was the alternative and is not available — the action documents `actions`, `checks`, `discussions` and `workflows` as
+        the values `additional_permissions` accepts, and no more.
+
     - **The Claude App carries `workflows: write`, and every agent workload has it** (#996). Granted because `agent-dependencies.yml` exists to sweep tool
       pins and nine of its eleven live in `.github/workflows/` — so the one job that workload has was the one its credential forbade, and every run that found
       something failed at the push after doing all the work. **`GITHUB_TOKEN` is not an alternative**, for the reason `agent-security.yml` already records: a
@@ -77,6 +86,14 @@ What each workflow is for, which checks are required, and the shapes that fail s
       and was not taken, so the grant is repository-wide. **A workflow file is the one file where a bad edit changes what CI itself may do**, which makes review
       of any agent pull request touching that directory the actual control. Nothing else changed: the agents still open pull requests and still never push to
       `main`.
+    - **No agent workflow can be tested from a branch, and this is upstream, not a repository choice.** The action exchanges its OIDC token for the App
+      token only if the workflow file is byte-identical to the copy on the default branch, so a `workflow_dispatch` on a branch that edits one gets
+      `Workflow validation failed. The workflow file must exist and have identical content to the version on the repository's default branch.` **The step
+      then ends `outcome=success`** — the action treats the skip as a clean exit, so a job without a further guard goes green having run no agent at all.
+      That is what the `Fail if the report is a stub` step in each workload is for, and it caught this on the first attempt (run
+      [33752364761](https://github.com/enorm-labs/event-junkie/actions/runs/33752364761)). So a change to one of these five files is verified **after** it
+      merges, by dispatching it on `main` with `dry_run: true` — which writes the report to the job summary and opens nothing. Plan the change knowing its
+      proof comes last.
     - `agent-docs.yml` — the `/update-docs` workload, and **the one #387 puts last on purpose**: a wrong answer is a plausible-looking paragraph nobody
       notices for months. `--unattended` limits it to detecting and **correcting facts** — a path that does not resolve, a command that fails, a number that
       disagrees with its named source of truth, an issue whose state is wrong. It rewrites no argument, simplifies nothing and deletes no paragraph; those are
