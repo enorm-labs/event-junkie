@@ -115,6 +115,11 @@ The decisions the three backend modules are built on. Each one has a failure mod
   resolve `Pageable` from request parameters (not auto-configured unlike Spring MVC). The event list endpoint uses batch loading to avoid N+1 queries: it
   fetches the current page of events, then bulk-fetches all artist, promoter, and genre tag associations for that page in 3 additional queries (4 queries total
   per page).
+    - **Both APIs answer a list in the same `PageResponse` envelope** — `content`, `page`, `size`, `totalElements`, `totalPages` — and the importer's admin API
+      did not until #810. A bare array cannot say it was cut short, so a first page and a complete list were the same response, and
+      `scripts/apply-licence-review.py` wrote 20 of 86 sources reporting `Wrote 20 of 20.` **The type is deliberately duplicated per module** (`events-core` is
+      free of web dependencies and it carries springdoc annotations), so the two copies have to be changed together — one API answering differently from the
+      other is the asymmetry that caused it. A client reads `totalElements` and compares; the three scripts under `scripts/` are the worked example.
     - **`StableSortPageableArgumentResolver`** extends Spring Data's `ReactivePageableHandlerMethodArgumentResolver` and appends `id` as the final sort key.
       Every list endpoint sorts by a **non-unique** column (`name`, `eventDate`), and `LIMIT`/`OFFSET` gives PostgreSQL no obligation to order tied rows the
       same way across two queries — so a client paging through could see one row twice and never see another. The tiebreaker is always ascending (within a tie

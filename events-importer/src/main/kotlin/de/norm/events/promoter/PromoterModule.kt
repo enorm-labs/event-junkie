@@ -10,5 +10,5 @@ import org.springframework.modulith.ApplicationModule
  * or venues. Other modules (e.g. event) depend on promoter, not the other
  * way around.
  */
-@ApplicationModule(allowedDependencies = ["slug"])
+@ApplicationModule(allowedDependencies = ["slug", "common"])
 class PromoterModule

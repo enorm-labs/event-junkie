@@ -1,5 +1,6 @@
 package de.norm.events.event
 
+import de.norm.events.common.PageResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -38,7 +39,7 @@ class EventController(
     @Operation(summary = "List all events with pagination")
     suspend fun findAll(
         @PageableDefault(size = 20, sort = ["eventDate"]) pageable: Pageable
-    ): List<EventResponse> = eventService.findAll(pageable)
+    ): PageResponse<EventResponse> = eventService.findAll(pageable)
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a single event by ID")

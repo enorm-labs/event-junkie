@@ -1,6 +1,7 @@
 package de.norm.events.artist
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.common.PageResponse
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
@@ -102,12 +103,16 @@ class ArtistControllerTest : BaseControllerTest() {
                 .exchange()
                 .expectStatus()
                 .isOk
-                .expectBody<List<ArtistResponse>>()
+                .expectBody<PageResponse<ArtistResponse>>()
                 .returnResult()
                 .responseBody!!
 
-        artists.size shouldBeGreaterThanOrEqual 1
-        artists.map { it.id } shouldContain created.id
+        // `.content`, never `.size`: on the envelope that field is the *page* size, so an assertion
+        // written against it passes whatever the listing returned (#810).
+        artists.content.size shouldBeGreaterThanOrEqual 1
+        artists.content.map { it.id } shouldContain created.id
+        // Everything created here fits on one page, so the total must equal what came back.
+        artists.totalElements shouldBe artists.content.size.toLong()
     }
 
     @Test

@@ -43,23 +43,25 @@ def fold(s):
 
 
 def fetch_all_sources(host):
-    """Read every source, one page at a time.
+    """Read every source, and check the count against the total the API reports.
 
-    The listing defaults to 20 and answers with a bare JSON array, so a response carries nothing
-    that distinguishes a first page from a complete one. Reading it once looks like success and
-    silently writes to a fifth of the sources.
+    The listing carries `totalElements` since #810. Before it, a first page and a complete list were
+    the same JSON array, and this script wrote 20 of 86 sources reporting success. The comparison at
+    the end is the part that matters: paging correctly and paging completely are different claims.
     """
-    out, page = [], 0
+    out, page, total = [], 0, 0
     while True:
-        batch = request(f"{host}/api/admin/event-sources?page={page}&size={PAGE_SIZE}&sort=name,asc")
-        if isinstance(batch, dict):
-            batch = batch.get("content", [])
-        out.extend(batch)
-        if len(batch) < PAGE_SIZE:
-            return out
+        body = request(f"{host}/api/admin/event-sources?page={page}&size={PAGE_SIZE}&sort=name,asc")
+        total = body["totalElements"]
+        out.extend(body["content"])
+        if len(out) >= total:
+            break
         page += 1
         if page > MAX_PAGES:
             sys.exit(f"Stopped after {MAX_PAGES} pages. The listing is not terminating.")
+    if len(out) != total:
+        sys.exit(f"Read {len(out)} of {total} sources. Refusing to act on a partial listing.")
+    return out
 
 
 def request(url, method="GET", body=None):

@@ -3,8 +3,19 @@ GET {{importer-host}}/api/admin/event-sources
 Accept: application/json
 
 > {%
-    client.test("should return 200", function () {
+    client.test("status is 200", function () {
         client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+    // The assertion this listing had no way to make before #810: a bare array cannot say it was
+    // cut short, so a first page and a complete list were the same response.
+    client.test("reports how much there is", function () {
+        client.assert(Array.isArray(response.body.content), "Expected a content array");
+        client.assert(typeof response.body.totalElements === "number", "Expected totalElements");
+        client.assert(
+            response.body.content.length <= response.body.totalElements,
+            "A page cannot hold more than the total: " +
+                response.body.content.length + " > " + response.body.totalElements
+        );
     });
 %}
 

@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.common.PageResponse
 import de.norm.events.event.EventRepository
 import de.norm.events.licence.SourceLicences
 import de.norm.events.slug.SlugGenerator
@@ -8,6 +9,7 @@ import de.norm.events.venue.VenueRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -35,7 +37,12 @@ class EventSourceService(
      * (e.g. `?page=0&size=20&sort=name,asc`).
      */
     @Transactional(readOnly = true)
-    fun findAll(pageable: Pageable): Flow<EventSourceResponse> = eventSourceRepository.findAllBy(pageable).map { EventSourceResponse.fromEntity(it) }
+    suspend fun findAll(pageable: Pageable): PageResponse<EventSourceResponse> =
+        PageResponse.of(
+            eventSourceRepository.findAllBy(pageable).map { EventSourceResponse.fromEntity(it) }.toList(),
+            pageable,
+            eventSourceRepository.count()
+        )
 
     /**
      * Finds a single event source by [slug].

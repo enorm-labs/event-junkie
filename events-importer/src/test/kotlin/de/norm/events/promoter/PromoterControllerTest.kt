@@ -1,6 +1,7 @@
 package de.norm.events.promoter
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.common.PageResponse
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
@@ -100,12 +101,16 @@ class PromoterControllerTest : BaseControllerTest() {
                 .exchange()
                 .expectStatus()
                 .isOk
-                .expectBody<List<PromoterResponse>>()
+                .expectBody<PageResponse<PromoterResponse>>()
                 .returnResult()
                 .responseBody!!
 
-        promoters.size shouldBeGreaterThanOrEqual 1
-        promoters.map { it.id } shouldContain created.id
+        // `.content`, never `.size`: on the envelope that field is the *page* size, so an assertion
+        // written against it passes whatever the listing returned (#810).
+        promoters.content.size shouldBeGreaterThanOrEqual 1
+        promoters.content.map { it.id } shouldContain created.id
+        // Everything created here fits on one page, so the total must equal what came back.
+        promoters.totalElements shouldBe promoters.content.size.toLong()
     }
 
     @Test

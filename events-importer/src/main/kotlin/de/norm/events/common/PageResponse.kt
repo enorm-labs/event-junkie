@@ -4,14 +4,17 @@ import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.data.domain.Pageable
 
 /**
- * Generic paged response wrapper for list endpoints.
+ * Generic paged response wrapper for the admin API's list endpoints.
  *
- * The list endpoints return pagination metadata so the frontend can render page controls
- * (total counts, "page X of N") without an extra count request.
+ * **A bare array cannot say it was cut short.** Every list here applies a default page size, so
+ * twenty rows and twenty-of-eighty-six looked identical to a client — which is how
+ * `scripts/apply-licence-review.py` wrote 20 of 86 sources and reported success (#810). The total is
+ * what makes a partial read detectable, and a client that ignores it now has to ignore something.
  *
- * The importer's admin API answers in the same envelope, and did not until #810 — where a bare array
- * let a script write 20 of 86 sources and report success. **The two copies must stay the same shape**,
- * because one API answering differently from the other is the asymmetry that caused it.
+ * A deliberate copy of `events-bff`'s type rather than a shared one, for the same reason
+ * [de.norm.events.StableSortPageableArgumentResolver] is duplicated: `events-core` is free of web
+ * dependencies, and this carries springdoc annotations. The two must stay the same shape, because
+ * one API answering in a different envelope from the other is the asymmetry #810 was about.
  */
 @Schema(description = "A page of results with pagination metadata")
 data class PageResponse<T>(
@@ -21,9 +24,9 @@ data class PageResponse<T>(
     val page: Int,
     @Schema(description = "Requested page size", example = "20")
     val size: Int,
-    @Schema(description = "Total number of matching items across all pages", example = "137")
+    @Schema(description = "Total number of matching items across all pages", example = "86")
     val totalElements: Long,
-    @Schema(description = "Total number of pages", example = "7")
+    @Schema(description = "Total number of pages", example = "5")
     val totalPages: Int
 ) {
     companion object {

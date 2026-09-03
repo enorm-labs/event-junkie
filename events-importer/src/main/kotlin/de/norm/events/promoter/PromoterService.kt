@@ -1,9 +1,10 @@
 package de.norm.events.promoter
 
+import de.norm.events.common.PageResponse
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 
@@ -24,8 +25,16 @@ class PromoterService(
      * Pagination and sorting are controlled by the [pageable] parameter, which Spring
      * resolves from `page`, `size`, and `sort` query parameters
      * (e.g. `?page=0&size=20&sort=name,asc`).
+     *
+     * The total comes from a separate `count()`, which is exact because this listing takes no
+     * filter. It is what lets a caller tell one page from the whole table (#810).
      */
-    fun findAll(pageable: Pageable): Flow<PromoterResponse> = promoterRepository.findAllBy(pageable).map { PromoterResponse.fromDomain(it.toDomain()) }
+    suspend fun findAll(pageable: Pageable): PageResponse<PromoterResponse> =
+        PageResponse.of(
+            promoterRepository.findAllBy(pageable).map { PromoterResponse.fromDomain(it.toDomain()) }.toList(),
+            pageable,
+            promoterRepository.count()
+        )
 
     /**
      * Finds a single promoter by [id].

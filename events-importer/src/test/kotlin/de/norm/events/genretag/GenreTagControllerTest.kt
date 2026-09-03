@@ -1,6 +1,7 @@
 package de.norm.events.genretag
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.common.PageResponse
 import de.norm.events.event.EventRequest
 import de.norm.events.event.EventRequestFixtures
 import de.norm.events.event.EventResponse
@@ -48,11 +49,12 @@ class GenreTagControllerTest : BaseControllerTest() {
                 .exchange()
                 .expectStatus()
                 .isOk
-                .expectBody<List<GenreTagResponse>>()
+                .expectBody<PageResponse<GenreTagResponse>>()
                 .returnResult()
                 .responseBody!!
 
-        tags shouldHaveSize 0
+        tags.content shouldHaveSize 0
+        tags.totalElements shouldBe 0L
     }
 
     @Test
@@ -75,12 +77,14 @@ class GenreTagControllerTest : BaseControllerTest() {
                 .exchange()
                 .expectStatus()
                 .isOk
-                .expectBody<List<GenreTagResponse>>()
+                .expectBody<PageResponse<GenreTagResponse>>()
                 .returnResult()
                 .responseBody!!
 
-        tags.size shouldBeGreaterThanOrEqual 1
-        tags.map { it.name } shouldContainExactlyInAnyOrder listOf("Punk")
+        // `.content`, never `.size`: on the envelope that field is the *page* size (#810).
+        tags.content.size shouldBeGreaterThanOrEqual 1
+        tags.content.map { it.name } shouldContainExactlyInAnyOrder listOf("Punk")
+        tags.totalElements shouldBe 1L
     }
 
     @Test
@@ -147,11 +151,11 @@ class GenreTagControllerTest : BaseControllerTest() {
                 .exchange()
                 .expectStatus()
                 .isOk
-                .expectBody<List<GenreTagResponse>>()
+                .expectBody<PageResponse<GenreTagResponse>>()
                 .returnResult()
                 .responseBody!!
 
-        val jazzTag = tags.first { it.name == "Jazz" }
+        val jazzTag = tags.content.first { it.name == "Jazz" }
 
         webTestClient
             .get()

@@ -131,7 +131,7 @@ Accept: application/json
 
 > {%
     client.test("Events list is not empty", function () {
-        client.assert(response.body.length >= 1, "Expected at least 1 event");
+        client.assert(response.body.content.length >= 1, "Expected at least 1 event");
     });
 %}
 

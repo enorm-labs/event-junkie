@@ -4,6 +4,7 @@ import de.norm.events.BaseControllerTest
 import de.norm.events.artist.ArtistRequest
 import de.norm.events.artist.ArtistRequestFixtures
 import de.norm.events.artist.ArtistResponse
+import de.norm.events.common.PageResponse
 import de.norm.events.promoter.PromoterRequest
 import de.norm.events.promoter.PromoterRequestFixtures
 import de.norm.events.promoter.PromoterResponse
@@ -266,12 +267,16 @@ class EventControllerTest : BaseControllerTest() {
                 .exchange()
                 .expectStatus()
                 .isOk
-                .expectBody<List<EventResponse>>()
+                .expectBody<PageResponse<EventResponse>>()
                 .returnResult()
                 .responseBody!!
 
-        events.size shouldBeGreaterThanOrEqual 1
-        events.map { it.id } shouldContain created.id
+        // `.content`, never `.size`: on the envelope that field is the *page* size, so an assertion
+        // written against it passes whatever the listing returned (#810).
+        events.content.size shouldBeGreaterThanOrEqual 1
+        events.content.map { it.id } shouldContain created.id
+        // Everything created here fits on one page, so the total must equal what came back.
+        events.totalElements shouldBe events.content.size.toLong()
     }
 
     @Test

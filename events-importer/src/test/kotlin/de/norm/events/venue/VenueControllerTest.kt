@@ -1,7 +1,9 @@
 package de.norm.events.venue
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.common.PageResponse
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -133,12 +135,41 @@ class VenueControllerTest : BaseControllerTest() {
                 .exchange()
                 .expectStatus()
                 .isOk
-                .expectBody<List<VenueResponse>>()
+                .expectBody<PageResponse<VenueResponse>>()
                 .returnResult()
                 .responseBody!!
 
-        venues.size shouldBeGreaterThanOrEqual 1
-        venues.map { it.id } shouldContain created.id
+        // `.content`, never `.size`: on the envelope that field is the *page* size, so an assertion
+        // written against it passes whatever the listing returned (#810).
+        venues.content.size shouldBeGreaterThanOrEqual 1
+        venues.content.map { it.id } shouldContain created.id
+        // Everything created here fits on one page, so the total must equal what came back.
+        venues.totalElements shouldBe venues.content.size.toLong()
+    }
+
+    @Test
+    fun `reports the whole table when a page holds only part of it`() {
+        // The case this endpoint had no test for, and the one #810 is about: a client that reads
+        // once must be able to tell 3 rows from 3-of-5. Before the envelope both answers were the
+        // same JSON array, and `apply-licence-review.py` wrote 20 of 86 sources reporting success.
+        repeat(5) { createVenue(VenueRequestFixtures.create(name = "Truncation Venue $it")) }
+
+        val page =
+            webTestClient
+                .get()
+                .uri("/api/admin/venues?size=3&sort=name,asc")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody<PageResponse<VenueResponse>>()
+                .returnResult()
+                .responseBody!!
+
+        page.content shouldHaveSize 3
+        page.totalElements shouldBe 5L
+        page.totalPages shouldBe 2
+        page.page shouldBe 0
+        page.size shouldBe 3
     }
 
     @Test

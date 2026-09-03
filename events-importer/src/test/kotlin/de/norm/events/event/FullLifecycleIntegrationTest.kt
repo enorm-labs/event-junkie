@@ -3,6 +3,7 @@ package de.norm.events.event
 import de.norm.events.BaseControllerTest
 import de.norm.events.artist.ArtistRequestFixtures
 import de.norm.events.artist.ArtistResponse
+import de.norm.events.common.PageResponse
 import de.norm.events.promoter.PromoterRequestFixtures
 import de.norm.events.promoter.PromoterResponse
 import de.norm.events.venue.VenueRequestFixtures
@@ -138,7 +139,7 @@ class FullLifecycleIntegrationTest : BaseControllerTest() {
                 .exchange()
                 .expectStatus()
                 .isOk
-                .expectBody<List<EventResponse>>()
+                .expectBody<PageResponse<EventResponse>>()
                 .returnResult()
                 .responseBody!!
 
