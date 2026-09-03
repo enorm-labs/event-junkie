@@ -2,6 +2,7 @@ package de.norm.events.event
 
 import de.norm.events.common.PageResponse
 import de.norm.events.common.QueryParameters
+import de.norm.events.common.ResponseCache
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -19,6 +20,10 @@ import java.time.LocalDate
 
 /**
  * Public read API for events: filtered search, today's events, calendar range, and detail by slug.
+ *
+ * Every endpoint here reads through [ResponseCache]. The cache sits at this layer rather than inside
+ * [EventService] because a service calling its own cached method would bypass the `@Transactional`
+ * proxy, and because caching is a property of the request rather than of the query (#269).
  */
 @RestController
 @RequestMapping("/api/events")
@@ -26,7 +31,8 @@ import java.time.LocalDate
 class EventController(
     private val eventService: EventService,
     /** `bff.events.served` (#415). Counts events handed out, not requests — see [BffMetrics]. */
-    private val metrics: BffMetrics
+    private val metrics: BffMetrics,
+    private val cache: ResponseCache
 ) {
     @GetMapping
     @Operation(summary = "Search events with optional filters and pagination")
@@ -47,7 +53,10 @@ class EventController(
         exchange: ServerWebExchange
     ): PageResponse<EventSummaryResponse> {
         SEARCH_PARAMS.rejectUnknownIn(exchange)
-        return eventService.search(filters.toFilter(from = from, to = to), pageable).also {
+        val filter = filters.toFilter(from = from, to = to)
+        // The meter counts what is handed out, so it stays outside the cache: a served response is
+        // served whether or not this process had to ask the database for it.
+        return cache.get(SearchKey(filter, pageable)) { eventService.search(filter, pageable) }.also {
             metrics.recordServed(BffMetrics.ENDPOINT_SEARCH, it.content.size)
         }
     }
@@ -56,7 +65,11 @@ class EventController(
     @Operation(summary = "Get today's events")
     suspend fun today(exchange: ServerWebExchange): List<EventSummaryResponse> {
         NO_PARAMS.rejectUnknownIn(exchange)
-        return eventService.today().also { metrics.recordServed(BffMetrics.ENDPOINT_TODAY, it.size) }
+        // Keyed on the date rather than left to the TTL, so the answer changes at midnight instead
+        // of up to a TTL later. This is the one endpoint whose correctness depends on the calendar.
+        return cache
+            .get(TodayKey(LocalDate.now())) { eventService.today() }
+            .also { metrics.recordServed(BffMetrics.ENDPOINT_TODAY, it.size) }
     }
 
     @GetMapping("/calendar")
@@ -75,7 +88,10 @@ class EventController(
         exchange: ServerWebExchange
     ): List<EventSummaryResponse> {
         CALENDAR_PARAMS.rejectUnknownIn(exchange)
-        return eventService.calendar(from, to, filters.toFilter()).also { metrics.recordServed(BffMetrics.ENDPOINT_CALENDAR, it.size) }
+        val filter = filters.toFilter()
+        return cache
+            .get(CalendarKey(from, to, filter)) { eventService.calendar(from, to, filter) }
+            .also { metrics.recordServed(BffMetrics.ENDPOINT_CALENDAR, it.size) }
     }
 
     @GetMapping("/{slug}")
@@ -83,7 +99,10 @@ class EventController(
     suspend fun findBySlug(
         @Parameter(description = "Unique event slug (format: {date}-{venue}-{title}).", example = "2026-06-18-lido-sam-prekop-john-mcentire", required = true)
         @PathVariable slug: String
-    ): EventDetailResponse = eventService.findBySlug(slug).also { metrics.recordServed(BffMetrics.ENDPOINT_DETAIL, 1) }
+    ): EventDetailResponse =
+        cache
+            .get(DetailKey(slug)) { eventService.findBySlug(slug) }
+            .also { metrics.recordServed(BffMetrics.ENDPOINT_DETAIL, 1) }
 
     private companion object {
         /** The filter fields come from [EventFilterParams]; `from`/`to` and paging are declared here. */
@@ -105,3 +124,28 @@ class EventController(
         val NO_PARAMS = QueryParameters.accepting()
     }
 }
+
+/**
+ * The cache keys this controller owns, one per endpoint.
+ *
+ * Declared as separate types rather than as one key carrying an endpoint name: a data class is equal
+ * only to its own type, so two endpoints cannot collide even when their arguments match.
+ */
+private data class SearchKey(
+    val filter: EventFilter,
+    val pageable: Pageable
+)
+
+private data class TodayKey(
+    val date: LocalDate
+)
+
+private data class CalendarKey(
+    val from: LocalDate,
+    val to: LocalDate,
+    val filter: EventFilter
+)
+
+private data class DetailKey(
+    val slug: String
+)

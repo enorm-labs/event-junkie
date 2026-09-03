@@ -1,5 +1,6 @@
 package de.norm.events
 
+import de.norm.events.common.ResponseCache
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.runBlocking
@@ -44,6 +45,9 @@ abstract class BaseControllerTest {
 
     @Autowired
     protected lateinit var databaseClient: DatabaseClient
+
+    @Autowired
+    protected lateinit var responseCache: ResponseCache
 
     /**
      * The client every controller test issues requests through.
@@ -90,10 +94,18 @@ abstract class BaseControllerTest {
         val RESPONSE_TIMEOUT: Duration = Duration.ofSeconds(30)
     }
 
-    /** Truncates all domain tables before each test to ensure a clean state. */
+    /**
+     * Truncates all domain tables before each test to ensure a clean state.
+     *
+     * **The response cache is emptied with them (#269).** It is keyed on the request rather than on
+     * the data, so a row deleted by the TRUNCATE stays visible for the TTL — and the tests run in
+     * far less than one. The alternative, a zero TTL in the test configuration, would leave the
+     * caching path unexercised by every integration test in this module.
+     */
     @BeforeEach
     fun cleanUp() =
         runBlocking {
+            responseCache.clear()
             databaseClient
                 .sql(
                     "TRUNCATE TABLE events.cached_image_variant, events.cached_image, events.event_source, " +
