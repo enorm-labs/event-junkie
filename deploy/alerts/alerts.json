@@ -317,5 +317,34 @@
     "destinations": [
       "record-only"
     ]
+  },
+  {
+    "name": "ej-robots-disallowed",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "importer_scrape_failures_total",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "A venue's robots.txt now forbids a path we scrape, so the importer is correctly refusing to fetch it. **This is a decision, not a repair**: the answer is a different URL, or removing the source, and no scraper change fixes it. Which venue: `SELECT name, robots_txt_url, last_error FROM event_source WHERE robots_allowed = false`.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(increase(importer_scrape_failures_total{reason=\"robots_disallowed\"}[1h]))",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0
+      }
+    },
+    "trigger_condition": {
+      "period": 60,
+      "frequency": 15,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 1440
+    },
+    "destinations": [
+      "record-only"
+    ]
   }
 ]
