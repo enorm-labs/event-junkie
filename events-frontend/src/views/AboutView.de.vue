@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 /**
- * „Über uns" — deutsche Fassung von `AboutView.en.vue`.
+ * „Über uns“ — deutsche Fassung von `AboutView.en.vue`.
  *
  * Written rather than translated. The beta section is brand voice, not neutral prose
  * (BRANDING.md §8), and a literal rendering of *"still finding its feet"* or
@@ -51,11 +51,12 @@ const localePath = useLocalePath()
       <p class="text-muted-foreground">
         <strong class="font-medium text-foreground">Ein paar Dinge fehlen mit Absicht.</strong>
         Sport, auch in den Arenen, in denen ebenso Konzerte stattfinden — ein Basketballspiel ist
-        nicht, wofür du hergekommen bist, und mit drin begräbt es die Konzerte. Führungen, Workshops
+        nicht der Grund, warum du hier bist, und wenn Sport mit hereinkommt, gehen die Konzerte
+        darin unter. Führungen, Workshops
         und Yoga-Stunden: Sachen zum Mitmachen, nicht zum Hingehen und Zuschauen. Messen und
         Kongresse. Und, vorerst, klassische Konzerte und Orchester — nicht, weil sie nicht
         dazugehören, sondern weil ein Orchester mit Dirigentin und Solisten nicht in ein Modell
-        passt, das um Headliner und Support herum gebaut ist. Das ist ein „noch nicht" und steht als
+        passt, das um Headliner und Support herum gebaut ist. Das ist ein „noch nicht“ und steht als
         offene Frage fest, statt still unter den Tisch zu fallen.
       </p>
     </section>

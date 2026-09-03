@@ -1,7 +1,7 @@
 {
   "skipToContent": "Zum Inhalt springen",
   "nav": {
-    "label": "Haupt",
+    "label": "Hauptnavigation",
     "events": "Events",
     "venues": "Locations",
     "calendar": "Kalender",
@@ -28,7 +28,7 @@
   },
   "upcomingEvents": "Kommende Events",
   "pastEvents": "Vergangene Events",
-  "pastEventsNote": "Unser Archiv beginnt, als wir angefangen haben mitzuschreiben — alles davor steht nicht in den Büchern.",
+  "pastEventsNote": "Unser Archiv beginnt an dem Tag, an dem wir angefangen haben mitzuschreiben — was davor lief, steht nicht in den Büchern.",
   "locale": {
     "label": "Sprache"
   },

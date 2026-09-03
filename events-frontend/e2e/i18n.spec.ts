@@ -77,7 +77,7 @@ test('a German URL renders German', async ({ page }) => {
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'de')
   await expect(page.getByRole('heading', { level: 1, name: 'Locations' })).toBeVisible()
-  await expect(page.getByRole('navigation', { name: 'Haupt' })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Hauptnavigation' })).toBeVisible()
   await expect(page.getByRole('contentinfo')).toContainText('Von Berlin kriegst du nie genug')
 })
 
@@ -162,10 +162,10 @@ test('the header switcher adds no second Language landmark', async ({ page }) =>
 test('both switchers mark the active language', async ({ page }) => {
   await page.goto('/de/about')
 
-  // "Haupt", not "Main": the landmark's accessible name is itself translated, so a German reader
-  // hears a German landmark list. Selectors addressing landmarks by name are locale-dependent —
-  // which is why the other suites are pinned to /en.
-  const header = page.getByRole('navigation', { name: 'Haupt' })
+  // "Hauptnavigation", not "Main": the landmark's accessible name is itself translated, so a German
+  // reader hears a German landmark list. Selectors addressing landmarks by name are
+  // locale-dependent — which is why the other suites are pinned to /en.
+  const header = page.getByRole('navigation', { name: 'Hauptnavigation' })
   await expect(header.getByRole('link', { name: 'Deutsch' })).toHaveAttribute(
     'aria-current',
     'true',

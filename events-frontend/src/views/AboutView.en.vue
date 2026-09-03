@@ -47,7 +47,7 @@ const localePath = useLocalePath()
       <p class="text-muted-foreground">
         <strong class="font-medium text-foreground">A few things are deliberately left out.</strong>
         Sport, even at the arenas that also host concerts — a basketball fixture is not what you
-        came here for, and letting them in buries the gigs. Guided tours, workshops and yoga
+        came here for, and letting it in buries the gigs. Guided tours, workshops and yoga
         sessions: things you take part in rather than go and see. Trade fairs and conferences. And,
         for now, classical concerts and orchestras — not because they don't belong, but because an
         orchestra with a conductor and soloists doesn't fit a model built around a headliner and a
@@ -123,7 +123,7 @@ const localePath = useLocalePath()
       </p>
     </section>
 
-    <!-- The header's beta badge links here (Phase 4). `scroll-mt` keeps the heading clear of the
+    <!-- The header's beta badge links here. `scroll-mt` keeps the heading clear of the
          sticky-ish header when the anchor is followed. -->
     <section id="beta" class="scroll-mt-8 space-y-4 pt-4">
       <h2 class="text-2xl font-bold tracking-tight">Why it says beta</h2>
