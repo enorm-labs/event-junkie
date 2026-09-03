@@ -363,8 +363,16 @@ response header has no Ingress API vocabulary, which is why this is Traefik-spec
 - **HSTS `preload` is off**, and it is the one setting here that is genuinely hard to undo: it asks browsers to ship the promise baked in, and removal takes
   months to propagate through browser releases. It also needs the domain submitted to hstspreload.org, which is a step outside this chart.
 - **`X-XSS-Protection` is deliberately absent.** Removed from every current browser, and its last implementations introduced vulnerabilities of their own.
-- **Content-Security-Policy is not here yet**, and adding it blind is a blank page rather than a warning — it needs the SPA's inline styles and its exact set of
-  origins enumerated first, plus a report-only period. Its own issue, not a line in a values file.
+- **Content-Security-Policy is here**, under `ingress.securityHeaders.contentSecurityPolicy`, and it kept the report-only period this section asked for:
+  `reportOnly` defaults to **true**, so a browser evaluates the policy and complains without blocking anything. Turn it off per environment once a release has
+  been loaded with the console open — a wrong CSP is a blank page rather than a warning.
+- **`img-src` is the one directive not in the values list.** It is derived from `images.serving.enabled`, so the header cannot contradict the deployment it is
+  sent from: with serving off the API hands out the venue's own URL, and a `'self'` policy would blank every image on the site. Caching the images
+  ([ADR-019](../../../docs/adr/ADR-019_VENUE_IMAGE_DELIVERY.md)) is what made a strict rule reachable at all — while the site hotlinked, the only workable rule
+  permitted the whole web.
+- **The directives have a second copy**, in `events-frontend/scripts/csp.ts`, which applies the same policy to `npm run preview` — the server the Playwright
+  suite runs against. `scripts/csp-parity.sh` fails when the two drift, and when the `sha256-` in `script-src` stops matching the inline theme script in
+  `events-frontend/index.html`. That script runs before first paint, so a nonce cannot work here: this header is one static string on every response.
 
 The Ingress annotation that names these is a **comma-separated string with no schema behind it**, so a stray comma or an empty element silently drops _every_
 middleware on the router. It is built as a list in one place, and `tests/ingress_test.yaml` pins the whole string for all three combinations.
