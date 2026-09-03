@@ -1,5 +1,6 @@
 package de.norm.events.scraper.silentgreen
 
+import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.parseTime
@@ -73,9 +74,6 @@ class SilentGreenDetailPageScraper {
     private companion object {
         /** The detail article's prose, scoped so the page's navigation and footer stay out. */
         const val BODY_TEXT_SELECTOR = ".news-detail .ce-bodytext p"
-
-        /** Characters in an `HH:mm` time, sliced off the front of a labelled time cell. */
-        const val HH_MM_LENGTH = 5
     }
 }
 

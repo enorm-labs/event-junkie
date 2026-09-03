@@ -2,6 +2,7 @@ package de.norm.events.scraper.monarch
 
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferUnmarkedTitleType
@@ -166,8 +167,5 @@ class MonarchOverviewPageScraper {
 
         /** The "ABGESAGT" (cancelled) flag, matched as a whole word anywhere in the title. */
         private val ABGESAGT_PATTERN = Regex("""\babgesagt\b""", RegexOption.IGNORE_CASE)
-
-        /** Collapses runs of whitespace left after stripping the type/status markers. */
-        private val WHITESPACE = Regex("""\s+""")
     }
 }

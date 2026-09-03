@@ -7,6 +7,7 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.absoluteLinksAt
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -47,7 +48,7 @@ class AedenWebsiteImporter(
         lastModified: String?
     ): ImportResult {
         val entry = htmlFetcher.fetchDocument(url)
-        val monthUrls = discoverMonthUrls(entry, url)
+        val monthUrls = entry.absoluteLinksAt(MONTH_LINK_SELECTOR, url)
         logger.info { "Found ${monthUrls.size} month page(s) linked from ÆDEN entry $url" }
 
         val events =
@@ -58,21 +59,13 @@ class AedenWebsiteImporter(
         return ImportResult.Success(events = events, etag = null, lastModified = null)
     }
 
-    /**
-     * Resolves every distinct month link on the entry page to an absolute URL. The buttons are
-     * absolute (`https://aedenberlin.com/month/?month=2026-08`) in the rendered markup, but are
-     * resolved defensively so a relative href would work too.
-     */
-    private fun discoverMonthUrls(
-        entry: Document,
-        entryUrl: String
-    ): List<String> =
-        entry
-            .select("a.month-button[href]")
-            .map { it.attr("href") }
-            .filter { it.isNotBlank() }
-            .map { resolveUrl(entryUrl, it) }
-            .distinct()
+    private companion object {
+        /**
+         * The entry page's month buttons. Their hrefs are absolute
+         * (`https://aedenberlin.com/month/?month=2026-08`) in the rendered markup.
+         */
+        const val MONTH_LINK_SELECTOR = "a.month-button[href]"
+    }
 }
 
 val AEDEN_LIMITATIONS =

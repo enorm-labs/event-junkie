@@ -6,6 +6,8 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WHITESPACE
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.headlinersFromTitle
@@ -324,9 +326,6 @@ class ZennerApiScraper(
     }
 }
 
-/** Trims this string and returns `null` when it is null, empty, or all whitespace. */
-private fun String?.blankToNull(): String? = this?.trim()?.takeIf { it.isNotBlank() }
-
 /** The venue's "Open Air" format label. */
 private const val OPEN_AIR_LABEL = "open air"
 
@@ -385,7 +384,7 @@ private val BARE_DURATION_SERIES_PATTERN = Regex("""^\d+\s*min(?:utes)?$""", Reg
  * from it.
  */
 private fun isBareSeriesTitle(title: String): Boolean {
-    val normalized = title.trim().replace(Regex("""\s+"""), " ")
+    val normalized = title.trim().replace(WHITESPACE, " ")
     return BARE_DURATION_SERIES_PATTERN.matches(normalized) || normalized.lowercase() in BARE_SERIES_TITLES
 }
 

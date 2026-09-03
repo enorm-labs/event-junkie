@@ -8,8 +8,10 @@ import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.mapWixEventStatus
 import de.norm.events.scraper.parseWixSchedule
+import de.norm.events.scraper.parseWixTicketPrice
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stringOrNull
+import de.norm.events.scraper.wixPriceRangeNote
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
@@ -94,29 +96,10 @@ class MaxximOverviewPageScraper {
             imageUrl = node.path("mainImage").stringOrNull("url"),
             sourceUrl = resolveUrl(baseUrl, "/event-details/$slug"),
             sourceId = "${EventSource.MAXXIM.sourceIdPrefix}$slug",
-            pricePresale = ticketing?.let { parseTicketPrice(it.path("lowestTicketPrice")) },
-            priceNote = ticketing?.let { parsePriceRangeNote(it) },
+            pricePresale = ticketing?.let { parseWixTicketPrice(it.path("lowestTicketPrice")) },
+            priceNote = ticketing?.let { wixPriceRangeNote(it) },
             soldOut = ticketing?.path("soldOut")?.asBoolean(false) == true,
             status = mapWixEventStatus(node.path("status"))
         )
-    }
-
-    /**
-     * Reads a Wix ticket price node (`{"amount": "12.00", "currency": "EUR"}`).
-     * Returns `null` when the amount is absent or not a number — a free or
-     * registration-only night carries no ticketing block at all.
-     */
-    private fun parseTicketPrice(price: JsonNode): BigDecimal? = price.stringOrNull("amount")?.toBigDecimalOrNull()
-
-    /**
-     * Builds a price note only when a night has several ticket tiers, i.e. when
-     * the lowest and highest formatted prices differ (`"€10 – €25"`). A single-tier
-     * night — the normal case — needs no note: [ScrapedEvent.pricePresale] already
-     * says everything.
-     */
-    private fun parsePriceRangeNote(ticketing: JsonNode): String? {
-        val lowest = ticketing.stringOrNull("lowestTicketPriceFormatted")
-        val highest = ticketing.stringOrNull("highestTicketPriceFormatted")
-        return if (lowest != null && highest != null && lowest != highest) "$lowest – $highest" else null
     }
 }

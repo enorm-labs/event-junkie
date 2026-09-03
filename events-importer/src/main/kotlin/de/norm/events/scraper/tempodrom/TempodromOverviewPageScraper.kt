@@ -1,9 +1,11 @@
 package de.norm.events.scraper.tempodrom
 
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.parseIsoDate
@@ -11,7 +13,6 @@ import de.norm.events.scraper.parseSchemaEventStatus
 import de.norm.events.scraper.parseTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
-import org.jsoup.parser.Parser
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.kotlinModule
@@ -33,7 +34,7 @@ import java.math.BigDecimal
  * represented.
  *
  * The JSON-LD strings are HTML-escaped and script content is not decoded by Jsoup, so `name` and
- * `description` are run through [decodeHtml] before anything else touches them — see that function
+ * `description` are run through [decodeHtmlEntities] before anything else touches them — see that function
  * for why decoding late would be too late.
  *
  * @see TempodromWebsiteImporter for the HTTP fetch orchestrator.
@@ -83,7 +84,7 @@ class TempodromOverviewPageScraper {
             event
                 .path("name")
                 .asString(null)
-                ?.let(::decodeHtml)
+                ?.let(::decodeHtmlEntities)
                 ?.takeIf { it.isNotBlank() }
                 ?.let(::cleanEventTitle) ?: return null
         val startedAt = event.path("startDate").asString("").takeIf { it.isNotBlank() } ?: return null
@@ -94,7 +95,7 @@ class TempodromOverviewPageScraper {
             event
                 .path("description")
                 .asString(null)
-                ?.let(::decodeHtml)
+                ?.let(::decodeHtmlEntities)
                 ?.takeIf { it.isNotBlank() }
         val eventType = inferConcertVenueType(title)
         val offers = event.path("offers")
@@ -127,18 +128,6 @@ class TempodromOverviewPageScraper {
             artists = buildArtistsForEventType(title, subtitle, eventType)
         )
     }
-
-    /**
-     * Decodes the HTML entities the venue leaves in its JSON-LD strings.
-     *
-     * The block is script content, which Jsoup hands back as raw text without decoding, and the CMS
-     * escapes the strings it writes into it — so `"Scala &amp; Kolacny Brothers"` arrives with the
-     * entity intact. Left undecoded it reaches the stored title, the title-derived headliner *and*
-     * both slugs (`scala-amp-kolacny-brothers`), and it hides the `&` from the co-bill splitter.
-     * Same call as the other JSON-reading scrapers (`lark`, `madameclaude`, `cosmiccomedy`,
-     * `barjedervernunft`).
-     */
-    private fun decodeHtml(raw: String): String = Parser.unescapeEntities(raw.trim(), false).trim()
 
     /**
      * Reads the cheapest ticket price and, when the offer spans a range, a note recording it.
@@ -187,8 +176,5 @@ class TempodromOverviewPageScraper {
 
         /** Currency assumed when an offer omits one; every Tempodrom offer states EUR. */
         const val DEFAULT_CURRENCY = "EUR"
-
-        /** Length of the `HH:mm` prefix taken off a `HH:mm:ss` clock. */
-        const val HH_MM_LENGTH = 5
     }
 }

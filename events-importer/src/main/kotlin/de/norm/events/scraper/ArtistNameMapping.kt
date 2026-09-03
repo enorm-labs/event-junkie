@@ -120,8 +120,6 @@ fun isNonArtistLabel(name: String): Boolean {
     return trimmed.isNotEmpty() && trimmed.replaceFirst(ROLE_LABEL_PREFIX, "").isBlank()
 }
 
-private val WHITESPACE = Regex("""\s+""")
-
 /**
  * Curated event-*segment* labels — an aftershow/afterparty/warm-up slot a venue lists in the
  * lineup, which is a part of the night rather than a performer. Any leading qualifier is allowed

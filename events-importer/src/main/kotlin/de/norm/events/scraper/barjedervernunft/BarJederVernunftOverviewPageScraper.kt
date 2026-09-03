@@ -1,6 +1,7 @@
 package de.norm.events.scraper.barjedervernunft
 
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.parseIsoDate
@@ -185,8 +186,5 @@ class BarJederVernunftOverviewPageScraper {
 
         /** schema.org availability values that mean no tickets are left. */
         val SOLD_OUT_AVAILABILITY = listOf("SoldOut", "OutOfStock")
-
-        /** Characters in an `HH:mm` time, sliced off the front of the offset datetime's time part. */
-        const val HH_MM_LENGTH = 5
     }
 }

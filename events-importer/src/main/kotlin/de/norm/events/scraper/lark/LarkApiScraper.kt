@@ -5,16 +5,18 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.splitHeadlinerTitle
+import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.stripArtistSuffix
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.TextNode
-import org.jsoup.parser.Parser
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.kotlinModule
@@ -172,7 +174,7 @@ internal class LarkApiScraper(
         // The archive reaches back to 2022; only upcoming shows are worth minting.
         if (startedAt.toLocalDate() < today) return null
 
-        val rawTitle = decodeHtml(post.path("title").path("rendered").asString(""))
+        val rawTitle = decodeHtmlEntities(post.path("title").path("rendered").asString(""))
         if (rawTitle.isBlank()) {
             logger.warn { "LARK event $id has no title, skipping" }
             return null
@@ -291,21 +293,8 @@ internal class LarkApiScraper(
 
         /** The venue's own support-act marker, trailing the act it belongs to. */
         val SUPPORT_ACT_MARKER = Regex("""\s*\(\s*supports?\s*\)\s*""", RegexOption.IGNORE_CASE)
-
-        val WHITESPACE = Regex("""\s+""")
     }
 }
-
-/** Trimmed string value of [field] on this node, or null when absent, blank, or not a string. */
-private fun JsonNode.stringOrNull(field: String): String? = path(field).asString("").trim().takeIf { it.isNotBlank() }
-
-/**
- * Decodes the HTML entities WordPress emits in `title.rendered` (`&#8211;` → `–`, `&#038;` → `&`).
- *
- * The field is *rendered* HTML, so entities are expected; Jsoup's parser is used rather than a
- * hand-rolled table so every entity the venue can emit is covered.
- */
-private fun decodeHtml(raw: String): String = Parser.unescapeEntities(raw.trim(), false).trim()
 
 /**
  * Renders `acf.event_description` — which is *markup*, not text — down to a plain-text blurb.

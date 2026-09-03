@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dropPastEvents
@@ -253,8 +254,5 @@ class CrackBellmerOverviewPageScraper(
                 """secret\s+line\s*-?\s*up|line\s*-?\s*up|spontaneous\b.*|open\s+decks(\s+slot)?|ping\s+pong|music|hangouts?""",
                 RegexOption.IGNORE_CASE
             )
-
-        /** A run of whitespace inside an act name, collapsed before the anchored filler match. */
-        val WHITESPACE = Regex("""\s+""")
     }
 }

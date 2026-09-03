@@ -75,10 +75,10 @@ class BerghainDetailPageScraper {
         return ScrapedEvent(
             title = title,
             description = parseDescription(content),
-            eventType = floorToEventType(floors),
+            eventType = floorsToEventType(floors),
             eventDate = eventDate,
-            doorsTime = parseTime(DOORS_PATTERN.find(lineText)?.groupValues?.get(1)),
-            startTime = parseTime(START_PATTERN.find(lineText)?.groupValues?.get(1)),
+            doorsTime = parseTime(BERGHAIN_DOORS_PATTERN.find(lineText)?.groupValues?.get(1)),
+            startTime = parseTime(BERGHAIN_START_PATTERN.find(lineText)?.groupValues?.get(1)),
             genre = floorsToGenre(floors),
             imageUrl = content.imgSrcAt("figure img"),
             sourceUrl = sourceUrl,
@@ -134,14 +134,6 @@ class BerghainDetailPageScraper {
             .joinToString("\n")
             .takeIf { it.isNotBlank() }
 
-    /** Mirrors [BerghainOverviewPageScraper]'s floor-based typing: Kantine → concert, other floors → party. */
-    private fun floorToEventType(floors: List<String>): String? =
-        when {
-            floors.any { it.contains(KANTINE_MARKER, ignoreCase = true) } -> EventType.CONCERT.name
-            floors.isNotEmpty() -> EventType.PARTY.name
-            else -> null
-        }
-
     /** Parsed contents of the "Tickets" block. */
     private data class Tickets(
         val ticketUrl: String? = null,
@@ -151,9 +143,6 @@ class BerghainDetailPageScraper {
     )
 
     companion object {
-        /** Floor label identifying the adjacent concert hall (vs. the Berghain building's club floors). */
-        private const val KANTINE_MARKER = "Kantine"
-
         /** Heading text of the ticket/price block. */
         private const val TICKETS_HEADING = "Tickets"
 
@@ -162,11 +151,5 @@ class BerghainDetailPageScraper {
 
         /** German sold-out marker used in the ticket block. */
         private const val SOLD_OUT_MARKER = "ausverkauft"
-
-        /** Doors time in the date line, e.g. "tür 19:00" (German "Tür" = door). */
-        private val DOORS_PATTERN = Regex("""tür\s+(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
-
-        /** Show start time in the date line, e.g. "beginn 21:00". */
-        private val START_PATTERN = Regex("""beginn\s+(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
     }
 }

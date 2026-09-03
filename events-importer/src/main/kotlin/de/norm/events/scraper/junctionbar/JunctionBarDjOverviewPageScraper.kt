@@ -10,7 +10,6 @@ import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import org.jsoup.select.Elements
 import java.time.Clock
 import java.time.DateTimeException
 import java.time.DayOfWeek
@@ -55,7 +54,7 @@ class JunctionBarDjOverviewPageScraper(
     ): List<ScrapedEvent> {
         val container = document.selectFirst("div.gridContainer") ?: document.body()
 
-        val groups = segmentIntoNights(container)
+        val groups = segmentIntoNights(container, ::isDateBar)
         logger.info { "Found ${groups.size} dated night(s) on Junction Bar DJ page" }
 
         @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed nights without aborting the whole import.
@@ -69,23 +68,8 @@ class JunctionBarDjOverviewPageScraper(
         }
     }
 
-    /** Splits the flat program into nights: each date-bar child (a `<table>` with a date) starts a new group. */
-    private fun segmentIntoNights(container: Element): List<Night> {
-        val nights = mutableListOf<Night>()
-        var current: Night? = null
-        for (child in container.children()) {
-            if (isDateBar(child)) {
-                current = Night(dateBar = child, content = Elements())
-                nights.add(current)
-            } else {
-                current?.content?.add(child)
-            }
-        }
-        return nights
-    }
-
     /** A date-bar child holds a `<table>` whose text carries a `DD.MM.` date; content lines carry none. */
-    private fun isDateBar(child: Element): Boolean = child.selectFirst("table") != null && DATE_PATTERN.containsMatchIn(child.text())
+    internal fun isDateBar(child: Element): Boolean = child.selectFirst("table") != null && DATE_PATTERN.containsMatchIn(child.text())
 
     @Suppress("ReturnCount") // Guard clauses for the required date and DJ name are clearer than nesting.
     private fun parseNight(
@@ -157,12 +141,6 @@ class JunctionBarDjOverviewPageScraper(
         val normalizedHour = hour.toInt() % HOURS_PER_DAY
         return runCatching { LocalTime.of(normalizedHour, minute.toInt()) }.getOrNull()
     }
-
-    /** One night's date bar plus the `p.djane` lines that follow it until the next date bar. */
-    private data class Night(
-        val dateBar: Element,
-        val content: Elements
-    )
 
     companion object {
         /** The `DD.MM.` date opening a date bar. */

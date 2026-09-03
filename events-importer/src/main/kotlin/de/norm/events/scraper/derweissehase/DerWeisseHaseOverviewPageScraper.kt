@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.derweissehase.DerWeisseHaseOverviewPageScraper.Companion.LINEUP_SEPARATOR
@@ -178,7 +179,7 @@ class DerWeisseHaseOverviewPageScraper {
             .map { ScrapedArtist(name = it, role = "DJ") }
 
     /** True when [name] is an unbooked billing slot rather than a performer — see [UNANNOUNCED_SLOT_PATTERN]. */
-    private fun isUnannouncedSlot(name: String): Boolean = UNANNOUNCED_SLOT_PATTERN.matches(name.trim().replace(WHITESPACE_RUN, " "))
+    private fun isUnannouncedSlot(name: String): Boolean = UNANNOUNCED_SLOT_PATTERN.matches(name.trim().replace(WHITESPACE, " "))
 
     private companion object {
         /**
@@ -213,8 +214,5 @@ class DerWeisseHaseOverviewPageScraper {
          * `#` on the listing itself, and neither is a ticket URL.
          */
         private val RA_EVENT_URL = Regex("""https?://(?:[\w-]+\.)?ra\.co/events/\d+/?""", RegexOption.IGNORE_CASE)
-
-        /** A run of whitespace inside a roster entry, collapsed before the anchored slot match. */
-        private val WHITESPACE_RUN = Regex("""\s+""")
     }
 }

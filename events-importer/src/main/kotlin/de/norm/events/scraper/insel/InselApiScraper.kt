@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.headlinersFromTitle
@@ -283,9 +284,6 @@ private const val MAX_METADATA_LINE = 80
 
 /** How far into the description a promoter credit is looked for; the venue puts it first or just after the date. */
 private const val PROMOTER_LINE_LIMIT = 3
-
-/** Trims this string and returns `null` when it is null, empty, or all whitespace. */
-private fun String?.blankToNull(): String? = this?.trim()?.takeIf { it.isNotBlank() }
 
 /**
  * The description's prose, with the lines whose contents are stored in dedicated fields removed

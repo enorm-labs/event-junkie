@@ -3,6 +3,7 @@ package de.norm.events.scraper.schokoladen
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.hrefAt
@@ -209,9 +210,6 @@ class SchokoladenOverviewPageScraper {
 
         /** A "(genre, origin)" annotation appended to each act in a title, stripped before artist derivation. */
         private val GENRE_PARENTHETICAL = Regex("""\s*\([^)]*\)""")
-
-        /** Collapses runs of whitespace left behind after stripping parentheticals. */
-        private val WHITESPACE = Regex("""\s+""")
 
         /** A trailing "presents:" / "prsnts:" / "pres.:" promoter flourish. */
         private val PRESENTS_SUFFIX = Regex("""\s*(?:presents|prsnts|pres\.?)\s*:?\s*$""", RegexOption.IGNORE_CASE)

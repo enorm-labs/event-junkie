@@ -2,6 +2,7 @@ package de.norm.events.scraper.soda
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
@@ -194,9 +195,6 @@ class SodaDetailPageScraper {
     private companion object {
         /** The schema.org `@type` Soda uses for every event. */
         private const val MUSIC_EVENT_TYPE = "MusicEvent"
-
-        /** Length of the leading `HH:mm` in the "Beginn" box's "22:00 Uhr" rendering. */
-        private const val HH_MM_LENGTH = 5
     }
 }
 

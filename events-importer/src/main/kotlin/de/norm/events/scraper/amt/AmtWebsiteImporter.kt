@@ -7,6 +7,7 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.absoluteLinksAt
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -45,7 +46,7 @@ class AmtWebsiteImporter(
         lastModified: String?
     ): ImportResult {
         val entry = htmlFetcher.fetchDocument(url)
-        val monthUrls = discoverMonthUrls(entry, url)
+        val monthUrls = entry.absoluteLinksAt(MONTH_LINK_SELECTOR, url)
         logger.info { "Found ${monthUrls.size} month page(s) linked from AMT entry $url" }
 
         val events =
@@ -56,17 +57,10 @@ class AmtWebsiteImporter(
         return ImportResult.Success(events = events, etag = null, lastModified = null)
     }
 
-    /** Resolves every distinct `/month/<name>` link on the entry page to an absolute URL. */
-    private fun discoverMonthUrls(
-        entry: Document,
-        entryUrl: String
-    ): List<String> =
-        entry
-            .select("a[href^=\"/month/\"]")
-            .map { it.attr("href") }
-            .filter { it.isNotBlank() }
-            .map { resolveUrl(entryUrl, it) }
-            .distinct()
+    private companion object {
+        /** The entry page's `/month/<name>` links, one per published month. */
+        const val MONTH_LINK_SELECTOR = "a[href^=\"/month/\"]"
+    }
 }
 
 val AMT_LIMITATIONS =

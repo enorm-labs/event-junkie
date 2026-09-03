@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.slug.SlugGenerator
@@ -64,7 +65,7 @@ class JunctionBarMusicOverviewPageScraper {
                 }
         val container = document.selectFirst("div.gridContainer") ?: document.body()
 
-        val groups = segmentIntoNights(container)
+        val groups = segmentIntoNights(container, ::isDateBar)
         logger.info { "Found ${groups.size} dated night(s) on Junction Bar page $baseUrl" }
 
         @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed nights without aborting the whole import.
@@ -78,26 +79,8 @@ class JunctionBarMusicOverviewPageScraper {
         }
     }
 
-    /**
-     * Splits the flat program into nights: each date-bar child starts a new group, and the
-     * content children following it (until the next date bar) are that night's band blocks.
-     */
-    private fun segmentIntoNights(container: Element): List<Night> {
-        val nights = mutableListOf<Night>()
-        var current: Night? = null
-        for (child in container.children()) {
-            if (isDateBar(child)) {
-                current = Night(dateBar = child, content = Elements())
-                nights.add(current)
-            } else {
-                current?.content?.add(child)
-            }
-        }
-        return nights
-    }
-
     /** A date-bar child carries a `strong.datum` whose text holds a `DD.MM.` date. */
-    private fun isDateBar(child: Element): Boolean = child.selectFirst("strong.datum") != null && DATE_PATTERN.containsMatchIn(child.text())
+    internal fun isDateBar(child: Element): Boolean = child.selectFirst("strong.datum") != null && DATE_PATTERN.containsMatchIn(child.text())
 
     @Suppress("ReturnCount") // Guard clauses for the required date and band list are clearer than nesting.
     private fun parseNight(
@@ -116,7 +99,7 @@ class JunctionBarMusicOverviewPageScraper {
                 .select("a[href*=junction-bar-shop.de]")
                 .firstOrNull()
                 ?.attr("href")
-                ?.trimToNull()
+                ?.blankToNull()
 
         return ScrapedEvent(
             title = title,
@@ -240,14 +223,6 @@ class JunctionBarMusicOverviewPageScraper {
         return "${EventSource.JUNCTION_BAR.sourceIdPrefix}$identity"
     }
 
-    private fun String.trimToNull(): String? = trim().takeIf { it.isNotBlank() }
-
-    /** One night's date bar plus the content blocks that follow it until the next date bar. */
-    private data class Night(
-        val dateBar: Element,
-        val content: Elements
-    )
-
     companion object {
         /** The `DD.MM.` date opening a date bar (the trailing dot after the month distinguishes it from a time). */
         private val DATE_PATTERN = Regex("""(\d{1,2})\.(\d{1,2})\.""")
@@ -271,3 +246,33 @@ class JunctionBarMusicOverviewPageScraper {
         private val WEEKEND_SHOWTIME = LocalTime.of(22, 0)
     }
 }
+
+/**
+ * Splits the flat program into nights: each date bar starts a new group, and the children
+ * following it (until the next date bar) are that night's content.
+ *
+ * The venue lays both programme pages out flat — the nights are siblings, not containers — so
+ * [isDateBar] is what tells one apart, and it differs per page.
+ */
+internal fun segmentIntoNights(
+    container: Element,
+    isDateBar: (Element) -> Boolean
+): List<Night> {
+    val nights = mutableListOf<Night>()
+    var current: Night? = null
+    for (child in container.children()) {
+        if (isDateBar(child)) {
+            current = Night(dateBar = child, content = Elements())
+            nights.add(current)
+        } else {
+            current?.content?.add(child)
+        }
+    }
+    return nights
+}
+
+/** One night's date bar plus the content blocks that follow it until the next date bar. */
+internal data class Night(
+    val dateBar: Element,
+    val content: Elements
+)

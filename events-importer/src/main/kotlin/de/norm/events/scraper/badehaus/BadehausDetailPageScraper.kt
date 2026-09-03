@@ -68,7 +68,7 @@ class BadehausDetailPageScraper {
             startTime = parseTime(BEGINN_PATTERN.find(metaText)?.groupValues?.get(1)),
             imageUrl = event.selectFirst(".single-event-image-wrap img")?.absUrl("src")?.takeIf { it.isNotBlank() },
             sourceUrl = sourceUrl,
-            sourceId = "${EventSource.BADEHAUS.sourceIdPrefix}${extractSlug(sourceUrl)}",
+            sourceId = "${EventSource.BADEHAUS.sourceIdPrefix}${badehausEventSlug(sourceUrl)}",
             ticketUrl = event.selectFirst("a.ticketbtn")?.absUrl("href")?.takeIf { it.isNotBlank() },
             promoters = parsePromoters(event)
         )
@@ -103,9 +103,6 @@ class BadehausDetailPageScraper {
         val header = event.selectFirst("h3")?.text().orEmpty()
         return parseGermanDate(DATE_PATTERN.find(header)?.value)
     }
-
-    /** Extracts the event slug from a `/events/<slug>/` URL for a stable `sourceId`. */
-    private fun extractSlug(url: String): String = URI(url).path.trim('/').substringAfterLast('/')
 
     private companion object {
         /** Matches a `DD.MM.YYYY` date. */

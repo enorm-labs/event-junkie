@@ -97,14 +97,14 @@ class BerghainOverviewPageScraper(
 
         val lineText = dateLine?.text().orEmpty()
         val floors = block.select("h3").mapNotNull { it.text().trim().takeIf(String::isNotBlank) }
-        val eventType = floorToEventType(floors)
+        val eventType = floorsToEventType(floors)
 
         return ScrapedEvent(
             title = title,
             eventType = eventType,
             eventDate = eventDate,
-            doorsTime = parseTime(DOORS_PATTERN.find(lineText)?.groupValues?.get(1)),
-            startTime = parseTime(START_PATTERN.find(lineText)?.groupValues?.get(1)),
+            doorsTime = parseTime(BERGHAIN_DOORS_PATTERN.find(lineText)?.groupValues?.get(1)),
+            startTime = parseTime(BERGHAIN_START_PATTERN.find(lineText)?.groupValues?.get(1)),
             sourceUrl = resolveUrl(sourceUrl, href),
             sourceId = "${EventSource.BERGHAIN.sourceIdPrefix}$eventId",
             genre = floorsToGenre(floors),
@@ -144,34 +144,11 @@ class BerghainOverviewPageScraper(
         return lineup
     }
 
-    /**
-     * Types an event from its floor label(s): the Kantine am Berghain concert hall
-     * lists live [CONCERT][EventType.CONCERT]s, while the Berghain building floors
-     * (Berghain, Panorama Bar, Säule, Halle) host club [PARTY][EventType.PARTY]
-     * nights. Returns `null` when no floor is given, letting the persistence
-     * boundary apply the `OTHER` default.
-     */
-    private fun floorToEventType(floors: List<String>): String? =
-        when {
-            floors.any { it.contains(KANTINE_MARKER, ignoreCase = true) } -> EventType.CONCERT.name
-            floors.isNotEmpty() -> EventType.PARTY.name
-            else -> null
-        }
-
     companion object {
         /** Semantic selector for event blocks — a link to a `/de/event/<id>/` detail page, on either source page. */
         private const val EVENT_LINK_SELECTOR = "a[href^=/de/event/]"
 
         /** Tailwind utility class marking a `Live`/`b2b` format label span (not an artist name). */
         private const val MARKER_CLASS = "uppercase"
-
-        /** Floor label identifying the adjacent concert hall (vs. the Berghain building's club floors). */
-        private const val KANTINE_MARKER = "Kantine"
-
-        /** Doors time in the date line, e.g. "tür 19:00" (German "Tür" = door). */
-        private val DOORS_PATTERN = Regex("""tür\s+(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
-
-        /** Show start time in the date line, e.g. "beginn 21:00". */
-        private val START_PATTERN = Regex("""beginn\s+(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
     }
 }
