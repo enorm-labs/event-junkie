@@ -1,0 +1,29 @@
+# Traefik binds the node's ports 80 and 443 itself (#1013), so a visitor's address reaches it
+# without passing through ServiceLB.
+#
+# **This replaces `externalTrafficPolicy: Local`, which was measured and was not enough.** k3s did
+# point klipper-lb at the node and its NodePort rather than the ClusterIP. klipper-lb still installed
+# `iptables -t nat -I POSTROUTING -d <nodeIP>/32 -j MASQUERADE`, rewriting the source before the
+# packet reached the NodePort where `Local` would have preserved it.
+#
+# **`type: ClusterIP` is what frees the ports.** svclb's own containers declare `hostPort: 80` and
+# `hostPort: 443`, so Traefik cannot hold them while the Service is a LoadBalancer.
+#
+# **A hostPort rather than `hostNetwork`, and the NetworkPolicies decide that.** The chart finds
+# Traefik by `podSelector: app.kubernetes.io/name: traefik`. A hostPort leaves the pod its own
+# address, so the selector still matches; `hostNetwork` gives it the node's and closes ingress.
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    service:
+      spec:
+        type: ClusterIP
+    ports:
+      web:
+        hostPort: 80
+      websecure:
+        hostPort: 443
