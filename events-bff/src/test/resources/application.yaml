@@ -56,3 +56,8 @@ management:
 app:
   api:
     max-page-size: 100
+    cache:
+      # The shipped numbers, so the tests exercise the path that ships. BaseControllerTest empties
+      # the cache beside the TRUNCATE, which is what keeps one test's rows out of the next.
+      ttl-seconds: 60
+      maximum-items: 20000

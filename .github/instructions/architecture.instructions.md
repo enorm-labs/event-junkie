@@ -123,6 +123,19 @@ The decisions the three backend modules are built on. Each one has a failure mod
       paging path unstable. The resolver and its test are duplicated per module because `events-core` is deliberately free of web dependencies.
     - The BFF's `EventSearchRepository` builds its `ORDER BY` by hand (filtered event search) and ends it with `e.id ASC` for the same reason; it allowlists
       sort properties, so the key the resolver appends is ignored there.
+- **Read responses are cached in the BFF, at the controller layer** (#269). `ResponseCache` (a Caffeine cache in `common`) holds assembled response objects for
+  `app.api.cache.ttl-seconds`, and `CacheControlFilter` puts the same lifetime in a `Cache-Control` header so a browser stops asking too. Three things about it
+  are decisions rather than defaults:
+    - **Invalidation is the TTL and nothing else.** The importer is a different pod and the BFF runs two replicas, so there is no in-process event to subscribe
+      to. `event_source.last_success_at` would be a real watermark and reading it per request is the query the cache exists to avoid. Imports default to daily,
+      so a minute is a fraction of a cycle.
+    - **One shared cache with one item budget, which is why this is not `@Cacheable`.** Spring's annotation does work on suspend functions — that was tested,
+      not assumed — but it gives a cache per method, so the memory bound becomes a per-cache number times however many caches exist. Bounding by items rather
+      than entries matters because a calendar response carries up to 92 days while a detail response carries one.
+    - **The cache sits in the controller, not the service**, so the loader runs in the caller's coroutine and the transaction, the log context and cancellation
+      all behave as they would without it.
+    - **Keys are a data class per endpoint**, declared beside the controller that owns them. A data class is equal only to its own type, so `/events/{slug}` and
+      `/venues/{slug}` cannot answer each other even though both carry a slug. `ResponseCachingIntegrationTest` asserts exactly that.
 - **API path convention**: All importer admin endpoints live under `/api/admin/<resource>` (e.g. `/api/admin/venues`, `/api/admin/events`).
 - **Module metadata**: Each feature package in the importer has a `*Module.kt` marker class annotated with
   `@ApplicationModule(allowedDependencies = [...])` to declare allowed inter-module dependencies for Spring Modulith verification. Similarly, `events-core` has

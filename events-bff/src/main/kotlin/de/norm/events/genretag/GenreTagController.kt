@@ -1,6 +1,7 @@
 package de.norm.events.genretag
 
 import de.norm.events.common.QueryParameters
+import de.norm.events.common.ResponseCache
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.GetMapping
@@ -15,13 +16,15 @@ import org.springframework.web.server.ServerWebExchange
 @RequestMapping("/api/genres")
 @Tag(name = "Genres", description = "Public endpoint listing genre tags for filtering")
 class GenreTagController(
-    private val genreTagService: GenreTagService
+    private val genreTagService: GenreTagService,
+    private val cache: ResponseCache
 ) {
     @GetMapping
     @Operation(summary = "List all genre tags alphabetically")
     suspend fun list(exchange: ServerWebExchange): List<GenreTagResponse> {
         NO_PARAMS.rejectUnknownIn(exchange)
-        return genreTagService.list()
+        // One key, and the filter bar loads this beside every result set — the highest hit rate here.
+        return cache.get(GenreListKey) { genreTagService.list() }
     }
 
     private companion object {
@@ -29,3 +32,6 @@ class GenreTagController(
         val NO_PARAMS = QueryParameters.accepting()
     }
 }
+
+/** The one key this controller owns. An object, because the whole list is always returned. */
+private data object GenreListKey

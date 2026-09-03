@@ -2,6 +2,7 @@ package de.norm.events.promoter
 
 import de.norm.events.common.PageResponse
 import de.norm.events.common.QueryParameters
+import de.norm.events.common.ResponseCache
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -22,7 +23,8 @@ import org.springframework.web.server.ServerWebExchange
 @RequestMapping("/api/promoters")
 @Tag(name = "Promoters", description = "Public endpoints for browsing promoters")
 class PromoterController(
-    private val promoterService: PromoterService
+    private val promoterService: PromoterService,
+    private val cache: ResponseCache
 ) {
     @GetMapping
     @Operation(summary = "List promoters with pagination and optional name search")
@@ -36,7 +38,7 @@ class PromoterController(
         exchange: ServerWebExchange
     ): PageResponse<PromoterSummaryResponse> {
         LIST_PARAMS.rejectUnknownIn(exchange)
-        return promoterService.list(q, pageable)
+        return cache.get(PromoterListKey(q, pageable)) { promoterService.list(q, pageable) }
     }
 
     @GetMapping("/{slug}")
@@ -44,10 +46,20 @@ class PromoterController(
     suspend fun findBySlug(
         @Parameter(description = "Unique promoter slug.", example = "36-concerts", required = true)
         @PathVariable slug: String
-    ): PromoterDetailResponse = promoterService.findBySlug(slug)
+    ): PromoterDetailResponse = cache.get(PromoterDetailKey(slug)) { promoterService.findBySlug(slug) }
 
     private companion object {
         /** Declared rather than derived: these parameters are on the method, not on a filter object. */
         val LIST_PARAMS = QueryParameters.accepting(QueryParameters.PAGEABLE, QueryParameters.named("q"))
     }
 }
+
+/** The cache keys this controller owns. Separate types, so no endpoint can collide with another. */
+private data class PromoterListKey(
+    val query: String?,
+    val pageable: Pageable
+)
+
+private data class PromoterDetailKey(
+    val slug: String
+)

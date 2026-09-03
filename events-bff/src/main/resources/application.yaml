@@ -12,6 +12,13 @@ app:
     # StableSortPageableArgumentResolver, which is the only place this can be applied. 100 rather
     # than 20, because the venue detail feed asks for 50.
     max-page-size: 100
+    cache:
+      # How long an assembled response may be reused, and how many responses are held. Imports run
+      # daily per source, so 60 seconds is a fraction of a cycle. ResponseCache carries the rest,
+      # including why the bound counts items. Both are overridable per environment as
+      # APP_API_CACHE_TTL_SECONDS and APP_API_CACHE_MAXIMUM_ITEMS.
+      ttl-seconds: 60
+      maximum-items: 20000
   images:
     serving:
       # Off means a response carries the venue's own URL, which is what the site does today. On means
