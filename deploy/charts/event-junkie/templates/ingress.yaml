@@ -66,9 +66,8 @@ spec:
     - host: {{ .Values.ingress.host | quote }}
       http:
         paths:
-          {{- /* Two rules and no rewrite anywhere: the BFF serves under /api itself
-                 (`spring.webflux.base-path`), so the routing rule and the application agree on the
-                 path. Traefik prioritises the longer prefix, so /api wins over / regardless of the
+          {{- /* Two rules and no rewrite anywhere: the BFF's controllers are mapped under /api
+                 themselves, so the routing rule and the application agree on the path. Traefik prioritises the longer prefix, so /api wins over / regardless of the
                  order here — but they are written most-specific-first anyway, because relying on a
                  controller's tie-breaking is how this breaks on a different one.
 

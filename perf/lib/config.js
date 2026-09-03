@@ -7,12 +7,14 @@
  */
 
 /**
- * The BFF's origin. No `/api` prefix: that prefix is a *frontend* concern — the Vite dev server
- * strips it before proxying (see events-frontend/vite.config.ts). The BFF itself serves
- * `/events`, `/venues`, … at the root, and pointing k6 at `/api/...` is the first mistake
- * everybody makes here.
+ * The BFF's base URL: `BFF_HOST` is an **origin**, and the `/api` prefix is appended here.
+ *
+ * The prefix lives in the controllers' own `@RequestMapping("/api/events")` and siblings, so it is
+ * there under `bootRun` and in a cluster alike — nothing sets `spring.webflux.base-path`. Appending
+ * it once here keeps `BFF_HOST` meaning what it means for `scripts/dev-env.sh`, which probes the
+ * actuator at the root, and stops the two uses of one variable name from needing different values.
  */
-export const BASE_URL = (__ENV.BFF_HOST || 'http://localhost:8080').replace(/\/$/, '')
+export const BASE_URL = `${(__ENV.BFF_HOST || 'http://localhost:8080').replace(/\/$/, '')}/api`
 
 /**
  * Latency budgets, in milliseconds, for a **local** run against a laptop.

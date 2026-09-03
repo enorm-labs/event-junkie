@@ -441,7 +441,7 @@ docker run --rm --network event-junkie_default \
   --read-only --tmpfs /tmp \
   -e SPRING_R2DBC_URL='r2dbc:postgresql://postgres:5432/event_junkie' \
   -e SPRING_R2DBC_USERNAME=admin -e SPRING_R2DBC_PASSWORD=admin \
-  -e MANAGEMENT_SERVER_PORT=9001 -e SPRING_WEBFLUX_BASE_PATH=/api \
+  -e MANAGEMENT_SERVER_PORT=9001 \
   -p 19002:9001 -p 18080:8080 event-junkie/bff:dev
 ```
 
