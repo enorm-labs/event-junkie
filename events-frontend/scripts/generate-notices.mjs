@@ -113,9 +113,41 @@ function readBackendComponents() {
  * CPU architecture. None of them is shipped to a browser, so none of them is distributed, so none
  * of them needs attributing here. The cross-platform package that pulls them in (`esbuild` itself)
  * stays listed.
+ *
+ * **The name pattern below is necessary and not sufficient**, which cost a day to find out. It
+ * matches packages whose *name* carries a platform, like `@esbuild/darwin-arm64`. It cannot match
+ * `fsevents` — a macOS-only native binding with an ordinary name, declaring its restriction in the
+ * `os` field of its own package.json instead. So a Mac generated a file with one extra component
+ * and CI rejected it, which is exactly the non-determinism this guard exists to prevent, arriving
+ * through the door it did not cover. `excludedByOs` below closes that, using the field rather than
+ * the name so the next such package needs no new pattern.
  */
 const PLATFORM_SPECIFIC =
   /[-/](darwin|linux|win32|freebsd|openbsd|android|sunos)-(x64|arm64|arm|ia32|ppc64|ppc64le|s390x|riscv64|loong64)(-(gnu|musl|msvc|eabi|eabihf))?@/
+
+/**
+ * True when a package declares an `os` that excludes the platform we deploy on.
+ *
+ * `linux` is not a preference here: both images are Linux, on amd64 and arm64, so a package npm
+ * would refuse to install there cannot reach a user by any route. `cpu` is deliberately *not*
+ * checked — we publish both architectures, so an arch-restricted package does ship on one of them.
+ *
+ * Reads the installed package.json via the `path` license-checker reports. A package that cannot be
+ * read is kept: over-reporting a notice is a smaller error than dropping one, and this is a legal
+ * document. See docs/LEGAL.md §9.
+ */
+function excludedByOs(info) {
+  if (!info?.path) return false
+  try {
+    const { os } = JSON.parse(readFileSync(`${info.path}/package.json`, 'utf8'))
+    if (!Array.isArray(os) || os.length === 0) return false
+    // npm's own semantics: a leading `!` negates, so `["!win32"]` means everywhere but Windows.
+    if (os.some((value) => value.startsWith('!'))) return os.includes('!linux')
+    return !os.includes('linux')
+  } catch {
+    return false
+  }
+}
 
 function readFrontendComponents() {
   // `--production` drops devDependencies; `--excludePrivatePackages` drops this app itself.
@@ -130,7 +162,7 @@ function readFrontendComponents() {
   )
 
   return Object.entries(JSON.parse(stdout))
-    .filter(([id]) => !PLATFORM_SPECIFIC.test(id))
+    .filter(([id, info]) => !PLATFORM_SPECIFIC.test(id) && !excludedByOs(info))
     .map(([id, info]) => {
       // license-checker keys are `name@version`; the name itself may contain `@` (scoped packages).
       const at = id.lastIndexOf('@')

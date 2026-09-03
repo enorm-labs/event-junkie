@@ -31,14 +31,15 @@
 # tree exactly as it found it. That is the difference from the bare form, and it is the same split
 # `format-markdown.sh` and `ste-lint.sh` use.
 #
-# **The output depends on the platform, and Linux is the authority.** `license-checker` walks
-# `node_modules`, and optional dependencies differ by operating system: a macOS install carries
-# `fsevents`, a Linux one does not. Regenerating on a laptop therefore produces a file that fails in
-# CI, with no hint as to why — the diff is one component in four thousand lines. That is not
-# theoretical; it is how the first run of this check failed. The warning below is the only defence,
-# because the honest fix belongs in the generator rather than here: `fsevents` is a native
-# file-watcher binding that reaches no user, and it should not be in a production notice on any
-# platform.
+# **The output must not depend on the machine that produces it**, which is what makes a diff a
+# signal at all. `license-checker` walks `node_modules`, where optional dependencies differ by
+# operating system, so the generator drops both the platform-named binaries and any package whose
+# `os` field excludes Linux — `fsevents` being the one that has an ordinary name and declares the
+# restriction in the field (#1043). A laptop and CI produce byte-identical files.
+#
+# One asymmetry is unguarded: a package restricted to Linux would be absent from a macOS install
+# entirely, so a Mac would omit what CI lists. Nothing in the tree is Linux-only — its three
+# `os`-restricted packages are all `darwin`. **CI is the authority** if the two ever disagree.
 
 set -euo pipefail
 
@@ -69,30 +70,10 @@ regenerate() {
     npm --prefix events-frontend run generate:notices
 }
 
-# Separate from `regenerate` because `check` prints it before doing anything: on a macOS laptop the
-# failure that follows is almost certainly this rather than a real drift.
-warn_platform() {
-    [[ "$(uname -s)" == "Linux" ]] && return 0
-    cat >&2 <<'PLATFORM'
-notices-parity.sh: this is not Linux, and the notices differ by platform.
-
-A macOS install carries optional dependencies a Linux one does not (fsevents), so a file
-regenerated here will fail in CI. Generate it the way CI does instead:
-
-  docker run --rm -v "$PWD":/w -w /w/events-frontend node:24-bookworm sh -c 'npm ci && npm run generate:notices'
-
-The Gradle half is platform-independent and can be produced locally.
-
-PLATFORM
-}
-
 if [[ "$MODE" == "fix" ]]; then
-    warn_platform
     regenerate
     exit 0
 fi
-
-warn_platform
 
 BEFORE="$(mktemp)"
 cp "$NOTICES" "$BEFORE"
