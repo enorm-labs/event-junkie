@@ -11,6 +11,7 @@ import de.norm.events.scraper.parseIsoTime
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.privatclub.PrivatclubOverviewPageScraper.Companion.GERMAN_DATE_FORMATTER
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -222,13 +223,13 @@ class PrivatclubOverviewPageScraper(
 
         val eventNode = parseEventNode(jsonLdScript.data()) ?: return null
 
-        val startDateStr = eventNode.stringField("startDate")
+        val startDateStr = eventNode.stringOrNull("startDate")
         return JsonLdData(
             eventDate = startDateStr?.let { parseIsoDate(it) },
             startTime = startDateStr?.let { parseIsoTime(it) },
-            doorsTime = eventNode.stringField("doorTime")?.let { parseTime(it) },
-            imageUrl = eventNode.stringField("image")?.takeIf { it.startsWith("http") },
-            url = eventNode.stringField("url")?.takeIf { it.startsWith("http") },
+            doorsTime = eventNode.stringOrNull("doorTime")?.let { parseTime(it) },
+            imageUrl = eventNode.stringOrNull("image")?.takeIf { it.startsWith("http") },
+            url = eventNode.stringOrNull("url")?.takeIf { it.startsWith("http") },
             ticketUrl = extractOfferUrl(eventNode)
         )
     }
@@ -266,15 +267,8 @@ class PrivatclubOverviewPageScraper(
         val offerNodes = if (offers.isArray) offers.toList() else listOf(offers)
         return offerNodes
             .asSequence()
-            .mapNotNull { it.stringField("url") }
+            .mapNotNull { it.stringOrNull("url") }
             .firstOrNull { it.startsWith("http") }
-    }
-
-    /** Reads a trimmed string [field] from this node, or `null` when the field is missing, JSON `null`, or blank. */
-    private fun JsonNode.stringField(field: String): String? {
-        val node = path(field)
-        if (node.isMissingNode || node.isNull) return null
-        return node.asString().trim().takeIf { it.isNotBlank() }
     }
 
     // -- HTML fallback parsers --------------------------------------------

@@ -11,6 +11,7 @@ import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -57,7 +58,7 @@ class Hole44DetailPageScraper {
         val content = document.body()
         val jsonLd = parseEventNode(document)
 
-        val title = content.textAt("h4.single-event-title") ?: jsonLd?.text("name")
+        val title = content.textAt("h4.single-event-title") ?: jsonLd?.stringOrNull("name")
         if (title == null) {
             logger.warn { "Detail page at $sourceUrl has no event title, skipping" }
             return null
@@ -69,17 +70,17 @@ class Hole44DetailPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = support,
-            description = jsonLd?.text("description"),
+            description = jsonLd?.stringOrNull("description"),
             eventType = eventType,
             // Prefer the structured startDate, then the slug's ISO prefix, then the German `.details` date.
             eventDate =
-                jsonLd?.text("startDate")?.let { parseIsoDate(it) }
+                jsonLd?.stringOrNull("startDate")?.let { parseIsoDate(it) }
                     ?: parseIsoDate(slug.take(ISO_DATE_LENGTH))
                     ?: parseGermanDate(detailValue(content, "Datum"))
                     ?: UNRESOLVED_EVENT_DATE,
             doorsTime = parseTime(detailValue(content, "Einlass")),
             startTime = parseTime(detailValue(content, "Start")),
-            imageUrl = jsonLd?.text("image") ?: content.hrefAt("a.event-image"),
+            imageUrl = jsonLd?.stringOrNull("image") ?: content.hrefAt("a.event-image"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.HOLE44.sourceIdPrefix}$slug",
             genre = parseGenres(content),
@@ -102,7 +103,7 @@ class Hole44DetailPageScraper {
             .map { it.data() }
             .firstNotNullOfOrNull { json ->
                 try {
-                    jsonMapper.readTree(json).takeIf { it.text("@type") == "Event" }
+                    jsonMapper.readTree(json).takeIf { it.stringOrNull("@type") == "Event" }
                 } catch (e: Exception) {
                     logger.warn(e) { "Failed to parse Hole 44 JSON-LD block" }
                     null
@@ -137,11 +138,4 @@ private fun parsePromoter(content: Element): List<String> {
     val raw = content.textAt(".event-promoter") ?: return emptyList()
     val name = raw.replace(PROMOTER_CREDIT_SUFFIX, "").trim()
     return listOfNotNull(name.takeIf { it.isNotBlank() })
-}
-
-/** Reads a trimmed string [field] from this node, or `null` when missing, JSON `null`, or blank. */
-private fun JsonNode.text(field: String): String? {
-    val node = path(field)
-    if (node.isMissingNode || node.isNull) return null
-    return node.asString().trim().takeIf { it.isNotBlank() }
 }

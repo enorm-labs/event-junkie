@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.parseIsoDate
@@ -145,12 +146,6 @@ class PankeProgrammePageScraper {
      */
     private fun parseStartTime(info: String?): LocalTime? = parseTime(START_TIME.find(info.orEmpty())?.groupValues?.get(1))
 }
-
-/** Reads an attribute off the first matching child. */
-private fun Element.attrAt(
-    cssQuery: String,
-    attribute: String
-): String? = selectFirst(cssQuery)?.attr(attribute)?.takeIf { it.isNotBlank() }
 
 /**
  * Reads the poster out of an article's inline `background-image: url(…)`, the only place the
