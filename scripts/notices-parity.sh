@@ -78,10 +78,19 @@ fi
 BEFORE="$(mktemp)"
 cp "$NOTICES" "$BEFORE"
 # Unconditional, so an interrupted or failing regeneration does not leave a half-written legal
-# document in the tree.
+# document in the tree. It must stay unconditional: the stale path below ends in `exit 1`, which
+# fires this same trap, so making the restore depend on success is what would leave a regenerated
+# file behind on exactly the run that matters.
 trap 'cp "$BEFORE" "$NOTICES"; rm -f "$BEFORE"' EXIT
 
-regenerate >/dev/null
+# `regenerate` is two generators, and a failure in either is not a staleness result. Unguarded, the
+# second one failing after the first succeeds surfaces as that command's own error, which a reader
+# cannot tell apart from the report below.
+if ! regenerate >/dev/null; then
+    printf 'notices-parity.sh: could not regenerate the notices — the Gradle or npm generator failed.\n' >&2
+    printf 'This is not a staleness result. %s is unchanged.\n' "$NOTICES" >&2
+    exit 1
+fi
 
 if diff -q "$BEFORE" "$NOTICES" >/dev/null; then
     printf 'The committed notices match the resolved dependencies.\n'
@@ -89,20 +98,26 @@ if diff -q "$BEFORE" "$NOTICES" >/dev/null; then
 fi
 
 added="$(comm -13 \
-    <(jq -r '[.. | objects | select(.name and .version) | .name] | .[]' "$BEFORE" | sort -u) \
-    <(jq -r '[.. | objects | select(.name and .version) | .name] | .[]' "$NOTICES" | sort -u) |
+    <(jq -r '[.. | objects | select(.name and .version) | "\(.name)@\(.version)"] | .[]' "$BEFORE" | sort -u) \
+    <(jq -r '[.. | objects | select(.name and .version) | "\(.name)@\(.version)"] | .[]' "$NOTICES" | sort -u) |
     wc -l | tr -d ' ')"
 removed="$(comm -23 \
-    <(jq -r '[.. | objects | select(.name and .version) | .name] | .[]' "$BEFORE" | sort -u) \
-    <(jq -r '[.. | objects | select(.name and .version) | .name] | .[]' "$NOTICES" | sort -u) |
+    <(jq -r '[.. | objects | select(.name and .version) | "\(.name)@\(.version)"] | .[]' "$BEFORE" | sort -u) \
+    <(jq -r '[.. | objects | select(.name and .version) | "\(.name)@\(.version)"] | .[]' "$NOTICES" | sort -u) |
     wc -l | tr -d ' ')"
 
 # The counts rather than the diff, because the diff is four thousand lines of generated JSON and
 # says nothing a reader can act on. What matters is whether components appeared or disappeared.
+#
+# **Keyed on `name@version`, not `name`.** A dependency that only moves version is present on both
+# sides under a bare name, so the counts come out "0 missing, 0 no longer resolve" for a file that
+# has genuinely drifted — a staleness message naming nothing. The versioned key costs one count on
+# each side per upgrade, which is why the wording below says "entries" rather than "components":
+# `foo 1.0 -> 1.1` is one line gone and one arrived, not two components.
 cat >&2 <<EOF
 notices-parity.sh: $NOTICES is stale.
 
-  ${added} component(s) missing from it, ${removed} listed that no longer resolve.
+  ${added} entry(s) missing from it, ${removed} listed that no longer resolve.
 
 Regenerate and commit the result:
 
