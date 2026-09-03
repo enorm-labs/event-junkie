@@ -523,7 +523,7 @@ Settled questions, so they are not re-litigated. The reasoning is in the section
 | 1   | Imprint address        | A rented _ladungsfähige Anschrift_ from Postflex, €39.90/yr. `c/o` is its own field                               | §8.3                 |
 | 2   | Legal-page language    | English and German, German authoritative                                                                          | §6.1                 |
 | 3   | First public version   | `0.1.1`; `main` carries `0.1.1-SNAPSHOT`; only a released `X.Y.Z` links; `0.1.0` skipped                          | §4.7                 |
-| 4   | `package.json` version | Mirrors the Gradle version, kept in step by hand, without `-SNAPSHOT`                                             | §4.6                 |
+| 4   | `package.json` version | Mirrors the Gradle version, kept in step by hand, without `-SNAPSHOT`                                             | §4.4                 |
 | 5   | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                         | §4.4                 |
 | 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                                 | `CODE_OF_CONDUCT.md` |
 | 7   | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                            | §8.4                 |
