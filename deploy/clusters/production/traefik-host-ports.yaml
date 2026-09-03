@@ -1,0 +1,35 @@
+# Traefik binds the node's ports 80 and 443 itself (#1013), so a visitor's address reaches it
+# without passing through ServiceLB.
+#
+# **Staging proved this, and proved the alternative wrong.** `externalTrafficPolicy: Local` left
+# klipper-lb's MASQUERADE in place. With the host ports, Traefik's own access log recorded the
+# caller's real address for one measured request. See docs/LEGAL.md §7.5.1.
+#
+# **`type: ClusterIP` frees the ports** — svclb's own containers declare `hostPort: 80` and `443`.
+#
+# **A hostPort rather than `hostNetwork`, and the NetworkPolicies decide that.** The chart finds
+# Traefik by `podSelector: app.kubernetes.io/name: traefik`. A hostPort leaves the pod its own
+# address, so the selector still matches; `hostNetwork` gives it the node's and closes ingress.
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    service:
+      spec:
+        type: ClusterIP
+    ports:
+      web:
+        hostPort: 80
+      websecure:
+        hostPort: 443
+    # **A hostPort and a rolling update cannot both work on one node, and this is not optional.**
+    # The chart's `maxUnavailable: 0` starts the replacement before stopping the old pod, and it
+    # cannot schedule while the old one holds 80 and 443. On staging that wedged Traefik behind a
+    # site still serving 200s, so nothing complained and every later change would have hung.
+    # `Recreate` stops the old pod first — an ingress gap on each Traefik change, bounded by
+    # `terminationGracePeriodSeconds` (60).
+    updateStrategy:
+      type: Recreate
