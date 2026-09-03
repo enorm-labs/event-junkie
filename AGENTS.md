@@ -600,6 +600,9 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | ADR: Probe semantics (readiness/liveness)   | `docs/adr/ADR-018_PROBE_SEMANTICS.md`                                                                                             |
 | ADR: Venue image delivery (cached)          | `docs/adr/ADR-019_VENUE_IMAGE_DELIVERY.md` — cache in a bucket, not hotlink. Not implemented, #283 blocks it                      |
 | ADR: Image processing (imgproxy)            | `docs/adr/ADR-020_IMAGE_PROCESSING.md` — derivatives at import time, never on the request path                                    |
+| ADR: Public site monitoring                 | `docs/adr/ADR-021_PUBLIC_SITE_MONITORING.md` — a Better Stack monitor polls every three minutes, from outside the cluster         |
+| ADR: Shared cluster base                    | `docs/adr/ADR-022_SHARED_CLUSTER_BASE.md` — `deploy/clusters/base/` holds what does not differ; each cluster patches one field    |
+| ADR: Operator authentication                | `docs/adr/ADR-023_OPERATOR_AUTHENTICATION.md` — the admin API stays unroutable. A Traefik middleware when a surface is deployed   |
 | Plan: Hetzner + k3s setup, go-live          | `docs/ops/PLATFORM_SETUP.md`                                                                                                      |
 | Releasing & deploying, end to end           | `docs/ops/RELEASING.md` — the diagram; ADR-016 has the reasoning                                                                  |
 | Bootstrapping a cluster, once               | `docs/ops/CLUSTER_BOOTSTRAP.md` — ordered runbook, first run 2026-08-13; traps table at the bottom                                |
