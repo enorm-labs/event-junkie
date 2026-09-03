@@ -60,9 +60,9 @@ bff:
     # bff.image.tag falls back to `.Chart.AppVersion`, which #264 stamps from the build that pushed
     # the image. Never `latest` — the render assertions fail the build on a floating tag.
     tag: ""
-  # bff.basePath is served by Spring itself (`spring.webflux.base-path`), which is why the ingress
-  # needs no rewrite and the chart stays free of a Traefik-specific Middleware CRD (§3.1). The
-  # frontend's generated client prepends the same prefix.
+  # bff.basePath is the ingress path rule, and it matches the prefix the controllers already carry
+  # in their own `@RequestMapping`. That is why the ingress needs no rewrite and the chart stays free
+  # of a Traefik-specific Middleware CRD (§3.1). Nothing sets `spring.webflux.base-path`.
   basePath: "/api"
   service:
     # bff.service.port is the application port — the only one the ingress routes.

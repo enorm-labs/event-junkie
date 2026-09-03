@@ -5,7 +5,7 @@ metadata:
   name: {{ include "event-junkie.componentName" $args }}
   annotations:
     kubernetes.io/description: >-
-      Public read API. Serves under /api via spring.webflux.base-path; actuator is on the management port, which no Ingress routes.
+      Public read API. Its controllers are mapped under /api, so no rewrite exists; actuator is on the management port, which no Ingress routes.
   labels:
     {{- include "event-junkie.labels" $args | nindent 4 }}
 spec:

@@ -105,20 +105,19 @@ the code it deploys, so a second number would be bookkeeping. `scripts/version.s
 build if the two placeholders drift from `gradle.properties`. Full scheme in
 [DEVELOPMENT.md](../../../docs/DEVELOPMENT.md#versions-and-cutting-a-release).
 
-### `/api` is Spring's, not the ingress's
+### `/api` is the application's, not the ingress's
 
-The BFF's controllers are mounted at the root — `/events`, `/venues`, `/artists`, `/promoters`,
-`/genres`, `/meta`. The frontend's generated client prepends `/api`, and Vite's dev proxy strips it
-locally. So something has to reconcile the two in a cluster.
+The BFF's controllers are mapped under `/api` themselves — `@RequestMapping("/api/events")` and its
+siblings. The routing rule and the application therefore agree on the path, and no rewrite exists
+anywhere: no Traefik `Middleware` doing `stripPrefix`, and no `spring.webflux.base-path`, which
+nothing in this chart sets. ADR-012's portability argument is "a Docker image plus a Postgres URL",
+and a rewrite living in one ingress controller's CRD is the first crack in that; a prefix compiled
+into the image travels with it.
 
-This chart sets `SPRING_WEBFLUX_BASE_PATH=/api` rather than adding a Traefik `Middleware` doing
-`stripPrefix`. The routing rule and the application then agree on the path and no rewrite exists
-anywhere. ADR-012's portability argument is "a Docker image plus a Postgres URL"; a rewrite that
-lives in one ingress controller's CRD is the first crack in that, whereas `base-path` travels with
-the image.
+`bff.basePath` exists so the Ingress rule and the controllers can be checked against each other from
+one value. It configures the rule, not the application.
 
-**Confirmed 2026-08-11**, running the image built in #426 with `SPRING_WEBFLUX_BASE_PATH=/api`, so
-this is no longer on #263's list to verify:
+The behaviour, which is the same under `bootRun` and in a cluster:
 
 | Path                       | Result                                |
 | -------------------------- | ------------------------------------- |

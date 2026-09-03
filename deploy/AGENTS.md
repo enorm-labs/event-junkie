@@ -188,7 +188,8 @@ load with any `.yaml` under `deploy/`, and reach Copilot on their own rather tha
 - **The importer holds two connection configurations for one database** — R2DBC for the application, JDBC for Flyway. Locally Spring Boot's Docker Compose
   support supplies both and nothing in `application.yaml` sets a URL, so this is invisible until there is no compose file. Forgetting the JDBC half means
   migrations never run; it is not a startup error.
-- **`/api` lives in `spring.webflux.base-path`, not in the ingress.** There is no rewrite anywhere in the chart. Do not add a Traefik `Middleware` doing
+- **`/api` lives in the BFF's controllers, not in the ingress and not in `spring.webflux.base-path`.** There is no rewrite anywhere in the chart, and nothing
+  sets that property. Do not add a Traefik `Middleware` doing
   `stripPrefix` — ADR-012's portability argument is that the application is a Docker image plus a Postgres URL, and a rewrite in one controller's CRD is the
   first crack in it.
 - **Actuator is private because it is on its own port**, not because an ingress rule excludes it. Never add an ingress path for `/actuator`, never route the

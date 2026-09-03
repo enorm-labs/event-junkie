@@ -37,21 +37,26 @@ never in question. `-e STRICT=true` turns them on.
 
 Everything is an environment variable with a working default:
 
-| Variable                | Default                 | Notes                                                                                                                                                        |
-| ----------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `BFF_HOST`              | `http://localhost:8080` | **No `/api` prefix.** That prefix is a frontend concern — the Vite dev server strips it before proxying. The BFF serves `/events`, `/venues`, … at the root. |
-| `VUS`                   | `20`                    | `load.js` — peak virtual users                                                                                                                               |
-| `DURATION`              | `2m`                    | `load.js` — how long to hold the peak                                                                                                                        |
-| `PEAK`                  | `100`                   | `spike.js` — peak virtual users                                                                                                                              |
-| `STRICT`                | unset                   | `spike.js` — apply the standard thresholds                                                                                                                   |
-| `THRESHOLD_DETAIL_MS`   | `300`                   | p95 budget for single-row lookups                                                                                                                            |
-| `THRESHOLD_LIST_MS`     | `600`                   | p95 budget for paged list endpoints                                                                                                                          |
-| `THRESHOLD_CALENDAR_MS` | `1200`                  | p95 budget for the calendar range query — the heaviest read in the API                                                                                       |
+| Variable                | Default                 | Notes                                                                                                                                                                  |
+| ----------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BFF_HOST`              | `http://localhost:8080` | **An origin, not a path.** The scripts append `/api` themselves, because the BFF serves that prefix everywhere — see below. Adding it here asks for `/api/api/events`. |
+| `VUS`                   | `20`                    | `load.js` — peak virtual users                                                                                                                                         |
+| `DURATION`              | `2m`                    | `load.js` — how long to hold the peak                                                                                                                                  |
+| `PEAK`                  | `100`                   | `spike.js` — peak virtual users                                                                                                                                        |
+| `STRICT`                | unset                   | `spike.js` — apply the standard thresholds                                                                                                                             |
+| `THRESHOLD_DETAIL_MS`   | `300`                   | p95 budget for single-row lookups                                                                                                                                      |
+| `THRESHOLD_LIST_MS`     | `600`                   | p95 budget for paged list endpoints                                                                                                                                    |
+| `THRESHOLD_CALENDAR_MS` | `1200`                  | p95 budget for the calendar range query — the heaviest read in the API                                                                                                 |
 
 ```bash
 k6 run -e VUS=50 -e DURATION=5m perf/load.js
 k6 run -e BFF_HOST=https://staging.example.invalid perf/smoke.js
 ```
+
+**The `/api` prefix is in the controllers**, as `@RequestMapping("/api/events")` and its siblings —
+not in an ingress rewrite, and not in `spring.webflux.base-path`, which nothing sets. So it is there
+under `bootRun` and in a cluster alike, and `lib/config.js` appends it once rather than every script
+carrying it.
 
 ## Two things that keep these honest
 

@@ -287,13 +287,12 @@ staging unchanged:
 cd http && ijhttp --env-file http-client.env.json --env staging importer/dev-seed.http
 ```
 
-`bff-host` in the same environment is the real `https://staging.event-junkie.de/api`, through Traefik. The read path _does_ have an ingress, so there is no
+`bff-host` in the same environment is the real `https://staging.event-junkie.de`, through Traefik. The read path _does_ have an ingress, so there is no
 reason to bypass it. It needs `/etc/hosts` (§6) and **`ijhttp --insecure`**, because the certificate comes from Let's Encrypt's staging CA.
 
-**The `/api` on the end is load-bearing, and it is the one difference between the two environments.** On a cluster the BFF serves that prefix itself —
-`spring.webflux.base-path`, set from `bff.basePath` in the chart — so the ingress needs no rewrite. A local `bootRun` has no prefix at all. Putting it in the
-host variable keeps every file under `http/bff/` identical for both environments. Do not add `/api` to the request lines as well, or the staging environment
-asks for `/api/api/events`.
+**`bff-host` is an origin in every environment, and the `/api` is in the request lines.** The BFF's controllers are mapped under `/api` themselves. The prefix
+is therefore identical under `bootRun` and on a cluster. The ingress needs no rewrite, and nothing sets `spring.webflux.base-path`. That is what keeps every
+file under `http/bff/` the same for both environments. Do not move `/api` into the host variable, or a request asks for `/api/api/events`.
 
 One request is local-only even so: `http/bff/health-and-openapi.http` reaches the actuator, and the chart moves that to a port no ingress names (§7 of
 PLATFORM_SETUP). The file says so where the request is.
