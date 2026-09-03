@@ -254,6 +254,16 @@ parse_batch_line() {
     return 0
 }
 
+pack_batch_row() {
+    printf '%s%s%s%s%s%s%s%s%s' \
+        "$1" "$US" "$2" "$US" "$3" "$US" "$4" "$US" "$5"
+}
+
+unpack_batch_row() {
+    local row="$1"
+    IFS="$US" read -r number s_opt p_opt s_label p_label <<<"$row"
+}
+
 batch() {
     local input="${1:-}"
     [[ -n "$input" && "$input" != "-" ]] || input=/dev/stdin
@@ -292,9 +302,8 @@ batch() {
                 die "line $lineno: no '$priority_label' option on 'Priority' — valid: $(option_names_of "$all" "Priority")"
         fi
 
-        rows+=("$(printf '%s%s%s%s%s%s%s%s%s' \
-            "$b_number" "$US" "$status_option" "$US" "$priority_option_id" "$US" \
-            "$b_status" "$US" "$priority_label")")
+        rows+=("$(pack_batch_row \
+            "$b_number" "$status_option" "$priority_option_id" "$b_status" "$priority_label")")
     done <"$input"
 
     [[ ${#rows[@]} -gt 0 ]] || die "no issues in the input"
@@ -304,7 +313,7 @@ batch() {
 
     local row number s_opt p_opt s_label p_label item
     for row in "${rows[@]}"; do
-        IFS="$US" read -r number s_opt p_opt s_label p_label <<<"$row"
+        unpack_batch_row "$row"
         batch_item_id "$number"
         item="$BATCH_ITEM_ID"
         [[ -n "$item" ]] || die "#$number could not be resolved on the board"
