@@ -81,17 +81,27 @@ people's material.
 
 ## 4. Version and commit exposure
 
-**`version` in the root `gradle.properties` is authoritative.** Nothing else may declare it independently. `springBoot { buildInfo }` writes it plus the commit
-into `META-INF/build-info.properties` at build time, which Spring exposes as a `BuildProperties` bean.
+### 4.1 Never the GitHub API
+
+**Never fetch the version from the GitHub API.** It sends every visitor's IP to GitHub. That makes GitHub a recipient
+in the privacy notice, and adds a third-party request to a page that otherwise makes none. It also reports what was
+_released_, not what is _running_. That is the question a version in the footer exists to answer.
+
+### 4.2 One authoritative source
+
+**`version` in the root `gradle.properties` is authoritative.** Nothing else may declare it independently.
+
+### 4.3 Stamped into the build
+
+`springBoot { buildInfo }` writes it plus the commit into `META-INF/build-info.properties` at build time, which Spring
+exposes as a `BuildProperties` bean.
 
 ### 4.4 Two consumers, one bean
 
 `/actuator/info` is for operators and is **not** publicly routed. `GET /meta` is the public endpoint the frontend
 calls. An actuator endpoint on the public ingress is a larger surface than one JSON route.
 
-**Never fetch the version from the GitHub API.** It sends every visitor's IP to GitHub. That makes GitHub a recipient
-in the privacy notice, and adds a third-party request to a page that otherwise makes none. It also reports what was
-_released_, not what is _running_. That is the question a version in the footer exists to answer.
+### 4.6 `package.json` mirrors it by hand
 
 **`package.json`'s `version` mirrors the Gradle version by hand**, without the `-SNAPSHOT` suffix. Automating it was
 considered and rejected as more machinery than the problem deserves. The convention is recorded in both `AGENTS.md`
