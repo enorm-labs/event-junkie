@@ -217,7 +217,6 @@ const { t } = useI18n()
         <li>have data erased (Art. 17)</li>
         <li>have processing restricted (Art. 18)</li>
         <li>receive your data in a portable format (Art. 20)</li>
-        <li>withdraw consent at any time, where processing is based on consent (Art. 7 (3))</li>
       </ul>
       <p>
         <strong>Erasure and backups.</strong> An erasure under Art. 17 takes effect immediately in

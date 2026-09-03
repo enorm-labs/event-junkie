@@ -231,10 +231,6 @@ const { t } = useI18n()
         <li>Daten löschen zu lassen (Art. 17 DSGVO)</li>
         <li>die Verarbeitung einschränken zu lassen (Art. 18 DSGVO)</li>
         <li>deine Daten in einem übertragbaren Format zu erhalten (Art. 20 DSGVO)</li>
-        <li>
-          eine Einwilligung jederzeit zu widerrufen, soweit die Verarbeitung auf einer Einwilligung
-          beruht (Art. 7 Abs. 3 DSGVO)
-        </li>
       </ul>
       <p>
         <strong>Löschung und Sicherungskopien.</strong> Eine Löschung nach Art. 17 DSGVO wirkt
