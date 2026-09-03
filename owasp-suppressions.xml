@@ -96,9 +96,11 @@
             2.26.0, fixed in 2.25.5 / 2.26.1). Dependency-Check additionally attributes it to
             `log4j-to-slf4j`, which merely bridges the Log4j API onto SLF4J and does not carry
             the affected code.
-            NOTE: this suppression is deliberately scoped to log4j-to-slf4j ONLY. The finding
-            against log4j-api is real — we resolve 2.25.4 — and is left visible on purpose
-            until log4j is bumped to 2.25.5.
+            NOTE: this suppression is deliberately scoped to log4j-to-slf4j ONLY, which stays at
+            2.25.4 because no BOM raises it and it does not carry the defect. log4j-api itself is
+            constrained to `log4j-api.version` on every events-core configuration, testFixtures
+            included, so the real finding is fixed rather than silenced here. Widening this entry
+            to log4j-api would hide a regression in that constraint.
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j-to-slf4j@.*$</packageUrl>
         <cve>CVE-2026-49844</cve>
