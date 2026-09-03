@@ -1,2476 +1,10 @@
 {
-  "componentCount": 647,
+  "componentCount": 351,
   "licenses": [
-    {
-      "license": "MIT",
-      "url": "https://opensource.org/license/mit",
-      "components": [
-        {
-          "name": "@babel/code-frame",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/compat-data",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/core",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/generator",
-          "version": "7.29.8",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/generator",
-          "version": "8.0.0",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helper-annotate-as-pure",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helper-compilation-targets",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helper-create-class-features-plugin",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helper-globals",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helper-member-expression-to-functions",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helper-module-imports",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helper-module-transforms",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helper-optimise-call-expression",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helper-plugin-utils",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helper-replace-supers",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helper-skip-transparent-expression-wrappers",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helper-string-parser",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helper-string-parser",
-          "version": "8.0.0",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helper-validator-identifier",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helper-validator-identifier",
-          "version": "8.0.4",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helper-validator-option",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/helpers",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/parser",
-          "version": "7.29.8",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/parser",
-          "version": "8.0.0-alpha.12",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/parser",
-          "version": "8.0.4",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/plugin-syntax-jsx",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/plugin-syntax-typescript",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/plugin-transform-modules-commonjs",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/plugin-transform-typescript",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/preset-typescript",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/template",
-          "version": "7.29.7",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/traverse",
-          "version": "7.29.8",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/types",
-          "version": "7.29.8",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@babel/types",
-          "version": "8.0.4",
-          "url": "https://github.com/babel/babel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@eslint-community/eslint-utils",
-          "version": "4.10.1",
-          "url": "https://github.com/eslint-community/eslint-utils",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@eslint-community/regexpp",
-          "version": "4.12.2",
-          "url": "https://github.com/eslint-community/regexpp",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@floating-ui/core",
-          "version": "1.8.0",
-          "url": "https://github.com/floating-ui/floating-ui",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@floating-ui/dom",
-          "version": "1.8.0",
-          "url": "https://github.com/floating-ui/floating-ui",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@floating-ui/utils",
-          "version": "0.2.12",
-          "url": "https://github.com/floating-ui/floating-ui",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@floating-ui/vue",
-          "version": "1.1.11",
-          "url": "https://github.com/floating-ui/floating-ui",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@full-ui/headless-calendar",
-          "version": "7.0.2",
-          "url": "https://github.com/fullcalendar/fullcalendar",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@fullcalendar/core",
-          "version": "7.0.2",
-          "url": "https://github.com/fullcalendar/fullcalendar",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@fullcalendar/vue3",
-          "version": "7.0.2",
-          "url": "https://github.com/fullcalendar/fullcalendar-vue",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@hono/node-server",
-          "version": "2.1.1",
-          "url": "https://github.com/honojs/node-server",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@intlify/core-base",
-          "version": "11.4.8",
-          "url": "https://github.com/intlify/vue-i18n",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@intlify/devtools-types",
-          "version": "11.4.8",
-          "url": "https://github.com/intlify/vue-i18n",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@intlify/message-compiler",
-          "version": "11.4.8",
-          "url": "https://github.com/intlify/vue-i18n",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@intlify/shared",
-          "version": "11.4.8",
-          "url": "https://github.com/intlify/vue-i18n",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@jridgewell/gen-mapping",
-          "version": "0.3.13",
-          "url": "https://github.com/jridgewell/sourcemaps",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@jridgewell/remapping",
-          "version": "2.3.5",
-          "url": "https://github.com/jridgewell/sourcemaps",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@jridgewell/resolve-uri",
-          "version": "3.1.2",
-          "url": "https://github.com/jridgewell/resolve-uri",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@jridgewell/sourcemap-codec",
-          "version": "1.5.5",
-          "url": "https://github.com/jridgewell/sourcemaps",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@jridgewell/trace-mapping",
-          "version": "0.3.31",
-          "url": "https://github.com/jridgewell/sourcemaps",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@modelcontextprotocol/sdk",
-          "version": "1.30.0",
-          "url": "https://github.com/modelcontextprotocol/typescript-sdk",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@nodelib/fs.scandir",
-          "version": "2.1.5",
-          "url": "https://github.com/nodelib/nodelib.git#master",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@nodelib/fs.stat",
-          "version": "2.0.5",
-          "url": "https://github.com/nodelib/nodelib.git#master",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@nodelib/fs.walk",
-          "version": "1.2.8",
-          "url": "https://github.com/nodelib/nodelib.git#master",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@oxc-project/types",
-          "version": "0.144.0",
-          "url": "https://github.com/oxc-project/oxc",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@rolldown/pluginutils",
-          "version": "1.0.1",
-          "url": "https://github.com/rolldown/plugins",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@tailwindcss/node",
-          "version": "4.3.3",
-          "url": "https://github.com/tailwindlabs/tailwindcss",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@tailwindcss/oxide",
-          "version": "4.3.3",
-          "url": "https://github.com/tailwindlabs/tailwindcss",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@tailwindcss/vite",
-          "version": "4.3.3",
-          "url": "https://github.com/tailwindlabs/tailwindcss",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@tanstack/virtual-core",
-          "version": "3.17.7",
-          "url": "https://github.com/TanStack/virtual",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@tanstack/vue-virtual",
-          "version": "3.13.35",
-          "url": "https://github.com/TanStack/virtual",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@ts-morph/common",
-          "version": "0.29.0",
-          "url": "https://github.com/dsherret/ts-morph",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@types/esrecurse",
-          "version": "4.3.1",
-          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@types/estree",
-          "version": "1.0.9",
-          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@types/jsesc",
-          "version": "2.5.1",
-          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@types/json-schema",
-          "version": "7.0.15",
-          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@types/node",
-          "version": "26.2.0",
-          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@types/web-bluetooth",
-          "version": "0.0.21",
-          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@unovue/detypes",
-          "version": "0.8.5",
-          "url": "https://github.com/unovue/detypes",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vue-macros/common",
-          "version": "3.1.4",
-          "url": "https://github.com/vue-macros/vue-macros",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vue/compiler-core",
-          "version": "3.5.41",
-          "url": "https://github.com/vuejs/core",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vue/compiler-dom",
-          "version": "3.5.41",
-          "url": "https://github.com/vuejs/core",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vue/compiler-sfc",
-          "version": "3.5.41",
-          "url": "https://github.com/vuejs/core",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vue/compiler-ssr",
-          "version": "3.5.41",
-          "url": "https://github.com/vuejs/core",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vue/devtools-api",
-          "version": "6.6.4",
-          "url": "https://github.com/vuejs/vue-devtools",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vue/devtools-api",
-          "version": "8.2.1",
-          "url": "https://github.com/vuejs/devtools",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vue/devtools-kit",
-          "version": "8.2.1",
-          "url": "https://github.com/vuejs/devtools",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vue/devtools-shared",
-          "version": "8.2.1",
-          "url": "https://github.com/vuejs/devtools",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vue/reactivity",
-          "version": "3.5.41",
-          "url": "https://github.com/vuejs/core",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vue/runtime-core",
-          "version": "3.5.41",
-          "url": "https://github.com/vuejs/core",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vue/runtime-dom",
-          "version": "3.5.41",
-          "url": "https://github.com/vuejs/core",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vue/server-renderer",
-          "version": "3.5.41",
-          "url": "https://github.com/vuejs/core",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vue/shared",
-          "version": "3.5.41",
-          "url": "https://github.com/vuejs/core",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vuedx/template-ast-types",
-          "version": "0.7.1",
-          "url": "https://github.com/znck/vue-developer-experience",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vueuse/core",
-          "version": "14.4.0",
-          "url": "https://github.com/vueuse/vueuse",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vueuse/metadata",
-          "version": "14.4.0",
-          "url": "https://github.com/vueuse/vueuse",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@vueuse/shared",
-          "version": "14.4.0",
-          "url": "https://github.com/vueuse/vueuse",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "accepts",
-          "version": "2.0.0",
-          "url": "https://github.com/jshttp/accepts",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "acorn",
-          "version": "8.18.0",
-          "url": "https://github.com/acornjs/acorn",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "acorn-jsx",
-          "version": "5.3.2",
-          "url": "https://github.com/acornjs/acorn-jsx",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ajv",
-          "version": "6.15.0",
-          "url": "https://github.com/ajv-validator/ajv",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ajv",
-          "version": "8.20.0",
-          "url": "https://github.com/ajv-validator/ajv",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ajv-formats",
-          "version": "3.0.1",
-          "url": "https://github.com/ajv-validator/ajv-formats",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ansi-regex",
-          "version": "5.0.1",
-          "url": "https://github.com/chalk/ansi-regex",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ansi-regex",
-          "version": "6.3.0",
-          "url": "https://github.com/chalk/ansi-regex",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ansi-styles",
-          "version": "4.3.0",
-          "url": "https://github.com/chalk/ansi-styles",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "aria-hidden",
-          "version": "1.2.6",
-          "url": "https://github.com/theKashey/aria-hidden",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ast-kit",
-          "version": "2.2.0",
-          "url": "https://github.com/sxzz/ast-kit",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ast-types-x",
-          "version": "1.18.0",
-          "url": "https://github.com/pionxzh/ast-types-x",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ast-walker-scope",
-          "version": "0.9.0",
-          "url": "https://github.com/sxzz/ast-walker-scope",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "astral-regex",
-          "version": "2.0.0",
-          "url": "https://github.com/kevva/astral-regex",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "atob",
-          "version": "2.1.2",
-          "url": "git://git.coolaj86.com/coolaj86/atob.js",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "balanced-match",
-          "version": "1.0.2",
-          "url": "https://github.com/juliangruber/balanced-match",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "balanced-match",
-          "version": "4.0.4",
-          "url": "https://github.com/juliangruber/balanced-match",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "birpc",
-          "version": "2.9.0",
-          "url": "https://github.com/antfu-collective/birpc",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "body-parser",
-          "version": "2.3.0",
-          "url": "https://github.com/expressjs/body-parser",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "brace-expansion",
-          "version": "1.1.18",
-          "url": "https://github.com/juliangruber/brace-expansion",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "brace-expansion",
-          "version": "5.0.9",
-          "url": "https://github.com/juliangruber/brace-expansion",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "braces",
-          "version": "3.0.3",
-          "url": "https://github.com/micromatch/braces",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "browserslist",
-          "version": "4.28.8",
-          "url": "https://github.com/browserslist/browserslist",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "bundle-name",
-          "version": "4.1.0",
-          "url": "https://github.com/sindresorhus/bundle-name",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "bytes",
-          "version": "3.1.2",
-          "url": "https://github.com/visionmedia/bytes.js",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "c12",
-          "version": "3.3.4",
-          "url": "https://github.com/unjs/c12",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "call-bind-apply-helpers",
-          "version": "1.0.2",
-          "url": "https://github.com/ljharb/call-bind-apply-helpers",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "call-bound",
-          "version": "1.0.4",
-          "url": "https://github.com/ljharb/call-bound",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "chalk",
-          "version": "5.6.2",
-          "url": "https://github.com/chalk/chalk",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "chokidar",
-          "version": "5.0.0",
-          "url": "https://github.com/paulmillr/chokidar",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "citty",
-          "version": "0.2.2",
-          "url": "https://github.com/unjs/citty",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "cli-cursor",
-          "version": "5.0.0",
-          "url": "https://github.com/sindresorhus/cli-cursor",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "cli-progress",
-          "version": "3.12.0",
-          "url": "https://github.com/npkgz/cli-progress",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "cli-spinners",
-          "version": "3.4.0",
-          "url": "https://github.com/sindresorhus/cli-spinners",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "clsx",
-          "version": "2.1.1",
-          "url": "https://github.com/lukeed/clsx",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "code-block-writer",
-          "version": "13.0.3",
-          "url": "https://github.com/dsherret/code-block-writer",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "color-convert",
-          "version": "2.0.1",
-          "url": "https://github.com/Qix-/color-convert",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "color-name",
-          "version": "1.1.4",
-          "url": "https://github.com/colorjs/color-name",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "commander",
-          "version": "14.0.3",
-          "url": "https://github.com/tj/commander.js",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "commander",
-          "version": "15.0.0",
-          "url": "https://github.com/tj/commander.js",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "concat-map",
-          "version": "0.0.1",
-          "url": "https://github.com/substack/node-concat-map",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "confbox",
-          "version": "0.1.8",
-          "url": "https://github.com/unjs/confbox",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "confbox",
-          "version": "0.2.4",
-          "url": "https://github.com/unjs/confbox",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "consola",
-          "version": "3.4.2",
-          "url": "https://github.com/unjs/consola",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "content-disposition",
-          "version": "1.1.0",
-          "url": "https://github.com/jshttp/content-disposition",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "content-type",
-          "version": "1.0.5",
-          "url": "https://github.com/jshttp/content-type",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "content-type",
-          "version": "2.1.0",
-          "url": "https://github.com/jshttp/content-type",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "convert-hrtime",
-          "version": "5.0.0",
-          "url": "https://github.com/sindresorhus/convert-hrtime",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "convert-source-map",
-          "version": "2.0.0",
-          "url": "https://github.com/thlorenz/convert-source-map",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "cookie",
-          "version": "0.7.2",
-          "url": "https://github.com/jshttp/cookie",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "cookie-signature",
-          "version": "1.2.2",
-          "url": "https://github.com/visionmedia/node-cookie-signature",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "cors",
-          "version": "2.8.6",
-          "url": "https://github.com/expressjs/cors",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "cross-spawn",
-          "version": "7.0.6",
-          "url": "https://github.com/moxystudio/node-cross-spawn",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "css",
-          "version": "3.0.0",
-          "url": "https://github.com/reworkcss/css",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "cssesc",
-          "version": "3.0.0",
-          "url": "https://github.com/mathiasbynens/cssesc",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "csstype",
-          "version": "3.2.3",
-          "url": "https://github.com/frenic/csstype",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "debug",
-          "version": "4.4.3",
-          "url": "https://github.com/debug-js/debug",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "decode-uri-component",
-          "version": "0.2.2",
-          "url": "https://github.com/SamVerschueren/decode-uri-component",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "dedent",
-          "version": "1.7.2",
-          "url": "https://github.com/dmnd/dedent",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "deep-diff",
-          "version": "1.0.2",
-          "url": "https://github.com/flitbit/diff",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "deep-is",
-          "version": "0.1.4",
-          "url": "https://github.com/thlorenz/deep-is",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "deepmerge",
-          "version": "4.3.1",
-          "url": "https://github.com/TehShrike/deepmerge",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "default-browser",
-          "version": "5.5.0",
-          "url": "https://github.com/sindresorhus/default-browser",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "default-browser-id",
-          "version": "5.0.1",
-          "url": "https://github.com/sindresorhus/default-browser-id",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "define-lazy-prop",
-          "version": "3.0.0",
-          "url": "https://github.com/sindresorhus/define-lazy-prop",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "defu",
-          "version": "6.1.7",
-          "url": "https://github.com/unjs/defu",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "depd",
-          "version": "2.0.0",
-          "url": "https://github.com/dougwilson/nodejs-depd",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "destr",
-          "version": "2.0.5",
-          "url": "https://github.com/unjs/destr",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "dom-serializer",
-          "version": "2.0.0",
-          "url": "https://github.com/cheeriojs/dom-serializer",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "dunder-proto",
-          "version": "1.0.1",
-          "url": "https://github.com/es-shims/dunder-proto",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ee-first",
-          "version": "1.1.1",
-          "url": "https://github.com/jonathanong/ee-first",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "emoji-regex",
-          "version": "8.0.0",
-          "url": "https://github.com/mathiasbynens/emoji-regex",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "encodeurl",
-          "version": "2.0.0",
-          "url": "https://github.com/pillarjs/encodeurl",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "enhanced-resolve",
-          "version": "5.24.5",
-          "url": "https://github.com/webpack/enhanced-resolve",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "es-define-property",
-          "version": "1.0.1",
-          "url": "https://github.com/ljharb/es-define-property",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "es-errors",
-          "version": "1.3.0",
-          "url": "https://github.com/ljharb/es-errors",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "es-object-atoms",
-          "version": "1.1.2",
-          "url": "https://github.com/ljharb/es-object-atoms",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "escalade",
-          "version": "3.2.0",
-          "url": "https://github.com/lukeed/escalade",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "escape-html",
-          "version": "1.0.3",
-          "url": "https://github.com/component/escape-html",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "escape-string-regexp",
-          "version": "4.0.0",
-          "url": "https://github.com/sindresorhus/escape-string-regexp",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "eslint",
-          "version": "10.8.1",
-          "url": "https://github.com/eslint/eslint",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "estree-walker",
-          "version": "2.0.2",
-          "url": "https://github.com/Rich-Harris/estree-walker",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "etag",
-          "version": "1.8.1",
-          "url": "https://github.com/jshttp/etag",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "eventsource",
-          "version": "3.0.7",
-          "url": "git://git@github.com/EventSource/eventsource",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "eventsource-parser",
-          "version": "3.1.1",
-          "url": "https://github.com/rexxars/eventsource-parser",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "express",
-          "version": "5.2.1",
-          "url": "https://github.com/expressjs/express",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "express-rate-limit",
-          "version": "8.6.2",
-          "url": "https://github.com/express-rate-limit/express-rate-limit",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "exsolve",
-          "version": "1.1.1",
-          "url": "https://github.com/unjs/exsolve",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "fast-deep-equal",
-          "version": "3.1.3",
-          "url": "https://github.com/epoberezkin/fast-deep-equal",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "fast-glob",
-          "version": "3.3.3",
-          "url": "https://github.com/mrmlnc/fast-glob",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "fast-json-stable-stringify",
-          "version": "2.1.0",
-          "url": "https://github.com/epoberezkin/fast-json-stable-stringify",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "fast-levenshtein",
-          "version": "2.0.6",
-          "url": "https://github.com/hiddentao/fast-levenshtein",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "fdir",
-          "version": "6.5.0",
-          "url": "https://github.com/thecodrr/fdir",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "file-entry-cache",
-          "version": "8.0.0",
-          "url": "https://github.com/jaredwray/file-entry-cache",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "fill-range",
-          "version": "7.1.1",
-          "url": "https://github.com/jonschlinkert/fill-range",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "finalhandler",
-          "version": "2.1.1",
-          "url": "https://github.com/pillarjs/finalhandler",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "find-up",
-          "version": "5.0.0",
-          "url": "https://github.com/sindresorhus/find-up",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "flat-cache",
-          "version": "4.0.1",
-          "url": "https://github.com/jaredwray/flat-cache",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "forwarded",
-          "version": "0.2.0",
-          "url": "https://github.com/jshttp/forwarded",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "fresh",
-          "version": "2.0.0",
-          "url": "https://github.com/jshttp/fresh",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "fs-extra",
-          "version": "11.4.0",
-          "url": "https://github.com/jprichardson/node-fs-extra",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "fsevents",
-          "version": "2.3.3",
-          "url": "https://github.com/fsevents/fsevents",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "function-bind",
-          "version": "1.1.2",
-          "url": "https://github.com/Raynos/function-bind",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "function-timeout",
-          "version": "1.0.2",
-          "url": "https://github.com/sindresorhus/function-timeout",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "fuzzysort",
-          "version": "3.1.0",
-          "url": "https://github.com/farzher/fuzzysort",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "gensync",
-          "version": "1.0.0-beta.2",
-          "url": "https://github.com/loganfsmyth/gensync",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "get-east-asian-width",
-          "version": "1.6.0",
-          "url": "https://github.com/sindresorhus/get-east-asian-width",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "get-intrinsic",
-          "version": "1.3.0",
-          "url": "https://github.com/ljharb/get-intrinsic",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "get-own-enumerable-keys",
-          "version": "1.0.0",
-          "url": "https://github.com/sindresorhus/get-own-enumerable-keys",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "get-proto",
-          "version": "1.0.1",
-          "url": "https://github.com/ljharb/get-proto",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "get-tsconfig",
-          "version": "4.14.2",
-          "url": "https://github.com/privatenumber/get-tsconfig",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "giget",
-          "version": "3.3.1",
-          "url": "https://github.com/unjs/giget",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "gonzales-pe",
-          "version": "4.3.0",
-          "url": "https://github.com/tonyganch/gonzales-pe",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "gopd",
-          "version": "1.2.0",
-          "url": "https://github.com/ljharb/gopd",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "has-symbols",
-          "version": "1.1.0",
-          "url": "https://github.com/inspect-js/has-symbols",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "hasown",
-          "version": "2.0.4",
-          "url": "https://github.com/inspect-js/hasOwn",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "he",
-          "version": "1.2.0",
-          "url": "https://github.com/mathiasbynens/he",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "hono",
-          "version": "4.13.2",
-          "url": "https://github.com/honojs/hono",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "hookable",
-          "version": "5.5.3",
-          "url": "https://github.com/unjs/hookable",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "http-errors",
-          "version": "2.0.1",
-          "url": "https://github.com/jshttp/http-errors",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "iconv-lite",
-          "version": "0.7.3",
-          "url": "https://github.com/pillarjs/iconv-lite",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "identifier-regex",
-          "version": "1.1.0",
-          "url": "https://github.com/sindresorhus/identifier-regex",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ignore",
-          "version": "5.3.2",
-          "url": "https://github.com/kaelzhang/node-ignore",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "imurmurhash",
-          "version": "0.1.4",
-          "url": "https://github.com/jensyt/imurmurhash-js",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ip-address",
-          "version": "10.5.0",
-          "url": "https://github.com/beaugunderson/ip-address",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ipaddr.js",
-          "version": "1.9.1",
-          "url": "https://github.com/whitequark/ipaddr.js",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "is-docker",
-          "version": "3.0.0",
-          "url": "https://github.com/sindresorhus/is-docker",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "is-extglob",
-          "version": "2.1.1",
-          "url": "https://github.com/jonschlinkert/is-extglob",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "is-fullwidth-code-point",
-          "version": "3.0.0",
-          "url": "https://github.com/sindresorhus/is-fullwidth-code-point",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "is-glob",
-          "version": "4.0.3",
-          "url": "https://github.com/micromatch/is-glob",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "is-identifier",
-          "version": "1.1.0",
-          "url": "https://github.com/sindresorhus/is-identifier",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "is-in-ssh",
-          "version": "1.0.0",
-          "url": "https://github.com/sindresorhus/is-in-ssh",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "is-inside-container",
-          "version": "1.0.0",
-          "url": "https://github.com/sindresorhus/is-inside-container",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "is-interactive",
-          "version": "2.0.0",
-          "url": "https://github.com/sindresorhus/is-interactive",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "is-number",
-          "version": "7.0.0",
-          "url": "https://github.com/jonschlinkert/is-number",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "is-obj",
-          "version": "3.0.0",
-          "url": "https://github.com/sindresorhus/is-obj",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "is-promise",
-          "version": "4.0.0",
-          "url": "https://github.com/then/is-promise",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "is-regexp",
-          "version": "3.1.0",
-          "url": "https://github.com/sindresorhus/is-regexp",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "is-unicode-supported",
-          "version": "2.1.0",
-          "url": "https://github.com/sindresorhus/is-unicode-supported",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "is-wsl",
-          "version": "3.1.1",
-          "url": "https://github.com/sindresorhus/is-wsl",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "jiti",
-          "version": "2.7.0",
-          "url": "https://github.com/unjs/jiti",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "jose",
-          "version": "6.2.8",
-          "url": "https://github.com/panva/jose",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "js-tokens",
-          "version": "4.0.0",
-          "url": "https://github.com/lydell/js-tokens",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "jsesc",
-          "version": "3.1.0",
-          "url": "https://github.com/mathiasbynens/jsesc",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "json-buffer",
-          "version": "3.0.1",
-          "url": "https://github.com/dominictarr/json-buffer",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "json-schema-traverse",
-          "version": "0.4.1",
-          "url": "https://github.com/epoberezkin/json-schema-traverse",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "json-schema-traverse",
-          "version": "1.0.0",
-          "url": "https://github.com/epoberezkin/json-schema-traverse",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "json-stable-stringify-without-jsonify",
-          "version": "1.0.1",
-          "url": "https://github.com/samn/json-stable-stringify",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "json5",
-          "version": "2.2.3",
-          "url": "https://github.com/json5/json5",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "jsonfile",
-          "version": "6.2.1",
-          "url": "https://github.com/jprichardson/node-jsonfile",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "keyv",
-          "version": "4.5.4",
-          "url": "https://github.com/jaredwray/keyv",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "kleur",
-          "version": "3.0.3",
-          "url": "https://github.com/lukeed/kleur",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "levn",
-          "version": "0.4.1",
-          "url": "https://github.com/gkz/levn",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "local-pkg",
-          "version": "1.2.1",
-          "url": "https://github.com/antfu-collective/local-pkg",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "locate-path",
-          "version": "6.0.0",
-          "url": "https://github.com/sindresorhus/locate-path",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "lodash-es",
-          "version": "4.18.1",
-          "url": "https://github.com/lodash/lodash",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "lodash.sortedlastindex",
-          "version": "4.1.0",
-          "url": "https://github.com/lodash/lodash",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "lodash.truncate",
-          "version": "4.4.2",
-          "url": "https://github.com/lodash/lodash",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "log-symbols",
-          "version": "7.0.1",
-          "url": "https://github.com/sindresorhus/log-symbols",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "magic-string",
-          "version": "0.30.21",
-          "url": "https://github.com/Rich-Harris/magic-string",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "magic-string-ast",
-          "version": "1.0.3",
-          "url": "https://github.com/sxzz/magic-string-ast",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "magicast",
-          "version": "0.5.4",
-          "url": "https://github.com/unjs/magicast",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "make-asynchronous",
-          "version": "1.1.0",
-          "url": "https://github.com/sindresorhus/make-asynchronous",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "math-intrinsics",
-          "version": "1.1.0",
-          "url": "https://github.com/es-shims/math-intrinsics",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "media-typer",
-          "version": "1.1.1",
-          "url": "https://github.com/jshttp/media-typer",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "merge-descriptors",
-          "version": "2.0.0",
-          "url": "https://github.com/sindresorhus/merge-descriptors",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "merge2",
-          "version": "1.4.1",
-          "url": "https://github.com/teambition/merge2",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "micromatch",
-          "version": "4.0.8",
-          "url": "https://github.com/micromatch/micromatch",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "mime-db",
-          "version": "1.54.0",
-          "url": "https://github.com/jshttp/mime-db",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "mime-types",
-          "version": "3.0.2",
-          "url": "https://github.com/jshttp/mime-types",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "mimic-function",
-          "version": "5.0.1",
-          "url": "https://github.com/sindresorhus/mimic-function",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "minimist",
-          "version": "1.2.8",
-          "url": "https://github.com/minimistjs/minimist",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "mlly",
-          "version": "1.8.2",
-          "url": "https://github.com/unjs/mlly",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ms",
-          "version": "2.1.3",
-          "url": "https://github.com/vercel/ms",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "muggle-string",
-          "version": "0.4.1",
-          "url": "https://github.com/johnsoncodehk/muggle-string",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "nanoid",
-          "version": "3.3.18",
-          "url": "https://github.com/ai/nanoid",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "natural-compare",
-          "version": "1.4.0",
-          "url": "https://github.com/litejs/natural-compare-lite",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "negotiator",
-          "version": "1.0.0",
-          "url": "https://github.com/jshttp/negotiator",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "node-fetch-native",
-          "version": "1.6.7",
-          "url": "https://github.com/unjs/node-fetch-native",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "node-html-parser",
-          "version": "7.1.0",
-          "url": "https://github.com/taoqf/node-fast-html-parser",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "node-releases",
-          "version": "2.0.53",
-          "url": "https://github.com/chicoxyzzy/node-releases",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "nostics",
-          "version": "1.2.0",
-          "url": "https://github.com/vercel-labs/nostics",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "nypm",
-          "version": "0.6.9",
-          "url": "https://github.com/unjs/nypm",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "object-assign",
-          "version": "4.1.1",
-          "url": "https://github.com/sindresorhus/object-assign",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "object-inspect",
-          "version": "1.13.4",
-          "url": "https://github.com/inspect-js/object-inspect",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ofetch",
-          "version": "1.5.1",
-          "url": "https://github.com/unjs/ofetch",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ohash",
-          "version": "2.0.11",
-          "url": "https://github.com/unjs/ohash",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "on-finished",
-          "version": "2.4.1",
-          "url": "https://github.com/jshttp/on-finished",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "onetime",
-          "version": "7.0.0",
-          "url": "https://github.com/sindresorhus/onetime",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "open",
-          "version": "11.0.1",
-          "url": "https://github.com/sindresorhus/open",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "openapi-fetch",
-          "version": "0.17.0",
-          "url": "https://github.com/openapi-ts/openapi-typescript",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "openapi-typescript-helpers",
-          "version": "0.1.0",
-          "url": "https://github.com/openapi-ts/openapi-typescript",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "optionator",
-          "version": "0.9.4",
-          "url": "https://github.com/gkz/optionator",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ora",
-          "version": "9.4.1",
-          "url": "https://github.com/sindresorhus/ora",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "org.checkerframework:checker-qual",
-          "version": "3.55.1",
-          "url": "https://checkerframework.org/",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "org.jsoup:jsoup",
-          "version": "1.23.1",
-          "url": "https://jsoup.org/",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "org.slf4j:jul-to-slf4j",
-          "version": "2.0.18",
-          "url": "http://www.slf4j.org",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "org.slf4j:slf4j-api",
-          "version": "2.0.18",
-          "url": "http://www.slf4j.org",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "org.webjars:webjars-locator-lite",
-          "version": "1.1.3",
-          "url": "https://webjars.org",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "p-event",
-          "version": "6.0.1",
-          "url": "https://github.com/sindresorhus/p-event",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "p-limit",
-          "version": "3.1.0",
-          "url": "https://github.com/sindresorhus/p-limit",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "p-locate",
-          "version": "5.0.0",
-          "url": "https://github.com/sindresorhus/p-locate",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "p-timeout",
-          "version": "6.1.4",
-          "url": "https://github.com/sindresorhus/p-timeout",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "parseurl",
-          "version": "1.3.3",
-          "url": "https://github.com/pillarjs/parseurl",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "path-browserify",
-          "version": "1.0.1",
-          "url": "https://github.com/browserify/path-browserify",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "path-exists",
-          "version": "4.0.0",
-          "url": "https://github.com/sindresorhus/path-exists",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "path-is-absolute",
-          "version": "1.0.1",
-          "url": "https://github.com/sindresorhus/path-is-absolute",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "path-key",
-          "version": "3.1.1",
-          "url": "https://github.com/sindresorhus/path-key",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "path-to-regexp",
-          "version": "8.4.2",
-          "url": "https://github.com/pillarjs/path-to-regexp",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "pathe",
-          "version": "2.0.3",
-          "url": "https://github.com/unjs/pathe",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "perfect-debounce",
-          "version": "2.1.0",
-          "url": "https://github.com/unjs/perfect-debounce",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "picomatch",
-          "version": "2.3.2",
-          "url": "https://github.com/micromatch/picomatch",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "picomatch",
-          "version": "4.0.5",
-          "url": "https://github.com/micromatch/picomatch",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "pkce-challenge",
-          "version": "5.0.1",
-          "url": "https://github.com/crouchcd/pkce-challenge",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "pkg-types",
-          "version": "1.3.1",
-          "url": "https://github.com/unjs/pkg-types",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "pkg-types",
-          "version": "2.3.1",
-          "url": "https://github.com/unjs/pkg-types",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "postcss",
-          "version": "8.5.26",
-          "url": "https://github.com/postcss/postcss",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "postcss-less",
-          "version": "6.0.0",
-          "url": "https://github.com/shellscape/postcss-less",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "postcss-sass",
-          "version": "0.5.0",
-          "url": "https://github.com/AleshaOleg/postcss-sass",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "postcss-scss",
-          "version": "4.0.9",
-          "url": "https://github.com/postcss/postcss-scss",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "postcss-selector-parser",
-          "version": "7.1.5",
-          "url": "https://github.com/postcss/postcss-selector-parser",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "postcss-styl",
-          "version": "0.12.3",
-          "url": "https://github.com/stylus/postcss-styl",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "powershell-utils",
-          "version": "0.1.0",
-          "url": "https://github.com/sindresorhus/powershell-utils",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "powershell-utils",
-          "version": "0.2.0",
-          "url": "https://github.com/sindresorhus/powershell-utils",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "preact",
-          "version": "10.29.8",
-          "url": "https://github.com/preactjs/preact",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "prelude-ls",
-          "version": "1.2.1",
-          "url": "https://github.com/gkz/prelude-ls",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "prettier",
-          "version": "3.9.6",
-          "url": "https://github.com/prettier/prettier",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "prompts",
-          "version": "2.4.2",
-          "url": "https://github.com/terkelg/prompts",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "proxy-addr",
-          "version": "2.0.7",
-          "url": "https://github.com/jshttp/proxy-addr",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "punycode",
-          "version": "2.3.1",
-          "url": "https://github.com/mathiasbynens/punycode.js",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "quansync",
-          "version": "0.2.11",
-          "url": "https://github.com/quansync-dev/quansync",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "queue-microtask",
-          "version": "1.2.3",
-          "url": "https://github.com/feross/queue-microtask",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "quote-js-string",
-          "version": "0.1.0",
-          "url": "https://github.com/sindresorhus/quote-js-string",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "range-parser",
-          "version": "1.3.0",
-          "url": "https://github.com/jshttp/range-parser",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "raw-body",
-          "version": "3.0.2",
-          "url": "https://github.com/stream-utils/raw-body",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "rc9",
-          "version": "3.0.1",
-          "url": "https://github.com/unjs/rc9",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "readdirp",
-          "version": "5.1.1",
-          "url": "https://github.com/paulmillr/readdirp",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "recast-x",
-          "version": "1.0.5",
-          "url": "https://github.com/pionxzh/recast-x",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "reka-ui",
-          "version": "2.10.3",
-          "url": "https://github.com/unovue/reka-ui",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "require-from-string",
-          "version": "2.0.2",
-          "url": "https://github.com/floatdrop/require-from-string",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "reserved-identifiers",
-          "version": "1.2.0",
-          "url": "https://github.com/sindresorhus/reserved-identifiers",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "resolve-pkg-maps",
-          "version": "1.0.0",
-          "url": "https://github.com/privatenumber/resolve-pkg-maps",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "restore-cursor",
-          "version": "5.1.0",
-          "url": "https://github.com/sindresorhus/restore-cursor",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "reusify",
-          "version": "1.1.0",
-          "url": "https://github.com/mcollina/reusify",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "rolldown",
-          "version": "1.2.4",
-          "url": "https://github.com/rolldown/rolldown",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "router",
-          "version": "2.2.0",
-          "url": "https://github.com/pillarjs/router",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "run-applescript",
-          "version": "7.1.0",
-          "url": "https://github.com/sindresorhus/run-applescript",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "run-parallel",
-          "version": "1.2.0",
-          "url": "https://github.com/feross/run-parallel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "safer-buffer",
-          "version": "2.1.2",
-          "url": "https://github.com/ChALkeR/safer-buffer",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "scule",
-          "version": "1.3.0",
-          "url": "https://github.com/unjs/scule",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "send",
-          "version": "1.2.1",
-          "url": "https://github.com/pillarjs/send",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "serve-static",
-          "version": "2.2.1",
-          "url": "https://github.com/expressjs/serve-static",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "shadcn-vue",
-          "version": "2.8.2",
-          "url": "https://github.com/unovue/shadcn-vue",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "shebang-command",
-          "version": "2.0.0",
-          "url": "https://github.com/kevva/shebang-command",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "shebang-regex",
-          "version": "3.0.0",
-          "url": "https://github.com/sindresorhus/shebang-regex",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "side-channel",
-          "version": "1.1.1",
-          "url": "https://github.com/ljharb/side-channel",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "side-channel-list",
-          "version": "1.0.1",
-          "url": "https://github.com/ljharb/side-channel-list",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "side-channel-map",
-          "version": "1.0.1",
-          "url": "https://github.com/ljharb/side-channel-map",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "side-channel-weakmap",
-          "version": "1.0.2",
-          "url": "https://github.com/ljharb/side-channel-weakmap",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "sisteransi",
-          "version": "1.0.5",
-          "url": "https://github.com/terkelg/sisteransi",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "slice-ansi",
-          "version": "4.0.0",
-          "url": "https://github.com/chalk/slice-ansi",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "source-map-resolve",
-          "version": "0.6.0",
-          "url": "https://github.com/lydell/source-map-resolve",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "statuses",
-          "version": "2.0.2",
-          "url": "https://github.com/jshttp/statuses",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "stdin-discarder",
-          "version": "0.3.2",
-          "url": "https://github.com/sindresorhus/stdin-discarder",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "string-width",
-          "version": "4.2.3",
-          "url": "https://github.com/sindresorhus/string-width",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "string-width",
-          "version": "8.2.2",
-          "url": "https://github.com/sindresorhus/string-width",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "strip-ansi",
-          "version": "6.0.1",
-          "url": "https://github.com/chalk/strip-ansi",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "strip-ansi",
-          "version": "7.2.0",
-          "url": "https://github.com/chalk/strip-ansi",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "stylus",
-          "version": "0.57.0",
-          "url": "https://github.com/stylus/stylus",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "super-regex",
-          "version": "1.1.0",
-          "url": "https://github.com/sindresorhus/super-regex",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "tailwind-merge",
-          "version": "3.6.0",
-          "url": "https://github.com/dcastil/tailwind-merge",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "tailwindcss",
-          "version": "4.3.3",
-          "url": "https://github.com/tailwindlabs/tailwindcss",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "tapable",
-          "version": "2.3.3",
-          "url": "https://github.com/webpack/tapable",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "temporal-polyfill",
-          "version": "1.0.4",
-          "url": "https://github.com/fullcalendar/temporal-polyfill",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "temporal-utils",
-          "version": "1.0.2",
-          "url": "https://github.com/fullcalendar/temporal-polyfill",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "time-span",
-          "version": "5.1.0",
-          "url": "https://github.com/sindresorhus/time-span",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "tiny-invariant",
-          "version": "1.3.3",
-          "url": "https://github.com/alexreardon/tiny-invariant",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "tinyexec",
-          "version": "1.3.0",
-          "url": "https://github.com/tinylibs/tinyexec",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "tinyglobby",
-          "version": "0.2.17",
-          "url": "https://github.com/SuperchupuDev/tinyglobby",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "to-regex-range",
-          "version": "5.0.1",
-          "url": "https://github.com/micromatch/to-regex-range",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "toidentifier",
-          "version": "1.0.1",
-          "url": "https://github.com/component/toidentifier",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ts-morph",
-          "version": "28.0.0",
-          "url": "https://github.com/dsherret/ts-morph",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "tw-animate-css",
-          "version": "1.4.0",
-          "url": "https://github.com/Wombosvideo/tw-animate-css",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "type-check",
-          "version": "0.4.0",
-          "url": "https://github.com/gkz/type-check",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "type-fest",
-          "version": "4.41.0",
-          "url": "https://github.com/sindresorhus/type-fest",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "type-is",
-          "version": "2.1.0",
-          "url": "https://github.com/jshttp/type-is",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ufo",
-          "version": "1.6.4",
-          "url": "https://github.com/unjs/ufo",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "undici",
-          "version": "8.10.0",
-          "url": "https://github.com/nodejs/undici",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "undici-types",
-          "version": "8.3.0",
-          "url": "https://github.com/nodejs/undici",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "universalify",
-          "version": "2.0.1",
-          "url": "https://github.com/RyanZim/universalify",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "unpipe",
-          "version": "1.0.0",
-          "url": "https://github.com/stream-utils/unpipe",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "unplugin",
-          "version": "3.3.0",
-          "url": "https://github.com/unjs/unplugin",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "unplugin-utils",
-          "version": "0.3.2",
-          "url": "https://github.com/sxzz/unplugin-utils",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "update-browserslist-db",
-          "version": "1.3.1",
-          "url": "https://github.com/browserslist/update-db",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "util-deprecate",
-          "version": "1.0.2",
-          "url": "https://github.com/TooTallNate/util-deprecate",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "vary",
-          "version": "1.1.2",
-          "url": "https://github.com/jshttp/vary",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "vite",
-          "version": "8.2.1",
-          "url": "https://github.com/vitejs/vite",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "vue",
-          "version": "3.5.41",
-          "url": "https://github.com/vuejs/core",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "vue-demi",
-          "version": "0.14.10",
-          "url": "https://github.com/antfu/vue-demi",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "vue-eslint-parser",
-          "version": "10.4.1",
-          "url": "https://github.com/vuejs/vue-eslint-parser",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "vue-i18n",
-          "version": "11.4.8",
-          "url": "https://github.com/intlify/vue-i18n",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "vue-metamorph",
-          "version": "3.3.4",
-          "url": "https://github.com/UnrefinedBrain/vue-metamorph",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "vue-router",
-          "version": "5.2.0",
-          "url": "https://github.com/vuejs/router",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "webpack-virtual-modules",
-          "version": "0.6.2",
-          "url": "https://github.com/sysgears/webpack-virtual-modules",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "word-wrap",
-          "version": "1.2.5",
-          "url": "https://github.com/jonschlinkert/word-wrap",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "wsl-utils",
-          "version": "1.0.0",
-          "url": "https://github.com/sindresorhus/wsl-utils",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "yocto-queue",
-          "version": "0.1.0",
-          "url": "https://github.com/sindresorhus/yocto-queue",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "yocto-spinner",
-          "version": "1.2.2",
-          "url": "https://github.com/sindresorhus/yocto-spinner",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "yoctocolors",
-          "version": "2.2.0",
-          "url": "https://github.com/sindresorhus/yoctocolors",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "zod",
-          "version": "3.25.76",
-          "url": "https://github.com/colinhacks/zod",
-          "ecosystem": "frontend"
-        }
-      ]
-    },
     {
       "license": "Apache-2.0",
       "url": "https://www.apache.org/licenses/LICENSE-2.0",
       "components": [
-        {
-          "name": "@eslint/config-array",
-          "version": "0.23.5",
-          "url": "https://github.com/eslint/rewrite",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@eslint/config-helpers",
-          "version": "0.7.0",
-          "url": "https://github.com/eslint/rewrite",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@eslint/core",
-          "version": "1.2.1",
-          "url": "https://github.com/eslint/rewrite",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@eslint/object-schema",
-          "version": "3.0.5",
-          "url": "https://github.com/eslint/rewrite",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@eslint/plugin-kit",
-          "version": "0.7.2",
-          "url": "https://github.com/eslint/rewrite",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@humanfs/core",
-          "version": "0.19.2",
-          "url": "https://github.com/humanwhocodes/humanfs",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@humanfs/node",
-          "version": "0.16.8",
-          "url": "https://github.com/humanwhocodes/humanfs",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@humanfs/types",
-          "version": "0.15.0",
-          "url": "https://github.com/humanwhocodes/humanfs",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@humanwhocodes/module-importer",
-          "version": "1.0.1",
-          "url": "https://github.com/humanwhocodes/module-importer",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@humanwhocodes/retry",
-          "version": "0.4.3",
-          "url": "https://github.com/humanwhocodes/retry",
-          "ecosystem": "frontend"
-        },
         {
           "name": "@internationalized/date",
           "version": "3.12.3",
@@ -2493,12 +27,6 @@
           "name": "atob",
           "version": "2.1.2",
           "url": "git://git.coolaj86.com/coolaj86/atob.js",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "baseline-browser-mapping",
-          "version": "2.11.14",
-          "url": "https://github.com/web-platform-dx/baseline-browser-mapping",
           "ecosystem": "frontend"
         },
         {
@@ -2550,9 +78,27 @@
           "ecosystem": "backend"
         },
         {
+          "name": "com.github.ben-manes.caffeine:caffeine",
+          "version": "3.2.4",
+          "url": "https://github.com/ben-manes/caffeine",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "com.github.crawler-commons:crawler-commons",
+          "version": "1.6",
+          "url": "https://github.com/crawler-commons/crawler-commons",
+          "ecosystem": "backend"
+        },
+        {
           "name": "com.github.slugify:slugify",
           "version": "4.0.1",
           "url": "https://github.com/slugify/slugify",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "com.google.errorprone:error_prone_annotations",
+          "version": "2.49.0",
+          "url": "https://errorprone.info/error_prone_annotations",
           "ecosystem": "backend"
         },
         {
@@ -2565,6 +111,12 @@
           "name": "com.zaxxer:HikariCP",
           "version": "7.0.2",
           "url": "https://github.com/brettwooldridge",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "commons-io:commons-io",
+          "version": "2.21.0",
+          "url": "https://commons.apache.org/proper/commons-io/",
           "ecosystem": "backend"
         },
         {
@@ -2586,67 +138,67 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "eslint-visitor-keys",
-          "version": "3.4.3",
-          "url": "https://github.com/eslint/eslint-visitor-keys",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "eslint-visitor-keys",
-          "version": "5.0.1",
-          "url": "https://github.com/eslint/js",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "fast-diff",
-          "version": "1.3.0",
-          "url": "https://github.com/jhchen/fast-diff",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "io.github.oshai:kotlin-logging-jvm",
           "version": "8.0.4",
           "url": "https://github.com/oshai/kotlin-logging",
           "ecosystem": "backend"
         },
         {
-          "name": "io.micrometer:micrometer-commons",
-          "version": "1.16.6",
-          "url": "https://github.com/micrometer-metrics/micrometer",
+          "name": "io.micrometer:context-propagation",
+          "version": "1.2.1",
+          "url": "https://github.com/micrometer-metrics/context-propagation",
           "ecosystem": "backend"
         },
         {
           "name": "io.micrometer:micrometer-commons",
-          "version": "1.17.0",
-          "url": "https://github.com/micrometer-metrics/micrometer",
+          "version": "1.16.7",
+          "url": "https://github.com/micrometer-metrics/micrometer-commercial",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "io.micrometer:micrometer-commons",
+          "version": "1.17.1",
+          "url": "https://github.com/micrometer-metrics/micrometer-commercial",
           "ecosystem": "backend"
         },
         {
           "name": "io.micrometer:micrometer-core",
-          "version": "1.17.0",
-          "url": "https://github.com/micrometer-metrics/micrometer",
+          "version": "1.17.1",
+          "url": "https://github.com/micrometer-metrics/micrometer-commercial",
           "ecosystem": "backend"
         },
         {
           "name": "io.micrometer:micrometer-jakarta9",
-          "version": "1.17.0",
-          "url": "https://github.com/micrometer-metrics/micrometer",
+          "version": "1.17.1",
+          "url": "https://github.com/micrometer-metrics/micrometer-commercial",
           "ecosystem": "backend"
         },
         {
           "name": "io.micrometer:micrometer-observation",
-          "version": "1.16.6",
-          "url": "https://github.com/micrometer-metrics/micrometer",
+          "version": "1.16.7",
+          "url": "https://github.com/micrometer-metrics/micrometer-commercial",
           "ecosystem": "backend"
         },
         {
           "name": "io.micrometer:micrometer-observation",
-          "version": "1.17.0",
-          "url": "https://github.com/micrometer-metrics/micrometer",
+          "version": "1.17.1",
+          "url": "https://github.com/micrometer-metrics/micrometer-commercial",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "io.micrometer:micrometer-registry-prometheus",
+          "version": "1.17.1",
+          "url": "https://github.com/micrometer-metrics/micrometer-commercial",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-buffer",
+          "version": "4.2.17.Final",
+          "url": "https://netty.io/",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "io.netty:netty-codec",
           "version": "4.2.17.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
@@ -2694,7 +246,19 @@
           "ecosystem": "backend"
         },
         {
+          "name": "io.netty:netty-codec-marshalling",
+          "version": "4.2.17.Final",
+          "url": "https://netty.io/",
+          "ecosystem": "backend"
+        },
+        {
           "name": "io.netty:netty-codec-native-quic",
+          "version": "4.2.17.Final",
+          "url": "https://netty.io/",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "io.netty:netty-codec-protobuf",
           "version": "4.2.17.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
@@ -2773,32 +337,68 @@
         },
         {
           "name": "io.projectreactor:reactor-core",
-          "version": "3.8.6",
+          "version": "3.8.7",
           "url": "https://github.com/reactor/reactor-core",
           "ecosystem": "backend"
         },
         {
           "name": "io.projectreactor.addons:reactor-pool",
-          "version": "1.2.6",
+          "version": "1.2.7",
           "url": "https://github.com/reactor/reactor-pool",
           "ecosystem": "backend"
         },
         {
           "name": "io.projectreactor.kotlin:reactor-kotlin-extensions",
-          "version": "1.3.1",
+          "version": "1.3.2",
           "url": "https://github.com/reactor/reactor-kotlin-extensions",
           "ecosystem": "backend"
         },
         {
           "name": "io.projectreactor.netty:reactor-netty-core",
-          "version": "1.3.6",
+          "version": "1.3.7",
           "url": "https://github.com/reactor/reactor-netty",
           "ecosystem": "backend"
         },
         {
           "name": "io.projectreactor.netty:reactor-netty-http",
-          "version": "1.3.6",
+          "version": "1.3.7",
           "url": "https://github.com/reactor/reactor-netty",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "io.prometheus:prometheus-metrics-config",
+          "version": "1.7.0",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "io.prometheus:prometheus-metrics-core",
+          "version": "1.7.0",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "io.prometheus:prometheus-metrics-exposition-formats",
+          "version": "1.7.0",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "io.prometheus:prometheus-metrics-exposition-textformats",
+          "version": "1.7.0",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "io.prometheus:prometheus-metrics-model",
+          "version": "1.7.0",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "io.prometheus:prometheus-metrics-tracer-common",
+          "version": "1.7.0",
+          "url": null,
           "ecosystem": "backend"
         },
         {
@@ -2850,6 +450,24 @@
           "ecosystem": "backend"
         },
         {
+          "name": "org.apache.httpcomponents.client5:httpclient5",
+          "version": "5.6.4",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.apache.httpcomponents.core5:httpcore5",
+          "version": "5.4.3",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.apache.httpcomponents.core5:httpcore5-h2",
+          "version": "5.4.3",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
           "name": "org.apache.logging.log4j:log4j-api",
           "version": "2.25.5",
           "url": "https://logging.apache.org/log4j/2.x/",
@@ -2869,7 +487,7 @@
         },
         {
           "name": "org.apache.tomcat.embed:tomcat-embed-el",
-          "version": "11.0.22",
+          "version": "11.0.24",
           "url": "https://tomcat.apache.org/",
           "ecosystem": "backend"
         },
@@ -2887,7 +505,7 @@
         },
         {
           "name": "org.hibernate.validator:hibernate-validator",
-          "version": "9.1.0.Final",
+          "version": "9.1.3.Final",
           "url": "https://hibernate.org/validator",
           "ecosystem": "backend"
         },
@@ -2952,6 +570,12 @@
           "ecosystem": "backend"
         },
         {
+          "name": "org.jetbrains.kotlinx:kotlinx-coroutines-slf4j",
+          "version": "1.10.2",
+          "url": "https://github.com/Kotlin/kotlinx.coroutines",
+          "ecosystem": "backend"
+        },
+        {
           "name": "org.jmolecules:jmolecules-events",
           "version": "2.0.1",
           "url": "https://github.com/xmolecules/jmolecules/jmolecules-events",
@@ -2965,13 +589,13 @@
         },
         {
           "name": "org.jspecify:jspecify",
-          "version": "1.0.0",
-          "url": "http://jspecify.org/",
+          "version": "1.0.1",
+          "url": "https://jspecify.dev/",
           "ecosystem": "backend"
         },
         {
           "name": "org.postgresql:r2dbc-postgresql",
-          "version": "1.1.1.RELEASE",
+          "version": "1.1.2.RELEASE",
           "url": "https://github.com/pgjdbc/r2dbc-postgresql",
           "ecosystem": "backend"
         },
@@ -2995,61 +619,61 @@
         },
         {
           "name": "org.springframework:spring-aop",
-          "version": "7.0.8",
+          "version": "7.0.9",
           "url": "https://github.com/spring-projects/spring-framework",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework:spring-beans",
-          "version": "7.0.8",
+          "version": "7.0.9",
           "url": "https://github.com/spring-projects/spring-framework",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework:spring-context",
-          "version": "7.0.8",
+          "version": "7.0.9",
           "url": "https://github.com/spring-projects/spring-framework",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework:spring-core",
-          "version": "7.0.8",
+          "version": "7.0.9",
           "url": "https://github.com/spring-projects/spring-framework",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework:spring-expression",
-          "version": "7.0.8",
+          "version": "7.0.9",
           "url": "https://github.com/spring-projects/spring-framework",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework:spring-jdbc",
-          "version": "7.0.8",
+          "version": "7.0.9",
           "url": "https://github.com/spring-projects/spring-framework",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework:spring-r2dbc",
-          "version": "7.0.8",
+          "version": "7.0.9",
           "url": "https://github.com/spring-projects/spring-framework",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework:spring-tx",
-          "version": "7.0.8",
+          "version": "7.0.9",
           "url": "https://github.com/spring-projects/spring-framework",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework:spring-web",
-          "version": "7.0.8",
+          "version": "7.0.9",
           "url": "https://github.com/spring-projects/spring-framework",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework:spring-webflux",
-          "version": "7.0.8",
+          "version": "7.0.9",
           "url": "https://github.com/spring-projects/spring-framework",
           "ecosystem": "backend"
         },
@@ -3060,14 +684,20 @@
           "ecosystem": "backend"
         },
         {
+          "name": "org.springframework.boot:spring-boot",
+          "version": "4.1.1",
+          "url": "https://spring.io/projects/spring-boot",
+          "ecosystem": "backend"
+        },
+        {
           "name": "org.springframework.boot:spring-boot-actuator",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-actuator-autoconfigure",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
@@ -3078,116 +708,122 @@
           "ecosystem": "backend"
         },
         {
+          "name": "org.springframework.boot:spring-boot-autoconfigure",
+          "version": "4.1.1",
+          "url": "https://spring.io/projects/spring-boot",
+          "ecosystem": "backend"
+        },
+        {
           "name": "org.springframework.boot:spring-boot-data-commons",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-data-r2dbc",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-devtools",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-docker-compose",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-flyway",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-health",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-http-client",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-http-codec",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-http-converter",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-jackson",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-jdbc",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-micrometer-metrics",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-micrometer-observation",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-netty",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-persistence",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-r2dbc",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-reactor",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-reactor-netty",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-sql",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
@@ -3198,32 +834,38 @@
           "ecosystem": "backend"
         },
         {
+          "name": "org.springframework.boot:spring-boot-starter",
+          "version": "4.1.1",
+          "url": "https://spring.io/projects/spring-boot",
+          "ecosystem": "backend"
+        },
+        {
           "name": "org.springframework.boot:spring-boot-starter-actuator",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-starter-data-r2dbc",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-starter-flyway",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-starter-jackson",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-starter-jdbc",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
@@ -3234,80 +876,86 @@
           "ecosystem": "backend"
         },
         {
+          "name": "org.springframework.boot:spring-boot-starter-logging",
+          "version": "4.1.1",
+          "url": "https://spring.io/projects/spring-boot",
+          "ecosystem": "backend"
+        },
+        {
           "name": "org.springframework.boot:spring-boot-starter-micrometer-metrics",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-starter-reactor-netty",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-starter-validation",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-starter-webclient",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-starter-webflux",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-transaction",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-validation",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-web-server",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-webclient",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.boot:spring-boot-webflux",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.data:spring-data-commons",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://spring.io/projects/spring-data",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.data:spring-data-r2dbc",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": "https://projects.spring.io/spring-data-r2dbc",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.data:spring-data-relational",
-          "version": "4.1.0",
+          "version": "4.1.1",
           "url": null,
           "ecosystem": "backend"
         },
@@ -3343,7 +991,7 @@
         },
         {
           "name": "org.webjars:swagger-ui",
-          "version": "5.32.11",
+          "version": "5.32.13",
           "url": "https://www.webjars.org",
           "ecosystem": "backend"
         },
@@ -3351,6 +999,192 @@
           "name": "org.yaml:snakeyaml",
           "version": "2.6",
           "url": "https://bitbucket.org/snakeyaml/snakeyaml",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:annotations",
+          "version": "2.54.7",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:apache5-client",
+          "version": "2.54.7",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:arns",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:auth",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:aws-core",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:aws-query-protocol",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:aws-xml-protocol",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:checksums",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:checksums-spi",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:crt-core",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:endpoints-spi",
+          "version": "2.54.7",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:http-auth",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:http-auth-aws",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:http-auth-aws-eventstream",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:http-auth-spi",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:http-client-spi",
+          "version": "2.54.7",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:identity-spi",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:json-utils",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:metrics-spi",
+          "version": "2.54.7",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:netty-nio-client",
+          "version": "2.54.7",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:profiles",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:protocol-core",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:regions",
+          "version": "2.54.7",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:retries",
+          "version": "2.54.7",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:retries-spi",
+          "version": "2.54.7",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:s3",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:sdk-core",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:third-party-jackson-core",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:utils",
+          "version": "2.54.7",
+          "url": null,
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.awssdk:utils-lite",
+          "version": "2.54.7",
+          "url": "https://aws.amazon.com/sdkforjava",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "software.amazon.eventstream:eventstream",
+          "version": "1.0.1",
+          "url": "https://github.com/awslabs/aws-eventstream-java",
           "ecosystem": "backend"
         },
         {
@@ -3385,20 +1219,710 @@
         },
         {
           "name": "typescript",
-          "version": "5.9.3",
-          "url": "https://github.com/microsoft/TypeScript",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "typescript",
           "version": "6.0.3",
           "url": "https://github.com/microsoft/TypeScript",
           "ecosystem": "frontend"
+        }
+      ]
+    },
+    {
+      "license": "MIT",
+      "url": "https://opensource.org/license/mit",
+      "components": [
+        {
+          "name": "@babel/helper-string-parser",
+          "version": "7.29.7",
+          "url": "https://github.com/babel/babel",
+          "ecosystem": "frontend"
         },
         {
-          "name": "web-worker",
-          "version": "1.5.0",
-          "url": "https://github.com/developit/web-worker",
+          "name": "@babel/helper-validator-identifier",
+          "version": "7.29.7",
+          "url": "https://github.com/babel/babel",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@babel/parser",
+          "version": "7.29.8",
+          "url": "https://github.com/babel/babel",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@babel/types",
+          "version": "7.29.8",
+          "url": "https://github.com/babel/babel",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@floating-ui/core",
+          "version": "1.8.0",
+          "url": "https://github.com/floating-ui/floating-ui",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@floating-ui/dom",
+          "version": "1.8.0",
+          "url": "https://github.com/floating-ui/floating-ui",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@floating-ui/utils",
+          "version": "0.2.12",
+          "url": "https://github.com/floating-ui/floating-ui",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@floating-ui/vue",
+          "version": "1.1.11",
+          "url": "https://github.com/floating-ui/floating-ui",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@full-ui/headless-calendar",
+          "version": "7.0.2",
+          "url": "https://github.com/fullcalendar/fullcalendar",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@fullcalendar/core",
+          "version": "7.0.2",
+          "url": "https://github.com/fullcalendar/fullcalendar",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@fullcalendar/vue3",
+          "version": "7.0.2",
+          "url": "https://github.com/fullcalendar/fullcalendar-vue",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@intlify/core-base",
+          "version": "11.4.10",
+          "url": "https://github.com/intlify/vue-i18n",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@intlify/devtools-types",
+          "version": "11.4.10",
+          "url": "https://github.com/intlify/vue-i18n",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@intlify/message-compiler",
+          "version": "11.4.10",
+          "url": "https://github.com/intlify/vue-i18n",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@intlify/shared",
+          "version": "11.4.10",
+          "url": "https://github.com/intlify/vue-i18n",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@jridgewell/gen-mapping",
+          "version": "0.3.13",
+          "url": "https://github.com/jridgewell/sourcemaps",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@jridgewell/remapping",
+          "version": "2.3.5",
+          "url": "https://github.com/jridgewell/sourcemaps",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@jridgewell/resolve-uri",
+          "version": "3.1.2",
+          "url": "https://github.com/jridgewell/resolve-uri",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@jridgewell/sourcemap-codec",
+          "version": "1.6.0",
+          "url": "https://github.com/jridgewell/sourcemaps",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@jridgewell/trace-mapping",
+          "version": "0.3.31",
+          "url": "https://github.com/jridgewell/sourcemaps",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@oxc-project/types",
+          "version": "0.147.0",
+          "url": "https://github.com/oxc-project/oxc",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@rolldown/pluginutils",
+          "version": "1.0.1",
+          "url": "https://github.com/rolldown/plugins",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@tanstack/virtual-core",
+          "version": "3.17.8",
+          "url": "https://github.com/TanStack/virtual",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@tanstack/vue-virtual",
+          "version": "3.13.36",
+          "url": "https://github.com/TanStack/virtual",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@types/node",
+          "version": "26.4.0",
+          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@types/web-bluetooth",
+          "version": "0.0.21",
+          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vue-macros/common",
+          "version": "3.1.4",
+          "url": "https://github.com/vue-macros/vue-macros",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vue/compiler-core",
+          "version": "3.5.42",
+          "url": "https://github.com/vuejs/core",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vue/compiler-dom",
+          "version": "3.5.42",
+          "url": "https://github.com/vuejs/core",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vue/compiler-sfc",
+          "version": "3.5.42",
+          "url": "https://github.com/vuejs/core",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vue/compiler-ssr",
+          "version": "3.5.42",
+          "url": "https://github.com/vuejs/core",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vue/devtools-api",
+          "version": "6.6.4",
+          "url": "https://github.com/vuejs/vue-devtools",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vue/devtools-api",
+          "version": "8.2.1",
+          "url": "https://github.com/vuejs/devtools",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vue/devtools-kit",
+          "version": "8.2.1",
+          "url": "https://github.com/vuejs/devtools",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vue/devtools-shared",
+          "version": "8.2.1",
+          "url": "https://github.com/vuejs/devtools",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vue/reactivity",
+          "version": "3.5.42",
+          "url": "https://github.com/vuejs/core",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vue/runtime-core",
+          "version": "3.5.42",
+          "url": "https://github.com/vuejs/core",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vue/runtime-dom",
+          "version": "3.5.42",
+          "url": "https://github.com/vuejs/core",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vue/server-renderer",
+          "version": "3.5.42",
+          "url": "https://github.com/vuejs/core",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vue/shared",
+          "version": "3.5.42",
+          "url": "https://github.com/vuejs/core",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vueuse/core",
+          "version": "14.4.0",
+          "url": "https://github.com/vueuse/vueuse",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vueuse/metadata",
+          "version": "14.4.0",
+          "url": "https://github.com/vueuse/vueuse",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@vueuse/shared",
+          "version": "14.4.0",
+          "url": "https://github.com/vueuse/vueuse",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "acorn",
+          "version": "8.18.0",
+          "url": "https://github.com/acornjs/acorn",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "aria-hidden",
+          "version": "1.2.6",
+          "url": "https://github.com/theKashey/aria-hidden",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "ast-kit",
+          "version": "2.2.0",
+          "url": "https://github.com/sxzz/ast-kit",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "ast-walker-scope",
+          "version": "0.9.0",
+          "url": "https://github.com/sxzz/ast-walker-scope",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "atob",
+          "version": "2.1.2",
+          "url": "git://git.coolaj86.com/coolaj86/atob.js",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "balanced-match",
+          "version": "1.0.2",
+          "url": "https://github.com/juliangruber/balanced-match",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "birpc",
+          "version": "2.9.0",
+          "url": "https://github.com/antfu-collective/birpc",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "brace-expansion",
+          "version": "1.1.18",
+          "url": "https://github.com/juliangruber/brace-expansion",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "chokidar",
+          "version": "5.0.0",
+          "url": "https://github.com/paulmillr/chokidar",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "clsx",
+          "version": "2.1.1",
+          "url": "https://github.com/lukeed/clsx",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "concat-map",
+          "version": "0.0.1",
+          "url": "https://github.com/substack/node-concat-map",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "confbox",
+          "version": "0.1.8",
+          "url": "https://github.com/unjs/confbox",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "confbox",
+          "version": "0.2.4",
+          "url": "https://github.com/unjs/confbox",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "css",
+          "version": "3.0.0",
+          "url": "https://github.com/reworkcss/css",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "csstype",
+          "version": "3.2.3",
+          "url": "https://github.com/frenic/csstype",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "debug",
+          "version": "4.4.3",
+          "url": "https://github.com/debug-js/debug",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "decode-uri-component",
+          "version": "0.2.2",
+          "url": "https://github.com/SamVerschueren/decode-uri-component",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "defu",
+          "version": "6.1.7",
+          "url": "https://github.com/unjs/defu",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "esbuild",
+          "version": "0.28.2",
+          "url": "https://github.com/evanw/esbuild",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "estree-walker",
+          "version": "2.0.2",
+          "url": "https://github.com/Rich-Harris/estree-walker",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "exsolve",
+          "version": "1.1.1",
+          "url": "https://github.com/unjs/exsolve",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "fdir",
+          "version": "6.5.0",
+          "url": "https://github.com/thecodrr/fdir",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "fsevents",
+          "version": "2.3.3",
+          "url": "https://github.com/fsevents/fsevents",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "hookable",
+          "version": "5.5.3",
+          "url": "https://github.com/unjs/hookable",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "jiti",
+          "version": "2.7.0",
+          "url": "https://github.com/unjs/jiti",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "local-pkg",
+          "version": "1.2.1",
+          "url": "https://github.com/antfu-collective/local-pkg",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "magic-string",
+          "version": "0.30.21",
+          "url": "https://github.com/Rich-Harris/magic-string",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "magic-string-ast",
+          "version": "1.0.3",
+          "url": "https://github.com/sxzz/magic-string-ast",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "mlly",
+          "version": "1.8.2",
+          "url": "https://github.com/unjs/mlly",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "ms",
+          "version": "2.1.3",
+          "url": "https://github.com/vercel/ms",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "muggle-string",
+          "version": "0.4.1",
+          "url": "https://github.com/johnsoncodehk/muggle-string",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "nanoid",
+          "version": "3.3.18",
+          "url": "https://github.com/ai/nanoid",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "nostics",
+          "version": "1.2.0",
+          "url": "https://github.com/vercel-labs/nostics",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "ohash",
+          "version": "2.0.12",
+          "url": "https://github.com/unjs/ohash",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "openapi-fetch",
+          "version": "0.17.0",
+          "url": "https://github.com/openapi-ts/openapi-typescript",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "openapi-typescript-helpers",
+          "version": "0.1.0",
+          "url": "https://github.com/openapi-ts/openapi-typescript",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "org.checkerframework:checker-qual",
+          "version": "3.55.1",
+          "url": "https://checkerframework.org/",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.jsoup:jsoup",
+          "version": "1.23.2",
+          "url": "https://jsoup.org/",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.slf4j:jul-to-slf4j",
+          "version": "2.0.18",
+          "url": "http://www.slf4j.org",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.slf4j:slf4j-api",
+          "version": "2.0.18",
+          "url": "http://www.slf4j.org",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "org.webjars:webjars-locator-lite",
+          "version": "1.1.4",
+          "url": "https://webjars.org",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "path-is-absolute",
+          "version": "1.0.1",
+          "url": "https://github.com/sindresorhus/path-is-absolute",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "pathe",
+          "version": "2.0.3",
+          "url": "https://github.com/unjs/pathe",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "perfect-debounce",
+          "version": "2.1.0",
+          "url": "https://github.com/unjs/perfect-debounce",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "picomatch",
+          "version": "4.0.7",
+          "url": "https://github.com/micromatch/picomatch",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "pkg-types",
+          "version": "1.3.1",
+          "url": "https://github.com/unjs/pkg-types",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "pkg-types",
+          "version": "2.3.1",
+          "url": "https://github.com/unjs/pkg-types",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "postcss",
+          "version": "8.5.26",
+          "url": "https://github.com/postcss/postcss",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "preact",
+          "version": "10.29.8",
+          "url": "https://github.com/preactjs/preact",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "quansync",
+          "version": "0.2.11",
+          "url": "https://github.com/quansync-dev/quansync",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "readdirp",
+          "version": "5.1.1",
+          "url": "https://github.com/paulmillr/readdirp",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "reka-ui",
+          "version": "2.10.4",
+          "url": "https://github.com/unovue/reka-ui",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "rolldown",
+          "version": "1.2.6",
+          "url": "https://github.com/rolldown/rolldown",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "safer-buffer",
+          "version": "2.1.2",
+          "url": "https://github.com/ChALkeR/safer-buffer",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "scule",
+          "version": "1.3.0",
+          "url": "https://github.com/unjs/scule",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "source-map-resolve",
+          "version": "0.6.0",
+          "url": "https://github.com/lydell/source-map-resolve",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "stylus",
+          "version": "0.57.0",
+          "url": "https://github.com/stylus/stylus",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "tailwind-merge",
+          "version": "3.6.0",
+          "url": "https://github.com/dcastil/tailwind-merge",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "tailwindcss",
+          "version": "4.3.3",
+          "url": "https://github.com/tailwindlabs/tailwindcss",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "temporal-polyfill",
+          "version": "1.0.4",
+          "url": "https://github.com/fullcalendar/temporal-polyfill",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "temporal-utils",
+          "version": "1.0.2",
+          "url": "https://github.com/fullcalendar/temporal-polyfill",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "tinyglobby",
+          "version": "0.2.17",
+          "url": "https://github.com/SuperchupuDev/tinyglobby",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "tw-animate-css",
+          "version": "1.4.0",
+          "url": "https://github.com/Wombosvideo/tw-animate-css",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "ufo",
+          "version": "1.6.4",
+          "url": "https://github.com/unjs/ufo",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "undici-types",
+          "version": "8.3.0",
+          "url": "https://github.com/nodejs/undici",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "unplugin",
+          "version": "3.3.0",
+          "url": "https://github.com/unjs/unplugin",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "unplugin-utils",
+          "version": "0.3.2",
+          "url": "https://github.com/sxzz/unplugin-utils",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "vite",
+          "version": "8.2.2",
+          "url": "https://github.com/vitejs/vite",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "vue",
+          "version": "3.5.42",
+          "url": "https://github.com/vuejs/core",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "vue-demi",
+          "version": "0.14.10",
+          "url": "https://github.com/antfu/vue-demi",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "vue-i18n",
+          "version": "11.4.10",
+          "url": "https://github.com/intlify/vue-i18n",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "vue-router",
+          "version": "5.3.0",
+          "url": "https://github.com/vuejs/router",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "webpack-virtual-modules",
+          "version": "0.6.2",
+          "url": "https://github.com/sysgears/webpack-virtual-modules",
           "ecosystem": "frontend"
         }
       ]
@@ -3409,38 +1933,8 @@
       "components": [
         {
           "name": "@lucide/vue",
-          "version": "1.32.0",
+          "version": "1.37.0",
           "url": "https://github.com/lucide-icons/lucide",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "boolbase",
-          "version": "1.0.0",
-          "url": "https://github.com/fb55/boolbase",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "electron-to-chromium",
-          "version": "1.5.406",
-          "url": "https://github.com/Kilian/electron-to-chromium",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "fastq",
-          "version": "1.20.1",
-          "url": "https://github.com/mcollina/fastq",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "flatted",
-          "version": "3.4.4",
-          "url": "https://github.com/WebReflection/flatted",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "foreground-child",
-          "version": "3.3.1",
-          "url": "https://github.com/tapjs/foreground-child",
           "ecosystem": "frontend"
         },
         {
@@ -3456,24 +1950,6 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "glob-parent",
-          "version": "5.1.2",
-          "url": "https://github.com/gulpjs/glob-parent",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "glob-parent",
-          "version": "6.0.2",
-          "url": "https://github.com/gulpjs/glob-parent",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "graceful-fs",
-          "version": "4.2.11",
-          "url": "https://github.com/isaacs/node-graceful-fs",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "inflight",
           "version": "1.0.6",
           "url": "https://github.com/npm/inflight",
@@ -3483,18 +1959,6 @@
           "name": "inherits",
           "version": "2.0.4",
           "url": "https://github.com/isaacs/inherits",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "isexe",
-          "version": "2.0.0",
-          "url": "https://github.com/isaacs/isexe",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "lru-cache",
-          "version": "5.1.1",
-          "url": "https://github.com/isaacs/node-lru-cache",
           "ecosystem": "frontend"
         },
         {
@@ -3522,51 +1986,9 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "semver",
-          "version": "6.3.1",
-          "url": "https://github.com/npm/node-semver",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "semver",
-          "version": "7.8.5",
-          "url": "https://github.com/npm/node-semver",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "setprototypeof",
-          "version": "1.2.0",
-          "url": "https://github.com/wesleytodd/setprototypeof",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "signal-exit",
-          "version": "4.1.0",
-          "url": "https://github.com/tapjs/signal-exit",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "validate-npm-package-name",
-          "version": "8.0.0",
-          "url": "https://github.com/npm/validate-npm-package-name",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "which",
-          "version": "2.0.2",
-          "url": "https://github.com/isaacs/node-which",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "wrappy",
           "version": "1.0.2",
           "url": "https://github.com/npm/wrappy",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "yallist",
-          "version": "3.1.1",
-          "url": "https://github.com/isaacs/yallist",
           "ecosystem": "frontend"
         },
         {
@@ -3574,12 +1996,60 @@
           "version": "2.9.0",
           "url": "https://github.com/eemeli/yaml",
           "ecosystem": "frontend"
+        }
+      ]
+    },
+    {
+      "license": "EPL-2.0",
+      "url": "https://www.eclipse.org/legal/epl-2.0/",
+      "components": [
+        {
+          "name": "ch.qos.logback:logback-classic",
+          "version": "1.5.34",
+          "url": "http://www.qos.ch",
+          "ecosystem": "backend"
         },
         {
-          "name": "zod-to-json-schema",
-          "version": "3.25.2",
-          "url": "https://github.com/StefanTerdell/zod-to-json-schema",
-          "ecosystem": "frontend"
+          "name": "ch.qos.logback:logback-classic",
+          "version": "1.5.38",
+          "url": "http://www.qos.ch",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "ch.qos.logback:logback-core",
+          "version": "1.5.34",
+          "url": "http://www.qos.ch",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "ch.qos.logback:logback-core",
+          "version": "1.5.38",
+          "url": "http://www.qos.ch",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "jakarta.activation:jakarta.activation-api",
+          "version": "2.1.4",
+          "url": "https://github.com/jakartaee/jaf-api",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "jakarta.annotation:jakarta.annotation-api",
+          "version": "3.0.0",
+          "url": "https://projects.eclipse.org/projects/ee4j.ca",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "jakarta.validation:jakarta.validation-api",
+          "version": "3.1.1",
+          "url": "https://beanvalidation.org",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "jakarta.xml.bind:jakarta.xml.bind-api",
+          "version": "4.0.5",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
         }
       ]
     },
@@ -3612,93 +2082,9 @@
           "ecosystem": "backend"
         },
         {
-          "name": "css-select",
-          "version": "5.2.2",
-          "url": "https://github.com/fb55/css-select",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "css-what",
-          "version": "6.2.2",
-          "url": "https://github.com/fb55/css-what",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "domelementtype",
-          "version": "2.3.0",
-          "url": "https://github.com/fb55/domelementtype",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "domhandler",
-          "version": "5.0.3",
-          "url": "https://github.com/fb55/domhandler",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "domutils",
-          "version": "3.2.2",
-          "url": "https://github.com/fb55/domutils",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "dotenv",
-          "version": "17.4.2",
-          "url": "https://github.com/motdotla/dotenv",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "entities",
-          "version": "4.5.0",
-          "url": "https://github.com/fb55/entities",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "entities",
           "version": "7.0.1",
           "url": "https://github.com/fb55/entities",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "eslint-scope",
-          "version": "9.1.2",
-          "url": "https://github.com/eslint/js",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "espree",
-          "version": "11.2.0",
-          "url": "https://github.com/eslint/js",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "esrecurse",
-          "version": "4.3.0",
-          "url": "https://github.com/estools/esrecurse",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "estraverse",
-          "version": "5.3.0",
-          "url": "https://github.com/estools/estraverse",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "esutils",
-          "version": "2.0.3",
-          "url": "https://github.com/estools/esutils",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "json-schema-typed",
-          "version": "8.0.2",
-          "url": "https://github.com/RemyRylan/json-schema-typed",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "nth-check",
-          "version": "2.1.1",
-          "url": "https://github.com/fb55/nth-check",
           "ecosystem": "frontend"
         },
         {
@@ -3712,18 +2098,6 @@
           "version": "42.7.13",
           "url": "https://jdbc.postgresql.org",
           "ecosystem": "backend"
-        },
-        {
-          "name": "stringify-object",
-          "version": "7.0.0",
-          "url": "https://github.com/sindresorhus/stringify-object",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "uri-js",
-          "version": "4.4.1",
-          "url": "https://github.com/garycourt/uri-js",
-          "ecosystem": "frontend"
         }
       ]
     },
@@ -3731,42 +2105,6 @@
       "license": "BSD-3-Clause",
       "url": "https://opensource.org/license/bsd-3-clause",
       "components": [
-        {
-          "name": "@dotenvx/dotenvx",
-          "version": "2.21.0",
-          "url": "https://github.com/dotenvx/dotenvx",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@dotenvx/primitives",
-          "version": "2.2.0",
-          "url": "https://github.com/dotenvx/dotenvx",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@dotenvx/tooling",
-          "version": "1.0.3",
-          "url": "https://github.com/dotenvx/dotenvx",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "diff",
-          "version": "9.0.0",
-          "url": "https://github.com/kpdecker/jsdiff",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "esquery",
-          "version": "1.7.0",
-          "url": "https://github.com/estools/esquery",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "fast-uri",
-          "version": "3.1.5",
-          "url": "https://github.com/fastify/fast-uri",
-          "ecosystem": "frontend"
-        },
         {
           "name": "jakarta.activation:jakarta.activation-api",
           "version": "2.1.4",
@@ -3778,12 +2116,6 @@
           "version": "4.0.5",
           "url": "https://www.eclipse.org",
           "ecosystem": "backend"
-        },
-        {
-          "name": "qs",
-          "version": "6.15.3",
-          "url": "https://github.com/ljharb/qs",
-          "ecosystem": "frontend"
         },
         {
           "name": "source-map",
@@ -3802,108 +2134,6 @@
           "version": "1.2.1",
           "url": "https://github.com/7rulnik/source-map-js",
           "ecosystem": "frontend"
-        },
-        {
-          "name": "table",
-          "version": "6.9.0",
-          "url": "https://github.com/gajus/table",
-          "ecosystem": "frontend"
-        }
-      ]
-    },
-    {
-      "license": "BlueOak-1.0.0",
-      "url": "https://blueoakcouncil.org/license/1.0.0",
-      "components": [
-        {
-          "name": "@isaacs/cliui",
-          "version": "9.0.0",
-          "url": "https://github.com/isaacs/cliui",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "glob",
-          "version": "11.1.0",
-          "url": "https://github.com/isaacs/node-glob",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "jackspeak",
-          "version": "4.2.3",
-          "url": "https://github.com/isaacs/jackspeak",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "lru-cache",
-          "version": "11.5.2",
-          "url": "https://github.com/isaacs/node-lru-cache",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "minimatch",
-          "version": "10.2.6",
-          "url": "https://github.com/isaacs/minimatch",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "minipass",
-          "version": "7.1.3",
-          "url": "https://github.com/isaacs/minipass",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "package-json-from-dist",
-          "version": "1.0.1",
-          "url": "https://github.com/isaacs/package-json-from-dist",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "path-scurry",
-          "version": "2.0.2",
-          "url": "https://github.com/isaacs/path-scurry",
-          "ecosystem": "frontend"
-        }
-      ]
-    },
-    {
-      "license": "EPL-2.0",
-      "url": "https://www.eclipse.org/legal/epl-2.0/",
-      "components": [
-        {
-          "name": "ch.qos.logback:logback-classic",
-          "version": "1.5.34",
-          "url": "http://www.qos.ch",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "ch.qos.logback:logback-core",
-          "version": "1.5.34",
-          "url": "http://www.qos.ch",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "jakarta.activation:jakarta.activation-api",
-          "version": "2.1.4",
-          "url": "https://github.com/jakartaee/jaf-api",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "jakarta.annotation:jakarta.annotation-api",
-          "version": "3.0.0",
-          "url": "https://projects.eclipse.org/projects/ee4j.ca",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "jakarta.validation:jakarta.validation-api",
-          "version": "3.1.1",
-          "url": "https://beanvalidation.org",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "jakarta.xml.bind:jakarta.xml.bind-api",
-          "version": "4.0.5",
-          "url": "https://www.eclipse.org",
-          "ecosystem": "backend"
         }
       ]
     },
@@ -3963,6 +2193,36 @@
           "name": "jakarta.xml.bind:jakarta.xml.bind-api",
           "version": "4.0.5",
           "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        }
+      ]
+    },
+    {
+      "license": "LGPL-2.1",
+      "url": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html",
+      "components": [
+        {
+          "name": "ch.qos.logback:logback-classic",
+          "version": "1.5.34",
+          "url": "http://www.qos.ch",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "ch.qos.logback:logback-classic",
+          "version": "1.5.38",
+          "url": "http://www.qos.ch",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "ch.qos.logback:logback-core",
+          "version": "1.5.34",
+          "url": "http://www.qos.ch",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "ch.qos.logback:logback-core",
+          "version": "1.5.38",
+          "url": "http://www.qos.ch",
           "ecosystem": "backend"
         }
       ]
@@ -4042,60 +2302,6 @@
           "version": "2.2.2",
           "url": "http://hdrhistogram.github.io/HdrHistogram/",
           "ecosystem": "backend"
-        },
-        {
-          "name": "type-fest",
-          "version": "4.41.0",
-          "url": "https://github.com/sindresorhus/type-fest",
-          "ecosystem": "frontend"
-        }
-      ]
-    },
-    {
-      "license": "LGPL-2.1",
-      "url": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html",
-      "components": [
-        {
-          "name": "ch.qos.logback:logback-classic",
-          "version": "1.5.34",
-          "url": "http://www.qos.ch",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "ch.qos.logback:logback-core",
-          "version": "1.5.34",
-          "url": "http://www.qos.ch",
-          "ecosystem": "backend"
-        }
-      ]
-    },
-    {
-      "license": "MPL-2.0",
-      "url": "https://www.mozilla.org/MPL/2.0/",
-      "components": [
-        {
-          "name": "lightningcss",
-          "version": "1.32.0",
-          "url": "https://github.com/parcel-bundler/lightningcss",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "lightningcss",
-          "version": "1.33.0",
-          "url": "https://github.com/parcel-bundler/lightningcss",
-          "ecosystem": "frontend"
-        }
-      ]
-    },
-    {
-      "license": "CC-BY-4.0",
-      "url": "https://creativecommons.org/licenses/by/4.0/",
-      "components": [
-        {
-          "name": "caniuse-lite",
-          "version": "1.0.30001809",
-          "url": "https://github.com/browserslist/caniuse-lite",
-          "ecosystem": "frontend"
         }
       ]
     },
@@ -4108,6 +2314,18 @@
           "version": "1.0.4",
           "url": "http://reactive-streams.org",
           "ecosystem": "backend"
+        }
+      ]
+    },
+    {
+      "license": "MPL-2.0",
+      "url": "https://www.mozilla.org/MPL/2.0/",
+      "components": [
+        {
+          "name": "lightningcss",
+          "version": "1.33.0",
+          "url": "https://github.com/parcel-bundler/lightningcss",
+          "ecosystem": "frontend"
         }
       ]
     }
