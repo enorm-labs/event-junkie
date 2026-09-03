@@ -185,9 +185,9 @@ frontend:
 ingress:
   # ingress.enabled turns the single Ingress object on. Off for k3d smoke tests that port-forward.
   enabled: true
-  # ingress.className is k3s's bundled Traefik. The only Traefik-specific object in the chart is the
-  # redirect Middleware below, which has no portable equivalent; emptying `redirectHosts` leaves a
-  # chart that would run behind any ingress controller.
+  # ingress.className is k3s's bundled Traefik. Four Middleware objects below are Traefik-specific,
+  # each expressing something the Ingress API has no vocabulary for: a redirect, a response header
+  # set, a robots header, and a limit. Everything else here runs behind any ingress controller.
   className: "traefik"
   # ingress.host is the name the certificate is issued for and the only name routed to the apps.
   host: "event-junkie.de"
@@ -290,6 +290,23 @@ ingress:
         # and contacting no third party.
         - "font-src 'self'"
         - "connect-src 'self'"
+  # ingress.rateLimit is the fourth Traefik Middleware, PLATFORM_SETUP §8 item 9 (#268). The
+  # template and the chart README carry why one half is on and the other cannot be.
+  rateLimit:
+    enabled: true
+    # Concurrent requests, grouped by request host, so it holds whatever address Traefik sees. It
+    # guards the resource that runs out first: each BFF replica holds ten R2DBC connections. A
+    # starting point rather than a measurement — `k6 run perf/spike.js` re-derives it.
+    inFlightRequests: 100
+    # The per-client request rate. OFF because k3s ServiceLB masquerades the client address, which
+    # would make one budget for every visitor at once. `externalTrafficPolicy: Local` on the Traefik
+    # Service is what turns it on.
+    perSource:
+      enabled: false
+      # A burst well above the average, because one page view fires several requests together.
+      average: 20
+      burst: 50
+      period: "1s"
 
 # networkPolicy closes PLATFORM_SETUP §8 item 1: k3s enforces NetworkPolicy, and enforcement being
 # *on* means nothing while every pod may talk to every pod. One default-deny plus one named
@@ -388,7 +405,7 @@ networkPolicy:
     # networkPolicy.ingressController locates Traefik — k3s installs it into kube-system with the
     # standard name label. Both selectors are values rather than literals because this is the one
     # part of the policy set that is specific to *which* ingress controller is installed, and the
-    # chart is otherwise portable off Traefik apart from two Middleware objects.
+    # chart is otherwise portable off Traefik apart from its four Middleware objects.
     namespaceSelector:
       kubernetes.io/metadata.name: kube-system
     podSelector:

@@ -29,7 +29,8 @@ metadata:
            not a render error — it is a Traefik router that silently drops every middleware in the
            list, which looks exactly like a working deployment.
 
-           Order matters only for readability here: neither middleware short-circuits the other.
+           Order matters here, unlike for the header middlewares: the rate limit is listed after them
+           so a rejected request still carries the security headers on its 429.
 
            Deliberately only on this Ingress and not on the redirect one. The redirect answers every
            request with a 301 to the canonical host, so a crawler or a browser that arrives there is
@@ -40,6 +41,9 @@ metadata:
     {{- $middlewares := list }}
     {{- if .Values.ingress.securityHeaders.enabled }}
     {{- $middlewares = append $middlewares (printf "%s-%s-security-headers@kubernetescrd" .Release.Namespace (include "event-junkie.fullname" $)) }}
+    {{- end }}
+    {{- if .Values.ingress.rateLimit.enabled }}
+    {{- $middlewares = append $middlewares (printf "%s-%s-rate-limit@kubernetescrd" .Release.Namespace (include "event-junkie.fullname" $)) }}
     {{- end }}
     {{- if .Values.ingress.noindex }}
     {{- $middlewares = append $middlewares (printf "%s-%s-noindex@kubernetescrd" .Release.Namespace (include "event-junkie.fullname" $)) }}

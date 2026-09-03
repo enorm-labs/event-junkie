@@ -265,12 +265,12 @@ The notice must state truthfully which logs hold personal data, what is in them,
 until 2026-08-19. They were closed by **reading the running system rather than the configuration**. A k3d rehearsal,
 requests driven through the real ingress, and the resulting log lines read out of the pods.
 
-| #   | Decision                                                | Answer                                                                                 |
-| --- | ------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| 1   | Do Traefik and the nginx container log real client IPs? | **Traefik: no, it logs nothing at all.** **nginx: it did, and no longer does**         |
-| 2   | Is any logged IP truncated?                             | **Moot — none is logged.** Truncation was rejected as the weaker lever                 |
-| 3   | What is the retention period per stream?                | **14 days** in the log store; a size bound on the node, which usually bites first      |
-| 4   | Where is retention actually enforced?                   | The kubelet on the node, and OpenObserve's compactor in **both** clusters (#271, #880) |
+| #   | Decision                                                | Answer                                                                                             |
+| --- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| 1   | Do Traefik and the nginx container log real client IPs? | **Traefik: no, it logs nothing at all.** **nginx: it logged an address field, and no longer does** |
+| 2   | Is any logged IP truncated?                             | **Moot — none is logged.** Truncation was rejected as the weaker lever                             |
+| 3   | What is the retention period per stream?                | **14 days** in the log store; a size bound on the node, which usually bites first                  |
+| 4   | Where is retention actually enforced?                   | The kubelet on the node, and OpenObserve's compactor in **both** clusters (#271, #880)             |
 
 **On 1 — the mechanism was not the one this section predicted, and the difference matters.** The earlier text reasoned
 that removing Cloudflare left no proxy between visitor and origin, so nginx would write real addresses from the first
@@ -290,6 +290,19 @@ not trusting a header. This one is solved by choosing a log format. `events-fron
 `$remote_addr` is harmless only while a proxy sits in front, which is a property of the topology rather than of the
 file. Logging no address is the version that stays true if that changes. **Verified after the change: zero IP
 addresses in the pod's entire log stream.**
+
+**One sentence above is wrong, and #268 measured it.** It claims X-Forwarded-For holds the visitor on the public
+internet. That was reasoning, not an observation. k3s exposes Traefik through ServiceLB. Its `klipper-lb` container
+installs `iptables -t nat -I POSTROUTING -d <clusterIP> -j MASQUERADE`, read out of the `svclb-traefik` pod's own
+startup log on both clusters. Every packet is rewritten before Traefik reads it. Traefik's peer is therefore the
+`svclb` pod for every visitor, and X-Forwarded-For inherits that address. The `10.42.1.1` annotated above as "the
+visitor" was the load balancer.
+
+**That makes this section's conclusion stronger, and changes nothing in the notice.** The address field nginx used to
+write held a cluster address rather than a visitor's. Less was logged than this section feared. The decision stands for
+the reason it already gave: a log format that writes no address survives the topology changing. **Do not read this as
+permission to write the field again.** `externalTrafficPolicy: Local` on the Traefik Service is the change that would
+make X-Forwarded-For carry a real visitor address.
 
 **Rows 3 and 4 changed on 2026-09-02: the duration is now real, and the notice states it (#278).** This section used
 to end by forbidding a number of days until OpenObserve's retention policy existed. It exists. #271 shipped it and

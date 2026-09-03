@@ -5,13 +5,14 @@
 # cluster by construction: the importer has no Ingress backend at all, and actuator lives on its own
 # port that no Ingress rule names. Both properties are one careless path entry away from being
 # false, and neither failure is visible in a diff.
-suite: ingress routing and noindex
+suite: ingress routing, noindex and rate limiting
 
 templates:
   - ingress.yaml
   - redirect-ingress.yaml
   - noindex-middleware.yaml
   - redirect-middleware.yaml
+  - rate-limit-middleware.yaml
 
 tests:
   - it: routes /api to the BFF and / to the frontend, and nothing else
@@ -191,7 +192,7 @@ tests:
   # empty element is not a render error — it is a Traefik router that silently drops **every**
   # middleware in the list. These three cases pin the whole list rather than checking that each name
   # appears somewhere in it, which is what makes a malformed join fail here (#416).
-  - it: names both middlewares on the ingress when noindex is on, in one well-formed list
+  - it: names all three middlewares on the ingress when noindex is on, in one well-formed list
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
@@ -200,12 +201,14 @@ tests:
     templates:
       - ingress.yaml
     asserts:
+      # The rate limit sits after the header middlewares deliberately: a 429 travels back out
+      # through them, so a rejected request still carries HSTS and the rest (#268).
       - equal:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
           value: >-
-            NAMESPACE-RELEASE-NAME-event-junkie-security-headers@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-noindex@kubernetescrd
+            NAMESPACE-RELEASE-NAME-event-junkie-security-headers@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-rate-limit@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-noindex@kubernetescrd
 
-  - it: names only the security headers middleware in production, where noindex is off
+  - it: names the security headers and rate limit middlewares in production, where noindex is off
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
@@ -216,10 +219,11 @@ tests:
     asserts:
       - equal:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
-          value: "NAMESPACE-RELEASE-NAME-event-junkie-security-headers@kubernetescrd"
+          value: >-
+            NAMESPACE-RELEASE-NAME-event-junkie-security-headers@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-rate-limit@kubernetescrd
 
-  # With both off the annotation must be absent rather than empty. An empty one is the failure this
-  # whole list-building exercise exists to avoid, and it is invisible in a rendered manifest.
+  # With all three off the annotation must be absent rather than empty. An empty one is the failure
+  # this whole list-building exercise exists to avoid, and it is invisible in a rendered manifest.
   - it: omits the annotation entirely when no middleware applies
     set:
       database.host: "10.0.1.2"
@@ -227,8 +231,79 @@ tests:
       database.existingSecret: "events-db"
       ingress.noindex: false
       ingress.securityHeaders.enabled: false
+      ingress.rateLimit.enabled: false
     templates:
       - ingress.yaml
     asserts:
       - notExists:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+
+  # --- the rate limit, whose two halves are enabled independently ------------------------------
+  #
+  # `inFlightReq` bounds concurrency and Traefik groups it by request host, so it works whatever
+  # address reaches the edge. `rateLimit` groups by the client address, which k3s ServiceLB
+  # masquerades — so shipping it on would make one budget for every visitor at once. The split is
+  # the decision, and these cases are what stop the off half being switched on by accident.
+  - it: bounds concurrency and nothing else by default
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    templates:
+      - rate-limit-middleware.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.inFlightReq.amount
+          value: 100
+      # The half that cannot work here. Rendering it would throttle the whole internet as one
+      # source, which looks exactly like a working deployment.
+      - notExists:
+          path: spec.rateLimit
+
+  - it: renders the per-source limit only when it is asked for
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      ingress.rateLimit.perSource.enabled: true
+    templates:
+      - rate-limit-middleware.yaml
+    asserts:
+      - equal:
+          path: spec.rateLimit.average
+          value: 20
+      # Traefik's own default burst is 1, which nobody means. A burst near the average rejects an
+      # ordinary page load, because one view fires several requests together.
+      - equal:
+          path: spec.rateLimit.burst
+          value: 50
+      - equal:
+          path: spec.rateLimit.period
+          value: "1s"
+
+  - it: renders neither the middleware nor its reference when the rate limit is off
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      ingress.rateLimit.enabled: false
+    templates:
+      - rate-limit-middleware.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: names no rate limit middleware on the ingress when it is off
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      ingress.rateLimit.enabled: false
+    templates:
+      - ingress.yaml
+    asserts:
+      - notMatchRegex:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          pattern: "-rate-limit@kubernetescrd"

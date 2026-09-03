@@ -1,0 +1,55 @@
+{{- if and .Values.ingress.enabled .Values.ingress.rateLimit.enabled }}
+{{- $args := dict "ctx" $ "component" "rate-limit" }}
+{{- /* Abuse control at the edge, PLATFORM_SETUP §8 item 9 (#268). The fourth Traefik-specific
+       object in the chart, and here for the same reason as the other three: the Ingress API has no
+       vocabulary for a limit.
+
+       TWO LIMITS THAT ANSWER DIFFERENT QUESTIONS, and only one of them works on this cluster.
+
+       - **`inFlightReq` bounds concurrency**, and its `sourceCriterion` defaults to `requestHost`.
+         That makes it source-independent, so it holds regardless of what address Traefik sees. It
+         is the one that protects the resource that actually runs out: each BFF replica has ten
+         R2DBC connections, and a request past the cap is a 429 rather than a growing queue behind
+         them.
+
+       - **`rateLimit` bounds a request rate per source**, and its `sourceCriterion` defaults to the
+         remote address. On this cluster that address is not the visitor's — see the block below —
+         so it is gated off rather than shipped broken.
+
+       WHY `rateLimit` IS OFF, and what turns it on. k3s exposes Traefik through ServiceLB, whose
+       klipper-lb container installs `iptables -t nat -I POSTROUTING -d <clusterIP> -j MASQUERADE`.
+       Every packet is rewritten before Traefik reads it, so its peer is the svclb pod for every
+       visitor and `X-Forwarded-For` inherits the same address. A per-source limit would therefore
+       group the whole internet as one source and throttle every visitor together, which is worse
+       than no limit and looks like a working deployment.
+
+       The Traefik service needs `externalTrafficPolicy: Local` before the address survives. That is
+       a cluster-level change, outside this chart and outside GitOps.
+
+       DELIBERATELY ABSENT: `sourceCriterion.requestHost` on `rateLimit`. It would make the limit
+       render and apply today, as one budget for the whole site — which hands any single client the
+       ability to spend everybody's. A limit that turns one abuser into an outage is not a limit. */}}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ printf "%s-rate-limit" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      Bounds concurrent requests, and per-source request rate where the client address survives the load balancer.
+spec:
+  inFlightReq:
+    {{- /* `| int64` is load-bearing here for the same reason it is on `stsSeconds`: Helm parses a
+           values number as float64, and the CRD's `format=int64` rejects the scientific notation
+           that produces, after `helm template` has shown it without complaint. */}}
+    amount: {{ required "ingress.rateLimit.inFlightRequests is required when rateLimit is enabled" .Values.ingress.rateLimit.inFlightRequests | int64 }}
+  {{- with .Values.ingress.rateLimit.perSource }}
+  {{- if .enabled }}
+  rateLimit:
+    average: {{ required "ingress.rateLimit.perSource.average is required when perSource is enabled — 0 silently disables the limit rather than setting it to zero" .average | int64 }}
+    burst: {{ required "ingress.rateLimit.perSource.burst is required when perSource is enabled — 1 is Traefik's default and is not what anyone means" .burst | int64 }}
+    period: {{ .period | quote }}
+  {{- end }}
+  {{- end }}
+{{- end }}

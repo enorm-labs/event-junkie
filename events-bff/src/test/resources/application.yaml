@@ -49,3 +49,10 @@ management:
           include: readinessState,r2dbc,eventsSchema
         liveness:
           include: livenessState
+
+# Repeated from the main file because this one shadows it, and `WebFluxConfiguration` reads the
+# property with no fallback — so an absent value fails every test context rather than quietly
+# restoring Spring Data's 2000-row default. `MaxPageSizeConfigTest` asserts the two numbers agree.
+app:
+  api:
+    max-page-size: 100

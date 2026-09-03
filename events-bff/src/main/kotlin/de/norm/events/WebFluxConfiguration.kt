@@ -14,17 +14,22 @@ import org.springframework.web.reactive.result.method.annotation.ArgumentResolve
  *   `sort` query parameters (e.g. `?page=0&size=20&sort=eventDate,asc`).
  *   [StableSortPageableArgumentResolver] is used in place of Spring Data's
  *   `ReactivePageableHandlerMethodArgumentResolver` so that every paged request carries a
- *   unique final sort key and cannot repeat or skip rows across pages.
+ *   unique final sort key and cannot repeat or skip rows across pages, and so that
+ *   `app.api.max-page-size` bounds how much one request may ask for.
  * - Configures CORS from the `app.cors.allowed-origins` property. In local development the
  *   Vite proxy makes requests same-origin, so this is empty by default and only needed when
  *   the SPA is served from a different origin than the BFF.
  */
 @Configuration
 class WebFluxConfiguration(
-    @Value("\${app.cors.allowed-origins:}") private val allowedOrigins: List<String>
+    @Value("\${app.cors.allowed-origins:}") private val allowedOrigins: List<String>,
+    // No fallback value. An absent property is a context failure, not a silent return to Spring
+    // Data's 2000-row default, and `src/test/resources/application.yaml` shadows the main file
+    // rather than merging with it — so a default here would hide the cap being dropped (#268).
+    @Value("\${app.api.max-page-size}") private val maxPageSize: Int
 ) : WebFluxConfigurer {
     override fun configureArgumentResolvers(configurer: ArgumentResolverConfigurer) {
-        configurer.addCustomResolver(StableSortPageableArgumentResolver())
+        configurer.addCustomResolver(StableSortPageableArgumentResolver(maxPageSize))
     }
 
     override fun addCorsMappings(registry: CorsRegistry) {

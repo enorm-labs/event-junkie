@@ -42,6 +42,26 @@ class EventControllerTest : BaseControllerTest() {
         }
 
     @Test
+    fun `GET events clamps an oversized page size rather than serving it`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Astra", "astra")
+            insertEvent(venueId, "Today Show", "today-show", LocalDate.now())
+
+            // The wiring is what this covers: WebFluxConfiguration constructs the resolver by hand,
+            // so the cap reaches a request only if it is passed in. Spring's servlet-only
+            // `spring.data.web.pageable.max-page-size` cannot do it here (#268).
+            webTestClient
+                .get()
+                .uri("/events?size=5000")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.size")
+                .isEqualTo(100)
+        }
+
+    @Test
     fun `GET events filters by venue slug`(): Unit =
         runBlocking {
             val astra = insertVenue("Astra", "astra")
