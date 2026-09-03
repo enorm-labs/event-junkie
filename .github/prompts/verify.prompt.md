@@ -110,6 +110,20 @@ helm unittest --strict deploy/charts/event-junkie
 scripts/cluster-assertions.sh
 ```
 
+### The open-source notices (when the diff touches either ecosystem's dependency declarations)
+
+```bash
+scripts/notices-parity.sh check
+```
+
+`events-frontend/src/assets/notices.json` is generated, committed, and rendered at `/legal/notices`, and until #1037 nothing joined it to its inputs. It
+drifted by 51 components before a pull request happened to regenerate it. **A stale notices file understates what we distribute**, which is the direction that
+matters — see [docs/LEGAL.md](../../docs/LEGAL.md) §9.2.
+
+This one is **not** in the always-run block above, unlike the three parity checks: it resolves both dependency graphs and reaches the network, so it costs
+seconds rather than milliseconds. Run it when `package.json`, `package-lock.json`, `gradle.properties` or any `build.gradle.kts` moved. `check` restores the
+committed file before exiting whatever happens; the bare form regenerates it for committing. `validate-notices.yml` runs it in CI on the same paths.
+
 ### The Content-Security-Policy (when the diff touches `deploy/`, `events-frontend/index.html` or `events-frontend/scripts/csp.ts`)
 
 ```bash

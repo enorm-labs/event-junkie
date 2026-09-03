@@ -314,7 +314,9 @@ npm run generate:notices                                   # events-frontend; me
 ```
 
 - The `--no-configuration-cache` flag is required — the licence-report plugin is not configuration-cache compatible (see the note in `gradle.properties`).
-- The generator deliberately writes **no timestamp**, so re-running it with unchanged dependencies produces an identical file and an empty diff.
+- The generator deliberately writes **no timestamp**, so re-running it with unchanged dependencies produces an identical file and an empty diff. That property
+  is what `scripts/notices-parity.sh` rests on: it regenerates and diffs, and `validate-notices.yml` runs it whenever either ecosystem's dependency
+  declarations change. Before #1037 nothing did, and the file had drifted by 51 components.
   Licence policy is enforced on both sides, in two files because the ecosystems report licence names differently (SPDX ids vs the Gradle normaliser's prose
   names). They are one policy — change them together:
 
