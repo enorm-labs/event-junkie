@@ -63,23 +63,6 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}"
 
-# **A base-image CVE fix that has not arrived upstream yet, and the release gate needs it now.**
-# Trivy fails the publish on HIGH findings, and `libexpat 2.8.3-r0` in this digest carries two:
-# CVE-2026-66046 and CVE-2026-76641. Alpine 3.24 already ships the fixed `2.8.4-r0` — the base image
-# has simply not been rebuilt against it, and no newer tag exists: `1.31-alpine`, `alpine` and
-# `mainline-alpine` all resolve to the digest pinned above.
-#
-# **Delete this once the base ships the fix**, by the same rule `gradle.properties` states for a BOM
-# override. An upgrade kept past its purpose hides the fact that the base has caught up, and quietly
-# becomes the thing choosing the version. Check with
-# `docker run --rm --user root <image> apk list --installed | grep libexpat`.
-#
-# `USER root` because the base runs as 101 and apk needs write access; `USER 10001:10001` below is
-# what the container actually runs as, and it is unaffected. Named rather than a blanket
-# `apk upgrade`, so what changes against the pinned digest stays reviewable.
-USER root
-RUN apk upgrade --no-cache libexpat
-
 # Config first, bundle second: the config changes rarely and the bundle changes every build, so
 # this ordering keeps the config layer cached.
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
