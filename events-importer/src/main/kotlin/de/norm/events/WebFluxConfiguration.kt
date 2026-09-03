@@ -1,5 +1,6 @@
 package de.norm.events
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.reactive.config.WebFluxConfigurer
 import org.springframework.web.reactive.result.method.annotation.ArgumentResolverConfigurer
@@ -17,8 +18,13 @@ import org.springframework.web.reactive.result.method.annotation.ArgumentResolve
  * unique final sort key and cannot repeat or skip rows across pages.
  */
 @Configuration
-class WebFluxConfiguration : WebFluxConfigurer {
+class WebFluxConfiguration(
+    // No fallback value. An absent property is a context failure, not a silent return to Spring
+    // Data's 2000-row default, and `src/test/resources/application.yaml` shadows the main file
+    // rather than merging with it — so a default here would hide the cap being dropped.
+    @Value("\${app.api.max-page-size}") private val maxPageSize: Int
+) : WebFluxConfigurer {
     override fun configureArgumentResolvers(configurer: ArgumentResolverConfigurer) {
-        configurer.addCustomResolver(StableSortPageableArgumentResolver())
+        configurer.addCustomResolver(StableSortPageableArgumentResolver(maxPageSize))
     }
 }

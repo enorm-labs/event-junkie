@@ -13,6 +13,10 @@
 # The intervals below stay as belt and braces for `DataQualitySnapshotIntegrationTest`, the one
 # context that switches scheduling back on.
 app:
+  # Repeated from the main file because this one shadows it, and `WebFluxConfiguration` reads the
+  # property with no fallback. `MaxPageSizeConfigTest` asserts the two numbers agree.
+  api:
+    max-page-size: 100
   scheduling:
     enabled: false
   metrics:

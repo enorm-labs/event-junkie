@@ -173,6 +173,28 @@ class VenueControllerTest : BaseControllerTest() {
     }
 
     @Test
+    fun `clamps an oversized page size, and the total still reports the whole table`() {
+        // The wiring is what this covers: WebFluxConfiguration constructs the resolver by hand, so
+        // the cap reaches a request only if it is passed in. Spring's servlet-only
+        // `spring.data.web.pageable.max-page-size` cannot do it here.
+        createVenue(VenueRequestFixtures.create(name = "Cap Venue"))
+
+        val page =
+            webTestClient
+                .get()
+                .uri("/api/admin/venues?size=5000")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody<PageResponse<VenueResponse>>()
+                .returnResult()
+                .responseBody!!
+
+        page.size shouldBe 100
+        page.totalElements shouldBe page.content.size.toLong()
+    }
+
+    @Test
     fun `POST venue with duplicate name returns 409 with descriptive message`() {
         createVenue(VenueRequestFixtures.astra())
 

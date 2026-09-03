@@ -32,8 +32,18 @@ import org.springframework.web.server.ServerWebExchange
  * The BFF's filtered event search builds its `ORDER BY` by hand and already ends it with
  * `e.id ASC`; it allowlists sort properties, so the key appended here is simply ignored
  * there. This resolver is what covers the derived `findAllBy(pageable)` endpoints.
+ *
+ * [maxPageSize] has to be applied here because nothing else can. `DataWebAutoConfiguration` is
+ * `@ConditionalOnWebApplication(type = SERVLET)`, so `spring.data.web.pageable.max-page-size`
+ * reaches nothing on WebFlux, and unset the cap is Spring Data's own default of 2000.
  */
-class StableSortPageableArgumentResolver : ReactivePageableHandlerMethodArgumentResolver() {
+class StableSortPageableArgumentResolver(
+    maxPageSize: Int
+) : ReactivePageableHandlerMethodArgumentResolver() {
+    init {
+        setMaxPageSize(maxPageSize)
+    }
+
     override fun resolveArgumentValue(
         parameter: MethodParameter,
         bindingContext: BindingContext,
