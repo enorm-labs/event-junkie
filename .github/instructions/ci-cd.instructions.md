@@ -175,8 +175,9 @@ What each workflow is for, which checks are required, and the shapes that fail s
       cannot quietly become a publishing one. And it **tests itself on pull requests that change it**, because the `workflow_dispatch` caveat above applies to
       it with teeth: the button does not exist until the change merges, and merging is what publishes.
     - `validate-chart.yml` — `helm lint --strict` and `helm template` | `flux schema validate` across every values file and every cluster's Flux resources, plus
-      `helm unittest` and `scripts/cluster-assertions.sh`. Triggers only when `deploy/**` changes. **Pins a Helm 3 client** even though local binaries are Helm 4, because Flux's helm-controller
-      embeds the Helm 3 SDK and a chart that renders only under Helm 4 is one Flux cannot install. Like `validate-infra.yml` it reaches no cluster, so it is a
+      `helm unittest` and `scripts/cluster-assertions.sh`. Triggers only when `deploy/**` changes. **Pins Helm 4.2.4**, matching the SDK helm-controller embeds, so the
+      client that gates the chart is the one that installs it. It pinned Helm 3 until #1006, on a premise that had lapsed — and while it did, CI was weaker
+      than the pre-commit hook, because Helm 4's `--strict` rejects an unknown `Chart.yaml` key and Helm 3's does not. Like `validate-infra.yml` it reaches no cluster, so it is a
       syntax and shape gate; the assertions are the part that catches a chart which is well-formed and wrong.
 - **Every `uses:` names a commit SHA, never a tag** (#443, 2026-08-18). A tag is a pointer its owner can move, so a compromised action repository would reach
   every workflow here on its next run — and since #264 a run on `main` publishes three images and a chart. The form is the one Dependabot maintains:
@@ -313,8 +314,9 @@ What each workflow is for, which checks are required, and the shapes that fail s
       whole point of the scheduled scan is that its findings are comparable with the publish gate's), and gitleaks' `rev:` in `.pre-commit-config.yaml` belong
       to no Dependabot ecosystem — `github-actions` updates
       `uses: azure/setup-helm@v5` and has nothing to say about the `version:` handed to it. They rot silently, and a scanner a year behind still reports
-      success. `/update-dependencies` step 12 sweeps them. **`HELM_VERSION` is deliberately held at 3.x** — Flux's helm-controller embeds the Helm 3 SDK, so
-      that pin is a constraint, not a lag.
+      success. `/update-dependencies` step 12 sweeps them. **`HELM_VERSION` tracks the Helm SDK helm-controller embeds** — Helm 4 since
+      v1.6.x — so that pin is a constraint, not a lag, and not "whatever `helm/helm` says is latest" either. It was held at 3.x on a lapsed premise until
+      #1006.
     - `/update-dependencies` still exists and is not redundant: Dependabot proposes one bump at a time, while that skill does a deliberate sweep across both
       stacks and knows which Gradle versions are BOM-managed and must **not** be pinned.
 - **A skill is three files, and `scripts/skill-parity.sh` is what keeps them in step.** The prompt lives in `.github/prompts/<name>.prompt.md`; `.claude/skills/`

@@ -69,10 +69,11 @@ permissions:
 env:
   IMAGE_PREFIX: ghcr.io/enorm-labs/event-junkie
   # Pinned to Helm 3 for the same reason release.yml and validate-chart.yml are: Flux's
-  # helm-controller embeds the Helm 3 SDK, and `deployed-versions.sh` borrows Helm's solver precisely
-  # to reproduce the selection helm-controller makes. A Helm 4 client here would be answering a
-  # slightly different question.
-  HELM_VERSION: v3.21.4
+  # `deployed-versions.sh` borrows Helm's own solver precisely to reproduce the selection
+  # helm-controller makes, so this client has to be the SDK helm-controller embeds — Helm 4 since
+  # v1.6.x. A Helm 3 client here answers a slightly different question, which is what it was doing
+  # until #1006.
+  HELM_VERSION: v4.2.4
   # **Must match release.yml's.** The two scans are meant to be comparable — a finding here that the
   # publish gate did not raise should mean the advisory is new, not that the scanners are.
   # Invisible to Dependabot (a string in YAML), so /update-dependencies step 12 sweeps both together.

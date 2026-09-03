@@ -55,10 +55,15 @@ permissions:
 
 env:
   CHART: deploy/charts/event-junkie
-  # Flux's helm-controller embeds the Helm 3 SDK, so the chart is gated against a Helm 3 client even
-  # though local binaries are Helm 4. A chart that only renders under Helm 4 is a chart Flux cannot
-  # install (#414), and that would not surface until the deployment pipeline itself was being built.
-  HELM_VERSION: v3.21.4
+  # Matched to the Helm SDK helm-controller embeds, which is what actually installs this chart. The
+  # deployed controller is `helm-controller:v1.6.3` and its `go.mod` reads
+  # `replace helm.sh/helm/v4 => github.com/fluxcd/helm/v4 v4.2.4-flux.1`, so the client here is 4.2.4.
+  #
+  # **This was v3.21.4 until #1006, on the premise that helm-controller embeds the Helm 3 SDK.** That
+  # premise lapsed and the pin then cost something: Helm 4's `--strict` rejects an unknown `Chart.yaml`
+  # key and Helm 3's does not, so a malformed chart failed the pre-commit hook and passed here. **The
+  # gate must not be weaker than the hook in front of it.** All three copies move together.
+  HELM_VERSION: v4.2.4
   # `flux schema validate` replaced kubeconform in #414. Both pinned, both invisible to Dependabot —
   # they are strings in YAML, not a manifest — so /update-dependencies step 12 sweeps them.
   FLUX_VERSION: 2.9.5
@@ -248,8 +253,10 @@ jobs:
 
       - name: Install the helm-unittest plugin
         run: |
+          # `--verify=false` is required from Helm 4 on: plugin install verifies provenance by
+          # default, and this source publishes none, so the install fails rather than warning.
           helm plugin install https://github.com/helm-unittest/helm-unittest \
-            --version "$HELM_UNITTEST_VERSION"
+            --version "$HELM_UNITTEST_VERSION" --verify=false
           helm unittest --help >/dev/null
 
       # The chart's own suites, under the two value sets it can be rendered from on its own:

@@ -27,8 +27,10 @@ the failure worth a scheduled job: a green gate that has stopped meaning anythin
 - **Nothing from Step 13.** Cluster component versions rot in production rather than in CI, and the check for them is a k3d rehearsal the runner cannot run.
 - **A pin that appears in two or three workflows moves in all of them or in none.** `HELM_VERSION`, `HELM_UNITTEST_VERSION` and `SHELLCHECK_VERSION` each live in
   more than one file, and a half-applied bump surfaces as two checks disagreeing about the same file. If every copy cannot be found, report the pin and leave it.
-- **`HELM_VERSION` stays on 3.x** whatever `helm/helm` says is latest. That constraint is semantic, not version lag — helm-controller embeds the Helm 3 SDK — and
-  an unattended run is exactly where it would get "fixed".
+- **`HELM_VERSION` tracks what helm-controller embeds, not what `helm/helm` calls latest.** The constraint is semantic rather than version lag: the client that
+  gates the chart has to be the SDK that installs it. Read it from the deployed controller's `go.mod` — `helm-controller:v1.6.3` gives
+  `replace helm.sh/helm/v4 => github.com/fluxcd/helm/v4 v4.2.4-flux.1`, hence `v4.2.4`. **Do not raise it to a newer Helm than helm-controller carries**, and do
+  not lower it either; #1006 is what a lapsed reading of this costs.
 - **A bump that turns a check red is a finding, not a thing to work around.** A newer analyser finding more is the tool working. Report the new findings and
   leave the pin raised, or revert it and say so; never pin back to make the gate green.
 - **`--dry-run`** on top of it opens no pull request and writes the report to the job summary. Use it first, and after any change to this section.
@@ -317,9 +319,10 @@ for repo in helm/helm helm-unittest/helm-unittest fluxcd/flux2 fluxcd/flux-schem
 done
 ```
 
-Two things to be careful of. **`HELM_VERSION` appears in two workflows** and they must not drift apart — the whole point of the pin is that the chart is gated
-against the same client everywhere. And **it must stay on Helm 3**, whatever `helm/helm` says is latest: Flux's helm-controller embeds the Helm 3 SDK, so
-raising it to 4.x would gate the chart against a client that cannot install it. That constraint is semantic, not a version-lag; do not "fix" it.
+Two things to be careful of. **`HELM_VERSION` appears in three workflows** — `validate-chart.yml`, `release.yml` and `image-scan-scheduled.yml` — and they must
+not drift apart, because the whole point of the pin is that the chart is gated against the same client everywhere. And **it tracks the SDK helm-controller
+embeds**, not whatever `helm/helm` says is latest: the client that gates the chart has to be the one that installs it. Read it from the deployed controller's
+`go.mod` rather than from a release page. That constraint is semantic, not a version-lag; do not "fix" it in either direction (#1006).
 
 **`HELM_UNITTEST_VERSION` appears in the same two workflows as `HELM_VERSION`**, and for the same reason: `release.yml` runs on a fresh runner and installs the
 plugin itself. #430 chose a plugin install over the `helmunittest/helm-unittest` image precisely so `HELM_VERSION` could stay exact — the image's newest Helm 3

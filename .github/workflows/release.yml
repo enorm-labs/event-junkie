@@ -80,10 +80,10 @@ env:
   IMAGE_PREFIX: ghcr.io/enorm-labs/event-junkie
   CHART: deploy/charts/event-junkie
   CHART_REPO: oci://ghcr.io/enorm-labs/charts
-  # Pinned to Helm 3 for the same reason validate-chart.yml is: Flux's helm-controller embeds the
-  # Helm 3 SDK, so a chart packaged by a Helm 4 client is a chart the thing that installs it may not
-  # understand.
-  HELM_VERSION: v3.21.4
+  # Pinned for the same reason validate-chart.yml is, and to the same version: it matches the Helm
+  # SDK helm-controller embeds, so the client that packages the chart is the one that installs it.
+  # Was v3.21.4 until #1006, on a premise about a Helm 3 SDK that had lapsed.
+  HELM_VERSION: v4.2.4
   TRIVY_VERSION: 0.74.0
 
 jobs:
@@ -444,8 +444,10 @@ jobs:
         run: |
           helm lint --strict "$CHART" \
             --set database.host=10.0.1.2 --set database.existingSecret=events-db
+          # `--verify=false` is required from Helm 4 on: plugin install verifies provenance by
+          # default, and this source publishes none, so the install fails rather than warning.
           helm plugin install https://github.com/helm-unittest/helm-unittest \
-            --version "$HELM_UNITTEST_VERSION"
+            --version "$HELM_UNITTEST_VERSION" --verify=false
           helm unittest --strict "$CHART"
           scripts/cluster-assertions.sh "$CHART"
 

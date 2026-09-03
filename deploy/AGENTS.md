@@ -11,10 +11,11 @@ not merged into one file.
 
 **Everything that renders the chart is safe. Everything that installs it is not.**
 
-**The pre-commit `helm lint` is stricter than CI's, and the difference is deliberate rather than a bug.** Local hooks run whatever `helm` is installed —
-currently v4 — while `validate-chart.yml` pins **v3.21.4**, because Flux's helm-controller embeds the Helm 3 SDK. Helm 4's `--strict` rejects an unknown
-`Chart.yaml` key; Helm 3's does not, so a malformed `Chart.yaml` can fail locally and pass CI. Found while probing #443's required checks with a deliberately
-invalid key, which CI accepted. Trust the local failure when they disagree.
+**The pre-commit `helm lint` and CI's run the same Helm.** Local hooks run whatever `helm` is installed — currently v4 — and `validate-chart.yml` pins
+**v4.2.4**, the SDK helm-controller embeds. Keep them matched: a client difference here is invisible until it lets something through, and `--strict` is where
+the versions diverge most (Helm 4 rejects an unknown `Chart.yaml` key, Helm 3 does not).
+
+**Trust the local failure when a hook and a check disagree.** That rule is older than the matching pins and outlives them.
 
 `helm lint`, `helm template` and `flux schema validate` are pure functions of the working tree. They reach no cluster, need no kubeconfig, and cannot break anything —
 run them as often as you like:
@@ -176,8 +177,9 @@ load with any `.yaml` under `deploy/`, and reach Copilot on their own rather tha
 
 ## Things that will bite
 
-- **`apiVersion: v2` in `Chart.yaml` is not a leftover.** The local Helm binary is v4, but Flux's helm-controller embeds the Helm **3** SDK. Raising it to v3
-  would render fine locally and produce a chart Flux cannot install — and that would not surface until #414. CI pins a Helm 3 client for this reason.
+- **`apiVersion: v2` in `Chart.yaml` is not a leftover**, but the reason changed with #1006. It used to be that helm-controller embedded the Helm **3** SDK
+  and could not install a v3 chart. It embeds Helm 4, so that is no longer the argument. Keep v2 because **nothing here needs a v3 feature**, and because
+  whether Flux installs a v3 chart is now unverified rather than known-false. Do not raise it to find out.
 - **Selector labels are the immutable subset.** `spec.selector` is immutable after creation, and `helm.sh/chart` and `app.kubernetes.io/version` change on every
   release. Use `event-junkie.selectorLabels` for any selector and `event-junkie.labels` only for `metadata.labels`. Mixing them installs perfectly and then
   fails every subsequent upgrade — a failure nobody sees until the _second_ release, which is why an assertion exists for it rather than a comment.
