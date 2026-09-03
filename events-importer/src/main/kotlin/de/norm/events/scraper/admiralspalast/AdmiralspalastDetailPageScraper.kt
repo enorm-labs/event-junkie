@@ -4,6 +4,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
@@ -201,8 +202,6 @@ class AdmiralspalastDetailPageScraper {
         const val TITLE = ".value.eventname"
         const val RESCHEDULE_NOTE = ".value.eventzusatz"
         const val TICKET_CELL = ".field.eventtix"
-
-        val WHITESPACE = Regex("""\s+""")
 
         /** What the ticket cell says instead of offering a link once a performance has sold out. */
         val SOLD_OUT = Regex("""\bausverkauft\b""", RegexOption.IGNORE_CASE)

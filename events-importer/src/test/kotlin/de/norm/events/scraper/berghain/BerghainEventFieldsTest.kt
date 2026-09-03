@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
  * Unit tests for [floorsToGenre] — the curated floor → genre default used to give
  * Berghain events a filterable style tag, since the site exposes no genre field.
  */
-class BerghainFloorGenreTest {
+class BerghainEventFieldsTest {
     @Test
     fun `maps each known floor to its signature genre`() {
         floorsToGenre(listOf("Berghain")) shouldBe "Techno"

@@ -12,7 +12,6 @@ import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.net.URI
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -86,7 +85,7 @@ class UrbanSpreeDetailPageScraper {
             startTime = parseTime(hero.dateInfo(index = 1)),
             imageUrl = normalizeAssetUrl(hero.absUrlAt("img.img-feat-noslider", "src")),
             sourceUrl = sourceUrl,
-            sourceId = "${EventSource.URBAN_SPREE.sourceIdPrefix}${eventSlug(sourceUrl)}",
+            sourceId = "${EventSource.URBAN_SPREE.sourceIdPrefix}${urbanSpreeEventSlug(sourceUrl)}",
             // The "Buy tickets" anchor is always rendered; its href is empty when no shop is linked.
             ticketUrl = hero.absUrlAt(".ct-btns a", "href"),
             pricePresale = price,
@@ -156,23 +155,12 @@ class UrbanSpreeDetailPageScraper {
             .firstOrNull { it.textAt(".info-label").equals(label, ignoreCase = true) }
             ?.textAt(".info-data")
 
-    /** Same URL-derived identity the overview builds, so both pages agree on the `sourceId`. */
-    private fun eventSlug(sourceUrl: String): String =
-        URI(sourceUrl)
-            .path
-            .removePrefix(PROGRAM_PATH_PREFIX)
-            .removeSuffix(".html")
-            .trim('/')
-
     private companion object {
         /** The hero block holding title, category, date, price, poster and ticket link. */
         private const val HERO_SELECTOR = "#pseudo-card"
 
         /** Label of the `.ct-info` row naming the event's promoter. */
         private const val PROMOTER_LABEL = "Promoter"
-
-        /** Path prefix stripped from a detail URL to leave the `<category>/<slug>` identity. */
-        private const val PROGRAM_PATH_PREFIX = "/program/"
 
         /** English hero date rendering, e.g. "Dec 12, 2026" / "Dec 05, 2026". */
         private val HERO_DATE_FORMATTER: DateTimeFormatter =

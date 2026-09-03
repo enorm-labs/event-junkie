@@ -1,5 +1,7 @@
 package de.norm.events.scraper.berghain
 
+import de.norm.events.event.EventType
+
 /**
  * Maps a Berghain floor label to its signature music genre.
  *
@@ -46,3 +48,27 @@ fun floorsToGenre(floors: List<String>): String? =
         .distinct()
         .joinToString(", ")
         .takeIf { it.isNotBlank() }
+
+/**
+ * Types an event from its floor label(s): the Kantine am Berghain concert hall lists live
+ * [CONCERT][EventType.CONCERT]s, while the Berghain building floors (Berghain, Panorama Bar,
+ * Säule, Halle) host club [PARTY][EventType.PARTY] nights.
+ *
+ * Returns `null` when no floor is given, letting the persistence boundary apply the `OTHER`
+ * default.
+ */
+internal fun floorsToEventType(floors: List<String>): String? =
+    when {
+        floors.any { it.contains(KANTINE_MARKER, ignoreCase = true) } -> EventType.CONCERT.name
+        floors.isNotEmpty() -> EventType.PARTY.name
+        else -> null
+    }
+
+/** Floor label identifying the adjacent concert hall (vs. the Berghain building's club floors). */
+private const val KANTINE_MARKER = "Kantine"
+
+/** Doors time in the date line, e.g. "tür 19:00" (German "Tür" = door). */
+internal val BERGHAIN_DOORS_PATTERN = Regex("""tür\s+(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
+
+/** Show start time in the date line, e.g. "beginn 21:00". */
+internal val BERGHAIN_START_PATTERN = Regex("""beginn\s+(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)

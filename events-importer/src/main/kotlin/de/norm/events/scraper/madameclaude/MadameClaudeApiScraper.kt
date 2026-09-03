@@ -5,12 +5,14 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isScreeningTitle
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
@@ -25,9 +27,6 @@ import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.kotlinModule
 import java.time.LocalDate
 import java.time.LocalTime
-
-/** Length of an ISO `HH:mm` prefix, used to trim the API's `HH:mm:ss` clock strings before parsing. */
-private const val HH_MM_LENGTH = 5
 
 /**
  * Pure parser for Madame Claude's event data, sourced from its WordPress REST API
@@ -145,8 +144,8 @@ class MadameClaudeApiScraper {
         val eventType = inferEventType(acf?.eventType.blankToNull(), title)
 
         // Post date carries the start time; a 00:00 value is the CMS's "unset" sentinel, not midnight.
-        val startTime = parseClock(postDate?.substringAfter('T', "")).takeIf { it != LocalTime.MIDNIGHT }
-        val doorsTime = parseClock(acf?.eventDoorsTime.blankToNull())
+        val startTime = parseClockPrefix(postDate?.substringAfter('T', "")).takeIf { it != LocalTime.MIDNIGHT }
+        val doorsTime = parseClockPrefix(acf?.eventDoorsTime.blankToNull())
 
         val entranceFee = acf?.eventEntranceFee.blankToNull()
         val free = detectFree(priceNote = entranceFee, title = title)
@@ -261,9 +260,6 @@ class MadameClaudeApiScraper {
         postDate?.let { parseIsoDate(it) }
             ?: acfDate?.substringBefore(' ')?.let { parseIsoDate(it) }
 
-    /** Parses the `HH:mm` prefix of the API's `HH:mm:ss` clock strings, returning null for missing/unparseable input. */
-    private fun parseClock(raw: String?): LocalTime? = parseTime(raw?.trim()?.take(HH_MM_LENGTH)?.takeIf { it.isNotBlank() })
-
     /**
      * Flattens a WordPress HTML content blob (`event_description`) to readable plain text:
      * Jsoup strips the tags while the source's own line breaks are preserved, `&nbsp;` is
@@ -306,9 +302,6 @@ class MadameClaudeApiScraper {
             )
     }
 }
-
-/** Trims this string and returns `null` when it is null, empty, or all whitespace. */
-private fun String?.blankToNull(): String? = this?.trim()?.takeIf { it.isNotBlank() }
 
 /**
  * One event in the WP REST API listing, mapped from its JSON by Jackson.

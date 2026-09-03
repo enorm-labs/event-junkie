@@ -6,6 +6,7 @@ import de.norm.events.scraper.ISO_DATE_LENGTH
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
@@ -179,6 +180,3 @@ internal fun parseMetropolTime(text: String?): LocalTime? =
  * venue writes for its `0:00` placeholder (which the shared `HH:mm` formatter would reject).
  */
 private val TIME_PATTERN = Regex("""(\d{1,2}):(\d{2})""")
-
-/** Splits the `.monthyear` label (`Aug. 2026`) into its month and year tokens. */
-private val WHITESPACE = Regex("""\s+""")

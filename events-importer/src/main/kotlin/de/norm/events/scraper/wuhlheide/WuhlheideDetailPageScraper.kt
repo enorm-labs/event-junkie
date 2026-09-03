@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.detailTableCell
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
@@ -59,42 +60,17 @@ class WuhlheideDetailPageScraper {
             title = title,
             eventType = inferConcertVenueType(title),
             eventDate = parseIsoDate(slug.substringAfterLast('/')) ?: UNRESOLVED_EVENT_DATE,
-            doorsTime = parseTime(labelledCell(document, DOORS_LABEL)),
-            startTime = parseTime(labelledCell(document, START_LABEL)),
+            doorsTime = parseTime(document.detailTableCell(DOORS_LABEL)),
+            startTime = parseTime(document.detailTableCell(START_LABEL)),
             imageUrl = document.imgSrcAt(".general img"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.WUHLHEIDE.sourceIdPrefix}$slug",
             // Anchored on the ticket icon: the sibling share buttons are also target="_blank".
             ticketUrl = document.hrefAt(".details .buttons a.button:has(i.fa-ticket)"),
-            pricePresale = parsePrice(labelledCell(document, PRICE_LABEL)),
+            pricePresale = parsePrice(document.detailTableCell(PRICE_LABEL)),
             promoters = listOfNotNull(document.textAt(".promoter a"))
         )
     }
-
-    /**
-     * Reads the value cell of the detail table row whose label cell is [label] (`Einlass:`,
-     * `Beginn:`, `Preis:`). Returns `null` when the row is absent — a sold-out show omits the
-     * price row entirely.
-     */
-    private fun labelledCell(
-        document: Document,
-        label: String
-    ): String? {
-        val row = document.select(".details table tr").firstOrNull { isLabelRow(it, label) } ?: return null
-        val value =
-            row
-                .select("td")
-                .getOrNull(1)
-                ?.text()
-                ?.trim()
-        return value?.takeIf { it.isNotBlank() }
-    }
-
-    /** Whether [row]'s first cell is the `"<label>:"` header of the detail table. */
-    private fun isLabelRow(
-        row: Element,
-        label: String
-    ): Boolean = row.textAt("td").equals("$label:", ignoreCase = true)
 
     /**
      * Parses the venue's `"69,90 EUR"` price. The currency is spelled out rather than written as

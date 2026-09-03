@@ -3,24 +3,21 @@ package de.norm.events.scraper
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.Month
 import java.time.MonthDay
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import kotlin.math.abs
 
-// Shared date and time parsing utilities for venue scrapers.
+// Shared date parsing utilities for venue scrapers. The clock readers are in
+// TimeParsingExtensions.
 //
-// Berlin venue websites use two common date/time formats:
-// 1. Standalone HH:mm — rendered in HTML for doors/start times
-//    (e.g. "Einlass: 19:00", "Beginn: 20:00"). Parsed by [parseTime].
-// 2. ISO 8601 datetime — embedded in schema.org MusicEvent JSON-LD
-//    startDate fields (e.g. "2026-05-16T20:00"). Split into date and
-//    time by [parseIsoDate] and [parseIsoTime].
-// 3. European short date DD/MM/YY — used by some WordPress-based venue
+// Berlin venue websites write a date three common ways:
+// 1. ISO 8601 datetime — embedded in schema.org MusicEvent JSON-LD startDate
+//    fields (e.g. "2026-05-16T20:00"). Read by [parseIsoDate].
+// 2. European short date DD/MM/YY — used by some WordPress-based venue
 //    sites (e.g. "21/09/26"). Parsed by [parseShortDate].
-// 4. German dotted date DD.MM.YYYY / DD.MM.YY — rendered on many Berlin
+// 3. German dotted date DD.MM.YYYY / DD.MM.YY — rendered on many Berlin
 //    venue pages (e.g. "10.07.2026", "29.06.26"). Parsed by [parseGermanDate]
 //    (four-digit year) and [parseGermanShortDate] (two-digit year).
 //
@@ -37,9 +34,6 @@ import kotlin.math.abs
  */
 val UNRESOLVED_EVENT_DATE: LocalDate = LocalDate.MIN
 
-/** Standard 24-hour time format (HH:mm) used by most Berlin venue websites. */
-private val HH_MM_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
-
 /** European short date format (d/M/yy); 2-digit year resolves to 2000–2099. */
 private val SHORT_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("d/M/yy")
 
@@ -48,36 +42,6 @@ private val GERMAN_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPatte
 
 /** German dotted date format with a two-digit year (d.M.yy); 2-digit year resolves to 2000–2099. */
 private val GERMAN_SHORT_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("d.M.yy")
-
-/**
- * Attempts to parse [text] as a [LocalTime] using the given [formatter].
- *
- * Returns `null` if [text] is null, blank, or cannot be parsed — rather
- * than throwing an exception. This is the expected behavior for scrapers
- * where missing or malformed time values should degrade gracefully.
- */
-fun parseTime(
-    text: String?,
-    formatter: DateTimeFormatter = HH_MM_FORMATTER
-): LocalTime? {
-    if (text.isNullOrBlank()) return null
-    return try {
-        LocalTime.parse(text.trim(), formatter)
-    } catch (_: DateTimeParseException) {
-        null
-    }
-}
-
-/**
- * Extracts the `HH:mm` time that [label] introduces in [text], or `null` when the label is absent.
- *
- * Venues flatten doors and start onto one line, so the label is the only thing separating them
- * (`"Einlass: 19:00 Beginn: 20:00"`). The colon is optional and the match ignores case.
- */
-fun labelledTime(
-    text: String,
-    label: String
-): String? = Regex("""$label\s*:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE).find(text)?.groupValues?.get(1)
 
 /**
  * Parses the date portion from an ISO 8601 date-time string.
@@ -96,21 +60,6 @@ fun parseIsoDate(dateTimeStr: String): LocalDate? =
     } catch (_: DateTimeParseException) {
         null
     }
-
-/**
- * Parses the time portion from an ISO 8601 date-time string.
- *
- * Extracts the part after "T" and delegates to [parseTime] for the
- * actual `HH:mm` parsing. Returns `null` if the string has no time
- * component or the time part is unparseable.
- *
- * This complements [parseIsoDate] for splitting schema.org `startDate`
- * values into separate date and time components.
- */
-fun parseIsoTime(dateTimeStr: String): LocalTime? {
-    val timePart = dateTimeStr.substringAfter("T", "")
-    return parseTime(timePart)
-}
 
 /**
  * Parses the date from a Kulturhäuser-platform `data-realdate` attribute

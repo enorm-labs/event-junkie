@@ -13,8 +13,10 @@ import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.mapWixEventStatus
 import de.norm.events.scraper.parseWixSchedule
+import de.norm.events.scraper.parseWixTicketPrice
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stringOrNull
+import de.norm.events.scraper.wixPriceRangeNote
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
@@ -111,34 +113,12 @@ class ColosseumOverviewPageScraper {
             sourceUrl = resolveUrl(baseUrl, "$DETAILS_PATH$slug"),
             sourceId = "${EventSource.COLOSSEUM.sourceIdPrefix}$slug",
             ticketUrl = registration.path("external").stringOrNull("registration"),
-            pricePresale = ticketing?.let { parseTicketPrice(it.path("lowestTicketPrice")) },
-            priceNote = ticketing?.let { parsePriceRangeNote(it) },
+            pricePresale = ticketing?.let { parseWixTicketPrice(it.path("lowestTicketPrice")) },
+            priceNote = ticketing?.let { wixPriceRangeNote(it) },
             soldOut = ticketing?.path("soldOut")?.asBoolean(false) == true,
             status = mapWixEventStatus(node.path("status")),
             artists = buildArtistList(title, extractSupportFromSubtitle(subtitle))
         )
-    }
-
-    /**
-     * Reads a Wix ticket price node (`{"amount": "19.30", "currency": "EUR"}`). Returns `null` when
-     * the amount is absent or not a number — an event with no ticket definitions carries none.
-     *
-     * The figure is Wix's checkout total, i.e. the face value plus the service fee Wix adds on top
-     * (`wixFeeConfig.type: 2`), which is what a buyer actually pays: a ticket the venue names
-     * "Standard (25€ + 2,5€ Gebühr)" is listed here at €28.19. The face value alone is only on the
-     * detail page, which is deliberately not fetched (see [ColosseumWebsiteImporter]).
-     */
-    private fun parseTicketPrice(price: JsonNode): BigDecimal? = price.stringOrNull("amount")?.toBigDecimalOrNull()
-
-    /**
-     * Builds a price note only when an event has several ticket tiers, i.e. when the lowest and
-     * highest formatted prices differ (`"€12.00 – €30.00"`). A single-tier event — the normal case
-     * here — needs no note: [ScrapedEvent.pricePresale] already says everything.
-     */
-    private fun parsePriceRangeNote(ticketing: JsonNode): String? {
-        val lowest = ticketing.stringOrNull("lowestTicketPriceFormatted")
-        val highest = ticketing.stringOrNull("highestTicketPriceFormatted")
-        return if (lowest != null && highest != null && lowest != highest) "$lowest – $highest" else null
     }
 
     private companion object {

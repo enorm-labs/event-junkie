@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.detailTableCell
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
@@ -54,7 +55,7 @@ class QuasimodoDetailPageScraper {
         val slug = extractEventSlug(sourceUrl, "/events/")
         val title = cleanEventTitle(rawTitle)
         val eventType = parseCategory(document) ?: inferConcertVenueType(title)
-        val presale = labelledCell(document, PRESALE_LABEL)
+        val presale = document.detailTableCell(PRESALE_LABEL)
 
         return ScrapedEvent(
             title = title,
@@ -62,14 +63,14 @@ class QuasimodoDetailPageScraper {
             eventType = eventType,
             // The listing's mobile block is the date source; the sentinel lets it backstop this page.
             eventDate = UNRESOLVED_EVENT_DATE,
-            doorsTime = parseTime(labelledCell(document, DOORS_LABEL)),
-            startTime = parseTime(labelledCell(document, START_LABEL)),
+            doorsTime = parseTime(document.detailTableCell(DOORS_LABEL)),
+            startTime = parseTime(document.detailTableCell(START_LABEL)),
             imageUrl = document.hrefAt(".event-image a"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.QUASIMODO.sourceIdPrefix}$slug",
             ticketUrl = document.hrefAt("a.ticket"),
             pricePresale = parsePriceValue(presale),
-            priceBoxOffice = parsePriceValue(labelledCell(document, BOX_OFFICE_LABEL)),
+            priceBoxOffice = parsePriceValue(document.detailTableCell(BOX_OFFICE_LABEL)),
             // The presale is written "ab 30€ (zzgl. Gebühr)"; the numeric field cannot carry the
             // "from" or the booking-fee caveat, so the venue's own wording is kept alongside it.
             priceNote = presale,
@@ -95,31 +96,6 @@ class QuasimodoDetailPageScraper {
             else -> null
         }
     }
-
-    /**
-     * Reads the value cell of the detail table row labelled [label] (`Beginn:`, `Einlass:`,
-     * `Vorverkauf:`, `Tageskasse:`). Returns `null` when the row is absent — most nights list no
-     * `Tageskasse` at all.
-     */
-    private fun labelledCell(
-        document: Document,
-        label: String
-    ): String? {
-        val row = document.select(".details table tr").firstOrNull { isLabelRow(it, label) } ?: return null
-        val value =
-            row
-                .select("td")
-                .getOrNull(1)
-                ?.text()
-                ?.trim()
-        return value?.takeIf { it.isNotBlank() }
-    }
-
-    /** Whether [row]'s first cell is the `"<label>:"` header of the detail table. */
-    private fun isLabelRow(
-        row: Element,
-        label: String
-    ): Boolean = row.textAt("td").equals("$label:", ignoreCase = true)
 
     /**
      * Reads the promoter from the `.promoter` line, dropping the venue's `"… präsentiert:"`

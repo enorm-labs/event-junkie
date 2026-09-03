@@ -3,6 +3,7 @@ package de.norm.events.scraper.delphi
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
@@ -162,7 +163,7 @@ class DelphiProgrammePageScraper {
      * is the abbreviation the shared parser knows.
      */
     private fun parseMonthHeading(text: String): LocalDate? {
-        val parts = text.trim().split(WHITESPACE_PATTERN)
+        val parts = text.trim().split(WHITESPACE)
         val month = parts.getOrNull(0)?.take(3)?.let { parseGermanMonthAbbreviation(it) }
         val year = parts.getOrNull(1)?.toIntOrNull()
         return if (month == null || year == null) {
@@ -201,8 +202,6 @@ private const val MONTH_HEADING_CLASS = "month"
 
 /** Captures the production id out of a `?prod=<id>` link. */
 private val PRODUCTION_ID_PATTERN = Regex("""[?&]prod=(\d+)""")
-
-private val WHITESPACE_PATTERN = Regex("""\s+""")
 
 /** The trailing `Uhr` the venue appends to its start time. */
 private const val CLOCK_SUFFIX = "Uhr"

@@ -2,6 +2,7 @@ package de.norm.events.scraper.loge
 
 import de.norm.events.event.EventStatus
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.extractEventSlug
@@ -147,5 +148,3 @@ internal fun mapSchemaEventStatus(url: String?): String =
         "EventPostponed", "EventRescheduled" -> EventStatus.POSTPONED.name
         else -> EventStatus.SCHEDULED.name
     }
-
-private const val HH_MM_LENGTH = 5

@@ -78,7 +78,7 @@ class BadehausOverviewPageScraper {
 
         val href = titleLink.attr("href").takeIf { it.isNotBlank() } ?: return null
         val sourceUrl = resolveUrl(baseUrl, href)
-        val slug = extractSlug(sourceUrl)
+        val slug = badehausEventSlug(sourceUrl)
 
         val eventInfo = card.textAt(".eventinfo").orEmpty()
         val eventDate =
@@ -166,9 +166,6 @@ class BadehausOverviewPageScraper {
         }
     }
 
-    /** Extracts the event slug from a `/events/<slug>/` URL for a stable `sourceId`. */
-    private fun extractSlug(url: String): String = URI(url).path.trim('/').substringAfterLast('/')
-
     private companion object {
         private const val SOLD_OUT_CLASS = "AUSVERKAUFT"
         private const val CANCELLED_CLASS = "ABGESAGT"
@@ -195,3 +192,10 @@ class BadehausOverviewPageScraper {
         private val TIME_PATTERN = Regex("""(\d{1,2}:\d{2})\s*UHR""", RegexOption.IGNORE_CASE)
     }
 }
+
+/**
+ * The event slug of a `/events/<slug>/` URL — the last path segment.
+ *
+ * Both pages build the `sourceId` from it, and they must agree on it.
+ */
+internal fun badehausEventSlug(url: String): String = URI(url).path.trim('/').substringAfterLast('/')

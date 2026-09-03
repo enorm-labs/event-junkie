@@ -5,6 +5,14 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
+import de.norm.events.scraper.elfsight.ElfsightAction
+import de.norm.events.scraper.elfsight.ElfsightEventNode
+import de.norm.events.scraper.elfsight.elfsightActionUrl
+import de.norm.events.scraper.elfsight.elfsightDescriptionText
+import de.norm.events.scraper.elfsight.elfsightJsonMapper
+import de.norm.events.scraper.elfsight.parseElfsightDate
+import de.norm.events.scraper.elfsight.parseElfsightEventNodes
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.humboldthain.HumboldthainApiScraper.Companion.TICKET_URL_PATTERN
 import de.norm.events.scraper.isNonArtistName
@@ -14,11 +22,9 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
-import tools.jackson.module.kotlin.kotlinModule
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.format.DateTimeParseException
 import java.time.temporal.TemporalAdjusters
 
 /** Public landing page every event links back to — the widget exposes no per-event URLs. */
@@ -29,10 +35,8 @@ private const val HUMBOLDTHAIN_URL = "https://www.humboldthain.com/"
  * "Event Calendar" widget embedded on its WordPress landing page.
  *
  * The widget renders client-side, so the page carries no events; its boot API returns the calendar as
- * JSON (ADR-007 §"Selector Strategy" priority 1). The payload shape is shared with
- * [de.norm.events.scraper.neuezukunft.NeueZukunftApiScraper] — events nest under
- * `data.widgets.<widgetId>.data.settings.events`, and every embedded widget exposing a
- * `settings.events` array contributes, so no widget id is hard-coded.
+ * JSON (ADR-007 §"Selector Strategy" priority 1). The payload shape and its readers are shared with
+ * the other Elfsight venue — see [de.norm.events.scraper.elfsight.ElfsightEventNode].
  *
  * **Recurrences are expanded.** The resident night is a *single* entry carrying a weekly repeat rule
  * the widget expands in the browser, so reading only `start.date` would import it once at the series'
@@ -57,13 +61,7 @@ class HumboldthainApiScraper(
 ) {
     private val logger = KotlinLogging.logger {}
 
-    // Elfsight uses camelCase JSON keys (coverImage, isAllDay), so the default mapper suffices;
-    // unknown fields are ignored (Jackson 3 default).
-    private val jsonMapper: JsonMapper =
-        JsonMapper
-            .builder()
-            .addModule(kotlinModule())
-            .build()
+    private val jsonMapper: JsonMapper = elfsightJsonMapper()
 
     /**
      * Parses every event from the Elfsight widget boot response [json], expanding weekly
@@ -74,14 +72,14 @@ class HumboldthainApiScraper(
      *   or carries no events.
      */
     fun scrape(json: String): List<ScrapedEvent> {
-        val eventNodes = parseEventNodes(json) ?: return emptyList()
+        val eventNodes = parseElfsightEventNodes(jsonMapper, json, VENUE_NAME) ?: return emptyList()
         logger.info { "Found ${eventNodes.size} calendar entry/entries in Humboldthain widget response" }
 
         @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the import.
         val parsed =
             eventNodes.flatMap { node ->
                 try {
-                    parseEvent(jsonMapper.treeToValue(node, HumboldthainEventNode::class.java))
+                    parseEvent(jsonMapper.treeToValue(node, ElfsightEventNode::class.java))
                 } catch (e: Exception) {
                     logger.warn(e) { "Failed to parse Humboldthain event, skipping" }
                     emptyList()
@@ -92,39 +90,9 @@ class HumboldthainApiScraper(
         return parsed.distinctBy { it.sourceId }
     }
 
-    /**
-     * Walks the boot payload and returns the `events` nodes of every embedded widget that
-     * exposes an event calendar, or null when the body is unparseable or carries no widgets.
-     * The widget id keying `data.widgets` is not hard-coded — each widget node is inspected and
-     * only those with a `settings.events` array (the `event-calendar` app) contribute events.
-     */
-    @Suppress(
-        "TooGenericExceptionCaught", // A malformed payload must degrade to null, never abort the import.
-        "ReturnCount" // Guard clauses for the unparseable body and missing widgets are clearer than nesting.
-    )
-    private fun parseEventNodes(json: String): List<JsonNode>? {
-        val root =
-            try {
-                jsonMapper.readTree(json)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Humboldthain widget boot response" }
-                return null
-            }
-        val widgets = root.path("data").path("widgets")
-        if (!widgets.isObject) {
-            logger.warn { "Humboldthain boot response has no 'data.widgets' object" }
-            return null
-        }
-        return widgets.flatMap { widget ->
-            widget.path("data").path("settings").path("events").let { events ->
-                if (events.isArray) events.toList() else emptyList()
-            }
-        }
-    }
-
     /** Validates one calendar entry and expands it into one [ScrapedEvent] per occurrence date. */
     @Suppress("ReturnCount") // Guard clauses for the required id, title, and date are clearer than nesting.
-    private fun parseEvent(node: HumboldthainEventNode): List<ScrapedEvent> {
+    private fun parseEvent(node: ElfsightEventNode): List<ScrapedEvent> {
         val id = node.id.blankToNull()
         if (id == null) {
             logger.warn { "Humboldthain event has no id, skipping" }
@@ -137,7 +105,7 @@ class HumboldthainApiScraper(
             return emptyList()
         }
 
-        val seriesStart = parseDate(node.start?.date)
+        val seriesStart = parseElfsightDate(node.start?.date)
         if (seriesStart == null) {
             logger.warn { "Humboldthain event '$id' has no parseable date, skipping" }
             return emptyList()
@@ -151,7 +119,7 @@ class HumboldthainApiScraper(
         // A "KONZERT:" night bills its act in the title; every other night is a DJ party whose
         // roster, if announced, is the description's Resident Advisor artist links.
         val artists = (if (concert) headlinersFromTitle(title) else emptyList()) + djArtists(description)
-        val descriptionText = descriptionText(descriptionHtml)
+        val descriptionText = elfsightDescriptionText(descriptionHtml)
 
         return occurrenceDates(node, id, seriesStart).map { date ->
             ScrapedEvent(
@@ -185,7 +153,7 @@ class HumboldthainApiScraper(
      */
     @Suppress("ReturnCount") // Guard clauses for the non-repeating and non-weekly cases are clearer than nesting.
     private fun occurrenceDates(
-        node: HumboldthainEventNode,
+        node: ElfsightEventNode,
         id: String,
         seriesStart: LocalDate
     ): List<LocalDate> {
@@ -206,7 +174,7 @@ class HumboldthainApiScraper(
                 .sortedBy { it.value }
         val today = LocalDate.now(clock)
         // The horizon bounds an open-ended ("never") rule; an explicit end date shortens it.
-        val limit = minOf(parseDate(node.repeatEndsDate?.date) ?: LocalDate.MAX, today.plusWeeks(OCCURRENCE_HORIZON_WEEKS))
+        val limit = minOf(parseElfsightDate(node.repeatEndsDate?.date) ?: LocalDate.MAX, today.plusWeeks(OCCURRENCE_HORIZON_WEEKS))
         val interval = node.repeatInterval.coerceAtLeast(1).toLong()
         val skipped = node.exceptions.mapNotNull { exceptionDate(it) }.toSet()
 
@@ -248,34 +216,14 @@ class HumboldthainApiScraper(
      * the URL to match [TICKET_URL_PATTERN].
      */
     private fun ticketUrl(
-        actions: List<HumboldthainAction>,
+        actions: List<ElfsightAction>,
         description: Document?
     ): String? =
-        actions
-            .firstNotNullOfOrNull { it.link?.value.blankToNull() }
-            ?.takeIf { it.startsWith("http") }
+        elfsightActionUrl(actions)
             ?: description
                 ?.select("a[href]")
                 ?.map { it.attr("href").trim() }
                 ?.firstOrNull { it.startsWith("http") && TICKET_URL_PATTERN.containsMatchIn(it) }
-
-    /**
-     * Flattens the widget's HTML `description` into plain text, preserving paragraph breaks:
-     * `<br>` and closing block tags become newlines before the remaining tags are stripped, then
-     * blank lines are collapsed. Returns null for a missing/empty body.
-     */
-    private fun descriptionText(html: String?): String? {
-        val raw = html.blankToNull() ?: return null
-        val withBreaks = raw.replace(BLOCK_BREAK_PATTERN, "\n")
-        return Jsoup
-            .parse(withBreaks)
-            .wholeText()
-            .lines()
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .joinToString("\n")
-            .blankToNull()
-    }
 
     /**
      * The date a recurrence exception skips. Elfsight leaves `exceptions` empty on every entry
@@ -283,19 +231,12 @@ class HumboldthainApiScraper(
      * the `{date, time}` object every other moment in the payload uses — rather than betting the
      * import on one.
      */
-    private fun exceptionDate(node: JsonNode): LocalDate? = parseDate(if (node.isString) node.asString("") else node.path("date").asString(""))
-
-    /** Parses an ISO `yyyy-MM-dd` date, returning null instead of throwing. */
-    private fun parseDate(raw: String?): LocalDate? {
-        val cleaned = raw.blankToNull() ?: return null
-        return try {
-            LocalDate.parse(cleaned)
-        } catch (_: DateTimeParseException) {
-            null
-        }
-    }
+    private fun exceptionDate(node: JsonNode): LocalDate? = parseElfsightDate(if (node.isString) node.asString("") else node.path("date").asString(""))
 
     companion object {
+        /** Names the venue in the shared payload reader's warnings. */
+        private const val VENUE_NAME = "Humboldthain"
+
         /**
          * How far ahead an open-ended weekly rule is expanded (~6 months of calendar).
          *
@@ -336,65 +277,5 @@ class HumboldthainApiScraper(
 
         /** Ticket shops the venue links from its prose: a Resident Advisor event page, Eventim, or any "ticket" URL. */
         private val TICKET_URL_PATTERN = Regex("""ra\.co/events/|eventim|dice\.fm|ticket""", RegexOption.IGNORE_CASE)
-
-        /** `<br>` variants and closing block tags — the boundaries turned into newlines before tag stripping. */
-        private val BLOCK_BREAK_PATTERN = Regex("""(?i)<br\s*/?>|</div>|</p>""")
     }
 }
-
-/** Trims this string and returns `null` when it is null, empty, or all whitespace. */
-private fun String?.blankToNull(): String? = this?.trim()?.takeIf { it.isNotBlank() }
-
-/**
- * One entry in the widget's `settings.events[]`, mapped from its JSON by Jackson.
- *
- * Only the fields Humboldthain populates are declared; unknown keys (styling, the empty
- * `location`/`host` lists, the venue's weekday-label `eventType`) are ignored. Every field is
- * nullable/defaulted so a partial or evolving payload deserializes cleanly and is validated in
- * [HumboldthainApiScraper] instead.
- */
-private data class HumboldthainEventNode(
-    val id: String? = null,
-    val name: String? = null,
-    val start: HumboldthainDateTime? = null,
-    val description: String? = null,
-    val isAllDay: Boolean = false,
-    val coverImage: HumboldthainImage? = null,
-    val actions: List<HumboldthainAction> = emptyList(),
-    /** `noRepeat` for a one-off entry, `custom`/`nthDayInMonth` for a recurring series. */
-    val repeatPeriod: String? = null,
-    /** How the series repeats — only `weekly` is expanded (see [HumboldthainApiScraper]). */
-    val repeatFrequency: String? = null,
-    /** Repeat every *n*-th week; 1 for an ordinary weekly night. */
-    val repeatInterval: Int = 1,
-    /** Two-letter weekday codes the series runs on (`["tu"]`). */
-    val repeatWeeklyOnDays: List<String> = emptyList(),
-    /** `never`, `onDate` (see [repeatEndsDate]) or `afterOccurrences` (see [repeatEndsOccurrences]). */
-    val repeatEnds: String? = null,
-    val repeatEndsDate: HumboldthainDateTime? = null,
-    val repeatEndsOccurrences: Int = 1,
-    /** Dates skipped by the series; left as a raw node because the venue never populates it. */
-    val exceptions: List<JsonNode> = emptyList()
-)
-
-/** A moment in the calendar: an ISO `date` (`yyyy-MM-dd`) and an `HH:mm` `time`. */
-private data class HumboldthainDateTime(
-    val date: String? = null,
-    val time: String? = null
-)
-
-/** The event cover image; only its absolute [url] is used. */
-private data class HumboldthainImage(
-    val url: String? = null
-)
-
-/** A call-to-action button: its [text] (e.g. "Presale Tickets") and nested [link]. */
-private data class HumboldthainAction(
-    val text: String? = null,
-    val link: HumboldthainLink? = null
-)
-
-/** The resolved target of a [HumboldthainAction]; empty for a non-linking marker. */
-private data class HumboldthainLink(
-    val value: String? = null
-)

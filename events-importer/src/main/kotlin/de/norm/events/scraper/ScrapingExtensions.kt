@@ -54,6 +54,39 @@ fun Element.hrefAt(cssQuery: String): String? =
         ?.takeIf { it.startsWith("http") }
 
 /**
+ * Reads the value cell of the `.details table` row whose label cell is `"<label>:"`.
+ *
+ * Quasimodo and Wuhlheide run one template, which files every scalar field in that
+ * table. Returns `null` when the row is absent, which is normal: a night omits the
+ * rows it has no value for.
+ */
+fun Element.detailTableCell(label: String): String? =
+    select(".details table tr")
+        .firstOrNull { it.textAt("td").equals("$label:", ignoreCase = true) }
+        ?.select("td")
+        ?.getOrNull(1)
+        ?.text()
+        ?.trim()
+        ?.takeIf { it.isNotBlank() }
+
+/**
+ * Resolves the `href` of every element matching [cssQuery] against [baseUrl], dropping
+ * blanks and duplicates.
+ *
+ * Used by the entry pages that link a month page per month (ÆDEN, AMT). The hrefs are
+ * absolute in the rendered markup, and are resolved so a relative one also works.
+ */
+fun Element.absoluteLinksAt(
+    cssQuery: String,
+    baseUrl: String
+): List<String> =
+    select(cssQuery)
+        .map { it.attr("href") }
+        .filter { it.isNotBlank() }
+        .map { resolveUrl(baseUrl, it) }
+        .distinct()
+
+/**
  * Checks whether any child element matching [cssQuery] is visible in the
  * Webflow CMS conditional visibility system and contains the given [text].
  *

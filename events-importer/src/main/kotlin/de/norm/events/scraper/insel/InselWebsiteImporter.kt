@@ -4,14 +4,16 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.GATSBY_STATIC_QUERY_HASHES
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.gatsbyPageDataUrl
+import de.norm.events.scraper.gatsbyStaticQueryUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import tools.jackson.databind.json.JsonMapper
-import java.net.URI
 
 /**
  * Website importer for Kulturhaus Insel Berlin.
@@ -25,7 +27,7 @@ import java.net.URI
  * a static query's artefact by a hash of the query text (`/page-data/sq/d/3497155224.json`), which is
  * neither guessable nor stable across a query edit — so the hash is discovered rather than
  * configured: fetch the page's own `page-data.json`, whose `staticQueryHashes` array lists every
- * static query it depends on ([toPageDataUrl]), then hand each candidate to [InselApiScraper] until
+ * static query it depends on ([gatsbyPageDataUrl]), then hand each candidate to [InselApiScraper] until
  * one *is* the events query. The scraper returns `null` for any other, so a sibling query publishing
  * the same collection projected down to bare dates is skipped rather than parsed into title-less
  * events. That costs one extra request plus however many candidates precede the events one — two of
@@ -74,14 +76,14 @@ class InselWebsiteImporter(
      */
     @Suppress("ReturnCount") // The early exits for "no candidates" and "found it" are clearer than nesting.
     private suspend fun fetchEvents(url: String): List<ScrapedEvent> {
-        val hashes = staticQueryHashes(apiClient.fetchJson(toPageDataUrl(url)))
+        val hashes = staticQueryHashes(apiClient.fetchJson(gatsbyPageDataUrl(url)))
         if (hashes.isEmpty()) {
             logger.warn { "Insel page-data lists no staticQueryHashes; no programme artefact to read" }
             return emptyList()
         }
 
         for (hash in hashes) {
-            val events = apiScraper.scrape(apiClient.fetchJson(toStaticQueryUrl(url, hash)), url)
+            val events = apiScraper.scrape(apiClient.fetchJson(gatsbyStaticQueryUrl(url, hash)), url)
             if (events != null) return events
             logger.debug { "Insel static query $hash is not the programme artefact" }
         }
@@ -95,56 +97,12 @@ class InselWebsiteImporter(
         try {
             jsonMapper
                 .readTree(json)
-                .path(STATIC_QUERY_HASHES)
+                .path(GATSBY_STATIC_QUERY_HASHES)
                 .mapNotNull { node -> node.asString().trim().takeIf { it.isNotBlank() } }
         } catch (e: Exception) {
             logger.warn(e) { "Failed to parse Insel page-data for its static-query hashes" }
             emptyList()
         }
-
-    /**
-     * Maps a Gatsby page URL onto its page-data artefact:
-     * `https://www.inselberlin.de/` → `https://www.inselberlin.de/page-data/index/page-data.json`.
-     *
-     * Gatsby keys the artefact by the page's own path, so the path is taken verbatim (minus
-     * surrounding slashes) and slotted into the fixed `/page-data/<path>/page-data.json` layout. The
-     * site root (`/`) is Gatsby's `index` page and is named as such.
-     */
-    private fun toPageDataUrl(pageUrl: String): String {
-        val uri = URI.create(pageUrl)
-        val path =
-            uri.path
-                .orEmpty()
-                .trim('/')
-                .ifBlank { ROOT_PAGE_NAME }
-        return uri.resolve("/$PAGE_DATA_SEGMENT/$path/$PAGE_DATA_FILE").toString()
-    }
-
-    /**
-     * Maps a static-query hash onto its artefact:
-     * `3497155224` → `https://www.inselberlin.de/page-data/sq/d/3497155224.json`.
-     */
-    private fun toStaticQueryUrl(
-        pageUrl: String,
-        hash: String
-    ): String = URI.create(pageUrl).resolve("/$PAGE_DATA_SEGMENT/$STATIC_QUERY_SEGMENT/$hash.json").toString()
-
-    private companion object {
-        /** Directory Gatsby publishes its query results under. */
-        const val PAGE_DATA_SEGMENT = "page-data"
-
-        /** Sub-directory Gatsby publishes static-query results under, keyed by query hash. */
-        const val STATIC_QUERY_SEGMENT = "sq/d"
-
-        /** Filename of a Gatsby page-data artefact. */
-        const val PAGE_DATA_FILE = "page-data.json"
-
-        /** Gatsby's name for the site root's page-data directory. */
-        const val ROOT_PAGE_NAME = "index"
-
-        /** The page-data key listing the static queries the page depends on. */
-        const val STATIC_QUERY_HASHES = "staticQueryHashes"
-    }
 }
 
 val INSEL_LIMITATIONS =

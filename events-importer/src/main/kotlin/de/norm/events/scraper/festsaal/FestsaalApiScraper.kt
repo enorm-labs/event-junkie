@@ -4,9 +4,11 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSupportActs
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -27,9 +29,6 @@ private const val FESTSAAL_PUBLIC_HOST = "festsaal-kreuzberg.de"
 
 /** Public listing base used to reconstruct an event URL when the API omits `meta.html_url`. */
 private const val FESTSAAL_PROGRAMM_BASE = "https://$FESTSAAL_PUBLIC_HOST/de/programm/"
-
-/** Length of an ISO `HH:mm` prefix, used to trim the API's `HH:mm:ss` clock strings before parsing. */
-private const val HH_MM_LENGTH = 5
 
 /**
  * Pure parser for Festsaal Kreuzberg's event data, sourced from its Wagtail
@@ -135,8 +134,8 @@ class FestsaalApiScraper {
             return null
         }
 
-        val doorsTime = parseClock(effective(node.changedDoors, node.doors))
-        val startTime = parseClock(effective(node.changedStart, node.start))
+        val doorsTime = parseClockPrefix(effective(node.changedDoors, node.doors))
+        val startTime = parseClockPrefix(effective(node.changedStart, node.start))
 
         val subtitle = node.subTitle.blankToNull()
         val eventType = inferEventType(title, subtitle)
@@ -271,9 +270,6 @@ class FestsaalApiScraper {
         }
     }
 
-    /** Parses the `HH:mm` prefix of the API's `HH:mm:ss` clock strings, returning null for missing/unparseable input. */
-    private fun parseClock(raw: String?): LocalTime? = parseTime(raw?.trim()?.take(HH_MM_LENGTH)?.takeIf { it.isNotBlank() })
-
     /**
      * Parses Festsaal's plain decimal price string (e.g. `"51,80"`, German comma separator,
      * no currency symbol) into a positive [BigDecimal], or null when absent/unparseable.
@@ -322,9 +318,6 @@ class FestsaalApiScraper {
         val NON_CONCERT_EVENT_KEYWORDS = listOf("markt", "open air")
     }
 }
-
-/** Trims this string and returns `null` when it is null, empty, or all whitespace. */
-private fun String?.blankToNull(): String? = this?.trim()?.takeIf { it.isNotBlank() }
 
 /**
  * One event in the Wagtail listing (`items[]`), mapped from its JSON by Jackson.

@@ -107,7 +107,7 @@ class UrbanSpreeOverviewPageScraper {
             startTime = startsAt.toLocalTime(),
             imageUrl = normalizeAssetUrl(card.absUrl(IMAGE_ATTR)),
             sourceUrl = sourceUrl,
-            sourceId = "${EventSource.URBAN_SPREE.sourceIdPrefix}${eventSlug(sourceUrl)}",
+            sourceId = "${EventSource.URBAN_SPREE.sourceIdPrefix}${urbanSpreeEventSlug(sourceUrl)}",
             pricePresale = price,
             // "Free" is the venue's own label in the price slot, so the note is pricing-scoped.
             free = detectFree(pricePresale = price, priceNote = priceText),
@@ -129,20 +129,6 @@ class UrbanSpreeOverviewPageScraper {
         }
     }
 
-    /**
-     * Derives the stable per-event identity from the detail URL's path — the category and
-     * slug MODX assigns the resource, e.g.
-     * `…/program/concerts/twin-noir-hinfort-urban-spree,-berlin.html` → `concerts/twin-noir-hinfort-urban-spree,-berlin`.
-     * Taken from the canonical URL rather than the (truncated, editable) title so the
-     * `sourceId` survives a title edit.
-     */
-    private fun eventSlug(sourceUrl: String): String =
-        URI(sourceUrl)
-            .path
-            .removePrefix(PROGRAM_PATH_PREFIX)
-            .removeSuffix(".html")
-            .trim('/')
-
     private companion object {
         /**
          * The event cards inside the `pdoPage` results wrapper. Scoped to `#pdopage` so the
@@ -156,8 +142,23 @@ class UrbanSpreeOverviewPageScraper {
 
         /** Original (non-thumbnailed) poster path on a card, e.g. `assets/project/urbanspree/mediasource/IMG_1389.JPG`. */
         private const val IMAGE_ATTR = "data-imgfeat"
-
-        /** Path prefix stripped from a detail URL to leave the `<category>/<slug>` identity. */
-        private const val PROGRAM_PATH_PREFIX = "/program/"
     }
 }
+
+/**
+ * Derives the stable per-event identity from the detail URL's path — the category and slug MODX
+ * assigns the resource, e.g.
+ * `…/program/concerts/twin-noir-hinfort-urban-spree,-berlin.html` → `concerts/twin-noir-hinfort-urban-spree,-berlin`.
+ *
+ * Taken from the canonical URL rather than the (truncated, editable) title, so the `sourceId`
+ * survives a title edit. Both pages build the identity, and they must agree on it.
+ */
+internal fun urbanSpreeEventSlug(sourceUrl: String): String =
+    URI(sourceUrl)
+        .path
+        .removePrefix(PROGRAM_PATH_PREFIX)
+        .removeSuffix(".html")
+        .trim('/')
+
+/** Path prefix stripped from a detail URL to leave the `<category>/<slug>` identity. */
+private const val PROGRAM_PATH_PREFIX = "/program/"

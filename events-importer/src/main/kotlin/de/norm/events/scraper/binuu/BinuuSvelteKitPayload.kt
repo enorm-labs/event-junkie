@@ -1,7 +1,10 @@
 package de.norm.events.scraper.binuu
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.HH_MM_LENGTH
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.core.json.JsonReadFeature
@@ -134,16 +137,6 @@ internal object BinuuSvelteKitPayload {
     }
 }
 
-/**
- * Reads a trimmed string [field] from this node, or `null` when the field is
- * missing, JSON `null`, or blank.
- */
-internal fun JsonNode.stringOrNull(field: String): String? {
-    val node = path(field)
-    if (node.isMissingNode || node.isNull) return null
-    return node.asString().trim().takeIf { it.isNotBlank() }
-}
-
 /** Reads the string array at [field] as a list of trimmed, non-blank values. */
 internal fun JsonNode.stringList(field: String): List<String> =
     path(field).mapNotNull { element ->
@@ -271,7 +264,7 @@ private val BINUU_TRAILING_EDITION = Regex("""\s+(?:n[°º]\s*)?\d+$""", RegexOp
 private fun isBinuuPartySeries(title: String): Boolean =
     title
         .trim()
-        .replace(Regex("""\s+"""), " ")
+        .replace(WHITESPACE, " ")
         .lowercase()
         .replace(BINUU_TRAILING_EDITION, "") in BINUU_PARTY_SERIES
 
@@ -279,4 +272,3 @@ private fun isBinuuPartySeries(title: String): Boolean =
 private val PARTY_NAME_KEYWORDS = listOf("party", "karaoke", "dj set", "dj-set", "club night", "clubnight", "rave")
 
 private const val DATE_LENGTH = 10
-private const val HH_MM_LENGTH = 5

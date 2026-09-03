@@ -1,5 +1,6 @@
 package de.norm.events.scraper.velomax
 
+import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
@@ -138,6 +139,3 @@ private fun Element.attrAtProp(
 
 /** The `HH:mm` clock part of a Microdata `yyyy-MM-dd HH:mm:ss` timestamp. */
 private fun String.clockTime(): String? = substringAfter(' ', "").takeIf { it.isNotBlank() }?.take(HH_MM_LENGTH)
-
-/** Length of an `HH:mm` prefix. */
-private const val HH_MM_LENGTH = 5

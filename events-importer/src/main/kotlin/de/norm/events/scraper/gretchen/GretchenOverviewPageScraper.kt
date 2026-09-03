@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.COLLAB_SEPARATOR
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.DROP_LINE_PATTERN
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.PARTY_TITLE_KEYWORDS
@@ -486,9 +487,6 @@ class GretchenOverviewPageScraper {
          * "NN Years <act>" title (e.g. "Recycle: 15 Years FLEXOUT AUDIO") is left intact.
          */
         private val SERIES_PREFIX = Regex("""^\d+\s+years\s+gretchen\s*:\s*""", RegexOption.IGNORE_CASE)
-
-        /** Collapses runs of whitespace to a single space. */
-        private val WHITESPACE = Regex("""\s+""")
 
         /** A lineup line of this many words or more is prose (a note/blurb), not a performer name. */
         private const val PROSE_WORD_THRESHOLD = 10
