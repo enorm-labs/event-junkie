@@ -290,8 +290,8 @@ ingress:
         # and contacting no third party.
         - "font-src 'self'"
         - "connect-src 'self'"
-  # ingress.rateLimit is the fourth Traefik Middleware, PLATFORM_SETUP §8 item 9 (#268). The
-  # template and the chart README carry what each half groups by, and where these numbers come from.
+  # ingress.rateLimit renders two Traefik Middlewares — one type per object, or Traefik drops every
+  # router naming them (#268). Template and README: what each groups by, and where the numbers come from.
   rateLimit:
     enabled: true
     # Concurrent requests, grouped by request host, so it holds whatever address Traefik sees. It

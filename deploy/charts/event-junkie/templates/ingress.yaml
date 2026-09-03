@@ -42,8 +42,14 @@ metadata:
     {{- if .Values.ingress.securityHeaders.enabled }}
     {{- $middlewares = append $middlewares (printf "%s-%s-security-headers@kubernetescrd" .Release.Namespace (include "event-junkie.fullname" $)) }}
     {{- end }}
+    {{- /* Two names, because Traefik permits one type per Middleware and the limit is two types.
+           The second is conditional on `perSource.enabled` for the same reason the object is: a
+           name in this list that resolves to nothing drops every middleware AND the router. */}}
     {{- if .Values.ingress.rateLimit.enabled }}
+    {{- $middlewares = append $middlewares (printf "%s-%s-in-flight-req@kubernetescrd" .Release.Namespace (include "event-junkie.fullname" $)) }}
+    {{- if .Values.ingress.rateLimit.perSource.enabled }}
     {{- $middlewares = append $middlewares (printf "%s-%s-rate-limit@kubernetescrd" .Release.Namespace (include "event-junkie.fullname" $)) }}
+    {{- end }}
     {{- end }}
     {{- if .Values.ingress.noindex }}
     {{- $middlewares = append $middlewares (printf "%s-%s-noindex@kubernetescrd" .Release.Namespace (include "event-junkie.fullname" $)) }}

@@ -31,7 +31,33 @@
 
        DELIBERATELY ABSENT: `sourceCriterion.requestHost` on `rateLimit`. It would make one budget
        for the whole site, which hands any single client the ability to spend everybody's. A limit
-       that turns one abuser into an outage is not a limit. */}}
+       that turns one abuser into an outage is not a limit.
+
+       TWO OBJECTS, AND THAT IS NOT A STYLE CHOICE. Traefik permits exactly one type per Middleware:
+       a second key makes the whole object `multi-types middleware not supported`, and every router
+       that names it is then dropped rather than degraded. The site answers Traefik's own 404 on
+       every path, including `/`. Nothing renders differently and no schema rejects it, because the
+       CRD models the types as optional siblings. It cost staging an outage (#268), and it stayed
+       invisible until then only because `rateLimit` was gated off — one key rendered, so one type
+       was declared. */}}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ printf "%s-in-flight-req" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      Bounds concurrent requests, grouped by request host, so it holds whatever address Traefik sees.
+spec:
+  inFlightReq:
+    {{- /* `| int64` is load-bearing here for the same reason it is on `stsSeconds`: Helm parses a
+           values number as float64, and the CRD's `format=int64` rejects the scientific notation
+           that produces, after `helm template` has shown it without complaint. */}}
+    amount: {{ required "ingress.rateLimit.inFlightRequests is required when rateLimit is enabled" .Values.ingress.rateLimit.inFlightRequests | int64 }}
+{{- with .Values.ingress.rateLimit.perSource }}
+{{- if .enabled }}
+---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -40,19 +66,12 @@ metadata:
     {{- include "event-junkie.labels" $args | nindent 4 }}
   annotations:
     kubernetes.io/description: >-
-      Bounds concurrent requests by request host, and sustained request rate by the client's own address.
+      Bounds sustained request rate per client address, which the Traefik hostPort preserves.
 spec:
-  inFlightReq:
-    {{- /* `| int64` is load-bearing here for the same reason it is on `stsSeconds`: Helm parses a
-           values number as float64, and the CRD's `format=int64` rejects the scientific notation
-           that produces, after `helm template` has shown it without complaint. */}}
-    amount: {{ required "ingress.rateLimit.inFlightRequests is required when rateLimit is enabled" .Values.ingress.rateLimit.inFlightRequests | int64 }}
-  {{- with .Values.ingress.rateLimit.perSource }}
-  {{- if .enabled }}
   rateLimit:
     average: {{ required "ingress.rateLimit.perSource.average is required when perSource is enabled — 0 silently disables the limit rather than setting it to zero" .average | int64 }}
     burst: {{ required "ingress.rateLimit.perSource.burst is required when perSource is enabled — 1 is Traefik's default and is not what anyone means" .burst | int64 }}
     period: {{ .period | quote }}
-  {{- end }}
-  {{- end }}
+{{- end }}
+{{- end }}
 {{- end }}

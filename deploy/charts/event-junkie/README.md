@@ -379,8 +379,14 @@ somewhere in it — which is what makes a malformed join fail there.
 
 ### `ingress.rateLimit` — two limits that answer different questions
 
-`ingress.rateLimit` renders a fourth Traefik `Middleware`. Its two limits stay independently switchable because they bound different things, and because only
-one of them can be got wrong quietly.
+`ingress.rateLimit` renders **two** Traefik `Middleware` objects, `-in-flight-req` and `-rate-limit`. They stay independently switchable because they bound
+different things, and because only one of them can be got wrong quietly.
+
+**One type per object is an invariant, not a layout choice.** Traefik refuses a `Middleware` that declares two types — `multi-types middleware not supported` —
+and drops **every router that names it**, so the site answers Traefik's own 404 on every path including `/`. Nothing rejects the render: the CRD models the
+types as optional siblings, so `helm template`, `helm unittest` and `flux schema validate` all pass on the manifest that takes the site down. The chart carried
+both keys in one object from the day the middleware was added, and it stayed invisible for a milestone because `rateLimit` was gated off — one key rendered, so
+one type was declared. Turning it on took staging down on 2026-09-03. `tests/ingress_test.yaml` asserts the document count and each object's missing sibling.
 
 | Limit                              | Grouped by               | Default | Why                                                                   |
 | ---------------------------------- | ------------------------ | ------- | --------------------------------------------------------------------- |

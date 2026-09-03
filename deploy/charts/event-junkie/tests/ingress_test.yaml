@@ -206,7 +206,7 @@ tests:
       - equal:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
           value: >-
-            NAMESPACE-RELEASE-NAME-event-junkie-security-headers@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-rate-limit@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-noindex@kubernetescrd
+            NAMESPACE-RELEASE-NAME-event-junkie-security-headers@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-in-flight-req@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-rate-limit@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-noindex@kubernetescrd
 
   - it: names the security headers and rate limit middlewares in production, where noindex is off
     set:
@@ -220,7 +220,7 @@ tests:
       - equal:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
           value: >-
-            NAMESPACE-RELEASE-NAME-event-junkie-security-headers@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-rate-limit@kubernetescrd
+            NAMESPACE-RELEASE-NAME-event-junkie-security-headers@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-in-flight-req@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-rate-limit@kubernetescrd
 
   # With all three off the annotation must be absent rather than empty. An empty one is the failure
   # this whole list-building exercise exists to avoid, and it is invisible in a rendered manifest.
@@ -238,13 +238,19 @@ tests:
       - notExists:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
 
-  # --- the rate limit, whose two halves are enabled independently ------------------------------
+  # --- the rate limit, which is two limits and therefore two objects ---------------------------
   #
-  # `inFlightReq` bounds concurrency and Traefik groups it by request host, so it works whatever
-  # address reaches the edge. `rateLimit` groups by the client address, which the Traefik hostPort
-  # preserves since #1013. Both ship on; the halves stay independent because they answer different
-  # questions and only one of them can be got wrong quietly.
-  - it: bounds both concurrency and per-source rate by default
+  # `inFlightReq` bounds concurrency, grouped by request host, so it works whatever address reaches
+  # the edge. `rateLimit` groups by the client address, which the Traefik hostPort preserves since
+  # #1013. Both ship on.
+  #
+  # **ONE TYPE PER OBJECT IS THE INVARIANT HERE, AND IT IS NOT A STYLE RULE.** Traefik refuses a
+  # Middleware carrying two types — `multi-types middleware not supported` — and drops every router
+  # that names it, so the whole site answers its 404. Nothing rejects the render: the CRD models the
+  # types as optional siblings, so `helm template`, `helm unittest` and `flux schema validate` all
+  # pass on the manifest that takes the site down. It took staging down once, and the count
+  # assertions below are the only thing standing between that and a repeat.
+  - it: renders the two limits as two objects, because one object cannot carry both
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
@@ -253,29 +259,41 @@ tests:
       - rate-limit-middleware.yaml
     asserts:
       - hasDocuments:
-          count: 1
+          count: 2
+      # Each document declares exactly one of the two keys. `notExists` on the sibling is the whole
+      # assertion — a merge back into one object satisfies every other check in this file.
+      - notExists:
+          path: spec.rateLimit
+        documentIndex: 0
       - equal:
           path: spec.inFlightReq.amount
           value: 100
+        documentIndex: 0
+      - notExists:
+          path: spec.inFlightReq
+        documentIndex: 1
       # Pinned rather than merely present. These are the numbers a first-time visitor's whole page
       # load has to fit inside — assets, fonts and venue images, not just queries — so a well-meant
       # reduction is the failure this case exists to catch. `values.yaml` carries the arithmetic.
       - equal:
           path: spec.rateLimit.average
           value: 50
+        documentIndex: 1
       # Traefik's own default burst is 1, which nobody means. A burst near the average rejects an
       # ordinary page load, because one view fires several requests together.
       - equal:
           path: spec.rateLimit.burst
           value: 250
+        documentIndex: 1
       - equal:
           path: spec.rateLimit.period
           value: "1s"
+        documentIndex: 1
 
   # The escape hatch, and the reason the two halves did not collapse into one flag: an environment
   # whose client address is masqueraded again — a k3d rehearsal, or a cluster that regains a load
   # balancer — wants concurrency bounded and the per-source budget gone, not both off.
-  - it: drops the per-source limit and keeps concurrency when it is turned off
+  - it: drops the per-source object and keeps concurrency when it is turned off
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
@@ -284,11 +302,31 @@ tests:
     templates:
       - rate-limit-middleware.yaml
     asserts:
+      - hasDocuments:
+          count: 1
       - equal:
           path: spec.inFlightReq.amount
           value: 100
       - notExists:
           path: spec.rateLimit
+
+  # The other half of that: an Ingress may not name a Middleware that was not rendered. Traefik
+  # answers a missing reference exactly as it answers a rejected object — it drops the router.
+  - it: names no per-source middleware on the ingress when the object is not rendered
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      ingress.rateLimit.perSource.enabled: false
+    templates:
+      - ingress.yaml
+    asserts:
+      - matchRegex:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          pattern: "-in-flight-req@kubernetescrd"
+      - notMatchRegex:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          pattern: "-rate-limit@kubernetescrd"
 
   - it: renders neither the middleware nor its reference when the rate limit is off
     set:
