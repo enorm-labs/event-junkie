@@ -1,5 +1,5 @@
 {
-  "componentCount": 349,
+  "componentCount": 368,
   "licenses": [
     {
       "license": "Apache-2.0",
@@ -21,12 +21,6 @@
           "name": "@swc/helpers",
           "version": "0.5.23",
           "url": "https://github.com/swc-project/swc",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "atob",
-          "version": "2.1.2",
-          "url": "git://git.coolaj86.com/coolaj86/atob.js",
           "ecosystem": "frontend"
         },
         {
@@ -1230,6 +1224,12 @@
       "url": "https://opensource.org/license/mit",
       "components": [
         {
+          "name": "@adobe/css-tools",
+          "version": "4.3.3",
+          "url": "https://github.com/adobe/css-tools",
+          "ecosystem": "frontend"
+        },
+        {
           "name": "@babel/helper-string-parser",
           "version": "7.29.7",
           "url": "https://github.com/babel/babel",
@@ -1353,6 +1353,12 @@
           "name": "@oxc-project/types",
           "version": "0.147.0",
           "url": "https://github.com/oxc-project/oxc",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@pkgjs/parseargs",
+          "version": "0.11.0",
+          "url": "https://github.com/pkgjs/parseargs",
           "ecosystem": "frontend"
         },
         {
@@ -1494,6 +1500,30 @@
           "ecosystem": "frontend"
         },
         {
+          "name": "ansi-regex",
+          "version": "5.0.1",
+          "url": "https://github.com/chalk/ansi-regex",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "ansi-regex",
+          "version": "6.3.0",
+          "url": "https://github.com/chalk/ansi-regex",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "ansi-styles",
+          "version": "4.3.0",
+          "url": "https://github.com/chalk/ansi-styles",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "ansi-styles",
+          "version": "6.2.3",
+          "url": "https://github.com/chalk/ansi-styles",
+          "ecosystem": "frontend"
+        },
+        {
           "name": "aria-hidden",
           "version": "1.2.6",
           "url": "https://github.com/theKashey/aria-hidden",
@@ -1512,12 +1542,6 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "atob",
-          "version": "2.1.2",
-          "url": "git://git.coolaj86.com/coolaj86/atob.js",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "balanced-match",
           "version": "1.0.2",
           "url": "https://github.com/juliangruber/balanced-match",
@@ -1531,7 +1555,7 @@
         },
         {
           "name": "brace-expansion",
-          "version": "1.1.18",
+          "version": "2.1.4",
           "url": "https://github.com/juliangruber/brace-expansion",
           "ecosystem": "frontend"
         },
@@ -1548,9 +1572,15 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "concat-map",
-          "version": "0.0.1",
-          "url": "https://github.com/substack/node-concat-map",
+          "name": "color-convert",
+          "version": "2.0.1",
+          "url": "https://github.com/Qix-/color-convert",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "color-name",
+          "version": "1.1.4",
+          "url": "https://github.com/colorjs/color-name",
           "ecosystem": "frontend"
         },
         {
@@ -1566,9 +1596,9 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "css",
-          "version": "3.0.0",
-          "url": "https://github.com/reworkcss/css",
+          "name": "cross-spawn",
+          "version": "7.0.6",
+          "url": "https://github.com/moxystudio/node-cross-spawn",
           "ecosystem": "frontend"
         },
         {
@@ -1584,15 +1614,27 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "decode-uri-component",
-          "version": "0.2.2",
-          "url": "https://github.com/SamVerschueren/decode-uri-component",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "defu",
           "version": "6.1.7",
           "url": "https://github.com/unjs/defu",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "eastasianwidth",
+          "version": "0.2.0",
+          "url": "https://github.com/komagata/eastasianwidth",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "emoji-regex",
+          "version": "8.0.0",
+          "url": "https://github.com/mathiasbynens/emoji-regex",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "emoji-regex",
+          "version": "9.2.2",
+          "url": "https://github.com/mathiasbynens/emoji-regex",
           "ecosystem": "frontend"
         },
         {
@@ -1617,6 +1659,12 @@
           "name": "hookable",
           "version": "5.5.3",
           "url": "https://github.com/unjs/hookable",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "is-fullwidth-code-point",
+          "version": "3.0.0",
+          "url": "https://github.com/sindresorhus/is-fullwidth-code-point",
           "ecosystem": "frontend"
         },
         {
@@ -1722,9 +1770,9 @@
           "ecosystem": "backend"
         },
         {
-          "name": "path-is-absolute",
-          "version": "1.0.1",
-          "url": "https://github.com/sindresorhus/path-is-absolute",
+          "name": "path-key",
+          "version": "3.1.1",
+          "url": "https://github.com/sindresorhus/path-key",
           "ecosystem": "frontend"
         },
         {
@@ -1794,26 +1842,50 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "safer-buffer",
-          "version": "2.1.2",
-          "url": "https://github.com/ChALkeR/safer-buffer",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "scule",
           "version": "1.3.0",
           "url": "https://github.com/unjs/scule",
           "ecosystem": "frontend"
         },
         {
-          "name": "source-map-resolve",
-          "version": "0.6.0",
-          "url": "https://github.com/lydell/source-map-resolve",
+          "name": "shebang-command",
+          "version": "2.0.0",
+          "url": "https://github.com/kevva/shebang-command",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "shebang-regex",
+          "version": "3.0.0",
+          "url": "https://github.com/sindresorhus/shebang-regex",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "string-width",
+          "version": "4.2.3",
+          "url": "https://github.com/sindresorhus/string-width",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "string-width",
+          "version": "5.1.2",
+          "url": "https://github.com/sindresorhus/string-width",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "strip-ansi",
+          "version": "6.0.1",
+          "url": "https://github.com/chalk/strip-ansi",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "strip-ansi",
+          "version": "7.2.0",
+          "url": "https://github.com/chalk/strip-ansi",
           "ecosystem": "frontend"
         },
         {
           "name": "stylus",
-          "version": "0.57.0",
+          "version": "0.64.0",
           "url": "https://github.com/stylus/stylus",
           "ecosystem": "frontend"
         },
@@ -1912,6 +1984,18 @@
           "version": "0.6.2",
           "url": "https://github.com/sysgears/webpack-virtual-modules",
           "ecosystem": "frontend"
+        },
+        {
+          "name": "wrap-ansi",
+          "version": "7.0.0",
+          "url": "https://github.com/chalk/wrap-ansi",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "wrap-ansi",
+          "version": "8.1.0",
+          "url": "https://github.com/chalk/wrap-ansi",
+          "ecosystem": "frontend"
         }
       ]
     },
@@ -1920,45 +2004,45 @@
       "url": "https://opensource.org/license/isc-license-txt",
       "components": [
         {
+          "name": "@isaacs/cliui",
+          "version": "8.0.2",
+          "url": "https://github.com/yargs/cliui",
+          "ecosystem": "frontend"
+        },
+        {
           "name": "@lucide/vue",
           "version": "1.37.0",
           "url": "https://github.com/lucide-icons/lucide",
           "ecosystem": "frontend"
         },
         {
-          "name": "fs.realpath",
-          "version": "1.0.0",
-          "url": "https://github.com/isaacs/fs.realpath",
+          "name": "foreground-child",
+          "version": "3.3.1",
+          "url": "https://github.com/tapjs/foreground-child",
           "ecosystem": "frontend"
         },
         {
           "name": "glob",
-          "version": "7.2.3",
+          "version": "10.5.0",
           "url": "https://github.com/isaacs/node-glob",
           "ecosystem": "frontend"
         },
         {
-          "name": "inflight",
-          "version": "1.0.6",
-          "url": "https://github.com/npm/inflight",
+          "name": "isexe",
+          "version": "2.0.0",
+          "url": "https://github.com/isaacs/isexe",
           "ecosystem": "frontend"
         },
         {
-          "name": "inherits",
-          "version": "2.0.4",
-          "url": "https://github.com/isaacs/inherits",
+          "name": "lru-cache",
+          "version": "10.4.3",
+          "url": "https://github.com/isaacs/node-lru-cache",
           "ecosystem": "frontend"
         },
         {
           "name": "minimatch",
-          "version": "3.1.5",
+          "version": "9.0.9",
           "url": "https://github.com/isaacs/minimatch",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "once",
-          "version": "1.4.0",
-          "url": "https://github.com/isaacs/once",
           "ecosystem": "frontend"
         },
         {
@@ -1968,15 +2052,15 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "sax",
-          "version": "1.2.4",
-          "url": "https://github.com/isaacs/sax-js",
+          "name": "signal-exit",
+          "version": "4.1.0",
+          "url": "https://github.com/tapjs/signal-exit",
           "ecosystem": "frontend"
         },
         {
-          "name": "wrappy",
-          "version": "1.0.2",
-          "url": "https://github.com/npm/wrappy",
+          "name": "which",
+          "version": "2.0.2",
+          "url": "https://github.com/isaacs/node-which",
           "ecosystem": "frontend"
         },
         {
@@ -2090,6 +2174,42 @@
       ]
     },
     {
+      "license": "BlueOak-1.0.0",
+      "url": "https://blueoakcouncil.org/license/1.0.0",
+      "components": [
+        {
+          "name": "jackspeak",
+          "version": "3.4.3",
+          "url": "https://github.com/isaacs/jackspeak",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "minipass",
+          "version": "7.1.3",
+          "url": "https://github.com/isaacs/minipass",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "package-json-from-dist",
+          "version": "1.0.1",
+          "url": "https://github.com/isaacs/package-json-from-dist",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "path-scurry",
+          "version": "1.11.1",
+          "url": "https://github.com/isaacs/path-scurry",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "sax",
+          "version": "1.4.4",
+          "url": "https://github.com/isaacs/sax-js",
+          "ecosystem": "frontend"
+        }
+      ]
+    },
+    {
       "license": "BSD-3-Clause",
       "url": "https://opensource.org/license/bsd-3-clause",
       "components": [
@@ -2104,12 +2224,6 @@
           "version": "4.0.5",
           "url": "https://www.eclipse.org",
           "ecosystem": "backend"
-        },
-        {
-          "name": "source-map",
-          "version": "0.6.1",
-          "url": "https://github.com/mozilla/source-map",
-          "ecosystem": "frontend"
         },
         {
           "name": "source-map",
