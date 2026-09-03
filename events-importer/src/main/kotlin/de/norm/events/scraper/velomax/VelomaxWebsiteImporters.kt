@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component
  * @see VelomaxOverviewPageScraper for the listing (discovery, hall filter, sport exclusion).
  * @see VelomaxDetailPageScraper for the Microdata detail pages.
  */
+@Suppress("AbstractClassCanBeConcreteClass") // A base for the venue importers below it; an instance of it alone names no venue.
 abstract class AbstractVelomaxHallImporter(
     htmlFetcher: HtmlFetcher,
     private val hall: VelomaxHall

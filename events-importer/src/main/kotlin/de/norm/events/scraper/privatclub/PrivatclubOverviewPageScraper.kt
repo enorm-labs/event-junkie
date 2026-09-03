@@ -151,7 +151,7 @@ class PrivatclubOverviewPageScraper(
         val subtitle = header.textAt("span.untertitel")?.takeIf { it.isNotBlank() }
 
         // Status from label element (sold out, rescheduled, cancelled)
-        val statusLabel = header.textAt(".label.notice")?.lowercase() ?: ""
+        val statusLabel = header.textAt(".label.notice")?.lowercase().orEmpty()
         val soldOut =
             statusLabel.contains("ausverkauft") || statusLabel.contains("sold out") ||
                 (detail?.selectFirst(".tickets_vkk.soldout") != null)
@@ -164,7 +164,7 @@ class PrivatclubOverviewPageScraper(
         val description = parseDescription(detail)
 
         // Promoter name from the "Örtlicher Veranstalter" section
-        val promoters = parsePromoterName(detail)?.let { listOf(it) } ?: emptyList()
+        val promoters = parsePromoterName(detail)?.let { listOf(it) }.orEmpty()
 
         // Artists extraction — for concerts the title is the headliner (support
         // acts come from the subtitle's "Support: <name>" pattern); parties and
@@ -331,7 +331,7 @@ class PrivatclubOverviewPageScraper(
         detail: Element?,
         header: Element
     ): Pair<LocalTime?, LocalTime?> {
-        val zeitText = detail?.textAt(".zeit_einlass") ?: ""
+        val zeitText = detail?.textAt(".zeit_einlass").orEmpty()
 
         // Extract "Einlass: HH:mm" and "Beginn: HH:mm" from the combined text
         val doorsMatch = EINLASS_PATTERN.find(zeitText)
@@ -394,8 +394,8 @@ class PrivatclubOverviewPageScraper(
             // Uses .closest() to find the enclosing .flex_wrapper instead of
             // fragile parent-chain navigation (vkkDiv sits inside
             // .linkbar > .flex_wrapper.ticketlinks > .flex > .tickets_vkk).
-            val linkbarText = detail.selectFirst(".linkbar")?.ownText() ?: ""
-            val ticketText = vkkDiv.closest(".flex_wrapper")?.text() ?: ""
+            val linkbarText = detail.selectFirst(".linkbar")?.ownText().orEmpty()
+            val ticketText = vkkDiv.closest(".flex_wrapper")?.text().orEmpty()
             val combinedText = "$linkbarText $ticketText"
 
             // Try to find a VVK/presale price

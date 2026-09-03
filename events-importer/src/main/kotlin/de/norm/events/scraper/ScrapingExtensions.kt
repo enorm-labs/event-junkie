@@ -117,7 +117,7 @@ fun Element.hasVisibleWebflowFlag(
  * text inside nested inline elements is appended to the current line. Returns an
  * empty list when no element matches.
  */
-fun Element.textLinesAt(cssQuery: String): List<String> = selectFirst(cssQuery)?.textLines() ?: emptyList()
+fun Element.textLinesAt(cssQuery: String): List<String> = selectFirst(cssQuery)?.textLines().orEmpty()
 
 /**
  * Splits this element's own text into its `<br>`-delimited lines, each trimmed, with blank lines

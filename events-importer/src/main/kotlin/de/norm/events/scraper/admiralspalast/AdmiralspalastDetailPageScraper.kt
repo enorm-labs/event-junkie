@@ -137,7 +137,7 @@ class AdmiralspalastDetailPageScraper {
             // one token, matching the Uber and Heimathafen scrapers.
             sourceId =
                 "${EventSource.ADMIRALSPALAST.sourceIdPrefix}$slug-$eventDate" +
-                    (startTime?.format(SOURCE_ID_TIME)?.let { "-$it" } ?: ""),
+                    startTime?.format(SOURCE_ID_TIME)?.let { "-$it" }.orEmpty(),
             // The venue bills no lineup, so the act is whatever the production title names. The
             // subtitle is deliberately not offered as a support-act source: it only ever carries the
             // reschedule note, which would be minted as a performer.

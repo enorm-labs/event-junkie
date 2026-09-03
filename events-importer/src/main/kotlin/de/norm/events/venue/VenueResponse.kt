@@ -48,7 +48,7 @@ data class VenueResponse(
         /** Converts a domain [Venue] to its API response representation. */
         fun fromDomain(venue: Venue): VenueResponse =
             VenueResponse(
-                id = venue.id!!,
+                id = requireNotNull(venue.id) { "Persisted venue must have an ID" },
                 name = venue.name,
                 slug = venue.slug,
                 address = venue.address,

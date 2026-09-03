@@ -84,6 +84,7 @@ data class EventSummaryResponse(
     val genreTags: List<String>
 ) {
     companion object {
+        @Suppress("LongParameterList") // A row-to-response mapper takes one parameter per column it cannot read off the entity.
         fun fromEntity(
             entity: EventEntity,
             venue: VenueSummaryResponse,
@@ -211,6 +212,7 @@ data class EventDetailResponse(
     val genreTags: List<String>
 ) {
     companion object {
+        @Suppress("LongParameterList") // A row-to-response mapper takes one parameter per column it cannot read off the entity.
         fun fromEntity(
             entity: EventEntity,
             venue: VenueSummaryResponse,

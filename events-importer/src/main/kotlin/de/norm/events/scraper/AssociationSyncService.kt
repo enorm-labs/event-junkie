@@ -540,7 +540,7 @@ class AssociationSyncService(
         val created = insertIfAbsent(slug) == 1
         val entity =
             findBySlug(slug)
-                ?: throw IllegalStateException("Entity with slug '$slug' not found after insert-if-absent")
+                ?: error("Entity with slug '$slug' not found after insert-if-absent")
 
         if (created) {
             logger.info { "Auto-created ${entity::class.simpleName} '$name' (slug=$slug)" }

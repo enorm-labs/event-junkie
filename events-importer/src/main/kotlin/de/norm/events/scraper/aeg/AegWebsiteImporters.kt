@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component
  * @see AegOverviewPageScraper for the listing (discovery, category, date, price).
  * @see AegDetailPageScraper for the detail pages (doors, description, ticket).
  */
+@Suppress("AbstractClassCanBeConcreteClass") // A base for the venue importers below it; an instance of it alone names no venue.
 abstract class AbstractAegVenueImporter(
     htmlFetcher: HtmlFetcher,
     override val eventSource: EventSource

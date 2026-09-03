@@ -429,7 +429,7 @@ class GretchenOverviewPageScraper {
                 ?.substringAfter(":")
                 ?.trim()
                 ?.takeIf { it.isNotBlank() && !it.equals("Gretchen", ignoreCase = true) }
-        return name?.let { listOf(it) } ?: emptyList()
+        return name?.let { listOf(it) }.orEmpty()
     }
 
     companion object {

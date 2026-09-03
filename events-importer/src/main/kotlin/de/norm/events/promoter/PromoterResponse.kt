@@ -30,7 +30,7 @@ data class PromoterResponse(
         /** Converts a domain [Promoter] to its API response representation. */
         fun fromDomain(promoter: Promoter): PromoterResponse =
             PromoterResponse(
-                id = promoter.id!!,
+                id = requireNotNull(promoter.id) { "Persisted promoter must have an ID" },
                 name = promoter.name,
                 slug = promoter.slug,
                 websiteUrl = promoter.websiteUrl,

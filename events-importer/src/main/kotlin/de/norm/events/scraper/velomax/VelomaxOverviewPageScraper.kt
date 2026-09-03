@@ -112,7 +112,7 @@ class VelomaxOverviewPageScraper {
             // first of each and silently drop the rest. The colon is left out (`-1830`) so the id
             // reads as one token, matching the Admiralspalast, Uber and Heimathafen scrapers. An
             // entry with no published time keeps the bare slug — nothing to disambiguate it with.
-            sourceId = "${hall.eventSource.sourceIdPrefix}$slug" + (startTime?.format(SOURCE_ID_TIME)?.let { "-$it" } ?: ""),
+            sourceId = "${hall.eventSource.sourceIdPrefix}$slug" + startTime?.format(SOURCE_ID_TIME)?.let { "-$it" }.orEmpty(),
             soldOut = signal.contains(SOLD_OUT_SIGNAL, ignoreCase = true),
             artists = buildArtistsForEventType(title, subtitle, eventType)
         )

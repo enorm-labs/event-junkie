@@ -147,7 +147,7 @@ class CachedImageController(
          */
         val FILE_NAME = Regex("^([0-9]{1,4})\\.(${ImageFormats.ORDERED.joinToString("|")})$")
 
-        /** Parsed once. The header can only ever be one of the types [ImageFormats] names. */
-        val MEDIA_TYPES = ImageFormats.ORDERED.associateWith { MediaType.parseMediaType(ImageFormats.mediaType(it)!!) }
+        /** Parsed once, off the map [ImageFormats] serves from, so the two key sets cannot drift. */
+        val MEDIA_TYPES = ImageFormats.MEDIA_TYPES.mapValues { (_, type) -> MediaType.parseMediaType(type) }
     }
 }

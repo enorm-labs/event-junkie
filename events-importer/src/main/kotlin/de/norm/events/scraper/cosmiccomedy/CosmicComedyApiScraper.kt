@@ -135,7 +135,7 @@ class CosmicComedyApiScraper {
         val performer =
             title
                 .takeIf { categories.any { category -> category.equals(SPECIAL_CATEGORY, ignoreCase = true) } }
-                ?.split(*TITLE_DASHES)
+                ?.split(TITLE_DASHES)
                 ?.takeIf { it.size > 1 }
                 ?.first()
                 ?.trim()
@@ -194,7 +194,7 @@ private val API_DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy
 private const val SPECIAL_CATEGORY = "Comedy Special"
 
 /** The dashes the club separates a performer from their show title with. */
-private val TITLE_DASHES = charArrayOf('–', '—')
+private val TITLE_DASHES = Regex("[–—]")
 
 /** Captures the Universe listing id out of the ticket widget embedded in a description. */
 private val UNIVERSE_WIDGET_PATTERN = Regex("""data-target-id="([^"]+)"""")

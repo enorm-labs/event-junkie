@@ -38,7 +38,7 @@ data class ArtistResponse(
         /** Converts a domain [Artist] to its API response representation. */
         fun fromDomain(artist: Artist): ArtistResponse =
             ArtistResponse(
-                id = artist.id!!,
+                id = requireNotNull(artist.id) { "Persisted artist must have an ID" },
                 name = artist.name,
                 slug = artist.slug,
                 description = artist.description,

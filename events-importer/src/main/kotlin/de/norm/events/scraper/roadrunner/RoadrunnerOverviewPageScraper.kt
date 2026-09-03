@@ -84,6 +84,7 @@ class RoadrunnerOverviewPageScraper(
      * Paragraphs before the first date line (page header) and after the last
      * separator (footer) belong to no block and are dropped.
      */
+    @Suppress("DoubleMutabilityForCollection") // The segmenter both starts a block (reassign) and extends it (mutate).
     private fun splitIntoEventBlocks(paragraphs: List<Element>): List<List<Element>> {
         val blocks = mutableListOf<List<Element>>()
         var current: MutableList<Element>? = null
