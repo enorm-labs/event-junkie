@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.web.reactive.function.client.WebClient
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.util.Locale
 import javax.imageio.ImageIO
 
 /**
@@ -287,7 +288,7 @@ class ImageFetcherTest {
         java.security.MessageDigest
             .getInstance("SHA-256")
             .digest(bytes)
-            .joinToString("") { "%02x".format(it) }
+            .joinToString("") { "%02x".format(Locale.ROOT, it) }
 }
 
 private val PNG_MAGIC_BYTES = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)

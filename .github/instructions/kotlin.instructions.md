@@ -29,10 +29,12 @@ How code here is written, and where its versions and thresholds live. Comments h
   plugin needs no second edit. The 2.0 line is still pre-release; the alpha
   is tracked deliberately because it is what supports current Kotlin (see the compatibility-table link in `settings.gradle.kts`). Builds upon default config
   with overrides in root `detekt.yml` (currently only `MaxLineLength: 160`). Run `./gradlew detekt` to analyze all modules.
-- **`detekt` and `detektMain` run different rules, and CI runs both** (#407). An entire class of rules — `UnsafeCallOnNullableType`, `UseOrEmpty`,
-  `UnusedPrivateProperty`, `LongParameterList` — needs resolved types, so `detekt` alone silently _skips_ them rather than passing them. `detektMain`
-  compiles the main source sets first and runs them. `detektTest` is the same analysis over test sources and is **not** gated yet: it still reports
-  findings.
+- **`detekt`, `detektMain` and `detektTest` run different rules, and CI runs all three** (#407). An entire class of rules — `UnsafeCallOnNullableType`,
+  `UseOrEmpty`, `UnusedPrivateProperty`, `LongParameterList` — needs resolved types, so `detekt` alone silently _skips_ them rather than passing them. The
+  other two compile the main and test source sets first and run them.
+- **Four rules are tuned for test sources in `detekt.yml`, each with its reason there.** A fixture builder's parameter list is the record it builds, every
+  `IgnoredReturnValue` in this tree is a call inside MockK's `coVerify` recording DSL, a test naming `Dispatchers.IO` _is_ the substitution
+  `InjectDispatcher` asks for, and `lateinit val` does not exist. Read the file before adding a `@Suppress` for one of them.
 - **Max line length**: 160 characters (enforced by both `.editorconfig` and `detekt.yml`).
 - Centralized library versions in **`gradle.properties`** (`java.version`, `jsoup.version`, `kotest.version`,
   `kotlin-logging.version`, `mockk.version`, `mockwebserver.version`, `slugify.version`, `spring-modulith.version`,

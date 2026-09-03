@@ -31,6 +31,7 @@ import java.time.Duration
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMetrics
 @Import(PostgresTestcontainersConfiguration::class)
+@Suppress("AbstractClassCanBeConcreteClass") // The shared setup for the suites below it; an instance of it alone tests nothing.
 abstract class BaseControllerTest {
     @LocalServerPort
     protected var port: Int = 0
