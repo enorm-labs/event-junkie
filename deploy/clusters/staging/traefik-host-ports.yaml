@@ -2,12 +2,10 @@
 # without passing through ServiceLB.
 #
 # **This replaces `externalTrafficPolicy: Local`, which was measured and was not enough.** k3s did
-# point klipper-lb at the node and its NodePort rather than the ClusterIP. klipper-lb still installed
-# `iptables -t nat -I POSTROUTING -d <nodeIP>/32 -j MASQUERADE`, rewriting the source before the
-# packet reached the NodePort where `Local` would have preserved it.
+# aim klipper-lb at the node and its NodePort, and klipper-lb still installed a MASQUERADE, which
+# rewrote the source before the packet reached the NodePort.
 #
-# **`type: ClusterIP` is what frees the ports.** svclb's own containers declare `hostPort: 80` and
-# `hostPort: 443`, so Traefik cannot hold them while the Service is a LoadBalancer.
+# **`type: ClusterIP` frees the ports** — svclb's own containers declare `hostPort: 80` and `443`.
 #
 # **A hostPort rather than `hostNetwork`, and the NetworkPolicies decide that.** The chart finds
 # Traefik by `podSelector: app.kubernetes.io/name: traefik`. A hostPort leaves the pod its own
@@ -27,14 +25,19 @@ spec:
         hostPort: 80
       websecure:
         hostPort: 443
-    # **Temporary, and here to measure one thing (#1013).** Traefik logs nothing by default, which
-    # is half of why "no IP address is logged" holds. Without a logged source address the hostPort
-    # can only be inferred to work from an absent iptables rule, never observed to.
-    #
-    # **Remove it the same day.** The collector ships every container's stdout to OpenObserve, kept
-    # 14 days, so this writes addresses into the log store for as long as it is on. Staging is
-    # reachable only through WireGuard, so the only address it can capture is the operator's own —
-    # which is what makes it acceptable here and **never on production**. See docs/LEGAL.md §7.5.1.
+    # **A hostPort and a rolling update cannot both work on one node.** The chart's
+    # `maxUnavailable: 0` starts the replacement before stopping the old pod, and it cannot
+    # schedule while the old one holds 80 and 443. Observed, not predicted: the access-log rollout
+    # left a pod `Pending` on "didn't have free ports", and it would never have recovered.
+    # `Recreate` stops the old pod first — an ingress gap on every Traefik change, bounded by
+    # `terminationGracePeriodSeconds` (60).
+    updateStrategy:
+      type: Recreate
+    # **Temporary, to measure one thing (#1013), and removed the same day.** Traefik logs nothing by
+    # default, so a preserved client address can only be inferred from an absent iptables rule.
+    # While this is on, the collector ships addresses into OpenObserve and keeps them 14 days.
+    # Staging answers only through WireGuard, so the only address it can capture is the operator's
+    # own — acceptable here and **never on production**, where docs/LEGAL.md §7.5.1 governs.
     logs:
       access:
         enabled: true
