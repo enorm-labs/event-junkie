@@ -20,13 +20,12 @@
 # the drift returns silently — the same failure this exists to end. `notices.json` itself is on the
 # list so that a hand-edit is caught, since the file says at the top that it is generated.
 #
-# **The notices differ by platform, and this job is what decides the answer.** `license-checker`
-# walks `node_modules`, and optional dependencies are not the same on every operating system — a
-# macOS install carries `fsevents` and a Linux one does not. So a file regenerated on a laptop fails
-# here over one component in four thousand lines of JSON, which is exactly how this check first
-# failed. `notices-parity.sh` warns when it is not run on Linux and gives the container command that
-# reproduces this runner. The real fix is in the generator, since `fsevents` is a native file-watcher
-# binding that reaches no user and does not belong in a production notice on any platform.
+# **This job is the authority on what the notices should contain.** `license-checker` walks
+# `node_modules`, where optional dependencies are not the same on every operating system, so the
+# generator drops the platform-named binaries and anything whose `os` field excludes Linux (#1043)
+# — without which a file regenerated on a laptop fails here over one component in four thousand
+# lines of JSON. A package restricted to Linux would be missing from a macOS install and is the one
+# asymmetry left unguarded, because nothing in the tree is Linux-only.
 #
 # This check is **not** on the `main` ruleset's required list, which is what makes a `paths:` filter
 # safe here: a required check that never runs stays Pending forever and deadlocks the pull request
