@@ -1,6 +1,6 @@
 {{- if and .Values.ingress.enabled .Values.ingress.redirectHosts }}
 {{- $args := dict "ctx" $ "component" "redirect" }}
-{{- /* The one Traefik-specific object in the chart, and it is here because there is no portable
+{{- /* The first Traefik-specific object in the chart, and it is here because there is no portable
        alternative: the Ingress API has no way to express a redirect, so every controller does it
        through its own extension. The /api routing deliberately avoided a Traefik Middleware (§3.1)
        because that rewrite *could* live in the application and therefore travel with the image; a
@@ -17,7 +17,7 @@ metadata:
     {{- include "event-junkie.labels" $args | nindent 4 }}
   annotations:
     kubernetes.io/description: >-
-      The only Traefik-specific object in this chart. The Ingress API cannot express a redirect, so
+      One of four Traefik-specific objects in this chart. The Ingress API cannot express a redirect, so
       every controller does it through its own extension. Gated on ingress.redirectHosts.
 spec:
   redirectRegex:

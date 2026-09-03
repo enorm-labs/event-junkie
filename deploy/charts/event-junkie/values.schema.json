@@ -190,7 +190,8 @@
         "className",
         "host",
         "tls",
-        "securityHeaders"
+        "securityHeaders",
+        "rateLimit"
       ],
       "properties": {
         "enabled": {
@@ -267,6 +268,51 @@
                 },
                 "preload": {
                   "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "rateLimit": {
+          "description": "Bounds what one client may cost, via a Traefik Middleware (#268). inFlightRequests always applies; perSource needs a client address that survives the load balancer.",
+          "type": "object",
+          "required": [
+            "enabled",
+            "inFlightRequests",
+            "perSource"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "inFlightRequests": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "perSource": {
+              "description": "Per-client request rate. Off while k3s ServiceLB masquerades the client address, which would make it one budget for every visitor.",
+              "type": "object",
+              "required": [
+                "enabled",
+                "average",
+                "burst",
+                "period"
+              ],
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "average": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "burst": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "period": {
+                  "type": "string",
+                  "minLength": 1
                 }
               }
             }

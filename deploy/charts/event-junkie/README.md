@@ -367,7 +367,31 @@ response header has no Ingress API vocabulary, which is why this is Traefik-spec
   origins enumerated first, plus a report-only period. Its own issue, not a line in a values file.
 
 The Ingress annotation that names these is a **comma-separated string with no schema behind it**, so a stray comma or an empty element silently drops _every_
-middleware on the router. It is built as a list in one place, and `tests/ingress_test.yaml` pins the whole string for all three combinations.
+middleware on the router. It is built as a list in one place, and `tests/ingress_test.yaml` pins the whole string rather than checking that each name appears
+somewhere in it — which is what makes a malformed join fail there.
+
+### `ingress.rateLimit` — one half works here and one half cannot
+
+`ingress.rateLimit` renders a fourth Traefik `Middleware`, and its two limits are enabled independently because only one of them is meaningful on this cluster.
+
+| Limit                              | Grouped by               | Default | Why                                                                               |
+| ---------------------------------- | ------------------------ | ------- | --------------------------------------------------------------------------------- |
+| `inFlightReq` (`inFlightRequests`) | request host, by default | **on**  | Bounds concurrency, so it holds whatever address Traefik sees                     |
+| `rateLimit` (`perSource.*`)        | the client's address     | **off** | k3s masquerades that address, so it would be one budget for every visitor at once |
+
+**Why the per-source half is off, and what turns it on.** k3s exposes Traefik through ServiceLB, whose `klipper-lb` container installs
+`iptables -t nat -I POSTROUTING -d <clusterIP> -j MASQUERADE`. Every packet is rewritten before Traefik reads it, so Traefik's peer is the `svclb` pod for every
+visitor and `X-Forwarded-For` inherits the same address. A per-source limit would therefore group the whole internet as one source and throttle every visitor
+together — worse than no limit, and indistinguishable from a working deployment.
+
+The Traefik Service needs `externalTrafficPolicy: Local` before the client address survives. That is a cluster-level change, outside this chart and outside
+GitOps.
+
+**`inFlightRequests` guards the resource that actually runs out.** Each BFF replica holds ten R2DBC connections; past the cap a client gets a `429` rather than
+joining a queue behind them. The number is a starting point rather than a measurement — `k6 run perf/spike.js` is what re-derives it.
+
+**`sourceCriterion.requestHost` on `rateLimit` is deliberately absent.** It would make the per-source limit render and apply today, as one budget for the whole
+site, which hands any single client the ability to spend everybody's.
 
 ## Validating a change
 

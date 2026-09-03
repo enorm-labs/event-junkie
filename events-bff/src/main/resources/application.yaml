@@ -6,6 +6,12 @@ spring:
       schema: events
 
 app:
+  api:
+    # The largest page the public read API returns (#268). `@PageableDefault` sets a default and
+    # never a maximum, and `spring.data.web.pageable.max-page-size` is servlet-only — see
+    # StableSortPageableArgumentResolver, which is the only place this can be applied. 100 rather
+    # than 20, because the venue detail feed asks for 50.
+    max-page-size: 100
   images:
     serving:
       # Off means a response carries the venue's own URL, which is what the site does today. On means
