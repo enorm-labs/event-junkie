@@ -5,14 +5,12 @@
  * rather than typing them twice.
  *
  * Structured against the twelve mandatory items in docs/LEGAL.md §7.2 — missing one is the usual
- * defect. It deliberately does **not** describe processing that does not happen: no cookie table,
- * no consent withdrawal, no analytics section. Describing imaginary processing is as inaccurate as
- * omitting real processing.
+ * defect. It describes no processing that does not happen: no cookie table, no consent withdrawal,
+ * no analytics. Imaginary processing is as inaccurate as omitting real processing.
  *
- * Retention and IP logging are settled (§7.5.1): no IP address is logged, and §2 states **14 days**.
- * That number is `ZO_COMPACT_DATA_RETENTION_DAYS` in both clusters' `openobserve.yaml`, whose own
- * comment says this notice must state whatever it says — so changing it there changes a published
- * claim, and the two move together.
+ * **Two claims here are coupled to deployed configuration** (§7.5.1, §7.3a). §2's **14 days** is
+ * `ZO_COMPACT_DATA_RETENTION_DAYS`, and §5's "no image request reaches a third party" is
+ * `images.serving.enabled`. Change either value and this notice becomes false.
  */
 import { useI18n } from 'vue-i18n'
 
@@ -38,13 +36,13 @@ const { t } = useI18n()
         Event Junkie sets no cookies, runs no analytics, embeds no third-party fonts, maps, social
         widgets or advertising, and has no user accounts. Nothing you do here is tracked or
         profiled. What remains is the unavoidable minimum: a web server records requests so the site
-        can be delivered and defended, and your browser remembers whether you chose light or dark
-        mode.
+        can be delivered and defended, and your browser remembers which language and which display
+        mode you chose.
       </p>
       <p>
-        <strong>Images are the one exception.</strong> Some of them are loaded directly from the
-        servers of venues and promoters, which learn your IP address in the process. Section 5 says
-        which ones, and what we are doing about it.
+        <strong>Images come from us too.</strong> Event Junkie downloads them once and serves them
+        itself, so viewing a page sends your browser to nobody else. Section 5 says what follows
+        from that.
       </p>
     </section>
 
@@ -108,15 +106,24 @@ const { t } = useI18n()
     <section>
       <h2>3. Local storage on your device</h2>
       <p>
-        This site sets <strong>no cookies</strong>. It stores exactly one value in your browser's
-        local storage: a key named <code>theme</code>, holding <code>light</code> or
-        <code>dark</code>, so your display preference survives a reload.
+        This site sets <strong>no cookies</strong>. It stores exactly two values in your browser's
+        local storage, and both only record a setting you made yourself:
       </p>
+      <ul>
+        <li>
+          <code>theme</code>, holding <code>light</code> or <code>dark</code>, so your display
+          preference survives a reload
+        </li>
+        <li>
+          <code>locale</code>, holding <code>de</code> or <code>en</code>, so your next visit starts
+          in the language you last chose
+        </li>
+      </ul>
       <p>
-        This value never leaves your device, is not transmitted to us or to anyone else, and is not
-        readable by any third party. It is strictly necessary to provide the display setting you
-        explicitly chose, so under § 25 (2) 2 TDDDG it requires no consent — which is why you are
-        not being asked to dismiss a banner. You can clear it at any time through your browser
+        These values never leave your device, are not transmitted to us or to anyone else, and are
+        not readable by any third party. Both are strictly necessary to provide the setting you
+        explicitly chose, so under § 25 (2) 2 TDDDG they require no consent — which is why you are
+        not being asked to dismiss a banner. You can clear them at any time through your browser
         settings.
       </p>
       <p>
@@ -188,16 +195,11 @@ const { t } = useI18n()
         in delivering this site to you and there is no transfer mechanism to disclose.
       </p>
       <p>
-        <strong>That does not yet hold for every image.</strong> Some images are loaded directly
-        from the servers of venues, promoters and ticket sellers. Your browser requests them there,
-        and that server learns your IP address — and, through the referer, which page you are
-        looking at. These providers are not processors: we do not instruct them, we point at their
-        images.
-      </p>
-      <p>
-        We now store a copy of each of these images of our own (section 4), so that they will come
-        from our servers. Until that is switched over everywhere, a content blocker in your browser
-        will stop those requests if you would rather avoid them.
+        <strong>That holds for images as well.</strong> They come from our servers, because Event
+        Junkie downloads each one and serves it itself (section 4). Your browser therefore contacts
+        no venue, promoter or ticket seller, and none of them learns your IP address when you look
+        at a page. Where we may not store an image, we show none at all rather than loading it from
+        the provider.
       </p>
       <p>
         If you contact us by email, or open an issue on GitHub, that data is processed to handle
@@ -233,8 +235,8 @@ const { t } = useI18n()
       </p>
       <p>
         <strong>Right to complain.</strong> You may lodge a complaint with a supervisory authority,
-        in particular in the member state of your residence or place of work. The authority
-        responsible for us is the
+        in particular in the member state of your habitual residence, your place of work, or the
+        place of the alleged infringement. The authority responsible for us is the
         <a :href="SUPERVISORY_AUTHORITY.url" rel="noopener" target="_blank">
           {{ SUPERVISORY_AUTHORITY.name }}
         </a>

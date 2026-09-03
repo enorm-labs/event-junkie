@@ -76,6 +76,8 @@ spec:
     # distinct images the events reference are cached and derived. The rest are images we are not
     # allowed to hold -- one venue's CDN publishes `Disallow: /` -- so those cards show no image
     # rather than a hotlink, which is the point (#843).
+    # `serving.enabled` is a published claim: §5 of the privacy notice says no image request
+    # reaches a third party, and that is only true while this is on (LEGAL.md §7.3a).
     images:
       enabled: true
       serving:
