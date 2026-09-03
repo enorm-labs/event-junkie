@@ -33,7 +33,8 @@ What each workflow is for, which checks are required, and the shapes that fail s
       cannot do: a CVE disclosed against an already-running image triggers no build, so that gate is silent exactly when the risk is newest. Same split as the
       two Dependency-Check workflows above. Three things about it are decisions rather than defaults. **It scans a published tag, not a rebuild of `main`** —
       `scripts/deployed-versions.sh` reproduces Flux's own selection, so the target cannot drift from what is deployed and production starts being scanned by
-      itself the day it has a release. **It scans arm64 as well as amd64**, which `release.yml` cannot (a multi-platform image cannot be loaded into a local
+      itself the day it has a release — a claim that held only after #1027, because the resolver read one 100-tag page of a paginated registry and every release
+      chart sat past it, so this job scanned a fortnight-old snapshot and called production unscannable. **It scans arm64 as well as amd64**, which `release.yml` cannot (a multi-platform image cannot be loaded into a local
       daemon before it is pushed) and which matters because arm64 is what the Hetzner nodes run. **Its thresholds match `release.yml`'s exactly**
       (`CRITICAL,HIGH`, `--ignore-unfixed`) so that a finding here which the publish gate did not raise means the advisory is new rather than the scanner
       different. It asserts a non-zero package count per image, because a scan that enumerates nothing reports as clean — the `Dependencies Scanned: 0` lesson,

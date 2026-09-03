@@ -23,6 +23,12 @@ name: Scheduled Image Scan
 # cannot drift from what is deployed, and production starts being scanned by itself the day it has a
 # release rather than the day somebody remembers to add it here.
 #
+# **That guarantee is only as good as "lists what is actually published", and for a while it was
+# not.** The registry paginates at 100 tags; the resolver read the first page and stopped, so this
+# job scanned a fortnight-old snapshot and reported production as having nothing to scan — with the
+# resolver's own comments explaining that as the correct answer (#1027). Nothing here changed to fix
+# it, which is the point: when this job looks wrong, suspect the resolver's inputs before its logic.
+#
 # **Both architectures, which is the gap the publish gate cannot close.**
 # `release.yml` scans only the amd64 variant, and not by choice: a multi-platform image cannot be
 # loaded into a local daemon before it is pushed, so there is nothing to scan yet. A scheduled scan
