@@ -40,11 +40,18 @@
 # advisory. (It was also unwatched for the three months before that: the `docker` ecosystem only
 # started covering this directory on 2026-08-11.)
 #
-# 1.31 is the current mainline and is rebuilt within days (Alpine 3.24.1, Trivy-clean at the time of
-# the bump). 1.30-alpine — the stable branch, and what #437 proposed — was equally clean and is the
-# conservative alternative if mainline ever churns too fast. The reason to stay on mainline is that
-# it picks up refreshed Alpine packages sooner, which is exactly the failure above.
-FROM nginxinc/nginx-unprivileged:1.31-alpine@sha256:d9083fe47768377ef55dedafd67d4da7c2f2bc2bece7554954f29359deb0dce9
+# 1.31 is the current mainline and is rebuilt within days (Alpine 3.24.1). 1.30-alpine — the stable
+# branch, and what #437 proposed — is the conservative alternative if mainline ever churns too fast.
+# The reason to stay on mainline is that it picks up refreshed Alpine packages sooner, which is
+# exactly the failure above, and it is why two digest bumps inside a fortnight are the design working.
+#
+# **Verify the package, never the digest.** A rebuilt digest is not evidence: #770 was triaged
+# against a digest that had moved while still shipping the vulnerable openssl. What this pin has to
+# satisfy is `libssl3 >= 3.5.8-r0` (#770) and `libexpat >= 2.8.4-r0` (#1009), both checked with
+# `docker run --rm --entrypoint sh <ref> -c 'apk list | grep -E "^libssl3|^libexpat"'` and then with
+# `trivy image <ref> --severity CRITICAL,HIGH --ignore-unfixed --ignorefile /dev/null`, which is the
+# form that reports on the image rather than on the waiver.
+FROM nginxinc/nginx-unprivileged:1.31-alpine@sha256:aa8c9087d36d93e9d650c5365f883b421e8214aedbad24ade52b844c583358f1
 
 ARG VERSION=unspecified
 ARG REVISION=unknown
