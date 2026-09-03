@@ -40,6 +40,7 @@ This is [LEGAL.md](LEGAL.md) §7.3a in short. It is also the scope declared in t
 | Image files             | yes      | Copies of images that venues, promoters and artists publish                    |
 | Communication data      | yes      | Artist profile and social URLs. No phone number and no email address is stored |
 | Log data                | yes      | Time, path, status, bytes, referrer, browser, operating system                 |
+| Connection data         | yes      | An IP address, counted for one second by the reverse proxy and stored nowhere  |
 | Contractual master data | no       | There is no contract with any data subject                                     |
 | Payment data            | no       | Nothing is sold                                                                |
 
@@ -60,6 +61,8 @@ Each was read out of the running system rather than from a plan or an intention.
 
 - **No IP address is logged.** The web server uses a log format that omits the field. The application logs method,
   path, status and duration.
+- **One component holds an IP address without logging it.** The reverse proxy counts requests per source address for
+  one second, to block a flood, and writes the address nowhere. It is the subject of question 6.
 - **Log retention is 14 days.** That is the configured value in both clusters. A volume limit on the node usually
   deletes a line sooner.
 - **Backups are deleted after 30 days**, and after 35 days at the latest. Two independent mechanisms enforce it.
@@ -118,9 +121,11 @@ This is the part worth paying for.
    with the site. Does a documented balancing test have to exist, and does the notice have to summarise it?
 5. **Erasure and backups.** §6 says an erasure takes effect immediately in live data. Backups are not edited, and the
    data expires with them within 35 days. A restore re-applies the erasure. Is that wording acceptable?
-6. **A change that is planned and not yet live.** Rate limiting per source address would have the reverse proxy process a
-   visitor's IP address to block abuse. Nothing would log it. Does §2 need a sentence for processing without logging,
-   and does it need it before the change or with it?
+6. **Processing without logging, and it is now live.** The reverse proxy rate-limits per source address. It holds a
+   visitor's IP address in memory as a counter for one second, and blocks a flood. Nothing writes it: no log, no
+   stream, no disk. The question was filed while the change was planned. It went live on 2026-09-03, before the site
+   is public, so no visitor's address reached the counter yet. Does §2 need a sentence for processing without
+   logging? Is Art. 6 (1) (f) the right basis?
 7. **The register.** The notice addresses the reader as _du_ throughout. Is that a problem under Art. 12 (1), or is
    plain language the point?
 8. **Technical and organisational measures.** The notice has no `Sicherheitsmaßnahmen` clause. Art. 13 does not ask

@@ -274,7 +274,7 @@
           }
         },
         "rateLimit": {
-          "description": "Bounds what one client may cost, via a Traefik Middleware (#268). inFlightRequests always applies; perSource needs a client address that survives the load balancer.",
+          "description": "Bounds what one client may cost, via a Traefik Middleware (#268). inFlightRequests groups by request host; perSource groups by the client address, which the Traefik hostPort preserves.",
           "type": "object",
           "required": [
             "enabled",
@@ -290,7 +290,7 @@
               "minimum": 1
             },
             "perSource": {
-              "description": "Per-client request rate. Off while k3s ServiceLB masquerades the client address, which would make it one budget for every visitor.",
+              "description": "Per-client request rate. Sized for a first-time visitor's whole page load, images included, because one Ingress carries the site.",
               "type": "object",
               "required": [
                 "enabled",

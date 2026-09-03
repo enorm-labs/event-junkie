@@ -9,17 +9,19 @@ scripts/dev-env.sh up bff             # the tests need something to talk to
 k6 run perf/smoke.js                  # every endpoint once — is it all still working?
 k6 run perf/load.js                   # sustained realistic load — does latency stay flat?
 k6 run perf/spike.js                  # a sudden surge — does it recover?
+k6 run perf/ratelimit.js              # the ingress limit — deployed environments only, see below
 ```
 
 ## What each script is for
 
 They answer different questions, and reading one's output as if it were another's is the main way to draw a wrong conclusion from them.
 
-| Script     | Shape                 | Question it answers                                                                  |
-| ---------- | --------------------- | ------------------------------------------------------------------------------------ |
-| `smoke.js` | 1 VU, 1 iteration     | Does every endpoint still work, and is anything catastrophically slow?               |
-| `load.js`  | ramp to N VUs, hold   | Does latency stay flat as concurrency rises, or does something serialise?            |
-| `spike.js` | quiet → surge → quiet | Does it survive a sudden crowd, and — more importantly — does it recover afterwards? |
+| Script         | Shape                     | Question it answers                                                                  |
+| -------------- | ------------------------- | ------------------------------------------------------------------------------------ |
+| `smoke.js`     | 1 VU, 1 iteration         | Does every endpoint still work, and is anything catastrophically slow?               |
+| `load.js`      | ramp to N VUs, hold       | Does latency stay flat as concurrency rises, or does something serialise?            |
+| `spike.js`     | quiet → surge → quiet     | Does it survive a sudden crowd, and — more importantly — does it recover afterwards? |
+| `ratelimit.js` | one visitor, then a flood | Does the per-source limit stop abuse without ever rejecting a visitor?               |
 
 **`smoke.js` is the one to reach for by default.** It puts no meaningful load on anything, finishes in about a second, and tolerates an empty database, so it is
 safe to run anywhere at any time. Use it after a dependency bump, after a query change, or to check an environment is alive.
@@ -27,6 +29,20 @@ safe to run anywhere at any time. Use it after a dependency bump, after a query 
 **`load.js` is where the interesting failure lives.** The number to watch is not requests per second — it is whether p95 climbs with the VU count. A curve that
 rises means something is serialising: an exhausted R2DBC connection pool, a blocking call on the event loop, a query without an index. WebFlux hides all three
 well until it doesn't, which is precisely why this test exists.
+
+**`ratelimit.js` measures the middleware, not the application**, so it is the one script that says nothing at all against a laptop. It exercises
+`ingress.rateLimit.perSource` (#268) and fails a run two ways: a 429 during ordinary browsing, and **no** 429 under abuse. Either alone is worthless — a limit
+nobody meets and a limit that never engages look identical from the outside. Its unit is a whole page view, images and fonts included, because one Ingress
+carries the site and they all spend the same budget.
+
+```bash
+k6 run -e BFF_HOST=https://staging.event-junkie.de \
+       -e RESOLVE=staging.event-junkie.de:10.10.1.1 -e INSECURE=true perf/ratelimit.js
+```
+
+`RESOLVE` and `INSECURE` are what reach staging: it has no public DNS record (PLATFORM_SETUP §6) and its certificate comes from Let's Encrypt's _staging_ CA,
+which is deliberately not publicly trusted. **The two scenarios run in sequence and must stay that way** — they share this machine's address, and therefore one
+token bucket.
 
 **`spike.js` matches how traffic to an events site actually arrives.** A lineup announcement or a festival going on sale sends a lot of people to the _same_ few
 pages within minutes, then it stops. Errors _during_ the spike are survivable; errors that continue _after_ it are the real finding — that is a pool that never
@@ -44,6 +60,10 @@ Everything is an environment variable with a working default:
 | `DURATION`              | `2m`                    | `load.js` — how long to hold the peak                                                                                                                                  |
 | `PEAK`                  | `100`                   | `spike.js` — peak virtual users                                                                                                                                        |
 | `STRICT`                | unset                   | `spike.js` — apply the standard thresholds                                                                                                                             |
+| `RESOLVE`               | unset                   | `ratelimit.js` — `host:ip`, for an environment whose name does not resolve publicly                                                                                    |
+| `INSECURE`              | unset                   | `ratelimit.js` — accept a certificate from a CA that is not publicly trusted                                                                                           |
+| `VISITS`                | `4`                     | `ratelimit.js` — first-time page loads the browsing scenario performs                                                                                                  |
+| `ABUSE_RATE`            | `200`                   | `ratelimit.js` — requests per second the abuse scenario sends from one source                                                                                          |
 | `THRESHOLD_DETAIL_MS`   | `300`                   | p95 budget for single-row lookups                                                                                                                                      |
 | `THRESHOLD_LIST_MS`     | `600`                   | p95 budget for paged list endpoints                                                                                                                                    |
 | `THRESHOLD_CALENDAR_MS` | `1200`                  | p95 budget for the calendar range query — the heaviest read in the API                                                                                                 |

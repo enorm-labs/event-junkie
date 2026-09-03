@@ -13,22 +13,25 @@
          them.
 
        - **`rateLimit` bounds a request rate per source**, and its `sourceCriterion` defaults to the
-         remote address. On this cluster that address is not the visitor's — see the block below —
-         so it is gated off rather than shipped broken.
+         remote address. That address only became the visitor's in #1013, which is why this half
+         spent a milestone rendered and disabled.
 
-       WHY `rateLimit` IS OFF, and what turns it on. k3s exposes Traefik through ServiceLB, whose
-       klipper-lb container installs `iptables -t nat -I POSTROUTING -d <clusterIP> -j MASQUERADE`.
-       Every packet is rewritten before Traefik reads it, so its peer is the svclb pod for every
-       visitor and `X-Forwarded-For` inherits the same address. A per-source limit would therefore
-       group the whole internet as one source and throttle every visitor together, which is worse
-       than no limit and looks like a working deployment.
+       WHAT TURNED IT ON, because the obvious answer was tried and was wrong. k3s exposed Traefik
+       through ServiceLB, whose klipper-lb container installs an unconditional
+       `iptables -t nat -I POSTROUTING -j MASQUERADE`. `externalTrafficPolicy: Local` is the
+       documented fix and did not work: the controller aimed klipper-lb at the node, and klipper-lb
+       masqueraded anyway. A **hostPort** on Traefik with the Service at `ClusterIP` is what removed
+       ServiceLB from the path — each cluster's `traefik-host-ports.yaml`, measured on staging.
 
-       The Traefik service needs `externalTrafficPolicy: Local` before the address survives. That is
-       a cluster-level change, outside this chart and outside GitOps.
+       WHY THE NUMBERS ARE LARGE. This middleware is on the one Ingress that carries the whole site,
+       so a page view spends the budget on its assets, its fonts and its venue images as well as its
+       queries. `values.yaml` carries the arithmetic; the short version is that a first visit costs
+       about 30 requests and a second costs two, so the limit is sized for first-time visitors
+       sharing a carrier NAT rather than for the API alone.
 
-       DELIBERATELY ABSENT: `sourceCriterion.requestHost` on `rateLimit`. It would make the limit
-       render and apply today, as one budget for the whole site — which hands any single client the
-       ability to spend everybody's. A limit that turns one abuser into an outage is not a limit. */}}
+       DELIBERATELY ABSENT: `sourceCriterion.requestHost` on `rateLimit`. It would make one budget
+       for the whole site, which hands any single client the ability to spend everybody's. A limit
+       that turns one abuser into an outage is not a limit. */}}
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -37,7 +40,7 @@ metadata:
     {{- include "event-junkie.labels" $args | nindent 4 }}
   annotations:
     kubernetes.io/description: >-
-      Bounds concurrent requests, and per-source request rate where the client address survives the load balancer.
+      Bounds concurrent requests by request host, and sustained request rate by the client's own address.
 spec:
   inFlightReq:
     {{- /* `| int64` is load-bearing here for the same reason it is on `stsSeconds`: Helm parses a

@@ -377,28 +377,61 @@ The Ingress annotation that names these is a **comma-separated string with no sc
 middleware on the router. It is built as a list in one place, and `tests/ingress_test.yaml` pins the whole string rather than checking that each name appears
 somewhere in it — which is what makes a malformed join fail there.
 
-### `ingress.rateLimit` — one half works here and one half cannot
+### `ingress.rateLimit` — two limits that answer different questions
 
-`ingress.rateLimit` renders a fourth Traefik `Middleware`, and its two limits are enabled independently because only one of them is meaningful on this cluster.
+`ingress.rateLimit` renders a fourth Traefik `Middleware`. Its two limits stay independently switchable because they bound different things, and because only
+one of them can be got wrong quietly.
 
-| Limit                              | Grouped by               | Default | Why                                                                               |
-| ---------------------------------- | ------------------------ | ------- | --------------------------------------------------------------------------------- |
-| `inFlightReq` (`inFlightRequests`) | request host, by default | **on**  | Bounds concurrency, so it holds whatever address Traefik sees                     |
-| `rateLimit` (`perSource.*`)        | the client's address     | **off** | k3s masquerades that address, so it would be one budget for every visitor at once |
+| Limit                              | Grouped by               | Default | Why                                                                   |
+| ---------------------------------- | ------------------------ | ------- | --------------------------------------------------------------------- |
+| `inFlightReq` (`inFlightRequests`) | request host, by default | **on**  | Bounds concurrency, so it holds whatever address Traefik sees         |
+| `rateLimit` (`perSource.*`)        | the client's address     | **on**  | Bounds sustained throughput from one source, which the first does not |
 
-**Why the per-source half is off, and what turns it on.** k3s exposes Traefik through ServiceLB, whose `klipper-lb` container installs
-`iptables -t nat -I POSTROUTING -d <clusterIP> -j MASQUERADE`. Every packet is rewritten before Traefik reads it, so Traefik's peer is the `svclb` pod for every
-visitor and `X-Forwarded-For` inherits the same address. A per-source limit would therefore group the whole internet as one source and throttle every visitor
-together — worse than no limit, and indistinguishable from a working deployment.
+**The per-source half spent a milestone disabled, and the reason is worth keeping.** k3s exposed Traefik through ServiceLB, whose `klipper-lb` container
+installs an unconditional `iptables -t nat -I POSTROUTING -j MASQUERADE`. Traefik's peer was the `svclb` pod for every visitor, and `X-Forwarded-For` inherited
+the same address, so the limit would have grouped the whole internet as one source — worse than no limit, and indistinguishable from a working deployment.
+[#1013](https://github.com/enorm-labs/event-junkie/issues/1013) fixed it with a **hostPort** on Traefik and the Service at `ClusterIP`, after
+`externalTrafficPolicy: Local` was tried and turned out not to be enough. `deploy/clusters/*/traefik-host-ports.yaml` carries it.
 
-The Traefik Service needs `externalTrafficPolicy: Local` before the client address survives. That is a cluster-level change, outside this chart and outside
-GitOps.
+**The two limits do not overlap, which is why both are on.** `inFlightReq` bounds how many requests are in flight at once and stops nothing that arrives
+sequentially. A scraper making 500 requests a second, one at a time, never trips it and costs the database everything. `rateLimit` is the half that sees that.
 
 **`inFlightRequests` guards the resource that actually runs out.** Each BFF replica holds ten R2DBC connections; past the cap a client gets a `429` rather than
 joining a queue behind them. The number is a starting point rather than a measurement — `k6 run perf/spike.js` is what re-derives it.
 
-**`sourceCriterion.requestHost` on `rateLimit` is deliberately absent.** It would make the per-source limit render and apply today, as one budget for the whole
-site, which hands any single client the ability to spend everybody's.
+#### Why `average: 50` and `burst: 250` are so large
+
+Because this middleware is on the **one Ingress that carries the whole site**, so the budget is not spent by API queries alone:
+
+| What a visit fetches                              | Measured on staging | Worst case     |
+| ------------------------------------------------- | ------------------- | -------------- |
+| HTML plus the assets `index.html` preloads        | 8                   | 8              |
+| The route's own chunks, the font subsets, favicon | 6–8                 | 8              |
+| Venue images — `/api/images` is the BFF           | 14                  | 20, one a card |
+| The queries the view makes                        | 1–3                 | 3              |
+| **Total for a first visit**                       | **about 30**        | **39**         |
+
+The measured column is a real events page at the default size of 20: `curl` the HTML and count the preloads, then count the distinct image URLs in
+`GET /events?size=20`. Fourteen rather than twenty, because cards share a venue image and a few venues publish none we may hold. The worst case is the same
+page with a distinct image on every card.
+
+Everything but the HTML is served `immutable`, so the _second_ visit costs one or two API calls. **The whole cost falls on first-time visitors** — which is
+exactly what a shared link delivers.
+
+**And there is no AAAA record.** Every mobile visitor therefore arrives through carrier CGNAT and shares one address with the other subscribers on it. `burst`
+has to hold several first visits at once, and 250 holds six of the worst case. `average` is roughly 25x what one person sustains while browsing.
+
+**A smaller number would fail in the worst way.** A 429 on a font or an image is a half-styled page, not an error page — so a limit set by taste rather than by
+this arithmetic looks like a working deployment while it quietly breaks the launch it was installed for. `k6 run perf/ratelimit.js` is what re-derives these,
+and it fails a run that produces a 429 during ordinary browsing **and** a run that produces none under abuse.
+
+**If the blunt limit ever proves too blunt**, the next move is to split the routers rather than to lower the numbers: a second Ingress carrying `/` and
+`/api/images` without this middleware, leaving a much tighter limit on the query surface alone. Traefik prioritises by rule length, so `/api/images` would win
+over `/api` — the same mechanism the Ingress template already relies on. It is not done here because it buys nothing until a real limit is measured to be
+insufficient.
+
+**`sourceCriterion.requestHost` on `rateLimit` is deliberately absent.** It would make one budget for the whole site, which hands any single client the ability
+to spend everybody's.
 
 ## Validating a change
 
