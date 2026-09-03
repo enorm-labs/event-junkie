@@ -1,7 +1,7 @@
-# apiVersion v2 is deliberate and must not be raised to v3. The local Helm binary is v4, but Flux's
-# helm-controller embeds the Helm 3 SDK — a v3-apiVersion chart would render fine here and then be
-# uninstallable by the thing that actually installs it (#414). CI renders and unit-tests the chart
-# under a pinned Helm 3 client for exactly this reason.
+# apiVersion v2 is deliberate: nothing here needs a chart apiVersion v3 feature, and v2 is what every
+# Helm that touches this chart reads — the client CI pins and the SDK helm-controller embeds.
+#
+# **Whether Flux installs a v3 chart is unverified.** Do not raise it to find out (#1006).
 apiVersion: v2
 name: event-junkie
 description: The event-junkie stack — BFF, importer and frontend behind one Traefik ingress
