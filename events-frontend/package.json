@@ -74,6 +74,10 @@
     "vitest": "4.1.11",
     "vue-tsc": "3.3.11"
   },
+  "//overrides": "CVE-2026-45822 remediation, and the only lever that reaches it. `shadcn-vue` needs `vue-metamorph`, which needs `postcss-styl`, which pins `stylus@^0.57.0` — and stylus below 0.59.0 parses CSS through `css@3` and the deprecated `source-map-resolve`, which is what drags in `decode-uri-component`. Pinning that package directly is not an option, because its only fixed release (0.5.0) is ESM-only and `source-map-resolve` requires it from CJS. stylus 0.59.0 replaced `css` with `@adobe/css-tools`, so overriding stylus deletes the branch instead of patching its leaf. `postcss-styl` is at its latest and still pins ^0.57.0; drop this override when it widens the range. Nothing here runs the stylus parser — the project has no .styl files, and the only thing the build takes from shadcn-vue is `dist/tailwind.css`.",
+  "overrides": {
+    "stylus": "0.64.0"
+  },
   "engines": {
     "node": ">=24.15.0"
   },
