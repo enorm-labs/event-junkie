@@ -74,8 +74,9 @@ covers the SPA.
   when the user names one.
     - **Two reasons, and the second is the one that bites.** A plan committed to the tree becomes documentation nobody updates, and this repository already
       spends effort deleting those. A plan that exists only in the terminal is gone at the next compaction, and the reasoning behind it goes with it.
-    - **Name it for what it is about**, so the next session finds one plan without reading all of `temp/`: `temp/<issue>-<slug>.md` for issue work
-      (`temp/278-privacy-notice-recheck.md`), `temp/<topic>.md` otherwise (`temp/v0.3-plan.md`).
+    - **Name it for what it is about**, so the next session finds one plan without reading all of `temp/`: `temp/<issue>-<slug>.md` for issue work,
+      `temp/<topic>.md` otherwise. **No example here names a real file, and that is deliberate.** The rule below deletes a plan once its work lands, so any
+      filename cited here becomes a dead reference within the week. Both of the ones that used to be here did.
     - **Format it: `scripts/format-markdown.sh temp/<file>.md`.** The formatter's default scope is the tracked tree, so a file under `temp/` is never reached
       by the commit hook, by CI, or by a bare `scripts/format-markdown.sh` — **it has to be named on the command line.** Skipping it costs nothing today and
       everything the moment a plan is pasted into an issue, a PR body or a document, which is where most of them end up: unformatted tables are the tell, and
