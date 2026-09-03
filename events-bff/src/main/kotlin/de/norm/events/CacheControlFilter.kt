@@ -39,6 +39,7 @@ class CacheControlFilter(
 ) : WebFilter {
     private val publicCaching = CacheControl.maxAge(Duration.ofSeconds(ttlSeconds)).cachePublic().headerValue
 
+    @Suppress("ForbiddenVoid") // Mono<Void> is WebFilter's own return type.
     override fun filter(
         exchange: ServerWebExchange,
         chain: WebFilterChain

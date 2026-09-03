@@ -212,7 +212,7 @@ class EventUpsertService(
 
     /** Date + title + start time — see [deduplicateScrapedEvents] for why the time is in the key. */
     private fun dedupKey(event: ScrapedEvent): String =
-        SlugGenerator.slugify("${event.eventDate}-${event.title}") + "@" + (event.startTime?.format(SLUG_TIME) ?: "")
+        SlugGenerator.slugify("${event.eventDate}-${event.title}") + "@" + event.startTime?.format(SLUG_TIME).orEmpty()
 
     /**
      * The slug discriminator each event needs, keyed by `sourceId`; absent for events that need none.

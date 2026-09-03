@@ -29,6 +29,10 @@ How code here is written, and where its versions and thresholds live. Comments h
   plugin needs no second edit. The 2.0 line is still pre-release; the alpha
   is tracked deliberately because it is what supports current Kotlin (see the compatibility-table link in `settings.gradle.kts`). Builds upon default config
   with overrides in root `detekt.yml` (currently only `MaxLineLength: 160`). Run `./gradlew detekt` to analyze all modules.
+- **`detekt` and `detektMain` run different rules, and CI runs both** (#407). An entire class of rules — `UnsafeCallOnNullableType`, `UseOrEmpty`,
+  `UnusedPrivateProperty`, `LongParameterList` — needs resolved types, so `detekt` alone silently _skips_ them rather than passing them. `detektMain`
+  compiles the main source sets first and runs them. `detektTest` is the same analysis over test sources and is **not** gated yet: it still reports
+  findings.
 - **Max line length**: 160 characters (enforced by both `.editorconfig` and `detekt.yml`).
 - Centralized library versions in **`gradle.properties`** (`java.version`, `jsoup.version`, `kotest.version`,
   `kotlin-logging.version`, `mockk.version`, `mockwebserver.version`, `slugify.version`, `spring-modulith.version`,

@@ -31,7 +31,7 @@ import java.time.Clock
 class OhmWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
     /** Clock for the scraper's year inference. Defaults to the system clock; override in tests. */
-    private val clock: Clock = Clock.systemDefaultZone()
+    clock: Clock = Clock.systemDefaultZone()
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}
 

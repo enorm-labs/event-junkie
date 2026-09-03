@@ -29,6 +29,7 @@ import kotlin.time.Duration.Companion.nanoseconds
  * 4. Updates the event source metadata (status, event count, ETag, etc.).
  */
 @Service
+@Suppress("LongParameterList") // Constructor injection: one parameter per collaborator; splitting the service hides the wiring.
 class EventImportService(
     private val eventSourceRepository: EventSourceRepository,
     private val eventUpsertService: EventUpsertService,
@@ -58,7 +59,7 @@ class EventImportService(
      * are naturally serialized at the HTTP layer.
      */
     @Value($$"${app.import.max-concurrency:4}")
-    private val maxConcurrency: Int = DEFAULT_MAX_CONCURRENCY
+    maxConcurrency: Int = DEFAULT_MAX_CONCURRENCY
 ) {
     private val logger = KotlinLogging.logger {}
 

@@ -32,6 +32,7 @@ class WebFluxConfiguration(
         configurer.addCustomResolver(StableSortPageableArgumentResolver(maxPageSize))
     }
 
+    @Suppress("SpreadOperator") // CorsRegistration.allowedOrigins is vararg-only, and the list is a handful of origins.
     override fun addCorsMappings(registry: CorsRegistry) {
         if (allowedOrigins.isNotEmpty()) {
             registry

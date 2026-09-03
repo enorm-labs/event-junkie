@@ -6,6 +6,7 @@ import de.norm.events.artist.ArtistSummaryResponse
 import de.norm.events.common.PageResponse
 import de.norm.events.event.EventService.Companion.MAX_CALENDAR_DAYS
 import de.norm.events.genretag.EventGenreTagRepository
+import de.norm.events.genretag.GenreTagEntity
 import de.norm.events.genretag.GenreTagRepository
 import de.norm.events.image.CachedImageGate
 import de.norm.events.licence.SourceLicences
@@ -30,6 +31,7 @@ import java.time.LocalDate
  * for the whole page (mirroring the importer's [de.norm.events.event] strategy).
  */
 @Service
+@Suppress("LongParameterList") // Constructor injection: one parameter per collaborator; splitting the service hides the wiring.
 class EventService(
     private val eventRepository: EventRepository,
     private val eventSearchRepository: EventSearchRepository,
@@ -235,7 +237,7 @@ class EventService(
         val genreLinks = eventGenreTagRepository.findByEventIdIn(eventIds).toList()
         val genreNamesById =
             genreLinks.map { it.genreTagId }.distinct().let { tagIds ->
-                if (tagIds.isEmpty()) emptyMap() else genreTagRepository.findAllById(tagIds).toList().associate { it.id!! to it.name }
+                if (tagIds.isEmpty()) emptyMap() else genreTagRepository.findAllById(tagIds).toList().associate { it.requiredId() to it.name }
             }
         val genreLinksByEvent = genreLinks.groupBy { it.eventId }
 
@@ -282,3 +284,6 @@ class EventService(
         private const val DETAIL_WIDTH = 704
     }
 }
+
+/** The id of a genre tag read back from the database, which is never null once it is persisted. */
+private fun GenreTagEntity.requiredId(): Long = requireNotNull(id) { "Persisted genre tag must have an ID" }

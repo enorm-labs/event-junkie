@@ -277,6 +277,7 @@ sealed interface ImageFetchResult {
      * A plain class rather than a `data` one: it carries the bytes, and an array in a data class
      * gives it an `equals` that compares references. Nothing here is compared by value.
      */
+    @Suppress("LongParameterList") // A value carrier for one fetched image: every parameter is a field of it.
     class Success(
         val bytes: ByteArray,
         val contentHash: String,

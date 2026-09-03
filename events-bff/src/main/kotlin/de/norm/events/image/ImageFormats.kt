@@ -29,7 +29,7 @@ object ImageFormats {
      * `image/jpg` is not a media type. It has to be `image/jpeg`, and deriving it as `"image/$format"`
      * would get that one wrong.
      */
-    private val MEDIA_TYPES = mapOf("avif" to "image/avif", "webp" to "image/webp", FALLBACK to "image/jpeg")
+    val MEDIA_TYPES = mapOf("avif" to "image/avif", "webp" to "image/webp", FALLBACK to "image/jpeg")
 
     fun mediaType(format: String): String? = MEDIA_TYPES[format]
 }

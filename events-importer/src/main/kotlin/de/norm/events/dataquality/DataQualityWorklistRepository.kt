@@ -1,6 +1,7 @@
 package de.norm.events.dataquality
 
 import de.norm.events.EVENTS_SCHEMA
+import io.r2dbc.spi.Readable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
@@ -82,12 +83,12 @@ class DataQualityWorklistRepository(
         return spec
             .map { row, _ ->
                 WorklistRow(
-                    id = row.get("id", Number::class.java)!!.toLong(),
-                    slug = row.get("slug", String::class.java)!!,
-                    title = row.get("title", String::class.java)!!,
-                    eventDate = row.get("event_date", LocalDate::class.java)!!,
+                    id = row.required("id", Number::class.java).toLong(),
+                    slug = row.required("slug", String::class.java),
+                    title = row.required("title", String::class.java),
+                    eventDate = row.required("event_date", LocalDate::class.java),
                     startTime = row.get("start_time", LocalTime::class.java),
-                    venueId = row.get("venue_id", Number::class.java)!!.toLong(),
+                    venueId = row.required("venue_id", Number::class.java).toLong(),
                     sourceSlug = row.get("source_slug", String::class.java) ?: MANUAL_BUCKET
                 )
             }.all()
@@ -113,3 +114,15 @@ data class WorklistRow(
     val venueId: Long,
     val sourceSlug: String
 )
+
+/**
+ * Reads a column the projection declares NOT NULL, naming it when it is absent.
+ *
+ * The columns come from a hand-written `SELECT`, so a null means the projection and this mapping
+ * have drifted apart. Saying which column drifted beats the bare `NullPointerException` that `!!`
+ * would raise here.
+ */
+private fun <T : Any> Readable.required(
+    column: String,
+    type: Class<T>
+): T = requireNotNull(get(column, type)) { "Column '$column' is missing from the data-quality worklist projection" }

@@ -33,23 +33,23 @@ class VenueService(
         val borough = district?.takeIf { it.isNotBlank() }
         val (entities, total) =
             when {
-                name == null && borough == null -> {
-                    venueRepository.findAllBy(safePageable).toList() to venueRepository.count()
+                name != null && borough != null -> {
+                    venueRepository.findByNameContainingIgnoreCaseAndDistrict(name, borough, safePageable).toList() to
+                        venueRepository.countByNameContainingIgnoreCaseAndDistrict(name, borough)
                 }
 
-                name == null -> {
-                    venueRepository.findByDistrict(borough!!, safePageable).toList() to
-                        venueRepository.countByDistrict(borough)
-                }
-
-                borough == null -> {
+                name != null -> {
                     venueRepository.findByNameContainingIgnoreCase(name, safePageable).toList() to
                         venueRepository.countByNameContainingIgnoreCase(name)
                 }
 
+                borough != null -> {
+                    venueRepository.findByDistrict(borough, safePageable).toList() to
+                        venueRepository.countByDistrict(borough)
+                }
+
                 else -> {
-                    venueRepository.findByNameContainingIgnoreCaseAndDistrict(name, borough, safePageable).toList() to
-                        venueRepository.countByNameContainingIgnoreCaseAndDistrict(name, borough)
+                    venueRepository.findAllBy(safePageable).toList() to venueRepository.count()
                 }
             }
         val images = cachedImageGate.forUrls(entities.map { it.imageUrl })

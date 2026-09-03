@@ -16,6 +16,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.Locale
 
 /**
  * Pure HTML parser for MAAYA Berlin's home-page **NEXT DATES** programme.
@@ -139,7 +140,7 @@ class MaayaOverviewPageScraper {
     private fun parseStartTime(schedule: String): LocalTime? {
         val match = TIME_PATTERN.find(schedule) ?: return null
         val (hour, minute) = match.destructured
-        return parseTime("%02d:%s".format(hour.toInt(), minute))
+        return parseTime("%02d:%s".format(Locale.ROOT, hour.toInt(), minute))
     }
 
     private companion object {

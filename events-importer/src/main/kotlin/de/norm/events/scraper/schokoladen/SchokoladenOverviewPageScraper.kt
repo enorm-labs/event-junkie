@@ -111,7 +111,7 @@ class SchokoladenOverviewPageScraper {
             sourceId = "${EventSource.SCHOKOLADEN.sourceIdPrefix}$eventId",
             ticketUrl = block.hrefAt("a.ticket-btn"),
             artists = parseArtists(title, subtitle, eventType),
-            promoters = parsePromoter(block)?.let { listOf(it) } ?: emptyList()
+            promoters = parsePromoter(block)?.let { listOf(it) }.orEmpty()
         )
     }
 
@@ -128,8 +128,8 @@ class SchokoladenOverviewPageScraper {
         info: Element?,
         block: Element
     ): Pair<LocalTime?, LocalTime?> {
-        val timeText = info?.textAt(".event-facts p:has(strong:contains(Time)) span") ?: ""
-        val doors = flexTime(DOORS_PATTERN.find(timeText)) ?: flexTime(HEADER_TIME_PATTERN.find(block.textAt("span.d-none") ?: ""))
+        val timeText = info?.textAt(".event-facts p:has(strong:contains(Time)) span").orEmpty()
+        val doors = flexTime(DOORS_PATTERN.find(timeText)) ?: flexTime(HEADER_TIME_PATTERN.find(block.textAt("span.d-none").orEmpty()))
         val start = flexTime(SHOW_PATTERN.find(timeText))
         return doors to start
     }

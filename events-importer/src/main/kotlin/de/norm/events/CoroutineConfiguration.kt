@@ -20,6 +20,7 @@ class CoroutineConfiguration {
      * `destroyMethod = ""` prevents Spring from attempting to call `close()` on
      * [Dispatchers.IO] during shutdown — it is a global singleton that cannot be closed.
      */
+    @Suppress("InjectDispatcher") // This bean *is* the injection point every caller resolves the dispatcher through.
     @Bean("ioDispatcher", destroyMethod = "")
     fun ioDispatcher(): CoroutineDispatcher = Dispatchers.IO
 }

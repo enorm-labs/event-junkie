@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service
  * them, so the dimensions arrive here.
  */
 @Service
+@Suppress("LongParameterList") // Constructor injection: one parameter per collaborator; splitting the service hides the wiring.
 class ImageDerivativeService(
     private val repository: CachedImageRepository,
     private val variantRepository: CachedImageVariantRepository,

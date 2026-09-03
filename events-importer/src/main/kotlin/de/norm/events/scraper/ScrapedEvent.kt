@@ -91,6 +91,7 @@ data class ScrapedEvent(
      *   [EventUpsertService][de.norm.events.scraper.EventUpsertService] computes it and passes it
      *   in. Null for the overwhelming majority of events, which keeps their slug unchanged.
      */
+    @Suppress("LongParameterList") // A row-to-response mapper takes one parameter per column it cannot read off the entity.
     fun toEventEntity(
         venueId: Long,
         venueSlug: String,

@@ -44,6 +44,7 @@ private val logger = KotlinLogging.logger {}
 class RequestLoggingFilter(
     @Value("\${management.endpoints.web.base-path:/actuator}") private val actuatorBasePath: String
 ) : WebFilter {
+    @Suppress("ForbiddenVoid") // Mono<Void> is WebFilter's own return type.
     override fun filter(
         exchange: ServerWebExchange,
         chain: WebFilterChain
@@ -59,7 +60,8 @@ class RequestLoggingFilter(
                 // difference between them.
                 if (!isActuatorRequest(request.path.value())) {
                     val durationMs = (System.nanoTime() - startNanos) / 1_000_000
-                    val query = request.uri.rawQuery?.let { "?$it" } ?: ""
+                    val rawQuery = request.uri.rawQuery
+                    val query = if (rawQuery == null) "" else "?$rawQuery"
                     val status = exchange.response.statusCode?.value() ?: 0
                     // Fields, not prose (#945) — the only per-request line the read API produces.
                     // Two values deliberately stay in the text: `durationMs`, because

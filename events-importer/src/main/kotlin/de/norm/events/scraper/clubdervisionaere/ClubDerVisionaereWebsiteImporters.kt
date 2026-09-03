@@ -38,6 +38,7 @@ import java.time.Clock
  * @see ClubDerVisionaereProgrammePageScraper for the HTML parsing logic.
  * @see <a href="https://clubdervisionaere.com/programm/">Club der Visionäre programme</a>
  */
+@Suppress("AbstractClassCanBeConcreteClass") // A base for the venue importers below it; an instance of it alone names no venue.
 abstract class AbstractClubDerVisionaereRoomImporter(
     private val htmlFetcher: HtmlFetcher,
     /** The room whose nights this importer keeps from the shared listing. */

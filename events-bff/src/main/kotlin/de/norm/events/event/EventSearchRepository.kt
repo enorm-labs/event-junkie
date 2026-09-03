@@ -74,7 +74,7 @@ class EventSearchRepository(
                 .bindAll(params)
                 .bind("limit", pageable.pageSize)
                 .bind("offset", pageable.offset)
-                .map { row: Readable -> row.get(0, Long::class.javaObjectType)!! }
+                .map { row: Readable -> row.requiredEventId() }
                 .all()
                 .collectList()
                 .awaitSingle()
@@ -94,7 +94,7 @@ class EventSearchRepository(
         return databaseClient
             .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where $DEFAULT_ORDER")
             .bindAll(params)
-            .map { row: Readable -> row.get(0, Long::class.javaObjectType)!! }
+            .map { row: Readable -> row.requiredEventId() }
             .all()
             .collectList()
             .awaitSingle()
@@ -271,3 +271,11 @@ class EventSearchRepository(
         private const val DEFAULT_ORDER = "ORDER BY e.event_date ASC, $START_TIME_TIEBREAKER, e.id ASC"
     }
 }
+
+/**
+ * Reads the `e.id` the id projections select, which is the table's primary key and never null.
+ *
+ * A null means the `SELECT` and this mapping have drifted apart, and the message says so rather
+ * than raising the bare `NullPointerException` that `!!` would.
+ */
+private fun Readable.requiredEventId(): Long = requireNotNull(get(0, Long::class.javaObjectType)) { "Event id projection returned a null id" }
