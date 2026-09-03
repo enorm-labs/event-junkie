@@ -16,7 +16,7 @@
    [AGENTS.md §Privacy & GDPR](../AGENTS.md) is the trigger list.
 2. **Legal pages are documents, not translated strings.** One component per language under `/{locale}/legal/*`. Edit both or neither.
 3. **German is authoritative** where the two versions could be read differently (§6.1).
-4. **The three flags in `events-frontend/src/lib/legal.ts` are the machine-readable record** of what is still provisional. Never clear one ahead of the thing it
+4. **The flags `CONTACT_DETAILS_ARE_PROVISIONAL`, `PROCESSOR_CONTRACTS_PENDING`, and `<THIRD_FLAG_NAME_FROM_events-frontend/src/lib/legal.ts>` in `events-frontend/src/lib/legal.ts` are the machine-readable record** of what is still provisional. Never clear one ahead of the thing it
    describes — that is what §14 exists to prevent.
 
 **The site is not signed off and cannot go live until §14 is closed.**
