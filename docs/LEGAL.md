@@ -530,7 +530,7 @@ Settled questions, so they are not re-litigated. The reasoning is in the section
 | 8   | Localisation           | English + German — [ADR-013](adr/ADR-013_LOCALISATION.md)                                                         | §6.2                 |
 | 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting and an axe sweep enforcing it                                                | §12                  |
 | 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                           | §9.1                 |
-| 11  | Version source         | Build-stamped from `gradle.properties`, never the GitHub API                                                      | §4.1                 |
+| 11  | Version source         | Build-stamped from `gradle.properties`, never the GitHub API                                                      | §4                   |
 | 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor | `ops/EMAIL.md`       |
 | 13  | Art. 28 contracts      | One: Hetzner's AVV, concluded. No third-country transfer to name at all                                           | §14                  |
 | 14  | Event-data retention   | Kept while the calendar operates, no deletion by age; erased on Art. 21 objection — #362                          | §7.3a                |
