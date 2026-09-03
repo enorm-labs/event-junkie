@@ -439,4 +439,44 @@ rule(
 )
 
 
+# #796. A venue editing its robots.txt and a venue redesigning its markup both
+# surface as "this source is failing", and they need opposite responses: a URL
+# change or dropping the source, versus a scraper repair. Merging them throws that
+# away at the last step, which is why the tag is its own constant
+# (ScrapeFailureReasons.kt). It is also the one importer failure that arrives
+# without anything of ours changing.
+#
+# **`> 0` rather than a rate, and a whole day of silence.** One occurrence means a
+# venue's rules now forbid a path we read, and it stays true until somebody acts.
+# Every later run re-trips it, so a short silence re-fires all day on one decision.
+#
+# **`--check` reports NO DATA here, and that is the healthy state.** The README
+# reads NO DATA as "can never fire", which is right for a gauge and wrong for a
+# counter: one that never incremented is absent from the exposition (#880). No
+# venue forbids us, so there is no series. The inverse of the `has_succeeded` case.
+#
+# **No `by (source)`.** The notification template substitutes `{alert_name}`,
+# `{stream_name}`, `{org_name}` and `{value}` — never a label — so grouping would
+# only change what `{value}` means. The description carries the query instead.
+#
+# **`robots_unreadable` gets no rule, and the omission is the decision.** A source
+# stuck there stops advancing `importer_source_last_success` and lands in
+# `ej-importer-stale`; a second rule would fire beside it and be the one that gets
+# muted. There is no retry-budget series to write one against anyway. PLATFORM_SETUP.md §7.
+rule(
+    "ej-robots-disallowed",
+    "A venue's robots.txt now forbids a path we scrape, so the importer is correctly refusing "
+    "to fetch it. **This is a decision, not a repair**: the answer is a different URL, or "
+    "removing the source, and no scraper change fixes it. Which venue: "
+    "`SELECT name, robots_txt_url, last_error FROM event_source WHERE robots_allowed = false`.",
+    'sum(increase(importer_scrape_failures_total{reason="robots_disallowed"}[1h]))',
+    ">",
+    0,
+    stream_name="importer_scrape_failures_total",
+    period_minutes=60,
+    frequency_minutes=15,
+    silence_minutes=24 * 60,
+)
+
+
 print(json.dumps(_rules, indent=2))

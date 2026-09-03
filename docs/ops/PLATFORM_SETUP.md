@@ -793,6 +793,16 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
   can, because the importer being down empties every source at once.
 - **A 304 counts as a success**, for both the column and the gauge. The request went out, the venue answered, and the conditional headers did their job.
   Treating it as "no success" would make a stable venue look broken after three quiet days.
+- **A venue forbidding us is a decision, and it gets its own rule** (`ej-robots-disallowed`, #796). `scrape.failures{reason="robots_disallowed"}` is the one
+  importer failure that arrives without anything of ours changing. A venue adds `Disallow: /programm` overnight, and the first signal is our own importer
+  refusing to fetch. The response is a different URL or removing the source, never a parser change. That is why the tag is a constant of its own rather than
+  part of `http_forbidden`. The rule fires on `> 0` over an hour, then stays quiet for a day, because every later run re-trips the same decision.
+  **The notification cannot name the venue.** The template's substitutions are `{alert_name}`, `{stream_name}`, `{org_name}` and `{value}`, and none of them
+  is a label. One query gives the answer: `SELECT name, robots_txt_url, last_error FROM event_source WHERE robots_allowed = false`.
+- **`robots_unreadable` deliberately has no rule.** That is a decision, not an omission. RFC 9309 §2.3.1.4 makes an unreadable `robots.txt` a complete
+  disallow. So a venue whose host has a bad day refuses us exactly like one that forbade us, which is why #887 split the tags. But the case worth waking
+  someone for is the persistent one. A source stuck there stops advancing `source.last_success` and lands in `ej-importer-stale` by construction — Zenner sat
+  three days, well past its 36 hours. A second rule would fire beside that one on the same condition, and be the one that gets muted.
 - **`field_coverage` must never be alerted on with a threshold.** A venue that never published a price sits at `0` forever without anything being wrong. The
   signal is a **drop against that source's own history**. That is why the flagging lives in the importer, where the history is, rather than in an alert rule.
   `event_source.flagged_at` is the alertable thing. Alerting on `field_coverage < 0.5` would page on half the corpus on day one.
