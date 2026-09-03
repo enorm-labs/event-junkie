@@ -12,12 +12,11 @@
 #   scripts/deployed-versions.sh staging    # just this one
 #
 # Output is one `cluster<TAB>version` line per cluster, in directory order. A cluster whose range
-# matches nothing published prints `(none)` plus a line on stderr saying why — which production does,
-# correctly, admitting release versions only when there has never been a release:
+# matches nothing published prints `(none)` plus a line on stderr saying why:
 #
-#   k3d          0.1.1-snapshot.20260818153553.g05b17c0
-#   production   (none)
-#   staging      0.1.1-snapshot.20260818153553.g05b17c0
+#   k3d          0.3.9-snapshot.20260903121833.g75cadf2
+#   production   0.3.8
+#   staging      0.3.9-snapshot.20260903121833.g75cadf2
 #
 # Requires: curl, yq, helm. Reaches the registry, and writes only under a temp dir it removes.
 #
@@ -63,21 +62,54 @@ trap 'rm -rf "$WORK"' EXIT
 #
 # The token endpoint is not optional even for a public package: GHCR's v2 API answers 401 to an
 # unauthenticated request and hands out a pull-scoped anonymous token for the asking. `--fail` on
-# both calls so a registry outage is an error rather than an empty tag list — an empty list would
+# every call so a registry outage is an error rather than an empty tag list — an empty list would
 # otherwise read as "nothing is published", which is the failure mode where a scan goes green having
 # looked at nothing.
+#
+# **The tag list is paginated, and one page is not the answer.** GHCR caps a page at 100 tags and
+# hands back the rest through a `Link: <…>; rel="next"` header. Reading only the first page is the
+# same class of mistake as #455 and fails the same silent way: the newest tag on page one looks like
+# the newest tag, so the caller resolves a real, published, months-old chart and reports it without
+# any sign of truncation. When #1027 found it, 369 tags were published and 100 were read: the nightly
+# image scan had been scanning a fortnight-old snapshot, and production — whose releases all sat past
+# page one — was reported as having nothing to scan at all.
+#
+# `n=100` on the *first* request is load-bearing beyond page size: GHCR echoes the parameter into
+# every `rel="next"` link it builds, so a first request without it yields a chain carrying `n=0`.
 list_tags() {
-  local registry="$1" repository="$2" token
+  local registry="$1" repository="$2" token url next body page=0
 
   token="$(
     curl -fsSL "https://${registry}/token?scope=repository:${repository}:pull&service=${registry}" |
       yq -p json -N '.token'
   )" || die "could not get an anonymous pull token for ${registry}/${repository}"
 
-  curl -fsSL -H "Authorization: Bearer ${token}" \
-    "https://${registry}/v2/${repository}/tags/list" |
-    yq -p json -N '.tags[]' ||
-    die "could not list tags for ${registry}/${repository}"
+  url="https://${registry}/v2/${repository}/tags/list?n=100"
+
+  while [[ -n "$url" ]]; do
+    page=$((page + 1))
+    # A registry that keeps offering a next page forever would otherwise hang the caller. 50 pages
+    # is 5000 tags — far past anything this project publishes, and still a bound.
+    ((page <= 50)) || die "${registry}/${repository}: more than 50 pages of tags — refusing to loop"
+
+    body="$(
+      curl -fsSL -D "$WORK/tags-headers" -H "Authorization: Bearer ${token}" "$url"
+    )" || die "could not list tags for ${registry}/${repository} (page ${page})"
+
+    printf '%s' "$body" | yq -p json -N '.tags // [] | .[]'
+
+    # Case-insensitive because the header name is, and `tr -d` because the value arrives CRLF
+    # terminated. GHCR returns a path rather than an absolute URL; the spec permits either.
+    next="$(
+      sed -n 's/^[Ll]ink:[[:space:]]*<\([^>]*\)>;[[:space:]]*rel="next".*/\1/p' "$WORK/tags-headers" |
+        tr -d '\r' | tail -1
+    )"
+    case "$next" in
+      '') url="" ;;
+      /*) url="https://${registry}${next}" ;;
+      *) url="$next" ;;
+    esac
+  done
 }
 
 # resolve <range> <version>...
@@ -171,10 +203,14 @@ for source_file in "$CLUSTERS_DIR"/*/oci-repository.yaml; do
   fi
 
   # `(none)` rather than an error, and the distinction is the whole reason this branch is commented.
+  # A range that admits nothing published is a result: failing here would paint the caller red every
+  # night for a correct state, which is how a check gets switched off.
   #
-  # Production resolves nothing today and is *right* to: its range admits release versions only and
-  # there has never been a release. Failing here would paint the caller red every night for a
-  # correct state, which is how a check gets switched off.
+  # It said so with production as the example until #1027 — "release versions only, and there has
+  # never been a release". That was true when it was written and had stopped being true by `0.3.0`,
+  # but the truncated tag list kept producing the output the sentence predicted, so the comment went
+  # on explaining a wrong answer as a right one. **A branch this rarely taken is worth re-deriving
+  # rather than reading.** No cluster resolves nothing today.
   #
   # A registry that will not answer, a chart URL with no tags at all, or a malformed source file are
   # different — those die above, loudly, because each of them is the shape of a scan that looks at
