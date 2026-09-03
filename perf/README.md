@@ -44,6 +44,12 @@ k6 run -e BFF_HOST=https://staging.event-junkie.de \
 which is deliberately not publicly trusted. **The two scenarios run in sequence and must stay that way** — they share this machine's address, and therefore one
 token bucket.
 
+**The abuse scenario is deliberately low-concurrency, and that is what makes it a test.** Traefik answers `inFlightReq` and `rateLimit` with the same bare 429,
+and nothing in the response says which fired. Measured on staging with `perSource.enabled: false`: 300 parallel requests produced 66 rejections — all of them
+from the concurrency limit. A scenario shaped like that reports a healthy pass against a per-source limit that is switched off. Ten sequential streams push
+about 80 requests a second and never approach `inFlightRequests: 100`, so a 429 there has only one possible source. The same 400 requests against the disabled
+limit produced zero.
+
 **`spike.js` matches how traffic to an events site actually arrives.** A lineup announcement or a festival going on sale sends a lot of people to the _same_ few
 pages within minutes, then it stops. Errors _during_ the spike are survivable; errors that continue _after_ it are the real finding — that is a pool that never
 drained or a queue that never emptied. Its thresholds are off by default for that reason: a red threshold would only tell you that a spike is hard, which was
@@ -63,7 +69,7 @@ Everything is an environment variable with a working default:
 | `RESOLVE`               | unset                   | `ratelimit.js` — `host:ip`, for an environment whose name does not resolve publicly                                                                                    |
 | `INSECURE`              | unset                   | `ratelimit.js` — accept a certificate from a CA that is not publicly trusted                                                                                           |
 | `VISITS`                | `4`                     | `ratelimit.js` — first-time page loads the browsing scenario performs                                                                                                  |
-| `ABUSE_RATE`            | `200`                   | `ratelimit.js` — requests per second the abuse scenario sends from one source                                                                                          |
+| `ABUSE_STREAMS`         | `10`                    | `ratelimit.js` — concurrent streams in the abuse scenario; must stay under `inFlightRequests`                                                                          |
 | `THRESHOLD_DETAIL_MS`   | `300`                   | p95 budget for single-row lookups                                                                                                                                      |
 | `THRESHOLD_LIST_MS`     | `600`                   | p95 budget for paged list endpoints                                                                                                                                    |
 | `THRESHOLD_CALENDAR_MS` | `1200`                  | p95 budget for the calendar range query — the heaviest read in the API                                                                                                 |

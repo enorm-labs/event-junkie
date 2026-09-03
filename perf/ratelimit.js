@@ -13,7 +13,9 @@
  *     rejected font or venue image is a half-styled page, and nobody reports it.
  *   - **Does abuse actually get stopped?** Zero 429s during the `abuse` scenario also fails the
  *     run. A limit that never engages is indistinguishable from no limit, which is the state this
- *     whole issue was filed against.
+ *     whole issue was filed against. **The concurrency there has to stay under
+ *     `ingress.rateLimit.inFlightRequests`** — see `ABUSE_STREAMS`, because a 429 from the wrong
+ *     limit passes this test against a per-source limit that is switched off.
  *
  * **The scenarios run in sequence, never together**, because they share a source address — this
  * machine's — and therefore one token bucket. `abuse` starts after `browsing` has finished and the
@@ -37,8 +39,20 @@ import {BASE_URL} from './lib/config.js'
 /** The site's origin. `BASE_URL` is the origin plus `/api`; static assets and the HTML are not. */
 const ORIGIN = BASE_URL.replace(/\/api$/, '')
 
-/** How hard the abuse scenario pushes, in requests per second. Far above any human. */
-const ABUSE_RATE = Number(__ENV.ABUSE_RATE || 200)
+/**
+ * Concurrent streams the abuse scenario runs, and **the number that makes this test mean anything.**
+ *
+ * It has to stay far below `ingress.rateLimit.inFlightRequests` (100), because Traefik answers both
+ * limits with a bare 429 and nothing in the response says which one fired. An abuse scenario with
+ * 200 VUs therefore trips the *concurrency* limit and reports a pass while the per-source limit is
+ * switched off — measured on staging before this landed: 300 parallel requests gave 66 rejections
+ * with `perSource.enabled: false`.
+ *
+ * Ten sequential streams cannot reach the concurrency cap, and still push about 80 requests a second
+ * — above `average` and below `inFlightRequests`. A 429 in this scenario can only be the per-source
+ * limit. The same 400 requests against the disabled limit produced zero.
+ */
+const ABUSE_STREAMS = Number(__ENV.ABUSE_STREAMS || 10)
 
 /**
  * Rejections, counted per scenario rather than in aggregate.
@@ -76,18 +90,20 @@ export const options = {
             iterations: Number(__ENV.VISITS || 4),
             maxDuration: '2m',
         },
-        // `startTime` is load-bearing — see the header. The gap is far longer than `burst/average`
-        // needs (250/50 = 5s), because a refill that has not finished would fail `browsing`'s
-        // sibling for a reason that has nothing to do with the limit being wrong.
+        // `constant-vus`, never `constant-arrival-rate`. An arrival rate k6 cannot keep up with
+        // queues VUs until the concurrency limit answers instead of the rate limit, and the run
+        // then passes for the wrong reason. Bounded streams keep in-flight requests at
+        // `ABUSE_STREAMS` whatever the server does.
+        //
+        // `startTime` is load-bearing too — see the header. The gap is far longer than
+        // `burst/average` needs (250/50 = 5s), because a refill that has not finished would fail
+        // `browsing`'s sibling for a reason that has nothing to do with the limit being wrong.
         abuse: {
-            executor: 'constant-arrival-rate',
+            executor: 'constant-vus',
             exec: 'abuse',
             startTime: '2m30s',
-            rate: ABUSE_RATE,
-            timeUnit: '1s',
-            duration: '10s',
-            preAllocatedVUs: 50,
-            maxVUs: 200,
+            vus: ABUSE_STREAMS,
+            duration: '15s',
         },
     },
     thresholds: {
@@ -146,7 +162,13 @@ export function browsing() {
     sleep(5)
 }
 
-/** One source, far above the limit, on the cheapest endpoint it can find. */
+/**
+ * One source, above the rate limit and below the concurrency limit, on the cheapest endpoint here.
+ *
+ * No `sleep`, so each stream runs as fast as the server answers. That is what a scraper does, and
+ * it is the shape `inFlightReq` is blind to: ten requests in flight is nothing, and eighty a second
+ * from one address is not.
+ */
 export function abuse() {
     countRejections(http.get(`${BASE_URL}/meta`, {tags: {group: 'detail', name: '/meta'}}), abuseRejected)
 }
