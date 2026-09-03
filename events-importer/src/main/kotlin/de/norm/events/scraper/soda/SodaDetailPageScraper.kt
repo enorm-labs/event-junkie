@@ -12,6 +12,7 @@ import de.norm.events.scraper.parseIsoTime
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLinesAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -64,13 +65,13 @@ class SodaDetailPageScraper {
         val content = document.body()
         val jsonLd = parseMusicEventNode(document)
 
-        val title = content.textAt("h1.title") ?: jsonLd?.text("name")?.let(::stripNameSuffix)
+        val title = content.textAt("h1.title") ?: jsonLd?.stringOrNull("name")?.let(::stripNameSuffix)
         if (title == null) {
             logger.warn { "Detail page at $sourceUrl has no event title, skipping" }
             return null
         }
 
-        val startDate = jsonLd?.text("startDate")
+        val startDate = jsonLd?.stringOrNull("startDate")
         val offers =
             jsonLd
                 ?.path("offers")
@@ -81,13 +82,13 @@ class SodaDetailPageScraper {
 
         return ScrapedEvent(
             title = title,
-            description = parseDescription(content) ?: jsonLd?.text("description"),
+            description = parseDescription(content) ?: jsonLd?.stringOrNull("description"),
             // Soda is a discotheque: every listing is a resident club night, never a billed act.
             eventType = EventType.PARTY.name,
             eventDate = startDate?.let { parseIsoDate(it) } ?: UNRESOLVED_EVENT_DATE,
             // The venue publishes no doors time — the "Einlass" box states an age limit.
             startTime = startDate?.let { parseIsoTime(it) } ?: parseTime(infoBoxValue(content, "Beginn")?.take(HH_MM_LENGTH)),
-            imageUrl = jsonLd?.text("image") ?: content.imgSrcAt("img.event-preview-image"),
+            imageUrl = jsonLd?.stringOrNull("image") ?: content.imgSrcAt("img.event-preview-image"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.SODA.sourceIdPrefix}${sodaEventSlug(sourceUrl)}",
             ticketUrl = content.attrAt("a.ticket-btn", "href")?.let { resolveUrl(sourceUrl, it) },
@@ -99,7 +100,7 @@ class SodaDetailPageScraper {
             free = entryPrice?.signum() == 0,
             // The schema.org URL uses `EventScheduled` / `EventCancelled` / `EventPostponed`,
             // whose keywords parseEventStatus already recognizes.
-            status = parseEventStatus(jsonLd?.text("eventStatus").orEmpty())
+            status = parseEventStatus(jsonLd?.stringOrNull("eventStatus").orEmpty())
         )
     }
 
@@ -123,7 +124,7 @@ class SodaDetailPageScraper {
         offers: List<JsonNode>
     ): Triple<BigDecimal?, BigDecimal?, BigDecimal?> {
         val entryPrice = parsePriceValue(infoBoxValue(content, "Eintritt"))
-        val offerPrice = offers.firstNotNullOfOrNull { it.text("price") }?.let { runCatching { BigDecimal(it) }.getOrNull() }
+        val offerPrice = offers.firstNotNullOfOrNull { it.stringOrNull("price") }?.let { runCatching { BigDecimal(it) }.getOrNull() }
         val boxOfficeAvailable =
             content.select(".rn-office-badge").any { it.text().contains("abendkasse", ignoreCase = true) }
 
@@ -141,7 +142,7 @@ class SodaDetailPageScraper {
      */
     private fun isSoldOut(offers: List<JsonNode>): Boolean =
         offers.isNotEmpty() &&
-            offers.all { it.text("availability")?.contains("soldout", ignoreCase = true) == true }
+            offers.all { it.stringOrNull("availability")?.contains("soldout", ignoreCase = true) == true }
 
     /**
      * Reads the value of the info box carrying [label] (e.g. `"Beginn"` → `"22:00 Uhr"`,
@@ -183,7 +184,7 @@ class SodaDetailPageScraper {
                 try {
                     val root = jsonMapper.readTree(json)
                     (if (root.isArray) root.toList() else listOf(root))
-                        .firstOrNull { it.text("@type") == MUSIC_EVENT_TYPE }
+                        .firstOrNull { it.stringOrNull("@type") == MUSIC_EVENT_TYPE }
                 } catch (e: Exception) {
                     logger.warn(e) { "Failed to parse Soda JSON-LD block" }
                     null
@@ -213,10 +214,3 @@ private fun stripNameSuffix(name: String): String {
 
 /** The `" - 31. Oktober 2026 - Soda Club Berlin"` tail appended to the JSON-LD `name`. */
 private val NAME_DATE_SUFFIX = Regex("""\s+-\s+\d{1,2}\.\s+\p{L}+\s+\d{4}\s+-\s+.*$""")
-
-/** Reads a trimmed string [field] from this node, or `null` when missing, JSON `null`, or blank. */
-private fun JsonNode.text(field: String): String? {
-    val node = path(field)
-    if (node.isMissingNode || node.isNull) return null
-    return node.asString().trim().takeIf { it.isNotBlank() }
-}

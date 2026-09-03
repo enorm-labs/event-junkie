@@ -3,6 +3,7 @@ package de.norm.events.scraper.delphi
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hrefAt
@@ -171,12 +172,6 @@ class DelphiProgrammePageScraper {
         }
     }
 }
-
-/** Reads an attribute off the first matching child, used where a link may be relative. */
-private fun Element.attrAt(
-    cssQuery: String,
-    attribute: String
-): String? = selectFirst(cssQuery)?.attr(attribute)?.takeIf { it.isNotBlank() }
 
 /**
  * The venue's format labels, mapped onto the model's types. The model has no dance or theatre

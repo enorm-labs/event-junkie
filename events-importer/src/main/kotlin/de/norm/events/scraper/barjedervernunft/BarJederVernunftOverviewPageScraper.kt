@@ -5,6 +5,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -79,19 +80,19 @@ class BarJederVernunftOverviewPageScraper {
     private fun parseCard(card: Element): ScrapedEvent? {
         val eventNode = parseJsonLd(card) ?: return null
 
-        val title = eventNode.stringField("performer") ?: card.textAt(".event-artist")
+        val title = eventNode.stringOrNull("performer") ?: card.textAt(".event-artist")
         if (title.isNullOrBlank()) {
             logger.warn { "Calendar card has no performer, skipping" }
             return null
         }
 
-        val sourceUrl = eventNode.stringField("url")?.takeIf { it.startsWith("http") }
+        val sourceUrl = eventNode.stringOrNull("url")?.takeIf { it.startsWith("http") }
         if (sourceUrl == null) {
             logger.warn { "Event '$title' has no show URL, skipping" }
             return null
         }
 
-        val startDate = eventNode.stringField("startDate")
+        val startDate = eventNode.stringOrNull("startDate")
         val eventDate = startDate?.let { parseIsoDate(it) }
         if (eventDate == null) {
             logger.warn { "Could not parse event date for '$title', skipping" }
@@ -104,10 +105,10 @@ class BarJederVernunftOverviewPageScraper {
             // Truncated teaser — the show page supplies the full text and overwrites this.
             // The CMS stores the blurb HTML-escaped, and script content is raw text (no
             // entity decoding by Jsoup), so "&amp;" survives into the JSON string.
-            description = eventNode.stringField("description")?.let { Parser.unescapeEntities(it, false) },
+            description = eventNode.stringOrNull("description")?.let { Parser.unescapeEntities(it, false) },
             eventDate = eventDate,
             startTime = parseOffsetTime(startDate),
-            imageUrl = eventNode.stringField("image")?.takeIf { it.startsWith("http") },
+            imageUrl = eventNode.stringOrNull("image")?.takeIf { it.startsWith("http") },
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.BAR_JEDER_VERNUNFT.sourceIdPrefix}$eventDate-${showSlug(sourceUrl)}",
             ticketUrl = card.hrefAt("a[data-ticketing]"),
@@ -140,12 +141,12 @@ class BarJederVernunftOverviewPageScraper {
                 logger.warn(e) { "Failed to parse Bar jeder Vernunft JSON-LD block" }
                 return null
             }
-        return root.takeIf { it.isObject && it.stringField("@type") == "Event" }
+        return root.takeIf { it.isObject && it.stringOrNull("@type") == "Event" }
     }
 
     /** Whether the schema.org `offers.availability` marks the date as sold out. */
     private fun isSoldOut(eventNode: JsonNode): Boolean {
-        val availability = eventNode.path("offers").stringField("availability").orEmpty()
+        val availability = eventNode.path("offers").stringOrNull("availability").orEmpty()
         return SOLD_OUT_AVAILABILITY.any { availability.endsWith(it, ignoreCase = true) }
     }
 
@@ -173,13 +174,6 @@ class BarJederVernunftOverviewPageScraper {
             .path
             .substringAfterLast('/')
             .removeSuffix(".html")
-
-    /** Reads a trimmed string [field] from this node, or `null` when it is missing, JSON `null`, or blank. */
-    private fun JsonNode.stringField(field: String): String? {
-        val node = path(field)
-        if (node.isMissingNode || node.isNull) return null
-        return node.asString().trim().takeIf { it.isNotBlank() }
-    }
 
     private companion object {
         /**
