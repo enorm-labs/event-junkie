@@ -241,10 +241,10 @@ tests:
   # --- the rate limit, whose two halves are enabled independently ------------------------------
   #
   # `inFlightReq` bounds concurrency and Traefik groups it by request host, so it works whatever
-  # address reaches the edge. `rateLimit` groups by the client address, which k3s ServiceLB
-  # masquerades — so shipping it on would make one budget for every visitor at once. The split is
-  # the decision, and these cases are what stop the off half being switched on by accident.
-  - it: bounds concurrency and nothing else by default
+  # address reaches the edge. `rateLimit` groups by the client address, which the Traefik hostPort
+  # preserves since #1013. Both ship on; the halves stay independent because they answer different
+  # questions and only one of them can be got wrong quietly.
+  - it: bounds both concurrency and per-source rate by default
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
@@ -257,31 +257,38 @@ tests:
       - equal:
           path: spec.inFlightReq.amount
           value: 100
-      # The half that cannot work here. Rendering it would throttle the whole internet as one
-      # source, which looks exactly like a working deployment.
-      - notExists:
-          path: spec.rateLimit
-
-  - it: renders the per-source limit only when it is asked for
-    set:
-      database.host: "10.0.1.2"
-      networkPolicy.databaseCidr: "10.0.1.2/32"
-      database.existingSecret: "events-db"
-      ingress.rateLimit.perSource.enabled: true
-    templates:
-      - rate-limit-middleware.yaml
-    asserts:
+      # Pinned rather than merely present. These are the numbers a first-time visitor's whole page
+      # load has to fit inside — assets, fonts and venue images, not just queries — so a well-meant
+      # reduction is the failure this case exists to catch. `values.yaml` carries the arithmetic.
       - equal:
           path: spec.rateLimit.average
-          value: 20
+          value: 50
       # Traefik's own default burst is 1, which nobody means. A burst near the average rejects an
       # ordinary page load, because one view fires several requests together.
       - equal:
           path: spec.rateLimit.burst
-          value: 50
+          value: 250
       - equal:
           path: spec.rateLimit.period
           value: "1s"
+
+  # The escape hatch, and the reason the two halves did not collapse into one flag: an environment
+  # whose client address is masqueraded again — a k3d rehearsal, or a cluster that regains a load
+  # balancer — wants concurrency bounded and the per-source budget gone, not both off.
+  - it: drops the per-source limit and keeps concurrency when it is turned off
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      ingress.rateLimit.perSource.enabled: false
+    templates:
+      - rate-limit-middleware.yaml
+    asserts:
+      - equal:
+          path: spec.inFlightReq.amount
+          value: 100
+      - notExists:
+          path: spec.rateLimit
 
   - it: renders neither the middleware nor its reference when the rate limit is off
     set:

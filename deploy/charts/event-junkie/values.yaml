@@ -291,21 +291,24 @@ ingress:
         - "font-src 'self'"
         - "connect-src 'self'"
   # ingress.rateLimit is the fourth Traefik Middleware, PLATFORM_SETUP §8 item 9 (#268). The
-  # template and the chart README carry why one half is on and the other cannot be.
+  # template and the chart README carry what each half groups by, and where these numbers come from.
   rateLimit:
     enabled: true
     # Concurrent requests, grouped by request host, so it holds whatever address Traefik sees. It
     # guards the resource that runs out first: each BFF replica holds ten R2DBC connections. A
     # starting point rather than a measurement — `k6 run perf/spike.js` re-derives it.
     inFlightRequests: 100
-    # The per-client request rate. OFF because k3s ServiceLB masquerades the client address, which
-    # would make one budget for every visitor at once. `externalTrafficPolicy: Local` on the Traefik
-    # Service is what turns it on.
+    # The per-client request rate, ON since #1013 gave Traefik the visitor's own address.
+    #
+    # **Both numbers are large on purpose, and shrinking them is how this breaks.** One Ingress
+    # carries the whole site, so a first visit spends about 30 of this budget on its assets, fonts
+    # and venue images before it asks a question. There is no AAAA record either, so a mobile
+    # visitor shares one carrier-NAT address with every other subscriber on it. The README has the
+    # arithmetic; `perf/ratelimit.js` fails a run that rejects a visitor and one that limits nothing.
     perSource:
-      enabled: false
-      # A burst well above the average, because one page view fires several requests together.
-      average: 20
-      burst: 50
+      enabled: true
+      average: 50
+      burst: 250
       period: "1s"
 
 # networkPolicy closes PLATFORM_SETUP §8 item 1: k3s enforces NetworkPolicy, and enforcement being

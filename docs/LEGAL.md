@@ -199,6 +199,7 @@ change everyone remembers, and the contract behind it is the one nobody does.
 | **Communication data**          | **yes, on a strict reading** | No phone numbers and no email addresses are stored anywhere. The artist profile and social URLs are what a strict reading catches. Declared deliberately: the cost was nil and omitting it would have left a scope gap |
 | Contractual master data         | no                           | There is no contract with any data subject                                                                                                                                                                             |
 | **Log data**                    | **yes**                      | Timestamp, requested path, HTTP status, bytes transferred, referrer, browser and OS. **No IP address** since §7.5 was settled on 2026-08-19. Retention is a size bound, not a period — see §7.5.1                      |
+| **Connection data**             | **yes, transient only**      | The visitor's IP address, held in memory by Traefik's per-source rate limiter for a one-second window and written nowhere (#268). Declared for the same reason log data was — see below and §7.5.1                     |
 | Contract, invoicing and payment | no                           | Nothing is sold and no payment is processed                                                                                                                                                                            |
 
 **Log data was declared even though §7.5 is open**, and the reasoning generalises. A processor agreement should cover
@@ -339,6 +340,25 @@ write held a cluster address rather than a visitor's. Less was logged than this 
 the reason it already gave: a log format that writes no address survives the topology changing. **Do not read this as
 permission to write the field again.** X-Forwarded-For carries a real visitor address on both clusters now. So
 `ej_no_ip` is the only thing keeping the claim true, and it has no second line of defence behind it.
+
+**A second consequence, and it is a processing operation rather than a logging one (#268).** Now that Traefik sees the
+visitor's address, its per-source rate limit works, and it is on in both clusters. That means Traefik **holds a
+visitor's IP address in memory**. It is a counter in a token bucket, keyed on that address, for a one-second window.
+Nothing writes it. It reaches no log, no stream in OpenObserve, and no disk. Traefik's access log stays off. Every
+claim this section makes about logging therefore stands word for word.
+
+**"Not logged" and "not processed" are different claims, and only the first one is settled here.** A transient
+in-memory counter keyed on an IP address is still processing under Art. 4 (2), on Art. 6 (1) (f), for the purpose of
+keeping the service available. Whether the notice has to name it is the reviewer's call and is
+[question 6 of the brief](LEGAL_REVIEW_BRIEF.md). **Nothing in the notice was changed for this**, deliberately —
+guessing at the answer is how a page acquires a claim nobody checked.
+
+**The timing is the part that makes this safe to switch on before the answer arrives.** The brief's question 6 asks
+whether such a sentence is needed _before_ the change or _with_ it. Production is dark: the apex does not resolve,
+the certificate is for `prod-check`, and staging is not on the public internet. So the limit is live and tested while
+the only clients are the operator's own. The reviewer answers before a single visitor's address is ever counted.
+**That ordering is the reason to do this now rather than after go-live**, and it stops being true the day
+`publish_dns` flips.
 
 **Rows 3 and 4 changed on 2026-09-02: the duration is now real, and the notice states it (#278).** This section used
 to end by forbidding a number of days until OpenObserve's retention policy existed. It exists. #271 shipped it and
