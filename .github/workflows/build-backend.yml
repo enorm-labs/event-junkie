@@ -157,9 +157,6 @@ jobs:
       - name: Build all modules
         run: ./gradlew build -x test -x koverVerify
 
-      - name: Run tests
-        run: ./gradlew test
-
       # Enforces the runtime-dependency licence policy in config/allowed-licenses.json
       # (docs/LEGAL.md §9.2). Deliberately a separate step rather than wired into
       # `check`: the plugin is not configuration-cache compatible, so attaching it to the main
@@ -168,10 +165,20 @@ jobs:
       - name: Check dependency licences
         run: ./gradlew checkLicense --no-configuration-cache
 
-      # `koverVerify` here rather than in the build step, because this runs after `test` and so has
-      # execution data to measure. The per-module floors are in the root build.gradle.kts.
-      - name: Generate Kover coverage reports and verify the floors
-        run: ./gradlew koverXmlReport koverLog koverVerify
+      # `test` and the Kover tasks in ONE invocation, which is what makes the coverage number
+      # reproducible: the reports are read from the execution data produced by the same task graph
+      # that wrote it, rather than by a later Gradle run that inherits whatever is on disk.
+      #
+      # It also stops both Boot suites running twice. `bootBuildInfo` stamps `build.time` as
+      # `Instant.now()`, and that IS a task input (`properties.timeIfNotExcluded`), so the task is
+      # never up-to-date and drags `processResources` -> `jar` -> `test` with it on every fresh
+      # invocation. Splitting `test` from the report tasks therefore did not reuse the first run —
+      # it paid for a second one. See #1058.
+      #
+      # Still not folded into `build` above: that one runs with `-x test`, so a coverage rule there
+      # would measure nothing. The per-module floors are in the root build.gradle.kts.
+      - name: Run tests, then generate Kover coverage reports and verify the floors
+        run: ./gradlew test koverXmlReport koverLog koverVerify
 
       - name: Post coverage to Job Summary
         run: |

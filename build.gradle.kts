@@ -198,14 +198,23 @@ subprojects {
     plugins.withId("org.springframework.boot") {
         configure<SpringBootExtension> {
             buildInfo {
-                // `build.time` is deliberately left at Boot's default. Two things worth knowing
-                // before "optimising" it away: it is NOT a task input, so it does not make
-                // `bootBuildInfo` re-run (verified — the task stays UP-TO-DATE across builds); and
-                // suppressing it needs `excludes.add("time")`, since on Boot 4 an unset
+                // `build.time` is deliberately left at Boot's default, and it is not free.
+                //
+                // **It is a task input**, under the name `properties.timeIfNotExcluded`, and it is
+                // `Instant.now()` — so `bootBuildInfo` is never up-to-date, and it drags
+                // `processResources` -> `jar` -> `test` with it. Every fresh Gradle invocation
+                // re-runs both Boot modules' test suites. `./gradlew :events-bff:test --info` names
+                // the reason. An earlier version of this comment claimed the opposite, which is
+                // what kept the double test run in CI unexamined; `build-backend.yml` now runs
+                // `test` and the Kover tasks in one invocation so it is paid once (#1058).
+                //
+                // Suppressing it needs `excludes.add("time")` — on Boot 4 an unset
                 // `properties { time = null }` falls back to `Instant.now()` rather than being
-                // omitted (BuildInfoProperties.getTimeIfNotExcluded). Drop it only if this project
-                // ever adopts a reproducible-build requirement — until then, knowing when a
-                // running instance was built is worth more to an operator than byte-identical jars.
+                // omitted. That is an **API change, not a build tweak**: `buildTime` is a
+                // documented field of `GET /meta` (MetaResponse), so excluding it here makes that
+                // field permanently null for every consumer. Knowing when a running instance was
+                // built is worth more to an operator than byte-identical jars, so it stays until a
+                // reproducible-build requirement says otherwise.
                 properties {
                     additional.put("commit", gitCommit)
                 }
