@@ -78,12 +78,21 @@ export const PROCESSOR_CONTRACTS_PENDING = false
 /**
  * Date the legal pages were last reviewed against what the system actually does (§7.7).
  *
- * 2026-09-02 — the first review against a **running production deployment** rather than against an
- * intended one (#278). Everything before this date was checked against the plan.
+ * The review reads the deployed configuration, not the plan and not the previous review. #279's
+ * pass found the notice still describing image requests to venue servers, which
+ * `images.serving.enabled` had stopped three days earlier, and §3 claiming one stored key where the
+ * site writes two.
  */
-export const LAST_REVIEWED = '2026-09-02'
+export const LAST_REVIEWED = '2026-09-03'
 
-/** The supervisory authority for a controller established in Berlin (Art. 13 (2) (d) GDPR). */
+/**
+ * The supervisory authority named under Art. 13 (2) (d) GDPR.
+ *
+ * Competence follows where the controller is **established**, which is not the rented
+ * *ladungsfähige Anschrift* in {@link CONTROLLER}. The two therefore name different Bundesländer on
+ * purpose, and a reader sees both. #279 asks a reviewer to confirm it and to say whether the page
+ * has to reconcile them.
+ */
 export const SUPERVISORY_AUTHORITY = {
   name: 'Berliner Beauftragte für Datenschutz und Informationsfreiheit',
   url: 'https://www.datenschutz-berlin.de/',

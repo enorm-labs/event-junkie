@@ -2,15 +2,14 @@
 /**
  * Datenschutzerklärung nach Art. 13 DSGVO — die **maßgebliche Fassung** (LEGAL.md §6.1).
  *
- * Follows the same twelve mandatory items as `PrivacyView.en.vue` (docs/LEGAL.md §7.2), section for
- * section, and cites them in German form — *Art. 6 Abs. 1 lit. f DSGVO*, not *Art. 6 (1) (f) GDPR*.
- * The unit test runs the checklist against both languages separately: a dropped element in one
- * version is invisible from the other. Like the English version it describes no processing that
- * does not happen — no cookie table, no consent withdrawal, no analytics section.
+ * Follows the same twelve mandatory items as `PrivacyView.en.vue` (docs/LEGAL.md §7.2) and cites
+ * them in German form — *Art. 6 Abs. 1 lit. f DSGVO*, not *Art. 6 (1) (f) GDPR*. The unit test runs
+ * the checklist per language: a dropped element in one version is invisible from the other. It
+ * describes no processing that does not happen — no cookie table, no consent, no analytics.
  *
- * Retention and IP logging are settled (§7.5.1): no IP address is logged, and §2 states **14 Tage**.
- * That is `ZO_COMPACT_DATA_RETENTION_DAYS` in both clusters, whose own comment says this notice must
- * state whatever it says — the two move together.
+ * **Two claims here are coupled to deployed configuration** (§7.5.1, §7.3a). §2's **14 Tage** is
+ * `ZO_COMPACT_DATA_RETENTION_DAYS`, and §5's "no image request reaches a third party" is
+ * `images.serving.enabled`. Change either value and this notice becomes false.
  *
  * Register: `du`, for the reasons set out in `ImprintView.de.vue`.
  */
@@ -39,13 +38,13 @@ const { t } = useI18n()
         Karten, Social-Media-Widgets oder Werbung von Dritten ein und kennt keine Benutzerkonten.
         Nichts von dem, was du hier tust, wird getrackt oder zu einem Profil verarbeitet. Übrig
         bleibt das unvermeidbare Minimum: Ein Webserver protokolliert Anfragen, damit die Seite
-        ausgeliefert und geschützt werden kann, und dein Browser merkt sich, ob du helle oder dunkle
-        Darstellung gewählt hast.
+        ausgeliefert und geschützt werden kann, und dein Browser merkt sich, welche Sprache und
+        welche Darstellung du gewählt hast.
       </p>
       <p>
-        <strong>Bilder sind die eine Ausnahme.</strong> Ein Teil von ihnen wird direkt von den
-        Servern der Locations und Veranstalter geladen, die dabei deine IP-Adresse erfahren.
-        Abschnitt 5 sagt, welche das sind und was wir dagegen tun.
+        <strong>Auch die Bilder kommen von uns.</strong> Event Junkie lädt sie einmal herunter und
+        liefert sie selbst aus, sodass dein Browser beim Ansehen einer Seite keine Anfrage an Dritte
+        stellt. Abschnitt 5 sagt, was daraus folgt.
       </p>
     </section>
 
@@ -116,17 +115,25 @@ const { t } = useI18n()
     <section>
       <h2>3. Lokale Speicherung auf deinem Gerät</h2>
       <p>
-        Diese Seite setzt <strong>keine Cookies</strong>. Sie speichert genau einen Wert im lokalen
-        Speicher deines Browsers: einen Schlüssel namens <code>theme</code> mit dem Wert
-        <code>light</code> oder <code>dark</code>, damit deine Darstellungseinstellung ein Neuladen
-        der Seite übersteht.
+        Diese Seite setzt <strong>keine Cookies</strong>. Sie speichert genau zwei Werte im lokalen
+        Speicher deines Browsers, und beide halten nur fest, was du selbst eingestellt hast:
       </p>
+      <ul>
+        <li>
+          <code>theme</code> mit dem Wert <code>light</code> oder <code>dark</code>, damit deine
+          Darstellungseinstellung ein Neuladen der Seite übersteht
+        </li>
+        <li>
+          <code>locale</code> mit dem Wert <code>de</code> oder <code>en</code>, damit du beim
+          nächsten Besuch in der zuletzt gewählten Sprache landest
+        </li>
+      </ul>
       <p>
-        Dieser Wert verlässt dein Gerät nicht, wird weder an uns noch an Dritte übermittelt und ist
-        für Dritte nicht auslesbar. Er ist unbedingt erforderlich, um die von dir ausdrücklich
-        gewählte Darstellung bereitzustellen, und bedarf deshalb nach § 25 Abs. 2 Nr. 2 TDDDG keiner
-        Einwilligung — weshalb du hier auch kein Banner wegklicken musst. Du kannst ihn jederzeit
-        über die Einstellungen deines Browsers löschen.
+        Diese Werte verlassen dein Gerät nicht, werden weder an uns noch an Dritte übermittelt und
+        sind für Dritte nicht auslesbar. Beide sind unbedingt erforderlich, um die von dir
+        ausdrücklich gewählte Einstellung bereitzustellen, und bedürfen deshalb nach § 25 Abs. 2
+        Nr. 2 TDDDG keiner Einwilligung — weshalb du hier auch kein Banner wegklicken musst. Du
+        kannst sie jederzeit über die Einstellungen deines Browsers löschen.
       </p>
       <p>
         Sollten jemals Cookies eingesetzt werden, dann ausschließlich unbedingt erforderliche: kein
@@ -201,16 +208,11 @@ const { t } = useI18n()
         offenlegen müssten.
       </p>
       <p>
-        <strong>Für Bilder gilt das nicht durchgängig.</strong> Ein Teil der Bilder wird direkt von
-        den Servern der Locations, Veranstalter und Ticketanbieter geladen. Dein Browser fragt sie
-        dort an, und der jeweilige Server erfährt dabei deine IP-Adresse sowie über den Referer,
-        welche Seite du gerade ansiehst. Diese Anbieter sind keine Auftragsverarbeiter: Wir
-        beauftragen sie nicht, sondern verweisen auf ihre Bilder.
-      </p>
-      <p>
-        Wir speichern inzwischen von jedem dieser Bilder eine eigene Kopie (Abschnitt 4), damit sie
-        künftig von unseren Servern kommen. Solange das noch nicht überall umgestellt ist, blockiert
-        ein Inhaltsblocker im Browser diese Anfragen.
+        <strong>Für Bilder gilt das ebenso.</strong> Sie kommen von unseren Servern, weil Event
+        Junkie sie einmal herunterlädt und selbst ausliefert (Abschnitt 4). Dein Browser fragt
+        deshalb keine Location, keinen Veranstalter und keinen Ticketanbieter an, und keiner von
+        ihnen erfährt beim Ansehen einer Seite deine IP-Adresse. Wo wir ein Bild nicht speichern
+        dürfen, zeigen wir gar keines, statt es beim Anbieter zu laden.
       </p>
       <p>
         Wenn du uns per E-Mail schreibst oder ein Issue auf GitHub eröffnest, werden diese Daten zur
@@ -253,8 +255,8 @@ const { t } = useI18n()
       </p>
       <p>
         <strong>Beschwerderecht.</strong> Du kannst dich bei einer Aufsichtsbehörde beschweren,
-        insbesondere im Mitgliedstaat deines Aufenthaltsorts oder deines Arbeitsplatzes. Für uns
-        zuständig ist die
+        insbesondere im Mitgliedstaat deines gewöhnlichen Aufenthaltsorts, deines Arbeitsplatzes
+        oder des Orts des mutmaßlichen Verstoßes. Für uns zuständig ist die
         <a :href="SUPERVISORY_AUTHORITY.url" rel="noopener" target="_blank">
           {{ SUPERVISORY_AUTHORITY.name }} </a
         >.

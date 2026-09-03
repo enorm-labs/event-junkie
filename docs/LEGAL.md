@@ -227,6 +227,13 @@ under § 16 UrhG and a processing operation under the DSGVO. Two consequences fo
   takedown deliberately covers a venue's own image and its events' images, and stops there. Deleting a performer's
   photograph on one venue's request would remove it from every other listing.
 
+**`images.serving.enabled` is a published claim, the way `ZO_COMPACT_DATA_RETENTION_DAYS` is.** With it on, the API
+hands out our own URL and the visitor's browser contacts no venue. §5 of the notice says so, and `legalViews.spec.ts`
+pins the sentence. With it off the API hands out the venue's own URL, and every card is a third-party request. That
+sentence is then false, so **turning it off is a notice change rather than a rollback.** Production served its own
+images from 2026-08-30. The notice went on warning about venue requests until #279 — a warning about a request the
+browser could not make.
+
 **The images carry no retention period either**, for the same reason event data carries none. They live as long as the
 event they belong to. What removes one is an objection, a venue opting out, or the sweep finding that nothing
 references it.
@@ -246,9 +253,14 @@ state them and both must move with it.**
 
 ### 7.4 Device storage — `localStorage`, not just cookies
 
-The site sets **no cookies**. It stores a `theme` key and a locale hint. § 25 TDDDG covers _storage on terminal
-equipment_, not cookies specifically. Both items are strictly necessary for a setting the visitor chose, so § 25 (2) 2
-applies and **no consent banner is required**.
+The site sets **no cookies**. It stores exactly two keys: **`theme`** (`App.vue`) and **`locale`**
+(`i18n/locales.ts`). § 25 TDDDG covers _storage on terminal equipment_, not cookies specifically. Both items are
+strictly necessary for a setting the visitor chose, so § 25 (2) 2 applies and **no consent banner is required**.
+
+**§3 of the notice names both keys, and it said "exactly one" until 2026-09-03.** The site wrote `locale` from the day
+the second language shipped. Nothing caught it. `legalViews.spec.ts` asserts that a required element is _present_, and
+never that a sentence is _true_ — the defect class §7.2 is about. The assertion added with #279 pins both names, so a
+third stored key fails the build rather than a complaint.
 
 That is a property worth defending deliberately. The first non-essential stored item makes a banner mandatory. It is a
 product decision, not an implementation detail, so escalate rather than implement.
@@ -384,7 +396,27 @@ be audited.
 Running the German notice past a generator such as [datenschutz-generator.de](https://datenschutz-generator.de/) is
 worthwhile _as a second opinion_. The German it produces is the idiom a German reader expects. It is **not** a
 substitute for the notice being written from what the system does. A generator emits boilerplate for processing you do
-not perform, which §7.2 rules out. Not yet done (§14).
+not perform, which §7.2 rules out.
+
+**Done on 2026-09-03 (#279), against the generator's own published output and its Art. 13 checklist.** Comparison, not
+submission: nothing of ours was entered into the form. Three things came out of it.
+
+**One correction, applied.** Our Beschwerderecht named two fora — habitual residence and place of work. Art. 77 (1)
+names three. The notice now also names the place of the alleged infringement, in both languages.
+
+**Two structural differences, deliberately kept, and both are now reviewer questions.** The generator always carries a
+`Sicherheitsmaßnahmen` clause and an `Übersicht der Verarbeitungen` table. Neither is an Art. 13 requirement. The
+second is the more interesting one here. It states _categories of data subject_. This site's largest such category is
+artists who never visited it, and §7.3a holds that fact while the notice does not.
+
+**What the generator would have produced is the argument for not using one as a source.** Its defaults include a
+cookie section, a contact-management section, newsletters and social media — none of which happen here. Its hosting
+clause states **"maximal 30 Tage"** for logfiles as boilerplate. Ours states 14 days because 14 days is configured.
+That is precisely the defect §7.5 names, handed to you pre-written. Its deletion clause is framed on withdrawn
+consent, and nothing here rests on consent.
+
+**The generator's own guidance agrees with §7.2**: it warns against listing purposes _"auf Vorrat"_, and says to
+disclose only processing actually planned.
 
 ## 8. Imprint (§ 5 DDG)
 
@@ -503,25 +535,18 @@ one _means_.
 
 **Blocking:**
 
-1. **`INFRASTRUCTURE_IS_PROPOSED = true`** (`events-frontend/src/lib/legal.ts`) — the notice still describes an
-   _intended_ deployment. The platform now exists, so this is actionable rather than blocked. Re-check §5 of both
-   notices against what actually runs, then clear the flag. Never clear it in advance of that check. The flag is the
-   only machine-readable record that the notice and the infrastructure were compared.
-2. **Log retention must not state a number of days** for server logs until OpenObserve's retention policy exists
-   ([#271](https://github.com/enorm-labs/event-junkie/issues/271)). A period the notice claims and nothing enforces is
-   the precise defect §7.5 names. It is worse than an honest longer one.
-3. **§7.3a does not cover the role mailboxes.** An email address is a category of personal data the processing
+1. **§7.3a does not cover the role mailboxes.** An email address is a category of personal data the processing
    inventory was not written against. So is the body of whatever someone writes to `hello@` or `security@`. That is a
    disclosure question wanting a legal read, not a mechanical edit.
-4. **A qualified review of the German privacy notice.** The drafts are careful and test-covered, and neither makes
+2. **A qualified review of the German privacy notice.** The drafts are careful and test-covered, and neither makes
    them _reviewed_. This is the item no amount of engineering substitutes for.
-5. **The DSGVO-generator cross-check** (§7.8), as a second opinion.
+   [`LEGAL_REVIEW_BRIEF.md`](LEGAL_REVIEW_BRIEF.md) is what a reviewer is handed, and carries the questions.
 
 **Not blocking, recorded so it is not rediscovered:**
 
-6. **`1.0.0` and dropping the beta badge** — one decision, deliberately deferred (§4.7).
-7. **An accessibility statement** — only publishable once conformance is actually measured (§12).
-8. **`FUNDING.yml`** — deliberately absent until donations are wanted (§8.4).
+3. **`1.0.0` and dropping the beta badge** — one decision, deliberately deferred (§4.7).
+4. **An accessibility statement** — only publishable once conformance is actually measured (§12).
+5. **`FUNDING.yml`** — deliberately absent until donations are wanted (§8.4).
 
 ### Two rules this section exists to enforce
 

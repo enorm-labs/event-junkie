@@ -120,15 +120,15 @@ const PRIVACY_ELEMENTS: Element[] = [
     en: /downloads those images and stores a copy/i,
     de: /lädt\s+diese Bilder herunter und speichert eine Kopie/i,
   },
-  // #792. The claim above it — no CDN, no proxy, your request reaches us directly — is what makes
-  // this necessary: without it the notice reads as though nothing else is ever contacted, while the
-  // browser is still sent to a venue's server for every image. **The copies now exist for all four
-  // columns (#833); what keeps this true is `app.images.serving.enabled`, which is off everywhere.**
-  // Delete this item when that switch is on in production (#843), not before.
+  // The inverse of #792's item, which this replaces. That one pinned the disclosure that images
+  // were fetched from venue servers, and said to delete it once `images.serving.enabled` was on in
+  // production. It has been since 2026-08-30, so the disclosure had become a warning about a
+  // request the browser cannot make — and the notice led with it. **This pins the claim that costs
+  // something**: turning serving back off makes the page false, and fails here first.
   {
-    what: 'that some images are still fetched from a third-party server, and what that discloses',
-    en: /loaded directly\s+from the servers of venues, promoters and ticket sellers/i,
-    de: /direkt von\s+den Servern der Locations, Veranstalter und Ticketanbieter geladen/i,
+    what: 'that no image request reaches a third party',
+    en: /contacts\s+no venue, promoter or ticket seller/i,
+    de: /keine Location, keinen Veranstalter und keinen Ticketanbieter an/i,
   },
   // GitHub, not a processor: the notice still has to address a third country, because choosing to
   // open an issue rather than write an email sends data to a US company.
@@ -207,9 +207,18 @@ const PRIVACY_ELEMENTS: Element[] = [
     de: /Art\. 22 DSGVO/,
   },
   {
-    what: 'the local-storage key and why it needs no consent',
+    what: 'the local-storage keys and why they need no consent',
     en: /§ 25 \(2\) 2 TDDDG/,
     de: /§ 25 Abs\. 2 Nr\. 2 TDDDG/,
+  },
+  // §3 said "exactly one value" in both languages while the site wrote two — `theme` from
+  // `App.vue` and `locale` from `i18n/locales.ts`. The checklist above could not catch it: every
+  // item asserts that an element is present, never that a sentence is true. Naming both keys is
+  // what makes a third one arriving fail here rather than in a complaint.
+  {
+    what: 'stored keys, both of them by name',
+    en: /\btheme\b[\s\S]*\blocale\b/,
+    de: /\btheme\b[\s\S]*\blocale\b/,
   },
   { what: 'that no cookies are set', en: /no cookies/i, de: /keine Cookies/i },
   {
