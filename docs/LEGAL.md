@@ -310,11 +310,20 @@ startup log on both clusters. Every packet is rewritten before Traefik reads it.
 `svclb` pod for every visitor, and X-Forwarded-For inherits that address. The `10.42.1.1` annotated above as "the
 visitor" was the load balancer.
 
+**Staging now carries a real visitor address, and it took two attempts to get there (#1013).**
+`externalTrafficPolicy: Local` was the documented fix and was not enough. The controller did aim klipper-lb at the
+node and its NodePort. Its container still installed the MASQUERADE, so the source was rewritten before the packet
+arrived. What worked
+is a **hostPort** on Traefik, with the Service dropped to `ClusterIP`. That removes ServiceLB from the path.
+
+**Measured rather than inferred.** Traefik's access log was turned on for one request and removed the same day. It
+recorded `"ClientHost":"10.10.1.2"`, the operator's own tunnel address. **Production does not have this yet.**
+
 **That makes this section's conclusion stronger, and changes nothing in the notice.** The address field nginx used to
 write held a cluster address rather than a visitor's. Less was logged than this section feared. The decision stands for
 the reason it already gave: a log format that writes no address survives the topology changing. **Do not read this as
-permission to write the field again.** `externalTrafficPolicy: Local` on the Traefik Service is the change that would
-make X-Forwarded-For carry a real visitor address.
+permission to write the field again.** On staging that protection is now the only one left. On production the change
+that would remove the second one is the same hostPort, not the traffic policy.
 
 **Rows 3 and 4 changed on 2026-09-02: the duration is now real, and the notice states it (#278).** This section used
 to end by forbidding a number of days until OpenObserve's retention policy existed. It exists. #271 shipped it and
