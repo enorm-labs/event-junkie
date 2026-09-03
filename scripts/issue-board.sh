@@ -240,6 +240,7 @@ parse_batch_line() {
     [[ -n "$line" ]] || return 1
 
     b_number="${line%% *}"
+    [[ "$b_number" =~ ^[0-9]+$ ]] || return 1
     rest=""
     [[ "$line" == *" "* ]] && rest="${line#* }"
 
