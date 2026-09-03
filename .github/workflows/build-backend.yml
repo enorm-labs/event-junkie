@@ -120,29 +120,28 @@ jobs:
       - name: Lint with ktlint
         run: ./gradlew ktlintCheck
 
-      # Both variants, because they are different analyses (#407). `detekt` runs the rules that
-      # read the syntax tree alone; `detektMain` resolves types first and runs the rules that need
-      # them — `UnsafeCallOnNullableType`, `UseOrEmpty`, `UnusedPrivateProperty` and the rest. For
-      # a long time only the first ran, so the second's rules were **not run** rather than passing,
-      # and the gate was green because it never looked. `detektMain` compiles the main source sets
-      # to get a classpath; the build below reuses that output, so the cost is one compile, not two.
-      #
-      # `detektTest` is deliberately not here yet — it still reports findings, and turning it on
-      # belongs with fixing them (#407).
+      # All three, because they are different analyses (#407). `detekt` runs the rules that read
+      # the syntax tree alone; `detektMain` and `detektTest` resolve types first and run the rules
+      # that need them — `UnsafeCallOnNullableType`, `UseOrEmpty`, `UnusedPrivateProperty` and the
+      # rest — over the main and test sources respectively. For a long time only the first ran, so
+      # the others' rules were **not run** rather than passing, and the gate was green because it
+      # never looked. The two type-resolution tasks compile their source sets to get a classpath;
+      # the build below reuses that output, so the cost is one compile of each, not two.
       - name: Static analysis with detekt
-        run: ./gradlew detekt detektMain
+        run: ./gradlew detekt detektMain detektTest
 
       - name: Post detekt report to Job Summary
         if: success() || failure()
         run: |
           echo "## 🔍 Detekt Static Analysis" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          for report in */build/reports/detekt/detekt.md */build/reports/detekt/main.md; do
+          for report in */build/reports/detekt/detekt.md */build/reports/detekt/main.md */build/reports/detekt/test.md; do
             [ -f "$report" ] || continue
             module=$(echo "$report" | cut -d'/' -f1)
-            # `main.md` is the type-resolution run; say which analysis a section came from.
+            # `main.md` and `test.md` are the type-resolution runs; say which analysis a section came from.
             case "$(basename "$report")" in
-              main.md) variant="with type resolution" ;;
+              main.md) variant="main, with type resolution" ;;
+              test.md) variant="test, with type resolution" ;;
               *) variant="syntax only" ;;
             esac
             # Replace the generic "# detekt" heading with a module-specific one
@@ -350,8 +349,8 @@ jobs:
           sarif_file: events-importer/build/reports/detekt/detekt.sarif
           category: detekt-events-importer
 
-      # The type-resolution run writes its own `main.sarif`, under its own category so the two
-      # analyses do not overwrite each other's alerts.
+      # The type-resolution runs write their own `main.sarif` and `test.sarif`, each under its own
+      # category so no two analyses overwrite each other's alerts.
       - name: Upload detekt type-resolution SARIF (events-core)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
         uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
@@ -370,6 +369,24 @@ jobs:
         with:
           sarif_file: events-importer/build/reports/detekt/main.sarif
           category: detekt-main-events-importer
+      - name: Upload detekt test-source SARIF (events-core)
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
+        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+        with:
+          sarif_file: events-core/build/reports/detekt/test.sarif
+          category: detekt-test-events-core
+      - name: Upload detekt test-source SARIF (events-bff)
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
+        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+        with:
+          sarif_file: events-bff/build/reports/detekt/test.sarif
+          category: detekt-test-events-bff
+      - name: Upload detekt test-source SARIF (events-importer)
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
+        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+        with:
+          sarif_file: events-importer/build/reports/detekt/test.sarif
+          category: detekt-test-events-importer
 
   # OWASP Dependency-Check runs as a separate job in parallel with the build to avoid
   # slowing down the main feedback loop.

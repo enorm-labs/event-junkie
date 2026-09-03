@@ -55,6 +55,7 @@ class ReadinessWithoutSchemaTest {
      */
     @TestConfiguration(proxyBeanMethods = false)
     class UnmigratedPostgres {
+        @Suppress("MemberNameEqualsClassName") // @Bean takes the bean name from the method, so renaming it renames the bean.
         @Bean
         @ServiceConnection(name = "postgres")
         fun unmigratedPostgres(): PostgreSQLContainer =
@@ -63,6 +64,7 @@ class ReadinessWithoutSchemaTest {
                 .withReuse(false)
     }
 
+    @Suppress("VarCouldBeVal") // Spring writes this field after construction, which a val does not allow.
     @LocalServerPort
     private var port: Int = 0
 

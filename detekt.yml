@@ -1,10 +1,39 @@
 # Detekt configuration – overrides for the default rule set.
 # See https://detekt.dev/docs/rules/style/#maxlinelength
 
+# The four rules below describe a defect in production code and a test-shaped fact in test code
+# (#407). Tuned here rather than silenced call site by call site, so the reason is read once.
+
+complexity:
+  LongParameterList:
+    # A fixture builder's parameter list *is* the record it builds: one defaulted parameter per
+    # column, so a test names the field it cares about and inherits the rest. Production code is
+    # still measured, and its few long constructors each carry their own `@Suppress`.
+    excludes: ['**/test/**']
+
+potential-bugs:
+  IgnoredReturnValue:
+    # Every finding here sat inside MockK's `coVerify { … }`, which specifies an expected call
+    # rather than making one. detekt cannot see that the enclosing lambda is a recording DSL, so
+    # the value it reports as dropped never existed. Production code still fires.
+    excludes: ['**/test/**']
+
+coroutines:
+  InjectDispatcher:
+    # The rule keeps a hard-coded dispatcher out of production wiring so a test can substitute one.
+    # A test *is* that substitution, and the `ioDispatcher` bean it asks for exists already.
+    excludes: ['**/test/**']
+
 style:
   MaxLineLength:
     # Aligned with .editorconfig max_line_length = 160
     maxLineLength: 160
+
+  VarCouldBeVal:
+    # `lateinit val` does not exist, so a `lateinit var` cannot take the rule's advice — all 32
+    # findings were the `@Autowired private lateinit var` that field injection requires. No main
+    # source declares one, so this changes nothing for production code.
+    ignoreLateinitVar: true
 
 # This repository's own rules, implemented in the :detekt-rules module.
 event-junkie:

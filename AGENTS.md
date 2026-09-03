@@ -207,7 +207,8 @@ application subprojects and one build-tooling subproject sharing a root `setting
 ./gradlew ktlintCheck          # Lint all modules
 ./gradlew ktlintFormat         # Auto-fix formatting
 ./gradlew detekt               # Static analysis, syntax-tree rules only (all modules)
-./gradlew detektMain           # Static analysis with type resolution — a different rule set; CI runs both
+./gradlew detektMain           # Static analysis with type resolution over main — a different rule set
+./gradlew detektTest           # The same over test sources; CI runs all three
 ./gradlew koverLog             # Print test coverage summary per module
 ./gradlew koverHtmlReport      # Generate HTML coverage reports
 ./gradlew dependencyUpdates    # Check for newer dependency versions
