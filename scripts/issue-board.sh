@@ -244,7 +244,7 @@ parse_batch_line() {
     [[ "$line" == *" "* ]] && rest="${line#* }"
 
     last="${rest##* }"
-    if [[ "$last" =~ ^[Pp][0-9]$ ]]; then
+    if [[ "$last" =~ ^[Pp][012]$ ]]; then
         b_priority="$last"
         if [[ "$rest" == *" "* ]]; then rest="${rest% *}"; else rest=""; fi
     fi
