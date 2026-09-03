@@ -1,0 +1,19 @@
+# `externalTrafficPolicy: Local` on k3s's own Traefik Service (#1013), so a visitor's address
+# survives the load balancer and reaches Traefik.
+#
+# k3s installs Traefik through a `HelmChart` CR in `kube-system`, so a `HelmChartConfig` of the same
+# name is the supported override. Editing the Service by hand is undone by the next reconcile.
+#
+# **What this costs.** Under `Local` a node running no Traefik pod drops the packet instead of
+# forwarding it. Both clusters are single-node, so this is a constraint that starts to bite the day
+# a second node joins, not today.
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    service:
+      spec:
+        externalTrafficPolicy: Local

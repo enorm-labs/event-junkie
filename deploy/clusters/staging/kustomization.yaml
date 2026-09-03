@@ -35,6 +35,8 @@ resources:
   # worst here: an absent policy leaves a namespace that looks hardened and is not.
   - observability-netpol.yaml
   - cert-manager-netpol.yaml
+  # Not in `../base`, though both clusters want it: that rolls both at once and staging goes first.
+  - traefik-service-policy.yaml
   # The Signal bridge (#271, item 2 for the collector, which is in `../base`).
   - signal-bridge.yaml
   - oci-repository.yaml
