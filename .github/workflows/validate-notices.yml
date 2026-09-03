@@ -1,0 +1,127 @@
+# The committed open-source notices, against what the dependencies actually resolve to (#1037).
+#
+# `events-frontend/src/assets/notices.json` is generated, committed, and rendered at /legal/notices.
+# Nothing joined it to its inputs, and it drifted: #1034 regenerated the file while moving two
+# packages out of `dependencies` and picked up 51 components that should already have been listed —
+# 50 JVM and one npm. It was found by a pull request that happened to touch the file, not by anyone
+# checking. **A stale notices file understates what we distribute**, which is the direction that
+# matters (docs/LEGAL.md §9.2).
+#
+# **This is its own workflow, and that is the decision worth explaining.** The generator merges two
+# ecosystems — it reads the Gradle licence report off disk and combines it with npm's — so a full
+# regeneration needs a JDK and Node in the same job, and no other pull-request workflow has both.
+# Folding it into `validate-docs.yml` was the alternative; it would have meant adding every backend
+# dependency file to that workflow's `paths:` filter, which triggers its three unrelated jobs on
+# `gradle.properties`. A fourth `validate-*` workflow keeps the triggers honest, and this repository
+# already has five.
+#
+# **The `paths:` filter has to name both ecosystems**, and it is the part most likely to rot. A
+# dependency file missing from it means a change that moves the notices does not run this check, and
+# the drift returns silently — the same failure this exists to end. `notices.json` itself is on the
+# list so that a hand-edit is caught, since the file says at the top that it is generated.
+#
+# **The notices differ by platform, and this job is what decides the answer.** `license-checker`
+# walks `node_modules`, and optional dependencies are not the same on every operating system — a
+# macOS install carries `fsevents` and a Linux one does not. So a file regenerated on a laptop fails
+# here over one component in four thousand lines of JSON, which is exactly how this check first
+# failed. `notices-parity.sh` warns when it is not run on Linux and gives the container command that
+# reproduces this runner. The real fix is in the generator, since `fsevents` is a native file-watcher
+# binding that reaches no user and does not belong in a production notice on any platform.
+#
+# This check is **not** on the `main` ruleset's required list, which is what makes a `paths:` filter
+# safe here: a required check that never runs stays Pending forever and deadlocks the pull request
+# (#443). If it is ever made required, the filter goes in the same change — the same note
+# `validate-docs.yml` carries.
+name: Validate Notices
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'events-frontend/package.json'
+      - 'events-frontend/package-lock.json'
+      - 'events-frontend/src/assets/notices.json'
+      - 'events-frontend/scripts/generate-notices.mjs'
+      - 'gradle.properties'
+      - 'build.gradle.kts'
+      - '*/build.gradle.kts'
+      - 'scripts/notices-parity.sh'
+      - '.github/workflows/validate-notices.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'events-frontend/package.json'
+      - 'events-frontend/package-lock.json'
+      - 'events-frontend/src/assets/notices.json'
+      - 'events-frontend/scripts/generate-notices.mjs'
+      - 'gradle.properties'
+      - 'build.gradle.kts'
+      - '*/build.gradle.kts'
+      - 'scripts/notices-parity.sh'
+      - '.github/workflows/validate-notices.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notices:
+    name: Check the notices against the dependencies
+    runs-on: ubuntu-latest
+    # Both dependency graphs get resolved from scratch on a cold cache, which is the whole cost of
+    # this job. Generous rather than tight: a timeout here reads as a broken check, and the thing it
+    # would be protecting against is a registry outage that fails the step anyway.
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24' # should match the version specified in .nvmrc
+          cache: 'npm'
+          cache-dependency-path: events-frontend/package-lock.json
+
+      # The generator shells out to `license-checker-rseidelsohn`, which is a devDependency, so the
+      # full install is needed rather than `--omit=dev`.
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: events-frontend
+
+      - name: Check the notices are current
+        run: scripts/notices-parity.sh check
+
+      - name: Explain the fix
+        if: failure()
+        run: |
+          {
+            echo "## Open-source notices"
+            echo
+            echo "\`events-frontend/src/assets/notices.json\` no longer matches what the"
+            echo "dependencies resolve to. It is generated and committed, and \`/legal/notices\`"
+            echo "renders it — so a stale one understates what we distribute."
+            echo
+            echo "Regenerate both halves and commit the result:"
+            echo
+            echo '```bash'
+            echo "scripts/notices-parity.sh    # runs both generators"
+            echo '```'
+            echo
+            echo "The generator writes no timestamp, so an unchanged dependency set produces an"
+            echo "identical file and an empty diff. A diff here means something really moved."
+            echo
+            echo "See events-frontend/AGENTS.md § Open-source notices and #1037."
+          } >> "$GITHUB_STEP_SUMMARY"

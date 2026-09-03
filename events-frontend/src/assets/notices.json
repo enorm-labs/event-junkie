@@ -1,5 +1,5 @@
 {
-  "componentCount": 351,
+  "componentCount": 349,
   "licenses": [
     {
       "license": "Apache-2.0",
@@ -1596,12 +1596,6 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "esbuild",
-          "version": "0.28.2",
-          "url": "https://github.com/evanw/esbuild",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "estree-walker",
           "version": "2.0.2",
           "url": "https://github.com/Rich-Harris/estree-walker",
@@ -1617,12 +1611,6 @@
           "name": "fdir",
           "version": "6.5.0",
           "url": "https://github.com/thecodrr/fdir",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "fsevents",
-          "version": "2.3.3",
-          "url": "https://github.com/fsevents/fsevents",
           "ecosystem": "frontend"
         },
         {
