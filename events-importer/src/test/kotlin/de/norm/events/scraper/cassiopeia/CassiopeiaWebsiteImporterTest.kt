@@ -43,7 +43,6 @@ class CassiopeiaWebsiteImporterTest {
 
     private val sourceUrl = "https://cassiopeia-berlin.de/club"
 
-    // Detail page fixtures organized by event type / concern
     private val concertDetailHtml = loadFixture("scraper/cassiopeia/cassiopeia-detail-concert.html")
     private val partyDetailHtml = loadFixture("scraper/cassiopeia/cassiopeia-detail-party.html")
     private val cancelledDetailHtml = loadFixture("scraper/cassiopeia/cassiopeia-detail-cancelled.html")
@@ -54,7 +53,6 @@ class CassiopeiaWebsiteImporterTest {
         importer = CassiopeiaWebsiteImporter(htmlFetcher, clock)
         html = loadFixture("scraper/cassiopeia/cassiopeia-club.html")
 
-        // Mock the overview page fetch to return the fixture HTML as a Success result
         val document = Jsoup.parse(html, sourceUrl)
         coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
             FetchResult.Success(
