@@ -20,13 +20,20 @@ Everything below is safe and needs no credentials:
 
 ```sh
 tofu fmt -recursive -check -diff infra
-tofu -chdir=infra/<stack> init -backend=false      # -backend=false is not optional
+export TF_DATA_DIR="$(mktemp -d)"                  # not optional on a checkout you have used — see below
+tofu -chdir=infra/<stack> init -backend=false      # -backend=false is not optional either
 tofu -chdir=infra/<stack> validate
+unset TF_DATA_DIR
 shellcheck -x infra/modules/environment/cloud-init/*.sh
 ```
 
 `<stack>` is one of `bootstrap`, `environments/production`, `environments/staging`. Run all three: they share a module, so a change to it can break one and not
-the others. CI runs exactly these commands in `.github/workflows/validate-infra.yml`.
+the others. CI runs exactly these commands in `.github/workflows/validate-infra.yml`, without the `TF_DATA_DIR` line.
+
+**`init -backend=false` still reads `.terraform/terraform.tfstate`, which is why `TF_DATA_DIR` is there.** That file is the backend-config record an earlier
+credentialed `init` left behind. OpenTofu reads it before it honours `-backend=false`, so on any checkout that has been initialized the command reaches the
+state bucket and fails. `-reconfigure` does not help. A scratch `TF_DATA_DIR` gives OpenTofu a clean data directory and leaves the real `.terraform` untouched.
+CI never meets this, because a fresh checkout has no `.terraform` — measured 2026-09-04 on all three stacks.
 
 **`-chdir` works above because none of those commands needs a credential.** Do not extend the pattern to anything that reaches the state backend. `.envrc` is
 loaded by direnv **on entering `infra/`**, and `-chdir` moves OpenTofu's working directory without moving the shell's — so direnv never fires and the
@@ -40,7 +47,8 @@ api error InvalidAccessKeyId: UnknownError
 ```
 
 **`InvalidAccessKeyId` here means no key, not a wrong one**, and it reads like a rotated secret. So a command that reaches the backend has to put the shell
-inside `infra/`. When handing one to a person, write it that way:
+inside `infra/`. **The same error has a second cause that is not about the shell at all** — `init -backend=false` against a stale `.terraform`, above. The
+message is identical, so check which one you are looking at before suspecting the key. When handing one to a person, write it that way:
 
 ```sh
 cd infra/environments/production && tofu plan     # direnv loads on entry, unloads on leaving
