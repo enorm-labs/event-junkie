@@ -434,7 +434,7 @@ variable "walg_version" {
     `.github/workflows/node-pin-reminder.yml`, which opens an issue carrying both replacement values.
   EOT
   type        = string
-  default     = "v3.0.8"
+  default     = "v3.0.9"
   nullable    = false
 }
 
@@ -452,8 +452,8 @@ variable "walg_checksums" {
   EOT
   type        = map(string)
   default = {
-    amd64 = "ce382535fb3a59f07fd3ae02e96a039764ac490de49abfb3564fec36d65fafbc"
-    arm64 = "6789fcaecef1b3e0bfdf9d494460fa301f9c9afcf055d25ecc73a769d87dc156"
+    amd64 = "444ce216230c254edef803e098a59a1746806da3e0d55671d7b0f0082db14ef4"
+    arm64 = "cb37c5f8391bd8ef2efceeb9c6995059c0abf2fa74b9b717b42a16a7c93cfde1"
   }
   nullable = false
 
