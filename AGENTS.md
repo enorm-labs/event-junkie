@@ -228,14 +228,18 @@ k6 run perf/spike.js           # a sudden surge — the finding is whether it re
 See [perf/README.md](perf/README.md) for what each answers, the thresholds and how to re-baseline them, and why there is deliberately no CI workflow yet.
 
 Infrastructure ([`infra/`](infra), OpenTofu). **Read [infra/AGENTS.md](infra/AGENTS.md) before touching any of it** — it opens with the commands that must
-never be run there. These four are the safe ones, need no credentials, and are exactly what `validate-infra.yml` runs:
+never be run there. These are the safe ones, need no credentials, and are what `validate-infra.yml` runs:
 
 ```bash
 tofu fmt -recursive -check -diff infra
+export TF_DATA_DIR="$(mktemp -d)"               # a used checkout makes init reach the state bucket
 tofu -chdir=infra/<stack> init -backend=false   # bootstrap · environments/production · environments/staging
 tofu -chdir=infra/<stack> validate
+unset TF_DATA_DIR
 shellcheck -x infra/modules/environment/cloud-init/*.sh
 ```
+
+The `TF_DATA_DIR` line is not decoration, and `infra/AGENTS.md` says what it works around.
 
 `tofu plan` and `tofu apply` are **not** on that list: they need a Hetzner API token and they spend money. Both environments are applied and live —
 changing `infra/` changes running servers.

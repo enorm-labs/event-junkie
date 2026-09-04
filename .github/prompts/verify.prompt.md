@@ -91,11 +91,16 @@ every other check passes. `deploy/**/*.yml` shipped in a first draft of the kube
 
 ```bash
 tofu fmt -recursive -check -diff infra
+export TF_DATA_DIR="$(mktemp -d)"   # required locally: a used .terraform sends init to the state bucket
 tofu -chdir=infra/bootstrap                init -backend=false && tofu -chdir=infra/bootstrap                validate
 tofu -chdir=infra/environments/production  init -backend=false && tofu -chdir=infra/environments/production  validate
 tofu -chdir=infra/environments/staging     init -backend=false && tofu -chdir=infra/environments/staging     validate
+unset TF_DATA_DIR
 shellcheck -x infra/modules/environment/cloud-init/*.sh
 ```
+
+**Without `TF_DATA_DIR` this section fails on any machine that has run OpenTofu**, with an `InvalidAccessKeyId` that reads like a rotated secret rather than a
+stale data directory. `infra/AGENTS.md` has the detail.
 
 **Never run `tofu plan` or `tofu apply`** — they need a Hetzner API token and spend money. See [infra/AGENTS.md](../../infra/AGENTS.md).
 

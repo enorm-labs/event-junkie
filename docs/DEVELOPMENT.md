@@ -386,7 +386,7 @@ Reports land in `build/reports/`: `dependency-check-report.html` and `.sarif` (t
 
 ## Infrastructure (OpenTofu)
 
-The Hetzner platform is declared in [`infra/`](../infra). **Nothing in it has ever been applied**, and the plan behind it is
+The Hetzner platform is declared in [`infra/`](../infra). **Both environments are applied and live**, and the plan behind it is
 [docs/ops/PLATFORM_SETUP.md](./ops/PLATFORM_SETUP.md).
 
 Before changing anything there, read [infra/AGENTS.md](../infra/AGENTS.md) — it opens with the commands that must not be run. These need no credentials and are
@@ -394,9 +394,11 @@ exactly what `validate-infra.yml` runs in CI:
 
 ```bash
 tofu fmt -recursive -check -diff infra
+export TF_DATA_DIR="$(mktemp -d)"   # a stale .terraform sends init to the state bucket — infra/AGENTS.md
 tofu -chdir=infra/bootstrap init -backend=false && tofu -chdir=infra/bootstrap validate
 tofu -chdir=infra/environments/production init -backend=false && tofu -chdir=infra/environments/production validate
 tofu -chdir=infra/environments/staging  init -backend=false && tofu -chdir=infra/environments/staging  validate
+unset TF_DATA_DIR
 shellcheck -x infra/modules/environment/cloud-init/*.sh
 ```
 

@@ -11,10 +11,13 @@ a live server, network, firewall and Primary IP. Production's domain resolves no
 ## The short version
 
 ```sh
-# Safe anywhere, no credentials, and exactly what validate-infra.yml runs:
+# Safe anywhere, no credentials, and what validate-infra.yml runs. TF_DATA_DIR is
+# what keeps init off the state bucket on a checkout you have used — AGENTS.md says why:
 tofu fmt -recursive -check -diff infra
+export TF_DATA_DIR="$(mktemp -d)"
 tofu -chdir=infra/<stack> init -backend=false     # bootstrap · environments/production · environments/staging
 tofu -chdir=infra/<stack> validate
+unset TF_DATA_DIR
 shellcheck -x infra/modules/environment/cloud-init/*.sh
 
 cd infra && ./check-capacity.sh --probe staging   # orders a server and deletes it — the only real answer
@@ -471,7 +474,9 @@ Everything CI runs, and all of it works without credentials:
 
 ```sh
 tofu fmt -recursive -check -diff infra
+export TF_DATA_DIR="$(mktemp -d)"   # without it, init reads a stale .terraform and fails on the bucket
 tofu -chdir=infra/bootstrap init -backend=false && tofu -chdir=infra/bootstrap validate
+unset TF_DATA_DIR
 shellcheck -x infra/modules/environment/cloud-init/*.sh
 ```
 
