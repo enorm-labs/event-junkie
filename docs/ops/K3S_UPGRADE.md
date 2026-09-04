@@ -23,11 +23,11 @@ done
 
 # 3. On the node, as root. Staging first, production only after staging has held.
 #    `sudo sh -c` because the pipe runs as the caller otherwise, and the installer needs root.
-ssh ops@10.10.1.1 \
+ssh -i ~/.ssh/id_ed25519_hetzner -o IdentitiesOnly=yes ops@10.10.1.1 \
   "sudo sh -c 'curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.36.4+k3s1 INSTALL_K3S_EXEC=server sh -s -'"
 
 # 4. Verify, in this order. `10.10.1.1` is staging, `10.10.0.1` production — CLUSTER_ACCESS.md.
-ssh ops@10.10.1.1 'k3s --version'
+ssh -i ~/.ssh/id_ed25519_hetzner -o IdentitiesOnly=yes ops@10.10.1.1 'k3s --version'
 kubectl get nodes -o wide                                          # Ready, and the new version
 kubectl -n kube-system get svc traefik -o jsonpath='{.spec.type}'  # still ClusterIP
 kubectl -n kube-system get pods | grep svclb                       # must return nothing
@@ -36,11 +36,13 @@ flux get all -A                                                    # everything 
 ```
 
 **The last check differs by environment, because staging has no public address.** Traefik binds the
-node's ports itself, so ask the node:
+node's ports itself, so ask the node. **Send the Host header it routes on** — a bare `https://localhost/`
+returns 404 from a perfectly healthy Traefik, because no router matches that name:
 
 ```sh
 # staging — the Let's Encrypt staging CA is why -k is correct
-ssh ops@10.10.1.1 'curl -sS -o /dev/null -w "%{http_code}\n" -k https://localhost/'
+ssh -i ~/.ssh/id_ed25519_hetzner -o IdentitiesOnly=yes ops@10.10.1.1 \
+  'curl -sS -o /dev/null -w "%{http_code}\n" -k --resolve staging.event-junkie.de:443:127.0.0.1 https://staging.event-junkie.de/'
 
 # production — from anywhere
 curl -sS -o /dev/null -w '%{http_code}\n' https://<the host>/
@@ -57,6 +59,9 @@ curl -sS -o /dev/null -w '%{http_code}\n' https://<the host>/
   `bootstrap.env`, which a live node does not have to hand.
 - **Take a baseline first.** `kubectl get pods -A` and `flux get all -A` before the upgrade are what
   make the checks afterwards a comparison rather than an impression.
+- **`-i` and `IdentitiesOnly=yes` are not optional**, unless `~/.ssh/config` carries the block in
+  [CLUSTER_ACCESS.md](CLUSTER_ACCESS.md). Without them ssh offers the wrong key and the node answers
+  `Permission denied (publickey)`, which reads as a broken account.
 - **Never `INSTALL_K3S_CHANNEL`.** The pin exists so a destroy and apply cycle cannot produce a
   different cluster. A channel defeats that from the other direction.
 - **Bump the pin in the same change.** A node upgraded without it is a node the next rebuild silently
