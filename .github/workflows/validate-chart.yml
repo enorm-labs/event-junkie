@@ -28,6 +28,10 @@ on:
       - 'scripts/version-test.sh'
       - 'scripts/uid-consistency.sh'
       - 'scripts/csp-parity.sh'
+      # The coverage floors this workflow asserts, and the script that reads them. Editing the
+      # baseline without a run is how a floor gets lowered unnoticed.
+      - 'scripts/scan-coverage.sh'
+      - 'scripts/scan-coverage-baseline.txt'
       # The other two files csp-parity.sh reads. Editing one alone is the drift it catches.
       - 'events-frontend/scripts/csp.ts'
       - 'events-frontend/index.html'
@@ -213,8 +217,14 @@ jobs:
       - name: Validate rendered manifests
         run: |
           set -euo pipefail
+          # `scan-coverage.sh render` is what makes the paragraph above an assertion rather than a
+          # description: every rendered resource validated, none skipped, and the count positive so
+          # that an empty stream cannot report all three (#1087).
           render() {
-            helm template validate "$CHART" "$@" | flux schema validate - -s ecosystem --verbose
+            helm template validate "$CHART" "$@" \
+              | flux schema validate - -s ecosystem --verbose \
+              | tee "${RUNNER_TEMP}/render.txt"
+            scripts/scan-coverage.sh render "${RUNNER_TEMP}/render.txt"
           }
           render --set database.host=10.0.1.2 --set database.existingSecret=events-db \
             --set networkPolicy.databaseCidr=10.0.1.2/32
@@ -247,9 +257,19 @@ jobs:
       # one more skipped instead. The difference is whether a malformed Secret is still caught.
       - name: Validate the Flux manifests
         run: |
+          set -euo pipefail
           flux schema validate deploy/clusters -s ecosystem --verbose \
             --skip-kind kustomize.config.k8s.io/v1beta1/Kustomization \
-            --skip-json-path v1/Secret:/sops
+            --skip-json-path v1/Secret:/sops \
+            | tee "${RUNNER_TEMP}/flux-clusters.txt"
+
+      # The step above passes on a `deploy/clusters` that has quietly stopped being read — a changed
+      # target directory, a filename pattern the tool no longer matches, a `--skip-kind` that grew.
+      # Every one of those reports `Invalid: 0` (#1087). These two are how much it read.
+      - name: Assert the Flux manifests are all still being read
+        run: |
+          scripts/scan-coverage.sh baseline flux-clusters-resources "${RUNNER_TEMP}/flux-clusters.txt"
+          scripts/scan-coverage.sh baseline flux-clusters-files "${RUNNER_TEMP}/flux-clusters.txt"
 
       - name: Install the helm-unittest plugin
         run: |

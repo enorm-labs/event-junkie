@@ -47,6 +47,25 @@ What each workflow is for, which checks are required, and the shapes that fail s
       enabled, and #561 and #862, both opened by this workflow, were off the board anyway. **This applies to every reminder workflow here**, since none of them
       can place a card. Check it after a run and place a missing one with `scripts/issue-board.sh status <n> Ready`. #1092 carries the gap. See
       `docs/ops/BACKUPS.md` §9.
+    - **Every scanner gate asserts a denominator as well as an exit code** (#1087), through
+      `scripts/scan-coverage.sh` and the floors in `scripts/scan-coverage-baseline.txt`. A tool that
+      quietly reports less than it did — a release that drops an audit, a `paths:` filter that
+      narrows the input, a suppression added by hand — exits 0 exactly as loudly as one that covered
+      everything, and only the count says which happened. **The output formats are parsed in that one
+      script and nowhere else**, so an extraction that stops matching is an error rather than a pass.
+      Three shapes, and which one a gate gets is a decision:
+        - **A floor that only moves up** for zizmor's `ignored`/`suppressed` and `flux schema
+validate`'s `resources found in N files`. A drop fails and names the update command; a rise
+          passes with a notice. The cost is stated in the baseline file: the floor is only as tight as
+          its last update, so raise it in the commit that adds the coverage.
+        - **A property, with no number to keep** for each rendered chart — every resource valid, none
+          skipped, and the count positive so that an empty stream cannot satisfy all three. That is
+          #691 in assertion form rather than in a comment.
+        - **A floor of zero** for Trivy and OWASP Dependency-Check, because their counts move with an
+          upstream advisory database and a number would rot until somebody lowered it.
+          `image-scan-scheduled.yml` had this; Dependency-Check — the tool the `Dependencies
+Scanned: 0` incident actually happened to — did not until #1087, and needed `"JSON"` added
+          to `formats` in `build.gradle.kts` to get a count at all.
     - `label-pr.yml` — Derives labels from the Conventional Commits PR title (`feat(scraper): …` → `feat` + `importer`, `fix(api)!: …` → `fix` +
       `breaking-change`) via `actions/github-script`. Creates any missing label on demand and re-syncs when the title is edited. Uses `pull_request_target` so
       fork PRs get a writable token; safe because it never checks out or runs PR code.

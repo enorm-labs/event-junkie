@@ -1,0 +1,15 @@
+# Scanner denominators — a floor that only moves up. See #1087 and scripts/scan-coverage.sh.
+#
+# Each number says how much a gate looked at, not what it found. A drop fails the gate, because a
+# scanner covering less ground reports success exactly as loudly as one covering all of it.
+#
+# Raise a number in the commit that adds the coverage; lower one only with a reason in the pull
+# request, and never to make a red check green. `scripts/scan-coverage.sh update <key> <file>` writes
+# the row from a real run rather than from a guess.
+#
+# Trivy and Dependency-Check are deliberately absent. Their counts move with an upstream advisory
+# database, so a number here would rot; both assert a floor of zero instead.
+flux-clusters-files	41
+flux-clusters-resources	141
+zizmor-ignored	11
+zizmor-suppressed	64

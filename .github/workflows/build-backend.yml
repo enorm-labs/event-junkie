@@ -459,6 +459,21 @@ jobs:
           # the counter-example to "no pull request can reach a secret" (#479).
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
+      # **Zero findings is only good news if something was examined.** `failBuildOnCVSS` passes
+      # trivially over an empty dependency set, which is what a misconfigured `scanProjects` did here
+      # for months while every build went green. Trivy gained this floor in image-scan-scheduled.yml;
+      # Dependency-Check, the tool it actually happened to, did not until #1087. A floor of zero
+      # rather than a number, because the count moves with every dependency change and a number would
+      # rot until somebody lowered it.
+      #
+      # Gated on the scan having completed: a fork run has no `NVD_API_KEY`, hits the unauthenticated
+      # rate limit and writes no report, and that is an absent scan rather than an empty one. This job
+      # is outside the `Build & Test (backend)` gate's `needs`, so a red mark here informs and blocks
+      # no merge — which is the whole point of the informational split.
+      - name: Assert the scan examined something
+        if: steps.depcheck.outcome == 'success'
+        run: scripts/scan-coverage.sh owasp build/reports/dependency-check/dependency-check-report.json
+
       - name: Post report to Job Summary
         if: success() || failure()
         run: |

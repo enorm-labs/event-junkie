@@ -73,6 +73,15 @@ jobs:
           path: ~/.gradle/dependency-check-data
           key: dependency-check-data-${{ github.run_id }}
 
+      # **Zero findings is only good news if something was examined.** `failBuildOnCVSS` passes
+      # trivially over an empty dependency set, which is what a misconfigured `scanProjects` did here
+      # for months while every build went green. Trivy gained this floor in image-scan-scheduled.yml;
+      # Dependency-Check, the tool it actually happened to, did not until #1087. A floor of zero
+      # rather than a number, because the count moves with every dependency change and a number would
+      # rot until somebody lowered it.
+      - name: Assert the scan examined something
+        run: scripts/scan-coverage.sh owasp build/reports/dependency-check/dependency-check-report.json
+
       # NOTE: the `hashFiles` guards below fail *silently* — if these paths ever stop
       # matching where the plugin writes, the uploads are skipped and the job still goes
       # green while findings quietly stop reaching Code Scanning. Dependency-Check 13.0.0
