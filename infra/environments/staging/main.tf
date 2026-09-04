@@ -26,8 +26,9 @@ module "environment" {
   # **Availability is advertised, not promised, and it lies both ways — only an order settles it.**
   # cx33 is missing from nbg1's `datacenters` list and orders fine; cax11/cax21 are listed and refuse
   # with `HTTP 422 unsupported location for server type`. Refusals are free and return in 0.1s
-  # (`./check-capacity.sh --probe`). Production keeps `cax21` and keeps waiting, so PLATFORM_SETUP
-  # §1's arm64 parity argument holds for two of three.
+  # (`./check-capacity.sh --probe`). Production is x86 for the same reason and by the same decision —
+  # PLATFORM_SETUP.md § Why the nodes are x86 and not ARM. `check-capacity.sh`'s WATCH list is where
+  # the ARM pair is still named, as what production would return to if it were buyable and cheaper.
   k3s_server_type      = "cx33"
   postgres_server_type = null
 

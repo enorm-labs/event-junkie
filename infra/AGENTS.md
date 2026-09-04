@@ -148,8 +148,8 @@ and one throwaway `prod-check` record points at the node. Flipping that variable
 bootstrap/            DNS zones · SSH keys        — long-lived, outside every destroy
 modules/environment/  servers · network · firewall · PGDATA volume · cloud-init
 environments/
-  production/         CAX21 k3s + CAX11 PostgreSQL · public · address records
-  staging/            one CAX11, all-in-one · not on the public internet
+  production/         CX33 k3s + CX23 PostgreSQL · public · address records
+  staging/            one CX33, all-in-one · not on the public internet
 ```
 
 The split is **by lifetime, not by environment**, and it is load-bearing. `tofu destroy` on an environment is meant to be routine; a DNS zone caught in that

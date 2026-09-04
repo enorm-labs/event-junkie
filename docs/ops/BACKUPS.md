@@ -187,8 +187,8 @@ It prints both pins against upstream, exits 1 when either is behind, and compute
 
 **Two things make a `wal-g` bump different from every other pin in that table.**
 
-**It carries checksums, so the bump is not a one-line edit.** Both architectures are pinned — production is ARM, staging is x86 — and both must be refreshed
-together, from the release's own `.sha256` files:
+**It carries checksums, so the bump is not a one-line edit.** Both architectures are pinned, because the node picks its own at boot, and both must be refreshed
+together from the release's own `.sha256` files. Both nodes are x86 today:
 
 ```sh
 V=v3.0.9
