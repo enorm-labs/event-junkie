@@ -1,8 +1,9 @@
 ---
-applyTo: ".github/workflows/**,.github/dependabot.yml,.github/release.yml,zizmor.yml,.pre-commit-config.yaml"
+applyTo: ".github/workflows/**,.github/dependabot.yml,.github/renovate.json5,.github/release.yml,zizmor.yml,.pre-commit-config.yaml"
 paths:
     - ".github/workflows/**"
     - ".github/dependabot.yml"
+    - ".github/renovate.json5"
     - ".github/release.yml"
     - "zizmor.yml"
     - ".pre-commit-config.yaml"
@@ -313,7 +314,7 @@ What each workflow is for, which checks are required, and the shapes that fail s
       "no runs were created".
     - With CI unavailable, the honest fallback is a local `/verify` against the merged commit — and say in the PR that CI never ran, rather than implying a
       green build.
-- **Dependabot** (`.github/dependabot.yml`) runs weekly across **four ecosystems**. Everything is grouped, because the alternative on a project this size is a
+- **Dependabot** (`.github/dependabot.yml`) runs weekly across **six ecosystems**. Everything is grouped, because the alternative on a project this size is a
   pull-request queue nobody reads.
     - **`gradle`** (`/`) — grouped by library family: `kotlin`, `spring-boot`, `spring-modulith`, `testcontainers`, `jackson`, `springdoc`, `kotest`,
       `postgresql`, `flyway`, `reactor`, `detekt`, `owasp`, `gradle-plugins`.
@@ -343,8 +344,33 @@ What each workflow is for, which checks are required, and the shapes that fail s
       success. `/update-dependencies` step 12 sweeps them. **`HELM_VERSION` tracks the Helm SDK helm-controller embeds** — Helm 4 since
       v1.6.x — so that pin is a constraint, not a lag, and not "whatever `helm/helm` says is latest" either. It was held at 3.x on a lapsed premise until
       #1006.
+    - **`docker-compose`** (`/`) — its own ecosystem in dependabot-core rather than a directory of `docker`, which reads Dockerfiles only. These are
+      development services, so a stale pin never reaches production — but it decides what a local run and a Testcontainers test exercise, and a Postgres that
+      drifts from the cluster's is a difference nobody sees until a deploy.
+- **Renovate** (`.github/renovate.json5`) covers what belongs to no Dependabot ecosystem **and** is not a workflow string pin. **Three mechanisms watch
+  versions here and they must not overlap**, because two bots proposing the same bump is worse than either alone (#384, ADR-024):
+
+    | Mechanism                          | Owns                                                                                                                 | Because                                                                                |
+    | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+    | **Dependabot**                     | the six ecosystems above                                                                                             | they are declared in a manifest it understands                                         |
+    | **`/update-dependencies` Step 12** | tool versions pinned as plain strings in `.github/workflows/`                                                        | it can push them since #996                                                            |
+    | **Renovate**                       | Flux and the charts it installs, images in plain Kubernetes manifests, `.pre-commit-config.yaml`, the Gradle wrapper | they belong to no ecosystem, and Renovate has purpose-built managers rather than regex |
+    - **`enabledManagers` is an allow-list, and that is the whole safety argument.** A manager absent from it cannot open a pull request whatever it finds, so
+      duplication against Dependabot is structurally impossible instead of a thing to police. Five are enabled: `flux`, `helm-values`, `kubernetes`,
+      `pre-commit`, `gradle-wrapper`.
+    - **Four of the five do nothing on their defaults, and three fail silently.** `flux` defaults to `gotk-components.yaml` alone; `kubernetes` defaults to
+      matching nothing at all; `pre-commit` is disabled by default upstream, indefinitely. A manager that matches nothing reports nothing, which is the same
+      failure this whole boundary exists to prevent.
+    - **`managerFilePatterns` in a manager block is additive to that manager's default, not a replacement** — measured, not documented. To _exclude_ a file,
+      use `packageRules` with `matchFileNames`. A scope you believe you set and did not is the expensive version of this mistake.
+    - **`labels: ["dependencies"]` and `semanticCommitType: "build"` are load-bearing, not cosmetic.** `release.yml` sorts release notes by label and Renovate
+      applies none by default, so without the first every Renovate PR lands in "Other Changes"; the second makes `git log` read the same whichever bot wrote
+      the commit, matching Dependabot's `build(deps)`.
+    - **`milestone-dependabot.yml` matches on the bot's login**, so `renovate[bot]` had to be added to its `BOTS` set — otherwise every Renovate PR arrives
+      with no milestone and the workflow logs the skip as normal operation.
     - `/update-dependencies` still exists and is not redundant: Dependabot proposes one bump at a time, while that skill does a deliberate sweep across both
       stacks and knows which Gradle versions are BOM-managed and must **not** be pinned.
+
 - **A skill is three files, and `scripts/skill-parity.sh` is what keeps them in step.** The prompt lives in `.github/prompts/<name>.prompt.md`; `.claude/skills/`
   and `.claude/commands/` each hold a one-line `@` pointer to it; `CLAUDE.md` § Project skills lists it. Nothing joins those trees, so a skill added to one and
   not the other is **silently absent** from the other — no error, the command simply is not there, which is how four skills went without commands. The check

@@ -223,8 +223,11 @@ kubectl --context event-junkie-staging -n observability rollout restart stateful
 
 ## Keeping it up to date
 
-**Nothing does this automatically, and that is a gap rather than a decision.** Dependabot covers gradle, npm, GitHub Actions, OpenTofu and Docker. It has no Helm
-ecosystem, so every chart version pinned in `deploy/clusters/*/` is watched by nobody:
+**Renovate watches all of these** (#384, ADR-024). Dependabot has no Helm ecosystem, so a `version:` inside a Flux `HelmRelease` belongs to none of its six.
+That is why `.github/renovate.json5` exists, and why it enables the `flux` and `kubernetes` managers. An upstream release opens a pull request the same day.
+**Nobody needs to check this list by hand.** A hand check only produces a second proposal for the same bump.
+
+What still needs a person is the review, because a bump here changes what is running in the cluster:
 
 | Component                                    | Pinned at      |
 | -------------------------------------------- | -------------- |
@@ -234,18 +237,26 @@ ecosystem, so every chart version pinned in `deploy/clusters/*/` is watched by n
 | `cert-manager`                               | v1.21.1        |
 | `cert-manager-webhook-hetzner`               | 0.8.0          |
 | `signal-cli-rest-api` (image, digest-pinned) | 0.100-rootless |
+| `postgres-exporter` (image, digest-pinned)   | v0.20.1        |
+| `busybox` (initContainer image)              | 1.37.0         |
 
-Until that is automated, upgrading is deliberate:
+Renovate groups the three observability charts into one pull request, because they move as a set. The operator owns the CRDs that the collector's custom
+resources need. A collector ahead of its operator is therefore a reconcile error, not a version mismatch. `cert-manager` is grouped across both clusters for the same
+class of reason. A version difference between environments stops staging being a rehearsal for production.
+
+**Read the chart's changelog for `ZO_*` defaults before approving one**, because this deployment relies on several of them being what they are.
+`ZO_LOCAL_MODE` in particular is easy to misread as choosing storage rather than topology.
+
+**And the pin is not laziness.** ADR-015's measurements were taken against 0.92.2, and criterion 2 is a claim about _that_ build. Approving an OpenObserve
+bump therefore means two things. Re-check resident memory against the ~1.5 GB ceiling, and record the result. That is the one thing an automated pull request
+cannot do for you.
+
+If you ever do need the versions by hand — Renovate paused, or checking whether a proposal is current:
 
 ```sh
 helm repo add openobserve https://charts.openobserve.ai && helm repo update
 helm search repo openobserve/openobserve-standalone --versions | head -5
 ```
-
-Then bump the `version:` in the HelmRelease, open a PR, and watch the reconcile. **Read the chart's changelog for `ZO_*` defaults**, because this deployment
-relies on several of them being what they are. `ZO_LOCAL_MODE` in particular is easy to misread as choosing storage rather than topology.
-
-The pin is not laziness. ADR-015's measurements were taken against 0.92.2, and criterion 2 is a claim about _that_ build.
 
 ## When it misbehaves
 

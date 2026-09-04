@@ -44,7 +44,7 @@ surface the code itself:
 
 - The third-party venue websites the importer reads from. They are not ours; please do not test against them.
 - Findings that require access to a developer's machine or to the repository's secrets.
-- Automated scanner output with no demonstrated impact. We already run OWASP Dependency-Check, CodeQL and Dependabot — a report that simply repeats their output
+- Automated scanner output with no demonstrated impact. We already run OWASP Dependency-Check, CodeQL, Dependabot and Renovate — a report that simply repeats their output
   is not useful unless you can show why it matters here.
 
 ## What we already do
@@ -54,6 +54,9 @@ So you know what ground is covered, and where a report is most likely to find so
 - **CodeQL** analysis on every pull request (Java/Kotlin, JavaScript/TypeScript, and the Actions workflows themselves).
 - **OWASP Dependency-Check** on every build, failing on CVSS ≥ 7, plus a scheduled full scan.
 - **Dependabot** alerts and update PRs, and **dependency review** on pull requests, with a licence policy attached.
+- **Renovate** for the versions no Dependabot ecosystem can express — Flux and the charts it installs (cert-manager among them), container images pinned in
+  plain Kubernetes manifests, the gitleaks hook itself, and the Gradle wrapper. These are the components that hold credentials and run in the cluster, rather
+  than libraries the application links against.
 - **gitleaks** as a pre-commit hook, to keep credentials out of the history in the first place.
 
 ## Supported versions

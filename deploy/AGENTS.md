@@ -234,6 +234,16 @@ fails at `422`); bootstrap **pushes directly to `main`**, which the branch rules
 after; and the whole flow wants the database and both secrets to exist **first**, or the first reconcile installs a crash-looping importer.
 [docs/ops/CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) has the order.
 
+**That directory is now machine-_updated_ as well as machine-written.** Renovate watches
+`gotk-components.yaml` and opens a pull request when Flux releases, regenerating the manifest rather
+than editing versions inside it (#384, ADR-024). **This is safe only because of where customisations
+live:** the SOPS `decryption` patch (#416) and the Pod Security Admission labels (#604) are kustomize
+patches in `flux-system/kustomization.yaml`, never edits to the generated file — which is exactly
+what both patches say in their own comments. **Keep it that way.** A customisation written into
+`gotk-components.yaml` now has two ways to vanish silently: a `flux bootstrap` re-run, and any
+Renovate upgrade. And when reviewing one of those pull requests, honour the PSA patch's own
+instruction to re-check `restricted` against the regenerated controllers.
+
 **The version range lives on the `OCIRepository`, not the `HelmRelease`.** With `chartRef` the release carries no version at all — `spec.ref.semver` on the source
 decides everything. Staging uses `>=0.0.0-0`; the `-0` is what admits prereleases, and without it the range matches no snapshot at all. Observed rather than
 assumed: removing it gives `no match found for semver: >=0.0.0`. Production uses `semverFilter: '^[0-9]+\.[0-9]+\.[0-9]+$'` as well as a range, because excluding
