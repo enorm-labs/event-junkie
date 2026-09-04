@@ -21,9 +21,8 @@
 #
 # **A bump is not a routine dependency bump.** Both values feed cloud-init and `user_data` is
 # force-new, so the OpenTofu plan says replace the server. Both also install in place on a running
-# node, which is k3s's own documented upgrade — docs/ops/CLUSTER_BOOTSTRAP.md § Upgrading k3s without
-# rebuilding, and docs/ops/BACKUPS.md §8 for wal-g. A person decides either way, which is why nothing
-# here opens a pull request.
+# node, which is k3s's own documented upgrade — docs/ops/K3S_UPGRADE.md, and docs/ops/BACKUPS.md §8
+# for wal-g. A person decides either way, which is why nothing here opens a pull request.
 #
 # **`walg_checksums` moves with `walg_version` or the node does not boot.** cloud-init's backups.sh
 # runs under `set -euo pipefail` and verifies the tarball against the pinned SHA-256, so a version
@@ -241,7 +240,7 @@ else
         printf '%-8s walg_checksums arm64 = %s\n' '' "$WALG_NEW_arm64"
     fi
     if [[ "$K3S_STATUS" == behind || "$WALG_STATUS" == behind ]]; then
-        printf '\nNeither bump is routine: docs/ops/CLUSTER_BOOTSTRAP.md, Upgrading k3s without rebuilding.\n'
+        printf '\nNeither bump is routine: docs/ops/K3S_UPGRADE.md, and docs/ops/BACKUPS.md section 8.\n'
     fi
 fi
 
