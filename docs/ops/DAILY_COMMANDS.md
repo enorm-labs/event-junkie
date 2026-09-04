@@ -213,7 +213,11 @@ Expect `ok: newest <timestamp>, disk N%`. **`systemctl status` is not the check*
 ```sh
 cd infra && ./check-capacity.sh --probe staging      # orders a server and deletes it
 cd infra && ./check-capacity.sh --all                # advertised inventory
+scripts/upstream-node-pins.sh                        # are k3s and wal-g behind upstream?
 ```
+
+**A node pin bump replaces the node.** `node-pin-reminder.yml` opens an issue weekly when either is behind, and never a pull request. Take them during a
+rebuild — [`CLUSTER_BOOTSTRAP.md`](CLUSTER_BOOTSTRAP.md) § _Rebuilding a node_.
 
 **Only `--probe` answers the question.** The advertisement disagreed with the order path three times out of four, in both directions.
 

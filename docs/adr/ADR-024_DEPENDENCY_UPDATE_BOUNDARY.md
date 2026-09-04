@@ -9,6 +9,10 @@ keeps its six ecosystems.**
 `.github/workflows/`, and the nightly `agent-dependencies.yml` workload is retired.** The original boundary gave those eight pins to `/update-dependencies`
 Step 12, on the grounds that it could push them since #996. Three of the four inputs to that reasoning did not survive testing — see _Amendment_ below.
 
+**Amended (2026-09-04, [#1068](https://github.com/enorm-labs/event-junkie/issues/1068)): the two node pins in `infra/` are watched by a reminder, not by a
+bot.** This file recorded them as deliberate gaps. `node-pin-reminder.yml` opens an issue when either falls behind, and opens no pull request. The reason a bot
+may not own them is now part of the mechanism rather than a note here.
+
 Decided in [#384](https://github.com/enorm-labs/event-junkie/issues/384), which was open for three weeks and rewritten once. **Supersedes nothing.** It records
 a boundary that did not exist before, and retires the hand-written cluster-component list that `/update-dependencies` Step 13 used to carry.
 
@@ -70,6 +74,8 @@ already moved to **2.9.5**. The CLI that validated the manifests ran ahead of th
   the reasoning.
 - **Renovate owns the rest**, because it brings purpose-built managers rather than regex over YAML. The `flux` manager reads `HelmRelease` versions and
   `gotk-components.yaml`. The `kubernetes` manager reads images in plain manifests.
+- **A reminder owns the two node pins**, `k3s_version` and `walg_version`. Neither belongs to an ecosystem, and neither may be proposed by a bot. The section
+  _Why the node pins get a reminder_ below has the reasoning.
 
 **The decisive argument is cost shape.** A nightly agent run pays for every night it finds nothing. An event-driven bot does not: a cert-manager release opens a
 pull request the day it ships, at zero marginal cost. For "watch twelve version strings", that is the right instrument and an LLM with sixty turns is the wrong
@@ -112,10 +118,11 @@ Empty output means the bump is complete. Any output is what the string edit coul
   manager absent from it cannot act, whatever it finds.
 - **`milestone-dependabot.yml` matches bots by login**, so it had to learn `renovate[bot]`. Any future bot is invisible to it until added — and invisibly, since
   the skip is logged as normal operation.
-- **Two deliberate gaps remain, and both are decisions rather than oversights.** `k3s_version` and `walg_version` stay unwatched in
-  `infra/modules/environment/variables.tf`, because `user_data` is force-new. A bump _replaces the node_. A routine patch pull request would hide that.
-  **#1068 carries that gap.** Whatever lands there amends this ADR. imgproxy stays unwatched because it pins a bare digest with no tag. Its version rests on a hand-made judgement about CRITICAL findings that an
-  updater cannot reproduce.
+- **The two node pins are watched, and still nothing proposes them.** `k3s_version` and `walg_version` in `infra/modules/environment/variables.tf` are read
+  weekly by `scripts/upstream-node-pins.sh`, and `node-pin-reminder.yml` turns a gap into an assigned issue. Detection and proposal come apart here on purpose.
+  See below.
+- **One deliberate gap remains.** imgproxy stays unwatched because it pins a bare digest with no tag. Its version rests on a hand-made judgement about CRITICAL
+  findings that an updater cannot reproduce.
 
 ## Why Renovate owns the CI tool pins
 
@@ -155,13 +162,39 @@ that is the shape this ADR exists to prevent.
   dependencies, and would not be at a hundred. The fallback is self-hosting through Actions, which costs two new pinned versions that nothing watches.
 - **When [#1087](https://github.com/enorm-labs/event-junkie/issues/1087) lands**, the finding-set comparison the retired sweep did once becomes a gate. Until
   then a scanner bump is verified only to the extent that CI runs it.
+- **If anything ever proposes a node pin as a pull request.** That reverses the decision below rather than extending it, and the wal-g failure mode is the
+  thing to re-read first.
+- **If `wal-g` stops publishing a `wal-g-pg-24.04` build**, or renames it. `backups.sh` builds that asset name by hand, and
+  `scripts/upstream-node-pins.sh` fails rather than reporting no update.
 - **If a third bot is proposed.** Read this file first. The question is never "is it useful" but "what does it own that nothing else does".
+
+## Why the node pins get a reminder
+
+`k3s_version` and `walg_version` are `default =` strings in `infra/modules/environment/variables.tf`. Dependabot's `opentofu` ecosystem reads providers and
+modules, so it cannot see either. k3s is not apt-managed, so `unattended-upgrades` never meets it. Three facts put them with a reminder rather than with
+Renovate, and each is why the detection is split from the proposal.
+
+**A bump replaces the node.** Both values feed cloud-init, and `user_data` is force-new in the Hetzner provider. Changing either destroys and recreates the
+server, which for k3s is a cluster rebuild. A routine-looking patch pull request hides that, and merging one on autopilot is a worse failure than the drift.
+
+**For wal-g a pull request is worse than useless.** `walg_checksums` carries the SHA-256 of both release tarballs, and `backups.sh` verifies against it under
+`set -euo pipefail`. An updater can move the version string and cannot compute those two values. The result is a pull request that passes every check, because
+nothing in CI boots a node, and that aborts the next rebuild.
+
+**"Behind" for k3s is a channel, not a tag.** k3s publishes every supported minor line in one release list, back to v1.16. The question worth asking is the
+`update.k3s.io` stable channel, and separately whether the gap crosses a minor. `scripts/upstream-node-pins.sh` asks both. A Renovate datasource asks neither.
+
+The reminder is the third of the shape `restore-drill-reminder.yml` and `credential-expiry-reminder.yml` already carry. It opens one assigned issue per pin.
+Each title names the pinned version and never the target, so upstream moving cannot pile issues up. The wal-g issue carries both replacement checksums, which
+makes the work an edit rather than a research task.
 
 ## References
 
+- [#1068](https://github.com/enorm-labs/event-junkie/issues/1068) — the node pins, and the three options weighed before the reminder won
 - [#384](https://github.com/enorm-labs/event-junkie/issues/384) — the issue, including the rejected options and three rounds of corrected evidence
 - [#996](https://github.com/enorm-labs/event-junkie/issues/996) — `workflows: write` for the Claude App, which made Step 12 able to push and reshaped this decision
 - [ADR-015](ADR-015_OBSERVABILITY_STACK.md) — the footprint measurement pinned to OpenObserve 0.92.2
 - [ADR-016](ADR-016_GITOPS_DELIVERY.md) — GitOps delivery, and the accepted cost of pinning cert-manager in two files
 - [ADR-017](ADR-017_JRE_BASE_IMAGE.md) — a vendor chosen largely on update-cadence grounds, and the precedent for this decision being ADR-shaped
 - [`.github/renovate.json5`](../../.github/renovate.json5) · [`.github/dependabot.yml`](../../.github/dependabot.yml) · [`/update-dependencies`](../../.github/prompts/update-dependencies.prompt.md)
+- [`.github/workflows/node-pin-reminder.yml`](../../.github/workflows/node-pin-reminder.yml) · [`scripts/upstream-node-pins.sh`](../../scripts/upstream-node-pins.sh)

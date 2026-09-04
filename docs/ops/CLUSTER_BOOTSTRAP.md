@@ -600,6 +600,16 @@ You end up here for four reasons, and three of them are not optional:
 | The destroy/apply cycle         | [#424](https://github.com/enorm-labs/event-junkie/issues/424)'s last box |
 | Something is broken past fixing | The reason a node is meant to be disposable                              |
 
+**Take both node pins while you are here.** A rebuild is the cheapest moment for them, because it is the moment they cost nothing extra. One command says
+whether either is behind, and prints the two checksums a `wal-g` bump needs:
+
+```sh
+scripts/upstream-node-pins.sh
+```
+
+`node-pin-reminder.yml` runs the same check weekly and opens an issue. [BACKUPS.md](BACKUPS.md) §8 has the wal-g rules, and
+[ADR-024](../adr/ADR-024_DEPENDENCY_UPDATE_BOUNDARY.md) has the reason nothing proposes these as a pull request.
+
 ### Applying a `cloud-init` fix without rebuilding
 
 **A change under `cloud-init/` reaches a running node only at its next rebuild.** `user_data` is a force-new attribute, so the corrected script is what the

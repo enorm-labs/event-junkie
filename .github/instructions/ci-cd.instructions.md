@@ -63,6 +63,15 @@ What each workflow is for, which checks are required, and the shapes that fail s
       anyway (#569). Weekly. **The dates are a literal `CREDENTIALS` table in the workflow, duplicated in `docs/CREDENTIALS.md` §2, and the two must move
       together** — reading them from GitHub instead would need `admin:org`, which `GITHUB_TOKEN` cannot hold, so that route would watch an expiring token with
       a stronger expiring token. Only `github-dispatch` has a date today (2027-08-20); nothing else here expires.
+    - `node-pin-reminder.yml` — opens an assigned issue when `k3s_version` or `walg_version` in `infra/modules/environment/variables.tf` falls behind upstream
+      (#1068). Weekly. The third workflow of the reminder shape, and the one whose refusal to open a pull request is load-bearing: both pins feed cloud-init,
+      `user_data` is force-new, so a bump **replaces the node**. For wal-g it is sharper still — `walg_checksums` must move with the version or `backups.sh`
+      aborts the boot on a failed `sha256sum -c`, no updater can compute those two values, and nothing in CI boots a node, so such a pull request would be
+      green and mergeable. **The comparison lives in `scripts/upstream-node-pins.sh`, not in the workflow**, so a person can ask the same question during a
+      rebuild; it reads both pins out of the Terraform file rather than restating them, and an extraction that matches nothing is an error rather than "up to
+      date". The script's exit codes are three answers and the workflow keeps them apart: 0 current, 1 behind, 2 the check could not be made — only the last
+      fails the job. Issue titles carry the **pinned** version and never the target, so upstream moving cannot pile up issues. See
+      `docs/adr/ADR-024_DEPENDENCY_UPDATE_BOUNDARY.md` § _Why the node pins get a reminder_.
     - `agent-security.yml` — **the only workflow that runs an agent**, and the first of #387's four workloads. Claude, driven by this repository's own
       [`/security-triage`](../prompts/security-triage.prompt.md) prompt, opening a pull request and never pushing to `main`. Five things about it are decisions.
       **It invokes the prompt as `--unattended`**, which is a clause in the prompt rather than a hint: the "ask first" tier has nobody to ask from a runner, so

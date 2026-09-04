@@ -1,0 +1,263 @@
+# Opens an issue when a node pin falls behind upstream, and never opens a pull request.
+#
+# `k3s_version` and `walg_version` are `default =` strings in `infra/modules/environment/variables.tf`.
+# No manifest declares them, so Dependabot's `opentofu` ecosystem cannot see them and Renovate's
+# allow-list deliberately excludes them (#384, ADR-024). k3s is not apt-managed either, so
+# `unattended-upgrades` never meets it: a k3s security release went unnoticed by every mechanism this
+# repository had. That is the gap #1068 closes.
+#
+# **Why a reminder rather than a bot.** Both values feed cloud-init and `user_data` is force-new, so a
+# bump destroys and recreates the server. A routine-looking patch pull request that quietly means
+# "rebuild production" is a worse failure than the drift it fixes. For wal-g it is worse still:
+# `walg_checksums` has to move with `walg_version` or `backups.sh` aborts the boot on a failed
+# `sha256sum -c`, and no updater can compute those two values. Such a pull request would be green,
+# mergeable, and would break the next rebuild.
+#
+# So this is the third of the same shape as `restore-drill-reminder.yml` and
+# `credential-expiry-reminder.yml`: a scheduled job that opens one assigned issue and touches nothing.
+#
+# **The comparison is `scripts/upstream-node-pins.sh`, not logic here.** It reads both pins out of the
+# Terraform file, asks `update.k3s.io` for the stable channel and GitHub for wal-g's newest release,
+# and computes the two replacement checksums. A person can run it, which is what makes it a step of
+# the rebuild runbook as well as the engine of this workflow.
+#
+# **It must be idempotent.** A dispatch, a re-run and a late schedule all converge on one issue per
+# pin — hence the list-before-create below, keyed on the exact title.
+name: Node Pin Reminder
+
+on:
+  schedule:
+    # Weekly, Mondays, off-the-hour because the top of the hour is a stampede on shared runners. The
+    # k3s stable channel moves about monthly, so a daily run would ask the same question thirty times
+    # per answer.
+    - cron: '52 6 * * 1'
+  # The only way to see it work without waiting for a Monday, and the only way to produce the first
+  # issue: GitHub offers a manual trigger only for workflows already on the default branch.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Creating the issue, and listing to find one that already exists.
+  issues: write
+
+# A dispatch racing the schedule must not produce two issues. `cancel-in-progress: false` because the
+# second run still has to check whether the first one created it.
+concurrency:
+  group: node-pin-reminder
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Check the node pins
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Exit 1 is "something is behind" and is the expected answer here. Anything above it is "the
+      # check could not be made", which fails the job rather than reporting nothing to do — a run
+      # that cannot reach `update.k3s.io` and stays green is the failure this workflow exists about.
+      - name: Compare the pins with upstream
+        id: check
+        env:
+          # Lifts api.github.com's 60-per-hour anonymous limit, which a shared runner address reaches
+          # on its own.
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          rc=0
+          pins="$(scripts/upstream-node-pins.sh --json)" || rc=$?
+          if [ "$rc" -ge 2 ]; then
+            echo "::error::The pin check could not be made — see the message above." >&2
+            exit "$rc"
+          fi
+          echo "pins=$(printf '%s' "$pins" | jq -c .)" >> "$GITHUB_OUTPUT"
+
+      - name: Open an issue for anything behind
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PINS: ${{ steps.check.outputs.pins }}
+          # An assignee rather than a mention, for the reason restore-drill-reminder.yml gives: an
+          # unassigned issue on a board is nobody's.
+          PIN_OWNER: enorm
+        with:
+          script: |
+            const pins = JSON.parse(process.env.PINS);
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const blob = `https://github.com/${owner}/${repo}/blob/main`;
+            const variables = 'infra/modules/environment/variables.tf';
+
+            // WHAT MERGING MEANS, said the same way in every body this opens. It is the one fact
+            // that separates these issues from a dependency bump, and the reason no bot proposes
+            // them: `user_data` is force-new, so either edit destroys and recreates the server.
+            const rebuild = [
+              '## This is a node rebuild, not a version bump',
+              '',
+              '`user_data` is a force-new attribute in the Hetzner provider, and both pins feed cloud-init. ' +
+                'Changing either **destroys and recreates the server** — for k3s that is a cluster rebuild.',
+              '',
+              `[\`docs/ops/CLUSTER_BOOTSTRAP.md\` § Rebuilding a node](${blob}/docs/ops/CLUSTER_BOOTSTRAP.md#rebuilding-a-node--including-migrating-to-arm) ` +
+                'is the procedure. The cheapest moment to take this is a rebuild that is happening anyway.',
+            ];
+
+            // The title carries the *pinned* version and never the target. A target in the title
+            // would open a fresh issue every time upstream moved, so a pin left behind for a quarter
+            // would accumulate a pile of them; the pinned version only changes when the work is done.
+            // Crossing a minor gets its own title, so the escalation is visible on the board rather
+            // than buried in a body nobody re-reads — the same trick credential-expiry-reminder.yml
+            // uses for an expiry that has passed.
+            const candidates = [];
+
+            if (pins.k3s.status === 'behind') {
+              const minor = pins.k3s.gap === 'minor';
+              candidates.push({
+                title: minor
+                  ? `k3s is a minor behind — the pinned ${pins.k3s.pinned} is on ${pins.k3s.pinnedMinor}, stable is ${pins.k3s.latestMinor}`
+                  : `Bump k3s — the pinned ${pins.k3s.pinned} is behind stable`,
+                size: minor ? 'size:M' : 'size:S',
+                body: [
+                  `**The pinned \`k3s_version\` is \`${pins.k3s.pinned}\`. The \`stable\` channel is \`${pins.k3s.latest}\`.**`,
+                  '',
+                  minor
+                    ? `That is a **minor** gap. The \`${pins.k3s.pinnedMinor}\` line itself offers \`${pins.k3s.lineLatest}\`, which is the ` +
+                      'conservative move and a different piece of work from crossing a minor — a new minor carries its own upstream ' +
+                      'upgrade notes, and the Kubernetes API server is what is being changed.'
+                    : 'That is a patch inside the pinned minor line.',
+                  '',
+                  ...rebuild,
+                  '',
+                  '## The edit',
+                  '',
+                  '```hcl',
+                  `# ${variables}`,
+                  'variable "k3s_version" {',
+                  `  default = "${minor ? pins.k3s.lineLatest : pins.k3s.latest}"`,
+                  '}',
+                  '```',
+                  '',
+                  '## Done when',
+                  '',
+                  '- [ ] `k3s_version` names a version that is current, or this issue says why it deliberately does not',
+                  '- [ ] Both environments have been applied, staging first',
+                  '- [ ] `kubectl get nodes -o wide` reports the new version on each cluster',
+                  '- [ ] The credential and volume steps of `CLUSTER_BOOTSTRAP.md` §8b have been redone — a rebuild destroys `/etc/wal-g/credentials.env`',
+                ].join('\n'),
+              });
+            }
+
+            if (pins.walg.status === 'behind') {
+              candidates.push({
+                title: `Bump wal-g — the pinned ${pins.walg.pinned} is behind`,
+                size: 'size:S',
+                body: [
+                  `**The pinned \`walg_version\` is \`${pins.walg.pinned}\`. The newest release is \`${pins.walg.latest}\`.**`,
+                  '',
+                  'wal-g is a binary on the node with no cluster blast radius, so this is a smaller obligation than k3s. ' +
+                    'What it puts at risk is the backups, and a backup that stops working is invisible until a restore.',
+                  '',
+                  ...rebuild,
+                  '',
+                  '## The edit — both values, or the node does not boot',
+                  '',
+                  '`backups.sh` runs under `set -euo pipefail` and verifies the tarball against the pinned SHA-256. ' +
+                    'A version moved without its checksums aborts cloud-init, and nothing in CI boots a node, so no check would say so.',
+                  '',
+                  '```hcl',
+                  `# ${variables}`,
+                  'variable "walg_version" {',
+                  `  default = "${pins.walg.latest}"`,
+                  '}',
+                  '',
+                  'variable "walg_checksums" {',
+                  '  default = {',
+                  `    amd64 = "${pins.walg.checksums.amd64}"`,
+                  `    arm64 = "${pins.walg.checksums.arm64}"`,
+                  '  }',
+                  '}',
+                  '```',
+                  '',
+                  'Those two are the SHA-256 of `wal-g-pg-24.04-amd64.tar.gz` and `wal-g-pg-24.04-aarch64.tar.gz`, computed from the ' +
+                    'tarballs and cross-checked against the `.sha256` published beside them. Both come from the same release, so this is ' +
+                    'not independent verification — what the pin buys is a value a person reviewed once, which is why this issue proposes ' +
+                    'them rather than committing them.',
+                  '',
+                  '## Done when',
+                  '',
+                  '- [ ] `walg_version` and both `walg_checksums` entries move in the same commit',
+                  '- [ ] Both environments have been applied, staging first',
+                  '- [ ] `/etc/wal-g/credentials.env` has been rewritten on each rebuilt node — it is deliberately not in `user_data`',
+                  '- [ ] `sudo -u postgres walg check` passes on each node, which is the assertion that matters rather than the unit state',
+                ].join('\n'),
+              });
+            }
+
+            // Listing rather than the search API, and deliberately so: search is an index and the
+            // index is eventually consistent, so an issue created seconds ago can be absent from it.
+            // `listForRepo` returns pull requests too, since they are issues to the API, and a
+            // same-titled pull request would otherwise suppress the reminder entirely.
+            const open = await github.paginate(github.rest.issues.listForRepo, {
+              owner, repo, state: 'open', per_page: 100,
+            });
+            const openIssues = open.filter((issue) => !issue.pull_request);
+
+            const opened = [];
+            const skipped = [];
+
+            for (const candidate of candidates) {
+              const existing = openIssues.find((issue) => issue.title === candidate.title);
+              if (existing) {
+                skipped.push(`${candidate.title} — already open as #${existing.number}`);
+                continue;
+              }
+
+              const body = [
+                `> Opened automatically by [\`node-pin-reminder.yml\`](${blob}/.github/workflows/node-pin-reminder.yml) ` +
+                  '([#1068](https://github.com/enorm-labs/event-junkie/issues/1068)). The versions below were true when this ' +
+                  `issue opened; [\`scripts/upstream-node-pins.sh\`](${blob}/scripts/upstream-node-pins.sh) answers for today.`,
+                '',
+                candidate.body,
+              ].join('\n');
+
+              const { data: issue } = await github.rest.issues.create({
+                owner,
+                repo,
+                title: candidate.title,
+                body,
+                // Intrinsic properties of the work, which is what labels carry here. Status and
+                // Priority are project fields and are set on the board.
+                labels: ['area:infra', 'area:security', candidate.size],
+                assignees: [process.env.PIN_OWNER],
+                // No milestone, deliberately: milestones here are release gates, and a recurring
+                // operational obligation outlives all of them and belongs to none.
+                type: 'Task',
+              });
+
+              // The board is covered by its own "Auto-add to project" workflow. It cannot be done
+              // from here — `GITHUB_TOKEN` cannot write to an *organisation* project, and a token
+              // that could rewrite the whole board is more than a reminder is worth holding.
+              core.notice(`Opened #${issue.number} — ${candidate.title}`);
+              opened.push(`[#${issue.number}](${issue.html_url}) — ${candidate.title}`);
+            }
+
+            const summary = core.summary.addHeading('📌 Node pins', 2);
+            summary.addTable([
+              [{ data: 'Pin', header: true }, { data: 'Pinned', header: true },
+               { data: 'Upstream', header: true }, { data: 'Status', header: true }],
+              ['k3s', pins.k3s.pinned, pins.k3s.latest, pins.k3s.status === 'behind' ? `behind (${pins.k3s.gap})` : 'current'],
+              ['wal-g', pins.walg.pinned, pins.walg.latest, pins.walg.status],
+            ]);
+            if (opened.length > 0) {
+              summary.addRaw('Opened:').addList(opened);
+            }
+            if (skipped.length > 0) {
+              summary.addRaw('Already open:').addList(skipped);
+            }
+            if (candidates.length === 0) {
+              summary.addRaw('Both pins are current.');
+            }
+            await summary.write();
