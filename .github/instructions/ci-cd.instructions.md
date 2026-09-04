@@ -43,8 +43,10 @@ What each workflow is for, which checks are required, and the shapes that fail s
     - `restore-drill-reminder.yml` — Opens the quarterly PostgreSQL restore drill as an assigned issue, and again on any push to `main` touching `backups.sh` or
       `postgres.sh`. Documented as quarterly is not a schedule; this is what makes a skipped quarter visible as an open card rather than as nothing at all.
       Idempotent by listing open issues rather than searching (the search index is eventually consistent). It does not put the issue on the board itself
-      (`GITHUB_TOKEN` cannot write to an organisation project); the board's `Auto-add to project` workflow was enabled on 2026-08-18 to cover that, and the
-      next issue it opens is what confirms it. See `docs/ops/BACKUPS.md` §9.
+      (`GITHUB_TOKEN` cannot write to an organisation project), and the board's `Auto-add to project` workflow does not reliably cover that either — it is
+      enabled, and #561 and #862, both opened by this workflow, were off the board anyway. **This applies to every reminder workflow here**, since none of them
+      can place a card. Check it after a run and place a missing one with `scripts/issue-board.sh status <n> Ready`. #1092 carries the gap. See
+      `docs/ops/BACKUPS.md` §9.
     - `label-pr.yml` — Derives labels from the Conventional Commits PR title (`feat(scraper): …` → `feat` + `importer`, `fix(api)!: …` → `fix` +
       `breaking-change`) via `actions/github-script`. Creates any missing label on demand and re-syncs when the title is edited. Uses `pull_request_target` so
       fork PRs get a writable token; safe because it never checks out or runs PR code.

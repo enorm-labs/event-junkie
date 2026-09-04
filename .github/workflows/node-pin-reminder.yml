@@ -237,9 +237,11 @@ jobs:
                 type: 'Task',
               });
 
-              // The board is covered by its own "Auto-add to project" workflow. It cannot be done
-              // from here — `GITHUB_TOKEN` cannot write to an *organisation* project, and a token
-              // that could rewrite the whole board is more than a reminder is worth holding.
+              // The board cannot be written from here — `GITHUB_TOKEN` cannot write to an
+              // *organisation* project, and a token that could rewrite the whole board is more than
+              // a reminder is worth holding. The board's own "Auto-add to project" workflow is
+              // enabled to cover that and misses items at roughly 4% (#1092), so check the card
+              // after a run. This workflow's first two issues, #1090 and #1091, were both missed.
               core.notice(`Opened #${issue.number} — ${candidate.title}`);
               opened.push(`[#${issue.number}](${issue.html_url}) — ${candidate.title}`);
             }
