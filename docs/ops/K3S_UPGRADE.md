@@ -21,16 +21,29 @@ done
 
 # 2. Bump `k3s_version` in infra/modules/environment/variables.tf, in the same change.
 
-# 3. On the node. Staging first, production only after staging has held.
-curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.36.4+k3s1 INSTALL_K3S_EXEC=server sh -s -
+# 3. On the node, as root. Staging first, production only after staging has held.
+#    `sudo sh -c` because the pipe runs as the caller otherwise, and the installer needs root.
+ssh ops@10.10.1.1 \
+  "sudo sh -c 'curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.36.4+k3s1 INSTALL_K3S_EXEC=server sh -s -'"
 
-# 4. Verify, in this order.
-k3s --version
+# 4. Verify, in this order. `10.10.1.1` is staging, `10.10.0.1` production — CLUSTER_ACCESS.md.
+ssh ops@10.10.1.1 'k3s --version'
 kubectl get nodes -o wide                                          # Ready, and the new version
 kubectl -n kube-system get svc traefik -o jsonpath='{.spec.type}'  # still ClusterIP
 kubectl -n kube-system get pods | grep svclb                       # must return nothing
+kubectl get pods -A                                                # everything back, none restarting
 flux get all -A                                                    # everything Ready
-curl -sS -o /dev/null -w '%{http_code}\n' https://<the host>/      # the site answers
+```
+
+**The last check differs by environment, because staging has no public address.** Traefik binds the
+node's ports itself, so ask the node:
+
+```sh
+# staging — the Let's Encrypt staging CA is why -k is correct
+ssh ops@10.10.1.1 'curl -sS -o /dev/null -w "%{http_code}\n" -k https://localhost/'
+
+# production — from anywhere
+curl -sS -o /dev/null -w '%{http_code}\n' https://<the host>/
 ```
 
 ## The four rules
@@ -42,6 +55,8 @@ curl -sS -o /dev/null -w '%{http_code}\n' https://<the host>/      # the site an
   lives in `/etc/rancher/k3s/config.yaml`, and the script does not touch it.
 - **Run the installer, not `k3s.sh`.** That script rewrites `/etc/rancher/k3s/config.yaml` from
   `bootstrap.env`, which a live node does not have to hand.
+- **Take a baseline first.** `kubectl get pods -A` and `flux get all -A` before the upgrade are what
+  make the checks afterwards a comparison rather than an impression.
 - **Never `INSTALL_K3S_CHANNEL`.** The pin exists so a destroy and apply cycle cannot produce a
   different cluster. A channel defeats that from the other direction.
 - **Bump the pin in the same change.** A node upgraded without it is a node the next rebuild silently
