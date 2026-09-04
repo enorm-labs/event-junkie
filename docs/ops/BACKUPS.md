@@ -164,22 +164,26 @@ ssh ops@<tunnel-address> "sudo -u postgres psql -x -c 'select archived_count, fa
 
 ## 8. Keeping `wal-g` current
 
-**This is the repository's blind spot, and `wal-g` sits squarely in it.** Dependabot covers `gradle`, `npm`, `docker`, `github-actions` and `opentofu`. A tool
-version pinned as a plain string belongs to none of those ecosystems, so it rots silently. The same is true of `k3s_version` next to it.
+**A version pinned as a plain string belongs to no ecosystem.** Dependabot covers `gradle`, `npm`, `docker`, `github-actions` and `opentofu`. A tool version in
+an OpenTofu variable default is none of those, so it rots silently. `k3s_version` next to it has the same shape. That was this repository's blind spot until
+[#1068](https://github.com/enorm-labs/event-junkie/issues/1068).
 
 The pin lives in `infra/modules/environment/variables.tf`:
 
 ```hcl
-variable "walg_version"   { default = "v3.0.8" }
-variable "walg_checksums" { default = { amd64 = "ce3825…", arm64 = "6789fc…" } }
+variable "walg_version"   { default = "<release tag>" }
+variable "walg_checksums" { default = { amd64 = "<sha256>", arm64 = "<sha256>" } }
 ```
 
-It is listed in [`update-dependencies.prompt.md`](../../.github/prompts/update-dependencies.prompt.md) § _The CI tool versions nothing else watches_, which is the
-routine sweep that catches it. Check the current release with:
+**What watches it: [`node-pin-reminder.yml`](../../.github/workflows/node-pin-reminder.yml).** Weekly, it opens an assigned issue when either pin falls behind
+upstream. It opens no pull request, and [ADR-024](../adr/ADR-024_DEPENDENCY_UPDATE_BOUNDARY.md) § _Why the node pins get a reminder_ says why. Ask the same
+question by hand at any time:
 
 ```sh
-gh api repos/wal-g/wal-g/releases/latest --jq .tag_name
+scripts/upstream-node-pins.sh
 ```
+
+It prints both pins against upstream, exits 1 when either is behind, and computes the two replacement checksums.
 
 **Two things make a `wal-g` bump different from every other pin in that table.**
 
@@ -199,8 +203,8 @@ than fetching it beside the tarball is the point. A checksum fetched from the ho
 **It changes `user_data`, which replaces the node.** This is the one that matters. Bumping Trivy edits a workflow. Bumping `wal-g` plans a rebuild of every node that
 runs PostgreSQL, production included. So:
 
-- **Do not sweep it up with the routine dependency run.** Bump it for a reason — a fix you need, an advisory — and take the rebuild deliberately. Keep
-  `docs/ops/CLUSTER_BOOTSTRAP.md` § _Rebuilding a node_ open while you do.
+- **Do not take it because it is available.** The reminder says a newer release exists, and that is all it says. Bump for a reason — a fix you need, an
+  advisory — and take the rebuild deliberately. Keep `docs/ops/CLUSTER_BOOTSTRAP.md` § _Rebuilding a node_ open while you do.
 - **Or install ahead of the rebuild.** `backups.sh` is idempotent and only downloads when the installed version differs. So you can bump the variable, run the
   script by hand on the node, and let the next natural rebuild find the work already done. The plan still shows a replacement, which is honest, because
   `user_data` genuinely differs.

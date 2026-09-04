@@ -162,6 +162,10 @@ variable "k3s_version" {
     Pinned deliberately: `get.k3s.io` without `INSTALL_K3S_VERSION` installs whatever is current at
     boot, which would mean a destroy/apply cycle silently produces a different cluster than the one
     it replaced. That is the opposite of what this issue is for.
+
+    Watched weekly by `.github/workflows/node-pin-reminder.yml` against the `update.k3s.io` stable
+    channel, because no manifest declares this string and no ecosystem owns it. It opens an issue and
+    never a pull request: `user_data` is force-new, so a bump replaces the node.
   EOT
   type        = string
   default     = "v1.36.3+k3s1"
@@ -422,7 +426,13 @@ variable "backup_retention_days" {
 }
 
 variable "walg_version" {
-  description = "wal-g release tag. Pinned rather than tracking latest, because an unattended boot is a poor place to meet a new major."
+  description = <<-EOT
+    wal-g release tag. Pinned rather than tracking latest, because an unattended boot is a poor place
+    to meet a new major.
+
+    **It moves together with `walg_checksums` or the node does not boot.** Watched weekly by
+    `.github/workflows/node-pin-reminder.yml`, which opens an issue carrying both replacement values.
+  EOT
   type        = string
   default     = "v3.0.8"
   nullable    = false
@@ -435,6 +445,9 @@ variable "walg_checksums" {
     Pinned here rather than fetched from the host that served the tarball, which would verify only
     that the download completed. Both architectures are carried because production is ARM and
     staging is x86 (#424), and the node picks its own at boot.
+
+    A `walg_version` bumped without these aborts cloud-init on a failed `sha256sum -c`, and nothing
+    in CI boots a node, so no check reports it. That is why no updater is allowed to propose one.
   EOT
   type        = map(string)
   default = {

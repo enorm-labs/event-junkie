@@ -534,6 +534,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Trivy waivers                               | `.trivyignore` — empty on purpose; an entry needs a reason and a date                                                             |
 | Chart and images agree about the UID        | `scripts/uid-consistency.sh` — reads the three Dockerfiles' `USER` and the chart; enforces the >10000 floor                       |
 | What each cluster would deploy              | `scripts/deployed-versions.sh` — reproduces Flux's selection; no cluster and no credential needed                                 |
+| Whether the two node pins are current       | `scripts/upstream-node-pins.sh` — k3s and wal-g against upstream; `node-pin-reminder.yml` runs it weekly                          |
 | Infrastructure as code (OpenTofu)           | `infra/` — read `infra/AGENTS.md` first; `bootstrap/` is applied, `environments/` is not                                          |
 | Shared MCP servers                          | `.mcp.json` — `opentofu`, the hosted registry lookup; no key, one approval per contributor                                        |
 | Cloud-init for the Hetzner nodes            | `infra/modules/environment/cloud-init/`                                                                                           |
@@ -544,6 +545,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Release notes categories                    | `.github/release.yml`                                                                                                             |
 | Dependabot config                           | `.github/dependabot.yml` — six ecosystems; read it with `renovate.json5` before calling anything unwatched                        |
 | Renovate config                             | `.github/renovate.json5` — Flux, cluster images, pre-commit, Gradle wrapper. An allow-list, so it cannot collide with Dependabot  |
+| The dependency-update boundary              | `docs/adr/ADR-024_DEPENDENCY_UPDATE_BOUNDARY.md` — which mechanism owns what, and what nothing may propose                        |
 | Commit message prompt                       | `.github/prompts/commit-message.prompt.md`                                                                                        |
 | Squash commit message prompt                | `.github/prompts/squash-commit-message.prompt.md`                                                                                 |
 | Open PR prompt                              | `.github/prompts/open-pr.prompt.md`                                                                                               |
