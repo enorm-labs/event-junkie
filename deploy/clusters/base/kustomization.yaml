@@ -18,5 +18,6 @@ resources:
   - namespace-observability.yaml
   - namespace-default.yaml
   - helm-repository-jetstack.yaml
+  - helm-repository-openobserve.yaml
   - postgres-exporter.yaml
   - collector.yaml

@@ -1,0 +1,25 @@
+# OpenObserve's chart repository, for the server and the collector alike.
+#
+# It sat in `staging/openobserve.yaml` and `production/openobserve.yaml`, byte-identical in both, and
+# `base/collector.yaml` carried a third object at the same URL under a second name because a base
+# resource cannot reference a source that exists only per cluster. Three objects addressed one
+# registry, and Renovate's `flux` manager reported the duplicate as `Excess registryUrls found for
+# datasource lookup` (#1080).
+#
+# **The HelmReleases stay per-cluster.** They differ in config, which is the rule
+# `base/kustomization.yaml` states: a file earns a place here by having no differences between the
+# two copies. A source has none, and never did.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: openobserve
+  namespace: flux-system
+  annotations:
+    kubernetes.io/description: >-
+      The upstream OpenObserve chart repository. Same reasoning as the jetstack one next to it: an install nothing versions and nothing notices drifting is
+      the thing this avoids.
+spec:
+  # An hour, like jetstack's and for the same reason: this only asks "what versions exist?", and the
+  # version actually installed is pinned in each HelmRelease.
+  interval: 1h
+  url: https://charts.openobserve.ai

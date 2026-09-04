@@ -75,7 +75,7 @@ no change to `flux-system/` at all.
 
 **Share the seven files. Patch one field. Keep the rest duplicated.**
 
-`deploy/clusters/base/` holds the six zero-diff files and `collector.yaml`. Each cluster names `- ../base` in `resources:` and patches
+`deploy/clusters/base/` holds the zero-diff files and `collector.yaml`. Each cluster names `- ../base` in `resources:` and patches
 `spec.values.k8sCluster` with JSON 6902 `replace`.
 
 **The admission rule is one sentence: a file belongs in the base when its two copies have no config difference.** `collector.yaml` is the single exception, and
