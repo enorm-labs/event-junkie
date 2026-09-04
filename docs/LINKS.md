@@ -24,7 +24,7 @@ point, such as INWX or the Hetzner status page. The obvious console URL is fille
 | <https://github.com/enorm-labs/event-junkie/issues>                                         | The backlog                                                                      |
 | <https://github.com/enorm-labs/event-junkie/milestones>                                     | `v0.2 — Deployable`, `v0.3 — Launch-ready`, `v1.0 — Go-live`                     |
 | <https://github.com/enorm-labs/event-junkie/discussions>                                    | Questions and product ideas                                                      |
-| <https://github.com/enorm-labs/event-junkie/actions>                                        | CI — 14 workflows                                                                |
+| <https://github.com/enorm-labs/event-junkie/actions>                                        | CI — 28 workflows                                                                |
 | <https://github.com/enorm-labs/event-junkie/security>                                       | The Security tab, worked by `/security-triage`                                   |
 | <https://github.com/enorm-labs/event-junkie/security/dependabot>                            | Dependabot alerts                                                                |
 | <https://github.com/enorm-labs/event-junkie/issues?q=is:issue+is:open+Dependency+Dashboard> | Renovate's Dependency Dashboard — where an update nobody acted on is visible     |

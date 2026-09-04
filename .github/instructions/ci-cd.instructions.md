@@ -173,16 +173,32 @@ What each workflow is for, which checks are required, and the shapes that fail s
       would need write access on every pull request including forks, which is far more than a formatter is worth, so a failure names the files and leaves the
       one-command fix to the author. It installs `events-frontend`'s dependencies for the pinned oxfmt rather than fetching a released one — versions disagree
       about Markdown, and a check run against "whatever is newest" would fail on files a contributor's pinned copy had just written. `package-lock.json` is in
-      its path filters for that reason: an oxfmt bump can reformat every document here. **It keeps a `paths:` filter on `pull_request`**, which only
-      `validate-notices.yml` does as well, because neither is on the required list — see the note in each file, and delete the filter if either is ever made
-      required.
+      its path filters for that reason: an oxfmt bump can reformat every document here. **It keeps a `paths:` filter on `pull_request`** because it is not on
+      the required list — see the note in the file, and delete the filter if it is ever made required. `validate-notices.yml` is the worked example of exactly
+      that: it became required and lost its filter in one change.
     - `validate-notices.yml` — regenerates `events-frontend/src/assets/notices.json` and fails when the committed copy differs, via
       `scripts/notices-parity.sh check`. **It is its own workflow because the file merges two ecosystems**: the generator reads the Gradle licence report off
       disk and combines it with npm's, so a regeneration needs a JDK and Node in one job, and no other pull-request workflow has both. Folding it into
       `validate-docs.yml` would have meant putting every backend dependency file into that workflow's filter, triggering its three unrelated jobs on
       `gradle.properties`. **The `paths:` filter is the part that rots**: a dependency file missing from it means the check does not run for the change that
       moves the notices, which is the silent drift it exists to end. It only works at all because the generator writes no timestamp, so an unchanged
-      dependency set regenerates byte-identically (#1037, after the file had drifted by 51 components unnoticed).
+      dependency set regenerates byte-identically (#1037, after the file had drifted by 51 components unnoticed). **It is required on the `main` ruleset and so
+      has no `pull_request` filter** — the two go together, and it runs on every pull request at 58s warm and 213-260s cold. That was priced and accepted
+      (#1084) only because the workflow below removes the reason it would otherwise be red on bot branches.
+    - `fix-notices-on-bot-prs.yml` — **the other half of the check above, and the reason it is not just noise on bot pull requests.** `validate-notices.yml`
+      fails on every Dependabot or Renovate branch that moves a frontend dependency, and neither bot can satisfy it: regenerating needs a JDK and Node in one
+      job. #1073 was the first, one day after the check shipped. This regenerates on the bot's branch and pushes, so the red tick means something again.
+      Four decisions in it are load-bearing and each is written out in the file:
+        - **`workflow_run`, not `push`.** A workflow triggered by a Dependabot push gets a read-only `GITHUB_TOKEN` and **cannot read repository secrets at
+          all** — they live in a separate Dependabot store — so the token mint would fail on most branches. `workflow_run` runs in the default branch's
+          context with the normal secrets.
+        - **Not `pull_request_target`.** That is the other writable trigger, and it would hand a writable token to a job that checks out a branch and runs
+          `npm ci` on its lockfile — the arbitrary-code-execution path `milestone-dependabot.yml` refuses in capitals.
+        - **The App token is minted _below_ `npm ci`.** Install scripts from the branch's lockfile run before the credential exists, so a malicious package
+          meets a job with nothing to steal. It carries `contents: write` and nothing else, and the commit stages one file by name.
+        - **The commit author is not `renovate[bot]`.** Renovate decides whether a human touched a branch from the last commit's author, and would read its own
+          name and force-push the regeneration away. Both bots abandon a branch once a foreign commit lands, which is the behaviour wanted here — at the cost
+          that the bump no longer auto-rebases.
     - `validate-infra.yml` — `tofu fmt -check`, `tofu init -backend=false` + `validate` across all three stacks in a matrix, and ShellCheck on the cloud-init
       scripts. Triggers only when `infra/**` changes. **It deliberately never runs `plan`**: that needs a Hetzner token, and per PLATFORM_SETUP.md §4 nothing
       outside the cluster holds a cluster or cloud credential. So this is a syntax and type gate, not a correctness one, and there is no drift detection.

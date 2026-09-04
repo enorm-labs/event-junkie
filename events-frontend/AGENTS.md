@@ -306,12 +306,26 @@ The application version lives in **`version` in the root `gradle.properties`** �
 ## Open-source notices
 
 `/legal/notices` renders `src/assets/notices.json`, which is **generated and committed** — never hand-edited. Regenerate it whenever dependencies change on
-either side:
+either side, and prefer the one command that does both halves in the right order:
+
+```bash
+scripts/notices-parity.sh                                  # repository root; runs both generators
+```
+
+The two halves by hand, if you need them separately:
 
 ```bash
 ./gradlew generateLicenseReport --no-configuration-cache   # repository root; writes build/reports/dependency-license/licenses.json
 npm run generate:notices                                   # events-frontend; merges both ecosystems into src/assets/notices.json
 ```
+
+- **`npm run generate:notices` merges whatever Gradle report is on disk, and cannot tell whether it is current.** Run it alone against an old report and it
+  writes a file that looks entirely correct and is not: on #1073 a report from a month earlier produced 312 components where the answer was 368, and exited 0
+  (#1084). There is a guard for a _missing_ report and there can be no useful guard for a stale one — Gradle skips the task as `UP-TO-DATE` when the dependency
+  set has not changed, so the report's age is not evidence of anything. **What the generator does instead is print which report it merged and when that report
+  was written.** Read that line; a backend count that has dropped by fifty is obvious there and invisible in the JSON.
+- **A bot's pull request repairs itself.** `fix-notices-on-bot-prs.yml` regenerates on Dependabot and Renovate branches, because neither can. Pushing to their
+  branch does stop them rebasing it, so if `main` moves under such a pull request, close and reopen it.
 
 - The `--no-configuration-cache` flag is required — the licence-report plugin is not configuration-cache compatible (see the note in `gradle.properties`).
 - The generator deliberately writes **no timestamp**, so re-running it with unchanged dependencies produces an identical file and an empty diff. That property
