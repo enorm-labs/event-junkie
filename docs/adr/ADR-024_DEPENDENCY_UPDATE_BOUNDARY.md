@@ -152,7 +152,6 @@ that is the shape this ADR exists to prevent.
 
 ## When to revisit
 
-- **When the two vestigial Gradle wrappers are deleted (#1066)**, drop the `packageRules` entry that disables them.
 - **If the `pre-commit` manager is ever disabled**, gitleaks' `rev:` becomes watched by nothing and no error says so. It left `/update-dependencies` Step 12
   when this ADR moved `.pre-commit-config.yaml` to Renovate (#1067), so there is no second mechanism holding it. Put it back in Step 12 in the same change.
 - **If `FLUX_VERSION` and `gotk-components.yaml` drift again.** Renovate owns both since #1071, so a release produces two pull requests. They stay separate
