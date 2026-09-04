@@ -363,9 +363,11 @@ What each workflow is for, which checks are required, and the shapes that fail s
       failure this whole boundary exists to prevent.
     - **`managerFilePatterns` in a manager block is additive to that manager's default, not a replacement** — measured, not documented. To _exclude_ a file,
       use `packageRules` with `matchFileNames`. A scope you believe you set and did not is the expensive version of this mistake.
-    - **`labels: ["dependencies"]` and `semanticCommitType: "build"` are load-bearing, not cosmetic.** `release.yml` sorts release notes by label and Renovate
-      applies none by default, so without the first every Renovate PR lands in "Other Changes"; the second makes `git log` read the same whichever bot wrote
-      the commit, matching Dependabot's `build(deps)`.
+    - **`labels: ["dependencies"]` is load-bearing, not cosmetic.** `release.yml` sorts release notes by label and Renovate applies none by default, so
+      without it every Renovate pull request lands in "Other Changes".
+    - **The commit prefix is `chore(deps)` and is deliberately not configured.** An earlier `semanticCommitType: "build"` was inert — `config:recommended`
+      pulls in `:semanticPrefixFixDepsChoreOthers`, whose `packageRules` entry sets `chore`, and a packageRule beats top-level config. Dependabot moved to
+      `chore(deps)` on 2026-08-28 anyway, so the two agree without it. **Never key anything on the prefix**; the `dependencies` label is the stable signal.
     - **`milestone-dependabot.yml` matches on the bot's login**, so `renovate[bot]` had to be added to its `BOTS` set — otherwise every Renovate PR arrives
       with no milestone and the workflow logs the skip as normal operation.
     - `/update-dependencies` still exists and is not redundant: Dependabot proposes one bump at a time, while that skill does a deliberate sweep across both

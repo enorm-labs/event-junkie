@@ -18,7 +18,7 @@
 #
 #   feat(scraper): import Astra   -> feat, importer
 #   fix(api)!: drop the v1 route  -> fix, breaking-change
-#   build(deps): bump hono        -> build   (+ `dependencies`, added by Dependabot)
+#   chore(deps): bump hono        -> chore   (+ `dependencies`, added by the bot itself)
 #
 # Conventional Commits Spec: https://www.conventionalcommits.org/en/v1.0.0/
 #

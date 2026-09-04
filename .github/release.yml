@@ -4,8 +4,14 @@
 # GitHub groups every merged pull request since the previous release into the first
 # category whose `labels` it matches — so ORDER MATTERS. More specific categories come
 # first: a `feat(scraper)` PR carries both `importer` and `feat`, and lands under
-# "New Event Sources"; a Dependabot `build(deps)` PR carries both `dependencies` and
-# `build`, and lands under "Dependencies".
+# "New Event Sources"; a bot dependency PR carries both `dependencies` and its
+# Conventional Commits type, and lands under "Dependencies" because that category
+# is ordered above both "Build & Tooling" and "Chores".
+#
+# Do not key anything on the type prefix here. Dependabot has already changed its own
+# prefix once, from `build(deps)` to `chore(deps)`, without anything in this repository
+# asking it to. The `dependencies` label is the stable signal, and it is matched before
+# either type is reached.
 #
 # Labels are applied automatically from the Conventional Commits PR title by
 # .github/workflows/label-pr.yml. The `enhancement`/`bug`/`documentation` aliases are
