@@ -116,8 +116,8 @@ installed the hooks fail. Install them with `brew install opentofu shellcheck he
 
 **CI's ShellCheck is pinned. Your local one is not.** All three CI jobs — `validate-scripts.yml`,
 `validate-chart.yml`, `validate-infra.yml` — run `koalaman/shellcheck:v0.11.0` from Docker rather than the runner's
-preinstalled binary. [`/update-dependencies`](../.github/prompts/update-dependencies.prompt.md) step 12 sweeps the
-pin. The pre-commit hook uses whatever `shellcheck` is on your `$PATH`, so the two can disagree. The disagreement only
+preinstalled binary. Renovate watches the pin, and groups the three copies into one pull request —
+[ADR-024](adr/ADR-024_DEPENDENCY_UPDATE_BOUNDARY.md). The pre-commit hook uses whatever `shellcheck` is on your `$PATH`, so the two can disagree. The disagreement only
 makes the hook noisier or quieter than the gate, never a false green on `main`.
 
 That disagreement is real and worth knowing about, because versions differ in which checks they even have. An

@@ -81,7 +81,8 @@ env:
   HELM_VERSION: v4.2.4
   # **Must match release.yml's.** The two scans are meant to be comparable — a finding here that the
   # publish gate did not raise should mean the advisory is new, not that the scanners are.
-  # Invisible to Dependabot (a string in YAML), so /update-dependencies step 12 sweeps both together.
+  # Invisible to Dependabot (a string in YAML). Renovate watches it and groups by `depName`, so both
+  # copies arrive in one pull request (ADR-024).
   TRIVY_VERSION: 0.74.0
 
 jobs:

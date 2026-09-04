@@ -55,8 +55,9 @@ env:
   #
   # Same trap validate-docs.yml records for oxfmt: a gate run against "whatever the runner ships"
   # fails on files the author's own copy had just passed, and the fix is not to edit the files.
-  # Invisible to Dependabot — a string in YAML, not a manifest — so /update-dependencies step 12
-  # sweeps it alongside HELM_VERSION, FLUX_VERSION, ACTIONLINT_VERSION and ZIZMOR_VERSION.
+  # Invisible to Dependabot — a string in YAML, not a manifest — so Renovate's `customManagers`
+  # watch it, alongside HELM_VERSION, FLUX_VERSION, ACTIONLINT_VERSION and ZIZMOR_VERSION (ADR-024).
+  # Renovate groups by `depName`, so the three copies below arrive in one pull request.
   #
   # **This pin appears in three workflows** — here, validate-chart.yml and validate-infra.yml — and
   # they must move together, the same rule HELM_VERSION carries. `k3d-rehearsal.sh`, `version.sh` and

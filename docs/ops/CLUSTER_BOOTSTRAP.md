@@ -417,9 +417,10 @@ first because it is the check that fails silently.
    schedule.** That takes every deploy with it, including the one that would relax the label.
 3. **Both patches still apply:** `kustomize build deploy/clusters/staging/flux-system` renders, and
    the `flux-system` Kustomization still carries `spec.decryption`.
-4. **`FLUX_VERSION` in `validate-chart.yml`.** That pins the CLI that validates these manifests and
-   is swept by `/update-dependencies` Step 12, _not_ by Renovate. The two drifting apart is how this
-   gap was found — staging ran v2.9.4 while CI validated with 2.9.5. Bring them into step.
+4. **`FLUX_VERSION` in `validate-chart.yml`.** That pins the CLI that validates these manifests.
+   Renovate watches it and `gotk-components.yaml` separately. The CLI and the controllers are
+   separate things, so a Flux release opens **two** pull requests. **Merge them together.** The two
+   drifting apart is how this gap was found — staging ran v2.9.4 while CI validated with 2.9.5.
 5. **Staging first.** It reconciles ahead of production and is the only real test.
 
 ## 10 · Verify the reconciliation

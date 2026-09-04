@@ -387,7 +387,9 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       whole point of the scheduled scan is that its findings are comparable with the publish gate's), and gitleaks' `rev:` in `.pre-commit-config.yaml` belong
       to no Dependabot ecosystem — `github-actions` updates
       `uses: azure/setup-helm@v5` and has nothing to say about the `version:` handed to it. They rot silently, and a scanner a year behind still reports
-      success. `/update-dependencies` step 12 sweeps them. **`HELM_VERSION` tracks the Helm SDK helm-controller embeds** — Helm 4 since
+      success. Renovate's `customManagers` watch every one of them, keyed by `depName` in
+      `.github/renovate.json5` with no `# renovate:` comment beside any pin, so `HELM_VERSION` and
+      `TRIVY_VERSION` each move in one pull request across every file that carries them (ADR-024). **`HELM_VERSION` tracks the Helm SDK helm-controller embeds** — Helm 4 since
       v1.6.x — so that pin is a constraint, not a lag, and not "whatever `helm/helm` says is latest" either. It was held at 3.x on a lapsed premise until
       #1006.
     - **`docker-compose`** (`/`) — its own ecosystem in dependabot-core rather than a directory of `docker`, which reads Dockerfiles only. These are

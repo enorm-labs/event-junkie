@@ -141,26 +141,27 @@ file. So a bump runs the new tool version before anyone merges it.
 
 **A scheduled agent adds nothing to that.** Its detection is slower, costs a run per night, and duplicates what an event-driven bot does for free.
 
-**What none of it covers is a scanner that quietly finds less.** CI proves a tool runs. It does not prove the tool still finds what it used to. A Trivy or
-zizmor reporting fewer findings passes every check.
+**What none of it covers is a scanner that quietly covers less.** CI proves a tool runs. It does not prove the tool still reads everything it did. A Trivy or
+zizmor that audits a narrower set passes every check.
 
 That property belongs in the gates rather than in whoever proposes a bump. The configuration route is the reason. A new suppression or a narrowed path moves
-the finding set, and no updater ever sees it. [#1087](https://github.com/enorm-labs/event-junkie/issues/1087) carries this.
+the finding set, and no updater ever sees it. [#1087](https://github.com/enorm-labs/event-junkie/issues/1087) put it there.
+`scripts/scan-coverage.sh` now asserts a denominator on every scanner gate. This decision is therefore about who proposes a bump, never about who checks it.
 
 **Splitting by pin is rejected**, scanners to an agent and tools to Renovate. It leaves two mechanisms with nothing enforcing which pin belongs to which, and
 that is the shape this ADR exists to prevent.
 
 ## When to revisit
 
-- **If the `pre-commit` manager is ever disabled**, gitleaks' `rev:` becomes watched by nothing and no error says so. It left `/update-dependencies` Step 12
-  when this ADR moved `.pre-commit-config.yaml` to Renovate (#1067), so there is no second mechanism holding it. Put it back in Step 12 in the same change.
+- **If the `pre-commit` manager is ever disabled**, gitleaks' `rev:` becomes watched by nothing and no error says so. This ADR moved
+  `.pre-commit-config.yaml` to Renovate (#1067) and left no second mechanism holding it. Give it one in the same change, or the switch-off is silent.
 - **If `FLUX_VERSION` and `gotk-components.yaml` drift again.** Renovate owns both since #1071, so a release produces two pull requests. They stay separate
   because the CLI and the controllers are separate things. Merge them together, and if they diverge again, fix the grouping.
 - **If Renovate opens a pull request against anything in Dependabot's six.** The allow-list failed. That is a bug in this decision, not a merge conflict.
 - **If the Mend hosted Community tier stops being free**, or its limits start to bind. One concurrent job and 4-hourly scheduling are generous at twelve
   dependencies, and would not be at a hundred. The fallback is self-hosting through Actions, which costs two new pinned versions that nothing watches.
-- **When [#1087](https://github.com/enorm-labs/event-junkie/issues/1087) lands**, the finding-set comparison the retired sweep did once becomes a gate. Until
-  then a scanner bump is verified only to the extent that CI runs it.
+- **If a scanner gate stops asserting a denominator.** [#1087](https://github.com/enorm-labs/event-junkie/issues/1087) made the finding-set comparison a
+  gate. A bump that narrows coverage now fails. A new scanner needs the same treatment, and `scripts/scan-coverage.sh` says which of its three shapes fits.
 - **If anything ever proposes a node pin as a pull request.** That reverses the decision below rather than extending it, and the wal-g failure mode is the
   thing to re-read first.
 - **If `wal-g` stops publishing a `wal-g-pg-24.04` build**, or renames it. `backups.sh` builds that asset name by hand, and
