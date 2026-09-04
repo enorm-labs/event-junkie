@@ -359,59 +359,55 @@ their merits, do not pin back.
   are already restoring — so the natural time to review it is the quarterly restore drill, not this sweep.
   [docs/ops/BACKUPS.md](../../docs/ops/BACKUPS.md) §8 has the whole argument.
 
-## Step 13: The cluster component versions, which are a different kind of blind spot
+## Step 13: The cluster components — Renovate's now, but read this before approving one
 
-Step 12's pins rot in CI. **These rot in production**, and Dependabot cannot see them either: it has no Helm ecosystem, so a `version:` inside a Flux
-`HelmRelease` belongs to no scanner. Six components run the platform and nothing watches any of them.
+**This step no longer sweeps anything. Do not check these by hand.** `.github/renovate.json5` watches
+every component below and opens a pull request the day one is released (#384, ADR-024) — it has a
+first-class `flux` manager for `HelmRelease` chart versions and a `kubernetes` manager for images in
+plain manifests, so this is a purpose-built mechanism rather than the list of `helm search` commands
+that used to live here. **A hand sweep now means two mechanisms proposing the same bump**, which is
+the duplication the whole boundary exists to prevent.
 
-| Component                      | Where                                                                                                        | Check against                                           |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
-| `openobserve-standalone`       | `deploy/clusters/staging/openobserve.yaml`                                                                   | `charts.openobserve.ai` — `helm search repo --versions` |
-| `openobserve-collector`        | `deploy/clusters/base/collector.yaml` — shared, so one edit moves both clusters                              | same repository                                         |
-| `opentelemetry-operator`       | `deploy/clusters/base/collector.yaml` — the same file                                                        | `open-telemetry/opentelemetry-helm-charts` **tags**     |
-| `cert-manager`                 | `deploy/clusters/staging/cert-manager.yaml` **and** `production/cert-manager.yaml` — both must move together | `cert-manager/cert-manager` releases                    |
-| `cert-manager-webhook-hetzner` | `deploy/clusters/staging/cert-manager-webhook.yaml`                                                          | `charts.hetzner.cloud` — `helm search repo --versions`  |
-| `signal-cli-rest-api`          | `deploy/clusters/staging/signal-bridge.yaml` — **image, digest-pinned**                                      | `bbernhard/signal-cli-rest-api` releases                |
+What survives is the part Renovate cannot know: **why some of these are not routine.** When a
+Renovate pull request touches one of them, this is the review.
 
-```sh
-helm repo add openobserve https://charts.openobserve.ai >/dev/null
-helm repo add hetzner https://charts.hetzner.cloud >/dev/null
-helm repo update >/dev/null
-for c in openobserve/openobserve-standalone openobserve/openobserve-collector hetzner/cert-manager-webhook-hetzner; do
-    printf '%-40s %s\n' "$c" "$(helm search repo "$c" --versions -o json | python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["version"])')"
-done
-for repo in cert-manager/cert-manager bbernhard/signal-cli-rest-api; do
-    printf '%-40s %s\n' "$repo" "$(gh api "repos/$repo/releases/latest" --jq .tag_name)"
-done
-# The operator chart is one of many in its repository, so `releases/latest` names whichever chart
-# shipped last — usually the collector. Filter the tags by this chart's own prefix instead.
-printf '%-40s %s\n' opentelemetry-operator \
-    "$(gh api 'repos/open-telemetry/opentelemetry-helm-charts/tags?per_page=100' \
-        --jq '[.[].name|select(startswith("opentelemetry-operator-"))][0]')"
-```
+**`openobserve-standalone` is pinned to the version an ADR was measured against.**
+[ADR-015](../../docs/adr/ADR-015_OBSERVABILITY_STACK.md) criterion 2 is a claim about the footprint
+of **0.92.2** specifically. A bump does not invalidate the decision, but it does invalidate the
+measurement — so approving one means re-checking resident memory against the ~1.5 GB ceiling and
+saying so, not just watching the pod come up.
 
-**Four things make this list different from Step 12's, and each one is a reason not to sweep them casually.**
+**The `ZO_*` defaults are load-bearing and change between versions.** `ZO_LOCAL_MODE` has already
+been misread once as choosing storage rather than topology (it chooses standalone-vs-cluster;
+`ZO_LOCAL_MODE_STORAGE` chooses the backend). Read the chart's changelog for default changes before
+approving, because a default that moves under you produces a pod that starts and behaves differently.
 
-**`openobserve-standalone` is pinned to the version an ADR was measured against.** [ADR-015](../../docs/adr/ADR-015_OBSERVABILITY_STACK.md) criterion 2 is a
-claim about the footprint of **0.92.2** specifically. Bumping it does not invalidate the decision, but it does invalidate the measurement — so a bump means
-re-checking resident memory against the ~1.5 GB ceiling and saying so, not just watching the pod come up.
+**`cert-manager` is pinned in both clusters and they must not drift.** Renovate groups them into one
+pull request for exactly this reason — if you ever see them split, the grouping has broken and the
+merge should wait. A version difference between environments means staging stops being a rehearsal
+for production, which is the only reason staging exists.
 
-**The `ZO_*` defaults are load-bearing and change between versions.** `ZO_LOCAL_MODE` has already been misread once as choosing storage rather than topology
-(it chooses standalone-vs-cluster; `ZO_LOCAL_MODE_STORAGE` chooses the backend). Read the chart's changelog for default changes before the diff, because a
-default that moves under you produces a pod that starts and behaves differently.
+**`signal-cli-rest-api` and `postgres-exporter` are digest-pinned, so the tag alone is not the
+version.** The tag _and_ the `@sha256:` must move together, or the digest silently wins and the diff
+records a change the cluster never saw.
 
-**`cert-manager` appears in both clusters and they must not drift.** A version difference between environments means staging stops being a rehearsal for
-production, which is the only reason staging exists.
+**Flux itself is in scope too, and it is the most careful review of the set.** Renovate regenerates
+`gotk-components.yaml` wholesale. That is safe here only because every local customisation is a
+kustomize patch in `flux-system/kustomization.yaml` rather than an edit to the generated file — but
+that file's Pod Security Admission patch says _"Re-check after a Flux upgrade"_, and it means it: the
+`enforce: restricted` label is justified against the controllers in the **previous** manifest, and a
+controller that violates it will not schedule, which takes every deploy with it. The pull request
+carries this as a note; do not merge it unread.
 
-**`signal-cli-rest-api` is digest-pinned, so the tag alone is not the version.** Move the tag _and_ the `@sha256:` together, or the digest silently wins and
-you have made no change at all — a bump that appears in the diff and not in the cluster.
+**None of these is a routine bump.** Each changes what is running in a cluster. One at a time, watch
+the reconcile, and read [docs/ops/OPENOBSERVE.md](../../docs/ops/OPENOBSERVE.md) § _Keeping it up to
+date_ for the operational consequences.
 
-**None of these belong in a routine sweep either.** Unlike Step 12's CI pins, bumping one of these changes what is running in a cluster. Do them one at a time,
-watch the reconcile, and read [docs/ops/OPENOBSERVE.md](../../docs/ops/OPENOBSERVE.md) § _Keeping it up to date_ first — it carries the same list with the
-operational consequences attached.
-
-**The real fix is Renovate**, which supports Flux `HelmRelease` and `OCIRepository` natively and would make this step unnecessary. Until that exists, this list
-is the only thing standing between the platform and a component two years behind.
+**What is still yours: Step 12.** The tool versions pinned as plain strings in `.github/workflows/`
+are deliberately excluded from Renovate, because this workload can push them since #996 and a second
+mechanism on the same files would collide. `FLUX_VERSION` is the one to watch — it pins the CLI that
+validates these manifests, Renovate pins the controllers that run them, and the two drifting apart is
+how this whole issue was found.
 
 ## Step 14: Ship it
 

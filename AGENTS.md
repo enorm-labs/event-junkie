@@ -31,17 +31,17 @@ file per topic, each declaring the paths it applies to. Claude Code reads them t
 directly; both pull a file into context when you touch a file it matches, so nothing here has to be loaded on the chance it is relevant. An agent that reads
 only this file should follow the links.
 
-| Rule file                                                           | Loads when you touch                                  | Covers                                                         |
-| ------------------------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
-| [architecture](.github/instructions/architecture.instructions.md)   | `events-core/`, `events-bff/`, `events-importer/`     | The reactive stack, the schema, migrations, DTOs, metrics      |
-| [kotlin](.github/instructions/kotlin.instructions.md)               | `*.kt`, `*.kts`, `gradle.properties`, `detekt.yml`    | Idioms, where versions live, ktlint · detekt · Kover           |
-| [comments](.github/instructions/comments.instructions.md)           | Every source language                                 | Few, short, about _why_ — and what lint already enforces       |
-| [documentation](.github/instructions/documentation.instructions.md) | `docs/**/*.md`                                        | Simplified Technical English: how the sentences are written    |
-| [markdown](.github/instructions/markdown.instructions.md)           | `*.md`                                                | oxfmt, its pinned scope, and why it runs twice                 |
-| [vue](.github/instructions/vue.instructions.md)                     | `events-frontend/` `*.vue`, `*.css`                   | SFC structure, Tailwind v4 + shadcn-vue, accessibility         |
-| [testing](.github/instructions/testing.instructions.md)             | backend `src/test/`, frontend `e2e/`, `__tests__/`    | JUnit + Testcontainers, and Vitest + Playwright                |
-| [kubernetes](.github/instructions/kubernetes.instructions.md)       | `deploy/**/*.yaml`                                    | Audited API versions, the YAML boolean trap, PSS `restricted`  |
-| [ci-cd](.github/instructions/ci-cd.instructions.md)                 | `.github/workflows/`, `dependabot.yml`, `release.yml` | Every workflow, the nine required checks, Dependabot, fork PRs |
+| Rule file                                                           | Loads when you touch                                                    | Covers                                                                          |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| [architecture](.github/instructions/architecture.instructions.md)   | `events-core/`, `events-bff/`, `events-importer/`                       | The reactive stack, the schema, migrations, DTOs, metrics                       |
+| [kotlin](.github/instructions/kotlin.instructions.md)               | `*.kt`, `*.kts`, `gradle.properties`, `detekt.yml`                      | Idioms, where versions live, ktlint · detekt · Kover                            |
+| [comments](.github/instructions/comments.instructions.md)           | Every source language                                                   | Few, short, about _why_ — and what lint already enforces                        |
+| [documentation](.github/instructions/documentation.instructions.md) | `docs/**/*.md`                                                          | Simplified Technical English: how the sentences are written                     |
+| [markdown](.github/instructions/markdown.instructions.md)           | `*.md`                                                                  | oxfmt, its pinned scope, and why it runs twice                                  |
+| [vue](.github/instructions/vue.instructions.md)                     | `events-frontend/` `*.vue`, `*.css`                                     | SFC structure, Tailwind v4 + shadcn-vue, accessibility                          |
+| [testing](.github/instructions/testing.instructions.md)             | backend `src/test/`, frontend `e2e/`, `__tests__/`                      | JUnit + Testcontainers, and Vitest + Playwright                                 |
+| [kubernetes](.github/instructions/kubernetes.instructions.md)       | `deploy/**/*.yaml`                                                      | Audited API versions, the YAML boolean trap, PSS `restricted`                   |
+| [ci-cd](.github/instructions/ci-cd.instructions.md)                 | `.github/workflows/`, `dependabot.yml`, `renovate.json5`, `release.yml` | Every workflow, the required checks, the Dependabot/Renovate boundary, fork PRs |
 
 **Sibling files, none of them optional in their own subtree:** [`infra/AGENTS.md`](infra/AGENTS.md) opens with the OpenTofu commands that must never be run ·
 [`deploy/AGENTS.md`](deploy/AGENTS.md) with the difference between rendering the chart and installing it · [`events-frontend/AGENTS.md`](events-frontend/AGENTS.md)
@@ -542,7 +542,8 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Frontend container image                    | `events-frontend/Dockerfile` + `events-frontend/docker/nginx.conf` — nginx on 8080, context is the module                         |
 | Chart assertions                            | `deploy/charts/event-junkie/tests/*_test.yaml` (helm-unittest) + `scripts/cluster-assertions.sh`                                  |
 | Release notes categories                    | `.github/release.yml`                                                                                                             |
-| Dependabot config                           | `.github/dependabot.yml`                                                                                                          |
+| Dependabot config                           | `.github/dependabot.yml` — six ecosystems; read it with `renovate.json5` before calling anything unwatched                        |
+| Renovate config                             | `.github/renovate.json5` — Flux, cluster images, pre-commit, Gradle wrapper. An allow-list, so it cannot collide with Dependabot  |
 | Commit message prompt                       | `.github/prompts/commit-message.prompt.md`                                                                                        |
 | Squash commit message prompt                | `.github/prompts/squash-commit-message.prompt.md`                                                                                 |
 | Open PR prompt                              | `.github/prompts/open-pr.prompt.md`                                                                                               |
@@ -606,6 +607,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | ADR: Public site monitoring                 | `docs/adr/ADR-021_PUBLIC_SITE_MONITORING.md` — a Better Stack monitor polls every three minutes, from outside the cluster         |
 | ADR: Shared cluster base                    | `docs/adr/ADR-022_SHARED_CLUSTER_BASE.md` — `deploy/clusters/base/` holds what does not differ; each cluster patches one field    |
 | ADR: Operator authentication                | `docs/adr/ADR-023_OPERATOR_AUTHENTICATION.md` — the admin API stays unroutable. A Traefik middleware when a surface is deployed   |
+| ADR: Dependency update boundary             | `docs/adr/ADR-024_DEPENDENCY_UPDATE_BOUNDARY.md` — three mechanisms, and which one owns what. Read before adding a fourth         |
 | Plan: Hetzner + k3s setup, go-live          | `docs/ops/PLATFORM_SETUP.md`                                                                                                      |
 | Releasing & deploying, end to end           | `docs/ops/RELEASING.md` — the diagram; ADR-016 has the reasoning                                                                  |
 | Bootstrapping a cluster, once               | `docs/ops/CLUSTER_BOOTSTRAP.md` — ordered runbook, first run 2026-08-13; traps table at the bottom                                |

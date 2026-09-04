@@ -1,0 +1,193 @@
+// Renovate — scoped, on purpose, to the pins that belong to no Dependabot ecosystem.
+//
+// **JSON5 rather than JSON so this file can carry its reasoning**, the same way `dependabot.yml`
+// next to it does. Renovate reads `.github/renovate.json5` natively; there is no build step and no
+// second copy.
+//
+// ## The boundary, in one paragraph
+//
+// Three mechanisms watch versions here and they must not overlap — two bots proposing the same bump
+// is worse than either alone (#384). **Dependabot** owns its six ecosystems: gradle, npm,
+// github-actions, opentofu, docker and docker-compose. **`/update-dependencies` Step 12**, run
+// nightly by `agent-dependencies.yml`, owns the tool versions pinned as plain strings in
+// `.github/workflows/` — it can push them since #996, which is why they are not Renovate's.
+// **Renovate owns what is left**: Flux and the charts it installs, the container images pinned in
+// plain Kubernetes manifests, one image in the chart's values, `.pre-commit-config.yaml`, and the
+// Gradle wrapper. ADR-024 has the full argument, including the options that were rejected.
+//
+// **`enabledManagers` is what enforces that**, and it is an allow-list rather than a set of
+// exclusions: a manager absent from it cannot open a pull request no matter what it finds. That
+// makes duplication against Dependabot structurally impossible instead of a thing to police.
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+
+  extends: ['config:recommended'],
+
+  // **Four of these five need explicit configuration below, and three fail *silently* on their
+  // defaults** — they match nothing and report nothing, which is the exact failure this whole issue
+  // is about. Only `helm-values` and `gradle-wrapper` have defaults that are already right.
+  enabledManagers: ['flux', 'helm-values', 'kubernetes', 'pre-commit', 'gradle-wrapper'],
+
+  // `.github/release.yml` sorts release notes by label, and its **Dependencies** category matches
+  // `dependencies` — which Dependabot applies by itself and Renovate does not. `label-pr.yml`
+  // deliberately does not own that label either, so without this line every Renovate pull request
+  // falls through thirteen categories into "Other Changes".
+  labels: ['dependencies'],
+
+  // **`build(deps):`, matching Dependabot rather than Renovate's own `chore(deps):`.** The
+  // convention is recorded in `release.yml`'s header: a `build(deps)` pull request carries both
+  // `dependencies` and `build`, and Dependencies is ordered above Build & Tooling, so the two
+  // labels compose correctly. `build` is in `label-pr.yml`'s `TYPES`. The point is that `git log`
+  // reads the same whichever bot wrote it.
+  semanticCommits: 'enabled',
+  semanticCommitType: 'build',
+  semanticCommitScope: 'deps',
+
+  // **Never.** Every dependency here changes what runs in a cluster, what builds the artifacts, or
+  // what scans the commits. Stated rather than left to the default, because the default is the kind
+  // of thing a future `extends` preset could change underneath us.
+  automerge: false,
+
+  // Disabled by default upstream, indefinitely — the maintainers declined to align with
+  // `pre-commit autoupdate` and closed the matter. Without this line the manager is simply absent.
+  'pre-commit': {
+    enabled: true,
+  },
+
+  // **The default is `gotk-components.ya?ml` and nothing else**, so out of the box this manager
+  // would watch Flux itself and none of the seven HelmReleases it installs. We want both, so the
+  // pattern is widened rather than replaced — `[^/]+\.yaml` catches the flat per-cluster manifests,
+  // and the second alternative reaches back into `flux-system/` for the bootstrap manifest.
+  //
+  // Deliberately NOT `.+\.yaml$`: that would also match `flux-system/gotk-sync.yaml` and the
+  // `secrets/` subdirectories, which hold SOPS-encrypted material and nothing to update.
+  //
+  // **`managerFilePatterns` inside a manager block is ADDITIVE to that manager's default, not a
+  // replacement** — measured rather than read: scoping `gradle-wrapper` to a single path here left
+  // all three of its files still matched. So the `gotk-components` alternative below is redundant
+  // with the default, and is kept only because it makes the intent readable. Where something has to
+  // be *excluded*, a `packageRules` entry with `matchFileNames` is the mechanism that works.
+  flux: {
+    managerFilePatterns: [
+      '/^deploy/clusters/(base|staging|production)/([^/]+|flux-system/gotk-components)\\.yaml$/',
+    ],
+  },
+
+  // **The default is `[]` — it matches nothing until told what to read.** Two third-party images
+  // are pinned in plain `Deployment` manifests here, and they belong to no other mechanism: the
+  // `flux` manager does not see them because they are not charts, and Dependabot's `docker`
+  // ecosystem does not because it reads Dockerfiles only.
+  kubernetes: {
+    // The pattern stays broad rather than naming the two files that have images today, so a
+    // manifest added later is covered without anyone remembering to widen it. The cost is that the
+    // manager also extracts every `kind:` it meets — `NetworkPolicy`, `Kustomization` and friends
+    // show up as depNames with nothing to update. That noise is confined to debug logs and never
+    // reaches a pull request.
+    managerFilePatterns: ['/^deploy/clusters/(base|staging|production)/[^/]+\\.yaml$/'],
+  },
+
+  packageRules: [
+    // --- Guards: things that must never move on their own ----------------------------------------
+    {
+      // **Our own chart, and the release pipeline owns it.** `oci-repository.yaml` tracks
+      // `>=0.0.0-0` deliberately — a floating range so staging takes every snapshot from `main`.
+      // That is not a pin that rots, and a pull request "fixing" it would stop staging tracking
+      // `main` at all. The `flux` manager documents `tag` and `digest` handling for OCIRepository
+      // and not `semver`, so this is probably inert; probably is not good enough for the file that
+      // decides what staging runs.
+      description: 'Never touch our own chart — the release pipeline owns its version',
+      matchPackageNames: ['ghcr.io/enorm-labs/**'],
+      enabled: false,
+    },
+
+    {
+      // **Two vestigial Gradle wrappers, which want deleting rather than maintaining.** A dry run
+      // found three tracked `gradle-wrapper.properties`: the root at 9.7.1, and copies under
+      // `events-bff/` and `events-importer/` still at **9.5.0**. Those two are Spring Initializr
+      // leftovers — `settings.gradle.kts` includes both modules as subprojects of the root build,
+      // nothing anywhere invokes their `gradlew`, and both Dockerfiles document the build as
+      // `./gradlew :events-bff:bootJarLayers` from the root. They rotted two minors behind precisely
+      // because nothing uses them.
+      //
+      // Renovate keeping them current would make a dead file look maintained, which is how it
+      // becomes permanent. **The root wrapper — the one that actually builds — stays watched.**
+      // Filed as #1066 for deletion. Drop this rule when that lands.
+      description: 'The two unused per-module Gradle wrappers are pending deletion, not upkeep',
+      matchManagers: ['gradle-wrapper'],
+      matchFileNames: [
+        'events-bff/gradle/wrapper/gradle-wrapper.properties',
+        'events-importer/gradle/wrapper/gradle-wrapper.properties',
+      ],
+      enabled: false,
+    },
+
+    // --- Grouping: files that must not drift apart -----------------------------------------------
+    {
+      // `gotk-components.yaml` is byte-identical across both clusters and must stay that way.
+      //
+      // **The trap that rides with every Flux bump**, and Renovate cannot check it: the
+      // `flux-system/kustomization.yaml` patch that sets `pod-security.kubernetes.io/enforce:
+      // restricted` says "Re-check after a Flux upgrade" — it is justified by having verified that
+      // all four controllers *in the pinned manifest* carry `runAsNonRoot`, `seccompProfile:
+      // RuntimeDefault`, `capabilities.drop: [ALL]` and no hostPath volumes. A regenerated manifest
+      // can break that, and the failure is a controller that will not schedule, which takes every
+      // deploy with it — including the one that would relax the label.
+      description: 'Flux itself, both clusters in one pull request',
+      matchManagers: ['flux'],
+      matchDepNames: ['fluxcd/flux2'],
+      groupName: 'flux',
+      prBodyNotes: [
+        '⚠️ **Re-check Pod Security Admission before merging.** `deploy/clusters/*/flux-system/kustomization.yaml` patches `flux-system` to `enforce: restricted`, justified against the controllers in the *previous* manifest. Confirm every controller in the regenerated `gotk-components.yaml` still satisfies `restricted` — `runAsNonRoot`, `seccompProfile: RuntimeDefault`, `capabilities.drop: [ALL]`, no hostPath. A controller that violates it will not schedule, and that takes every deploy with it.',
+        'Local customisations are kustomize patches in `flux-system/kustomization.yaml` (#416, #604), never edits to `gotk-components.yaml` — so this regeneration destroys nothing. Confirm `kustomize build deploy/clusters/staging/flux-system` still applies both patches.',
+        '`FLUX_VERSION` in `.github/workflows/validate-chart.yml` pins the CLI that validates these manifests. It is swept by `/update-dependencies` Step 12, not by Renovate — check the two agree once this merges.',
+      ],
+    },
+    {
+      // Pinned in two files by design — ADR-016 accepted the cost of no shared `base/` for these.
+      // Ungrouped, one upstream release opens two pull requests and staging quietly stops being a
+      // rehearsal for production the moment one is merged and the other is not.
+      description: 'cert-manager, both clusters in one pull request',
+      matchDepNames: ['cert-manager'],
+      groupName: 'cert-manager',
+    },
+    {
+      // **They move as a set** and are pinned across three files — the server in both clusters, the
+      // collector and the operator in `base/`. The operator owns the CRDs the collector's custom
+      // resources need, so a collector ahead of its operator is a reconcile error rather than a
+      // version mismatch.
+      //
+      // **ADR-015's footprint measurement is pinned to OpenObserve 0.92.2 specifically**, and the
+      // `ZO_*` defaults move between releases. A correct pull request here still invalidates a
+      // recorded measurement — read the ADR and `docs/ops/OPENOBSERVE.md` before merging, not after.
+      description: 'The observability stack moves as a set',
+      matchDepNames: [
+        'openobserve-standalone',
+        'openobserve-collector',
+        'opentelemetry-operator',
+      ],
+      groupName: 'observability stack',
+    },
+
+    // --- Everything else stays alone -------------------------------------------------------------
+    {
+      // `cert-manager-webhook-hetzner`, `signal-cli-rest-api`, `postgres-exporter`,
+      // `curlimages/curl`, `gitleaks` and the Gradle wrapper each get their own pull request. They
+      // share no release cadence with anything, and a Gradle wrapper bump in particular is a
+      // build-tool change that deserves to be reviewed on its own — CI compiles with
+      // `-PwarningsAsErrors` and local builds do not, so it is the one update here that can be
+      // green locally and fail `Build & Test (backend)`.
+      description: 'Separate pull requests for everything with its own cadence',
+      matchDepNames: [
+        'cert-manager-webhook-hetzner',
+        'bbernhard/signal-cli-rest-api',
+        'prometheuscommunity/postgres-exporter',
+        'docker.io/curlimages/curl',
+        // An initContainer inside the collector's HelmRelease values, found by the dry run rather
+        // than by reading — it is nested in a kustomize patch, which is why every hand inventory of
+        // this repository has missed it.
+        'busybox',
+      ],
+      groupName: null,
+    },
+  ],
+}

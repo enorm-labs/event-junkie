@@ -241,3 +241,12 @@ updates:
   # for one to watch anyway — PostgreSQL runs on a VM per ADR-012, so there is no subchart. The
   # versions the chart does pin are container image tags, which #426 will bring under the `docker`
   # ecosystem via the Dockerfiles rather than via the chart.
+  #
+  # **What this file does NOT watch now has an owner: `.github/renovate.json5`** (#384, ADR-024).
+  # Renovate covers the chart versions inside Flux `HelmRelease` manifests, Flux itself, the images
+  # pinned in plain Kubernetes manifests, one image in the chart's `values.yaml`, gitleaks' `rev:`
+  # in `.pre-commit-config.yaml`, and the Gradle wrapper — every one of them a version string that
+  # belongs to no ecosystem here. Its `enabledManagers` is an allow-list that deliberately excludes
+  # all six ecosystems above, so the two bots cannot propose the same bump. **Read both files before
+  # concluding something is unwatched**, and add a new ecosystem here rather than there whenever
+  # Dependabot can express it — a manifest it understands beats a pattern we maintain.

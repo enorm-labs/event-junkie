@@ -6,9 +6,15 @@
 #  contributor's code. A checkout makes it an arbitrary-code-execution path (#479, #443).
 # ==============================================================================================
 #
-# Dependabot pull requests are the one class that arrives with no milestone — `dependabot.yml` has
-# no key for one. This sets it, and never overwrites a milestone already there.
-name: Milestone Dependabot PRs
+# Bot pull requests are the one class that arrives with no milestone: `dependabot.yml` has no key
+# for one, and Renovate has no concept of milestones at all. This sets it, and never overwrites a
+# milestone already there.
+#
+# **`BOTS` is matched by login, so a new bot is invisible here until it is added** — and invisibly:
+# the skip below is logged as normal operation, not as a warning. `renovate[bot]` joined in #384.
+# The filename stays `milestone-dependabot.yml` because renaming it breaks every link into it for
+# no gain.
+name: Milestone bot PRs
 
 on:
   # comment-lint: allow a dated suppression, per the reason in zizmor.yml
@@ -42,7 +48,7 @@ concurrency:
 
 jobs:
   milestone:
-    name: Apply a milestone to Dependabot PRs
+    name: Apply a milestone to bot PRs
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -51,7 +57,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            const BOTS = new Set(['dependabot[bot]', 'dependabot-preview[bot]']);
+            const BOTS = new Set(['dependabot[bot]', 'dependabot-preview[bot]', 'renovate[bot]']);
             const { owner, repo } = context.repo;
 
             // No milestone here carries a due date, so "the next one due" cannot be asked for. The
@@ -86,7 +92,7 @@ jobs:
             if (context.eventName === 'pull_request_target') {
               const pr = context.payload.pull_request;
               if (!BOTS.has(pr.user.login)) {
-                core.info(`#${pr.number} is from ${pr.user.login}, not Dependabot — left alone.`);
+                core.info(`#${pr.number} is from ${pr.user.login}, not a known bot — left alone.`);
                 return;
               }
               if (pr.milestone) {
