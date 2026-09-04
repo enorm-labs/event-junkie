@@ -146,9 +146,13 @@ Checking by hand:
 ssh ops@<tunnel-address> 'sudo -u postgres /usr/local/bin/walg check'
 # ok: newest 2026-08-18T09:58:28Z, disk 2%
 
-ssh ops@<tunnel-address> "sudo -u postgres psql -x -c 'select archived_count, failed_count, last_archived_wal from pg_stat_archiver'"
-# failed_count must be 0. A rising failed_count is the earliest warning there is.
+ssh ops@<tunnel-address> "sudo -u postgres psql -x -c 'select archived_count, failed_count, last_failed_time, last_archived_wal from pg_stat_archiver'"
+# A *rising* failed_count is the earliest warning there is. The number alone is not the signal.
 ```
+
+> **`failed_count` is cumulative since `stats_reset`, so a non-zero reading is not a fault on its own.** Production reads 39, and all 39 landed in the 17
+> minutes after the node was created. That is the credential gap [§5](#5-the-credential-is-not-in-the-configuration-and-that-has-a-cost) describes.
+> `last_failed_time` is what separates that history from a live problem.
 
 ## 7. What it costs
 
@@ -205,10 +209,59 @@ runs PostgreSQL, production included. So:
 
 - **Do not take it because it is available.** The reminder says a newer release exists, and that is all it says. Bump for a reason — a fix you need, an
   advisory — and take the rebuild deliberately. Keep `docs/ops/CLUSTER_BOOTSTRAP.md` § _Rebuilding a node_ open while you do.
-- **Or install ahead of the rebuild.** `backups.sh` is idempotent and only downloads when the installed version differs. So you can bump the variable, run the
-  script by hand on the node, and let the next natural rebuild find the work already done. The plan still shows a replacement, which is honest, because
-  `user_data` genuinely differs.
+- **Or install ahead of the rebuild.** Bump the variable, put the new binary on the node by hand, and let the next natural rebuild find the work already done.
+  _Installing ahead of the rebuild_ below is the procedure, and it is not the one line it looks like. The plan still shows a replacement, which is honest,
+  because `user_data` genuinely differs.
 - **Never let the pin drift from what is installed.** A node rebuilt six months later would silently downgrade to whatever the variable still says.
+
+### Installing ahead of the rebuild
+
+Both nodes took `v3.0.9` this way on 2026-09-04 ([#1091](https://github.com/enorm-labs/event-junkie/issues/1091)). Two things make it less obvious than that
+bullet sounds, and both were found by doing it.
+
+**Do not simply run `/opt/event-junkie/backups.sh`.** It ends with `systemctl restart postgresql@18-main`, because `archive_mode` needs a restart rather than a
+reload. That is correct at boot and disproportionate here. The binary is the only part of that script a version bump changes. The env file, the `walg`
+dispatcher and the two systemd units are byte-identical at any version.
+
+**Patch `/etc/event-junkie/bootstrap.env` in the same breath.** It holds the node's own copy of `WALG_VERSION`, rendered from `user_data` at boot, and
+installing a binary does not touch it. Leave it stale and the script's guard reads a mismatch on the next hand run, then reinstalls the **old** version.
+Installing ahead of the rebuild without this step is a downgrade waiting for its trigger.
+
+So, per node, with the tag and both checksums already pinned in `variables.tf`:
+
+```sh
+T=$(mktemp -d)
+curl -fsSL --retry 3 -o "$T/w.tgz" \
+  "https://github.com/wal-g/wal-g/releases/download/$V/wal-g-pg-24.04-$A.tar.gz"
+echo "$SHA  $T/w.tgz" | sha256sum -c -     # aborts before install if the bytes differ
+tar -xzf "$T/w.tgz" -C "$T"
+sudo install -m 0755 "$T/wal-g-pg-24.04-$A" /usr/local/bin/wal-g
+rm -rf "$T"
+sudo sed -i -e "s|^WALG_VERSION=.*|WALG_VERSION=$V|" \
+            -e "s|^WALG_SHA256_AMD64=.*|WALG_SHA256_AMD64=<amd64 pin>|" \
+            -e "s|^WALG_SHA256_ARM64=.*|WALG_SHA256_ARM64=<arm64 pin>|" \
+  /etc/event-junkie/bootstrap.env
+```
+
+`$A` is `amd64` or `aarch64` from `dpkg --print-architecture`, and `$SHA` is that architecture's pinned value.
+
+**Then prove it archives, rather than that it exists.** A version string proves the download. Only a segment travelling through `archive_command` proves the
+backup path, which is the thing a stale or broken binary takes away silently.
+
+```sh
+sudo -u postgres psql -c "select pg_switch_wal()"
+sudo -u postgres psql -x -c "select archived_count, last_archived_wal, failed_count from pg_stat_archiver"
+```
+
+`archived_count` must rise. **On an idle database it will not.** At a segment boundary `pg_switch_wal()` returns an address like `0/B6000000` and does nothing,
+because there is no WAL to switch. That is exactly what production did, an hour after its last write, and the version string alone would have looked like
+success. Emit one record first:
+
+```sh
+sudo -u postgres psql -c "select pg_logical_emit_message(false, \$\$walg\$\$, \$\$archive probe\$\$)"
+```
+
+It writes a WAL record and changes no data, which is the point of using it rather than a table.
 
 **The floor on staleness is lower than it looks.** `wal-g` is on the recovery path, not the request path. Nothing about a stale version shows up in monitoring,
 and the moment you find out is the moment you are already restoring. Re-read this section when the quarterly drill comes round
