@@ -60,8 +60,6 @@ class CosmicComedyApiScraper {
      *
      * An unparseable body yields an empty page with no cursor, which stops paging rather than
      * aborting an import that may already hold earlier pages.
-     *
-     * @param json the raw response body.
      */
     @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to an empty page, never abort the import.
     fun scrapePage(json: String): CosmicComedyPage {

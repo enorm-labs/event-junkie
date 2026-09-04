@@ -84,7 +84,6 @@ class EventImportServiceIntegrationTest : BaseControllerTest() {
     @BeforeEach
     fun setUpFixtures() {
         runBlocking {
-            // Create a venue and event source for all tests
             val venue = venueRepository.save(VenueEntity(name = "Test Venue", slug = "test-venue"))
             venueId = requireNotNull(venue.id)
 

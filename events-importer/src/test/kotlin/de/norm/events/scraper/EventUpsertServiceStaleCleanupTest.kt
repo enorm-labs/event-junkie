@@ -197,8 +197,6 @@ class EventUpsertServiceStaleCleanupTest {
         @Test
         fun `cleanup window is tomorrow to max scraped date`() =
             runTest {
-                // Verify that findByEventSourceIdAndEventDateBetween is called
-                // with exactly tomorrow as fromDate and the latest scraped date as toDate.
                 val latestDate = today.plusDays(30)
 
                 val scrapedEvents =
