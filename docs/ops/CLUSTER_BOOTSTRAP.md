@@ -648,75 +648,14 @@ sudo ss -lntp | grep 5432
 
 The output must name the private address. Only `127.0.0.1` and `::1` means the node is in the broken state, whatever `systemctl status` says.
 
-### Upgrading k3s without rebuilding
+### Upgrading k3s is not a rebuild
 
-**A `k3s_version` bump does not need a rebuild, and a rebuild is the expensive way to take one.** The
-node's k3s comes from `get.k3s.io` with `INSTALL_K3S_VERSION`, and re-running that installer is
-[k3s's own documented upgrade](https://docs.k3s.io/upgrades/manual). A rebuild destroys the cluster,
-Flux, the six hand-made Secrets, `/etc/wal-g/credentials.env`, the WireGuard server key and
-OpenObserve's dashboards. An upgrade keeps every one of them.
+**A `k3s_version` bump does not need one.** k3s upgrades in place through the same installer the node
+booted with. That keeps the cluster, Flux, the Secrets, the backup credential and the dashboards
+below. [K3S_UPGRADE.md](K3S_UPGRADE.md) is the procedure.
 
-Same shape as the `cloud-init` fix above, and the same rule. **Bump the variable, and apply the
-change by hand.** The next rebuild then finds the work already done. A node upgraded without the pin
-moving is a node the next rebuild silently downgrades.
-
-**Rancher's `system-upgrade-controller` is the other documented method and is not worth it here.** It
-installs a controller, a CRD and a plan into the cluster to drain and upgrade nodes in order. There
-is one node per cluster and no agents, so it automates a single command.
-
-```bash
-# On the node. Staging first, production only after staging has held.
-curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.36.4+k3s1 INSTALL_K3S_EXEC=server sh -s -
-```
-
-**The environment and the arguments must match what the node already runs.** The script rewrites the
-systemd unit from what it is given. Upstream writes that as `<EXISTING_K3S_ENV> sh -s -
-<EXISTING_K3S_ARGS>`. Here it is `INSTALL_K3S_EXEC=server` and no positional arguments, which is what
-`cloud-init/k3s.sh` passes. Everything else the server reads lives in
-`/etc/rancher/k3s/config.yaml`, and the script does not touch it.
-
-**Never `INSTALL_K3S_CHANNEL` here.** The pin exists so a destroy and apply cycle cannot produce a
-different cluster. A channel defeats that from the other direction.
-
-**Run the installer, not `k3s.sh`.** That script rewrites `/etc/rancher/k3s/config.yaml` from
-`bootstrap.env`, which a live node does not have to hand. The existing config is what you want kept.
-
-**The script restarts k3s itself**, so no `systemctl restart` follows it. containerd is replaced with
-the binary. Every workload on the node restarts, and the API is briefly away. On a single-node
-cluster that is a short outage of everything. **Servers go first and one at a time, then agents** is
-upstream's rule. Here it reads as one node per cluster, and no agents at all.
-
-Afterwards, in this order:
-
-```bash
-k3s --version                                                      # the new version on the node
-kubectl get nodes -o wide                                          # Ready, and the same version
-kubectl -n kube-system get svc traefik -o jsonpath='{.spec.type}'  # still ClusterIP
-kubectl -n kube-system get pods | grep svclb                       # must return nothing
-flux get all -A                                                    # everything Ready
-curl -sS -o /dev/null -w '%{http_code}\n' https://<the host>/      # the site answers
-```
-
-**The three ingress checks are not decoration.** k3s packages the Traefik chart, so a k3s upgrade can
-move it. Upstream flags exactly that for the v1.31 to v1.32 step, where Traefik went from v2 to v3.
-`traefik-host-ports.yaml` sets `service.spec.type: ClusterIP`, which frees ports 80 and 443 for
-Traefik's own `hostPort`. A chart release that stops reading that key brings svclb back, and svclb
-takes the ports. The site then stops answering.
-
-**So compare the packaged chart before upgrading, not after.** It is one command. It is also what
-turned the v1.36.4 release note's Traefik warning into a non-event, because the chart is identical
-either side of that bump.
-
-```bash
-for v in <old> <new>; do
-  curl -fsSL "https://raw.githubusercontent.com/k3s-io/k3s/${v//+/%2B}/manifests/traefik.yaml" \
-    | grep -oE 'traefik-[0-9.]+\+up[0-9.]+\.tgz'
-done
-```
-
-**Rolling back is a downgrade, and k3s does not promise one.** The datastore schema can move forward
-between minors. Within a patch line it is usually fine. The honest recovery for a bad upgrade is the
-rebuild this section exists to avoid, which is another reason staging goes first.
+Come back here when a rebuild is the point — an edit under `cloud-init/`, a change of architecture,
+or a node broken past fixing.
 
 ### Architecture is a rebuild, not a resize, and the plan will not say so
 

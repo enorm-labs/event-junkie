@@ -102,7 +102,7 @@ jobs:
                 'so the OpenTofu plan says **destroy and recreate the server**. A rebuild loses the k3s cluster, ' +
                 'Flux, the six hand-made Secrets, `/etc/wal-g/credentials.env` and OpenObserve\'s dashboards.',
               '',
-              `**Take it in place instead.** [\`CLUSTER_BOOTSTRAP.md\` § Upgrading k3s without rebuilding](${blob}/docs/ops/CLUSTER_BOOTSTRAP.md#upgrading-k3s-without-rebuilding) ` +
+              `**Take it in place instead.** [\`K3S_UPGRADE.md\`](${blob}/docs/ops/K3S_UPGRADE.md) ` +
                 `and [\`BACKUPS.md\` §8](${blob}/docs/ops/BACKUPS.md) are the two procedures. Bump the pin in the same change, ` +
                 'or the next rebuild silently downgrades the node. A rebuild that is happening anyway is the free moment for both.',
             ];
