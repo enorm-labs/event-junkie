@@ -557,7 +557,6 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Security triage prompt                      | `.github/prompts/security-triage.prompt.md` — its `--unattended` section is what `agent-security.yml` runs                        |
 | Agentic workflow (security)                 | `.github/workflows/agent-security.yml` — nightly, opens a PR, dismisses nothing                                                   |
 | Agentic workflow (refactor)                 | `.github/workflows/agent-refactor.yml` — fenced away from shared normalization                                                    |
-| Agentic workflow (dependency pins)          | `.github/workflows/agent-dependencies.yml` — Step 12 only, the pins Dependabot cannot see                                         |
 | Agentic workflow (comments)                 | `.github/workflows/agent-comments.yml` — whole tree nightly, capped at twelve files per PR                                        |
 | Refactor prompt                             | `.github/prompts/refactor.prompt.md`                                                                                              |
 | Documentation currency prompt               | `.github/prompts/update-docs.prompt.md`                                                                                           |

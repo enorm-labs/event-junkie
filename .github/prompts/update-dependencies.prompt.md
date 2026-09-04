@@ -11,51 +11,44 @@ Always run git commands with the pager disabled (`git --no-pager ...`) to preven
 alert and stops when the alert is gone. This command starts from "what is out of date" and applies only to versions we manage. They overlap on the same files, so
 running both at once produces two half-finished bumps of the same property — do one, ship it, then the other.
 
-## Running unattended
+## Who runs this, and what it is for
 
-[`agent-dependencies.yml`](../workflows/agent-dependencies.yml) invokes this prompt as `/update-dependencies --unattended` from a runner. **It runs Step 12 and
-nothing else**, which is a much narrower job than the name suggests and is the only part of this sweep that is worth automating at all.
+**A person, from a terminal. Nothing invokes it on a schedule.** It exists for the half of dependency
+work that no updater does: reading a Gradle report, deciding which majors are safe to take,
+cross-checking compatibility across a BOM, and running the build to find out. That is judgement, and
+it belongs to whoever is holding the terminal.
 
-The reason is that Dependabot already does the rest, and better. It owns `gradle`, `npm`, `docker`, `github-actions` and `opentofu`, with grouping, a suppression
-that carries its argument, and a held major on the JRE. An agent re-deriving those bumps produces a second, worse pull request against the same files and a merge
-conflict with the first. **Step 12's pins are the blind spot** — a tool version pinned as a plain string belongs to no ecosystem, so `HELM_VERSION`,
-`ZIZMOR_VERSION`, `ACTIONLINT_VERSION`, `SHELLCHECK_VERSION` and their siblings rot in silence while the checks that use them keep reporting success. That is
-the failure worth a scheduled job: a green gate that has stopped meaning anything.
+**Two bots own the mechanical half, and this prompt must not touch what they own.** Editing a version
+they watch produces a second pull request against the same file, and a merge conflict with the first.
+ADR-024 has the boundary; the short form:
 
-- **Step 12 only, minus its last two rows.** `walg_version` and `k3s_version` feed `bootstrap.env` and are force-new attributes — bumping either plans a node
-  replacement, production included. They are reported, never edited, and Step 12 already says to move them deliberately with the rebuild runbook open.
-- **Nothing from Step 13.** Cluster component versions rot in production rather than in CI, and the check for them is a k3d rehearsal the runner cannot run.
-- **A pin that appears in two or three workflows moves in all of them or in none.** `HELM_VERSION`, `HELM_UNITTEST_VERSION` and `SHELLCHECK_VERSION` each live in
-  more than one file, and a half-applied bump surfaces as two checks disagreeing about the same file. If every copy cannot be found, report the pin and leave it.
-- **`HELM_VERSION` tracks what helm-controller embeds, not what `helm/helm` calls latest.** The constraint is semantic rather than version lag: the client that
-  gates the chart has to be the SDK that installs it. Read it from the deployed controller's `go.mod` — `helm-controller:v1.6.3` gives
-  `replace helm.sh/helm/v4 => github.com/fluxcd/helm/v4 v4.2.4-flux.1`, hence `v4.2.4`. **Do not raise it to a newer Helm than helm-controller carries**, and do
-  not lower it either; #1006 is what a lapsed reading of this costs.
-- **A bump that turns a check red is a finding, not a thing to work around.** A newer analyser finding more is the tool working. Report the new findings and
-  leave the pin raised, or revert it and say so; never pin back to make the gate green.
-- **`--dry-run`** on top of it opens no pull request and writes the report to the job summary. Use it first, and after any change to this section.
+| Owner           | Watches                                                                                                                                                        |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dependabot**  | `gradle`, `npm`, `github-actions`, `opentofu`, `docker`, `docker-compose`                                                                                      |
+| **Renovate**    | Flux and the charts it installs, images in plain Kubernetes manifests, the CI tool pins in `.github/workflows/`, `.pre-commit-config.yaml`, the Gradle wrapper |
+| **This prompt** | the judgement calls above, and anything neither bot can express                                                                                                |
 
-The proof is the repository's own gates: every pin here is consumed by a workflow that lints or validates something, so a wrong version fails the pull request
-rather than merging quietly.
+**So a local run is for when you want to think about the dependency set**, not to keep it current —
+the bots do that, event-driven, and they do it better because they never forget. Reach for this when
+a major is waiting and somebody has to decide, when a BOM override needs re-checking against what
+Boot has caught up with, or when you want the whole picture in one report rather than a queue of
+pull requests.
 
-**Your final message is the report, and there is no second turn.** The run ends the moment you stop calling tools, so a closing line like _"I'll compile the
-report once the checks finish"_ ends it with that sentence as the whole deliverable — and the job still reports success. There is nobody to hand off to and
-nothing to wait for: no reviewer reads the transcript, no follow-up prompt arrives, and any work you plan but do not do in this turn is simply lost. Finish the
-work, then write the Output section below as your last message. This has already happened once, on a `--all` sweep that ended waiting for classification agents
-it had no tool to spawn.
+**To look at the CI tool pins without touching them**, which Renovate owns:
 
-**Every count in the report carries the command that produced it.** A bucket line reading `DELETE 0` with nothing behind it is an assertion, and an assertion is
-exactly what cannot be checked after the fact. Show the command and its output — a `git grep -c`, a script's summary line, a test name — so a reviewer, or the
-next run, can re-run it and get the same number. This is the rule [`/codebase-audit`](codebase-audit.prompt.md) already applies: every claim backed by a
-concrete file, count or command output.
+```sh
+grep -rn '_VERSION:' .github/workflows/ | grep -vE 'VERSION: \$\{\{'
+```
 
-**A zero needs its evidence, and so does every other number.** "Nothing to do here" is the finding nobody checks and the one that ends the run early. But the
-rule is not "prove the zeros" — a run that carried a command for each of its zeros and none for its one non-zero count reported three candidates where the tree
-held fifty-seven, and the count with no command behind it was the only one that was wrong. **A number you did not produce with a command is a guess, whatever
-its size**, and a guess in a section headed _"reported for a human"_ is the one a human acts on.
+Read-only on purpose. A pin that looks stale is a Renovate question — check the Dependency Dashboard
+before editing anything by hand.
 
-Two runs of this prompt minutes apart once disagreed about whether a pattern still existed at all. Both reports were confident, well formatted, and one of them
-was wrong. The command output is the only part of a report that cannot be plausible and false at the same time.
+**A zero still needs its evidence.** "Nothing to do here" is the finding nobody checks and the one
+that ends a run early. A number produced without a command behind it is a guess whatever its size,
+and a guess in a section headed _"reported for a human"_ is the one a human acts on. Two runs of this
+prompt minutes apart once disagreed about whether a pattern existed at all. Both reports were
+confident and well formatted, and one was wrong. Command output is the only part of a report that
+cannot be plausible and false at the same time.
 
 ## Step 1: Generate the Dependency Update Report
 
@@ -291,80 +284,45 @@ in the README before the restructure, so look there if this section has moved ag
 the wrapper itself reads as neglect, so match it to `distributionUrl` in `gradle/wrapper/gradle-wrapper.properties` whenever you notice a gap. This prompt does
 not bump the wrapper itself; that is a separate manual step.
 
-## Step 12: The CI tool versions nothing else watches
+## Step 12: Ship it
 
-**These are the repository's blind spot.** Dependabot covers `gradle`, `npm`, `docker`, `github-actions` and `opentofu` — but a _tool version pinned as a plain
-string_ belongs to none of those ecosystems. `github-actions` updates `uses: azure/setup-helm@v5`; it has nothing to say about the `version: v3.19.0` passed to
-it. So these rot silently, and a scanner or validator that is a year behind still reports success, which is the failure mode worth caring about: a green check
-that has stopped meaning anything.
+**An edit that is not committed is an edit that did not happen.** This sweep rewrites `gradle.properties`, `settings.gradle.kts`, `package.json` and the README
+badges. **It does not touch `.github/workflows/`** — the tool pins there are Renovate's, and editing one here is how a duplicate pull request starts.
 
-| Pin                     | Where                                                                                                              | Check against                                                      |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| `HELM_VERSION`          | `.github/workflows/validate-chart.yml`, `release.yml` **and** `image-scan-scheduled.yml` — all three move together | `helm/helm` releases, **tracking the SDK helm-controller embeds**  |
-| `FLUX_VERSION`          | `.github/workflows/validate-chart.yml`                                                                             | `fluxcd/flux2` releases                                            |
-| `FLUX_SCHEMA_VERSION`   | `.github/workflows/validate-chart.yml`                                                                             | `fluxcd/flux-schema` releases — or `flux plugin list` locally      |
-| `TRIVY_VERSION`         | `.github/workflows/release.yml` **and** `image-scan-scheduled.yml` — both must move together                       | `aquasecurity/trivy` releases                                      |
-| `ZIZMOR_VERSION`        | `.github/workflows/validate-workflows.yml`                                                                         | `zizmorcore/zizmor` releases — the image tag has **no** `v` prefix |
-| `ACTIONLINT_VERSION`    | `.github/workflows/validate-workflows.yml`                                                                         | `rhysd/actionlint` releases                                        |
-| `HELM_UNITTEST_VERSION` | `.github/workflows/validate-chart.yml` **and** `release.yml` — both must move together                             | `helm-unittest/helm-unittest` releases                             |
-| `SHELLCHECK_VERSION`    | `validate-scripts.yml`, `validate-infra.yml` **and** `validate-chart.yml` — all three move together                | `koalaman/shellcheck` releases                                     |
-| `walg_version`          | `infra/modules/environment/variables.tf` — **and both `walg_checksums`**                                           | `wal-g/wal-g` releases — read the rules below before bumping       |
-| `k3s_version`           | `infra/modules/environment/variables.tf`                                                                           | `k3s-io/k3s` releases — same rebuild consequence as `wal-g`        |
+The verification is already above: Step 6 for the backend, Step 10 for the frontend. Run whichever the diff touched, then [`/open-pr`](open-pr.prompt.md) with
+the table from Output Summary below as the body.
 
-```sh
-for repo in helm/helm helm-unittest/helm-unittest fluxcd/flux2 fluxcd/flux-schema aquasecurity/trivy \
-            zizmorcore/zizmor rhysd/actionlint koalaman/shellcheck wal-g/wal-g k3s-io/k3s; do
-  printf '%-28s %s\n' "$repo" "$(gh api "repos/$repo/releases/latest" --jq .tag_name)"
-done
-```
+**One pull request per sweep, not per bump.** Grouping is what `dependabot.yml` does for the ecosystems it owns, for the reason its own comments give: separate
+pull requests per dependency is how people learn to ignore them.
 
-Two things to be careful of. **`HELM_VERSION` appears in three workflows** — `validate-chart.yml`, `release.yml` and `image-scan-scheduled.yml` — and they must
-not drift apart, because the whole point of the pin is that the chart is gated against the same client everywhere. And **it tracks the SDK helm-controller
-embeds**, not whatever `helm/helm` says is latest: the client that gates the chart has to be the one that installs it. Read it from the deployed controller's
-`go.mod` rather than from a release page. That constraint is semantic, not a version-lag; do not "fix" it in either direction (#1006).
+**If nothing moved, ship nothing and say so.** These pins are checked far more often than they change, so an empty sweep is the normal outcome rather than a
+failure — and an empty pull request costs a review to learn that.
 
-**`HELM_UNITTEST_VERSION` appears in the same two workflows as `HELM_VERSION`**, and for the same reason: `release.yml` runs on a fresh runner and installs the
-plugin itself. #430 chose a plugin install over the `helmunittest/helm-unittest` image precisely so `HELM_VERSION` could stay exact — the image's newest Helm 3
-tag lags, and the plugin version it carries has no `--values` flag. If a bump ever tempts you back to the image, that is the constraint to re-check first.
+## Output Summary
 
-**`SHELLCHECK_VERSION` appears in three** — `validate-scripts.yml`, `validate-infra.yml` and `validate-chart.yml` — for the same reason and with a sharper failure mode. It is pinned at all because the runner image's preinstalled
-ShellCheck is older than a current local install and disagrees with it — v0.9.0 flags `SC2015` on `A && B || true`, v0.11.0 correctly does not — so an unpinned
-job fails on files the author's own copy had just passed. `cluster-assertions.sh`, `k3d-rehearsal.sh`, `version.sh` and `version-test.sh` are linted by two of the three jobs, so a drifted pin surfaces as two checks
-disagreeing about the same file. Bump all three in one commit, and when a bump does turn a job red, read the findings on their merits before
-assuming the pin is wrong: a newer analyser finding more is the tool working.
+After completing the update, provide a summary table:
 
-A Trivy bump can turn a green scan red by adding advisories rather than by anything changing in the image. That is the tool working — treat the new findings on
-their merits, do not pin back.
+| Dependency | Previous Version | New Version | Location                                   |
+| ---------- | ---------------- | ----------- | ------------------------------------------ |
+| ...        | ...              | ...         | `build.gradle.kts` / `settings.gradle.kts` |
+| ...        | ...              | ...         | `events-frontend/package.json`             |
 
-**The last two rows are not like the others, and the difference is expensive.** `walg_version` and `k3s_version` feed `bootstrap.env`, which is templated into
-`user_data` — **a force-new attribute.** Bumping either one plans a _node replacement_, production included, where bumping Trivy edits a workflow. So:
+Also note:
 
-- **Do not sweep them up with the routine run.** Move them when there is a reason, and take the rebuild deliberately with
-  [docs/ops/CLUSTER_BOOTSTRAP.md](../../docs/ops/CLUSTER_BOOTSTRAP.md) § _Rebuilding a node_ open.
-- **`wal-g` also carries two checksums**, one per architecture. Both environments have been x86 since 2026-08-21 — ARM cannot be bought anywhere in `eu-central` — so only the `amd64` one is exercised today, and that is exactly why both must stay correct: the unused one is the one nobody notices is wrong. Both move with the version, and they come from the
-  release's own `.sha256` files — never from the tarball's host, which would verify only that the download completed:
+- Which **README badges** were refreshed, and which were already correct.
+- Any dependencies that were **skipped** because only pre-release versions were available.
+- Any **major version bumps** that were applied, with a brief note on breaking changes (if any).
+- Any dependencies already at their **latest stable version** (no update needed).
+- Any **CVE-remediation overrides removed** because the BOM caught up, and any **kept**, naming the CVE that still justifies each one.
+- **Nothing about cluster components, CI tool pins, or anything else Renovate and Dependabot own.** A report that lists them invites somebody to act on the
+  list, and acting on it is what produces the duplicate pull request. If one of them looks wrong, that is a Dependency Dashboard question, not a finding here.
 
-    ```sh
-    V=v3.0.9
-    for a in amd64 aarch64; do
-      printf '%-8s %s\n' "$a" "$(curl -fsSL "https://github.com/wal-g/wal-g/releases/download/$V/wal-g-pg-24.04-$a.tar.gz.sha256" | cut -d' ' -f1)"
-    done
-    ```
+## Appendix: reviewing a Renovate pull request against a cluster component
 
-    The `aarch64` asset maps to the `arm64` key; the node picks by `dpkg --print-architecture`. A version bumped without its checksums fails the boot at
-    `sha256sum -c` — intended, and an unpleasant way to discover a half-done edit.
-
-- **`wal-g` is on the recovery path, not the request path.** Nothing about a stale version shows up in monitoring, and the moment you find out is the moment you
-  are already restoring — so the natural time to review it is the quarterly restore drill, not this sweep.
-  [docs/ops/BACKUPS.md](../../docs/ops/BACKUPS.md) §8 has the whole argument.
-
-## Step 13: The cluster components — Renovate's now, but read this before approving one
-
-**This step no longer sweeps anything. Do not check these by hand.** `.github/renovate.json5` watches
-every component below and opens a pull request the day one is released (#384, ADR-024) — it has a
-first-class `flux` manager for `HelmRelease` chart versions and a `kubernetes` manager for images in
-plain manifests, so this is a purpose-built mechanism rather than the list of `helm search` commands
-that used to live here. **A hand sweep now means two mechanisms proposing the same bump**, which is
+**Not a step, and nothing here is swept.** `.github/renovate.json5` watches every component below and
+opens a pull request the day one is released (#384, ADR-024) — a first-class `flux` manager for
+`HelmRelease` chart versions and a `kubernetes` manager for images in plain manifests. **Checking them
+by hand means two mechanisms proposing the same bump**, which is
 the duplication the whole boundary exists to prevent.
 
 What survives is the part Renovate cannot know: **why some of these are not routine.** When a
@@ -405,42 +363,8 @@ carries this as a note; do not merge it unread.
 the reconcile, and read [docs/ops/OPENOBSERVE.md](../../docs/ops/OPENOBSERVE.md) § _Keeping it up to
 date_ for the operational consequences.
 
-**What is still yours: Step 12.** The tool versions pinned as plain strings in `.github/workflows/`
-are deliberately excluded from Renovate, because this workload can push them since #996 and a second
-mechanism on the same files would collide. `FLUX_VERSION` is the one to watch — it pins the CLI that
-validates these manifests, Renovate pins the controllers that run them, and the two drifting apart is
-how this whole issue was found.
-
-## Step 14: Ship it
-
-**An edit that is not committed is an edit that did not happen.** This sweep rewrites `gradle.properties`, `settings.gradle.kts`, `package.json`, the README
-badges and the pinned tool versions in `.github/workflows/`. A change left in the working tree is lost when the session ends — on a runner that is the end of
-the job, and the run still reports success.
-
-The verification is already above: Step 6 for the backend, Step 10 for the frontend. Run whichever the diff touched, then [`/open-pr`](open-pr.prompt.md) with
-the table from Output Summary below as the body.
-
-**One pull request per sweep, not per bump.** Grouping is what `dependabot.yml` does for the ecosystems it owns, for the reason its own comments give: separate
-pull requests per dependency is how people learn to ignore them.
-
-**If nothing moved, ship nothing and say so.** These pins are checked far more often than they change, so an empty sweep is the normal outcome rather than a
-failure — and an empty pull request costs a review to learn that.
-
-## Output Summary
-
-After completing the update, provide a summary table:
-
-| Dependency | Previous Version | New Version | Location                                   |
-| ---------- | ---------------- | ----------- | ------------------------------------------ |
-| ...        | ...              | ...         | `build.gradle.kts` / `settings.gradle.kts` |
-| ...        | ...              | ...         | `events-frontend/package.json`             |
-
-Also note:
-
-- Which **README badges** were refreshed, and which were already correct.
-- Any dependencies that were **skipped** because only pre-release versions were available.
-- Any **major version bumps** that were applied, with a brief note on breaking changes (if any).
-- Any dependencies already at their **latest stable version** (no update needed).
-- Any **CVE-remediation overrides removed** because the BOM caught up, and any **kept**, naming the CVE that still justifies each one.
-- **Cluster components (Step 13) checked but deliberately not bumped**, and why — these are excluded from the routine sweep on purpose, so an empty line here
-  should read as "checked, all current" rather than "not looked at".
+**`FLUX_VERSION` and Flux itself are now one bot's problem, which is the point.** The pin in
+`validate-chart.yml` names the CLI that validates these manifests; `gotk-components.yaml` names the
+controllers that reconcile them. Those two drifting apart is how #384 was found — staging ran v2.9.4
+while CI validated with 2.9.5, and nothing reported it. Renovate watches both now, so a release
+produces two pull requests rather than one and a blind spot. **Merge them together.**

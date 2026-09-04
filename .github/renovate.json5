@@ -6,14 +6,14 @@
 //
 // ## The boundary, in one paragraph
 //
-// Three mechanisms watch versions here and they must not overlap — two bots proposing the same bump
-// is worse than either alone (#384). **Dependabot** owns its six ecosystems: gradle, npm,
-// github-actions, opentofu, docker and docker-compose. **`/update-dependencies` Step 12**, run
-// nightly by `agent-dependencies.yml`, owns the tool versions pinned as plain strings in
-// `.github/workflows/` — it can push them since #996, which is why they are not Renovate's.
-// **Renovate owns what is left**: Flux and the charts it installs, the container images pinned in
-// plain Kubernetes manifests, one image in the chart's values, `.pre-commit-config.yaml`, and the
-// Gradle wrapper. ADR-024 has the full argument, including the options that were rejected.
+// Two mechanisms watch versions here and they must not overlap — two bots proposing the same bump is
+// worse than either alone (#384). **Dependabot** owns its six ecosystems: gradle, npm,
+// github-actions, opentofu, docker and docker-compose, because each is declared in a manifest it
+// understands. **Renovate owns everything else**: Flux and the charts it installs, the container
+// images pinned in plain Kubernetes manifests, one image in the chart's values, the CI tool versions
+// pinned as plain strings in `.github/workflows/`, `.pre-commit-config.yaml`, and the Gradle wrapper.
+// ADR-024 has the full argument, including the four options it rejected and the amendment that gave
+// Renovate the CI pins (#1071).
 //
 // **`enabledManagers` is what enforces that**, and it is an allow-list rather than a set of
 // exclusions: a manager absent from it cannot open a pull request no matter what it finds. That
@@ -26,7 +26,17 @@
   // **Four of these five need explicit configuration below, and three fail *silently* on their
   // defaults** — they match nothing and report nothing, which is the exact failure this whole issue
   // is about. Only `helm-values` and `gradle-wrapper` have defaults that are already right.
-  enabledManagers: ['flux', 'helm-values', 'kubernetes', 'pre-commit', 'gradle-wrapper'],
+  enabledManagers: [
+    'flux',
+    'helm-values',
+    'kubernetes',
+    'pre-commit',
+    'gradle-wrapper',
+    // The CI tool versions pinned as plain strings in `.github/workflows/`, taken from
+    // `/update-dependencies` Step 12 in #1071. `customManagers` below says why they need no comments
+    // in the workflows, and the packageRules pair says why this entry is narrower than it looks.
+    'custom.regex',
+  ],
 
   // `.github/release.yml` sorts release notes by label, and its **Dependencies** category matches
   // `dependencies` — which Dependabot applies by itself and Renovate does not. `label-pr.yml`
@@ -96,8 +106,121 @@
     managerFilePatterns: ['/^deploy/clusters/(base|staging|production)/[^/]+\\.yaml$/'],
   },
 
+  // **The eight CI tool versions that belong to no ecosystem** — a `HELM_VERSION: v4.2.4` is a string
+  // in YAML, and `github-actions` updates `uses: azure/setup-helm@v5` while having nothing to say
+  // about the `version:` handed to it. They rot in silence while the checks using them keep reporting
+  // success, which is the failure this whole boundary exists to catch.
+  //
+  // **No `# renovate:` comments in the workflows**, which is the part worth knowing:
+  // `depNameTemplate` and `datasourceTemplate` carry the mapping here instead, so the pins stay plain
+  // and there is nothing beside them to drift out of step. Measured on #1071 — all eight resolve,
+  // across all fourteen occurrences.
+  //
+  // **A pin in three files becomes one pull request**, because Renovate groups by `depName`.
+  // `HELM_VERSION` lives in three workflows and `SHELLCHECK_VERSION` in three; they must move
+  // together or the gate disagrees with itself, and this makes that automatic rather than remembered.
+  //
+  // **`extractVersionTemplate` strips a leading `v`** so the datasource compares versions rather than
+  // tag spellings. The pins themselves keep whatever form their tool wants — `v4.2.4` for Helm,
+  // `1.30.0` for zizmor, whose image tag has no prefix.
+  customManagers: [
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/.*\\.ya?ml$/'],
+      matchStrings: ['HELM_VERSION:\\s*(?<currentValue>\\S+)'],
+      depNameTemplate: 'helm/helm',
+      datasourceTemplate: 'github-releases',
+      extractVersionTemplate: '^v?(?<version>.+)$',
+    },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/.*\\.ya?ml$/'],
+      matchStrings: ['FLUX_VERSION:\\s*(?<currentValue>\\S+)'],
+      depNameTemplate: 'fluxcd/flux2',
+      datasourceTemplate: 'github-releases',
+      extractVersionTemplate: '^v?(?<version>.+)$',
+    },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/.*\\.ya?ml$/'],
+      matchStrings: ['FLUX_SCHEMA_VERSION:\\s*(?<currentValue>\\S+)'],
+      depNameTemplate: 'fluxcd/flux-schema',
+      datasourceTemplate: 'github-releases',
+      extractVersionTemplate: '^v?(?<version>.+)$',
+    },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/.*\\.ya?ml$/'],
+      matchStrings: ['TRIVY_VERSION:\\s*(?<currentValue>\\S+)'],
+      depNameTemplate: 'aquasecurity/trivy',
+      datasourceTemplate: 'github-releases',
+      extractVersionTemplate: '^v?(?<version>.+)$',
+    },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/.*\\.ya?ml$/'],
+      matchStrings: ['ZIZMOR_VERSION:\\s*(?<currentValue>\\S+)'],
+      depNameTemplate: 'zizmorcore/zizmor',
+      datasourceTemplate: 'github-releases',
+      extractVersionTemplate: '^v?(?<version>.+)$',
+    },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/.*\\.ya?ml$/'],
+      matchStrings: ['ACTIONLINT_VERSION:\\s*(?<currentValue>\\S+)'],
+      depNameTemplate: 'rhysd/actionlint',
+      datasourceTemplate: 'github-releases',
+      extractVersionTemplate: '^v?(?<version>.+)$',
+    },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/.*\\.ya?ml$/'],
+      matchStrings: ['HELM_UNITTEST_VERSION:\\s*(?<currentValue>\\S+)'],
+      depNameTemplate: 'helm-unittest/helm-unittest',
+      datasourceTemplate: 'github-releases',
+      extractVersionTemplate: '^v?(?<version>.+)$',
+    },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/.*\\.ya?ml$/'],
+      matchStrings: ['SHELLCHECK_VERSION:\\s*(?<currentValue>\\S+)'],
+      depNameTemplate: 'koalaman/shellcheck',
+      datasourceTemplate: 'github-releases',
+      extractVersionTemplate: '^v?(?<version>.+)$',
+    },
+  ],
+
   packageRules: [
     // --- Guards: things that must never move on their own ----------------------------------------
+    {
+      // **`custom.regex` is not only ours.** Enabling it also activates every regex manager an
+      // extended preset defines — measured on #1071, where `config:recommended` contributed one that
+      // picked `@tsconfig/node24` out of two `tsconfig.json` files. Dependabot's `npm` ecosystem
+      // already owns those in its `typescript` group, so letting them through would be the exact
+      // duplication this file's allow-list exists to prevent.
+      //
+      // The manager is therefore disabled wholesale and re-enabled by name below. **A pin added to
+      // `customManagers` must be added there too**, and the dry run is what proves it: a pin that is
+      // extracted but not allowed shows as `SKIPPED: disabled` rather than being absent.
+      description: 'Only the CI pins named below may come from a regex manager',
+      matchManagers: ['custom.regex'],
+      enabled: false,
+    },
+    {
+      description: 'The eight CI tool pins, re-enabled by name',
+      matchManagers: ['custom.regex'],
+      matchDepNames: [
+        'helm/helm',
+        'fluxcd/flux2',
+        'fluxcd/flux-schema',
+        'aquasecurity/trivy',
+        'zizmorcore/zizmor',
+        'rhysd/actionlint',
+        'helm-unittest/helm-unittest',
+        'koalaman/shellcheck',
+      ],
+      enabled: true,
+    },
     {
       // **Our own chart, and the release pipeline owns it.** `oci-repository.yaml` tracks
       // `>=0.0.0-0` deliberately — a floating range so staging takes every snapshot from `main`.
