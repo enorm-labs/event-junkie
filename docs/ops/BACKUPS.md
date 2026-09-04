@@ -13,7 +13,7 @@ and the single highest-risk item the decision creates**. Everything here exists 
 |                 |                                                                                                                            |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | **What**        | PostgreSQL only — WAL streamed continuously, plus a base backup nightly at 02:30                                           |
-| **With**        | [`wal-g`](https://wal-g.readthedocs.io/PostgreSQL/) v3.0.8, installed by `infra/modules/environment/cloud-init/backups.sh` |
+| **With**        | [`wal-g`](https://wal-g.readthedocs.io/PostgreSQL/) v3.0.9, installed by `infra/modules/environment/cloud-init/backups.sh` |
 | **Where**       | `s3://event-junkie-backups/<environment>/`, Hetzner Object Storage, `fsn1`                                                 |
 | **Window**      | 30 days of point-in-time recovery                                                                                          |
 | **RPO**         | ≤ 5 minutes (`archive_timeout = 300`), lower under load                                                                    |
