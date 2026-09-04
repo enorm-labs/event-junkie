@@ -35,8 +35,8 @@ infra/
 ├── bootstrap/                 DNS zones · SSH keys        — long-lived, outside every destroy
 ├── modules/environment/       one environment's servers, network, firewall, PGDATA volume, cloud-init
 └── environments/
-    ├── production/            CAX21 k3s + CAX11 PostgreSQL · public · address records
-    └── staging/               one CAX11, all-in-one · not on the public internet at all
+    ├── production/            CX33 k3s + CX23 PostgreSQL · public · address records
+    └── staging/               one CX33, all-in-one · not on the public internet at all
 ```
 
 **The split is the design, not tidiness.** `tofu destroy` on an environment is meant to be routine — it is how the "a destroy/apply cycle produces a working
@@ -388,6 +388,14 @@ carries anyway: ARM is only ever offered in Falkenstein, Helsinki and Nuremberg.
 > declared peer. 2.6 GB of the node's 3.7 GB is free before any workload — enough headroom for Flux's ~300 MB and the three services.
 >
 > **`environments/` has now been applied.** Everything above this line was written while it never had been.
+
+> **Closing entry: both environments are x86, and the ARM plan is not pending.** `cx` capacity returned, and both
+> environments run `cx33` — production with a separate `cx23` for PostgreSQL, staging co-located on its one node. ARM was
+> not merely unbuyable by then, it was also dearer: `cax21` + `cax11` at €19.61 against `cx33` + `cx23`'s €16.63, for the
+> same cores, memory and disk. So this is a decision rather than a wait. `infra/environments/production/main.tf` carries
+> the argument and `docs/ops/PLATFORM_SETUP.md` § _Why the nodes are x86 and not ARM_ carries the summary. Everything
+> above this line is the record of getting here, and `check-capacity.sh`'s `WATCH` is where the ARM pair is still named —
+> as what production would return to if it were both buyable and cheaper.
 
 ## Things that will surprise you
 

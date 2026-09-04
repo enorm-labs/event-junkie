@@ -74,7 +74,7 @@ variable "image" {
 # ---------------------------------------------------------------------------
 
 variable "k3s_server_type" {
-  description = "Server type for the k3s node. CAX21 (4 ARM vCPU / 8 GB) in production — see PLATFORM_SETUP.md §1 for the memory arithmetic."
+  description = "Server type for the k3s node. CX33 (4 x86 vCPU / 8 GB) in both environments — see PLATFORM_SETUP.md for the memory arithmetic and for why it is not ARM."
   type        = string
   nullable    = false
 }
@@ -90,7 +90,7 @@ variable "postgres_server_type" {
   description = <<-EOT
     Server type for a dedicated PostgreSQL node, or `null` to co-locate PostgreSQL on the k3s node.
 
-    Production uses a separate node. Staging sets this to `null` and runs both on one CAX11 — the
+    Production uses a separate node. Staging sets this to `null` and runs both on its one node — the
     topology stays honest either way, because the applications reach PostgreSQL over the network at
     a private address in both cases, never over a socket.
   EOT
@@ -443,8 +443,9 @@ variable "walg_checksums" {
     SHA-256 of the `wal-g-pg-24.04-*.tar.gz` release assets, keyed by dpkg architecture.
 
     Pinned here rather than fetched from the host that served the tarball, which would verify only
-    that the download completed. Both architectures are carried because production is ARM and
-    staging is x86 (#424), and the node picks its own at boot.
+    that the download completed. Both architectures are carried because the node picks its own at
+    boot, from `dpkg --print-architecture`. Both nodes are x86 today, and multi-arch is what keeps
+    ARM buyable again without a second change here.
 
     A `walg_version` bumped without these aborts cloud-init on a failed `sha256sum -c`, and nothing
     in CI boots a node, so no check reports it. That is why no updater is allowed to propose one.
