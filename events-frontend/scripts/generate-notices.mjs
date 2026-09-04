@@ -4,8 +4,20 @@
  * which `/legal/notices` renders. See docs/LEGAL.md §9.
  *
  * Run:
+ *   scripts/notices-parity.sh                                  # from the repository root — runs both
+ *
+ * or the two halves by hand, in this order:
+ *
  *   ./gradlew generateLicenseReport --no-configuration-cache   # from the repository root
  *   npm run generate:notices                                   # from events-frontend
+ *
+ * **This script merges whatever Gradle report is on disk and cannot tell whether it is current.**
+ * Running the npm half alone with an old report writes a file that looks entirely correct and is
+ * not — on #1073 a report from a month earlier produced 312 components where the answer was 368,
+ * and exited 0 (#1084). There is a guard for a *missing* report and there can be no useful guard
+ * for a stale one: Gradle skips the task as UP-TO-DATE when the dependency set is unchanged, so the
+ * report's age is not evidence of anything. What this script does instead is **say what it merged**,
+ * so a month-old backend half is visible in the output rather than silent. Read that line.
  *
  * The output is **committed**. The frontend is not a Gradle subproject (see AGENTS.md), so its
  * build must not have to invoke Gradle; committing the merged file also means the page works in
@@ -20,7 +32,7 @@
  */
 
 import { execFileSync } from 'node:child_process'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, statSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 const GRADLE_REPORT = fileURLToPath(
@@ -222,8 +234,18 @@ const notices = {
 writeFileSync(OUTPUT, `${JSON.stringify(notices, null, 2)}\n`)
 
 const unknown = notices.licenses.find((group) => group.license === 'Unknown')
+const backendCount = components.filter((component) => component.ecosystem === 'backend').length
+
+// **Naming the Gradle report and its date is the point of this line**, not decoration. The backend
+// half comes from a file this script did not produce and cannot validate, so the one defence against
+// merging a stale one is showing which file was read and when it was written. A count that drops by
+// fifty is obvious here and invisible in the JSON.
 console.log(
-  `Wrote ${OUTPUT}\n  ${notices.componentCount} components, ${notices.licenses.length} licences` +
+  `Wrote ${OUTPUT}\n` +
+    `  ${notices.componentCount} components (${backendCount} backend, ` +
+    `${notices.componentCount - backendCount} frontend), ${notices.licenses.length} licences\n` +
+    `  backend half from ${GRADLE_REPORT}\n` +
+    `    written ${statSync(GRADLE_REPORT).mtime.toISOString()} — regenerate it if that looks old` +
     (unknown
       ? `\n  WARNING: ${unknown.components.length} component(s) with no licence metadata`
       : ''),

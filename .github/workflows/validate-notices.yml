@@ -27,10 +27,21 @@
 # lines of JSON. A package restricted to Linux would be missing from a macOS install and is the one
 # asymmetry left unguarded, because nothing in the tree is Linux-only.
 #
-# This check is **not** on the `main` ruleset's required list, which is what makes a `paths:` filter
-# safe here: a required check that never runs stays Pending forever and deadlocks the pull request
-# (#443). If it is ever made required, the filter goes in the same change — the same note
-# `validate-docs.yml` carries.
+# **This check is required on the `main` ruleset, and therefore carries no `pull_request` filter.**
+# The two are not separable: a required check that never runs stays Pending forever (#443), so a
+# filter here would deadlock every pull request that does not touch a dependency file.
+#
+# **It is required only because `fix-notices-on-bot-prs.yml` exists** (#1084). Blocking on a check
+# that is red for something its author cannot fix teaches people to merge past it, and every bot
+# dependency bump is exactly that case. With the repair in place the check is red only when
+# something is genuinely wrong, which is the state that makes blocking cost nothing. If that
+# workflow is ever removed, this one comes off the required list in the same change.
+#
+# **A failure on a bot's branch is repaired rather than left red**, by `fix-notices-on-bot-prs.yml`,
+# which watches this workflow and regenerates on Dependabot and Renovate branches (#1084). Neither
+# bot can do it: the file merges two ecosystems and needs a JDK and Node in one job. Without that,
+# this check is red on every frontend dependency bump for a reason its author cannot fix, which is
+# how a check becomes something people merge past — and this one guards a licence artifact.
 name: Validate Notices
 
 on:
@@ -48,16 +59,17 @@ on:
       - '.github/workflows/validate-notices.yml'
   pull_request:
     branches: [ main ]
-    paths:
-      - 'events-frontend/package.json'
-      - 'events-frontend/package-lock.json'
-      - 'events-frontend/src/assets/notices.json'
-      - 'events-frontend/scripts/generate-notices.mjs'
-      - 'gradle.properties'
-      - 'build.gradle.kts'
-      - '*/build.gradle.kts'
-      - 'scripts/notices-parity.sh'
-      - '.github/workflows/validate-notices.yml'
+    # No `paths:` here, deliberately, and it is the same reason `validate-workflows.yml` gives: this
+    # check is **required** on the `main` ruleset, and a required check that never runs stays Pending
+    # forever — GitHub's own words: "A pull request that requires those checks to be successful will
+    # be blocked from merging." A filter here would deadlock every pull request that happens not to
+    # touch a dependency file (#443).
+    #
+    # **The cost is real and was priced before accepting it**: unlike `validate-workflows.yml`, which
+    # is seconds, this job resolves both dependency graphs — 58s warm, 213-260s cold, measured over
+    # six runs. That now runs on every pull request rather than roughly one in ten.
+    #
+    # The `push:` filter above keeps its paths. Nothing requires those runs.
   workflow_dispatch:
 
 permissions:

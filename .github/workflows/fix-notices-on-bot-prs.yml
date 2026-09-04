@@ -1,0 +1,202 @@
+# Regenerates the open-source notices on a bot's dependency branch, because the bot cannot (#1084).
+#
+# `validate-notices.yml` fails on every Dependabot or Renovate pull request that moves a frontend
+# dependency, and the bot has no way to satisfy it: regenerating merges two ecosystems and needs a
+# JDK and Node in one job. #1073 was the first, one day after the check shipped, and 16 frontend
+# dependency updates landed in the 90 days before it. **A check that is red for something the author
+# cannot fix is a check people learn to merge past** — and this one guards a licence artifact
+# rendered at /legal/notices, so a stale one understates what we distribute (docs/LEGAL.md §9.2).
+#
+# **A workflow triggered by a Dependabot push gets a read-only `GITHUB_TOKEN` and cannot read
+# repository secrets at all** — they live in a separate Dependabot secrets store. So a `push:`
+# trigger would reach the token-minting step with an empty private key and fail on every Dependabot
+# branch, which is most of them. `workflow_run` runs in the context of the default branch with the
+# normal secrets, which is the documented way out.
+#
+# **`pull_request_target` is the other writable trigger and is forbidden here.** It would hand a
+# writable token to a job that checks out a pull request's branch and runs `npm ci` on its lockfile.
+# That is precisely the arbitrary-code-execution path `milestone-dependabot.yml` opens by refusing,
+# in capitals, and the reasoning there applies unchanged.
+#
+# `npm ci` executes install scripts from the branch's lockfile. That lockfile is written by a bot
+# resolving public registry packages, which is the same input `Build & Test (frontend)` already
+# installs — but that job holds a read-only token and no secrets, and this one holds an App
+# installation token that can write to the repository. **So the token is minted below `npm ci`, not
+# above it**, and reaches only the push step. A malicious package in the lockfile therefore runs in
+# a job where the credential does not yet exist.
+#
+# Dependabot abandons a branch once it sees a foreign commit. Renovate documents the same:
+# "If you push a new commit to a Renovate branch ... Renovate stops all updates of that branch."
+# That is the behaviour we want — the regeneration must not be force-pushed away — and it means the
+# bump no longer auto-rebases if `main` moves. Acceptable, and the reason this job pushes only when
+# the file actually changed.
+#
+# **Renovate decides `isBranchModified` from the commit author**, so the identity below must not be
+# `renovate[bot]` or Renovate will read its own name and force-push over the regeneration. It is set
+# explicitly for that reason, not for attribution.
+name: Fix notices on bot PRs
+
+on:
+  # comment-lint: allow a dated suppression, per the reason in zizmor.yml
+# zizmor: ignore[dangerous-triggers]
+  # 2026-09-04 — zizmor is right that `workflow_run` is usually insecure: it runs in the base
+  # repository's context, with its secrets, and the common mistake is to check out the pull request's
+  # head and trust it. **This job does check out the head**, because regenerating the file is the
+  # whole point — so unlike `milestone-dependabot.yml` and `label-pr.yml`, which carry this same
+  # suppression because they never check anything out, the containment here is explicit:
+  #
+  #   - **Forks cannot reach it.** `head_repository.full_name == github.repository` is in the `if:`.
+  #   - **Only two branch prefixes reach it**, both belonging to bots that branch inside this
+  #     repository. A human's branch is theirs to fix.
+  #   - **The credential does not exist while untrusted code runs.** The App token is minted below
+  #     `npm ci`, and only the push step sees it.
+  #   - **One file can be committed.** The commit stages `events-frontend/src/assets/notices.json`
+  #     by name, so anything else the install or the generator wrote cannot ride along.
+  #   - **The token carries one permission**, `contents: write`, rather than whatever the
+  #     installation happens to hold.
+  #
+  # Re-check all five before adding any step here, and revisit the suppression if one stops holding.
+  workflow_run:
+    workflows: [ 'Validate Notices' ]
+    types: [ completed ]
+
+# Nothing at the top level. The push needs `contents: write`, and it gets that from the minted App
+# token rather than from `GITHUB_TOKEN` — a push made with `GITHUB_TOKEN` starts no check run, so
+# the pull request would sit Pending against its required checks forever (ci-cd.instructions.md).
+permissions:
+  contents: read
+
+concurrency:
+  # Per branch. A second failing run for the same branch should replace the first rather than race
+  # it to the same push.
+  group: fix-notices-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
+jobs:
+  regenerate:
+    name: Regenerate the notices for a bot branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Four conditions, and each one is load-bearing:
+    #
+    #   1. The check actually failed. A successful run has nothing to fix.
+    #   2. It was a pull request. A `push` run of Validate Notices is `main` itself, and this job
+    #      must never commit there.
+    #   3. The branch belongs to a bot we recognise. A human's branch is theirs to fix, and this job
+    #      silently rewriting a person's commit would be worse than the red check.
+    #   4. The head repository is this one. A fork's branch cannot be pushed to and the token would
+    #      not carry the permission anyway.
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      (startsWith(github.event.workflow_run.head_branch, 'dependabot/') ||
+       startsWith(github.event.workflow_run.head_branch, 'renovate/'))
+
+    steps:
+      # `persist-credentials: false` here and a token only at the push step below. The checkout
+      # credential would otherwise sit in `.git/config` for the whole job, including while `npm ci`
+      # runs the lockfile's install scripts.
+      - name: Checkout the bot's branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          persist-credentials: false
+
+      - name: Set up JDK
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24' # should match the version specified in .nvmrc
+          cache: 'npm'
+          cache-dependency-path: events-frontend/package-lock.json
+
+      # The generator shells out to `license-checker-rseidelsohn`, a devDependency, so the full
+      # install is needed rather than `--omit=dev`. Same reason as validate-notices.yml.
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: events-frontend
+
+      # Runs both generators in the right order. Running only the npm half merges whatever Gradle
+      # report is on disk, which on a fresh runner does not exist — so this would fail rather than
+      # write a wrong file. It is the local case that is dangerous (#1084), not this one.
+      - name: Regenerate the notices
+        run: scripts/notices-parity.sh
+
+      - name: Decide whether anything changed
+        id: changed
+        run: |
+          if git diff --quiet -- events-frontend/src/assets/notices.json; then
+            echo "result=none" >> "$GITHUB_OUTPUT"
+            echo "The notices were already current. Nothing to push."
+          else
+            echo "result=changed" >> "$GITHUB_OUTPUT"
+            git --no-pager diff --stat -- events-frontend/src/assets/notices.json
+          fi
+
+      # **Below the untrusted install, on purpose.** See the header.
+      - name: Mint an App installation token
+        id: app-token
+        if: steps.changed.outputs.result == 'changed'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          # One permission. This job commits a file and pushes it, and does nothing else.
+          permission-contents: write
+
+      - name: Commit and push the regeneration
+        if: steps.changed.outputs.result == 'changed'
+        env:
+          TOKEN: ${{ steps.app-token.outputs.token }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          # Not `renovate[bot]` and not `dependabot[bot]`: Renovate reads the last commit's author to
+          # decide whether a human touched the branch, and would force-push over its own name.
+          git config user.name 'event-junkie-ci[bot]'
+          git config user.email '<>'
+          git add events-frontend/src/assets/notices.json
+          git commit -m 'chore(deps): regenerate the open-source notices
+
+          The dependency change on this branch moves events-frontend/src/assets/notices.json, which
+          neither Dependabot nor Renovate can regenerate: it merges the Gradle licence report with
+          npm'"'"'s and needs a JDK and Node in one job. Added here so validate-notices.yml passes
+          (#1084).
+
+          Note that pushing this stops the bot rebasing this branch. If main moves under it, close
+          and reopen the pull request rather than expecting an automatic update.'
+          git push "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "HEAD:${BRANCH}"
+
+      # Both values arrive through `env:` rather than `${{ }}` inside the script. A branch name is
+      # attacker-controllable — anyone who can open a pull request chooses it — and expanded into a
+      # `run:` block it is shell, not text.
+      - name: Say what happened
+        if: always()
+        env:
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          RESULT: ${{ steps.changed.outputs.result }}
+        run: |
+          {
+            echo "## Notices on \`$BRANCH\`"
+            echo
+            if [ "$RESULT" = 'changed' ]; then
+              echo "Regenerated \`events-frontend/src/assets/notices.json\` and pushed it to the branch."
+              echo
+              echo "**The bot will not rebase this branch again.** Both Dependabot and Renovate abandon"
+              echo "a branch once a foreign commit lands on it. If \`main\` moves under this pull request,"
+              echo "close and reopen it rather than waiting for an update that will not come."
+            else
+              echo "The notices were already current, so nothing was pushed."
+              echo
+              echo "If \`Validate Notices\` still failed, it failed for some other reason — read that job."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
