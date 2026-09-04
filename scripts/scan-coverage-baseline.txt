@@ -9,7 +9,7 @@
 #
 # Trivy and Dependency-Check are deliberately absent. Their counts move with an upstream advisory
 # database, so a number here would rot; both assert a floor of zero instead.
-flux-clusters-files	41
-flux-clusters-resources	141
+flux-clusters-files	42
+flux-clusters-resources	139
 zizmor-ignored	11
 zizmor-suppressed	64

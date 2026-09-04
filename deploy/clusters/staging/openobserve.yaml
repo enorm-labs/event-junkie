@@ -6,21 +6,6 @@
 # footprint ADR-015 compared, and it would not fit a node already running two JVMs. Standalone is one
 # StatefulSet and one PVC, and every measured number in ADR-015 is standalone's, so **picking the
 # wrong one silently invalidates criterion 2**, which the whole decision turned on.
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: openobserve
-  namespace: flux-system
-  annotations:
-    kubernetes.io/description: >-
-      The upstream OpenObserve chart repository. Same reasoning as the jetstack one next to it: an install nothing versions and nothing notices drifting is
-      the thing this avoids.
-spec:
-  # An hour, like jetstack's and for the same reason: this only asks "what versions exist?", and the
-  # version actually installed is pinned below.
-  interval: 1h
-  url: https://charts.openobserve.ai
----
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:

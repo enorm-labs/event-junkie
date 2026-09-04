@@ -13,8 +13,8 @@ resources:
   # nothing but a `flux bootstrap` re-run — and the `decryption` patch then renders, merges and
   # never reaches the cluster (#416). **Rendering is not applying.**
   - flux-system
-  # The four namespaces, cert-manager's chart repository, PostgreSQL metrics and the collector,
-  # shared with staging (#953). The namespaces are declared rather than left to
+  # The four namespaces, the cert-manager and OpenObserve chart repositories, PostgreSQL metrics and
+  # the collector, shared with staging (#953, #1080). The namespaces are declared rather than left to
   # `createNamespace: true`, which creates an unlabelled one PSA cannot govern (#604).
   - ../base
   # Encrypted; decrypted by the sops-age patch in flux-system/kustomization.yaml, which is exactly

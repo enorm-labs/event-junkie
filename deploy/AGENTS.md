@@ -285,7 +285,8 @@ rules, all of them things that fail quietly rather than loudly.
   cleanly, report Ready, and fail at challenge time. Official chart: `cert-manager-webhook-hetzner` from `charts.hetzner.cloud`, `groupName`
   `acme.hetzner.com`, solver config `tokenSecretKeyRef`.
 - **Bump staging before production, and expect to edit two files.** cert-manager's `HelmRelease` still exists once per cluster, because the two copies differ
-  in what they do. Its `HelmRepository` does not: `base/helm-repository-jetstack.yaml` is shared, and one edit moves both (#953).
+  in what they do. Its `HelmRepository` does not: `base/helm-repository-jetstack.yaml` is shared, and one edit moves both (#953). OpenObserve has the same
+  shape — two releases, one `base/helm-repository-openobserve.yaml` (#1080).
 
 **The hcloud token DNS-01 needs is project-wide** — it cannot be scoped to a zone, so it could delete the servers. It exists on staging only, and production
 must not acquire one to gain a wildcard certificate.

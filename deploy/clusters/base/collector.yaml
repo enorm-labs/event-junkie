@@ -69,25 +69,15 @@ spec:
       autoGenerateCert:
         enabled: true
     manager:
-      # comment-lint: allow an inert setting removed needs its argument recorded, or it comes back.
-      # **No `collectorImage` here, and its absence is a correction rather than an omission.** This
-      # set `otel/opentelemetry-collector-k8s`, on the argument that the `-k8s` distribution carries
-      # the Kubernetes and Prometheus receivers this needs and leaves out the several hundred
-      # exporters it does not. The argument is sound. The setting did nothing.
+      # **No `collectorImage`, because it can do nothing.** It supplies a default for collectors that
+      # name no image, and the OpenObserve chart pins `spec.image` on both — so both pods run
+      # `opentelemetry-collector-contrib:0.138.0`. `kubectl -n observability get pod -o
+      # jsonpath='{.spec.containers[0].image}'` answers it.
       #
-      # `manager.collectorImage` supplies a **default** for collectors that do not name their own,
-      # and the OpenObserve chart pins `spec.image` on both `OpenTelemetryCollector` resources —
-      # `…/opentelemetry-collector-contrib:0.138.0`, from its own top-level `image.repository`. A
-      # default that is always overridden is never read, so both pods have run `-contrib` the whole
-      # time, which is what `kubectl -n observability get pod -o jsonpath='{.spec.containers[0].image}'`
-      # answers and what this file used to claim they did not.
-      #
-      # **The switch would be the chart's `image.repository`, not this — and it does not work
-      # today.** The gateway's `traces` pipeline uses the `servicegraph` **connector**, which is
-      # contrib-only; on `-k8s` the collector fails to start on an unknown component rather than
-      # skipping it. Nothing sends traces to that pipeline — the NetworkPolicy deliberately opens no
-      # ingress for 4317/4318 — so retiring it is what unblocks the smaller image. That is a real
-      # footprint saving and its own change, not a line to slip in here.
+      # **The smaller `-k8s` distribution is the chart's `image.repository`, and it fails today.**
+      # The gateway's `traces` pipeline uses the contrib-only `servicegraph` connector, and `-k8s`
+      # refuses to start on an unknown component. Nothing sends traces there — the NetworkPolicy
+      # opens no ingress for 4317/4318 — so retiring that pipeline unblocks it. Its own change.
       resources:
         requests:
           memory: "64Mi"
@@ -97,18 +87,6 @@ spec:
           # data path.
           memory: "128Mi"
           cpu: "200m"
----
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: openobserve-collector
-  namespace: flux-system
-  annotations:
-    kubernetes.io/description: >-
-      The same OpenObserve chart repository the server comes from, declared separately because a HelmRepository is per-URL and this one is reused by name.
-spec:
-  interval: 1h
-  url: https://charts.openobserve.ai
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
@@ -140,9 +118,10 @@ spec:
     spec:
       chart: openobserve-collector
       version: "0.4.6"
+      # The shared source, not a second object at the same URL (#1080).
       sourceRef:
         kind: HelmRepository
-        name: openobserve-collector
+        name: openobserve
         namespace: flux-system
       interval: 1h
 
@@ -163,17 +142,14 @@ spec:
       valuesKey: O2_BASIC_AUTH_HEADER
       targetPath: exporters.otlphttp/openobserve_k8s_events.headers.Authorization
 
-  # comment-lint: allow the JSON-6902 choice and the two measurements are what a reader needs to not undo this.
   # **Giving the agent somewhere to remember how far it read (#950).** `filelog` has
   # `start_at: beginning` and no checkpoint, so every restart re-reads every pod log file: the part
   # older than 24h is refused by OpenObserve in bursts, and the part newer is ingested twice.
   # Measured across a restart without it: **617 of 2,066 rows duplicated, 29.9%**.
   #
-  # **Measured again on staging with it, both numbers go to zero** — 10 rejection batches per
-  # restart to 0, 29.9% to 0.0%. The check that the second number is real rather than an outage: the
-  # row rate over the window matched the baseline, 249 against an expected ~258. A restart with no
-  # saved offsets still re-reads everything, which is only the first restart after the extension
-  # arrives.
+  # **Measured again on staging with it, both go to zero** — 10 rejection batches per restart to 0,
+  # 29.9% to 0.0%, and the row rate matched baseline (249 against ~258), so the zero is real rather
+  # than an outage. Only the first restart after the extension arrives still re-reads everything.
   #
   # The chart hardcodes the agent's volumes, so the mount arrives by patch on the rendered
   # `OpenTelemetryCollector` and the operator propagates it to the DaemonSet.
@@ -257,16 +233,14 @@ spec:
     # a single series, which for a counter is not a tidier graph but a wrong one. Everything deleted
     # below is per-deploy churn or a duplicate of something kept.
     #
-    # **Metrics only, not logs or traces** — a pod name in a log line is how you find the log. That
-    # is why this is a separate processor rather than a narrower `k8sattributes.extract.metadata`
-    # list, which is shared by all three pipelines. **The agent is unaffected**: a separate collector
-    # and the only one holding `kubeletstats`, whose `k8s_pod_*` metrics need their pod names because
-    # there the pod IS the subject rather than a label on it.
+    # **Metrics only, not logs or traces** — a pod name in a log line is how you find the log, so
+    # this is a separate processor rather than a narrower `k8sattributes.extract.metadata` list,
+    # which all three pipelines share. **The agent is unaffected**: it is the only one holding
+    # `kubeletstats`, whose `k8s_pod_*` metrics need their pod names, the pod being the subject.
     #
     # **Nested under `gateway:`, unlike `exporters:` above.** The chart shares `exporters` between
-    # both collectors, but `processors` and `service` exist once per collector — the same keys at the
-    # top level are silently ignored and the render looks fine while the processor is absent.
-    # `helm template` plus a `yq` query catches that; the rendered pipeline list does not.
+    # both collectors; `processors` and `service` exist once per collector, and the same keys at the
+    # top level are ignored silently. `helm template` plus a `yq` query is what catches that.
 
     # **Both collectors ship with `resources: {}`, and that is how a node dies** — not scheduled
     # against, not capped, free to take the node with them. The gateway measures **928Mi**, which is
@@ -335,13 +309,10 @@ spec:
       # statement, and without `ignore` a failed statement takes the whole pipeline with it — the
       # agent is the only thing shipping logs, so that is a total outage of them.
       processors:
-        # comment-lint: allow every rule here is a measured line count and a reason it is safe to lose.
         # **What is left of the log volume once the application stops logging its own health checks
-        # (#959).** Both of these are a control loop reporting that it did nothing, on a timer.
-        # Measured on production over one hour, against a post-#959 baseline of ~406 rows an hour:
-        # **198 from coredns** (one warning, repeating, 100% of that container's output) and **88
-        # from flux** (out of 132). About 70% of what remains, leaving Flux at ~44 an hour — the
-        # lines that say something happened.
+        # (#959).** Both are a control loop reporting that it did nothing, on a timer. Measured on
+        # production over an hour against a ~406-row baseline: **198 from coredns**, 100% of that
+        # container's output, and **88 from flux** of 132 — about 70% of what remains.
         #
         # **Matched on the body alone, so this rule's position is not load-bearing.** Scoping by
         # `k8s.container.name` would be more precise and would silently stop matching if the
@@ -424,10 +395,9 @@ spec:
                 - set(log.body, log.cache["message"]) where log.cache["message"] != nil
 
       service:
-        # **One `service:` key, and the reason is a bug this file already produced once.** A second
-        # `service:` under `agent:` is a duplicate YAML mapping key: the later wins outright and the
-        # earlier is dropped without a warning. `helm template` showed `extensions` back at the
-        # chart's two while every other part of the change looked right.
+        # **One `service:` key.** A second under `agent:` is a duplicate YAML mapping key: the later
+        # wins and the earlier is dropped without a warning. This file produced that once — `helm
+        # template` showed `extensions` back at the chart's two while the rest looked right.
         #
         # Restated because Helm replaces lists. The first two are the chart's; without them the
         # health probe has no endpoint and the pod never goes Ready.
