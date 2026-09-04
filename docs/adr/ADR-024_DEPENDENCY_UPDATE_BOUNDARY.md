@@ -3,7 +3,11 @@
 ## Status
 
 **Accepted (2026-09-04) — Renovate is adopted, scoped by an allow-list to what belongs to no Dependabot ecosystem and is not a workflow string pin. Dependabot
-keeps its six ecosystems. `/update-dependencies` Step 12 keeps the tool versions pinned in `.github/workflows/`.**
+keeps its six ecosystems.**
+
+**Amended (2026-09-04, [#1071](https://github.com/enorm-labs/event-junkie/issues/1071)): Renovate also takes the CI tool versions pinned as plain strings in
+`.github/workflows/`, and the nightly `agent-dependencies.yml` workload is retired.** The original boundary gave those eight pins to `/update-dependencies`
+Step 12, on the grounds that it could push them since #996. Three of the four inputs to that reasoning did not survive testing — see _Amendment_ below.
 
 Decided in [#384](https://github.com/enorm-labs/event-junkie/issues/384), which was open for three weeks and rewritten once. **Supersedes nothing.** It records
 a boundary that did not exist before, and retires the hand-written cluster-component list that `/update-dependencies` Step 13 used to carry.
@@ -62,8 +66,8 @@ already moved to **2.9.5**. The CLI that validated the manifests ran ahead of th
 **The boundary, and why each edge is where it is:**
 
 - **Dependabot owns its six ecosystems**, because a manifest it understands beats a pattern we maintain. A new dependency type goes here first.
-- **Step 12 owns the workflow string pins**, because it can push them since #996. This clause is a fact about _credentials_, not about capability — Renovate
-  could watch them via `customManagers`. It does not, because two mechanisms on one file collide.
+- **Renovate owns the CI tool pins in `.github/workflows/` too.** `customManagers` resolves all eight without a comment beside any pin. The section below has
+  the reasoning.
 - **Renovate owns the rest**, because it brings purpose-built managers rather than regex over YAML. The `flux` manager reads `HelmRelease` versions and
   `gotk-components.yaml`. The `kubernetes` manager reads images in plain manifests.
 
@@ -113,16 +117,44 @@ Empty output means the bump is complete. Any output is what the string edit coul
   **#1068 carries that gap.** Whatever lands there amends this ADR. imgproxy stays unwatched because it pins a bare digest with no tag. Its version rests on a hand-made judgement about CRITICAL findings that an
   updater cannot reproduce.
 
+## Why Renovate owns the CI tool pins
+
+These eight are the pins with no manifest: `HELM_VERSION`, `SHELLCHECK_VERSION`, `TRIVY_VERSION`, `HELM_UNITTEST_VERSION`, `FLUX_VERSION`,
+`FLUX_SCHEMA_VERSION`, `ZIZMOR_VERSION` and `ACTIONLINT_VERSION`, across fourteen occurrences in six workflows. Four facts put them with Renovate rather than
+with a scheduled agent, and each was measured in [#1071](https://github.com/enorm-labs/event-junkie/issues/1071).
+
+**`customManagers` reads them without touching the workflows.** `depNameTemplate` and `datasourceTemplate` carry the mapping in `renovate.json5`, so no
+`# renovate:` comment sits beside any pin and nothing can drift out of step with one. A dry run resolves all eight.
+
+**A pin that lives in three files becomes one pull request.** Renovate groups by `depName`. `HELM_VERSION` and `SHELLCHECK_VERSION` each appear in three
+workflows and must move together or the gates disagree with each other. That grouping is automatic here and was a hand step before.
+
+**Every pin is exercised by a check on the pull request that bumps it.** Three of the six workflows carry no `paths:` filter. The other three list their own
+file. So a bump runs the new tool version before anyone merges it.
+
+**A scheduled agent adds nothing to that.** Its detection is slower, costs a run per night, and duplicates what an event-driven bot does for free.
+
+**What none of it covers is a scanner that quietly finds less.** CI proves a tool runs. It does not prove the tool still finds what it used to. A Trivy or
+zizmor reporting fewer findings passes every check.
+
+That property belongs in the gates rather than in whoever proposes a bump. The configuration route is the reason. A new suppression or a narrowed path moves
+the finding set, and no updater ever sees it. [#1087](https://github.com/enorm-labs/event-junkie/issues/1087) carries this.
+
+**Splitting by pin is rejected**, scanners to an agent and tools to Renovate. It leaves two mechanisms with nothing enforcing which pin belongs to which, and
+that is the shape this ADR exists to prevent.
+
 ## When to revisit
 
 - **When the two vestigial Gradle wrappers are deleted (#1066)**, drop the `packageRules` entry that disables them.
 - **If the `pre-commit` manager is ever disabled**, gitleaks' `rev:` becomes watched by nothing and no error says so. It left `/update-dependencies` Step 12
   when this ADR moved `.pre-commit-config.yaml` to Renovate (#1067), so there is no second mechanism holding it. Put it back in Step 12 in the same change.
-- **If `FLUX_VERSION` and `gotk-components.yaml` drift again.** Renovate owns one and Step 12 owns the other. A second occurrence means the split is wrong,
-  and one mechanism should own both.
+- **If `FLUX_VERSION` and `gotk-components.yaml` drift again.** Renovate owns both since #1071, so a release produces two pull requests. They stay separate
+  because the CLI and the controllers are separate things. Merge them together, and if they diverge again, fix the grouping.
 - **If Renovate opens a pull request against anything in Dependabot's six.** The allow-list failed. That is a bug in this decision, not a merge conflict.
 - **If the Mend hosted Community tier stops being free**, or its limits start to bind. One concurrent job and 4-hourly scheduling are generous at twelve
   dependencies, and would not be at a hundred. The fallback is self-hosting through Actions, which costs two new pinned versions that nothing watches.
+- **When [#1087](https://github.com/enorm-labs/event-junkie/issues/1087) lands**, the finding-set comparison the retired sweep did once becomes a gate. Until
+  then a scanner bump is verified only to the extent that CI runs it.
 - **If a third bot is proposed.** Read this file first. The question is never "is it useful" but "what does it own that nothing else does".
 
 ## References

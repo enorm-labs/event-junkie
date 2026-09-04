@@ -81,9 +81,11 @@ What each workflow is for, which checks are required, and the shapes that fail s
         `security_events` on the App token was the alternative and is not available — the action documents `actions`, `checks`, `discussions` and `workflows` as
         the values `additional_permissions` accepts, and no more.
 
-    - **The Claude App carries `workflows: write`, and every agent workload has it** (#996). Granted because `agent-dependencies.yml` exists to sweep tool
-      pins and eight of its ten live in `.github/workflows/` — so the one job that workload has was the one its credential forbade, and every run that found
-      something failed at the push after doing all the work. **`GITHUB_TOKEN` is not an alternative**, for the reason `agent-security.yml` already records: a
+    - **The Claude App carries `workflows: write`, and every agent workload has it** (#996). It was granted for a nightly sweep of the tool pins in
+      `.github/workflows/`, whose one job was the one its credential forbade. **Renovate holds those pins now (#1071) and the grant remains**, so no workload
+      needs it: `agent-docs.yml` and the rest carry a write permission on the one directory where a bad edit changes what CI itself may do. Narrowing it to a
+      scoped per-run token is worth doing and nothing depends on it any more. **`GITHUB_TOKEN` is not an alternative**, for the reason `agent-security.yml`
+      already records: a
       pull request it pushes starts no check run and sits Pending against every required check forever. A scoped token minted per run was the narrower option
       and was not taken, so the grant is repository-wide. **A workflow file is the one file where a bad edit changes what CI itself may do**, which makes review
       of any agent pull request touching that directory the actual control. Nothing else changed: the agents still open pull requests and still never push to
@@ -141,11 +143,6 @@ What each workflow is for, which checks are required, and the shapes that fail s
       `GenreNormalizer`, `ArtistNameMapping`, `MoneyExtensions` — because a change there compiles, passes the whole suite, and still changes the rows that land
       in the database. The only check that catches it is a `--full` re-seed, which needs a database and a live scrape, so findings in that code are reported and
       never applied. Second in the evaluation order, because a wrong answer is caught mechanically.
-    - `agent-dependencies.yml` — the `/update-dependencies` workload, narrowed by `--unattended` to **Step 12 and nothing else**. Dependabot already owns
-      `gradle`, `npm`, `docker`, `github-actions` and `opentofu`, so an agent re-deriving those bumps only produces a worse second pull request against the same
-      files. Step 12's pins are the blind spot: a tool version pinned as a plain string belongs to no ecosystem, so `HELM_VERSION`, `ZIZMOR_VERSION`,
-      `ACTIONLINT_VERSION` and their siblings rot while the checks that consume them keep reporting success. **`walg_version` and `k3s_version` are excluded** —
-      they are force-new attributes and bumping either plans a node replacement — and so is Step 13, whose check is a k3d rehearsal the runner cannot run.
     - `agent-comments.yml` — the `/compact-comments` workload, and **the dangerous one**, in the terms #387 uses. A large share of the comments here exist to
       carry reasoning, and each reads as removable to something optimising for brevity. `--unattended` limits the run to **DELETE, RENAME and EXTRACT**, the
       buckets a reviewer checks in seconds; **RELOCATE and KEEP are reported, never applied**, and venue KDoc is off-limits whatever its density. **It sweeps with `--all`, not `--worst N`, and the first run is why.** A `--worst 5` sweep removed
@@ -369,15 +366,17 @@ What each workflow is for, which checks are required, and the shapes that fail s
 - **Renovate** (`.github/renovate.json5`) covers what belongs to no Dependabot ecosystem **and** is not a workflow string pin. **Three mechanisms watch
   versions here and they must not overlap**, because two bots proposing the same bump is worse than either alone (#384, ADR-024):
 
-    | Mechanism                          | Owns                                                                                                                 | Because                                                                                |
-    | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-    | **Dependabot**                     | the six ecosystems above                                                                                             | they are declared in a manifest it understands                                         |
-    | **`/update-dependencies` Step 12** | tool versions pinned as plain strings in `.github/workflows/`                                                        | it can push them since #996                                                            |
-    | **Renovate**                       | Flux and the charts it installs, images in plain Kubernetes manifests, `.pre-commit-config.yaml`, the Gradle wrapper | they belong to no ecosystem, and Renovate has purpose-built managers rather than regex |
+    | Mechanism      | Owns                                                                                                                                                           | Because                                                                                |
+    | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+    | **Dependabot** | the six ecosystems above                                                                                                                                       | they are declared in a manifest it understands                                         |
+    | **Renovate**   | Flux and the charts it installs, images in plain Kubernetes manifests, the CI tool pins in `.github/workflows/`, `.pre-commit-config.yaml`, the Gradle wrapper | they belong to no ecosystem, and Renovate has purpose-built managers rather than regex |
     - **`enabledManagers` is an allow-list, and that is the whole safety argument.** A manager absent from it cannot open a pull request whatever it finds, so
-      duplication against Dependabot is structurally impossible instead of a thing to police. Five are enabled: `flux`, `helm-values`, `kubernetes`,
-      `pre-commit`, `gradle-wrapper`.
-    - **Four of the five do nothing on their defaults, and three fail silently.** `flux` defaults to `gotk-components.yaml` alone; `kubernetes` defaults to
+      duplication against Dependabot is structurally impossible instead of a thing to police. Six are enabled: `flux`, `helm-values`, `kubernetes`,
+      `pre-commit`, `gradle-wrapper`, `custom.regex`.
+    - **`custom.regex` is the CI tool pins, and it is doubly gated.** Enabling it activates every regex manager an extended preset defines as well as ours, so
+      it is disabled wholesale by a `packageRules` entry and re-enabled by the eight `depName`s we mean. A pin added to `customManagers` and not to that list is
+      extracted and then skipped — visible in a dry run as `SKIPPED: disabled`, which is the failure worth knowing how to spot.
+    - **Four of the six do nothing on their defaults, and three fail silently.** `flux` defaults to `gotk-components.yaml` alone; `kubernetes` defaults to
       matching nothing at all; `pre-commit` is disabled by default upstream, indefinitely. A manager that matches nothing reports nothing, which is the same
       failure this whole boundary exists to prevent.
     - **`managerFilePatterns` in a manager block is additive to that manager's default, not a replacement** — measured, not documented. To _exclude_ a file,
