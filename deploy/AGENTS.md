@@ -235,14 +235,17 @@ after; and the whole flow wants the database and both secrets to exist **first**
 [docs/ops/CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) has the order.
 
 **That directory is now machine-_updated_ as well as machine-written.** Renovate watches
-`gotk-components.yaml` and opens a pull request when Flux releases, regenerating the manifest rather
-than editing versions inside it (#384, ADR-024). **This is safe only because of where customisations
-live:** the SOPS `decryption` patch (#416) and the Pod Security Admission labels (#604) are kustomize
-patches in `flux-system/kustomization.yaml`, never edits to the generated file — which is exactly
-what both patches say in their own comments. **Keep it that way.** A customisation written into
-`gotk-components.yaml` now has two ways to vanish silently: a `flux bootstrap` re-run, and any
-Renovate upgrade. And when reviewing one of those pull requests, honour the PSA patch's own
-instruction to re-check `restricted` against the regenerated controllers.
+`gotk-components.yaml` and opens a pull request when Flux releases (#384, ADR-024). **This is safe
+only because of where customisations live:** the SOPS `decryption` patch (#416) and the Pod Security
+Admission labels (#604) are kustomize patches in `flux-system/kustomization.yaml`, never edits to the
+generated file — which is exactly what both patches say in their own comments. **Keep it that way.**
+A customisation written into `gotk-components.yaml` now has two ways to vanish silently: a
+`flux bootstrap` re-run, and any Renovate upgrade.
+
+**Renovate edits the version strings. It does not regenerate the file** (#1075, measured). So a
+release that changes anything besides a version leaves this manifest structurally behind while every
+label says otherwise. `docs/ops/CLUSTER_BOOTSTRAP.md` §9b carries the one-line `flux install --export`
+diff that proves a bump complete, and it runs before the PSA re-check rather than after.
 
 **The version range lives on the `OCIRepository`, not the `HelmRelease`.** With `chartRef` the release carries no version at all — `spec.ref.semver` on the source
 decides everything. Staging uses `>=0.0.0-0`; the `-0` is what admits prereleases, and without it the range matches no snapshot at all. Observed rather than

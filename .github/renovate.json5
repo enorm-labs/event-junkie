@@ -34,14 +34,24 @@
   // falls through thirteen categories into "Other Changes".
   labels: ['dependencies'],
 
-  // **`build(deps):`, matching Dependabot rather than Renovate's own `chore(deps):`.** The
-  // convention is recorded in `release.yml`'s header: a `build(deps)` pull request carries both
-  // `dependencies` and `build`, and Dependencies is ordered above Build & Tooling, so the two
-  // labels compose correctly. `build` is in `label-pr.yml`'s `TYPES`. The point is that `git log`
-  // reads the same whichever bot wrote it.
+  // **`chore(deps):`, which is what Dependabot writes here too.**
+  //
+  // This block originally set `semanticCommitType: 'build'`, on the strength of `release.yml`'s
+  // header describing Dependabot pull requests as `build(deps)`. **Both halves of that were wrong,
+  // and the first live pull request showed it.**
+  //
+  //   1. The setting was **inert**. `config:recommended` pulls in `:semanticPrefixFixDepsChoreOthers`,
+  //      whose `packageRules` entry sets `chore` — and a packageRule beats top-level config. Renovate
+  //      emitted `chore(deps)` regardless of what was written here.
+  //   2. `release.yml`'s header had gone stale. Dependabot wrote `build(deps)` until 2026-08-28 and
+  //      `chore(deps)` since.
+  //
+  // So the two bots already agree, and the setting that claimed to make them agree did nothing.
+  // **Left unset deliberately** rather than forced back to `build`: `chore(deps)` is now the live
+  // convention for both, and a preset override that has to be fought is a worse thing to own than a
+  // default that is already correct. Either prefix sorts identically in the release notes anyway —
+  // `release.yml` matches the `dependencies` label before it reaches `build` or `chore`.
   semanticCommits: 'enabled',
-  semanticCommitType: 'build',
-  semanticCommitScope: 'deps',
 
   // **Never.** Every dependency here changes what runs in a cluster, what builds the artifacts, or
   // what scans the commits. Stated rather than left to the default, because the default is the kind
@@ -129,16 +139,25 @@
       // `flux-system/kustomization.yaml` patch that sets `pod-security.kubernetes.io/enforce:
       // restricted` says "Re-check after a Flux upgrade" — it is justified by having verified that
       // all four controllers *in the pinned manifest* carry `runAsNonRoot`, `seccompProfile:
-      // RuntimeDefault`, `capabilities.drop: [ALL]` and no hostPath volumes. A regenerated manifest
-      // can break that, and the failure is a controller that will not schedule, which takes every
+      // RuntimeDefault`, `capabilities.drop: [ALL]` and no hostPath volumes. A new manifest can
+      // break that, and the failure is a controller that will not schedule, which takes every
       // deploy with it — including the one that would relax the label.
+      //
+      // **And Renovate substitutes strings here rather than regenerating.** Measured on the first
+      // real pull request (#1075): 72 version labels, 8 image tags, 2 header comments — not a
+      // 6092-line replacement. For 2.9.4 -> 2.9.5 that was provably complete, because the result was
+      // byte-identical to `flux install --export`. **For a release that also changes RBAC, a
+      // controller flag or a resource limit, it would not be** — and the manifest would claim the
+      // new version while staying structurally on the old one, rendering and validating cleanly the
+      // whole time. The first note below is what catches that.
       description: 'Flux itself, both clusters in one pull request',
       matchManagers: ['flux'],
       matchDepNames: ['fluxcd/flux2'],
       groupName: 'flux',
       prBodyNotes: [
+        '⚠️ **Prove the bump is complete first.** Renovate edits version strings here rather than regenerating the manifest, so anything upstream changed besides a version is silently absent. Run `flux install --export --components=source-controller,kustomize-controller,helm-controller,notification-controller | diff - deploy/clusters/staging/flux-system/gotk-components.yaml` with a matching `flux` CLI. **Empty output means complete.** Any output is what the string edit could not reach, and this pull request needs a real regeneration on top.',
         '⚠️ **Re-check Pod Security Admission before merging.** `deploy/clusters/*/flux-system/kustomization.yaml` patches `flux-system` to `enforce: restricted`, justified against the controllers in the *previous* manifest. Confirm every controller in the regenerated `gotk-components.yaml` still satisfies `restricted` — `runAsNonRoot`, `seccompProfile: RuntimeDefault`, `capabilities.drop: [ALL]`, no hostPath. A controller that violates it will not schedule, and that takes every deploy with it.',
-        'Local customisations are kustomize patches in `flux-system/kustomization.yaml` (#416, #604), never edits to `gotk-components.yaml` — so this regeneration destroys nothing. Confirm `kustomize build deploy/clusters/staging/flux-system` still applies both patches.',
+        'Local customisations are kustomize patches in `flux-system/kustomization.yaml` (#416, #604), never edits to `gotk-components.yaml` — so this update destroys nothing. Confirm `kustomize build deploy/clusters/staging/flux-system` still applies both patches.',
         '`FLUX_VERSION` in `.github/workflows/validate-chart.yml` pins the CLI that validates these manifests. It is swept by `/update-dependencies` Step 12, not by Renovate — check the two agree once this merges.',
       ],
     },

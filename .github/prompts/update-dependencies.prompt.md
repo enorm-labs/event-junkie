@@ -391,9 +391,12 @@ for production, which is the only reason staging exists.
 version.** The tag _and_ the `@sha256:` must move together, or the digest silently wins and the diff
 records a change the cluster never saw.
 
-**Flux itself is in scope too, and it is the most careful review of the set.** Renovate regenerates
-`gotk-components.yaml` wholesale. That is safe here only because every local customisation is a
-kustomize patch in `flux-system/kustomization.yaml` rather than an edit to the generated file — but
+**Flux itself is in scope too, and it is the most careful review of the set.** Renovate edits the
+version strings in `gotk-components.yaml` and does **not** regenerate it (#1075), so the first check
+is `flux install --export … | diff -` against the file — empty output means the bump is complete, and
+anything else is what a string edit could not reach. `docs/ops/CLUSTER_BOOTSTRAP.md` §9b has the full
+command. Beyond that it is safe only because every local customisation is a kustomize patch in
+`flux-system/kustomization.yaml` rather than an edit to the generated file — but
 that file's Pod Security Admission patch says _"Re-check after a Flux upgrade"_, and it means it: the
 `enforce: restricted` label is justified against the controllers in the **previous** manifest, and a
 controller that violates it will not schedule, which takes every deploy with it. The pull request

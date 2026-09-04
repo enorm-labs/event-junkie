@@ -71,9 +71,26 @@ already moved to **2.9.5**. The CLI that validated the manifests ran ahead of th
 pull request the day it ships, at zero marginal cost. For "watch twelve version strings", that is the right instrument and an LLM with sixty turns is the wrong
 one.
 
-**Flux is in scope**, which was not the initial recommendation. Renovate regenerates `gotk-components.yaml` wholesale, and its documentation warns that custom
-bootstrap flags are lost. That is safe here for one reason. Every local customisation is already a kustomize patch in `flux-system/kustomization.yaml` (#416,
-#604), never an edit to the generated file. This repository engineered that property deliberately, and wrote it down twice, before anyone considered Renovate.
+**Flux is in scope**, which was not the initial recommendation. That is safe here for one reason. Every local customisation is already a kustomize patch in
+`flux-system/kustomization.yaml` (#416, #604), never an edit to the generated file. This repository engineered that property deliberately, and wrote it down
+twice, before anyone considered Renovate.
+
+**This ADR first said Renovate regenerates the manifest. It does not.** The claim came from Renovate's own documentation. That documentation warns that custom
+bootstrap flags "will be overwritten with the Flux defaults", which only replacement could produce. The first real pull request (#1075) showed otherwise. Renovate
+substitutes strings: 72 version labels, 8 image tags, 2 header comments, and nothing else.
+
+The safety argument above is unaffected, because the customisations are out of the file either way. **The risk is different, though, and it is worse in one
+respect.** For v2.9.4 to v2.9.5 a string edit was provably complete, because the result was byte-identical to `flux install --export`. A release that also
+changes RBAC, a controller flag or a resource limit is different. The manifest would then carry the new version label and the old structure, and it would render,
+validate and reconcile without complaint. So every Flux pull request runs one check before any other:
+
+```sh
+flux install --export \
+  --components=source-controller,kustomize-controller,helm-controller,notification-controller \
+  | diff - deploy/clusters/staging/flux-system/gotk-components.yaml
+```
+
+Empty output means the bump is complete. Any output is what the string edit could not reach.
 
 **Nothing automerges.** Every dependency here changes what runs in a cluster, what builds the artifacts, or what scans the commits.
 
@@ -85,8 +102,8 @@ bootstrap flags are lost. That is safe here for one reason. Every local customis
 - **`/update-dependencies` Step 13 no longer sweeps.** It became a review checklist of what a person must check and Renovate cannot know. ADR-015's footprint
   measurement is pinned to OpenObserve 0.92.2. The `ZO_*` defaults move between releases. Digest-pinned images need the tag and the digest moved together. A
   Flux upgrade needs the Pod Security Admission re-check.
-- **Every Renovate pull request needs a human.** With no automerge, the review is the control. For Flux that review is not a diff read. It is a check that
-  the regenerated controllers still satisfy `restricted`.
+- **Every Renovate pull request needs a human.** With no automerge, the review is the control. For Flux that review is not a diff read. It is the export diff
+  above, and then a check that the new controllers still satisfy `restricted`.
 - **A second bot to reason about**, and one more place to look before concluding something is unwatched. The allow-list is what keeps that cost bounded: a
   manager absent from it cannot act, whatever it finds.
 - **`milestone-dependabot.yml` matches bots by login**, so it had to learn `renovate[bot]`. Any future bot is invisible to it until added — and invisibly, since

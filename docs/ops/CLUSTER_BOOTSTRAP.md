@@ -379,30 +379,48 @@ gh api repos/enorm-labs/event-junkie/rulesets/<id> --jq '{enforcement, bypass_ac
 ## 9b · Upgrading Flux afterwards — Renovate's job, not another bootstrap
 
 **`flux bootstrap` installs Flux once. It is not how Flux is upgraded.** Renovate watches
-`gotk-components.yaml` in both clusters (#384, ADR-024). It opens a grouped pull request when a
-release lands, and regenerates the manifest rather than editing versions inside it. A second
-bootstrap would mean turning the branch ruleset off for two more direct pushes to `main`. That is
-everything §9 warns about, for something a reviewable pull request already does.
+`gotk-components.yaml` in both clusters (#384, ADR-024) and opens a grouped pull request when a
+release lands. A second bootstrap would mean turning the branch ruleset off for two more direct
+pushes to `main`. That is everything §9 warns about, for something a reviewable pull request already
+does.
 
-**Why regeneration is safe here, and the one condition it depends on.** Every local customisation is
+**Why this is safe here, and the one condition it depends on.** Every local customisation is
 a kustomize patch in `flux-system/kustomization.yaml`. That covers the SOPS `decryption` patch (#416)
 and the Pod Security Admission labels (#604). None of them edits `gotk-components.yaml`, which opens
 with `DO NOT EDIT`. Renovate replacing that file therefore destroys nothing. **Keep it that way.** A
 customisation written into the generated file now has two ways to disappear silently.
 
+**Renovate edits the version strings. It does not regenerate the file.** Measured on the first real
+pull request (#1075): 72 version labels, 8 image tags, 2 header comments, and nothing else. For
+v2.9.4 to v2.9.5 that was complete, and provably so. A release that also changes RBAC, a controller
+flag or a resource limit is different. The manifest would then carry the new version and the old
+structure. It would render, validate and reconcile without complaint. Step 1 catches that, and it is
+first because it is the check that fails silently.
+
 **What to check before merging one**, in order:
 
-1. **Pod Security Admission, which the patch itself tells you to re-check.** `enforce: restricted`
+1. **Prove the bump is complete.** With a `flux` CLI at the proposed version:
+
+    ```sh
+    flux install --export \
+      --components=source-controller,kustomize-controller,helm-controller,notification-controller \
+      | diff - deploy/clusters/staging/flux-system/gotk-components.yaml
+    ```
+
+    **Empty output means complete.** Any output is what the string edit could not reach, and the pull
+    request needs a real regeneration on top of it.
+
+2. **Pod Security Admission, which the patch itself tells you to re-check.** `enforce: restricted`
    on `flux-system` rests on one check. Every controller _in the previous manifest_ carries
    `runAsNonRoot`, `seccompProfile: RuntimeDefault`, `capabilities.drop: [ALL]` and no hostPath
    volumes. Confirm that still holds for the regenerated set. **A controller that violates it will not
    schedule.** That takes every deploy with it, including the one that would relax the label.
-2. **Both patches still apply:** `kustomize build deploy/clusters/staging/flux-system` renders, and
+3. **Both patches still apply:** `kustomize build deploy/clusters/staging/flux-system` renders, and
    the `flux-system` Kustomization still carries `spec.decryption`.
-3. **`FLUX_VERSION` in `validate-chart.yml`.** That pins the CLI that validates these manifests and
+4. **`FLUX_VERSION` in `validate-chart.yml`.** That pins the CLI that validates these manifests and
    is swept by `/update-dependencies` Step 12, _not_ by Renovate. The two drifting apart is how this
    gap was found — staging ran v2.9.4 while CI validated with 2.9.5. Bring them into step.
-4. **Staging first.** It reconciles ahead of production and is the only real test.
+5. **Staging first.** It reconciles ahead of production and is the only real test.
 
 ## 10 · Verify the reconciliation
 
