@@ -558,8 +558,8 @@ helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.
 ```
 
 `--verify=false` is a Helm 4 requirement. Helm 4 refuses an unverifiable plugin source without it, and the local
-binary is v4. CI pins Helm 3 and installs the same version without the flag. Pin whatever `HELM_UNITTEST_VERSION` in
-`validate-chart.yml` pins: a gate whose plugin version floats is a gate whose verdict floats.
+binary is v4. CI pins Helm 4 too (`HELM_VERSION`) and installs the plugin with the same flag. Pin whatever
+`HELM_UNITTEST_VERSION` in `validate-chart.yml` pins: a gate whose plugin version floats is a gate whose verdict floats.
 
 Everything below reaches no cluster and needs no kubeconfig, and is what `validate-chart.yml` runs in CI:
 
