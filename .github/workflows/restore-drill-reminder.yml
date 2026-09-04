@@ -196,13 +196,20 @@ jobs:
             // and a token able to rewrite the whole board is more than a quarterly reminder is worth
             // holding a credential for.
             //
-            // **"Auto-add to project" was enabled on the board on 2026-08-18**, in response to this,
-            // which is the right place for the fix: it covers every issue rather than only these
-            // ones. Note what that does and does not settle. It applies to items created *after* it
-            // was switched on, so #536 still had to be placed by hand — and the setting being on is
-            // not the same as having seen it work, which is the exact distinction that produced this
-            // comment in the first place. **The next issue this workflow opens is what confirms it.**
-            // If that one is also missing from the board, the fallback is unchanged:
+            // **"Auto-add to project" is enabled on the board, and it does not settle this.** That
+            // was the fix, on the reasoning that a board setting covers every issue rather than only
+            // these ones. The comment then asked for proof rather than assuming it: *the next issue
+            // this workflow opens is what confirms it.*
+            //
+            // **It did not.** #561 and #862 are this workflow's next two issues and both were off
+            // the board, alongside four others — six of 151 open issues, three of them opened by a
+            // person rather than an app. So the built-in workflow misses items at roughly 4%, for no
+            // reason readable from here: GraphQL exposes only a ProjectV2Workflow's id, name,
+            // enabled and number, never its filter.
+            //
+            // The distinction that produced this comment held, twice over. A setting being on is not
+            // the same as having seen it work, and a mechanism inferred from a state is a guess.
+            // #1092 carries the gap. **Check the card after a run.** The fallback is unchanged:
             // `scripts/issue-board.sh status <n> Ready`.
             core.notice(`Opened #${issue.number} — ${title}`);
             await core.summary

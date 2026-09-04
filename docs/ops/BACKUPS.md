@@ -227,10 +227,18 @@ or `postgres.sh`. A change to either means the last run proved a version that no
 than nothing at all. That is why it is an issue and not a calendar entry. It is idempotent. A dispatch, a re-run and a late schedule all converge on
 one issue, and a _closed_ one is never reopened.
 
-**One gap, found by the first real run:** the issue did not reach the project board. `Auto-add to project` was not among the board's enabled workflows, and
-`GITHUB_TOKEN` cannot write to an organisation project, so the workflow could not compensate. **That setting is now on**, which fixes it for every issue rather
-than only these. It applies only to items created after it was switched on, so _the next issue this workflow opens is what confirms it_. If one is ever missing
-again: `scripts/issue-board.sh status <n> Ready`.
+**One gap, still open: the issue does not reliably reach the project board.** `GITHUB_TOKEN` cannot write to an organisation project, so this workflow cannot
+place the card itself. The board's `Auto-add to project` workflow is meant to cover that. It is enabled, and it still misses issues. Six of 151
+open issues sat off the board when #1092 measured it. Two of the six are this workflow's own, #561 and #862. Enabling the setting was recorded here as the
+fix, and that was wrong.
+
+**So check the card after a run.** The fallback is one command:
+
+```sh
+scripts/issue-board.sh status <n> Ready
+```
+
+[#1092](https://github.com/enorm-labs/event-junkie/issues/1092) carries the gap, including whether anything can be done about it from this side.
 
 **The PostgreSQL major version is the one trigger that stays a note rather than a gate.** It lives in `var.postgres_version`, in a variables file that moves for
 a dozen unrelated reasons. A path filter there would open a drill issue on every unrelated edit, and teach everyone to close them unread.
