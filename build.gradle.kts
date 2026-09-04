@@ -467,8 +467,10 @@ dependencyCheck {
             "kotlinScriptDef",
             "testKotlinScriptDef"
         )
-    // Output formats: HTML for local review, SARIF for GitHub Code Scanning integration
-    formats = listOf("HTML", "SARIF")
+    // HTML for local review, SARIF for GitHub Code Scanning, JSON so a gate can assert the scan
+    // enumerated something. A scan that examines nothing passes `failBuildOnCVSS` trivially, which
+    // is what `scanProjects` being misconfigured did here for months (#1087).
+    formats = listOf("HTML", "SARIF", "JSON")
     // Fail the build if a CVE with CVSS score >= 7 (HIGH) is found
     failBuildOnCVSS = 7.0f
     // Suppress false positives via a shared suppression file (create as needed)

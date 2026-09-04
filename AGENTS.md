@@ -535,6 +535,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Chart and images agree about the UID        | `scripts/uid-consistency.sh` — reads the three Dockerfiles' `USER` and the chart; enforces the >10000 floor                       |
 | What each cluster would deploy              | `scripts/deployed-versions.sh` — reproduces Flux's selection; no cluster and no credential needed                                 |
 | Whether the two node pins are current       | `scripts/upstream-node-pins.sh` — k3s and wal-g against upstream; `node-pin-reminder.yml` runs it weekly                          |
+| Whether a scanner still covers as much      | `scripts/scan-coverage.sh` + `scripts/scan-coverage-baseline.txt` — denominators, not just exit codes                             |
 | Infrastructure as code (OpenTofu)           | `infra/` — read `infra/AGENTS.md` first; `bootstrap/` is applied, `environments/` is not                                          |
 | Shared MCP servers                          | `.mcp.json` — `opentofu`, the hosted registry lookup; no key, one approval per contributor                                        |
 | Cloud-init for the Hetzner nodes            | `infra/modules/environment/cloud-init/`                                                                                           |

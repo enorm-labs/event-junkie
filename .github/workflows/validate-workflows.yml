@@ -22,6 +22,10 @@ on:
     paths:
       - '.github/workflows/**'
       - 'zizmor.yml'
+      # The audit-coverage floors and the script that reads them. A baseline edited without a run is
+      # how a floor gets lowered unnoticed.
+      - 'scripts/scan-coverage.sh'
+      - 'scripts/scan-coverage-baseline.txt'
   pull_request:
     branches: [ main ]
     # No `paths:` here, deliberately, since #443. These checks are **required** on the `main`
@@ -72,6 +76,17 @@ jobs:
       # date — the same bar `.trivyignore` and `owasp-suppressions.xml` are held to.
       - name: zizmor
         run: |
+          set -euo pipefail
           docker run --rm -v "$PWD:/src" -w /src \
             "ghcr.io/zizmorcore/zizmor:${ZIZMOR_VERSION}" \
-            --config zizmor.yml --min-severity medium --format plain .github/workflows/
+            --config zizmor.yml --min-severity medium --format plain .github/workflows/ \
+            | tee "${RUNNER_TEMP}/zizmor.txt"
+
+      # A clean zizmor run is two claims, and the exit code carries only one of them: nothing was
+      # found, and the whole set was audited. A release that drops an audit, or a suppression added
+      # to `zizmor.yml`, narrows the second while leaving the first green (#1087). The two counts
+      # below are the denominator, and a drop in either fails here.
+      - name: Assert zizmor still audits what it did
+        run: |
+          scripts/scan-coverage.sh baseline zizmor-ignored "${RUNNER_TEMP}/zizmor.txt"
+          scripts/scan-coverage.sh baseline zizmor-suppressed "${RUNNER_TEMP}/zizmor.txt"

@@ -29,6 +29,7 @@ on:
     branches: [ main ]
     paths:
       - 'scripts/**.sh'
+      - 'scripts/scan-coverage-baseline.txt'
       - '.github/workflows/validate-scripts.yml'
   pull_request:
     branches: [ main ]
@@ -38,6 +39,7 @@ on:
     # request. **If this one is ever made required, delete this filter in the same change.**
     paths:
       - 'scripts/**.sh'
+      - 'scripts/scan-coverage-baseline.txt'
       - '.github/workflows/validate-scripts.yml'
   workflow_dispatch:
 
@@ -80,12 +82,22 @@ jobs:
       # `source`d files, matching the pre-commit hook's invocation so the two cannot disagree about
       # a finding.
       - name: Run ShellCheck
+        id: shellcheck
         run: |
           docker run --rm -v "$PWD:/mnt" -w /mnt \
             "koalaman/shellcheck:${SHELLCHECK_VERSION}" -x scripts/*.sh
 
+      # `scan-coverage.sh` decides whether a scanner covered less than it did, and the expensive way
+      # for it to be wrong is to answer "covered everything" when it could not read the output at all.
+      # The assertions it makes run in two required workflows, so a crash is caught there — a silent
+      # always-pass is caught only here (#1087).
+      - name: Assert what scan-coverage.sh decides
+        run: scripts/scan-coverage-test.sh
+
+      # Gated on the step it explains. Without the condition a failing assertion above prints a
+      # paragraph about ShellCheck, which sends the reader to the wrong tool.
       - name: Explain the fix
-        if: failure()
+        if: failure() && steps.shellcheck.outcome == 'failure'
         run: |
           {
             echo "## ShellCheck"
