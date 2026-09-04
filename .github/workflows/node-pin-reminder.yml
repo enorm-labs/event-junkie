@@ -96,13 +96,15 @@ jobs:
             // that separates these issues from a dependency bump, and the reason no bot proposes
             // them: `user_data` is force-new, so either edit destroys and recreates the server.
             const rebuild = [
-              '## This is a node rebuild, not a version bump',
+              '## Not a routine version bump',
               '',
-              '`user_data` is a force-new attribute in the Hetzner provider, and both pins feed cloud-init. ' +
-                'Changing either **destroys and recreates the server** — for k3s that is a cluster rebuild.',
+              '`user_data` is a force-new attribute in the Hetzner provider, and both pins feed cloud-init, ' +
+                'so the OpenTofu plan says **destroy and recreate the server**. A rebuild loses the k3s cluster, ' +
+                'Flux, the six hand-made Secrets, `/etc/wal-g/credentials.env` and OpenObserve\'s dashboards.',
               '',
-              `[\`docs/ops/CLUSTER_BOOTSTRAP.md\` § Rebuilding a node](${blob}/docs/ops/CLUSTER_BOOTSTRAP.md#rebuilding-a-node--including-migrating-to-arm) ` +
-                'is the procedure. The cheapest moment to take this is a rebuild that is happening anyway.',
+              `**Take it in place instead.** [\`CLUSTER_BOOTSTRAP.md\` § Upgrading k3s without rebuilding](${blob}/docs/ops/CLUSTER_BOOTSTRAP.md#upgrading-k3s-without-rebuilding) ` +
+                `and [\`BACKUPS.md\` §8](${blob}/docs/ops/BACKUPS.md) are the two procedures. Bump the pin in the same change, ` +
+                'or the next rebuild silently downgrades the node. A rebuild that is happening anyway is the free moment for both.',
             ];
 
             // The title carries the *pinned* version and never the target. A target in the title
@@ -143,9 +145,10 @@ jobs:
                   '## Done when',
                   '',
                   '- [ ] `k3s_version` names a version that is current, or this issue says why it deliberately does not',
-                  '- [ ] Both environments have been applied, staging first',
-                  '- [ ] `kubectl get nodes -o wide` reports the new version on each cluster',
-                  '- [ ] The credential and volume steps of `CLUSTER_BOOTSTRAP.md` §8b have been redone — a rebuild destroys `/etc/wal-g/credentials.env`',
+                  '- [ ] Both environments are on the new version, staging first',
+                  '- [ ] `kubectl get nodes -o wide` reports it on each cluster',
+                  '- [ ] The Traefik checks pass on each: `svc/traefik` is still `ClusterIP`, no svclb pods, the site answers',
+                  '- [ ] Only if this was taken as a rebuild: `CLUSTER_BOOTSTRAP.md` §8b redone, because a rebuild destroys `/etc/wal-g/credentials.env`',
                 ].join('\n'),
               });
             }
@@ -189,8 +192,8 @@ jobs:
                   '## Done when',
                   '',
                   '- [ ] `walg_version` and both `walg_checksums` entries move in the same commit',
-                  '- [ ] Both environments have been applied, staging first',
-                  '- [ ] `/etc/wal-g/credentials.env` has been rewritten on each rebuilt node — it is deliberately not in `user_data`',
+                  '- [ ] Both environments are on the new version, staging first',
+                  '- [ ] Only if this was taken as a rebuild: `/etc/wal-g/credentials.env` rewritten on each node — it is deliberately not in `user_data`',
                   '- [ ] `sudo -u postgres walg check` passes on each node, which is the assertion that matters rather than the unit state',
                 ].join('\n'),
               });

@@ -648,6 +648,53 @@ sudo ss -lntp | grep 5432
 
 The output must name the private address. Only `127.0.0.1` and `::1` means the node is in the broken state, whatever `systemctl status` says.
 
+### Upgrading k3s without rebuilding
+
+**A `k3s_version` bump does not need a rebuild, and a rebuild is the expensive way to take one.** The
+node's k3s comes from `get.k3s.io` with `INSTALL_K3S_VERSION`, which is also how k3s documents an
+upgrade. Re-running the installer on a live node replaces the binary and restarts the service.
+A rebuild destroys the cluster, Flux, the six hand-made Secrets, `/etc/wal-g/credentials.env`, the
+WireGuard server key and OpenObserve's dashboards. An upgrade keeps every one of them.
+
+Same shape as the `cloud-init` fix above, and the same rule. **Bump the variable, and apply the
+change by hand.** The next rebuild then finds the work already done. A node upgraded without the pin
+moving is a node the next rebuild silently downgrades.
+
+```bash
+# On the node, one environment at a time. Staging first.
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.36.4+k3s1 INSTALL_K3S_EXEC=server sh -
+```
+
+**Run the installer, not `k3s.sh`.** The script rewrites `/etc/rancher/k3s/config.yaml` from
+`bootstrap.env`, which a live node does not have to hand. The existing config is what you want kept.
+
+**It is a restart, not a rolling one.** containerd is replaced with the binary. Every workload on the
+node restarts, and the API is briefly away. On a single-node cluster that is a short outage of
+everything. That is why staging goes first.
+
+Afterwards, in this order:
+
+```bash
+kubectl get nodes -o wide                                          # the new version, Ready
+kubectl -n kube-system get svc traefik -o jsonpath='{.spec.type}'  # still ClusterIP
+kubectl -n kube-system get pods | grep svclb                       # must return nothing
+flux get all -A                                                    # everything Ready
+curl -sS -o /dev/null -w '%{http_code}\n' https://<the host>/      # the site answers
+```
+
+**The three ingress checks are not decoration.** k3s packages the Traefik chart, so a k3s upgrade can
+move it. `traefik-host-ports.yaml` sets `service.spec.type: ClusterIP`, which frees ports 80 and 443
+for Traefik's own `hostPort`. A chart release that stops reading that key brings svclb back, and
+svclb takes the ports. The site then stops answering. Compare the packaged chart first, in one
+command:
+
+```bash
+for v in <old> <new>; do
+  curl -fsSL "https://raw.githubusercontent.com/k3s-io/k3s/${v//+/%2B}/manifests/traefik.yaml" \
+    | grep -oE 'traefik-[0-9.]+\+up[0-9.]+\.tgz'
+done
+```
+
 ### Architecture is a rebuild, not a resize, and the plan will not say so
 
 Hetzner cannot rescale between architectures. [Their FAQ](https://docs.hetzner.com/cloud/servers/faq/) lists rescale alongside snapshots and ISOs as places

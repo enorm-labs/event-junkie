@@ -976,15 +976,19 @@ The daily timer applies security updates without anyone deciding to.
 
 Three things that are _not_ automatic:
 
-|                      | Why not                                                                                         | What covers it                                                                                     |
-| -------------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Reboots**          | On a single-node cluster an unannounced 04:00 reboot is an outage nobody scheduled              | A deliberate reboot, when `/var/run/reboot-required` exists                                        |
-| **k3s**              | Not apt-managed — installed pinned from `get.k3s.io`, and restarting it disrupts every workload | `node-pin-reminder.yml` opens an issue when `k3s_version` falls behind. The bump rebuilds the node |
-| **Container images** | The applications' libraries come from their images, not the host's apt                          | Rebuild in CI, with Trivy scanning the result — §8 item 11                                         |
+|                      | Why not                                                                                         | What covers it                                                                                                                                       |
+| -------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Reboots**          | On a single-node cluster an unannounced 04:00 reboot is an outage nobody scheduled              | A deliberate reboot, when `/var/run/reboot-required` exists                                                                                          |
+| **k3s**              | Not apt-managed — installed pinned from `get.k3s.io`, and restarting it disrupts every workload | `node-pin-reminder.yml` opens an issue when `k3s_version` falls behind. Take it in place — CLUSTER_BOOTSTRAP.md § _Upgrading k3s without rebuilding_ |
+| **Container images** | The applications' libraries come from their images, not the host's apt                          | Rebuild in CI, with Trivy scanning the result — §8 item 11                                                                                           |
 
-**A reboot does not update k3s.** It is installed at a pinned version, so it comes back on the same one. Only `k3s_version` moves it, and moving that
-replaces the node — [ADR-024](../adr/ADR-024_DEPENDENCY_UPDATE_BOUNDARY.md) § _Why the node pins get a reminder_. The weekly reminder is what makes a k3s
-security release visible, since nothing else here can see it.
+**A reboot does not update k3s.** It is installed at a pinned version and comes back on the same one. Only `k3s_version` moves it, and nothing else here can see a
+release. That is what the weekly reminder is for — see
+[ADR-024](../adr/ADR-024_DEPENDENCY_UPDATE_BOUNDARY.md).
+
+**Moving it does not have to replace the node.** `user_data` is force-new, so the OpenTofu plan says rebuild — but k3s upgrades in place through the same
+installer the node booted with. [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) § _Upgrading k3s without rebuilding_ is the cheap path, and it is the one to take
+unless a rebuild is happening anyway.
 
 **The trap worth knowing about is `needrestart`.** It decides whether a service running an updated library actually gets restarted, and its default is
 interactive. Run non-interactively from `unattended-upgrades`, that silently falls back to _list only_. The result is a machine that reports itself fully
