@@ -13,20 +13,24 @@ happening anyway.
 ## The sequence
 
 ```sh
-# 1. Compare the packaged Traefik chart across the two versions. See "Traefik" below.
+# 1. Read the release notes, for EVERY version between the pin and the target.
+#    https://github.com/k3s-io/k3s/releases — see "Reading the release notes" below.
+gh release view 'v1.36.4+k3s1' --repo k3s-io/k3s
+
+# 2. Compare the packaged Traefik chart across the two versions. See "Traefik" below.
 for v in v1.36.3+k3s1 v1.36.4+k3s1; do
   curl -fsSL "https://raw.githubusercontent.com/k3s-io/k3s/${v//+/%2B}/manifests/traefik.yaml" \
     | grep -oE 'traefik-[0-9.]+\+up[0-9.]+\.tgz'
 done
 
-# 2. Bump `k3s_version` in infra/modules/environment/variables.tf, in the same change.
+# 3. Bump `k3s_version` in infra/modules/environment/variables.tf, in the same change.
 
-# 3. On the node, as root. Staging first, production only after staging has held.
+# 4. On the node, as root. Staging first, production only after staging has held.
 #    `sudo sh -c` because the pipe runs as the caller otherwise, and the installer needs root.
 ssh -i ~/.ssh/id_ed25519_hetzner -o IdentitiesOnly=yes ops@10.10.1.1 \
   "sudo sh -c 'curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.36.4+k3s1 INSTALL_K3S_EXEC=server sh -s -'"
 
-# 4. Verify, in this order. `10.10.1.1` is staging, `10.10.0.1` production — CLUSTER_ACCESS.md.
+# 5. Verify, in this order. `10.10.1.1` is staging, `10.10.0.1` production — CLUSTER_ACCESS.md.
 ssh -i ~/.ssh/id_ed25519_hetzner -o IdentitiesOnly=yes ops@10.10.1.1 'k3s --version'
 kubectl get nodes -o wide                                          # Ready, and the new version
 kubectl -n kube-system get svc traefik -o jsonpath='{.spec.type}'  # still ClusterIP
@@ -76,6 +80,30 @@ cluster that is a short outage of everything, which is why staging goes first.
 **A downgrade is not promised.** The datastore schema can move forward between minors. Within a patch
 line it is usually fine. The recovery for a bad upgrade is the rebuild this document exists to avoid.
 
+## Reading the release notes
+
+**Read every version between the pin and the target, not only the target.** k3s ships a patch roughly
+monthly. Two behind means two sets of notes, and a breaking change in the middle one still applies.
+
+Look for the `> [!WARNING]` and `> [!IMPORTANT]` blocks at the top, the **Embedded Component
+Versions** table, and anything naming Traefik, containerd, etcd or the datastore. The component table
+is the useful part: it says what actually moved.
+
+**A warning at the top may describe a change from an earlier release in the same line.** k3s repeats
+them. The v1.36.4 notes carry a Traefik chart warning that **v1.36.2** introduced. The packaged chart
+is identical either side of v1.36.4, so it says nothing about that bump. Check which release
+introduced a warning before you treat it as this one's:
+
+```sh
+for v in v1.36.2+k3s1 v1.36.3+k3s1 v1.36.4+k3s1; do
+  printf '%s ' "$v"
+  gh release view "$v" --repo k3s-io/k3s --json body --jq '.body' | grep -c 'Traefik chart to v40'
+done
+```
+
+**A warning that does apply is a reason to stop, not a reason to hurry.** The upgrade is cheap and
+reversing it is not.
+
 ## Traefik
 
 **k3s packages the Traefik chart, so a k3s upgrade can move it.** Upstream did exactly that between
@@ -94,6 +122,8 @@ command. Reconsider it when there is more than one node.
 
 ## Links
 
+- [k3s releases](https://github.com/k3s-io/k3s/releases) — the notes, one per version, with the
+  component table at the bottom of each
 - [k3s manual upgrades](https://docs.k3s.io/upgrades/manual) — the commands above come from here
 - [k3s automated upgrades](https://docs.k3s.io/upgrades/automated) — `system-upgrade-controller`
 - [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) § _Rebuilding a node_ — when a rebuild is the point
