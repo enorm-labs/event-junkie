@@ -300,11 +300,10 @@ that has stopped meaning anything.
 
 | Pin                     | Where                                                                                                              | Check against                                                      |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| `HELM_VERSION`          | `.github/workflows/validate-chart.yml`, `release.yml` **and** `image-scan-scheduled.yml` — all three move together | `helm/helm` releases, **staying on 3.x**                           |
+| `HELM_VERSION`          | `.github/workflows/validate-chart.yml`, `release.yml` **and** `image-scan-scheduled.yml` — all three move together | `helm/helm` releases, **tracking the SDK helm-controller embeds**  |
 | `FLUX_VERSION`          | `.github/workflows/validate-chart.yml`                                                                             | `fluxcd/flux2` releases                                            |
 | `FLUX_SCHEMA_VERSION`   | `.github/workflows/validate-chart.yml`                                                                             | `fluxcd/flux-schema` releases — or `flux plugin list` locally      |
 | `TRIVY_VERSION`         | `.github/workflows/release.yml` **and** `image-scan-scheduled.yml` — both must move together                       | `aquasecurity/trivy` releases                                      |
-| `gitleaks` `rev:`       | `.pre-commit-config.yaml`                                                                                          | `gitleaks/gitleaks` releases                                       |
 | `ZIZMOR_VERSION`        | `.github/workflows/validate-workflows.yml`                                                                         | `zizmorcore/zizmor` releases — the image tag has **no** `v` prefix |
 | `ACTIONLINT_VERSION`    | `.github/workflows/validate-workflows.yml`                                                                         | `rhysd/actionlint` releases                                        |
 | `HELM_UNITTEST_VERSION` | `.github/workflows/validate-chart.yml` **and** `release.yml` — both must move together                             | `helm-unittest/helm-unittest` releases                             |
@@ -314,7 +313,7 @@ that has stopped meaning anything.
 
 ```sh
 for repo in helm/helm helm-unittest/helm-unittest fluxcd/flux2 fluxcd/flux-schema aquasecurity/trivy \
-            gitleaks/gitleaks zizmorcore/zizmor rhysd/actionlint koalaman/shellcheck wal-g/wal-g k3s-io/k3s; do
+            zizmorcore/zizmor rhysd/actionlint koalaman/shellcheck wal-g/wal-g k3s-io/k3s; do
   printf '%-28s %s\n' "$repo" "$(gh api "repos/$repo/releases/latest" --jq .tag_name)"
 done
 ```
