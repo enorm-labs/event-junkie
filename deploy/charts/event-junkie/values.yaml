@@ -509,4 +509,4 @@ tests:
     registry: "docker.io"
     # The one place a third-party image is acceptable: nothing the test pod does outlives the test.
     repository: "curlimages/curl"
-    tag: "8.11.1"
+    tag: "8.22.0"
