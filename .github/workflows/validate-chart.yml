@@ -69,7 +69,7 @@ env:
   # gate must not be weaker than the hook in front of it.** All three copies move together.
   HELM_VERSION: v4.2.4
   # `flux schema validate` replaced kubeconform in #414. Both pinned, both invisible to Dependabot —
-  # they are strings in YAML, not a manifest — so /update-dependencies step 12 sweeps them.
+  # they are strings in YAML, not a manifest — so Renovate's `customManagers` watch them (ADR-024).
   FLUX_VERSION: 2.9.5
   FLUX_SCHEMA_VERSION: 0.12.1
   # Pinned for the reason validate-scripts.yml sets out at length: `ubuntu-latest` preinstalls an
@@ -83,8 +83,8 @@ env:
   # together, which reads like the safer option — but its newest Helm 3 tag carries plugin 1.0.3,
   # which has no `--values` flag, and that flag is how `scripts/cluster-assertions.sh` feeds each
   # cluster's `spec.values` in. Installing the plugin keeps HELM_VERSION exact and gets a plugin
-  # that can do it. Invisible to Dependabot, like the pins above — /update-dependencies step 12
-  # sweeps it.
+  # that can do it. Invisible to Dependabot, like the pins above, and watched by Renovate for the
+  # same reason.
   HELM_UNITTEST_VERSION: v1.1.2
 
 jobs:
