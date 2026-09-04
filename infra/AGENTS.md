@@ -186,6 +186,11 @@ argument behind it. If you contradict one of those documents, change the documen
 
 ## Things that will bite
 
+- **A `k3s_version` bump is not automatically a rebuild.** The plan says replace the server, because
+  `user_data` is force-new — but k3s upgrades in place through the installer the node booted with, and
+  that keeps the cluster, Flux, the Secrets and the backup credential. Take
+  [`docs/ops/K3S_UPGRADE.md`](../docs/ops/K3S_UPGRADE.md) and bump the pin in the same change. The
+  same shape applies to `walg_version`, in `docs/ops/BACKUPS.md` §8.
 - **`user_data` forces replacement.** Any edit under `cloud-init/` rebuilds the node, production included. It is also capped at **32 KiB**, and since #270 that
   is no longer a comfortable margin. Measured on this tree:
 

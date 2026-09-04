@@ -216,8 +216,8 @@ cd infra && ./check-capacity.sh --all                # advertised inventory
 scripts/upstream-node-pins.sh                        # are k3s and wal-g behind upstream?
 ```
 
-**A node pin bump replaces the node.** `node-pin-reminder.yml` opens an issue weekly when either is behind, and never a pull request. Take them during a
-rebuild — [`CLUSTER_BOOTSTRAP.md`](CLUSTER_BOOTSTRAP.md) § _Rebuilding a node_.
+**Neither pin bump is routine, and neither needs a rebuild.** `node-pin-reminder.yml` opens an issue weekly when either is behind, and never a pull request.
+[`K3S_UPGRADE.md`](K3S_UPGRADE.md) is the k3s procedure and [`BACKUPS.md`](BACKUPS.md) §8 the wal-g one.
 
 **Only `--probe` answers the question.** The advertisement disagreed with the order path three times out of four, in both directions.
 

@@ -92,7 +92,8 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       rebuild; it reads both pins out of the Terraform file rather than restating them, and an extraction that matches nothing is an error rather than "up to
       date". The script's exit codes are three answers and the workflow keeps them apart: 0 current, 1 behind, 2 the check could not be made — only the last
       fails the job. Issue titles carry the **pinned** version and never the target, so upstream moving cannot pile up issues. See
-      `docs/adr/ADR-024_DEPENDENCY_UPDATE_BOUNDARY.md` § _Why the node pins get a reminder_.
+      `docs/adr/ADR-024_DEPENDENCY_UPDATE_BOUNDARY.md` § _Why the node pins get a reminder_. **What to do with the issue it opens is
+      `docs/ops/K3S_UPGRADE.md`**, and the answer is not a rebuild.
     - `agent-security.yml` — **the only workflow that runs an agent**, and the first of #387's four workloads. Claude, driven by this repository's own
       [`/security-triage`](../prompts/security-triage.prompt.md) prompt, opening a pull request and never pushing to `main`. Five things about it are decisions.
       **It invokes the prompt as `--unattended`**, which is a clause in the prompt rather than a hint: the "ask first" tier has nobody to ask from a runner, so
