@@ -116,6 +116,8 @@ Empty output means the bump is complete. Any output is what the string edit coul
 ## When to revisit
 
 - **When the two vestigial Gradle wrappers are deleted (#1066)**, drop the `packageRules` entry that disables them.
+- **If the `pre-commit` manager is ever disabled**, gitleaks' `rev:` becomes watched by nothing and no error says so. It left `/update-dependencies` Step 12
+  when this ADR moved `.pre-commit-config.yaml` to Renovate (#1067), so there is no second mechanism holding it. Put it back in Step 12 in the same change.
 - **If `FLUX_VERSION` and `gotk-components.yaml` drift again.** Renovate owns one and Step 12 owns the other. A second occurrence means the split is wrong,
   and one mechanism should own both.
 - **If Renovate opens a pull request against anything in Dependabot's six.** The allow-list failed. That is a bug in this decision, not a merge conflict.

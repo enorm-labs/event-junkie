@@ -7,7 +7,7 @@
 #
 # **There is no `github_token:` input, deliberately.** Passing one makes the agent commit as
 # GITHUB_TOKEN, and Actions starts no workflow on those commits — so the pull request sits Pending
-# against nine required checks forever, looking like a hung check rather than this line.
+# against every required check forever, looking like a hung check rather than this line.
 #
 # **`--allowedTools` is load-bearing.** These prompts carry no frontmatter, so without it the agent
 # has no shell and no GitHub API, and the run reads the repository and does nothing. Bash is
