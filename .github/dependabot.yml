@@ -100,10 +100,19 @@ updates:
           - "@vue/*"
           - "@vitejs/plugin-vue"
           - "@intlify/*"
+      # **`oxlint` and `eslint-plugin-oxlint` are peer-locked** at `~X.Y`, so npm refuses any install
+      # that moves one without the other. They have to share a group, or each half arrives in its own
+      # pull request and neither can pass `npm ci`. That is exactly what #1101 and #1102 were — the
+      # mirror-image halves of one 1.80 to 1.81 bump, both red, neither fixable by merging the other.
+      #
+      # **`eslint-plugin-oxlint` is named although `eslint-*` looks like it covers it.** It landed in
+      # the `frontend-minor-patch` catch-all every time regardless, so the glob is not doing the work
+      # this list implies. Naming it does not depend on knowing why.
       linting:
         patterns:
           - "eslint"
           - "eslint-*"
+          - "eslint-plugin-oxlint"
           - "@eslint/*"
           - "oxlint"
           - "oxfmt"

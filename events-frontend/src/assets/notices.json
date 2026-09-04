@@ -2011,7 +2011,7 @@
         },
         {
           "name": "@lucide/vue",
-          "version": "1.38.0",
+          "version": "1.39.0",
           "url": "https://github.com/lucide-icons/lucide",
           "ecosystem": "frontend"
         },
