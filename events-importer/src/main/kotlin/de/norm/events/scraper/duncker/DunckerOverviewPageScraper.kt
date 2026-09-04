@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
@@ -15,7 +16,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
 import java.time.DateTimeException
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.MonthDay
@@ -160,7 +160,7 @@ class DunckerOverviewPageScraper(
             } catch (_: DateTimeException) {
                 return null
             }
-        val weekday = GERMAN_WEEKDAY_ABBREVIATIONS[row.textAt("td.tableweekday")?.lowercase()]
+        val weekday = parseGermanWeekdayAbbreviation(row.textAt("td.tableweekday"))
         return inferYearForWeekday(monthDay, weekday, clock)
     }
 
@@ -228,17 +228,5 @@ class DunckerOverviewPageScraper(
 
         /** A "DJ"/"Djs" label followed by the act name(s), captured to end of line. */
         private val DJ_PATTERN = Regex("""^djs?\b\.?\s+(.+)$""", RegexOption.IGNORE_CASE)
-
-        /** German two-letter weekday abbreviations used in the programme table. */
-        private val GERMAN_WEEKDAY_ABBREVIATIONS: Map<String, DayOfWeek> =
-            mapOf(
-                "mo" to DayOfWeek.MONDAY,
-                "di" to DayOfWeek.TUESDAY,
-                "mi" to DayOfWeek.WEDNESDAY,
-                "do" to DayOfWeek.THURSDAY,
-                "fr" to DayOfWeek.FRIDAY,
-                "sa" to DayOfWeek.SATURDAY,
-                "so" to DayOfWeek.SUNDAY
-            )
     }
 }

@@ -7,6 +7,7 @@ import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import de.norm.events.slug.SlugGenerator
@@ -14,7 +15,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.MonthDay
 
@@ -153,7 +153,7 @@ class WildAtHeartOverviewPageScraper(
         if (text == null) return null
         val match = DATUM_PATTERN.find(text) ?: return null
         val (weekdayAbbrev, day, month) = match.destructured
-        val weekday = GERMAN_WEEKDAY_ABBREVS[weekdayAbbrev.lowercase()]
+        val weekday = parseGermanWeekdayAbbreviation(weekdayAbbrev)
         val monthDay = runCatching { MonthDay.of(month.toInt(), day.toInt()) }.getOrNull() ?: return null
         return inferYearForWeekday(monthDay, weekday, clock)
     }
@@ -190,16 +190,5 @@ class WildAtHeartOverviewPageScraper(
 
         /** Extracts a "Beginn HH:MM" start time from a `.headlines` banner. */
         private val BEGINN_PATTERN = Regex("""Beginn\s*:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
-
-        private val GERMAN_WEEKDAY_ABBREVS: Map<String, DayOfWeek> =
-            mapOf(
-                "mo" to DayOfWeek.MONDAY,
-                "di" to DayOfWeek.TUESDAY,
-                "mi" to DayOfWeek.WEDNESDAY,
-                "do" to DayOfWeek.THURSDAY,
-                "fr" to DayOfWeek.FRIDAY,
-                "sa" to DayOfWeek.SATURDAY,
-                "so" to DayOfWeek.SUNDAY
-            )
     }
 }

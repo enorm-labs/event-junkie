@@ -7,6 +7,7 @@ import de.norm.events.scraper.arcanoa.ArcanoaOverviewPageScraper.Companion.RECUR
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
+import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -116,7 +117,7 @@ class ArcanoaOverviewPageScraper(
             val bodyEnd = markers.getOrNull(index + 1)?.range?.first ?: text.length
             val (weekday, day, month) = marker.destructured
             ProgrammeEntry(
-                weekday = GERMAN_WEEKDAY_ABBREVIATIONS[weekday.lowercase()],
+                weekday = parseGermanWeekdayAbbreviation(weekday),
                 day = day.toInt(),
                 month = month.toInt(),
                 body = text.substring(marker.range.last + 1, bodyEnd).trim()
@@ -310,18 +311,6 @@ class ArcanoaOverviewPageScraper(
                 """\barcanoa\b|open\s*stage|\bjam[\s-]*session\b|\bjam\b|spielleute|mittelalter""" +
                     """|liedermacherfestival|singersongwriter""",
                 RegexOption.IGNORE_CASE
-            )
-
-        /** German two-letter weekday abbreviations used in the programme lines. */
-        private val GERMAN_WEEKDAY_ABBREVIATIONS: Map<String, DayOfWeek> =
-            mapOf(
-                "mo" to DayOfWeek.MONDAY,
-                "di" to DayOfWeek.TUESDAY,
-                "mi" to DayOfWeek.WEDNESDAY,
-                "do" to DayOfWeek.THURSDAY,
-                "fr" to DayOfWeek.FRIDAY,
-                "sa" to DayOfWeek.SATURDAY,
-                "so" to DayOfWeek.SUNDAY
             )
     }
 }
