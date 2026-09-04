@@ -132,6 +132,31 @@ fun parseGermanShortDate(text: String?): LocalDate? = parseGerman(text, GERMAN_S
  */
 fun parseGermanMonthAbbreviation(text: String?): Month? = GERMAN_MONTH_ABBREVIATIONS[text?.trim(',', '.', ' ')?.lowercase()]
 
+/**
+ * Maps a German two-letter weekday abbreviation onto its [DayOfWeek], case-insensitively.
+ *
+ * Venues that render a year-less date write the weekday in front of it ("SA 08.08.", "Fr 03.07."),
+ * which is what [inferYearForWeekday] needs to pick the calendar year. Spelled out rather than
+ * parsed with a [Locale.GERMAN][java.util.Locale.GERMAN] formatter for the same reason as
+ * [parseGermanMonthAbbreviation]: the JDK's CLDR abbreviations carry a trailing dot.
+ *
+ * Shared by the venues whose listings render this heading — Arcanoa, Club der Visionäre, Duncker,
+ * gART.n, Kater and Wild at Heart. Only the two-letter form; a page spelling the weekday out
+ * ("Donnerstag") or writing it in English is read by that venue's own map.
+ */
+fun parseGermanWeekdayAbbreviation(text: String?): DayOfWeek? = GERMAN_WEEKDAY_ABBREVIATIONS[text?.lowercase()]
+
+private val GERMAN_WEEKDAY_ABBREVIATIONS: Map<String, DayOfWeek> =
+    mapOf(
+        "mo" to DayOfWeek.MONDAY,
+        "di" to DayOfWeek.TUESDAY,
+        "mi" to DayOfWeek.WEDNESDAY,
+        "do" to DayOfWeek.THURSDAY,
+        "fr" to DayOfWeek.FRIDAY,
+        "sa" to DayOfWeek.SATURDAY,
+        "so" to DayOfWeek.SUNDAY
+    )
+
 private val GERMAN_MONTH_ABBREVIATIONS: Map<String, Month> =
     mapOf(
         "jan" to Month.JANUARY,

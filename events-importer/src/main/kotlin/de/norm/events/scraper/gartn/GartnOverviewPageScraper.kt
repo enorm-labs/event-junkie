@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stripArtistSuffix
@@ -17,7 +18,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
 import java.time.Clock
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.MonthDay
 import java.time.ZoneId
@@ -150,7 +150,7 @@ class GartnOverviewPageScraper(
         val (weekday, day, month) = (DATE_HEADING.find(dateHeading(block)) ?: return null).destructured
         return runCatching { MonthDay.of(month.toInt(), day.toInt()) }
             .getOrNull()
-            ?.let { inferYearForWeekday(it, GERMAN_WEEKDAY_ABBREVIATIONS[weekday.lowercase()], clock) }
+            ?.let { inferYearForWeekday(it, parseGermanWeekdayAbbreviation(weekday), clock) }
     }
 
     /** A block's `h2` heading text, which is a `SA 08.08.` date on every event block and nothing else. */
@@ -255,17 +255,5 @@ class GartnOverviewPageScraper(
 
         /** The back-to-back marker joining two DJs into one slot. */
         val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
-
-        /** German two-letter weekday abbreviations used in the date headings. */
-        val GERMAN_WEEKDAY_ABBREVIATIONS: Map<String, DayOfWeek> =
-            mapOf(
-                "mo" to DayOfWeek.MONDAY,
-                "di" to DayOfWeek.TUESDAY,
-                "mi" to DayOfWeek.WEDNESDAY,
-                "do" to DayOfWeek.THURSDAY,
-                "fr" to DayOfWeek.FRIDAY,
-                "sa" to DayOfWeek.SATURDAY,
-                "so" to DayOfWeek.SUNDAY
-            )
     }
 }

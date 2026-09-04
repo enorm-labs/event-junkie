@@ -9,6 +9,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isScreeningTitle
+import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripArtistSuffix
@@ -16,7 +17,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.MonthDay
 import java.time.ZoneId
@@ -204,7 +204,7 @@ class KaterOverviewPageScraper(
         val monthDay = runCatching { MonthDay.of(groups[MONTH_GROUP].toInt(), groups[DAY_GROUP].toInt()) }.getOrNull()
         return monthDay?.let {
             Schedule(
-                date = inferYearForWeekday(it, GERMAN_WEEKDAYS[groups[WEEKDAY_GROUP].lowercase()], clock),
+                date = inferYearForWeekday(it, parseGermanWeekdayAbbreviation(groups[WEEKDAY_GROUP]), clock),
                 startTime = parseTime(groups[TIME_GROUP])
             )
         }
@@ -237,18 +237,6 @@ class KaterOverviewPageScraper(
 
         /** The opening schedule line; only the start half is captured. */
         val SCHEDULE_PATTERN = Regex("""^([A-Za-zÄÖÜäöü]{2})\.\s*(\d{1,2})\.(\d{1,2})\.?\s+(\d{1,2}:\d{2})""")
-
-        /** German weekday abbreviations as the venue writes them. */
-        val GERMAN_WEEKDAYS: Map<String, DayOfWeek> =
-            mapOf(
-                "mo" to DayOfWeek.MONDAY,
-                "di" to DayOfWeek.TUESDAY,
-                "mi" to DayOfWeek.WEDNESDAY,
-                "do" to DayOfWeek.THURSDAY,
-                "fr" to DayOfWeek.FRIDAY,
-                "sa" to DayOfWeek.SATURDAY,
-                "so" to DayOfWeek.SUNDAY
-            )
 
         /**
          * An unambiguous free-entry phrase in the blurb. Deliberately multi-word: the shared

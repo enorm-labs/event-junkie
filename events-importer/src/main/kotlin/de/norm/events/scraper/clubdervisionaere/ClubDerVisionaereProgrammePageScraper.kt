@@ -7,6 +7,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.clubdervisionaere.ClubDerVisionaereProgrammePageScraper.Companion.FLOOR_LABEL_PATTERN
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
@@ -16,7 +17,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
 import java.time.DateTimeException
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.MonthDay
 
@@ -159,7 +159,7 @@ class ClubDerVisionaereProgrammePageScraper(
             } catch (_: DateTimeException) {
                 return null
             }
-        return inferYearForWeekday(monthDay, GERMAN_WEEKDAY_ABBREVIATIONS[weekdayText.lowercase()], clock)
+        return inferYearForWeekday(monthDay, parseGermanWeekdayAbbreviation(weekdayText), clock)
     }
 
     /**
@@ -292,17 +292,5 @@ class ClubDerVisionaereProgrammePageScraper(
 
         /** The back-to-back marker joining two DJs into one slot ("XDB b2b Onirik"). */
         private val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
-
-        /** German two-letter weekday abbreviations used in the date cells. */
-        private val GERMAN_WEEKDAY_ABBREVIATIONS: Map<String, DayOfWeek> =
-            mapOf(
-                "mo" to DayOfWeek.MONDAY,
-                "di" to DayOfWeek.TUESDAY,
-                "mi" to DayOfWeek.WEDNESDAY,
-                "do" to DayOfWeek.THURSDAY,
-                "fr" to DayOfWeek.FRIDAY,
-                "sa" to DayOfWeek.SATURDAY,
-                "so" to DayOfWeek.SUNDAY
-            )
     }
 }
