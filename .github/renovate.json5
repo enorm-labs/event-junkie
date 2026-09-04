@@ -83,8 +83,8 @@
   // `secrets/` subdirectories, which hold SOPS-encrypted material and nothing to update.
   //
   // **`managerFilePatterns` inside a manager block is ADDITIVE to that manager's default, not a
-  // replacement** — measured rather than read: scoping `gradle-wrapper` to a single path here left
-  // all three of its files still matched. So the `gotk-components` alternative below is redundant
+  // replacement** — measured rather than read: naming one path for `gradle-wrapper` did not stop its
+  // default from matching every other wrapper file. So the `gotk-components` alternative below is redundant
   // with the default, and is kept only because it makes the intent readable. Where something has to
   // be *excluded*, a `packageRules` entry with `matchFileNames` is the mechanism that works.
   flux: {
@@ -230,27 +230,6 @@
       // decides what staging runs.
       description: 'Never touch our own chart — the release pipeline owns its version',
       matchPackageNames: ['ghcr.io/enorm-labs/**'],
-      enabled: false,
-    },
-
-    {
-      // **Two vestigial Gradle wrappers, which want deleting rather than maintaining.** A dry run
-      // found three tracked `gradle-wrapper.properties`: the root at 9.7.1, and copies under
-      // `events-bff/` and `events-importer/` still at **9.5.0**. Those two are Spring Initializr
-      // leftovers — `settings.gradle.kts` includes both modules as subprojects of the root build,
-      // nothing anywhere invokes their `gradlew`, and both Dockerfiles document the build as
-      // `./gradlew :events-bff:bootJarLayers` from the root. They rotted two minors behind precisely
-      // because nothing uses them.
-      //
-      // Renovate keeping them current would make a dead file look maintained, which is how it
-      // becomes permanent. **The root wrapper — the one that actually builds — stays watched.**
-      // Filed as #1066 for deletion. Drop this rule when that lands.
-      description: 'The two unused per-module Gradle wrappers are pending deletion, not upkeep',
-      matchManagers: ['gradle-wrapper'],
-      matchFileNames: [
-        'events-bff/gradle/wrapper/gradle-wrapper.properties',
-        'events-importer/gradle/wrapper/gradle-wrapper.properties',
-      ],
       enabled: false,
     },
 

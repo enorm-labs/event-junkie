@@ -750,10 +750,15 @@ There is a [`/update-dependencies`](../.github/prompts/update-dependencies.promp
 
 ### Updating the Gradle wrapper
 
+**Pass the checksum every time, or the bump removes it.** `gradle-wrapper.properties` carries a `distributionSha256Sum`, and `./gradlew wrapper` writes the
+file from its arguments. A run without the flag drops the line, and the wrapper goes back to verifying only the URL. Nothing fails when it does.
+
 ```bash
-./gradlew wrapper --gradle-version latest
-./gradlew wrapper --gradle-version 9.7.1     # or a specific version
+SUM=$(curl -fsSL https://services.gradle.org/distributions/gradle-9.7.1-bin.zip.sha256)
+./gradlew wrapper --gradle-version 9.7.1 --gradle-distribution-sha256-sum "$SUM"
 ```
+
+Renovate bumps this wrapper by itself and maintains the checksum with it, so the command above is for a bump taken by hand.
 
 ### Licences and open-source notices
 
