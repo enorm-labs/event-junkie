@@ -145,11 +145,32 @@ private fun splitActs(slot: String): List<String> =
         .map(::stripSetFormatNote)
         // The venue also bills a format in *front* of the act ("Listening Session: Drexciya —
         // Neptune's Lair"); that names the slot, not the performer.
-        .map(::stripArtistPrefix)
+        .map(::stripFormatLabel)
+        .map(::stripReleaseTitle)
         .filter { it.isNotBlank() && !isUnannouncedAct(it) && !HOST_CREDIT.containsMatchIn(it) }
 
 /** Removes a trailing set-format note, unless it is all the slot says — then the name stands. */
 private fun stripSetFormatNote(act: String): String = act.replace(SET_FORMAT_NOTE, "").trim().ifBlank { act.trim() }
+
+/**
+ * Strips a leading format label, with or without the room in front of it: the Globus programme
+ * line reads `Globus Listening Session: The Fear Ratio 'Slinky'` (#1133). The room is dropped only
+ * when a label follows it, so an act whose name opens with a room's name is left whole.
+ */
+private fun stripFormatLabel(act: String): String {
+    val withoutRoom = act.replaceFirst(ROOM_PREFIX, "")
+    val stripped = stripArtistPrefix(withoutRoom)
+    return if (stripped != withoutRoom) stripped else stripArtistPrefix(act)
+}
+
+/** Strips a trailing quoted release — `The Fear Ratio 'Slinky'` — unless the quote is all there is. */
+private fun stripReleaseTitle(act: String): String = act.replace(RELEASE_TITLE, "").trim().ifBlank { act.trim() }
+
+/** One of the venue's rooms at the head of a slot, as the `Globus …` programme line writes it. */
+private val ROOM_PREFIX = Regex("""^(?:aurora\s+bar|tresor|globus)\s+""", RegexOption.IGNORE_CASE)
+
+/** A quoted release title trailing the act that presents it: `'Slinky'`, `"Neptune's Lair"`. */
+private val RELEASE_TITLE = Regex("""\s+['"‘’“„]([^'"‘’“”„]+)['"’”“]\s*$""")
 
 /** The back-to-back marker joining two DJs into one slot. */
 private val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)

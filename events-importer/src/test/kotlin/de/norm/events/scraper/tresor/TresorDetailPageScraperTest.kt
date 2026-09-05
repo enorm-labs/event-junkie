@@ -1,6 +1,7 @@
 package de.norm.events.scraper.tresor
 
 import de.norm.events.scraper.ScrapedEvent
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -41,6 +42,19 @@ class TresorDetailPageScraperTest {
         klubnacht.startTime shouldBe LocalTime.of(23, 0)
         klubnacht.eventDate shouldBe LocalDate.of(2026, 8, 1)
         klubnacht.sourceId shouldBe "tresor:20260801-tresor-klubnacht"
+    }
+
+    @Test
+    fun `reads the act out of a room-and-format label and drops its quoted release`() {
+        // "Globus Listening Session: The Fear Ratio 'Slinky'": Globus is the room, Listening
+        // Session the format, Slinky the record (#1133).
+        val night = scrape("tresor-detail-globus-session.html", "20260905-tresor-invites-o-v-r")
+        night.shouldNotBeNull()
+
+        val globus = night.artists.filter { it.stage == "Globus" }.map { it.name }
+        globus.first() shouldBe "The Fear Ratio"
+        night.artists.map { it.name } shouldContain "Samuel Kerridge"
+        night.artists.none { it.name.contains("Listening Session", ignoreCase = true) } shouldBe true
     }
 
     @Test
