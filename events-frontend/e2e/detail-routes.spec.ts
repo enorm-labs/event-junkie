@@ -60,6 +60,12 @@ const eventBody = {
   promoters: [{ slug: 'mock-promoter', name: 'Mock Promoter' }],
 }
 const venueBody = { slug: 'mock-venue', name: 'Mock Venue', city: 'Berlin' }
+
+/** The smallest valid PNG, so a routed poster request decodes instead of rendering as broken. */
+const ONE_PIXEL_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+  'base64',
+)
 const artistBody = { slug: 'mock-artist', name: 'Mock Artist' }
 const promoterBody = { slug: 'mock-promoter', name: 'Mock Promoter' }
 
@@ -179,6 +185,81 @@ test.describe('a past event', () => {
 
     await expect(page.getByRole('link', { name: 'Buy tickets' })).toBeVisible()
     await expect(page.getByText('This event has already taken place.')).toHaveCount(0)
+  })
+
+  test('an all-headliner co-bill lists its acts without role labels', async ({ page }) => {
+    // A venue that bills `A + B + C` names no order, and the importer stores every act as a
+    // headliner. Three "Headliner" tags would only repeat the list.
+    const coBill = {
+      ...eventBody,
+      lineup: [
+        { artist: { slug: 'alibi', name: 'Alibi' }, role: 'HEADLINER', billingOrder: 0 },
+        { artist: { slug: 'onyon', name: 'Onyon' }, role: 'HEADLINER', billingOrder: 1 },
+      ],
+    }
+    await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, coBill))
+
+    await page.goto('/events/mock-event')
+
+    await expect(page.getByRole('link', { name: 'Onyon' })).toBeVisible()
+    await expect(page.getByText('Headliner', { exact: true })).toHaveCount(0)
+  })
+
+  test('an all-DJ night keeps its role labels', async ({ page }) => {
+    // Uniform is not the test — `DJ` still says the acts play records rather than live.
+    const djNight = {
+      ...eventBody,
+      lineup: [
+        { artist: { slug: 'dj-one', name: 'DJ One' }, role: 'DJ', billingOrder: 0 },
+        { artist: { slug: 'dj-two', name: 'DJ Two' }, role: 'DJ', billingOrder: 1 },
+      ],
+    }
+    await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, djNight))
+
+    await page.goto('/events/mock-event')
+
+    await expect(page.getByText('DJ', { exact: true })).toHaveCount(2)
+  })
+
+  test('keeps a gap between the poster and the description', async ({ page }) => {
+    // `space-y-8` puts its margin on the element before the gap, and the cached-image <picture>
+    // is `display: contents`, so without a wrapper the poster sat flush against the description.
+    const withPoster = {
+      ...eventBody,
+      description: 'Doors at eight.',
+      imageUrl: '/api/images/poster/704.jpg',
+      imageSources: [{ type: 'image/jpeg', srcset: '/api/images/poster/704.jpg 704w' }],
+      intrinsicWidth: 704,
+      intrinsicHeight: 469,
+    }
+    await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, withPoster))
+    await page.route(/\/api\/images\//, (route) =>
+      route.fulfill({ status: 200, contentType: 'image/png', body: ONE_PIXEL_PNG }),
+    )
+
+    await page.goto('/events/mock-event')
+
+    const poster = await page.getByRole('img', { name: 'Mock Fest' }).boundingBox()
+    const description = await page.getByText('Doors at eight.').boundingBox()
+    expect(poster).not.toBeNull()
+    expect(description).not.toBeNull()
+    expect(description!.y - (poster!.y + poster!.height)).toBeGreaterThanOrEqual(32)
+  })
+
+  test('a mixed lineup labels every act', async ({ page }) => {
+    const mixed = {
+      ...eventBody,
+      lineup: [
+        { artist: { slug: 'main', name: 'Main Act' }, role: 'HEADLINER', billingOrder: 0 },
+        { artist: { slug: 'opener', name: 'Opener' }, role: 'SUPPORT', billingOrder: 1 },
+      ],
+    }
+    await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, mixed))
+
+    await page.goto('/events/mock-event')
+
+    await expect(page.getByText('Headliner', { exact: true })).toBeVisible()
+    await expect(page.getByText('Support', { exact: true })).toBeVisible()
   })
 })
 

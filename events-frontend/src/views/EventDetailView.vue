@@ -26,6 +26,15 @@ const lineup = computed(() =>
   [...(event.value?.lineup ?? [])].sort((a, b) => (a.billingOrder ?? 0) - (b.billingOrder ?? 0)),
 )
 
+/**
+ * Whether the lineup's role labels carry information.
+ *
+ * An importer that reads a co-bill like `Alibi + Onyon + Tense` bills every act `HEADLINER`, because
+ * the venue named no order. Three "Headliner" tags say nothing the list does not, so an all-headliner
+ * lineup drops them. An all-DJ night keeps its tags: `DJ` says the acts play records, not live.
+ */
+const showRoles = computed(() => lineup.value.some((entry) => entry.role !== 'HEADLINER'))
+
 const isPast = computed(() => isPastEvent(event.value?.eventDate))
 
 onMounted(run)
@@ -103,7 +112,9 @@ useStructuredData((): JsonLd[] => {
     <p v-else-if="error" class="text-sm text-destructive">{{ error }}</p>
 
     <article v-else-if="event" class="space-y-8">
-      <header class="space-y-3">
+      <!-- The poster belongs to the title, so it sits closer than the article's stride. `mb-5` wins
+           over `space-y-8` because the latter is a zero-specificity `:where()` rule. -->
+      <header class="mb-5 space-y-3">
         <h1 class="text-3xl font-bold tracking-tight">{{ event.title }}</h1>
         <p v-if="event.subtitle" class="text-lg text-muted-foreground">{{ event.subtitle }}</p>
         <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -130,16 +141,22 @@ useStructuredData((): JsonLd[] => {
         The widest image on the site, drawn across a `max-w-3xl` column: 704 px once `sm:p-8` is
         subtracted, and the viewport minus its padding below that. Those three lengths are what turn
         `srcset`'s pixel widths into a choice, so they track the `<main>` classes above.
+
+        The wrapper is the spacing. `space-y-8` puts its margin on the child that precedes the gap,
+        and `CachedImage` renders a `display: contents` <picture>, which has no box to carry one — so
+        the picture sat flush against the description while the placeholder, a real <div>, did not.
       -->
-      <CachedImage
-        :src="event.imageUrl"
-        :sources="event.imageSources"
-        :intrinsic-width="event.intrinsicWidth"
-        :intrinsic-height="event.intrinsicHeight"
-        :alt="event.title ?? ''"
-        sizes="(min-width: 768px) 704px, (min-width: 640px) calc(100vw - 4rem), calc(100vw - 2rem)"
-        img-class="w-full rounded-lg border border-border object-cover"
-      />
+      <div>
+        <CachedImage
+          :src="event.imageUrl"
+          :sources="event.imageSources"
+          :intrinsic-width="event.intrinsicWidth"
+          :intrinsic-height="event.intrinsicHeight"
+          :alt="event.title ?? ''"
+          sizes="(min-width: 768px) 704px, (min-width: 640px) calc(100vw - 4rem), calc(100vw - 2rem)"
+          img-class="w-full rounded-lg border border-border object-cover"
+        />
+      </div>
 
       <p v-if="event.description" class="whitespace-pre-line text-foreground/90">
         {{ event.description }}
@@ -175,7 +192,7 @@ useStructuredData((): JsonLd[] => {
             <span v-else class="font-medium">{{ entry.artist?.name }}</span>
             <div class="flex items-center gap-2 text-xs text-muted-foreground">
               <BaseBadge v-if="entry.stage" variant="outline">{{ entry.stage }}</BaseBadge>
-              <span v-if="entry.role">
+              <span v-if="showRoles && entry.role">
                 {{ enumLabel('events.role', entry.role) }}
               </span>
             </div>
