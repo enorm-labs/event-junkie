@@ -164,8 +164,9 @@ jobs:
             const findings = artifact
               ? tables.map(({ component, text }) =>
                   text ? `**${component}**\n\n\`\`\`text\n${text}\n\`\`\`` : `**${component}** — clean.`).join('\n\n')
-              : `The run failed at ${failedStep}, before the images were scanned, so there is no Trivy table. ` +
-                'That is a different failure from the one this issue was designed for — read the run.';
+              : `The run failed at ${failedStep} and carries no \`trivy-reports\` artifact, so there is no table to quote. ` +
+                'Either it died before the scan — a different failure from the one this issue was designed for — or it predates ' +
+                'the artifact. Read the run.';
 
             const report = `${runLink} failed publishing ${what}.\n\n${findings}`;
 
