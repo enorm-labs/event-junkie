@@ -155,77 +155,102 @@ const { t } = useI18n()
       </Button>
     </div>
 
-    <BaseSelect
-      :aria-label="t('events.filters.byType')"
-      :model-value="queryString('eventType')"
-      @change="applyFilters({ eventType: ($event.target as HTMLSelectElement).value })"
-    >
-      <option value="">{{ t('events.filters.allTypes') }}</option>
-      <!--
+    <!--
+      The bar reads as a funnel: when (above), then what, then where, then how much. Each pair is
+      grouped so it wraps as one — with real venue names the type select used to trail the date row
+      while the venue select opened the next. Type and genre both ask what kind of night; venue and
+      district both ask where. "Free only" is the price axis at zero, so it stays with the price
+      range, and the availability toggle closes the bar.
+    -->
+    <div class="flex flex-wrap gap-3">
+      <BaseSelect
+        :aria-label="t('events.filters.byType')"
+        :model-value="queryString('eventType')"
+        @change="applyFilters({ eventType: ($event.target as HTMLSelectElement).value })"
+      >
+        <option value="">{{ t('events.filters.allTypes') }}</option>
+        <!--
         The option value stays the raw enum the BFF filters on; only the label is humanised,
         through the same helper the event cards use — so picking "Club night" here and reading
         it off a card are the same words.
       -->
-      <option v-for="type in EVENT_TYPES" :key="type" :value="type">
-        {{ formatEventType(type) }}
-      </option>
-    </BaseSelect>
+        <option v-for="type in EVENT_TYPES" :key="type" :value="type">
+          {{ formatEventType(type) }}
+        </option>
+      </BaseSelect>
 
-    <BaseSelect
-      :aria-label="t('events.filters.byVenue')"
-      :model-value="queryString('venue')"
-      @change="applyFilters({ venue: ($event.target as HTMLSelectElement).value })"
-    >
-      <option value="">{{ t('events.filters.allVenues') }}</option>
-      <option v-for="v in venues.data.value ?? []" :key="v.slug" :value="v.slug ?? ''">
-        {{ v.name }}
-      </option>
-    </BaseSelect>
+      <BaseSelect
+        :aria-label="t('events.filters.byGenre')"
+        :model-value="queryString('genre')"
+        @change="applyFilters({ genre: ($event.target as HTMLSelectElement).value })"
+      >
+        <option value="">{{ t('events.filters.allGenres') }}</option>
+        <option v-for="tag in genres.data.value ?? []" :key="tag.slug" :value="tag.slug ?? ''">
+          {{ tag.name }}
+        </option>
+      </BaseSelect>
+    </div>
 
-    <BaseSelect
-      :aria-label="t('events.filters.byDistrict')"
-      :model-value="queryString('district')"
-      @change="applyFilters({ district: ($event.target as HTMLSelectElement).value })"
-    >
-      <option value="">{{ t('events.filters.allDistricts') }}</option>
-      <option v-for="d in DISTRICTS" :key="d.slug" :value="d.slug">{{ d.label }}</option>
-    </BaseSelect>
+    <div class="flex flex-wrap gap-3">
+      <BaseSelect
+        :aria-label="t('events.filters.byVenue')"
+        :model-value="queryString('venue')"
+        @change="applyFilters({ venue: ($event.target as HTMLSelectElement).value })"
+      >
+        <option value="">{{ t('events.filters.allVenues') }}</option>
+        <option v-for="v in venues.data.value ?? []" :key="v.slug" :value="v.slug ?? ''">
+          {{ v.name }}
+        </option>
+      </BaseSelect>
 
-    <BaseSelect
-      :aria-label="t('events.filters.byGenre')"
-      :model-value="queryString('genre')"
-      @change="applyFilters({ genre: ($event.target as HTMLSelectElement).value })"
-    >
-      <option value="">{{ t('events.filters.allGenres') }}</option>
-      <option v-for="tag in genres.data.value ?? []" :key="tag.slug" :value="tag.slug ?? ''">
-        {{ tag.name }}
-      </option>
-    </BaseSelect>
+      <BaseSelect
+        :aria-label="t('events.filters.byDistrict')"
+        :model-value="queryString('district')"
+        @change="applyFilters({ district: ($event.target as HTMLSelectElement).value })"
+      >
+        <option value="">{{ t('events.filters.allDistricts') }}</option>
+        <option v-for="d in DISTRICTS" :key="d.slug" :value="d.slug">{{ d.label }}</option>
+      </BaseSelect>
+    </div>
 
-    <form class="flex items-center gap-2" @submit.prevent="applyFilters({ minPrice, maxPrice })">
-      <BaseInput
-        v-model="minPrice"
-        :aria-label="t('events.filters.minPrice')"
-        :placeholder="t('events.filters.minPricePlaceholder')"
-        class="w-20"
-        inputmode="decimal"
-        min="0"
-        step="0.01"
-        type="number"
-      />
-      <span class="text-sm text-muted-foreground">–</span>
-      <BaseInput
-        v-model="maxPrice"
-        :aria-label="t('events.filters.maxPrice')"
-        :placeholder="t('events.filters.maxPricePlaceholder')"
-        class="w-20"
-        inputmode="decimal"
-        min="0"
-        step="0.01"
-        type="number"
-      />
-      <Button type="submit" variant="outline">{{ t('common.actions.apply') }}</Button>
-    </form>
+    <div class="flex flex-wrap items-center gap-3">
+      <form class="flex items-center gap-2" @submit.prevent="applyFilters({ minPrice, maxPrice })">
+        <BaseInput
+          v-model="minPrice"
+          :aria-label="t('events.filters.minPrice')"
+          :placeholder="t('events.filters.minPricePlaceholder')"
+          class="w-20"
+          inputmode="decimal"
+          min="0"
+          step="0.01"
+          type="number"
+        />
+        <span class="text-sm text-muted-foreground">–</span>
+        <BaseInput
+          v-model="maxPrice"
+          :aria-label="t('events.filters.maxPrice')"
+          :placeholder="t('events.filters.maxPricePlaceholder')"
+          class="w-20"
+          inputmode="decimal"
+          min="0"
+          step="0.01"
+          type="number"
+        />
+        <Button type="submit" variant="outline">{{ t('common.actions.apply') }}</Button>
+      </form>
+
+      <label class="flex h-8 items-center gap-2 text-sm text-muted-foreground">
+        <input
+          :checked="queryString('free') === 'true'"
+          class="size-4 rounded border-border accent-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          type="checkbox"
+          @change="
+            applyFilters({ free: ($event.target as HTMLInputElement).checked ? 'true' : '' })
+          "
+        />
+        {{ t('events.filters.freeOnly') }}
+      </label>
+    </div>
 
     <label class="flex h-8 items-center gap-2 text-sm text-muted-foreground">
       <input
@@ -239,16 +264,6 @@ const { t } = useI18n()
         "
       />
       {{ t('events.filters.hideSoldOut') }}
-    </label>
-
-    <label class="flex h-8 items-center gap-2 text-sm text-muted-foreground">
-      <input
-        :checked="queryString('free') === 'true'"
-        class="size-4 rounded border-border accent-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-        type="checkbox"
-        @change="applyFilters({ free: ($event.target as HTMLInputElement).checked ? 'true' : '' })"
-      />
-      {{ t('events.filters.freeOnly') }}
     </label>
   </div>
 </template>

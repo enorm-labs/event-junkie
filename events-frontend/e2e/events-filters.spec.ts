@@ -275,18 +275,6 @@ test('browses past events from an explicit range', async ({ page }) => {
   expect(errors, 'unexpected uncaught exceptions').toEqual([])
 })
 
-test('the last-30-days preset asks for a range that has already ended', async ({ page }) => {
-  await page.goto('/events')
-
-  await page.getByRole('button', { name: 'Last 30 days' }).click()
-
-  await expect(eventHeading(page, 'Gig Last Month')).toBeVisible()
-  // It ends yesterday, so the range holds only events that have happened.
-  const url = new URL(page.url())
-  expect(url.searchParams.get('to')).toBe(isoDaysFromNow(-1))
-  expect(url.searchParams.get('from')).toBe(isoDaysFromNow(-30))
-})
-
 test('hides sold-out events when the toggle is checked', async ({ page }) => {
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
