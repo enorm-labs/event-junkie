@@ -140,7 +140,7 @@ class ClubOstDetailPageScraperTest {
     }
 
     @Test
-    fun `scrape returns null when the URL carries no numeric event id`() {
+    fun `scrape returns null when the URL carries no event id`() {
         val url = "https://clubost.de/event/teaser/"
         val html =
             """

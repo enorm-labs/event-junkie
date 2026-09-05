@@ -66,7 +66,7 @@ class ClubOstDetailPageScraper {
 
         val eventId = extractClubOstEventId(sourceUrl)
         if (eventId == null) {
-            logger.warn { "Club OST detail URL $sourceUrl carries no numeric event id, skipping" }
+            logger.warn { "Club OST detail URL $sourceUrl carries no event id, skipping" }
             return null
         }
 

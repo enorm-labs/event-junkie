@@ -31,7 +31,7 @@ import org.jsoup.nodes.Element
  * silently switch the rendering and must come with a matching parser here.
  *
  * Every card is a flyer, a title, a start time and a Resident Advisor ticket link, identified by the
- * numeric id in its `/event/<id>` link. The venue is a techno club whose whole programme is club
+ * id in its `/event/<id>` link (a UUID since September 2026, a numeric key before). The venue is a techno club whose whole programme is club
  * nights, so every event is typed [EventType.PARTY] outright — the same call
  * [gartn][de.norm.events.scraper.gartn], [voidclub][de.norm.events.scraper.voidclub] and the other
  * category-less techno rooms make. The template does reserve a slot for the lineup — an empty
@@ -92,7 +92,7 @@ class ClubOstOverviewPageScraper {
         }
         val eventId = extractClubOstEventId(href)
         if (eventId == null) {
-            logger.warn { "Club OST detail link '$href' carries no numeric event id, skipping" }
+            logger.warn { "Club OST detail link '$href' carries no event id, skipping" }
             return null
         }
 
@@ -148,15 +148,18 @@ class ClubOstOverviewPageScraper {
 }
 
 /**
- * Extracts the numeric event id Club OST's detail URLs carry — `/event/231438/` → `231438`.
+ * Extracts the event id Club OST's detail URLs carry — `/event/231438/` → `231438`, and since
+ * September 2026 `/event/e9bdde1e-299a-4cc3-ad01-c8d3011aa869/` → that UUID.
  *
- * The id is the club's booking-system primary key (it reappears in the flyer's S3 path,
- * `…/756/231438/original/…`), so it is stable across renames and re-scheduling in a way the
- * upper-cased title is not. It is the whole of the event's identity on this site: there is no
- * slug. Returns `null` when the href has no numeric segment, which is the signal to skip the
- * card rather than mint an unstable `sourceId` from the title.
+ * The id is the club's booking-system primary key, so it is stable across renames and
+ * re-scheduling in a way the upper-cased title is not. It is the whole of the event's identity on
+ * this site: there is no slug. Both shapes are accepted because the site switched from one to the
+ * other, and a pattern that took only the leading digits skipped every UUID starting with a letter
+ * and collided the rest on their first digits — two of ten September cards were lost (#1131).
+ * Returns `null` when the segment is neither, which is the signal to skip the card rather than mint
+ * an unstable `sourceId` from the title.
  */
 fun extractClubOstEventId(href: String): String? = EVENT_ID_PATTERN.find(href)?.groupValues?.get(1)
 
-/** The numeric id segment of a Club OST detail path, with or without the trailing slash. */
-private val EVENT_ID_PATTERN = Regex("""/event/(\d+)/?""")
+/** The id segment of a Club OST detail path — a UUID or the older numeric key — with or without the trailing slash. */
+private val EVENT_ID_PATTERN = Regex("""/event/([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|\d+)/?(?:$|[?#/])""", RegexOption.IGNORE_CASE)

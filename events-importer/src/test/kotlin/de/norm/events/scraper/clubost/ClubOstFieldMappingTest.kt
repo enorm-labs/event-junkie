@@ -101,4 +101,14 @@ class ClubOstFieldMappingTest {
         extractClubOstEventId("/impressum/") shouldBe null
         extractClubOstEventId("/event/blasphemy/") shouldBe null
     }
+
+    @Test
+    fun `extractClubOstEventId reads the UUID the site switched to in September 2026`() {
+        // Taking only the leading digits skipped every UUID starting with a letter and collided
+        // the rest on their first digits (#1131); the whole segment is the id.
+        extractClubOstEventId("/event/e9bdde1e-299a-4cc3-ad01-c8d3011aa869/") shouldBe "e9bdde1e-299a-4cc3-ad01-c8d3011aa869"
+        extractClubOstEventId("https://clubost.de/event/2fb359f9-da6c-497d-9818-a1e8868d06f4/") shouldBe
+            "2fb359f9-da6c-497d-9818-a1e8868d06f4"
+        extractClubOstEventId("/event/2fb359f9/") shouldBe null
+    }
 }

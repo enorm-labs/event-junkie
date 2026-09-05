@@ -9,6 +9,7 @@ import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.Month
 
 /**
  * Unit tests for [ClubOstOverviewPageScraper], parsing a snapshot of the real Club OST
@@ -99,7 +100,7 @@ class ClubOstOverviewPageScraperTest {
     }
 
     @Test
-    fun `scrape derives sourceId from the stable numeric event id`() {
+    fun `scrape derives sourceId from the stable event id`() {
         scrapeFixture().map { it.sourceId }.sorted() shouldContainExactly
             listOf(
                 "club_ost:215982",
@@ -161,7 +162,25 @@ class ClubOstOverviewPageScraperTest {
     }
 
     @Test
-    fun `scrape skips a card whose link carries no numeric event id`() {
+    fun `scrape keeps every card once the detail links carry UUIDs`() {
+        // Homepage of 5 September 2026: ten September nights, `/event/<uuid>/` links. The numeric
+        // pattern dropped two of the ten and merged others onto one id (#1131).
+        val events =
+            scraper.scrape(
+                Jsoup.parse(loadFixture("scraper/clubost/clubost-overview-uuid.html"), sourceUrl),
+                sourceUrl
+            )
+
+        val september = events.filter { it.eventDate.month == Month.SEPTEMBER }
+        september.map { it.eventDate.dayOfMonth }.sorted() shouldContainExactly listOf(5, 10, 11, 12, 17, 18, 19, 24, 25, 26)
+        events.map { it.sourceId }.toSet().size shouldBe events.size
+        events.first { it.eventDate == LocalDate.of(2026, 9, 5) }.sourceId shouldBe "club_ost:e9bdde1e-299a-4cc3-ad01-c8d3011aa869"
+        events.first { it.eventDate == LocalDate.of(2026, 9, 5) }.sourceUrl shouldBe
+            "https://clubost.de/event/e9bdde1e-299a-4cc3-ad01-c8d3011aa869/"
+    }
+
+    @Test
+    fun `scrape skips a card whose link carries no event id`() {
         val html =
             """
             <html><body>

@@ -1,0 +1,2731 @@
+
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Club Ost</title>
+    <!-- Icons and Picture imports -->
+    <!--link rel="icon" type="image/x-icon" href="/static/images/icon.ico"-->
+    
+    <!-- Custom CSS -->
+
+    <link rel="stylesheet" href="/static/node_modules/bootstrap/dist/css/bootstrap.min.css">
+
+ 
+
+    <link href="https://fonts.googleapis.com/css?family=Cormorant+Garamond" rel="stylesheet">
+    <!-- JavaScript-Code -->
+   <!--script src="/static/js/home/home.js"></script-->
+   <script src="/static/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    
+    <!-- cookies consent -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orestbida/cookieconsent@v2.8.0/dist/cookieconsent.css" />
+    <script src="https://cdn.jsdelivr.net/gh/orestbida/cookieconsent@v2.8.0/dist/cookieconsent.js" defer></script>
+  
+    <!-- meta data -->
+    <meta name="keywords" content="Club OST, Osthafen, OST Hafen Berlin, 10245 Berlin, Ostkreuz, Treptower Park, Alt Stralau, Friedrichshain, Friedrichshain-Kreuzberg, Club, Techno, Club Techno, EDM, House, Rave, Rave Berlin, Berliner Rave, Berghain, RSO, Musik, Weggehen, Ausgehen, Feiern, Berlin Party, Berlin Techno, Berlin Nightlife, Berlin Nachtleben, Berliner Nachtleben, Nachtleben, Nightlife, Resident Advisor, ra.co, Convent, Rave The Planet, Hot Meal, Polyamor, Stützpunkt, Wo feiern gehen, Wo Party machen, Wo Rave Berlin">
+    <meta name="description" content="Erlebe das Beste aus Techno, EDM und Berliner Nachtleben im Club OST. Entdecke Partys, Raves und unvergleichliches Nightlife in Berlin.">
+    <meta name="author" content="Club OST Berlin">
+
+    <!-- Favicons -->
+    <link href="/static/images/logos/fav.png" rel="icon">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/logos/fav.png">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Club OST">
+  
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Poppins:300,300i,400,400i,600,600i,700,700i|Satisfy|Comic+Neue:300,300i,400,400i,700,700i" rel="stylesheet">
+
+    <!-- Vendor CSS Files -->
+    <link href="/static/vendor/animate.css/animate.min.css" rel="stylesheet">
+    <link href="/static/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="/static/vendor/boxicons/css/boxicons.min.css" rel="stylesheet">
+    <link href="/static/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+    <link href="/static/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+
+    <!-- flaggen -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
+
+    <!-- Template Main CSS File -->
+    <link href="/static/css/style.css" rel="stylesheet">
+
+    <style>
+        .section-title h2 span {
+            color: white;
+        }
+
+        .social-icons-mobile {
+          position: fixed;
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          z-index: 1000;
+        }
+        
+        .social-icons-mobile a {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          background: gray;
+          padding: 12px;
+          border-radius: 50%;
+          color: white;
+          text-align: center;
+          transition: 0.3s;
+          width: 40px;
+          height: 40px;
+          font-size: 18px;
+        }
+        
+        .social-icons-mobile a img {
+          width: 24px;
+          height: 24px;
+          object-fit: contain;
+        }
+    
+        .social-icons-mobile a:hover {
+          background: rgba(0, 0, 0, 0.9);
+          color: #f8b400;
+        }
+    
+        @media (min-width: 768px) {
+            .social-icons-mobile {
+                display: none;
+            }
+        }
+    </style>
+    <!-- css subpages -->
+    
+<style>
+    /*
+    #intro-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: black;
+        z-index: 9999;
+        display: flex;
+    }
+    
+    
+    .row {
+        height: 100%;
+    }
+    
+    .col-animation {
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        justify-content: center; 
+        align-items: flex-end; 
+    }
+    
+    .animated-text {
+        font-size: 5vw;
+        font-weight: bold;
+        color: white;
+        z-index: 1;
+        position: absolute; 
+    }
+    
+    .background-highlight {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 0;
+        background-color: white;
+        z-index: 0;
+    }
+    
+    .special-highlight {
+        background-color: rgba(0, 0, 50, 0.5);
+        background-image: url("/static/images/logos/Ost_Logo_white.png");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+    
+    
+    #main-content {
+        display: block; 
+        position: relative; 
+        z-index: 1; 
+    }
+    */
+</style>
+
+  </head>
+
+  <body style="background-color: black;">
+
+    <!--div class="social-icons-mobile">
+        <a href="https://www.instagram.com/club.ost/" target="_blank" class="fab fa-instagram"></a>
+        <a href="https://de.ra.co/clubs/141987" target="_blank">
+          <img src="/static/images/logos/ResidentAdvisor_logo_white_transparent.png" alt="ResidentAdviser Logo" style="width: 27.2px; height: 27.2px;">
+      </a>
+        <a href="https://www.facebook.com/club.ost" target="_blank" class="fab fa-facebook-f"></a>
+        <a href="https://linktr.ee/club_ost" target="_blank" class="bi bi-link"></a>
+    </div-->
+  <!-- Animation Overlay -->
+  <!--div id="intro-overlay">
+    <div class="container-fluid h-100">
+      <div class="row h-100 align-items-end test2" >
+        < Each column represents a letter >
+        
+        <div class="col col-animation">
+          <div class="background-highlight " style="animation-delay: 0.5s;"></div>
+          <span class="animated-text" style="animation-delay: 0.5s;">C</span>
+        </div>
+        
+        <div class="col col-animation">
+          <div class="background-highlight " style="animation-delay: 0.7s;"></div>
+          <span class="animated-text" style="animation-delay: 0.7s;">L</span>
+        </div>
+        
+        <div class="col col-animation">
+          <div class="background-highlight " style="animation-delay: 0.9s;"></div>
+          <span class="animated-text" style="animation-delay: 0.9s;">U</span>
+        </div>
+        
+        <div class="col col-animation">
+          <div class="background-highlight special-highlight" style="animation-delay: 1.1s;"></div>
+          <span class="animated-text" style="animation-delay: 1.1s;">B</span>
+        </div>
+        
+        <div class="col col-animation">
+          <div class="background-highlight " style="animation-delay: 1.3s;"></div>
+          <span class="animated-text" style="animation-delay: 1.3s;">O</span>
+        </div>
+        
+        <div class="col col-animation">
+          <div class="background-highlight " style="animation-delay: 1.5s;"></div>
+          <span class="animated-text" style="animation-delay: 1.5s;">S</span>
+        </div>
+        
+        <div class="col col-animation">
+          <div class="background-highlight " style="animation-delay: 1.7s;"></div>
+          <span class="animated-text" style="animation-delay: 1.7s;">T</span>
+        </div>
+        
+      </div>
+    </div>
+  </div-->
+
+<!-- Main Content -->
+<div id="main-content">
+
+          <!-- ======= Top Bar ======= -->
+          <section id="topbar" class="d-flex align-items-center fixed-top topbar-transparent">
+            
+
+
+
+ <!-- flaggen -->
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
+ <style>
+  .language-container {
+      position: relative;
+      display: inline-block;
+     
+  }
+
+  .selected-option {
+    margin-bottom: 5px;
+  }
+
+  .selected-option, .dropdown-option {
+      padding: 2px 5px 2px 5px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+
+  }
+
+  .dropdown-options {
+      position: absolute;
+      background-color: #fff;
+      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+      z-index: 1;
+     
+     
+  }
+
+  .dropdown-option:hover {
+      background-color: #f1f1f1;
+  }
+
+
+</style>
+
+<div class="container-fluid container-xl d-flex align-items-center justify-content-start">
+  <!--i class="bi bi-phone d-flex align-items-center"><span>+49 303 - 650 736 5</span></i>
+    <i class="bi bi-clock ms-4 d-none d-lg-flex align-items-center"><span>Mon-Sat: 11:00 AM - 11:00 PM</span></i-->
+    <div class="language-container">
+      <div class="selected-option" onclick="toggleDropdown()">
+          
+          <!--
+          
+              <span class="flag-icon flag-icon-gb" onclick="selectLanguage('en')"></span>
+          
+          -->
+          <span 
+          class="flag-icon flag-icon-de" 
+          style="margin-right: 10px;" 
+          onclick="selectLanguage('de')" 
+          data-bs-toggle="tooltip" 
+          data-bs-placement="bottom" 
+          title="Deutsch">
+        </span>
+        <span 
+          class="flag-icon flag-icon-gb" 
+          onclick="selectLanguage('en')" 
+          data-bs-toggle="tooltip" 
+          data-bs-placement="bottom" 
+          title="English">
+        </span>
+        
+      </div>
+
+      <!--div id="dropdown-menu" class="dropdown-options" style="display: none;">
+          
+          
+        
+          
+            <div class="dropdown-option" onclick="selectLanguage('de')">
+              <span class="flag-icon flag-icon-de" onclick="selectLanguage('de')"></span>
+            </div>
+          
+
+         
+      </div-->
+  </div>
+  
+  <form id="language-form" action="/set_language/" method="POST" style="display: none;">
+      <input type="hidden" name="csrfmiddlewaretoken" value="P5q20uIg02ra1QBJp2dd9spZd2OFZdW0qZnRfaVzdIKZ5xOpb36CibSzjXzCnOZF">
+      <input type="hidden" name="language_code" id="language-input">
+  </form>
+    </div>
+  </div>
+
+  <!-- <select name="language_code" onchange="this.form.submit()">
+            <option value="de" data-icon="flag-icon-de">Deutsch</option>
+          -->
+
+  <script>
+    function toggleDropdown() {
+        const dropdown = document.getElementById("dropdown-menu");
+        dropdown.style.display = dropdown.style.display === "none" ? "block" : "none";
+    }
+
+    function selectLanguage(code) {
+        document.getElementById("language-input").value = code;
+        document.getElementById("language-form").submit();
+    }
+
+     // Schließen des Dropdowns beim Klick außerhalb
+     document.addEventListener("click", function(event) {
+        const dropdown = document.getElementById("dropdown-menu");
+        const container = document.querySelector(".language-container");
+
+        if (!container.contains(event.target)) {
+            dropdown.style.display = "none";
+        }
+      });
+</script>
+
+   
+          </section>
+          <!-- End Top Bar -->
+          <!-- ======= Header ======= -->
+          <header id="header" class="fixed-top d-flex align-items-center header-transparent">
+            
+
+
+
+
+<style>
+.social-icons {
+  display: flex;
+  gap: 15px;
+}
+
+.social-icon {
+  color: #ffffff;
+  font-size: 1.7em !important;
+  transition: color 0.3s ease;
+}
+
+.social-icon:hover {
+  color: gray;
+}
+
+.navbar-mobile ul {
+  justify-items: center;
+  background-color: #131313;
+  color: white
+}
+
+.navbar-mobile a, .navbar-mobile a:focus {
+  color: white;
+  padding: 5px 0;
+}
+
+.navbar a  {
+  font-size: 18px;
+}
+
+.navbar a i, .navbar a:focus i {
+  font-size: 25px;
+}
+
+.book-a-table-btn:hover {
+  background-color: white;
+  color: black;
+}
+
+.navbar a:hover, .navbar .active, .navbar .active:focus, .navbar li > a {
+    color: white;
+}
+
+.navbar a:hover .navbar li:hover{
+    color: gray;
+}
+
+
+.book-a-table-btn {
+    background: black;
+    color: #fff;
+    border-radius: 0; 
+}
+
+#hero .btn-menu, #hero .btn-book {
+    border-radius: 0;
+    color: #fff;
+    border: 2px solid white;
+}
+
+#hero .btn-menu:hover, #hero .btn-book:hover {
+    background: white;
+    color: black;
+}
+
+
+
+
+
+@media (max-width: 991px) {
+    .book-a-table-btn {
+      margin: 0px !important
+    }
+
+    .navbar-mobile a:hover, .navbar-mobile .active, .navbar-mobile li:hover > a {
+      font-size:  20px;
+    }
+
+    .navbar-mobile a, .navbar-mobile a:focus {
+      font-size:  20px !important;
+    }
+
+   
+
+}
+
+@media (max-width: 991px) {
+  #navbar {
+    display: flex !important;
+  }
+
+  .navbar-mobile ul {
+    display: flex;
+    flex-direction: column; /* Vertikale Anordnung */
+    align-items: center; /* Horizontal zentrieren */
+    justify-content: center; /* Vertikal zentrieren */
+    background-color: #131313;
+    padding: 0;
+    margin: 0;
+    height: 100vh; /* Volle Höhe für das Menü */
+  }
+
+  .navbar-mobile li {
+    width: 100%; /* Optional: Links über volle Breite */
+    margin: 10px 0; /* Abstand zwischen den Links */
+    text-align: center; /* Text zentrieren */
+    justify-items: center;
+  }
+
+  .navbar-mobile a, .navbar-mobile a:focus {
+    font-size: 20px !important; /* Textgröße für mobile Ansicht */
+    color: white;
+  }
+}
+
+
+.social-icons .custom-icon {
+  display: inline-block;
+  width: 1.7em; /* Gleiche Größe wie die anderen Icons */
+  height: 1.7em; /* Gleiche Größe wie die anderen Icons */
+  background: url("/static/icons/ResidentAdvisor_logo.png") no-repeat center center;
+  background-size: contain; /* Sorgt dafür, dass das Bild skaliert wird */
+  transition: color 0.3s ease; /* Gleiche Hover-Übergänge */
+}
+
+.social-icons .custom-icon:hover {
+  filter: brightness(70%); /* Optional: Effekt beim Hover */
+}
+
+
+
+
+</style>
+
+
+
+<div class="container-fluid container-xl d-flex align-items-center justify-content-between">
+  
+    <div class="logo me-auto">
+      <h1>
+        <a href="/">
+          <img  src="/static/images/logos/Ost_Logo_white.png" class="narva-logo" alt="Club Ost">
+        </a>
+      </h1>
+      <!-- Uncomment below if you prefer to use an image logo -->
+      <!-- <a href="index.html"><img src="{% static 'images/logo.png" alt="" class="img-fluid"></a>-->
+    </div>
+
+    <nav id="navbar" class="navbar order-last order-lg-0 d-none">
+      <!--ul>
+        <li ><a class="nav-link scrollto active " href="/#hero">HOME</a></li>
+
+        <li><a href="https://www.instagram.com/club.ost/" target="_blank" class="nav-link social-icon d-md-block d-lg-none"><i class="bi bi-instagram"></i></a></li>
+        <li> <a href="https://linktr.ee/club_ost" target="_blank" class=" nav-link social-icon d-md-block d-lg-none"><i class="bi bi-link"></i></a></li>
+        <li><a href="https://www.facebook.com/club.ost" target="_blank" class="nav-link social-icon d-md-block d-lg-none"><i class="bi bi-facebook"></i></a></li>
+        <li><a href="https://de.ra.co/clubs/141987" target="_blank" class="nav-link social-icon d-md-block d-lg-none"><i class="bi bi-music-note-list"></i></a></li>
+      </ul-->
+      <!-- mobile -->
+        <a href="https://www.instagram.com/club.ost/" target="_blank" class="social-icon" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Instagram">
+          <i class="bi bi-instagram"></i>
+        </a>
+        <a href="https://linktr.ee/club_ost" target="_blank" class="social-icon" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Linktree">
+          <i class="bi bi-link"></i>
+        </a>
+        <a href="https://www.facebook.com/club.ost" target="_blank" class="social-icon" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Facebook">
+          <i class="bi bi-facebook"></i>
+        </a>
+     
+        <a href="https://de.ra.co/clubs/141987" target="_blank" class="social-icon" data-bs-toggle="tooltip" data-bs-placement="bottom" title="ResidentAdviser">
+          <img src="/static/images/logos/ResidentAdvisor_logo_white_transparent.png" alt="ResidentAdviser Logo" style="width: 27.2px; height: 27.2px;">
+        </a>
+    
+      
+    </nav><!-- .navbar -->
+
+    <div class="social-icons d-none d-lg-flex ms-3" >
+      <a href="https://www.instagram.com/club.ost/" target="_blank" class="social-icon" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Instagram">
+        <i class="bi bi-instagram"></i>
+      </a>
+      <a href="https://linktr.ee/club_ost" target="_blank" class="social-icon" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Linktree">
+        <i class="bi bi-link"></i>
+      </a>
+      <a href="https://www.facebook.com/club.ost" target="_blank" class="social-icon" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Facebook">
+        <i class="bi bi-facebook"></i>
+      </a>
+   
+      <a href="https://de.ra.co/clubs/141987" target="_blank" class="social-icon" data-bs-toggle="tooltip" data-bs-placement="bottom" title="ResidentAdviser">
+        <img src="/static/images/logos/ResidentAdvisor_logo_white_transparent.png" alt="ResidentAdviser Logo" style="width: 27.2px; height: 27.2px;">
+    </a>
+    
+      
+    </div>
+    
+
+  </div>
+
+   
+          </header>
+          <!-- End Header -->
+
+          
+
+
+  <!-- ======= carusel Section ======= -->
+  <section id="hero">
+    
+
+
+
+
+<style>
+
+
+  .hero {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    padding-bottom: 56.25%;
+  }
+
+  .hero_image {
+  object-fit: cover;
+  object-position: 50% 115%; /* Horizontal zentriert, vertikal unten */
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+
+  .hero_image_overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 50, 0.5);
+  }
+
+  .hero_lights {
+    filter: url(#glow);
+    animation: flicker 2s linear infinite;
+  }
+
+  .hero_lights_blue {
+    filter: url(#glow-blue);
+    animation: flicker 3s linear infinite 0.2s;
+  }
+
+  .hero-narva-logo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 15%; /* Passe die Größe des Logos an */
+    z-index: 10;
+  }
+
+
+  @media (max-width: 600px) {
+    .hero-narva-logo {
+      width: 30%; /* Größe des Logos bei kleiner Bildschirmbreite */
+    }
+  }
+
+  @media (max-width: 400px) {
+    .hero-narva-logo {
+      width: 50%; /* Größe des Logos bei kleiner Bildschirmbreite */
+    }
+  }
+
+
+  @keyframes flicker {
+    0%,
+    19.9%,
+    22%,
+    62.9%,
+    64%,
+    64.9%,
+    70%,
+    100% {
+      opacity: 0.99;
+    }
+    20%,
+    21.9%,
+    63%,
+    63.9%,
+    65%,
+    69.9% {
+      opacity: 0.4;
+    }
+  }
+</style>
+
+<div class="hero">
+  <a href="/#gallery">
+  <!-- Hintergrundbild -->
+  <img class="hero_image" src="/static/images/club/OST-Foto-S_W_NoLogo.jpeg" />
+  <div class="hero_image_overlay"></div>
+
+  <!-- Neon Lights -->
+  <img class="hero_image hero_lights" src="/static/images/neon_lights/Pink_Line.svg" />
+  <img class="hero_image hero_lights_blue" src="/static/images/neon_lights/Blue_Lines.svg" />
+
+  <!-- Logo in der Mitte -->
+  <img
+    src="/static/images/logos/Ost_Logo_white.png"
+    class="hero-narva-logo"
+    alt="Club Ost"
+  />
+
+  <!-- SVG Filter -->
+  <svg viewBox="0 0 200 200">
+    <defs>
+      <filter
+        id="glow"
+        filterUnits="userSpaceOnUse"
+        x="-50%"
+        y="-50%"
+        width="200%"
+        height="200%"
+      >
+        <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur5" />
+        <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur10" />
+        <feGaussianBlur in="SourceGraphic" stdDeviation="20" result="blur20" />
+        <feGaussianBlur in="SourceGraphic" stdDeviation="30" result="blur30" />
+        <feGaussianBlur in="SourceGraphic" stdDeviation="50" result="blur50" />
+        <feMerge result="blur-merged">
+          <feMergeNode in="blur10" />
+          <feMergeNode in="blur20" />
+          <feMergeNode in="blur30" />
+          <feMergeNode in="blur50" />
+        </feMerge>
+        <feColorMatrix
+          result="red-blur"
+          in="blur-merged"
+          type="matrix"
+          values="0.3 0 0 0 0
+                  0 0.06 0 0 0
+                  0 0 0.44 0 0
+                  0 0 0 1 0"
+        />
+        <feMerge>
+          <feMergeNode in="red-blur" />
+          <feMergeNode in="blur5" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+  </svg>
+
+  <svg viewBox="0 0 200 200">
+    <defs>
+      <filter
+        id="glow-blue"
+        filterUnits="userSpaceOnUse"
+        x="-50%"
+        y="-50%"
+        width="200%"
+        height="200%"
+      >
+        <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur5" />
+        <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur10" />
+        <feGaussianBlur in="SourceGraphic" stdDeviation="20" result="blur20" />
+        <feGaussianBlur in="SourceGraphic" stdDeviation="30" result="blur30" />
+        <feGaussianBlur in="SourceGraphic" stdDeviation="50" result="blur50" />
+        <feMerge result="blur-merged">
+          <feMergeNode in="blur10" />
+          <feMergeNode in="blur20" />
+          <feMergeNode in="blur30" />
+          <feMergeNode in="blur50" />
+        </feMerge>
+        <feColorMatrix
+          result="red-blur"
+          in="blur-merged"
+          type="matrix"
+          values="0 0 0 0 0
+                  0 0.06 0 0 0
+                  0 0 0.2 0 0
+                  0 0 0 1 0"
+        />
+        <feMerge>
+          <feMergeNode in="red-blur" />
+          <feMergeNode in="blur5" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+  </svg>
+</a>
+</div>
+
+
+ 
+  </section>
+  <!-- End carusel -->
+
+  <main id="main">
+
+    <!-- ======= Gallery Section ======= -->
+    <section id="gallery" class="gallery" style="background-color: black;">
+      
+
+
+
+
+
+<style>
+  /* Allgemeine Stile */
+  .evento {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 15px;
+    padding-right: 5px;
+    padding-left: 5px;
+  }
+  .event-flyer {
+    position: relative;
+  }
+  .img-fluid {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .img-fluid-promoted {
+    max-width: 65%;
+    height: auto;
+    align-self: center;
+  }
+  .event-description {
+    color: white !important;
+    padding: 16px;
+    flex-wrap: wrap; /* Erlaubt, dass Inhalte innerhalb der Spalte ihre eigene Breite haben */
+    word-break: break-word;
+    border-radius: 5px;
+
+  }
+  .event-list {
+    margin-top: 20px;
+    padding-top: 70px;
+    padding-bottom: 50px;
+    background: #000;
+  }
+
+  .tag-evento {
+    font-size: 13px;
+    padding: 8px;
+    margin-bottom: 5px;
+    color: #000;
+    font-weight: bold;
+    display: inline-block; /* Verhindert 100% Breite */
+    white-space: nowrap;  /* Verhindert Textumbruch */
+    background: #EFEFEF;
+    display: inline-block; /* Nur so breit wie der Inhalt */
+    max-width: fit-content; /* Sicherstellen, dass es nur den Inhalt berücksichtigt */
+}
+
+.tag-evento:hover {
+    background-color: #dcdcdc; /* Etwas dunkler für Hover-Effekt */
+}
+
+.event-info {
+    font-size: 12px;
+}
+
+
+
+
+  .overlay-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    overflow-y: auto;
+    border-radius: 5px;
+  }
+
+  .event-image {
+    border-radius: 5px;
+    height: 500px;
+  }
+  
+  .event-flyer:hover .event-image {
+    opacity: 0.3;
+  }
+  .event-flyer:hover .overlay-text {
+    opacity: 1;
+  }
+  .overlay-text ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+  .overlay-text li {
+    font-weight: 500;
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+
+  /* Filterleiste */
+  .filter-container {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .filter-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 5px;
+    background-color: #131313;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .filter-btn.active {
+    background-color: white;
+    color: black;
+  }
+  
+  
+
+    .search-container {
+    position: relative;
+    display: inline-block;
+}
+
+#search-input {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    outline: none;
+}
+
+.search-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: black;
+    font-size: 18px;
+}
+
+@media (max-width: 768px) {
+  .filter-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .filter-container > div {
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+
+  .search-container {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  #search-input {
+    width: 100%;
+  }
+}
+
+/* Setze die Höhe der event-description auf den maximalen Wert */
+.event-description {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Verteilt den Inhalt gleichmäßig */
+    height: 100%; /* Erzwingt gleiche Höhe für alle Elemente */
+    background: #131313;
+    text-align: center;
+    color: white;
+}
+
+.event-item {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Stellt sicher, dass alle Events dieselbe Höhe haben */
+}
+
+.event-flyer {
+    flex-grow: 1; /* Sorgt dafür, dass der event-flyer den verbleibenden Platz einnimmt */
+}
+
+.tag-evento {
+    margin-bottom: auto; /* Verhindert zu viel Platz unten */
+    border-radius: 5px;
+}
+
+.event-info {
+    margin-top: auto; /* Erzwingt, dass sich die Event-Infos unten ausrichten */
+} 
+
+
+/* Modal Schwarzes Design */
+.modal-dark {
+  background-color: #000; /* Schwarzer Hintergrund */
+  color: #fff; /* Weiße Schrift */
+}
+
+.modal-header-dark {
+  background-color: #000; /* Schwarzer Hintergrund */
+  color: #fff; /* Weiße Schrift */
+  border-bottom: 1px solid #444; /* Optional: Graue Linie */
+}
+
+.modal-title-dark {
+  color: #fff; /* Weiße Schrift */
+}
+
+.modal-body-dark {
+  background-color: #000; /* Schwarzer Hintergrund */
+  color: #fff; /* Weiße Schrift */
+}
+
+.event-description-dark {
+  background-color: #000; /* Schwarzer Hintergrund */
+  color: #fff; /* Weiße Schrift */
+}
+
+.tag-evento-dark {
+  background-color: #333; /* Dunkelgrau für Ticketschaltfläche */
+  color: #fff; /* Weiße Schrift */
+  padding: 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.btn-close-white {
+  filter: invert(1); /* Macht die Schließen-Schaltfläche weiß */
+}
+
+.modal-content {
+  border: 1px solid #444; /* Optionale graue Umrandung */
+}
+
+
+
+
+</style>
+
+<div class="container event-list">
+  <div class="section-title">
+    <h2><span>PARTYS</span></h2>
+  </div>
+
+  <!-- Filterleiste -->
+  <div class="filter-container d-flex justify-content-between align-items-center">
+    <div>
+      <span class="filter-btn active" data-filter="all">All</span>
+      <span class="filter-btn" data-filter="current-month">Current Month</span>
+      <span class="filter-btn" data-filter="next-month">Next Month</span>
+    </div>
+    <div class="search-container">
+      <input type="text" id="search-input" placeholder="Search Events..." />
+      <i class="bi bi-search search-icon"></i>
+    </div>
+  </div>
+
+  <div class="row g-0 align-items-stretch">
+    
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="9" data-title="ost klubnacht" id="event-item-361">
+        <a href="/event/e9bdde1e-299a-4cc3-ad01-c8d3011aa869/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/e9bdde1e-299a-4cc3-ad01-c8d3011aa869/0526af37-45d3-4920-bfae-17c152583d5e.png" alt="Logo-Event 361" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">OST KLUBNACHT</h3>
+          
+          
+          <a target="_blank" href="https://de.ra.co/events/2517686">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Sept. 5, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="9" data-title="savory" id="event-item-342">
+        <a href="/event/33c91be2-2968-4e3a-9149-07ffd1a3a32a/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/33c91be2-2968-4e3a-9149-07ffd1a3a32a/77948e76-539f-4ff0-bbd7-8d0055811bb6.png" alt="Logo-Event 342" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">SAVORY</h3>
+          
+          
+          <a target="_blank" href="https://de.ra.co/events/2510220">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Sept. 10, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="9" data-title="revolver" id="event-item-343">
+        <a href="/event/2fb359f9-da6c-497d-9818-a1e8868d06f4/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="/static/images/logos/logo_long.png" alt="Event-Logo" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">REVOLVER</h3>
+          
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Sept. 11, 2026 | 10 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="9" data-title="onyx" id="event-item-344">
+        <a href="/event/687af574-f9ff-4931-bbbb-469d0352efdf/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://imgproxy.ra.co/_/quality:66/w:1442/rt:fill/aHR0cHM6Ly9pbWFnZXMucmEuY28vNmYzZWU5N2YxOTYxN2U2MDQ5ZTE2YjZjMzM0ZWYzMzQwY2FiMTdjZi5qcGc=" alt="Logo-Event 344" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">ONYX</h3>
+          
+          
+          <a target="_blank" href="https://de.ra.co/events/2396852">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Sept. 12, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="9" data-title="savory" id="event-item-345">
+        <a href="/event/b39db1c2-bbad-43a2-9efa-377943690110/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/b39db1c2-bbad-43a2-9efa-377943690110/26114a79-bf74-4e6f-9cb7-685e176c010c.png" alt="Logo-Event 345" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">SAVORY</h3>
+          
+          
+          <a target="_blank" href="https://de.ra.co/events/2510238">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Sept. 17, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="9" data-title="schranz is back" id="event-item-346">
+        <a href="/event/043fe2de-9f5b-4a9c-aff0-52ae9c4b64b0/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://bookmetender-club-production-event-attachments.s3-eu-central-1.amazonaws.com/756/226689/original/0eec236c0f1f87d74676d51487cd0ecb72ee2b0f.jpg" alt="Logo-Event 346" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">SCHRANZ IS BACK</h3>
+          
+          
+          <a target="_blank" href="https://de.ra.co/events/2374925">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Sept. 18, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="9" data-title="devoted" id="event-item-347">
+        <a href="/event/0c099ed7-5235-4b76-a6d4-7e7d9110f6e9/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://imgproxy.ra.co/_/quality:66/w:1442/rt:fill/aHR0cHM6Ly9pbWFnZXMucmEuY28vZTk5ZDk2YTkyOTI1MTY0YzExMzdiMDkyODdkNWFmOWM5MzUxNGEyNy5wbmc=" alt="Logo-Event 347" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">DEVOTED</h3>
+          
+          
+          <a target="_blank" href="https://de.ra.co/events/2356091">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Sept. 19, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="9" data-title="savory" id="event-item-348">
+        <a href="/event/7abca717-7669-4f92-8b8a-8fae47d5b17c/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/7abca717-7669-4f92-8b8a-8fae47d5b17c/78e4f080-00b9-4715-bcbd-a760c3840d13.png" alt="Logo-Event 348" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">SAVORY</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2510247">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Sept. 24, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="9" data-title="808 studios" id="event-item-349">
+        <a href="/event/5c7398df-bf83-4266-9534-c0a89c496b29/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="/static/images/logos/logo_long.png" alt="Event-Logo" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">808 STUDIOS</h3>
+          
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Sept. 25, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="9" data-title="mixmag" id="event-item-350">
+        <a href="/event/9607c8a6-92ca-4cd4-862c-3284df8ae342/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/9607c8a6-92ca-4cd4-862c-3284df8ae342/4d1f2b0a-0db2-4eb0-b7d5-e35dd72e7005.jpeg" alt="Logo-Event 350" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">MIXMAG</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2517710">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Sept. 26, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="10" data-title="savory" id="event-item-374">
+        <a href="/event/dee60bc4-dd94-47dd-958d-e19a2b978d18/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="/static/images/logos/logo_long.png" alt="Event-Logo" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">SAVORY</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2522765">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Oct. 1, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="10" data-title="polyamor" id="event-item-375">
+        <a href="/event/ee1f8735-6a21-4849-a86e-8b6b3651a015/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/ee1f8735-6a21-4849-a86e-8b6b3651a015/cb598fbf-856f-4acc-910d-7d54a1912532.webp" alt="Logo-Event 375" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">POLYAMOR</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2425155">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Oct. 3, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="10" data-title="savory" id="event-item-376">
+        <a href="/event/d5e6eb10-50c7-46c7-a858-d6fd8fefc4c3/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="/static/images/logos/logo_long.png" alt="Event-Logo" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">SAVORY</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2522824">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Oct. 8, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="10" data-title="verknipt" id="event-item-377">
+        <a href="/event/aef49937-74a4-4e14-aaa9-961b3344bd06/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/aef49937-74a4-4e14-aaa9-961b3344bd06/003081d3-d8cb-4c92-acfb-463749927d68.webp" alt="Logo-Event 377" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">VERKNIPT</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2493404">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Oct. 9, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="10" data-title="verknipt" id="event-item-378">
+        <a href="/event/1a282c8f-25de-4f94-8cf8-19a379c79436/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/1a282c8f-25de-4f94-8cf8-19a379c79436/d04a02d9-dd3c-4e28-bb64-cab1d19df637.webp" alt="Logo-Event 378" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">VERKNIPT</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2493408">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Oct. 10, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="10" data-title="savory" id="event-item-379">
+        <a href="/event/6d2ba71f-8949-4ba6-a488-79e38bc08d95/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="/static/images/logos/logo_long.png" alt="Event-Logo" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">SAVORY</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2525915">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Oct. 15, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="10" data-title="devoted" id="event-item-380">
+        <a href="/event/d5b31e1c-68c4-4648-b464-d27c6d81200c/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/d5b31e1c-68c4-4648-b464-d27c6d81200c/a8c321a7-f14e-46a3-ac35-c3dc832f4d7e.webp" alt="Logo-Event 380" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">DEVOTED</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2356093">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Oct. 16, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="10" data-title="pinky promise: midnight circus" id="event-item-381">
+        <a href="/event/2e299c2b-30d7-4ec6-9521-dbbd274c19c3/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/2e299c2b-30d7-4ec6-9521-dbbd274c19c3/265cd2d2-9e05-4cbc-97af-b5e2260c5435.webp" alt="Logo-Event 381" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">PINKY PROMISE: MIDNIGHT CIRCUS</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2523504">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Oct. 17, 2026 | 10 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="10" data-title="odd" id="event-item-368">
+        <a href="/event/a2f7d39b-f1fd-4e08-8993-4add1cd0e9c4/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/a2f7d39b-f1fd-4e08-8993-4add1cd0e9c4/91d3f54d-2b80-4534-8544-0a18f9ab39ae.webp" alt="Logo-Event 368" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">ODD</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2398942">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Oct. 23, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="10" data-title="5 years of gabber industries berlin" id="event-item-369">
+        <a href="/event/e508826b-6c76-4a83-8092-ed7b22468377/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/e508826b-6c76-4a83-8092-ed7b22468377/3f06cfd8-19c8-4948-aec4-e4b91628287c.webp" alt="Logo-Event 369" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">5 YEARS OF GABBER INDUSTRIES BERLIN</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2344908">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Oct. 30, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="10" data-title="slave to the rave" id="event-item-370">
+        <a href="/event/1e119a3b-8775-4ae8-8c44-e5f1ad898800/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/1e119a3b-8775-4ae8-8c44-e5f1ad898800/d4334e3a-0559-4253-b41d-d30bf9d173aa.webp" alt="Logo-Event 370" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">SLAVE TO THE RAVE</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2387910">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Oct. 31, 2026 | 10 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="11" data-title="sesh clara cuve invites" id="event-item-371">
+        <a href="/event/893b10cf-60e6-403a-97cf-6e1b1bc8caaf/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/893b10cf-60e6-403a-97cf-6e1b1bc8caaf/df6809ae-079f-46dd-977a-143ffaaf19ae.webp" alt="Logo-Event 371" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">SESH CLARA CUVE INVITES</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2354314">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Nov. 6, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="11" data-title="convent pres. charlie sparks, cltx" id="event-item-372">
+        <a href="/event/5f305c27-f535-4fe7-bc6e-37f8d127a655/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="/static/images/logos/logo_long.png" alt="Event-Logo" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">CONVENT PRES. CHARLIE SPARKS, CLTX</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2487410">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Nov. 7, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="11" data-title="onyx" id="event-item-373">
+        <a href="/event/3a1983da-6435-4e9e-bc7b-5f79528a2ef9/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/3a1983da-6435-4e9e-bc7b-5f79528a2ef9/3b6011e8-cd96-4759-a661-3b109cfa9922.webp" alt="Logo-Event 373" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">ONYX</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2227692">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Nov. 20, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="11" data-title="devoted" id="event-item-362">
+        <a href="/event/abc42c08-9203-4367-8d05-a66aaddc9281/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/abc42c08-9203-4367-8d05-a66aaddc9281/5c405081-393a-4f7a-b441-4a2fb88fc610.webp" alt="Logo-Event 362" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">DEVOTED</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2356094">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Nov. 28, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="12" data-title="ultra sozial" id="event-item-363">
+        <a href="/event/8f7e9fdf-9a13-4bee-91b2-3bc5d7216301/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="/static/images/logos/logo_long.png" alt="Event-Logo" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">ULTRA SOZIAL</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2515790">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Dec. 4, 2026 | 10 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="12" data-title="polyamour" id="event-item-364">
+        <a href="/event/8ca18914-9b10-46f3-a8d9-4c863b7871b0/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/8ca18914-9b10-46f3-a8d9-4c863b7871b0/4bddf6c2-396e-4964-96e6-6ccd108376aa.webp" alt="Logo-Event 364" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">POLYAMOUR</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2375001">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Dec. 5, 2026 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="12" data-title="slave to the rave" id="event-item-365">
+        <a href="/event/cfad791a-6275-4286-97ae-bf523d019925/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/cfad791a-6275-4286-97ae-bf523d019925/2794ebf0-b747-4cc8-8c13-96aaf94cdeca.webp" alt="Logo-Event 365" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">SLAVE TO THE RAVE</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2387902">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Dec. 12, 2026 | 10 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="12" data-title="gegen x prncptl x ost nye 33h" id="event-item-366">
+        <a href="/event/3db4959b-f43d-4422-ac1c-632f94b5c9e2/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/3db4959b-f43d-4422-ac1c-632f94b5c9e2/e96bfdd9-60d9-4697-9379-01609bde423c.webp" alt="Logo-Event 366" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">GEGEN X PRNCPTL X OST NYE 33H</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2480820">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Dec. 31, 2026 | 11:55 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+      
+      <div class="col-md-4 col-12 evento h-100 event-item" data-month="2" data-title="slave to the rave" id="event-item-367">
+        <a href="/event/01b4e16a-deb2-4091-8196-3202ab6b7add/" class="text-decoration-none">
+        <div class="event-flyer h-100 d-flex flex-column">
+          
+            <img src="https://ost.klubtool.de/api/public/artwork/01b4e16a-deb2-4091-8196-3202ab6b7add/9e4e53a3-04c9-4066-80a0-e4e06d4fddfe.webp" alt="Logo-Event 367" class="img-fluid event-image">
+          
+          <div class="overlay-text">
+            More Infos comming soon 
+          </div>
+          
+        </div>
+        <div class="event-description d-flex flex-column justify-content-between h-100">
+          <h3 style="color: white">SLAVE TO THE RAVE</h3>
+          
+          
+          <a target="_blank" href="https://ra.co/events/2389106">
+            <span class="tag-evento">
+              BUY TICKET
+            </span>
+          </a>
+          
+          <!--
+          <span class="tag-evento">
+            On the 12-24 Free entry for everyone!
+          </span> -->
+          
+          
+      
+          <div class="artist mt-2">
+          
+          </div>
+          <div class="event-info mt-auto">
+              <span>
+                  Feb. 13, 2027 | 11 p.m.  
+              </span>
+          </div>
+      </div>
+  </a>
+
+    </div>
+      
+    
+
+  </div>
+</div>
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const eventModal = document.getElementById("modal-promoted");
+    console.log("eventModal", eventModal)
+    if (eventModal) {
+      const modal = new bootstrap.Modal(eventModal);
+      modal.show(); // Öffnet das Modal automatisch
+    }
+  });
+  </script>
+  
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+  const filterButtons = document.querySelectorAll(".filter-btn");
+  const eventItems = document.querySelectorAll(".event-item");
+  const searchInput = document.getElementById("search-input");
+
+  const currentMonth = new Date().getMonth() + 1;
+  const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+
+  filterButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const filter = button.getAttribute("data-filter");
+
+      filterButtons.forEach((btn) => btn.classList.remove("active"));
+      button.classList.add("active");
+
+      applyFilters(filter, searchInput.value.toLowerCase());
+    });
+  });
+
+  searchInput.addEventListener("input", () => {
+    const activeFilter = document.querySelector(".filter-btn.active").getAttribute("data-filter");
+    applyFilters(activeFilter, searchInput.value.toLowerCase());
+  });
+
+  function applyFilters(filter, searchText) {
+    eventItems.forEach((item) => {
+      const eventMonth = parseInt(item.getAttribute("data-month"));
+      const title = item.getAttribute("data-title");
+
+      let isVisible = true;
+
+      if (filter === "current-month" && eventMonth !== currentMonth) {
+        isVisible = false;
+      } else if (filter === "next-month" && eventMonth !== nextMonth) {
+        isVisible = false;
+      }
+
+      if (!title.includes(searchText)) {
+        isVisible = false;
+      }
+
+      item.style.display = isVisible ? "block" : "none";
+    });
+  }
+});
+
+  </script>
+
+
+ 
+    </section><!-- End Gallery Section -->
+
+    <!-- ======= Contact Section ======= -->
+    <section id="contact" class="contact" style="background-color: black;">
+      
+
+
+
+
+
+<style>
+  .contact .info h4 {
+    color: white;
+  }
+  .contact .info {
+    background-color: #131313;
+  }
+
+  .contact .info-wrap {
+    background-color: #131313;
+  }
+
+ 
+  .contact .info i {
+    font-size: 20px;
+    color: white;
+    float: left;
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50px;
+    transition: all 0.3s ease-in-out;
+}
+
+
+
+  .contact .info p {
+    color: white;
+  }
+
+  .contact .info a {
+    color: white;
+  }
+
+  .contact .info a:hover {
+    color: gray;
+  }
+  </style>
+<div class="container" >
+  
+  <div class="section-title">
+    <h2><span>DIRECTIONS</span></h2>
+  </div>
+</div>
+<div class="container">
+
+ 
+
+  <div class="map mt-3">
+    <iframe style="border:0; width: 100%; height: 350px;" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2429.0109186463833!2d13.462514676946576!3d52.49704193792864!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47a84efc1ea3ac99%3A0x6377694ed9f9fd5c!2sClub%20OST!5e0!3m2!1sde!2sde!4v1730815469727!5m2!1sde!2sde" width="600" height="450" style="border:0;" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+  </div>
+
+  <!--div class="info-wrap" style="color: white;">
+    <div class="row">
+      <div class="col-lg-6 col-md-6 info">
+        <i class="bi bi-geo-alt"></i>
+        <h4>ADDRESS:</h4>
+        <p>Alt-Stralau 1-2<br>
+          10245 Berlin </p>
+      </div>
+
+      <div class="col-lg-3 col-md-6 info mt-4 mt-lg-0">
+        <i class="bi bi-clock"></i>
+        <h4>Open Hours:</h4>
+        <p>Monday-Saturday:<br>11:00 AM - 18:00 PM</p>
+      </div>
+
+      <div class="col-lg-6 col-md-6  mt-4 mt-lg-0 info">
+        <i class="bi bi-envelope"></i>
+        <h4>CONTACT:</h4>
+        <p>
+          <a href="/kontakt?subject=lost_and_found">Lost Items</a><br>
+          <a href="/kontakt?subject=booking">Bookings</a><br>
+          <a href="/kontakt?subject=contact">Contact</a><br>
+          <a href="/kontakt?subject=job">Jobs</a>
+          
+        </p>
+      </div-->
+
+    
+
+    
+    </div>
+  </div>
+
+
+
+
+
+  <!--div class="php-email-form">
+    <h3><span>U-Bahn</span></h3>
+    <p>
+       Die U-Bahn-Linien U1 und U3 halten an der Station Warschauer Straße, die sich in der Nähe der Narva Lounge befindet. Von dort aus können Sie zu Fuß zum Veranstaltungsort gelangen.
+    </p>
+
+    <h3><span>S-Bahn</span></h3>
+    <p>
+      Die S-Bahn-Linien S5, S7 und S75 halten ebenfalls an der Station Warschauer Straße. Die Event Location ist von dort aus zu Fuß erreichbar.
+    </p>
+    
+    <h3><span>Bus</span></h3>
+    <p>
+      Verschiedene Buslinien (Buslinie 347; Buslinie N1; Buslinie N60) verkehren in der Nähe der Narva Lounge.
+    </p>
+
+    <h3><span>Straßenbahn</span></h3>
+    <p>
+      Die Straßenbahnlinie M10 hält in der Nähe der Räumlichkeit.
+    </p>
+  </div-->
+  <!--form action="forms/contact.php" method="post" role="form" >
+    <div class="row">
+      <div class="col-md-6 form-group">
+        <input type="text" name="name" class="form-control" id="name" placeholder="Your Name" required>
+      </div>
+      <div class="col-md-6 form-group mt-3 mt-md-0">
+        <input type="email" class="form-control" name="email" id="email" placeholder="Your Email" required>
+      </div>
+    </div>
+    <div class="form-group mt-3">
+      <input type="text" class="form-control" name="subject" id="subject" placeholder="Subject" required>
+    </div>
+    <div class="form-group mt-3">
+      <textarea class="form-control" name="message" rows="5" placeholder="Message" required></textarea>
+    </div>
+    <div class="my-3">
+      <div class="loading">Loading</div>
+      <div class="error-message"></div>
+      <div class="sent-message">Your message has been sent. Thank you!</div>
+    </div>
+    <div class="text-center"><button type="submit">Send Message</button></div>
+  </form-->
+
+</div>
+
+
+
+
+
+   
+    </section><!-- End Contact Section -->
+  
+
+  </main><!-- End #main -->
+
+
+
+
+
+
+
+
+
+
+            
+          <!-- ======= Footer ======= -->
+          <footer id="footer" style=" background-color: #131313;
+          z-index: 1;
+          padding-top: 100px;">
+            
+
+
+
+
+
+
+<style>
+  .icon-image {
+    width: 20px; /* oder eine andere gewünschte Größe */
+    height: 20px;
+    vertical-align: middle;
+    font-size: 17px !important;
+}
+</style>
+
+<div class="container footer-area">
+  <div class="row">
+    <!-- Mittlere Spalte (CLUB OST) -->
+    <div class="col-lg-4 col-md-12 order-1 order-lg-2 mt-5 mt-lg-0">
+        <div class="mb-3">
+            <h2 style="color: white; font-weight: 600;">CLUB OST</h2>
+        </div>
+        <div class="mb-3">
+            <a style="padding-left: 10px;" href="/impressum/">Legal Notice</a>
+            <a style="padding-left: 10px;" href="/datenschutz/">Data Protection</a>
+        </div>
+    </div>
+
+    <!-- Erste Spalte (Adresse) -->
+    <div class="col-lg-4 col-md-12 order-2 order-lg-1 mt-5 mt-lg-0">
+        <h3>ADDRESS</h3>
+        <p>
+            Alt-Stralau 1-2<br>
+            10245 Berlin
+        </p>
+    </div>
+
+    <!-- Dritte Spalte (Kontakt) -->
+    <div class="col-lg-4 col-md-12 order-3 mt-5 mt-lg-0">
+        <div>
+            <h3>CONTACT</h3>
+            <p>
+                <a class="mt-2" href="/kontakt?subject=lost_and_found">Lost Items</a><br>
+                <a class="mt-2" href="/kontakt?subject=booking">Bookings</a><br>
+                <a class="mt-2" href="/kontakt?subject=contact">Contact</a><br>
+                <a class="mt-2" href="/kontakt?subject=job">Jobs</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+
+  
+
+  
+  </div>
+
+
+  
+  
+
+  <div class="copyright mb-5">
+    <!--&copy; Copyright <strong><span>Matrix Club Verwaltungsgesellschaft mbH</span></strong>. All Rights Reserved-->
+  </div>
+  <!--div class="social-links">
+    <a href="#" class="facebook"><i class="bx bxl-facebook"></i></a>
+    <a href="#" class="instagram"><i class="bx bxl-instagram"></i></a>
+    <a href="#" class="facebook"><i class="bx bxl-linktree"></i></a>
+    <a href="#" class="custom-icon">
+      <img src="/static/images/icons/fa-ra.svg" alt="Custom Icon" class="bx icon-image">
+    </a-->
+
+
+    <!--a href="#" class="google-plus"><i class="bx bxl-skype"></i></a-->
+    <!--a href="#" class="linkedin"><i class="bx bxl-linkedin"></i></a-->
+
+
+
+
+
+  </div>
+ 
+
+  
+  
+
+  <!--div class="mt-3">
+    <b>Rules</b> 
+    <div style="font-size: 11px;">
+      <i>No GBH</i><br>
+      No Photo/Video<br>
+      No Sexism<br>
+      No Tags/Graffiti<br>
+      No Racism<br>
+    </div-->
+   
+
+
+
+   
+          </footer><!-- End Footer -->
+        
+          <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+  </div>
+</body>
+  
+    <!-- subpages scripts -->
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <!--script>
+      document.addEventListener("DOMContentLoaded", () => {
+          const overlay = document.getElementById("intro-overlay");
+          const mainContent = document.getElementById("main-content");
+          const texts = document.querySelectorAll(".animated-text");
+          const backgrounds = document.querySelectorAll(".background-highlight");
+          const logo = document.querySelector(".special-highlight"); // Das Logo im Hintergrund
+  
+          // Animation der Texte und des Hintergrunds
+          gsap.timeline()
+              // Animiert die Texte nacheinander
+              .to(texts, {
+                  y: "-100vh", // Texte bewegen sich nach oben
+                  duration: 2, // Dauer der Bewegung
+                  stagger: 0.3, // Verzögerung zwischen den Buchstaben
+                  ease: "power2.out", // Weicher Übergang
+              })
+              // Animiert den Hintergrund hinter den Buchstaben
+              .to(backgrounds, {
+                  height: "100%", // Hintergrund füllt die gesamte Höhe
+                  duration: 2, // Dauer der Animation
+                  stagger: 0.3, // Verzögerung zwischen den Buchstaben
+                  ease: "power2.out",
+              }, "<") // "<" sorgt dafür, dass diese Animation parallel zur Textanimation startet
+              // Zeigt das Logo an (falls eines vorhanden ist)
+              .to(logo, {
+                  opacity: 1, // Logo einblenden
+                  duration: 1, // Dauer der Einblendung
+                  delay: 1, // Wartezeit nach der Hintergrundanimation
+              });
+  
+          // Overlay ausblenden und Hauptinhalt anzeigen
+          gsap.to(overlay, {
+              opacity: 0, // Overlay ausblenden
+              duration: 0.5, // Dauer der Ausblendung
+              delay: texts.length * 0.3 + 2, // Wartezeit basierend auf der Anzahl der Texte
+              onComplete: () => {
+                  overlay.style.display = "none"; // Overlay vollständig ausblenden
+                  mainContent.style.display = "block"; // Hauptinhalt anzeigen
+              },
+          });
+      });
+  </script-->
+
+
+  
+  
+    
+  
+    <!-- Vendor JS Files -->
+    <script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/vendor/glightbox/js/glightbox.min.js"></script>
+    <script src="/static/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+    <script src="/static/vendor/swiper/swiper-bundle.min.js"></script>
+    <script src="/static/vendor/php-email-form/validate.js"></script>
+  
+    <!-- Template Main JS File -->
+    <script src="/static/js/home/home.js"></script>
+    <script defer src="/static/js/cookieconsent-init.js"></script>
+
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Alle Tooltips auf der Seite aktivieren
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+      });
+
+    </script>
+
+    
+
+
+  </body>
+  </html>
