@@ -192,7 +192,11 @@ The levers, in order:
 3. **A dated waiver in `.trivyignore`**, only when the fix cannot be taken. The gate scans the **amd64** image, and Alpine builds each architecture
    separately. So verify on `--platform linux/amd64`. #1118 was verified on arm64 and changed nothing in CI. #1119 is the waiver that followed.
 
-The nightly security agent is where this playbook belongs, so the next occurrence opens the pull request instead (#1122).
+A red publish on `main` does two things by itself (#1122). `publish-failure-issue.yml` opens one blocker issue with the Trivy tables, updates it on
+each further red run, and closes it on the first green one. `agent-security.yml` runs on the same trigger. It walks this list with the commands in
+[`security-triage.prompt.md` § A blocked publish](../../.github/prompts/security-triage.prompt.md#a-blocked-publish). When the answer is an upgrade
+line, or a waiver it can justify, it opens the pull request. Look for that pull request before starting by hand. The same section deletes an upgrade
+line or a waiver once the base has caught up, which is what #1033 did by hand.
 
 ## What a release deserves
 

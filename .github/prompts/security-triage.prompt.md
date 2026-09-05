@@ -36,6 +36,12 @@ tier above has nobody to ask. **Unattended, that tier does not collapse into the
   path is not, and is one of the sections above.
 - **`--dry-run` on top of it opens no pull request at all** and writes the whole report to the job summary. That is the mode to use the first time, and after
   any change to this section.
+- **`--failed-publish <run-url>` names a red `release.yml` run on `main`**, which is the second trigger `agent-security.yml` has. Start from
+  [§ A blocked publish](#a-blocked-publish), with the run's image and package, and do the rest of the inventory after. The run can arrive minutes
+  before the nightly schedule or minutes after it, so **Step 2's "already handled" check includes a pull request this prompt opened earlier tonight** —
+  `gh pr list --search 'author:app/claude'` — and a second run for the same finding reports it rather than opening a twin.
+- **A waiver is the one thing here that is a judgement, and unattended it has the higher bar:** the three conditions in § A blocked publish, or no pull
+  request. The upgrade line and the deletion are mechanical and in scope.
 - **Report the reachability of each surface, not just its findings.** Dependabot alerts are expected to return `403` from Actions: neither `GITHUB_TOKEN` nor
   the Claude GitHub App carries a permission for them. Say which surfaces answered, because the Notes below are exactly right that a quiet inventory and a
   clean one look identical.
@@ -78,6 +84,83 @@ Getting this table wrong is how a triage session ends with a clean Security tab 
 
 For Trivy and Dependency-Check the code-scanning alert is a _view_; the Gradle plugin and the Trivy step read their own files and neither knows the alert was
 dismissed. Editing those two files is an accepted-risk decision — draft it and confirm with the user, as `/security-report` says.
+
+## A blocked publish
+
+The case where "prefer Dependabot's PR" is the wrong lever, and it has happened twice: #964 on 2026-09-01 (libexpat) and #1117 on 2026-09-05
+(util-linux). Alpine publishes a fix, the nginx base has not been rebuilt with it, every mainline tag resolves to the digest already pinned, and every
+`release.yml` run on `main` fails at _Scan the images_ until somebody acts. Nothing reaches staging, and `cut-release.yml` refuses to cut.
+[RELEASING.md § Publishing is blocked](../../docs/ops/RELEASING.md#publishing-is-blocked) is the procedure for a person; this is the same procedure
+with its commands. **`agent-security.yml` runs it on a failed publish**, passing `--failed-publish <run-url>`, and the last step runs on every invocation
+whether or not a run was named.
+
+**Every check is on amd64, and that is the whole lesson of #1118.** The gate scans the `linux/amd64` image, and Alpine builds each architecture
+separately, so a package can exist for aarch64 and not for x86_64. #1118 was verified on an arm64 machine, merged, and upgraded nothing in CI.
+
+1. **Read the finding from an image you built, not from the run's log.** The run names the image and the package; the rebuild is what you can act on.
+   The frontend is the image that has failed both times, and its context needs only a stub `dist/`:
+
+    ```sh
+    mkdir -p events-frontend/dist && touch events-frontend/dist/index.html
+    docker build --no-cache --platform linux/amd64 -t probe:amd64 events-frontend
+    # Trivy at release.yml's pin, so the number is the gate's number
+    v=$(sed -nE 's/^ *TRIVY_VERSION: *//p' .github/workflows/release.yml)
+    curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${v}/trivy_${v}_Linux-64bit.tar.gz" | sudo tar -xz -C /usr/local/bin trivy
+    trivy image probe:amd64 --severity CRITICAL,HIGH --ignore-unfixed --ignorefile /dev/null   # the image
+    trivy image probe:amd64 --severity CRITICAL,HIGH --ignore-unfixed --ignorefile .trivyignore # the gate
+    ```
+
+    The first number is what the image carries; the second is what blocks. Both go into the pull request. A BFF or importer finding is the same shape
+    after `./gradlew :events-bff:bootJarLayers`, with `events-bff/build/docker` as the context.
+
+    **`--no-cache` is not optional.** A `RUN apk upgrade` layer is cached by its text, so a cached build replays the index from the day the layer was
+    first built and says nothing about today's. The rehearsal of this section found 7 HIGH with the cache and 0 without, on the same Dockerfile, the
+    same afternoon — the cached layer predated Alpine's x86_64 build of the fix.
+
+2. **Has the base moved?** Resolve the tag and compare with the `FROM` pin:
+
+    ```sh
+    docker buildx imagetools inspect nginxinc/nginx-unprivileged:1.31-alpine | grep -m1 Digest
+    ```
+
+    If it moved, build from the new digest and repeat step 1 — **the package decides, never the digest.** #770 was triaged against a digest that had
+    moved while still shipping the vulnerable openssl. A clean rebuild is a one-line pin bump, or Dependabot's `docker` PR if one is already open.
+
+3. **Does Alpine have the fix for x86_64?** Ask the index the gate's architecture reads, not `apk` on the machine you happen to be on:
+
+    ```sh
+    for a in x86_64 aarch64; do
+      printf '%s ' "$a"
+      curl -s "https://dl-cdn.alpinelinux.org/alpine/v3.24/main/$a/APKINDEX.tar.gz" | tar -xzOf - APKINDEX | grep -A1 '^P:<package>$' | grep '^V:'
+    done
+    ```
+
+    The branch (`v3.24`) is in the Trivy header, `(alpine 3.24.1)`. Report both architectures; the difference between them is the finding of #1119.
+
+4. **x86_64 has it → upgrade the package in our layer.** #964 is the shape and #1118 its second use: `USER root` and `RUN apk upgrade --no-cache <package>`
+   above the `COPY`s, the final `USER 10001:10001` untouched. Named rather than a blanket `apk upgrade`, so what moves against the pinned digest stays
+   reviewable. The comment carries the CVEs, why a digest bump was not available, the issue, and **the deletion condition with its check** — the base
+   digest carrying the version, read with `apk list --installed` inside it. Prove it with step 1 on the new build before opening the pull request.
+
+5. **x86_64 does not have it → a dated waiver in `.trivyignore`,** in #1119's shape, and only with all three of:
+    - **the reachability check written into the reason**: `apk info -L <package>` inside the image lists what the package put there, and the reason names
+      which of those files the advisory is in and why nothing executes it (`/bin/mount` being BusyBox is the #1119 argument);
+    - **the deletion condition**: the x86_64 index listing the fixed version, which is step 3 re-run;
+    - **and the file is not one the image executes.** A finding in nginx, a module it loads, musl or libssl is not waivable by this prompt. Write it up
+      as _what a human should consider_, with the evidence, and open no pull request for it.
+
+    The upgrade layer from step 4 goes in alongside the waiver when x86_64 is merely late: it fixes arm64 today and takes effect on amd64 the moment the
+    index moves, which is what makes the waiver deletable without a second Dockerfile change.
+
+6. **The inverse, on every run.** An upgrade line or a waiver kept past its purpose hides that the base has caught up and quietly becomes the thing
+   choosing the version. For each `RUN apk upgrade` in a Dockerfile, run the check its comment names against the pinned digest; for each dated
+   `.trivyignore` block, re-run step 3. A condition that holds is a deletion pull request in #1033's shape, with the check's output in the body. Check
+   both even on a run with nothing red — that is how #1033 was found by hand, two days after the base had caught up.
+
+**Two waivers sharing a root cause is the signal that the base image is wrong, not the waivers.** `.trivyignore` held eight entries for the Go stdlib
+compiled into `usr/bin/pebble`, a binary Temurin's Ubuntu JRE carried and nothing executed, each one justified and dated, until #492 changed the base to
+[Liberica on Alpine](../../docs/adr/ADR-017_JRE_BASE_IMAGE.md) and deleted all eight. The third lever — change the base — is the one that gets forgotten,
+and it is a report and an issue, never an unattended pull request.
 
 ## Step 1 — Take the inventory
 
@@ -140,14 +223,10 @@ Then by class:
 - **Transitive with no BOM entry** — check first whether bumping the _direct_ dependency carries the fix. Only pin via a `constraints` block if it does not.
 - **A webjar or other bundled asset** — the vulnerable file is inside a jar (the `swagger-ui` bundled JS is the live example). Bump the webjar; there is nothing
   to patch in our tree.
-- **Base image / GitHub Action** — Dependabot's `docker` and `github-actions` ecosystems own these; prefer its PR. Trivy's findings land here: a path like
-  `usr/bin/pebble` is a binary _inside the image_, not code we wrote, so there is nothing in this tree to patch.
-    - **There are three levers, not two, and the third is the one that gets forgotten**: bump the base image tag, wait for upstream — or _change the base image_.
-      `usr/bin/pebble` was the live example here for exactly as long as it took to notice that the first two had no end state: it is a Go binary in Temurin's
-      Ubuntu JRE whose stdlib only moves when Temurin rebuilds, so the waiver list grew on the Go release cadence. #492 removed it by moving to
-      [Liberica on Alpine](../../docs/adr/ADR-017_JRE_BASE_IMAGE.md), and `.trivyignore` went back to empty.
-    - **A second waiver sharing a root cause with the first is the signal.** Not the tenth. Two entries with one cause means the cause is structural, and the
-      question changes from "is this reachable?" to "why are we still shipping the thing that generates them?". `.trivyignore`'s header carries this rule.
+- **GitHub Action** — Dependabot's `github-actions` ecosystem owns the pins; prefer its PR.
+- **Base image** — a Trivy finding in a path like `usr/bin/pebble` or `usr/lib/libuuid.so.1` is a binary _inside the image_, not code we wrote, so there
+  is nothing in this tree to patch. Dependabot's `docker` PR is the first lever when one is open, and it has been the wrong one twice: when Alpine
+  has the fix and the base has not been rebuilt with it, no PR is coming. That case is [§ A blocked publish](#a-blocked-publish), below.
 
 After fixing, **prove the finding is gone** rather than assuming: re-resolve and compare against the advisory's `first_patched_version`.
 

@@ -1,0 +1,215 @@
+# Turns a red publish on `main` into an issue, and closes it when the next publish is green (#1122).
+#
+# The morning #1122 was filed, four `release.yml` runs failed inside 44 minutes, three pull requests
+# merged and a release was cut over them, and the only signal was the workflow-failure email — which
+# is a signal nobody has to act on. The blocked-publish playbook is `docs/ops/RELEASING.md` § Publishing is
+# blocked, and `agent-security.yml` now runs it on the same trigger; this is the interim half, the
+# thing that exists whether or not the agent's pull request is right.
+#
+# **Why an issue rather than a notification.** The same reasoning as `restore-drill-reminder.yml`: it
+# lands on the tracker, it is assignable, and a publish that has been red for a day is visible as an
+# open card rather than as a run somebody would have to go and look at. It also gives the Trivy table
+# a place a person reads, which the run's log is not.
+#
+# **One issue, updated, then closed — never a pile.** The title is fixed, the guard lists open issues
+# by exact title (listing, not search — the search index is eventually consistent), a second failure
+# comments on the open issue rather than opening another, and the first green publish closes it. A
+# closed one is not reopened: the next failure is a new fact and gets a new issue.
+#
+# **Only a publish counts.** `release.yml` also completes on its pull-request self-test and on a
+# dispatch dry run, and neither publishes. A red one of those is a broken workflow change, which its
+# own pull request shows. The guard below admits a push to `main` (a snapshot) and a `release` event.
+#
+# **The table comes from an artifact, not from the log.** `release.yml` uploads the three Trivy
+# tables as `trivy-reports` under the same guard as its SARIF uploads. A run's log is one zip behind
+# `actions: read` and would need parsing; the artifact is three text files. A run that died before
+# the scan has no artifact, and the issue says so and names the failed step instead.
+#
+# **This workflow cannot put the card on the board** — `GITHUB_TOKEN` cannot write to an organisation
+# project, and the board's own auto-add misses items (#1092). Place it by hand:
+# `scripts/issue-board.sh status <n> Ready`.
+name: Publish failure issue
+
+on:
+  # comment-lint: allow a dated suppression, per the reason in zizmor.yml
+# zizmor: ignore[dangerous-triggers]
+  # 2026-09-05 — `workflow_run` carries the default branch's context and secrets, and the danger
+  # is checking out the triggering run's head. This file has no checkout and runs nothing from the
+  # run: `github-script` reads the run's metadata and its artifact through the API and writes an
+  # issue. The same property `milestone-dependabot.yml` and `label-pr.yml` rely on, and the one to
+  # re-check before adding any step here.
+  workflow_run:
+    workflows: [ 'Release' ]
+    types: [ completed ]
+  # Replays a run that has already completed, as if it had just done so. The only way to produce
+  # the first issue — GitHub offers the button only once the file is on the default branch — and
+  # the way to prove both halves: dispatch it on a failed run, then on a green one.
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: The id of a `release.yml` run to act on, from its URL
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  # Creating, commenting on and closing the issue, and listing open ones for the guard.
+  issues: write
+  # Reading the run, its jobs, and downloading the `trivy-reports` artifact.
+  actions: read
+
+# Two publishes finishing close together must converge on one issue, so the second waits for the
+# first rather than racing it past the guard.
+concurrency:
+  group: publish-failure-issue
+  cancel-in-progress: false
+
+jobs:
+  file:
+    name: File or close the blocker issue
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Open, update or close the issue
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          # The completed run on a trigger, the replayed one on a dispatch. Through the environment
+          # rather than interpolated into the script, per the template-injection rule.
+          RUN_ID: ${{ github.event.workflow_run.id || inputs.run_id }}
+          # An assignee rather than a mention, for the reason the drill reminder gives: an
+          # unassigned issue on a board is nobody's, and a blocked publish has an owner.
+          ISSUE_OWNER: enorm
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const runId = Number(process.env.RUN_ID);
+            if (!Number.isInteger(runId) || runId <= 0) {
+              core.setFailed(`RUN_ID is not a run id: "${process.env.RUN_ID}"`);
+              return;
+            }
+
+            const { data: run } = await github.rest.actions.getWorkflowRun({ owner, repo, run_id: runId });
+
+            // The guard. A dispatch can name any run, so the workflow's name is checked here as
+            // well as in the trigger, and a `release` run's head_branch is the tag, not `main`.
+            const isPublish =
+              run.name === 'Release' &&
+              ((run.event === 'push' && run.head_branch === 'main') || run.event === 'release');
+            if (!isPublish || run.status !== 'completed') {
+              core.notice(`Run ${runId} is not a completed publish (${run.name}, ${run.event} on ${run.head_branch}, ${run.status}) — nothing to do.`);
+              return;
+            }
+
+            const TITLE = 'Publishing is blocked — release.yml is red on main';
+            const open = await github.paginate(github.rest.issues.listForRepo, { owner, repo, state: 'open', per_page: 100 });
+            // `listForRepo` returns pull requests too; a same-titled one would otherwise suppress the issue.
+            const existing = open.find((issue) => !issue.pull_request && issue.title === TITLE);
+
+            const what = run.event === 'release' ? `the release \`${run.head_branch}\`` : `the snapshot for \`${run.head_sha.slice(0, 7)}\``;
+            const runLink = `[run ${run.id}](${run.html_url})`;
+
+            if (run.conclusion === 'success') {
+              if (!existing) {
+                core.notice(`Run ${runId} is green and no issue is open — nothing to do.`);
+                return;
+              }
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: existing.number,
+                body: `Publishing is green again: ${runLink} published ${what}. Closing.`,
+              });
+              await github.rest.issues.update({ owner, repo, issue_number: existing.number, state: 'closed', state_reason: 'completed' });
+              core.notice(`Closed #${existing.number} — ${runLink} is green.`);
+              await core.summary.addHeading('🚦 Publish failure issue', 2)
+                .addRaw(`Closed [#${existing.number}](${existing.html_url}) — ${what} published in ${runLink}.`).write();
+              return;
+            }
+
+            // A cancelled or skipped run says nothing about the gate. Only a failure opens an issue.
+            if (run.conclusion !== 'failure') {
+              core.notice(`Run ${runId} ended ${run.conclusion}, which is not a failed publish — nothing to do.`);
+              return;
+            }
+
+            // The tables, if the run got as far as the scan. Each file is one image's table; an
+            // empty one means that image was clean.
+            const tables = [];
+            let failedStep = '';
+            const { data: { artifacts } } = await github.rest.actions.listWorkflowRunArtifacts({ owner, repo, run_id: runId });
+            const artifact = artifacts.find((a) => a.name === 'trivy-reports' && !a.expired);
+            if (artifact) {
+              const { data } = await github.rest.actions.downloadArtifact({ owner, repo, artifact_id: artifact.id, archive_format: 'zip' });
+              const dir = path.join(process.env.RUNNER_TEMP, 'trivy-reports');
+              fs.mkdirSync(dir, { recursive: true });
+              const zip = path.join(dir, 'trivy-reports.zip');
+              fs.writeFileSync(zip, Buffer.from(data));
+              await exec.exec('unzip', ['-o', '-q', zip, '-d', dir]);
+              for (const component of ['bff', 'importer', 'frontend']) {
+                const file = path.join(dir, `trivy-${component}.txt`);
+                const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').trim() : '';
+                tables.push({ component, text });
+              }
+            } else {
+              const { data: { jobs } } = await github.rest.actions.listJobsForWorkflowRun({ owner, repo, run_id: runId });
+              const job = jobs.find((j) => j.conclusion === 'failure');
+              const step = job && job.steps.find((s) => s.conclusion === 'failure');
+              failedStep = step ? `_${step.name}_` : 'an unknown step';
+            }
+
+            // Absolute URLs, because a relative link in an issue body resolves against the rendered page.
+            const blob = `https://github.com/${owner}/${repo}/blob/main`;
+            const findings = artifact
+              ? tables.map(({ component, text }) =>
+                  text ? `**${component}**\n\n\`\`\`text\n${text}\n\`\`\`` : `**${component}** — clean.`).join('\n\n')
+              : `The run failed at ${failedStep}, before the images were scanned, so there is no Trivy table. ` +
+                'That is a different failure from the one this issue was designed for — read the run.';
+
+            const report = `${runLink} failed publishing ${what}.\n\n${findings}`;
+
+            if (existing) {
+              await github.rest.issues.createComment({ owner, repo, issue_number: existing.number, body: `Still red. ${report}` });
+              core.notice(`Updated #${existing.number} with ${runLink}.`);
+              await core.summary.addHeading('🚦 Publish failure issue', 2)
+                .addRaw(`Updated [#${existing.number}](${existing.html_url}) with ${runLink}.`).write();
+              return;
+            }
+
+            const body = [
+              `> Opened automatically by [\`publish-failure-issue.yml\`](${blob}/.github/workflows/publish-failure-issue.yml) ` +
+                '([#1122](https://github.com/enorm-labs/event-junkie/issues/1122)). It closes itself on the next green publish.',
+              '',
+              report,
+              '',
+              '## What this means',
+              '',
+              'Nothing reaches staging until a publish is green, and `cut-release.yml` refuses to cut from a red commit. ' +
+                '**The cause is usually not the change that landed**: the image scan gates on fixable findings in the base ' +
+                'images, so an Alpine advisory turns `main` red with nothing in the diff to show for it.',
+              '',
+              `The levers, in order, are in [\`docs/ops/RELEASING.md\` § Publishing is blocked](${blob}/docs/ops/RELEASING.md#publishing-is-blocked): ` +
+                'a newer base digest, then the package upgraded in our layer, then a dated waiver — each verified on **amd64**, ' +
+                'which is the architecture the gate scans. `agent-security.yml` runs the same playbook on this trigger and opens ' +
+                'the pull request when it can; look for it before starting by hand.',
+              '',
+              '## Done when',
+              '',
+              '- [ ] A publish on `main` is green — this issue closes itself',
+              '- [ ] If the red run was a release, it is republished so the tag has artifacts behind it',
+              '- [ ] Whatever was added — an upgrade line, a waiver — carries its deletion condition',
+              '',
+              'This issue is not on the project board (#1092). Place it with `scripts/issue-board.sh status <n> Ready`.',
+            ].join('\n');
+
+            const { data: issue } = await github.rest.issues.create({
+              owner, repo, title: TITLE, body,
+              labels: ['area:ci', 'area:security', 'size:S'],
+              assignees: [process.env.ISSUE_OWNER],
+              // No milestone: a blocked publish belongs to whichever release it is blocking.
+              type: 'Task',
+            });
+            core.notice(`Opened #${issue.number} — ${TITLE}`);
+            await core.summary.addHeading('🚦 Publish failure issue', 2)
+              .addRaw(`Opened [#${issue.number}](${issue.html_url}) for ${runLink}, assigned to @${process.env.ISSUE_OWNER}.`).write();

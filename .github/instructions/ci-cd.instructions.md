@@ -47,6 +47,13 @@ What each workflow is for, which checks are required, and the shapes that fail s
       enabled, and #561 and #862, both opened by this workflow, were off the board anyway. **This applies to every reminder workflow here**, since none of them
       can place a card. Check it after a run and place a missing one with `scripts/issue-board.sh status <n> Ready`. #1092 carries the gap. See
       `docs/ops/BACKUPS.md` §9.
+    - `publish-failure-issue.yml` — turns a red `release.yml` on `main` into one issue, and closes it on the next green publish (#1122). Four failed publishes
+      in 44 minutes on 2026-09-05 produced four emails and nothing anybody had to act on. `workflow_run` on `Release`, `github-script`, no checkout — the
+      `milestone-dependabot.yml` shape — and a job guard that admits only a push to `main` or a `release` event, because the workflow's pull-request self-test
+      and its dispatch dry run complete too and publish nothing. **The Trivy tables come from the `trivy-reports` artifact `release.yml` uploads**, under the
+      same guard as its SARIF uploads; a run that died before the scan has none, and the issue names the failed step instead. Idempotent by exact title
+      through the list API; a second red run comments, a green one comments and closes, a closed issue is never reopened. Its `workflow_dispatch` takes a
+      `run_id` and replays that run, which is how both halves were proven and how the first issue can be produced at all.
     - **Every scanner gate asserts a denominator as well as an exit code** (#1087), through
       `scripts/scan-coverage.sh` and the floors in `scripts/scan-coverage-baseline.txt`. A tool that
       quietly reports less than it did — a release that drops an audit, a `paths:` filter that
@@ -102,7 +109,11 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       Pending against every required check forever. **`--allowedTools` is load-bearing**: these prompts carry no frontmatter, so without it the agent has no
       shell and no GitHub API and the run reads the repository and does nothing. And **Dependabot alerts are expected to `403`** — neither `GITHUB_TOKEN` nor the
       Claude App carries a permission for them — so its honest scope is code scanning. It runs on the nightly schedule below, and `dry_run` defaults to true only
-      on a manual dispatch — a scheduled run is live.
+      on a manual dispatch — a scheduled run is live. **It also runs on a red publish** (#1122): a `workflow_run` on `release.yml`, admitted by a job-level
+      `if:` only for a failed push to `main` or a failed `release` event, with the run's URL passed as `--failed-publish`. The prompt's § A blocked publish
+      is what that run walks — digest, then Alpine's x86_64 index, then the upgrade line or the waiver, everything verified on amd64 — and a waiver is the
+      one thing it opens no pull request for without the reachability evidence. The 2026-09-05 cron fired between three failed publishes and the fix and
+      saw nothing; that is the gap the trigger closes.
 
         The fifth decision is **`ACTIONS_GITHUB_TOKEN`**, and it is the one that makes the fourth true. `security-events: read` is granted to the Actions token,
         but the action overwrites `GITHUB_TOKEN` and `GH_TOKEN` in the environment the agent inherits with its App installation token — so `gh` authenticated as
@@ -256,7 +267,8 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       because a multi-platform image cannot be loaded into the local daemon and therefore cannot be scanned before it exists in a registry. **It publishes on an
       allowlist** — `push` events, or a `workflow_dispatch` whose `publish` input is ticked — never "everything except the dry run", so a trigger added later
       cannot quietly become a publishing one. And it **tests itself on pull requests that change it**, because the `workflow_dispatch` caveat above applies to
-      it with teeth: the button does not exist until the change merges, and merging is what publishes.
+      it with teeth: the button does not exist until the change merges, and merging is what publishes. It uploads the three Trivy tables as a `trivy-reports`
+      artifact at the reporting tail, next to the SARIF uploads and under the same guard, for `publish-failure-issue.yml` to quote.
     - `validate-chart.yml` — `helm lint --strict` and `helm template` | `flux schema validate` across every values file and every cluster's Flux resources, plus
       `helm unittest` and `scripts/cluster-assertions.sh`. Triggers only when `deploy/**` changes. **Pins Helm 4.2.4**, matching the SDK helm-controller embeds, so the
       client that gates the chart is the one that installs it. It pinned Helm 3 until #1006, on a premise that had lapsed — and while it did, CI was weaker
