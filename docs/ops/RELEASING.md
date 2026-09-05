@@ -18,6 +18,7 @@ flux --context event-junkie-staging reconcile helmrelease event-junkie -n flux-s
 gh api repos/enorm-labs/event-junkie/deployments --jq '.[0] | {environment, ref, created_at}'         # what GitHub thinks
 
 # Cut a release: one dispatch. It publishes the release and opens the bump PR.
+gh run list --workflow=release.yml --branch main --limit 1                 # green? the cut refuses a red one
 gh workflow run cut-release.yml -f dry_run=false -f bump=patch
 ```
 
@@ -176,17 +177,31 @@ remediation:
 Rollback is also `git revert` on the manifests, and drift from a manual `kubectl edit` is reported on staging (`driftDetection: warn`) and corrected on
 production (`enabled`).
 
+### Publishing is blocked
+
+The symptom is a red `release.yml` on `main`, failing at _Scan the images_ on every push. **The cause is usually not the change that landed.** Trivy gates
+on fixable CRITICAL and HIGH findings in the base images. Alpine publishes a fix, and the base image does not carry it yet. This happened on 2026-09-01
+(libexpat, #964) and on 2026-09-05 (util-linux, #1117). Nothing reaches staging until it is fixed, and `cut-release.yml` refuses to cut.
+
+The levers, in order:
+
+1. **A newer base digest.** Compare the tag's digest with the pin. Then check the package inside it, never the digest alone.
+2. **Upgrade the package in our layer.** Name the package, and write the deletion condition in the comment. #964 is the shape. #1033 is its removal.
+3. **A dated waiver in `.trivyignore`**, only when the fix cannot be taken. The gate scans the **amd64** image, and Alpine builds each architecture
+   separately. So verify on `--platform linux/amd64`. #1118 was verified on arm64 and changed nothing in CI. #1119 is the waiver that followed.
+
+The nightly security agent is where this playbook belongs, so the next occurrence opens the pull request instead (#1122).
+
 ## Cutting a release
 
 ```bash
-# 1. main is at the version you intend to release
-scripts/version.sh check
-
-# 2. publish the release — this is what triggers the workflow
-gh release create v0.3.1 --target main --generate-notes
-
-# 3. afterwards, bump all four files to 0.3.2-SNAPSHOT / 0.3.2 in a PR
+gh workflow run cut-release.yml -f dry_run=true                  # resolves the version and previews the notes
+gh workflow run cut-release.yml -f dry_run=false -f bump=patch   # publishes, then opens the bump PR
 ```
+
+The workflow refuses three things. The four version files disagree. The tag already exists. The commit's snapshot publish on `main` is not green. The last
+one is the release gate seen early. A release rebuilds what the snapshot built, so it fails the same way. It then leaves a tag with nothing behind it. The
+by-hand fallback and the reasoning are in [DEVELOPMENT.md § Cutting a release](../DEVELOPMENT.md#cutting-a-release).
 
 A release version is **never committed**: `release.yml` passes `-Pversion=` from the tag, so the tag and the artifacts cannot disagree. Tagging `v0.4.0` on a tree
 that says `0.3.1-SNAPSHOT` fails before anything is built.

@@ -185,7 +185,8 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       exists so 4.6 and 4.8 can be compared on one prompt. Last to earn a schedule, per #387's ordering. It sets up a JDK and Gradle, because the proof
       obligation is a full build and a missing toolchain reads to a model as a broken one.
     - `cut-release.yml` — publishes the GitHub Release that `release.yml` keys on, then opens the pull request that moves `main` to the next snapshot (#868).
-      `workflow_dispatch` only, `dry_run` on by default. Three things about it are decisions. **The version is never typed** — it comes from
+      `workflow_dispatch` only, `dry_run` on by default. **It refuses a commit whose snapshot publish is not green**, because a release rebuilds what the
+      snapshot built and fails the same gate — v0.3.10 was cut over four red runs and left an empty tag (#1117). Three things about it are decisions. **The version is never typed** — it comes from
       `scripts/version.sh base`, so a tag cannot claim a number the tree does not carry, and the same script writes the four files for the bump so a workflow
       and a person edit them identically. **It mints a GitHub App token rather than using `GITHUB_TOKEN`**, because GitHub suppresses the events its own token
       raises: a release created with it fires no `release: published`, so nothing is published and every job is green, and a pull request it opens starts no

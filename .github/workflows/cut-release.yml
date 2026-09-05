@@ -13,6 +13,11 @@ name: Cut release
 # following it: snapshots of the just-released version sort *below* the release, so the
 # `>=0.0.0-0` range keeps resolving the release itself and nothing reports it (#455). Doing both
 # halves in one run is the whole point.
+#
+# **A release is a rebuild of what `main` already published as a snapshot**, so a red snapshot
+# publish is a red release: v0.3.10 was cut over four failed runs and left a tag with nothing
+# behind it, for a base-image finding no change on `main` had caused (#1117). The cut therefore
+# refuses a commit whose snapshot publish is not green, in dry run too.
 
 on:
   workflow_dispatch:
@@ -45,6 +50,8 @@ concurrency:
 
 permissions:
   contents: read
+  # To read release.yml's runs for the snapshot check below.
+  actions: read
 
 jobs:
   cut:
@@ -107,6 +114,30 @@ jobs:
             exit 1
           fi
           echo "v$VERSION is free"
+
+      # The run for this exact commit, not the latest on main: a green run for an older commit says
+      # nothing about a base image that moved since. No run at all is refused too — the publish
+      # takes minutes, and a cut in that window would race it.
+      - name: Refuse a commit whose snapshot publish is not green
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha="$(git rev-parse HEAD)"
+          run="$(gh run list --workflow=release.yml --event push --branch main --limit 30 \
+            --json headSha,status,conclusion,url |
+            jq -c --arg sha "$sha" '[.[] | select(.headSha == $sha)][0]')"
+          if [ -z "$run" ] || [ "$run" = "null" ]; then
+            echo "::error::No snapshot publish has run for ${sha}. Wait for release.yml on main, then retry."
+            exit 1
+          fi
+          status="$(jq -r .status <<<"$run")"
+          conclusion="$(jq -r .conclusion <<<"$run")"
+          url="$(jq -r .url <<<"$run")"
+          if [ "$status" != "completed" ] || [ "$conclusion" != "success" ]; then
+            echo "::error::The snapshot publish for ${sha} is ${status}/${conclusion}: ${url} — a release from this commit fails the same gate. See docs/ops/RELEASING.md § Publishing is blocked."
+            exit 1
+          fi
+          echo "Snapshot publish for ${sha} is green: ${url}"
 
       # `generate-notes` renders what `gh release create --generate-notes` would produce and creates
       # nothing, so a dry run can show the notes rather than only the number. The categories come
