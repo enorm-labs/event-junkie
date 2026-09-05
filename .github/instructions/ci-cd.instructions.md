@@ -136,7 +136,7 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       is a **Status** line rather than a rewrite of the argument that would destroy the only record of why the old choice was made. `BRANDING.md` and
       `LOGO_IDEAS.md` are exempt as voice-carrying copy, and `ACCEPTED_LIMITATIONS.md` is generated. It installs Node and the frontend's lockfile, because
       `format-markdown.sh` needs the **pinned** oxfmt rather than one on `PATH` — the same reason `validate-docs.yml` does it.
-    - **All five run nightly, staggered across one overnight window, and a scheduled run is live.** Security 04:23, refactor 04:41, dependency pins 05:52,
+    - **All five run nightly, staggered across one overnight window, and a scheduled run is live.** Security 04:23, refactor 04:41, plausibility 05:17,
       comments 06:14, documentation 06:35 UTC, each off-the-hour like every other schedule here. They were one per weekday until the cadence moved: nightly buys
       a finding on the day it appears rather than up to a week later, and costs up to five open agent pull requests a day rather than five a week. The
       staggered start times are what remains of the weekday spread, and the `concurrency` group on each stops a manual dispatch racing its own cron and stops a
@@ -184,6 +184,13 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       model is `claude-opus-4-8` rather than Opus 5, which is a measured preference about verbosity at comment work rather than a cost decision — the input
       exists so 4.6 and 4.8 can be compared on one prompt. Last to earn a schedule, per #387's ordering. It sets up a JDK and Gradle, because the proof
       obligation is a full build and a missing toolchain reads to a model as a broken one.
+    - `agent-plausibility.yml` — the [`/plausibility-check`](../prompts/plausibility-check.prompt.md) workload, and the only one that opens nothing. It reads
+      the running site's API for the next days, checks each row for what cannot be right, fetches a rationed sample of the venues' own pages, and writes a
+      report to the job summary and the `agent-report` artifact. Three things about it are decisions. **It has no `dry_run` input, because every run is
+      one**: the prompt writes to no database, no tracker and no tree, so there is nothing to withhold. **It files nothing and holds no `issues: write`**, on
+      purpose — a comparison between two texts can be confidently wrong, and the report is what a person reads before anything becomes an issue. **It
+      scrapes venue websites from a runner**, so the prompt carries ADR-007's politeness rules and the `sample` input is the ceiling on the venues' side. Its
+      origin is `SITE_URL`, the variable `site-probe.yml` reads with the same apex fallback, so launch day's deletion of that variable retargets both.
     - `cut-release.yml` — publishes the GitHub Release that `release.yml` keys on, then opens the pull request that moves `main` to the next snapshot (#868).
       `workflow_dispatch` only, `dry_run` on by default. Three things about it are decisions. **The version is never typed** — it comes from
       `scripts/version.sh base`, so a tag cannot claim a number the tree does not carry, and the same script writes the four files for the bump so a workflow

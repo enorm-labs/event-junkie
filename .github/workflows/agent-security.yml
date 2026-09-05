@@ -30,7 +30,7 @@ name: Agent — Security Triage
 
 on:
   # Nightly, off-the-hour for the reason every other schedule here gives: the top of the hour is
-  # a stampede on shared runners. The four agent workloads keep the staggered start times they
+  # a stampede on shared runners. The five agent workloads keep the staggered start times they
   # had as one-per-weekday, so a night is a queue rather than five runners at once.
   schedule:
     - cron: '23 4 * * *'
