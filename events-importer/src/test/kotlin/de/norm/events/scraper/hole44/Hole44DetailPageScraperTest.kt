@@ -83,6 +83,17 @@ class Hole44DetailPageScraperTest {
     }
 
     @Test
+    fun `reads the ticket shop link from the Tickets button`() {
+        // Modern English, 5 September 2026: "Tickets / Eventim" is an `a.button.ticket` anchor (#1140).
+        val url = "https://hole-berlin.de/event/2026-09-05-modern-english/"
+        val event = parse("hole44-detail-ticket-button.html", url).shouldNotBeNull()
+
+        event.title shouldBe "Modern English"
+        event.ticketUrl.shouldNotBeNull() shouldStartWith "https://www.eventim.de/noapp/event/modern-english-hole-44-21500096/"
+        event.status shouldBe "RELOCATED"
+    }
+
+    @Test
     fun `returns null for a page without an event title`() {
         val url = "https://hole-berlin.de/event/missing/"
         parse2(url) shouldBe null

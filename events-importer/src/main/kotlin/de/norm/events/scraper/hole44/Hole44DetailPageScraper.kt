@@ -27,7 +27,7 @@ import tools.jackson.databind.json.JsonMapper
  * priority 1) — used for the description and image. The `single_event_header`
  * markup adds the fields the overview lacks: the promoter (`.event-promoter`), the
  * doors time (`Einlass` in the `.details` list), the support line
- * (`.single-event-support`), and the on-page image.
+ * (`.single-event-support`), the ticket-shop button and the on-page image.
  *
  * The date, start time, genre, and status are all present here too and are read
  * directly, so a successful detail fetch yields a complete event; the overview
@@ -81,6 +81,8 @@ class Hole44DetailPageScraper {
             doorsTime = parseTime(detailValue(content, "Einlass")),
             startTime = parseTime(detailValue(content, "Start")),
             imageUrl = jsonLd?.stringOrNull("image") ?: content.hrefAt("a.event-image"),
+            // The "Tickets" button links straight to the shop (Eventim); the JSON-LD carries no offer (#1140).
+            ticketUrl = content.hrefAt("a.button.ticket"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.HOLE44.sourceIdPrefix}$slug",
             genre = parseGenres(content),
