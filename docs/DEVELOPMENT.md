@@ -425,7 +425,8 @@ the fat jar into its layers first, and the **build context is that output direct
 docker buildx build -f events-bff/Dockerfile events-bff/build/docker -t event-junkie/bff:dev --load
 ```
 
-Both architectures at once — this is what CI does, and it needs no QEMU because neither Dockerfile contains a `RUN`:
+Both architectures at once — this is what CI does. Neither Dockerfile does build work in a `RUN`, so no build matrix is needed. The one `apk upgrade`
+each carries runs for the other architecture under Docker's emulation. Docker Desktop and the CI runner both have it:
 
 ```bash
 docker buildx build -f events-bff/Dockerfile events-bff/build/docker \

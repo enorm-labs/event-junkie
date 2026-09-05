@@ -230,8 +230,10 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
-      # No QEMU and no per-architecture runner, because neither Dockerfile contains a `RUN` — see
-      # the header comment in events-bff/Dockerfile. Both platforms genuinely build here.
+      # No per-architecture runner and no QEMU setup step, because neither Dockerfile does build
+      # work in a `RUN` — see the header comment in events-bff/Dockerfile. The one `RUN` each
+      # carries, a named `apk upgrade`, runs for arm64 under the emulation the runner image already
+      # has (#770). Both platforms genuinely build here.
       #
       # `type=cacheonly` because a multi-platform image cannot be loaded into the local daemon:
       # `load: true` would fail, and dropping to a single platform would leave arm64 unbuilt, which

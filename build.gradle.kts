@@ -227,9 +227,9 @@ subprojects {
     // than one per module.
     //
     // Spring Boot's reference Dockerfile does this extraction *inside* a builder stage
-    // (`RUN java -Djarmode=tools …`). Doing it in Gradle instead is what makes the image build
-    // contain no `RUN` at all — and therefore no target-architecture execution — so one runner can
-    // emit a linux/amd64 + linux/arm64 manifest list with no QEMU and no build matrix. A JVM jar is
+    // (`RUN java -Djarmode=tools …`). Doing it in Gradle instead is what keeps build work — and
+    // its architecture-specific output — out of the image build, so one runner can emit a
+    // linux/amd64 + linux/arm64 manifest list with no build matrix. A JVM jar is
     // architecture-independent; only the base image differs per platform.
     //
     // `--application-filename application.jar` pins the extracted jar's name, which otherwise

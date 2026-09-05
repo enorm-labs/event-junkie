@@ -290,9 +290,11 @@ docker buildx build -f events-bff/Dockerfile events-bff/build/docker -t event-ju
 
 Three rules these files exist under, each of which something else depends on:
 
-- **No `RUN`, and no builder stage.** A `RUN` executes target-architecture code, which is what would force QEMU or a runner per architecture. With none, one
-  runner emits both platforms. This is why the layer extraction lives in Gradle rather than in the Dockerfile, unlike Spring Boot's reference example — and it
-  is also why the **AOT cache** Spring Boot recommends for Java 25+ is deliberately not used: it needs a `RUN` and its output is architecture-specific.
+- **No builder stage, and no `RUN` that does build work.** Build work in a `RUN` executes target-architecture code and produces architecture-specific output,
+  which is what would force a runner per architecture. With the layer extraction in Gradle rather than in the Dockerfile, unlike Spring Boot's reference
+  example, one runner emits both platforms — and that is also why the **AOT cache** Spring Boot recommends for Java 25+ is deliberately not used: its output
+  is architecture-specific. **The one `RUN` allowed is a named `apk upgrade`** for a base-image CVE the base has not been rebuilt with (#964, #770): it runs
+  for arm64 under the emulation the runner already carries, and `events-bff/Dockerfile` states the rule for such a layer and its deletion condition.
 - **`USER 10001:10001`, numeric and above 10000.** A named user would need `RUN useradd`. It must match `security.runAsUser` in the chart's `values.yaml`,
   and `scripts/uid-consistency.sh` is what enforces that — a mismatch is a pod that cannot read its own files, which does not look like a values problem from
   the logs. Above 10000 since #448: a UID inside the host's own user range lands as a real account if a container ever escapes its namespace, and nothing maps
@@ -553,7 +555,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Shared MCP servers                          | `.mcp.json` — `opentofu`, the hosted registry lookup; no key, one approval per contributor                                        |
 | Cloud-init for the Hetzner nodes            | `infra/modules/environment/cloud-init/`                                                                                           |
 | Helm chart (bff · importer · frontend)      | `deploy/charts/event-junkie/` — read `deploy/AGENTS.md` first; exercised on k3d, never on a real cluster                          |
-| Backend container images                    | `events-bff/Dockerfile`, `events-importer/Dockerfile` — no `RUN`, context is each module's `build/docker`                         |
+| Backend container images                    | `events-bff/Dockerfile`, `events-importer/Dockerfile` — no build-work `RUN`, context is each module's `build/docker`              |
 | Frontend container image                    | `events-frontend/Dockerfile` + `events-frontend/docker/nginx.conf` — nginx on 8080, context is the module                         |
 | Chart assertions                            | `deploy/charts/event-junkie/tests/*_test.yaml` (helm-unittest) + `scripts/cluster-assertions.sh`                                  |
 | Release notes categories                    | `.github/release.yml`                                                                                                             |
