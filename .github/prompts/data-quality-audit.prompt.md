@@ -94,6 +94,16 @@ useful — a problem concentrated at one venue usually points at that importer. 
 - `ARTISTS` — Non-artist strings sitting in `artist.name`: event-format words (`Quiz`, `Karaoke`, `Open Mic`,
   `Festival`, `Special`, `Tour`, `Support`, `Live`, `Warm Up`, `Aftershow`, `w/`, `presents`, `vs`), standalone symbols, pure numbers, or very long strings (a
   whole title parsed as one artist).
+- `ARTISTS` — An artist with exactly one event whose `name` equals that event's `title`, case-insensitively — the series-as-artist signature every
+  `NON_ARTIST_NAMES` entry so far has shared (#1110, #1135). A real act with one Berlin date also matches, so this ranks candidates rather than
+  convicting them; the venue's page settles each one.
+
+    ```sql
+    SELECT a.id, a.name, min(e.title) AS title, min(v.name) AS venue
+    FROM artist a JOIN event_artist ea ON ea.artist_id = a.id JOIN event e ON e.id = ea.event_id JOIN venue v ON v.id = e.venue_id
+    GROUP BY a.id, a.name HAVING count(*) = 1 AND lower(a.name) = lower(min(e.title));
+    ```
+
 - `ARTISTS` — Residual ALL-CAPS artist names — `canonicalArtistName`'s de-shouting is casing-only and its `ACRONYMS` set is curated, so a genuine all-caps name that is not
   in it gets title-cased and a new stylised one slips through until added.
 - `ARTISTS` / `PROMOTERS` — Artist/promoter names with leftover HTML entities (`&amp;`, `&#039;`), stray encoding (`Ã¤`, `â€™`), leading/trailing punctuation or whitespace, doubled
