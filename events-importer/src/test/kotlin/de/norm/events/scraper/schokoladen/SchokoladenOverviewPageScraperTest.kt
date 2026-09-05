@@ -98,6 +98,19 @@ class SchokoladenOverviewPageScraperTest {
             lsd.doorsTime shouldBe LocalTime.of(19, 0)
             lsd.startTime shouldBe LocalTime.of(20, 0)
         }
+
+        @Test
+        fun `reads times written before their labels, with Konzert as the start`() {
+            // Revolte Tanzbein, 5 September 2026: "19:00 Einlass - 20:00 Konzert - 22:00 DJ-Set" (#1141).
+            val autumn =
+                javaClass.classLoader
+                    .getResourceAsStream("scraper/schokoladen/schokoladen-overview-time-line.html")!!
+                    .bufferedReader()
+                    .readText()
+            val revolte = scraper.scrape(Jsoup.parse(autumn, baseUrl), baseUrl).first { it.sourceId == "schokoladen:e20260905" }
+            revolte.doorsTime shouldBe LocalTime.of(19, 0)
+            revolte.startTime shouldBe LocalTime.of(20, 0)
+        }
     }
 
     @Nested
