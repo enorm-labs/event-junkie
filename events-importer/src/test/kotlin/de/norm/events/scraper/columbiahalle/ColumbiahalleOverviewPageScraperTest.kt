@@ -2,6 +2,7 @@ package de.norm.events.scraper.columbiahalle
 
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -115,6 +116,14 @@ class ColumbiahalleOverviewPageScraperTest {
                 ScrapedArtist("BROKEN SOCIAL SCENE", "HEADLINER"),
                 ScrapedArtist("STARS", "HEADLINER")
             )
+    }
+
+    @Test
+    fun `mints no artist for a series billed under its own name`() {
+        val kban = event("9720")
+        kban.title shouldBe "KEIN BOCK AUF NAZIS"
+        kban.eventType shouldBe "CONCERT"
+        kban.artists.shouldBeEmpty()
     }
 
     @Test
