@@ -193,9 +193,13 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       origin is `SITE_URL`, the variable `site-probe.yml` reads with the same apex fallback, so launch day's deletion of that variable retargets both.
     - `cut-release.yml` — publishes the GitHub Release that `release.yml` keys on, then opens the pull request that moves `main` to the next snapshot (#868).
       `workflow_dispatch` only, `dry_run` on by default. **It refuses a commit whose snapshot publish is not green**, because a release rebuilds what the
-      snapshot built and fails the same gate — v0.3.10 was cut over four red runs and left an empty tag (#1117). Three things about it are decisions. **The version is never typed** — it comes from
+      snapshot built and fails the same gate — v0.3.10 was cut over four red runs and left an empty tag (#1117). Four things about it are decisions. **The version is never typed** — it comes from
       `scripts/version.sh base`, so a tag cannot claim a number the tree does not carry, and the same script writes the four files for the bump so a workflow
-      and a person edit them identically. **It mints a GitHub App token rather than using `GITHUB_TOKEN`**, because GitHub suppresses the events its own token
+      and a person edit them identically. **And it is never chosen** — `scripts/version.sh deserved` reads the Conventional Commits since the last release
+      tag and applies SemVer (`docs/ops/RELEASING.md` § What a release deserves): a `feat` is a minor, a breaking change a major (a minor before 1.0.0), the
+      rest a patch. A tree that says less is not cut; the run opens the pull request that raises it and ends red, so a release that was asked for and not
+      made never reads as green. The only input is `at_least`, a floor for the one decision the commits cannot show, which is `1.0.0`.
+      `scripts/version-deserved-test.sh` asserts each rule against a fabricated history, from `validate-scripts.yml`. **It mints a GitHub App token rather than using `GITHUB_TOKEN`**, because GitHub suppresses the events its own token
       raises: a release created with it fires no `release: published`, so nothing is published and every job is green, and a pull request it opens starts no
       check, so the bump never merges. The token is narrowed with `permission-contents` and `permission-pull-requests` rather than inheriting the
       installation's, which zizmor's `github-app` audit is what enforces. **And it does both halves in one run**, because the bump is the step nobody notices
