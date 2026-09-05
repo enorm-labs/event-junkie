@@ -28,7 +28,9 @@ import java.math.BigDecimal
  * Two things live only here. The **taxonomies** are slugs on the `article` element itself —
  * `event-tags-*` are real music genres (`electronic`, `indietronica`, unlike the mixed vocabularies
  * other venues tag with) and `promoters-*` names the booking agency — so both are read from the
- * class list rather than costing a second request. And the page carries **no heading of its own**:
+ * class list rather than costing a second request. The promoter is taken from the hero's visible
+ * `<promoter> presents` credit first, because the slug loses what the site's editor left out of it
+ * (`promoters-schoneberg` for "Konzertbüro Schoneberg", #1139). And the page carries **no heading of its own**:
  * the act's name appears only in the document title with a site suffix, so the overview's
  * `.eventname` stays authoritative and this scraper derives a title only to stand on its own
  * (see [HuxleysWebsiteImporter.fillGapsFromOverview]).
@@ -89,9 +91,26 @@ class HuxleysDetailPageScraper {
             soldOut = article.textAt(".canceledsoldout")?.contains(SOLD_OUT_TEXT, ignoreCase = true) == true,
             status = parseHuxleysStatus(article),
             artists = buildArtistsForEventType(title, subtitle, eventType),
-            promoters = parseTaxonomy(article, PROMOTER_CLASS_PREFIX)
+            promoters = parsePromoters(document, article)
         )
     }
+
+    /**
+     * The promoter as the hero credits it — `Konzertbüro Schoneberg presents`, minus the verb —
+     * falling back to the `promoters-*` taxonomy slug when the page shows no credit. The hero sits
+     * above the article, so the credit is read off the document.
+     */
+    private fun parsePromoters(
+        document: Document,
+        article: Element
+    ): List<String> =
+        document
+            .textAt(".promoter")
+            ?.replace(PROMOTER_CREDIT_SUFFIX, "")
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+            ?.let { listOf(it) }
+            ?: parseTaxonomy(article, PROMOTER_CLASS_PREFIX)
 
     /**
      * The presale/box-office price, when the page states one at all.
@@ -161,6 +180,9 @@ class HuxleysDetailPageScraper {
          * agency is the one a user would recognise.
          */
         const val PROMOTER_CLASS_PREFIX = "promoters-"
+
+        /** The trailing "presents" / "präsentiert" verb on the hero's promoter credit. */
+        val PROMOTER_CREDIT_SUFFIX = Regex("""\s*(?:presents?|präsentiert|pres\.)\s*$""", RegexOption.IGNORE_CASE)
 
         /** The suffix WordPress appends to every document title. */
         const val SITE_TITLE_SUFFIX = " - Huxleys Neue Welt"

@@ -23,9 +23,16 @@ class PromoterNormalizerTest {
             canonicalPromoterName("Loft Concerts GmbH") shouldBe "Loft Concerts"
             canonicalPromoterName("UNDERCOVER") shouldBe "Undercover"
             canonicalPromoterName("Undercover GmbH") shouldBe "Undercover"
-            canonicalPromoterName("TRINITY") shouldBe "Trinity"
-            canonicalPromoterName("Trinity Music") shouldBe "Trinity"
-            canonicalPromoterName("Trinity Music GmbH") shouldBe "Trinity"
+            // The stripped "Music" is restored by a correction entry, so the trading name is the
+            // display form from every source (#1139).
+            canonicalPromoterName("TRINITY") shouldBe "Trinity Music"
+            canonicalPromoterName("Trinity Music") shouldBe "Trinity Music"
+            canonicalPromoterName("Trinity Music GmbH") shouldBe "Trinity Music"
+            canonicalPromoterName("Trinty") shouldBe "Trinity Music"
+            // A leading descriptor is kept, and the slug-derived form folds onto it.
+            canonicalPromoterName("Konzertbüro Schoneberg") shouldBe "Konzertbüro Schoneberg"
+            canonicalPromoterName("Schoneberg") shouldBe "Konzertbüro Schoneberg"
+            canonicalPromoterName("KONZERTBÜRO SCHONEBERG") shouldBe "Konzertbüro Schoneberg"
             canonicalPromoterName("LANDSTREICHER") shouldBe "Landstreicher"
             canonicalPromoterName("Landstreicher Konzerte") shouldBe "Landstreicher"
             canonicalPromoterName("Landstreicher Konzerte GmbH") shouldBe "Landstreicher"
@@ -55,14 +62,14 @@ class PromoterNormalizerTest {
     @Test
     fun `folds known typos and spelling variants onto their correct spelling`() {
         assertSoftly {
-            canonicalPromoterName("Trinty") shouldBe "Trinity"
-            canonicalPromoterName("TRINTY") shouldBe "Trinity"
+            canonicalPromoterName("Trinty") shouldBe "Trinity Music"
+            canonicalPromoterName("TRINTY") shouldBe "Trinity Music"
             // The correction applies after descriptor-stripping and de-shouting.
-            canonicalPromoterName("Trinty Music GmbH") shouldBe "Trinity"
+            canonicalPromoterName("Trinty Music GmbH") shouldBe "Trinity Music"
             canonicalPromoterName("Radioactve") shouldBe "Radioactive"
             canonicalPromoterName("Radioactve Events") shouldBe "Radioactive"
-            // The correctly spelled name is untouched and resolves to the same canonical form.
-            canonicalPromoterName("Trinity Music") shouldBe "Trinity"
+            // The correctly spelled name resolves to the same canonical form.
+            canonicalPromoterName("Trinity Music") shouldBe "Trinity Music"
         }
     }
 

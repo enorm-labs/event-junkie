@@ -173,7 +173,14 @@ private val STRIP_WORDS: Set<String> =
  */
 private val NAME_CORRECTIONS: Map<String, String> =
     mapOf(
-        "trinty" to "Trinity",
+        // "Music" is a stripped descriptor, so "Trinity Music" and "Trinity" both reduce to this
+        // key; the entry restores the agency's trading name, as "loft" does below (#1139).
+        "trinity" to "Trinity Music",
+        "trinty" to "Trinity Music",
+        // Huxleys' taxonomy slug drops the first word of "Konzertbüro Schoneberg"; folded here so
+        // rows minted from the slug resolve to the same promoter as the visible credit.
+        "schoneberg" to "Konzertbüro Schoneberg",
+        "konzertbüroschoneberg" to "Konzertbüro Schoneberg",
         "radioactve" to "Radioactive",
         "allrooms" to "All Rooms",
         "loft" to "Loft Concerts",

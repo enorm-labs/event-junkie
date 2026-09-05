@@ -64,11 +64,11 @@ class HuxleysDetailPageScraperTest {
     }
 
     @Test
-    fun `de-slugifies a multi-word promoter`() {
+    fun `reads the promoter from the hero credit, keeping its own spelling`() {
         val kard = scrape("huxleys-detail-simple.html", "2026-09-01-kard")
         kard.shouldNotBeNull()
         kard.genre shouldBe "Kpop"
-        kard.promoters shouldContainExactly listOf("Concert Concept Veranstaltungs Gmbh")
+        kard.promoters shouldContainExactly listOf("Concert Concept Veranstaltungs-GmbH")
         kard.subtitle shouldBe "Europe Tour"
         kard.startTime shouldBe LocalTime.of(19, 30)
         kard.doorsTime shouldBe LocalTime.of(18, 30)
@@ -80,7 +80,7 @@ class HuxleysDetailPageScraperTest {
         rockLegends.shouldNotBeNull()
         rockLegends.status shouldBe "CANCELLED"
         rockLegends.soldOut shouldBe false
-        rockLegends.promoters shouldContainExactly listOf("Manfred Hertlein Veranstaltungs Gmbh")
+        rockLegends.promoters shouldContainExactly listOf("Manfred Hertlein Veranstaltungs GmbH")
         // This page carries no genre taxonomy at all.
         rockLegends.genre.shouldBeNull()
     }
@@ -102,6 +102,32 @@ class HuxleysDetailPageScraperTest {
         kard.pricePresale.shouldBeNull()
         kard.priceBoxOffice.shouldBeNull()
         kard.priceNote.shouldBeNull()
+    }
+
+    @Test
+    fun `reads the promoter's full name where the taxonomy slug lost its first word`() {
+        // The Dresden Dolls: the hero credits "Konzertbüro Schoneberg presents", the slug is
+        // `promoters-schoneberg` — a Berlin district, not a promoter (#1139).
+        val dolls = scrape("huxleys-detail-schoneberg.html", "2026-09-05-the-dresden-dolls")
+        dolls.shouldNotBeNull()
+        dolls.promoters shouldContainExactly listOf("Konzertbüro Schoneberg")
+    }
+
+    @Test
+    fun `falls back to the taxonomy slug when the hero shows no credit`() {
+        val html =
+            """
+            <html><head><title>Some Act - Huxleys Neue Welt</title></head><body>
+              <article class="post-1 event promoters-trinity-music"><div class="details"></div></article>
+            </body></html>
+            """.trimIndent()
+        val event =
+            scraper.scrape(
+                Jsoup.parse(html, "https://huxleysneuewelt.de/event/2026-09-05-some-act"),
+                "https://huxleysneuewelt.de/event/2026-09-05-some-act"
+            )
+        event.shouldNotBeNull()
+        event.promoters shouldContainExactly listOf("Trinity Music")
     }
 
     @Test
