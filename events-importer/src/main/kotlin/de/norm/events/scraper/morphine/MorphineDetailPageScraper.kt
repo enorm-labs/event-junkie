@@ -1,6 +1,7 @@
 package de.norm.events.scraper.morphine
 
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
@@ -9,6 +10,7 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
@@ -34,6 +36,7 @@ import java.math.BigDecimal
  * sliding scale or donation range, which is most nights, has no field to go in. `.block.paragraph`
  * keeps its `<br>` breaks, because that is how the instrument credits are written ("Jon Rose | violin
  * & field recordings").
+
  *
  * **The lineup names carry more than the act**, and the shared splitters resolve them only as far as a
  * structural signal allows: a `/`-separated co-bill written without spaces stays one name, because
@@ -94,9 +97,36 @@ class MorphineDetailPageScraper {
             pricePresale = readPaypalPrice(overlay),
             priceBoxOffice = parseDoorPrice(priceNote),
             priceNote = priceNote,
-            artists = lineup.flatMap { headlinersFromTitle(stripLiveRecordingSuffix(it.name)) }.distinctBy { it.name.lowercase() }
+            artists =
+                readPerformers(overlay).ifEmpty {
+                    lineup.flatMap { headlinersFromTitle(stripLiveRecordingSuffix(it.name)) }.distinctBy { it.name.lowercase() }
+                }
         )
     }
+
+    /**
+     * Reads the performers of an ensemble piece out of the first `.block.paragraph` whose every line
+     * is a `Name (instrument, …)` credit — at least [MIN_PERFORMER_CREDITS] of them, so a single
+     * parenthesised remark in prose is never mistaken for a lineup. Such a piece is billed under the
+     * work's name ("VINYL REDUCTION" is a turntable-quartet composition, not an act, #1134), so when
+     * the block exists its names are the lineup and the work stays the title. Empty otherwise, and
+     * the `ul.lineup` names are the acts as before.
+     */
+    private fun readPerformers(overlay: Element): List<ScrapedArtist> =
+        overlay
+            .select("div.block.paragraph p")
+            .map { paragraph -> paragraph.textLines().map { it.trim() }.filter { it.isNotBlank() } }
+            .firstOrNull { lines -> lines.size >= MIN_PERFORMER_CREDITS && lines.all { PERFORMER_CREDIT.matches(it) } }
+            .orEmpty()
+            .mapNotNull {
+                PERFORMER_CREDIT
+                    .find(it)
+                    ?.groupValues
+                    ?.get(1)
+                    ?.trim()
+            }.filterNot { isNonArtistName(it) }
+            .distinctBy { it.lowercase() }
+            .map { ScrapedArtist(name = it, role = "HEADLINER") }
 
     /**
      * Reads the `ul.lineup` set entries, each an `<li>` of two spans: the set's start time and the
@@ -144,6 +174,12 @@ class MorphineDetailPageScraper {
     )
 
     private companion object {
+        /** `Sofia Borges (turntable, prepared vinyls)` — one performer's credit line, name then instruments. */
+        private val PERFORMER_CREDIT = Regex("""^([^()|:]+?)\s*\(([^()]+)\)$""")
+
+        /** An ensemble has at least this many credit lines; one line is a remark, not a lineup. */
+        private const val MIN_PERFORMER_CREDITS = 2
+
         /** A lineup entry wraps exactly two spans: the start time, then the billed name. */
         private const val SPANS_PER_ENTRY = 2
         private const val TIME_SPAN = 0

@@ -120,7 +120,27 @@ class MorphineDetailPageScraperTest {
         event.priceBoxOffice shouldBe BigDecimal("10")
         event.pricePresale shouldBe null
         event.imageUrl shouldBe null
-        event.artists shouldBe listOf(ScrapedArtist("Neumann Schick Voglsinger", "HEADLINER"))
+        // The performers come from the credit block, not from the surname-list title.
+        event.artists.map { it.name } shouldBe listOf("Andrea Neumann", "Ignaz Schick", "Stefan Voglsinger")
+    }
+
+    @Test
+    fun `bills the performers of an ensemble piece and keeps the work as the title`() {
+        // "VINYL REDUCTION" is a turntable-quartet composition; the four players are credited below it (#1134).
+        val url = "http://www.morphinerecords.com/events/vinyl-reduction-2"
+        val event = parse("morphine-detail-performers.html", url).shouldNotBeNull()
+
+        event.title shouldBe "VINYL REDUCTION - Day 2"
+        event.artists shouldBe
+            listOf(
+                ScrapedArtist("Sofia Borges", "HEADLINER"),
+                ScrapedArtist("Stefan Roigk", "HEADLINER"),
+                ScrapedArtist("Ignaz Schick", "HEADLINER"),
+                ScrapedArtist("Eliad Wagner", "HEADLINER")
+            )
+        event.doorsTime shouldBe LocalTime.of(20, 0)
+        event.startTime shouldBe LocalTime.of(20, 30)
+        event.priceNote shouldBe "10 - 20 Euro sliding scale"
     }
 
     @Test
