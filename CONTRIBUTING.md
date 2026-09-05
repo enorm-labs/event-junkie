@@ -10,10 +10,10 @@ By taking part you agree to the [Code of Conduct](./CODE_OF_CONDUCT.md).
 **Tell us when the event data is wrong.** Events are read automatically from venue websites, so when a venue redesigns its programme page we can be quietly
 wrong for weeks without noticing. Nobody sees that faster than someone who went to the show.
 
-- [Wrong or missing event data](https://github.com/enorm-labs/event-junkie/issues/new?template=wrong-event-data.yml) — include the venue's own page for the
+- [Wrong or missing event data](https://github.com/enorm-labs/event-junkie/issues/new?template=1-wrong-event-data.yml) — include the venue's own page for the
   event; that is what the importer reads.
-- [Suggest a venue](https://github.com/enorm-labs/event-junkie/issues/new?template=new-venue.yml) — coverage grows one venue at a time.
-- [Bug in the site or API](https://github.com/enorm-labs/event-junkie/issues/new?template=bug.yml)
+- [Suggest a venue](https://github.com/enorm-labs/event-junkie/issues/new?template=3-new-venue.yml) — coverage grows one venue at a time.
+- [Bug in the site or API](https://github.com/enorm-labs/event-junkie/issues/new?template=2-bug.yml)
 
 Two things go **privately** instead: [security problems](./SECURITY.md), and artists or organisers asking for their name or details to be removed — you do not
 need a reason and you should not have to ask in public.
@@ -25,6 +25,9 @@ conversations rather than units of work, and one that turns out to be actionable
 
 **Open an issue first** for anything beyond a small fix. Not bureaucracy — this project has a strong opinion about how importers, modules and the data model fit
 together, and a pull request that cuts across that is painful to review and disheartening to receive back. A short conversation first saves your evening.
+
+Pick whichever form fits; the forms set the labels and the issue type, so there is nothing to add by hand. Issues labelled
+[`good first issue`](https://github.com/enorm-labs/event-junkie/labels/good%20first%20issue) are the ones picked out as a sensible place to start.
 
 ## Getting set up
 
@@ -42,7 +45,12 @@ A few that catch people out:
 
 - **Conventional Commits in the PR title.** It drives the labels and the release notes, so `feat(importer): import events from SO36`, not `Add SO36`.
 - **Rebase, never merge `main` in.** PRs are merged with "Rebase and merge"; a merge commit blocks the button.
-- **The version lives in `gradle.properties`** and is mirrored by hand in `events-frontend/package.json` — one bump touches both files.
+- **One commit per pull request.** "Rebase and merge" replays every commit on the branch onto `main` exactly as written, so three "fix the lint" commits
+  become three commits on `main` for good. Fold review fixes into the commit (`git commit --amend`, then `git push --force-with-lease`) and keep the commit
+  message, the PR title and the PR description saying the same thing.
+- **`Closes #<n>` in the PR body**, on its own line, when the change finishes an issue. Merging then closes the issue and moves it on the project board.
+- **Leave the version alone.** It lives in `gradle.properties` and is mirrored into three other files by `scripts/version.sh`, which the release workflow
+  drives. A pull request never bumps it.
 - **Reformatting is intentional.** If `ktlintFormat` or `npm run format` rewrites a file, leave it; do not revert it as noise.
 
 ## Adding an importer
@@ -76,23 +84,25 @@ with "Rebase and merge", and a merge commit blocks the button.
 
 ### What CI will and will not run on your pull request
 
-Worth knowing before a red check makes you think you broke something. **Eleven checks are required**,
-and all eleven run on a fork's pull request exactly as they do on ours — none of them needs a secret
+Worth knowing before a red check makes you think you broke something. **Fourteen checks are required**,
+and all fourteen run on a fork's pull request exactly as they do on ours — none of them needs a secret
 or a token that can write:
 
 ```
+Build & Test (backend | frontend)                   Gradle, and the Vite + Playwright matrix
 Lint & render · ShellCheck deploy-story scripts     the Helm chart
 Lint & audit workflows                              actionlint + zizmor
 Format & Validate (infra/bootstrap | staging | production)
 ShellCheck cloud-init
 Analyze (actions | javascript-typescript | java-kotlin)    CodeQL
 Dependency Review
+Check the notices against the dependencies          the open-source notices file is current
 ```
 
 That was verified rather than assumed, on 2026-08-19, by opening the repository's first fork pull
 request and merging it (#579).
 
-Two things behave differently on a fork, and neither means anything is wrong:
+Three things behave differently on a fork, and none of them means anything is wrong:
 
 - **The coverage comment does not appear, and detekt findings do not reach the Security tab.** A
   fork's `GITHUB_TOKEN` is read-only, so nothing can post a comment and nothing can write to Code
@@ -107,11 +117,10 @@ Two things behave differently on a fork, and neither means anything is wrong:
   workflow rather than through GitHub's default setup — default setup produces no run at all for a
   fork, and a required check that never reports leaves a pull request unmergeable with nothing red to
   explain why. That was this repository's own bug until #479 found it.
-- **`Build & Test (backend)` and `Build & Test (frontend)` are required**, and a documentation-only
-  pull request does not pay for them. Each workflow decides from your changed files whether there is
-  anything to build; if there is not, the build is skipped and the check reports green anyway. So a
-  README typo does not sit through sixteen minutes of Gradle and Playwright, and a change that
-  touches code cannot merge without them.
+- **A documentation-only pull request does not pay for `Build & Test`.** Each of the two workflows
+  decides from your changed files whether there is anything to build; if there is not, the build is
+  skipped and the check reports green anyway. So a README typo does not sit through sixteen minutes
+  of Gradle and Playwright, and a change that touches code cannot merge without them.
 
 **One secret is referenced on a pull request, and it is empty on yours.** `NVD_API_KEY` is passed to
 the informational OWASP Dependency-Check job in `build-backend.yml`, and GitHub does not expose
@@ -123,14 +132,20 @@ which no pull request triggers. Nothing else here reads a secret on a pull reque
 ## Before opening a pull request
 
 ```bash
-./gradlew clean build          # compiles, tests, ktlint, detekt, coverage
+./gradlew ktlintCheck detekt build koverLog      # compiles, tests, ktlint, detekt, coverage
 cd events-frontend
-npm run type-check && npm run lint && npm run test:unit && npm run test:e2e
+npm run type-check && npm run lint && npm run test:unit -- --run && npm run test:e2e -- --project=chromium
+cd ..
+scripts/comment-lint.sh check                    # the comment rules detekt and ESLint cannot see
+scripts/format-markdown.sh check                 # only when you touched a .md file
 ```
 
 Skip the Gradle build for documentation-only or frontend-only changes — it covers the backend modules only. Documentation is not check-free, though: `.md`
 files are formatted by `scripts/format-markdown.sh`, which the `pre-commit` hook runs for you (see
-[docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md#markdown-formatting)).
+[docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md#markdown-formatting)), and anything under `docs/` is held to a sentence-length ceiling by `scripts/ste-lint.sh check`.
+
+That is the short list. The full one, including what to run when a change touches `infra/`, `deploy/` or a dependency file, is
+[`.github/prompts/verify.prompt.md`](./.github/prompts/verify.prompt.md) — CI runs the same sequence, so a green run there is a green pull request.
 
 The pull request template asks two questions that are easy to skip and expensive to miss:
 

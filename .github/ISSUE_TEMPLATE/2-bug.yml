@@ -34,10 +34,10 @@ body:
     attributes:
       label: Version
       description: >-
-        The version and commit from the bottom of any page, e.g. `v0.1.0 · 9f1a2b3`. This tells us
+        The version and commit from the bottom of any page, e.g. `v0.3.12 · 9f1a2b3`. This tells us
         exactly which build you saw, which is usually the difference between reproducing a bug and
         guessing at it.
-      placeholder: v0.1.0 · 9f1a2b3
+      placeholder: v0.3.12 · 9f1a2b3
     validations:
       required: false
 

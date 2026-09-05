@@ -3,22 +3,22 @@
 Thanks for using Event Junkie. This file is the map: it says where each kind of question goes, and what to expect once it gets there. Everything here is free
 and voluntary — there is no paid tier and no support contract.
 
-> **The site is not live yet.** Event Junkie is in development and is not deployed anywhere
-> (see [README §Project Status](./README.md#project-status)). So "the site is down" is not yet a thing that can happen,
+> **The site is not public yet.** Event Junkie is deployed, but production serves nothing until the domain is pointed at it at go-live
+> (see [README §Status](./README.md#status)). So "the site is down" is not yet a thing that can happen,
 > and questions today are mostly about the code, the data model, or running it locally.
 
 ## Where to go
 
-| You want to…                                      | Go here                                                                                                                                                  |
-| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Report wrong or missing event data**            | [Wrong or missing event data](https://github.com/enorm-labs/event-junkie/issues/new?template=wrong-event-data.yml)                                       |
-| **Suggest a venue we should be importing**        | [Suggest a venue](https://github.com/enorm-labs/event-junkie/issues/new?template=new-venue.yml)                                                          |
-| **Report a bug in the site or API**               | [Bug report](https://github.com/enorm-labs/event-junkie/issues/new?template=bug.yml)                                                                     |
-| **Ask a question** — using it, the data, the code | [Discussions → Q&A](https://github.com/enorm-labs/event-junkie/discussions/new?category=q-a)                                                             |
-| **Suggest a feature or float an idea**            | [Discussions → Ideas](https://github.com/enorm-labs/event-junkie/discussions/new?category=ideas)                                                         |
-| **Report a security vulnerability**               | [Private advisory form](https://github.com/enorm-labs/event-junkie/security/advisories/new) — **never a public issue**. See [SECURITY.md](./SECURITY.md) |
-| **Ask for your name or details to be removed**    | [The same private form](https://github.com/enorm-labs/event-junkie/security/advisories/new) — see [below](#artists-organisers-and-venues)                |
-| **Contribute code**                               | [CONTRIBUTING.md](./CONTRIBUTING.md)                                                                                                                     |
+| You want to…                                      | Go here                                                                                                                                                                                  |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Report wrong or missing event data**            | [Wrong or missing event data](https://github.com/enorm-labs/event-junkie/issues/new?template=1-wrong-event-data.yml)                                                                     |
+| **Suggest a venue we should be importing**        | [Suggest a venue](https://github.com/enorm-labs/event-junkie/issues/new?template=3-new-venue.yml)                                                                                        |
+| **Report a bug in the site or API**               | [Bug report](https://github.com/enorm-labs/event-junkie/issues/new?template=2-bug.yml)                                                                                                   |
+| **Ask a question** — using it, the data, the code | [Discussions → Q&A](https://github.com/enorm-labs/event-junkie/discussions/new?category=q-a)                                                                                             |
+| **Suggest a feature or float an idea**            | [Discussions → Ideas](https://github.com/enorm-labs/event-junkie/discussions/new?category=ideas)                                                                                         |
+| **Report a security vulnerability**               | [Private advisory form](https://github.com/enorm-labs/event-junkie/security/advisories/new) or **security@event-junkie.de** — **never a public issue**. See [SECURITY.md](./SECURITY.md) |
+| **Ask for your name or details to be removed**    | **hello@event-junkie.de**, or [the same private form](https://github.com/enorm-labs/event-junkie/security/advisories/new) — see [below](#artists-organisers-and-venues)                  |
+| **Contribute code**                               | [CONTRIBUTING.md](./CONTRIBUTING.md)                                                                                                                                                     |
 
 **Questions go to Discussions, not the issue tracker.** Not to keep them at arm's length — a question is a conversation, whereas an issue is a unit of work that
 can be closed. A discussion that turns out to be actionable gets converted into an issue, so nothing is lost by starting there. Blank issues are disabled for
@@ -50,16 +50,14 @@ Security reports run on their own track, described in [SECURITY.md](./SECURITY.m
 
 ## Artists, organisers and venues
 
-If you are named on this site and would rather not be, **you do not need a reason and you should not have to ask in public.** Use
-the [private form](https://github.com/enorm-labs/event-junkie/security/advisories/new) — it is labelled for security reports because it is currently the only
-confidential channel, and it reaches the maintainer directly.
+If you are named on this site and would rather not be, **you do not need a reason and you should not have to ask in public.** Email
+**hello@event-junkie.de**, which only the maintainer reads. If you would rather not use email, the
+[private form](https://github.com/enorm-labs/event-junkie/security/advisories/new) reaches the same person — it is labelled for security reports because
+GitHub offers one private form, not because your request is one.
 
-The same channel is the right one for a venue that would prefer we did not import its programme at all. That is a request, not an argument to win —
+The same channels are the right ones for a venue that would prefer we did not import its programme at all. That is a request, not an argument to win —
 see [docs/LEGAL.md](./docs/LEGAL.md) and
 [ADR-007 Web Scraping Strategy](./docs/adr/ADR-007_WEB_SCRAPING_STRATEGY.md) for how the project thinks about it.
-
-Once `event-junkie.de` is registered, an email address will work as an alternative to the form. It does not exist yet; until then the form above is the only
-private route.
 
 ## Running it yourself
 

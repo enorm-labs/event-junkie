@@ -19,7 +19,7 @@ body:
     attributes:
       label: Event on Event Junkie
       description: The page on our site showing the problem. Leave blank if the event is missing entirely.
-      placeholder: https://event-junkie.de/events/...
+      placeholder: https://event-junkie.de/de/events/...
     validations:
       required: false
 
