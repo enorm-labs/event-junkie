@@ -177,9 +177,9 @@ Contributions are welcome. Full guide: [CONTRIBUTING.md](./CONTRIBUTING.md). Tak
 **The most valuable contribution is not code.** Event data is read automatically from venue websites, so a redesigned programme page can leave us quietly wrong
 for weeks. Nobody notices that faster than somebody who went to the show.
 
-- [Wrong or missing event data](https://github.com/enorm-labs/event-junkie/issues/new?template=wrong-event-data.yml)
-- [Suggest a venue](https://github.com/enorm-labs/event-junkie/issues/new?template=new-venue.yml)
-- [Bug in the site or API](https://github.com/enorm-labs/event-junkie/issues/new?template=bug.yml)
+- [Wrong or missing event data](https://github.com/enorm-labs/event-junkie/issues/new?template=1-wrong-event-data.yml)
+- [Suggest a venue](https://github.com/enorm-labs/event-junkie/issues/new?template=3-new-venue.yml)
+- [Bug in the site or API](https://github.com/enorm-labs/event-junkie/issues/new?template=2-bug.yml)
 
 Questions and product ideas go to [Discussions](https://github.com/enorm-labs/event-junkie/discussions). Security problems go
 through [private disclosure](./SECURITY.md), never a public issue.
@@ -187,7 +187,8 @@ through [private disclosure](./SECURITY.md), never a public issue.
 ### Quick start: your first pull request
 
 ```bash
-# 1. Branch from main. The name follows the Conventional Commits type and scope.
+# 1. Branch from main — in your fork, if you do not have push access (CONTRIBUTING.md has the fork flow).
+#    The name follows the Conventional Commits type and scope.
 git switch main && git pull
 git switch -c feat/so36-importer
 
@@ -195,22 +196,24 @@ git switch -c feat/so36-importer
 #    this project has strong opinions and they are all written down.
 
 # 3. Verify. Skip the Gradle build for docs-only or frontend-only changes.
-./gradlew clean build
-cd events-frontend && npm run type-check && npm run lint && npm run test:unit && npm run test:e2e
+./gradlew ktlintCheck detekt build koverLog
+cd events-frontend && npm run type-check && npm run lint && npm run test:unit -- --run && npm run test:e2e -- --project=chromium
 
 # 4. Commit with a Conventional Commits subject. It drives the labels and release notes.
 git commit -m "feat(importer): import events from SO36"
 
-# 5. Push and open the PR.
+# 5. Push and open the PR. "Closes #<n>" in the body links and later closes the issue.
 git push -u origin feat/so36-importer
 gh pr create --base main
 ```
 
-Four things that catch people out:
+Five things that catch people out:
 
 - **Open an issue first** for anything beyond a small fix. Not bureaucracy — this project has a strong opinion about how importers, modules and the data model
   fit together, and a PR that cuts across it is painful to review and disheartening to receive back.
 - **Rebase, never merge `main` in.** PRs are merged with "Rebase and merge", which a merge commit blocks.
+- **One commit per PR.** "Rebase and merge" replays every commit as written, so fold review fixes into the commit with `git commit --amend` rather than
+  stacking "fix the lint" on top.
 - **The PR template asks about privacy and accessibility.** Both are easy to skip and expensive to miss. If your change adds a third-party request, stores
   something on the visitor's device or alters what is logged, the privacy notice needs updating in the same PR — **in both languages**.
 - **Reformatting is intentional.** If `ktlintFormat` or `npm run format` rewrites a file, leave it; do not revert it as noise.
@@ -221,7 +224,7 @@ How to get help, and what to expect: [SUPPORT.md](./SUPPORT.md).
 
 ## Maintainers
 
-Norman Lange ([@enorm-labs](https://github.com/enorm-labs)). This is a single-maintainer project — see
+Norman Lange ([@enorm](https://github.com/enorm)), publishing as [enorm-labs](https://github.com/enorm-labs). This is a single-maintainer project — see
 [SUPPORT.md](./SUPPORT.md#what-to-expect) for what that means in practice.
 
 ## License

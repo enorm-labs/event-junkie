@@ -22,7 +22,7 @@ contact_links:
   # schema validation, at which point the entry does not render at all — worse than copying an
   # address, and it fails where nobody looks. **At go-live** the removal route should point at the
   # published privacy notice, which states the same address alongside the Art. 15-21 rights; it
-  # cannot yet, production running dark with the domain resolving to nothing (#284).
+  # cannot yet, production running dark with the domain resolving to nothing until the v1.0 go-live.
   - name: 🔒 Report a security vulnerability
     url: https://github.com/enorm-labs/event-junkie/security/advisories/new
     about: >-
