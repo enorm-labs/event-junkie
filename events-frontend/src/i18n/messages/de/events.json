@@ -2,7 +2,7 @@
   "eyebrow": "Such dir was aus",
   "title": "Events",
   "subtitle": "Kommende Musikveranstaltungen in Berlin durchstöbern und filtern.",
-  "empty": "Zu diesen Filtern gibt es nichts. Mach sie etwas weiter und versuch es noch mal.",
+  "empty": "Zu diesen Filtern gibt es nichts. Lockere sie ein bisschen und versuch es noch mal.",
   "resultCount": "{count} Event gefunden | {count} Events gefunden",
   "filters": {
     "searchPlaceholder": "Events durchsuchen …",

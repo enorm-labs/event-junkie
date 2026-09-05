@@ -48,7 +48,7 @@ const localePath = useLocalePath()
       <p>
         Das Bild laden wir herunter und speichern eine Kopie, damit euer Server es nicht bei jedem
         Seitenaufruf erneut ausliefern muss. Die Kopie liegt bei uns, nicht bei einem Dritten, und
-        sie geht mit, wenn ihr aussteigt.
+        sie wird gelöscht, wenn ihr aussteigt.
       </p>
     </section>
 
@@ -118,8 +118,8 @@ const localePath = useLocalePath()
       <h2>Rechte an Texten und Bildern</h2>
       <p>
         Beschreibungen, Bilder und anderes Material von Locations, Veranstaltern und Künstlerinnen
-        und Künstlern bleiben Eigentum der jeweiligen Rechteinhaber. Wer Rechte an etwas hält, das hier zu sehen
-        ist, und die Entfernung möchte, findet den Weg im
+        und Künstlern bleiben Eigentum der jeweiligen Rechteinhaber. Wer Rechte an etwas hält, das
+        hier zu sehen ist, und die Entfernung möchte, findet den Weg im
         <RouterLink :to="localePath('/legal/imprint')">Impressum</RouterLink>. Bei einem Bild
         löschen wir dabei auch die Kopie, die auf unseren Servern liegt.
       </p>
