@@ -16,6 +16,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.MonthDay
 
 /**
@@ -101,7 +102,7 @@ class WildAtHeartOverviewPageScraper(
         val description = row.select(".beschreibung").joinToString("\n") { it.text().trim() }.takeIf { it.isNotBlank() }
 
         val ticketUrl = headline?.let { TICKETS_PATTERN.find(it)?.groupValues?.get(1) }
-        val startTime = headline?.let { BEGINN_PATTERN.find(it)?.groupValues?.get(1) }?.let { parseTime(it) }
+        val startTime = headline?.let { parseBannerStart(it) }
         val free = headline?.contains("eintritt frei", ignoreCase = true) == true
 
         return ScrapedEvent(
@@ -175,6 +176,22 @@ class WildAtHeartOverviewPageScraper(
             .takeIf { it.isNotBlank() }
     }
 
+    /**
+     * The start time a `.headlines` banner states — "Beginn 21:00", or the flea market's "ab 14 Uhr"
+     * (#1142). `null` when the banner names no time, which most rows do not (see
+     * [WILD_AT_HEART_LIMITATIONS]).
+     */
+    private fun parseBannerStart(headline: String): LocalTime? =
+        BEGINN_PATTERN
+            .find(headline)
+            ?.groupValues
+            ?.get(1)
+            ?.let { parseTime(it) }
+            ?: AB_UHR_PATTERN.find(headline)?.let { match ->
+                val minute = match.groupValues[2].toIntOrNull() ?: 0
+                runCatching { LocalTime.of(match.groupValues[1].toInt(), minute) }.getOrNull()
+            }
+
     /** Strips the decorative surrounding double-quotes and whitespace a band/support name is wrapped in. */
     private fun stripQuotes(text: String): String = text.trim().trim('"').trim()
 
@@ -190,5 +207,8 @@ class WildAtHeartOverviewPageScraper(
 
         /** Extracts a "Beginn HH:MM" start time from a `.headlines` banner. */
         private val BEGINN_PATTERN = Regex("""Beginn\s*:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
+
+        /** Extracts an "ab HH Uhr" / "ab HH:MM Uhr" start time from a `.headlines` banner. */
+        private val AB_UHR_PATTERN = Regex("""\bab\s+(\d{1,2})(?:[:.](\d{2}))?\s*Uhr\b""", RegexOption.IGNORE_CASE)
     }
 }

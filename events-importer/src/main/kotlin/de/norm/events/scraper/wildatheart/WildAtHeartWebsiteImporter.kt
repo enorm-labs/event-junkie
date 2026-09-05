@@ -67,5 +67,9 @@ val WILD_AT_HEART_LIMITATIONS =
     VenueLimitations(
         EventSource.WILD_AT_HEART,
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme is one hand-coded page"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the retro page has no category field; a live-music venue, so an unmarked title defaults to a concert")
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the retro page has no category field; a live-music venue, so an unmarked title defaults to a concert"),
+        AcceptedLimitation(
+            LimitedAspect.START_TIME,
+            "the listing states a time only inside a banner (Beginn 21:00, ab 14 Uhr), and most rows carry no banner; those are read, the rest store no time"
+        )
     )

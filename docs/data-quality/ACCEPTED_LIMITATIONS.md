@@ -167,6 +167,7 @@ says so.
 | `VOID_CLUB`           | `EVENT_TYPE`       | the club states no category; `.void-event-genre` names the music and `.void-event-venue` the rooms in use, neither of which is a kind of event   | —     |
 | `WILD_AT_HEART`       | `PER_EVENT_PAGE`   | the whole programme is one hand-coded page                                                                                                       | —     |
 | `WILD_AT_HEART`       | `EVENT_TYPE`       | the retro page has no category field; a live-music venue, so an unmarked title defaults to a concert                                             | —     |
+| `WILD_AT_HEART`       | `START_TIME`       | the listing states a time only inside a banner (Beginn 21:00, ab 14 Uhr), and most rows carry no banner; those are read, the rest store no time  | —     |
 | `WUHLHEIDE`           | `CANCELLATION`     | the venue publishes no cancellations; its one badge, Ausverkauft, is a sold-out flag                                                             | —     |
 | `ZENNER`              | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `ZENNER`              | `DOORS_TIME`       | the venue publishes no doors times                                                                                                               | —     |
