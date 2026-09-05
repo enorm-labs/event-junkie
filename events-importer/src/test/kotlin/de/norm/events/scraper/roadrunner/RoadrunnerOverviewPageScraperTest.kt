@@ -61,6 +61,39 @@ class RoadrunnerOverviewPageScraperTest {
     }
 
     @Test
+    fun `reads date lines typed without the comma or the day's dot`() {
+        // The autumn 2026 page writes "Samstag 05 September:" and "Samstag 31 Oktober:" beside the
+        // canonical "Mittwoch, 11. November:"; the strict pattern found none of them (#1130).
+        val autumnClock = Clock.fixed(Instant.parse("2026-09-05T10:00:00Z"), ZoneOffset.UTC)
+        val events =
+            RoadrunnerOverviewPageScraper(autumnClock).scrape(
+                Jsoup.parse(
+                    javaClass.classLoader
+                        .getResourceAsStream("scraper/roadrunner/roadrunner-programm-autumn.html")!!
+                        .bufferedReader()
+                        .readText(),
+                    baseUrl
+                ),
+                baseUrl
+            )
+
+        events.map { it.eventDate } shouldBe
+            listOf(
+                LocalDate.of(2026, 9, 5),
+                LocalDate.of(2026, 9, 12),
+                LocalDate.of(2026, 9, 13),
+                LocalDate.of(2026, 10, 3),
+                LocalDate.of(2026, 10, 9),
+                LocalDate.of(2026, 10, 31),
+                LocalDate.of(2026, 11, 11)
+            )
+        val blutUndEisen = events.first()
+        blutUndEisen.title shouldBe "BLUT & EISEN 30 JAHRE"
+        blutUndEisen.doorsTime shouldBe LocalTime.of(20, 0)
+        events.last().title shouldBe "PHIL CAMPELL'S BASTARD SONS The Phil Forever Tour"
+    }
+
+    @Test
     fun `splits multiple dot-separated blocks and infers each year from its weekday`() {
         val html =
             """
