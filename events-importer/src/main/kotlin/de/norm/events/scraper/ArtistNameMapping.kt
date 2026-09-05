@@ -536,13 +536,16 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
  * - articles/possessives opening a backing band ("X & **the** Ys", "X and **his**
  *   Ys", "X und **die** Ys"); and
  * - collective nouns naming an unnamed supporting cast ("X & **Friends**", "X &
- *   **Guests**", "X & **Gäste**", "X & **Band**"), a billing convention where the
- *   act is "X", not a separate act literally called "Friends" or "Band".
+ *   **Guests**", "X & **Gäste**", "X & **Band**", "Lacrimosa mit **Orchester**"), a
+ *   billing convention where the act is "X", not a separate act literally called
+ *   "Friends" or "Band". The same set keeps a [WITH_FRAME_PATTERN] tail from being
+ *   read as the acts.
  */
 private val CONJUNCTION_TAIL_ARTICLES: Set<String> =
     setOf("the", "his", "her", "their", "los", "las", "die", "der", "das", "el", "la")
 
-private val CONJUNCTION_TAIL_COLLECTIVES: Set<String> = setOf("friends", "guests", "gäste", "freunde", "band")
+private val CONJUNCTION_TAIL_COLLECTIVES: Set<String> =
+    setOf("friends", "guests", "gäste", "freunde", "band", "orchester", "orchestra", "ensemble", "chor", "choir")
 
 /** Right-hand-side opener words that keep a conjunction boundary joined — see the two source sets. */
 private val CONJUNCTION_TAIL_MARKERS: Set<String> = CONJUNCTION_TAIL_ARTICLES + CONJUNCTION_TAIL_COLLECTIVES
@@ -815,8 +818,8 @@ fun stripArtistPrefix(name: String): String {
  *
  * @param splitOnSlash forwarded to [splitHeadlinerTitle]: pass false for a venue that
  *   uses `/` inside a single act name (Madame Claude) so the name isn't torn apart.
- * @param unpackWithFrame reads a `"<night> w/ <acts>"` title as its acts only — see
- *   [withFrameActs] for why this is opt-in rather than the default.
+ * @param unpackWithFrame reads a `"<night> w/ <acts>"` or `"<night> mit <acts>"` title as
+ *   its acts only — see [withFrameActs] for why this is opt-in rather than the default.
  * @param subtitle the event's subtitle, when the caller has one. Used only to recognise a label
  *   showcase — a `"<X> presents"` credit beside a title that opens with `<X>` — via
  *   [isPresenterOwnEventTitle]; omitting it simply skips that check.
@@ -844,7 +847,10 @@ fun headlinersFromTitle(
 }
 
 /**
- * A `"<night> w/ <acts>"` guest-billing frame, up to and including the marker.
+ * A `"<night> w/ <acts>"` or `"<night> mit <acts>"` guest-billing frame, up to and including the
+ * marker. `mit` is the German spelling of the same convention — SO36 bills `SADTEMBER mit TAHA,
+ * JOHNBOY M.IKARUS`, where SADTEMBER is the night (#1132) — and needs whitespace on both sides so
+ * a name that merely contains the letters (Mitski, Submit) is untouched.
  *
  * The marker is **not** a co-bill separator, which is the tempting reading: across the seed, every
  * title carrying it names a night, a series or a label on the left and the booked acts on the right
@@ -865,16 +871,20 @@ fun headlinersFromTitle(
  * who is playing, not in what order.
  *
  * The marker must be preceded by something, so a lineup entry that *opens* with `w/` still goes to
- * [ROLE_LABEL_PREFIX], which strips it as a role label. Returns `null` rather than an empty list
- * when the frame yields nothing usable, so the caller falls back to parsing the whole title.
+ * [ROLE_LABEL_PREFIX], which strips it as a role label. A tail opening with a
+ * [CONJUNCTION_TAIL_MARKERS] word is the act's own backing (`Lacrimosa mit Orchester`), not a guest
+ * list. Both cases return `null`, so the caller falls back to parsing the whole title.
  */
-private val WITH_FRAME_PATTERN = Regex("""^.+?\bw/\s*""", RegexOption.IGNORE_CASE)
+private val WITH_FRAME_PATTERN = Regex("""^.+?(?:\bw/\s*|\smit\s+)""", RegexOption.IGNORE_CASE)
 
 /** The acts a [WITH_FRAME_PATTERN] title bills, or `null` when the title carries no such frame. */
+@Suppress("ReturnCount") // Two guard clauses (no frame, backing-band tail) read better than nesting
 private fun withFrameActs(title: String): List<ScrapedArtist>? {
     val frame = WITH_FRAME_PATTERN.find(title) ?: return null
+    val tail = title.substring(frame.range.last + 1)
+    if (tail.trimStart().substringBefore(' ').lowercase() in CONJUNCTION_TAIL_MARKERS) return null
     val acts =
-        splitSupportActs(title.substring(frame.range.last + 1))
+        splitSupportActs(tail)
             .map { stripFramingPrefix(stripArtistPrefix(stripArtistSuffix(it))) }
             .filterNot { isNonArtistName(it) }
             .map { ScrapedArtist(name = it, role = "HEADLINER") }

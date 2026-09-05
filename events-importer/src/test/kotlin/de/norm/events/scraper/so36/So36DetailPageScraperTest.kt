@@ -73,6 +73,18 @@ class So36DetailPageScraperTest {
     }
 
     @Test
+    fun `reads the acts after a mit billing frame and never the night's name`() {
+        // "SADTEMBER mit TAHA, JOHNBOY M.IKARUS" + "+ Arbok 48 + Support": SADTEMBER is the night (#1132).
+        val url = "https://www.so36.com/produkte/96647-tickets-sadtember-mit-taha-johnboy-m-ikarus-so36-berlin-am-05-09-2026"
+        val event = scraper.scrape(fixture("so36-detail-mit-billing.html", url), url)
+        event.shouldNotBeNull()
+
+        event.title shouldBe "SADTEMBER mit TAHA, JOHNBOY M.IKARUS"
+        event.artists.map { it.name to it.role } shouldBe
+            listOf("TAHA" to "HEADLINER", "JOHNBOY M.IKARUS" to "HEADLINER", "Arbok 48" to "SUPPORT")
+    }
+
+    @Test
     fun `parses a party detail page without a lineup, price or ticket link`() {
         val event = scraper.scrape(fixture("so36-detail-party.html", partyUrl), partyUrl)
         event.shouldNotBeNull()

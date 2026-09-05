@@ -696,6 +696,27 @@ class ArtistNameMappingTest {
     }
 
     @Test
+    fun `headlinersFromTitle reads the German mit spelling of the frame when asked`() {
+        // SO36's "SADTEMBER mit TAHA, JOHNBOY M.IKARUS": the night on the left, the acts on the right (#1132).
+        headlinersFromTitle("SADTEMBER mit TAHA, JOHNBOY M.IKARUS", unpackWithFrame = true) shouldContainExactly
+            listOf(ScrapedArtist(name = "TAHA", role = "HEADLINER"), ScrapedArtist(name = "JOHNBOY M.IKARUS", role = "HEADLINER"))
+        // Off by default, like `w/`.
+        headlinersFromTitle("SADTEMBER mit TAHA, JOHNBOY M.IKARUS").map { it.name } shouldContainExactly
+            listOf("SADTEMBER mit TAHA, JOHNBOY M.IKARUS")
+    }
+
+    @Test
+    fun `headlinersFromTitle keeps an act billed with its own backing whole`() {
+        // "mit Orchester" / "mit Band" is the act's backing, not a guest list; the act stays the headliner.
+        headlinersFromTitle("Lacrimosa mit Orchester", unpackWithFrame = true).map { it.name } shouldContainExactly
+            listOf("Lacrimosa mit Orchester")
+        headlinersFromTitle("Alexander Eder mit Band", unpackWithFrame = true).map { it.name } shouldContainExactly
+            listOf("Alexander Eder mit Band")
+        // The marker needs whitespace on both sides: a name containing the letters is untouched.
+        headlinersFromTitle("Mitski", unpackWithFrame = true).map { it.name } shouldContainExactly listOf("Mitski")
+    }
+
+    @Test
     fun `headlinersFromTitle drops an unfinished-billing tail from a w-slash lineup`() {
         headlinersFromTitle("House of Rave w/ Maceo Plex, Mark Dekoda and many more", unpackWithFrame = true)
             .map { it.name } shouldContainExactly listOf("Maceo Plex", "Mark Dekoda")
