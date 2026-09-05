@@ -99,6 +99,7 @@ before go-live. The drill covers staging only, so far.
 | 2026-08-31 | That monitor proven by inducing a failure                    | HEALTHCHECKS.md drill log                       |
 |            | The monitor and `SITE_URL` both name the apex                | Section 0, changes 3 and 4                      |
 |            | **Decide whether to publish an uptime badge** in `README.md` | HEALTHCHECKS.md § It is measured, not published |
+|            | Decide how visitors and traffic are counted                  | #1126                                           |
 | 2026-08-31 | **Production has any in-cluster monitoring**                 | #880, and the dashboard push below              |
 |            | Alerts reach a person                                        | #877                                            |
 |            | An alert proven by breaking something on prod                | #285                                            |
@@ -142,7 +143,7 @@ OpenObserve to Signal). That is a different chain, and it stays unbuilt.
 | ---- | --------------------------------------------------------------------- | -------- |
 |      | Event sources registered **and enabled**, so the site has content     | #876     |
 |      | Venue addresses, districts and coordinates audited                    | #329     |
-|      | Venue descriptions read against the venue they describe               | #986     |
+|      | Venue descriptions read against the venue they describe               | #1124    |
 |      | Every page read in both languages, About and the legal texts included | #280     |
 |      | Images served from our own cache, not hotlinked                       | #843     |
 
@@ -156,8 +157,9 @@ Do #843 before it — see below.
 venues were added, with varying care. A wrong coordinate puts a pin in the wrong place, and it drops
 the venue out of a radius search without saying so. The second failure is the quiet one.
 
-**The descriptions are hand-written prose, and no check reads them.** #986 found two that were
-wrong, and both failed the same way. They repeated something the row's address said. Sonnenraum was
+**The descriptions are hand-written prose, and #1124 reads each one against the venue itself.**
+#986 read them against the address only. It found two that were wrong, and both failed the same
+way. They repeated something the row's address said. Sonnenraum was
 described as "next to Club der Visionäre" because it carried that club's address, and it stands
 196 m away. Heideglühen was "in a former nursery off Beusselstraße", which is the wrong street.
 A corrected address does not correct the sentence that quotes it. Read each description against the
