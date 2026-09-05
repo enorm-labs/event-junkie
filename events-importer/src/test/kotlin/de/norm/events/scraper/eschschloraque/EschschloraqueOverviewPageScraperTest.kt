@@ -7,6 +7,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
@@ -116,6 +117,17 @@ class EschschloraqueOverviewPageScraperTest {
         hotTunes.subtitle shouldBe "on the couch: Dinah Richten a.k.a.Seraphim & MissVergnügen"
         // "on the couch:" names the DJ seat, and the alias is one performer written twice.
         hotTunes.artists.map { it.name } shouldBe listOf("Dinah Richten", "MissVergnügen")
+    }
+
+    @Test
+    fun `bills both DJs of a night that heads each act's own blurb with its name`() {
+        // "Krawallwitz & Simon Eickenboom": one `.redsubtitle` in the intro, the other further down
+        // the body, and only the first was read (#1136).
+        val night = scrape("eschschloraque-overview-two-djs.html").first { it.title == "Krawallwitz & Simon Eickenboom" }
+        night.artists.map { it.name to it.role } shouldBe listOf("Krawallwitz" to "DJ", "Simon Eickenboom" to "DJ")
+        night.subtitle shouldBe "Krawallwitz"
+        night.description.shouldNotBeNull()
+        night.description shouldContain "Popping bottles"
     }
 
     @Test

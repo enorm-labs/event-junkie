@@ -99,12 +99,18 @@ class EschschloraqueOverviewPageScraper {
             return null
         }
 
-        val billingParagraph = findBillingParagraph(node)
-        val description = parseDescription(node, billingParagraph)
+        val billingParagraphs = findBillingParagraphs(node)
+        val description = parseDescription(node, billingParagraphs)
 
         return ScrapedEvent(
             title = title,
-            subtitle = billingParagraph?.text()?.trim()?.takeIf { it.isNotBlank() },
+            // The first billing line is the subtitle; a later one heads an act's own blurb.
+            subtitle =
+                billingParagraphs
+                    .firstOrNull()
+                    ?.text()
+                    ?.trim()
+                    ?.takeIf { it.isNotBlank() },
             description = description,
             eventType = inferUnmarkedTitleType(title),
             eventDate = startDateTime.first,
@@ -116,7 +122,7 @@ class EschschloraqueOverviewPageScraper {
             // "eschschloraque:20-jahre-missvergnügen-12082026" rather than "…missvergn%C3%BCgen…".
             sourceId = "${EventSource.ESCHSCHLORAQUE.sourceIdPrefix}${extractSlug(path)}",
             free = description?.let { FREE_ENTRY_PHRASE.containsMatchIn(it) } == true,
-            artists = parseLineup(billingParagraph)
+            artists = parseLineup(billingParagraphs)
         )
     }
 
@@ -142,19 +148,19 @@ class EschschloraqueOverviewPageScraper {
     }
 
     /**
-     * Finds the paragraph carrying the night's billing line — the one holding the venue's own
+     * Finds the paragraphs carrying the night's billing lines — the ones holding the venue's own
      * `.redsubtitle` spans, in which it names the DJs and live acts ("on the couch: Holly Hunted &
      * MissVergnügen", "Live: Nostalgican | ear def").
      *
-     * The venue puts it either in the optional `field-intro-text` or, when that field is unused,
-     * as the first paragraph of the body — so the search runs over the prose fields in document
-     * order and takes the first match. Only the *first* is taken: a multi-act night repeats
-     * `.redsubtitle` inside each act's own blurb further down (`field-body-2`, `field-body-3`),
-     * which is prose about an act already billed above, not a second lineup.
+     * The venue puts the billing either in the optional `field-intro-text` or as the first paragraph
+     * of the body — but a two-DJ night can also bill each act at the head of its own blurb, one
+     * `.redsubtitle` per section ("Krawallwitz" in the intro, "Simon Eickenboom" further down the
+     * body, #1136), so every such paragraph is read in document order. A multi-act night that
+     * repeats an act's name above its blurb is covered by [parseLineup] billing each name once.
      *
-     * Returns `null` for a night billed in plain prose with no `.redsubtitle` at all.
+     * Empty for a night billed in plain prose with no `.redsubtitle` at all.
      */
-    private fun findBillingParagraph(node: Element): Element? = node.select(BILLING_PARAGRAPH).firstOrNull()
+    private fun findBillingParagraphs(node: Element): List<Element> = node.select(BILLING_PARAGRAPH)
 
     /**
      * Joins the node's prose into a description, one paragraph per line.
@@ -165,22 +171,23 @@ class EschschloraqueOverviewPageScraper {
      * up without a code change. Image-caption `blockquote`s are excluded for free: they live
      * inside the image fields, which are not text fields.
      *
-     * The [billingParagraph] is dropped, since it is already stored as the subtitle.
+     * The [billingParagraphs] are dropped: the first is already stored as the subtitle, and the rest
+     * only name an act billed by the lineup.
      */
     private fun parseDescription(
         node: Element,
-        billingParagraph: Element?
+        billingParagraphs: List<Element>
     ): String? =
         node
             .select(PROSE_PARAGRAPHS)
-            .filterNot { it === billingParagraph }
+            .filterNot { paragraph -> billingParagraphs.any { it === paragraph } }
             .map { it.text().trim() }
             .filter { it.isNotBlank() }
             .joinToString("\n")
             .takeIf { it.isNotBlank() }
 
     /**
-     * Builds the lineup from the `.redsubtitle` spans of the [billingParagraph].
+     * Builds the lineup from the `.redsubtitle` spans of the [billingParagraphs], each act once.
      *
      * Each span is one billing line, and its leading label decides the role: a `Live:` line bills
      * live acts as headliners, every other line (`Dj:`, `on the couch:`, or an unlabelled list of
@@ -190,15 +197,14 @@ class EschschloraqueOverviewPageScraper {
      * hosting series ("Hot Tunes for Cool Cats", "MissVergnügen presents RESITANT – live"), not
      * the performer — the performers are exactly what these lines list.
      */
-    private fun parseLineup(billingParagraph: Element?): List<ScrapedArtist> =
-        billingParagraph
-            ?.select(".redsubtitle")
-            .orEmpty()
+    private fun parseLineup(billingParagraphs: List<Element>): List<ScrapedArtist> =
+        billingParagraphs
+            .flatMap { it.select(".redsubtitle") }
             .flatMap { line ->
                 val text = line.text().trim()
                 val role = if (LIVE_LABEL.containsMatchIn(text)) "HEADLINER" else "DJ"
                 splitActs(text.replaceFirst(BILLING_LABEL, "")).map { ScrapedArtist(name = it, role = role) }
-            }
+            }.distinctBy { it.name.lowercase() }
 
     /**
      * Splits one billing line into act names.
