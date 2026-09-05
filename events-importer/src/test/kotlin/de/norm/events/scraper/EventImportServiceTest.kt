@@ -285,6 +285,24 @@ class EventImportServiceTest {
             }
 
         @Test
+        fun `a forced run fetches without the cached validators and stores the new ones`() =
+            runTest {
+                val src = source(etag = "\"old-etag\"", lastModified = "Mon, 31 Aug 2026 20:43:18 GMT")
+
+                coEvery { cassiopeiaImporter.importEvents(src.url, null, null) } returns
+                    ImportResult.Success(events = emptyList(), etag = "\"new-etag\"", lastModified = null)
+
+                val result = service.importFromSource(src, force = true)
+
+                result.imported shouldBe true
+                coVerify(exactly = 0) { cassiopeiaImporter.importEvents(any(), "\"old-etag\"", any()) }
+                // The following run is conditional again: the forced fetch's validators are stored like any other.
+                coVerify {
+                    eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name && it.etag == "\"new-etag\"" && it.lastModified == null })
+                }
+            }
+
+        @Test
         fun `unknown source type records misconfiguration and returns error`() =
             runTest {
                 val src = source(sourceType = "NONEXISTENT")

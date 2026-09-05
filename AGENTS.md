@@ -365,6 +365,11 @@ scripts/dev-env.sh psql "UPDATE events.event_source SET status='IDLE', retry_cou
 then re-trigger those slugs. On a long job — a `--full` re-seed, a before/after diff — compile everything first, restart once, _then_ import, and leave the
 build alone until every source has left `RUNNING`.
 
+**A parser fix at a venue whose page has not changed is a 304 forever.** The importer sends the cached `ETag` / `Last-Modified`, and a `Not modified` answer
+skips the import on the schedule and on a manual trigger alike, so the fixed parser never runs until the venue edits its page. Do not clear the columns with
+`psql`; trigger the one source with `POST /api/admin/event-sources/<slug>/import?force=true` (#1159). The log says
+`Fetching source page unconditionally (forced)`, and the run stores the fresh validators, so the next run is conditional again.
+
 **Re-keying a live source collides with its own today-dated rows.** Changing how a scraper builds its `sourceId` — adding the session start time, the occurrence
 date, anything — gives every event a new id, so the old rows go stale and the new ones insert. But `EventUpsertService.removeStaleEvents`
 deliberately spares **today**: a today-dated row therefore keeps its old id _and_ its slug while its replacement tries to take the same slug, and the insert

@@ -46,10 +46,17 @@ class ImportJobLauncher(
      * Validates that a source with [slug] exists (throwing [EventSourceNotFoundException] if
      * not, so the caller can return `404` synchronously), then launches its import in the
      * background and returns immediately.
+     *
+     * @param force skip the conditional headers on this one fetch — see
+     *   [EventImportService.importFromSource].
      */
-    suspend fun triggerImportBySlug(slug: String) {
+    suspend fun triggerImportBySlug(
+        slug: String,
+        force: Boolean = false
+    ) {
         val source = eventSourceRepository.findBySlug(slug) ?: throw EventSourceNotFoundException(slug)
-        launch("source '$slug'") { eventImportService.importFromSource(source) }
+        val description = if (force) "source '$slug' (forced)" else "source '$slug'"
+        launch(description) { eventImportService.importFromSource(source, force) }
     }
 
     @Suppress("TooGenericExceptionCaught") // Fire-and-forget: never let a background failure escape unlogged

@@ -96,6 +96,16 @@ Accept: application/json
     });
 %}
 
+### Force a full fetch for one source, ignoring its cached ETag / Last-Modified (a parser fix at a venue whose page has not changed)
+POST {{importer-host}}/api/admin/event-sources/{{source_slug}}/import?force=true
+Accept: application/json
+
+> {%
+    client.test("should return 202", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
 ### Update event source configuration (enable/disable, interval, retries)
 PATCH {{importer-host}}/api/admin/event-sources/{{source_slug}}
 Content-Type: application/json
