@@ -505,8 +505,9 @@ commercial change also alters the § 5 DDG analysis, not only the privacy notice
 
 [ORT](https://github.com/oss-review-toolkit/ort) was evaluated and judged disproportionate for this project. What runs instead:
 
-- `npm run generate:notices` produces the committed `src/assets/notices.json` behind `/legal/notices` (642
-  components). It covers the JVM runtime tree and the frontend production tree.
+- `npm run generate:notices` produces the committed `src/assets/notices.json` behind `/legal/notices`. It lists
+  what the two images distribute. On the JVM side that is the classpath `bootJar` is built from. On the npm side
+  it is the production dependencies, without the peer edges that lead to the build tool.
 - **Two allow-list gates**, because one tool sees only one ecosystem. `./gradlew checkLicense` covers the JVM tree, and
   `npm run check:licenses` covers npm. The npm half was missing at first, so the notices page disclosed frontend
   licences that nothing audited.

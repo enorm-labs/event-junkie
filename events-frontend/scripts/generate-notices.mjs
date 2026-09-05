@@ -163,9 +163,12 @@ function excludedByOs(info) {
 
 function readFrontendComponents() {
   // `--production` drops devDependencies; `--excludePrivatePackages` drops this app itself.
+  // `--nopeer` stops the walk following `peerDependencies`: `vue-router` names `vite` as a peer
+  // and `vue` names `typescript`, which is how the build tool and the compiler and their trees
+  // reached a page about what we distribute (#1112). check-licenses.mjs passes the same flags.
   const stdout = execFileSync(
     'npx',
-    ['license-checker-rseidelsohn', '--production', '--json', '--excludePrivatePackages'],
+    ['license-checker-rseidelsohn', '--production', '--nopeer', '--json', '--excludePrivatePackages'],
     {
       cwd: fileURLToPath(new URL('..', import.meta.url)),
       encoding: 'utf8',

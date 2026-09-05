@@ -3,9 +3,9 @@
  * Open-Source-Lizenzhinweise — deutsche Fassung von `NoticesView.en.vue`.
  *
  * Die Daten stammen aus `src/assets/notices.json` (erzeugt von `npm run generate:notices`, siehe
- * scripts/generate-notices.mjs). Nach Lizenz gruppiert statt flach aufgelistet: 642 alphabetische
- * Zeilen sind eine Wand, „diese 400 sind MIT“ dagegen eine Aussage, mit der man etwas anfangen
- * kann.
+ * scripts/generate-notices.mjs). Nach Lizenz gruppiert statt flach aufgelistet: Hunderte
+ * alphabetische Zeilen sind eine Wand, „das hier sind die MIT-Komponenten“ dagegen eine Aussage,
+ * mit der man etwas anfangen kann.
  *
  * Die Aufklapp-Logik und die Koordinaten-Formatierung liegen in `useNotices`, damit beide
  * Sprachfassungen dieselbe Implementierung teilen; unterschiedlich ist nur der Text.

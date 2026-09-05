@@ -1,5 +1,5 @@
 {
-  "componentCount": 368,
+  "componentCount": 303,
   "licenses": [
     {
       "license": "Apache-2.0",
@@ -115,21 +115,9 @@
         },
         {
           "name": "commons-logging:commons-logging",
-          "version": "1.3.5",
-          "url": "https://commons.apache.org/proper/commons-logging/",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "commons-logging:commons-logging",
           "version": "1.3.6",
           "url": "https://commons.apache.org/proper/commons-logging/",
           "ecosystem": "backend"
-        },
-        {
-          "name": "detect-libc",
-          "version": "2.1.2",
-          "url": "https://github.com/lovell/detect-libc",
-          "ecosystem": "frontend"
         },
         {
           "name": "io.github.oshai:kotlin-logging-jvm",
@@ -141,12 +129,6 @@
           "name": "io.micrometer:context-propagation",
           "version": "1.2.1",
           "url": "https://github.com/micrometer-metrics/context-propagation",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "io.micrometer:micrometer-commons",
-          "version": "1.16.7",
-          "url": "https://github.com/micrometer-metrics/micrometer-commercial",
           "ecosystem": "backend"
         },
         {
@@ -164,12 +146,6 @@
         {
           "name": "io.micrometer:micrometer-jakarta9",
           "version": "1.17.1",
-          "url": "https://github.com/micrometer-metrics/micrometer-commercial",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "io.micrometer:micrometer-observation",
-          "version": "1.16.7",
           "url": "https://github.com/micrometer-metrics/micrometer-commercial",
           "ecosystem": "backend"
         },
@@ -469,12 +445,6 @@
         },
         {
           "name": "org.apache.logging.log4j:log4j-to-slf4j",
-          "version": "2.25.4",
-          "url": "https://logging.apache.org/log4j/2.x/",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "org.apache.logging.log4j:log4j-to-slf4j",
           "version": "2.25.5",
           "url": "https://logging.apache.org/log4j/2.x/",
           "ecosystem": "backend"
@@ -507,12 +477,6 @@
           "name": "org.jboss.logging:jboss-logging",
           "version": "3.6.3.Final",
           "url": "http://www.jboss.org",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "org.jetbrains:annotations",
-          "version": "13.0",
-          "url": "http://www.jetbrains.org",
           "ecosystem": "backend"
         },
         {
@@ -673,12 +637,6 @@
         },
         {
           "name": "org.springframework.boot:spring-boot",
-          "version": "4.1.0",
-          "url": "https://spring.io/projects/spring-boot",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "org.springframework.boot:spring-boot",
           "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
@@ -697,12 +655,6 @@
         },
         {
           "name": "org.springframework.boot:spring-boot-autoconfigure",
-          "version": "4.1.0",
-          "url": "https://spring.io/projects/spring-boot",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "org.springframework.boot:spring-boot-autoconfigure",
           "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
@@ -715,18 +667,6 @@
         },
         {
           "name": "org.springframework.boot:spring-boot-data-r2dbc",
-          "version": "4.1.1",
-          "url": "https://spring.io/projects/spring-boot",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "org.springframework.boot:spring-boot-devtools",
-          "version": "4.1.1",
-          "url": "https://spring.io/projects/spring-boot",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "org.springframework.boot:spring-boot-docker-compose",
           "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
@@ -823,12 +763,6 @@
         },
         {
           "name": "org.springframework.boot:spring-boot-starter",
-          "version": "4.1.0",
-          "url": "https://spring.io/projects/spring-boot",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "org.springframework.boot:spring-boot-starter",
           "version": "4.1.1",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
@@ -860,12 +794,6 @@
         {
           "name": "org.springframework.boot:spring-boot-starter-jdbc",
           "version": "4.1.1",
-          "url": "https://spring.io/projects/spring-boot",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "org.springframework.boot:spring-boot-starter-logging",
-          "version": "4.1.0",
           "url": "https://spring.io/projects/spring-boot",
           "ecosystem": "backend"
         },
@@ -1210,12 +1138,6 @@
           "version": "3.1.5",
           "url": "https://github.com/FasterXML/jackson-module-kotlin",
           "ecosystem": "backend"
-        },
-        {
-          "name": "typescript",
-          "version": "6.0.3",
-          "url": "https://github.com/microsoft/TypeScript",
-          "ecosystem": "frontend"
         }
       ]
     },
@@ -1223,12 +1145,6 @@
       "license": "MIT",
       "url": "https://opensource.org/license/mit",
       "components": [
-        {
-          "name": "@adobe/css-tools",
-          "version": "4.3.3",
-          "url": "https://github.com/adobe/css-tools",
-          "ecosystem": "frontend"
-        },
         {
           "name": "@babel/helper-string-parser",
           "version": "7.29.7",
@@ -1350,24 +1266,6 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "@oxc-project/types",
-          "version": "0.147.0",
-          "url": "https://github.com/oxc-project/oxc",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@pkgjs/parseargs",
-          "version": "0.11.0",
-          "url": "https://github.com/pkgjs/parseargs",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@rolldown/pluginutils",
-          "version": "1.0.1",
-          "url": "https://github.com/rolldown/plugins",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "@tanstack/virtual-core",
           "version": "3.17.8",
           "url": "https://github.com/TanStack/virtual",
@@ -1377,12 +1275,6 @@
           "name": "@tanstack/vue-virtual",
           "version": "3.13.36",
           "url": "https://github.com/TanStack/virtual",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@types/node",
-          "version": "26.4.1",
-          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped",
           "ecosystem": "frontend"
         },
         {
@@ -1500,30 +1392,6 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "ansi-regex",
-          "version": "5.0.1",
-          "url": "https://github.com/chalk/ansi-regex",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ansi-regex",
-          "version": "6.3.0",
-          "url": "https://github.com/chalk/ansi-regex",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ansi-styles",
-          "version": "4.3.0",
-          "url": "https://github.com/chalk/ansi-styles",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ansi-styles",
-          "version": "6.2.3",
-          "url": "https://github.com/chalk/ansi-styles",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "aria-hidden",
           "version": "1.2.6",
           "url": "https://github.com/theKashey/aria-hidden",
@@ -1542,21 +1410,9 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "balanced-match",
-          "version": "1.0.2",
-          "url": "https://github.com/juliangruber/balanced-match",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "birpc",
           "version": "2.9.0",
           "url": "https://github.com/antfu-collective/birpc",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "brace-expansion",
-          "version": "2.1.4",
-          "url": "https://github.com/juliangruber/brace-expansion",
           "ecosystem": "frontend"
         },
         {
@@ -1572,18 +1428,6 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "color-convert",
-          "version": "2.0.1",
-          "url": "https://github.com/Qix-/color-convert",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "color-name",
-          "version": "1.1.4",
-          "url": "https://github.com/colorjs/color-name",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "confbox",
           "version": "0.1.8",
           "url": "https://github.com/unjs/confbox",
@@ -1596,45 +1440,15 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "cross-spawn",
-          "version": "7.0.6",
-          "url": "https://github.com/moxystudio/node-cross-spawn",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "csstype",
           "version": "3.2.3",
           "url": "https://github.com/frenic/csstype",
           "ecosystem": "frontend"
         },
         {
-          "name": "debug",
-          "version": "4.4.3",
-          "url": "https://github.com/debug-js/debug",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "defu",
           "version": "6.1.7",
           "url": "https://github.com/unjs/defu",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "eastasianwidth",
-          "version": "0.2.0",
-          "url": "https://github.com/komagata/eastasianwidth",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "emoji-regex",
-          "version": "8.0.0",
-          "url": "https://github.com/mathiasbynens/emoji-regex",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "emoji-regex",
-          "version": "9.2.2",
-          "url": "https://github.com/mathiasbynens/emoji-regex",
           "ecosystem": "frontend"
         },
         {
@@ -1662,18 +1476,6 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "is-fullwidth-code-point",
-          "version": "3.0.0",
-          "url": "https://github.com/sindresorhus/is-fullwidth-code-point",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "jiti",
-          "version": "2.7.0",
-          "url": "https://github.com/unjs/jiti",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "local-pkg",
           "version": "1.2.1",
           "url": "https://github.com/antfu-collective/local-pkg",
@@ -1695,12 +1497,6 @@
           "name": "mlly",
           "version": "1.8.2",
           "url": "https://github.com/unjs/mlly",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "ms",
-          "version": "2.1.3",
-          "url": "https://github.com/vercel/ms",
           "ecosystem": "frontend"
         },
         {
@@ -1770,12 +1566,6 @@
           "ecosystem": "backend"
         },
         {
-          "name": "path-key",
-          "version": "3.1.1",
-          "url": "https://github.com/sindresorhus/path-key",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "pathe",
           "version": "2.0.3",
           "url": "https://github.com/unjs/pathe",
@@ -1836,57 +1626,9 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "rolldown",
-          "version": "1.2.6",
-          "url": "https://github.com/rolldown/rolldown",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "scule",
           "version": "1.3.0",
           "url": "https://github.com/unjs/scule",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "shebang-command",
-          "version": "2.0.0",
-          "url": "https://github.com/kevva/shebang-command",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "shebang-regex",
-          "version": "3.0.0",
-          "url": "https://github.com/sindresorhus/shebang-regex",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "string-width",
-          "version": "4.2.3",
-          "url": "https://github.com/sindresorhus/string-width",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "string-width",
-          "version": "5.1.2",
-          "url": "https://github.com/sindresorhus/string-width",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "strip-ansi",
-          "version": "6.0.1",
-          "url": "https://github.com/chalk/strip-ansi",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "strip-ansi",
-          "version": "7.2.0",
-          "url": "https://github.com/chalk/strip-ansi",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "stylus",
-          "version": "0.64.0",
-          "url": "https://github.com/stylus/stylus",
           "ecosystem": "frontend"
         },
         {
@@ -1932,12 +1674,6 @@
           "ecosystem": "frontend"
         },
         {
-          "name": "undici-types",
-          "version": "8.3.0",
-          "url": "https://github.com/nodejs/undici",
-          "ecosystem": "frontend"
-        },
-        {
           "name": "unplugin",
           "version": "3.3.0",
           "url": "https://github.com/unjs/unplugin",
@@ -1947,12 +1683,6 @@
           "name": "unplugin-utils",
           "version": "0.3.2",
           "url": "https://github.com/sxzz/unplugin-utils",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "vite",
-          "version": "8.2.2",
-          "url": "https://github.com/vitejs/vite",
           "ecosystem": "frontend"
         },
         {
@@ -1984,144 +1714,6 @@
           "version": "0.6.2",
           "url": "https://github.com/sysgears/webpack-virtual-modules",
           "ecosystem": "frontend"
-        },
-        {
-          "name": "wrap-ansi",
-          "version": "7.0.0",
-          "url": "https://github.com/chalk/wrap-ansi",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "wrap-ansi",
-          "version": "8.1.0",
-          "url": "https://github.com/chalk/wrap-ansi",
-          "ecosystem": "frontend"
-        }
-      ]
-    },
-    {
-      "license": "ISC",
-      "url": "https://opensource.org/license/isc-license-txt",
-      "components": [
-        {
-          "name": "@isaacs/cliui",
-          "version": "8.0.2",
-          "url": "https://github.com/yargs/cliui",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "@lucide/vue",
-          "version": "1.39.0",
-          "url": "https://github.com/lucide-icons/lucide",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "foreground-child",
-          "version": "3.3.1",
-          "url": "https://github.com/tapjs/foreground-child",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "glob",
-          "version": "10.5.0",
-          "url": "https://github.com/isaacs/node-glob",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "isexe",
-          "version": "2.0.0",
-          "url": "https://github.com/isaacs/isexe",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "lru-cache",
-          "version": "10.4.3",
-          "url": "https://github.com/isaacs/node-lru-cache",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "minimatch",
-          "version": "9.0.9",
-          "url": "https://github.com/isaacs/minimatch",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "picocolors",
-          "version": "1.1.1",
-          "url": "https://github.com/alexeyraspopov/picocolors",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "signal-exit",
-          "version": "4.1.0",
-          "url": "https://github.com/tapjs/signal-exit",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "which",
-          "version": "2.0.2",
-          "url": "https://github.com/isaacs/node-which",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "yaml",
-          "version": "2.9.0",
-          "url": "https://github.com/eemeli/yaml",
-          "ecosystem": "frontend"
-        }
-      ]
-    },
-    {
-      "license": "EPL-2.0",
-      "url": "https://www.eclipse.org/legal/epl-2.0/",
-      "components": [
-        {
-          "name": "ch.qos.logback:logback-classic",
-          "version": "1.5.34",
-          "url": "http://www.qos.ch",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "ch.qos.logback:logback-classic",
-          "version": "1.5.38",
-          "url": "http://www.qos.ch",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "ch.qos.logback:logback-core",
-          "version": "1.5.34",
-          "url": "http://www.qos.ch",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "ch.qos.logback:logback-core",
-          "version": "1.5.38",
-          "url": "http://www.qos.ch",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "jakarta.activation:jakarta.activation-api",
-          "version": "2.1.4",
-          "url": "https://github.com/jakartaee/jaf-api",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "jakarta.annotation:jakarta.annotation-api",
-          "version": "3.0.0",
-          "url": "https://projects.eclipse.org/projects/ee4j.ca",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "jakarta.validation:jakarta.validation-api",
-          "version": "3.1.1",
-          "url": "https://beanvalidation.org",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "jakarta.xml.bind:jakarta.xml.bind-api",
-          "version": "4.0.5",
-          "url": "https://www.eclipse.org",
-          "ecosystem": "backend"
         }
       ]
     },
@@ -2174,45 +1766,21 @@
       ]
     },
     {
-      "license": "BlueOak-1.0.0",
-      "url": "https://blueoakcouncil.org/license/1.0.0",
+      "license": "EPL-2.0",
+      "url": "https://www.eclipse.org/legal/epl-2.0/",
       "components": [
         {
-          "name": "jackspeak",
-          "version": "3.4.3",
-          "url": "https://github.com/isaacs/jackspeak",
-          "ecosystem": "frontend"
+          "name": "ch.qos.logback:logback-classic",
+          "version": "1.5.38",
+          "url": "http://www.qos.ch",
+          "ecosystem": "backend"
         },
         {
-          "name": "minipass",
-          "version": "7.1.3",
-          "url": "https://github.com/isaacs/minipass",
-          "ecosystem": "frontend"
+          "name": "ch.qos.logback:logback-core",
+          "version": "1.5.38",
+          "url": "http://www.qos.ch",
+          "ecosystem": "backend"
         },
-        {
-          "name": "package-json-from-dist",
-          "version": "1.0.1",
-          "url": "https://github.com/isaacs/package-json-from-dist",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "path-scurry",
-          "version": "1.11.1",
-          "url": "https://github.com/isaacs/path-scurry",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "sax",
-          "version": "1.4.4",
-          "url": "https://github.com/isaacs/sax-js",
-          "ecosystem": "frontend"
-        }
-      ]
-    },
-    {
-      "license": "BSD-3-Clause",
-      "url": "https://opensource.org/license/bsd-3-clause",
-      "components": [
         {
           "name": "jakarta.activation:jakarta.activation-api",
           "version": "2.1.4",
@@ -2220,22 +1788,22 @@
           "ecosystem": "backend"
         },
         {
+          "name": "jakarta.annotation:jakarta.annotation-api",
+          "version": "3.0.0",
+          "url": "https://projects.eclipse.org/projects/ee4j.ca",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "jakarta.validation:jakarta.validation-api",
+          "version": "3.1.1",
+          "url": "https://beanvalidation.org",
+          "ecosystem": "backend"
+        },
+        {
           "name": "jakarta.xml.bind:jakarta.xml.bind-api",
           "version": "4.0.5",
           "url": "https://www.eclipse.org",
           "ecosystem": "backend"
-        },
-        {
-          "name": "source-map",
-          "version": "0.7.6",
-          "url": "https://github.com/mozilla/source-map",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "source-map-js",
-          "version": "1.2.1",
-          "url": "https://github.com/7rulnik/source-map-js",
-          "ecosystem": "frontend"
         }
       ]
     },
@@ -2300,32 +1868,26 @@
       ]
     },
     {
-      "license": "LGPL-2.1",
-      "url": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html",
+      "license": "BSD-3-Clause",
+      "url": "https://opensource.org/license/bsd-3-clause",
       "components": [
         {
-          "name": "ch.qos.logback:logback-classic",
-          "version": "1.5.34",
-          "url": "http://www.qos.ch",
+          "name": "jakarta.activation:jakarta.activation-api",
+          "version": "2.1.4",
+          "url": "https://github.com/jakartaee/jaf-api",
           "ecosystem": "backend"
         },
         {
-          "name": "ch.qos.logback:logback-classic",
-          "version": "1.5.38",
-          "url": "http://www.qos.ch",
+          "name": "jakarta.xml.bind:jakarta.xml.bind-api",
+          "version": "4.0.5",
+          "url": "https://www.eclipse.org",
           "ecosystem": "backend"
         },
         {
-          "name": "ch.qos.logback:logback-core",
-          "version": "1.5.34",
-          "url": "http://www.qos.ch",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "ch.qos.logback:logback-core",
-          "version": "1.5.38",
-          "url": "http://www.qos.ch",
-          "ecosystem": "backend"
+          "name": "source-map-js",
+          "version": "1.2.1",
+          "url": "https://github.com/7rulnik/source-map-js",
+          "ecosystem": "frontend"
         }
       ]
     },
@@ -2396,6 +1958,42 @@
       ]
     },
     {
+      "license": "ISC",
+      "url": "https://opensource.org/license/isc-license-txt",
+      "components": [
+        {
+          "name": "@lucide/vue",
+          "version": "1.39.0",
+          "url": "https://github.com/lucide-icons/lucide",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "picocolors",
+          "version": "1.1.1",
+          "url": "https://github.com/alexeyraspopov/picocolors",
+          "ecosystem": "frontend"
+        }
+      ]
+    },
+    {
+      "license": "LGPL-2.1",
+      "url": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html",
+      "components": [
+        {
+          "name": "ch.qos.logback:logback-classic",
+          "version": "1.5.38",
+          "url": "http://www.qos.ch",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "ch.qos.logback:logback-core",
+          "version": "1.5.38",
+          "url": "http://www.qos.ch",
+          "ecosystem": "backend"
+        }
+      ]
+    },
+    {
       "license": "CC0-1.0",
       "url": "https://creativecommons.org/publicdomain/zero/1.0/",
       "components": [
@@ -2416,18 +2014,6 @@
           "version": "1.0.4",
           "url": "http://reactive-streams.org",
           "ecosystem": "backend"
-        }
-      ]
-    },
-    {
-      "license": "MPL-2.0",
-      "url": "https://www.mozilla.org/MPL/2.0/",
-      "components": [
-        {
-          "name": "lightningcss",
-          "version": "1.33.0",
-          "url": "https://github.com/parcel-bundler/lightningcss",
-          "ecosystem": "frontend"
         }
       ]
     }

@@ -28,7 +28,8 @@ const allowed = new Set(JSON.parse(readFileSync(POLICY, 'utf8')).allowedLicenses
 const packages = JSON.parse(
   execFileSync(
     'npx',
-    ['license-checker-rseidelsohn', '--production', '--json', '--excludePrivatePackages'],
+    // The same flags as generate-notices.mjs, so the check and the notices look at one set.
+    ['license-checker-rseidelsohn', '--production', '--nopeer', '--json', '--excludePrivatePackages'],
     { cwd: FRONTEND, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
   ),
 )
