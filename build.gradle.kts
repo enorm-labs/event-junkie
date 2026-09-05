@@ -493,10 +493,13 @@ dependencyCheck {
 // This is the "Stage 1" tool: it lists and checks, but does not curate or scan source. ORT is the
 // Stage 2 upgrade if policy enforcement beyond an allow-list is ever wanted.
 licenseReport {
-    // Only what actually ships. `runtimeClasspath` excludes the compile-only, test and build-tool
-    // dependencies that never reach a user — attributing detekt or Testcontainers on a public page
-    // would be noise, and their licences carry no distribution obligation for us.
-    configurations = arrayOf("runtimeClasspath")
+    // Only what actually ships, which is the classpath `bootJar` is built from — not
+    // `runtimeClasspath`, which Boot extends with `developmentOnly`, so devtools and the Docker
+    // Compose support were listed (#1112). Compile-only, test and build-tool dependencies never
+    // reach a user, and their licences carry no distribution obligation for us. `events-core`
+    // applies no Boot plugin and has no such configuration; the plugin matches by name and skips
+    // it, and its dependencies are reached through the two Boot modules' resolved trees.
+    configurations = arrayOf("productionRuntimeClasspath")
 
     // `:detekt-rules` is excluded for the same reason compile-only dependencies are: it is a detekt
     // plugin, so nothing on its classpath ships, and attributing detekt's own licence on a public
