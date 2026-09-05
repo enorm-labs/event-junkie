@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -138,6 +139,24 @@ class KlunkerkranichOverviewPageScraperTest {
             listOf(ScrapedArtist(name = "Soul Jam Collective", role = "HEADLINER"))
 
         on(LocalDate.of(2026, 8, 9), "TENDER MESH MUSIC w. Big Leg, MCRD").artists.map { it.role } shouldContainExactly listOf("DJ", "DJ")
+    }
+
+    @Test
+    fun `bills a collective and its members as separate acts`() {
+        // "…Miz Kiara,In Limbo Audio: Sven Howland & Niklas Gietmann & Nicolai Toma, p.toile": the
+        // first member kept the team's name glued to its own (#1137).
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/klunkerkranich/klunkerkranich-overview-collective.html")!!
+                .bufferedReader()
+                .readText()
+        val clique = scrape(html).first { it.title.startsWith("CLIQUE BOOKING") }
+
+        val names = clique.artists.map { it.name }
+        names shouldContainAll listOf("In Limbo Audio", "Sven Howland", "Niklas Gietmann", "Nicolai Toma", "Miz Kiara", "p.toile")
+        names.none { it.contains(':') } shouldBe true
+        clique.artists.first { it.name == "Acua" }.role shouldBe "HEADLINER"
+        clique.artists.first { it.name == "Sven Howland" }.role shouldBe "DJ"
     }
 
     @Test
