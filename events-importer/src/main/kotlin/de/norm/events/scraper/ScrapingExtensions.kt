@@ -126,8 +126,10 @@ fun Element.textLinesAt(cssQuery: String): List<String> = selectFirst(cssQuery)?
  * The self-referential counterpart to [textLinesAt], for callers that already hold the element —
  * e.g. after picking one paragraph out of a prose block (ÆDEN's `Lineup:` roster). Only direct-child
  * `<br>` elements break a line; text inside nested inline elements is appended to the current line.
+ * With [keepBlankLines] a `<br><br>` run yields an empty line, for a caller that reads the blank as a
+ * paragraph break (Astra's subtitle notices).
  */
-fun Element.textLines(): List<String> {
+fun Element.textLines(keepBlankLines: Boolean = false): List<String> {
     val lines = mutableListOf<String>()
     val current = StringBuilder()
     for (node in childNodes()) {
@@ -147,7 +149,7 @@ fun Element.textLines(): List<String> {
         }
     }
     lines.add(current.toString())
-    return lines.map { it.trim() }.filter { it.isNotBlank() }
+    return lines.map { it.trim() }.filter { keepBlankLines || it.isNotBlank() }
 }
 
 /**
