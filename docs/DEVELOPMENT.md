@@ -672,30 +672,37 @@ none of it. Three images built and scanned, and the chart stamped, linted and pa
 the notes `.github/release.yml` generates from the merged PRs' labels.
 
 ```bash
+# What the commits since the last tag deserve, and which commits decided it.
+scripts/version.sh deserved
+
 # Dry run first: resolves the version, creates nothing.
 gh workflow run cut-release.yml -f dry_run=true
 
-# Then for real. `bump` is patch by default.
-gh workflow run cut-release.yml -f dry_run=false -f bump=patch
+# Then for real.
+gh workflow run cut-release.yml -f dry_run=false
 ```
 
 [`cut-release.yml`](../.github/workflows/cut-release.yml) reads the version from `gradle.properties`. It does both
 halves. First it publishes the release. Then it opens the pull request that moves `main` to the next snapshot. **The
-version is never typed**, so the tag cannot claim a number the tree does not carry.
+version is never typed**, so the tag cannot claim a number the tree does not carry. **And it is never chosen.** The
+tree has to carry what the commits since the last release deserve. The rule is in
+[RELEASING.md § What a release deserves](ops/RELEASING.md#what-a-release-deserves). A tree that says less is not cut.
+The run opens the pull request that raises it, and stops.
 
 The second half is the one that matters, and it was the step a person could skip without noticing. Until `main` carries
 the next snapshot, staging stops following it. Snapshots of the just-released version sort _below_ the release, so the
 `>=0.0.0-0` range keeps resolving the release itself, and nothing reports it
 ([#455](https://github.com/enorm-labs/event-junkie/issues/455)).
 
-`bump` takes `minor` or `major` for a release that earned one. **`patch` is the default because it assumes least.** A
-snapshot is a prerelease of the coming release. So `0.4.0-SNAPSHOT` decides the next release is a minor one, before
-anybody knows what is in it.
+The bump after a release is always a patch, because it assumes least. A snapshot is a prerelease of the coming release,
+and right after a release nobody knows what the next one holds. The tree is raised later, when a `feat` or a breaking
+change lands, and `at_least=major` on the dispatch is how `1.0.0` is cut.
 
 By hand, if the workflow is unavailable:
 
 ```bash
 scripts/version.sh check
+scripts/version.sh deserved        # must print what `scripts/version.sh base` prints, or raise the tree first
 gh release create v0.3.1 --target main --generate-notes
 scripts/version.sh bump patch      # writes all four files; commit them on a branch
 ```

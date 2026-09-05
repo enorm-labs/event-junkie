@@ -18,8 +18,9 @@ flux --context event-junkie-staging reconcile helmrelease event-junkie -n flux-s
 gh api repos/enorm-labs/event-junkie/deployments --jq '.[0] | {environment, ref, created_at}'         # what GitHub thinks
 
 # Cut a release: one dispatch. It publishes the release and opens the bump PR.
+scripts/version.sh deserved                                                # what the commits since the last tag earn
 gh run list --workflow=release.yml --branch main --limit 1                 # green? the cut refuses a red one
-gh workflow run cut-release.yml -f dry_run=false -f bump=patch
+gh workflow run cut-release.yml -f dry_run=false
 ```
 
 **Nothing here deploys from CI, and nothing can.** A green Actions run means "the artifact was published", not "it is live" — those are minutes apart. §When a
@@ -92,8 +93,9 @@ Publishing is decided by an **allowlist** (`push`, `release`, or a dispatch that
 keeps the Releases page the single record of what shipped.
 
 **[`cut-release.yml`](../../.github/workflows/cut-release.yml) is what publishes that release**, on a `workflow_dispatch` with `dry_run` on by default. It reads
-the version from `gradle.properties` and refuses a tag that already exists. Then it creates the release, and opens the pull request that moves `main` to the
-next snapshot. Both halves in one run, because the second is the one a person skips without noticing (#868).
+the version from `gradle.properties`, checks it against what the commits deserve (§What a release deserves), and refuses a tag that already exists. Then it
+creates the release, and opens the pull request that moves `main` to the next snapshot. Both halves in one run, because the second is the one a person skips
+without noticing (#868).
 
 **It cannot use `GITHUB_TOKEN`.** GitHub suppresses the events its own token raises. A release created with it fires no `release: published`, so `release.yml`
 never runs, nothing reaches GHCR, and every job reports green. The same rule leaves a pull request it opens with no checks, so the bump could never merge. The
@@ -192,16 +194,48 @@ The levers, in order:
 
 The nightly security agent is where this playbook belongs, so the next occurrence opens the pull request instead (#1122).
 
+## What a release deserves
+
+The number is not chosen. [`scripts/version.sh deserved`](../../scripts/version.sh) reads it from the Conventional Commits since the last release
+tag. The rule is [SemVer 2.0.0](https://semver.org/) applied to what the commits say:
+
+| The commits since the last tag contain                          | Before `1.0.0` | From `1.0.0` |
+| --------------------------------------------------------------- | -------------- | ------------ |
+| a breaking change (`!` in the subject, or `BREAKING CHANGE:`)   | **minor**      | **major**    |
+| a `feat`, in any scope, and no breaking change                  | **minor**      | **minor**    |
+| only `fix`, `perf`, `refactor`, `docs`, `chore`, `ci`, and such | **patch**      | **patch**    |
+
+A new event source is a `feat`, so a release that adds one is a minor. A subject that is not Conventional Commits counts as a patch. The summary lists it,
+so an unlabelled feature is visible rather than silently cheap. A revert is a patch. The floor `at_least` is for the one decision the commits cannot
+show: `1.0.0` is cut with `major`. It never lowers the verdict.
+
+**What "breaking" means here.** The `!` belongs on a change that a consumer has to act on. That is the BFF's public `/api/**` contract, the chart's
+`values.yaml` keys, the importer's admin API, or a step an operator must take before the upgrade. A change to a scraper is not breaking, however large.
+
+**Before `1.0.0` a breaking change is a minor.** SemVer §4 says a `0.y.z` release may change anything, and the minor is the number that signals it.
+`docs/LEGAL.md` §4.7 holds the decision on `1.0.0` itself.
+
+Every release since `v0.3.0` was a patch. Under this rule `v0.3.9`, with fifteen `feat` commits, was a `v0.4.0`. The rule is enforced from now on and rewrites
+nothing.
+
 ## Cutting a release
 
 ```bash
+scripts/version.sh deserved                                      # 0.4.0, with the commits that decided it on stderr
 gh workflow run cut-release.yml -f dry_run=true                  # resolves the version and previews the notes
-gh workflow run cut-release.yml -f dry_run=false -f bump=patch   # publishes, then opens the bump PR
+gh workflow run cut-release.yml -f dry_run=false                 # publishes, then opens the bump PR
+gh workflow run cut-release.yml -f dry_run=false -f at_least=major   # the 1.0.0 release, once
 ```
 
-The workflow refuses three things. The four version files disagree. The tag already exists. The commit's snapshot publish on `main` is not green. The last
-one is the release gate seen early. A release rebuilds what the snapshot built, so it fails the same way. It then leaves a tag with nothing behind it. The
-by-hand fallback and the reasoning are in [DEVELOPMENT.md § Cutting a release](../DEVELOPMENT.md#cutting-a-release).
+The workflow refuses four things. The four version files disagree. The tree says less than the commits deserve. The tag already exists. The commit's snapshot
+publish on `main` is not green. The last one is the release gate seen early. A release rebuilds what the snapshot built, so it fails the same way. It then
+leaves a tag with nothing behind it. The by-hand fallback and the reasoning are in
+[DEVELOPMENT.md § Cutting a release](../DEVELOPMENT.md#cutting-a-release).
+
+**The second refusal is the usual one, and the run does the work for you.** After a release, `main` moves to the next patch snapshot, because nothing is known
+about the next release yet. When a `feat` lands during the cycle the tree says `0.3.13-SNAPSHOT` and the commits deserve `0.4.0`. The run then opens the
+pull request that raises the four files and ends red. The commits that decided it are in the summary and in the pull request. Merge it, wait for its
+snapshot publish, and dispatch again. A dry run reports the same verdict and opens nothing.
 
 A release version is **never committed**: `release.yml` passes `-Pversion=` from the tag, so the tag and the artifacts cannot disagree. Tagging `v0.4.0` on a tree
 that says `0.3.1-SNAPSHOT` fails before anything is built.

@@ -95,6 +95,13 @@ jobs:
       - name: Assert what scan-coverage.sh decides
         run: scripts/scan-coverage-test.sh
 
+      # `version.sh deserved` turns the commits since the last release into the number the release
+      # gets, and `cut-release.yml` refuses a tree that says less. A wrong verdict is a release
+      # numbered as if nothing changed, not a red build, so each rule is asserted against a
+      # fabricated history. It needs only git, which is why it runs here and not with the chart.
+      - name: Assert what version.sh deserved decides
+        run: scripts/version-deserved-test.sh
+
       # Gated on the step it explains. Without the condition a failing assertion above prints a
       # paragraph about ShellCheck, which sends the reader to the wrong tool.
       - name: Explain the fix

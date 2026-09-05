@@ -15,6 +15,8 @@
 #   scripts/version.sh next <patch|minor|major>          # 0.1.2 — the next base, printed, nothing written
 #   scripts/version.sh set <x.y.z>                       # write that version to all four files
 #   scripts/version.sh bump <patch|minor|major>          # next + set, which is the post-release bump
+#   scripts/version.sh last                              # 0.1.1 — the newest release tag reachable from HEAD
+#   scripts/version.sh deserved [--at-least minor|major] # 0.2.0 — what the commits since `last` earn (SemVer)
 #
 # `compute` defaults to $GITHUB_REF / $GITHUB_SHA and falls back to the working tree, so it produces
 # the same answer in CI and on a laptop. The third argument exists for `scripts/version-test.sh`,
@@ -24,11 +26,18 @@
 # are edited from one place so that a workflow and a person at a terminal cannot bump them
 # differently (#868).
 #
-# Requires: yq (for Chart.yaml). Reaches no network.
+# `deserved` reads the Conventional Commits subjects and bodies since the last release and applies
+# the rule in docs/ops/RELEASING.md § What a release deserves: a breaking change is a major (a minor
+# before 1.0.0), a `feat` is a minor, anything else is a patch. It prints the version and, on stderr,
+# the commits that decided it. `cut-release.yml` refuses a tree whose number is not this one.
+#
+# Requires: yq (for Chart.yaml), git. Reaches no network. VERSION_GIT_ROOT points the history
+# commands at another repository, which is how `scripts/version-deserved-test.sh` fabricates one.
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+GIT_ROOT="${VERSION_GIT_ROOT:-$REPO_ROOT}"
 GRADLE_PROPERTIES="$REPO_ROOT/gradle.properties"
 PACKAGE_JSON="$REPO_ROOT/events-frontend/package.json"
 CHART_YAML="$REPO_ROOT/deploy/charts/event-junkie/Chart.yaml"
@@ -85,7 +94,7 @@ package_json_version() {
 # about the same commit, which `date -u` cannot do by construction.
 commit_timestamp() {
   local sha="$1" stamp
-  stamp="$(TZ=UTC0 git -C "$REPO_ROOT" show -s --format=%cd --date=format-local:%Y%m%d%H%M%S "$sha" 2>/dev/null)" ||
+  stamp="$(TZ=UTC0 git -C "$GIT_ROOT" show -s --format=%cd --date=format-local:%Y%m%d%H%M%S "$sha" 2>/dev/null)" ||
     die "cannot read the committer date of '$sha' — it is not a commit in this repository"
   # Fourteen digits, and the first one is not a zero: a SemVer numeric identifier must not carry a
   # leading zero, and the whole point of this identifier is that it compares numerically.
@@ -112,9 +121,9 @@ replace_line() {
 
 # The next base version after this tree's, for `patch`, `minor` or `major`.
 #
-# **`patch` is the default the release flow uses.** A snapshot is a prerelease of the coming release,
-# so bumping to `0.4.0-SNAPSHOT` commits the next release to being a minor one before anybody knows
-# what is in it. `patch` assumes least; the other two are there for a release that has earned one.
+# **The release flow always takes `patch` here.** A snapshot is a prerelease of the coming release,
+# and right after a release nothing is known about the next one, so `patch` assumes least. The tree
+# is raised later, by `set`, once `deserved` says the commits have earned more.
 next_version() {
   local part="$1" base major minor patch
   base="$(base_version)"
@@ -166,14 +175,139 @@ cmd_bump() {
   cmd_set "$(next_version "$part")"
 }
 
+# The newest release tag reachable from HEAD, without its `v`: `0.3.12`.
+#
+# `--merged HEAD` rather than every tag, so a tag on a branch that never landed cannot become the
+# baseline the next release is measured from. Only the bare `vX.Y.Z` shape counts, which is the
+# same filter production's OCIRepository applies.
+last_release() {
+  local tag
+  tag="$(git -C "$GIT_ROOT" tag --list 'v[0-9]*' --merged HEAD --sort=-v:refname |
+    grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)" || true
+  [[ -n "$tag" ]] || die "no release tag of the form vX.Y.Z is reachable from HEAD"
+  printf '%s\n' "${tag#v}"
+}
+
+# Ranks a bump kind so the floor and the commits' verdict can be compared: patch < minor < major.
+bump_rank() {
+  case "$1" in
+    patch) printf '1\n' ;;
+    minor) printf '2\n' ;;
+    major) printf '3\n' ;;
+    *) die "'$1' is not one of patch, minor, major" ;;
+  esac
+}
+
+# Applies [part] to [base]: `0.3.12 minor` is `0.4.0`.
+apply_bump() {
+  local base="$1" part="$2" major minor patch
+  IFS=. read -r major minor patch <<<"$base"
+  case "$part" in
+    major) printf '%s.0.0\n' "$((major + 1))" ;;
+    minor) printf '%s.%s.0\n' "$major" "$((minor + 1))" ;;
+    patch) printf '%s.%s.%s\n' "$major" "$minor" "$((patch + 1))" ;;
+  esac
+}
+
+# The version the commits since the last release deserve, with the reasoning on stderr.
+#
+# One `feat` is a minor. One breaking change (`!` in the subject, or a `BREAKING CHANGE:` footer)
+# is a major once the last release is 1.0.0 or later, and a minor before that: SemVer §4 says a
+# 0.y.z release may change anything, and the minor is the number that signals it. Anything else
+# is a patch. A subject that is not Conventional Commits counts as a patch and is listed, so
+# an unlabelled feature is visible rather than silently cheap.
+#
+# `--at-least` is a floor for the one decision the commits cannot show: 1.0.0. It never lowers.
+cmd_deserved() {
+  local floor="" last
+  while (($# > 0)); do
+    case "$1" in
+      --at-least)
+        floor="${2:-}"
+        [[ "$floor" == minor || "$floor" == major ]] || die "--at-least takes minor or major"
+        shift 2
+        ;;
+      *) die "usage: version.sh deserved [--at-least minor|major]" ;;
+    esac
+  done
+
+  last="$(last_release)"
+  local -a shas
+  mapfile -t shas < <(git -C "$GIT_ROOT" rev-list --no-merges --reverse "v$last..HEAD")
+  ((${#shas[@]} > 0)) || die "no commits since v$last, so there is nothing to release"
+
+  local sha subject body type bang kind
+  local kind_count_breaking=0 kind_count_feat=0 kind_count_other=0 kind_count_unclassified=0
+  local -a deciding=() unclassified=()
+  for sha in "${shas[@]}"; do
+    subject="$(git -C "$GIT_ROOT" show -s --format=%s "$sha")"
+    body="$(git -C "$GIT_ROOT" show -s --format=%b "$sha")"
+    if [[ "$subject" =~ ^([a-zA-Z]+)(\([^\)]*\))?(!)?:[[:space:]] ]]; then
+      type="${BASH_REMATCH[1],,}"
+      bang="${BASH_REMATCH[3]}"
+      if [[ -n "$bang" ]] || grep -qE '^BREAKING[ -]CHANGE:' <<<"$body"; then
+        kind=breaking
+      elif [[ "$type" == feat ]]; then
+        kind=feat
+      else
+        kind=other
+      fi
+    else
+      kind=unclassified
+    fi
+    case "$kind" in
+      breaking)
+        kind_count_breaking=$((kind_count_breaking + 1))
+        deciding+=("  breaking  ${sha:0:8} $subject")
+        ;;
+      feat)
+        kind_count_feat=$((kind_count_feat + 1))
+        deciding+=("  feat      ${sha:0:8} $subject")
+        ;;
+      other) kind_count_other=$((kind_count_other + 1)) ;;
+      unclassified)
+        kind_count_unclassified=$((kind_count_unclassified + 1))
+        unclassified+=("  ?         ${sha:0:8} $subject")
+        ;;
+    esac
+  done
+
+  local part=patch
+  if ((kind_count_breaking > 0)); then
+    if [[ "${last%%.*}" == 0 ]]; then part=minor; else part=major; fi
+  elif ((kind_count_feat > 0)); then
+    part=minor
+  fi
+  if [[ -n "$floor" ]] && (($(bump_rank "$floor") > $(bump_rank "$part"))); then
+    part="$floor"
+  fi
+
+  {
+    printf 'since v%s: %s commit(s) — %s breaking, %s feat, %s other, %s not Conventional Commits\n' \
+      "$last" "${#shas[@]}" "$kind_count_breaking" "$kind_count_feat" "$kind_count_other" "$kind_count_unclassified"
+    printf 'deserves: %s' "$part"
+    if [[ -n "$floor" && "$floor" == "$part" ]]; then printf ' (floor --at-least %s)' "$floor"; fi
+    printf '\n'
+    local line
+    for line in "${deciding[@]}"; do printf '%s\n' "$line"; done
+    for line in "${unclassified[@]}"; do printf '%s\n' "$line"; done
+  } >&2
+
+  apply_bump "$last" "$part"
+}
+
+cmd_last() {
+  last_release
+}
+
 cmd_base() {
   base_version
 }
 
 cmd_compute() {
   local ref="${1:-${GITHUB_REF:-}}" sha="${2:-${GITHUB_SHA:-}}" stamp="${3:-}"
-  [[ -n "$ref" ]] || ref="$(git -C "$REPO_ROOT" rev-parse --symbolic-full-name HEAD)"
-  [[ -n "$sha" ]] || sha="$(git -C "$REPO_ROOT" rev-parse HEAD)"
+  [[ -n "$ref" ]] || ref="$(git -C "$GIT_ROOT" rev-parse --symbolic-full-name HEAD)"
+  [[ -n "$sha" ]] || sha="$(git -C "$GIT_ROOT" rev-parse HEAD)"
 
   local base
   base="$(base_version)"
@@ -264,8 +398,10 @@ main() {
     next) cmd_next "$@" ;;
     set) cmd_set "$@" ;;
     bump) cmd_bump "$@" ;;
+    last) cmd_last ;;
+    deserved) cmd_deserved "$@" ;;
     *)
-      printf 'usage: version.sh {base|compute [ref] [sha]|check|next <part>|set <x.y.z>|bump <part>}\n' >&2
+      printf 'usage: version.sh {base|compute [ref] [sha]|check|next <part>|set <x.y.z>|bump <part>|last|deserved [--at-least minor|major]}\n' >&2
       exit 2
       ;;
   esac
