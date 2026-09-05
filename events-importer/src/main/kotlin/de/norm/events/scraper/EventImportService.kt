@@ -145,8 +145,16 @@ class EventImportService(
      * Acquires a permit from the global [importSemaphore] for the full duration of the import,
      * so the total number of concurrent imports never exceeds [maxConcurrency] regardless of the
      * caller. The (fail-fast) persisted-id precondition is checked *before* taking a permit.
+     *
+     * @param force fetch the listing without the cached `If-None-Match` / `If-Modified-Since`
+     *   headers (#1159). A parser fix at a venue whose page has not changed otherwise 304s on
+     *   every run until the venue edits its page; this is the one exception, per call, and it
+     *   stores the response's validators like any other run so the next run is conditional again.
      */
-    internal suspend fun importFromSource(source: EventSourceEntity): ImportResultResponse {
+    internal suspend fun importFromSource(
+        source: EventSourceEntity,
+        force: Boolean = false
+    ): ImportResultResponse {
         requireNotNull(source.id) { "Event source must be persisted (have a non-null id) before importing" }
         // The one place the log context for a run is established (#380). Every line any scraper,
         // the upsert or the coverage check writes below this point carries the slug and run id,
@@ -154,7 +162,7 @@ class EventImportService(
         // semaphore deliberately: a run that spends a minute waiting for a permit should still say
         // which source it is waiting for.
         return withContext(LogContext.forImportRun(source.slug)) {
-            importSemaphore.withPermit { timedImportPipeline(source) }
+            importSemaphore.withPermit { timedImportPipeline(source, force) }
         }
     }
 
@@ -170,14 +178,17 @@ class EventImportService(
      * `finally` rather than a call on each path, so a run always records exactly once — including
      * one that throws past every branch below.
      */
-    private suspend fun timedImportPipeline(source: EventSourceEntity): ImportResultResponse {
+    private suspend fun timedImportPipeline(
+        source: EventSourceEntity,
+        force: Boolean
+    ): ImportResultResponse {
         val startedAt = System.nanoTime()
         // FAILED rather than a nullable: if an exception escapes every branch, "the run failed" is
         // the honest reading, and a missing sample would be indistinguishable from a run that never
         // started.
         var outcome = ImporterMetrics.RunOutcome.FAILED
         try {
-            val (response, runOutcome) = runImportPipeline(source)
+            val (response, runOutcome) = runImportPipeline(source, force)
             outcome = runOutcome
             return response
         } finally {
@@ -186,7 +197,10 @@ class EventImportService(
     }
 
     @Suppress("TooGenericExceptionCaught", "ReturnCount") // Intentional: record any failure; multiple early returns for error paths
-    private suspend fun runImportPipeline(source: EventSourceEntity): Pair<ImportResultResponse, ImporterMetrics.RunOutcome> {
+    private suspend fun runImportPipeline(
+        source: EventSourceEntity,
+        force: Boolean
+    ): Pair<ImportResultResponse, ImporterMetrics.RunOutcome> {
         val eventSourceEnum =
             try {
                 EventSource.valueOf(source.sourceType)
@@ -215,8 +229,10 @@ class EventImportService(
                 ?: return ImportResultResponse(sourceSlug = source.slug, imported = false, eventCount = 0) to
                     ImporterMetrics.RunOutcome.SKIPPED
 
+        if (force) logger.info { "Fetching source page unconditionally (forced) for '${runningSource.slug}'" }
+        val (etag, lastModified) = runningSource.validatorsFor(force)
         return try {
-            when (val result = importer.importEvents(runningSource.url, runningSource.etag, runningSource.lastModified)) {
+            when (val result = importer.importEvents(runningSource.url, etag, lastModified)) {
                 is ImportResult.NotModified -> {
                     logger.info { "Source '${runningSource.slug}' not modified, skipping import" }
                     // The count carries forward rather than resetting to 0 (#659). A 304 says the
@@ -457,3 +473,11 @@ private fun EventSourceEntity.withRobots(check: RobotsCheck): EventSourceEntity 
         robotsAllowed = check.allowed,
         robotsTxtUrl = check.robotsTxtUrl
     )
+
+/**
+ * The cached validators this run sends, as `etag to lastModified` — neither when [force] (#1159).
+ *
+ * Null validators are what makes `HtmlFetcher.fetch` unconditional, and every conditional importer
+ * hands them straight through, so one call site covers all of them without a second fetch path.
+ */
+private fun EventSourceEntity.validatorsFor(force: Boolean): Pair<String?, String?> = if (force) null to null else etag to lastModified

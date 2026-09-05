@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
@@ -54,16 +55,23 @@ class EventSourceController(
      * Returns `202 Accepted` immediately; the import runs asynchronously (see
      * [ImportJobLauncher]). Poll `GET /api/admin/event-sources/{slug}` to observe its status.
      *
+     * `?force=true` fetches the page without the cached `ETag` / `Last-Modified` (#1159). It exists
+     * for one case: a parser fix at a venue whose page has not changed, which otherwise answers 304
+     * on every run until the venue edits its page. Per source on purpose — there is no case for
+     * forcing all of them at once, and it would cost every stable host a full fetch (ADR-007).
+     *
      * @throws EventSourceNotFoundException if no source with the given slug exists.
      */
     @PostMapping("/{slug}/import")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @Operation(summary = "Trigger a background import for a single event source by slug")
+    @Operation(summary = "Trigger a background import for a single event source by slug (?force=true skips the conditional headers)")
     suspend fun importBySlug(
-        @PathVariable slug: String
+        @PathVariable slug: String,
+        @RequestParam(defaultValue = "false") force: Boolean
     ): ImportTriggeredResponse {
-        importJobLauncher.triggerImportBySlug(slug)
-        return ImportTriggeredResponse(message = "Import started for source '$slug'", sourceSlug = slug)
+        importJobLauncher.triggerImportBySlug(slug, force)
+        val message = if (force) "Import started for source '$slug' (forced fetch)" else "Import started for source '$slug'"
+        return ImportTriggeredResponse(message = message, sourceSlug = slug)
     }
 
     // -- CRUD operations ---

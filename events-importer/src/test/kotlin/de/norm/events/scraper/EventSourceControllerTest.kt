@@ -7,11 +7,20 @@ import de.norm.events.venue.VenueRequestFixtures
 import de.norm.events.venue.VenueResponse
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldEndWith
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import mockwebserver3.Dispatcher
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.RecordedRequest
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.expectBody
+import java.time.Instant
 
 class EventSourceControllerTest : BaseControllerTest() {
     @Autowired
@@ -216,6 +225,108 @@ class EventSourceControllerTest : BaseControllerTest() {
     }
 
     @Test
+    fun `POST import with force=true fetches without the cached validators and stores the new ones`() {
+        // One listing on a local server that honours If-None-Match, so the three triggers below can be
+        // told apart by what the server received: a first fetch, a 304, and a forced full fetch.
+        val server = MockWebServer()
+        val listing = ConditionalListing()
+        server.dispatcher = listing
+        server.start()
+        try {
+            val venueId = createVenue().id
+            val listingUrl = server.url("/programm/").toString()
+            val slug = createSource(EventSourceRequestFixtures.create(venueId = venueId, url = listingUrl)).slug
+
+            triggerImport(slug)
+            listing.nextRequest().headers["If-None-Match"] shouldBe null
+            awaitSource(slug) { it.status == "SUCCESS" && it.etag == ConditionalListing.FIRST_ETAG }
+
+            val beforeSecond = Instant.now()
+            triggerImport(slug)
+            listing.nextRequest().headers["If-None-Match"] shouldBe ConditionalListing.FIRST_ETAG
+            awaitSource(slug) { it.status == "SUCCESS" && it.lastImportAt?.isBefore(beforeSecond) == false }
+
+            listing.etag = ConditionalListing.SECOND_ETAG
+            triggerImport(slug, force = true).message shouldEndWith "(forced fetch)"
+            listing.nextRequest().headers["If-None-Match"] shouldBe null
+            awaitSource(slug) { it.status == "SUCCESS" && it.etag == ConditionalListing.SECOND_ETAG }
+        } finally {
+            server.close()
+        }
+    }
+
+    @Test
+    fun `POST import with force=true for non-existent source returns 404`() {
+        webTestClient
+            .post()
+            .uri("/api/admin/event-sources/non-existent/import?force=true")
+            .exchange()
+            .expectStatus()
+            .isNotFound
+    }
+
+    /** Triggers [slug]'s import and asserts the 202. */
+    private fun triggerImport(
+        slug: String,
+        force: Boolean = false
+    ): ImportTriggeredResponse =
+        webTestClient
+            .post()
+            .uri("/api/admin/event-sources/$slug/import?force=$force")
+            .exchange()
+            .expectStatus()
+            .isAccepted
+            .expectBody<ImportTriggeredResponse>()
+            .returnResult()
+            .responseBody!!
+
+    /** Polls the source row until the background import has left it in the state [done] describes. */
+    private fun awaitSource(
+        slug: String,
+        done: (EventSourceEntity) -> Boolean
+    ): Unit =
+        runBlocking {
+            withTimeout(AWAIT_MS) {
+                while (!done(eventSourceRepository.findBySlug(slug).shouldNotBeNull())) delay(POLL_MS)
+            }
+        }
+
+    /**
+     * An empty listing page that answers 304 to a matching `If-None-Match`, and 404 for `robots.txt`
+     * so the robots filter allows everything.
+     */
+    private class ConditionalListing : Dispatcher() {
+        /** The ETag the page currently carries; a request presenting it gets a 304. */
+        @Volatile
+        var etag: String = FIRST_ETAG
+
+        private val listingRequests = java.util.concurrent.LinkedBlockingQueue<RecordedRequest>()
+
+        override fun dispatch(request: RecordedRequest): MockResponse {
+            if (request.target.endsWith("/robots.txt")) return MockResponse.Builder().code(404).build()
+            listingRequests.add(request)
+            return if (request.headers["If-None-Match"] == etag) {
+                MockResponse.Builder().code(304).build()
+            } else {
+                MockResponse
+                    .Builder()
+                    .code(200)
+                    .addHeader("Content-Type", "text/html; charset=utf-8")
+                    .addHeader("ETag", etag)
+                    .body("<html><body><div class=\"programm\"></div></body></html>")
+                    .build()
+            }
+        }
+
+        fun nextRequest(): RecordedRequest = listingRequests.poll(AWAIT_MS, java.util.concurrent.TimeUnit.MILLISECONDS).shouldNotBeNull()
+
+        companion object {
+            const val FIRST_ETAG = "\"v1\""
+            const val SECOND_ETAG = "\"v2\""
+        }
+    }
+
+    @Test
     fun `PATCH non-existent source returns 404`() {
         webTestClient
             .patch()
@@ -393,5 +504,10 @@ class EventSourceControllerTest : BaseControllerTest() {
             .exchange()
             .expectStatus()
             .isBadRequest
+    }
+
+    private companion object {
+        const val AWAIT_MS = 10_000L
+        const val POLL_MS = 50L
     }
 }

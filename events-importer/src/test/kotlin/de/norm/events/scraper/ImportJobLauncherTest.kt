@@ -42,7 +42,20 @@ class ImportJobLauncherTest {
 
             launcher.triggerImportBySlug("privatclub")
 
-            coVerify(timeout = TIMEOUT_MS) { eventImportService.importFromSource(source) }
+            coVerify(timeout = TIMEOUT_MS) { eventImportService.importFromSource(source, force = false) }
+        }
+
+    @Test
+    fun `a forced trigger hands the flag to the import`() =
+        runTest {
+            val source = mockk<EventSourceEntity>()
+            coEvery { eventSourceRepository.findBySlug("privatclub") } returns source
+            coEvery { eventImportService.importFromSource(source, force = true) } returns
+                ImportResultResponse(sourceSlug = "privatclub", imported = true, eventCount = 3)
+
+            launcher.triggerImportBySlug("privatclub", force = true)
+
+            coVerify(timeout = TIMEOUT_MS) { eventImportService.importFromSource(source, force = true) }
         }
 
     @Test
@@ -52,7 +65,7 @@ class ImportJobLauncherTest {
 
             shouldThrow<EventSourceNotFoundException> { launcher.triggerImportBySlug("nope") }
 
-            coVerify(exactly = 0) { eventImportService.importFromSource(any()) }
+            coVerify(exactly = 0) { eventImportService.importFromSource(any(), any()) }
         }
 
     @Test
