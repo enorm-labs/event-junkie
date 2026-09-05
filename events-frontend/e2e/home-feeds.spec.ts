@@ -64,6 +64,33 @@ test('renders the tonight and upcoming feeds', async ({ page }) => {
   expect(errors, 'unexpected uncaught exceptions').toEqual([])
 })
 
+test('the hero leads to the events list first, with the calendar beside it', async ({ page }) => {
+  await page.goto('/')
+
+  // The primary way in is the list (#366): the feeds below are already a list, and the filters
+  // are what a visitor who wants more of it needs. The calendar stays as the second button.
+  const hero = page.getByRole('main')
+  await expect(hero.getByRole('link', { name: 'Browse events' })).toHaveAttribute(
+    'href',
+    '/en/events',
+  )
+  await expect(hero.getByRole('link', { name: 'Browse calendar' })).toHaveAttribute(
+    'href',
+    '/en/calendar',
+  )
+
+  await hero.getByRole('link', { name: 'Browse events' }).click()
+  await expect(page).toHaveURL(/\/en\/events$/)
+})
+
+test('the upcoming feed ends in a link to the full list', async ({ page }) => {
+  await page.goto('/')
+
+  await expect(eventHeading(page, 'Upcoming Two')).toBeVisible()
+  await page.getByRole('link', { name: 'See all upcoming events' }).click()
+  await expect(page).toHaveURL(/\/en\/events$/)
+})
+
 test('shows empty states when both feeds are empty', async ({ page }) => {
   await page.route(todayFeed, (route) => json(route, []))
   await page.route(upcomingFeed, (route) => json(route, eventPage([])))

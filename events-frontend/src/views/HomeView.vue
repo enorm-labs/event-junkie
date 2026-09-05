@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
-import { CalendarDays } from '@lucide/vue'
+import { CalendarDays, Ticket } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import EventCard from '@/components/EventCard.vue'
 import ClubStamp from '@/components/ClubStamp'
@@ -45,12 +45,23 @@ useStructuredData(() => websiteJsonLd(locale.value as Locale))
              showed the wrong language on /de; `footer.tagline` is the catalogue's tagline rather
              than a footer string, and the footer already reads it. -->
         <h1 class="sr-only">Event Junkie — {{ t('footer.tagline') }}</h1>
-        <Button as-child size="lg">
-          <RouterLink :to="localePath('/calendar')">
-            <CalendarDays />
-            {{ t('common.actions.browseCalendar') }}
-          </RouterLink>
-        </Button>
+        <!-- The list is the primary way in: the sections below are already a list, and a visitor
+             who wants more of it wants the filters, not a month grid. The calendar stays one click
+             away for whoever has a date in mind (#366). -->
+        <div class="flex flex-wrap justify-center gap-3">
+          <Button as-child size="lg">
+            <RouterLink :to="localePath('/events')">
+              <Ticket />
+              {{ t('common.actions.browseEvents') }}
+            </RouterLink>
+          </Button>
+          <Button as-child size="lg" variant="outline">
+            <RouterLink :to="localePath('/calendar')">
+              <CalendarDays />
+              {{ t('common.actions.browseCalendar') }}
+            </RouterLink>
+          </Button>
+        </div>
       </div>
     </section>
 
@@ -81,9 +92,14 @@ useStructuredData(() => websiteJsonLd(locale.value as Locale))
       <p v-else-if="!upcoming.data.value?.length" class="text-sm text-muted-foreground">
         {{ t('home.upcomingEmpty') }}
       </p>
-      <div v-else class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <EventCard v-for="event in upcoming.data.value" :key="event.slug" :event="event" />
-      </div>
+      <template v-else>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <EventCard v-for="event in upcoming.data.value" :key="event.slug" :event="event" />
+        </div>
+        <Button as-child class="px-0" variant="link">
+          <RouterLink :to="localePath('/events')">{{ t('home.seeAllUpcoming') }}</RouterLink>
+        </Button>
+      </template>
     </section>
   </main>
 </template>
