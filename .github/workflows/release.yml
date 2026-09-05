@@ -75,6 +75,10 @@ permissions:
   # nothing here can be used to push: `packages: write` above is still the only write to a registry.
   id-token: write
   attestations: write
+  # The attest action also registers each image as a storage record on the organisation's
+  # artifacts page, and warned on every tag build since v0.3.0 for want of this. Metadata only: it
+  # writes nothing to a registry and nothing to the attestation.
+  artifact-metadata: write
 
 env:
   IMAGE_PREFIX: ghcr.io/enorm-labs/event-junkie
