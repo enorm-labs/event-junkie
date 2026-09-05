@@ -35,7 +35,7 @@ class FestsaalApiScraperTest {
 
     @Test
     fun `parses every event in the API response`() {
-        events shouldHaveSize 77
+        events shouldHaveSize 78
     }
 
     @Test
@@ -54,6 +54,16 @@ class FestsaalApiScraperTest {
         elenaRose.status shouldBe "SCHEDULED"
         elenaRose.soldOut shouldBe false
         elenaRose.artists shouldContainExactly listOf(ScrapedArtist("ELENA ROSE", "HEADLINER"))
+    }
+
+    @Test
+    fun `mints no artist for a league billed under its own name`() {
+        val dltlly = event("festsaal:dltlly-september-2026")
+        dltlly.title shouldBe "DLTLLY"
+        dltlly.subtitle shouldBe "13th Birthday"
+        dltlly.eventType shouldBe "CONCERT"
+        dltlly.genre shouldBe "Hip-Hop"
+        dltlly.artists.shouldBeEmpty()
     }
 
     @Test

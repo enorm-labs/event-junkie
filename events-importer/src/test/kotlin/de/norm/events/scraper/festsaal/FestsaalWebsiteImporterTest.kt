@@ -45,7 +45,7 @@ class FestsaalWebsiteImporterTest {
         runTest {
             val result = importer.importEvents(apiBaseUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 77
+            result.events shouldHaveSize 78
         }
 
     @Test
