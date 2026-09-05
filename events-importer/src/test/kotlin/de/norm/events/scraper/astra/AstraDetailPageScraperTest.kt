@@ -4,8 +4,10 @@ import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -106,6 +108,16 @@ class AstraDetailPageScraperTest {
         // "VVK Paket" contains the letters "ak" but not as a standalone token → presale, not box office.
         event.pricePresale shouldBe BigDecimal("25.00")
         event.priceBoxOffice shouldBe BigDecimal("30.00")
+    }
+
+    @Test
+    fun `keeps the relocation banner out of the subtitle and puts it first in the description`() {
+        // Buzzcocks, 5 September 2026: tour name, support line, blank line, then the shouted banner (#1138).
+        val buzzcocks = parseFixture("astra-detail-buzzcocks.html", "https://www.astra-berlin.de/events/2026-09-05-buzzcocks")
+
+        buzzcocks.subtitle shouldBe "„Celebrating 50 Years Of Buzzcocks\" + Support: GYM TONIC"
+        buzzcocks.description.shouldNotBeNull()
+        buzzcocks.description shouldStartWith "VERLEGT INS LIDO. BEREITS GEKAUFTE TICKETS BEHALTEN IHRE GÜLTIGKEIT!"
     }
 
     @Test

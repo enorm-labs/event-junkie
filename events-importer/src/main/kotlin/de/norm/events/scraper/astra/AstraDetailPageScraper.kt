@@ -61,7 +61,8 @@ class AstraDetailPageScraper {
         return ScrapedEvent(
             title = block.title,
             subtitle = block.subtitle,
-            description = parseDescription(content),
+            // The banner leads the description, the way the Lido template stores it.
+            description = listOfNotNull(block.notice, parseDescription(content)).joinToString("\n").ifBlank { null },
             eventType = block.eventType,
             // Detail pages always carry the real date; sentinel only if absent
             // (then the overview value is used via fillGapsFromOverview).

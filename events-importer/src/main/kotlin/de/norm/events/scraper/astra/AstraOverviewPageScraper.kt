@@ -16,6 +16,7 @@ import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.supportSubtitleLine
 import de.norm.events.scraper.textAt
+import de.norm.events.scraper.textLines
 import de.norm.events.scraper.textLinesAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -131,6 +132,8 @@ class AstraOverviewPageScraper {
         return ScrapedEvent(
             title = block.title,
             subtitle = block.subtitle,
+            // The overview has no prose of its own; a banner is the only thing to store.
+            description = block.notice,
             eventType = eventType,
             // Sentinel for the dateless teaser; the detail page fills the real date in.
             eventDate = block.eventDate ?: UNRESOLVED_EVENT_DATE,
@@ -167,6 +170,8 @@ internal data class AstraEventBlock(
     /** Mapped event type, or `null` when no `kind` label is present. */
     val eventType: String?,
     val subtitle: String?,
+    /** A shouted notice the venue appends below the subtitle — a relocation, a sold-out warning — or `null`. */
+    val notice: String?,
     val imageUrl: String?,
     val soldOut: Boolean,
     val status: String
@@ -191,6 +196,7 @@ internal fun parseAstraEventBlock(
     val sourceUrl = resolveUrl(baseUrl, href)
 
     val statusText = root.textAt(".event__status")?.lowercase().orEmpty()
+    val (subtitle, notice) = splitSubtitleNotice(root.selectFirst(".event__subtitle")?.textLines(keepBlankLines = true).orEmpty())
 
     return AstraEventBlock(
         title = title,
@@ -202,12 +208,33 @@ internal fun parseAstraEventBlock(
         doorsTime = parseTime(root.textAt(".event__time--doors .event__time-value")),
         startTime = parseTime(root.textAt(".event__time--start .event__time-value")),
         eventType = mapEventType(root.textAt(".event__kind .event__label")),
-        subtitle = root.textAt(".event__subtitle"),
+        subtitle = subtitle,
+        notice = notice,
         imageUrl = root.imgSrcAt(".event__right-col img.image__src"),
         soldOut = statusText.contains("sold out") || statusText.contains("ausverkauft"),
         status = parseEventStatus(statusText)
     )
 }
+
+/**
+ * Separates the subtitle proper from the notice the venue appends below it.
+ *
+ * The `.event__subtitle` block is the tour name and a `+ Support:` line, and then, after a blank
+ * `<br><br>` line, a shouted banner — `VERLEGT INS LIDO. BEREITS GEKAUFTE TICKETS BEHALTEN IHRE
+ * GÜLTIGKEIT!`, `MATINEE SHOW!`. Joined as one text the banner ran into the subtitle with no
+ * separator, and the support act read as "Gym Tonic Verlegt Ins Lido" (#1138). A line counts as a
+ * notice when it follows a blank line **and** is shouted; a festival's lower-case lineup after the
+ * same blank stays part of the subtitle. Returns the subtitle and the notice, each `null` when
+ * empty.
+ */
+internal fun splitSubtitleNotice(lines: List<String>): Pair<String?, String?> {
+    val firstBlank = lines.indexOfFirst { it.isBlank() }.takeIf { it >= 0 } ?: lines.size
+    val (notice, subtitle) = lines.filter { it.isNotBlank() }.partition { line -> lines.indexOf(line) > firstBlank && line.isShouted() }
+    return subtitle.joinToString(" ").ifBlank { null } to notice.joinToString(" ").ifBlank { null }
+}
+
+/** True for a line written in capitals only — the venue's style for a notice, never for a tour name or an act. */
+private fun String.isShouted(): Boolean = any { it.isLetter() } && none { it.isLowerCase() }
 
 /**
  * Parses Astra's `DD.MM.YY` date format (e.g. "11.12.26") via the shared

@@ -71,6 +71,23 @@ class AstraOverviewPageScraperTest {
     }
 
     @Test
+    fun `stores a notice appended below the subtitle as the description, not as subtitle text`() {
+        val greenLung = event("Green Lung")
+        greenLung.subtitle shouldBe "„Dance To The Grave Tour MMXXVI - 2026\" + Support: HIGH ON FIRE & GNOME"
+        greenLung.description shouldBe "NEUER TERMIN! BEREITS GEKAUFTE TICKETS BEHALTEN IHRE GÜLTIGKEIT."
+    }
+
+    @Test
+    fun `keeps a festival's lower-case lineup after a blank line in the subtitle`() {
+        // Only a shouted line after the blank is a notice; a lineup list is subtitle text.
+        splitSubtitleNotice(listOf("Every Voice Feeds The Chorus", "", "Mit Homefront, Touché Amoré & Greet Death!")) shouldBe
+            ("Every Voice Feeds The Chorus Mit Homefront, Touché Amoré & Greet Death!" to null)
+        splitSubtitleNotice(listOf("„Tour ins Blaue 2026\"", "", "DAS KONZERT IST RESTLOS AUSVERKAUFT!")) shouldBe
+            ("„Tour ins Blaue 2026\"" to "DAS KONZERT IST RESTLOS AUSVERKAUFT!")
+        splitSubtitleNotice(emptyList()) shouldBe (null to null)
+    }
+
+    @Test
     fun `does not extract artists for a festival`() {
         val festival = event("Berlin Breakout")
         festival.eventType shouldBe "FESTIVAL"
