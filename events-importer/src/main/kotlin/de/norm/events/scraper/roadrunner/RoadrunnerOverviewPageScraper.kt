@@ -131,12 +131,14 @@ class RoadrunnerOverviewPageScraper(
 
         val doorsTime = parseDoorsTime(block)
         val ticketUrl = block.firstNotNullOfOrNull { it.selectFirst("a[href^=http]")?.attr("href") }
+        // Flyer file names are typed by hand and may carry a space ("Images/Programm/The lazys.jpg"),
+        // which URI.resolve rejects — and an unusable flyer must not cost the whole event (#1130).
         val imageUrl =
             block
                 .firstNotNullOfOrNull { it.selectFirst("img[src]") }
                 ?.attr("src")
                 ?.takeIf { it.isNotBlank() }
-                ?.let { resolveUrl(baseUrl, it) }
+                ?.let { runCatching { resolveUrl(baseUrl, it.replace(" ", "%20")) }.getOrNull() }
         val description = parseDescription(block, dateLine, title)
 
         return ScrapedEvent(
@@ -155,10 +157,10 @@ class RoadrunnerOverviewPageScraper(
         )
     }
 
-    /** The event title, rendered in the `Stil11` span, with the plain bold title as a fallback. */
+    /** The event title, rendered in the first `Stil11` element, with the plain bold title as a fallback. */
     private fun parseTitle(block: List<Element>): String? =
         block
-            .firstNotNullOfOrNull { it.selectFirst("span.Stil11") }
+            .firstNotNullOfOrNull { titleElement(it) }
             ?.text()
             ?.trim()
             ?.takeIf { it.isNotBlank() }
@@ -187,7 +189,7 @@ class RoadrunnerOverviewPageScraper(
         block
             .asSequence()
             .filter { it !== dateLine }
-            .filter { it.selectFirst("span.Stil11") == null } // title line
+            .filter { titleElement(it) == null } // title line
             .filter { it.selectFirst("img") == null } // flyer-only line
             .filter { it.selectFirst("a[href^=http]") == null } // ticket-link line
             .map { it.text().trim() }
@@ -212,13 +214,19 @@ class RoadrunnerOverviewPageScraper(
         return parseGermanMonthDay(day, month)?.let { inferYearForWeekday(it, weekday, clock) }
     }
 
-    /** Parses "29" + "Mai" into a [MonthDay], or `null` when unparseable. */
+    /** Parses "29" + "Mai" (or a zero-padded "05") into a [MonthDay], or `null` when unparseable. */
     private fun parseGermanMonthDay(
         day: String,
         month: String
-    ): MonthDay? = runCatching { MonthDay.parse("$day. $month", GERMAN_DAY_MONTH_FORMATTER) }.getOrNull()
+    ): MonthDay? = runCatching { MonthDay.parse("${day.toInt()}. $month", GERMAN_DAY_MONTH_FORMATTER) }.getOrNull()
 
     // -- Line classification ----------------------------------------------
+
+    /**
+     * The `Stil11` title styling, which the hand-coded page puts on a `<span>` inside the paragraph
+     * on some blocks and on the `<p>` itself on others (autumn 2026: "BLUT & EISEN 30 JAHRE").
+     */
+    private fun titleElement(p: Element): Element? = if (p.hasClass(TITLE_CLASS)) p else p.selectFirst("span.$TITLE_CLASS")
 
     private fun isDateLine(p: Element): Boolean = DATE_PATTERN.containsMatchIn(p.text())
 
@@ -231,14 +239,19 @@ class RoadrunnerOverviewPageScraper(
     }
 
     companion object {
+        /** The stylesheet class the page's author gives an event's title line. */
+        private const val TITLE_CLASS = "Stil11"
+
         /**
-         * Matches a German date line: "<Weekday>, <day>. <Month>", capturing the
-         * weekday, day number and month name. The trailing colon and any following
-         * text (e.g. a second date for two-day events) are ignored.
+         * Matches a German date line — "<Weekday>, <day>. <Month>" — capturing the weekday, day
+         * number and month name. The comma and the day's dot are optional: the page is typed by
+         * hand and one season wrote "Samstag 05 September:" and "Samstag 31 Oktober:", which the
+         * strict form silently turned into an import of zero events (#1130). The trailing colon
+         * and any following text (e.g. a second date for two-day events) are ignored.
          */
         private val DATE_PATTERN =
             Regex(
-                """(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag),\s*(\d{1,2})\.\s*""" +
+                """(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag),?\s*(\d{1,2})\.?\s*""" +
                     """(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)""",
                 RegexOption.IGNORE_CASE
             )
