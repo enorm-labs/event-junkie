@@ -171,12 +171,19 @@ class KlunkerkranichOverviewPageScraper(
      * shared slot — and both are stored separately. The `*live` marker qualifies the **billing**,
      * not just the name it trails ("IBAAKU & K'BOKO *live" is one live act pairing), so the role is
      * decided before the split and applies to every act in it.
+     *
+     * A collective may be billed with its members after a colon — "In Limbo Audio: Sven Howland &
+     * Niklas Gietmann & Nicolai Toma" — and the page names both the team and the people, so the
+     * collective is stored as an act of its own and the members as separate ones; the first member
+     * no longer keeps the team's name glued to its own (#1137).
      */
     private fun parseBilling(billing: String): List<ScrapedArtist> {
         val role = if (LIVE_MARKER.containsMatchIn(billing)) "HEADLINER" else "DJ"
-        return billing
-            .replace(LIVE_MARKER, "")
-            .split(ACT_SEPARATOR)
+        val unmarked = billing.replace(LIVE_MARKER, "")
+        val collective = COLLECTIVE_PREFIX.find(unmarked)
+        val members = collective?.let { unmarked.substring(it.range.last + 1) } ?: unmarked
+        return listOfNotNull(collective?.groupValues?.get(1)?.trim())
+            .plus(members.split(ACT_SEPARATOR))
             .map { it.trim().trim('-', '–', '—').trim() }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
             .map { ScrapedArtist(name = it, role = role) }
@@ -215,6 +222,12 @@ class KlunkerkranichOverviewPageScraper(
          * separately billed acts, and the `b2b` marker joining two DJs into one slot.
          */
         val ACT_SEPARATOR = Regex("""\s+(?:&|and|und|b2b)\s+""", RegexOption.IGNORE_CASE)
+
+        /**
+         * A collective's name in front of the colon that introduces its members. Anchored, and the
+         * name may not itself contain a colon, so a billing with no such prefix is left whole.
+         */
+        val COLLECTIVE_PREFIX = Regex("""^\s*([^:]+?)\s*:\s*""")
 
         /** The venue's `*live` annotation, marking an act that plays rather than spins. */
         val LIVE_MARKER = Regex("""\s*\*\s*live\b\.?""", RegexOption.IGNORE_CASE)
