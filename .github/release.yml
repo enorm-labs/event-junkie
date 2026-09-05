@@ -3,8 +3,8 @@
 #
 # GitHub groups every merged pull request since the previous release into the first
 # category whose `labels` it matches — so ORDER MATTERS. More specific categories come
-# first: a `feat(scraper)` PR carries both `importer` and `feat`, and lands under
-# "New Event Sources"; a bot dependency PR carries both `dependencies` and its
+# first: a PR that adds a venue importer carries both `importer` and `feat`, and lands
+# under "New Event Sources"; a bot dependency PR carries both `dependencies` and its
 # Conventional Commits type, and lands under "Dependencies" because that category
 # is ordered above both "Build & Tooling" and "Chores".
 #
@@ -13,9 +13,10 @@
 # asking it to. The `dependencies` label is the stable signal, and it is matched before
 # either type is reached.
 #
-# Labels are applied automatically from the Conventional Commits PR title by
-# .github/workflows/label-pr.yml. The `enhancement`/`bug`/`documentation` aliases are
-# GitHub's stock labels, kept so hand-labelled PRs land in the right bucket too.
+# Labels are applied automatically by .github/workflows/label-pr.yml: the type labels from
+# the Conventional Commits PR title, `importer` from the files (an added `*Importer.kt`
+# under `scraper/`). The `enhancement`/`bug`/`documentation` aliases are GitHub's stock
+# labels, kept so hand-labelled PRs land in the right bucket too.
 #
 # NOTE: the file must be named release.yml — GitHub does not pick up a .yaml extension.
 changelog:

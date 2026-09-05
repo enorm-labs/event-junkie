@@ -73,9 +73,11 @@ validate`'s `resources found in N files`. A drop fails and names the update comm
           `image-scan-scheduled.yml` had this; Dependency-Check — the tool the `Dependencies
 Scanned: 0` incident actually happened to — did not until #1087, and needed `"JSON"` added
           to `formats` in `build.gradle.kts` to get a count at all.
-    - `label-pr.yml` — Derives labels from the Conventional Commits PR title (`feat(scraper): …` → `feat` + `importer`, `fix(api)!: …` → `fix` +
-      `breaking-change`) via `actions/github-script`. Creates any missing label on demand and re-syncs when the title is edited. Uses `pull_request_target` so
-      fork PRs get a writable token; safe because it never checks out or runs PR code.
+    - `label-pr.yml` — Derives the type labels from the Conventional Commits PR title (`fix(api)!: …` → `fix` + `breaking-change`) and the `importer` label
+      from the files: an added `*Importer.kt` in its own package under `scraper/` is a new event source, whatever the scope says. The scope rule it replaced
+      filed the dropped-events counter and the force-fetch trigger under "New Event Sources", because `scraper` and `importer` both carry infrastructure
+      work too. Via `actions/github-script`; creates any missing label on demand and re-syncs on a title edit or a push. Uses `pull_request_target` so fork
+      PRs get a writable token; safe because it never checks out or runs PR code — listing file paths through the REST API executes nothing.
     - `milestone-dependabot.yml` — gives every Dependabot pull request a milestone, since `dependabot.yml` has no key for one and they are otherwise the
       single class of pull request that arrives without one. Same shape and same banner as `label-pr.yml`: `pull_request_target`, no checkout, `github-script`.
       It picks the **oldest open milestone** — no milestone here carries a due date, so there is no string to keep current, and when one closes the next wins by
