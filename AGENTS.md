@@ -530,6 +530,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | CI: nightly OWASP scan                      | `.github/workflows/dependency-check-scheduled.yml`                                                                                |
 | CI: nightly scan of deployed images         | `.github/workflows/image-scan-scheduled.yml` — a published tag, both arches; thresholds match release.yml                         |
 | CI: quarterly restore-drill reminder        | `.github/workflows/restore-drill-reminder.yml` — opens the drill as an assigned issue                                             |
+| CI: blocker issue for a red publish         | `.github/workflows/publish-failure-issue.yml` — one issue per red streak on `main`, closed by the next green publish              |
 | CI: credential expiry reminder              | `.github/workflows/credential-expiry-reminder.yml` — dates live in the workflow, mirrored in docs/CREDENTIALS.md §2               |
 | CI: PR labelling                            | `.github/workflows/label-pr.yml`                                                                                                  |
 | CI: OpenTofu fmt/validate + ShellCheck      | `.github/workflows/validate-infra.yml`                                                                                            |
@@ -570,7 +571,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Code review prompt                          | `.github/prompts/code-review.prompt.md`                                                                                           |
 | Security report prompt                      | `.github/prompts/security-report.prompt.md`                                                                                       |
 | Security triage prompt                      | `.github/prompts/security-triage.prompt.md` — its `--unattended` section is what `agent-security.yml` runs                        |
-| Agentic workflow (security)                 | `.github/workflows/agent-security.yml` — nightly, opens a PR, dismisses nothing                                                   |
+| Agentic workflow (security)                 | `.github/workflows/agent-security.yml` — nightly and on a red publish, opens a PR, dismisses nothing                              |
 | Agentic workflow (refactor)                 | `.github/workflows/agent-refactor.yml` — fenced away from shared normalization                                                    |
 | Agentic workflow (comments)                 | `.github/workflows/agent-comments.yml` — whole tree nightly, capped at twelve files per PR                                        |
 | Plausibility check prompt                   | `.github/prompts/plausibility-check.prompt.md` — the site against the venues' pages, read-only                                    |

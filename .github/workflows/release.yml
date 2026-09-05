@@ -299,7 +299,10 @@ jobs:
               exit 1
             fi
 
-            trivy convert --format table "trivy-${component}.json"
+            # The table twice: to the log, and to a file that `publish-failure-issue.yml` pastes
+            # into the blocker issue. It has no other way to read it — a run's logs need a token
+            # with `actions: read` and arrive as one zip, so the report is handed over as an artifact.
+            trivy convert --format table "trivy-${component}.json" | tee "trivy-${component}.txt"
             trivy convert --format sarif --output "trivy-${component}.sarif" "trivy-${component}.json"
             echo "::endgroup::"
           done
@@ -528,3 +531,17 @@ jobs:
         with:
           sarif_file: trivy-frontend.sarif
           category: trivy-frontend
+
+      # The three tables, for `publish-failure-issue.yml` to quote when this run is red on `main`.
+      # Same guard and same position as the SARIF uploads, for the same reason: a report step above
+      # a publish step can skip the publish. Unconditional on the fork check, since an artifact is
+      # written by the run itself and needs no token. A week, not the default 90 days: the issue
+      # is filed within minutes of the run ending, the tables stay in the log for anyone reading
+      # later, and a week is long enough to replay a run through that workflow's dispatch input.
+      - name: Upload the Trivy tables
+        if: (success() || failure()) && hashFiles('trivy-*.txt') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: trivy-reports
+          path: trivy-*.txt
+          retention-days: 7
