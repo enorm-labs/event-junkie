@@ -1,6 +1,8 @@
 package de.norm.events.event
 
 import de.norm.events.artist.ArtistSummaryResponse
+import de.norm.events.image.INTRINSIC_HEIGHT_DESCRIPTION
+import de.norm.events.image.INTRINSIC_WIDTH_DESCRIPTION
 import de.norm.events.image.ImageSourceResponse
 import de.norm.events.image.ServedImage
 import de.norm.events.promoter.PromoterSummaryResponse
@@ -48,14 +50,9 @@ data class EventSummaryResponse(
                 "cached, in which case `imageUrl` is all there is."
     )
     val imageSources: List<ImageSourceResponse>,
-    @Schema(
-        description =
-            "Pixel width of the original image, for the `width` attribute. Null together with " +
-                "`intrinsicHeight` when the dimensions are unknown.",
-        example = "1200"
-    )
+    @Schema(description = INTRINSIC_WIDTH_DESCRIPTION, example = "1200")
     val intrinsicWidth: Int?,
-    @Schema(description = "Pixel height of the original image, for the `height` attribute", example = "630")
+    @Schema(description = INTRINSIC_HEIGHT_DESCRIPTION, example = "630")
     val intrinsicHeight: Int?,
     @Schema(
         description =
@@ -159,14 +156,9 @@ data class EventDetailResponse(
                 "cached, in which case `imageUrl` is all there is."
     )
     val imageSources: List<ImageSourceResponse>,
-    @Schema(
-        description =
-            "Pixel width of the original image, for the `width` attribute. Null together with " +
-                "`intrinsicHeight` when the dimensions are unknown.",
-        example = "1200"
-    )
+    @Schema(description = INTRINSIC_WIDTH_DESCRIPTION, example = "1200")
     val intrinsicWidth: Int?,
-    @Schema(description = "Pixel height of the original image, for the `height` attribute", example = "630")
+    @Schema(description = INTRINSIC_HEIGHT_DESCRIPTION, example = "630")
     val intrinsicHeight: Int?,
     @Schema(
         description =

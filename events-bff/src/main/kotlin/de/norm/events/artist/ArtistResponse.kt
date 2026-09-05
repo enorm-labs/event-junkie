@@ -1,5 +1,8 @@
 package de.norm.events.artist
 
+import de.norm.events.image.IMAGE_SOURCES_DESCRIPTION
+import de.norm.events.image.INTRINSIC_HEIGHT_DESCRIPTION
+import de.norm.events.image.INTRINSIC_WIDTH_DESCRIPTION
 import de.norm.events.image.ImageSourceResponse
 import de.norm.events.image.ServedImage
 import io.swagger.v3.oas.annotations.media.Schema
@@ -17,20 +20,11 @@ data class ArtistSummaryResponse(
     val name: String,
     @Schema(description = "URL of the artist's photo or band logo")
     val imageUrl: String?,
-    @Schema(
-        description =
-            "Alternative formats of the same image, best first, for a <picture> element. Empty " +
-                "when the image is not cached, in which case `imageUrl` is all there is."
-    )
+    @Schema(description = IMAGE_SOURCES_DESCRIPTION)
     val imageSources: List<ImageSourceResponse>,
-    @Schema(
-        description =
-            "Pixel width of the original image, for the `width` attribute. Null together with " +
-                "`intrinsicHeight` when the dimensions are unknown.",
-        example = "1200"
-    )
+    @Schema(description = INTRINSIC_WIDTH_DESCRIPTION, example = "1200")
     val intrinsicWidth: Int?,
-    @Schema(description = "Pixel height of the original image, for the `height` attribute", example = "630")
+    @Schema(description = INTRINSIC_HEIGHT_DESCRIPTION, example = "630")
     val intrinsicHeight: Int?
 ) {
     companion object {
@@ -68,20 +62,11 @@ data class ArtistDetailResponse(
     val description: String?,
     @Schema(description = "URL of the artist's photo or band logo")
     val imageUrl: String?,
-    @Schema(
-        description =
-            "Alternative formats of the same image, best first, for a <picture> element. Empty " +
-                "when the image is not cached, in which case `imageUrl` is all there is."
-    )
+    @Schema(description = IMAGE_SOURCES_DESCRIPTION)
     val imageSources: List<ImageSourceResponse>,
-    @Schema(
-        description =
-            "Pixel width of the original image, for the `width` attribute. Null together with " +
-                "`intrinsicHeight` when the dimensions are unknown.",
-        example = "1200"
-    )
+    @Schema(description = INTRINSIC_WIDTH_DESCRIPTION, example = "1200")
     val intrinsicWidth: Int?,
-    @Schema(description = "Pixel height of the original image, for the `height` attribute", example = "630")
+    @Schema(description = INTRINSIC_HEIGHT_DESCRIPTION, example = "630")
     val intrinsicHeight: Int?,
     @Schema(description = "URL of the artist's official homepage")
     val websiteUrl: String?,
