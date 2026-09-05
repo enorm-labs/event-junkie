@@ -196,7 +196,7 @@ The nightly security agent is where this playbook belongs, so the next occurrenc
 
 ## What a release deserves
 
-The number is not chosen. [`scripts/version.sh deserved`](../../scripts/version.sh) reads it from the Conventional Commits since the last release
+The decision and its reasoning are [ADR-025](../adr/ADR-025_RELEASE_VERSION_FROM_COMMITS.md). The number is not chosen. [`scripts/version.sh deserved`](../../scripts/version.sh) reads it from the Conventional Commits since the last release
 tag. The rule is [SemVer 2.0.0](https://semver.org/) applied to what the commits say:
 
 | The commits since the last tag contain                          | Before `1.0.0` | From `1.0.0` |

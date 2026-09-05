@@ -624,6 +624,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | ADR: Shared cluster base                    | `docs/adr/ADR-022_SHARED_CLUSTER_BASE.md` — `deploy/clusters/base/` holds what does not differ; each cluster patches one field    |
 | ADR: Operator authentication                | `docs/adr/ADR-023_OPERATOR_AUTHENTICATION.md` — the admin API stays unroutable. A Traefik middleware when a surface is deployed   |
 | ADR: Dependency update boundary             | `docs/adr/ADR-024_DEPENDENCY_UPDATE_BOUNDARY.md` — three mechanisms, and which one owns what. Read before adding a fourth         |
+| ADR: Release number from the commits        | `docs/adr/ADR-025_RELEASE_VERSION_FROM_COMMITS.md` — a `feat` is a minor, a break a major. The cut refuses less                   |
 | Plan: Hetzner + k3s setup, go-live          | `docs/ops/PLATFORM_SETUP.md`                                                                                                      |
 | Releasing & deploying, end to end           | `docs/ops/RELEASING.md` — the diagram; ADR-016 has the reasoning                                                                  |
 | Bootstrapping a cluster, once               | `docs/ops/CLUSTER_BOOTSTRAP.md` — ordered runbook, first run 2026-08-13; traps table at the bottom                                |
