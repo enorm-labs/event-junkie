@@ -53,15 +53,20 @@ export function useTodayEvents() {
   return useAsync<EventSummary[]>(
     () => unwrap(api.GET('/api/events/today')),
     'errors.subject.tonightsEvents',
+    () => '/api/events/today',
   )
 }
 
 /** First page of upcoming events from a given start date (inclusive), for the Home feed. */
 export function useUpcomingEvents(from: string, size = 12) {
-  return useAsync<EventSummary[]>(async () => {
-    const page = await unwrap(api.GET('/api/events', { params: { query: { from, size } } }))
-    return page.content ?? []
-  }, 'errors.subject.upcomingEvents')
+  return useAsync<EventSummary[]>(
+    async () => {
+      const page = await unwrap(api.GET('/api/events', { params: { query: { from, size } } }))
+      return page.content ?? []
+    },
+    'errors.subject.upcomingEvents',
+    () => `/api/events?from=${from}&size=${size}`,
+  )
 }
 
 /**
@@ -88,5 +93,6 @@ export function useEventSearch(
   return useAsync<EventPage>(
     () => unwrap(api.GET('/api/events', { params: { query: params() } })),
     subjectKey,
+    () => `/api/events?${JSON.stringify(params())}`,
   )
 }

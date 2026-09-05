@@ -23,6 +23,7 @@ export function useVenueSearch(
   return useAsync<VenuePage>(
     () => unwrap(api.GET('/api/venues', { params: { query: params() } })),
     subjectKey,
+    () => `/api/venues?${JSON.stringify(params())}`,
   )
 }
 
@@ -31,8 +32,12 @@ export function useVenueSearch(
  * paged; we request a size large enough to hold all tracked venues in a single call.
  */
 export function useAllVenues() {
-  return useAsync<VenueSummary[]>(async () => {
-    const page = await unwrap(api.GET('/api/venues', { params: { query: { size: 500 } } }))
-    return page.content ?? []
-  }, 'errors.subject.venues')
+  return useAsync<VenueSummary[]>(
+    async () => {
+      const page = await unwrap(api.GET('/api/venues', { params: { query: { size: 500 } } }))
+      return page.content ?? []
+    },
+    'errors.subject.venues',
+    () => '/api/venues?size=500',
+  )
 }

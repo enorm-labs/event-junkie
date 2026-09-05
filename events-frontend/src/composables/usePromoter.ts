@@ -7,5 +7,6 @@ export function usePromoter(slug: () => string) {
   return useAsync<PromoterDetail>(
     () => unwrap(api.GET('/api/promoters/{slug}', { params: { path: { slug: slug() } } })),
     'errors.subject.promoter',
+    () => `/api/promoters/${slug()}`,
   )
 }
