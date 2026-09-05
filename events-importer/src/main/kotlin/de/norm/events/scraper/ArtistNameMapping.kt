@@ -293,6 +293,9 @@ private val NON_ARTIST_NAMES: Set<String> =
         "jazz after dark",
         "future bash reloaded",
         "a dead moon night",
+        // The anti-fascist campaign's own concert series: Columbiahalle bills its anniversary
+        // festival under the name with the lineup unannounced (#1110).
+        "kein bock auf nazis",
         // Bare event-format words a co-billed title splits off as if they were acts — Säälchen's
         // `10 Jahre "The Big Brassers" – Jubiläumskonzert & Party` yields both of these.
         "party",

@@ -253,6 +253,9 @@ class ArtistNameMappingTest {
         isNonArtistName("Jazz After Dark") shouldBe true
         isNonArtistName("Future Bash Reloaded") shouldBe true
         isNonArtistName("A Dead Moon Night") shouldBe true
+        // A campaign's concert series billed as the act, in the venue's shouted case and with a tour tail.
+        isNonArtistName("KEIN BOCK AUF NAZIS") shouldBe true
+        isNonArtistName(stripArtistSuffix("Kein Bock auf Nazis - 20 Jahre Tour")) shouldBe true
     }
 
     @Test
