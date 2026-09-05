@@ -55,18 +55,3 @@
 # Delete on the next rebuild of the Liberica base — this clears itself, unlike the pebble entries
 # above. Tracked by #770, which is what stops it becoming permanent.
 CVE-2026-14456
-
-# 2026-09-05 — seven util-linux advisories on `libuuid 2.42.1-r0` in the nginx base of the frontend
-# image (CVE-2026-53612, -53613, -53614, -76642, -78408, -78409, -78410). Alpine 3.24 has built the
-# fixed 2.42.3-r0 for aarch64 but not yet for x86_64, and the gate scans the amd64 image, so the
-# `apk upgrade libuuid` layer in events-frontend/Dockerfile cannot take the fix there yet.
-# Not reachable: the image carries only `usr/lib/libuuid.so.1` from util-linux, while every one of
-# the seven is in mount(8), libmount or nsenter — and `/bin/mount` and `/usr/bin/nsenter` here are
-# BusyBox. Delete once the x86_64 index lists 2.42.3-r0; tracked by #1117.
-CVE-2026-53612
-CVE-2026-53613
-CVE-2026-53614
-CVE-2026-76642
-CVE-2026-78408
-CVE-2026-78409
-CVE-2026-78410

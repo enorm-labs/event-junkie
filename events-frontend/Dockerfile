@@ -67,10 +67,10 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
 
 # **A base-image CVE fix that has not arrived upstream yet, and the release gate needs it now.**
 # Trivy fails the publish on HIGH findings, and `libuuid 2.42.1-r0` in this digest carries seven
-# util-linux advisories (CVE-2026-53612 and six siblings). Alpine 3.24 ships the fixed `2.42.3-r0`
-# for aarch64, and for x86_64 once its builder catches up; until then the seven are waived in
-# `.trivyignore` and #1117 tracks the deletion. Every mainline tag resolves to the digest pinned
-# above and `stable-alpine` carries the same package. Same shape as #964.
+# util-linux advisories (CVE-2026-53612 and six siblings). Alpine 3.24 ships the fixed `2.42.3`
+# for both architectures now, so this layer is the whole fix (#1117 — the x86_64 build lagged
+# aarch64 by a day, and a waiver covered that day). Every mainline tag resolves to the digest
+# pinned above and `stable-alpine` carries the same package. Same shape as #964.
 #
 # **Delete this once the base ships the fix**, by the same rule `gradle.properties` states for a BOM
 # override: an upgrade kept past its purpose hides that the base has caught up and quietly becomes
