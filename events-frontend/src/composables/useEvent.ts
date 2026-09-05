@@ -7,5 +7,6 @@ export function useEvent(slug: () => string) {
   return useAsync<EventDetail>(
     () => unwrap(api.GET('/api/events/{slug}', { params: { path: { slug: slug() } } })),
     'errors.subject.event',
+    () => `/api/events/${slug()}`,
   )
 }

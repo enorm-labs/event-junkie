@@ -7,5 +7,6 @@ export function useVenue(slug: () => string) {
   return useAsync<VenueDetail>(
     () => unwrap(api.GET('/api/venues/{slug}', { params: { path: { slug: slug() } } })),
     'errors.subject.venue',
+    () => `/api/venues/${slug()}`,
   )
 }

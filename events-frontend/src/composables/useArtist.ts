@@ -7,5 +7,6 @@ export function useArtist(slug: () => string) {
   return useAsync<ArtistDetail>(
     () => unwrap(api.GET('/api/artists/{slug}', { params: { path: { slug: slug() } } })),
     'errors.subject.artist',
+    () => `/api/artists/${slug()}`,
   )
 }

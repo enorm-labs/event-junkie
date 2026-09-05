@@ -182,7 +182,11 @@ const router = createRouter({
   ],
   // Legal pages are linked from the footer, so they are always reached from the bottom of a
   // scrolled page; without this the browser keeps the old offset and the imprint opens mid-document.
-  scrollBehavior(to) {
+  // A history traversal (back gesture, back button) instead returns to where the visitor left the
+  // page: defining a scrollBehavior switches the browser's own restoration off, and the views
+  // repaint from useAsync's cache in the same tick, so the document has its height (#1111).
+  scrollBehavior(to, _from, savedPosition) {
+    if (savedPosition) return savedPosition
     return to.hash ? { el: to.hash, behavior: 'smooth' } : { top: 0 }
   },
 })
