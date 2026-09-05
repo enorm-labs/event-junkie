@@ -14,8 +14,11 @@ Before reporting anything, check whether the finding is already known. Two place
 
 - **[`docs/data-quality/ACCEPTED_LIMITATIONS.md`](../../docs/data-quality/ACCEPTED_LIMITATIONS.md)** — one row per source and aspect, saying what that venue's
   site does not publish and why (#715). It is generated from `AcceptedLimitations.kt`, and `AcceptedLimitationsTest` fails the build when the two disagree, so
-  it is a lookup rather than a reading: match the finding's `event_source` and the field it is about against the table. **Read this instead of grepping scraper
-  KDoc.** The KDoc explains how each parser copes; it is not the register of what the source withholds, and treating it as one is what this table replaced.
+  it is a lookup rather than a reading: match the finding's `event_source` and its **aspect** against the table. The aspects are `LimitedAspect` in
+  `AcceptedLimitation.kt`, and every check below names the one it maps to, so the lookup is on (source, aspect) and not on a guess about which column a
+  row is about. Most aspects tie to a `TrackedField`, which is the per-source coverage series from #472, so a source that declares `PRICE` and climbs on
+  `priceAny` has gained a field or a parsing bug. A check marked `—` has no aspect and no limitation that can excuse it. **Read this instead of grepping
+  scraper KDoc.** The KDoc explains how each parser copes; it is not the register of what the source withholds, and treating it as one is what this table replaced.
 - **The open issues**, mirrored in `build/BACKLOG.md` (defects already queued for repair — `grep` it, or `gh issue list --label importer`).
 
 A finding matching either — artist-less concerts at Badehaus, `eventType` defaulting to `OTHER`, first-page-only pagination — must be labelled
@@ -56,75 +59,86 @@ Valid enum values (stored as `TEXT`; anything else is a bug — parsers fall bac
 ## What to check
 
 Work through these categories. For each, run SQL, then judge whether hits are real problems or noise. Break findings down **per venue / per source** where
-useful — a problem concentrated at one venue usually points at that importer.
+useful — a problem concentrated at one venue usually points at that importer. The tag opening each check is its `LimitedAspect`, and the same tags key
+[`/plausibility-check`](plausibility-check.prompt.md), so a finding from either prompt names the same row of the limitations table.
 
 ### 1. Missing / required data
 
-- Events with no artists (`event` with no `event_artist` row), broken down by venue and `event_type`. Several venues accept this deliberately — check the
-  importer's KDoc before flagging as new.
-- `NULL`/empty `title`, `slug`, `source_id`, `event_date`, `venue_id`.
-- Events with no genre at all: both `event.genre IS NULL` and no `event_genre_tag` rows.
-- Missing `event_type` signal: rows defaulting to `OTHER` (per venue — which sources never set a type?).
-- Missing structured fields that are usually recoverable: no `start_time`/`doors_time`, no price fields _and_ no `price_note`, no `image_url`, no `ticket_url`/
-  `source_url`.
-- `venue` rows missing `district`, `latitude`/`longitude`, or `website_url`.
-- Whitespace-only or placeholder text values (e.g. `''`, `'-'`, `'TBA'`, `'N/A'`, `'null'`) in name/title fields.
+- `ARTISTS` — Events with no artists (`event` with no `event_artist` row), broken down by venue and `event_type`. Several venues declare this, so check
+  the table before flagging as new.
+- `—` — `NULL`/empty `title`, `slug`, `source_id`, `event_date`, `venue_id`.
+- `GENRE` — Events with no genre at all: both `event.genre IS NULL` and no `event_genre_tag` rows.
+- `EVENT_TYPE` — Missing `event_type` signal: rows defaulting to `OTHER` (per venue — which sources never set a type?).
+- `START_TIME` / `DOORS_TIME`, `PRICE`, `IMAGE`, `TICKET_URL` — Missing structured fields that are usually recoverable: no `start_time`/`doors_time`, no
+  price fields _and_ no `price_note`, no `image_url`, no `ticket_url`.
+- `DESCRIPTION` — Events with no `description` at a source with no `DESCRIPTION` row, and descriptions that are boilerplate (cookie, newsletter, Impressum)
+  or identical across every event of one source — the selector drifted to the page chrome.
+- `SUBTITLE` — A `subtitle` equal to the title, or holding what belongs in another column: a date, a time, a price, a line-up.
+- `PER_EVENT_PAGE` — `source_url` that is the programme page rather than a page per event. Declared for the listing-only venues; a `NULL` `source_url` is
+  always a defect.
+- `—` — `venue` rows missing `district`, `latitude`/`longitude`, or `website_url`.
+- `—` — Whitespace-only or placeholder text values (e.g. `''`, `'-'`, `'TBA'`, `'N/A'`, `'null'`) in name/title fields.
 
 ### 2. Duplicates & entity fragmentation
 
-- Artists / promoters / genre_tags that are almost certainly the same entity under different names:
+- `—` — Artists / promoters / genre_tags that are almost certainly the same entity under different names:
   same `slug` prefix, case-only differences, punctuation/spacing variants, trailing `Live`/tour suffixes, ALL-CAPS vs mixed case. (Slugs are case-insensitive so
   exact-slug dupes shouldn't exist, but _near_-duplicate slugs do — that's fragmentation.)
-- Group by `lower(regexp_replace(name, '[^a-z0-9]', '', 'gi'))` to surface names that normalize to the same token but have distinct rows.
-- Events that look like the same real-world event under different `source_id`s (same venue + date + similar title) — the importers dedupe by `source_id`, so
+- `—` — Group by `lower(regexp_replace(name, '[^a-z0-9]', '', 'gi'))` to surface names that normalize to the same token but have distinct rows.
+- `—` — Events that look like the same real-world event under different `source_id`s (same venue + date + similar title) — the importers dedupe by `source_id`, so
   cross-source or re-listed duplicates slip through.
-- Orphan `artist`/`promoter`/`genre_tag` rows referenced by zero events (dead rows from renames/reparsing).
+- `—` — Orphan `artist`/`promoter`/`genre_tag` rows referenced by zero events (dead rows from renames/reparsing).
 
 ### 3. Mis-parsed artist & promoter names
 
-- Non-artist strings sitting in `artist.name`: event-format words (`Quiz`, `Karaoke`, `Open Mic`,
+- `ARTISTS` — Non-artist strings sitting in `artist.name`: event-format words (`Quiz`, `Karaoke`, `Open Mic`,
   `Festival`, `Special`, `Tour`, `Support`, `Live`, `Warm Up`, `Aftershow`, `w/`, `presents`, `vs`), standalone symbols, pure numbers, or very long strings (a
   whole title parsed as one artist).
-- Residual ALL-CAPS artist names — `canonicalArtistName`'s de-shouting is casing-only and its `ACRONYMS` set is curated, so a genuine all-caps name that is not
+- `ARTISTS` — Residual ALL-CAPS artist names — `canonicalArtistName`'s de-shouting is casing-only and its `ACRONYMS` set is curated, so a genuine all-caps name that is not
   in it gets title-cased and a new stylised one slips through until added.
-- Artist/promoter names with leftover HTML entities (`&amp;`, `&#039;`), stray encoding (`Ã¤`, `â€™`), leading/trailing punctuation or whitespace, doubled
+- `ARTISTS` / `PROMOTERS` — Artist/promoter names with leftover HTML entities (`&amp;`, `&#039;`), stray encoding (`Ã¤`, `â€™`), leading/trailing punctuation or whitespace, doubled
   spaces.
-- Promoter names that are actually venue names, generic labels (`Presents`, `Konzert`), or descriptors that should have been stripped/merged.
-- Suspiciously short (1–2 char) or suspiciously long name values in any of `artist`, `promoter`, `venue`, `genre_tag`.
+- `PROMOTERS` — Promoter names that are actually venue names, generic labels (`Presents`, `Konzert`), or descriptors that should have been stripped/merged.
+- `—` — Suspiciously short (1–2 char) or suspiciously long name values in any of `artist`, `promoter`, `venue`, `genre_tag`.
 
 ### 4. Event type & genre correctness
 
-- `event_type` / `status` / `event_artist.role` values outside the valid enum sets above.
-- `genre_tag.name` values that aren't really genres (event-format labels, series names, freeform fragments) that leaked past `GenreNormalizer`'s stop-list —
+- `—` — `event_type` / `status` / `event_artist.role` values outside the valid enum sets above.
+- `GENRE` — `genre_tag.name` values that aren't really genres (event-format labels, series names, freeform fragments) that leaked past `GenreNormalizer`'s stop-list —
   cross-check against the `NON_GENRE_TOKENS` stop-list's intent.
-- Genre tags that are near-duplicates of each other (`Drum & Bass` vs `Drum and Bass` vs `DnB`).
-- Mismatch between raw `event.genre` text and the linked `event_genre_tag` rows (raw genre present but no tags extracted, or tags present that don't relate to
+- `GENRE` — Genre tags that are near-duplicates of each other (`Drum & Bass` vs `Drum and Bass` vs `DnB`).
+- `GENRE` — Mismatch between raw `event.genre` text and the linked `event_genre_tag` rows (raw genre present but no tags extracted, or tags present that don't relate to
   the raw text).
-- Type heuristic sanity: titles containing `Quiz`/`Karaoke`/`Party` mapped to a surprising `event_type`, or festivals (multi-day, `Festival` in title) typed as
+- `EVENT_TYPE` — Type heuristic sanity: titles containing `Quiz`/`Karaoke`/`Party` mapped to a surprising `event_type`, or festivals (multi-day, `Festival` in title) typed as
   `CONCERT`.
-- Keyword-driven type sanity (these types are inferred from title keywords in `EventTypeMapping`):
+- `EVENT_TYPE` — Keyword-driven type sanity (these types are inferred from title keywords in `EventTypeMapping`):
   a `SCREENING` whose title has no screening cue, a `READING`/`EXHIBITION` that looks like a gig, or — conversely — a reading/exhibition/screening keyword that
   landed in `OTHER`/`CONCERT` because its venue doesn't run the title classifier. Watch for keyword false positives (e.g. a musical `Songslam`
   mistyped `READING`, or `\bkino\b`/`slam` matching a substring of a band name).
 
 ### 5. Dates, times & prices
 
-- `event_date` in the far past (stale listings) or implausibly far future — the usual cause is year inference on a year-less date. Bucket by how far from today
+- `EVENT_DATE` — `event_date` in the far past (stale listings) or implausibly far future — the usual cause is year inference on a year-less date, and a
+  venue declaring `EVENT_DATE` has dates that are derived rather than announced. Bucket by how far from today
   (`2026-07-07`).
-- `start_time` earlier than `doors_time` (doors should be ≤ start).
-- Negative or absurd prices; `price_presale`/`price_box_office` with `free = true`; `price_currency`
-  other than `EUR`; `sold_out = true` for a venue declaring `SOLD_OUT` in the limitations table — a flag no parser sets should never be true in the data.
-- Many events from one `event_source` sharing the exact same date/time (parsing collapsed to a default).
+- `DOORS_TIME` — `start_time` earlier than `doors_time` (doors should be ≤ start).
+- `PRICE_PRESALE` / `PRICE_BOX_OFFICE` — Negative or absurd prices; `price_presale`/`price_box_office` with `free = true`; `price_currency` other than
+  `EUR`.
+- `PRICE_NOTE` — A `price_note` holding an amount (`12 €`, `AK 15`) while both price columns are `NULL` — the note caught what the columns should.
+- `SOLD_OUT` — `sold_out = true` for a venue declaring `SOLD_OUT` in the limitations table — a flag no parser sets should never be true in the data.
+- `CANCELLATION` — `status` other than `SCHEDULED` at a venue declaring `CANCELLATION`, for the same reason; and a source that has never stored a
+  `CANCELLED` row is worth a line, because a parser that reads no cancellation cue shows a cancelled night as on.
+- `—` — Many events from one `event_source` sharing the exact same date/time (parsing collapsed to a default).
 
 ### 6. Referential & consistency integrity
 
-- Orphaned events (`event_source_id IS NULL`) — expected only for manually-created events; a scraped batch going NULL is a bug.
-- Join rows pointing at non-existent parents (FKs should prevent this, but verify), duplicate
+- `—` — Orphaned events (`event_source_id IS NULL`) — expected only for manually-created events; a scraped batch going NULL is a bug.
+- `—` — Join rows pointing at non-existent parents (FKs should prevent this, but verify), duplicate
   `billing_order` within one event, or an event with multiple `HEADLINER` rows where that's unexpected.
-- `event_source` health: rows in `FAILED`/stuck `RUNNING` status, `last_error` populated,
+- `PAGINATION`, or `—` — `event_source` health: rows in `FAILED`/stuck `RUNNING` status, `last_error` populated,
   `retry_count` at/over `max_retries`, `enabled = true` but never imported (`last_import_at IS NULL`), or `last_event_count = 0` on a source that should return
   events.
-- Slug integrity: `slug` not matching a slugified form of `name`/`title`, or colliding-after-normalization slugs.
+- `—` — Slug integrity: `slug` not matching a slugified form of `name`/`title`, or colliding-after-normalization slugs.
 
 ## Output
 
@@ -134,12 +148,17 @@ Write the report to `docs/data-quality/audit-<YYYY-MM-DD>.md` (create the direct
 2. **Findings**, grouped by category and ordered by severity:
     - 🔴 **wrong or missing user-visible data** · 🟠 **data-quality / noise** · 🟢 **cosmetic / edge case**.
     - Each finding: what it is, the SQL that found it, the **count**, 3–5 **sample rows**, the likely **root cause** (which importer / normalizer), and whether
-      it's **NEW** or **KNOWN/accepted** (citing the issue number, or the source and aspect of the limitations-table row that covers it).
+      it's **NEW** or **KNOWN/accepted** (citing the issue number, or the source and aspect of the limitations-table row that covers it). Every finding
+      names its aspect, `—` included.
 3. **Recommended actions** — for NEW findings, point at the specific normalizer or scraper to fix (`canonicalArtistName`, `canonicalPromoterName`,
    `GenreNormalizer`, `isNonArtistName`,
    `stripArtistSuffix`, per-venue parser). If it is an accepted limitation to document rather than fix, suggest the `AcceptedLimitation` to add to that
-   venue's `*_LIMITATIONS` declaration — aspect and one-sentence reason — rather than a paragraph of KDoc; if it is repairable, suggest an issue using the
+   venue's `*_LIMITATIONS` declaration — the `LimitedAspect` and a one-sentence reason — rather than a paragraph of KDoc; if it is repairable, suggest an issue using the
    🔍 Importer / data defect form.
 
 Keep the report skimmable and every claim backed by a query result. Do not apply fixes, edit importer code, or modify the database as part of the audit —
 reporting is the deliverable. If the user wants a fix afterward, that's a separate, explicitly-requested step.
+
+[`/plausibility-check`](plausibility-check.prompt.md) is the outside-in sibling: it reads the running site's API and the venues' own pages rather than the
+database, needs a URL rather than a local PostgreSQL, and runs nightly from `agent-plausibility.yml`. Findings it reports about a row are the same defects
+this audit finds in the table, seen from the other end, and both prompts key their checks by the same `LimitedAspect` names.
