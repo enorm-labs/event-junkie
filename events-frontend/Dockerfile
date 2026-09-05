@@ -50,7 +50,9 @@
 # satisfy is `libssl3 >= 3.5.8-r0` (#770) and `libexpat >= 2.8.4-r0` (#1009), both checked with
 # `docker run --rm --entrypoint sh <ref> -c 'apk list | grep -E "^libssl3|^libexpat"'` and then with
 # `trivy image <ref> --severity CRITICAL,HIGH --ignore-unfixed --ignorefile /dev/null`, which is the
-# form that reports on the image rather than on the waiver.
+# form that reports on the image rather than on the waiver. **Both on `--platform linux/amd64`**:
+# the gate scans the amd64 image, and Alpine builds each architecture separately, so a package can
+# exist for arm64 and not yet for x86_64 — which is how #1118 verified clean and changed nothing.
 FROM nginxinc/nginx-unprivileged:1.31-alpine@sha256:aa8c9087d36d93e9d650c5365f883b421e8214aedbad24ade52b844c583358f1
 
 ARG VERSION=unspecified
@@ -65,9 +67,10 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
 
 # **A base-image CVE fix that has not arrived upstream yet, and the release gate needs it now.**
 # Trivy fails the publish on HIGH findings, and `libuuid 2.42.1-r0` in this digest carries seven
-# util-linux advisories (CVE-2026-53612 and six siblings). Alpine 3.24 already ships the fixed
-# `2.42.3-r0`; the base has not been rebuilt against it, and every mainline tag resolves to the
-# digest pinned above while `stable-alpine` carries the same package. Same shape as #964.
+# util-linux advisories (CVE-2026-53612 and six siblings). Alpine 3.24 ships the fixed `2.42.3-r0`
+# for aarch64, and for x86_64 once its builder catches up; until then the seven are waived in
+# `.trivyignore` and #1117 tracks the deletion. Every mainline tag resolves to the digest pinned
+# above and `stable-alpine` carries the same package. Same shape as #964.
 #
 # **Delete this once the base ships the fix**, by the same rule `gradle.properties` states for a BOM
 # override: an upgrade kept past its purpose hides that the base has caught up and quietly becomes

@@ -120,6 +120,9 @@ covers the SPA.
   loads itself when you touch a file under `docs/`. The same discipline already governs code comments
   ([.github/instructions/comments.instructions.md](.github/instructions/comments.instructions.md) § How to write the sentences). **Keep every hedge at its
   original strength** — the one way an STE rewrite goes wrong is by shortening _may have failed_ into _failed_. See #733.
+- **A red `release.yml` on `main` blocks every release, and the cause is usually not the change that landed.** The image scan gates on fixable findings
+  in the base images, so an Alpine advisory turns `main` red with nothing in the diff to show for it. Look at the latest run before cutting; `cut-release.yml`
+  refuses a red one. The levers, and the amd64 trap, are in [docs/ops/RELEASING.md § Publishing is blocked](docs/ops/RELEASING.md#publishing-is-blocked).
 - **Correct the docs in the same change that makes them wrong.** A behaviour change that leaves a document describing the old behaviour is incomplete work, not
   a follow-up — and the document to fix is the one a reader would reach for, which is usually not the one you were editing.
 - **ADR numbers are claimed by writing the ADR, never by planning one.** A document that says _"needs ADR-0NN"_ for an ADR nobody has written yet is a
