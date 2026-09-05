@@ -47,12 +47,12 @@ const localePath = useLocalePath()
       <p class="text-muted-foreground">
         <strong class="font-medium text-foreground">A few things are deliberately left out.</strong>
         Sport, even at the arenas that also host concerts — a basketball fixture is not what you
-        came here for, and letting it in buries the gigs. Guided tours, workshops and yoga
-        sessions: things you take part in rather than go and see. Trade fairs and conferences. And,
-        for now, classical concerts and orchestras — not because they don't belong, but because an
-        orchestra with a conductor and soloists doesn't fit a model built around a headliner and a
-        support act. That one is a "not yet", and it is written down as an open question rather than
-        quietly dropped.
+        came here for, and letting it in buries the gigs. Guided tours, workshops and yoga sessions:
+        things you take part in rather than go and see. Trade fairs and conferences. And, for now,
+        classical concerts and orchestras — not because they don't belong, but because an orchestra
+        with a conductor and soloists doesn't fit a model built around a headliner and a support
+        act. That one is a "not yet", and it is written down as an open question rather than quietly
+        dropped.
       </p>
     </section>
 
@@ -149,7 +149,7 @@ const localePath = useLocalePath()
         >
           privacy page
         </RouterLink>
-        , which is short for exactly that reason.
+        , whose short version at the top says exactly that.
       </p>
       <p class="text-muted-foreground">
         Found something wrong? Telling us is the fastest way to fix it —

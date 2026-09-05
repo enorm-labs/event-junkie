@@ -75,8 +75,8 @@ const { t } = useI18n()
         die beteiligten Server sie protokollieren. Dabei können verarbeitet werden: Datum und
         Uhrzeit der Anfrage, die angeforderte Seite oder Datei, der HTTP-Status und die übertragene
         Datenmenge, die zuvor besuchte Seite sowie Angaben zu Browser und Betriebssystem. Deine
-        IP-Adresse gehört nicht dazu: Der Webserver verwendet ein Log-Format, das sie auslässt, sodass
-        gar keine Adresse geschrieben wird.
+        IP-Adresse gehört nicht dazu: Der Webserver verwendet ein Log-Format, das sie auslässt,
+        sodass gar keine Adresse geschrieben wird.
       </p>
       <p>
         <strong>Zweck:</strong> Auslieferung der Seite, Aufrechterhaltung von Verfügbarkeit und
@@ -90,11 +90,11 @@ const { t } = useI18n()
       </p>
       <p>
         <strong>Speicherdauer:</strong> Logdaten werden <strong>14 Tage</strong> aufbewahrt und
-        danach automatisch gelöscht. Zwei unabhängige Mechanismen begrenzen sie, und meist greift der
-        kürzere: Auf dem Server selbst werden Einträge nach Volumen verdrängt — es wird eine feste
-        Menge vorgehalten und der jeweils älteste Eintrag überschrieben —, sodass eine Zeile oft
-        früher verschwindet; im Log-Speicher wird unabhängig davon alles gelöscht, was älter als 14
-        Tage ist. Ausgenommen sind Einträge, die wegen eines konkreten Sicherheitsvorfalls länger
+        danach automatisch gelöscht. Zwei unabhängige Mechanismen begrenzen sie, und meist greift
+        der kürzere: Auf dem Server selbst werden Einträge nach Volumen verdrängt — es wird eine
+        feste Menge vorgehalten und der jeweils älteste Eintrag überschrieben —, sodass eine Zeile
+        oft früher verschwindet; im Log-Speicher wird unabhängig davon alles gelöscht, was älter als
+        14 Tage ist. Ausgenommen sind Einträge, die wegen eines konkreten Sicherheitsvorfalls länger
         aufbewahrt werden müssen. Genannt wird hier immer die tatsächlich konfigurierte Frist.
       </p>
       <p>
@@ -131,9 +131,9 @@ const { t } = useI18n()
       <p>
         Diese Werte verlassen dein Gerät nicht, werden weder an uns noch an Dritte übermittelt und
         sind für Dritte nicht auslesbar. Beide sind unbedingt erforderlich, um die von dir
-        ausdrücklich gewählte Einstellung bereitzustellen, und bedürfen deshalb nach § 25 Abs. 2
-        Nr. 2 TDDDG keiner Einwilligung — weshalb du hier auch kein Banner wegklicken musst. Du
-        kannst sie jederzeit über die Einstellungen deines Browsers löschen.
+        ausdrücklich gewählte Einstellung bereitzustellen, und bedürfen deshalb nach § 25 Abs. 2 Nr.
+        2 TDDDG keiner Einwilligung — weshalb du hier auch kein Banner wegklicken musst. Du kannst
+        sie jederzeit über die Einstellungen deines Browsers löschen.
       </p>
       <p>
         Sollten jemals Cookies eingesetzt werden, dann ausschließlich unbedingt erforderliche: kein
@@ -178,7 +178,8 @@ const { t } = useI18n()
         bei jedem Seitenaufruf erneut beim Anbieter anzufragen. Rechtsgrundlage ist Art. 6 Abs. 1
         lit. f DSGVO. Das berechtigte Interesse ist eine Auslieferung ohne Beteiligung Dritter und
         eine geringere Last für die Server der Locations. Die Kopie wird gelöscht, sobald die
-        Location aussteigt oder eine Rechteinhaberin das verlangt, und danach nicht erneut geladen.
+        Location aussteigt oder eine Rechteinhaberin oder ein Rechteinhaber das verlangt, und danach
+        nicht erneut geladen.
       </p>
       <p>
         <strong>Wenn du Künstlerin oder Künstler bist</strong> und möchtest, dass dein Name entfernt

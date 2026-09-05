@@ -51,13 +51,12 @@ const localePath = useLocalePath()
       <p class="text-muted-foreground">
         <strong class="font-medium text-foreground">Ein paar Dinge fehlen mit Absicht.</strong>
         Sport, auch in den Arenen, in denen ebenso Konzerte stattfinden — ein Basketballspiel ist
-        nicht der Grund, warum du hier bist, und wenn Sport mit hereinkommt, gehen die Konzerte
-        darin unter. Führungen, Workshops
-        und Yoga-Stunden: Sachen zum Mitmachen, nicht zum Hingehen und Zuschauen. Messen und
-        Kongresse. Und, vorerst, klassische Konzerte und Orchester — nicht, weil sie nicht
-        dazugehören, sondern weil ein Orchester mit Dirigentin und Solisten nicht in ein Modell
-        passt, das um Headliner und Support herum gebaut ist. Das ist ein „noch nicht“ und steht als
-        offene Frage fest, statt still unter den Tisch zu fallen.
+        nicht der Grund, warum du hier bist, und sobald Sport mit drin ist, gehen die Konzerte darin
+        unter. Führungen, Workshops und Yoga-Stunden: Sachen zum Mitmachen, nicht zum Hingehen und
+        Zuschauen. Messen und Kongresse. Und, vorerst, klassische Konzerte und Orchester — nicht,
+        weil sie nicht dazugehören, sondern weil ein Orchester mit Dirigentin und Solisten nicht in
+        ein Modell passt, das um Headliner und Support herum gebaut ist. Das ist ein „noch nicht“
+        und ist als offene Frage festgehalten, statt stillschweigend unter den Tisch zu fallen.
       </p>
     </section>
 
@@ -116,13 +115,13 @@ const localePath = useLocalePath()
         </a>
         ), die mit Konventionen und Prompts arbeiten, die im Repository liegen. Die Vision, die
         Produktentscheidungen, die Architektur und die Prioritäten sind meine; die Agenten setzen
-        dagegen um, und jede Änderung wird geprüft, bevor sie landet.
+        sie um, und jede Änderung wird geprüft, bevor sie landet.
       </p>
       <p class="text-muted-foreground">
         Das ist kein Kleingedrucktes, sondern der spannende Teil. Ein echtes Projekt mit echten
-        Nutzerinnen und Nutzern und echten Zwängen ist der einzige Weg herauszufinden, worin diese
-        Arbeitsweise wirklich gut ist und wo es weiter einen Menschen braucht, der hinschaut. Das
-        Ganze ist
+        Nutzerinnen und Nutzern und echten Einschränkungen ist der einzige Weg herauszufinden, worin
+        diese Arbeitsweise wirklich gut ist und wo es weiter einen Menschen braucht, der hinschaut.
+        Das Ganze ist
         <a
           class="text-foreground underline underline-offset-4"
           href="https://github.com/enorm-labs/event-junkie"
@@ -168,7 +167,7 @@ const localePath = useLocalePath()
         >
           Datenschutzseite
         </RouterLink>
-        , die genau deshalb kurz ist.
+        , deren Kurzfassung ganz oben genau das sagt.
       </p>
       <p class="text-muted-foreground">
         Etwas gefunden, das nicht stimmt? Uns Bescheid zu geben ist der schnellste Weg zur Korrektur

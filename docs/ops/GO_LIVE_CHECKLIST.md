@@ -139,13 +139,13 @@ OpenObserve to Signal). That is a different chain, and it stays unbuilt.
 
 ### Content and data
 
-| Done | Item                                                                  | Evidence |
-| ---- | --------------------------------------------------------------------- | -------- |
-|      | Event sources registered **and enabled**, so the site has content     | #876     |
-|      | Venue addresses, districts and coordinates audited                    | #329     |
-|      | Venue descriptions read against the venue they describe               | #1124    |
-|      | Every page read in both languages, About and the legal texts included | #280     |
-|      | Images served from our own cache, not hotlinked                       | #843     |
+| Done | Item                                                                                                      | Evidence |
+| ---- | --------------------------------------------------------------------------------------------------------- | -------- |
+|      | Event sources registered **and enabled**, so the site has content                                         | #876     |
+|      | Venue addresses, districts and coordinates audited                                                        | #329     |
+|      | Venue descriptions read against the venue they describe                                                   | #1124    |
+|      | Every page read in both languages **by the maintainer**, as a reader — About and the legal texts included | #280     |
+|      | Images served from our own cache, not hotlinked                                                           | #843     |
 
 **Production serves an empty site today, and the last step is deliberate.** All 86 sources are
 registered and carry their licence verdicts. Every one is disabled. A source with no import history
@@ -204,11 +204,12 @@ key exists. It cannot tell you a translation is good, or that a claim is still t
 
 ### Product
 
-| Done | Item                              | Evidence    |
-| ---- | --------------------------------- | ----------- |
-|      | The beta badge decision           | #295        |
-|      | Maintenance mode, if wanted first | #296        |
-|      | The README says the site is live  | `README.md` |
+| Done | Item                                                                                                                                 | Evidence    |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
+|      | The beta badge decision                                                                                                              | #295        |
+|      | Maintenance mode, if wanted first                                                                                                    | #296        |
+|      | The README says the site is live                                                                                                     | `README.md` |
+|      | The repo health files proof-read **by the maintainer** — README, CONTRIBUTING, SUPPORT, SECURITY, the Code of Conduct, the templates | #281        |
 
 **The README claims a status in two places, and both are wrong the moment the apex serves.** The badge near the top
 reads `Status-In Development`, and § Status opens with "In development — deployed, but not public yet." Change the
