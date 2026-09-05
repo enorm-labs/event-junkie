@@ -8,6 +8,15 @@
 emptied `.trivyignore`. This ADR exists because the reasoning generalises past this one image. It is really about
 **what an unfixable finding in a base layer costs**, and that will come up again.
 
+**Amended (2026-09-05): the "no `RUN`" constraint below is narrowed to "no `RUN` that does build work"**
+([#770](https://github.com/enorm-labs/event-junkie/issues/770)). The decision is unaffected. Both backend Dockerfiles now
+carry a named `apk upgrade` for an openssl fix that Alpine published and that the Liberica base does not carry yet. The
+arm64 half of that layer runs under the emulation the CI runner already has. The frontend image published this way under
+[#964](https://github.com/enorm-labs/event-junkie/issues/964) and does again under
+[#1118](https://github.com/enorm-labs/event-junkie/pull/1118). So the single-runner property still holds. What the
+constraint protected was architecture-specific _output_. A package upgrade does not produce that, and an AOT cache does.
+`events-bff/Dockerfile` states the narrowed rule and the conditions such a layer must meet.
+
 Two things the implementation settled, which this document could only flag as risks:
 
 - **Netty's native transports are not used.** Nothing in the build depends on `netty-transport-native-*`, so the NIO
@@ -53,9 +62,9 @@ and the habit is what rots.
 Four of these are non-negotiable and come from decisions already made elsewhere:
 
 - **Java 25.** `.sdkmanrc`, `java.version=25`, the Gradle toolchain. A base that forces a runtime downgrade is not a candidate.
-- **`linux/amd64` and `linux/arm64` from one runner.** The Dockerfiles contain **no `RUN` instruction** on purpose,
-  because Gradle extracts the layered jar instead. One runner therefore emits both platforms with no QEMU and no build
-  matrix. Staging is x86 and production is meant to be arm64
+- **`linux/amd64` and `linux/arm64` from one runner.** The Dockerfiles contain **no `RUN` that does build work** on
+  purpose, because Gradle extracts the layered jar instead. At the time they contained no `RUN` at all, and the amendment
+  above narrows that. One runner therefore emits both platforms with no build matrix. Staging is x86 and production is meant to be arm64
   ([#424](https://github.com/enorm-labs/event-junkie/issues/424)), so both are real.
 - **Non-root by numeric UID.** `USER 10001:10001` is numeric, so it needs no `/etc/passwd` entry and no `RUN useradd`.
   It must keep matching `security.runAsUser` in `values.yaml`, which `scripts/uid-consistency.sh` enforces. #448
@@ -138,7 +147,7 @@ in-cluster `helm test`. A chart render would not do.
 **What is unaffected, and worth stating so nobody re-derives it**
 
 - **No `RUN` is introduced.** The single-runner multi-arch property survives, and the change is one `FROM` line per
-  Dockerfile.
+  Dockerfile. (The `apk upgrade` layer of 2026-09-05 came later, under the amendment in §Status.)
 - The numeric `USER` needs no change — numeric UIDs require no passwd entry on any base.
 - `WORKDIR`, the four layered `COPY`s, `EXPOSE` and the exec-form `ENTRYPOINT` are base-agnostic.
 - The frontend image is untouched. It is `nginxinc/nginx-unprivileged:1.31-alpine` and was never affected.

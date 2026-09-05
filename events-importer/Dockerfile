@@ -7,9 +7,9 @@
 #       --platform linux/amd64,linux/arm64 --build-arg VERSION=… --build-arg REVISION=…
 #
 # The structure below is identical to `events-bff/Dockerfile`, and the reasoning for every line of
-# it — why there is no `RUN` and no builder stage, why the base image is pinned by digest, why the
-# user is numeric, why the AOT cache is deliberately not used — is written out there. Read that one
-# before changing either.
+# it — why there is no builder stage and no `RUN` that does build work, why a named `apk upgrade`
+# is the one exception, why the base image is pinned by digest, why the user is numeric, why the
+# AOT cache is deliberately not used — is written out there. Read that one before changing either.
 #
 # The two files are kept separate rather than generated from a shared template: they differ in the
 # labels and the exposed port, a template would need parameters for both, and a reviewer expects to
@@ -33,6 +33,12 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}"
+
+# The openssl upgrade, for the reason and the deletion condition written out in
+# `events-bff/Dockerfile` (#770). The two images pin the same base, so they carry the same layer
+# and lose it together.
+USER root
+RUN apk upgrade --no-cache libssl3 libcrypto3
 
 WORKDIR /application
 

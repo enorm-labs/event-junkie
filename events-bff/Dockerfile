@@ -10,20 +10,30 @@
 # in it that should not be copied. Pointing the build at the module directory instead would drag
 # the whole `build/` tree (classes, test reports, the fat jar) through the daemon.
 #
-# THERE IS DELIBERATELY NO `RUN` INSTRUCTION IN THIS FILE, and no builder stage.
+# THERE IS DELIBERATELY NO BUILDER STAGE AND NO `RUN` THAT DOES BUILD WORK. The one `RUN` allowed
+# here is a named `apk upgrade`, under the rule below.
 #
 # Spring Boot's reference Dockerfile extracts the layered jar in a builder stage with
 # `RUN java -Djarmode=tools … extract`. The layout below is identical to what that produces — the
 # extraction just happens in Gradle instead (`bootJarLayers` in the root build). The reason is
-# multi-arch: a `RUN` executes target-architecture code, so a two-platform build needs either QEMU
-# emulation or a runner per architecture plus a manifest merge. A JVM jar is architecture-
-# independent, so with no `RUN` at all one runner emits both platforms and only the base image
-# layers differ.
+# multi-arch: build work in a `RUN` executes target-architecture code and produces
+# architecture-specific output, so a two-platform build would need a runner per architecture plus
+# a manifest merge. A JVM jar is architecture-independent, so with the extraction in Gradle one
+# runner emits both platforms and only the base image layers differ.
 #
-# The cost, recorded so it is a decision rather than an oversight: Spring Boot recommends an **AOT
-# cache** for Java 25+ (`RUN java -XX:AOTCacheOutput=…`), which would cut startup time. It needs a
-# `RUN`, and the cache it produces is architecture-specific, so it is incompatible with the above.
-# Revisit when startup time is measured against the chart's probe budget rather than guessed at.
+# **A package upgrade is not build work, and it is the exception** (#770). `apk upgrade <pkg>` on
+# the arm64 half runs under the emulation the `ubuntu-latest` runner already carries — the
+# frontend image published this way under #964 and does again under #1118, and the arm64 upgrade
+# takes about two seconds in its publish log. Nothing in this repository installs that emulation; if a runner image ever
+# drops it, the publish fails at the build step, loudly. The rule for such a layer is the
+# frontend's: one named package, the CVE and the reason a digest bump was not available in the
+# comment, the deletion condition with its check, and `USER 10001:10001` restored below it.
+#
+# The cost of the build-work rule, recorded so it is a decision rather than an oversight: Spring
+# Boot recommends an **AOT cache** for Java 25+ (`RUN java -XX:AOTCacheOutput=…`), which would cut
+# startup time. Its output is architecture-specific, which is exactly the property that rules a
+# `RUN` out here. Revisit when startup time is measured against the chart's probe budget rather
+# than guessed at.
 
 # Pinned by tag *and* digest, per Docker's best-practices guide: the tag says what it is, the digest
 # says which one. Dependabot's `docker` ecosystem tracks both. This digest is the multi-arch
@@ -59,6 +69,21 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}"
+
+# **A base-image CVE fix that has not arrived upstream, taken here instead.** CVE-2026-14456, an
+# unbounded allocation in OpenSSL's QUIC server listener, is fixed in Alpine 3.24's `openssl
+# 3.5.8-r0` for both architectures, but the Liberica base has not been rebuilt since it was pinned
+# and still ships 3.5.7-r0 (#770). Not reachable — the JVM does not link libssl, only BusyBox's
+# `ssl_client` and `libapk` do — but a fixable finding is fixed here rather than waived, and this
+# line is what let `.trivyignore` go back to empty.
+#
+# **Delete this once the base ships 3.5.8-r0 or later**, by the same rule `gradle.properties`
+# states for a BOM override: an upgrade kept past its purpose hides that the base has caught up.
+# Check with `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep -E "^libssl3"'`
+# on the pinned digest. `USER root` because apk needs write access; the final `USER` below is what
+# the container runs as, and is unaffected.
+USER root
+RUN apk upgrade --no-cache libssl3 libcrypto3
 
 WORKDIR /application
 

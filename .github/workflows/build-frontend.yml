@@ -202,8 +202,9 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
-      # Both platforms genuinely build, with no QEMU, because the Dockerfile contains no `RUN` —
-      # `dist/` is identical on amd64 and arm64. `type=cacheonly` because a multi-platform image
+      # Both platforms genuinely build, with no QEMU setup step, because the Dockerfile does no
+      # build work in a `RUN` — `dist/` is identical on amd64 and arm64, and its one `apk upgrade`
+      # runs for arm64 under the runner's own emulation. `type=cacheonly` because a multi-platform image
       # cannot be loaded into the local daemon, and building one platform would leave arm64
       # unbuilt — the architecture the Hetzner nodes run (#424).
       - name: Build the frontend image (amd64 + arm64, no push)

@@ -9,14 +9,17 @@
 # `.dockerignore` next to this file cuts the context down to `dist/` and `docker/` — without it the
 # context would carry node_modules, coverage and playwright-report.
 #
-# THERE IS DELIBERATELY NO BUILDER STAGE AND NO `RUN`, which is where this departs from every guide
-# on the subject — Vue CLI's Docker/nginx page, and the community write-ups, all run
-# `RUN npm run build` inside a first stage. Two reasons, and the first is the load-bearing one:
+# THERE IS DELIBERATELY NO BUILDER STAGE AND NO `RUN` THAT DOES BUILD WORK, which is where this
+# departs from every guide on the subject — Vue CLI's Docker/nginx page, and the community
+# write-ups, all run `RUN npm run build` inside a first stage. Two reasons, and the first is the
+# load-bearing one:
 #
-#  1. **Multi-arch.** A `RUN` executes target-architecture code, so a two-platform image needs QEMU
-#     or a runner per architecture plus a manifest merge. `dist/` is just text — it is identical on
-#     amd64 and arm64 — so with no `RUN` at all a single runner emits both platforms. Same
-#     reasoning as events-bff/Dockerfile.
+#  1. **Multi-arch.** Build work in a `RUN` executes target-architecture code and produces
+#     architecture-specific output, so a two-platform image would need a runner per architecture
+#     plus a manifest merge. `dist/` is just text — it is identical on amd64 and arm64 — so with the
+#     build outside the Dockerfile a single runner emits both platforms. Same reasoning as
+#     events-bff/Dockerfile, which also records the one exception: a named `apk upgrade`, which
+#     runs under the runner's emulation for arm64 and published from this file under #964 and #1118.
 #  2. **CI already builds it.** `build-frontend.yml` runs `npm ci && npm run build` with a cached
 #     node_modules before it ever reaches this file. A builder stage here would be a second,
 #     uncached build of an artefact that already exists.

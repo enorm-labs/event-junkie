@@ -28,14 +28,14 @@ Nothing in this repository decodes an image today. So this is a new dependency, 
 
 ### The constraints any candidate had to satisfy
 
-| Constraint                                                | Where it comes from                         | What it rules out                                  |
-| --------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------- |
-| The runtime is `bellsoft/liberica-openjre-alpine:25`      | ADR-017                                     | Anything needing a glibc binary                    |
-| The importer Dockerfile has no `RUN` and no builder stage | `events-importer/Dockerfile`                | Installing a native library with `apk`             |
-| The chart sets `readOnlyRootFilesystem: true`             | `deploy/charts/*/templates/_helpers.tpl`    | Any decoder that writes temporary files by default |
-| No CDN and no caching proxy                               | ADR-012, and §5 of both privacy notices     | Anything that resizes for each request             |
-| Stored objects are content addressed and immutable        | ADR-019                                     | A processor that must run at request time          |
-| Politeness belongs to our own fetcher                     | [ADR-007](ADR-007_WEB_SCRAPING_STRATEGY.md) | Letting the processor pull from a venue            |
+| Constraint                                                                                                                                      | Where it comes from                         | What it rules out                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| The runtime is `bellsoft/liberica-openjre-alpine:25`                                                                                            | ADR-017                                     | Anything needing a glibc binary                                                                                                       |
+| The importer Dockerfile has no builder stage and no `RUN` that does build work (as amended 2026-09-05 in ADR-017; at the time, no `RUN` at all) | `events-importer/Dockerfile`                | Building a native library in the image; an `apk add` of a prebuilt one was ruled out when this was decided and is not re-weighed here |
+| The chart sets `readOnlyRootFilesystem: true`                                                                                                   | `deploy/charts/*/templates/_helpers.tpl`    | Any decoder that writes temporary files by default                                                                                    |
+| No CDN and no caching proxy                                                                                                                     | ADR-012, and §5 of both privacy notices     | Anything that resizes for each request                                                                                                |
+| Stored objects are content addressed and immutable                                                                                              | ADR-019                                     | A processor that must run at request time                                                                                             |
+| Politeness belongs to our own fetcher                                                                                                           | [ADR-007](ADR-007_WEB_SCRAPING_STRATEGY.md) | Letting the processor pull from a venue                                                                                               |
 
 **Throughput is not a constraint, and it is worth saying so.** About 80 sources produce roughly 65 images a day. A
 processor chosen for speed would win a race that nobody is running.
