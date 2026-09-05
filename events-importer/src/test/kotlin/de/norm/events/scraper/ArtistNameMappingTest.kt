@@ -256,6 +256,9 @@ class ArtistNameMappingTest {
         // A campaign's concert series billed as the act, in the venue's shouted case and with a tour tail.
         isNonArtistName("KEIN BOCK AUF NAZIS") shouldBe true
         isNonArtistName(stripArtistSuffix("Kein Bock auf Nazis - 20 Jahre Tour")) shouldBe true
+        // A battle-rap league billed as the act, in the venue's shouted case.
+        isNonArtistName("DLTLLY") shouldBe true
+        isNonArtistName("Dltlly") shouldBe true
     }
 
     @Test

@@ -296,6 +296,9 @@ private val NON_ARTIST_NAMES: Set<String> =
         // The anti-fascist campaign's own concert series: Columbiahalle bills its anniversary
         // festival under the name with the lineup unannounced (#1110).
         "kein bock auf nazis",
+        // DLTLLY (Don't Let The Label Label You) is a battle-rap league: Festsaal bills its birthday
+        // show under the league's name and names no performer anywhere on the page (#1135).
+        "dltlly",
         // Bare event-format words a co-billed title splits off as if they were acts — Säälchen's
         // `10 Jahre "The Big Brassers" – Jubiläumskonzert & Party` yields both of these.
         "party",
