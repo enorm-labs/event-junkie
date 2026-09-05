@@ -126,6 +126,11 @@ curl -sS --max-time 20 -o "temp/source-<slug>.html" -w '%{http_code}' \
 sleep 1                                                            # between requests to the same host
 ```
 
+**A venue with no rows has no `sourceUrl` to follow, and it is the venue most worth a fetch.** For those, take the listing URL from the importer's own
+configuration under `events-importer/src/main/kotlin/de/norm/events/scraper/<venue>/` — the page the importer fetches nightly under its robots check —
+one fetch per venue, counted against `--sample`, and say in the report that the URL came from the tree rather than from the site. That is how a
+scraper that fails silently is told apart from a quiet night, and it is the only fetch this prompt allows that the site did not publish.
+
 A `403` or `429` from a host ends fetching from that host for this run; say so, and do not try a different path or header. A `404` is a finding of its own:
 the site lists an event whose page is gone, which is often a cancellation the importer has not seen yet.
 
@@ -147,7 +152,8 @@ When the page and the row disagree and the page looks wrong, say that too — th
 ## Step 5 — Write the report
 
 Locally, write it to `temp/plausibility-<YYYY-MM-DD>.md` and run `scripts/format-markdown.sh temp/plausibility-<YYYY-MM-DD>.md` on it, because the report
-ends up pasted into issues and unformatted tables are the tell. Unattended, the final message is the report (below).
+ends up pasted into issues and unformatted tables are the tell. Unattended, the final message is the report (below), and the formatter is not run: the
+runner carries no `node_modules`, the pinned oxfmt is the only one allowed, and a person formats the report when they paste it somewhere.
 
 ## Running unattended
 
