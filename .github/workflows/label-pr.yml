@@ -10,15 +10,21 @@
 #  `pull-requests: write` and `issues: write` — the single worst supply-chain shape a repository
 #  can have, and it would look like a one-line convenience in review. If a future step genuinely
 #  needs the PR's contents, it belongs in a `pull_request` workflow with a read-only token, not
-#  here (#479, #443).
+#  here (#479, #443). Listing the PR's file paths through the REST API is not that: it reads
+#  names and statuses, and executes nothing.
 # ==============================================================================================
 #
 # Labels each pull request from its Conventional Commits title, so the automatically
 # generated release notes can group it (see .github/release.yml).
 #
-#   feat(scraper): import Astra   -> feat, importer
+#   feat(scraper): add Astra      -> feat, importer  (it adds an importer class, see below)
 #   fix(api)!: drop the v1 route  -> fix, breaking-change
 #   chore(deps): bump hono        -> chore   (+ `dependencies`, added by the bot itself)
+#
+# `importer` comes from the files, not the scope. The `scraper` and `importer` scopes both carry
+# infrastructure work as well as venues, so a scope rule filed the dropped-events counter and the
+# force-fetch trigger under "New Event Sources" (#1162, in v0.4.0's notes). A new venue adds a class named
+# `*Importer.kt` in its own package under `scraper/`, and nothing else does.
 #
 # Conventional Commits Spec: https://www.conventionalcommits.org/en/v1.0.0/
 #
@@ -35,8 +41,9 @@ on:
   # This workflow does neither: it reads the title from `context.payload` inside `actions/github-script`
   # and calls the REST API. There is no `actions/checkout` step in this file at all, which is the
   # property that makes the trigger safe and the one to re-check before adding any step here.
+  # `synchronize` as well, because the importer label follows the files and a push can add one.
   pull_request_target:
-    types: [ opened, edited, reopened ]
+    types: [ opened, edited, reopened, synchronize ]
 
 permissions:
   contents: read
@@ -63,7 +70,7 @@ jobs:
             // `java`, `javascript` from Dependabot, or hand-applied labels) is left alone.
             const MANAGED = {
               'breaking-change': { color: 'b60205', description: 'Contains a breaking change' },
-              importer:          { color: '5319e7', description: 'Adds or reworks a venue event importer' },
+              importer:          { color: '5319e7', description: 'Adds a venue event importer' },
               feat:              { color: '0e8a16', description: 'New feature' },
               fix:               { color: 'd73a4a', description: 'Bug fix' },
               perf:              { color: 'fbca04', description: 'Performance improvement' },
@@ -81,9 +88,10 @@ jobs:
             // `breaking-change` and `importer` are derived below instead.
             const TYPES = new Set(['feat', 'fix', 'perf', 'refactor', 'docs', 'test', 'build', 'ci', 'style', 'chore', 'revert']);
 
-            // `feat` in one of these scopes means a new/reworked event source, which gets its
-            // own section in the release notes. `fix(scraper)` stays an ordinary bug fix.
-            const IMPORTER_SCOPES = new Set(['scraper', 'importer']);
+            // A new event source: an importer class added in its own package under `scraper/`.
+            // The package's other files (scrapers, fixtures) and the shared classes at the top of
+            // `scraper/` do not match, and a renamed or modified importer is not a new source.
+            const IMPORTER_CLASS = /^events-importer\/src\/main\/kotlin\/de\/norm\/events\/scraper\/[^/]+\/[A-Za-z0-9]+Importer\.kt$/;
 
             const pr = context.payload.pull_request;
             const match = /^\s*([a-zA-Z]+)\s*(?:\(([^)]*)\))?\s*(!)?:/.exec(pr.title);
@@ -94,16 +102,21 @@ jobs:
               return;
             }
 
-            const [, rawType, rawScope, bang] = match;
+            const [, rawType, , bang] = match;
             const type = rawType.toLowerCase();
-            const scope = (rawScope ?? '').toLowerCase();
             // Either the `!` marker or a BREAKING CHANGE footer marks a breaking change.
             const breaking = Boolean(bang) || /^BREAKING[ -]CHANGE:/m.test(pr.body ?? '');
+
+            // Paths and statuses only, paginated because a venue lands with its fixtures.
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner, repo: context.repo.repo, pull_number: pr.number, per_page: 100,
+            });
+            const addsImporter = files.some((file) => file.status === 'added' && IMPORTER_CLASS.test(file.filename));
 
             const wanted = new Set();
             if (TYPES.has(type)) wanted.add(type);
             if (breaking) wanted.add('breaking-change');
-            if (type === 'feat' && IMPORTER_SCOPES.has(scope)) wanted.add('importer');
+            if (addsImporter) wanted.add('importer');
 
             if (wanted.size === 0) {
               core.notice(`Unknown Conventional Commits type "${type}" — no labels applied.`);
