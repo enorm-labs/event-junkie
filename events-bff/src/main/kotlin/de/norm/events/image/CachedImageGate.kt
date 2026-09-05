@@ -211,3 +211,22 @@ data class ImageSourceResponse(
     )
     val srcset: String
 )
+
+/**
+ * The `@Schema` descriptions every response DTO shares for the fields a [ServedImage] fills.
+ *
+ * Four modules document the same fields, and nothing fails when one copy drifts from the others.
+ * `EventSummaryResponse` and `EventDetailResponse` word `imageUrl` and `imageSources` for a poster
+ * instead, which is deliberate.
+ */
+const val IMAGE_SOURCES_DESCRIPTION =
+    "Alternative formats of the same image, best first, for a <picture> element. Empty " +
+        "when the image is not cached, in which case `imageUrl` is all there is."
+
+/** @see IMAGE_SOURCES_DESCRIPTION */
+const val INTRINSIC_WIDTH_DESCRIPTION =
+    "Pixel width of the original image, for the `width` attribute. Null together with " +
+        "`intrinsicHeight` when the dimensions are unknown."
+
+/** @see IMAGE_SOURCES_DESCRIPTION */
+const val INTRINSIC_HEIGHT_DESCRIPTION = "Pixel height of the original image, for the `height` attribute"
