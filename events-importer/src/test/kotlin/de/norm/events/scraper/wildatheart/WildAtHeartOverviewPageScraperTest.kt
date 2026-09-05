@@ -130,6 +130,25 @@ class WildAtHeartOverviewPageScraperTest {
         event.artists shouldHaveSize 0
         // The banner is the title, so it is not repeated as a subtitle.
         event.subtitle.shouldBeNull()
+        // "ab 14 Uhr" is the only time the listing states for it (#1142).
+        event.startTime shouldBe LocalTime.of(14, 0)
+    }
+
+    @Test
+    fun `reads an ab-Uhr banner time and leaves a row with no published time timeless`() {
+        // The 5 September 2026 programme: the flea market says "ab 14 Uhr"; Les Calcatoggios states no time at all.
+        val autumnClock = Clock.fixed(Instant.parse("2026-09-04T10:00:00Z"), ZoneOffset.UTC)
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/wildatheart/wildatheart-concerts-autumn.html")!!
+                .bufferedReader()
+                .readText()
+        val events = WildAtHeartOverviewPageScraper(autumnClock).scrape(Jsoup.parse(html, baseUrl), baseUrl)
+
+        events.first { it.title.startsWith("Punk & Rock`n`Roll Flohmarkt") }.startTime shouldBe LocalTime.of(14, 0)
+        val calcatoggios = events.first { it.title == "Les Calcatoggios" }
+        calcatoggios.startTime.shouldBeNull()
+        calcatoggios.doorsTime.shouldBeNull()
     }
 
     @Test
