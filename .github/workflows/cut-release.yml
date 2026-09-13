@@ -16,6 +16,11 @@ name: Cut release
 # `>=0.0.0-0` range keeps resolving the release itself and nothing reports it (#455). Doing both
 # halves in one run is the whole point.
 #
+# **The notes open with a summary.** `scripts/release-highlights.sh` names the few changes a visitor
+# to the site would notice, above the label buckets `.github/release.yml` groups everything into.
+# That file also drops this project's own version bumps from the notes, by author: they are
+# bookkeeping, and there is one in every release cycle.
+#
 # **A release is a rebuild of what `main` already published as a snapshot**, so a red snapshot
 # publish is a red release: v0.3.10 was cut over four failed runs and left a tag with nothing
 # behind it, for a base-image finding no change on `main` had caused (#1117). The cut therefore
@@ -33,8 +38,9 @@ on:
         default: auto
       notes:
         description: >-
-          Prepended to the generated release notes, for a release that needs a paragraph of its own.
-          The categories below it come from .github/release.yml.
+          A paragraph of its own for this release, between the generated summary and the categories.
+          The summary comes from scripts/release-highlights.sh; the categories from
+          .github/release.yml.
         type: string
         default: ''
       dry_run:
@@ -167,6 +173,21 @@ jobs:
           fi
           echo "Snapshot publish for ${sha} is green: ${url}"
 
+      # The few changes worth naming, above the buckets `.github/release.yml` groups everything into.
+      # Written outside the working tree, like the notes below, so it cannot be swept into the bump
+      # commit. Empty for a release whose commits earn no highlight, and then the notes are
+      # unchanged rather than opening with a bare heading.
+      - name: Summarise what the release changes
+        if: ${{ steps.version.outputs.raise != 'true' }}
+        id: highlights
+        run: |
+          scripts/release-highlights.sh >"$RUNNER_TEMP/highlights.md"
+          if [ -s "$RUNNER_TEMP/highlights.md" ]; then
+            cat "$RUNNER_TEMP/highlights.md" >>"$GITHUB_STEP_SUMMARY"
+          else
+            echo "No commit since the last release earns a highlight." >>"$GITHUB_STEP_SUMMARY"
+          fi
+
       # `generate-notes` renders what `gh release create --generate-notes` would produce and creates
       # nothing, so a dry run can show the notes rather than only the number. The categories come
       # from `.github/release.yml`.
@@ -183,12 +204,15 @@ jobs:
           {
             echo "### Notes for v$VERSION"
             echo
+            if [ -s "$RUNNER_TEMP/highlights.md" ]; then printf '%s\n\n' "$(cat "$RUNNER_TEMP/highlights.md")"; fi
             if [ -n "$NOTES" ]; then printf '%s\n\n' "$NOTES"; fi
             gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
               -f tag_name="v$VERSION" -f target_commitish=main --jq .body
           } >>"$GITHUB_STEP_SUMMARY"
 
-      # Written outside the working tree, so it cannot be swept into the bump commit below.
+      # Written outside the working tree, so it cannot be swept into the bump commit below. The
+      # summary comes first, then the dispatch's own paragraph, then the generated categories —
+      # `--notes-file` is prepended to what `--generate-notes` produces.
       - name: Create the release
         if: ${{ !inputs.dry_run && steps.version.outputs.raise != 'true' }}
         env:
@@ -196,8 +220,13 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           NOTES: ${{ inputs.notes }}
         run: |
-          if [ -n "$NOTES" ]; then
-            printf '%s\n' "$NOTES" >"$RUNNER_TEMP/notes.md"
+          : >"$RUNNER_TEMP/notes.md"
+          if [ -s "$RUNNER_TEMP/highlights.md" ]; then
+            cat "$RUNNER_TEMP/highlights.md" >>"$RUNNER_TEMP/notes.md"
+            printf '\n' >>"$RUNNER_TEMP/notes.md"
+          fi
+          if [ -n "$NOTES" ]; then printf '%s\n\n' "$NOTES" >>"$RUNNER_TEMP/notes.md"; fi
+          if [ -s "$RUNNER_TEMP/notes.md" ]; then
             gh release create "v$VERSION" --target main --generate-notes --notes-file "$RUNNER_TEMP/notes.md"
           else
             gh release create "v$VERSION" --target main --generate-notes

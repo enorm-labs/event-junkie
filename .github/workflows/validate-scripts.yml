@@ -111,6 +111,11 @@ jobs:
       - name: Assert what version.sh deserved decides
         run: scripts/version-deserved-test.sh
 
+      # Every way the release summary can be wrong is quiet — a version bump named as a highlight, a
+      # breaking change buried under a feature — and the release that shows it up is already out.
+      - name: Assert what release-highlights.sh summarises
+        run: scripts/release-highlights-test.sh
+
       # Gated on the step it explains. Without the condition a failing assertion above prints a
       # paragraph about ShellCheck, which sends the reader to the wrong tool.
       - name: Explain the fix

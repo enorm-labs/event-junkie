@@ -466,7 +466,13 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
   available at `.github/prompts/` for commit messages, squash commit messages, and code reviews.
 - **Release notes** (`.github/release.yml`) — GitHub's automatically generated release notes group merged PRs into categories (🎪 New Event Sources, ✨ Features,
   🐛 Bug Fixes, …) by the labels `label-pr.yml` applies. Categories are matched **in order**, first match wins, so specific ones (`importer`, `dependencies`)
-  precede general ones (`feat`, `build`). Label a PR `ignore-for-release` to keep it out of the notes entirely.
+  precede general ones (`feat`, `build`). Label a PR `ignore-for-release` to keep it out of the notes entirely. **The release App's own pull requests are
+  excluded by author**: `cut-release.yml` opens a bump after every release and a raise whenever the tree says less than the commits deserve, and those are the
+  only pull requests it ever opens — bookkeeping, in every release cycle, that told a reader nothing.
+- **A summary sits above those categories**, written by [`scripts/release-highlights.sh`](../../scripts/release-highlights.sh) and prepended by
+  `cut-release.yml`: one counted sentence and at most five changes a visitor to the site would notice, breaking changes first. Everything else — chores, CI,
+  docs, tests, refactors and dependency bumps — is left to the categories. It prints nothing when no commit qualifies, so a maintenance release keeps plain
+  notes instead of an empty heading. `scripts/release-highlights-test.sh` asserts each rule, from `validate-scripts.yml`.
 - **Opening a PR** — the `/open-pr` skill (`.github/prompts/open-pr.prompt.md`) runs the full ship flow: cut a branch, commit with a Conventional Commits
   message, push, and open the PR via `gh`. Invoking it is the explicit go-ahead for the commit/push that the "no unsolicited commits/pushes" rule above
   otherwise withholds.

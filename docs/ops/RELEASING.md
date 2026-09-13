@@ -97,6 +97,20 @@ the version from `gradle.properties`, checks it against what the commits deserve
 creates the release, and opens the pull request that moves `main` to the next snapshot. Both halves in one run, because the second is the one a person skips
 without noticing (#868).
 
+**The notes open with a summary.** [`scripts/release-highlights.sh`](../../scripts/release-highlights.sh) reads the Conventional Commits since the last
+release. It names at most five changes a visitor to the site would notice, under one counted sentence. Breaking changes come first, then features, new event
+sources, fixes and performance work. `cut-release.yml` puts that summary above the label categories from
+[`.github/release.yml`](../../.github/release.yml), and the dispatch's own `notes` input between the two. A release whose commits earn no highlight gets the
+plain notes rather than an empty heading. Run the script at a terminal to see what a release would say:
+
+```bash
+scripts/release-highlights.sh            # since the last release tag
+scripts/release-highlights.sh v0.13.0    # since a named tag
+```
+
+**The App's own version bumps are not in the notes.** They are excluded by author in `.github/release.yml`, because there is one in every release cycle and it
+is bookkeeping.
+
 **It cannot use `GITHUB_TOKEN`.** GitHub suppresses the events its own token raises. A release created with it fires no `release: published`, so `release.yml`
 never runs, nothing reaches GHCR, and every job reports green. The same rule leaves a pull request it opens with no checks, so the bump could never merge. The
 workflow mints a GitHub App installation token instead, narrowed to `contents: write` and `pull requests: write` and valid for an hour
