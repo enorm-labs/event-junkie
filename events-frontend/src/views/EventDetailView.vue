@@ -36,8 +36,8 @@ const lineup = computed(() =>
  */
 const showRoles = computed(() => lineup.value.some((entry) => entry.role !== 'HEADLINER'))
 
-const isPast = computed(() => isPastEvent(event.value?.eventDate, event.value?.endDate))
-const isRunning = computed(() => isRunningEvent(event.value?.eventDate, event.value?.endDate))
+const isPast = computed(() => !!event.value && isPastEvent(event.value))
+const isRunning = computed(() => !!event.value && isRunningEvent(event.value))
 
 onMounted(run)
 watch(slug, run)

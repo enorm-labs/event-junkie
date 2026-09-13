@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
 import java.time.LocalDate
 
 /**
@@ -17,7 +18,8 @@ import java.time.LocalDate
 class PromoterService(
     private val promoterRepository: PromoterRepository,
     private val promoterSearchRepository: PromoterSearchRepository,
-    private val cachedImageGate: CachedImageGate
+    private val cachedImageGate: CachedImageGate,
+    private val clock: Clock
 ) {
     /**
      * Lists promoters with pagination, optionally filtered by a case-insensitive name [query],
@@ -29,7 +31,7 @@ class PromoterService(
         pageable: Pageable
     ): PageResponse<PromoterListItemResponse> {
         val safePageable = pageable.sanitizeSort(SORTABLE_PROPERTIES, DEFAULT_SORT)
-        val page = promoterSearchRepository.search(query, LocalDate.now(), safePageable)
+        val page = promoterSearchRepository.search(query, LocalDate.now(clock), safePageable)
         val entities = promoterRepository.findByIdIn(page.rows.map { it.id }).toList().associateBy { it.id }
         return PageResponse.of(
             page.rows.mapNotNull { row -> entities[row.id]?.let { PromoterListItemResponse.fromEntity(it, row.upcomingEventCount) } },

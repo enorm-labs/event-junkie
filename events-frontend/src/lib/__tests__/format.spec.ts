@@ -10,6 +10,7 @@ import {
   todayIso,
   tomorrowIso,
   yesterdayIso,
+  type EventSpan,
 } from '@/lib/format'
 
 describe('formatDate locale handling', () => {
@@ -127,14 +128,16 @@ describe('isPastEvent', () => {
     vi.useRealTimers()
   })
 
+  const on = (eventDate: string, rest: Partial<EventSpan> = {}) => ({ eventDate, ...rest })
+
   it("treats today's event as still to come, and yesterday's as past", () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-07-07T12:00:00Z'))
 
     // The boundary the BFF and the importer both use: `>= today` is upcoming.
-    expect(isPastEvent('2026-07-06')).toBe(true)
-    expect(isPastEvent('2026-07-07')).toBe(false)
-    expect(isPastEvent('2026-07-08')).toBe(false)
+    expect(isPastEvent(on('2026-07-06'))).toBe(true)
+    expect(isPastEvent(on('2026-07-07'))).toBe(false)
+    expect(isPastEvent(on('2026-07-08'))).toBe(false)
   })
 
   it('ends on the stated end date when there is one (ADR-029)', () => {
@@ -142,25 +145,50 @@ describe('isPastEvent', () => {
     vi.setSystemTime(new Date('2026-07-07T12:00:00Z'))
 
     // A Friday-to-Monday weekender on its Tuesday: over. On its Sunday: not.
-    expect(isPastEvent('2026-07-03', '2026-07-06')).toBe(true)
-    expect(isPastEvent('2026-07-03', '2026-07-07')).toBe(false)
-    expect(isRunningEvent('2026-07-03', '2026-07-07')).toBe(true)
+    expect(isPastEvent(on('2026-07-03', { endDate: '2026-07-06' }))).toBe(true)
+    expect(isPastEvent(on('2026-07-03', { endDate: '2026-07-07' }))).toBe(false)
+    expect(isRunningEvent(on('2026-07-03', { endDate: '2026-07-07' }))).toBe(true)
     // Started today: live, not running-since.
-    expect(isRunningEvent('2026-07-07', '2026-07-09')).toBe(false)
-    expect(isRunningEvent('2026-07-06', null)).toBe(false)
+    expect(isRunningEvent(on('2026-07-07', { endDate: '2026-07-09' }))).toBe(false)
+    expect(isRunningEvent(on('2026-07-06'))).toBe(false)
+  })
+
+  it('keeps last night until six in the morning when it started late (#299)', () => {
+    vi.useFakeTimers()
+    // 03:00 Berlin on the 7th (01:00 UTC in July).
+    vi.setSystemTime(new Date('2026-07-07T01:00:00Z'))
+
+    expect(isPastEvent(on('2026-07-06', { startTime: '23:00:00' }))).toBe(false)
+    expect(isPastEvent(on('2026-07-06', { doorsTime: '22:00:00' }))).toBe(false)
+    // No time at all: the BFF's slot for a party is 23:00, and no slot at all still counts as a night.
+    expect(isPastEvent(on('2026-07-06', { assumedStartTime: '23:00:00' }))).toBe(false)
+    expect(isPastEvent(on('2026-07-06'))).toBe(false)
+    // A 20:00 gig is over at midnight, and a stated end is the venue's word.
+    expect(isPastEvent(on('2026-07-06', { startTime: '20:00:00' }))).toBe(true)
+    expect(isPastEvent(on('2026-07-06', { startTime: '23:00:00', endDate: '2026-07-06' }))).toBe(
+      true,
+    )
+    // The night before last gets no grace.
+    expect(isPastEvent(on('2026-07-05', { startTime: '23:00:00' }))).toBe(true)
+    // Running, since it started yesterday and is not over.
+    expect(isRunningEvent(on('2026-07-06', { startTime: '23:00:00' }))).toBe(true)
+
+    // 06:00 Berlin: over.
+    vi.setSystemTime(new Date('2026-07-07T04:00:00Z'))
+    expect(isPastEvent(on('2026-07-06', { startTime: '23:00:00' }))).toBe(true)
   })
 
   it('is false for a missing date rather than throwing', () => {
-    expect(isPastEvent(null)).toBe(false)
-    expect(isPastEvent(undefined)).toBe(false)
-    expect(isPastEvent('')).toBe(false)
+    expect(isPastEvent({ eventDate: null })).toBe(false)
+    expect(isPastEvent({})).toBe(false)
+    expect(isPastEvent(on(''))).toBe(false)
   })
 
   it('reads the Berlin calendar day, not UTC', () => {
-    // 23:30 UTC on the 6th is already the 7th in Berlin, so the 6th has passed.
+    // 23:30 UTC on the 6th is already the 7th in Berlin, so a 20:00 show on the 6th has passed.
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-07-06T23:30:00Z'))
 
-    expect(isPastEvent('2026-07-06')).toBe(true)
+    expect(isPastEvent(on('2026-07-06', { startTime: '20:00:00' }))).toBe(true)
   })
 })

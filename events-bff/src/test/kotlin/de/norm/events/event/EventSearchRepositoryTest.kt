@@ -1,6 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.runBlocking
@@ -147,5 +148,34 @@ class EventSearchRepositoryTest : BaseControllerTest() {
             // Tonight on Sunday is the weekender alone; on Tuesday, the Tuesday night alone.
             repositoryOn(friday).searchAll(EventFilter(on = friday.plusDays(2))) shouldBe listOf(weekender)
             repositoryOn(friday).searchAll(EventFilter(on = friday.plusDays(4))) shouldBe listOf(tuesdayNight)
+        }
+
+    /**
+     * The late-night grace (#299): before 06:00, last night's event with no stated end and a late
+     * effective start is still on — for the default window and for Tonight alike. A 20:00 concert
+     * is over at midnight, a stated end is the venue's word, and at 06:00 the night is over.
+     */
+    @Test
+    fun `a late night without an end is still on before six the next morning`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Tresor", "tresor")
+            val friday = LocalDate.of(2030, 6, 14)
+            val saturday = friday.plusDays(1)
+            val club = insertEvent(venueId, "Club", "club", friday, startTime = LocalTime.of(23, 0))
+            // No time at all: the #1384 PARTY slot is 23:00, so it counts as a night.
+            val timeless = insertEvent(venueId, "Timeless", "timeless", friday, eventType = "PARTY")
+            insertEvent(venueId, "Gig", "gig", friday, startTime = LocalTime.of(20, 0))
+            insertEvent(venueId, "Ended", "ended", friday, startTime = LocalTime.of(23, 0), endDate = friday, endTime = LocalTime.of(23, 59))
+            val saturdayNight = insertEvent(venueId, "Next", "next", saturday, startTime = LocalTime.of(23, 0))
+
+            fun at(hour: Int) = EventSearchRepository(databaseClient, Clock.fixed(saturday.atTime(hour, 0).toInstant(ZoneOffset.UTC), ZoneOffset.UTC))
+
+            // The club and the timeless night tie at 23:00 and rotate by the seed, so the order is not the point.
+            at(3).searchAll(EventFilter()) shouldContainExactlyInAnyOrder listOf(club, timeless, saturdayNight)
+            at(3).searchAll(EventFilter(on = saturday)) shouldContainExactlyInAnyOrder listOf(club, timeless, saturdayNight)
+            at(7).searchAll(EventFilter()) shouldBe listOf(saturdayNight)
+            at(7).searchAll(EventFilter(on = saturday)) shouldBe listOf(saturdayNight)
+            // Tonight for a day that is not the clock's own gets no grace: Sunday at 03:00 asks about Sunday.
+            at(3).searchAll(EventFilter(on = saturday.plusDays(1))) shouldBe emptyList()
         }
 }

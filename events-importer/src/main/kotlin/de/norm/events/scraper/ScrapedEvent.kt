@@ -12,6 +12,7 @@ import de.norm.events.slug.SlugGenerator
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 /**
@@ -203,23 +204,37 @@ private fun resolveEventType(
 }
 
 /**
- * Returns the events dated today or later, passing the number dropped to [onDropped].
+ * Returns the events that are not over, passing the number dropped to [onDropped].
  *
- * Same-day events are kept because the show may still be happening, and [EventUpsertService]
- * is the source of truth — a scraper applies the same cutoff earlier only to spare a
- * detail-page fetch. The callback keeps the log statement at the call site, so each caller
- * logs under its own logger and names its own source.
+ * An event is over after its `endDate`, else after its date (ADR-029), and today counts as not
+ * over because the show may still be happening. Before 06:00 on [clock], last night's event with
+ * no stated end is not over either when it started at 22:00 or later, or names no start at all
+ * (#299) — the BFF applies the same grace with the assumed slot, and keeping one row too many
+ * here costs nothing. [EventUpsertService] is the source of truth — a scraper applies the same
+ * cutoff earlier only to spare a detail-page fetch. The callback keeps the log statement at the
+ * call site, so each caller logs under its own logger and names its own source.
  */
 fun List<ScrapedEvent>.dropPastEvents(
     clock: Clock,
     onDropped: (Int) -> Unit
 ): List<ScrapedEvent> {
-    val today = LocalDate.now(clock)
-    // A weekender ends on its `endDate`, so it stays through its last day (ADR-029).
-    val (upcoming, past) = partition { !(it.endDate ?: it.eventDate).isBefore(today) }
+    val now = LocalDateTime.now(clock)
+    val today = now.toLocalDate()
+    val graceNight = today.minusDays(1).takeIf { now.toLocalTime() < GRACE_ENDS }
+    val (upcoming, past) =
+        partition {
+            !(it.endDate ?: it.eventDate).isBefore(today) ||
+                (it.endDate == null && it.eventDate == graceNight && (it.startTime == null || it.startTime >= LATE_START))
+        }
     if (past.isNotEmpty()) onDropped(past.size)
     return upcoming
 }
+
+/** A start at or after this is a night, and gets the grace (#299). */
+private val LATE_START: LocalTime = LocalTime.of(22, 0)
+
+/** When last night is over for the importer (#299). The BFF and the frontend share the hour. */
+private val GRACE_ENDS: LocalTime = LocalTime.of(6, 0)
 
 /**
  * A raw artist reference extracted from a scraped event.

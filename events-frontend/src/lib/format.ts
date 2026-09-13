@@ -136,6 +136,16 @@ export function todayIso(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date())
 }
 
+/** The time of day in Berlin as `HH:mm`, for the late-night grace in `isPastEvent`. */
+export function berlinTimeIso(): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Berlin',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(new Date())
+}
+
 /**
  * Tomorrow's date in Berlin as an ISO date string (`YYYY-MM-DD`). Used by the Home "Upcoming"
  * feed so it starts the day after today — today's events live in the separate "Tonight" section.
@@ -156,17 +166,42 @@ export function addDays(isoDate: string, days: number): string {
   return date.toISOString().slice(0, 10)
 }
 
+/** The fields that decide whether an event is over. */
+export type EventSpan = {
+  eventDate?: string | null
+  endDate?: string | null
+  startTime?: string | null
+  doorsTime?: string | null
+  assumedStartTime?: string | null
+}
+
+/** A start at or after this is a night, and gets the grace below (#299). */
+const LATE_START = '22:00'
+
+/** When last night is over (#299). The BFF and the importer share the hour. */
+const GRACE_ENDS = '06:00'
+
 /**
  * Whether an event is over. It ends on `endDate` when the venue stated one, else on its date, and
  * today counts as not over — matching the importer's `dropPastEvents` and the BFF's default window
  * on `COALESCE(end_date, event_date)`; one function keeps the three agreeing (ADR-029).
+ *
+ * Last night gets a grace (#299): before 06:00 Berlin, an event dated yesterday with no stated end
+ * and an effective start of 22:00 or later (start, else doors, else the BFF's assumed slot) is not
+ * over. A club night ends at six, not at midnight.
  */
-export function isPastEvent(isoDate?: string | null, endDate?: string | null): boolean {
-  const ends = endDate ?? isoDate
-  return !!ends && ends < todayIso()
+export function isPastEvent(event: EventSpan): boolean {
+  const ends = event.endDate ?? event.eventDate
+  if (!ends) return false
+  const today = todayIso()
+  if (ends >= today) return false
+  if (event.endDate || ends !== yesterdayIso() || berlinTimeIso() >= GRACE_ENDS) return true
+  // No time at all is a night too, as the importer counts it; the BFF sends a slot anyway.
+  const start = event.startTime ?? event.doorsTime ?? event.assumedStartTime
+  return !!start && start.slice(0, 5) < LATE_START
 }
 
 /** Whether an event started before today and is not over: a weekender in its second night. */
-export function isRunningEvent(isoDate?: string | null, endDate?: string | null): boolean {
-  return !!isoDate && isoDate < todayIso() && !isPastEvent(isoDate, endDate)
+export function isRunningEvent(event: EventSpan): boolean {
+  return !!event.eventDate && event.eventDate < todayIso() && !isPastEvent(event)
 }

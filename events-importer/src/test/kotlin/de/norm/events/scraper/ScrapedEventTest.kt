@@ -239,10 +239,26 @@ class ScrapedEventTest {
         val weekender = scrapedEvent(eventDate = friday, endDate = friday.plusDays(3))
         val night = scrapedEvent(eventDate = friday)
 
-        fun on(day: LocalDate) = Clock.fixed(day.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC)
+        // Noon, so the late-night grace (#299) stays out of a test about the end date.
+        fun on(day: LocalDate) = Clock.fixed(day.atTime(12, 0).toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
 
         listOf(weekender, night).dropPastEvents(on(friday.plusDays(1))) {} shouldBe listOf(weekender)
         listOf(weekender, night).dropPastEvents(on(friday.plusDays(3))) {} shouldBe listOf(weekender)
         listOf(weekender, night).dropPastEvents(on(friday.plusDays(4))) {} shouldBe emptyList()
+    }
+
+    @Test
+    fun `dropPastEvents keeps last night until six in the morning, unless the venue said when it ends`() {
+        val friday = LocalDate.of(2026, 9, 11)
+        val club = scrapedEvent(eventDate = friday, startTime = LocalTime.of(23, 0))
+        val timeless = scrapedEvent(eventDate = friday)
+        val gig = scrapedEvent(eventDate = friday, startTime = LocalTime.of(20, 0))
+        val ended = scrapedEvent(eventDate = friday, startTime = LocalTime.of(23, 0), endDate = friday, endTime = LocalTime.of(23, 59))
+        val all = listOf(club, timeless, gig, ended)
+
+        fun saturdayAt(hour: Int) = Clock.fixed(friday.plusDays(1).atTime(hour, 0).toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
+
+        all.dropPastEvents(saturdayAt(3)) {} shouldBe listOf(club, timeless)
+        all.dropPastEvents(saturdayAt(7)) {} shouldBe emptyList()
     }
 }
