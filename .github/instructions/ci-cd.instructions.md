@@ -15,8 +15,9 @@ What each workflow is for, which checks are required, and the shapes that fail s
 
 - **GitHub Actions** runs these workflows (`.github/workflows/`):
     - `build-backend.yml` — Lint (`ktlintCheck`), static analysis (`detekt`), build, test, and OWASP dependency CVE scan. Posts detekt markdown reports and
-      Kover coverage to the job summary; on PRs, also posts Kover coverage as a sticky comment (via `mi-kas/kover-report`). Detekt SARIF reports are uploaded
-      per module to GitHub Code Scanning. Triggers on `main` push/PR, skips
+      Kover coverage to the job summary; on PRs, also posts Kover coverage as a sticky comment (via `mi-kas/kover-report`). The nine detekt SARIF reports
+      (three modules × the syntax-only, main and test analyses) reach Code Scanning in **one upload**, kept apart by `runAutomationDetails.id` set to the
+      category each used to be uploaded under — nine serial uploads were ~63s on the gate's critical path (#1394). Triggers on `main` push/PR, skips
       `events-frontend/**`, `*.md`, `docs/**`. Its build job also sets `ORG_GRADLE_PROJECT_warningsAsErrors=true`, so a Kotlin warning fails the build here and
       nowhere else — see [kotlin.instructions.md](kotlin.instructions.md).
     - `build-frontend.yml` — Install, lint, build, unit test, and Playwright e2e test. Triggers only when `events-frontend/**` changes. Uses Node 24.
@@ -498,7 +499,7 @@ in [AGENTS.md](../../AGENTS.md) § Automating GitHub with `gh`.
     check contexts.
 
     **Every step that writes to GitHub is guarded on `github.event.pull_request.head.repo.fork != true`** rather than left to fail — the coverage comment and
-    the three detekt SARIF uploads in `build-backend.yml`, the OWASP SARIF upload in the same file, and the SARIF uploads in `release.yml` and
+    the detekt SARIF collect-and-upload pair in `build-backend.yml`, the OWASP SARIF upload in the same file, and the SARIF uploads in `release.yml` and
     `image-scan-scheduled.yml`. None of them can work with a read-only token however they are written; unguarded, the API answers `403` and the step fails, so
     the guard is what keeps a fork pull request from going red for a reason its author did not cause. **Add the guard to any new step that posts a comment or
     uploads SARIF**, in the same change that adds the step.
