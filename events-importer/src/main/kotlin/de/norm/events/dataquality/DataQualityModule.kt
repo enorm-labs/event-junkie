@@ -10,10 +10,10 @@ import org.springframework.modulith.ApplicationModule
  * data quality starts from a number instead of an impression, and without a baseline every later
  * pillar is judged on whether it *feels* like it helped.
  *
- * It reads across three other modules because a quality report is inherently cross-cutting — the
- * counts come from `event`, the source labels from `scraper`, and the non-artist-name check from
- * `artist`. That is exactly why it is its own module rather than a package inside one of them: put
- * it in `event` and it needs `scraper`; put it in `scraper` and it needs `event`.
+ * It reads across two other modules because a quality report is inherently cross-cutting — the
+ * counts come from `event`, and the source labels and the non-artist-name check from `scraper`.
+ * That is exactly why it is its own module rather than a package inside one of them: put it in
+ * `event` and it needs `scraper`; put it in `scraper` and it needs `event`.
  */
-@ApplicationModule(allowedDependencies = ["event", "scraper", "artist"])
+@ApplicationModule(allowedDependencies = ["event", "scraper"])
 class DataQualityModule
