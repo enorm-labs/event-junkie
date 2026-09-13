@@ -80,6 +80,7 @@
 ###   Säälchen             — https://www.holzmarkt.com/kalender
 ###   Schokoladen          — https://www.schokoladen-mitte.de/
 ###   silent green         — https://www.silent-green.net/programm
+###   Sisyphos             — https://www.sisyphos-berlin.net/collections/tickets/products.json
 ###   SO36                 — https://www.so36.com/tickets
 ###   Soda Club            — https://www.soda-berlin.de/events
 ###   Sonnenraum           — https://clubdervisionaere.com/programm/
@@ -4435,6 +4436,68 @@ Accept: application/json
 
 > {%
     client.test("silent green import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Sisyphos (Hauptstr. 15, Berlin-Lichtenberg)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Sisyphos venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Sisyphos",
+    "address": "Hauptstr. 15",
+    "city": "Berlin",
+    "postalCode": "10317",
+    "district": "lichtenberg",
+    "latitude": 52.49333,
+    "longitude": 13.49190,
+    "websiteUrl": "https://www.sisyphos-berlin.net",
+    "description": "A sprawling garden club in a former dog-biscuit factory in Rummelsburg, running weekend-long techno and house parties across several floors and open-air areas.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein weitläufiger Gartenclub in einer ehemaligen Hundekuchenfabrik in Rummelsburg, mit Techno- und House-Partys über ganze Wochenenden auf mehreren Floors und Open-Air-Flächen.",
+    "descriptionAltLanguage": "de"
+}
+
+> {%
+    client.global.set("sisyphos_venue_id", response.body.id);
+    client.test("Sisyphos venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Sisyphos event source ---
+# Links the venue to the SisyphosWebsiteImporter.
+# The sourceType "SISYPHOS" matches EventSource.SISYPHOS.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{sisyphos_venue_id}},
+    "name": "Sisyphos",
+    "url": "https://www.sisyphos-berlin.net/collections/tickets/products.json",
+    "sourceType": "SISYPHOS",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Sisyphos event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Sisyphos import ---
+POST {{importer-host}}/api/admin/event-sources/sisyphos/import
+Accept: application/json
+
+> {%
+    client.test("Sisyphos import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}

@@ -20,9 +20,9 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    87 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    88 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     3 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   103 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   102 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | No URL recorded yet — website still needs a first look                               |     0 |
 
 "Website analyzed" also means the [data model](DATA_MODEL.md) was checked against that source, and no source needed a
@@ -102,6 +102,7 @@ schema change.
 | Säälchen                         | https://www.holzmarkt.com/kalender                          | Concert Hall | Drupal; shared calendar filtered by location           |
 | Schokoladen                      | https://www.schokoladen-mitte.de/                           | Club         | Laravel; anchor-based events; genre inside title       |
 | silent green                     | https://www.silent-green.net/programm                       | Concert Hall | TYPO3 news; month walk; a run listed per open day      |
+| Sisyphos                         | https://www.sisyphos-berlin.net/collections/tickets         | Techno Club  | Shopify `products.json`; ticketed specials only        |
 | SO36                             | https://www.so36.com/tickets                                | Club         | Cookie wall bypassed via Ticket-Toaster shop           |
 | Soda Club                        | https://www.soda-berlin.de/events                           | Club         | disco2app CMS; `MusicEvent` JSON-LD on details         |
 | Sonnenraum                       | https://clubdervisionaere.com/programm                      | Club         | Shares the CdV listing; Monday live residency          |
@@ -207,11 +208,12 @@ venue-level sources. Until then the promoter data reaches us anyway, as the `pro
 events.
 
 **A handful of tickets is not a programme.** Sisyphos is the case to reason from. Its only web presence is a Shopify
-merch shop. That shop's `/pages/tickets` carried 3 ticketed nights of one recurring series beside the T-shirts —
-`generationS`, one per month. The club actually runs a programme every weekend. Importing those 3 would not be a
-thin-but-truthful import like OHM's, where the venue publishes its real programme on a short rolling horizon. It would
-present one series per month as if it were the whole programme. The bar is whether the source reflects what the venue
-is doing, not whether it yields a non-zero count.
+merch shop. Its `TICKETS` collection carries one recurring series beside the T-shirts: `generationS`, one night a
+month. The club actually runs a programme every weekend. That is not a thin-but-truthful import like OHM's, where the
+venue publishes its real programme on a short rolling horizon. It presents one series per month as if it were the
+whole programme. The bar for a candidate is whether the source reflects what the venue is doing, not whether it yields
+a non-zero count. Sisyphos itself is [imported](#-imported) anyway, by decision. The ticketed specials are real
+nights, the feed is structured JSON, and the importer's limitations record says what the count means.
 
 **The blockers repeat, and not one of them is "the venue is too small".** They are worth reading as a group, because
 each is cheap to recognise before spending time on a candidate:
@@ -348,7 +350,6 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Lokschuppen                      | https://lokschuppen-berlin.com/                | Techno Club  | Readymag site; the content is JS-only                     | Headless browser           |
 | OXI & OXI Garten                 | https://oxi-club.de/                           | Techno Club  | Domain redirects to Instagram                             | Site change                |
 | RSO                              | https://rso.berlin/                            | Techno Club  | Domain returns 404; no own site found                     | Site change / RA           |
-| Sisyphos                         | https://www.sisyphos-berlin.net/               | Techno Club  | Shop-only site; 3 ticketed nights, no programme           | RA as a source             |
 | SchwuZ                           | https://www.schwuz.de/                         | Techno Club  | Between locations; ~2 guest events listed                 | New venue / site change    |
 | Sisyfass                         | —                                              | Bar          | No website; Instagram and RA only                         | Site change                |
 | Strandbad Grünau                 | https://strandbadgruenau.de/                   | Open Air     | `/events/` is rental marketing, not a programme           | Promoter feed              |
