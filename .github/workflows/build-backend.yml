@@ -117,18 +117,19 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
-      - name: Lint with ktlint
-        run: ./gradlew ktlintCheck
-
-      # All three, because they are different analyses (#407). `detekt` runs the rules that read
-      # the syntax tree alone; `detektMain` and `detektTest` resolve types first and run the rules
-      # that need them — `UnsafeCallOnNullableType`, `UseOrEmpty`, `UnusedPrivateProperty` and the
-      # rest — over the main and test sources respectively. For a long time only the first ran, so
-      # the others' rules were **not run** rather than passing, and the gate was green because it
-      # never looked. The two type-resolution tasks compile their source sets to get a classpath;
-      # the build below reuses that output, so the cost is one compile of each, not two.
-      - name: Static analysis with detekt
-        run: ./gradlew detekt detektMain detektTest
+      # One invocation with `--parallel`, so ktlint of one module runs while another compiles, and
+      # bff and importer wait only for core. The flag is per step rather than `org.gradle.parallel`
+      # in gradle.properties because the licence-report plugin below cannot run under it.
+      #
+      # All three detekt tasks, because they are different analyses (#407). `detekt` runs the rules
+      # that read the syntax tree alone; `detektMain` and `detektTest` resolve types first and run
+      # the rules that need them — `UnsafeCallOnNullableType`, `UseOrEmpty`, `UnusedPrivateProperty`
+      # and the rest — over the main and test sources respectively. For a long time only the first
+      # ran, so the others' rules were **not run** rather than passing, and the gate was green
+      # because it never looked. The two type-resolution tasks compile their source sets to get a
+      # classpath; the build below reuses that output, so the cost is one compile of each, not two.
+      - name: Lint with ktlint and analyse with detekt
+        run: ./gradlew ktlintCheck detekt detektMain detektTest --parallel
 
       - name: Post detekt report to Job Summary
         if: success() || failure()
@@ -155,7 +156,7 @@ jobs:
       # execution data — every module reports 0% and the rule fails for the wrong reason. The
       # verification runs for real in the coverage step below, after `test`.
       - name: Build all modules
-        run: ./gradlew build -x test -x koverVerify
+        run: ./gradlew build -x test -x koverVerify --parallel
 
       # Enforces the runtime-dependency licence policy in config/allowed-licenses.json
       # (docs/LEGAL.md §9.2). Deliberately a separate step rather than wired into
@@ -178,7 +179,7 @@ jobs:
       # Still not folded into `build` above: that one runs with `-x test`, so a coverage rule there
       # would measure nothing. The per-module floors are in the root build.gradle.kts.
       - name: Run tests, then generate Kover coverage reports and verify the floors
-        run: ./gradlew test koverXmlReport koverLog koverVerify
+        run: ./gradlew test koverXmlReport koverLog koverVerify --parallel
 
       - name: Post coverage to Job Summary
         run: |
@@ -214,7 +215,7 @@ jobs:
       # it did not run. Verification first, reporting last.
       - name: Extract the layered jars
         if: github.event_name == 'pull_request'
-        run: ./gradlew :events-bff:bootJarLayers :events-importer:bootJarLayers
+        run: ./gradlew :events-bff:bootJarLayers :events-importer:bootJarLayers --parallel
 
       # `scripts/version.sh` is the single place that knows what version a commit is, and it derives
       # everything from `gradle.properties` — what `bootBuildInfo` stamps into build-info.properties
