@@ -152,6 +152,19 @@ const localePath = useLocalePath()
         an dem ich etwas ändern kann.
       </p>
       <p class="text-muted-foreground">
+        Der Weiterbau der A100 ist davon der sichtbarste Fall: Die geplante Verlängerung führt durch
+        Treptow, an Clubs und Kulturorten vorbei, die an der Strecke liegen. Dagegen steht
+        <a
+          class="text-foreground underline underline-offset-4"
+          href="https://a100-wegbassen.de/"
+          rel="noopener"
+          target="_blank"
+        >
+          A100 Wegbassen</a
+        >, ein Bündnis aus Clubs, Anwohnerinitiativen und Klimagruppen, das den Stopp des Weiterbaus
+        fordert und dafür Demos und Raves veranstaltet.
+      </p>
+      <p class="text-muted-foreground">
         Ich möchte etwas zurückgeben. Wenn diese Webseite dazu führt, dass ein paar Leute in einem
         kleinen Laden landen, von dem sie noch nie gehört haben, hat sie ihren Zweck erfüllt. Die
         großen Namen findet man auch ohne mich, die anderen nicht.
