@@ -22,7 +22,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    87 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     3 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |    86 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   103 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | No URL recorded yet — website still needs a first look                               |     0 |
 
 "Website analyzed" also means the [data model](DATA_MODEL.md) was checked against that source, and no source needed a
@@ -236,6 +236,12 @@ each is cheap to recognise before spending time on a candidate:
 - **Nine venues have no website at all**, only Instagram, Facebook or an RA club page. They are Haus der Visionäre,
   Atemporal, Prisma, Mena Berlin, Phantom Bar, Containerhafen, Rosie's Bar, Süss war gestern and RAW-Gelände. ROSA was
   the tenth and now has its own site.
+- **A second RA sweep on 2026-09-13 found the same shapes again.** The eight-week window held 1123 events at
+  234 venues. Every venue with two or more events and no row here was opened, seventeen in all, and not one is
+  importable. Eight have no site of their own: 90mil, West Germany, Torte Bar, Ipse, Lauschangriff, The Cloud, Studiodb
+  and PKH Warehouse. YAAM runs EventON and reports no upcoming events. Musikbrauerei is the only one with dated HTML, a
+  hand-edited page that keeps its 2025 entries and holds two upcoming concerts. RA's `Void Hall` is VOID Club, already
+  imported.
   Searching for an own domain is still worth it everywhere else. It turned up twelve venue sites this document did not
   have, and exactly one of them — Der Weiße Hase — carries a live programme.
 - **Four recorded domains are dead.** `bredouille-bar.com` no longer resolves, `tausendberlin.de` is parked and for
@@ -347,6 +353,23 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Sisyfass                         | —                                              | Bar          | No website; Instagram and RA only                         | Site change                |
 | Strandbad Grünau                 | https://strandbadgruenau.de/                   | Open Air     | `/events/` is rental marketing, not a programme           | Promoter feed              |
 | Zuckerzauber                     | https://zuckerzauber.info/                     | Bar          | Domain redirects to Facebook                              | Site change                |
+| Sameheads                        | http://www.sameheads.com                       | Bar          | Headless WordPress; label and art pages, no programme     | RA as a source             |
+| 90mil                            | —                                              | Open Air     | No own site; Instagram and RA only                        | RA as a source             |
+| Taborkirche                      | https://www.taborkirche.de                     | Concert Hall | Church; RA's own link is a Leipzig parish site            | Site change / RA           |
+| Orangerie Neukölln               | https://www.orangerie-nk.de/events             | Bar          | `/events` is rental marketing, not a programme            | Site change / promoter     |
+| West Germany                     | —                                              | Club         | No own site; RA only                                      | RA as a source             |
+| YAAM                             | https://yaam.de/programm/                      | Club         | WordPress + EventON; calendar says no upcoming events     | Site change / re-check     |
+| Torte Bar                        | —                                              | Bar          | No own site; Instagram and RA only                        | RA as a source             |
+| Ipse                             | —                                              | Open Air     | No own site; `ipse-berlin.de` is parked                   | RA as a source             |
+| Musikbrauerei                    | https://musikbrauerei.com/events/              | Concert Hall | Hand-edited Kadence page; 2025 entries kept, 2 upcoming   | More events / re-check     |
+| P61 Gallery                      | https://www.p61gallery.com/programm            | Other        | Digital-art museum; programme is exhibitions              | Scope decision             |
+| Chausseestrasse 131              | https://www.chausseestrasse131.com/            | Club         | Wix; "WEBSITE UNDER CONSTRUCTION"                         | Site change                |
+| SaltyAcid Space                  | http://saltyacid.space/                        | Open Air     | One-pager with a video; PROGRAM link goes nowhere         | Site change / RA           |
+| Lauschangriff                    | —                                              | Bar          | No own site; Facebook and RA only                         | RA as a source             |
+| The Cloud                        | —                                              | Bar          | No own site; Instagram and RA only                        | RA as a source             |
+| Studiodb                         | —                                              | Other        | No own site; Instagram and RA only                        | RA as a source             |
+| PKH Warehouse                    | —                                              | Other        | No own site; RA only                                      | RA as a source             |
+| Studio1111                       | http://studio1111.de/                          | Club         | Impressum-only page                                       | Site change                |
 
 ## ❓ Not analyzed yet
 
