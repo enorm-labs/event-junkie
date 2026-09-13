@@ -6,12 +6,14 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.parseGermanMonthAbbreviation
+import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.temporal.TemporalAdjusters
 
 /**
  * Pure HTML parser for Heideglühen's `/monatsvorschau/` page — the open-air's whole published
@@ -29,8 +31,9 @@ import java.time.LocalTime
  * parses as a date is the date, the first `<mark>` is the title and any later `<mark>` is the
  * subtitle ("34-Stunden-Weekender").
  *
- * The party runs overnight — the paragraph's closing time belongs to the *next* day — and the model
- * stores no end time, so that tail is kept as the description instead of being dropped.
+ * The party runs overnight: the paragraph's `(bis Sonntag, 6 Uhr)` tail is the end, and it names
+ * the weekday rather than the date, so the end date is the first day from the start that falls
+ * on it (ADR-029).
  *
  * @see HeidegluehenWeekPageScraper for the imminent event's DJ lineup.
  * @see HeidegluehenWebsiteImporter for the HTTP fetch orchestrator.
@@ -91,11 +94,11 @@ class HeidegluehenMonthPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = marks.drop(1).joinToString(" · ").takeIf { it.isNotBlank() },
-            // The model stores no end time, and this one matters: the party runs into the next day.
-            description = schedule.closingNote,
             eventType = EventType.PARTY.name,
             eventDate = schedule.date,
             startTime = schedule.startTime,
+            endDate = schedule.endDate,
+            endTime = schedule.endTime,
             imageUrl = monthImageUrl,
             sourceUrl = sourceUrl,
             // There is one party per date and no per-event page, so the date is the identity.
@@ -105,16 +108,18 @@ class HeidegluehenMonthPageScraper {
 }
 
 /**
- * The start of a party and the venue's own wording for when it ends.
+ * The span of a party.
  *
  * @property date the day the party starts.
  * @property startTime the hour it opens.
- * @property closingNote the "bis …" tail, kept because the model has nowhere else to put it.
+ * @property endDate the day it closes, resolved from the weekday in the "bis …" tail; null without one.
+ * @property endTime the hour it closes, null without the tail.
  */
 internal data class HeidegluehenSchedule(
     val date: LocalDate,
     val startTime: LocalTime?,
-    val closingNote: String?
+    val endDate: LocalDate?,
+    val endTime: LocalTime?
 )
 
 /**
@@ -130,15 +135,18 @@ internal fun parseSchedule(line: String): HeidegluehenSchedule? {
     val date = month?.let { runCatching { LocalDate.of(groups[YEAR_GROUP].toInt(), it, groups[DAY_GROUP].toInt()) }.getOrNull() }
 
     return date?.let {
+        // "bis Sonntag" from a Saturday is the next day; "bis Samstag, 22 Uhr" from a Saturday noon is the same day.
+        // A weekday the table does not know drops the hour with it: the column refuses a time without a date.
+        val closing =
+            CLOSING_NOTE.find(line)?.groupValues?.let { groups ->
+                parseGermanWeekdayAbbreviation(groups[CLOSING_WEEKDAY_GROUP].take(WEEKDAY_ABBREVIATION))
+                    ?.let { weekday -> it.with(TemporalAdjusters.nextOrSame(weekday)) to parseHour(groups[CLOSING_HOUR_GROUP]) }
+            }
         HeidegluehenSchedule(
             date = it,
             startTime = parseHour(groups[HOUR_GROUP]),
-            closingNote =
-                CLOSING_NOTE
-                    .find(line)
-                    ?.value
-                    ?.trim('(', ')', ' ')
-                    ?.takeIf { note -> note.isNotBlank() }
+            endDate = closing?.first,
+            endTime = closing?.second
         )
     }
 }
@@ -156,8 +164,15 @@ internal const val MONTH_ARTWORK = "#pagecontent .fl-photo-align-center img"
 /** `"Samstag, 1. August 2026, 12 Uhr"` — weekday and anything after the hour are ignored. */
 private val GERMAN_PROSE_DATE = Regex("""(\d{1,2})\.\s*([A-Za-zÄÖÜäöüß]+)\s+(\d{4}),?\s*(\d{1,2})\s*Uhr""")
 
-/** The `"(bis Sonntag, 6 Uhr)"` tail stating when the party ends. */
-private val CLOSING_NOTE = Regex("""\(?\s*bis\s[^)]*\)?""", RegexOption.IGNORE_CASE)
+/** The `"(bis Sonntag, 6 Uhr)"` tail stating when the party ends: the weekday it closes on, and the hour. */
+private val CLOSING_NOTE = Regex("""bis\s+([A-Za-zÄÖÜäöüß]+),?\s*(\d{1,2})\s*Uhr""", RegexOption.IGNORE_CASE)
+
+/** Capture groups of [CLOSING_NOTE]. */
+private const val CLOSING_WEEKDAY_GROUP = 1
+private const val CLOSING_HOUR_GROUP = 2
+
+/** `"Sonntag".take(2)` is the `So` the shared weekday table knows. */
+private const val WEEKDAY_ABBREVIATION = 2
 
 /** Capture groups of [GERMAN_PROSE_DATE]. */
 private const val DAY_GROUP = 1

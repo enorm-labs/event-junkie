@@ -7,7 +7,6 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldEndWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
@@ -65,10 +64,16 @@ class HeidegluehenMonthPageScraperTest {
     }
 
     @Test
-    fun `keeps the closing time, which the model has nowhere else to store`() {
-        // The party runs into the next day, so "until 6" is not a detail worth dropping.
-        event(LocalDate.of(2026, 8, 1)).description shouldBe "bis Sonntag, 6 Uhr"
-        event(LocalDate.of(2026, 8, 15)).description shouldBe "bis Sonntag, 22 Uhr"
+    fun `stores the closing time on the day the tail names`() {
+        // "(bis Sonntag, 6 Uhr)" from a Saturday noon: the next day (ADR-029). It used to be the description.
+        val night = event(LocalDate.of(2026, 8, 1))
+        night.endDate shouldBe LocalDate.of(2026, 8, 2)
+        night.endTime shouldBe LocalTime.of(6, 0)
+        night.description.shouldBeNull()
+
+        val weekender = event(LocalDate.of(2026, 8, 15))
+        weekender.endDate shouldBe LocalDate.of(2026, 8, 16)
+        weekender.endTime shouldBe LocalTime.of(22, 0)
     }
 
     @Test
@@ -107,9 +112,15 @@ class HeidegluehenMonthPageScraperTest {
         val schedule = parseSchedule("Samstag, 1. August 2026, 12 Uhr (bis Sonntag, 6 Uhr)")!!
         schedule.date shouldBe LocalDate.of(2026, 8, 1)
         schedule.startTime shouldBe LocalTime.of(12, 0)
-        schedule.closingNote!! shouldContain "Sonntag"
-        // The week page writes the same date without the parenthesis.
-        parseSchedule("Samstag, 6. Juni 2026, 12 Uhr,")!!.date shouldBe LocalDate.of(2026, 6, 6)
+        schedule.endDate shouldBe LocalDate.of(2026, 8, 2)
+        schedule.endTime shouldBe LocalTime.of(6, 0)
+        // A closing weekday that is the start's own day stays on it.
+        parseSchedule("Samstag, 1. August 2026, 12 Uhr (bis Samstag, 22 Uhr)")!!.endDate shouldBe LocalDate.of(2026, 8, 1)
+        // The week page writes the same date without the parenthesis, and so without an end.
+        val weekPage = parseSchedule("Samstag, 6. Juni 2026, 12 Uhr,")!!
+        weekPage.date shouldBe LocalDate.of(2026, 6, 6)
+        weekPage.endDate.shouldBeNull()
+        weekPage.endTime.shouldBeNull()
         parseSchedule("Das Programm folgt am Dienstag…").shouldBeNull()
         parseSchedule("~~~").shouldBeNull()
     }

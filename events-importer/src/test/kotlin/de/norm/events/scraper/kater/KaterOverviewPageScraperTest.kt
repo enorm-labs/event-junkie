@@ -61,9 +61,11 @@ class KaterOverviewPageScraperTest {
         val night = event("1885")
         night.title shouldBe "Kater x Wabi-Sabi & Flirt Records"
         night.eventType shouldBe "PARTY"
-        // "Sa. 01.08 22:00 — So. 02.08 10:00": the start half only, with the year inferred.
+        // "Sa. 01.08 22:00 — So. 02.08 10:00": both halves, each year inferred from its weekday (ADR-029).
         night.eventDate shouldBe LocalDate.of(2026, 8, 1)
         night.startTime shouldBe LocalTime.of(22, 0)
+        night.endDate shouldBe LocalDate.of(2026, 8, 2)
+        night.endTime shouldBe LocalTime.of(10, 0)
         night.sourceUrl shouldBe "https://www.katerclub.de/#event-1885"
         night.ticketUrl shouldBe "https://de.ra.co/events/2466351"
         night.artists shouldContainExactly
@@ -111,7 +113,10 @@ class KaterOverviewPageScraperTest {
         val garden = event("1886")
         garden.title shouldBe "Katergarten"
         garden.free shouldBe true
+        // "Sa. 01.08 17:00 — Sa. 01.08 22:00": an end on the same day stays on it.
         garden.startTime shouldBe LocalTime.of(17, 0)
+        garden.endDate shouldBe LocalDate.of(2026, 8, 1)
+        garden.endTime shouldBe LocalTime.of(22, 0)
         garden.artists.shouldBeEmpty()
     }
 

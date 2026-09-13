@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.endOn
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.textAt
@@ -17,19 +18,17 @@ import org.jsoup.nodes.Element
  * The page is a **stub by design**: the club publishes its programme on Resident Advisor and uses its
  * own site as a shopfront, so every detail page prints the same three placeholder sentences where a
  * description, a further-information note and a flyer would go. Of the four fields it states — date,
- * start time, end time, description — the first two only repeat the listing, the description is
- * always a placeholder, and **the model has no end-time field**, so the page adds no event data.
+ * start time, end time, description — the first two only repeat the listing and the description is
+ * always a placeholder. The end time is the one fact the listing lacks.
  *
- * It is still fetched, for one reason: the **title's real casing**. The listing template upper-cases
+ * It was first fetched for one reason, and still is: the **title's real casing**. The listing template upper-cases
  * every title (`RAVE THE PLANET TRUCK`), which is presentation, not the name the venue typed; this
  * page prints it as entered (`Rave The Planet Truck`), and storing the shouted form would be storing
  * a CSS decision as data. The cost is one extra request per event against a programme of well under
  * a dozen, so a two-page fetch is cheap here in a way it would not be for a venue listing hundreds.
  *
- * The end time the page states — often the following morning, `11 p.m.` → `8 a.m.` — is
- * **deliberately dropped**: [ScrapedEvent][de.norm.events.scraper.ScrapedEvent] carries doors and
- * start only, and inventing a same-day end from it would be wrong for every night that runs past
- * midnight, which is most of them. That is a limitation of the model, not of this parser.
+ * The end time the page states is often the following morning, `11 p.m.` → `8 a.m.`, and the page
+ * names no end date. [endOn] resolves it: an end at or before the start is the next day (ADR-029).
  *
  * There are no CMS classes to key on: the title is the content column's `h1`, the four fields are
  * `p` rows introduced by a `<strong>` label, and the ticket link is `a.button-link.ticket`.
@@ -82,10 +81,14 @@ class ClubOstDetailPageScraper {
             return null
         }
 
+        val startTime = parseClubOstTime(content.valueForLabel(START_TIME_LABEL))
+        val endTime = parseClubOstTime(content.valueForLabel(END_TIME_LABEL))
         return ScrapedEvent(
             title = title,
             eventDate = eventDate,
-            startTime = parseClubOstTime(content.valueForLabel(START_TIME_LABEL)),
+            startTime = startTime,
+            endDate = endTime?.let { endOn(eventDate, startTime, it) },
+            endTime = endTime,
             eventType = EventType.PARTY.name,
             description = withoutPlaceholder(content.valueForLabel(DESCRIPTION_LABEL)),
             imageUrl = content.imgSrcAt("img"),
@@ -128,6 +131,9 @@ class ClubOstDetailPageScraper {
 
         /** Label introducing the start time row. */
         private const val START_TIME_LABEL = "Start time:"
+
+        /** Label introducing the end time row, a clock time with no date of its own. */
+        private const val END_TIME_LABEL = "End time:"
 
         /** Label introducing the description row. */
         private const val DESCRIPTION_LABEL = "Description:"
