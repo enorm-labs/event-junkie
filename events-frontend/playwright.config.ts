@@ -25,8 +25,17 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /**
+   * Two workers on CI: one browser per pair of the runner's four vCPUs.
+   *
+   * Nothing in the suite needs serialising — every data-driven test mocks the BFF through its own
+   * `page.route`, so two tests share nothing but the preview server. Measured on the runner, all
+   * 1,075 tests: 628s on one worker, 454s on four (with a flake), **334s on two**. Four
+   * oversubscribes the machine; two is the setting that wins there, whatever a laptop reports.
+   *
+   * A local run keeps Playwright's own default of half the cores.
+   */
+  workers: process.env.CI ? 2 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
