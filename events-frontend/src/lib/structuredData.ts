@@ -62,6 +62,16 @@ export function eventStartDate(event: EventDetail): string | undefined {
 }
 
 /**
+ * `endDate` in the same form, only when the venue stated an end (ADR-029): a weekender's Monday
+ * morning, or the bare closing day of a run. Never derived — see `eventStartDate`.
+ */
+export function eventEndDate(event: EventDetail): string | undefined {
+  if (!event.endDate) return undefined
+  if (!event.endTime) return event.endDate
+  return `${event.endDate}T${event.endTime.slice(0, 5)}:00${berlinOffset(event.endDate)}`
+}
+
+/**
  * The BFF's scheduling status, in schema.org's vocabulary.
  *
  * `RELOCATED` has no counterpart — schema.org offers `EventRescheduled` (a time change) and
@@ -92,7 +102,7 @@ const EVENT_TYPES: Record<string, string> = {
 
 function offers(event: EventDetail, url: string): JsonLd | undefined {
   // Rule 1 above: a past event's page shows no ticket link, so this must not publish one either.
-  if (isPastEvent(event.eventDate)) return undefined
+  if (isPastEvent(event.eventDate, event.endDate)) return undefined
 
   const price = event.free ? 0 : (event.pricePresale ?? event.priceBoxOffice)
   if (price == null) return undefined
@@ -165,6 +175,7 @@ export function eventJsonLd(event: EventDetail, locale: Locale): JsonLd | null {
     '@type': (event.eventType && EVENT_TYPES[event.eventType]) ?? 'Event',
     name: event.title,
     startDate,
+    endDate: eventEndDate(event),
     location,
     url,
     description: description?.text ?? event.subtitle ?? undefined,

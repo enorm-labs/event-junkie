@@ -125,4 +125,12 @@ describe('EventRow', () => {
       'Not announced, estimated from the event type',
     )
   })
+
+  it('marks a weekender in its second night as running (ADR-029)', () => {
+    const wrapper = mount(EventRow, {
+      props: { event: { ...event, eventDate: '2026-06-12', endDate: '2026-06-16' } },
+      global: { stubs },
+    })
+    expect(wrapper.text()).toContain('Running since Fri')
+  })
 })

@@ -12,7 +12,7 @@ import { APP_NAME, eventPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
 import { useStructuredData } from '@/composables/useStructuredData'
 import { breadcrumbJsonLd, eventJsonLd, type JsonLd } from '@/lib/structuredData'
 import type { Locale } from '@/i18n/locales'
-import { formatPrice, isPastEvent } from '@/lib/format'
+import { formatPrice, isPastEvent, isRunningEvent } from '@/lib/format'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -36,13 +36,14 @@ const lineup = computed(() =>
  */
 const showRoles = computed(() => lineup.value.some((entry) => entry.role !== 'HEADLINER'))
 
-const isPast = computed(() => isPastEvent(event.value?.eventDate))
+const isPast = computed(() => isPastEvent(event.value?.eventDate, event.value?.endDate))
+const isRunning = computed(() => isRunningEvent(event.value?.eventDate, event.value?.endDate))
 
 onMounted(run)
 watch(slug, run)
 
 const localePath = useLocalePath()
-const { formatDate, formatEventTime, eventTimeHint } = useFormat()
+const { formatEventDates, formatEventTime, eventTimeHint, formatWeekday } = useFormat()
 // The header has room for the words behind a `~` time, where the card only has a title (#1384).
 const timeHint = computed(() => (event.value ? eventTimeHint(event.value) : null))
 
@@ -128,7 +129,7 @@ useStructuredData((): JsonLd[] => {
         <h1 class="text-page font-bold tracking-tight">{{ event.title }}</h1>
         <p v-if="event.subtitle" class="text-lede text-muted-foreground">{{ event.subtitle }}</p>
         <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <span>{{ formatDate(event.eventDate) }}</span>
+          <span>{{ formatEventDates(event) }}</span>
           <span>· {{ formatEventTime(event) }}</span>
           <span v-if="timeHint">· {{ timeHint }}</span>
           <span v-if="event.venue?.name">· {{ event.venue.name }}</span>
@@ -140,6 +141,9 @@ useStructuredData((): JsonLd[] => {
             {{ enumLabel('events.status', event.status) }}
           </BaseBadge>
           <span v-if="isPast">· {{ t('events.card.past') }}</span>
+          <span v-else-if="isRunning" class="text-primary">
+            · {{ t('events.card.runningSince', { day: formatWeekday(event.eventDate) }) }}
+          </span>
           <span v-else-if="event.soldOut" class="font-medium text-destructive">
             · {{ t('events.card.soldOut') }}
           </span>

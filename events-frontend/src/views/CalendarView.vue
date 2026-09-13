@@ -6,7 +6,7 @@ import EventCalendar from '@/components/EventCalendar.vue'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import { describeError } from '@/api/client'
 import { fetchCalendarEvents } from '@/composables/useEvents'
-import { isPastEvent, todayIso } from '@/lib/format'
+import { isPastEvent, isRunningEvent, todayIso } from '@/lib/format'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useI18n } from 'vue-i18n'
 
@@ -40,9 +40,11 @@ async function load() {
       // get the same "live" mark as EventCard, off the same Berlin clock (`todayIso`) rather than
       // FullCalendar's `isToday`, which reads the visitor's clock and can disagree late at night.
       // v7 reads `className` (one string); the v6 `classNames` array is ignored without a warning.
-      className: isPastEvent(event.eventDate)
+      // A weekender is one entry on its opening day (ADR-029 left the span's drawing open), and it
+      // is live on every day it runs.
+      className: isPastEvent(event.eventDate, event.endDate)
         ? 'fc-event-past'
-        : event.eventDate === todayIso()
+        : event.eventDate === todayIso() || isRunningEvent(event.eventDate, event.endDate)
           ? 'fc-event-live'
           : undefined,
       // `venue` backs the calendar's hover tooltip, where the clipped title is spelled out.

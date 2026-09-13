@@ -62,14 +62,14 @@ class EventService(
     }
 
     /**
-     * Today's events — backs the Home page's Tonight feed. Goes through the search repository
-     * rather than a derived query so a night of 23:00 doors gets the same seeded tiebreak as the
-     * list (#1380); a derived `OrderByStartTime` left tied rows in heap order.
+     * Tonight's events — everything on today, including a weekender in its second night
+     * (ADR-029). Goes through the search repository rather than a derived query so a night of
+     * 23:00 doors gets the same seeded tiebreak as the list (#1380); a derived `OrderByStartTime`
+     * left tied rows in heap order.
      */
     @Transactional(readOnly = true)
     suspend fun today(): List<EventSummaryResponse> {
-        val today = LocalDate.now(clock)
-        val ids = eventSearchRepository.searchAll(EventFilter(from = today, to = today))
+        val ids = eventSearchRepository.searchAll(EventFilter(on = LocalDate.now(clock)))
         return summariesFor(hydrateOrdered(ids))
     }
 
@@ -77,7 +77,8 @@ class EventService(
      * Events within an inclusive date range, for the calendar view. [filter] carries the same
      * optional criteria as [search] — the calendar is the search endpoint's other rendering —
      * and its own date range is overridden by [from]/[to], which the view derives from the
-     * visible window.
+     * visible window. The range is on the start date, so a weekender is drawn once, on its
+     * opening day (ADR-029 left the calendar's rendering of a span open; this is the answer for now).
      *
      * @throws ResponseStatusException 400 if the range is inverted or exceeds [MAX_CALENDAR_DAYS].
      */

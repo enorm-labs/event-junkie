@@ -17,6 +17,11 @@ import java.time.LocalDate
 data class EventFilter(
     val from: LocalDate? = null,
     val to: LocalDate? = null,
+    /**
+     * A day the event is on: started by it and not ended before it (ADR-029). Internal — the
+     * Tonight feed sets it, and no query parameter maps to it. Wins over [from] and [to].
+     */
+    val on: LocalDate? = null,
     val eventType: String? = null,
     val venueSlug: String? = null,
     val district: String? = null,
@@ -118,14 +123,25 @@ class EventSearchRepository(
         return if (conditions.isEmpty()) "" else "WHERE " + conditions.joinToString(" AND ")
     }
 
-    /** Applies the date-range filter, defaulting to upcoming events when no range is given. */
+    /**
+     * Applies the date filter. With no range, every event that has not ended: a weekender stays
+     * listed through its last day (ADR-029). An explicit [EventFilter.from] means "starts on or
+     * after" — that is what a visitor's earliest-date filter and the home page's Upcoming feed
+     * (`from = tomorrow`) ask for, and it keeps a running event out of Upcoming while Tonight
+     * carries it. [EventFilter.on] is the Tonight case: on that day, started and not over.
+     */
     private fun appendDateRange(
         filter: EventFilter,
         conditions: MutableList<String>,
         params: MutableMap<String, Any>
     ) {
+        filter.on?.let {
+            conditions += "e.event_date <= :on AND $EFFECTIVE_END >= :on"
+            params["on"] = it
+            return
+        }
         if (filter.from == null && filter.to == null) {
-            conditions += "e.event_date >= :today"
+            conditions += "$EFFECTIVE_END >= :today"
             params["today"] = LocalDate.now(clock)
             return
         }
@@ -273,6 +289,9 @@ class EventSearchRepository(
     }
 
     companion object {
+        /** The day an event is over after: its stated end, else its date (ADR-029). */
+        private const val EFFECTIVE_END = "COALESCE(e.end_date, e.event_date)"
+
         /**
          * The time an event sorts by: its start, else its doors, else the slot its kind of event
          * usually takes ([AssumedStartTime], #1384). Never null, so a timeless club night lands

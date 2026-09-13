@@ -4,6 +4,7 @@ import type { EventDetail, VenueDetail } from '@/api/types'
 import {
   breadcrumbJsonLd,
   eventJsonLd,
+  eventEndDate,
   eventStartDate,
   venueJsonLd,
   websiteJsonLd,
@@ -60,6 +61,16 @@ describe('eventStartDate', () => {
 
   it('is undefined with no date at all', () => {
     expect(eventStartDate({ ...event, eventDate: undefined })).toBeUndefined()
+  })
+})
+
+describe('eventEndDate', () => {
+  it('is the stated end with its offset, the bare day for a run, and absent otherwise (ADR-029)', () => {
+    expect(eventEndDate({ ...event, endDate: '2026-06-15', endTime: '10:00:00' })).toBe(
+      '2026-06-15T10:00:00+02:00',
+    )
+    expect(eventEndDate({ ...event, endDate: '2026-07-31', endTime: null })).toBe('2026-07-31')
+    expect(eventEndDate({ ...event, endDate: null })).toBeUndefined()
   })
 })
 

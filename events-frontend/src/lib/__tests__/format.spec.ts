@@ -6,6 +6,7 @@ import {
   formatShortDate,
   humaniseEventType,
   isPastEvent,
+  isRunningEvent,
   todayIso,
   tomorrowIso,
   yesterdayIso,
@@ -134,6 +135,19 @@ describe('isPastEvent', () => {
     expect(isPastEvent('2026-07-06')).toBe(true)
     expect(isPastEvent('2026-07-07')).toBe(false)
     expect(isPastEvent('2026-07-08')).toBe(false)
+  })
+
+  it('ends on the stated end date when there is one (ADR-029)', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-07T12:00:00Z'))
+
+    // A Friday-to-Monday weekender on its Tuesday: over. On its Sunday: not.
+    expect(isPastEvent('2026-07-03', '2026-07-06')).toBe(true)
+    expect(isPastEvent('2026-07-03', '2026-07-07')).toBe(false)
+    expect(isRunningEvent('2026-07-03', '2026-07-07')).toBe(true)
+    // Started today: live, not running-since.
+    expect(isRunningEvent('2026-07-07', '2026-07-09')).toBe(false)
+    expect(isRunningEvent('2026-07-06', null)).toBe(false)
   })
 
   it('is false for a missing date rather than throwing', () => {

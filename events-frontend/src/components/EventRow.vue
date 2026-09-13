@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { EventSummary } from '@/api/types'
-import { eventLabel, formatPrice, isPastEvent, todayIso } from '@/lib/format'
+import { eventLabel, formatPrice, isPastEvent, isRunningEvent, todayIso } from '@/lib/format'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -23,19 +23,26 @@ const props = withDefaults(
   { as: 'h3' },
 )
 
-const { formatShortDate, formatEventTime, eventTimeHint, formatEventType } = useFormat()
+const { formatShortDate, formatEventTime, eventTimeHint, formatEventType, formatWeekday } =
+  useFormat()
 const timeHint = computed(() => eventTimeHint(props.event))
 const { t } = useI18n()
 const localePath = useLocalePath()
 
-const isPast = computed(() => isPastEvent(props.event.eventDate))
+const isPast = computed(() => isPastEvent(props.event.eventDate, props.event.endDate))
+const isRunning = computed(() => isRunningEvent(props.event.eventDate, props.event.endDate))
 const isLive = computed(
-  () => Boolean(props.event.eventDate) && props.event.eventDate === todayIso(),
+  () => (Boolean(props.event.eventDate) && props.event.eventDate === todayIso()) || isRunning.value,
 )
 
-// The same one word, chosen the same way as on the card: past beats sold out, which beats free.
+// The same one word, chosen the same way as on the card: past beats running beats sold out beats free.
 const state = computed(() => {
   if (isPast.value) return { label: t('events.card.past'), class: 'text-muted-foreground' }
+  if (isRunning.value)
+    return {
+      label: t('events.card.runningSince', { day: formatWeekday(props.event.eventDate) }),
+      class: 'text-primary',
+    }
   if (props.event.soldOut) return { label: t('events.card.soldOut'), class: 'text-destructive' }
   if (props.event.free) return { label: t('events.card.free'), class: 'text-success' }
   return null
