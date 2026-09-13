@@ -41,11 +41,11 @@ import java.time.MonthDay
  *    grouped under a `<label>:` paragraph — a floor (`Main:`, `Chill Floor:`) or a
  *    billing section (`Live Band featuring:`, `DJ Sets:`). A trailing `LIVE` marker or
  *    a `from HH:mm` set time may ride along on the act line; the set time is dropped
- *    rather than used as the event's start time, which the venue never publishes.
+ *    rather than used as the event's start time, which this page does not print — the
+ *    homepage does, and the importer joins it on (see [ClubDerVisionaereHomePageScraper]).
  *
- * Parenthesised names are deliberately left whole — `Los Refrescos (Dandy Jack &
- * Argenis Brito)` is one act billed with its members, and `Naima (2)` is a Resident
- * Advisor disambiguator — so the conjunction split is skipped for them.
+ * Parenthesised names are left whole — `Los Refrescos (Dandy Jack & Argenis Brito)` is one
+ * act billed with its members, `Naima (2)` a Resident Advisor disambiguator.
  *
  * @see CLUB_DER_VISIONAERE_LIMITATIONS for what the venue does not publish.
  * @see ClubDerVisionaereWebsiteImporter and its sibling room importers for the fetch orchestration.

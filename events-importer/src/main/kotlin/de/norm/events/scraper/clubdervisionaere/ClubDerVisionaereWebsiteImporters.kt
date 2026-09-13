@@ -7,19 +7,24 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
+import java.net.URI
 import java.time.Clock
 
 /**
  * Shared fetch orchestration for the three rooms that Club der Visionäre lists on one
  * programme page (see [ClubDerVisionaereRoom]).
  *
- * The pipeline is a single request per cycle: fetch the programme page via [HtmlFetcher]
- * and hand it to [ClubDerVisionaereProgrammePageScraper], which returns only the nights
- * belonging to this importer's [room]. There are no detail pages — the listing is the
- * whole programme.
+ * The pipeline is two requests per cycle: fetch the programme page via [HtmlFetcher] and
+ * hand it to [ClubDerVisionaereProgrammePageScraper], which returns only the nights
+ * belonging to this importer's [room]; then fetch the site's homepage, whose NEXT box is
+ * the one place the venue prints a start time, and join those times onto the nights by
+ * WordPress post id via [ClubDerVisionaereHomePageScraper]. There are no detail pages —
+ * the listing is the whole programme. A homepage that cannot be fetched costs the nights
+ * their time, not the import.
  *
  * The WordPress REST API is not an option despite ADR-007's JSON-first preference: upcoming
  * nights are `future`-status posts, which `/wp-json/wp/v2/posts` omits from its listing and
@@ -31,9 +36,9 @@ import java.time.Clock
  * separate gives each venue its own `event_source` row, its own `sourceId` prefix and
  * its own import status, all from one parser.
  *
- * Conditional requests are passed through as usual, but the server currently sends
- * neither ETag nor Last-Modified, so every cycle is a full fetch; the idempotent
- * `sourceId` upsert absorbs that.
+ * Conditional requests are passed through as usual for the programme page, but the server
+ * currently sends neither ETag nor Last-Modified, so every cycle is a full fetch; the
+ * idempotent `sourceId` upsert absorbs that. The homepage is fetched unconditionally.
  *
  * @see ClubDerVisionaereProgrammePageScraper for the HTML parsing logic.
  * @see <a href="https://clubdervisionaere.com/programm/">Club der Visionäre programme</a>
@@ -48,6 +53,7 @@ abstract class AbstractClubDerVisionaereRoomImporter(
     private val logger = KotlinLogging.logger {}
 
     private val programmePageScraper = ClubDerVisionaereProgrammePageScraper(clock)
+    private val homePageScraper = ClubDerVisionaereHomePageScraper()
 
     override val eventSource: EventSource get() = room.eventSource
 
@@ -66,12 +72,34 @@ abstract class AbstractClubDerVisionaereRoomImporter(
                 logger.info { "Scraped ${events.size} event(s) for ${room.eventSource.name}" }
 
                 ImportResult.Success(
-                    events = events,
+                    events = if (events.isEmpty()) events else withStartTimes(events, url),
                     etag = fetchResult.etag,
                     lastModified = fetchResult.lastModified
                 )
             }
         }
+
+    /**
+     * Joins the homepage's start times onto [events] by post id. A night the homepage does
+     * not list keeps no time — never a guess — and an unreachable homepage leaves every
+     * night without one, logged as a warning, since the programme itself imported fine.
+     */
+    @Suppress("TooGenericExceptionCaught") // Intentional: the homepage is the clock, not the listing; degrade rather than fail.
+    private suspend fun withStartTimes(
+        events: List<ScrapedEvent>,
+        programmeUrl: String
+    ): List<ScrapedEvent> {
+        val homeUrl = URI(programmeUrl).resolve("/").toString()
+        val times =
+            try {
+                homePageScraper.scrape(htmlFetcher.fetchDocument(homeUrl))
+            } catch (e: Exception) {
+                logger.warn(e) { "Failed to fetch the Club der Visionäre homepage $homeUrl, storing the nights without a start time" }
+                return events
+            }
+        val prefix = room.eventSource.sourceIdPrefix
+        return events.map { event -> event.copy(startTime = times[event.sourceId.removePrefix(prefix)]) }
+    }
 }
 
 /**
@@ -114,7 +142,10 @@ val CLUB_DER_VISIONAERE_LIMITATIONS =
         sources = setOf(EventSource.CLUB_DER_VISIONAERE, EventSource.SONNENRAUM, EventSource.MS_HOPPETOSSE),
         limitations =
             listOf(
-                AcceptedLimitation(LimitedAspect.START_TIME, "the venue never publishes one; a from-HH:mm marker on the act line is that act's set time"),
+                AcceptedLimitation(
+                    LimitedAspect.START_TIME,
+                    "the listing prints none; the homepage's NEXT box does, for the ten nights it shows — a night further out gets its time once it moves in"
+                ),
                 AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue publishes no category of its own; every listing is a club night"),
                 AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the programme page is the source for every night")
             )

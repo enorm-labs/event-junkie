@@ -31,7 +31,7 @@ says so.
 | `CLASH`               | `GENRE`            | the homepage listing is the whole source and carries no genre                                                                                    | —     |
 | `CLASH`               | `PROMOTERS`        | the homepage listing is the whole source and names no promoter                                                                                   | —     |
 | `CLASH`               | `EVENT_TYPE`       | the site has no category field; the type is inferred from the title, defaulting to a concert                                                     | —     |
-| `CLUB_DER_VISIONAERE` | `START_TIME`       | the venue never publishes one; a from-HH:mm marker on the act line is that act's set time                                                        | —     |
+| `CLUB_DER_VISIONAERE` | `START_TIME`       | the listing prints none; the homepage's NEXT box does, for the ten nights it shows — a night further out gets its time once it moves in          | —     |
 | `CLUB_DER_VISIONAERE` | `EVENT_TYPE`       | the venue publishes no category of its own; every listing is a club night                                                                        | —     |
 | `CLUB_DER_VISIONAERE` | `PER_EVENT_PAGE`   | the programme page is the source for every night                                                                                                 | —     |
 | `CLUB_OST`            | `DESCRIPTION`      | the venue programmes through Resident Advisor and leaves the CMS description empty on every event                                                | —     |
@@ -124,7 +124,7 @@ says so.
 | `MORPHINE`            | `CANCELLATION`     | a dropped night is removed from the listing rather than flagged                                                                                  | —     |
 | `MORPHINE`            | `TICKET_URL`       | the advance-sale button posts to PayPal rather than linking anywhere                                                                             | —     |
 | `MORPHINE`            | `PRICE`            | nearly every night is priced as a sliding scale or donation range, which the model has no field for, so the wording is kept verbatim as the note | —     |
-| `MS_HOPPETOSSE`       | `START_TIME`       | the venue never publishes one; a from-HH:mm marker on the act line is that act's set time                                                        | —     |
+| `MS_HOPPETOSSE`       | `START_TIME`       | the listing prints none; the homepage's NEXT box does, for the ten nights it shows — a night further out gets its time once it moves in          | —     |
 | `MS_HOPPETOSSE`       | `EVENT_TYPE`       | the venue publishes no category of its own; every listing is a club night                                                                        | —     |
 | `MS_HOPPETOSSE`       | `PER_EVENT_PAGE`   | the programme page is the source for every night                                                                                                 | —     |
 | `NEUE_ZUKUNFT`        | `PER_EVENT_PAGE`   | the calendar widget exposes no per-event URLs                                                                                                    | —     |
@@ -168,7 +168,7 @@ says so.
 | `SODA`                | `DOORS_TIME`       | the Einlass info box states an age limit, not a doors time                                                                                       | —     |
 | `SODA`                | `ARTISTS`          | the JSON-LD performer is the placeholder Unbekannt on every night                                                                                | —     |
 | `SODA`                | `PROMOTERS`        | the JSON-LD `organizer` is the venue itself on every night                                                                                       | —     |
-| `SONNENRAUM`          | `START_TIME`       | the venue never publishes one; a from-HH:mm marker on the act line is that act's set time                                                        | —     |
+| `SONNENRAUM`          | `START_TIME`       | the listing prints none; the homepage's NEXT box does, for the ten nights it shows — a night further out gets its time once it moves in          | —     |
 | `SONNENRAUM`          | `EVENT_TYPE`       | the venue publishes no category of its own; every listing is a club night                                                                        | —     |
 | `SONNENRAUM`          | `PER_EVENT_PAGE`   | the programme page is the source for every night                                                                                                 | —     |
 | `SUPAMOLLY`           | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
