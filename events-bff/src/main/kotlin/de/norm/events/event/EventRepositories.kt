@@ -2,21 +2,17 @@ package de.norm.events.event
 
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
-import java.time.LocalDate
 
 /**
  * Reactive read repository for [EventEntity] via R2DBC.
  *
  * Dynamic multi-filter search is handled separately by [EventSearchRepository] — which the
- * calendar range query also goes through, since it takes the same filters; the derived methods
- * here cover the fixed-shape queries (slug lookup, today).
+ * calendar and today queries also go through, since every ordered list shares one tiebreak;
+ * the derived method here covers the one fixed-shape query (slug lookup).
  */
 interface EventRepository : CoroutineCrudRepository<EventEntity, Long> {
     /** Finds a single event by its unique slug, or null if not found. */
     suspend fun findBySlug(slug: String): EventEntity?
-
-    /** Events on a single calendar [date], ordered by start time — backs the "today" endpoint. */
-    fun findByEventDateOrderByStartTime(date: LocalDate): Flow<EventEntity>
 }
 
 /**

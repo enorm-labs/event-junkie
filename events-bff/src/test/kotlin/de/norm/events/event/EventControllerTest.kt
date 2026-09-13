@@ -1,6 +1,8 @@
 package de.norm.events.event
 
+import com.jayway.jsonpath.JsonPath
 import de.norm.events.BaseControllerTest
+import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -383,6 +385,52 @@ class EventControllerTest : BaseControllerTest() {
                 .jsonPath("$[0].slug")
                 .isEqualTo("today")
         }
+
+    @Test
+    fun `GET events today orders a tie the way the list does`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Astra", "astra")
+            val today = LocalDate.now()
+            repeat(6) { insertEvent(venueId, "Night $it", "night-$it", today, startTime = LocalTime.of(23, 0)) }
+
+            val tonight = slugsOf("/events/today", "$[*].slug")
+            val list = slugsOf("/events?from=$today&to=$today", "$.content[*].slug")
+
+            tonight shouldBe list
+            tonight.toSet().size shouldBe 6
+        }
+
+    @Test
+    fun `GET events gives every visitor the same order for a tie`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Astra", "astra")
+            val date = LocalDate.now().plusDays(1)
+            repeat(6) { insertEvent(venueId, "Night $it", "night-$it", date, startTime = LocalTime.of(23, 0)) }
+
+            val first = slugsOf("/events", "$.content[*].slug")
+            // Past the cache, so this is the database answering twice rather than the cache once.
+            responseCache.clear()
+            val second = slugsOf("/events", "$.content[*].slug")
+
+            first shouldBe second
+        }
+
+    private fun slugsOf(
+        uri: String,
+        jsonPath: String
+    ): List<String> {
+        val body =
+            webTestClient
+                .get()
+                .uri(uri)
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody(String::class.java)
+                .returnResult()
+                .responseBody
+        return JsonPath.read(body, jsonPath)
+    }
 
     @Test
     fun `GET events calendar returns events within range and rejects inverted range`(): Unit =
