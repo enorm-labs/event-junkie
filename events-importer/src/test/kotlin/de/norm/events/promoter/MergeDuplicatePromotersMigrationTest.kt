@@ -78,10 +78,13 @@ class MergeDuplicatePromotersMigrationTest {
             plantPromoter(statement, "Atoc", "atoc")
             plantEvent(statement, "a1", "atoc")
             // V031: the two halves the Urban Spree split minted, one event linked to both, beside
-            // the reviewed row (present on staging, absent on production — both shapes).
+            // the reviewed survivor. Both environments had the survivor, and moving two links onto
+            // it in one statement is what failed the first cut of V031 (UNIQUE on event_promoter).
+            plantPromoter(statement, "Pure Obsessions & Red Nights", "pure-obsessions-red-nights")
             plantPromoter(statement, "Pure Obsessions", "pure-obsessions")
             plantPromoter(statement, "Red Nights", "red-nights")
             plantEvent(statement, "u1", "pure-obsessions", "red-nights")
+            plantEvent(statement, "u2", "pure-obsessions-red-nights", "red-nights")
             // V032: a row stored under the stripped word, with its credit-link website.
             plantPromoter(statement, "Mfp", "mfp")
             plantEvent(statement, "m1", "mfp")
@@ -189,11 +192,11 @@ class MergeDuplicatePromotersMigrationTest {
     }
 
     @Test
-    fun `V031 folds the two halves of a split party name into one row with one link`() {
+    fun `V031 folds the two halves of a split party name onto the existing survivor with one link per event`() {
         promoters().containsKey("pure-obsessions") shouldBe false
         promoters().containsKey("red-nights") shouldBe false
         promoters()["pure-obsessions-red-nights"] shouldBe "Pure Obsessions & Red Nights"
-        eventsOf("pure-obsessions-red-nights") shouldContainExactlyInAnyOrder listOf("u1")
+        eventsOf("pure-obsessions-red-nights") shouldContainExactlyInAnyOrder listOf("u1", "u2")
     }
 
     @Test

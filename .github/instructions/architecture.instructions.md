@@ -50,8 +50,10 @@ The decisions the three backend modules are built on. Each one has a failure mod
     `http/importer/dev-seed.http` through `SlugGenerator` and asserts that every slug literal in a `venue` statement under `db/migration/` is in that set,
     naming the file and the line of any that is not. It runs in `./gradlew build`. A promoter data migration (V023, V025, V026, V027, V029, V030) names slugs no seed creates,
     so those are not scanned; `MergeDuplicatePromotersMigrationTest` runs each of them against planted rows instead, and also asserts that a merge
-    survivor's slug is the slug of its own name — the trap V025 repaired. A merge's step 1 picks the smallest loser that exists; V023 picked the
-    first-listed one blind and left `tip-berlin` behind on production (#1343), so copy V029's shape, not V023's.
+    survivor's slug is the slug of its own name — the trap V025 repaired. A merge's step 1 picks the smallest loser that exists (V023 picked the
+    first-listed one blind and left `tip-berlin` behind on production, #1343), and its step 3 inserts the survivor's links rather than updating the
+    losers' — two losers on one event both move in one statement and `UNIQUE (event_id, promoter_id)` refuses the second, which failed `v0.13.1`'s
+    rollout on both clusters. Copy V031's shape.
 
     **When a venue is renamed or removed, add its old slug to `RETIRED_VENUE_SLUGS` in that test, with the reason.** An older migration then keeps naming a
     venue that no longer exists, which is correct and is what the entry records. A second assertion deletes the entry again once it is stale, so the escape
