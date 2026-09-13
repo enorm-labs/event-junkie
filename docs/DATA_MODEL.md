@@ -47,6 +47,8 @@ classDiagram
         LocalDate eventDate
         LocalTime doorsTime
         LocalTime startTime
+        LocalDate endDate
+        LocalTime endTime
         String imageUrl
         String sourceUrl
         String sourceId
@@ -205,6 +207,8 @@ Core entity representing a single music event at a venue on a specific date.
 | `event_date`         | `DATE`          | No       | Calendar date of the event                                      | `2026-06-12`                                               |
 | `doors_time`         | `TIME`          | Yes      | When doors open                                                 | `19:00`                                                    |
 | `start_time`         | `TIME`          | Yes      | When the show starts                                            | `20:00`                                                    |
+| `end_date`           | `DATE`          | Yes      | Last day, only when the venue states one (ADR-029)              | `2026-06-15`                                               |
+| `end_time`           | `TIME`          | Yes      | When it ends on `end_date`, never without `end_date`            | `10:00`                                                    |
 | `image_url`          | `TEXT`          | Yes      | Event poster / flyer URL                                        | `https://example.com/adicts-poster.jpg`                    |
 | `source_url`         | `TEXT`          | Yes      | Original URL on the venue website                               | `https://www.astra-berlin.de/events/2026-06-12-the-adicts` |
 | `source_id`          | `TEXT` (UQ)     | No       | Unique import key for idempotent upserts                        | `astra:2026-06-12-the-adicts`                              |

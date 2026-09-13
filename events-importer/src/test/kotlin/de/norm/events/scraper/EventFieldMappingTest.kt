@@ -3,6 +3,7 @@ package de.norm.events.scraper
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
+import java.time.LocalDate
 import java.time.LocalTime
 
 // Focused tests for EventFieldMapping — one test per behaviour.
@@ -108,6 +109,24 @@ class EventFieldMappingTest {
     fun `detectFree is false when nothing is provided`() {
         detectFree() shouldBe false
         detectFree(priceNote = null, title = null) shouldBe false
+    }
+
+    // --- endOn ---
+
+    @Test
+    fun `endOn rolls an end at or before the start to the next day`() {
+        val night = LocalDate.of(2026, 9, 11)
+        // Club OST's "11 p.m. → 8 a.m."
+        endOn(night, LocalTime.of(23, 0), LocalTime.of(8, 0)) shouldBe night.plusDays(1)
+        endOn(night, LocalTime.of(22, 0), LocalTime.of(22, 0)) shouldBe night.plusDays(1)
+    }
+
+    @Test
+    fun `endOn keeps an end after the start on the day, and a start-less end too`() {
+        val night = LocalDate.of(2026, 9, 11)
+        endOn(night, LocalTime.of(20, 0), LocalTime.of(23, 30)) shouldBe night
+        // No start to compare against: the venue's own day is the only fact.
+        endOn(night, null, LocalTime.of(6, 0)) shouldBe night
     }
 
     // --- orderDoorsBeforeStart ---

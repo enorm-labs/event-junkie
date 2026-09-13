@@ -54,6 +54,8 @@ enum class LimitedAspect(
     EVENT_TYPE(TrackedField.EVENT_TYPE),
     DOORS_TIME(TrackedField.DOORS_TIME),
     START_TIME(TrackedField.START_TIME),
+    END_DATE(TrackedField.END_DATE),
+    END_TIME(TrackedField.END_TIME),
     IMAGE(TrackedField.IMAGE_URL),
     TICKET_URL(TrackedField.TICKET_URL),
     GENRE(TrackedField.GENRE),

@@ -40,6 +40,15 @@ data class EventSummaryResponse(
     val startTime: LocalTime?,
     @Schema(
         description =
+            "Last day of the event, only when the venue stated one; null means it ends on `eventDate`. A weekender " +
+                "carries the Monday here, a run of weeks its closing day.",
+        example = "2026-06-15"
+    )
+    val endDate: LocalDate?,
+    @Schema(description = "Time the event ends on `endDate`, only when the venue stated one. Never set without `endDate`.", example = "10:00")
+    val endTime: LocalTime?,
+    @Schema(
+        description =
             "Our guess at the start, from the kind of event, when the venue published neither `startTime` nor " +
                 "`doorsTime`; null whenever either is set. The list sorts by it, and a page must show it as a guess.",
         example = "23:00"
@@ -107,6 +116,8 @@ data class EventSummaryResponse(
                 eventDate = entity.eventDate,
                 doorsTime = entity.doorsTime,
                 startTime = entity.startTime,
+                endDate = entity.endDate,
+                endTime = entity.endTime,
                 assumedStartTime = AssumedStartTime.forEntity(entity),
                 imageUrl = image.url,
                 imageSources = image.sources,
@@ -174,6 +185,15 @@ data class EventDetailResponse(
     val doorsTime: LocalTime?,
     @Schema(description = "Time when the show/performance starts", example = "20:00")
     val startTime: LocalTime?,
+    @Schema(
+        description =
+            "Last day of the event, only when the venue stated one; null means it ends on `eventDate`. A weekender " +
+                "carries the Monday here, a run of weeks its closing day.",
+        example = "2026-06-15"
+    )
+    val endDate: LocalDate?,
+    @Schema(description = "Time the event ends on `endDate`, only when the venue stated one. Never set without `endDate`.", example = "10:00")
+    val endTime: LocalTime?,
     @Schema(
         description =
             "Our guess at the start, from the kind of event, when the venue published neither `startTime` nor " +
@@ -267,6 +287,8 @@ data class EventDetailResponse(
                 eventDate = entity.eventDate,
                 doorsTime = entity.doorsTime,
                 startTime = entity.startTime,
+                endDate = entity.endDate,
+                endTime = entity.endTime,
                 assumedStartTime = AssumedStartTime.forEntity(entity),
                 imageUrl = image.url,
                 imageSources = image.sources,

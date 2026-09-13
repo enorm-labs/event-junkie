@@ -2,10 +2,13 @@ package de.norm.events.scraper
 
 import de.norm.events.licence.SourceLicence
 import de.norm.events.licence.SourceLicences
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneOffset
 
 /**
  * Unit tests for [ScrapedEvent.toEventEntity], focused on the normalization it applies
@@ -20,16 +23,21 @@ class ScrapedEventTest {
         eventType: String? = null,
         genre: String? = null,
         description: String? = null,
-        imageUrl: String? = null
+        imageUrl: String? = null,
+        eventDate: LocalDate = LocalDate.of(2026, 12, 30),
+        endDate: LocalDate? = null,
+        endTime: LocalTime? = null
     ) = ScrapedEvent(
         title = title,
         eventType = eventType,
         genre = genre,
-        eventDate = LocalDate.of(2026, 12, 30),
+        eventDate = eventDate,
         sourceId = "so36:98223",
         sourceUrl = "https://www.so36.com/produkte/98223",
         doorsTime = doorsTime,
         startTime = startTime,
+        endDate = endDate,
+        endTime = endTime,
         description = description,
         imageUrl = imageUrl
     )
@@ -204,5 +212,37 @@ class ScrapedEventTest {
         const val GERMAN_DESCRIPTION =
             "Die Bolschewistische Kurkapelle wurde 1986 in Ost-Berlin als Teil der politischen Untergrundszene " +
                 "gegründet, wenige Jahre vor dem Fall der Berliner Mauer."
+    }
+
+    // --- the end (ADR-029) ---
+
+    @Test
+    fun `toEventEntity passes a stated end through and leaves it empty otherwise`() {
+        val weekender = scrapedEvent(startTime = LocalTime.of(22, 0), endDate = LocalDate.of(2027, 1, 2), endTime = LocalTime.of(10, 0)).toEntity()
+        weekender.endDate shouldBe LocalDate.of(2027, 1, 2)
+        weekender.endTime shouldBe LocalTime.of(10, 0)
+
+        val night = scrapedEvent(startTime = LocalTime.of(22, 0)).toEntity()
+        night.endDate shouldBe null
+        night.endTime shouldBe null
+    }
+
+    @Test
+    fun `toEventEntity refuses an end time without an end date`() {
+        // The column constraint would refuse it too, halfway through a bulk save; this fails at the row.
+        shouldThrow<IllegalArgumentException> { scrapedEvent(endTime = LocalTime.of(6, 0)).toEntity() }
+    }
+
+    @Test
+    fun `dropPastEvents keeps a weekender through its last day`() {
+        val friday = LocalDate.of(2026, 9, 11)
+        val weekender = scrapedEvent(eventDate = friday, endDate = friday.plusDays(3))
+        val night = scrapedEvent(eventDate = friday)
+
+        fun on(day: LocalDate) = Clock.fixed(day.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC)
+
+        listOf(weekender, night).dropPastEvents(on(friday.plusDays(1))) {} shouldBe listOf(weekender)
+        listOf(weekender, night).dropPastEvents(on(friday.plusDays(3))) {} shouldBe listOf(weekender)
+        listOf(weekender, night).dropPastEvents(on(friday.plusDays(4))) {} shouldBe emptyList()
     }
 }

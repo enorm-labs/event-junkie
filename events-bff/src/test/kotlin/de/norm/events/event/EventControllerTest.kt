@@ -385,6 +385,45 @@ class EventControllerTest : BaseControllerTest() {
         }
 
     @Test
+    fun `GET events carries a stated end on the summary and the detail, and null otherwise`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Sisyphos", "sisyphos")
+            val friday = LocalDate.now().plusDays(1)
+            insertEvent(venueId, "Weekender", "weekender", friday, startTime = LocalTime.of(23, 0), endDate = friday.plusDays(3), endTime = LocalTime.of(10, 0))
+            insertEvent(venueId, "Night", "night", friday.plusDays(4))
+
+            webTestClient
+                .get()
+                .uri("/events")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[0].slug")
+                .isEqualTo("weekender")
+                .jsonPath("$.content[0].endDate")
+                .isEqualTo(friday.plusDays(3).toString())
+                .jsonPath("$.content[0].endTime")
+                .isEqualTo("10:00:00")
+                .jsonPath("$.content[1].endDate")
+                .isEmpty
+                .jsonPath("$.content[1].endTime")
+                .isEmpty
+
+            webTestClient
+                .get()
+                .uri("/events/weekender")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.endDate")
+                .isEqualTo(friday.plusDays(3).toString())
+                .jsonPath("$.endTime")
+                .isEqualTo("10:00:00")
+        }
+
+    @Test
     fun `GET events calendar returns events within range and rejects inverted range`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")

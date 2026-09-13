@@ -96,6 +96,10 @@ data class Event(
     val doorsTime: LocalTime? = null,
     /** Time when the show/performance starts. */
     val startTime: LocalTime? = null,
+    /** Last day of the event, when the venue states one; null means it ends on [eventDate] (ADR-029). */
+    val endDate: LocalDate? = null,
+    /** Time the event ends on [endDate], when the venue states one. Never set without [endDate]. */
+    val endTime: LocalTime? = null,
     /** URL of the event's poster or flyer image. */
     val imageUrl: String? = null,
     /** Original URL on the source venue's website. */

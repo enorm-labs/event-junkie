@@ -30,6 +30,8 @@ enum class TrackedField(
     EVENT_TYPE("eventType", { !it.eventType.isNullOrBlank() }),
     DOORS_TIME("doorsTime", { it.doorsTime != null }),
     START_TIME("startTime", { it.startTime != null }),
+    END_DATE("endDate", { it.endDate != null }),
+    END_TIME("endTime", { it.endTime != null }),
     IMAGE_URL("imageUrl", { !it.imageUrl.isNullOrBlank() }),
     TICKET_URL("ticketUrl", { !it.ticketUrl.isNullOrBlank() }),
     GENRE("genre", { !it.genre.isNullOrBlank() }),

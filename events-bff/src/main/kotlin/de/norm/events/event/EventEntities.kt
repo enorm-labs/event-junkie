@@ -37,6 +37,8 @@ data class EventEntity(
     val eventDate: LocalDate,
     val doorsTime: LocalTime? = null,
     val startTime: LocalTime? = null,
+    val endDate: LocalDate? = null,
+    val endTime: LocalTime? = null,
     val imageUrl: String? = null,
     val sourceUrl: String? = null,
     val ticketUrl: String? = null,
