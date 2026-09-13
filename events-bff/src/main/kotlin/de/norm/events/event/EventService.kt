@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
+import java.time.Clock
 import java.time.LocalDate
 
 /**
@@ -43,7 +44,8 @@ class EventService(
     private val promoterRepository: PromoterRepository,
     private val genreTagRepository: GenreTagRepository,
     private val sourceLicenceGate: SourceLicenceGate,
-    private val cachedImageGate: CachedImageGate
+    private val cachedImageGate: CachedImageGate,
+    private val clock: Clock
 ) {
     /**
      * Searches events with optional filters and pagination, returning summaries with
@@ -59,9 +61,17 @@ class EventService(
         return PageResponse.of(summariesFor(events), pageable, page.total)
     }
 
-    /** Today's events, ordered by start time — backs the Home page. */
+    /**
+     * Today's events — backs the Home page's Tonight feed. Goes through the search repository
+     * rather than a derived query so a night of 23:00 doors gets the same seeded tiebreak as the
+     * list (#1380); a derived `OrderByStartTime` left tied rows in heap order.
+     */
     @Transactional(readOnly = true)
-    suspend fun today(): List<EventSummaryResponse> = summariesFor(eventRepository.findByEventDateOrderByStartTime(LocalDate.now()).toList())
+    suspend fun today(): List<EventSummaryResponse> {
+        val today = LocalDate.now(clock)
+        val ids = eventSearchRepository.searchAll(EventFilter(from = today, to = today))
+        return summariesFor(hydrateOrdered(ids))
+    }
 
     /**
      * Events within an inclusive date range, for the calendar view. [filter] carries the same

@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
+import java.time.Clock
 import java.time.LocalDate
 
 /**
@@ -50,7 +51,8 @@ data class EventIdPage(
  */
 @Repository
 class EventSearchRepository(
-    private val databaseClient: DatabaseClient
+    private val databaseClient: DatabaseClient,
+    private val clock: Clock
 ) {
     suspend fun search(
         filter: EventFilter,
@@ -73,6 +75,7 @@ class EventSearchRepository(
             databaseClient
                 .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where ${orderBy(pageable)} LIMIT :limit OFFSET :offset")
                 .bindAll(params)
+                .bind("seed", tiebreakSeed())
                 .bind("limit", pageable.pageSize)
                 .bind("offset", pageable.offset)
                 .map { row: Readable -> row.requiredEventId() }
@@ -95,6 +98,7 @@ class EventSearchRepository(
         return databaseClient
             .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where $DEFAULT_ORDER")
             .bindAll(params)
+            .bind("seed", tiebreakSeed())
             .map { row: Readable -> row.requiredEventId() }
             .all()
             .collectList()
@@ -122,7 +126,7 @@ class EventSearchRepository(
     ) {
         if (filter.from == null && filter.to == null) {
             conditions += "e.event_date >= :today"
-            params["today"] = LocalDate.now()
+            params["today"] = LocalDate.now(clock)
             return
         }
         filter.from?.let {
@@ -224,7 +228,7 @@ class EventSearchRepository(
     /**
      * Builds a safe `ORDER BY` clause by whitelisting sort properties to known columns
      * (preventing SQL injection via the `sort` query parameter). Falls back to chronological
-     * ordering; a stable tiebreaker on `e.id` keeps pagination deterministic.
+     * ordering; every order ends in [TIEBREAK], which keeps pagination deterministic.
      */
     private fun orderBy(pageable: Pageable): String {
         val clauses =
@@ -234,8 +238,11 @@ class EventSearchRepository(
                         listOfNotNull("$column ${if (order.isAscending) "ASC" else "DESC"}", SECONDARY_SORT[column])
                     }.orEmpty()
             }
-        return if (clauses.isEmpty()) DEFAULT_ORDER else "ORDER BY ${clauses.joinToString(", ")}, e.id ASC"
+        return if (clauses.isEmpty()) DEFAULT_ORDER else "ORDER BY ${clauses.joinToString(", ")}, $TIEBREAK"
     }
+
+    /** Today's date on [clock], as the `:seed` every ordered query binds — see [TIEBREAK]. */
+    private fun tiebreakSeed(): String = LocalDate.now(clock).toString()
 
     /**
      * The three many-to-many associations filterable by slug. Each describes its join table and
@@ -279,7 +286,23 @@ class EventSearchRepository(
 
         /** Extra ordering appended after a primary sort column, keyed by that column. */
         private val SECONDARY_SORT = mapOf("e.event_date" to START_TIME_TIEBREAKER)
-        private const val DEFAULT_ORDER = "ORDER BY e.event_date ASC, $START_TIME_TIEBREAKER, e.id ASC"
+
+        /**
+         * How rows that tie on every requested key are ordered: by a hash of the id and the day's
+         * date, then by the id itself (#1380).
+         *
+         * Club nights cluster at 23:00 and 00:00, so on most days the real decider between the
+         * first twelve events was the id — and the lowest id is the event imported first, which
+         * is the venue that announced earliest. The same venues led the home page every day.
+         *
+         * The hash rotates the order inside a tie once a day while keeping it the same for every
+         * visitor and every page all day. `random()` would be fair too, but it hands two visitors
+         * two orders, lets page 2 repeat page 1, and leaves the response cache serving whichever
+         * order it computed first. The trailing `e.id` makes the order total, so two rows never
+         * compare equal.
+         */
+        private const val TIEBREAK = "md5(e.id::text || :seed) ASC, e.id ASC"
+        private const val DEFAULT_ORDER = "ORDER BY e.event_date ASC, $START_TIME_TIEBREAKER, $TIEBREAK"
     }
 }
 
