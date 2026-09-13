@@ -19,6 +19,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.MonthDay
 
 /**
@@ -109,6 +110,8 @@ class KaterOverviewPageScraper(
             eventType = if (isScreeningTitle(title)) EventType.SCREENING.name else EventType.PARTY.name,
             eventDate = schedule.date,
             startTime = schedule.startTime,
+            endDate = schedule.endDate,
+            endTime = schedule.endTime,
             // The venue publishes no per-event page worth fetching, so the homepage anchor is the URL.
             sourceUrl = "$baseUrl#$EVENT_ID_PREFIX$eventId",
             sourceId = "${EventSource.KATER.sourceIdPrefix}$eventId",
@@ -183,29 +186,44 @@ class KaterOverviewPageScraper(
             .map { stripArtistSuffix(it.replace(FORMAT_MARKER, "").trim()) }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
 
-    /** A night's start, once its year has been inferred. */
+    /** A night's span, once each half's year has been inferred. */
     private data class Schedule(
         val date: LocalDate,
-        val startTime: java.time.LocalTime?
+        val startTime: LocalTime?,
+        val endDate: LocalDate?,
+        val endTime: LocalTime?
     )
 
     /**
      * Parses the summary's opening `Wd. DD.MM HH:mm — Wd. DD.MM HH:mm` line.
      *
-     * Only the **start** half is used: the model has no end-time field, and the closing half is
-     * usually the following morning anyway. The date carries no year, so the weekday disambiguates
-     * it via [inferYearForWeekday].
+     * Both halves are read, and the closing one is usually the following morning (ADR-029). Neither
+     * date carries a year, so the weekday disambiguates each via [inferYearForWeekday]. A line
+     * without the closing half still yields a start.
      */
     private fun parseSchedule(line: String): Schedule? {
         val groups = SCHEDULE_PATTERN.find(line)?.groupValues ?: return null
-        val monthDay = runCatching { MonthDay.of(groups[MONTH_GROUP].toInt(), groups[DAY_GROUP].toInt()) }.getOrNull()
-        return monthDay?.let {
+        val endDate = groups[END_DAY_GROUP].takeIf { it.isNotEmpty() }?.let { dateOf(it, groups[END_MONTH_GROUP], groups[END_WEEKDAY_GROUP]) }
+        return dateOf(groups[DAY_GROUP], groups[MONTH_GROUP], groups[WEEKDAY_GROUP])?.let { date ->
             Schedule(
-                date = inferYearForWeekday(it, parseGermanWeekdayAbbreviation(groups[WEEKDAY_GROUP]), clock),
-                startTime = parseTime(groups[TIME_GROUP])
+                date = date,
+                startTime = parseTime(groups[TIME_GROUP]),
+                endDate = endDate,
+                // The column refuses a time without a date, so an unparseable closing date drops its time too.
+                endTime = endDate?.let { parseTime(groups[END_TIME_GROUP]) }
             )
         }
     }
+
+    /** A `DD.MM` with its weekday, or `null` when the pair is not a real date. */
+    private fun dateOf(
+        day: String,
+        month: String,
+        weekday: String
+    ): LocalDate? =
+        runCatching { MonthDay.of(month.toInt(), day.toInt()) }
+            .getOrNull()
+            ?.let { inferYearForWeekday(it, parseGermanWeekdayAbbreviation(weekday), clock) }
 
     private companion object {
         /** The WordPress post id on the article, which is the night's only stable identity. */
@@ -226,14 +244,21 @@ class KaterOverviewPageScraper(
         /** A bracketed performance-format marker the venue appends to an act ("Vovolectr0 [LIVE]"). */
         val FORMAT_MARKER = Regex("""\s*\[[^\]]*]\s*$""")
 
-        /** Capture-group indices of [SCHEDULE_PATTERN]. */
+        /** Capture-group indices of [SCHEDULE_PATTERN]; the closing half's groups are empty when the line has none. */
         const val WEEKDAY_GROUP = 1
         const val DAY_GROUP = 2
         const val MONTH_GROUP = 3
         const val TIME_GROUP = 4
+        const val END_WEEKDAY_GROUP = 5
+        const val END_DAY_GROUP = 6
+        const val END_MONTH_GROUP = 7
+        const val END_TIME_GROUP = 8
 
-        /** The opening schedule line; only the start half is captured. */
-        val SCHEDULE_PATTERN = Regex("""^([A-Za-zÄÖÜäöü]{2})\.\s*(\d{1,2})\.(\d{1,2})\.?\s+(\d{1,2}:\d{2})""")
+        /** One `Wd. DD.MM HH:mm` half of the schedule line. */
+        private const val HALF = """([A-Za-zÄÖÜäöü]{2})\.\s*(\d{1,2})\.(\d{1,2})\.?\s+(\d{1,2}:\d{2})"""
+
+        /** The opening schedule line: a start half, and usually a closing half after a dash of any width. */
+        val SCHEDULE_PATTERN = Regex("""^$HALF(?:\s*[—–-]\s*$HALF)?""")
 
         /**
          * An unambiguous free-entry phrase in the blurb. Deliberately multi-word: the shared

@@ -72,10 +72,9 @@ class ClubOstDetailPageScraperTest {
     }
 
     @Test
-    fun `scrape ignores the end time the page states`() {
-        // The page says the Blasphemy night ends at 8 a.m. the next morning. ScrapedEvent has
-        // no end-time field, and folding it into a same-day time would be wrong for every
-        // night running past midnight — so it is dropped, not approximated.
+    fun `scrape puts the end time the page states on the next morning`() {
+        // The page says the Blasphemy night runs 11 p.m. to 8 a.m. and names no second date; an end at or
+        // before the start is the following day (ADR-029). It used to be dropped as a model limitation.
         val event =
             scrapeFixture(
                 "scraper/clubost/clubost-detail-blasphemy.html",
@@ -85,6 +84,8 @@ class ClubOstDetailPageScraperTest {
         event.shouldNotBeNull()
         event.doorsTime shouldBe null
         event.startTime shouldBe LocalTime.of(23, 0)
+        event.endDate shouldBe LocalDate.of(2026, 8, 8)
+        event.endTime shouldBe LocalTime.of(8, 0)
     }
 
     @Test
