@@ -12,7 +12,7 @@ import { APP_NAME, eventPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
 import { useStructuredData } from '@/composables/useStructuredData'
 import { breadcrumbJsonLd, eventJsonLd, type JsonLd } from '@/lib/structuredData'
 import type { Locale } from '@/i18n/locales'
-import { formatPrice, formatTime, isPastEvent } from '@/lib/format'
+import { formatPrice, isPastEvent } from '@/lib/format'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -42,7 +42,7 @@ onMounted(run)
 watch(slug, run)
 
 const localePath = useLocalePath()
-const { formatDate } = useFormat()
+const { formatDate, formatEventTime } = useFormat()
 
 const { t, te, locale } = useI18n()
 
@@ -127,7 +127,7 @@ useStructuredData((): JsonLd[] => {
         <p v-if="event.subtitle" class="text-lede text-muted-foreground">{{ event.subtitle }}</p>
         <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <span>{{ formatDate(event.eventDate) }}</span>
-          <span v-if="event.startTime">· {{ formatTime(event.startTime) }}</span>
+          <span>· {{ formatEventTime(event) }}</span>
           <span v-if="event.venue?.name">· {{ event.venue.name }}</span>
           <!--
             The status pill is the exception the rest of #1248 flattened: a cancelled event is the

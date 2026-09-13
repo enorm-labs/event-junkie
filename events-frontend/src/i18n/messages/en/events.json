@@ -43,7 +43,9 @@
     "liveTonight": "Live tonight",
     "soldOut": "Sold out",
     "free": "Free",
-    "past": "Past"
+    "past": "Past",
+    "doors": "Doors {time}",
+    "timeUnknown": "Time not announced"
   },
   "detail": {
     "notFound": "Event not found",

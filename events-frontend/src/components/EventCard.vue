@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router'
 import type { EventSummary } from '@/api/types'
 import CachedImage from '@/components/CachedImage.vue'
 import EventPoster from '@/components/EventPoster.vue'
-import { eventLabel, formatPrice, formatTime, isPastEvent, todayIso } from '@/lib/format'
+import { eventLabel, formatPrice, isPastEvent, todayIso } from '@/lib/format'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -27,7 +27,7 @@ const props = withDefaults(
   { as: 'h3' },
 )
 
-const { formatDate, formatEventType } = useFormat()
+const { formatDate, formatEventTime, formatEventType } = useFormat()
 
 // `OTHER` is the importers' catch-all — it tells a reader nothing the card doesn't already say,
 // so it's dropped rather than spending a pill on it. Every other type earns its place.
@@ -72,10 +72,7 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
 </script>
 
 <template>
-  <RouterLink
-    :to="localePath(`/events/${event.slug}`)"
-    :class="CARD_CLASS"
-  >
+  <RouterLink :to="localePath(`/events/${event.slug}`)" :class="CARD_CLASS">
     <div ref="posterEl" :data-focus="posterFocused || undefined" :class="CARD_POSTER_CLASS">
       <!--
         `sizes` describes the real slot: a `max-w-5xl` grid is one column below `sm` and two above
@@ -95,27 +92,27 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
     </div>
     <div class="min-w-0 space-y-1">
       <div class="flex min-w-0 items-center gap-2">
-          <span v-if="isLive" class="relative flex size-2 shrink-0">
-            <span
-              class="absolute inline-flex size-full rounded-full bg-primary opacity-75 motion-safe:animate-ping"
-            />
-            <span class="relative inline-flex size-2 rounded-full bg-primary" />
-            <span class="sr-only">{{ t('events.card.liveTonight') }}</span>
-          </span>
-          <!--
+        <span v-if="isLive" class="relative flex size-2 shrink-0">
+          <span
+            class="absolute inline-flex size-full rounded-full bg-primary opacity-75 motion-safe:animate-ping"
+          />
+          <span class="relative inline-flex size-2 rounded-full bg-primary" />
+          <span class="sr-only">{{ t('events.card.liveTonight') }}</span>
+        </span>
+        <!--
             Both lines are `truncate`d, so a long one is cut off with no way to read the rest.
             The native `title` tooltip spells each out on hover — the same affordance the
             calendar cells got, sharing `eventLabel` so the two can't drift. Scoped to the
             clipped elements rather than the whole card, so hovering the card doesn't pop a
             tooltip over information that is already fully visible.
           -->
-          <component
-            :is="as"
-            :title="eventLabel(event.title, event.venue?.name)"
-            class="truncate text-lede font-semibold"
-          >
-            {{ event.title }}
-          </component>
+        <component
+          :is="as"
+          :title="eventLabel(event.title, event.venue?.name)"
+          class="truncate text-lede font-semibold"
+        >
+          {{ event.title }}
+        </component>
       </div>
       <p
         v-if="event.subtitle"
@@ -126,7 +123,7 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
       </p>
       <p class="text-body text-muted-foreground">
         {{ formatDate(event.eventDate) }}
-        <template v-if="event.startTime"> · {{ formatTime(event.startTime) }}</template>
+        · {{ formatEventTime(event) }}
         <template v-if="event.venue?.name"> · {{ event.venue.name }}</template>
       </p>
       <p

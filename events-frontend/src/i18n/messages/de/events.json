@@ -43,7 +43,9 @@
     "liveTonight": "Heute Abend live",
     "soldOut": "Ausverkauft",
     "free": "Kostenlos",
-    "past": "Vorbei"
+    "past": "Vorbei",
+    "doors": "Einlass {time}",
+    "timeUnknown": "Uhrzeit nicht bekannt"
   },
   "detail": {
     "notFound": "Event nicht gefunden",

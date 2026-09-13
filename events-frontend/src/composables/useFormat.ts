@@ -1,6 +1,6 @@
 import { useI18n } from 'vue-i18n'
 
-import { formatDate, formatShortDate, humaniseEventType } from '@/lib/format'
+import { formatDate, formatShortDate, formatTime, humaniseEventType } from '@/lib/format'
 import { INTL_LOCALES, isLocale } from '@/i18n/locales'
 
 /**
@@ -25,6 +25,20 @@ export function useFormat() {
     /** `formatShortDate` bound to the active locale — the compact view's date. */
     formatShortDate: (isoDate?: string | null) =>
       formatShortDate(isoDate, isLocale(locale.value) ? INTL_LOCALES[locale.value] : 'en-GB'),
+
+    /**
+     * The time a card, row or detail header shows: the start when the venue published one, else
+     * the doors labelled as doors, else a note that no time was announced (#1383).
+     *
+     * Doors is labelled because it is a different fact — `19:00` beside a 21:00 concert reads as
+     * our mistake. The note is there because an empty slot reads the same way; on staging one event
+     * in ten has no start, and most of those are venues that never publish one.
+     */
+    formatEventTime: (event: { startTime?: string | null; doorsTime?: string | null }) => {
+      if (event.startTime) return formatTime(event.startTime)
+      if (event.doorsTime) return t('events.card.doors', { time: formatTime(event.doorsTime) })
+      return t('events.card.timeUnknown')
+    },
 
     /**
      * The display label for an event type.
