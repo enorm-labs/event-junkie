@@ -220,12 +220,18 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           NOTES: ${{ inputs.notes }}
         run: |
+          # Every part is written without a trailing newline: `gh` joins this file to the generated
+          # section with a blank line of its own, so a newline here reads as a second gap.
           : >"$RUNNER_TEMP/notes.md"
           if [ -s "$RUNNER_TEMP/highlights.md" ]; then
-            cat "$RUNNER_TEMP/highlights.md" >>"$RUNNER_TEMP/notes.md"
-            printf '\n' >>"$RUNNER_TEMP/notes.md"
+            printf '%s' "$(cat "$RUNNER_TEMP/highlights.md")" >>"$RUNNER_TEMP/notes.md"
           fi
-          if [ -n "$NOTES" ]; then printf '%s\n\n' "$NOTES" >>"$RUNNER_TEMP/notes.md"; fi
+          if [ -n "$NOTES" ]; then
+            if [ -s "$RUNNER_TEMP/notes.md" ]; then
+              printf '\n\n' >>"$RUNNER_TEMP/notes.md"
+            fi
+            printf '%s' "$NOTES" >>"$RUNNER_TEMP/notes.md"
+          fi
           if [ -s "$RUNNER_TEMP/notes.md" ]; then
             gh release create "v$VERSION" --target main --generate-notes --notes-file "$RUNNER_TEMP/notes.md"
           else
