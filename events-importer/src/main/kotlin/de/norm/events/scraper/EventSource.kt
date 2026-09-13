@@ -228,6 +228,9 @@ enum class EventSource {
     /** silent green Berlin – a Wedding cultural quarter in a 1911 crematorium: experimental concerts, exhibitions, film and talks across its halls. */
     SILENT_GREEN,
 
+    /** Sisyphos Berlin – the sprawling Rummelsburg garden club in a former dog-biscuit factory, running weekend-long techno and house parties. */
+    SISYPHOS,
+
     /** SO36 Berlin – the Oranienstraße club central to Berlin's punk and new-wave history, today mixing punk, rock, queer parties and club nights. */
     SO36,
 

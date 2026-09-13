@@ -156,6 +156,13 @@ says so.
 | `SAALCHEN`            | `GENRE`            | the venue publishes no genre field of its own                                                                                                    | —     |
 | `SILENT_GREEN`        | `PRICE`            | the venue names no prices anywhere — an event either links out to a ticket shop or says nothing                                                  | —     |
 | `SILENT_GREEN`        | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
+| `SISYPHOS`            | `EVENT_TYPE`       | the shop files every night as a ticket product with no category; each is stored as a party                                                       | —     |
+| `SISYPHOS`            | `DOORS_TIME`       | a ticket product names a day and never a time                                                                                                    | —     |
+| `SISYPHOS`            | `START_TIME`       | a ticket product names a day and never a time                                                                                                    | —     |
+| `SISYPHOS`            | `ARTISTS`          | the shop names no DJ anywhere; a night is sold under its series name                                                                             | —     |
+| `SISYPHOS`            | `GENRE`            | the shop names no musical style                                                                                                                  | —     |
+| `SISYPHOS`            | `PRICE_BOX_OFFICE` | the shop sells online only and states no door price                                                                                              | —     |
+| `SISYPHOS`            | `CANCELLATION`     | a cancelled night is removed from the shop rather than marked                                                                                    | —     |
 | `SO36`                | `PRICE_BOX_OFFICE` | the shop publishes the presale price as microdata and does not expose a box-office price structurally                                            | —     |
 | `SO36`                | `SOLD_OUT`         | the JSON-LD offer reports `SoldOut` for the external shops most events sell through, even when those shops still have tickets, so it is not read | —     |
 | `SODA`                | `DOORS_TIME`       | the Einlass info box states an age limit, not a doors time                                                                                       | —     |

@@ -1,0 +1,408 @@
+{
+    "products": [
+        {
+            "id": 11982459863304,
+            "title": "generationS 10. OKT 2026",
+            "handle": "generations-10-okt-2026",
+            "body_html": "<p><span><b>Halligalli Hits &amp; Disco Cocktail!<br><br></b>Deine Lieblingsmenschen hören andere Musik, aber du hast richtig Bock, sie mal ins Sisyphos zu bringen?<br>Kommt einfach zur generationS! <br>Zeige deinen Lieblingsort all denjenigen, denen du sonst immer nur davon erzählt.<br><br>Gewohnt verbimmelt schicken wir euch auf eine musikalische Reise quer durch alle Genres. Wir fliegen gemeinsam durchs Sisyuniversum und noch weiter.<br></span></p>",
+            "published_at": "2026-05-23T01:00:29+02:00",
+            "created_at": "2026-05-23T00:30:06+02:00",
+            "updated_at": "2026-09-14T00:04:44+02:00",
+            "vendor": "Shopyphos",
+            "product_type": "Ticket",
+            "tags": [
+                "kein-widerruf",
+                "Ticket"
+            ],
+            "variants": [
+                {
+                    "id": 57875315851528,
+                    "title": "Default Title",
+                    "option1": "Default Title",
+                    "option2": null,
+                    "option3": null,
+                    "sku": null,
+                    "requires_shipping": false,
+                    "taxable": true,
+                    "featured_image": null,
+                    "available": true,
+                    "price": "25.00",
+                    "grams": 0,
+                    "compare_at_price": null,
+                    "position": 1,
+                    "product_id": 11982459863304,
+                    "created_at": "2026-05-23T00:30:06+02:00",
+                    "updated_at": "2026-09-14T00:04:44+02:00"
+                }
+            ],
+            "images": [
+                {
+                    "id": 86593218314504,
+                    "created_at": "2026-08-31T15:56:17+02:00",
+                    "position": 1,
+                    "updated_at": "2026-08-31T15:56:21+02:00",
+                    "product_id": 11982459863304,
+                    "variant_ids": [],
+                    "src": "https://cdn.shopify.com/s/files/1/0405/6131/1898/files/generations04.okt.jpg?v=1788184581",
+                    "width": 1080,
+                    "height": 1350
+                }
+            ],
+            "options": [
+                {
+                    "name": "Title",
+                    "position": 1,
+                    "values": [
+                        "Default Title"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": 12218580402440,
+            "title": "Sauniphos - SAMSTAG",
+            "handle": "sauniphos-samstags-ticket",
+            "body_html": "<p dir=\"ltr\"><span>Der große Auftakt! Das volle Programm für Köpfe, Körper und die Sinne. Volle Sauna-Power, interaktive Workshops, Kultur und Nacht-Vibe.</span></p>\n<p dir=\"ltr\"><span>Das erwartet dich am Samstag:</span></p>\n<ul>\n<li dir=\"ltr\" role=\"presentation\">\n<span>Sauna Crews satt:</span><span> Zahlreiche Gast-Crews bespielen die Saunen mit Aufguss-Ritualen </span>\n</li>\n<li dir=\"ltr\" role=\"presentation\">\n<span>Workshops &amp; Interaktion:</span><span> Mitmach-Sessions, Bewegung, Atmung &amp; Bodywork.</span>\n</li>\n<li dir=\"ltr\" role=\"presentation\">\n<span>Kultur &amp; Highlights:</span><span> Konzerte, Performances, Naked Tea Party und DJs.</span>\n</li>\n<li dir=\"ltr\" role=\"presentation\">\n<span>Wellness &amp; Verpflegung:</span><span> Massagen, heiße Zuber, Erfrischungen von der Sisy-Bar und Leckereien aus der Sisy-Küche.</span>\n</li>\n<li dir=\"ltr\" role=\"presentation\">\n<span>FLINTA Area:</span><span>* Eigene FLINTA* Sauna in einem geschützten Bereich.</span>\n</li>\n</ul>\n<p><strong>Bitte selbst mitbringen:</strong> <br>Saunahandtuch + Badehandtuch, Bademantel, Trinkflasche, Latschen, gute Laune und was du sonst noch brauchst.</p>",
+            "published_at": "2026-09-03T19:30:49+02:00",
+            "created_at": "2026-09-03T16:35:28+02:00",
+            "updated_at": "2026-09-14T00:04:44+02:00",
+            "vendor": "Shopyphos",
+            "product_type": "Ticket",
+            "tags": [
+                "Ticket"
+            ],
+            "variants": [
+                {
+                    "id": 58601017180424,
+                    "title": "Default Title",
+                    "option1": "Default Title",
+                    "option2": null,
+                    "option3": null,
+                    "sku": null,
+                    "requires_shipping": false,
+                    "taxable": true,
+                    "featured_image": null,
+                    "available": true,
+                    "price": "77.77",
+                    "grams": 0,
+                    "compare_at_price": null,
+                    "position": 1,
+                    "product_id": 12218580402440,
+                    "created_at": "2026-09-03T16:52:33+02:00",
+                    "updated_at": "2026-09-14T00:04:44+02:00"
+                }
+            ],
+            "images": [
+                {
+                    "id": 86645729919240,
+                    "created_at": "2026-09-03T16:36:02+02:00",
+                    "position": 1,
+                    "updated_at": "2026-09-03T16:36:06+02:00",
+                    "product_id": 12218580402440,
+                    "variant_ids": [],
+                    "src": "https://cdn.shopify.com/s/files/1/0405/6131/1898/files/sauniphos2026_1.jpg?v=1788446166",
+                    "width": 1080,
+                    "height": 1350
+                }
+            ],
+            "options": [
+                {
+                    "name": "Title",
+                    "position": 1,
+                    "values": [
+                        "Default Title"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": 12218705641736,
+            "title": "Sauniphos - SONNTAG",
+            "handle": "sauniphos-sonntags-ticket",
+            "body_html": "<p>Der zweite Akt zum Herunterfahren, Genießen und Seele-Baumeln-Lassen. Gleiche Sauna-Power, aber im entspannten DeTox/ReTox-Modus: Keine Workshops, dafür sanfte Berieselung, DJs, Wohlfühl-Programme und gemütliches Zusammenkommen.</p>\n<h3>Das erwartet dich am Sonntag:</h3>\n<ul>\n<li>Volle Sauna-Action: <br>Alle Saunen geöffnet und bespielt von phantastischen Sauna Crews. Relax,</li>\n<li>Beats &amp; Berieselung: DJs, Walking Acts und visuelle Einflüsse zum Genießen und Versacken.</li>\n<li>Wellness &amp; Verpflegung: Massagen, heiße Zuber, Kulinarik aus der Sisy-Küche und Drinks von der Sisy-Bar.</li>\n<li>FLINTA Area: <br>*Eigene FLINTA* Sauna in einem geschützten Bereich. </li>\n</ul>\n<h5>\n<meta charset=\"utf-8\">\n<meta charset=\"utf-8\">\n<b id=\"docs-internal-guid-c8d43932-7fff-570e-d3fd-22443a25047a\"><span>Bitte selbst mitbringen:</span><span> </span></b>\n</h5>\n<p>Saunahandtuch + Badehandtuch, Bademantel, Trinkflasche, Latschen, gute Laune und was du sonst noch brauchst</p>",
+            "published_at": "2026-09-03T19:30:50+02:00",
+            "created_at": "2026-09-03T17:54:46+02:00",
+            "updated_at": "2026-09-14T00:04:44+02:00",
+            "vendor": "Shopyphos",
+            "product_type": "Ticket",
+            "tags": [
+                "Ticket"
+            ],
+            "variants": [
+                {
+                    "id": 58602037117192,
+                    "title": "Default Title",
+                    "option1": "Default Title",
+                    "option2": null,
+                    "option3": null,
+                    "sku": null,
+                    "requires_shipping": false,
+                    "taxable": true,
+                    "featured_image": null,
+                    "available": true,
+                    "price": "55.55",
+                    "grams": 0,
+                    "compare_at_price": null,
+                    "position": 1,
+                    "product_id": 12218705641736,
+                    "created_at": "2026-09-03T17:54:46+02:00",
+                    "updated_at": "2026-09-14T00:04:44+02:00"
+                }
+            ],
+            "images": [
+                {
+                    "id": 86646595125512,
+                    "created_at": "2026-09-03T17:55:09+02:00",
+                    "position": 1,
+                    "updated_at": "2026-09-03T17:55:13+02:00",
+                    "product_id": 12218705641736,
+                    "variant_ids": [],
+                    "src": "https://cdn.shopify.com/s/files/1/0405/6131/1898/files/sauniphos2026_2.jpg?v=1788450913",
+                    "width": 1080,
+                    "height": 1350
+                }
+            ],
+            "options": [
+                {
+                    "name": "Title",
+                    "position": 1,
+                    "values": [
+                        "Default Title"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": 12218786316552,
+            "title": "Sauniphos - SAMSTAG & SONNTAG - Double Duck",
+            "handle": "sauniphos-super-double-duck-weekend-pass-sa-so",
+            "body_html": "<h3><strong>Dieses Ticket gilt für zwei Personen.</strong></h3>\n<p>Warum entscheiden, wenn man beides haben kann? Erlebe das komplette SAUNIPHOS-Wochenende mit dem Super Duck Pass: Erst die volle Ladung Action, Workshops und Vibe am Samstag, dann das sanfte Ausklingen, Massagen und DeTox/ReTox am Sonntag.</p>\n<h3>Das Rundum-Sorglos-Paket:</h3>\n<ul>\n<li>Zugang für beide Tage (Samstag 12:00 Uhr – Sonntagmorgen 08:00 Uhr UND Sonntag 12:00 Uhr – 24:00 Uhr). </li>\n<li>Die volle Bandbreite: Workshops, Konzerte, Naked Tea Party, DJs, Walking Acts &amp; tiefste Sonntags-Entspannung.</li>\n<li>Uneingeschränkter Zugang zu allen Saunen (inkl. FLINTA* Sauna), Aufgüssen, Zubern, Massagen, Bars und der Küche.</li>\n</ul>\n<h4><br></h4>\n<h4>\n<meta charset=\"utf-8\"> <meta charset=\"utf-8\"> <b id=\"docs-internal-guid-0ea656af-7fff-35cd-6390-3c8633253e23\"><span>Bitte selbst mitbringen:</span><span> </span></b>\n</h4>\n<p>Saunahandtuch + Badehandtuch, Bademantel, Trinkflasche, Latschen.</p>",
+            "published_at": "2026-09-03T19:30:55+02:00",
+            "created_at": "2026-09-03T18:35:53+02:00",
+            "updated_at": "2026-09-14T00:04:44+02:00",
+            "vendor": "Shopyphos",
+            "product_type": "Ticket",
+            "tags": [
+                "kein-widerruf",
+                "Ticket"
+            ],
+            "variants": [
+                {
+                    "id": 58602222911752,
+                    "title": "Default Title",
+                    "option1": "Default Title",
+                    "option2": null,
+                    "option3": null,
+                    "sku": null,
+                    "requires_shipping": false,
+                    "taxable": true,
+                    "featured_image": null,
+                    "available": true,
+                    "price": "202.60",
+                    "grams": 0,
+                    "compare_at_price": null,
+                    "position": 1,
+                    "product_id": 12218786316552,
+                    "created_at": "2026-09-03T18:35:53+02:00",
+                    "updated_at": "2026-09-14T00:04:44+02:00"
+                }
+            ],
+            "images": [
+                {
+                    "id": 86775160111368,
+                    "created_at": "2026-09-08T14:16:14+02:00",
+                    "position": 1,
+                    "updated_at": "2026-09-08T14:16:17+02:00",
+                    "product_id": 12218786316552,
+                    "variant_ids": [],
+                    "src": "https://cdn.shopify.com/s/files/1/0405/6131/1898/files/Image_20260907_075631_504_7bcd8b1b-fcc6-486d-ad7d-4e10acd633ea.jpg?v=1788869777",
+                    "width": 1080,
+                    "height": 1350
+                }
+            ],
+            "options": [
+                {
+                    "name": "Title",
+                    "position": 1,
+                    "values": [
+                        "Default Title"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": 12218757808392,
+            "title": "Sauniphos - SAMSTAG & SONNTAG",
+            "handle": "super-duck",
+            "body_html": "<p>Warum entscheiden, wenn man beides haben kann? Erlebe das komplette SAUNIPHOS-Wochenende mit dem Super Duck Pass: Erst die volle Ladung Action, Workshops und Vibe am Samstag, dann das sanfte Ausklingen, Massagen und DeTox/ReTox am Sonntag.</p>\n<h3>Das Rundum-Sorglos-Paket:</h3>\n<ul>\n<li>Zugang für beide Tage (Samstag 12:00 Uhr – Sonntagmorgen 08:00 Uhr UND Sonntag 12:00 Uhr – 24:00 Uhr). </li>\n<li>Die volle Bandbreite: Workshops, Konzerte, Naked Tea Party, DJs, Walking Acts &amp; tiefste Sonntags-Entspannung.</li>\n<li>Uneingeschränkter Zugang zu allen Saunen (inkl. FLINTA* Sauna), Aufgüssen, Zubern, Massagen, Bars und der Küche.</li>\n</ul>\n<h4></h4>\n<h4>\n<meta charset=\"utf-8\">\n<meta charset=\"utf-8\">\n<b id=\"docs-internal-guid-0ea656af-7fff-35cd-6390-3c8633253e23\"><span>Bitte selbst mitbringen:</span><span> </span></b>\n</h4>\n<p>Saunahandtuch + Badehandtuch, Bademantel, Trinkflasche, Latschen.</p>",
+            "published_at": "2026-09-03T19:30:53+02:00",
+            "created_at": "2026-09-03T18:17:35+02:00",
+            "updated_at": "2026-09-14T00:04:44+02:00",
+            "vendor": "Shopyphos",
+            "product_type": "Ticket",
+            "tags": [
+                "kein-widerruf",
+                "Ticket"
+            ],
+            "variants": [
+                {
+                    "id": 58602171531528,
+                    "title": "Default Title",
+                    "option1": "Default Title",
+                    "option2": null,
+                    "option3": null,
+                    "sku": null,
+                    "requires_shipping": false,
+                    "taxable": true,
+                    "featured_image": null,
+                    "available": true,
+                    "price": "111.11",
+                    "grams": 0,
+                    "compare_at_price": null,
+                    "position": 1,
+                    "product_id": 12218757808392,
+                    "created_at": "2026-09-03T18:17:35+02:00",
+                    "updated_at": "2026-09-14T00:04:44+02:00"
+                }
+            ],
+            "images": [
+                {
+                    "id": 86775127539976,
+                    "created_at": "2026-09-08T14:14:54+02:00",
+                    "position": 1,
+                    "updated_at": "2026-09-08T14:14:56+02:00",
+                    "product_id": 12218757808392,
+                    "variant_ids": [],
+                    "src": "https://cdn.shopify.com/s/files/1/0405/6131/1898/files/Image_20260907_075631_504.jpg?v=1788869696",
+                    "width": 1080,
+                    "height": 1350
+                }
+            ],
+            "options": [
+                {
+                    "name": "Title",
+                    "position": 1,
+                    "values": [
+                        "Default Title"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": 12218720125192,
+            "title": "Sauniphos - SONNTAG - Double Duck",
+            "handle": "sauniphos-sonntag",
+            "body_html": "<h3><strong>Dieses Ticket gilt für zwei Personen.</strong></h3>\n<p>Der zweite Akt zum Herunterfahren, Genießen und Seele-Baumeln-Lassen. Gleiche Sauna-Power, aber im entspannten DeTox/ReTox-Modus: Keine Workshops, dafür sanfte Berieselung, DJs, Wohlfühl-Programme und gemütliches Zusammenkommen.</p>\n<h3>Das erwartet dich am Sonntag:</h3>\n<ul>\n<li>Volle Sauna-Action: <br>Alle Saunen geöffnet und bespielt von phantastischen Sauna Crews. Relax,</li>\n<li>Beats &amp; Berieselung: DJs, Walking Acts und visuelle Einflüsse zum Genießen und Versacken.</li>\n<li>Wellness &amp; Verpflegung: Massagen, heiße Zuber, Kulinarik aus der Sisy-Küche und Drinks von der Sisy-Bar.</li>\n<li>FLINTA Area: <br>*Eigene FLINTA* Sauna in einem geschützten Bereich. </li>\n</ul>\n<h5>\n<meta charset=\"utf-8\"> <meta charset=\"utf-8\"> <b id=\"docs-internal-guid-c8d43932-7fff-570e-d3fd-22443a25047a\"><span>Bitte selbst mitbringen:</span><span> </span></b>\n</h5>\n<p>Saunahandtuch + Badehandtuch, Bademantel, Trinkflasche, Latschen, gute Laune und was du sonst noch brauchst</p>",
+            "published_at": "2026-09-03T19:30:51+02:00",
+            "created_at": "2026-09-03T17:59:31+02:00",
+            "updated_at": "2026-09-14T00:04:44+02:00",
+            "vendor": "Shopyphos",
+            "product_type": "Ticket",
+            "tags": [
+                "kein-widerruf",
+                "Ticket"
+            ],
+            "variants": [
+                {
+                    "id": 58602102685960,
+                    "title": "Default Title",
+                    "option1": "Default Title",
+                    "option2": null,
+                    "option3": null,
+                    "sku": null,
+                    "requires_shipping": false,
+                    "taxable": true,
+                    "featured_image": null,
+                    "available": true,
+                    "price": "99.99",
+                    "grams": 0,
+                    "compare_at_price": null,
+                    "position": 1,
+                    "product_id": 12218720125192,
+                    "created_at": "2026-09-03T17:59:31+02:00",
+                    "updated_at": "2026-09-14T00:04:44+02:00"
+                }
+            ],
+            "images": [
+                {
+                    "id": 86646692774152,
+                    "created_at": "2026-09-03T18:00:30+02:00",
+                    "position": 1,
+                    "updated_at": "2026-09-03T18:00:34+02:00",
+                    "product_id": 12218720125192,
+                    "variant_ids": [],
+                    "src": "https://cdn.shopify.com/s/files/1/0405/6131/1898/files/sauniphos2026_2_9a3761f5-c0c2-4073-9fcd-7cc63b3c9208.jpg?v=1788451234",
+                    "width": 1080,
+                    "height": 1350
+                }
+            ],
+            "options": [
+                {
+                    "name": "Title",
+                    "position": 1,
+                    "values": [
+                        "Default Title"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": 12218619265288,
+            "title": "Sauniphos - SAMSTAG - Double Duck",
+            "handle": "sauniphos-1",
+            "body_html": "<h3>\n<meta charset=\"utf-8\">\n<strong>Dieses Ticket gilt für zwei Personen.</strong>\n</h3>\n<p>Der große Auftakt! Das volle Programm für Köpfe, Körper und die Sinne. Volle Sauna-Power, interaktive Workshops, Kultur und Nacht-Vibe.</p>\n<p>Das erwartet dich am Samstag:</p>\n<ul>\n<li>Sauna Crews satt: Zahlreiche Gast-Crews bespielen die Saunen mit Aufguss-Ritualen</li>\n<li>Workshops &amp; Interaktion: Mitmach-Sessions, Bewegung, Atmung &amp;amp; Bodywork.</li>\n<li>Kultur &amp; Highlights: Konzerte, Performances, Naked Tea Party und DJs.</li>\n<li>Wellness &amp; Verpflegung: Massagen, heiße Zuber, Erfrischungen von der Sisy-Bar und Leckereien aus der Sisy-Küche.</li>\n<li>FLINTA Area:* Eigene FLINTA* Sauna in einem geschützten Bereich.</li>\n</ul>\n<p><strong>Bitte selbst mitbringen:</strong><br>Saunahandtuch + Badehandtuch, Bademantel, Trinkflasche, Latschen, gute Laune und was du sonst noch brauchst.</p>",
+            "published_at": "2026-09-03T19:29:45+02:00",
+            "created_at": "2026-09-03T17:28:51+02:00",
+            "updated_at": "2026-09-14T00:04:44+02:00",
+            "vendor": "Shopyphos",
+            "product_type": "Ticket",
+            "tags": [
+                "kein-widerruf",
+                "Ticket"
+            ],
+            "variants": [
+                {
+                    "id": 58601397846280,
+                    "title": "Default Title",
+                    "option1": "Default Title",
+                    "option2": null,
+                    "option3": null,
+                    "sku": null,
+                    "requires_shipping": false,
+                    "taxable": true,
+                    "featured_image": null,
+                    "available": true,
+                    "price": "123.45",
+                    "grams": 0,
+                    "compare_at_price": null,
+                    "position": 1,
+                    "product_id": 12218619265288,
+                    "created_at": "2026-09-03T17:28:51+02:00",
+                    "updated_at": "2026-09-14T00:04:44+02:00"
+                }
+            ],
+            "images": [
+                {
+                    "id": 86646022340872,
+                    "created_at": "2026-09-03T17:30:20+02:00",
+                    "position": 1,
+                    "updated_at": "2026-09-03T17:30:24+02:00",
+                    "product_id": 12218619265288,
+                    "variant_ids": [],
+                    "src": "https://cdn.shopify.com/s/files/1/0405/6131/1898/files/sauniphos2026_1_225eac48-b402-46bb-956e-3493a0860dce.jpg?v=1788449424",
+                    "width": 1080,
+                    "height": 1350
+                }
+            ],
+            "options": [
+                {
+                    "name": "Title",
+                    "position": 1,
+                    "values": [
+                        "Default Title"
+                    ]
+                }
+            ]
+        }
+    ]
+}

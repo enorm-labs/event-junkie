@@ -68,6 +68,7 @@ import de.norm.events.scraper.rosa.ROSA_LIMITATIONS
 import de.norm.events.scraper.saalchen.SAALCHEN_LIMITATIONS
 import de.norm.events.scraper.schokoladen.SCHOKOLADEN_LIMITATIONS
 import de.norm.events.scraper.silentgreen.SILENT_GREEN_LIMITATIONS
+import de.norm.events.scraper.sisyphos.SISYPHOS_LIMITATIONS
 import de.norm.events.scraper.so36.SO36_LIMITATIONS
 import de.norm.events.scraper.soda.SODA_LIMITATIONS
 import de.norm.events.scraper.supamolly.SUPAMOLLY_LIMITATIONS
@@ -159,6 +160,7 @@ object AcceptedLimitations {
             SAALCHEN_LIMITATIONS,
             SCHOKOLADEN_LIMITATIONS,
             SILENT_GREEN_LIMITATIONS,
+            SISYPHOS_LIMITATIONS,
             SO36_LIMITATIONS,
             SODA_LIMITATIONS,
             SUPAMOLLY_LIMITATIONS,
