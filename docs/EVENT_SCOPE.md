@@ -44,7 +44,7 @@ coverage:
 | `OTHER`      |   ~3% | The genuine remainder, plus anything a venue labels `sonstiges`    | fallback                                        |
 | `READING`    |   ~2% | Literary readings, spoken word, poetry slams                       | `lesung` / `reading`                            |
 | `FESTIVAL`   |   ~1% | Multi-day or multi-stage events                                    | `festival`                                      |
-| `EXHIBITION` |   ~1% | Gallery shows and openings                                         | `ausstellung` / `exhibition` / `vernissage`     |
+| `EXHIBITION` |   ~1% | A run, opening day to closing day; the vernissage is its evening   | `ausstellung` / `exhibition` / `vernissage`     |
 | `QUIZ`       |   <1% | Pub quizzes and game nights                                        | `quiz`                                          |
 | `SCREENING`  |   <1% | Film screenings, open-air cinema, football "public viewing"        | `screening`, `public viewing`                   |
 | `CLUB_NIGHT` |   <1% | A recurring club night distinct from a one-off party               | venue-specific labels                           |
@@ -73,10 +73,11 @@ is true of the venue, and do not "tidy" one into the other.
 _(That `PARTY` and `FESTIVAL` discard artists at all is a separate and larger question. It affects far more than these
 8 rows, and it is tracked in [issue #332](https://github.com/enorm-labs/event-junkie/issues/332).)_
 
-**`EXHIBITION` means an _opening_, not a _run_.** A `vernissage` has a start time on one evening and imports
-correctly. An exhibition that runs for six weeks does not fit the model at all, because an event carries a date, not a
-date range. The type name promises more than the data delivers. That gap is the subject of the deferred decision in
-§5, not something to work around in a scraper.
+**`EXHIBITION` is a _run_.** An event carries an optional end since ADR-029, and an exhibition uses it. It is one row
+from opening day to closing day, with `end_date` set and `end_time` empty. The vernissage time is its `start_time`
+when the venue states one. A gallery that lists the show once per open day is folded by `collapseExhibitionRuns` in
+the importer, so silent green's 23 rows are one row. A festival's days are not folded: each has its own lineup
+(issue #337).
 
 ## 3. What is deliberately excluded
 
@@ -142,14 +143,14 @@ scraping**. Answer §5's first question and the importer is a short job.
 ## 5. Coverage decisions
 
 Each of these changes what the app _is_, so **none may be settled by an importer PR.** All five were decided on
-2026-08-08. The two that are still open are open on _sequencing_, not on principle.
+2026-08-08. The one that is still open is open on _sequencing_, not on principle.
 
 | Question                                                                                     | Decision                      | Blocked on       | What it costs                                                                                                            |
 | -------------------------------------------------------------------------------------------- | ----------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | **Comedy clubs?** (Comedy Café Berlin, Quatsch Comedy Club, …)                               | ✅ **Yes**                    | nothing          | Cheapest of the five. Cosmic Comedy is already imported, so this is more venues in a category that exists                |
 | **Theatres?** (Volksbühne, Schaubühne, Berliner Ensemble, …)                                 | ✅ **Yes**                    | nothing          | Low. Theater im Delphi, Heimathafen and Bar jeder Vernunft are already imported — coverage, not a new category           |
 | **Classical / orchestras?** (Konzerthaus, Philharmonie, RBB Sendesaal, Berliner Symphoniker) | ⏸ **Deferred** — not rejected | the artist model | Medium. `ArtistRole` and the genre vocabulary need extending **first**; the scraping is already solved for RBB Sendesaal |
-| **Exhibitions as first-class runs?**                                                         | ⏸ **Deferred**                | the time model   | Medium. A run of weeks needs a date range in the schema and a display decision. Openings already import fine — see §2    |
+| **Exhibitions as first-class runs?**                                                         | ✅ **Yes** — done (#337)      | nothing          | Done. ADR-029 gave the row an end; an exhibition is one row from opening to closing day — see §2                         |
 | **Sport?**                                                                                   | ❌ **No**                     | —                | Settled. Different venues, different audience, and past the point where this is a music app                              |
 
 **What the two yeses unlock.** A comedy or theatre venue can be moved out of [Blocked](EVENT_DATA_SOURCES.md) and

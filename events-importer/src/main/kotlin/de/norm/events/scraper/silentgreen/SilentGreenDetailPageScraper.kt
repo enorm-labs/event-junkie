@@ -1,5 +1,6 @@
 package de.norm.events.scraper.silentgreen
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
@@ -7,7 +8,9 @@ import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
+import java.time.LocalDate
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 /**
  * Pure HTML parser for a silent green **detail page** (`/programm/detail/<slug>`).
@@ -36,6 +39,8 @@ class SilentGreenDetailPageScraper {
             SilentGreenEventDetails(
                 doorsTime = parseLeadingTime(document, ".event-detail-time-entry"),
                 startTime = parseLeadingTime(document, ".event-detail-time-begin"),
+                runStart = parseBlockDate(document, ".event-detail-date-begin"),
+                runEnd = parseBlockDate(document, ".event-detail-date-end"),
                 description = parseDescription(document),
                 imageUrl = document.attrAt("meta[property=og:image]", "content")?.takeIf { it.startsWith("http") }
             )
@@ -57,6 +62,18 @@ class SilentGreenDetailPageScraper {
     ): LocalTime? = parseTime(document.textAt(cssQuery)?.take(HH_MM_LENGTH))
 
     /**
+     * Reads the `DD.MM.YYYY` out of one half of the date block — `"Fr. 17.07.2026 -"` or
+     * `"So. 23.08.2026"` — whose weekday and trailing dash are the venue's typography, not data.
+     */
+    private fun parseBlockDate(
+        document: Document,
+        cssQuery: String
+    ): LocalDate? =
+        BLOCK_DATE.find(document.textAt(cssQuery).orEmpty())?.value?.let {
+            runCatching { LocalDate.parse(it, BLOCK_DATE_FORMAT) }.getOrNull()
+        }
+
+    /**
      * Joins the prose paragraphs of the detail body into the description.
      *
      * The venue opens most bodies with the same `"… präsentiert"` credit line the calendar prints
@@ -74,6 +91,10 @@ class SilentGreenDetailPageScraper {
     private companion object {
         /** The detail article's prose, scoped so the page's navigation and footer stay out. */
         const val BODY_TEXT_SELECTOR = ".news-detail .ce-bodytext p"
+
+        /** The date inside a date-block cell. */
+        val BLOCK_DATE = Regex("""\d{2}\.\d{2}\.\d{4}""")
+        val BLOCK_DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
     }
 }
 
@@ -89,17 +110,31 @@ data class SilentGreenEventDetails(
     val doorsTime: LocalTime? = null,
     /** Time the show starts ("Beginn"), a fallback for a row whose time cell is empty. */
     val startTime: LocalTime? = null,
+    /** First day of the page's date block; the run's opening for an exhibition (ADR-029). */
+    val runStart: LocalDate? = null,
+    /** Last day of the page's date block; absent on a one-day page. */
+    val runEnd: LocalDate? = null,
     /** The full blurb, minus its leading credit line. */
     val description: String? = null,
     /** The event's poster, from the page's `og:image`. */
     val imageUrl: String? = null
 ) {
-    /** Returns [event] with the fields the calendar row could not supply filled in from this run's page. */
-    fun applyTo(event: ScrapedEvent): ScrapedEvent =
-        event.copy(
+    /**
+     * Returns [event] with the fields the calendar row could not supply filled in from this run's page.
+     *
+     * An exhibition also takes the page's span: the calendar lists only the days inside the scraped
+     * months, and a run that opened before them opened all the same. The days then fold into one
+     * event in [collapseExhibitionRuns]; a festival's days keep their own dates.
+     */
+    fun applyTo(event: ScrapedEvent): ScrapedEvent {
+        val run = event.eventType == EventType.EXHIBITION.name && runStart != null && runEnd != null && runEnd > runStart
+        return event.copy(
             doorsTime = event.doorsTime ?: doorsTime,
             startTime = event.startTime ?: startTime,
+            eventDate = if (run) runStart else event.eventDate,
+            endDate = if (run) runEnd else event.endDate,
             description = event.description ?: description,
             imageUrl = event.imageUrl ?: imageUrl
         )
+    }
 }

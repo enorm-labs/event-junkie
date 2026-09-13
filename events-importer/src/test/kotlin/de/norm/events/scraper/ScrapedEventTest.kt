@@ -261,4 +261,40 @@ class ScrapedEventTest {
         all.dropPastEvents(saturdayAt(3)) {} shouldBe listOf(club, timeless)
         all.dropPastEvents(saturdayAt(7)) {} shouldBe emptyList()
     }
+
+    // --- collapseExhibitionRuns (ADR-029, #337) ---
+
+    private fun day(
+        date: LocalDate,
+        type: String = "EXHIBITION",
+        page: String = "show",
+        endDate: LocalDate? = null
+    ) = scrapedEvent(eventType = type, eventDate = date, endDate = endDate).copy(sourceId = "so36:$date-$page", sourceUrl = "https://so36.com/$page")
+
+    @Test
+    fun `collapseExhibitionRuns folds the listed days of one page into a run and leaves the rest alone`() {
+        val d = LocalDate.of(2026, 8, 14)
+        val rows = listOf(day(d), day(d, type = "CONCERT", page = "gig"), day(d.plusDays(1)), day(d.plusDays(2)), day(d, page = "other"))
+
+        val folded = rows.collapseExhibitionRuns { "so36:${it.sourceUrl.substringAfterLast('/')}" }
+
+        folded.map { it.sourceId } shouldBe listOf("so36:show", "so36:$d-gig", "so36:other")
+        folded.first().eventDate shouldBe d
+        folded.first().endDate shouldBe d.plusDays(2)
+        // One listed day is a day, not a run.
+        folded.last().endDate shouldBe null
+    }
+
+    @Test
+    fun `collapseExhibitionRuns widens to a span a day already carries, and skips rows without a key`() {
+        val d = LocalDate.of(2026, 8, 14)
+        val fromPage = day(LocalDate.of(2026, 7, 17), endDate = LocalDate.of(2026, 8, 23))
+        val rows = listOf(day(d), fromPage, day(d.plusDays(1)))
+
+        val run = rows.collapseExhibitionRuns { "so36:show" }.single()
+        run.eventDate shouldBe LocalDate.of(2026, 7, 17)
+        run.endDate shouldBe LocalDate.of(2026, 8, 23)
+
+        rows.collapseExhibitionRuns { null } shouldBe rows
+    }
 }

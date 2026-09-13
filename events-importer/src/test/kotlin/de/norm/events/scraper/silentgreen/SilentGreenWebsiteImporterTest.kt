@@ -78,8 +78,9 @@ class SilentGreenWebsiteImporterTest {
             val result = importer.importEvents(entryUrl)
 
             result.shouldBeInstanceOf<ImportResult.Success>()
-            // 53 August rows + 17 September rows; October renders an empty calendar and stops the walk.
-            result.events shouldHaveSize 70
+            // 53 August rows + 17 September rows, minus the days that fold into two exhibition runs
+            // (23 → 1 and 11 → 1, ADR-029); October renders an empty calendar and stops the walk.
+            result.events shouldHaveSize 38
             coVerify(exactly = 1) { htmlFetcher.fetchDocument(entryUrl) }
             coVerify(exactly = 1) { htmlFetcher.fetchDocument(septemberUrl) }
             coVerify(exactly = 1) { htmlFetcher.fetchDocument(octoberUrl) }
@@ -95,14 +96,29 @@ class SilentGreenWebsiteImporterTest {
         }
 
     @Test
-    fun `importEvents applies a run's detail page to every day of that run`() =
+    fun `importEvents folds an exhibition's days into one run dated by its page`() =
         runTest {
             val result = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
 
+            // 23 August days, one page whose date block says "Fr. 17.07.2026 – So. 23.08.2026": one run,
+            // opening before the scraped month (ADR-029, #337).
             val exhibition = result.events.filter { it.sourceUrl == detailUrl("bjoern-melhus-lost-in-finity") }
-            exhibition shouldHaveSize 23
-            exhibition.all { it.imageUrl?.contains("csm_NEU_melhus") == true } shouldBe true
-            exhibition.all { it.description?.contains("Krisenmodus") == true } shouldBe true
+            exhibition shouldHaveSize 1
+            val run = exhibition.single()
+            run.sourceId shouldBe "silent_green:bjoern-melhus-lost-in-finity"
+            run.eventDate shouldBe LocalDate.of(2026, 7, 17)
+            run.endDate shouldBe LocalDate.of(2026, 8, 23)
+            run.endTime shouldBe null
+            run.imageUrl?.contains("csm_NEU_melhus") shouldBe true
+            run.description?.contains("Krisenmodus") shouldBe true
+
+            // A page without a date block: the listed days bound the run.
+            val islands = result.events.single { it.sourceUrl.contains("islands-of-time") }
+            islands.eventDate shouldBe LocalDate.of(2026, 8, 6)
+            islands.endDate shouldBe LocalDate.of(2026, 8, 16)
+
+            // A festival's three days keep their own dates: each has its own lineup.
+            result.events.count { it.sourceUrl.contains("pop-kultur-festival-2026") } shouldBe 3
         }
 
     @Test

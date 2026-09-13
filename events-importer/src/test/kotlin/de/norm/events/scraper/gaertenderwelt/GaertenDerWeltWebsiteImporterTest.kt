@@ -146,6 +146,46 @@ class GaertenDerWeltWebsiteImporterTest {
             result.events shouldHaveSize 0
         }
 
+    @Test
+    fun `importEvents folds the days of one exhibition slug into a run and leaves a multi-night booking apart`() =
+        runTest {
+            // The park lists an exhibition once per open day, each under its own stamp (ADR-029, #337).
+            fun row(
+                stamp: String,
+                slug: String,
+                category: String,
+                title: String
+            ) = """
+                <div class="eventWrapper"><div class="date">x</div><div class="eventInner">
+                  <div class="category">$category</div>
+                  <h3 class="media-heading"><a href="/events/veranstaltungen/detail/$stamp/$slug/" title="$title">$title</a></h3>
+                  <div class="time">9 Uhr</div><p class="textMedium">t</p>
+                </div></div>
+                """
+            val listing =
+                Jsoup.parse(
+                    """<html><body><div class="tx-events2"><div class="list">
+                    ${row("2026-09-01_0900", "zwischen-himmel-und-erde", "Ausstellungen", "Zwischen Himmel und Erde: Ausstellung")}
+                    ${row("2026-09-02_0900", "zwischen-himmel-und-erde", "Ausstellungen", "Zwischen Himmel und Erde: Ausstellung")}
+                    ${row("2026-09-13_0900", "zwischen-himmel-und-erde", "Ausstellungen", "Zwischen Himmel und Erde: Ausstellung")}
+                    ${row("2026-09-05_2100", "drohnenshow", "Konzerte", "Drohnenshow")}
+                    ${row("2026-09-06_2100", "drohnenshow", "Konzerte", "Drohnenshow")}
+                    </div></div></body></html>""",
+                    ENTRY_URL
+                )
+            coEvery { htmlFetcher.fetchDocument(ENTRY_URL) } returns listing
+
+            val result = importer.importEvents(ENTRY_URL).shouldBeInstanceOf<ImportResult.Success>()
+
+            val run = result.events.single { it.eventType == "EXHIBITION" }
+            run.sourceId shouldBe "gaerten_der_welt:zwischen-himmel-und-erde"
+            run.eventDate shouldBe LocalDate.of(2026, 9, 1)
+            run.endDate shouldBe LocalDate.of(2026, 9, 13)
+            run.startTime shouldBe LocalTime.of(9, 0)
+            // A drone show over two nights shares a slug and keeps both nights: only exhibitions fold.
+            result.events.count { it.title == "Drohnenshow" } shouldBe 2
+        }
+
     private companion object {
         private const val ENTRY_URL = "https://www.gaertenderwelt.de/events/veranstaltungen/"
         private const val PAGE2_URL = "https://www.gaertenderwelt.de/events/veranstaltungen/page2/"

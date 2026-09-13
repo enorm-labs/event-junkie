@@ -3,6 +3,7 @@ package de.norm.events.scraper.gaertenderwelt
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.collapseExhibitionRuns
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
@@ -120,7 +121,9 @@ fun cleanGaertenDerWeltTitle(title: String): String {
 data class GaertenDerWeltEventPath(
     val date: LocalDate,
     val startTime: LocalTime?,
-    val identity: String
+    val identity: String,
+    /** The stamp-less `<slug>`: what the days of one exhibition share (#337). */
+    val slug: String
 )
 
 /**
@@ -138,6 +141,8 @@ data class GaertenDerWeltEventPath(
  *
  * The slug alone is *not* the identity: the park reuses one slug across every date of a recurring
  * event (`fuehrung-durch-die-gaerten-der-welt` runs monthly), so the stamp is what separates them.
+ * The one exception is an exhibition, which the park also lists once per open day under one slug
+ * and which is one run, not thirteen openings — [collapseExhibitionRuns] folds those on the slug.
  * The flip side is that a rescheduled event changes stamp and therefore `sourceId` — the old row
  * is cleaned up as stale and the new date inserted, which is the correct outcome for what is
  * genuinely a different date.
@@ -145,7 +150,7 @@ data class GaertenDerWeltEventPath(
 fun parseEventPath(sourceUrl: String): GaertenDerWeltEventPath? =
     EVENT_PATH_PATTERN.find(URI(sourceUrl).path)?.destructured?.let { (stamp, time, slug) ->
         parseIsoDate(stamp)?.let { date ->
-            GaertenDerWeltEventPath(date = date, startTime = parseTime(time, STAMP_TIME_FORMATTER), identity = "${stamp}_$time/$slug")
+            GaertenDerWeltEventPath(date = date, startTime = parseTime(time, STAMP_TIME_FORMATTER), identity = "${stamp}_$time/$slug", slug = slug)
         }
     }
 

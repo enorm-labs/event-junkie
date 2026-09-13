@@ -24,9 +24,9 @@ import java.time.YearMonth
  * The page renders each open day as an `.eventList-day` block of `.eventList-event` rows, and a
  * **run appears once per day it is open**: the August page holds 53 rows for 19 events, 23 of them
  * one exhibition. Every row is emitted as its own dated event — that is what the venue publishes
- * for that day, and the model has one date per event, so a run cannot be stored as a range. The
- * duplicate detail fetches this would otherwise cause are de-duplicated by
- * [SilentGreenWebsiteImporter].
+ * for that day. [SilentGreenWebsiteImporter] fetches each detail page once and folds an
+ * exhibition's days into one run dated by the page's span (ADR-029, #337); a festival's days keep
+ * their own dates, since each has its own lineup.
  *
  * The rendered date is year-less (`"Sa 01.08."`), so the row supplies the day and month and the
  * page's own `.current-month` heading (`"August 2026"`) supplies the year. A page whose heading
@@ -171,7 +171,7 @@ class SilentGreenMonthPageScraper {
      * Combined with the date it forms the `sourceId`, because the URL alone is shared by every day
      * of a multi-day run.
      */
-    private fun detailSlug(url: String): String = URI(url).path.trimEnd('/').substringAfterLast('/')
+    private fun detailSlug(url: String): String = silentGreenDetailSlug(url)
 
     private companion object {
         /** One calendar row, scoped to a day block so nothing else on the page can match. */
@@ -196,3 +196,6 @@ class SilentGreenMonthPageScraper {
         const val NON_BREAKING_SPACE = '\u00A0'
     }
 }
+
+/** The `<slug>` of a `/programm/detail/<slug>` URL, which is a run's identity across its days. */
+internal fun silentGreenDetailSlug(url: String): String = URI(url).path.trimEnd('/').substringAfterLast('/')
