@@ -52,6 +52,8 @@ Run by CI, by the commit hook, or by `/verify`. Each fails a build.
 | `version.sh`                                       | The one place that knows what version this commit is; `gradle.properties` is the source of truth                                           | `release.yml`, `cut-release.yml`, both build workflows, hook `version-consistency` |
 | `version-test.sh`                                  | Snapshot versions ORDER, asserted against Helm's own solver — a format check would not catch #455                                          | `validate-chart.yml`, `validate-scripts.yml`, `/verify`                            |
 | `version-deserved-test.sh`                         | Asserts what `version.sh deserved` decides: the number the commits since the last release earn                                             | `validate-scripts.yml`                                                             |
+| `release-highlights.sh`                            | The summary on top of a release's notes: the few changes a visitor would notice, breaking first                                            | `cut-release.yml`                                                                  |
+| `release-highlights-test.sh`                       | Asserts what `release-highlights.sh` summarises, and what it leaves to the label categories                                                | `validate-scripts.yml`                                                             |
 
 ## Tools
 
