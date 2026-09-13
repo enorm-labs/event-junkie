@@ -8,7 +8,8 @@ import { eventLabel, formatPrice, formatTime, isPastEvent, todayIso } from '@/li
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
-import { CARD_CLASS } from '@/lib/utils'
+import { CARD_CLASS, CARD_POSTER_CLASS } from '@/lib/utils'
+import { useViewportFocus } from '@/composables/useViewportFocus'
 
 const props = withDefaults(
   defineProps<{
@@ -65,6 +66,9 @@ const taxonomy = computed(() => [eventType.value, ...(props.event.genreTags ?? [
 const localePath = useLocalePath()
 
 const { t } = useI18n()
+
+// Reveals the poster while the card passes the middle of a touch screen, where `:hover` is dead.
+const { el: posterEl, focused: posterFocused } = useViewportFocus()
 </script>
 
 <template>
@@ -72,21 +76,23 @@ const { t } = useI18n()
     :to="localePath(`/events/${event.slug}`)"
     :class="CARD_CLASS"
   >
-    <!--
-      `sizes` describes the real slot: a `max-w-5xl` grid is one column below `sm` and two above it,
-      so a card is the viewport minus gutters, then about 474 px. A wrong value silently downloads
-      the wrong file.
-    -->
-    <CachedImage
-      v-if="event.imageUrl"
-      :src="event.imageUrl"
-      :sources="event.imageSources"
-      :alt="event.title ?? ''"
-      aspect="aspect-[3/2]"
-      sizes="(min-width: 640px) 474px, calc(100vw - 2rem)"
-      img-class="grayscale transition duration-300 group-hover:grayscale-0"
-    />
-    <EventPoster v-else :title="event.title" />
+    <div ref="posterEl" :data-focus="posterFocused || undefined" :class="CARD_POSTER_CLASS">
+      <!--
+        `sizes` describes the real slot: a `max-w-5xl` grid is one column below `sm` and two above
+        it, so a card is the whole viewport, then about 474 px. A wrong value silently downloads the
+        wrong file.
+      -->
+      <CachedImage
+        v-if="event.imageUrl"
+        :src="event.imageUrl"
+        :sources="event.imageSources"
+        :alt="event.title ?? ''"
+        aspect="aspect-[3/2]"
+        sizes="(min-width: 640px) 474px, 100vw"
+        img-class="grayscale transition duration-300 group-hover:grayscale-0 group-data-focus/poster:grayscale-0"
+      />
+      <EventPoster v-else :title="event.title" />
+    </div>
     <div class="min-w-0 space-y-1">
       <div class="flex min-w-0 items-center gap-2">
           <span v-if="isLive" class="relative flex size-2 shrink-0">

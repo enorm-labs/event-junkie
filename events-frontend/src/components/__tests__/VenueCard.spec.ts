@@ -41,6 +41,28 @@ describe('VenueCard', () => {
     expect(wrapper.get('[aria-hidden="true"]').text()).toBe('Lido')
   })
 
+  it('bleeds the poster to both edges below sm, like the event card', () => {
+    // Same shell, same reasoning as `EventCard.spec.ts`: `-mx-4` cancels the page's `p-4` on a
+    // phone, and the card's text keeps the inset.
+    const wrapper = mount(VenueCard, { props: { venue }, global: { stubs } })
+
+    const poster = wrapper.get('picture').element.parentElement
+    expect(poster?.className).toContain('-mx-4')
+    expect(poster?.className).toContain('sm:mx-0')
+    expect(poster?.className).toContain('group/poster')
+  })
+
+  it('bleeds a title poster the same way', () => {
+    const wrapper = mount(VenueCard, {
+      props: { venue: { ...venue, imageUrl: null, imageSources: [] } },
+      global: { stubs },
+    })
+
+    const poster = wrapper.get('[aria-hidden="true"]').element.parentElement?.parentElement
+    expect(poster?.className).toContain('group/poster')
+    expect(poster?.className).toContain('-mx-4')
+  })
+
   it('links to the venue detail route', () => {
     const wrapper = mount(VenueCard, { props: { venue }, global: { stubs } })
     // Locale-prefixed: every in-app link carries the active locale (ADR-013 §Decision 2).
