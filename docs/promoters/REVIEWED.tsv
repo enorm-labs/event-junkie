@@ -2,7 +2,7 @@ stored_name	slug	kind	website	name	description_de	description_en	events	note
 11freunde	11freunde	media	https://www.11freunde.de/	11FREUNDE			2	football magazine; pub quiz
 36 Concerts	36-concerts	promoter	https://www.36-tickets.de/	36 Concerts	36 Concerts ist die Hausagentur von Lido, Astra Kulturhaus und Bi Nuu in Kreuzberg, bis 2020 unter dem Namen Direct Concerts. Sie bucht vor allem Indie, Rock und Alternative für die eigenen Clubs und daneben für Festsaal Kreuzberg und Urban Spree.	36 Concerts is the in-house agency of Lido, Astra Kulturhaus and Bi Nuu in Kreuzberg, known as Direct Concerts until 2020. It books mostly indie, rock and alternative for its own clubs, and also for Festsaal Kreuzberg and Urban Spree.	27	in-house agency of Lido, Astra, Bi Nuu
 7synths Party	7synths-party	party		7synths Party			1	Badehaus party series
-Act	act	junk		Act			1	one word, Gretchen; deleted by V026
+Act	act-agency	promoter	https://theactagency.com/	ACT Agency			1	Gretchen credits "ACT agency" with a link to the booking agency; the strip left "Act" and V026 dropped it (#1361); V032 renames it
 AEG Presents	aeg-presents	promoter	https://www.aegpresents.com/	AEG Presents			1	
 Afro Haus	afro-haus	promoter	https://www.afrohaus.de/	Afro Haus			5	site writes AFRO HAUS
 Agave	agave	unverified		Agave			1	Metropol, one event
@@ -40,7 +40,7 @@ Brighter	brighter	promoter		Brighter			1	Brighter Agency, Schokoladen co-billing
 Bum	bum	junk		Bum			1	Badehaus; deleted by V026
 ByteFM	bytefm	media	https://www.byte.fm/	ByteFM	"ByteFM ist ein Internetradio aus Hamburg „für gute Musik"", werbefrei und getragen von seinen Hörer:innen. Der Sender präsentiert Konzerte, in Berlin vor allem im Columbia Theater."	"ByteFM is an internet radio station from Hamburg ""for good music"", ad-free and funded by its listeners. It presents concerts, in Berlin mostly at Columbia Theater."	6	
 Casius	casius	unverified		Casius			1	Privatclub
-Channel	channel	junk		Channel			1	Hole 44; deleted by V026
+Channel	channel-music	promoter	https://channelmusic.de/	Channel Music	Channel Music betreibt die Gastronomie in Huxleys Neue Welt, Metropol, Quasimodo und Hole 44 und veranstaltet dort gelegentlich selbst.	Channel Music runs the catering at Huxleys Neue Welt, Metropol, Quasimodo and Hole 44, and occasionally promotes shows there itself.	1	Hole 44 credits "Channel Music presents"; the strip left "Channel" and V026 dropped it (#1361); V032 renames it
 Chicha	chicha	party		Chicha			2	
 Chimperator	chimperator	promoter	https://chimperator.de/	Chimperator	Chimperator ist ein Label, eine Talentschmiede und ein Live-Veranstalter aus Stuttgart, Heimat von Die Orsons, Maeckes, Tua, Teesy und OG Keemo. In Berlin laufen die Shows unter anderem im Bi Nuu.	Chimperator is a label, talent house and live promoter from Stuttgart, home to Die Orsons, Maeckes, Tua, Teesy and OG Keemo. Its Berlin shows run at Bi Nuu, among others.	1	
 Chnsw!	chnsw	party		CHNSW!			4	source writes CHNSW!
@@ -110,7 +110,7 @@ Hollywood Tramp	hollywood-tramp	party	https://www.hollywoodtramp.de/	Hollywood T
 Ibb	ibb-booking	promoter	https://www.ibb-booking.com/	IBB Booking			2	same site as Boldt Berlin
 Ilija Gabrilenko	ilija-gabrilenko	promoter		Ilija Gabrilenko			1	person, Urban Spree
 Impericon	impericon	promoter	https://www.impericon.com/	Impericon			1	
-Itd	itd	junk		Itd			1	Hole 44; deleted by V026
+Itd	itd-events	promoter		ITD Events			1	Hole 44 credits "ITD Events presents" (drag); no site found; the strip left "Itd" and V026 dropped it (#1361); V032 renames it
 Jb Freie	jb-freie-musik	promoter	https://www.jb-store.de/	JB Freie Musik			1	Joel Brandenstein's company (Ratingen); Huxleys credit read as Jb Freie until #307
 Jm Audio	jm-audio-entertainment	promoter		JM Audio Entertainment			1	Huxleys credit read as Jm Audio until #307
 Join	join	unverified		Join			2	Max-Schmeling-Halle, rap
@@ -139,7 +139,7 @@ Landstreicher	landstreicher-konzerte	promoter	https://landstreicher-konzerte.de/
 Lars Berndt	lars-berndt-events	promoter	https://www.lb-events.de/	Lars Berndt Events			3	Bochum
 LassMaMachen	lassmamachen	unverified		LassMaMachen			1	
 le petit signal	le-petit-signal	promoter		le petit signal			1	Schokoladen collective
-Leasing&rent	leasing-rent	junk		Leasing&rent			1	deleted by V026
+Leasing&rent	leasing-rent-ou	unverified		LEASING&RENT OÜ			1	Privatclub names the Estonian company as local promoter of a Rita Dakota date; a legal name with no site; V032 renames it (#1361)
 Levanto	levanto	unverified		Levanto			1	Cosmic Comedy
 Lido Berlin	lido-berlin	venue	https://www.lido-berlin.de/	Lido Berlin			1	
 Light The Blind	light-the-blind	artist	https://www.lighttheblind.de/	Light The Blind			1	band
@@ -164,7 +164,7 @@ Medibüro Berlin	mediburo-berlin	sponsor	https://medibuero.de/	Medibüro Berlin	
 Messed!Up Magazine	messed-up-magazine	media	https://www.messedmag.com/	Messed!Up Magazine			2	
 Metal Hammer	metal-hammer	media	https://www.metal-hammer.de/	Metal Hammer			1	
 Metal.de	metal-de	media	https://www.metal.de/	metal.de			1	site lowercase
-Mfp	mfp	junk		Mfp			1	deleted by V026
+Mfp	mfp-concerts	promoter	https://mfpconcerts.com/	MFP Concerts	MFP Concerts ist eine Konzert- und Bookingagentur aus Reichertshofen, seit über 20 Jahren auf Tourneen nationaler und internationaler Acts in Deutschland und Europa, von Rock bis Jazz.	MFP Concerts is a concert and booking agency from Reichertshofen, touring national and international acts across Germany and Europe for over 20 years, from rock to jazz.	1	Lido credits "MFP Concerts" with a link; the strip left "Mfp" and V026 dropped it (#1361); V032 renames it
 Michael Koch	michael-koch	artist		Michael Koch			1	
 Milchmädchen Musikkultur	milchmadchen-musikkultur	promoter		Milchmädchen Musikkultur			1	
 Milchsalon	milchsalon	promoter	https://milchsalon.de/	Milchsalon			1	
@@ -239,7 +239,7 @@ Sonic Seducer	sonic-seducer	media	https://sonic-seducer.de/	Sonic Seducer			1
 Soulgigs	soulgigs	promoter		Soulgigs			1	site not found
 Sozialo	sozialo	party		Sozialo			2	sozialo.de for sale
 Spanisch in Berlin - Eventos	spanisch-in-berlin-eventos	promoter		Spanisch in Berlin - Eventos			1	
-Spirit	spirit	junk		Spirit			1	deleted by V026
+Spirit	spirit-events	promoter	https://spirittickets.de/	Spirit Events	Spirit Events aus Magdeburg veranstaltet Punk-, Oi!- und Ska-Konzerte, in Berlin etwa OXO 86 in Huxleys Neue Welt.	Spirit Events from Magdeburg promotes punk, Oi! and ska shows, in Berlin for instance OXO 86 at Huxleys Neue Welt.	1	Huxleys credits "Spirit Events presents"; the strip left "Spirit" and V026 dropped it (#1361); V032 renames it
 Spokes	spokes	unverified		Spokes			1	Cosmic Comedy
 Stand in Front	stand-in-front	promoter	https://standinfront.de/	Stand in Front	Stand in Front ist eine Berliner Management- und Tourneeagentur für deutschen Rap, mit Künstlern wie Prinz Pi, Genetikk und Omar76. Die Berliner Shows laufen in der Columbiahalle und im Hole 44.	Stand in Front is a Berlin management and touring company for German rap, with acts such as Prinz Pi, Genetikk and Omar76. Its Berlin shows run at the Columbiahalle and Hole 44.	6	
 Starving Artist	starving-artist	unverified		Starving Artist			1	

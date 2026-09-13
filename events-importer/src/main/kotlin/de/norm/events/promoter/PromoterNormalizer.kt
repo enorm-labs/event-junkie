@@ -1,7 +1,6 @@
 package de.norm.events.promoter
 
 import de.norm.events.common.deshoutWord
-import de.norm.events.common.isShortInitialism
 
 // Promoter-name canonicalization for the scraper pipeline.
 //
@@ -25,9 +24,9 @@ import de.norm.events.common.isShortInitialism
 //      distinct promoters.
 //
 // At least one word is always kept, and stripping never leaves a residue nobody would search for:
-// "Records" keeps its single word, "36 Concerts" does not collapse to the bare number "36", and
-// "HB Music" does not collapse to the bare initialism "HB". That last residue is also kept in its
-// capitals rather than de-shouted to "Hb", which is what the strip-then-de-shout order used to do.
+// "Records" keeps its single word, "36 Concerts" does not collapse to "36", and "HB Music" and
+// "MFP Concerts" keep their descriptor and their capitals (#1361). A legal form still comes off
+// an initialism ("KKT GmbH" is "KKT"): it is a suffix, not part of the name.
 //
 // Accepted: a *leading* descriptor is not stripped, so "Konzertbüro Schoneberg" does not merge with
 // "Schoneberg Konzerte" without an explicit correction-map entry. Artists are deliberately not
@@ -57,13 +56,13 @@ fun canonicalPromoterName(raw: String): String {
     // Drop the trailing run of legal-form / descriptor / connector tokens, but always keep a
     // usable name: stripping "Concerts" off "36 Concerts" would leave the bare number "36", and
     // stripping "Music" off "HB Music" the bare initialism "HB".
-    while (tokens.size > 1 && tokens.last().isStrippableTrailingWord() && tokens.dropLast(1).isUsableName()) {
+    while (tokens.size > 1 && tokens.last().isStrippableTrailingWord() && tokens.dropLast(1).isUsableNameWithout(tokens.last())) {
         tokens.removeAt(tokens.lastIndex)
     }
 
     // The initialism the guard above kept a descriptor for is an initialism, so it keeps its
     // capitals ("HB Music", not "Hb Music"). Every other token de-shouts as usual.
-    val keepFirst = tokens.first().isShortInitialism() && tokens.drop(1).all { it.isStrippableTrailingWord() }
+    val keepFirst = tokens.first().isLoneInitialism() && tokens.drop(1).all { it.isStrippableTrailingWord() }
     val canonical =
         tokens
             .mapIndexed { index, token -> if (index == 0 && keepFirst) token else token.deshoutWord() }
@@ -72,8 +71,17 @@ fun canonicalPromoterName(raw: String): String {
     return NAME_CORRECTIONS[canonical.normalizedKey()] ?: canonical
 }
 
-/** Whether these tokens still name something: a letter-bearing word that is not a lone initialism. */
-private fun List<String>.isUsableName(): Boolean = any { word -> word.any(Char::isLetter) } && !(size == 1 && first().isShortInitialism())
+/**
+ * Whether these tokens still name something once [stripped] comes off: a letter-bearing word, and
+ * not a lone initialism left by a descriptor. A legal form leaves the initialism alone.
+ */
+private fun List<String>.isUsableNameWithout(stripped: String): Boolean =
+    any { word -> word.any(Char::isLetter) } && !(size == 1 && first().isLoneInitialism() && !stripped.isLegalForm())
+
+/** Up to three capitals and nothing else: "HB", "MFP", "ITD" — an initialism a descriptor belongs to. */
+private fun String.isLoneInitialism(): Boolean = length <= LONE_INITIALISM_MAX_LEN && all(Char::isLetter) && none(Char::isLowerCase)
+
+private const val LONE_INITIALISM_MAX_LEN = 3
 
 /**
  * Whether [raw] is not a real promoter but something a source dropped into the promoter slot.
@@ -81,9 +89,9 @@ private fun List<String>.isUsableName(): Boolean = any { word -> word.any(Char::
  * Three shapes, each seen on staging (#1318): a name that, once a trailing parenthetical is
  * dropped, consists *entirely* of legal-form and descriptor words ([STRIP_WORDS]) or punctuation
  * ("Event.", "Konzerts GmbH"); a lone token of one or two letters ("Ar", "Qu"), which nobody
- * searches for — three letters are not enough to tell "Itd" from "KKT", so those go by name; and
- * a name on [NON_PROMOTER_NAMES]. Runs before [canonicalPromoterName], which always keeps one
- * word and so cannot drop these itself.
+ * searches for; and a name on [NON_PROMOTER_NAMES]. Runs before [canonicalPromoterName], which
+ * always keeps one word and so cannot drop these itself. It reads the raw credit, so a promoter
+ * whose descriptor the strip takes ("MFP Concerts") is judged by its whole name (#1361).
  */
 fun isNonPromoterName(raw: String): Boolean {
     val tokens =
@@ -92,10 +100,13 @@ fun isNonPromoterName(raw: String): Boolean {
             .replace(TRAILING_PAREN_REGEX, "")
             .split(WHITESPACE_REGEX)
             .filter { it.isNotBlank() }
+    // The list is keyed on the name without its presenter verb, so a credit that adds one
+    // ("… präsentieren:") still matches.
+    val named = tokens.dropLastWhile { it.isStrippableTrailingWord() }.ifEmpty { tokens }
     return tokens.isEmpty() ||
         tokens.all { it.isStrippableTrailingWord() } ||
         tokens.singleOrNull()?.isTinyToken() == true ||
-        tokens.joinToString(" ").normalizedKey() in NON_PROMOTER_NAMES
+        named.joinToString(" ").normalizedKey() in NON_PROMOTER_NAMES
 }
 
 /** One or two letters and nothing else: a fragment, not a name ("Ar", "Qu"). */
@@ -110,6 +121,8 @@ private fun String.isStrippableTrailingWord(): Boolean {
     return key.isEmpty() || key in STRIP_WORDS
 }
 
+private fun String.isLegalForm(): Boolean = lowercase().replace(NON_WORD_REGEX, "") in LEGAL_FORMS
+
 private val WHITESPACE_REGEX = Regex("""\s+""")
 
 /** A trailing parenthetical annotation (" (wf)", " (GSA)") appended to a promoter name. */
@@ -123,9 +136,8 @@ private val NON_WORD_REGEX = Regex("""[^a-z0-9äöüß]""")
  * generic promoter descriptors. Kept intentionally tight to limit accidental merges;
  * extend it as new venues surface new descriptor conventions.
  */
-private val STRIP_WORDS: Set<String> =
+private val LEGAL_FORMS: Set<String> =
     setOf(
-        // Legal forms
         "gmbh",
         "mbh",
         "ug",
@@ -139,68 +151,69 @@ private val STRIP_WORDS: Set<String> =
         "ltd",
         "llc",
         "inc",
-        "co",
-        // Generic promoter descriptors
-        "concert",
-        "concerts",
-        "konzert",
-        "konzerte",
-        "music",
-        "musik",
-        "events",
-        "event",
-        "booking",
-        "agency",
-        "agentur",
-        "promotion",
-        "promotions",
-        "entertainment",
-        "live",
-        "records",
-        "production",
-        "productions",
-        // Longer German forms that staging showed splitting one promoter into two rows (#328).
-        // "Radio France International" is why "international" is not here: it would become
-        // "Radio France", which is a different broadcaster.
-        "veranstaltungs",
-        "veranstaltungsgmbh",
-        "konzertproduktionen",
-        "kulturproduktionen",
-        "konzertagentur",
-        "konzertdirektion",
-        "einzelunternehmer",
-        // Presenter *verbs* a promoter appends to its own name when it heads a billing
-        // ("porcupine records & little league shows prsnt:"). Punctuation is stripped before the
-        // lookup, so the trailing colon is already handled.
-        //
-        // The plain English "presents" is deliberately **absent**: it is a brand word as often as a
-        // verb — "AEG Presents" is the company's actual name, and stripping it would leave "Aeg".
-        "prsnt",
-        "prsnts",
-        "presenting",
-        "präsentiert",
-        "präsentieren"
+        "co"
     )
+
+private val STRIP_WORDS: Set<String> =
+    LEGAL_FORMS +
+        setOf(
+            // Generic promoter descriptors
+            "concert",
+            "concerts",
+            "konzert",
+            "konzerte",
+            "music",
+            "musik",
+            "events",
+            "event",
+            "booking",
+            "agency",
+            "agentur",
+            "promotion",
+            "promotions",
+            "entertainment",
+            "live",
+            "records",
+            "production",
+            "productions",
+            // Longer German forms that staging showed splitting one promoter into two rows (#328).
+            // "Radio France International" is why "international" is not here: it would become
+            // "Radio France", which is a different broadcaster.
+            "veranstaltungs",
+            "veranstaltungsgmbh",
+            "konzertproduktionen",
+            "kulturproduktionen",
+            "konzertagentur",
+            "konzertdirektion",
+            "einzelunternehmer",
+            // Presenter *verbs* a promoter appends to its own name when it heads a billing
+            // ("porcupine records & little league shows prsnt:"). Punctuation is stripped before the
+            // lookup, so the trailing colon is already handled.
+            //
+            // The plain English "presents" is deliberately **absent**: it is a brand word as often as a
+            // verb — "AEG Presents" is the company's actual name, and stripping it would leave "Aeg".
+            "prsnt",
+            "prsnts",
+            "presenting",
+            "präsentiert",
+            "präsentieren"
+        )
 
 /**
  * Credits a source prints in the promoter slot that name no promoter (#1318): a bar night, a
  * series label, a show title, a curator's role, a sponsor's URL, or a word with nothing
  * behind it. Keyed like [NAME_CORRECTIONS], so casing and punctuation do not matter. A three-letter
- * fragment goes here by name because the length alone cannot separate it from "KKT" or "IBB".
+ * fragment goes here by name because the length alone cannot separate it from "KKT" or "IBB" —
+ * and only once the whole credit was read: "Mfp" was "MFP Concerts" with its descriptor
+ * stripped (#1361).
  */
 private val NON_PROMOTER_NAMES: Set<String> =
     setOf(
-        "act",
         "bum",
-        "channel",
-        "itd",
-        "mfp",
         "mup",
         "niemals",
         "nova",
         "slam",
-        "spirit",
-        "leasingrent",
         "kneipenabend",
         "sundaymatinee",
         "tagderklubkultur",
@@ -328,5 +341,14 @@ private val NAME_CORRECTIONS: Map<String, String> =
         // Lido credits "Atoc Live"; the company is ATOC Soundlab (#1343).
         "atoc" to "ATOC Soundlab",
         "atoclive" to "ATOC Soundlab",
-        "atocsoundlab" to "ATOC Soundlab"
+        "atocsoundlab" to "ATOC Soundlab",
+        // Credits whose descriptor the strip took, and #1318 then read as fragments (#1361). The
+        // initialisms keep their descriptor now; these entries restore the rows stored before.
+        "act" to "ACT Agency",
+        "actagency" to "ACT Agency",
+        "channel" to "Channel Music",
+        "itd" to "ITD Events",
+        "mfp" to "MFP Concerts",
+        "spirit" to "Spirit Events",
+        "leasingrent" to "LEASING&RENT OÜ"
     )
