@@ -124,4 +124,28 @@ class EventSearchRepositoryTest : BaseControllerTest() {
             // `sort=startTime` maps to the same expression, or a sort by time would sink the same rows.
             repository.search(filter, PageRequest.of(0, 5, Sort.by("startTime"))).ids shouldBe expected
         }
+
+    /**
+     * The window an event is listed in, once it has an end (ADR-029): the default window keeps a
+     * weekender through its last day, an explicit `from` means "starts on or after", and `on` is
+     * the Tonight case — started by that day and not over.
+     */
+    @Test
+    fun `a weekender stays in the default window until its end, and is on every day of its span`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Sisyphos", "sisyphos")
+            val friday = LocalDate.of(2030, 6, 14)
+            val weekender = insertEvent(venueId, "Weekender", "weekender", friday, endDate = friday.plusDays(3))
+            val tuesdayNight = insertEvent(venueId, "Tuesday", "tuesday", friday.plusDays(4))
+
+            // Saturday: the default window still has the weekender; "from Sunday" does not, it started Friday.
+            repositoryOn(friday.plusDays(1)).searchAll(EventFilter()) shouldBe listOf(weekender, tuesdayNight)
+            repositoryOn(friday.plusDays(1)).searchAll(EventFilter(from = friday.plusDays(2))) shouldBe listOf(tuesdayNight)
+            // Tuesday: over.
+            repositoryOn(friday.plusDays(4)).searchAll(EventFilter()) shouldBe listOf(tuesdayNight)
+
+            // Tonight on Sunday is the weekender alone; on Tuesday, the Tuesday night alone.
+            repositoryOn(friday).searchAll(EventFilter(on = friday.plusDays(2))) shouldBe listOf(weekender)
+            repositoryOn(friday).searchAll(EventFilter(on = friday.plusDays(4))) shouldBe listOf(tuesdayNight)
+        }
 }

@@ -273,4 +273,47 @@ describe('EventCard', () => {
       false,
     )
   })
+
+  // ADR-029: the end the venue stated, and the state a weekender is in on its second night.
+  it('shows the end beside the start, in the words that fit how far away it is', () => {
+    const night = mount(EventCard, {
+      props: { event: { ...event, endDate: '2026-07-01', endTime: '06:00:00' } },
+      global: { stubs },
+    })
+    expect(night.text()).toContain('20:00 – 06:00')
+
+    const weekender = mount(EventCard, {
+      props: { event: { ...event, endDate: '2026-07-03', endTime: '10:00:00' } },
+      global: { stubs },
+    })
+    // A Tuesday-to-Friday span in the fixture's June 2026.
+    expect(weekender.text()).toContain('Tue 20:00 – Fri 10:00')
+  })
+
+  it('shows a run as a date range when there is an end date but no end time', () => {
+    const run = mount(EventCard, {
+      props: { event: { ...event, startTime: null, endDate: '2026-07-31', endTime: null } },
+      global: { stubs },
+    })
+    expect(run.text()).toContain('Tue, 30 Jun 2026 – Fri, 31 Jul 2026')
+  })
+
+  it('marks a weekender in its second night as running, and live', () => {
+    // The clock is 2026-06-15; a Friday 12 June start that ends on Tuesday 16 June is mid-run.
+    const wrapper = mount(EventCard, {
+      props: { event: { ...event, eventDate: '2026-06-12', endDate: '2026-06-16', soldOut: true } },
+      global: { stubs },
+    })
+    expect(wrapper.text()).toContain('Running since Fri')
+    expect(wrapper.text()).not.toContain('Sold out')
+    expect(wrapper.text()).toContain('Live tonight')
+  })
+
+  it('treats a weekender as past only after its end date', () => {
+    const wrapper = mount(EventCard, {
+      props: { event: { ...event, eventDate: '2026-06-12', endDate: '2026-06-14' } },
+      global: { stubs },
+    })
+    expect(wrapper.text()).toContain('Past')
+  })
 })

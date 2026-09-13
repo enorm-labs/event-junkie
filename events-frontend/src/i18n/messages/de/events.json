@@ -47,7 +47,9 @@
     "doors": "Einlass {time}",
     "timeUnknown": "Uhrzeit nicht bekannt",
     "assumed": "~{time}",
-    "assumedHint": "Nicht bekannt gegeben, geschätzt nach Veranstaltungsart"
+    "assumedHint": "Nicht bekannt gegeben, geschätzt nach Veranstaltungsart",
+    "runningSince": "Läuft seit {day}",
+    "until": "Bis {time}"
   },
   "detail": {
     "notFound": "Event nicht gefunden",

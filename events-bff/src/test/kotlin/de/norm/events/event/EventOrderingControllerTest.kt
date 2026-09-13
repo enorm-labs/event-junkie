@@ -90,4 +90,15 @@ class EventOrderingControllerTest : BaseControllerTest() {
                 .jsonPath("$.content[2].assumedStartTime")
                 .isEqualTo("23:00:00")
         }
+
+    @Test
+    fun `GET events today carries a weekender on its second night`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Sisyphos", "sisyphos")
+            val yesterday = LocalDate.now().minusDays(1)
+            insertEvent(venueId, "Weekender", "weekender", yesterday, endDate = yesterday.plusDays(3))
+            insertEvent(venueId, "Last night", "last-night", yesterday)
+
+            slugsOf("/events/today", "$[*].slug") shouldBe listOf("weekender")
+        }
 }

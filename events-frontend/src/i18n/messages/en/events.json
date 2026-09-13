@@ -47,7 +47,9 @@
     "doors": "Doors {time}",
     "timeUnknown": "Time not announced",
     "assumed": "~{time}",
-    "assumedHint": "Not announced, estimated from the event type"
+    "assumedHint": "Not announced, estimated from the event type",
+    "runningSince": "Running since {day}",
+    "until": "Until {time}"
   },
   "detail": {
     "notFound": "Event not found",

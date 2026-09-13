@@ -47,6 +47,21 @@ export function formatDate(isoDate?: string | null, locale: string = 'en'): stri
   return dateFormatter(locale).format(new Date(year, month - 1, day))
 }
 
+/** The weekday alone — "Fri" / "Fr." — for the far end of a span that crosses more than one night. */
+export function formatWeekday(isoDate?: string | null, locale: string = 'en'): string {
+  if (!isoDate) return ''
+  const [year, month, day] = isoDate.split('-').map(Number)
+  if (!year || !month || !day) return isoDate
+  return new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(
+    new Date(year, month - 1, day),
+  )
+}
+
+/** Days from `from` to `to`, both ISO dates; negative when `to` is earlier. */
+export function daysBetween(from: string, to: string): number {
+  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000)
+}
+
 /**
  * The same date without the year — "Fri 12 Jun" / "Fr., 12. Juni" — for the compact view.
  *
@@ -142,9 +157,16 @@ export function addDays(isoDate: string, days: number): string {
 }
 
 /**
- * Whether an event has happened. Today counts as upcoming, matching the importer's
- * `dropPastEvents` and the BFF's `event_date >= today`; one function keeps the three agreeing.
+ * Whether an event is over. It ends on `endDate` when the venue stated one, else on its date, and
+ * today counts as not over — matching the importer's `dropPastEvents` and the BFF's default window
+ * on `COALESCE(end_date, event_date)`; one function keeps the three agreeing (ADR-029).
  */
-export function isPastEvent(isoDate?: string | null): boolean {
-  return !!isoDate && isoDate < todayIso()
+export function isPastEvent(isoDate?: string | null, endDate?: string | null): boolean {
+  const ends = endDate ?? isoDate
+  return !!ends && ends < todayIso()
+}
+
+/** Whether an event started before today and is not over: a weekender in its second night. */
+export function isRunningEvent(isoDate?: string | null, endDate?: string | null): boolean {
+  return !!isoDate && isoDate < todayIso() && !isPastEvent(isoDate, endDate)
 }
