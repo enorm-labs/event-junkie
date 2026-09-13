@@ -58,6 +58,9 @@ class TempodromOverviewPageScraperTest {
         // `startDate` is "2026-09-01T20:30:00" — seconds and all.
         babyKeem.startTime shouldBe LocalTime.of(20, 30)
         babyKeem.doorsTime shouldBe LocalTime.of(18, 30)
+        // `endDate: "2026-09-01"` repeats the start date without a time, which says nothing.
+        babyKeem.endDate.shouldBeNull()
+        babyKeem.endTime.shouldBeNull()
         babyKeem.status shouldBe "SCHEDULED"
         babyKeem.soldOut shouldBe false
         babyKeem.sourceUrl shouldStartWith "https://www.tempodrom.de/event/"
@@ -88,11 +91,13 @@ class TempodromOverviewPageScraperTest {
     }
 
     @Test
-    fun `stores a multi-day run on its opening day`() {
+    fun `stores a multi-day run from its opening day to its closing day`() {
         val congress = event("berlin_salsacongress_2026_2026-08-27_2026-08-30_00")
         congress.eventDate shouldBe LocalDate.of(2026, 8, 27)
-        // The model has no end date, and a date-only start carries no time.
+        // A date-only start carries no time; the date-only `endDate` is the run's last day (ADR-029).
         congress.startTime.shouldBeNull()
+        congress.endDate shouldBe LocalDate.of(2026, 8, 30)
+        congress.endTime.shouldBeNull()
         congress.subtitle shouldBe "Jungle Vibes Edition"
     }
 

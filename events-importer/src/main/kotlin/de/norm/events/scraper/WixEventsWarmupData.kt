@@ -11,7 +11,9 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
+import java.time.temporal.ChronoUnit
 
 // Shared reader for the Wix Events payload that Wix server-side-injects into every page
 // hosting a Wix Events widget (currently Loge's /event-list, Maxxim's /partys and Colosseum's
@@ -86,29 +88,53 @@ internal object WixEventsWarmupData {
 }
 
 /**
- * Parses the Berlin-local date and start time from a Wix `scheduling.config`
- * node. The `startDate` is a UTC instant (`2026-07-17T17:00:00.000Z`) paired
- * with a `timeZoneId` (`Europe/Berlin`), so it is converted to that zone to
- * recover the wall-clock date/time (19:00, not the 17:00 UTC value). Falls back
- * to [FALLBACK_ZONE] when the zone is absent or unknown. Returns `(null, null)`
- * for a missing/unparseable `startDate` or a to-be-decided (`scheduleTbd`) event.
+ * A Wix event's span in the venue's wall-clock time: the date and start, and the end when the
+ * venue shows one. [date] is null for a missing or unparseable `startDate` or a to-be-decided
+ * (`scheduleTbd`) event.
  */
-@Suppress("ReturnCount") // Guard clauses for the missing/unparseable startDate are clearer than nesting
-internal fun parseWixSchedule(config: JsonNode): Pair<LocalDate?, LocalTime?> {
-    val startDate = config.stringOrNull("startDate") ?: return null to null
-    val instant =
-        try {
-            Instant.parse(startDate)
-        } catch (_: DateTimeParseException) {
-            return null to null
-        }
+internal data class WixSchedule(
+    val date: LocalDate?,
+    val startTime: LocalTime?,
+    val endDate: LocalDate? = null,
+    val endTime: LocalTime? = null
+)
+
+/**
+ * Parses the Berlin-local span from a Wix `scheduling.config` node. The `startDate` is a UTC
+ * instant (`2026-07-17T17:00:00.000Z`) paired with a `timeZoneId` (`Europe/Berlin`), so it is
+ * converted to that zone to recover the wall-clock date/time (19:00, not the 17:00 UTC value).
+ * Falls back to [FALLBACK_ZONE] when the zone is absent or unknown.
+ *
+ * The `endDate` is read the same way (ADR-029), and only when the venue shows it: Wix fills an
+ * end for every event, and `endDateHidden` is the venue saying it means nothing. An end before the
+ * start is a slip on the venue's side and is dropped rather than refused by the database.
+ */
+internal fun parseWixSchedule(config: JsonNode): WixSchedule {
     val zone =
         config.stringOrNull("timeZoneId")?.let { id ->
             runCatching { ZoneId.of(id) }.getOrNull()
         } ?: FALLBACK_ZONE
-    val zoned = instant.atZone(zone)
-    return zoned.toLocalDate() to zoned.toLocalTime()
+    val start = config.stringOrNull("startDate")?.let { parseWixInstant(it, zone) } ?: return WixSchedule(null, null)
+    val end =
+        config
+            .stringOrNull("endDate")
+            ?.takeUnless { config.path("endDateHidden").asBoolean(false) }
+            ?.let { parseWixInstant(it, zone) }
+            ?.takeIf { it >= start }
+    // Loge writes one end as `20:00:00.721Z`; a time on the page is minutes, so the row's is too.
+    return WixSchedule(start.toLocalDate(), start.toLocalTime(), end?.toLocalDate(), end?.toLocalTime()?.truncatedTo(ChronoUnit.MINUTES))
 }
+
+/** The wall-clock moment of a Wix UTC instant in [zone], or null when it is not one. */
+private fun parseWixInstant(
+    text: String,
+    zone: ZoneId
+): ZonedDateTime? =
+    try {
+        Instant.parse(text).atZone(zone)
+    } catch (_: DateTimeParseException) {
+        null
+    }
 
 /** Default zone for Wix schedules missing a usable `timeZoneId` — every scraped venue is in Berlin. */
 private val FALLBACK_ZONE: ZoneId = BERLIN

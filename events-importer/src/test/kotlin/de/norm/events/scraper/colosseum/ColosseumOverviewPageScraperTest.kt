@@ -54,6 +54,8 @@ class ColosseumOverviewPageScraperTest {
         funke.eventType shouldBe EventType.READING.name
         funke.eventDate shouldBe LocalDate.of(2026, 9, 13)
         funke.startTime shouldBe LocalTime.of(15, 30)
+        funke.endDate shouldBe LocalDate.of(2026, 9, 13)
+        funke.endTime shouldBe LocalTime.of(17, 0)
         funke.sourceUrl shouldBe "https://www.colosseumberlin.com/details-registrierung/cornelia-funke"
         funke.imageUrl shouldBe "https://static.wixstatic.com/media/fb623f_be9dd581db1b41dd8cfbff934388e18f~mv2.jpg"
         funke.pricePresale shouldBe BigDecimal("20.30")
@@ -157,5 +159,13 @@ class ColosseumOverviewPageScraperTest {
     fun `returns an empty list when the page has no warmup payload`() {
         val document = Jsoup.parse("<html><body></body></html>", baseUrl)
         scraper.scrape(document, baseUrl).shouldBeEmpty()
+    }
+
+    @Test
+    fun `stores no end when the venue hides it`() {
+        // Wix fills an end for every event; `endDateHidden: true` is the venue saying it means nothing (ADR-029).
+        val free = edgeCaseEvent("colosseum:eintritt-frei")
+        free.endDate.shouldBeNull()
+        free.endTime.shouldBeNull()
     }
 }

@@ -44,6 +44,9 @@ class LogeOverviewPageScraperTest {
         estamoe.eventType shouldBe EventType.CONCERT.name
         estamoe.eventDate shouldBe LocalDate.of(2026, 7, 17)
         estamoe.startTime shouldBe LocalTime.of(19, 0)
+        // `endDate: 2026-07-17T20:00:00.000Z` is 22:00 Berlin, the same evening (ADR-029).
+        estamoe.endDate shouldBe LocalDate.of(2026, 7, 17)
+        estamoe.endTime shouldBe LocalTime.of(22, 0)
         estamoe.sourceUrl shouldBe "https://www.loge-berlin.org/event-details/estamoe-daloy-furie"
         estamoe.imageUrl shouldBe "https://static.wixstatic.com/media/c8299d_5471b0b2807a43cfbebf4583469519dc~mv2.jpg"
     }
