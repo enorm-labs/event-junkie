@@ -45,7 +45,9 @@
     "free": "Kostenlos",
     "past": "Vorbei",
     "doors": "Einlass {time}",
-    "timeUnknown": "Uhrzeit nicht bekannt"
+    "timeUnknown": "Uhrzeit nicht bekannt",
+    "assumed": "~{time}",
+    "assumedHint": "Nicht bekannt gegeben, geschätzt nach Veranstaltungsart"
   },
   "detail": {
     "notFound": "Event nicht gefunden",

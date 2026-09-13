@@ -42,7 +42,9 @@ onMounted(run)
 watch(slug, run)
 
 const localePath = useLocalePath()
-const { formatDate, formatEventTime } = useFormat()
+const { formatDate, formatEventTime, eventTimeHint } = useFormat()
+// The header has room for the words behind a `~` time, where the card only has a title (#1384).
+const timeHint = computed(() => (event.value ? eventTimeHint(event.value) : null))
 
 const { t, te, locale } = useI18n()
 
@@ -128,6 +130,7 @@ useStructuredData((): JsonLd[] => {
         <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <span>{{ formatDate(event.eventDate) }}</span>
           <span>· {{ formatEventTime(event) }}</span>
+          <span v-if="timeHint">· {{ timeHint }}</span>
           <span v-if="event.venue?.name">· {{ event.venue.name }}</span>
           <!--
             The status pill is the exception the rest of #1248 flattened: a cancelled event is the

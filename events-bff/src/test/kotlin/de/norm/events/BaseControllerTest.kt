@@ -203,6 +203,7 @@ abstract class BaseControllerTest {
         subtitle: String? = null,
         eventType: String = "CONCERT",
         startTime: LocalTime? = null,
+        doorsTime: LocalTime? = null,
         pricePresale: BigDecimal? = null,
         priceBoxOffice: BigDecimal? = null,
         genre: String? = null,
@@ -213,9 +214,9 @@ abstract class BaseControllerTest {
         databaseClient
             .sql(
                 "INSERT INTO events.event " +
-                    "(venue_id, title, subtitle, slug, event_date, start_time, source_id, event_type, " +
+                    "(venue_id, title, subtitle, slug, event_date, start_time, doors_time, source_id, event_type, " +
                     "price_presale, price_box_office, genre, sold_out, free, image_url) " +
-                    "VALUES (:venueId, :title, :subtitle, :slug, :eventDate, :startTime, :sourceId, :eventType, " +
+                    "VALUES (:venueId, :title, :subtitle, :slug, :eventDate, :startTime, :doorsTime, :sourceId, :eventType, " +
                     ":pricePresale, :priceBoxOffice, :genre, :soldOut, :free, :imageUrl) " +
                     "RETURNING id"
             ).bind("venueId", venueId)
@@ -224,6 +225,7 @@ abstract class BaseControllerTest {
             .bind("slug", slug)
             .bind("eventDate", eventDate)
             .bindOrNull("startTime", startTime, LocalTime::class.java)
+            .bindOrNull("doorsTime", doorsTime, LocalTime::class.java)
             .bind("sourceId", sourceId)
             .bind("eventType", eventType)
             .bindOrNull("pricePresale", pricePresale, BigDecimal::class.java)

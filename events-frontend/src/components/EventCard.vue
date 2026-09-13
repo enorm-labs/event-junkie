@@ -27,7 +27,10 @@ const props = withDefaults(
   { as: 'h3' },
 )
 
-const { formatDate, formatEventTime, formatEventType } = useFormat()
+const { formatDate, formatEventTime, eventTimeHint, formatEventType } = useFormat()
+
+// Set only when the time shown is the BFF's guess (#1384); the card carries it as a title.
+const timeHint = computed(() => eventTimeHint(props.event))
 
 // `OTHER` is the importers' catch-all — it tells a reader nothing the card doesn't already say,
 // so it's dropped rather than spending a pill on it. Every other type earns its place.
@@ -123,7 +126,11 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
       </p>
       <p class="text-body text-muted-foreground">
         {{ formatDate(event.eventDate) }}
-        · {{ formatEventTime(event) }}
+        ·
+        <span :title="timeHint ?? undefined">
+          {{ formatEventTime(event) }}
+          <span v-if="timeHint" class="sr-only">({{ timeHint }})</span>
+        </span>
         <template v-if="event.venue?.name"> · {{ event.venue.name }}</template>
       </p>
       <p

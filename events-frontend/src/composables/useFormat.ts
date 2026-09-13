@@ -3,6 +3,13 @@ import { useI18n } from 'vue-i18n'
 import { formatDate, formatShortDate, formatTime, humaniseEventType } from '@/lib/format'
 import { INTL_LOCALES, isLocale } from '@/i18n/locales'
 
+/** The three times an event can carry, in the order a page trusts them. */
+type EventTimes = {
+  startTime?: string | null
+  doorsTime?: string | null
+  assumedStartTime?: string | null
+}
+
 /**
  * Locale-aware wrappers around the pure helpers in `lib/format.ts`.
  *
@@ -28,17 +35,27 @@ export function useFormat() {
 
     /**
      * The time a card, row or detail header shows: the start when the venue published one, else
-     * the doors labelled as doors, else a note that no time was announced (#1383).
+     * the doors labelled as doors, else the BFF's guess marked as one (`~23:00`), else a note that
+     * no time was announced (#1383, #1384).
      *
      * Doors is labelled because it is a different fact — `19:00` beside a 21:00 concert reads as
-     * our mistake. The note is there because an empty slot reads the same way; on staging one event
-     * in ten has no start, and most of those are venues that never publish one.
+     * our mistake. The guess is marked because the list sorts by it and a reader should see the
+     * same number, but never take it for the venue's word; `eventTimeHint` says so in words. The
+     * note is the last resort, for a BFF that does not send the guess yet.
      */
-    formatEventTime: (event: { startTime?: string | null; doorsTime?: string | null }) => {
+    formatEventTime: (event: EventTimes) => {
       if (event.startTime) return formatTime(event.startTime)
       if (event.doorsTime) return t('events.card.doors', { time: formatTime(event.doorsTime) })
+      if (event.assumedStartTime)
+        return t('events.card.assumed', { time: formatTime(event.assumedStartTime) })
       return t('events.card.timeUnknown')
     },
+
+    /** The words behind a `~` time, for a `title` and a screen reader; null when the time is a fact. */
+    eventTimeHint: (event: EventTimes) =>
+      !event.startTime && !event.doorsTime && event.assumedStartTime
+        ? t('events.card.assumedHint')
+        : null,
 
     /**
      * The display label for an event type.

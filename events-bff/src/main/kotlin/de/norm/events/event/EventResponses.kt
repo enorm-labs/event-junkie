@@ -40,6 +40,13 @@ data class EventSummaryResponse(
     val startTime: LocalTime?,
     @Schema(
         description =
+            "Our guess at the start, from the kind of event, when the venue published neither `startTime` nor " +
+                "`doorsTime`; null whenever either is set. The list sorts by it, and a page must show it as a guess.",
+        example = "23:00"
+    )
+    val assumedStartTime: LocalTime?,
+    @Schema(
+        description =
             "Where the poster is fetched from. A path on this origin once the environment serves cached images, " +
                 "and the venue's own URL until then (ADR-019)."
     )
@@ -100,6 +107,7 @@ data class EventSummaryResponse(
                 eventDate = entity.eventDate,
                 doorsTime = entity.doorsTime,
                 startTime = entity.startTime,
+                assumedStartTime = AssumedStartTime.forEntity(entity),
                 imageUrl = image.url,
                 imageSources = image.sources,
                 intrinsicWidth = image.intrinsicWidth,
@@ -166,6 +174,13 @@ data class EventDetailResponse(
     val doorsTime: LocalTime?,
     @Schema(description = "Time when the show/performance starts", example = "20:00")
     val startTime: LocalTime?,
+    @Schema(
+        description =
+            "Our guess at the start, from the kind of event, when the venue published neither `startTime` nor " +
+                "`doorsTime`; null whenever either is set. The list sorts by it, and a page must show it as a guess.",
+        example = "23:00"
+    )
+    val assumedStartTime: LocalTime?,
     @Schema(
         description =
             "Where the poster is fetched from. A path on this origin once the environment serves cached images, " +
@@ -252,6 +267,7 @@ data class EventDetailResponse(
                 eventDate = entity.eventDate,
                 doorsTime = entity.doorsTime,
                 startTime = entity.startTime,
+                assumedStartTime = AssumedStartTime.forEntity(entity),
                 imageUrl = image.url,
                 imageSources = image.sources,
                 intrinsicWidth = image.intrinsicWidth,

@@ -112,4 +112,17 @@ describe('EventRow', () => {
     })
     expect(neither.text()).toContain('Time not announced')
   })
+
+  it('marks an assumed start as a guess (#1384)', () => {
+    const wrapper = mount(EventRow, {
+      props: {
+        event: { ...event, startTime: null, doorsTime: null, assumedStartTime: '23:00:00' },
+      },
+      global: { stubs },
+    })
+    expect(wrapper.text()).toContain('~23:00')
+    expect(wrapper.get('[title]').attributes('title')).toBe(
+      'Not announced, estimated from the event type',
+    )
+  })
 })

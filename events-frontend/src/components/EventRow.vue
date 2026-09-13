@@ -23,7 +23,8 @@ const props = withDefaults(
   { as: 'h3' },
 )
 
-const { formatShortDate, formatEventTime, formatEventType } = useFormat()
+const { formatShortDate, formatEventTime, eventTimeHint, formatEventType } = useFormat()
+const timeHint = computed(() => eventTimeHint(props.event))
 const { t } = useI18n()
 const localePath = useLocalePath()
 
@@ -59,7 +60,11 @@ const price = computed(() => formatPrice(props.event.pricePresale, props.event.p
     <div class="flex items-baseline gap-3">
       <span class="shrink-0 text-meta text-muted-foreground tabular-nums">
         {{ formatShortDate(event.eventDate) }}
-        · {{ formatEventTime(event) }}
+        ·
+        <span :title="timeHint ?? undefined">
+          {{ formatEventTime(event) }}
+          <span v-if="timeHint" class="sr-only">({{ timeHint }})</span>
+        </span>
       </span>
       <span v-if="isLive" class="relative flex size-2 shrink-0">
         <span
