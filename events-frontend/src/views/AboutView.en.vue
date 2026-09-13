@@ -139,6 +139,19 @@ const localePath = useLocalePath()
         something about.
       </p>
       <p class="text-muted-foreground">
+        The A100 motorway extension is the most visible case: the planned stretch runs through
+        Treptow, past clubs and cultural spaces that sit on the route. Against it stands
+        <a
+          class="text-foreground underline underline-offset-4"
+          href="https://a100-wegbassen.de/"
+          rel="noopener"
+          target="_blank"
+        >
+          A100 Wegbassen</a
+        >, an alliance of clubs, neighbourhood initiatives and climate groups that demands a halt to
+        the extension and holds demos and raves to make the point. Their site is in German only.
+      </p>
+      <p class="text-muted-foreground">
         I want to give something back. If this site puts a few people in a small room they had never
         heard of, it has done its job. The big names are findable without me. The others are not.
       </p>
