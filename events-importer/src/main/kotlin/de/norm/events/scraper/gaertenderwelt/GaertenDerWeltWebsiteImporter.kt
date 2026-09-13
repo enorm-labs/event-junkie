@@ -10,6 +10,7 @@ import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.collapseExhibitionRuns
 import de.norm.events.scraper.gaertenderwelt.GaertenDerWeltWebsiteImporter.Companion.MAX_PAGES
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
@@ -33,11 +34,10 @@ import org.springframework.stereotype.Component
  *
  * **The park's participation formats are deliberately not imported** — see [isProgrammeCategory].
  *
- * **A multi-day run is stored as its opening date.** The park lists a run under one row with a date
- * range — an exhibition across two months, a drone show over three nights — and the model holds one
- * date per event. The URL stamp gives the opening unambiguously; expanding a range into one event per
- * day would invent sixty openings for a two-month exhibition and cannot be told from a genuine
- * multi-night booking.
+ * **An exhibition is one run.** The park lists it once per open day, each day under its own
+ * `YYYY-MM-DD_HHmm` stamp and all under one slug; the days fold into one event from the first listed
+ * day to the last ([collapseExhibitionRuns], ADR-029, #337). A drone show over three nights, or any
+ * other multi-night booking, keeps its nights: only `EXHIBITION` rows fold.
  *
  * @see GAERTEN_DER_WELT_LIMITATIONS for what the park does not publish.
  * @see GaertenDerWeltOverviewPageScraper for listing-page parsing, identity, date and pagination.
@@ -59,7 +59,12 @@ class GaertenDerWeltWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult {
-        val rows = collectListingRows(url)
+        // An exhibition is listed once per open day under one slug; folded first, so its page is
+        // fetched once and the run is one row (ADR-029, #337).
+        val rows =
+            collectListingRows(url).collapseExhibitionRuns { row ->
+                parseEventPath(row.sourceUrl)?.let { "${EventSource.GAERTEN_DER_WELT.sourceIdPrefix}${it.slug}" }
+            }
         val events = rows.map { enrichFromDetailPage(it) }
         logger.info { "Scraped ${events.size} Gärten der Welt event(s)" }
         return ImportResult.Success(events = events, etag = null, lastModified = null)

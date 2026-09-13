@@ -230,6 +230,36 @@ fun List<ScrapedEvent>.dropPastEvents(
     return upcoming
 }
 
+/**
+ * Folds the days of an exhibition into one run (ADR-029, #337).
+ *
+ * A gallery lists a show once per day it is open, and the page linked from every one of those
+ * days is the same. [key] names that page as the run's `sourceId` — or null for a row that is
+ * not one day of a run — and every `EXHIBITION` row sharing a key becomes one event: the earliest
+ * day's row, dated from the first listed day to the last, identified by the key alone. A row that
+ * already carries a span from its page widens the fold to it. A single listed day stays a single
+ * day with no end, and every other kind of event passes through untouched, in its place: a
+ * festival's days differ in lineup and are not folded.
+ */
+fun List<ScrapedEvent>.collapseExhibitionRuns(key: (ScrapedEvent) -> String?): List<ScrapedEvent> {
+    val runKey = { event: ScrapedEvent -> key(event)?.takeIf { event.eventType == EventType.EXHIBITION.name } }
+    val runs = mapNotNull { event -> runKey(event)?.let { it to event } }.groupBy({ it.first }, { it.second })
+    val folded = mutableSetOf<String>()
+    return mapNotNull { event ->
+        val k = runKey(event) ?: return@mapNotNull event
+        if (!folded.add(k)) return@mapNotNull null
+        val days = runs.getValue(k).sortedBy { it.eventDate }
+        val opening = days.first().eventDate
+        val closing = days.maxOf { it.endDate ?: it.eventDate }
+        days.first().copy(
+            sourceId = k,
+            eventDate = opening,
+            endDate = closing.takeIf { it > opening },
+            endTime = null
+        )
+    }
+}
+
 /** A start at or after this is a night, and gets the grace (#299). */
 private val LATE_START: LocalTime = LocalTime.of(22, 0)
 

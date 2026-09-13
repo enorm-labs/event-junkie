@@ -9,6 +9,7 @@ import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.collapseExhibitionRuns
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -27,11 +28,13 @@ import org.springframework.stereotype.Component
  *    empty calendar for any month you ask for, arbitrarily far ahead — so the walk stops at the
  *    first month with no entries, the only end-of-programme signal the site gives.
  *    [MAX_MONTH_PAGES] caps it regardless.
- * 2. **Shared detail pages.** A run is listed once per day it is open, so many rows resolve to one
+ * 2. **Shared detail pages, and runs.** A run is listed once per day it is open, so many rows resolve to one
  *    `/programm/detail/<slug>` page — 92 rows over five months for 55 distinct pages, one exhibition
  *    alone accounting for 23. Each distinct page is fetched once and applied to every day of that
  *    run ([SilentGreenEventDetails.applyTo]); a per-event fetch would re-request the same page 20+
- *    times and be serialised by the per-host politeness throttle.
+ *    times and be serialised by the per-host politeness throttle. An exhibition's days then fold
+ *    into one event spanning the page's date block ([collapseExhibitionRuns], ADR-029, #337) — the
+ *    23 rows are one row. A festival's days stay apart: each has its own lineup.
  *
  * A detail page that cannot be fetched or parsed is not fatal: those days keep their calendar data,
  * losing only the doors time, poster and blurb. Conditional requests are intentionally **not** used
@@ -72,7 +75,12 @@ class SilentGreenWebsiteImporter(
 
         val distinct = events.distinctBy { it.sourceId }
         logger.info { "Scraped ${distinct.size} silent green event(s) across ${visited.size} month page(s) from $url" }
-        return ImportResult.Success(events = enrichFromDetailPages(distinct), etag = null, lastModified = null)
+        // An exhibition's days share one page, and the page's date block is the run (ADR-029, #337).
+        val runs =
+            enrichFromDetailPages(distinct).collapseExhibitionRuns { event ->
+                "${EventSource.SILENT_GREEN.sourceIdPrefix}${silentGreenDetailSlug(event.sourceUrl)}"
+            }
+        return ImportResult.Success(events = runs, etag = null, lastModified = null)
     }
 
     /** Resolves the next-month link — the right-hand arrow of the month switcher — dropping its anchor fragment. */
