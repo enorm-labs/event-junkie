@@ -102,7 +102,7 @@ const EVENT_TYPES: Record<string, string> = {
 
 function offers(event: EventDetail, url: string): JsonLd | undefined {
   // Rule 1 above: a past event's page shows no ticket link, so this must not publish one either.
-  if (isPastEvent(event.eventDate, event.endDate)) return undefined
+  if (isPastEvent(event)) return undefined
 
   const price = event.free ? 0 : (event.pricePresale ?? event.priceBoxOffice)
   if (price == null) return undefined

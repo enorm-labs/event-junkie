@@ -41,9 +41,9 @@ const eventType = computed(() =>
     : null,
 )
 
-const isPast = computed(() => isPastEvent(props.event.eventDate, props.event.endDate))
+const isPast = computed(() => isPastEvent(props.event))
 // A weekender in its second night: started, not over (ADR-029).
-const isRunning = computed(() => isRunningEvent(props.event.eventDate, props.event.endDate))
+const isRunning = computed(() => isRunningEvent(props.event))
 
 // An event on today gets a pulsing "live" dot — it stands out in the Upcoming feed and on
 // venue/artist pages, and reinforces liveness in the Tonight feed. Self-contained, so any caller

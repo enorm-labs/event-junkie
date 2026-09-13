@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 /**
  * Optional filter criteria for the public event search. Any combination may be supplied;
@@ -129,6 +131,9 @@ class EventSearchRepository(
      * after" — that is what a visitor's earliest-date filter and the home page's Upcoming feed
      * (`from = tomorrow`) ask for, and it keeps a running event out of Upcoming while Tonight
      * carries it. [EventFilter.on] is the Tonight case: on that day, started and not over.
+     *
+     * "Not over" carries the late-night grace (#299): before 06:00, last night's event without a
+     * stated end is still on when its effective start was 22:00 or later — see [lateNightGrace].
      */
     private fun appendDateRange(
         filter: EventFilter,
@@ -136,13 +141,14 @@ class EventSearchRepository(
         params: MutableMap<String, Any>
     ) {
         filter.on?.let {
-            conditions += "e.event_date <= :on AND $EFFECTIVE_END >= :on"
+            conditions += "e.event_date <= :on AND (${notOverOn(":on", it, params)})"
             params["on"] = it
             return
         }
         if (filter.from == null && filter.to == null) {
-            conditions += "$EFFECTIVE_END >= :today"
-            params["today"] = LocalDate.now(clock)
+            val today = LocalDate.now(clock)
+            conditions += notOverOn(":today", today, params)
+            params["today"] = today
             return
         }
         filter.from?.let {
@@ -153,6 +159,27 @@ class EventSearchRepository(
             conditions += "e.event_date <= :to"
             params["to"] = it
         }
+    }
+
+    /**
+     * The rows that are not over on [day], bound as [dayParam]: their effective end is on or after
+     * it, or the late-night grace covers them.
+     *
+     * The grace is the club night's shape (#299): a `23:00` start with no stated end is not over at
+     * 00:00, it is over at 06:00. So before 06:00 on the clock, and only when [day] is the clock's
+     * own day, yesterday's events with no `end_date` and an effective start of 22:00 or later are
+     * still on. The effective start includes the #1384 slot, so a timeless club night counts. A
+     * stated end (ADR-029) is the venue's word and gets no grace either way.
+     */
+    private fun notOverOn(
+        dayParam: String,
+        day: LocalDate,
+        params: MutableMap<String, Any>
+    ): String {
+        val now = LocalDateTime.now(clock)
+        if (day != now.toLocalDate() || now.toLocalTime() >= GRACE_ENDS) return "$EFFECTIVE_END >= $dayParam"
+        params["graceDay"] = day.minusDays(1)
+        return "($EFFECTIVE_END >= $dayParam OR (e.end_date IS NULL AND e.event_date = :graceDay AND $EFFECTIVE_START >= TIME '$LATE_START'))"
     }
 
     /** Applies filters on columns of the `event` table itself (event type, venue). */
@@ -291,6 +318,12 @@ class EventSearchRepository(
     companion object {
         /** The day an event is over after: its stated end, else its date (ADR-029). */
         private const val EFFECTIVE_END = "COALESCE(e.end_date, e.event_date)"
+
+        /** An event starting at or after this is a night, and gets the grace (#299). */
+        private const val LATE_START = "22:00"
+
+        /** When last night is over for the listing (#299). Shared with the frontend's `isPastEvent`. */
+        private val GRACE_ENDS: LocalTime = LocalTime.of(6, 0)
 
         /**
          * The time an event sorts by: its start, else its doors, else the slot its kind of event

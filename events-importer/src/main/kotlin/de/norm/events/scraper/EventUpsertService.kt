@@ -25,8 +25,11 @@ import java.time.format.DateTimeFormatter
 class EventUpsertService(
     private val eventRepository: EventRepository,
     private val associationSyncService: AssociationSyncService,
-    /** Injected clock for deterministic time in tests. Defaults to system UTC clock in production. */
-    private val clock: Clock = Clock.systemUTC()
+    /**
+     * Injected clock for deterministic time in tests. Berlin in production: the containers run in
+     * UTC, and a UTC "today" dropped last night one or two hours late and out of step with the BFF (#299).
+     */
+    private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 

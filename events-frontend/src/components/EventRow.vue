@@ -29,8 +29,8 @@ const timeHint = computed(() => eventTimeHint(props.event))
 const { t } = useI18n()
 const localePath = useLocalePath()
 
-const isPast = computed(() => isPastEvent(props.event.eventDate, props.event.endDate))
-const isRunning = computed(() => isRunningEvent(props.event.eventDate, props.event.endDate))
+const isPast = computed(() => isPastEvent(props.event))
+const isRunning = computed(() => isRunningEvent(props.event))
 const isLive = computed(
   () => (Boolean(props.event.eventDate) && props.event.eventDate === todayIso()) || isRunning.value,
 )

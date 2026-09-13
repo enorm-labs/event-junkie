@@ -36,7 +36,9 @@ class EventUpsertServiceStaleCleanupTest {
     private val today = LocalDate.of(2026, 6, 15)
     private val tomorrow = today.plusDays(1)
     private val yesterday = today.minusDays(1)
-    private val fixedClock: Clock = Clock.fixed(today.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
+
+    // Noon: before 06:00 the late-night grace (#299) would keep yesterday's timeless rows, which is not what these test.
+    private val fixedClock: Clock = Clock.fixed(today.atTime(12, 0).toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
 
     private lateinit var service: EventUpsertService
 

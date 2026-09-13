@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ServerWebExchange
+import java.time.Clock
 import java.time.LocalDate
 
 /**
@@ -32,7 +33,8 @@ class EventController(
     private val eventService: EventService,
     /** `bff.events.served` (#415). Counts events handed out, not requests — see [BffMetrics]. */
     private val metrics: BffMetrics,
-    private val cache: ResponseCache
+    private val cache: ResponseCache,
+    private val clock: Clock
 ) {
     @GetMapping
     @Operation(summary = "Search events with optional filters and pagination")
@@ -68,7 +70,7 @@ class EventController(
         // Keyed on the date rather than left to the TTL, so the answer changes at midnight instead
         // of up to a TTL later. This is the one endpoint whose correctness depends on the calendar.
         return cache
-            .get(TodayKey(LocalDate.now())) { eventService.today() }
+            .get(TodayKey(LocalDate.now(clock))) { eventService.today() }
             .also { metrics.recordServed(BffMetrics.ENDPOINT_TODAY, it.size) }
     }
 
