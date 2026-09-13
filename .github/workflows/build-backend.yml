@@ -324,13 +324,19 @@ jobs:
             echo "plus per-module floors and runs earlier, so it would have failed first."
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # Upload each module's SARIF report separately with a unique category. GitHub Code Scanning
-      # supports multiple SARIF uploads per commit when each has a distinct category. See:
-      # https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github
+      # One upload for all nine detekt reports — three modules × the syntax-only, main and test
+      # analyses. Code Scanning keeps them apart by `runAutomationDetails.id`, which is what the
+      # `category` input of `upload-sarif` sets internally (the category plus a trailing slash). The
+      # ids written here are those categories, one per module and analysis, so each keeps its alert
+      # history. detekt writes no `automationDetails` itself; without the ids, nine runs of one tool
+      # under one category are one analysis, and the last run to land erases the others' alerts.
+      # One upload is ~7s; one per report is ~63s on the gate's critical path (#1394).
       #
-      # Last, with the other GitHub-API steps (#507), and `success() || failure()` on each so they
-      # run regardless of what failed above — including each other. detekt wrote these files near the
-      # top of the job; nothing since then removes them.
+      # Last, with the other GitHub-API steps (#507), and `success() || failure()` so it runs
+      # regardless of what failed above. detekt wrote these files near the top of the job; nothing
+      # since then removes them. A module whose detekt never ran has no file and is skipped with a
+      # warning — but a module with zero findings still has a valid file and is uploaded, because an
+      # analysis that stops arriving reads to Code Scanning as the tool having been switched off.
       #
       # `head.repo.fork != true` for the same reason the coverage comment above carries it, and it is
       # the same guard `release.yml` and `image-scan-scheduled.yml` already put on their own uploads
@@ -340,63 +346,35 @@ jobs:
       # that path **detekt findings do not reach Code Scanning at all**, so they are a review
       # responsibility, exactly as the per-changed-file coverage threshold already is. detekt itself
       # still runs and still fails the build, which is the larger half.
-      - name: Upload detekt SARIF (events-core)
+      - name: Collect the detekt SARIF reports under their categories
+        id: sarif
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
-        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
-        with:
-          sarif_file: events-core/build/reports/detekt/detekt.sarif
-          category: detekt-events-core
-      - name: Upload detekt SARIF (events-bff)
-        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
-        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
-        with:
-          sarif_file: events-bff/build/reports/detekt/detekt.sarif
-          category: detekt-events-bff
-      - name: Upload detekt SARIF (events-importer)
-        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
-        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
-        with:
-          sarif_file: events-importer/build/reports/detekt/detekt.sarif
-          category: detekt-events-importer
+        run: |
+          mkdir -p build/sarif
+          count=0
+          for module in events-core events-bff events-importer; do
+            for report in detekt main test; do
+              file="$module/build/reports/detekt/$report.sarif"
+              if [ ! -f "$file" ]; then
+                echo "::warning::$file was not written; that analysis is not uploaded for this commit"
+                continue
+              fi
+              case "$report" in
+                detekt) category="detekt-$module" ;;
+                *) category="detekt-$report-$module" ;;
+              esac
+              jq --arg id "$category/" '.runs[].automationDetails.id = $id' "$file" >"build/sarif/$category.sarif"
+              count=$((count + 1))
+            done
+          done
+          echo "count=$count" >>"$GITHUB_OUTPUT"
+          echo "$count report(s) collected"
 
-      # The type-resolution runs write their own `main.sarif` and `test.sarif`, each under its own
-      # category so no two analyses overwrite each other's alerts.
-      - name: Upload detekt type-resolution SARIF (events-core)
-        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
+      - name: Upload detekt SARIF
+        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && steps.sarif.outputs.count != '0'
         uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
         with:
-          sarif_file: events-core/build/reports/detekt/main.sarif
-          category: detekt-main-events-core
-      - name: Upload detekt type-resolution SARIF (events-bff)
-        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
-        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
-        with:
-          sarif_file: events-bff/build/reports/detekt/main.sarif
-          category: detekt-main-events-bff
-      - name: Upload detekt type-resolution SARIF (events-importer)
-        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
-        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
-        with:
-          sarif_file: events-importer/build/reports/detekt/main.sarif
-          category: detekt-main-events-importer
-      - name: Upload detekt test-source SARIF (events-core)
-        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
-        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
-        with:
-          sarif_file: events-core/build/reports/detekt/test.sarif
-          category: detekt-test-events-core
-      - name: Upload detekt test-source SARIF (events-bff)
-        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
-        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
-        with:
-          sarif_file: events-bff/build/reports/detekt/test.sarif
-          category: detekt-test-events-bff
-      - name: Upload detekt test-source SARIF (events-importer)
-        if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
-        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
-        with:
-          sarif_file: events-importer/build/reports/detekt/test.sarif
-          category: detekt-test-events-importer
+          sarif_file: build/sarif
 
   # OWASP Dependency-Check runs as a separate job in parallel with the build to avoid
   # slowing down the main feedback loop.
