@@ -115,6 +115,29 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
         }
     }
 
+    // #1362: Lido linked a credit to the event page itself.
+    @Test
+    fun `a credit link on the venue's own host does not become the promoter's website`() {
+        runBlocking {
+            val sourceId = "promoter-self-link:1"
+            val event = persistEvent(sourceId)
+
+            associationSyncService.resolveAndSyncAssociations(
+                listOf(event),
+                listOf(
+                    scraped(
+                        sourceId,
+                        promoters = listOf("Touring Tunes"),
+                        promoterWebsites =
+                            mapOf("Touring Tunes" to "https://www.example.com/events/latexfauna")
+                    )
+                )
+            )
+
+            promoterRepository.findBySlug("touring-tunes")?.websiteUrl shouldBe null
+        }
+    }
+
     @Test
     fun `two artist names that canonicalise together yield one association`() {
         runBlocking {
