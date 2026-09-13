@@ -36,6 +36,13 @@ data class ScrapedEvent(
     val doorsTime: LocalTime? = null,
     /** Time when the show/performance starts. */
     val startTime: LocalTime? = null,
+    /**
+     * Last day of the event, when the venue states one (ADR-029). Null for the usual single night.
+     * A scraper that has an end time but no end date derives this with [endOn].
+     */
+    val endDate: LocalDate? = null,
+    /** Time the event ends on [endDate], when the venue states one. Requires [endDate]. */
+    val endTime: LocalTime? = null,
     /** URL of the event's poster or flyer image. */
     val imageUrl: String? = null,
     val sourceUrl: String,
@@ -143,6 +150,10 @@ data class ScrapedEvent(
             eventDate = eventDate,
             doorsTime = doors,
             startTime = start,
+            endDate = endDate,
+            // The database refuses a time without a date, so a scraper's slip surfaces here, not as a
+            // constraint violation halfway through a bulk save.
+            endTime = endTime?.also { requireNotNull(endDate) { "endTime without endDate on $sourceId" } },
             imageUrl = if (licences.withholdsImage()) null else imageUrl,
             sourceUrl = sourceUrl,
             ticketUrl = ticketUrl,
@@ -204,7 +215,8 @@ fun List<ScrapedEvent>.dropPastEvents(
     onDropped: (Int) -> Unit
 ): List<ScrapedEvent> {
     val today = LocalDate.now(clock)
-    val (upcoming, past) = partition { !it.eventDate.isBefore(today) }
+    // A weekender ends on its `endDate`, so it stays through its last day (ADR-029).
+    val (upcoming, past) = partition { !(it.endDate ?: it.eventDate).isBefore(today) }
     if (past.isNotEmpty()) onDropped(past.size)
     return upcoming
 }

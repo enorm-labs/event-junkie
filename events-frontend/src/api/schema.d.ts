@@ -670,6 +670,17 @@ export interface components {
              */
             startTime?: string | null;
             /**
+             * Format: date
+             * @description Last day of the event, only when the venue stated one; null means it ends on `eventDate`. A weekender carries the Monday here, a run of weeks its closing day.
+             * @example 2026-06-15
+             */
+            endDate?: string | null;
+            /**
+             * @description Time the event ends on `endDate`, only when the venue stated one. Never set without `endDate`.
+             * @example 10:00
+             */
+            endTime?: string | null;
+            /**
              * @description Our guess at the start, from the kind of event, when the venue published neither `startTime` nor `doorsTime`; null whenever either is set. The list sorts by it, and a page must show it as a guess.
              * @example 23:00
              */
@@ -886,6 +897,17 @@ export interface components {
              * @example 20:00
              */
             startTime?: string | null;
+            /**
+             * Format: date
+             * @description Last day of the event, only when the venue stated one; null means it ends on `eventDate`. A weekender carries the Monday here, a run of weeks its closing day.
+             * @example 2026-06-15
+             */
+            endDate?: string | null;
+            /**
+             * @description Time the event ends on `endDate`, only when the venue stated one. Never set without `endDate`.
+             * @example 10:00
+             */
+            endTime?: string | null;
             /**
              * @description Our guess at the start, from the kind of event, when the venue published neither `startTime` nor `doorsTime`; null whenever either is set. The list sorts by it, and a page must show it as a guess.
              * @example 23:00

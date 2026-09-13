@@ -2,6 +2,7 @@ package de.norm.events.scraper
 
 import de.norm.events.event.EventStatus
 import java.math.BigDecimal
+import java.time.LocalDate
 import java.time.LocalTime
 
 // Field-level mapping for scraped events: status badges, doors/start ordering,
@@ -64,6 +65,18 @@ fun orderDoorsBeforeStart(
     doors: LocalTime?,
     start: LocalTime?
 ): Pair<LocalTime?, LocalTime?> = if (doors != null && start != null && doors > start) start to doors else doors to start
+
+/**
+ * The day an event that starts at [start] on [eventDate] ends, given only the end [time] the venue
+ * printed beside it (ADR-029). A club's `23:00 – 06:00` ends the next morning, so an end at or
+ * before the start rolls to the following day. `22:00 – 23:30` stays on the day. A venue that
+ * prints the end's own date does not need this: it sets `endDate` directly.
+ */
+fun endOn(
+    eventDate: LocalDate,
+    start: LocalTime?,
+    time: LocalTime
+): LocalDate = if (start != null && time <= start) eventDate.plusDays(1) else eventDate
 
 /**
  * A leading "verlegt in den <venue> –" relocation note a venue prepends to a moved show's

@@ -42,6 +42,9 @@ data class EventEntity(
     val eventDate: LocalDate,
     val doorsTime: LocalTime? = null,
     val startTime: LocalTime? = null,
+    /** The end, only when the venue states one (ADR-029). `endTime` never without `endDate`. */
+    val endDate: LocalDate? = null,
+    val endTime: LocalTime? = null,
     val imageUrl: String? = null,
     val sourceUrl: String? = null,
     val sourceId: String,

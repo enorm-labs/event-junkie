@@ -204,6 +204,8 @@ abstract class BaseControllerTest {
         eventType: String = "CONCERT",
         startTime: LocalTime? = null,
         doorsTime: LocalTime? = null,
+        endDate: LocalDate? = null,
+        endTime: LocalTime? = null,
         pricePresale: BigDecimal? = null,
         priceBoxOffice: BigDecimal? = null,
         genre: String? = null,
@@ -214,10 +216,10 @@ abstract class BaseControllerTest {
         databaseClient
             .sql(
                 "INSERT INTO events.event " +
-                    "(venue_id, title, subtitle, slug, event_date, start_time, doors_time, source_id, event_type, " +
-                    "price_presale, price_box_office, genre, sold_out, free, image_url) " +
-                    "VALUES (:venueId, :title, :subtitle, :slug, :eventDate, :startTime, :doorsTime, :sourceId, :eventType, " +
-                    ":pricePresale, :priceBoxOffice, :genre, :soldOut, :free, :imageUrl) " +
+                    "(venue_id, title, subtitle, slug, event_date, start_time, doors_time, end_date, end_time, source_id, " +
+                    "event_type, price_presale, price_box_office, genre, sold_out, free, image_url) " +
+                    "VALUES (:venueId, :title, :subtitle, :slug, :eventDate, :startTime, :doorsTime, :endDate, :endTime, " +
+                    ":sourceId, :eventType, :pricePresale, :priceBoxOffice, :genre, :soldOut, :free, :imageUrl) " +
                     "RETURNING id"
             ).bind("venueId", venueId)
             .bind("title", title)
@@ -226,6 +228,8 @@ abstract class BaseControllerTest {
             .bind("eventDate", eventDate)
             .bindOrNull("startTime", startTime, LocalTime::class.java)
             .bindOrNull("doorsTime", doorsTime, LocalTime::class.java)
+            .bindOrNull("endDate", endDate, LocalDate::class.java)
+            .bindOrNull("endTime", endTime, LocalTime::class.java)
             .bind("sourceId", sourceId)
             .bind("eventType", eventType)
             .bindOrNull("pricePresale", pricePresale, BigDecimal::class.java)
