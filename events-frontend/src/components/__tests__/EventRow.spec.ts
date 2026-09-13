@@ -97,4 +97,19 @@ describe('EventRow', () => {
     const onList = mount(EventRow, { props: { event, as: 'h2' }, global: { stubs } })
     expect(onList.get('h2').text()).toBe('Tonight Show')
   })
+
+  // The row takes the same fallback as the card (#1383).
+  it('shows doors when there is no start, and a note when there is neither', () => {
+    const doors = mount(EventRow, {
+      props: { event: { ...event, startTime: null, doorsTime: '19:00:00' } },
+      global: { stubs },
+    })
+    expect(doors.text()).toContain('Doors 19:00')
+
+    const neither = mount(EventRow, {
+      props: { event: { ...event, startTime: null, doorsTime: null } },
+      global: { stubs },
+    })
+    expect(neither.text()).toContain('Time not announced')
+  })
 })

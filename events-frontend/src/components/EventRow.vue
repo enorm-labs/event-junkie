@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { EventSummary } from '@/api/types'
-import { eventLabel, formatPrice, formatTime, isPastEvent, todayIso } from '@/lib/format'
+import { eventLabel, formatPrice, isPastEvent, todayIso } from '@/lib/format'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -23,7 +23,7 @@ const props = withDefaults(
   { as: 'h3' },
 )
 
-const { formatShortDate, formatEventType } = useFormat()
+const { formatShortDate, formatEventTime, formatEventType } = useFormat()
 const { t } = useI18n()
 const localePath = useLocalePath()
 
@@ -59,7 +59,7 @@ const price = computed(() => formatPrice(props.event.pricePresale, props.event.p
     <div class="flex items-baseline gap-3">
       <span class="shrink-0 text-meta text-muted-foreground tabular-nums">
         {{ formatShortDate(event.eventDate) }}
-        <template v-if="event.startTime"> · {{ formatTime(event.startTime) }}</template>
+        · {{ formatEventTime(event) }}
       </span>
       <span v-if="isLive" class="relative flex size-2 shrink-0">
         <span

@@ -215,4 +215,32 @@ describe('EventCard', () => {
     expect(poster?.className).toContain('-mx-4')
     expect(poster?.className).toContain('sm:mx-0')
   })
+
+  // One event in ten has no start time on staging, and most of those venues never publish one.
+  // The slot still says something: doors when they exist, labelled, and otherwise that nothing
+  // was announced — an empty slot reads as our bug (#1383).
+  it('shows the doors time, labelled, when there is no start time', () => {
+    const wrapper = mount(EventCard, {
+      props: { event: { ...event, startTime: null, doorsTime: '19:00:00' } },
+      global: { stubs },
+    })
+    expect(wrapper.text()).toContain('Doors 19:00')
+  })
+
+  it('says the time was not announced when there is neither', () => {
+    const wrapper = mount(EventCard, {
+      props: { event: { ...event, startTime: null, doorsTime: null } },
+      global: { stubs },
+    })
+    expect(wrapper.text()).toContain('Time not announced')
+  })
+
+  it('shows the start alone when both are published', () => {
+    const wrapper = mount(EventCard, {
+      props: { event: { ...event, doorsTime: '19:00:00' } },
+      global: { stubs },
+    })
+    expect(wrapper.text()).toContain('20:00')
+    expect(wrapper.text()).not.toContain('Doors')
+  })
 })
