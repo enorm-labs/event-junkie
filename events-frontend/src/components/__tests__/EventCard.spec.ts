@@ -243,4 +243,34 @@ describe('EventCard', () => {
     expect(wrapper.text()).toContain('20:00')
     expect(wrapper.text()).not.toContain('Doors')
   })
+
+  // The BFF sends its own guess when the venue published nothing; the card shows the number the
+  // list sorted by, marked as a guess, and says so in words for a screen reader (#1384).
+  it('marks an assumed start as a guess and explains it', () => {
+    const wrapper = mount(EventCard, {
+      props: {
+        event: { ...event, startTime: null, doorsTime: null, assumedStartTime: '23:00:00' },
+      },
+      global: { stubs },
+    })
+    expect(wrapper.text()).toContain('~23:00')
+    expect(wrapper.text()).toContain('Not announced, estimated from the event type')
+    expect(wrapper.get('[title="Not announced, estimated from the event type"]').text()).toContain(
+      '~23:00',
+    )
+  })
+
+  it('shows doors, not the guess, when both are sent', () => {
+    const wrapper = mount(EventCard, {
+      props: {
+        event: { ...event, startTime: null, doorsTime: '19:00:00', assumedStartTime: '23:00:00' },
+      },
+      global: { stubs },
+    })
+    expect(wrapper.text()).toContain('Doors 19:00')
+    expect(wrapper.text()).not.toContain('~')
+    expect(wrapper.find('[title="Not announced, estimated from the event type"]').exists()).toBe(
+      false,
+    )
+  })
 })

@@ -273,16 +273,23 @@ class EventSearchRepository(
     }
 
     companion object {
+        /**
+         * The time an event sorts by: its start, else its doors, else the slot its kind of event
+         * usually takes ([AssumedStartTime], #1384). Never null, so a timeless club night lands
+         * among the other nights rather than after the last timed event of its day.
+         */
+        private val EFFECTIVE_START = AssumedStartTime.SQL_EFFECTIVE_START
+
         private val SORT_COLUMNS =
             mapOf(
                 "eventDate" to "e.event_date",
-                "startTime" to "e.start_time",
+                "startTime" to EFFECTIVE_START,
                 "title" to "e.title",
                 "pricePresale" to "e.price_presale"
             )
 
         /** Stable within-day ordering applied alongside a date sort, so same-day events keep chronological order. */
-        private const val START_TIME_TIEBREAKER = "e.start_time ASC NULLS LAST"
+        private val START_TIME_TIEBREAKER = "$EFFECTIVE_START ASC"
 
         /** Extra ordering appended after a primary sort column, keyed by that column. */
         private val SECONDARY_SORT = mapOf("e.event_date" to START_TIME_TIEBREAKER)
@@ -302,7 +309,7 @@ class EventSearchRepository(
          * compare equal.
          */
         private const val TIEBREAK = "md5(e.id::text || :seed) ASC, e.id ASC"
-        private const val DEFAULT_ORDER = "ORDER BY e.event_date ASC, $START_TIME_TIEBREAKER, $TIEBREAK"
+        private val DEFAULT_ORDER = "ORDER BY e.event_date ASC, $START_TIME_TIEBREAKER, $TIEBREAK"
     }
 }
 

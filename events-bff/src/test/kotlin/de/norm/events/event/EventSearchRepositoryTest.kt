@@ -6,6 +6,7 @@ import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import java.security.MessageDigest
 import java.time.Clock
 import java.time.LocalDate
@@ -99,5 +100,28 @@ class EventSearchRepositoryTest : BaseControllerTest() {
                 )
 
             repositoryOn(day).search(EventFilter(from = night, to = night), pageable).ids shouldBe expectedOrder(ids, day)
+        }
+
+    /**
+     * A timeless event sorts into the slot its kind usually takes (#1384): doors when it has them,
+     * else [AssumedStartTime]'s table. The sort and the shown guess read the same table, so this is
+     * also the test that the SQL rendering of it agrees with the Kotlin one.
+     */
+    @Test
+    fun `a timeless event sorts by its doors, else by the slot its kind usually takes`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Astra", "astra")
+            val exhibition = insertEvent(venueId, "Run", "run", night, eventType = "EXHIBITION")
+            val doorsOnly = insertEvent(venueId, "Doors", "doors", night, doorsTime = LocalTime.of(19, 0))
+            val concert = insertEvent(venueId, "Gig", "gig", night, startTime = LocalTime.of(20, 0))
+            val party = insertEvent(venueId, "Night", "night", night, eventType = "PARTY")
+            val late = insertEvent(venueId, "Late", "late", night, startTime = LocalTime.of(23, 30))
+            val filter = EventFilter(from = night, to = night)
+            val repository = repositoryOn(LocalDate.of(2030, 6, 1))
+
+            val expected = listOf(exhibition, doorsOnly, concert, party, late)
+            repository.searchAll(filter) shouldBe expected
+            // `sort=startTime` maps to the same expression, or a sort by time would sink the same rows.
+            repository.search(filter, PageRequest.of(0, 5, Sort.by("startTime"))).ids shouldBe expected
         }
 }

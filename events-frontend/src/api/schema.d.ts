@@ -669,6 +669,11 @@ export interface components {
              * @example 20:00
              */
             startTime?: string | null;
+            /**
+             * @description Our guess at the start, from the kind of event, when the venue published neither `startTime` nor `doorsTime`; null whenever either is set. The list sorts by it, and a page must show it as a guess.
+             * @example 23:00
+             */
+            assumedStartTime?: string | null;
             /** @description Where the poster is fetched from. A path on this origin once the environment serves cached images, and the venue's own URL until then (ADR-019). */
             imageUrl?: string | null;
             /** @description Better formats of the same poster, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
@@ -881,6 +886,11 @@ export interface components {
              * @example 20:00
              */
             startTime?: string | null;
+            /**
+             * @description Our guess at the start, from the kind of event, when the venue published neither `startTime` nor `doorsTime`; null whenever either is set. The list sorts by it, and a page must show it as a guess.
+             * @example 23:00
+             */
+            assumedStartTime?: string | null;
             /** @description Where the poster is fetched from. A path on this origin once the environment serves cached images, and the venue's own URL until then (ADR-019). */
             imageUrl?: string | null;
             /** @description Better formats of the same poster, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */

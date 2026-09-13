@@ -45,7 +45,9 @@
     "free": "Free",
     "past": "Past",
     "doors": "Doors {time}",
-    "timeUnknown": "Time not announced"
+    "timeUnknown": "Time not announced",
+    "assumed": "~{time}",
+    "assumedHint": "Not announced, estimated from the event type"
   },
   "detail": {
     "notFound": "Event not found",
