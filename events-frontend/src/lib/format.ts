@@ -8,15 +8,27 @@ const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
   year: 'numeric',
 }
 
+// The compact view sets the date on the same line as the title, where the year costs the title
+// five characters it can use (#1371).
+const SHORT_DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+}
+
 // Intl.DateTimeFormat construction is not free and these are rendered per event card, so cache
 // one formatter per locale rather than building one per call.
 const dateFormatters = new Map<string, Intl.DateTimeFormat>()
 
-function dateFormatter(locale: string): Intl.DateTimeFormat {
-  let formatter = dateFormatters.get(locale)
+function dateFormatter(
+  locale: string,
+  options: Intl.DateTimeFormatOptions = DATE_FORMAT_OPTIONS,
+): Intl.DateTimeFormat {
+  const key = `${locale}|${options === DATE_FORMAT_OPTIONS ? 'full' : 'short'}`
+  let formatter = dateFormatters.get(key)
   if (!formatter) {
-    formatter = new Intl.DateTimeFormat(locale, DATE_FORMAT_OPTIONS)
-    dateFormatters.set(locale, formatter)
+    formatter = new Intl.DateTimeFormat(locale, options)
+    dateFormatters.set(key, formatter)
   }
   return formatter
 }
@@ -33,6 +45,25 @@ export function formatDate(isoDate?: string | null, locale: string = 'en'): stri
   const [year, month, day] = isoDate.split('-').map(Number)
   if (!year || !month || !day) return isoDate
   return dateFormatter(locale).format(new Date(year, month - 1, day))
+}
+
+/**
+ * The same date without the year — "Fri 12 Jun" / "Fr., 12. Juni" — for the compact view.
+ *
+ * **The year comes back for any other year**, so a gig from 2024 in a venue's past events cannot
+ * read as one from this June. `year` is a parameter rather than a call to the clock, because a
+ * formatting helper that reads the time of day cannot be tested without freezing it.
+ */
+export function formatShortDate(
+  isoDate?: string | null,
+  locale: string = 'en',
+  currentYear: number = new Date().getFullYear(),
+): string {
+  if (!isoDate) return ''
+  const [year, month, day] = isoDate.split('-').map(Number)
+  if (!year || !month || !day) return isoDate
+  if (year !== currentYear) return formatDate(isoDate, locale)
+  return dateFormatter(locale, SHORT_DATE_FORMAT_OPTIONS).format(new Date(year, month - 1, day))
 }
 
 /** Trims an ISO time (`HH:mm[:ss]`) down to `HH:mm`. */

@@ -3,7 +3,9 @@ import { computed, onMounted, watch } from 'vue'
 import { type LocationQueryRaw, RouterLink, useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import EventCard from '@/components/EventCard.vue'
-import { CARD_GRID_CLASS } from '@/lib/utils'
+import EventRow from '@/components/EventRow.vue'
+import { useCompactView } from '@/composables/useCompactView'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import { type EventSearchParams, useEventSearch } from '@/composables/useEvents'
 import { useEventFilters } from '@/composables/useEventFilters'
@@ -67,6 +69,8 @@ watch(() => route.query, run, { deep: true })
 const localePath = useLocalePath()
 
 const { t } = useI18n()
+// The compact view is a global display preference — see `useCompactView`.
+const { compact } = useCompactView()
 </script>
 
 <template>
@@ -100,9 +104,13 @@ const { t } = useI18n()
       <p class="text-sm text-muted-foreground">
         {{ t('events.resultCount', { count: page.totalElements }) }}
       </p>
-      <div :class="CARD_GRID_CLASS">
-        <!-- No section heading sits between the page `h1` and the grid here (unlike the home and
-             detail pages), so the cards are the second level of the outline. -->
+      <!-- No section heading sits between the page `h1` and the grid here (unlike the home and
+           detail pages), so the cards are the second level of the outline. The compact view swaps
+           the whole grid rather than hiding the posters: a hidden image is still downloaded. -->
+      <div v-if="compact" :class="CARD_LIST_CLASS">
+        <EventRow v-for="event in page.content" :key="event.slug" :event="event" as="h2" />
+      </div>
+      <div v-else :class="CARD_GRID_CLASS">
         <EventCard v-for="event in page.content" :key="event.slug" :event="event" as="h2" />
       </div>
 

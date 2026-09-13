@@ -1,6 +1,6 @@
 import { useI18n } from 'vue-i18n'
 
-import { formatDate, humaniseEventType } from '@/lib/format'
+import { formatDate, formatShortDate, humaniseEventType } from '@/lib/format'
 import { INTL_LOCALES, isLocale } from '@/i18n/locales'
 
 /**
@@ -21,6 +21,10 @@ export function useFormat() {
      */
     formatDate: (isoDate?: string | null) =>
       formatDate(isoDate, isLocale(locale.value) ? INTL_LOCALES[locale.value] : 'en-GB'),
+
+    /** `formatShortDate` bound to the active locale — the compact view's date. */
+    formatShortDate: (isoDate?: string | null) =>
+      formatShortDate(isoDate, isLocale(locale.value) ? INTL_LOCALES[locale.value] : 'en-GB'),
 
     /**
      * The display label for an event type.

@@ -47,11 +47,15 @@
       name="twitter:description"
     />
     <script>
-      // Apply the theme before first paint so a reload never flashes the wrong mode.
+      // Apply the theme and the view before first paint, so a reload never flashes the wrong mode
+      // and the compact view never draws posters it is about to collapse.
       // New visitors default to dark (nightlife brand); an explicit stored choice always wins.
       try {
         if (localStorage.getItem('theme') !== 'light') {
           document.documentElement.classList.add('dark')
+        }
+        if (localStorage.getItem('view') === 'compact') {
+          document.documentElement.classList.add('compact')
         }
       } catch {
         document.documentElement.classList.add('dark')

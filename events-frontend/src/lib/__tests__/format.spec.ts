@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   eventLabel,
   formatDate,
+  formatShortDate,
   humaniseEventType,
   isPastEvent,
   todayIso,
@@ -24,6 +25,27 @@ describe('formatDate locale handling', () => {
 
   it('returns the input unchanged when it is not an ISO date', () => {
     expect(formatDate('not-a-date', 'en-GB')).toBe('not-a-date')
+  })
+})
+
+describe('formatShortDate', () => {
+  it('drops the year inside the current year', () => {
+    expect(formatShortDate('2026-06-12', 'en-GB', 2026)).toBe('Fri 12 Jun')
+    expect(formatShortDate('2026-06-12', 'de-DE', 2026)).toContain('12. Juni')
+    expect(formatShortDate('2026-06-12', 'de-DE', 2026)).not.toContain('2026')
+  })
+
+  it('keeps the year for any other year', () => {
+    // A venue's past events go back years. Without this, a 2024 gig reads as one from this June.
+    expect(formatShortDate('2024-06-12', 'en-GB', 2026)).toBe('Wed, 12 Jun 2024')
+  })
+
+  it('returns the input unchanged when it is not an ISO date', () => {
+    expect(formatShortDate('not-a-date', 'en-GB', 2026)).toBe('not-a-date')
+  })
+
+  it('is empty for no date at all', () => {
+    expect(formatShortDate(null, 'en-GB', 2026)).toBe('')
   })
 })
 

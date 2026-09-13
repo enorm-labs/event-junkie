@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseSelect from '@/components/BaseSelect.vue'
 import VenueCard from '@/components/VenueCard.vue'
+import VenueRow from '@/components/VenueRow.vue'
+import { useCompactView } from '@/composables/useCompactView'
 import { useVenueSearch, type VenueSearchParams } from '@/composables/useVenues'
 import { DISTRICTS } from '@/lib/districts'
 import { useI18n } from 'vue-i18n'
-import { CARD_GRID_CLASS, PANEL_CLASS } from '@/lib/utils'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS, PANEL_CLASS } from '@/lib/utils'
 
 const PAGE_SIZE = 24
 
@@ -77,6 +79,8 @@ onMounted(run)
 watch(() => route.query, run, { deep: true })
 
 const { t } = useI18n()
+// The compact view is a global display preference — see `useCompactView`.
+const { compact } = useCompactView()
 </script>
 
 <template>
@@ -122,8 +126,11 @@ const { t } = useI18n()
       <p class="text-sm text-muted-foreground">
         {{ t('venues.resultCount', { count: page.totalElements }) }}
       </p>
-      <div :class="CARD_GRID_CLASS">
-        <!-- Second level of the outline: nothing sits between the page `h1` and this grid. -->
+      <!-- Second level of the outline: nothing sits between the page `h1` and this grid. -->
+      <div v-if="compact" :class="CARD_LIST_CLASS">
+        <VenueRow v-for="venue in page.content" :key="venue.slug" :venue="venue" as="h2" />
+      </div>
+      <div v-else :class="CARD_GRID_CLASS">
         <VenueCard v-for="venue in page.content" :key="venue.slug" :venue="venue" as="h2" />
       </div>
 

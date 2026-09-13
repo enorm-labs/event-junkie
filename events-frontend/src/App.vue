@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
-import { Moon, Sun } from '@lucide/vue'
+import { LayoutGrid, Moon, Rows3, Sun } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import AppFooter from '@/components/AppFooter.vue'
 import BaseBadge from '@/components/BaseBadge.vue'
@@ -10,6 +10,7 @@ import BrandLogo from '@/components/BrandLogo.vue'
 import GitHubMark from '@/components/GitHubMark.vue'
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
 import { pageTitle } from '@/composables/usePageMeta'
+import { useCompactView } from '@/composables/useCompactView'
 import { REPOSITORY_URL } from '@/lib/links'
 import { useLocalePath } from '@/composables/useLocalePath'
 
@@ -48,6 +49,14 @@ function toggleDark() {
 // One source for the toggle's accessible name and its hover tooltip — they must not drift.
 const themeToggleLabel = computed(() =>
   isDark.value ? t('common.nav.toLightMode') : t('common.nav.toDarkMode'),
+)
+
+// The compact view is a second display preference, next to the theme and for the same reasons:
+// it persists, it is global, and it is applied before paint. See `useCompactView`.
+const { compact, toggle: toggleCompact } = useCompactView()
+
+const compactToggleLabel = computed(() =>
+  compact.value ? t('common.nav.toPosterView') : t('common.nav.toCompactView'),
 )
 
 // Same rule for the beta badge: one string behind both the tooltip and the accessible name.
@@ -159,6 +168,19 @@ const localePath = useLocalePath()
             variant="outline"
           >
             <GitHubMark />
+          </Button>
+          <!-- `aria-pressed` rather than two buttons: one control, whose state a screen reader
+               reads out. The label says what pressing it does, as the theme toggle's does. -->
+          <Button
+            :aria-label="compactToggleLabel"
+            :aria-pressed="compact"
+            :title="compactToggleLabel"
+            size="icon"
+            variant="outline"
+            @click="toggleCompact"
+          >
+            <LayoutGrid v-if="compact" />
+            <Rows3 v-else />
           </Button>
           <Button
             :aria-label="themeToggleLabel"
