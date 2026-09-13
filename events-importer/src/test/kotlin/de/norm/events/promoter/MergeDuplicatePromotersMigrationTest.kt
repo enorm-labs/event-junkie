@@ -14,7 +14,7 @@ import java.sql.Connection
 import java.sql.DriverManager
 
 /**
- * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031 — against the rows each names, planted on a
+ * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031, V032 — against the rows each names, planted on a
  * database migrated to just before it.
  *
  * The migrations are keyed on slugs read from staging, and a misspelt one updates no row while
@@ -82,8 +82,12 @@ class MergeDuplicatePromotersMigrationTest {
             plantPromoter(statement, "Pure Obsessions", "pure-obsessions")
             plantPromoter(statement, "Red Nights", "red-nights")
             plantEvent(statement, "u1", "pure-obsessions", "red-nights")
+            // V032: a row stored under the stripped word, with its credit-link website.
+            plantPromoter(statement, "Mfp", "mfp")
+            plantEvent(statement, "m1", "mfp")
+            statement.execute("UPDATE promoter SET website_url = 'http://www.MFPConcerts.com' WHERE slug = 'mfp'")
         }
-        flyway("31").migrate()
+        flyway("32").migrate()
     }
 
     @AfterAll
@@ -190,6 +194,19 @@ class MergeDuplicatePromotersMigrationTest {
         promoters().containsKey("red-nights") shouldBe false
         promoters()["pure-obsessions-red-nights"] shouldBe "Pure Obsessions & Red Nights"
         eventsOf("pure-obsessions-red-nights") shouldContainExactlyInAnyOrder listOf("u1")
+    }
+
+    @Test
+    fun `V032 moves a row stored under its stripped word onto the slug of its whole name, website kept`() {
+        promoters().containsKey("mfp") shouldBe false
+        promoters()["mfp-concerts"] shouldBe "MFP Concerts"
+        eventsOf("mfp-concerts") shouldContainExactlyInAnyOrder listOf("m1")
+        connection.createStatement().use { statement ->
+            statement.executeQuery("SELECT website_url FROM events.promoter WHERE slug = 'mfp-concerts'").use { rows ->
+                rows.next()
+                rows.getString(1) shouldBe "http://www.MFPConcerts.com"
+            }
+        }
     }
 
     @Test

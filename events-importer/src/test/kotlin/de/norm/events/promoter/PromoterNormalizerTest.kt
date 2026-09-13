@@ -147,19 +147,20 @@ class PromoterNormalizerTest {
             // One or two letters, whatever the case.
             isNonPromoterName("Ar") shouldBe true
             isNonPromoterName("QU") shouldBe true
-            // Three letters only by name: "KKT", "IBB" and "MCT" are promoters.
-            isNonPromoterName("Itd") shouldBe true
-            isNonPromoterName("Mfp") shouldBe true
+            // Three letters only by name: "KKT", "IBB" and "MCT" are promoters, and so were
+            // "Itd" and "Mfp" once the whole credit was read (#1361).
+            isNonPromoterName("Bum") shouldBe true
             isNonPromoterName("KKT") shouldBe false
             isNonPromoterName("IBB") shouldBe false
-            // Named fragments, keyed without casing or punctuation.
+            isNonPromoterName("ITD Events") shouldBe false
+            isNonPromoterName("MFP Concerts") shouldBe false
+            // Named fragments, keyed without casing or punctuation, with or without a presenter verb.
             isNonPromoterName("Kneipenabend") shouldBe true
             isNonPromoterName("Sunday-Matinee") shouldBe true
             isNonPromoterName("Tag Der Klubkultur") shouldBe true
-            isNonPromoterName("Leasing&rent") shouldBe true
             isNonPromoterName("Peter Edel & www.stummfilmkonzerte.de") shouldBe true
             isNonPromoterName("Das forgotten female* composers") shouldBe true
-            isNonPromoterName("SPIRIT") shouldBe true
+            isNonPromoterName("Das forgotten female* composers präsentieren:") shouldBe true
             // Short real names stay.
             isNonPromoterName("Echo") shouldBe false
             isNonPromoterName("Join") shouldBe false
@@ -316,6 +317,25 @@ class PromoterNormalizerTest {
             canonicalPromoterName("Jm Audio") shouldBe "JM Audio Entertainment"
             // The venue itself writes "We Artists", so that one was right all along.
             canonicalPromoterName("We Artists") shouldBe "We Artists"
+        }
+    }
+
+    // #1361: a descriptor stays on a three-letter initialism, a legal form still comes off, and
+    // the rows #1318 stored under the stripped word resolve to the whole name.
+    @Test
+    fun `keeps a descriptor on a short initialism and restores the credits the strip had reduced`() {
+        assertSoftly {
+            canonicalPromoterName("MFP Concerts") shouldBe "MFP Concerts"
+            canonicalPromoterName("ITD Events") shouldBe "ITD Events"
+            canonicalPromoterName("ACT agency") shouldBe "ACT Agency"
+            canonicalPromoterName("KKT GmbH") shouldBe "KKT"
+            canonicalPromoterName("Channel Music") shouldBe "Channel Music"
+            canonicalPromoterName("Spirit Events") shouldBe "Spirit Events"
+            canonicalPromoterName("LEASING&RENT OÜ") shouldBe "LEASING&RENT OÜ"
+            canonicalPromoterName("Mfp") shouldBe "MFP Concerts"
+            canonicalPromoterName("Itd") shouldBe "ITD Events"
+            canonicalPromoterName("Act") shouldBe "ACT Agency"
+            canonicalPromoterName("Leasing&rent") shouldBe "LEASING&RENT OÜ"
         }
     }
 
