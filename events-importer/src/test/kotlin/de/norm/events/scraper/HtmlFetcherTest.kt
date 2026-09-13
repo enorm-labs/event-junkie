@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
@@ -90,6 +91,30 @@ class HtmlFetcherTest {
                 val recorded = server.takeRequest()
                 recorded.target shouldBe encodedPath
                 recorded.target shouldNotContain "%25"
+            }
+    }
+
+    @Nested
+    inner class Cookies {
+        @Test
+        fun `fetch sends the cookies a gated source needs, and none when there are none`() =
+            runTest {
+                repeat(2) {
+                    server.enqueue(
+                        MockResponse
+                            .Builder()
+                            .code(200)
+                            .body("<html><body>ok</body></html>")
+                            .build()
+                    )
+                }
+
+                fetcher.fetch(baseUrl() + "/dates", cookies = mapOf("rosa_age_ok" to "1"))
+                server.takeRequest().headers["Cookie"] shouldBe "rosa_age_ok=1"
+
+                // The default has to stay a request that carries nothing: every other venue uses it.
+                fetcher.fetch(baseUrl() + "/dates")
+                server.takeRequest().headers["Cookie"].shouldBeNull()
             }
     }
 

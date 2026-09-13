@@ -76,6 +76,7 @@
 ###   Renate               — https://www.renate.cc/
 ###   Ritter Butzke        — https://club.ritterbutzke.com/events
 ###   Roadrunner's Paradise — http://www.roadrunners-paradise.de/programm.html
+###   ROSA                 — https://www.rosaclub.de/dates
 ###   Säälchen             — https://www.holzmarkt.com/kalender
 ###   Schokoladen          — https://www.schokoladen-mitte.de/
 ###   silent green         — https://www.silent-green.net/programm
@@ -4186,6 +4187,68 @@ Accept: application/json
 
 > {%
     client.test("Roadrunner's Paradise import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### ROSA (Storkower Str. 121, Berlin-Prenzlauer Berg)
+### ————————————————————————————————————————————————————————————
+
+### --- Create ROSA venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "ROSA",
+    "address": "Storkower Str. 121",
+    "city": "Berlin",
+    "postalCode": "10407",
+    "district": "prenzlauer-berg",
+    "latitude": 52.53516,
+    "longitude": 13.45241,
+    "websiteUrl": "https://www.rosaclub.de",
+    "description": "A sex-positive club and cultural venue built around consent and community, with queer party nights and an 18+ door.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein sexpositiver Club und Kulturort, der um Konsens und Community herum gebaut ist, mit queeren Partynächten und Einlass ab 18.",
+    "descriptionAltLanguage": "de"
+}
+
+> {%
+    client.global.set("rosa_venue_id", response.body.id);
+    client.test("ROSA venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create ROSA event source ---
+# Links the venue to the RosaWebsiteImporter.
+# The sourceType "ROSA" matches EventSource.ROSA.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{rosa_venue_id}},
+    "name": "ROSA",
+    "url": "https://www.rosaclub.de/dates",
+    "sourceType": "ROSA",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("ROSA event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial ROSA import ---
+POST {{importer-host}}/api/admin/event-sources/rosa/import
+Accept: application/json
+
+> {%
+    client.test("ROSA import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
