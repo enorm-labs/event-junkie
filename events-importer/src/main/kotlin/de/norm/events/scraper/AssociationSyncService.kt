@@ -22,6 +22,7 @@ import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
+import java.net.URI
 
 /**
  * Resolves artists, promoters, and genre tags by slug (auto-creating unknown ones) and
@@ -258,6 +259,7 @@ class AssociationSyncService(
      *
      * Fill-if-empty, never replace: the venue's link is as often the promoter's ticket shop as its
      * site, and a reviewed `website_url` (docs/promoters/REVIEWED.tsv) must not lose to it (#1319).
+     * A link back onto the venue's own host is the event page, not the promoter's site (#1362).
      */
     private suspend fun fillPromoterWebsites(
         scrapedEvents: List<ScrapedEvent>,
@@ -265,9 +267,9 @@ class AssociationSyncService(
     ) {
         val websitesBySlug =
             scrapedEvents
-                .flatMap { it.promoterWebsites.entries }
-                .filterNot { (raw, _) -> isNonPromoterName(raw) }
-                .associate { (raw, url) -> SlugGenerator.slugify(canonicalPromoterName(raw)) to url }
+                .flatMap { event -> event.promoterWebsites.entries.map { (raw, url) -> Triple(raw, url, event.sourceUrl) } }
+                .filterNot { (raw, url, sourceUrl) -> isNonPromoterName(raw) || url.hostOrNull() == sourceUrl.hostOrNull() }
+                .associate { (raw, url, _) -> SlugGenerator.slugify(canonicalPromoterName(raw)) to url }
         websitesBySlug
             .mapNotNull { (slug, url) -> promoterCache[slug]?.takeIf { it.websiteUrl == null }?.let { it to url } }
             .forEach { (promoter, url) ->
@@ -576,3 +578,6 @@ class AssociationSyncService(
         return entity
     }
 }
+
+/** The host of a URL, lower-cased and without a `www.` prefix; null where the string is not a URL. */
+private fun String.hostOrNull(): String? = runCatching { URI(this).host?.lowercase()?.removePrefix("www.") }.getOrNull()
