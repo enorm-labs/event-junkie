@@ -258,6 +258,32 @@ for (const route of dataRoutes) {
 }
 
 /**
+ * The compact view is a second rendering of the same routes, so it needs its own scan (#1371).
+ *
+ * The rows carry the headings the cards carried, and the header gains a pressed-state toggle. Both
+ * are exactly the kind of thing axe catches and a card-only pass never sees.
+ */
+test('the compact view has no detectable accessibility violations', async ({ page }) => {
+  await mockBff(page)
+  await page.goto('/en/events')
+  await page.getByRole('button', { name: /switch to the compact list/i }).click()
+
+  await expect(page.getByRole('heading', { name: 'Tonight Show' })).toBeVisible()
+  await expect(page.locator('img')).toHaveCount(0)
+
+  const results = await buildScan(page).analyze()
+
+  expect(
+    results.violations.map((v) => ({
+      rule: v.id,
+      impact: v.impact,
+      help: v.help,
+      nodes: v.nodes.map((n) => n.target.join(' ')),
+    })),
+  ).toEqual([])
+})
+
+/**
  * One `best-practice` rule promoted to a gate on the routes it was actually failing on.
  *
  * This is the move the informational pass below prescribes — *"if a finding here turns out to

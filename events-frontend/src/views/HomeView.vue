@@ -4,9 +4,11 @@ import { RouterLink } from 'vue-router'
 import { CalendarDays, Ticket } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import EventCard from '@/components/EventCard.vue'
-import { CARD_GRID_CLASS } from '@/lib/utils'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
 import ClubStamp from '@/components/ClubStamp'
 import SectionLabel from '@/components/SectionLabel.vue'
+import EventRow from '@/components/EventRow.vue'
+import { useCompactView } from '@/composables/useCompactView'
 import { useTodayEvents, useUpcomingEvents } from '@/composables/useEvents'
 import { tomorrowIso } from '@/lib/format'
 import { useLocalePath } from '@/composables/useLocalePath'
@@ -31,6 +33,8 @@ const { t, locale } = useI18n()
 // Site-level identity, so Search can show the site name rather than the bare domain. Deliberately
 // `WebSite` and not `Organization` — see lib/structuredData.ts.
 useStructuredData(() => websiteJsonLd(locale.value as Locale))
+// The compact view is a global display preference — see `useCompactView`.
+const { compact } = useCompactView()
 </script>
 
 <template>
@@ -77,6 +81,9 @@ useStructuredData(() => websiteJsonLd(locale.value as Locale))
       <p v-else-if="!today.data.value?.length" class="text-sm text-muted-foreground">
         {{ t('home.tonightEmpty') }}
       </p>
+      <div v-else-if="compact" :class="CARD_LIST_CLASS">
+        <EventRow v-for="event in today.data.value" :key="event.slug" :event="event" />
+      </div>
       <div v-else :class="CARD_GRID_CLASS">
         <EventCard v-for="event in today.data.value" :key="event.slug" :event="event" />
       </div>
@@ -94,7 +101,10 @@ useStructuredData(() => websiteJsonLd(locale.value as Locale))
         {{ t('home.upcomingEmpty') }}
       </p>
       <template v-else>
-        <div :class="CARD_GRID_CLASS">
+        <div v-if="compact" :class="CARD_LIST_CLASS">
+          <EventRow v-for="event in upcoming.data.value" :key="event.slug" :event="event" />
+        </div>
+        <div v-else :class="CARD_GRID_CLASS">
           <EventCard v-for="event in upcoming.data.value" :key="event.slug" :event="event" />
         </div>
         <Button as-child class="px-0" variant="link">

@@ -27,7 +27,7 @@ export const CSP_DIRECTIVES = [
   // by a Traefik middleware, and a nonce has to be new per response. A hash is the alternative the
   // spec provides, and it works because Vite copies that script into `dist/index.html` byte for
   // byte — `scripts/csp-parity.sh` recomputes it from the source file on every build.
-  "script-src 'self' 'sha256-tbzDDqTc7a2d6gVi/Drd9uDCYWdCxXMJEWzje2jcSrQ='",
+  "script-src 'self' 'sha256-DuAtP0bDA+RpucmlfZGOJZext9f2E8NeIekOECvRyQ4='",
   // No `'unsafe-inline'`, which is unusual enough to be worth stating: the SPA has no `:style`
   // bindings and no literal `style` attributes, and the build emits one stylesheet and no `<style>`
   // element. Vue sets styles through the CSSOM, which CSP does not govern.

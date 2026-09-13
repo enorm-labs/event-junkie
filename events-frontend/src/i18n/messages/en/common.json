@@ -10,6 +10,8 @@
     "beta": "beta",
     "betaLabel": "Event Junkie is in beta. Data may be incomplete or out of date. See what that means.",
     "sourceOnGitHub": "Source code on GitHub",
+    "toCompactView": "Switch to the compact list",
+    "toPosterView": "Switch to the poster view",
     "toLightMode": "Switch to light mode",
     "toDarkMode": "Switch to dark mode"
   },

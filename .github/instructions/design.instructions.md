@@ -116,3 +116,8 @@ have their own edge, down parts one card's last line of text from the next card'
   reveal is dead code on a phone. `useViewportFocus` marks the card while it crosses the middle tenth of the viewport, and the same utility is written a second
   time as `group-data-focus/poster:`. A pointer device is left to `:hover` alone, because two triggers for one effect fight over the same card.
 - **A heading level belongs to the page**, not to the component — see [vue](vue.instructions.md), which owns the `as` prop rule and the `heading-order` gate.
+- **The compact view is the one place a list has no posters** ([#1371](https://github.com/enorm-labs/event-junkie/issues/1371)). A reader can switch every
+  event and venue grid to `EventRow` / `VenueRow`: one text row each, in a single column, with `CARD_LIST_CLASS` drawing a hairline between two rows and
+  nothing around them. A row carries what the card carries under its poster and no more, so the meta line stays the meta line. The poster view is the default
+  and stays it; this is a second way to read the same data, at 6.5 times the density on a phone. **The rows render no image element at all** — a hidden `<img>`
+  is still downloaded, and the bytes are half the reason the view exists.

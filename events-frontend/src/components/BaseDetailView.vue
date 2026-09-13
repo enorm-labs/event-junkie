@@ -7,9 +7,11 @@ import type { ImageSource } from '@/api/types'
 import CachedImage from '@/components/CachedImage.vue'
 import ImageCreditLine from '@/components/ImageCreditLine.vue'
 import EventCard from '@/components/EventCard.vue'
+import EventRow from '@/components/EventRow.vue'
+import { useCompactView } from '@/composables/useCompactView'
 import SectionLabel from '@/components/SectionLabel.vue'
 import type { ImageCredit } from '@/lib/imageCredit'
-import { CARD_GRID_CLASS } from '@/lib/utils'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
 
@@ -61,6 +63,8 @@ defineProps<{
 const localePath = useLocalePath()
 
 const { t } = useI18n()
+// The compact view is a global display preference — see `useCompactView`.
+const { compact } = useCompactView()
 </script>
 
 <template>
@@ -136,6 +140,9 @@ const { t } = useI18n()
         <p v-else-if="!events?.content?.length" class="text-sm text-muted-foreground">
           {{ emptyText }}
         </p>
+        <div v-else-if="compact" :class="CARD_LIST_CLASS">
+          <EventRow v-for="event in events.content" :key="event.slug" :event="event" />
+        </div>
         <div v-else :class="CARD_GRID_CLASS">
           <EventCard v-for="event in events.content" :key="event.slug" :event="event" />
         </div>
@@ -148,7 +155,10 @@ const { t } = useI18n()
           <SectionLabel as="span">{{ t('common.pastEvents') }}</SectionLabel>
         </summary>
         <p class="pt-3 text-sm text-muted-foreground">{{ t('common.pastEventsNote') }}</p>
-        <div :class="[CARD_GRID_CLASS, 'pt-3']">
+        <div v-if="compact" :class="[CARD_LIST_CLASS, 'mt-3']">
+          <EventRow v-for="event in pastEvents.content" :key="event.slug" :event="event" />
+        </div>
+        <div v-else :class="[CARD_GRID_CLASS, 'pt-3']">
           <EventCard v-for="event in pastEvents.content" :key="event.slug" :event="event" />
         </div>
       </details>

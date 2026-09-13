@@ -40,6 +40,9 @@ export const CARD_POSTER_CLASS = 'group/poster -mx-4 sm:mx-0'
  */
 export const CARD_GRID_CLASS = 'grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2'
 
+/** The compact view's list of `EventRow`/`VenueRow` text rows: one column, hairlines between. */
+export const CARD_LIST_CLASS = 'divide-y divide-border border-y border-border'
+
 /**
  * The two filter bars: chrome, not an object (see #1240). One hairline rule, which is the only line
  * on a list page. No horizontal padding, because the page's own `p-4 sm:p-8` sets that edge.
