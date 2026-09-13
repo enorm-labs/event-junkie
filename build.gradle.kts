@@ -109,6 +109,19 @@ subprojects {
         mavenCentral()
     }
 
+    // Two files on the runtime classpath change on every run and mean nothing to a test's outcome,
+    // so they are left out of the up-to-date check and the build-cache key. `build-info.properties`
+    // carries `build.time` (kept on purpose — see `buildInfo` below), and Spring Modulith writes
+    // `application-modules.json` into the resources directory during the test run itself. With
+    // either in the key, `:events-bff:test` and `:events-importer:test` re-run on every invocation
+    // and never hit the cache; `./gradlew :events-bff:test --info` names both.
+    normalization {
+        runtimeClasspath {
+            ignore("META-INF/build-info.properties")
+            ignore("META-INF/spring-modulith/application-modules.json")
+        }
+    }
+
     // see https://github.com/jlleitschuh/ktlint-gradle?tab=readme-ov-file#configuration
     configure<KtlintExtension> {
         // The actual ktlint version, see https://github.com/pinterest/ktlint/releases
@@ -201,12 +214,10 @@ subprojects {
                 // `build.time` is deliberately left at Boot's default, and it is not free.
                 //
                 // **It is a task input**, under the name `properties.timeIfNotExcluded`, and it is
-                // `Instant.now()` — so `bootBuildInfo` is never up-to-date, and it drags
-                // `processResources` -> `jar` -> `test` with it. Every fresh Gradle invocation
-                // re-runs both Boot modules' test suites. `./gradlew :events-bff:test --info` names
-                // the reason. An earlier version of this comment claimed the opposite, which is
-                // what kept the double test run in CI unexamined; `build-backend.yml` now runs
-                // `test` and the Kover tasks in one invocation so it is paid once (#1058).
+                // `Instant.now()` — so `bootBuildInfo` is never up-to-date, and neither is
+                // `processResources` -> `jar`. `test` no longer follows: the `normalization` block
+                // above leaves `build-info.properties` out of the runtime-classpath key, so the two
+                // Boot modules' suites are up-to-date and cacheable like everything else.
                 //
                 // Suppressing it needs `excludes.add("time")` — on Boot 4 an unset
                 // `properties { time = null }` falls back to `Instant.now()` rather than being
