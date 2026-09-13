@@ -144,6 +144,15 @@ says so.
 | `RITTER_BUTZKE`       | `EVENT_TYPE`       | the club publishes no categories; every night is a DJ programme                                                                                  | —     |
 | `ROADRUNNER`          | `PER_EVENT_PAGE`   | the whole programme lives on one hand-coded page                                                                                                 | —     |
 | `ROADRUNNER`          | `EVENT_TYPE`       | the retro programme carries no category field; a live-music venue, so an unmarked title defaults to a concert                                    | —     |
+| `ROSA`                | `SUBTITLE`         | the site states one title per night and no second line                                                                                           | —     |
+| `ROSA`                | `DOORS_TIME`       | the site publishes an opening range, not a doors time                                                                                            | —     |
+| `ROSA`                | `GENRE`            | the venue names no musical style anywhere                                                                                                        | —     |
+| `ROSA`                | `PRICE`            | the venue sells through Resident Advisor and prints no price                                                                                     | —     |
+| `ROSA`                | `ARTISTS`          | the site names the party series, never who plays it                                                                                              | —     |
+| `ROSA`                | `PROMOTERS`        | the site credits no promoter beside the party name                                                                                               | —     |
+| `ROSA`                | `SOLD_OUT`         | the site links to the ticket shop rather than stating a status                                                                                   | —     |
+| `ROSA`                | `CANCELLATION`     | the site drops a cancelled night instead of marking it                                                                                           | —     |
+| `ROSA`                | `PER_EVENT_PAGE`   | the whole programme is one page with an anchor per night                                                                                         | —     |
 | `SAALCHEN`            | `GENRE`            | the venue publishes no genre field of its own                                                                                                    | —     |
 | `SILENT_GREEN`        | `PRICE`            | the venue names no prices anywhere — an event either links out to a ticket shop or says nothing                                                  | —     |
 | `SILENT_GREEN`        | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |

@@ -57,12 +57,16 @@ class HtmlFetcher(
      *
      * @param etag the ETag value from a previous fetch (sent as `If-None-Match`).
      * @param lastModified the Last-Modified value from a previous fetch (sent as `If-Modified-Since`).
+     * @param cookies sent verbatim, for a source that serves its programme only to a request that
+     *   carries one. ROSA's age gate is the case: without `rosa_age_ok` the page renders the gate
+     *   and no events. A cookie belongs to one venue, so the value stays in that importer.
      * @return a [FetchResult] indicating whether the page was modified or not.
      */
     suspend fun fetch(
         url: String,
         etag: String? = null,
-        lastModified: String? = null
+        lastModified: String? = null,
+        cookies: Map<String, String> = emptyMap()
     ): FetchResult {
         // `url` as a payload field rather than inside the sentence (#945): it is the value the
         // "did this source 304 or actually change" question filters on. The two validators stay in
@@ -80,6 +84,7 @@ class HtmlFetcher(
             .apply {
                 etag?.let { header("If-None-Match", it) }
                 lastModified?.let { header("If-Modified-Since", it) }
+                cookies.forEach { (name, value) -> cookie(name, value) }
             }.awaitExchange { response ->
                 handleResponse(response, url)
             }

@@ -216,6 +216,9 @@ enum class EventSource {
     /** Roadrunner's Paradise Berlin – a courtyard rock'n'roll club in Prenzlauer Berg: rockabilly, psychobilly, punk and garage. */
     ROADRUNNER,
 
+    /** ROSA Berlin – a sex-positive club and cultural venue programming queer party nights. */
+    ROSA,
+
     /** Säälchen Berlin – the concert hall on the Holzmarkt riverside grounds beside the Spree. */
     SAALCHEN,
 
