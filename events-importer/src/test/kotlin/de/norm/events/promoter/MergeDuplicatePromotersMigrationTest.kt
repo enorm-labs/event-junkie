@@ -14,7 +14,7 @@ import java.sql.Connection
 import java.sql.DriverManager
 
 /**
- * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030 — against the rows each names, planted on a
+ * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031 — against the rows each names, planted on a
  * database migrated to just before it.
  *
  * The migrations are keyed on slugs read from staging, and a misspelt one updates no row while
@@ -77,8 +77,13 @@ class MergeDuplicatePromotersMigrationTest {
             // V030: the row Lido's "Atoc Live" credit minted.
             plantPromoter(statement, "Atoc", "atoc")
             plantEvent(statement, "a1", "atoc")
+            // V031: the two halves the Urban Spree split minted, one event linked to both, beside
+            // the reviewed row (present on staging, absent on production — both shapes).
+            plantPromoter(statement, "Pure Obsessions", "pure-obsessions")
+            plantPromoter(statement, "Red Nights", "red-nights")
+            plantEvent(statement, "u1", "pure-obsessions", "red-nights")
         }
-        flyway("30").migrate()
+        flyway("31").migrate()
     }
 
     @AfterAll
@@ -177,6 +182,14 @@ class MergeDuplicatePromotersMigrationTest {
         promoters().containsKey("atoc") shouldBe false
         promoters()["atoc-soundlab"] shouldBe "ATOC Soundlab"
         eventsOf("atoc-soundlab") shouldContainExactlyInAnyOrder listOf("a1")
+    }
+
+    @Test
+    fun `V031 folds the two halves of a split party name into one row with one link`() {
+        promoters().containsKey("pure-obsessions") shouldBe false
+        promoters().containsKey("red-nights") shouldBe false
+        promoters()["pure-obsessions-red-nights"] shouldBe "Pure Obsessions & Red Nights"
+        eventsOf("pure-obsessions-red-nights") shouldContainExactlyInAnyOrder listOf("u1")
     }
 
     @Test

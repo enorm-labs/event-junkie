@@ -97,6 +97,15 @@ class UrbanSpreeDetailPageScraperTest {
         scrapeConcert().shouldNotBeNull().promoters shouldContainExactly listOf("Aufnahme + wiedergabe")
     }
 
+    // #1356: one party name carries the venue's own join character.
+    @Test
+    fun `keeps a single name that carries an ampersand whole`() {
+        val document = fixture("urbanspree-detail-concert.html", concertUrl)
+        document.select(".info-data").first { it.text() == "Aufnahme + wiedergabe" }.text("Pure Obsessions & Red Nights")
+
+        scraper.scrape(document, concertUrl).shouldNotBeNull().promoters shouldContainExactly listOf("Pure Obsessions & Red Nights")
+    }
+
     @Test
     fun `scrape flags free entry and drops the empty ticket link`() {
         val event = scraper.scrape(fixture("urbanspree-detail-free.html", freeUrl), freeUrl).shouldNotBeNull()
