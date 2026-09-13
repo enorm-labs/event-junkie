@@ -92,7 +92,8 @@ class ColosseumOverviewPageScraper {
         }
         // No detail page is fetched, so an event without a resolvable startDate has no second
         // chance at a date — drop it rather than persist a sentinel.
-        val (eventDate, startTime) = parseWixSchedule(node.path("scheduling").path("config"))
+        val schedule = parseWixSchedule(node.path("scheduling").path("config"))
+        val eventDate = schedule.date
         if (eventDate == null) {
             logger.warn { "Colosseum event '$slug' has no parseable start date, skipping" }
             return null
@@ -108,7 +109,9 @@ class ColosseumOverviewPageScraper {
             subtitle = subtitle,
             eventType = resolveEventType(title, subtitle),
             eventDate = eventDate,
-            startTime = startTime,
+            startTime = schedule.startTime,
+            endDate = schedule.endDate,
+            endTime = schedule.endTime,
             imageUrl = node.path("mainImage").stringOrNull("url"),
             sourceUrl = resolveUrl(baseUrl, "$DETAILS_PATH$slug"),
             sourceId = "${EventSource.COLOSSEUM.sourceIdPrefix}$slug",

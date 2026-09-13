@@ -91,17 +91,22 @@ class KlunkerkranichOverviewPageScraperTest {
         night.sourceUrl shouldBe "https://klunkerkranich.org/events/2026-08-11-blaues-stuendchen-w-yvois/"
         night.eventType shouldBe EventType.PARTY.name
         night.startTime shouldBe LocalTime.of(17, 0)
+        // "17:00 — 00:00": midnight closes the roof on the next day (ADR-029).
+        night.endDate shouldBe LocalDate.of(2026, 8, 12)
+        night.endTime shouldBe LocalTime.of(0, 0)
         night.imageUrl shouldBe
             "https://klunkerkranich.org/wp-content/uploads/2026/07/Klunkerkranich-deko-aussicht-su-18.Jun26-2-520x320.jpg"
         night.artists shouldContainExactly listOf(ScrapedArtist(name = "Yvois", role = "DJ"))
     }
 
     @Test
-    fun `stores only the opening time of the hours range`() {
-        // "16:00 — 03:00" is when the roof is open; the closing time has nowhere to go and there is no doors time.
+    fun `reads the hours range as start and end, with no doors time`() {
+        // "16:00 — 03:00" is when the roof is open: the start, and an end on the following morning.
         val night = on(LocalDate.of(2026, 8, 14), "FERNAB ÜBER DEN DÄCHERN w. Kīto, Juli Lee, K2WO b2b Her, Woanders, ELENE")
 
         night.startTime shouldBe LocalTime.of(16, 0)
+        night.endDate shouldBe LocalDate.of(2026, 8, 15)
+        night.endTime shouldBe LocalTime.of(3, 0)
         night.doorsTime.shouldBeNull()
     }
 

@@ -76,7 +76,8 @@ class MaxximOverviewPageScraper {
         }
         // Unlike Loge there is no detail page to recover a to-be-decided date from, so an event
         // without a resolvable startDate is dropped rather than persisted with a sentinel date.
-        val (eventDate, startTime) = parseWixSchedule(node.path("scheduling").path("config"))
+        val schedule = parseWixSchedule(node.path("scheduling").path("config"))
+        val eventDate = schedule.date
         if (eventDate == null) {
             logger.warn { "MAXXIM event '$slug' has no parseable start date, skipping" }
             return null
@@ -92,7 +93,9 @@ class MaxximOverviewPageScraper {
             // MAXXIM publishes no categories: it is a club whose every night is a DJ dance party.
             eventType = EventType.PARTY.name,
             eventDate = eventDate,
-            startTime = startTime,
+            startTime = schedule.startTime,
+            endDate = schedule.endDate,
+            endTime = schedule.endTime,
             imageUrl = node.path("mainImage").stringOrNull("url"),
             sourceUrl = resolveUrl(baseUrl, "/event-details/$slug"),
             sourceId = "${EventSource.MAXXIM.sourceIdPrefix}$slug",

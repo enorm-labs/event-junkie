@@ -79,7 +79,7 @@ class LogeOverviewPageScraper {
             return null
         }
 
-        val (eventDate, startTime) = parseWixSchedule(node.path("scheduling").path("config"))
+        val schedule = parseWixSchedule(node.path("scheduling").path("config"))
         return ScrapedEvent(
             title = title,
             // Loge is a live-music venue with no category field; default to CONCERT so events aren't
@@ -88,8 +88,10 @@ class LogeOverviewPageScraper {
             eventType = EventType.CONCERT.name,
             // Fall back to the sentinel for a rare to-be-decided date; the detail page (schema.org
             // startDate) then supplies it via LogeWebsiteImporter.fillGapsFromOverview.
-            eventDate = eventDate ?: UNRESOLVED_EVENT_DATE,
-            startTime = startTime,
+            eventDate = schedule.date ?: UNRESOLVED_EVENT_DATE,
+            startTime = schedule.startTime,
+            endDate = schedule.endDate,
+            endTime = schedule.endTime,
             imageUrl = node.path("mainImage").stringOrNull("url"),
             sourceUrl = resolveUrl(baseUrl, "/event-details/$slug"),
             sourceId = "${EventSource.LOGE.sourceIdPrefix}$slug",

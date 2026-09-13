@@ -89,6 +89,11 @@ class TempodromOverviewPageScraper {
                 ?.let(::cleanEventTitle) ?: return null
         val startedAt = event.path("startDate").asString("").takeIf { it.isNotBlank() } ?: return null
         val eventDate = parseIsoDate(startedAt) ?: return null
+        // Every event carries an `endDate`, and 140 of 145 repeat the start date without a time —
+        // a same-day, date-only end says nothing. The five that differ are the runs: a circus over
+        // Christmas, a snooker week, Holiday on Ice (ADR-029).
+        val endedAt = event.path("endDate").asString("")
+        val endDate = parseIsoDate(endedAt)?.takeIf { it > eventDate || endedAt.contains('T') }
 
         val url = event.path("url").asString("").trim()
         val subtitle =
@@ -112,6 +117,8 @@ class TempodromOverviewPageScraper {
             doorsTime = parseClockTime(event.path("doorTime").asString("")),
             // A multi-day run publishes a date-only `startDate`, so it simply has no start time.
             startTime = parseClockTime(startedAt),
+            endDate = endDate,
+            endTime = endDate?.let { parseClockTime(endedAt) },
             imageUrl =
                 event
                     .path("image")

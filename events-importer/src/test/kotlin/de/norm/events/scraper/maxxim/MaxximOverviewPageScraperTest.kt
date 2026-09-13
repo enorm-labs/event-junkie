@@ -54,6 +54,9 @@ class MaxximOverviewPageScraperTest {
         millenium.eventType shouldBe EventType.PARTY.name
         millenium.eventDate shouldBe LocalDate.of(2026, 8, 1)
         millenium.startTime shouldBe LocalTime.of(22, 0)
+        // `endDate: 2026-08-02T03:00:00.000Z` is 05:00 Berlin, the club's real closing (ADR-029).
+        millenium.endDate shouldBe LocalDate.of(2026, 8, 2)
+        millenium.endTime shouldBe LocalTime.of(5, 0)
         millenium.sourceUrl shouldBe "https://www.maxxim-berlin.de/event-details/millenium-memories-90s-2000er-4"
         millenium.imageUrl shouldBe "https://static.wixstatic.com/media/8948df_f54d38631a5a4644bf9b6c0caa656be5~mv2.png"
         millenium.pricePresale shouldBe BigDecimal("12.00")

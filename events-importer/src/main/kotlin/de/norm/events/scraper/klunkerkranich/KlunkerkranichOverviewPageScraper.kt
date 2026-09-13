@@ -7,6 +7,7 @@ import de.norm.events.scraper.ISO_DATE_LENGTH
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.endOn
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
@@ -42,7 +43,7 @@ import java.util.Locale
  *    the canonical spelling, the German date is the fallback, and its year is inferred from the
  *    stated weekday ([inferYearForWeekday]).
  * 2. **The time range is opening hours, not doors and start.** "17:00 — 00:00" is when the roof is
- *    open, so only its first time is stored, as the start.
+ *    open: the first time is the start, the second the end, on the next day when it is past midnight.
  * 3. **The title packs the whole billing** — `<series> w. <DJ lineup>`, occasionally `<promoter>
  *    presents: <acts>` — with acts separated by commas, `&` and `b2b`, and a `*live` marker on the
  *    ones that play rather than spin. [parseLineup] reads the acts out of the tail and uses that
@@ -104,12 +105,15 @@ class KlunkerkranichOverviewPageScraper(
             return null
         }
 
+        val hours = parseOpeningHours(card.textAt(".o-card__meta--secondary"))
         return ScrapedEvent(
             title = title,
             // The venue states no category anywhere; see the class KDoc for why every night is a PARTY.
             eventType = EventType.PARTY.name,
             eventDate = eventDate,
-            startTime = parseOpeningTime(card.textAt(".o-card__meta--secondary")),
+            startTime = hours.first,
+            endDate = hours.second?.let { endOn(eventDate, hours.first, it) },
+            endTime = hours.second,
             imageUrl = card.imgSrcAt("img.o-card__image"),
             sourceUrl = eventUrl,
             sourceId = "${EventSource.KLUNKERKRANICH.sourceIdPrefix}$slug",
@@ -135,12 +139,15 @@ class KlunkerkranichOverviewPageScraper(
     }
 
     /**
-     * Reads the start time from the card's opening-hours range ("17:00 — 00:00").
+     * Reads the opening and closing time from the card's hours range ("17:00 — 00:00").
      *
-     * Only the opening time is stored: the closing time is when the roof shuts, which the model has
-     * no field for, and the venue never states a separate doors time.
+     * The opening time is the start — the venue never states a separate doors time — and the
+     * closing time is the end (ADR-029). A closing time at or before the opening is the next day,
+     * which `endOn` resolves at the call site.
      */
-    private fun parseOpeningTime(range: String?): LocalTime? = parseTime(range?.substringBefore(TIME_RANGE_SEPARATOR)?.trim())
+    private fun parseOpeningHours(range: String?): Pair<LocalTime?, LocalTime?> =
+        parseTime(range?.substringBefore(TIME_RANGE_SEPARATOR)?.trim()) to
+            parseTime(range?.substringAfter(TIME_RANGE_SEPARATOR, "")?.trim())
 
     /**
      * Reads the billed acts out of a title's `w.` / `presents:` lineup tail.
