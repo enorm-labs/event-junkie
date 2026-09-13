@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
-import { CalendarDays, Ticket } from '@lucide/vue'
+import { CalendarDays, Compass } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import EventCard from '@/components/EventCard.vue'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
@@ -56,7 +56,7 @@ const { compact } = useCompactView()
         <div class="flex flex-wrap justify-center gap-3">
           <Button as-child size="lg">
             <RouterLink :to="localePath('/events')">
-              <Ticket />
+              <Compass />
               {{ t('common.actions.browseEvents') }}
             </RouterLink>
           </Button>
