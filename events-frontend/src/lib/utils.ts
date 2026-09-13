@@ -16,15 +16,20 @@ export const FIELD_CLASS =
   'h-8 rounded-lg border border-border bg-background px-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
 
 /**
- * An interactive card — the event and venue tiles, which are links.
+ * An interactive card — the event and venue tiles, which are links. Extracted, like
+ * {@link FIELD_CLASS}, because both cards carry it verbatim.
  *
  * No border, fill, shadow or radius: the poster is the card, and a container drawn around a picture
- * competes with it. Space is what separates one card from the next (see #1246). The hover is the
- * poster turning from grayscale to colour, which the cards own.
- *
- * Extracted, like {@link FIELD_CLASS}, because both cards carry it verbatim.
+ * competes with it. Space is what separates one card from the next (see #1246). The reveal, from
+ * grayscale to colour, belongs to the poster box below.
  */
 export const CARD_CLASS = 'group flex flex-col gap-3'
+
+/**
+ * The poster box inside a {@link CARD_CLASS} card: it bleeds through the page shell's `p-4` below
+ * `sm`, and names the group the touch reveal hangs off (`useViewportFocus`).
+ */
+export const CARD_POSTER_CLASS = 'group/poster -mx-4 sm:mx-0'
 
 /**
  * A grid of {@link CARD_CLASS} cards.

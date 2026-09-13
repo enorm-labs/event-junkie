@@ -108,4 +108,11 @@ have their own edge, down parts one card's last line of text from the next card'
 - **Chrome is a hairline rule, not a box.** The filter bar is the only chrome on a list page.
 - **An empty state offers a control**, not only a sentence ([#1266](https://github.com/enorm-labs/event-junkie/issues/1266)).
 - **A missing image is a designed poster**, never a grey rectangle. One upcoming event in nine has no flyer.
+- **Below `sm` the poster bleeds to both viewport edges**, through the page shell's `p-4`, with `CARD_POSTER_CLASS`. A phone shows one card per row, and 16 px
+  of ground either side of a picture that _is_ the card buys nothing. A title poster bleeds with it: a card with no flyer is one in nine, so it is a normal
+  card rather than a fallback, and an inset grey box beside a full-width photograph reads as the broken one. The card's text keeps the inset, so the column
+  still reads as a column. From `sm` up the grid has two columns and the shell's margins stand.
+- **A hover effect needs a second trigger for a touch device.** Tailwind 4 compiles every `hover:` variant inside `@media (hover: hover)`, so a `group-hover:`
+  reveal is dead code on a phone. `useViewportFocus` marks the card while it crosses the middle tenth of the viewport, and the same utility is written a second
+  time as `group-data-focus/poster:`. A pointer device is left to `:hover` alone, because two triggers for one effect fight over the same card.
 - **A heading level belongs to the page**, not to the component — see [vue](vue.instructions.md), which owns the `as` prop rule and the `heading-order` gate.

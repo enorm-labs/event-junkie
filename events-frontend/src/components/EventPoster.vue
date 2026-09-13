@@ -16,14 +16,14 @@ defineProps<{ title?: string | null; aspect?: string }>()
   >
     <!-- The counterpart to the poster's grayscale reveal: the card answers the pointer either way. -->
     <span
-      class="h-px w-10 bg-primary transition-all duration-300 motion-safe:group-hover:w-20"
+      class="h-px w-10 bg-primary transition-all duration-300 motion-safe:group-hover:w-20 motion-safe:group-data-focus/poster:w-20"
     />
     <!--
       `line-clamp-5` rather than `truncate`: this is the only place the title is set large, so a long
       one is worth five lines before it is cut. The card's own heading carries the full text.
     -->
     <span
-      class="line-clamp-5 font-mono text-lede leading-tight tracking-eyebrow text-foreground/70 uppercase transition-colors duration-300 group-hover:text-foreground"
+      class="line-clamp-5 font-mono text-lede leading-tight tracking-eyebrow text-foreground/70 uppercase transition-colors duration-300 group-hover:text-foreground group-data-focus/poster:text-foreground"
       aria-hidden="true"
       >{{ title }}</span
     >

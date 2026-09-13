@@ -57,9 +57,10 @@ describe('EventCard', () => {
     })
 
     expect(wrapper.get('source').attributes('type')).toBe('image/avif')
-    // The slot the card actually draws: full width below `sm`, about 474 px in the two-column grid
-    // above it. Without this the browser reads the srcset widths against the wrong number.
-    expect(wrapper.get('source').attributes('sizes')).toBe('(min-width: 640px) 474px, calc(100vw - 2rem)')
+    // The slot the card actually draws: the whole viewport below `sm`, where the poster bleeds
+    // through the page shell's padding, and about 474 px in the two-column grid above it. Without
+    // this the browser reads the srcset widths against the wrong number.
+    expect(wrapper.get('source').attributes('sizes')).toBe('(min-width: 640px) 474px, 100vw')
     // The box is reserved before the bytes arrive, so a portrait flyer landing in a 3:2 slot does
     // not push the text below it (#1245).
     expect(wrapper.get('picture').classes()).toContain('aspect-[3/2]')
@@ -186,5 +187,32 @@ describe('EventCard', () => {
       global: { stubs },
     })
     expect(wrapper.text()).not.toContain('Live tonight')
+  })
+
+  it('bleeds the poster to both edges below sm, and keeps the text inset', () => {
+    // The page shell is `p-4 sm:p-8`, so `-mx-4` reaches the viewport edge on a phone and does
+    // nothing from `sm` up, where the grid has two columns. Only the poster box moves: the card's
+    // own text keeps the shell's inset.
+    const wrapper = mount(EventCard, {
+      props: { event: { ...event, imageUrl: '/api/images/abc/192.jpg' } },
+      global: { stubs },
+    })
+
+    const poster = wrapper.get('picture').element.parentElement
+    expect(poster?.className).toContain('-mx-4')
+    expect(poster?.className).toContain('sm:mx-0')
+    // The named group the touch reveal hangs off — see `useViewportFocus`.
+    expect(poster?.className).toContain('group/poster')
+  })
+
+  it('bleeds a title poster the same way, and hands it the reveal group', () => {
+    // One upcoming event in nine has no flyer, so a title poster is a normal card rather than a
+    // fallback: it gets the same edge, and the same scroll reveal on its hairline and title.
+    const wrapper = mount(EventCard, { props: { event }, global: { stubs } })
+
+    const poster = wrapper.get('[aria-hidden="true"]').element.parentElement?.parentElement
+    expect(poster?.className).toContain('group/poster')
+    expect(poster?.className).toContain('-mx-4')
+    expect(poster?.className).toContain('sm:mx-0')
   })
 })
