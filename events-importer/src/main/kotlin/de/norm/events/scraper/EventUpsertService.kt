@@ -133,9 +133,6 @@ class EventUpsertService(
                 .toList()
                 .associateBy { it.sourceId }
 
-        // 1. Build all event entities in memory, skip unchanged ones, and bulk-save only changes.
-        //    This avoids unnecessary UPDATE statements and inflated updated_at timestamps for events
-        //    where the scraped data hasn't changed since the last import.
         val discriminators = slugDiscriminators(scrapedEvents)
         val entities =
             scrapedEvents.map { scraped ->
@@ -156,11 +153,10 @@ class EventUpsertService(
                 unchanged
             }
 
-        // 2. Resolve artists/promoters and sync associations (delegated to AssociationSyncService)
         associationSyncService.resolveAndSyncAssociations(savedEvents, scrapedEvents)
 
-        // 3. Log upsert results (only for changed/new events — unchanged ones are already logged in partitionByChanged)
-        //    and count the same distinction for `importer.events.written{operation}` while it is in hand.
+        // Only changed/new events are logged here — unchanged ones already are, in partitionByChanged.
+        // Count the same distinction for `importer.events.written{operation}` while it is in hand.
         var inserted = 0
         changed.forEach { saved ->
             val existed = existingBySourceId.containsKey(saved.sourceId)
