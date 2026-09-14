@@ -69,7 +69,10 @@ class LogeWebsiteImporter(
             imageUrl = fallback.imageUrl ?: primary.imageUrl,
             // Event type and artists are only derived on the overview page.
             eventType = fallback.eventType ?: primary.eventType,
-            artists = primary.artists.ifEmpty { fallback.artists }
+            artists = primary.artists.ifEmpty { fallback.artists },
+            // The end is in the overview JSON alone (#1408).
+            endDate = fallback.endDate,
+            endTime = fallback.endTime
         )
 }
 

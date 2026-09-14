@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalTime
 
 /**
  * Unit tests for [LogeWebsiteImporter].
@@ -88,6 +89,9 @@ class LogeWebsiteImporterTest {
             estamoe.pricePresale shouldBe BigDecimal("12.30")
             estamoe.status shouldBe "SCHEDULED"
             estamoe.artists.map { it.role } shouldBe listOf("HEADLINER", "SUPPORT", "SUPPORT")
+            // The end is in the overview JSON alone and has to survive the merge (#1408).
+            estamoe.endDate shouldBe LocalDate.of(2026, 7, 17)
+            estamoe.endTime shouldBe LocalTime.of(22, 0)
         }
 
     @Test

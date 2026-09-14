@@ -91,6 +91,9 @@ class ClubOstWebsiteImporterTest {
             event.startTime shouldBe LocalTime.of(23, 0)
             event.eventType shouldBe "PARTY"
             event.description shouldBe null
+            // The end is on the detail page alone and has to survive the merge (#1408).
+            event.endDate shouldBe LocalDate.of(2026, 8, 8)
+            event.endTime shouldBe LocalTime.of(8, 0)
         }
 
     @Test

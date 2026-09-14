@@ -19,13 +19,14 @@ import org.springframework.stereotype.Component
  * 2. Parses every event card via [ClubOstOverviewPageScraper]. This is the **primary** source
  *    for the whole event: date, start time, flyer and Resident Advisor ticket link.
  * 3. Fetches each event's detail page and parses it via [ClubOstDetailPageScraper], for the
- *    one thing the listing gets wrong — the title, which the listing template upper-cases.
+ *    one thing the listing gets wrong — the title, which the listing template upper-cases —
+ *    and the one thing it lacks, the end time.
  *
  * The usual detail-page precedence is therefore **inverted here**: the detail page is a stub
- * that repeats the listing's date and time and publishes nothing else, so
- * [fillGapsFromOverview] keeps the overview's values for every field except the title. Reading
- * it as "primary" the way [cassiopeia][de.norm.events.scraper.cassiopeia] does would trade a
- * populated flyer and ticket link for the stub's blanks.
+ * that repeats the listing's date and start and publishes nothing else, so
+ * [fillGapsFromOverview] keeps the overview's values for every field except the title and the
+ * end. Reading it as "primary" the way [cassiopeia][de.norm.events.scraper.cassiopeia] does
+ * would trade a populated flyer and ticket link for the stub's blanks.
  *
  * @see ClubOstOverviewPageScraper for the listing parse (and the site's bilingual rendering)
  * @see ClubOstDetailPageScraper for the detail parse and what the stub does not carry
@@ -65,7 +66,10 @@ class ClubOstWebsiteImporter(
     ): ScrapedEvent =
         fallback.copy(
             title = primary.title,
-            description = primary.description ?: fallback.description
+            description = primary.description ?: fallback.description,
+            // The end is on the detail page alone (#1408).
+            endDate = primary.endDate,
+            endTime = primary.endTime
         )
 }
 
