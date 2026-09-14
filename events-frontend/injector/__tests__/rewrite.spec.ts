@@ -110,6 +110,18 @@ describe('rewriteHead', () => {
     expect(content(html, 'og:description')).toBe('a &quot;quoted&quot; one')
   })
 
+  it('inserts a value with $-patterns as it is, rather than splicing the document into the tag', () => {
+    // `$'` in a string replacement is "everything after the match" — the rest of the page (#1426).
+    const dollars = `Tickets 12$' VVK $& $\` $1`
+    const meta = { title: dollars, description: dollars, image: `https://img.example/a$'b.jpg` }
+    const html = rewriteHead(shell, { meta, locale: 'en', path: '/events/x' })
+    expect(html).toContain(`<title>Tickets 12$&#39; VVK $&amp; $\` $1</title>`)
+    expect(content(html, 'og:description')).toBe(`Tickets 12$&#39; VVK $&amp; $\` $1`)
+    expect(content(html, 'og:image')).toBe(`https://img.example/a$&#39;b.jpg`)
+    expect(html.match(/<\/title>/g)).toHaveLength(1)
+    expect(html.match(/<body>/g)).toHaveLength(1)
+  })
+
   it('leaves the body untouched', () => {
     const html = rewriteHead(shell, { meta: event, locale: 'en', path: '/events/x' })
     expect(html).toContain('<body><div id="app"></div></body>')
