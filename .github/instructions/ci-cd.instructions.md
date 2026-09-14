@@ -355,6 +355,12 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
   SBOM is unsigned metadata on the image index and says _what is inside it_. Only the first is what `gh attestation verify oci://… --repo enorm-labs/event-junkie`
   checks, and it is quiet on success, so exit 0 is the verdict.
 
+- **Every published image and the chart also carry a cosign signature, keyless, on the digest** (#1425). A third artifact next to the two above, and the only
+  one a cluster can enforce: Flux's source-controller verifies cosign signatures through `spec.verify` on an OCIRepository and reads neither attestation.
+  The identity Fulcio certifies is the workflow's, `…/.github/workflows/release.yml@<ref>`, so a cluster matches on that subject and a chart pushed by hand
+  fails verification. The signing steps run only when `publish` is true, after the attestations. A signing failure is a red publish, and for the chart it is also a
+  newest version a verifying cluster refuses until a re-run signs the same digest — the cluster keeps the last verified artifact meanwhile.
+
 - **Releases are immutable** (#443, enabled 2026-08-19, before the first release existed so nothing was grandfathered in). A published release's tag and assets
   cannot be edited or deleted afterwards. This matters more here than it would elsewhere because **publishing a GitHub Release is what triggers a production
   publish** (#264): the tag that names a production image is now as permanent as the image it names, and a release published by mistake is fixed by shipping
