@@ -10,7 +10,7 @@ What is encrypted into git and restored by Flux, what stays hand-made and why, a
 - **`sops-age` is the whole recovery story.** The repository without it is noise.
 
 ```sh
-sops -d deploy/clusters/staging/events-db.sops.yaml | head    # can I still decrypt?
+sops -d deploy/clusters/staging/secrets/events-db.yaml | head  # can I still decrypt?
 flux --context event-junkie-staging get helmreleases -A       # a missing credential fails the release, by design
 ```
 
