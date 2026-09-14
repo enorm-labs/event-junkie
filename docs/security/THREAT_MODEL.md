@@ -232,7 +232,7 @@ That App holds `contents`, `pull_requests`, `workflows` and `actions` at `write`
 | -------------------------------------------- | ------ | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------ |
 | A pod escapes to the node                    | E      | low        | high   | Mitigated. Pod Security `restricted` on `event-junkie`, `default` and `cert-manager`. Containers run as UID 10001 (#448) |
 | A pod in `observability` escapes to the node | E      | low        | high   | Open. The namespace enforces `privileged` because the collector agent mounts the node. #709                              |
-| A leaked credential's liveness is unknown    | I      | low        | low    | Open. `secret_scanning_validity_checks` is off. Carried forward from #385. #1427                                         |
+| A leaked credential's liveness is unknown    | I      | low        | low    | Mitigated. `secret_scanning_validity_checks` is on (#1427), beside secret scanning and push protection                   |
 | A debug pod has unrestricted egress          | E      | low        | medium | Mitigated. `default-deny` selects every pod in the namespace, not only the chart's                                       |
 
 ## 3 · What we do about it
@@ -241,8 +241,7 @@ That App holds `contents`, `pull_requests`, `workflows` and `actions` at `write`
 
 1. **#1425 — Flux verifies nothing it pulls.** Likelihood low, impact high. Sign the chart in `release.yml` and set `spec.verify` on the OCIRepository.
 2. **#709 — `observability` is `privileged`.** Likelihood low, impact high. Move the collector agent to its own namespace.
-3. **#1427 — validity checks for leaked secrets.** Likelihood low, impact low. One repository setting.
-4. **#1426 — the injector expands `$` patterns.** Likelihood low, impact low. One `replace` call with a function argument.
+3. **#1426 — the injector expands `$` patterns.** Likelihood low, impact low. One `replace` call with a function argument.
 
 ### Accepted
 
