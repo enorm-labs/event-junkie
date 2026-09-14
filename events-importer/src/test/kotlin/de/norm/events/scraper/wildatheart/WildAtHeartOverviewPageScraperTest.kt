@@ -52,10 +52,11 @@ class WildAtHeartOverviewPageScraperTest {
         event.sourceUrl shouldBe baseUrl
         event.sourceId shouldBe "wild_at_heart:2026-07-15-foxy"
         event.imageUrl shouldBe "https://www.wildatheartberlin.de/uploads/img/R1771964478Foxy.jpg"
-        // No banner on this row → no subtitle, no ticket link, not free.
+        // No banner on this row → no subtitle, no ticket link, not free, and no start — only the house doors.
         event.subtitle.shouldBeNull()
         event.ticketUrl.shouldBeNull()
         event.startTime.shouldBeNull()
+        event.doorsTime shouldBe LocalTime.of(20, 0)
         event.free shouldBe false
 
         event.artists shouldHaveSize 2
@@ -91,6 +92,7 @@ class WildAtHeartOverviewPageScraperTest {
         event.eventDate shouldBe LocalDate.of(2026, 9, 9)
         event.free shouldBe true
         event.startTime shouldBe LocalTime.of(21, 0)
+        event.doorsTime.shouldBeNull()
         event.subtitle.shouldNotBeNull() shouldContain "WILD WEDNESDAY"
     }
 
@@ -135,7 +137,7 @@ class WildAtHeartOverviewPageScraperTest {
     }
 
     @Test
-    fun `reads an ab-Uhr banner time and leaves a row with no published time timeless`() {
+    fun `reads an ab-Uhr banner time and gives a row with no published time the house doors`() {
         // The 5 September 2026 programme: the flea market says "ab 14 Uhr"; Les Calcatoggios states no time at all.
         val autumnClock = Clock.fixed(Instant.parse("2026-09-04T10:00:00Z"), ZoneOffset.UTC)
         val html =
@@ -145,10 +147,12 @@ class WildAtHeartOverviewPageScraperTest {
                 .readText()
         val events = WildAtHeartOverviewPageScraper(autumnClock).scrape(Jsoup.parse(html, baseUrl), baseUrl)
 
-        events.first { it.title.startsWith("Punk & Rock`n`Roll Flohmarkt") }.startTime shouldBe LocalTime.of(14, 0)
+        val fleaMarket = events.first { it.title.startsWith("Punk & Rock`n`Roll Flohmarkt") }
+        fleaMarket.startTime shouldBe LocalTime.of(14, 0)
+        fleaMarket.doorsTime.shouldBeNull()
         val calcatoggios = events.first { it.title == "Les Calcatoggios" }
         calcatoggios.startTime.shouldBeNull()
-        calcatoggios.doorsTime.shouldBeNull()
+        calcatoggios.doorsTime shouldBe LocalTime.of(20, 0)
     }
 
     @Test

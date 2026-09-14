@@ -70,6 +70,6 @@ val WILD_AT_HEART_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the retro page has no category field; a live-music venue, so an unmarked title defaults to a concert"),
         AcceptedLimitation(
             LimitedAspect.START_TIME,
-            "the listing states a time only inside a banner (Beginn 21:00, ab 14 Uhr), and most rows carry no banner; those are read, the rest store no time"
+            "a start appears only inside a banner (Beginn 21:00, ab 14 Uhr); a row without one stores the house doors from info.htm (20:00), no start"
         )
     )
