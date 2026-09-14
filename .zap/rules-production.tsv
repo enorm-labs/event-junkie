@@ -1,0 +1,82 @@
+# ZAP rules for the weekly passive baseline against production (#1421). Read by dast.yml through `-c`.
+#
+# One line per rule: id, level, name. FAIL turns the run red. WARN is for the reader of the report.
+# IGNORE silences the rule, and every IGNORE carries the date and the reason on the line above it,
+# like `.trivyignore` — one without is a review finding. A `#` line is a comment to ZAP too.
+#
+# FAIL is what the chart guarantees or what no site should ever show: the headers
+# `security-headers-middleware.yaml` sets on every response, no CSP missing, no server banner, no
+# stack trace, no injection. A rule was promoted to FAIL only after it passed once, on 2026-09-14.
+# A WARN with a note names the issue that will promote it.
+#
+# The ids and names come from the pinned image's `-g` output. A new rule in a newer image arrives
+# at WARN by default (`-i` is not set), and the rule-count floor in scan-coverage-baseline.txt is
+# what says the set moved.
+10003	FAIL	(Vulnerable JS Library (Powered by Retire.js))
+10009	WARN	(In Page Banner Information Leak)
+10010	WARN	(Cookie No HttpOnly Flag)
+10011	WARN	(Cookie Without Secure Flag)
+10015	WARN	(Re-examine Cache-control Directives)
+10017	FAIL	(Cross-Domain JavaScript Source File Inclusion)
+10019	WARN	(Content-Type Header Missing)
+10020	FAIL	(Anti-clickjacking Header)
+10021	FAIL	(X-Content-Type-Options Header Missing)
+10023	FAIL	(Information Disclosure - Debug Error Messages)
+10024	WARN	(Information Disclosure - Sensitive Information in URL)
+10025	WARN	(Information Disclosure - Sensitive Information in HTTP Referrer Header)
+10026	WARN	(HTTP Parameter Override)
+10027	WARN	(Information Disclosure - Suspicious Comments)
+10028	WARN	(Off-site Redirect)
+10029	WARN	(Cookie Poisoning)
+10030	WARN	(User Controllable Charset)
+10031	WARN	(User Controllable HTML Element Attribute (Potential XSS))
+10032	WARN	(Viewstate)
+10033	FAIL	(Directory Browsing)
+10034	WARN	(Heartbleed OpenSSL Vulnerability (Indicative))
+10035	FAIL	(Strict-Transport-Security Header)
+10036	FAIL	(HTTP Server Response Header)
+10037	FAIL	(Server Leaks Information via "X-Powered-By" HTTP Response Header Field(s))
+10038	FAIL	(Content Security Policy (CSP) Header Not Set)
+10039	FAIL	(X-Backend-Server Header Information Leak)
+10040	FAIL	(Secure Pages Include Mixed Content)
+10041	FAIL	(HTTP to HTTPS Insecure Transition in Form Post)
+10042	FAIL	(HTTPS to HTTP Insecure Transition in Form Post)
+10043	WARN	(User Controllable JavaScript Event (XSS))
+10044	WARN	(Big Redirect Detected (Potential Sensitive Information Leak))
+10049	WARN	(Content Cacheability)
+10050	WARN	(Retrieved from Cache)
+10052	FAIL	(X-ChromeLogger-Data (XCOLD) Header Information Leak)
+10054	WARN	(Cookie without SameSite Attribute)
+10055	WARN	(CSP)
+10056	FAIL	(X-Debug-Token Information Leak)
+10057	WARN	(Username Hash Found)
+10061	FAIL	(X-AspNet-Version Response Header)
+10062	WARN	(PII Disclosure)
+# WARN until #1442 adds the header to security-headers-middleware.yaml, then FAIL.
+10063	WARN	(Permissions Policy Header Not Set)
+10096	WARN	(Timestamp Disclosure)
+10097	WARN	(Hash Disclosure)
+10098	FAIL	(Cross-Domain Misconfiguration)
+10099	FAIL	(Source Code Disclosure)
+10105	WARN	(Weak Authentication Method)
+10108	WARN	(Reverse Tabnabbing)
+10109	WARN	(Modern Web Application)
+10110	WARN	(Dangerous JS Functions)
+10111	WARN	(Authentication Request Identified)
+10112	WARN	(Session Management Response Identified)
+10113	WARN	(Verification Request Identified)
+10115	FAIL	(Script Served From Malicious Domain (polyfill))
+10116	WARN	(ZAP is Out of Date)
+10202	WARN	(Absence of Anti-CSRF Tokens)
+2	WARN	(Private IP Disclosure)
+3	WARN	(Session ID in URL Rewrite)
+50001	WARN	(Script Passive Scan Rules)
+90001	WARN	(Insecure JSF ViewState)
+90002	FAIL	(Java Serialization Object)
+90003	WARN	(Sub Resource Integrity Attribute Missing)
+# WARN until #1442 adds the header to security-headers-middleware.yaml, then FAIL.
+90004	WARN	(Insufficient Site Isolation Against Spectre Vulnerability)
+90011	WARN	(Charset Mismatch)
+90022	FAIL	(Application Error Disclosure)
+90030	WARN	(WSDL File Detection)
+90033	WARN	(Loosely Scoped Cookie)

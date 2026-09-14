@@ -133,7 +133,7 @@ Likelihood and impact are each `low`, `medium` or `high`, judged for this system
 | A request flood exhausts the BFF pods    | D      | medium     | medium | Mitigated. `rate-limit-middleware.yaml`: 100 in flight, 50/s per source, burst 250. Real source addresses since #1013   |
 | Plaintext first request, TLS stripped    | T, I   | low        | low    | Mitigated. HSTS for one year, `security-headers-middleware.yaml`. The redirect host is not pinned, on purpose           |
 | A certificate expires unnoticed          | D      | low        | high   | Mitigated. cert-manager renews. `site-probe.yml` and Better Stack fail on an untrusted certificate                      |
-| A port other than 80 and 443 answers     | E      | low        | high   | Mitigated. `firewall.tf`. Nothing tests it from outside yet, which #1421 adds                                           |
+| A port other than 80 and 443 answers     | E      | low        | high   | Mitigated. `firewall.tf`. Nothing tests it from outside. `dast.yml` talks to 443 only, so a port probe stays open       |
 | The node's SSH accepts a password        | S      | low        | high   | Mitigated. `harden.sh`: `PasswordAuthentication no`, `PermitRootLogin no`, and port 22 is closed by the firewall        |
 | Traefik or nginx carries a published CVE | E      | medium     | high   | Mitigated. Renovate and Dependabot propose, Trivy blocks a publish, `image-scan-scheduled.yml` rescans what is deployed |
 
@@ -262,7 +262,8 @@ Each of these is a choice. A reviewer who disagrees with one changes the row and
 
 ### What tests this model
 
-- **#1421** sends hostile requests from outside. It tests B1, B2, B3 and B10 against the running chart, and nothing else can.
+- **`dast.yml`** (#1421) sends hostile requests from outside. ZAP's active scans run nightly against the chart on k3d, and the passive baseline
+  weekly against production. It tests B1, B2, B3 and B10 against the running chart, and nothing else can.
 - **#1422** reads B4 to B9 each quarter, against the OWASP Top 10:2025 categories a scanner cannot observe.
 - `tests/ingress_test.yaml`, `scripts/cluster-assertions.sh` and `validate-workflows.yml` fail a pull request that breaks a _mitigated_ row in B1, B2 or B6.
 

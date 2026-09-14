@@ -80,6 +80,11 @@ spec:
       # #286 is proven to actually reach nginx. A render assertion cannot tell you which of the two
       # files was served. Matches values-k3d.yaml, which drives the non-Flux rehearsal path.
       noindex: true
+      # Enforced, as staging and production have it since #854. The DAST scan (#1421) runs against
+      # this cluster and reads the header; the chart's report-only default counts as no CSP there.
+      securityHeaders:
+        contentSecurityPolicy:
+          reportOnly: false
       tls:
         # No TLS and so no cert-manager: the rehearsal is about whether the workloads start, reach
         # the database and route to each other. Adding certificate issuance would mean installing

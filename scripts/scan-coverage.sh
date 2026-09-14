@@ -63,6 +63,18 @@ count() {
     grep -oE "[0-9]+ $1" "$2" | tail -1 | grep -oE '^[0-9]+' || true
 }
 
+# The two ZAP denominators (#1421), read from a scan script's stdout. `Total of N URLs` is what the
+# spider reached — a Traefik that never came up or a spider behind a 429 wall shows here as a drop.
+# The last line is the per-rule tally, `FAIL-NEW: 0\tFAIL-INPROG: 0\tWARN-NEW: 3\t…\tPASS: 55`, and
+# its sum is how many rules the pinned image ran; a rule set that shrinks on a bump shows here.
+zap_urls() {
+    sed -nE 's/^Total of ([0-9]+) URLs$/\1/p' "$1" | tail -1
+}
+
+zap_rules() {
+    grep -E '^FAIL-NEW: [0-9]+' "$1" | tail -1 | grep -oE '[0-9]+' | awk '{ s += $1 } END { if (NR) print s }' || true
+}
+
 extract() {
     local key="$1" file="$2"
     case "$key" in
@@ -70,6 +82,8 @@ extract() {
         zizmor-suppressed) count suppressed "$file" ;;
         flux-clusters-resources) sed -nE 's/^Summary: ([0-9]+) resources found.*/\1/p' "$file" | tail -1 ;;
         flux-clusters-files) sed -nE 's/^Summary: [0-9]+ resources found in ([0-9]+) files.*/\1/p' "$file" | tail -1 ;;
+        zap-*-urls) zap_urls "$file" ;;
+        zap-*-rules) zap_rules "$file" ;;
         *) die "unknown key '$key' — see $(basename "$BASELINE")" ;;
     esac
 }
@@ -93,7 +107,9 @@ cmd_baseline() {
     if ((actual < floor)); then
         fail "$key dropped from $floor to $actual. Something was scanned before and is not now. If that is meant, take it in this commit: scripts/scan-coverage.sh update $key $file"
     fi
-    if ((actual > floor)); then
+    # A spider's URL count moves from run to run, so its floor is set with headroom on purpose and a
+    # rise there is the normal case, not a floor to raise (scan-coverage-baseline.txt says why).
+    if ((actual > floor)) && [[ "$key" != zap-*-urls ]]; then
         printf '%s: %s rose from %s to %s — raise the floor: scripts/scan-coverage.sh update %s %s\n' \
             "$(basename "$BASELINE")" "$key" "$floor" "$actual" "$key" "$file"
         [[ -n "${GITHUB_ACTIONS:-}" ]] &&

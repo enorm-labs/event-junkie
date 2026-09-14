@@ -106,7 +106,7 @@
     managerFilePatterns: ['/^deploy/clusters/(base|staging|production)/[^/]+\\.yaml$/'],
   },
 
-  // **The nine CI tool versions that belong to no ecosystem** — a `HELM_VERSION: v4.2.4` is a string
+  // **The eleven CI tool versions that belong to no ecosystem** — a `HELM_VERSION: v4.2.4` is a string
   // in YAML, and `github-actions` updates `uses: azure/setup-helm@v5` while having nothing to say
   // about the `version:` handed to it. They rot in silence while the checks using them keep reporting
   // success, which is the failure this whole boundary exists to catch.
@@ -114,7 +114,13 @@
   // **No `# renovate:` comments in the workflows**, which is the part worth knowing:
   // `depNameTemplate` and `datasourceTemplate` carry the mapping here instead, so the pins stay plain
   // and there is nothing beside them to drift out of step. Measured on #1071 — all eight resolve,
-  // across all fourteen occurrences; `RUFF_VERSION` joined as the ninth (#1189).
+  // across all fourteen occurrences; `RUFF_VERSION` joined as the ninth (#1189), `K3D_VERSION` and
+  // `ZAP_IMAGE` as the tenth and eleventh (#1421).
+  //
+  // **`ZAP_IMAGE` is the one pin here that is an image reference with a digest**, `tag@sha256:…`,
+  // because dast.yml runs it with `docker run` and a tag on GHCR is mutable. The `docker` datasource
+  // reads `currentValue` and `currentDigest` from one match and moves both, so the digest is never
+  // stale against its tag.
   //
   // **A pin in three files becomes one pull request**, because Renovate groups by `depName`.
   // `HELM_VERSION` lives in three workflows and `SHELLCHECK_VERSION` in three; they must move
@@ -196,6 +202,21 @@
       datasourceTemplate: 'github-releases',
       extractVersionTemplate: '^v?(?<version>.+)$',
     },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/.*\\.ya?ml$/'],
+      matchStrings: ['K3D_VERSION:\\s*(?<currentValue>\\S+)'],
+      depNameTemplate: 'k3d-io/k3d',
+      datasourceTemplate: 'github-releases',
+      extractVersionTemplate: '^v?(?<version>.+)$',
+    },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/.*\\.ya?ml$/'],
+      matchStrings: ['ZAP_IMAGE:\\s*ghcr\\.io/zaproxy/zaproxy:(?<currentValue>[^@\\s]+)@(?<currentDigest>sha256:[0-9a-f]{64})'],
+      depNameTemplate: 'ghcr.io/zaproxy/zaproxy',
+      datasourceTemplate: 'docker',
+    },
   ],
 
   packageRules: [
@@ -215,7 +236,7 @@
       enabled: false,
     },
     {
-      description: 'The nine CI tool pins, re-enabled by name',
+      description: 'The eleven CI tool pins, re-enabled by name',
       matchManagers: ['custom.regex'],
       matchDepNames: [
         'helm/helm',
@@ -227,6 +248,8 @@
         'helm-unittest/helm-unittest',
         'koalaman/shellcheck',
         'astral-sh/ruff',
+        'k3d-io/k3d',
+        'ghcr.io/zaproxy/zaproxy',
       ],
       enabled: true,
     },
