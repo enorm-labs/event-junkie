@@ -457,6 +457,41 @@ jobs:
           subject-digest: ${{ steps.push-injector.outputs.digest }}
           push-to-registry: true
 
+      # --- Sign what was just published -------------------------------------------------------------
+      #
+      # A cosign signature per image, keyless: Fulcio issues a short-lived certificate against the
+      # same OIDC token the attestations use, Rekor logs it, and the signature is pushed to GHCR next
+      # to the image. **The attestation above says where an image came from; this is what Flux can
+      # check.** source-controller verifies cosign signatures (`spec.verify` on an OCIRepository) and
+      # knows nothing about GitHub attestations, so without this the provenance is metadata a person
+      # reads and never a gate the cluster enforces (#1425). Signed by digest for the reason the
+      # attest block gives: a tag is a pointer, a digest is the thing.
+      #
+      # The registry credential is the docker login above — cosign reads the same store — and the
+      # identity is the workflow's: `https://github.com/enorm-labs/event-junkie/.github/workflows/release.yml@<ref>`,
+      # which is the subject each cluster's OCIRepository matches against.
+      - name: Install cosign
+        if: steps.version.outputs.publish == 'true'
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.3
+
+      - name: Sign the published images
+        if: steps.version.outputs.publish == 'true'
+        env:
+          BFF_DIGEST: ${{ steps.push-bff.outputs.digest }}
+          IMPORTER_DIGEST: ${{ steps.push-importer.outputs.digest }}
+          FRONTEND_DIGEST: ${{ steps.push-frontend.outputs.digest }}
+          INJECTOR_DIGEST: ${{ steps.push-injector.outputs.digest }}
+        run: |
+          for component in bff importer frontend injector; do
+            var="$(echo "$component" | tr '[:lower:]' '[:upper:]')_DIGEST"
+            digest="${!var}"
+            # A missing digest would sign nothing and pass — the failure #1087 exists to refuse.
+            [[ "$digest" == sha256:* ]] || { echo "::error::no digest for ${component}"; exit 1; }
+            cosign sign --yes "${IMAGE_PREFIX}/${component}@${digest}"
+          done
+
       # --- Publish the chart ----------------------------------------------------------------------
 
       - name: Set up Helm
@@ -501,6 +536,7 @@ jobs:
       # `helm registry login` rather than relying on the docker login above: Helm keeps its own
       # registry credential store, and inheriting the docker one is not something to depend on.
       - name: Publish the chart
+        id: push-chart
         if: steps.version.outputs.publish == 'true'
         env:
           VERSION: ${{ steps.version.outputs.value }}
@@ -513,7 +549,20 @@ jobs:
           helm registry login ghcr.io \
             --username "$ACTOR" \
             --password "${{ secrets.GITHUB_TOKEN }}"
-          helm push "build/chart/event-junkie-${VERSION}.tgz" "$CHART_REPO"
+          # `helm push` prints the manifest digest it created, and that digest is what gets signed:
+          # the same by-digest rule as the images. Captured rather than re-resolved from the tag, so
+          # the signature is on what this run pushed and not on whatever the tag points at by the
+          # time a lookup runs. An empty capture fails here rather than signing nothing.
+          helm push "build/chart/event-junkie-${VERSION}.tgz" "$CHART_REPO" | tee push.log
+          digest="$(sed -n 's/^Digest: *//p' push.log)"
+          [[ "$digest" == sha256:* ]] || { echo "::error::helm push printed no digest"; exit 1; }
+          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
+
+      - name: Sign the published chart
+        if: steps.version.outputs.publish == 'true'
+        env:
+          DIGEST: ${{ steps.push-chart.outputs.digest }}
+        run: cosign sign --yes "${CHART_REPO#oci://}/event-junkie@${DIGEST}"
 
       - name: Summarise
         if: success() || failure()

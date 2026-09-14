@@ -41,6 +41,7 @@ flowchart TB
         scan{"Trivy<br/>fixable CRITICAL/HIGH"}
         stamp["Stamp Chart.yaml<br/>version = appVersion = VERSION"]
         push["Push images, then chart"]
+        sign["cosign sign, by digest<br/>4 images + chart, keyless"]
     end
 
     subgraph ghcr["GHCR — public, anonymous pull"]
@@ -59,9 +60,9 @@ flowchart TB
     rel --> ver
     ver --> build --> scan
     scan -->|"fail"| stop(["Nothing published"])
-    scan -->|"pass"| stamp --> push
-    push --> imgs
-    push --> chart
+    scan -->|"pass"| stamp --> push --> sign
+    sign --> imgs
+    sign --> chart
 
     chart -.->|"Flux polls<br/>1m staging · 10m production"| ocirepo
     ocirepo --> hr --> wl
@@ -77,6 +78,18 @@ flowchart TB
 
 **Every arrow crossing into the cluster is dashed, and they all start inside it.** That is the entire security argument: CI holds no cluster credential because
 there is nothing for it to hold.
+
+**Every published artifact carries a cosign signature, keyless, on its digest** (#1425). Fulcio issues a certificate for the workflow's own identity —
+`https://github.com/enorm-labs/event-junkie/.github/workflows/release.yml@<ref>` — and Rekor logs it. Anyone can check one from a laptop with no key:
+
+```sh
+cosign verify ghcr.io/enorm-labs/charts/event-junkie:<version> \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp '^https://github\.com/enorm-labs/event-junkie/\.github/workflows/release\.yml@'
+```
+
+The signature is separate from the provenance attestation (#443), which `gh attestation verify` reads and Flux cannot. Flux verifies cosign
+signatures and nothing else, so the signature is the half a cluster can enforce through `spec.verify` on its OCIRepository.
 
 ## What triggers what
 
