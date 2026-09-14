@@ -529,13 +529,15 @@ in [AGENTS.md](../../AGENTS.md) § Automating GitHub with `gh`.
     arbitrary-code-execution path holding write scopes. `milestone-dependabot.yml` needs the trigger for a second reason: a `pull_request` run raised by
     Dependabot gets a read-only token, so it could not write a milestone at all.
 
-- **Nothing running in CI can push to `main`, and nothing but the operator can merge into it.** Two rulesets say so, and they are two on purpose (#1424).
-  `main` requires every change to arrive by pull request with every check green, and has **no bypass actor** — #443 removed the admin bypass so the
-  operator's own mistakes cannot skip a check. `main-updates` carries one rule, _restrict updates_, with `OrganizationAdmin` as its only bypass actor: a
-  merge is an update to the ref, so a GitHub App — `claude`, `renovate`, `event-junkie-release` — or `GITHUB_TOKEN` can open a pull request and cannot
-  land one. **A bypass actor is per ruleset, not per rule.** Putting the update rule on `main` with a bypass would let the operator bypass the checks too,
-  which is why the second ruleset exists. The obvious workaround for the first does not exist either: GitHub refuses the Actions bot as a bypass actor with
-  _"Actor GitHub Actions integration must be part of the ruleset source or owner organization"_. **Design any workflow that wants to write to the repo as
+- **Nothing running in CI can push to `main`, and no GitHub App we did not list can land a pull request into it.** The `main` ruleset requires every
+  change to arrive by pull request with every check green, and has **no bypass actor** — #443 removed the admin bypass so the operator's own mistakes
+  cannot skip a check. One of those checks is `Merge gate` (`merge-gate.yml`, #1424): it fails when the pull request's author is a Bot outside
+  `dependabot[bot]`, `renovate[bot]`, `event-junkie-release[bot]`. It runs on **`pull_request_target`**, and that is the point rather than a risk taken:
+  the check executes the file as it stands on `main`, so the `claude` App's `workflows: write` cannot edit it green from the pull request it gates. The
+  file checks out nothing and reads two payload fields, which is what keeps that trigger safe. **The first version of this control was a second ruleset
+  restricting updates to `main`, and it broke auto-merge**: GitHub's deferred merge runs without bypass, a limitation GitHub calls known and does not plan
+  to fix. The ruleset is gone. The obvious workaround for pushes does not exist either: GitHub refuses the Actions bot as a bypass actor with _"Actor
+  GitHub Actions integration must be part of the ruleset source or owner organization"_. **Design any workflow that wants to write to the repo as
   generate-on-demand or open-a-PR, never as push-to-main or merge.** A whole snapshot workflow was written, merged and deleted before this was discovered.
-  Auto-merge armed by the operator should merge on that person's behalf and pass the bypass. Not yet observed: the first armed bot pull request after
-  #1424 is the test, and this sentence takes its result.
+  **What the gate does not stop:** an App with `contents: write` pushing onto a person's open branch. The author stays the person, and auto-merge armed
+  on that branch would land the push. The threat model carries that as an accepted row.

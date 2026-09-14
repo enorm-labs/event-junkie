@@ -14,7 +14,7 @@ Every _mitigated_ row names the file that does the work. A reader can check each
 - **The strongest controls are network controls.** Default-deny NetworkPolicies, a firewall with two public ports, Pod Security `restricted`, and
   staging on the WireGuard tunnel only.
 - **The strongest credential in the system is write access to `main`.** What lands there is what the cluster runs
-  ([ADR-016](../adr/ADR-016_GITOPS_DELIVERY.md)). Three GitHub Apps can open a pull request there. Only the operator can land one (#1424).
+  ([ADR-016](../adr/ADR-016_GITOPS_DELIVERY.md)). Three GitHub Apps can open a pull request there. A required check refuses the unlisted one (#1424).
 - **The top open threats** are in §3. An unsigned chart that Flux does not verify, and a `privileged` namespace.
 
 ## 1 · What we are working on
@@ -186,7 +186,7 @@ The importer is the one workload that talks to the open internet. Everything it 
 | A bot branch runs a hostile install script            | E      | low        | medium | Mitigated. `fix-notices-on-bot-prs.yml` mints the App token only at the push step, after `npm ci`                                                               |
 | A dependency ships malware                            | T      | medium     | high   | Mitigated in part. Dependency review on each PR, Dependency-Check nightly, Trivy on each image. Nothing checks a package's provenance                           |
 | A chart or image in GHCR is replaced and Flux runs it | T, E   | low        | high   | Mitigated on staging and k3d, open on production until the next release (#1425). `release.yml` signs, `spec.verify` matches the workflow's identity             |
-| A commit reaches `main` without a review              | T      | low        | high   | Mitigated. Ruleset `main-updates` restricts updates to the operator (#1424). An App can open a pull request and cannot land one                                 |
+| A commit reaches `main` without a review              | T      | low        | high   | Mitigated. `merge-gate.yml`, a required check on `pull_request_target`, fails a pull request authored by an unlisted App (#1424)                                |
 | A tag or an action is unpinned                        | T      | low        | medium | Mitigated. Every action is pinned by SHA, every tool by version. zizmor and Dependabot keep it so                                                               |
 
 ### B7 · Operator → cluster
@@ -211,12 +211,13 @@ The importer is the one workload that talks to the open internet. Everything it 
 Five `agent-*.yml` workflows run Claude with a shell. The action replaces `GITHUB_TOKEN` in the process with the `claude` App's installation token.
 That App holds `contents`, `pull_requests`, `workflows` and `actions` at `write`.
 
-| Threat                                                                   | STRIDE | Likelihood | Impact | Status                                                                                                                                                    |
-| ------------------------------------------------------------------------ | ------ | ---------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A venue page instructs the plausibility agent, which holds a write token | E      | medium     | medium | Mitigated. The token can push a branch and open a pull request. Ruleset `main-updates` refuses the merge (#1424), and the operator reads the pull request |
-| An agent dismisses a security alert                                      | T      | low        | medium | Mitigated. `agent-security.yml` grants `security-events: read` and `--unattended` files nothing                                                           |
-| An agent commits as `GITHUB_TOKEN` and no check runs                     | D      | low        | low    | Mitigated. No `github_token:` input, on purpose. `agent-security.yml` header                                                                              |
-| The Claude OAuth token leaks from a run                                  | I      | low        | medium | Mitigated. A repository secret, masked in logs, revocable in one click                                                                                    |
+| Threat                                                                   | STRIDE | Likelihood | Impact | Status                                                                                                                                          |
+| ------------------------------------------------------------------------ | ------ | ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| A venue page instructs the plausibility agent, which holds a write token | E      | medium     | medium | Mitigated. The token can push a branch and open a pull request. `Merge gate` fails it (#1424), and the operator reads it before merging by hand |
+| The same token pushes onto a person's open branch with auto-merge armed  | T      | low        | high   | Accepted. A required check cannot see who pushed. The window is one armed pull request at a time, and the push shows in its commit list         |
+| An agent dismisses a security alert                                      | T      | low        | medium | Mitigated. `agent-security.yml` grants `security-events: read` and `--unattended` files nothing                                                 |
+| An agent commits as `GITHUB_TOKEN` and no check runs                     | D      | low        | low    | Mitigated. No `github_token:` input, on purpose. `agent-security.yml` header                                                                    |
+| The Claude OAuth token leaks from a run                                  | I      | low        | medium | Mitigated. A repository secret, masked in logs, revocable in one click                                                                          |
 
 ### B10 · Object Storage and imgproxy → visitors
 
@@ -254,6 +255,8 @@ Each of these is a choice. A reviewer who disagrees with one changes the row and
 - The images key can write to every bucket the account holds. Hetzner scopes a key to a bucket, not a verb.
 - Venue text can steer a translation. The result is text, rendered escaped.
 - One operator, so repudiation is not a threat this system defends against.
+- An App with `contents: write` can push onto a person's open, auto-merge-armed branch. The check that gates merges cannot see who pushed, and
+  the ruleset that could stop it broke auto-merge (#1424).
 
 ## 4 · Did we do a good enough job
 
