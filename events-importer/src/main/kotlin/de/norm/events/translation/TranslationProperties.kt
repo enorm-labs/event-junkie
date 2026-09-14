@@ -38,10 +38,11 @@ data class TranslationProperties(
      */
     val maxRetries: Int = DEFAULT_MAX_RETRIES,
     /**
-     * The most descriptions one import run may translate.
+     * The most descriptions one source may translate in one of its imports. Per source, not per cycle:
+     * a night over every granted source is bounded at this times the source count.
      *
      * A source that grants translation and then publishes 300 events would otherwise spend the whole
-     * budget in one run. The remainder is picked up by the next run, because an untranslated event
+     * budget in one import. The remainder is picked up by the next one, because an untranslated event
      * stays a candidate.
      */
     val maxPerRun: Int = DEFAULT_MAX_PER_RUN
