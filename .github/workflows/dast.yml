@@ -1,0 +1,309 @@
+name: DAST
+
+# Hostile requests against the running site, on a schedule, from something that has no source code
+# and no credential (#1421, epic #1419). Every other scanner here reads an artifact — CodeQL the
+# source, Trivy the image layers, `helm unittest` the rendered chart. This one talks to the site.
+#
+# **Two jobs, two targets, and the split is the design.** `dast-k3d` is the active scan: ZAP's full
+# scan and API scan, fuzzing every parameter of every endpoint. It runs against the chart on an
+# ephemeral k3d cluster on this runner, built the way Hetzner runs it (ADR-012) — same chart, same
+# images, same Traefik with the same header, CSP and rate-limit middlewares. `dast-production` is
+# the passive baseline: a spider and the passive rules against the public site, from the outside.
+# An active scan against a CX33 with visitors on it would be a self-inflicted load test that trips
+# the rate limit and tests nothing else; staging is on the WireGuard tunnel and is not reachable
+# from here, on purpose (PLATFORM_SETUP §4a).
+#
+# **Neither job holds a credential to any cluster, and that is a property to keep.** The k3d cluster
+# is created and deleted inside the job. The production job sends HTTPS requests to a public
+# hostname with `contents: read` and nothing else, the same shape as `site-probe.yml`. A scanner
+# with a kubeconfig would be testing from the wrong side of the boundary.
+#
+# **What makes a run fail.** `-I` makes every WARN non-fatal, so only a rule set to FAIL in the
+# rules file under `.zap/` is red — a header the chart guarantees, a CSP that is present, no
+# reflected input. Every IGNORE there carries a date and a reason, like `.trivyignore`. And the
+# two denominators per scan — URLs the spider reached, rules the pinned image ran — are floors in
+# `scripts/scan-coverage-baseline.txt` (#1087), because a Traefik that never came up, a spider
+# behind a 429 wall or a bump that dropped a rule all look like a clean scan otherwise.
+#
+# **Nothing here opens an issue.** Both jobs upload the HTML and JSON reports as artifacts; what a
+# finding becomes is a decision for the person who reads them.
+#
+# **k3d comes up through Flux, not through a local build.** `k3d-rehearsal.sh flux-up` installs the
+# controllers and applies `deploy/clusters/k3d`, which pulls the newest signed snapshot chart from
+# GHCR — `main`'s HEAD after `release.yml` published it. No JDK, no Node, no image build, and the
+# OCIRepository's cosign verification (#1425) is exercised in CI every night as a side effect. The
+# cost: a `workflow_dispatch` on a branch scans the published snapshot, not the branch.
+#
+# **No `pull_request` trigger**, decided in #1421: a DAST finding is rarely about the pull request,
+# and the two scans are minutes. Nightly, weekly, and by hand.
+
+on:
+  schedule:
+    # Off-the-hour and clear of every other schedule here, for the reason `site-probe.yml` gives.
+    # Each job reads `github.event.schedule` to know which cron woke it.
+    - cron: '52 3 * * *' # dast-k3d, nightly
+    - cron: '46 5 * * 0' # dast-production, weekly on Sunday
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Which scan to run
+        type: choice
+        options:
+          - both
+          - k3d
+          - production
+        default: both
+      target:
+        description: URL for the production baseline. Empty means SITE_URL, then the apex.
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dast-${{ github.event_name }}
+  cancel-in-progress: false
+
+env:
+  # Pinned by tag **and** digest, because `docker run` pulls it and a tag on GHCR is mutable.
+  # Renovate's `custom.regex` manager reads both from this one line (ADR-024, `renovate.json5`).
+  # The digest is the multi-arch index, so the same line runs on an arm64 laptop.
+  ZAP_IMAGE: ghcr.io/zaproxy/zaproxy:2.17.0@sha256:781a2bdaea47324e7bab583e2263f21d257b0aee61ed51521a5be45f5f5081ef
+  # `k3d-rehearsal.sh` needs k3d and flux; the runner has docker, kubectl, helm and yq. Both are
+  # Renovate-managed strings. FLUX_VERSION appears in validate-chart.yml too, and Renovate moves
+  # every occurrence in one pull request.
+  K3D_VERSION: v5.9.0
+  FLUX_VERSION: 2.9.5
+  # The public target. Same convention as site-probe.yml: the repository variable while production
+  # serves a rehearsal hostname, the apex once it is deleted at go-live. A dispatch input wins over
+  # both. The issue asked for a loud skip when unset; with the apex as the fallback it is never
+  # unset, and a skip that becomes permanent at launch — the day the variable is deleted — would be
+  # the silent failure this repository keeps meeting.
+  SITE_URL: ${{ inputs.target || vars.SITE_URL || 'https://event-junkie.de' }}
+  # How many events `.zap/seed.sql` inserts. Asserted through the public API before the scan, so a
+  # seed that no longer matches the schema fails here with a PostgreSQL error rather than as a
+  # spider that found one page.
+  SEED_EVENTS: '30'
+
+jobs:
+  dast-k3d:
+    name: Active scan against k3d
+    runs-on: ubuntu-latest
+    # Measured on the first local run: flux-up 4 minutes, the full scan 26, the API scan 1.
+    timeout-minutes: 75
+    if: >-
+      (github.event_name == 'schedule' && github.event.schedule == '52 3 * * *')
+      || (github.event_name == 'workflow_dispatch' && inputs.job != 'production')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install k3d and flux
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /usr/local/bin/k3d \
+            "https://github.com/k3d-io/k3d/releases/download/${K3D_VERSION}/k3d-linux-amd64"
+          chmod +x /usr/local/bin/k3d
+          curl -fsSL \
+            "https://github.com/fluxcd/flux2/releases/download/v${FLUX_VERSION}/flux_${FLUX_VERSION}_linux_amd64.tar.gz" \
+            | tar -xz -C /usr/local/bin flux
+          k3d version
+          flux version --client
+
+      # The rehearsal script owns every k3d, helm and kubectl incantation, and `down` at the end of
+      # this job is what makes a failed run leave nothing behind. `flux-verify` afterwards asserts
+      # what was pulled: a snapshot, from GHCR, one tag, tests passed.
+      - name: Bring the chart up through Flux
+        run: |
+          scripts/k3d-rehearsal.sh flux-up
+          scripts/k3d-rehearsal.sh flux-verify
+
+      # A fixture rather than an import: the same rows every night, and no venue's page fetched for
+      # our scanner's sake. The header of seed.sql says why, and what a failure here means.
+      - name: Seed the database and assert the site serves the rows
+        run: |
+          set -euo pipefail
+          docker exec -i event-junkie-postgres-1 psql -U admin -d event_junkie_k3d -v ON_ERROR_STOP=1 < .zap/seed.sql
+          total="$(curl -sS -H 'Host: event-junkie.localhost' 'http://localhost:8080/api/events?size=1' \
+            | jq -r '.totalElements')"
+          if [ "$total" != "$SEED_EVENTS" ]; then
+            echo "::error::/api/events reports $total events after seeding, expected $SEED_EVENTS."
+            exit 1
+          fi
+          echo "/api/events serves $total seeded events"
+
+      # ZAP runs as uid 1000 inside the image and the runner is not, so the work directory is opened
+      # up before it is mounted. `build/` is gitignored; the rules files are copied in so ZAP reads
+      # them from the same mount it writes the reports to.
+      - name: Prepare the ZAP work directory
+        run: |
+          mkdir -p build/zap
+          cp .zap/rules-k3d-full.tsv .zap/rules-k3d-api.tsv build/zap/
+          chmod -R a+rwX build/zap
+
+      # Through Traefik, because that is what the security-headers, CSP, `noindex` and rate-limit
+      # middlewares are. The container reaches the k3d load balancer on the runner's :8080 through
+      # `host.docker.internal`, and a replacer rule rewrites the `Host` header to the name the
+      # Ingress routes on. Not `--network host` with the real hostname: `.localhost` names resolve
+      # to loopback inside curl and Firefox whatever `/etc/hosts` says, and the browser spider's
+      # Firefox could not start under host networking on the machine this was first run on. `-j`
+      # adds that browser spider — the frontend is an SPA, and the traditional spider reads an HTML
+      # head with no links in it; the first run found 217 URLs with it. Two scanner threads and a
+      # delay keep the active scan under the per-source rate limit (50 req/s, burst 250); a fuzzer
+      # that gets 429s tests the limiter and nothing else. The active scan is capped at 30 minutes
+      # — the first run took 26 — so a fuzzer that finds more to do cannot outrun the job.
+      #
+      # The exit status is kept and applied after the coverage floors, so a red run says which of
+      # the two it was: a FAIL rule, or a scan that saw less than it should. No `-s`: the short
+      # format drops the `Total of N URLs` line the floor reads.
+      - name: Full scan through Traefik
+        run: |
+          set -uo pipefail
+          docker run --rm --add-host host.docker.internal:host-gateway \
+            -v "$PWD/build/zap:/zap/wrk:rw" "$ZAP_IMAGE" \
+            zap-full-scan.py -t http://host.docker.internal:8080 -j -m 3 -T 40 -I \
+              -c rules-k3d-full.tsv -J full.json -r full.html \
+              -z "-config scanner.threadPerHost=2 -config scanner.delayInMs=10 -config scanner.maxScanDurationInMins=30 $HOST_REPLACER" \
+            | tee build/zap/full.txt
+          status=${PIPESTATUS[0]}
+          scripts/scan-coverage.sh baseline zap-k3d-full-urls build/zap/full.txt
+          scripts/scan-coverage.sh baseline zap-k3d-full-rules build/zap/full.txt
+          exit "$status"
+        env:
+          # One replacer rule: every request's `Host` becomes the Ingress hostname. The keys are
+          # ZAP's `replacer` add-on configuration, index 0.
+          HOST_REPLACER: >-
+            -config replacer.full_list(0).description=host
+            -config replacer.full_list(0).enabled=true
+            -config replacer.full_list(0).matchtype=REQ_HEADER
+            -config replacer.full_list(0).matchstr=Host
+            -config replacer.full_list(0).regex=false
+            -config replacer.full_list(0).replacement=event-junkie.localhost
+
+      # The OpenAPI document is on the BFF port and not routed through Traefik (`bff.basePath` is
+      # `/api`), so a port-forward exposes it — on every interface, because the container reaches
+      # the runner through the bridge, not through loopback. The scan then fuzzes the BFF directly
+      # through the same forward, deliberately past the rate limiter, which would otherwise answer
+      # the fuzzer with 429s and hide every real finding behind them. The API scan is where `sort`,
+      # `page`, `size`, `q` and the slugs get hostile values; a spider never reaches them. Its rules
+      # file ignores the headers Traefik adds, because here there is no Traefik.
+      - name: API scan against the BFF
+        run: |
+          set -uo pipefail
+          kubectl --context k3d-event-junkie -n event-junkie port-forward --address 0.0.0.0 \
+            svc/event-junkie-bff 18080:8080 >/dev/null 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf -o /dev/null http://localhost:18080/v3/api-docs && break
+            [ "$i" = 30 ] && { echo "::error::the BFF never answered on :18080"; exit 1; }
+            sleep 2
+          done
+          docker run --rm --add-host host.docker.internal:host-gateway \
+            -v "$PWD/build/zap:/zap/wrk:rw" "$ZAP_IMAGE" \
+            zap-api-scan.py -t http://host.docker.internal:18080/v3/api-docs -f openapi -T 40 -I \
+              -c rules-k3d-api.tsv -J api.json -r api.html \
+            | tee build/zap/api.txt
+          status=${PIPESTATUS[0]}
+          scripts/scan-coverage.sh baseline zap-k3d-api-urls build/zap/api.txt
+          scripts/scan-coverage.sh baseline zap-k3d-api-rules build/zap/api.txt
+          exit "$status"
+
+      - name: Summarise
+        if: always()
+        run: |
+          {
+            echo "## ZAP against k3d"
+            echo
+            for scan in full api; do
+              f="build/zap/$scan.txt"
+              [ -f "$f" ] || { echo "- \`$scan\`: no output"; continue; }
+              echo "- \`$scan\`: $(grep -E '^Total of [0-9]+ URLs' "$f" | tail -1 || echo 'no URL count') — $(grep -E '^FAIL-NEW:' "$f" | tail -1 || echo 'no tally')"
+            done
+            echo
+            echo "Reports are in the \`zap-k3d\` artifact. A FAIL row is a regression; a WARN row is for the reader."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: zap-k3d
+          path: |
+            build/zap/*.html
+            build/zap/*.json
+            build/zap/*.txt
+          retention-days: 30
+
+      - name: Tear the cluster down
+        if: always()
+        run: scripts/k3d-rehearsal.sh down
+
+  dast-production:
+    name: Passive baseline against production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: >-
+      (github.event_name == 'schedule' && github.event.schedule == '46 5 * * 0')
+      || (github.event_name == 'workflow_dispatch' && inputs.job != 'k3d')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Prepare the ZAP work directory
+        run: |
+          mkdir -p build/zap
+          cp .zap/rules-production.tsv build/zap/
+          chmod -R a+rwX build/zap
+
+      # Passive only: the spider for two minutes plus the browser spider, then the passive rules over
+      # what came back. No active rule runs against production, ever — the header says why. The
+      # traditional spider's own pacing (two threads, 200 ms between requests) is a tenth of the
+      # per-source rate limit, and the browser spider is one visitor. The first run took 15 minutes
+      # end to end, most of it the browser spider and the passive-scan drain, which is what `-T`
+      # and the job timeout are sized for.
+      - name: Baseline scan
+        run: |
+          set -uo pipefail
+          echo "Target: $SITE_URL"
+          docker run --rm \
+            -v "$PWD/build/zap:/zap/wrk:rw" "$ZAP_IMAGE" \
+            zap-baseline.py -t "$SITE_URL" -j -m 2 -T 20 -I \
+              -c rules-production.tsv -J baseline.json -r baseline.html \
+            | tee build/zap/baseline.txt
+          status=${PIPESTATUS[0]}
+          scripts/scan-coverage.sh baseline zap-production-urls build/zap/baseline.txt
+          scripts/scan-coverage.sh baseline zap-production-rules build/zap/baseline.txt
+          exit "$status"
+
+      - name: Summarise
+        if: always()
+        run: |
+          {
+            echo "## ZAP baseline against \`$SITE_URL\`"
+            echo
+            f=build/zap/baseline.txt
+            if [ -f "$f" ]; then
+              echo "- $(grep -E '^Total of [0-9]+ URLs' "$f" | tail -1 || echo 'no URL count') — $(grep -E '^FAIL-NEW:' "$f" | tail -1 || echo 'no tally')"
+            else
+              echo "- no output"
+            fi
+            echo
+            echo "Reports are in the \`zap-production\` artifact."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: zap-production
+          path: |
+            build/zap/*.html
+            build/zap/*.json
+            build/zap/*.txt
+          retention-days: 90

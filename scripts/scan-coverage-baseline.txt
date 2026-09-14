@@ -9,7 +9,19 @@
 #
 # Trivy and Dependency-Check are deliberately absent. Their counts move with an upstream advisory
 # database, so a number here would rot; both assert a floor of zero instead.
+#
+# The ZAP rule counts are exact for the pinned image. The ZAP URL counts are a spider's, and a
+# spider on a runner does not find the same number every night — so those three floors sit at about
+# half of what the first run found (217, 73 and 27), which is the line between a scan that saw the
+# site and one that saw a 429 wall or a Traefik that never came up. `update` them from a real run
+# only for a reduction that is meant.
 flux-clusters-files	42
 flux-clusters-resources	139
 zizmor-ignored	13
 zizmor-suppressed	76
+zap-k3d-api-rules	119
+zap-k3d-api-urls	40
+zap-k3d-full-rules	141
+zap-k3d-full-urls	120
+zap-production-rules	66
+zap-production-urls	15

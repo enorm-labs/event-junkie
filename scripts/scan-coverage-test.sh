@@ -37,6 +37,7 @@ trap 'rm -rf "$WORK"' EXIT
 # A baseline of its own, so the assertions do not move when the repository's floors do.
 BASELINE="$WORK/scan-coverage-baseline.txt"
 printf 'zizmor-ignored\t11\nzizmor-suppressed\t64\nflux-clusters-resources\t141\nflux-clusters-files\t41\n' >"$BASELINE"
+printf 'zap-k3d-full-urls\t40\nzap-k3d-full-rules\t60\n' >>"$BASELINE"
 
 # run <expected-exit> <name> <args...> — the script against the fixture baseline above.
 run() {
@@ -107,6 +108,32 @@ run 1 "an empty stream fails rather than validating nothing" render "$WORK/rende
 run 1 "a skipped resource fails" render "$WORK/render-skipped.txt"
 run 1 "an invalid resource fails" render "$WORK/render-invalid.txt"
 run 2 "output with no summary is an error" render "$WORK/render-garbage.txt"
+
+# The tally line is tab-separated and its seven numbers sum to the rule count. 60 here; a rule set
+# that lost a rule sums to 59 whatever the levels moved between.
+cat >"$WORK/zap-ok.txt" <<'EOF'
+Total of 40 URLs
+PASS: Vulnerable JS Library [10003]
+WARN-NEW: Strict-Transport-Security Header Not Set [10035] x 3
+FAIL-NEW: 0	FAIL-INPROG: 0	WARN-NEW: 3	WARN-INPROG: 0	INFO: 1	IGNORE: 2	PASS: 54
+EOF
+cat >"$WORK/zap-fewer-urls.txt" <<'EOF'
+Total of 1 URLs
+FAIL-NEW: 0	FAIL-INPROG: 0	WARN-NEW: 3	WARN-INPROG: 0	INFO: 1	IGNORE: 2	PASS: 54
+EOF
+cat >"$WORK/zap-fewer-rules.txt" <<'EOF'
+Total of 40 URLs
+FAIL-NEW: 0	FAIL-INPROG: 0	WARN-NEW: 0	WARN-INPROG: 0	INFO: 0	IGNORE: 0	PASS: 59
+EOF
+printf 'ZAP never printed a tally\n' >"$WORK/zap-garbage.txt"
+
+echo "ZAP"
+run 0 "today's counts pass" baseline zap-k3d-full-urls "$WORK/zap-ok.txt"
+run 0 "the seven levels sum to the rule count" baseline zap-k3d-full-rules "$WORK/zap-ok.txt"
+run 1 "one URL is a spider that found nothing" baseline zap-k3d-full-urls "$WORK/zap-fewer-urls.txt"
+run 1 "one rule fewer fails whatever level it left from" baseline zap-k3d-full-rules "$WORK/zap-fewer-rules.txt"
+run 2 "output with no tally is an error" baseline zap-k3d-full-rules "$WORK/zap-garbage.txt"
+run 2 "output with no URL count is an error" baseline zap-k3d-full-urls "$WORK/zap-garbage.txt"
 
 printf '{"dependencies": [{"fileName": "a.jar"}, {"fileName": "b.jar"}]}\n' >"$WORK/owasp-ok.json"
 printf '{"dependencies": []}\n' >"$WORK/owasp-empty.json"
