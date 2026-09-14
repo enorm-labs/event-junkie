@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.event.EventEntity
 import de.norm.events.licence.SourceLicence
 import de.norm.events.licence.SourceLicences
 import io.kotest.assertions.throwables.shouldThrow
@@ -42,7 +43,7 @@ class ScrapedEventTest {
         imageUrl = imageUrl
     )
 
-    private fun ScrapedEvent.toEntity() = toEventEntity(venueId = 1L, venueSlug = "so36", eventSourceId = 1L)
+    private fun ScrapedEvent.toEntity(existing: EventEntity? = null) = toEventEntity(venueId = 1L, venueSlug = "so36", eventSourceId = 1L, existing = existing)
 
     @Test
     fun `toEventEntity swaps a transposed doors-after-start pair`() {
@@ -198,15 +199,66 @@ class ScrapedEventTest {
         entity.descriptionLanguageConfidence shouldBe null
     }
 
-    // Nothing writes a second language yet. #330 imports one, #470's engine translates one.
+    // The translation pass writes the second text after the import; the mapper only carries it. Blanking
+    // it here re-bought the whole catalogue every night (#1301).
     @Test
-    fun `toEventEntity writes no alternative text`() {
-        val entity = scrapedEvent(description = GERMAN_DESCRIPTION).toEntity()
+    fun `toEventEntity keeps the stored translation while the description is unchanged`() {
+        val entity = scrapedEvent(description = GERMAN_DESCRIPTION).toEntity(existing = translated(GERMAN_DESCRIPTION))
+
+        entity.descriptionAlt shouldBe "An evening with a view"
+        entity.descriptionAltLanguage shouldBe "en"
+        entity.descriptionAltOrigin shouldBe "MACHINE"
+        entity.descriptionAltEngine shouldBe "anthropic:test"
+        entity.descriptionAltSourceHash shouldBe "hash-of-old"
+    }
+
+    @Test
+    fun `toEventEntity drops the stored translation when the venue rewrote the description`() {
+        val entity = scrapedEvent(description = "$GERMAN_DESCRIPTION Neu.").toEntity(existing = translated(GERMAN_DESCRIPTION))
 
         entity.descriptionAlt shouldBe null
         entity.descriptionAltLanguage shouldBe null
         entity.descriptionAltOrigin shouldBe null
+        entity.descriptionAltEngine shouldBe null
+        entity.descriptionAltSourceHash shouldBe null
     }
+
+    // A prohibited source keeps no trace of the text, and a translation is a trace of it.
+    @Test
+    fun `toEventEntity drops the stored translation with a description it no longer stores`() {
+        val entity =
+            scrapedEvent(description = GERMAN_DESCRIPTION)
+                .toEventEntity(
+                    venueId = 1L,
+                    venueSlug = "so36",
+                    eventSourceId = 1L,
+                    existing = translated(GERMAN_DESCRIPTION),
+                    licences = licensed(SourceLicence.PROHIBITED, SourceLicence.UNCLEAR)
+                )
+
+        entity.description shouldBe null
+        entity.descriptionAlt shouldBe null
+        entity.descriptionAltOrigin shouldBe null
+    }
+
+    @Test
+    fun `toEventEntity writes no translation for a new event`() {
+        val entity = scrapedEvent(description = GERMAN_DESCRIPTION).toEntity()
+
+        entity.descriptionAlt shouldBe null
+        entity.descriptionAltOrigin shouldBe null
+    }
+
+    /** A stored row that the translation pass has already filled in, as the upsert reads it back. */
+    private fun translated(description: String) =
+        scrapedEvent(description = description).toEntity().copy(
+            id = 7L,
+            descriptionAlt = "An evening with a view",
+            descriptionAltLanguage = "en",
+            descriptionAltOrigin = "MACHINE",
+            descriptionAltEngine = "anthropic:test",
+            descriptionAltSourceHash = "hash-of-old"
+        )
 
     private companion object {
         const val GERMAN_DESCRIPTION =
