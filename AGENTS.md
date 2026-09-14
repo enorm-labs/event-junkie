@@ -640,6 +640,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Upgrading k3s on a running node             | `docs/ops/K3S_UPGRADE.md` — in place, not a rebuild; the Traefik check is the one that matters                                    |
 | Alerting from outside the cluster           | `docs/ops/HEALTHCHECKS.md` — healthchecks.io dead-man's switches. Ping URLs are credentials and live only on the node             |
 | Secrets, and the SOPS plan                  | `docs/ops/SECRETS.md` — three hand-made objects today; the age private key never enters this repository                           |
+| Threat model (STRIDE per boundary)          | `docs/security/THREAT_MODEL.md` — every _mitigated_ row names its file; an _open_ row is an issue. Reread on a new boundary       |
 | Flux resources (one dir per cluster)        | `deploy/clusters/` — read `deploy/AGENTS.md` first; the semver range is on the OCIRepository                                      |
 | Plan: footer, legal pages, versioning       | `docs/LEGAL.md`                                                                                                                   |
 | Frontend entry point                        | `events-frontend/src/main.ts`                                                                                                     |
