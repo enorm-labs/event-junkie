@@ -4,13 +4,13 @@ What is encrypted into git and restored by Flux, what stays hand-made and why, a
 
 ## The short version
 
-- **Six objects.** Three are encrypted into git and restored by Flux. Three are typed by a human and exist nowhere else.
+- **Eight objects.** One, `events-db`, is encrypted into git and restored by Flux. The other seven are typed by a human and exist nowhere else.
 - **Only `github-dispatch` cannot be regenerated.** Everything else comes back from the Keychain, a local file, or an `ALTER ROLE`.
 - **A rebuild silently loses every hand-made one**, and the cluster comes back looking healthy. §8b is the same shape.
 - **`sops-age` is the whole recovery story.** The repository without it is noise.
 
 ```sh
-sops -d deploy/clusters/staging/events-db.sops.yaml | head    # can I still decrypt?
+sops -d deploy/clusters/staging/secrets/events-db.yaml | head  # can I still decrypt?
 flux --context event-junkie-staging get helmreleases -A       # a missing credential fails the release, by design
 ```
 
