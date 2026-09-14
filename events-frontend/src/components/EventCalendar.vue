@@ -10,12 +10,11 @@ import type {
 import FullCalendar from '@fullcalendar/vue3'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { eventLabel } from '@/lib/format'
+import { berlinTimeIso, eventLabel, todayIso } from '@/lib/format'
 // v7 ships plugins as subpaths of the framework package; the standalone
 // @fullcalendar/daygrid et al. have no v7 release.
 import classicThemePlugin from '@fullcalendar/vue3/themes/classic'
 import dayGridPlugin from '@fullcalendar/vue3/daygrid'
-import timeGridPlugin from '@fullcalendar/vue3/timegrid'
 import listPlugin from '@fullcalendar/vue3/list'
 // v7 no longer bundles its own CSS — the skeleton (structure), the theme (rules) and the
 // palette (colours) are all opt-in. The palette is imported for its non-colour defaults
@@ -84,27 +83,36 @@ const { t } = useI18n()
 
 // FullCalendar is encapsulated here so the rest of the app sees a single, on-theme
 // component (see ADR-011). The CSS-variable bridge to our shadcn tokens lives in <style> below.
+// The week is a row of day cells, not a timetable: nearly every event starts between 19:00 and
+// 23:00, so a time axis stacks a night into slivers a few pixels wide (#1412).
 const options = computed<CalendarOptions>(() => ({
-  plugins: [classicThemePlugin, dayGridPlugin, timeGridPlugin, listPlugin],
+  plugins: [classicThemePlugin, dayGridPlugin, listPlugin],
   initialView: props.initialView,
   headerToolbar: {
     start: 'prev,next today',
     center: 'title',
-    end: 'dayGridMonth,timeGridWeek,listWeek',
+    end: 'dayGridMonth,dayGridWeek,listWeek',
   },
   // v7 has no `buttonText` option and no built-in English labels behind it.
   // A view button with no resolvable text is not rendered at all — silently, with no warning —
   // so without this block the calendar loses its entire view switcher while still looking fine.
   buttons: {
-    dayGridMonth: { text: 'Month' },
-    timeGridWeek: { text: 'Week' },
-    listWeek: { text: 'List' },
+    dayGridMonth: { text: t('calendar.view.month') },
+    dayGridWeek: { text: t('calendar.view.week') },
+    listWeek: { text: t('calendar.view.list') },
   },
   height: 'auto',
   firstDay: 1, // Monday (Berlin / EU convention)
+  // Today is Berlin's day, the clock the live dots run on (`todayIso`), not the visitor's.
+  now: () => `${todayIso()}T${berlinTimeIso()}:00`,
+  dayCellTopInnerClass: (info) => (info.isToday ? 'fc-today-number' : undefined),
+  dayHeaderInnerClass: (info) => (info.isToday ? 'fc-today-number' : undefined),
+  // A full cell folds into a "+N more" popover instead of stretching the row. The month takes a
+  // count: `true` sizes to the cell, and a phone-width month cell fits one event.
+  views: { dayGridMonth: { dayMaxEvents: 6 }, dayGridWeek: { dayMaxEvents: true } },
+  moreLinkText: t('calendar.more'), // rendered as `+N <more>`
   // A club night ending 06:00 is one day's entry, not a two-day bar; a run still on at 09:00 spans.
   nextDayThreshold: '09:00',
-  nowIndicator: true,
   events: props.events,
   datesSet: handleDatesSet,
   eventClick: handleEventClick,
@@ -156,7 +164,7 @@ const options = computed<CalendarOptions>(() => ({
 
   /* calendar content */
   --fc-classic-highlight: color-mix(in oklch, var(--primary) 12%, transparent);
-  --fc-classic-today: color-mix(in oklch, var(--primary) 8%, transparent);
+  --fc-classic-today: color-mix(in oklch, var(--primary) 22%, transparent);
   --fc-classic-now: var(--destructive);
 
   /* neutral backgrounds */
@@ -182,6 +190,13 @@ const options = computed<CalendarOptions>(() => ({
   color: var(--foreground);
 }
 
+/* Today's number and header, on top of the cell tint; the class is set from `isToday` above
+   because v7 hashes its own class names. */
+.event-calendar :deep(.fc-today-number) {
+  color: var(--primary);
+  font-weight: 700;
+}
+
 /* A token pair, not an opacity fade: dimming below the contrast threshold is the failure the
    two notes above record. `:deep` because the class sits on a FullCalendar descendant. */
 .event-calendar :deep(.fc-event-past) {
@@ -192,8 +207,8 @@ const options = computed<CalendarOptions>(() => ({
 /* Today's events pulse the way EventCard's live dot does — the same ring, thrown from the dot
    FullCalendar already draws. That dot is the event's first child and, being drawn with a border,
    the only empty one; v7 hashes every class name, so `:first-child:empty` is the one stable handle
-   on it. Timed events in the month and list views carry a dot; all-day bars and week-view blocks
-   have none, and match nothing here. The dot is all border around a 0 px box (8 px in the month
+   on it. Timed events in the grid and list views carry a dot; all-day bars have none, and match
+   nothing here. The dot is all border around a 0 px box (8 px in the month
    grid, 10 px in the list), so the ring's containing block is that empty centre and `inset: -4px`
    grows it back out to the dot's edge.
    The animation is Tailwind's `animate-ping`, spelled out because a keyframe cannot be `@apply`ed

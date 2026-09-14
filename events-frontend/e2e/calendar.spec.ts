@@ -229,3 +229,44 @@ test('shows an error state when the calendar feed fails', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'Calendar' })).toBeVisible()
   await expect(page.getByText(/couldn't load the calendar/i)).toBeVisible()
 })
+
+test("marks today's day number in the month grid and the week header", async ({ page }) => {
+  await page.goto('/calendar')
+
+  // The class is set from FullCalendar's own `isToday` (EventCalendar.vue), so the number that
+  // carries it is Berlin's day, whatever the runner's clock says.
+  const todayNumber = String(Number(todayInBerlin().slice(8)))
+  await expect(page.locator('.fc-today-number', { hasText: todayNumber })).toBeVisible()
+
+  await page.getByRole('tab', { name: 'Week view' }).click()
+  await expect(page.locator('.fc-today-number')).toBeVisible()
+})
+
+test('folds a crowded day into a "+N more" popover instead of a timetable', async ({ page }) => {
+  // Twelve events on one day, all at 20:00 — the shape a Berlin Saturday has.
+  await page.route(calendarFeed, (route) => {
+    const from = new URL(route.request().url()).searchParams.get('from') ?? '2026-07-01'
+    return json(
+      route,
+      Array.from({ length: 12 }, (_, i) => ({
+        slug: `gig-${i}`,
+        title: `Gig ${i}`,
+        eventDate: from,
+        startTime: '20:00',
+      })),
+    )
+  })
+
+  await page.goto('/calendar')
+  await page.getByRole('tab', { name: 'Week view' }).click()
+
+  // Not every gig fits the cell; the rest sit behind the link, and the popover shows them all.
+  // Sorted by title, "Gig 9" is the last of the twelve and never fits the cell.
+  const last = page.getByRole('link', { name: /Gig 9/ })
+  // A narrow cell (the mobile projects) shortens the link to the bare `+N`.
+  const more = page.getByRole('button', { name: /^\+\d+( more)?$/ })
+  await expect(more).toBeVisible()
+  await expect(last).toHaveCount(0)
+  await more.click()
+  await expect(last).toBeVisible()
+})
