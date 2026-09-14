@@ -43,12 +43,18 @@ function metaTag(key: string): RegExp {
   return new RegExp(`<meta\\s[^>]*?(?:name|property)="${key}"[^>]*?/?>`, 'g')
 }
 
-/** Rewrites `content` on one `<meta>` element, remembering what it said. Leaves a missing tag missing. */
+/**
+ * Rewrites `content` on one `<meta>` element, remembering what it said. Leaves a missing tag missing.
+ *
+ * Every `replace` in this file takes a function, never a string built from a value. A string
+ * replacement is scanned for `$&`, `` $` ``, `$'` and `$n` — so a title ending in `$'` would splice
+ * the rest of the document into the tag (#1426). A function's return is inserted as it is.
+ */
 function setContent(html: string, key: string, value: string): string {
   return html.replace(metaTag(key), (tag) => {
     const previous = /\scontent="([^"]*)"/.exec(tag)?.[1] ?? ''
-    const withContent = tag.replace(/\scontent="[^"]*"/, ` content="${escapeHtml(value)}"`)
-    return withContent.replace(/\s*\/?>$/, ` ${SITE_DEFAULT_ATTRIBUTE}="${previous}" />`)
+    const withContent = tag.replace(/\scontent="[^"]*"/, () => ` content="${escapeHtml(value)}"`)
+    return withContent.replace(/\s*\/?>$/, () => ` ${SITE_DEFAULT_ATTRIBUTE}="${previous}" />`)
   })
 }
 
@@ -80,8 +86,8 @@ export function rewriteHead(shell: string, input: RewriteInput): string {
   const { meta, locale, path, image } = input
   let html = shell
 
-  html = html.replace(/<html\s+lang="[^"]*"/, `<html lang="${locale}"`)
-  html = html.replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(meta.title)}</title>`)
+  html = html.replace(/<html\s+lang="[^"]*"/, () => `<html lang="${locale}"`)
+  html = html.replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(meta.title)}</title>`)
 
   html = setContent(html, 'og:title', meta.title)
   html = setContent(html, 'twitter:title', meta.title)
@@ -114,5 +120,5 @@ export function rewriteHead(shell: string, input: RewriteInput): string {
     html = removeTag(html, 'twitter:image')
   }
 
-  return html.replace('</head>', `    ${managedTags(locale, path)}\n  </head>`)
+  return html.replace('</head>', () => `    ${managedTags(locale, path)}\n  </head>`)
 }
