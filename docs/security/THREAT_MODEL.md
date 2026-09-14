@@ -185,7 +185,7 @@ The importer is the one workload that talks to the open internet. Everything it 
 | A pull request from a fork runs with secrets          | E      | low        | high   | Mitigated. `pull_request` triggers, `persist-credentials: false`, zizmor in `validate-workflows.yml`. The two `pull_request_target` workflows check out nothing |
 | A bot branch runs a hostile install script            | E      | low        | medium | Mitigated. `fix-notices-on-bot-prs.yml` mints the App token only at the push step, after `npm ci`                                                               |
 | A dependency ships malware                            | T      | medium     | high   | Mitigated in part. Dependency review on each PR, Dependency-Check nightly, Trivy on each image. Nothing checks a package's provenance                           |
-| A chart or image in GHCR is replaced and Flux runs it | T, E   | low        | high   | Open. Flux pulls by semver range with no `spec.verify`. `release.yml` attests provenance but signs nothing Flux can check. #1425                                |
+| A chart or image in GHCR is replaced and Flux runs it | T, E   | low        | high   | Mitigated on staging and k3d, open on production until the next release (#1425). `release.yml` signs, `spec.verify` matches the workflow's identity             |
 | A commit reaches `main` without a review              | T      | low        | high   | Mitigated. Ruleset `main-updates` restricts updates to the operator (#1424). An App can open a pull request and cannot land one                                 |
 | A tag or an action is unpinned                        | T      | low        | medium | Mitigated. Every action is pinned by SHA, every tool by version. zizmor and Dependabot keep it so                                                               |
 
@@ -239,7 +239,7 @@ That App holds `contents`, `pull_requests`, `workflows` and `actions` at `write`
 
 ### Open, ranked
 
-1. **#1425 — Flux verifies nothing it pulls.** Likelihood low, impact high. Sign the chart in `release.yml` and set `spec.verify` on the OCIRepository.
+1. **#1425 — production's OCIRepository does not verify yet.** Likelihood low, impact high. Six lines, after the first signed release is cut.
 2. **#709 — `observability` is `privileged`.** Likelihood low, impact high. Move the collector agent to its own namespace.
 3. **#1426 — the injector expands `$` patterns.** Likelihood low, impact low. One `replace` call with a function argument.
 
