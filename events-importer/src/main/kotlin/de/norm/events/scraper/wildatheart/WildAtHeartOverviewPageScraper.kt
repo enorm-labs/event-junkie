@@ -31,6 +31,10 @@ import java.time.MonthDay
  * `Tickets:<url>` presale link, a `Beginn HH:MM` start time, or an `Eintritt frei`
  * free-entry note. There are no per-event URLs — the whole programme is one page.
  *
+ * A row without a banner time stores the house doors instead of nothing: `info.htm` states
+ * "Geöffnet ist für Konzerte und Events von 20 Uhr bis Open End", and the one per-event time
+ * the listing prints, Wild Wednesday's `Beginn 21:00`, is an hour after it (#1403).
+ *
  * Dates carry a weekday but no year, so the year is inferred from the weekday via
  * [inferYearForWeekday]: among nearby candidate years the one whose `DD.MM.` actually
  * lands on the stated weekday and falls closest to today wins. The venue leaves
@@ -103,6 +107,9 @@ class WildAtHeartOverviewPageScraper(
 
         val ticketUrl = headline?.let { TICKETS_PATTERN.find(it)?.groupValues?.get(1) }
         val startTime = headline?.let { parseBannerStart(it) }
+        // A banner time is the venue's specific statement for that row — the flea market's `ab 14 Uhr`
+        // contradicts the house rule — so the house doors apply only where the row states nothing.
+        val doorsTime = HOUSE_DOORS.takeIf { startTime == null }
         val free = headline?.contains("eintritt frei", ignoreCase = true) == true
 
         return ScrapedEvent(
@@ -114,6 +121,7 @@ class WildAtHeartOverviewPageScraper(
             eventType = inferConcertVenueType(title),
             eventDate = eventDate,
             startTime = startTime,
+            doorsTime = doorsTime,
             imageUrl = row.selectFirst("img[src]")?.absUrl("src")?.takeIf { it.isNotBlank() },
             // No per-event URLs on this single-page site — the programme page is the source.
             sourceUrl = baseUrl,
@@ -199,6 +207,9 @@ class WildAtHeartOverviewPageScraper(
     private fun cleanBanner(headline: String?): String? = headline?.replace(TICKETS_PATTERN, "")?.trim()?.takeIf { it.isNotBlank() }
 
     companion object {
+        /** The doors the venue's `info.htm` states for concerts and events: "von 20 Uhr bis Open End". */
+        private val HOUSE_DOORS: LocalTime = LocalTime.of(20, 0)
+
         /** Matches a `.datum` cell "Weekday DD.MM.", capturing the German weekday abbreviation, day and month. */
         private val DATUM_PATTERN = Regex("""(Mo|Di|Mi|Do|Fr|Sa|So)\s*(\d{1,2})\.(\d{1,2})\.""", RegexOption.IGNORE_CASE)
 
