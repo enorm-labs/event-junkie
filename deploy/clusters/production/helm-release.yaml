@@ -85,9 +85,10 @@ spec:
       # release that keeps a translation across re-import. One catch-up pass, then only new text.
       translation:
         engine: anthropic
-        # The nightly import adds more than the chart's 50 to a handful of sources — 92 on Uber
-        # Arena, measured — and a pass that stops at the cap leaves a tail no later pass clears. 250
-        # covers the largest night seen so far, with room, and still bounds a runaway.
+        # Per source, per pass — not per night. The nightly import adds more than the chart's 50 to a
+        # handful of sources — 92 on Uber Arena, measured — and a pass that stops at the cap leaves a
+        # tail no later pass clears. 250 covers the largest night seen so far, with room. Across the
+        # 84 granted sources it bounds a night at 21,000, so it is not what stops a runaway (#1432).
         maxPerRun: 250
     images:
       enabled: true
