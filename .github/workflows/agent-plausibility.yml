@@ -15,6 +15,12 @@
 # **There is no `github_token:` input**, and no `issues: write` — see agent-security.yml for the
 # first, and the prompt's unattended section for why the second is deliberate. `display_report:
 # true` and the empty `inputs` context on a schedule are the same traps as the rest of the family.
+#
+# **`Bash` stays in `--allowedTools`, and the pages it fetches are attacker-controlled text.** The
+# prompt reads the API and the venues' pages with curl, so the shell is the job. The token that
+# shell holds is the Claude App's, with `contents: write`, which is why the `main-updates` ruleset
+# exists (#1424): an instruction smuggled in on a venue page can open a pull request and cannot
+# land one. ci-cd.instructions.md § the rulesets has the two-ruleset reasoning.
 name: Agent — Plausibility Check
 
 on:

@@ -516,8 +516,13 @@ in [AGENTS.md](../../AGENTS.md) § Automating GitHub with `gh`.
     arbitrary-code-execution path holding write scopes. `milestone-dependabot.yml` needs the trigger for a second reason: a `pull_request` run raised by
     Dependabot gets a read-only token, so it could not write a milestone at all.
 
-- **Nothing running in CI can push to `main`.** The `main` ruleset requires every change to arrive by pull request, and its **only** bypass actor is
-  `OrganizationAdmin`. The obvious workaround does not exist: GitHub refuses the Actions bot as a bypass actor with _"Actor GitHub Actions integration must be
-  part of the ruleset source or owner organization"_ — a platform constraint, not a permissions problem, and the UI offers no such actor either. **Design any
-  workflow that wants to write to the repo as generate-on-demand or open-a-PR, never as push-to-main.** A whole snapshot workflow was written, merged and
-  deleted before this was discovered.
+- **Nothing running in CI can push to `main`, and nothing but the operator can merge into it.** Two rulesets say so, and they are two on purpose (#1424).
+  `main` requires every change to arrive by pull request with every check green, and has **no bypass actor** — #443 removed the admin bypass so the
+  operator's own mistakes cannot skip a check. `main-updates` carries one rule, _restrict updates_, with `OrganizationAdmin` as its only bypass actor: a
+  merge is an update to the ref, so a GitHub App — `claude`, `renovate`, `event-junkie-release` — or `GITHUB_TOKEN` can open a pull request and cannot
+  land one. **A bypass actor is per ruleset, not per rule.** Putting the update rule on `main` with a bypass would let the operator bypass the checks too,
+  which is why the second ruleset exists. The obvious workaround for the first does not exist either: GitHub refuses the Actions bot as a bypass actor with
+  _"Actor GitHub Actions integration must be part of the ruleset source or owner organization"_. **Design any workflow that wants to write to the repo as
+  generate-on-demand or open-a-PR, never as push-to-main or merge.** A whole snapshot workflow was written, merged and deleted before this was discovered.
+  Auto-merge armed by the operator should merge on that person's behalf and pass the bypass. Not yet observed: the first armed bot pull request after
+  #1424 is the test, and this sentence takes its result.
