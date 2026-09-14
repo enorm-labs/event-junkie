@@ -70,7 +70,7 @@ class QuasimodoOverviewPageScraper {
         card: Element,
         baseUrl: String
     ): ScrapedEvent? {
-        val href = card.selectFirst("a.event-item[href]")?.attr("href")?.takeIf { it.isNotBlank() } ?: return null
+        val href = card.attrAt("a.event-item[href]", "href") ?: return null
         val sourceUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(sourceUrl, "/events/")
 

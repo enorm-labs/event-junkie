@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
@@ -86,7 +87,7 @@ class AegOverviewPageScraper {
         baseUrl: String,
         eventSource: EventSource
     ): ScrapedEvent? {
-        val href = row.selectFirst("h3.event-title a[href]")?.attr("href")?.takeIf { it.isNotBlank() } ?: return null
+        val href = row.attrAt("h3.event-title a[href]", "href") ?: return null
         val sourceUrl = resolveUrl(baseUrl, href)
         // The slug keeps its trailing "/YYYY-MM-DD-HHMM" segment: one production runs many dates.
         val slug = extractEventSlug(sourceUrl, "/events/detail/")

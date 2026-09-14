@@ -3,6 +3,7 @@ package de.norm.events.scraper.wuhlheide
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
@@ -67,7 +68,7 @@ class WuhlheideOverviewPageScraper {
         show: Element,
         baseUrl: String
     ): ScrapedEvent? {
-        val href = show.selectFirst("h2 a[href]")?.attr("href")?.takeIf { it.isNotBlank() } ?: return null
+        val href = show.attrAt("h2 a[href]", "href") ?: return null
         val sourceUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(sourceUrl, "/programm/")
 

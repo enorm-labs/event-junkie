@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.isNonArtistName
@@ -76,7 +77,7 @@ class TresorOverviewPageScraper {
         item: Element,
         baseUrl: String
     ): ScrapedEvent? {
-        val href = item.selectFirst("a[href*=/event/]")?.attr("href")?.takeIf { it.isNotBlank() } ?: return null
+        val href = item.attrAt("a[href*=/event/]", "href") ?: return null
         val sourceUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(sourceUrl, EVENT_PATH_PREFIX)
         val title = item.textAt(".event-title")?.let(::cleanEventTitle) ?: return null

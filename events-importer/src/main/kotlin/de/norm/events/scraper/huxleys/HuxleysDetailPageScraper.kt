@@ -3,6 +3,7 @@ package de.norm.events.scraper.huxleys
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
@@ -140,7 +141,7 @@ class HuxleysDetailPageScraper {
      */
     private fun parseTitle(document: Document): String? {
         val raw =
-            document.selectFirst("meta[property=og:title]")?.attr("content")?.takeIf { it.isNotBlank() }
+            document.attrAt("meta[property=og:title]", "content")
                 ?: document.title().takeIf { it.isNotBlank() }
                 ?: return null
         return raw
