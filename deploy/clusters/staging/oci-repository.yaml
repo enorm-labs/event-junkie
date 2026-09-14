@@ -1,4 +1,4 @@
-# comment-lint: allow-file 16 lines of OCIRepository, of which one field failed silently twice.
+# comment-lint: allow-file 21 lines of OCIRepository, of which one field failed silently twice.
 # The chart source for staging. #264 publishes it here on every push to `main`.
 #
 # THE ONE FIELD THIS FILE EXISTS FOR IS `semver`, AND IT IS THE ONE THAT FAILS SILENTLY — twice, for
@@ -45,8 +45,14 @@ spec:
   # No secretRef: the GHCR packages are public and pull anonymously, which is why the chart's
   # `image.pullSecrets` is empty too. Making them private would put a classic PAT in this cluster,
   # unscopable to one package, GitHub Packages not supporting fine-grained tokens (PLATFORM_SETUP §3).
-  #
-  # No `verify:` yet either, and that is the interesting gap: Flux can refuse to reconcile a chart
-  # that is not cosign-signed by our own workflow (`spec.verify.provider: cosign` plus
-  # `matchOIDCIdentity`). #443 proposes signing the artifacts; the day it lands, this is where the
-  # signature stops being decorative metadata and becomes a gate.
+  # Refuses a chart not signed by our own release workflow (#1425). source-controller looks up the
+  # cosign signature next to the artifact on GHCR — a Sigstore bundle, stored as an OCI referrer by
+  # cosign v3 — and checks the Fulcio certificate inside it against these two regexes. The subject is
+  # the workflow's identity, read from the first signed publish rather than guessed: a snapshot runs
+  # at `refs/heads/main`, a release at `refs/tags/vX.Y.Z`. A chart pushed by hand with `helm push`
+  # carries no signature and never reconciles, however valid its contents.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+      - issuer: "^https://token\\.actions\\.githubusercontent\\.com$"
+        subject: "^https://github\\.com/enorm-labs/event-junkie/\\.github/workflows/release\\.yml@refs/(heads/main|tags/v[0-9]+\\.[0-9]+\\.[0-9]+)$"

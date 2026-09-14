@@ -127,6 +127,10 @@ costs.
 
 - **CI holds no cluster credential, because there is none to hold.** A repository compromise no longer implies a _credentialled_ path into the cluster.
 - **Rollback is `git revert`**, and drift is corrected rather than merely detected.
+- **The cluster trusts a signature, not a registry** (#1425). `release.yml` signs every image and the chart with cosign, keyless, under the
+  workflow's own identity, and each OCIRepository carries `spec.verify` matching that identity. A chart pushed to GHCR by any other path — a person
+  with `packages: write`, a compromised token — never reconciles. Production's `verify:` lands after the first signed release exists, since its
+  range resolves whatever release is newest.
 - **Verification runs where the workloads do.** CI cannot reach staging by design, so the chart's `helm test` hook is
   the smoke test. Flux runs it as part of reconciliation, and remediates on failure.
 

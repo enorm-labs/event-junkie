@@ -24,3 +24,10 @@ spec:
   layerSelector:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
+  # Staging's `verify:` verbatim, for the same reason the range is: what is rehearsed here is what
+  # staging enforces. staging/oci-repository.yaml says what the two regexes are and where they come from.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+      - issuer: "^https://token\\.actions\\.githubusercontent\\.com$"
+        subject: "^https://github\\.com/enorm-labs/event-junkie/\\.github/workflows/release\\.yml@refs/(heads/main|tags/v[0-9]+\\.[0-9]+\\.[0-9]+)$"
