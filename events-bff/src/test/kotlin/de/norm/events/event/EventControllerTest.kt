@@ -1,6 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -427,11 +428,14 @@ class EventControllerTest : BaseControllerTest() {
     fun `GET events calendar returns events within range and rejects inverted range`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            insertEvent(venueId, "In Range", "in-range", LocalDate.now().plusDays(3))
-            insertEvent(venueId, "Out Of Range", "out-of-range", LocalDate.now().plusDays(40))
-
             val from = LocalDate.now()
             val to = LocalDate.now().plusDays(7)
+            insertEvent(venueId, "In Range", "in-range", from.plusDays(3))
+            insertEvent(venueId, "Out Of Range", "out-of-range", from.plusDays(40))
+            // A run that opened before the window and is still on is in it (#1405); one that closed the day before is not.
+            insertEvent(venueId, "Still Running", "still-running", from.minusDays(10), endDate = from.plusDays(2))
+            insertEvent(venueId, "Closed Yesterday", "closed-yesterday", from.minusDays(10), endDate = from.minusDays(1))
+
             webTestClient
                 .get()
                 .uri("/events/calendar?from=$from&to=$to")
@@ -440,9 +444,9 @@ class EventControllerTest : BaseControllerTest() {
                 .isOk
                 .expectBody()
                 .jsonPath("$.length()")
-                .isEqualTo(1)
-                .jsonPath("$[0].slug")
-                .isEqualTo("in-range")
+                .isEqualTo(2)
+                .jsonPath("$[*].slug")
+                .value<List<String>> { it shouldContainExactlyInAnyOrder listOf("still-running", "in-range") }
 
             webTestClient
                 .get()

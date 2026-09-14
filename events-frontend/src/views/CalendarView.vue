@@ -6,7 +6,7 @@ import EventCalendar from '@/components/EventCalendar.vue'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import { describeError } from '@/api/client'
 import { fetchCalendarEvents } from '@/composables/useEvents'
-import { isPastEvent, isRunningEvent, todayIso } from '@/lib/format'
+import { toCalendarInput } from '@/lib/calendarEvent'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useI18n } from 'vue-i18n'
 
@@ -32,24 +32,7 @@ async function load() {
   const { from, to } = range.value
   try {
     const data = await fetchCalendarEvents(from, clampTo(from, to), filters.value)
-    events.value = data.map((event) => ({
-      title: event.title ?? '',
-      start: event.startTime ? `${event.eventDate}T${event.startTime}` : event.eventDate,
-      url: `/events/${event.slug}`,
-      // Paging back a month already returned past events; this is what tells them apart. Today's
-      // get the same "live" mark as EventCard, off the same Berlin clock (`todayIso`) rather than
-      // FullCalendar's `isToday`, which reads the visitor's clock and can disagree late at night.
-      // v7 reads `className` (one string); the v6 `classNames` array is ignored without a warning.
-      // A weekender is one entry on its opening day (ADR-029 left the span's drawing open), and it
-      // is live on every day it runs.
-      className: isPastEvent(event)
-        ? 'fc-event-past'
-        : event.eventDate === todayIso() || isRunningEvent(event)
-          ? 'fc-event-live'
-          : undefined,
-      // `venue` backs the calendar's hover tooltip, where the clipped title is spelled out.
-      extendedProps: { slug: event.slug, venue: event.venue?.name },
-    }))
+    events.value = data.map(toCalendarInput)
     error.value = null
   } catch (e) {
     error.value = describeError(e, 'errors.subject.calendar')

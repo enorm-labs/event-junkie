@@ -20,6 +20,12 @@ data class EventFilter(
     val from: LocalDate? = null,
     val to: LocalDate? = null,
     /**
+     * The first day of a window: rows whose effective end (ADR-029) is on or after it, so a run
+     * that opened earlier is still in. The calendar sets it with [to] (#1405); the list keeps
+     * [from], which is the start date. Wins over [from].
+     */
+    val runningFrom: LocalDate? = null,
+    /**
      * A day the event is on: started by it and not ended before it (ADR-029). Internal — the
      * Tonight feed sets it, and no query parameter maps to it. Wins over [from] and [to].
      */
@@ -145,13 +151,16 @@ class EventSearchRepository(
             params["on"] = it
             return
         }
-        if (filter.from == null && filter.to == null) {
+        if (filter.from == null && filter.runningFrom == null && filter.to == null) {
             val today = LocalDate.now(clock)
             conditions += notOverOn(":today", today, params)
             params["today"] = today
             return
         }
-        filter.from?.let {
+        filter.runningFrom?.let {
+            conditions += "$EFFECTIVE_END >= :runningFrom"
+            params["runningFrom"] = it
+        } ?: filter.from?.let {
             conditions += "e.event_date >= :from"
             params["from"] = it
         }
