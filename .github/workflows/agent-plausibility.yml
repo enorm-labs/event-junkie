@@ -18,9 +18,9 @@
 #
 # **`Bash` stays in `--allowedTools`, and the pages it fetches are attacker-controlled text.** The
 # prompt reads the API and the venues' pages with curl, so the shell is the job. The token that
-# shell holds is the Claude App's, with `contents: write`, which is why the `main-updates` ruleset
-# exists (#1424): an instruction smuggled in on a venue page can open a pull request and cannot
-# land one. ci-cd.instructions.md § the rulesets has the two-ruleset reasoning.
+# shell holds is the Claude App's, with `contents: write`, which is why merge-gate.yml exists
+# (#1424): an instruction smuggled in on a venue page can open a pull request and cannot land
+# one, because the required check refuses a pull request this App authored.
 name: Agent — Plausibility Check
 
 on:
