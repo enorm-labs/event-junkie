@@ -102,6 +102,8 @@ const options = computed<CalendarOptions>(() => ({
   },
   height: 'auto',
   firstDay: 1, // Monday (Berlin / EU convention)
+  // A club night ending 06:00 is one day's entry, not a two-day bar; a run still on at 09:00 spans.
+  nextDayThreshold: '09:00',
   nowIndicator: true,
   events: props.events,
   datesSet: handleDatesSet,

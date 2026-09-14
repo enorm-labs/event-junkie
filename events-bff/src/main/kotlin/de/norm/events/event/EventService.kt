@@ -77,8 +77,8 @@ class EventService(
      * Events within an inclusive date range, for the calendar view. [filter] carries the same
      * optional criteria as [search] — the calendar is the search endpoint's other rendering —
      * and its own date range is overridden by [from]/[to], which the view derives from the
-     * visible window. The range is on the start date, so a weekender is drawn once, on its
-     * opening day (ADR-029 left the calendar's rendering of a span open; this is the answer for now).
+     * visible window. A span is in every window it overlaps — a run that opened before [from]
+     * and is still on is returned, and the view draws it as a bar across its days (#1405).
      *
      * @throws ResponseStatusException 400 if the range is inverted or exceeds [MAX_CALENDAR_DAYS].
      */
@@ -94,7 +94,7 @@ class EventService(
         if (from.plusDays(MAX_CALENDAR_DAYS) <= to) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Date range must not exceed $MAX_CALENDAR_DAYS days")
         }
-        val ids = eventSearchRepository.searchAll(filter.copy(from = from, to = to))
+        val ids = eventSearchRepository.searchAll(filter.copy(from = null, runningFrom = from, to = to))
         return summariesFor(hydrateOrdered(ids))
     }
 
