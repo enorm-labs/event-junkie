@@ -14,9 +14,8 @@ Every _mitigated_ row names the file that does the work. A reader can check each
 - **The strongest controls are network controls.** Default-deny NetworkPolicies, a firewall with two public ports, Pod Security `restricted`, and
   staging on the WireGuard tunnel only.
 - **The strongest credential in the system is write access to `main`.** What lands there is what the cluster runs
-  ([ADR-016](../adr/ADR-016_GITOPS_DELIVERY.md)). Three GitHub Apps hold it, and one of them runs agents that read venue pages.
-- **The top open threats** are in §3. An agent with a write token and a shell. An unsigned chart that Flux does not verify. A `privileged`
-  namespace.
+  ([ADR-016](../adr/ADR-016_GITOPS_DELIVERY.md)). Three GitHub Apps can open a pull request there. Only the operator can land one (#1424).
+- **The top open threats** are in §3. An unsigned chart that Flux does not verify, and a `privileged` namespace.
 
 ## 1 · What we are working on
 
@@ -187,7 +186,7 @@ The importer is the one workload that talks to the open internet. Everything it 
 | A bot branch runs a hostile install script            | E      | low        | medium | Mitigated. `fix-notices-on-bot-prs.yml` mints the App token only at the push step, after `npm ci`                                                               |
 | A dependency ships malware                            | T      | medium     | high   | Mitigated in part. Dependency review on each PR, Dependency-Check nightly, Trivy on each image. Nothing checks a package's provenance                           |
 | A chart or image in GHCR is replaced and Flux runs it | T, E   | low        | high   | Open. Flux pulls by semver range with no `spec.verify`. `release.yml` attests provenance but signs nothing Flux can check. #1425                                |
-| A commit reaches `main` without a review              | T      | medium     | high   | Open. The ruleset requires checks and zero approvals. Three Apps hold `contents: write` and may merge. #1424                                                    |
+| A commit reaches `main` without a review              | T      | low        | high   | Mitigated. Ruleset `main-updates` restricts updates to the operator (#1424). An App can open a pull request and cannot land one                                 |
 | A tag or an action is unpinned                        | T      | low        | medium | Mitigated. Every action is pinned by SHA, every tool by version. zizmor and Dependabot keep it so                                                               |
 
 ### B7 · Operator → cluster
@@ -212,12 +211,12 @@ The importer is the one workload that talks to the open internet. Everything it 
 Five `agent-*.yml` workflows run Claude with a shell. The action replaces `GITHUB_TOKEN` in the process with the `claude` App's installation token.
 That App holds `contents`, `pull_requests`, `workflows` and `actions` at `write`.
 
-| Threat                                                                   | STRIDE | Likelihood | Impact | Status                                                                                                                                             |
-| ------------------------------------------------------------------------ | ------ | ---------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A venue page instructs the plausibility agent, which holds a write token | E      | medium     | high   | Open. `agent-plausibility.yml` reads venue pages with `Bash` allowed. The token can push, open and merge, and the ruleset needs no approval. #1424 |
-| An agent dismisses a security alert                                      | T      | low        | medium | Mitigated. `agent-security.yml` grants `security-events: read` and `--unattended` files nothing                                                    |
-| An agent commits as `GITHUB_TOKEN` and no check runs                     | D      | low        | low    | Mitigated. No `github_token:` input, on purpose. `agent-security.yml` header                                                                       |
-| The Claude OAuth token leaks from a run                                  | I      | low        | medium | Mitigated. A repository secret, masked in logs, revocable in one click                                                                             |
+| Threat                                                                   | STRIDE | Likelihood | Impact | Status                                                                                                                                                    |
+| ------------------------------------------------------------------------ | ------ | ---------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A venue page instructs the plausibility agent, which holds a write token | E      | medium     | medium | Mitigated. The token can push a branch and open a pull request. Ruleset `main-updates` refuses the merge (#1424), and the operator reads the pull request |
+| An agent dismisses a security alert                                      | T      | low        | medium | Mitigated. `agent-security.yml` grants `security-events: read` and `--unattended` files nothing                                                           |
+| An agent commits as `GITHUB_TOKEN` and no check runs                     | D      | low        | low    | Mitigated. No `github_token:` input, on purpose. `agent-security.yml` header                                                                              |
+| The Claude OAuth token leaks from a run                                  | I      | low        | medium | Mitigated. A repository secret, masked in logs, revocable in one click                                                                                    |
 
 ### B10 · Object Storage and imgproxy → visitors
 
@@ -240,12 +239,10 @@ That App holds `contents`, `pull_requests`, `workflows` and `actions` at `write`
 
 ### Open, ranked
 
-1. **#1424 — an agent with a write token and a shell reads attacker-controlled text.** Likelihood medium, impact high. Restrict updates to `main`
-   to the operator in the ruleset. An App can then open a pull request but not merge one.
-2. **#1425 — Flux verifies nothing it pulls.** Likelihood low, impact high. Sign the chart in `release.yml` and set `spec.verify` on the OCIRepository.
-3. **#709 — `observability` is `privileged`.** Likelihood low, impact high. Move the collector agent to its own namespace.
-4. **#1427 — validity checks for leaked secrets.** Likelihood low, impact low. One repository setting.
-5. **#1426 — the injector expands `$` patterns.** Likelihood low, impact low. One `replace` call with a function argument.
+1. **#1425 — Flux verifies nothing it pulls.** Likelihood low, impact high. Sign the chart in `release.yml` and set `spec.verify` on the OCIRepository.
+2. **#709 — `observability` is `privileged`.** Likelihood low, impact high. Move the collector agent to its own namespace.
+3. **#1427 — validity checks for leaked secrets.** Likelihood low, impact low. One repository setting.
+4. **#1426 — the injector expands `$` patterns.** Likelihood low, impact low. One `replace` call with a function argument.
 
 ### Accepted
 
