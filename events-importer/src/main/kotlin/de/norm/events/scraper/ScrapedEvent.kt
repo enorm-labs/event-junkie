@@ -119,6 +119,11 @@ data class ScrapedEvent(
         val (doors, start) = orderDoorsBeforeStart(doorsTime, startTime)
         val storedDescription = if (licences.withholdsDescription()) null else description
         val detected = DescriptionLanguage.detect(storedDescription)
+        // The second-language text is not scraped, it is derived from the description after the
+        // import commits. Rebuilding it as null here made every translated row "changed", wiped the
+        // translation on save, and bought it again the same night — the whole catalogue, daily
+        // (#1301). It survives exactly as long as the text it was made from does.
+        val alt = existing?.takeIf { storedDescription != null && it.description == storedDescription }
         // priceCurrency is intentionally omitted — all scraped venues are currently in Berlin
         // (EUR). EventEntity defaults to "EUR". If non-EUR venues are added, introduce a
         // priceCurrency field on ScrapedEvent and pass it through here.
@@ -140,6 +145,11 @@ data class ScrapedEvent(
             // description under English chrome is marked rather than mislabelled (ADR-026).
             descriptionLanguage = detected?.language?.code,
             descriptionLanguageConfidence = detected?.confidence,
+            descriptionAlt = alt?.descriptionAlt,
+            descriptionAltLanguage = alt?.descriptionAltLanguage,
+            descriptionAltOrigin = alt?.descriptionAltOrigin,
+            descriptionAltEngine = alt?.descriptionAltEngine,
+            descriptionAltSourceHash = alt?.descriptionAltSourceHash,
             // Fall back to OTHER (not CONCERT) when the source provided no category,
             // so unclassifiable events aren't silently labelled as concerts; then
             // promote an under-classified festival title (a "Konzert"-labelled festival
