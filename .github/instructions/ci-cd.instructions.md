@@ -343,6 +343,13 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
     frontend one", so requiring it would have been ambiguous. Keep them distinct. - **`OWASP Dependency-Check` is deliberately not in the gate's `needs`**: it is informational and `continue-on-error`, and its `NVD_API_KEY` is empty on
     a fork run, so gating merges on it would turn an unauthenticated rate limit into a blocked pull request.
 
+- **Secret scanning, push protection and validity checks are on; the other two secret-scanning settings are off, and that is decided** (#443, #385,
+  #1427). Push protection refuses a push that carries a known provider's token. Validity checks ask that provider whether a found token is still live, which
+  is the difference between an alert to act on today and one to triage. `non_provider_patterns` and `ai_detection` widen the net at a noise cost this
+  repository does not pay for. Read the five, never assume them:
+  `gh api repos/{owner}/{repo} --jq '.security_and_analysis | map_values(.status)'`. gitleaks in `.pre-commit-config.yaml` is the local half of the same
+  control and catches what the server-side scan would have refused, one push earlier.
+
 - **Commits are deliberately NOT signed** (#443). There is no `required_signatures` rule on the `main` ruleset and none is wanted: with a
   single maintainer, a signature proves authorship to the same person who holds the only account that can merge anything, while costing a signing key on every
   machine _and every agent_ that commits here. The control that actually gates `main` is the ruleset — every change by pull request, every
