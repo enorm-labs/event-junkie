@@ -6,6 +6,7 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -100,7 +101,7 @@ class JunctionBarWebsiteImporter(
         linkMarker: String,
         fallbackPath: String
     ): String {
-        val href = homepage.selectFirst("a[href*=$linkMarker]")?.attr("href")?.takeIf { it.isNotBlank() }
+        val href = homepage.attrAt("a[href*=$linkMarker]", "href")
         return href?.let { resolveUrl(entryUrl, it) } ?: resolveUrl(entryUrl, fallbackPath)
     }
 

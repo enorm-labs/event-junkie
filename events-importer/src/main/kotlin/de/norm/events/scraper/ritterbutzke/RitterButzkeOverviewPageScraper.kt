@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
@@ -65,7 +66,7 @@ class RitterButzkeOverviewPageScraper {
         card: Element,
         baseUrl: String
     ): ScrapedEvent? {
-        val href = card.selectFirst("a.event-link[href]")?.attr("href")?.takeIf { it.isNotBlank() } ?: return null
+        val href = card.attrAt("a.event-link[href]", "href") ?: return null
         val sourceUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(sourceUrl, "/event/")
 
