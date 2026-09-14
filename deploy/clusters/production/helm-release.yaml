@@ -79,14 +79,12 @@ spec:
     # `serving.enabled` is a published claim: §5 of the privacy notice says no image request
     # reaches a third party, and that is only true while this is on (LEGAL.md §7.3a).
     importer:
-      # **Off until the release that carries #1301 is live.** The importer wiped every translation on
-      # re-import and bought it again the same night, about $4.35 a day for the whole catalogue. This
-      # manifest applies on merge and a code fix does not, so this is the stop that works today; the
-      # English page shows the German text until it is `anthropic` again. Then: a source also needs
-      # a PERMITTED `translation_licence`, and 84 of the 86 hold one since ADR-027. The Secret is
-      # hand-made — docs/ops/SECRETS.md §The decision.
+      # **On here translates.** A source also needs a PERMITTED `translation_licence`, and 84 of the
+      # 86 hold one since ADR-027. The Secret is hand-made — docs/ops/SECRETS.md §The decision.
+      # Off for the two days the importer re-bought the catalogue nightly (#1301); back on with the
+      # release that keeps a translation across re-import. One catch-up pass, then only new text.
       translation:
-        engine: none
+        engine: anthropic
         # The nightly import adds more than the chart's 50 to a handful of sources — 92 on Uber
         # Arena, measured — and a pass that stops at the cap leaves a tail no later pass clears. 250
         # covers the largest night seen so far, with room, and still bounds a runaway.
