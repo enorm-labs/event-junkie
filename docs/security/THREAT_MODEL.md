@@ -186,6 +186,7 @@ The importer is the one workload that talks to the open internet. Everything it 
 | A bot branch runs a hostile install script            | E      | low        | medium | Mitigated. `fix-notices-on-bot-prs.yml` mints the App token only at the push step, after `npm ci`                                                               |
 | A dependency ships malware                            | T      | medium     | high   | Mitigated in part. Dependency review on each PR, Dependency-Check nightly, Trivy on each image. Nothing checks a package's provenance                           |
 | A chart or image in GHCR is replaced and Flux runs it | T, E   | low        | high   | Mitigated on staging and k3d, open on production until the next release (#1425). `release.yml` signs, `spec.verify` matches the workflow's identity             |
+| A chart fails verification and nobody hears of it     | R      | low        | medium | Mitigated. The `source-failure` Alert dispatches every OCIRepository error to `flux-source-failure.yml`, which goes red (#1454)                                 |
 | A commit reaches `main` without a review              | T      | low        | high   | Mitigated. `merge-gate.yml`, a required check on `pull_request_target`, fails a pull request authored by an unlisted App (#1424)                                |
 | A tag or an action is unpinned                        | T      | low        | medium | Mitigated. Every action is pinned by SHA, every tool by version. zizmor and Dependabot keep it so                                                               |
 
@@ -242,7 +243,6 @@ That App holds `contents`, `pull_requests`, `workflows` and `actions` at `write`
 
 1. **#1425 — production's OCIRepository does not verify yet.** Likelihood low, impact high. Six lines, after the first signed release is cut.
 2. **#709 — `observability` is `privileged`.** Likelihood low, impact high. Move the collector agent to its own namespace.
-3. **#1454 — a chart that fails signature verification alerts nobody.** Likelihood low, impact medium. The Flux `Alert` watches the HelmRelease only.
 
 ### Accepted
 

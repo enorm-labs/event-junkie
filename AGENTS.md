@@ -550,6 +550,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | CI: Markdown formatting                     | `.github/workflows/validate-docs.yml`                                                                                             |
 | CI: build, scan and publish to GHCR         | `.github/workflows/release.yml` — the only workflow that pushes anything; it does not deploy                                      |
 | CI: deployment records from Flux            | `.github/workflows/deployment-status.yml` — writes the GitHub deployment; the cluster triggers it, not a merge                    |
+| CI: a failing Flux source, made visible     | `.github/workflows/flux-source-failure.yml` — red by construction; the cluster's `source-failure` Alert triggers it (#1454)       |
 | Every script, and the `--help` rule         | `scripts/README.md` — gates, tools, and ops; `scripts/index-parity.sh` fails when the directory, the index, or the tree disagrees |
 | Markdown formatting                         | `scripts/format-markdown.sh` + `.oxfmtrc.json` — Markdown only, and the scope is load-bearing                                     |
 | README screenshots, and when they rot       | `docs/screenshots/` — dated, because nothing else signals staleness; retake on design changes, never on data changes              |

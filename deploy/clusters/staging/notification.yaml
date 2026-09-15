@@ -51,9 +51,9 @@ spec:
   providerRef:
     name: github-dispatch
   eventSeverity: info
-  # Deliberately narrower than the commit-status Alert above, which also watches the OCIRepository.
-  # A chart arriving in the registry is not a deployment — it is what a deployment later consumes —
-  # and recording it as one would put two entries on the timeline for a single rollout.
+  # The HelmRelease only. A chart arriving in the registry is not a deployment — it is what a
+  # deployment later consumes — and recording it as one would put two entries on the timeline for a
+  # single rollout. The OCIRepository has its own Alert below, for its failures alone.
   eventSources:
     - kind: HelmRelease
       name: event-junkie
@@ -61,6 +61,28 @@ spec:
   # These two are the workflow's whole input beyond the revision: `env` picks the GitHub environment
   # and `cluster` is recorded on the deployment. An unrecognised `env` fails the run rather than
   # defaulting, so a typo here is loud instead of filing staging under production.
+  eventMetadata:
+    env: staging
+    cluster: staging
+---
+# The source's failures, and nothing else (#1454). A chart that fails cosign verification (#1425), or
+# a registry that cannot be reached, leaves the HelmRelease Ready on its last good artifact, so the
+# Alert above never hears of it. `error` rather than `info`: at `info` every chart arrival — every
+# merge, on staging — would spend a `contents: write` call on a dispatch nothing records.
+# `flux-source-failure.yml` receives these and goes red, which is what makes the event visible.
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: source-failure
+  namespace: flux-system
+spec:
+  providerRef:
+    name: github-dispatch
+  eventSeverity: error
+  eventSources:
+    - kind: OCIRepository
+      name: event-junkie
+      namespace: flux-system
   eventMetadata:
     env: staging
     cluster: staging

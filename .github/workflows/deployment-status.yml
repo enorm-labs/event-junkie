@@ -26,10 +26,10 @@ on:
   # The event type is Flux's own format, `{Kind}/{Name}.{Namespace}` — not a name we chose, and it
   # must match the involved object exactly or the dispatch arrives and matches no workflow.
   #
-  # Only the HelmRelease, though the Alert also watches the OCIRepository: a chart appearing in the
-  # registry is not a deployment, it is the thing a deployment later consumes. Recording both would
-  # put two entries on the timeline for one rollout, the earlier of which is exactly the "published,
-  # not running" claim the header rejects.
+  # Only the HelmRelease: a chart appearing in the registry is not a deployment, it is the thing a
+  # deployment later consumes, and recording both would put two entries on the timeline for one
+  # rollout, the earlier of which is exactly the "published, not running" claim the header rejects.
+  # The OCIRepository's failures go to `flux-source-failure.yml` through their own Alert (#1454).
   repository_dispatch:
     types: [ HelmRelease/event-junkie.flux-system ]
 

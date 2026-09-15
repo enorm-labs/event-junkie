@@ -437,7 +437,7 @@ because CI cannot reach here.
 **Then check that the reconcile reached GitHub**, which is the half that has no evidence inside the cluster (#565):
 
 ```sh
-flux --context event-junkie-staging get alerts -A                                # github-dispatch: Ready
+flux --context event-junkie-staging get alerts -A                                # github-dispatch and source-failure: Ready
 gh api repos/enorm-labs/event-junkie/deployments --jq '.[0] | {environment, ref, created_at}'
 ```
 

@@ -153,8 +153,8 @@ kubectl --context event-junkie-staging create secret generic github-dispatch \
   -n flux-system --from-literal=token=<the PAT>
 ```
 
-Until it exists, the `github-dispatch` Provider reconciles into a failed state and sends no dispatch. The Alert is configured correctly and simply has no
-credential to use. Once it exists, notification-controller picks it up on its next reconcile, and **nothing needs restarting**. The order does not matter, only that
+Until it exists, the `github-dispatch` Provider reconciles into a failed state and sends no dispatch. The Alerts are configured correctly and simply have
+no credential to use. Once it exists, notification-controller picks it up on its next reconcile, and **nothing needs restarting**. The order does not matter, only that
 both eventually exist.
 
 **Existence is not the check, and a rotation is exactly when this bites.** A present but read-only token looks identical from here — see
