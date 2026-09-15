@@ -1,6 +1,7 @@
 package de.norm.events.promoter
 
 import de.norm.events.EVENTS_SCHEMA
+import de.norm.events.common.escapeLike
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.data.domain.Pageable
@@ -85,9 +86,6 @@ class PromoterSearchRepository(
     }
 
     companion object {
-        /** `%` and `_` in a search term are letters to the visitor, not wildcards. */
-        private fun String.escapeLike(): String = replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-
         private const val UPCOMING_COUNT =
             "SELECT COUNT(*) FROM $EVENTS_SCHEMA.event_promoter ep " +
                 "JOIN $EVENTS_SCHEMA.event e ON e.id = ep.event_id " +

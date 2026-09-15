@@ -1,6 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.EVENTS_SCHEMA
+import de.norm.events.common.escapeLike
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.data.domain.Pageable
@@ -270,7 +271,7 @@ class EventSearchRepository(
         }
         filter.query?.takeIf { it.isNotBlank() }?.let {
             conditions += "(e.title ILIKE :q OR e.subtitle ILIKE :q)"
-            params["q"] = "%${it.trim()}%"
+            params["q"] = "%${it.trim().escapeLike()}%"
         }
     }
 
