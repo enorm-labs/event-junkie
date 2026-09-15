@@ -42,15 +42,17 @@ What each workflow is for, which checks are required, and the shapes that fail s
       different. It asserts a non-zero package count per image, because a scan that enumerates nothing reports as clean — the `Dependencies Scanned: 0` lesson,
       one surface over. **The fix for a red run is to cut a release**, not to re-run the job: these images are immutable and already deployed.
     - `dast.yml` — ZAP and Nuclei against the running site, and the only scanner here that sends a request rather than reading an artifact (#1421,
-      #1423). Two jobs, neither holding a cluster credential. **`dast-k3d`, nightly and active**: `k3d-rehearsal.sh flux-up` brings the newest signed
+      #1423, #1461). Three jobs, none holding a cluster credential. **`dast-k3d`, nightly and active**: `k3d-rehearsal.sh flux-up` brings the newest signed
       snapshot chart up on an ephemeral k3d cluster on the runner, `.zap/seed.sql` gives the spider thirty events, then the full scan runs through
       Traefik — the real headers, CSP and rate limiter — the API scan fuzzes every parameter of every endpoint through a port-forward to the BFF, past
       the rate limiter on purpose, and Nuclei runs its `misconfig`, `exposure`, `tech` and `cve` templates at medium severity and above through Traefik
       — the question ZAP does not ask, "is a known bad thing exposed", one pinned template per CVE or misconfiguration. Nuclei's binary and its
       templates are two pins with two cadences; the templates go to `~/nuclei-templates` because workflow templates chain others by a path relative
       to that directory, and `.nuclei-ignore` is copied to its config directory or the `dos` and `fuzz` tags run. **`dast-production`, weekly and
-      passive**: a spider and the passive rules against `SITE_URL`, from the outside, same target rule as `site-probe.yml`; no Nuclei there, it sends
-      thousands of probes fast. Only a rule set to `FAIL` in `.zap/rules-*.tsv` is red, and so is any Nuclei match outside `.nuclei/waivers.tsv`; every
+      passive**: a spider and the passive rules against `SITE_URL`, from the outside, same target rule as `site-probe.yml`. **`nuclei-production`,
+      weekly**: the k3d Nuclei pass against the same `SITE_URL` at ten requests a second, a fifth of the limiter's average — the load argument that
+      keeps the active ZAP scan off production is about rate, and what the public hostname answers that the chart did not put there is the surface
+      Nuclei is for. Only a rule set to `FAIL` in `.zap/rules-*.tsv` is red, and so is any Nuclei match outside `.nuclei/waivers-<target>.tsv`; every
       `IGNORE` and every waiver row is dated and reasoned. The URL and rule counts of each ZAP scan and Nuclei's loaded-template count are floors in
       `scan-coverage-baseline.txt`, because a spider behind a 429 wall or a bump that drops a rule reports clean otherwise — and the floors are red only
       under `set -e`, which the scan steps carry for that reason. Reports are artifacts; nothing opens an issue. No `pull_request` trigger, decided: a

@@ -33,3 +33,4 @@ zap-k3d-full-urls	60
 zap-production-rules	67
 zap-production-urls	15
 nuclei-k3d-templates	5000
+nuclei-production-templates	5000

@@ -1,0 +1,4 @@
+# Nuclei matches accepted on production (#1461). One row per template id, tab-separated:
+# id	date	reason
+# A row here is passed to `-exclude-id`; a match outside this file fails the nuclei-production job.
+# Like `.zap/*.tsv` and `.trivyignore`, an entry without a date and a reason is a defect.
