@@ -11,17 +11,20 @@
 # database, so a number here would rot; both assert a floor of zero instead.
 #
 # The ZAP rule counts are exact for the pinned image. The ZAP URL counts are a spider's, and a
-# spider on a runner does not find the same number every night — so those three floors sit at about
-# half of what the first run found (217, 73 and 27), which is the line between a scan that saw the
-# site and one that saw a 429 wall or a Traefik that never came up. `update` them from a real run
-# only for a reduction that is meant.
+# spider does not find the same number every run: the k3d full scan found 217 URLs on a laptop and
+# 107 on the runner, the production baseline 27 and 214. So those three floors sit at about half of
+# the smallest count seen, which is the line between a scan that saw the site and one that saw a
+# 429 wall or a Traefik that never came up. `update` them from a real run only for a reduction that
+# is meant. An active rule set to IGNORE in `.zap/rules-*.tsv` is not run at all (the full scan
+# prints it as SKIP) and leaves the rule count, so an IGNORE on an active rule lowers that floor by
+# one in the same commit.
 flux-clusters-files	42
 flux-clusters-resources	139
 zizmor-ignored	13
 zizmor-suppressed	76
 zap-k3d-api-rules	119
 zap-k3d-api-urls	40
-zap-k3d-full-rules	141
-zap-k3d-full-urls	120
-zap-production-rules	66
+zap-k3d-full-rules	140
+zap-k3d-full-urls	60
+zap-production-rules	67
 zap-production-urls	15

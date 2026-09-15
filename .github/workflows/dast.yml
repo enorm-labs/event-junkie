@@ -90,7 +90,7 @@ jobs:
   dast-k3d:
     name: Active scan against k3d
     runs-on: ubuntu-latest
-    # Measured on the first local run: flux-up 4 minutes, the full scan 26, the API scan 1.
+    # Measured on the runner's first run: flux-up 2 minutes, the full scan 15, the API scan 1.
     timeout-minutes: 75
     if: >-
       (github.event_name == 'schedule' && github.event.schedule == '52 3 * * *')
@@ -152,10 +152,11 @@ jobs:
       # to loopback inside curl and Firefox whatever `/etc/hosts` says, and the browser spider's
       # Firefox could not start under host networking on the machine this was first run on. `-j`
       # adds that browser spider — the frontend is an SPA, and the traditional spider reads an HTML
-      # head with no links in it; the first run found 217 URLs with it. Two scanner threads and a
-      # delay keep the active scan under the per-source rate limit (50 req/s, burst 250); a fuzzer
-      # that gets 429s tests the limiter and nothing else. The active scan is capped at 30 minutes
-      # — the first run took 26 — so a fuzzer that finds more to do cannot outrun the job.
+      # head with no links in it; the first runs found 217 URLs with it on a laptop and 107 on the
+      # runner. Two scanner threads and a delay keep the active scan under the per-source rate limit
+      # (50 req/s, burst 250); a fuzzer that gets 429s tests the limiter and nothing else. The active
+      # scan is capped at 30 minutes — the first runs took 26 and 15 — so a fuzzer that finds more to
+      # do cannot outrun the job.
       #
       # The exit status is kept and applied after the coverage floors, so a red run says which of
       # the two it was: a FAIL rule, or a scan that saw less than it should. No `-s`: the short
@@ -190,8 +191,11 @@ jobs:
       # through the same forward, deliberately past the rate limiter, which would otherwise answer
       # the fuzzer with 429s and hide every real finding behind them. The API scan is where `sort`,
       # `page`, `size`, `q` and the slugs get hostile values; a spider never reaches them. Its rules
-      # file ignores the headers Traefik adds, because here there is no Traefik.
+      # file ignores the headers Traefik adds, because here there is no Traefik. It runs even when
+      # the full scan failed: both are measurements, and one red step should not hide the other's
+      # report.
       - name: API scan against the BFF
+        if: ${{ !cancelled() }}
         run: |
           set -uo pipefail
           kubectl --context k3d-event-junkie -n event-junkie port-forward --address 0.0.0.0 \

@@ -51,7 +51,8 @@
 10056	FAIL	(X-Debug-Token Information Leak)
 10057	WARN	(Username Hash Found)
 10061	FAIL	(X-AspNet-Version Response Header)
-10062	WARN	(PII Disclosure)
+# 2026-09-15 — a false positive: the rule's Luhn check matched twelve digits inside an image content hash in `/api/images/<sha256>/…`. The site stores no card numbers and no personal data (ADR-019, the privacy notice).
+10062	IGNORE	(PII Disclosure)
 # WARN until #1442 adds the header to security-headers-middleware.yaml, then FAIL.
 10063	WARN	(Permissions Policy Header Not Set)
 10096	WARN	(Timestamp Disclosure)

@@ -52,12 +52,14 @@
 10051	WARN	(Relative Path Confusion - Active/beta)
 10052	FAIL	(X-ChromeLogger-Data (XCOLD) Header Information Leak - Passive/release)
 10054	WARN	(Cookie without SameSite Attribute - Passive/release)
+# WARN on k3d only: image serving is off there, so the chart composes `img-src 'self' https:` and the rule reads `https:` as a wildcard. Production serves its own images and passes.
 10055	WARN	(CSP - Passive/release)
 10056	FAIL	(X-Debug-Token Information Leak - Passive/release)
 10057	WARN	(Username Hash Found - Passive/release)
 10058	WARN	(GET for POST - Active/release)
 10061	FAIL	(X-AspNet-Version Response Header - Passive/release)
-10062	WARN	(PII Disclosure - Passive/release)
+# 2026-09-15 — a false positive: the rule's Luhn check matched twelve digits inside an image content hash in `/api/images/<sha256>/…`. The site stores no card numbers and no personal data (ADR-019, the privacy notice).
+10062	IGNORE	(PII Disclosure - Passive/release)
 # WARN until #1442 adds the header to security-headers-middleware.yaml, then FAIL.
 10063	WARN	(Permissions Policy Header Not Set - Passive/beta)
 # 2026-09-14 — the frontend is an SPA and nginx answers every unknown path with index.html, so `/events - Copy/<slug>` is 200 by design. There is no file behind it to disclose.
