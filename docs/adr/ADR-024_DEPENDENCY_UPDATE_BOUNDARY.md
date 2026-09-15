@@ -128,7 +128,7 @@ Empty output means the bump is complete. Any output is what the string edit coul
 
 These eight are the pins with no manifest: `HELM_VERSION`, `SHELLCHECK_VERSION`, `TRIVY_VERSION`, `HELM_UNITTEST_VERSION`, `FLUX_VERSION`,
 `FLUX_SCHEMA_VERSION`, `ZIZMOR_VERSION` and `ACTIONLINT_VERSION`, across fourteen occurrences in six workflows.
-`RUFF_VERSION` in `validate-python.yml` joined as the ninth ([#1189](https://github.com/enorm-labs/event-junkie/issues/1189)), `K3D_VERSION` and `ZAP_IMAGE` in `dast.yml` as the tenth and eleventh ([#1421](https://github.com/enorm-labs/event-junkie/issues/1421)). Four facts put them with Renovate rather than
+`RUFF_VERSION` in `validate-python.yml` joined as the ninth ([#1189](https://github.com/enorm-labs/event-junkie/issues/1189)), `K3D_VERSION` and `ZAP_IMAGE` in `dast.yml` as the tenth and eleventh ([#1421](https://github.com/enorm-labs/event-junkie/issues/1421)). `NUCLEI_VERSION` and `NUCLEI_TEMPLATES_VERSION` in the same file are the twelfth and thirteenth ([#1423](https://github.com/enorm-labs/event-junkie/issues/1423)). Four facts put them with Renovate rather than
 with a scheduled agent, and each was measured in [#1071](https://github.com/enorm-labs/event-junkie/issues/1071).
 
 **`customManagers` reads them without touching the workflows.** `depNameTemplate` and `datasourceTemplate` carry the mapping in `renovate.json5`, so no

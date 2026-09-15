@@ -5,8 +5,10 @@ name: DAST
 # source, Trivy the image layers, `helm unittest` the rendered chart. This one talks to the site.
 #
 # **Two jobs, two targets, and the split is the design.** `dast-k3d` is the active scan: ZAP's full
-# scan and API scan, fuzzing every parameter of every endpoint. It runs against the chart on an
-# ephemeral k3d cluster on this runner, built the way Hetzner runs it (ADR-012) — same chart, same
+# scan and API scan, fuzzing every parameter of every endpoint, then Nuclei (#1423) asking the other
+# question — not "does the app misbehave under hostile input" but "is a known bad thing exposed":
+# one template per CVE, exposure or misconfiguration, thousands of them, kept current upstream. It
+# runs against the chart on an ephemeral k3d cluster on this runner, built the way Hetzner runs it (ADR-012) — same chart, same
 # images, same Traefik with the same header, CSP and rate-limit middlewares. `dast-production` is
 # the passive baseline: a spider and the passive rules against the public site, from the outside.
 # An active scan against a CX33 with visitors on it would be a self-inflicted load test that trips
@@ -20,10 +22,11 @@ name: DAST
 #
 # **What makes a run fail.** `-I` makes every WARN non-fatal, so only a rule set to FAIL in the
 # rules file under `.zap/` is red — a header the chart guarantees, a CSP that is present, no
-# reflected input. Every IGNORE there carries a date and a reason, like `.trivyignore`. And the
-# two denominators per scan — URLs the spider reached, rules the pinned image ran — are floors in
-# `scripts/scan-coverage-baseline.txt` (#1087), because a Traefik that never came up, a spider
-# behind a 429 wall or a bump that dropped a rule all look like a clean scan otherwise.
+# reflected input. Every IGNORE there carries a date and a reason, like `.trivyignore`; so does
+# every row of `.nuclei/waivers.tsv`, and a Nuclei match outside that file is red. And the
+# denominators — URLs the spider reached, rules the pinned image ran, templates Nuclei loaded —
+# are floors in `scripts/scan-coverage-baseline.txt` (#1087), because a Traefik that never came
+# up, a spider behind a 429 wall or a bump that dropped a rule all look like a clean scan otherwise.
 #
 # **Nothing here opens an issue.** Both jobs upload the HTML and JSON reports as artifacts; what a
 # finding becomes is a decision for the person who reads them.
@@ -75,6 +78,11 @@ env:
   # every occurrence in one pull request.
   K3D_VERSION: v5.9.0
   FLUX_VERSION: 2.9.5
+  # The binary and the templates are two releases with two cadences, pinned apart. Both are
+  # Renovate-managed; `-update-templates` at run time would be the unpinned dependency ADR-024
+  # exists to refuse. No `v`: the download URLs add it, so a bump rewrites a plain number.
+  NUCLEI_VERSION: 3.11.1
+  NUCLEI_TEMPLATES_VERSION: 10.4.8
   # The public target. Same convention as site-probe.yml: the repository variable while production
   # serves a rehearsal hostname, the apex once it is deleted at go-live. A dispatch input wins over
   # both. The issue asked for a loud skip when unset; with the apex as the fallback it is never
@@ -91,6 +99,7 @@ jobs:
     name: Active scan against k3d
     runs-on: ubuntu-latest
     # Measured on the runner's first run: flux-up 2 minutes, the full scan 15, the API scan 1.
+    # Nuclei is 4 more, measured on a laptop.
     timeout-minutes: 75
     if: >-
       (github.event_name == 'schedule' && github.event.schedule == '52 3 * * *')
@@ -113,6 +122,27 @@ jobs:
             | tar -xz -C /usr/local/bin flux
           k3d version
           flux version --client
+
+      # The templates go to `~/nuclei-templates`, the directory nuclei would install them to
+      # itself, and not to a path of our own: a workflow template names the templates it chains by
+      # a path relative to that directory, and from anywhere else 261 of them fail to resolve.
+      # `-duc` below stops the update check that would fetch a newer set. `.nuclei-ignore` ships in
+      # the tarball and lists the tags the project excludes by default — `dos`, `fuzz`,
+      # `bruteforce` — but nuclei reads it only from its config directory, and logs a warning and
+      # runs them when it is not there.
+      - name: Install nuclei and its templates
+        run: |
+          set -euo pipefail
+          curl -fsSL -o "${RUNNER_TEMP}/nuclei.zip" \
+            "https://github.com/projectdiscovery/nuclei/releases/download/v${NUCLEI_VERSION}/nuclei_${NUCLEI_VERSION}_linux_amd64.zip"
+          unzip -oq "${RUNNER_TEMP}/nuclei.zip" nuclei -d /usr/local/bin
+          mkdir -p build/nuclei ~/.config/nuclei
+          curl -fsSL \
+            "https://github.com/projectdiscovery/nuclei-templates/archive/refs/tags/v${NUCLEI_TEMPLATES_VERSION}.tar.gz" \
+            | tar -xz -C "${RUNNER_TEMP}"
+          mv "${RUNNER_TEMP}/nuclei-templates-${NUCLEI_TEMPLATES_VERSION}" ~/nuclei-templates
+          cp ~/nuclei-templates/.nuclei-ignore ~/.config/nuclei/.nuclei-ignore
+          nuclei -version 2>&1 | head -1
 
       # The rehearsal script owns every k3d, helm and kubectl incantation, and `down` at the end of
       # this job is what makes a failed run leave nothing behind. `flux-verify` afterwards asserts
@@ -159,18 +189,20 @@ jobs:
       # do cannot outrun the job.
       #
       # The exit status is kept and applied after the coverage floors, so a red run says which of
-      # the two it was: a FAIL rule, or a scan that saw less than it should. No `-s`: the short
-      # format drops the `Total of N URLs` line the floor reads.
+      # the two it was: a FAIL rule, or a scan that saw less than it should. `-e` is what makes a
+      # missed floor red at all: under `set -uo` alone a missed floor prints and the step exits
+      # with ZAP's status. No `-s`: the short format drops the `Total of N URLs` line the floor
+      # reads.
       - name: Full scan through Traefik
         run: |
-          set -uo pipefail
+          set -euo pipefail
+          status=0
           docker run --rm --add-host host.docker.internal:host-gateway \
             -v "$PWD/build/zap:/zap/wrk:rw" "$ZAP_IMAGE" \
             zap-full-scan.py -t http://host.docker.internal:8080 -j -m 3 -T 40 -I \
               -c rules-k3d-full.tsv -J full.json -r full.html \
               -z "-config scanner.threadPerHost=2 -config scanner.delayInMs=10 -config scanner.maxScanDurationInMins=30 $HOST_REPLACER" \
-            | tee build/zap/full.txt
-          status=${PIPESTATUS[0]}
+            | tee build/zap/full.txt || status=$?
           scripts/scan-coverage.sh baseline zap-k3d-full-urls build/zap/full.txt
           scripts/scan-coverage.sh baseline zap-k3d-full-rules build/zap/full.txt
           exit "$status"
@@ -197,7 +229,8 @@ jobs:
       - name: API scan against the BFF
         if: ${{ !cancelled() }}
         run: |
-          set -uo pipefail
+          set -euo pipefail
+          status=0
           kubectl --context k3d-event-junkie -n event-junkie port-forward --address 0.0.0.0 \
             svc/event-junkie-bff 18080:8080 >/dev/null 2>&1 &
           for i in $(seq 1 30); do
@@ -209,25 +242,58 @@ jobs:
             -v "$PWD/build/zap:/zap/wrk:rw" "$ZAP_IMAGE" \
             zap-api-scan.py -t http://host.docker.internal:18080/v3/api-docs -f openapi -T 40 -I \
               -c rules-k3d-api.tsv -J api.json -r api.html \
-            | tee build/zap/api.txt
-          status=${PIPESTATUS[0]}
+            | tee build/zap/api.txt || status=$?
           scripts/scan-coverage.sh baseline zap-k3d-api-urls build/zap/api.txt
           scripts/scan-coverage.sh baseline zap-k3d-api-rules build/zap/api.txt
+          exit "$status"
+
+      # The binary runs on the runner, not in a container: k3d's load balancer is on the host's
+      # :8080, and the `Host` header does the routing the way ZAP's replacer does. `-type http`
+      # keeps out the network, code, javascript and headless templates, which probe other ports or
+      # need flags this job does not pass; `-ni` drops the templates that need an out-of-band
+      # server, so the run calls nothing outside the runner. Info-severity templates are not run:
+      # `tech-detect` and its like describe the stack rather than find a hole. nuclei exits 0
+      # whatever it matches, so red is the JSONL having a line — after the floor, so a run that
+      # loaded too few templates says so first. Waivers come from `.nuclei/waivers.tsv`, one
+      # template id per row with the date and the reason, the way `.zap/*.tsv` carries IGNOREs.
+      - name: Nuclei through Traefik
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          status=0
+          waived=$(grep -v '^#' .nuclei/waivers.tsv | cut -f1 | grep . | paste -sd, - || true)
+          nuclei -duc -ni -nc -stats -si 60 -t ~/nuclei-templates -type http \
+            -tags misconfig,exposure,tech,cve -severity medium,high,critical \
+            -rate-limit 40 ${waived:+-exclude-id "$waived"} \
+            -u http://127.0.0.1:8080 -H 'Host: event-junkie.localhost' \
+            -jsonl -o build/nuclei/nuclei.jsonl 2>&1 | tee build/nuclei/nuclei.txt || status=$?
+          touch build/nuclei/nuclei.jsonl
+          scripts/scan-coverage.sh baseline nuclei-k3d-templates build/nuclei/nuclei.txt
+          if [ -s build/nuclei/nuclei.jsonl ]; then
+            jq -r '"::error title=Nuclei match::\(.["template-id"]) [\(.info.severity)] \(.["matched-at"])"' build/nuclei/nuclei.jsonl
+            exit 1
+          fi
           exit "$status"
 
       - name: Summarise
         if: always()
         run: |
           {
-            echo "## ZAP against k3d"
+            echo "## ZAP and Nuclei against k3d"
             echo
             for scan in full api; do
               f="build/zap/$scan.txt"
               [ -f "$f" ] || { echo "- \`$scan\`: no output"; continue; }
               echo "- \`$scan\`: $(grep -E '^Total of [0-9]+ URLs' "$f" | tail -1 || echo 'no URL count') — $(grep -E '^FAIL-NEW:' "$f" | tail -1 || echo 'no tally')"
             done
+            f=build/nuclei/nuclei.txt
+            if [ -f "$f" ]; then
+              echo "- \`nuclei\`: $(grep -oE 'Templates loaded for current scan: [0-9]+' "$f" || echo 'no template count') — $(grep -c '' build/nuclei/nuclei.jsonl 2>/dev/null || echo 0) matches"
+            else
+              echo "- \`nuclei\`: no output"
+            fi
             echo
-            echo "Reports are in the \`zap-k3d\` artifact. A FAIL row is a regression; a WARN row is for the reader."
+            echo "Reports are in the \`zap-k3d\` artifact. A FAIL row or a Nuclei match is a regression; a WARN row is for the reader."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the reports
@@ -239,6 +305,8 @@ jobs:
             build/zap/*.html
             build/zap/*.json
             build/zap/*.txt
+            build/nuclei/*.jsonl
+            build/nuclei/*.txt
           retention-days: 30
 
       - name: Tear the cluster down
@@ -273,14 +341,14 @@ jobs:
       # and the job timeout are sized for.
       - name: Baseline scan
         run: |
-          set -uo pipefail
+          set -euo pipefail
+          status=0
           echo "Target: $SITE_URL"
           docker run --rm \
             -v "$PWD/build/zap:/zap/wrk:rw" "$ZAP_IMAGE" \
             zap-baseline.py -t "$SITE_URL" -j -m 2 -T 20 -I \
               -c rules-production.tsv -J baseline.json -r baseline.html \
-            | tee build/zap/baseline.txt
-          status=${PIPESTATUS[0]}
+            | tee build/zap/baseline.txt || status=$?
           scripts/scan-coverage.sh baseline zap-production-urls build/zap/baseline.txt
           scripts/scan-coverage.sh baseline zap-production-rules build/zap/baseline.txt
           exit "$status"

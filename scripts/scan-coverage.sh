@@ -75,6 +75,13 @@ zap_rules() {
     grep -E '^FAIL-NEW: [0-9]+' "$1" | tail -1 | grep -oE '[0-9]+' | awk '{ s += $1 } END { if (NR) print s }' || true
 }
 
+# Nuclei's denominator (#1423): how many templates the tag, severity and type filters admitted
+# from the pinned release. A templates bump that retires templates, or a filter that stopped
+# matching, shows here. Read from the log, where the line carries an `[INF]` prefix.
+nuclei_templates() {
+    grep -oE 'Templates loaded for current scan: [0-9]+' "$1" | tail -1 | grep -oE '[0-9]+$' || true
+}
+
 extract() {
     local key="$1" file="$2"
     case "$key" in
@@ -84,6 +91,7 @@ extract() {
         flux-clusters-files) sed -nE 's/^Summary: [0-9]+ resources found in ([0-9]+) files.*/\1/p' "$file" | tail -1 ;;
         zap-*-urls) zap_urls "$file" ;;
         zap-*-rules) zap_rules "$file" ;;
+        nuclei-*-templates) nuclei_templates "$file" ;;
         *) die "unknown key '$key' — see $(basename "$BASELINE")" ;;
     esac
 }
@@ -107,9 +115,10 @@ cmd_baseline() {
     if ((actual < floor)); then
         fail "$key dropped from $floor to $actual. Something was scanned before and is not now. If that is meant, take it in this commit: scripts/scan-coverage.sh update $key $file"
     fi
-    # A spider's URL count moves from run to run, so its floor is set with headroom on purpose and a
-    # rise there is the normal case, not a floor to raise (scan-coverage-baseline.txt says why).
-    if ((actual > floor)) && [[ "$key" != zap-*-urls ]]; then
+    # A spider's URL count moves from run to run, and Nuclei's template count sits over a floor set
+    # with headroom on purpose; a rise there is the normal case, not a floor to raise
+    # (scan-coverage-baseline.txt says why).
+    if ((actual > floor)) && [[ "$key" != zap-*-urls && "$key" != nuclei-*-templates ]]; then
         printf '%s: %s rose from %s to %s — raise the floor: scripts/scan-coverage.sh update %s %s\n' \
             "$(basename "$BASELINE")" "$key" "$floor" "$actual" "$key" "$file"
         [[ -n "${GITHUB_ACTIONS:-}" ]] &&

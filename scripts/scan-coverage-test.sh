@@ -38,6 +38,7 @@ trap 'rm -rf "$WORK"' EXIT
 BASELINE="$WORK/scan-coverage-baseline.txt"
 printf 'zizmor-ignored\t11\nzizmor-suppressed\t64\nflux-clusters-resources\t141\nflux-clusters-files\t41\n' >"$BASELINE"
 printf 'zap-k3d-full-urls\t40\nzap-k3d-full-rules\t60\n' >>"$BASELINE"
+printf 'nuclei-k3d-templates\t5000\n' >>"$BASELINE"
 
 # run <expected-exit> <name> <args...> — the script against the fixture baseline above.
 run() {
@@ -134,6 +135,23 @@ run 1 "one URL is a spider that found nothing" baseline zap-k3d-full-urls "$WORK
 run 1 "one rule fewer fails whatever level it left from" baseline zap-k3d-full-rules "$WORK/zap-fewer-rules.txt"
 run 2 "output with no tally is an error" baseline zap-k3d-full-rules "$WORK/zap-garbage.txt"
 run 2 "output with no URL count is an error" baseline zap-k3d-full-urls "$WORK/zap-garbage.txt"
+
+# nuclei writes the count into its log with an `[INF]` prefix and colour codes stripped by `-nc`.
+# The floor is 5000 here; the second fixture is a run that loaded fewer, which is what a templates
+# bump that retired a tag, or a `-tags` typo, looks like.
+cat >"$WORK/nuclei-ok.txt" <<'EOF'
+[WRN] Found 5 templates with runtime error (use -validate flag for further examination)
+[INF] Templates loaded for current scan: 5130
+[INF] Targets loaded for current scan: 1
+[INF] Scan completed in 3m. 0 matches found.
+EOF
+printf '[INF] Templates loaded for current scan: 4999\n[INF] Targets loaded for current scan: 1\n' >"$WORK/nuclei-fewer.txt"
+printf '[FTL] Could not create runner: no templates provided\n' >"$WORK/nuclei-garbage.txt"
+
+echo "Nuclei"
+run 0 "the loaded count passes its floor" baseline nuclei-k3d-templates "$WORK/nuclei-ok.txt"
+run 1 "one template under the floor is a smaller scan" baseline nuclei-k3d-templates "$WORK/nuclei-fewer.txt"
+run 2 "a log with no count is an error" baseline nuclei-k3d-templates "$WORK/nuclei-garbage.txt"
 
 printf '{"dependencies": [{"fileName": "a.jar"}, {"fileName": "b.jar"}]}\n' >"$WORK/owasp-ok.json"
 printf '{"dependencies": []}\n' >"$WORK/owasp-empty.json"

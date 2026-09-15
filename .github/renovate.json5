@@ -106,7 +106,7 @@
     managerFilePatterns: ['/^deploy/clusters/(base|staging|production)/[^/]+\\.yaml$/'],
   },
 
-  // **The eleven CI tool versions that belong to no ecosystem** — a `HELM_VERSION: v4.2.4` is a string
+  // **The thirteen CI tool versions that belong to no ecosystem** — a `HELM_VERSION: v4.2.4` is a string
   // in YAML, and `github-actions` updates `uses: azure/setup-helm@v5` while having nothing to say
   // about the `version:` handed to it. They rot in silence while the checks using them keep reporting
   // success, which is the failure this whole boundary exists to catch.
@@ -115,7 +115,8 @@
   // `depNameTemplate` and `datasourceTemplate` carry the mapping here instead, so the pins stay plain
   // and there is nothing beside them to drift out of step. Measured on #1071 — all eight resolve,
   // across all fourteen occurrences; `RUFF_VERSION` joined as the ninth (#1189), `K3D_VERSION` and
-  // `ZAP_IMAGE` as the tenth and eleventh (#1421).
+  // `ZAP_IMAGE` as the tenth and eleventh (#1421), `NUCLEI_VERSION` and `NUCLEI_TEMPLATES_VERSION` as
+  // the twelfth and thirteenth (#1423) — one binary and one templates release, on different cadences.
   //
   // **`ZAP_IMAGE` is the one pin here that is an image reference with a digest**, `tag@sha256:…`,
   // because dast.yml runs it with `docker run` and a tag on GHCR is mutable. The `docker` datasource
@@ -217,6 +218,22 @@
       depNameTemplate: 'ghcr.io/zaproxy/zaproxy',
       datasourceTemplate: 'docker',
     },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/.*\\.ya?ml$/'],
+      matchStrings: ['NUCLEI_VERSION:\\s*(?<currentValue>\\S+)'],
+      depNameTemplate: 'projectdiscovery/nuclei',
+      datasourceTemplate: 'github-releases',
+      extractVersionTemplate: '^v?(?<version>.+)$',
+    },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/.*\\.ya?ml$/'],
+      matchStrings: ['NUCLEI_TEMPLATES_VERSION:\\s*(?<currentValue>\\S+)'],
+      depNameTemplate: 'projectdiscovery/nuclei-templates',
+      datasourceTemplate: 'github-releases',
+      extractVersionTemplate: '^v?(?<version>.+)$',
+    },
   ],
 
   packageRules: [
@@ -236,7 +253,7 @@
       enabled: false,
     },
     {
-      description: 'The eleven CI tool pins, re-enabled by name',
+      description: 'The thirteen CI tool pins, re-enabled by name',
       matchManagers: ['custom.regex'],
       matchDepNames: [
         'helm/helm',
@@ -250,6 +267,8 @@
         'astral-sh/ruff',
         'k3d-io/k3d',
         'ghcr.io/zaproxy/zaproxy',
+        'projectdiscovery/nuclei',
+        'projectdiscovery/nuclei-templates',
       ],
       enabled: true,
     },
