@@ -1,7 +1,14 @@
 package de.norm.events
 
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.web.WebProperties
+import org.springframework.boot.webflux.error.ErrorAttributes
+import org.springframework.boot.webflux.error.ErrorWebExceptionHandler
+import org.springframework.context.ApplicationContext
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.annotation.Order
+import org.springframework.http.codec.ServerCodecConfigurer
 import org.springframework.web.reactive.config.CorsRegistry
 import org.springframework.web.reactive.config.WebFluxConfigurer
 import org.springframework.web.reactive.result.method.annotation.ArgumentResolverConfigurer
@@ -19,6 +26,9 @@ import org.springframework.web.reactive.result.method.annotation.ArgumentResolve
  * - Configures CORS from the `app.cors.allowed-origins` property. In local development the
  *   Vite proxy makes requests same-origin, so this is empty by default and only needed when
  *   the SPA is served from a different origin than the BFF.
+ * - Replaces Boot's error handler with [ProblemDetailErrorHandler], wired the way
+ *   `ErrorWebFluxAutoConfiguration` wires the default. The autoconfiguration backs off on its
+ *   `@ConditionalOnMissingBean`.
  */
 @Configuration
 class WebFluxConfiguration(
@@ -31,6 +41,19 @@ class WebFluxConfiguration(
     override fun configureArgumentResolvers(configurer: ArgumentResolverConfigurer) {
         configurer.addCustomResolver(StableSortPageableArgumentResolver(maxPageSize))
     }
+
+    @Bean
+    @Order(-1)
+    fun errorWebExceptionHandler(
+        errorAttributes: ErrorAttributes,
+        webProperties: WebProperties,
+        codecs: ServerCodecConfigurer,
+        applicationContext: ApplicationContext
+    ): ErrorWebExceptionHandler =
+        ProblemDetailErrorHandler(errorAttributes, webProperties.resources, webProperties.error, applicationContext).apply {
+            setMessageWriters(codecs.writers)
+            setMessageReaders(codecs.readers)
+        }
 
     @Suppress("SpreadOperator") // CorsRegistration.allowedOrigins is vararg-only, and the list is a handful of origins.
     override fun addCorsMappings(registry: CorsRegistry) {
