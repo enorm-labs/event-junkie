@@ -17,7 +17,9 @@
 # 429 wall or a Traefik that never came up. `update` them from a real run only for a reduction that
 # is meant. An active rule set to IGNORE in `.zap/rules-*.tsv` is not run at all (the full scan
 # prints it as SKIP) and leaves the rule count, so an IGNORE on an active rule lowers that floor by
-# one in the same commit.
+# one in the same commit. The API scan's two script rules, 100000 and 100001, appear in the tally
+# only when they fire, so its floor is the count with neither firing — a fix that silences one of
+# them is not a smaller scan.
 #
 # The Nuclei template count is exact for the pinned templates release and its filters, and the
 # floor sits 133 under it on purpose: a templates bump that retires a handful of templates is the
@@ -26,7 +28,7 @@ flux-clusters-files	42
 flux-clusters-resources	141
 zizmor-ignored	14
 zizmor-suppressed	79
-zap-k3d-api-rules	120
+zap-k3d-api-rules	118
 zap-k3d-api-urls	40
 zap-k3d-full-rules	140
 zap-k3d-full-urls	60

@@ -1,6 +1,7 @@
 package de.norm.events.common
 
 import de.norm.events.BaseControllerTest
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.http.MediaType
@@ -34,6 +35,30 @@ class NulByteRequestTest : BaseControllerTest() {
             .expectBody()
             .jsonPath("$.title")
             .isEqualTo("NUL byte in request")
+    }
+
+    /**
+     * A parameter without `=` is what ZAP's `?-s` probe sends, and every route answered it 500 for
+     * a day (#1465): the value list holds a `null`, which the filter dereferenced.
+     */
+    @Test
+    fun `a parameter without a value is not a NUL byte and reaches the route`() {
+        webTestClient
+            .get()
+            .uri { it.path("/venues").query("q").build() }
+            .exchange()
+            .expectStatus()
+            .isOk
+
+        webTestClient
+            .get()
+            .uri { it.path("/venues").query("-s").build() }
+            .exchange()
+            .expectStatus()
+            .isBadRequest
+            .expectBody()
+            .jsonPath("$.title")
+            .isEqualTo("Unknown query parameter")
     }
 
     companion object {
