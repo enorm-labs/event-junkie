@@ -220,7 +220,7 @@ class ColumbiahalleOverviewPageScraper {
  * Parses a German month heading ("August 2026", "März 2027") into a [YearMonth], or `null` when it
  * is not one — the only place the programme states a month and a year at all.
  */
-internal fun parseGermanYearMonth(text: String): YearMonth? =
+private fun parseGermanYearMonth(text: String): YearMonth? =
     try {
         YearMonth.parse(text.trim(), GERMAN_MONTH_HEADING_FORMATTER)
     } catch (_: DateTimeParseException) {

@@ -193,7 +193,7 @@ class SaalchenOverviewPageScraper {
  * (`"18:00 Uhr (Beginn der Vorentscheidung um 15:30 Uhr)"` → 18:00). Returns `null` when the
  * value names no time.
  */
-internal fun parseNoticeTime(text: String?): LocalTime? =
+private fun parseNoticeTime(text: String?): LocalTime? =
     NOTICE_TIME_PATTERN.find(text.orEmpty())?.let { match ->
         // Branch 1 is "HH:mm", branch 2 the bare-hour "N Uhr" spelling.
         val hour = match.groupValues[1].ifEmpty { match.groupValues[3] }.toIntOrNull()
@@ -208,7 +208,7 @@ internal fun parseNoticeTime(text: String?): LocalTime? =
  * picking the first of three would store the concession price as the ticket price. The raw line is
  * kept in [ScrapedEvent.priceNote] either way.
  */
-internal fun parseSinglePrice(text: String?): BigDecimal? {
+private fun parseSinglePrice(text: String?): BigDecimal? {
     val value = text?.trim().orEmpty()
     val euroAmounts =
         EURO_AMOUNT_PATTERN
