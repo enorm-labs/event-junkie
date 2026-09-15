@@ -187,7 +187,7 @@ The importer is the one workload that talks to the open internet. Everything it 
 | A dependency ships malware                            | T      | medium     | high   | Mitigated in part. Dependency review on each PR, Dependency-Check nightly, Trivy on each image. Nothing checks a package's provenance                           |
 | A chart or image in GHCR is replaced and Flux runs it | T, E   | low        | high   | Mitigated on staging and k3d, open on production until the next release (#1425). `release.yml` signs, `spec.verify` matches the workflow's identity             |
 | A chart fails verification and nobody hears of it     | R      | low        | medium | Mitigated. The `source-failure` Alert dispatches every OCIRepository error to `flux-source-failure.yml`, which goes red (#1454)                                 |
-| A commit reaches `main` without a review              | T      | low        | high   | Mitigated. `merge-gate.yml`, a required check on `pull_request_target`, fails a pull request authored by an unlisted App (#1424)                                |
+| A commit reaches `main` without a review              | T      | low        | high   | Mitigated. `merge-gate.yml`, a required check on `pull_request_target`, fails an unlisted App's pull request until a person approves its head (#1424)           |
 | A tag or an action is unpinned                        | T      | low        | medium | Mitigated. Every action is pinned by SHA, every tool by version. zizmor and Dependabot keep it so                                                               |
 
 ### B7 · Operator → cluster
@@ -214,7 +214,7 @@ That App holds `contents`, `pull_requests`, `workflows` and `actions` at `write`
 
 | Threat                                                                   | STRIDE | Likelihood | Impact | Status                                                                                                                                          |
 | ------------------------------------------------------------------------ | ------ | ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| A venue page instructs the plausibility agent, which holds a write token | E      | medium     | medium | Mitigated. The token can push a branch and open a pull request. `Merge gate` fails it (#1424), and the operator reads it before merging by hand |
+| A venue page instructs the plausibility agent, which holds a write token | E      | medium     | medium | Mitigated. The token can push a branch and open a pull request. `Merge gate` fails it until the operator reads it and approves the head (#1424) |
 | The same token pushes onto a person's open branch with auto-merge armed  | T      | low        | high   | Accepted. A required check cannot see who pushed. The window is one armed pull request at a time, and the push shows in its commit list         |
 | An agent dismisses a security alert                                      | T      | low        | medium | Mitigated. `agent-security.yml` grants `security-events: read` and `--unattended` files nothing                                                 |
 | An agent commits as `GITHUB_TOKEN` and no check runs                     | D      | low        | low    | Mitigated. No `github_token:` input, on purpose. `agent-security.yml` header                                                                    |

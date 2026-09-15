@@ -559,9 +559,12 @@ in [AGENTS.md](../../AGENTS.md) § Automating GitHub with `gh`.
 - **Nothing running in CI can push to `main`, and no GitHub App we did not list can land a pull request into it.** The `main` ruleset requires every
   change to arrive by pull request with every check green, and has **no bypass actor** — #443 removed the admin bypass so the operator's own mistakes
   cannot skip a check. One of those checks is `Merge gate` (`merge-gate.yml`, #1424): it fails when the pull request's author is a Bot outside
-  `dependabot[bot]`, `renovate[bot]`, `event-junkie-release[bot]`. It runs on **`pull_request_target`**, and that is the point rather than a risk taken:
-  the check executes the file as it stands on `main`, so the `claude` App's `workflows: write` cannot edit it green from the pull request it gates. The
-  file checks out nothing and reads two payload fields, which is what keeps that trigger safe. **The first version of this control was a second ruleset
+  `dependabot[bot]`, `renovate[bot]`, `event-junkie-release[bot]` — **unless a person has approved the pull request's current head.** A required check
+  with no bypass actor blocks the merge button for the person too, so an agent's pull request lands by review: approve it, the gate runs again on the
+  review and passes, merge. A push after the approval moves the head and the gate is red again. Only a User's approval counts, so the `claude` App
+  cannot supply it. The gate runs on **`pull_request_target`** and `pull_request_review`, and the first is the point rather than a risk taken: the check
+  executes the file as it stands on `main`, so the `claude` App's `workflows: write` cannot edit it green from the pull request it gates. The file
+  checks out nothing, reads the payload and lists the reviews, which is what keeps that trigger safe. **The first version of this control was a second ruleset
   restricting updates to `main`, and it broke auto-merge**: GitHub's deferred merge runs without bypass, a limitation GitHub calls known and does not plan
   to fix. The ruleset is gone. The obvious workaround for pushes does not exist either: GitHub refuses the Actions bot as a bypass actor with _"Actor
   GitHub Actions integration must be part of the ruleset source or owner organization"_. **Design any workflow that wants to write to the repo as
