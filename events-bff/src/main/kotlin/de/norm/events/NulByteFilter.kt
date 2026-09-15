@@ -1,0 +1,50 @@
+package de.norm.events
+
+import org.springframework.core.io.buffer.DataBuffer
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
+import org.springframework.stereotype.Component
+import org.springframework.web.server.ServerWebExchange
+import org.springframework.web.server.WebFilter
+import org.springframework.web.server.WebFilterChain
+import reactor.core.publisher.Mono
+
+/**
+ * Answers `400` to any request whose path or query carries a NUL byte, before a handler sees it.
+ *
+ * PostgreSQL rejects U+0000 in every text value with `22021 invalid byte sequence`, and R2DBC
+ * surfaces that as a `BadSqlGrammarException`, so `?q=%00` on any list endpoint and `%00` in any
+ * slug answered `500` and logged the whole statement at ERROR (#1441). No legitimate request
+ * carries a NUL, and rejecting it here needs no database and no per-parameter code.
+ *
+ * The body is a constant RFC 9457 problem and echoes nothing from the request, so it needs no
+ * serializer. A filter cannot throw into `GlobalExceptionHandler`, which only sees handler
+ * exceptions.
+ */
+@Component
+class NulByteFilter : WebFilter {
+    @Suppress("ForbiddenVoid") // Mono<Void> is WebFilter's own return type.
+    override fun filter(
+        exchange: ServerWebExchange,
+        chain: WebFilterChain
+    ): Mono<Void> {
+        val request = exchange.request
+        val tainted =
+            (request.uri.path ?: "").contains(NUL) ||
+                request.queryParams.any { (name, values) -> name.contains(NUL) || values.any { it.contains(NUL) } }
+        if (!tainted) return chain.filter(exchange)
+
+        val response = exchange.response
+        response.statusCode = HttpStatus.BAD_REQUEST
+        response.headers.contentType = MediaType.APPLICATION_PROBLEM_JSON
+        val body: DataBuffer = response.bufferFactory().wrap(PROBLEM.toByteArray())
+        return response.writeWith(Mono.just(body))
+    }
+
+    private companion object {
+        const val NUL = '\u0000'
+        const val PROBLEM =
+            """{"type":"about:blank","title":"NUL byte in request","status":400,""" +
+                """"detail":"The path or a query parameter contains a NUL byte, which no value here can hold."}"""
+    }
+}
