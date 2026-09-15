@@ -149,7 +149,7 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       `Workflow validation failed. The workflow file must exist and have identical content to the version on the repository's default branch.` **The step
       then ends `outcome=success`** — the action treats the skip as a clean exit, so a job without a further guard goes green having run no agent at all.
       That is what the `Fail if the report is a stub` step in each workload is for, and it caught this on the first attempt (run
-      [33752364761](https://github.com/enorm-labs/event-junkie/actions/runs/33752364761)). So a change to one of these five files is verified **after** it
+      [33752364761](https://github.com/enorm-labs/event-junkie/actions/runs/33752364761)). So a change to one of these six files is verified **after** it
       merges, by dispatching it on `main` with `dry_run: true` — which writes the report to the job summary and opens nothing. Plan the change knowing its
       proof comes last.
     - `agent-docs.yml` — the `/update-docs` workload, and **the one #387 puts last on purpose**: a wrong answer is a plausible-looking paragraph nobody
@@ -159,8 +159,8 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       is a **Status** line rather than a rewrite of the argument that would destroy the only record of why the old choice was made. `BRANDING.md` and
       `LOGO_IDEAS.md` are exempt as voice-carrying copy, and `ACCEPTED_LIMITATIONS.md` is generated. It installs Node and the frontend's lockfile, because
       `format-markdown.sh` needs the **pinned** oxfmt rather than one on `PATH` — the same reason `validate-docs.yml` does it.
-    - **All five run nightly, staggered across one overnight window, and a scheduled run is live.** Security 04:23, refactor 04:41, plausibility 05:17,
-      comments 06:14, documentation 06:35 UTC, each off-the-hour like every other schedule here. They were one per weekday until the cadence moved: nightly buys
+    - **Five run nightly, staggered across one overnight window, the OWASP review weekly, and a scheduled run is live.** Security 04:23, refactor 04:41,
+      plausibility 05:17, comments 06:14, documentation 06:35 UTC, OWASP Monday 06:31, each off-the-hour like every other schedule here. They were one per weekday until the cadence moved: nightly buys
       a finding on the day it appears rather than up to a week later, and costs up to five open agent pull requests a day rather than five a week. The
       staggered start times are what remains of the weekday spread, and the `concurrency` group on each stops a manual dispatch racing its own cron and stops a
       long run being lapped by the next night's. **A schedule cannot pass inputs, and this is the trap**: the `inputs` context is
@@ -172,7 +172,7 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       configure — scheduled workflows run **from the default branch only**, and on a public repository GitHub **disables the schedule after 60 days without
       repository activity**. The action also rejects a bot actor unless it is named in `allowed_bots`, and a scheduled run is attributed to whoever last
       changed the `cron` line, so that line must be edited by a human account.
-    - **All five set `display_report: true`, and none sets `show_full_output`.** The two are not interchangeable and the default of both is `false`, which is
+    - **All six set `display_report: true`, and none sets `show_full_output`.** The two are not interchangeable and the default of both is `false`, which is
       how the first dry run finished green having answered nothing: the report went to a temp file on a runner that then stopped existing. `display_report`
       publishes the agent's final report to the job summary; `show_full_output` dumps every intermediate tool result, and the action's own description warns it
       "may contain secrets, API keys, or other sensitive information" in a publicly visible log. The report itself is public in the step summary either way,
@@ -207,13 +207,19 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       model is `claude-opus-4-8` rather than Opus 5, which is a measured preference about verbosity at comment work rather than a cost decision — the input
       exists so 4.6 and 4.8 can be compared on one prompt. Last to earn a schedule, per #387's ordering. It sets up a JDK and Gradle, because the proof
       obligation is a full build and a missing toolchain reads to a model as a broken one.
-    - `agent-plausibility.yml` — the [`/plausibility-check`](../prompts/plausibility-check.prompt.md) workload, and the only one that opens nothing. It reads
+    - `agent-plausibility.yml` — the [`/plausibility-check`](../prompts/plausibility-check.prompt.md) workload, and the first that opens nothing. It reads
       the running site's API for the next days, checks each row for what cannot be right, fetches a rationed sample of the venues' own pages, and writes a
       report to the job summary and the `agent-report` artifact. Three things about it are decisions. **It has no `dry_run` input, because every run is
       one**: the prompt writes to no database, no tracker and no tree, so there is nothing to withhold. **It files nothing and holds no `issues: write`**, on
       purpose — a comparison between two texts can be confidently wrong, and the report is what a person reads before anything becomes an issue. **It
       scrapes venue websites from a runner**, so the prompt carries ADR-007's politeness rules and the `sample` input is the ceiling on the venues' side. Its
       origin is `SITE_URL`, the variable `site-probe.yml` reads with the same apex fallback, so launch day's deletion of that variable retargets both.
+    - `agent-owasp.yml` — the [`/owasp-top-10`](../prompts/owasp-top-10.prompt.md) workload, the second that opens nothing (#1422). It walks the OWASP
+      Top 10:2025 against the tree as deployed — workflows, chart, cluster manifests, ADRs, the threat model — and writes one line per category plus the
+      findings. **Weekly, Monday 06:31, and diff-first is what makes weekly readable**: the prompt leads with the window's commits that touched a category's
+      evidence and gives an unmoved category one line, so a quiet week is a short report where a quarter of commits would be a wall. `gh api` reads the
+      ruleset through `ACTIONS_GITHUB_TOKEN`, the `agent-security.yml` wiring; `curl -sI` reads production's live headers for A02 and A04. It says per
+      category what `dast.yml` already asserts, so the report carries the gap and not a second alert list.
     - `cut-release.yml` — publishes the GitHub Release that `release.yml` keys on, then opens the pull request that moves `main` to the next snapshot (#868).
       `workflow_dispatch` only, `dry_run` on by default. **It refuses a commit whose snapshot publish is not green**, because a release rebuilds what the
       snapshot built and fails the same gate — v0.3.10 was cut over four red runs and left an empty tag (#1117). Four things about it are decisions. **The version is never typed** — it comes from
