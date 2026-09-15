@@ -19,7 +19,8 @@ import reactor.core.publisher.Mono
  *
  * The body is a constant RFC 9457 problem and echoes nothing from the request, so it needs no
  * serializer. A filter cannot throw into `GlobalExceptionHandler`, which only sees handler
- * exceptions.
+ * exceptions. A parameter without `=` — `?-s` — arrives as a `null` value, which is not a NUL
+ * (#1465).
  */
 @Component
 class NulByteFilter : WebFilter {
@@ -29,9 +30,12 @@ class NulByteFilter : WebFilter {
         chain: WebFilterChain
     ): Mono<Void> {
         val request = exchange.request
+
+        // The declared value type is `String`, and `?-s` puts a `null` in the list anyway (#1465).
+        @Suppress("UselessCallOnNotNull")
         val tainted =
             (request.uri.path ?: "").contains(NUL) ||
-                request.queryParams.any { (name, values) -> name.contains(NUL) || values.any { it.contains(NUL) } }
+                request.queryParams.any { (name, values) -> name.contains(NUL) || values.any { it.orEmpty().contains(NUL) } }
         if (!tainted) return chain.filter(exchange)
 
         val response = exchange.response

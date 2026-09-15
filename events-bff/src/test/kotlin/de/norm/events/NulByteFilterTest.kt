@@ -62,8 +62,16 @@ class NulByteFilterTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["/api/artists?q=Møbius%20Trio", "/api/venues/jazzkeller-kreuzberg", "/api/events?q=%25&sort=eventDate,ASC"])
-    fun `everything else passes through untouched`(uri: String) {
+    @ValueSource(
+        strings = [
+            "/api/artists?q=Møbius%20Trio",
+            "/api/venues/jazzkeller-kreuzberg",
+            "/api/events?q=%25&sort=eventDate,ASC",
+            "/api/venues?-s",
+            "/api/venues?q=&-d+x"
+        ]
+    )
+    fun `everything else passes through untouched, a parameter without a value included`(uri: String) {
         val exchange = run(MockServerWebExchange.from(MockServerHttpRequest.get(uri)))
 
         chainCalled shouldBe true

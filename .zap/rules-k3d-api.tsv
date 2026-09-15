@@ -121,7 +121,8 @@
 90019	FAIL	(Server Side Code Injection - Active/release)
 90020	FAIL	(Remote OS Command Injection - Active/release)
 90021	FAIL	(XPath Injection - Active/release)
-90022	FAIL	(Application Error Disclosure - Passive/release)
+# WARN, not FAIL, since 2026-09-15: the rule matches the words `Type mismatch` in the 400 problem a parameter that does not bind gets (#1446). That detail is Spring's, one sentence, and on purpose; see #1465 for the run that showed it.
+90022	WARN	(Application Error Disclosure - Passive/release)
 90023	FAIL	(XML External Entity Attack - Active/release)
 90024	FAIL	(Generic Padding Oracle - Active/release)
 90026	WARN	(SOAP Action Spoofing - Active/beta)

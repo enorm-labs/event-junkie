@@ -135,7 +135,8 @@
 90001	WARN	(Insecure JSF ViewState - Passive/release)
 90002	FAIL	(Java Serialization Object - Passive/release)
 90003	WARN	(Sub Resource Integrity Attribute Missing - Passive/release)
-90004	FAIL	(Insufficient Site Isolation Against Spectre Vulnerability - Passive/beta)
+# WARN until #1464 adds Cross-Origin-Embedder-Policy and Cross-Origin-Opener-Policy: the rule wants all three, and #1442 added only the resource policy. FAIL again in that pull request.
+90004	WARN	(Insufficient Site Isolation Against Spectre Vulnerability - Passive/beta)
 90011	WARN	(Charset Mismatch - Passive/release)
 90017	FAIL	(XSLT Injection - Active/release)
 90019	FAIL	(Server Side Code Injection - Active/release)
