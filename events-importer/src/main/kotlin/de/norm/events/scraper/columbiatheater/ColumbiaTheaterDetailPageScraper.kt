@@ -112,7 +112,7 @@ private val URL_SCHEME = Regex("""https?://""")
  * link. Everything from the second `http(s)://` on is dropped; an ordinary single-URL href is
  * returned unchanged.
  */
-internal fun firstTicketUrl(href: String): String =
+private fun firstTicketUrl(href: String): String =
     URL_SCHEME
         .findAll(href)
         .drop(1)

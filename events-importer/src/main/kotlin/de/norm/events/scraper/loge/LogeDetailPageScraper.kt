@@ -142,7 +142,7 @@ class LogeDetailPageScraper {
  * to a domain [EventStatus] name. Rescheduled events (a new date) map to
  * `POSTPONED`; an unknown or absent value defaults to `SCHEDULED`.
  */
-internal fun mapSchemaEventStatus(url: String?): String =
+private fun mapSchemaEventStatus(url: String?): String =
     when (url?.substringAfterLast('/')?.trim()) {
         "EventCancelled" -> EventStatus.CANCELLED.name
         "EventPostponed", "EventRescheduled" -> EventStatus.POSTPONED.name
