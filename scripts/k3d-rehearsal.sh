@@ -423,7 +423,14 @@ prepare_database() {
     [ "$i" = 30 ] && die "PostgreSQL did not become ready within 30s"
     sleep 1
   done
-  psql_ -d postgres -c "DROP DATABASE IF EXISTS $DB;" -c "CREATE DATABASE $DB OWNER admin;" >/dev/null
+  # On an empty volume — every CI runner — the image initialises with a throwaway server that
+  # answers `pg_isready`, then stops it and starts the real one. A statement sent in between dies
+  # with `terminating connection due to administrator command`, so the statement retries.
+  for i in $(seq 1 15); do
+    if psql_ -d postgres -c "DROP DATABASE IF EXISTS $DB;" -c "CREATE DATABASE $DB OWNER admin;" >/dev/null 2>&1; then break; fi
+    [ "$i" = 15 ] && die "could not create $DB within 30s of PostgreSQL reporting ready"
+    sleep 2
+  done
   k create namespace "$namespace" >/dev/null 2>&1 || true
   k -n "$namespace" create secret generic events-db \
     --from-literal=username=admin --from-literal=password=admin >/dev/null
