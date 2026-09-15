@@ -280,7 +280,9 @@
             "hsts",
             "referrerPolicy",
             "permissionsPolicy",
-            "crossOriginResourcePolicy"
+            "crossOriginResourcePolicy",
+            "crossOriginEmbedderPolicy",
+            "crossOriginOpenerPolicy"
           ],
           "properties": {
             "enabled": {
@@ -297,6 +299,14 @@
             "crossOriginResourcePolicy": {
               "type": "string",
               "enum": ["same-origin", "same-site", "cross-origin"]
+            },
+            "crossOriginEmbedderPolicy": {
+              "type": "string",
+              "enum": ["require-corp", "credentialless"]
+            },
+            "crossOriginOpenerPolicy": {
+              "type": "string",
+              "enum": ["same-origin", "same-origin-allow-popups", "unsafe-none"]
             },
             "hsts": {
               "type": "object",

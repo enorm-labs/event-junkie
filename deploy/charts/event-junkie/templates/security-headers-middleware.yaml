@@ -34,6 +34,11 @@
          assets and the cached venue images (#1442). Traefik has no field for it, so it goes through
          `customResponseHeaders`, the way `noindex-middleware.yaml` sends `X-Robots-Tag`.
 
+       - **Cross-Origin-Embedder-Policy: credentialless** and **Cross-Origin-Opener-Policy:
+         same-origin** complete the isolation trio (#1464). `credentialless` rather than
+         `require-corp`: with image serving off, every image is a venue's own URL with no CORP
+         header, and `require-corp` would blank them all.
+
        DELIBERATELY ABSENT, so they are not proposed as oversights:
 
        - **X-XSS-Protection** (`browserXssFilter`). Removed from every current browser, and in its
@@ -59,7 +64,7 @@ metadata:
     {{- include "event-junkie.labels" $args | nindent 4 }}
   annotations:
     kubernetes.io/description: >-
-      A content security policy, HSTS, nosniff, frame-deny, a referrer policy, a permissions policy and a cross-origin resource policy on every response. Response headers have no Ingress API equivalent.
+      A content security policy, HSTS, nosniff, frame-deny, a referrer policy, a permissions policy and the three cross-origin policies on every response. Response headers have no Ingress API equivalent.
 spec:
   headers:
     {{- /* `stsSeconds: 0` means "do not send the header at all", which is why the value is
@@ -81,6 +86,8 @@ spec:
     permissionsPolicy: {{ .Values.ingress.securityHeaders.permissionsPolicy | quote }}
     customResponseHeaders:
       Cross-Origin-Resource-Policy: {{ .Values.ingress.securityHeaders.crossOriginResourcePolicy | quote }}
+      Cross-Origin-Embedder-Policy: {{ .Values.ingress.securityHeaders.crossOriginEmbedderPolicy | quote }}
+      Cross-Origin-Opener-Policy: {{ .Values.ingress.securityHeaders.crossOriginOpenerPolicy | quote }}
     {{- with .Values.ingress.securityHeaders.contentSecurityPolicy }}
     {{- if .enabled }}
     {{- /* `img-src` is composed here and configured nowhere, so the header cannot contradict the
