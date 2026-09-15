@@ -41,14 +41,20 @@ What each workflow is for, which checks are required, and the shapes that fail s
       (`CRITICAL,HIGH`, `--ignore-unfixed`) so that a finding here which the publish gate did not raise means the advisory is new rather than the scanner
       different. It asserts a non-zero package count per image, because a scan that enumerates nothing reports as clean — the `Dependencies Scanned: 0` lesson,
       one surface over. **The fix for a red run is to cut a release**, not to re-run the job: these images are immutable and already deployed.
-    - `dast.yml` — ZAP against the running site, and the only scanner here that sends a request rather than reading an artifact (#1421). Two jobs,
-      neither holding a cluster credential. **`dast-k3d`, nightly and active**: `k3d-rehearsal.sh flux-up` brings the newest signed snapshot chart up
-      on an ephemeral k3d cluster on the runner, `.zap/seed.sql` gives the spider thirty events, then the full scan runs through Traefik — the real
-      headers, CSP and rate limiter — and the API scan fuzzes every parameter of every endpoint through a port-forward to the BFF, past the rate limiter
-      on purpose. **`dast-production`, weekly and passive**: a spider and the passive rules against `SITE_URL`, from the outside, same target rule as
-      `site-probe.yml`. Only a rule set to `FAIL` in `.zap/rules-*.tsv` is red; every `IGNORE` there is dated and reasoned. The URL and rule counts of
-      each scan are floors in `scan-coverage-baseline.txt`, because a spider behind a 429 wall or a bump that drops a rule reports clean otherwise. Reports
-      are artifacts; nothing opens an issue. No `pull_request` trigger, decided: a DAST finding is rarely about the pull request.
+    - `dast.yml` — ZAP and Nuclei against the running site, and the only scanner here that sends a request rather than reading an artifact (#1421,
+      #1423). Two jobs, neither holding a cluster credential. **`dast-k3d`, nightly and active**: `k3d-rehearsal.sh flux-up` brings the newest signed
+      snapshot chart up on an ephemeral k3d cluster on the runner, `.zap/seed.sql` gives the spider thirty events, then the full scan runs through
+      Traefik — the real headers, CSP and rate limiter — the API scan fuzzes every parameter of every endpoint through a port-forward to the BFF, past
+      the rate limiter on purpose, and Nuclei runs its `misconfig`, `exposure`, `tech` and `cve` templates at medium severity and above through Traefik
+      — the question ZAP does not ask, "is a known bad thing exposed", one pinned template per CVE or misconfiguration. Nuclei's binary and its
+      templates are two pins with two cadences; the templates go to `~/nuclei-templates` because workflow templates chain others by a path relative
+      to that directory, and `.nuclei-ignore` is copied to its config directory or the `dos` and `fuzz` tags run. **`dast-production`, weekly and
+      passive**: a spider and the passive rules against `SITE_URL`, from the outside, same target rule as `site-probe.yml`; no Nuclei there, it sends
+      thousands of probes fast. Only a rule set to `FAIL` in `.zap/rules-*.tsv` is red, and so is any Nuclei match outside `.nuclei/waivers.tsv`; every
+      `IGNORE` and every waiver row is dated and reasoned. The URL and rule counts of each ZAP scan and Nuclei's loaded-template count are floors in
+      `scan-coverage-baseline.txt`, because a spider behind a 429 wall or a bump that drops a rule reports clean otherwise — and the floors are red only
+      under `set -e`, which the scan steps carry for that reason. Reports are artifacts; nothing opens an issue. No `pull_request` trigger, decided: a
+      DAST finding is rarely about the pull request.
     - `restore-drill-reminder.yml` — Opens the quarterly PostgreSQL restore drill as an assigned issue, and again on any push to `main` touching `backups.sh` or
       `postgres.sh`. Documented as quarterly is not a schedule; this is what makes a skipped quarter visible as an open card rather than as nothing at all.
       Idempotent by listing open issues rather than searching (the search index is eventually consistent). It does not put the issue on the board itself
@@ -474,7 +480,7 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       duplication against Dependabot is structurally impossible instead of a thing to police. Six are enabled: `flux`, `helm-values`, `kubernetes`,
       `pre-commit`, `gradle-wrapper`, `custom.regex`.
     - **`custom.regex` is the CI tool pins, and it is doubly gated.** Enabling it activates every regex manager an extended preset defines as well as ours, so
-      it is disabled wholesale by a `packageRules` entry and re-enabled by the eleven `depName`s we mean. A pin added to `customManagers` and not to that list is
+      it is disabled wholesale by a `packageRules` entry and re-enabled by the thirteen `depName`s we mean. A pin added to `customManagers` and not to that list is
       extracted and then skipped — visible in a dry run as `SKIPPED: disabled`, which is the failure worth knowing how to spot.
     - **Four of the six do nothing on their defaults, and three fail silently.** `flux` defaults to `gotk-components.yaml` alone; `kubernetes` defaults to
       matching nothing at all; `pre-commit` is disabled by default upstream, indefinitely. A manager that matches nothing reports nothing, which is the same
