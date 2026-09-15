@@ -100,7 +100,7 @@ class BinuuOverviewPageScraper {
  * `https://binuu.de/de/events/zf0kroyf2cjolyl`), matching the site's own
  * `…/de/events/<id>` links.
  */
-internal fun binuuDetailUrl(
+private fun binuuDetailUrl(
     baseUrl: String,
     id: String
 ): String = "${baseUrl.trimEnd('/')}/$id"

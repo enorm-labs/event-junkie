@@ -367,7 +367,7 @@ private val DJ_ACT_SEPARATOR = Regex("""\s*\+\s*""")
  * Used to source a party's lineup from the title (the DJ names) rather than treating the
  * title as an event name with no performers.
  */
-internal fun isDjSetTitle(title: String): Boolean = DJ_SET_TITLE_MARKER.containsMatchIn(title)
+private fun isDjSetTitle(title: String): Boolean = DJ_SET_TITLE_MARKER.containsMatchIn(title)
 
 /**
  * Derives the DJ lineup from a "(DJ-Set)" [title].

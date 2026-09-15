@@ -102,7 +102,7 @@ fun silentGreenArtists(
  * Only the derived artist names are affected — the stored event title keeps the venue's billing
  * verbatim.
  */
-fun stripHostPrefix(title: String): String {
+private fun stripHostPrefix(title: String): String {
     val withoutHost =
         title
             .trim()
