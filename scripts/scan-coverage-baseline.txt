@@ -19,7 +19,7 @@
 # prints it as SKIP) and leaves the rule count, so an IGNORE on an active rule lowers that floor by
 # one in the same commit.
 flux-clusters-files	42
-flux-clusters-resources	139
+flux-clusters-resources	141
 zizmor-ignored	14
 zizmor-suppressed	79
 zap-k3d-api-rules	120

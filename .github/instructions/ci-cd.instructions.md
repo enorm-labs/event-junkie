@@ -95,10 +95,15 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       the ones predating it.
     - `deployment-status.yml` — turns a Flux `repository_dispatch` into a **GitHub deployment**, so the Environments tab says what is running (#565). Triggered
       by the `github-dispatch` Provider in each cluster, on the event type `HelmRelease/event-junkie.flux-system` — Flux's own `{Kind}/{Name}.{Namespace}`
-      format, not a name we chose. **It is the only workflow that cannot be tested from a pull request**, because `repository_dispatch` runs workflows from the
-      default branch only; it therefore fails loudly on any payload it does not recognise rather than defaulting. The revision Flux reports is a _chart
+      format, not a name we chose. **It cannot be tested from a pull request**, nor can `flux-source-failure.yml` below, because `repository_dispatch` runs
+      workflows from the default branch only; it therefore fails loudly on any payload it does not recognise rather than defaulting. The revision Flux reports is a _chart
       version_, not a commit, so it parses the commit back out of `scripts/version.sh`'s two shapes — change one and this must change with it. Note that
       helm-controller appends the chart's OCI digest as SemVer build metadata (`…g3b1c09e+97ec754320b5`), which is stripped before matching.
+    - `flux-source-failure.yml` — the other `repository_dispatch` listener, on `OCIRepository/event-junkie.flux-system`, fired by each cluster's
+      `source-failure` Alert at `eventSeverity: error` (#1454). A chart that fails cosign verification, or a registry that cannot be reached, leaves the
+      HelmRelease Ready on its last good artifact, so `deployment-status.yml` never hears of it. **The job is red by construction**: every dispatch that
+      reaches it is a failure, and a failed run is the one shape GitHub mails somebody about — the actor of a `repository_dispatch` is the PAT's owner. An
+      unmatched dispatch type leaves no trace on GitHub, which is why the Alert alone was not enough. Same main-branch-only trap as its sibling.
     - `credential-expiry-reminder.yml` — opens an assigned issue 30 days before a credential expires, and a louder, differently-titled one if the date passes
       anyway (#569). Weekly. **The dates are a literal `CREDENTIALS` table in the workflow, duplicated in `docs/CREDENTIALS.md` §2, and the two must move
       together** — reading them from GitHub instead would need `admin:org`, which `GITHUB_TOKEN` cannot hold, so that route would watch an expiring token with
