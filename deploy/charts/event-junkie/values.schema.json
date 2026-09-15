@@ -273,12 +273,14 @@
           }
         },
         "securityHeaders": {
-          "description": "HSTS, X-Content-Type-Options, X-Frame-Options and Referrer-Policy on every response, via a Traefik Middleware (#416). Response headers have no Ingress API equivalent.",
+          "description": "HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy and Cross-Origin-Resource-Policy on every response, via a Traefik Middleware (#416, #1442). Response headers have no Ingress API equivalent.",
           "type": "object",
           "required": [
             "enabled",
             "hsts",
-            "referrerPolicy"
+            "referrerPolicy",
+            "permissionsPolicy",
+            "crossOriginResourcePolicy"
           ],
           "properties": {
             "enabled": {
@@ -287,6 +289,14 @@
             "referrerPolicy": {
               "type": "string",
               "minLength": 1
+            },
+            "permissionsPolicy": {
+              "type": "string",
+              "minLength": 1
+            },
+            "crossOriginResourcePolicy": {
+              "type": "string",
+              "enum": ["same-origin", "same-site", "cross-origin"]
             },
             "hsts": {
               "type": "object",

@@ -290,6 +290,10 @@ ingress:
     # use — knowing that a visitor arrived from another site at all. Event URLs carry slugs that
     # describe what somebody was looking at, so this is a privacy setting as much as a security one.
     referrerPolicy: "strict-origin-when-cross-origin"
+    # ingress.securityHeaders.permissionsPolicy denies browser features the site never asks for (#1442).
+    permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+    # ingress.securityHeaders.crossOriginResourcePolicy: no other origin may load the cached images (ADR-019).
+    crossOriginResourcePolicy: "same-origin"
     # ingress.securityHeaders.contentSecurityPolicy is the header the image cache made possible
     # (#846). While the site hotlinked, any venue domain could appear in an `<img src>`, so the only
     # workable `img-src` was one that permitted the whole web — which is not a rule. ADR-019 named a
