@@ -20,8 +20,8 @@
 # one in the same commit.
 flux-clusters-files	42
 flux-clusters-resources	139
-zizmor-ignored	13
-zizmor-suppressed	76
+zizmor-ignored	14
+zizmor-suppressed	79
 zap-k3d-api-rules	120
 zap-k3d-api-urls	40
 zap-k3d-full-rules	140

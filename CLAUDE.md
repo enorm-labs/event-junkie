@@ -34,6 +34,8 @@ Slash commands available under `.claude/skills/`:
   `/loop`, to work through the backlog
 - `/next-issue` — recommend what to work on next, and say why
 - `/open-pr` — branch, commit (Conventional Commits), push, and open a PR in one flow
+- `/owasp-top-10` — walk the OWASP Top 10:2025 against the tree as deployed, diff-first over the last week, one line per category; files nothing, and
+  `agent-owasp.yml` runs it weekly
 - `/plausibility-check` — read the next days' events from the public site, check each row for what cannot be right, compare a sample against the venue's
   own page, and report; files nothing, and `agent-plausibility.yml` runs it nightly
 - `/refactor` — change the shape of the code without changing what it does; the acting counterpart to `/codebase-audit`
