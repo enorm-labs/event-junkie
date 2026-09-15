@@ -134,3 +134,5 @@
 90037	FAIL	(Remote OS Command Injection (Time Based) - Active/release)
 # WARN until #1441 turns a NUL byte in `q` into a 400, then FAIL. Not in the image's `-g` list: the api scan adds it itself.
 100000	WARN	(A Server Error response code was returned by the server)
+# WARN until #1446 makes every API error a ProblemDetail whatever the client accepts, then FAIL. Added by the api scan itself, like 100000.
+100001	WARN	(Unexpected Content-Type was returned)
