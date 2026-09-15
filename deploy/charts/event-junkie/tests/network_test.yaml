@@ -329,6 +329,14 @@ tests:
       - equal:
           path: spec.headers.referrerPolicy
           value: strict-origin-when-cross-origin
+      # The two the first ZAP baseline found missing (#1442). Traefik has a field for the first and
+      # none for the second, which is why they are asserted at different paths.
+      - equal:
+          path: spec.headers.permissionsPolicy
+          value: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+      - equal:
+          path: spec.headers.customResponseHeaders["Cross-Origin-Resource-Policy"]
+          value: same-origin
       # X-XSS-Protection is removed from every current browser and its last implementations
       # introduced vulnerabilities of their own. Setting it is cargo cult, and this says so in a
       # place that fails rather than in a comment that does not.

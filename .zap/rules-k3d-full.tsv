@@ -60,8 +60,7 @@
 10061	FAIL	(X-AspNet-Version Response Header - Passive/release)
 # 2026-09-15 — a false positive: the rule's Luhn check matched twelve digits inside an image content hash in `/api/images/<sha256>/…`. The site stores no card numbers and no personal data (ADR-019, the privacy notice).
 10062	IGNORE	(PII Disclosure - Passive/release)
-# WARN until #1442 adds the header to security-headers-middleware.yaml, then FAIL.
-10063	WARN	(Permissions Policy Header Not Set - Passive/beta)
+10063	FAIL	(Permissions Policy Header Not Set - Passive/beta)
 # 2026-09-14 — the frontend is an SPA and nginx answers every unknown path with index.html, so `/events - Copy/<slug>` is 200 by design. There is no file behind it to disclose.
 10095	IGNORE	(Backup File Disclosure - Active/beta)
 10096	WARN	(Timestamp Disclosure - Passive/release)
@@ -136,8 +135,7 @@
 90001	WARN	(Insecure JSF ViewState - Passive/release)
 90002	FAIL	(Java Serialization Object - Passive/release)
 90003	WARN	(Sub Resource Integrity Attribute Missing - Passive/release)
-# WARN until #1442 adds the header to security-headers-middleware.yaml, then FAIL.
-90004	WARN	(Insufficient Site Isolation Against Spectre Vulnerability - Passive/beta)
+90004	FAIL	(Insufficient Site Isolation Against Spectre Vulnerability - Passive/beta)
 90011	WARN	(Charset Mismatch - Passive/release)
 90017	FAIL	(XSLT Injection - Active/release)
 90019	FAIL	(Server Side Code Injection - Active/release)

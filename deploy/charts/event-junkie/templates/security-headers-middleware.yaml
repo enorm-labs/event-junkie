@@ -27,6 +27,13 @@
          URL of the page a visitor came from is sent to every third-party host they navigate to, and
          event pages carry slugs that describe what somebody was looking at.
 
+       - **Permissions-Policy** denies the browser features nothing here uses. A script that runs
+         where it should not cannot turn a denied feature back on.
+
+       - **Cross-Origin-Resource-Policy: same-origin** keeps another origin's page from loading the
+         assets and the cached venue images (#1442). Traefik has no field for it, so it goes through
+         `customResponseHeaders`, the way `noindex-middleware.yaml` sends `X-Robots-Tag`.
+
        DELIBERATELY ABSENT, so they are not proposed as oversights:
 
        - **X-XSS-Protection** (`browserXssFilter`). Removed from every current browser, and in its
@@ -52,7 +59,7 @@ metadata:
     {{- include "event-junkie.labels" $args | nindent 4 }}
   annotations:
     kubernetes.io/description: >-
-      A content security policy, HSTS, nosniff, frame-deny and a referrer policy on every response. Response headers have no Ingress API equivalent.
+      A content security policy, HSTS, nosniff, frame-deny, a referrer policy, a permissions policy and a cross-origin resource policy on every response. Response headers have no Ingress API equivalent.
 spec:
   headers:
     {{- /* `stsSeconds: 0` means "do not send the header at all", which is why the value is
@@ -71,6 +78,9 @@ spec:
     contentTypeNosniff: true
     frameDeny: true
     referrerPolicy: {{ .Values.ingress.securityHeaders.referrerPolicy | quote }}
+    permissionsPolicy: {{ .Values.ingress.securityHeaders.permissionsPolicy | quote }}
+    customResponseHeaders:
+      Cross-Origin-Resource-Policy: {{ .Values.ingress.securityHeaders.crossOriginResourcePolicy | quote }}
     {{- with .Values.ingress.securityHeaders.contentSecurityPolicy }}
     {{- if .enabled }}
     {{- /* `img-src` is composed here and configured nowhere, so the header cannot contradict the
