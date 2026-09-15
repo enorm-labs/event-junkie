@@ -100,8 +100,8 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       version_, not a commit, so it parses the commit back out of `scripts/version.sh`'s two shapes — change one and this must change with it. Note that
       helm-controller appends the chart's OCI digest as SemVer build metadata (`…g3b1c09e+97ec754320b5`), which is stripped before matching.
     - `flux-source-failure.yml` — the other `repository_dispatch` listener, on `OCIRepository/event-junkie.flux-system`, fired by each cluster's
-      `source-failure` Alert at `eventSeverity: error` (#1454). A chart that fails cosign verification, or a registry that cannot be reached, leaves the
-      HelmRelease Ready on its last good artifact, so `deployment-status.yml` never hears of it. **The job is red by construction**: every dispatch that
+      `source-failure` Alert at `eventSeverity: error` (#1454). A chart that fails cosign verification, or a registry that cannot be reached, keeps the last
+      good artifact installed; the HelmRelease turns not-Ready with the source's message but emits no event, so `deployment-status.yml` never hears of it. **The job is red by construction**: every dispatch that
       reaches it is a failure, and a failed run is the one shape GitHub mails somebody about — the actor of a `repository_dispatch` is the PAT's owner. An
       unmatched dispatch type leaves no trace on GitHub, which is why the Alert alone was not enough. Same main-branch-only trap as its sibling.
     - `credential-expiry-reminder.yml` — opens an assigned issue 30 days before a credential expires, and a louder, differently-titled one if the date passes
