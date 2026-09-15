@@ -16,7 +16,7 @@ import org.springframework.web.reactive.function.client.WebClient
 /**
  * The URL [ImgproxyClient] builds, and the signature it puts in front of it.
  *
- * **The vector below was verified against a real imgproxy**, `v4.0.14` at the digest the chart pins.
+ * **The vector below was verified against a real imgproxy**, `v4.0.14`.
  * Running it with this key and salt and requesting this exact path answered `404 Source image is
  * unreachable` — past signature verification, failing only on the S3 source a local container
  * cannot reach. One byte changed in the signature answered `403 Forbidden`. So this constant is

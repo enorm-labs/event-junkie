@@ -41,21 +41,10 @@
 # sets is how a gate stops being read.
 # ---------------------------------------------------------------------------------------------
 # ---------------------------------------------------------------------------------------------
-
-# 2026-09-10 — CVE-2026-84445 in google.golang.org/grpc, compiled into the imgproxy sidecar
-# (ghcr.io/imgproxy/imgproxy, pinned by digest in the chart). Fixed in grpc-go 1.83.2 and no
-# imgproxy build carries it: v4.0.14 is the newest release, the whole GHCR tag list was walked, and
-# `latest` — a later rebuild of that release — was pulled and scanned and still ships v1.83.1. So
-# the fix cannot be taken by bumping, which is the answer this file otherwise expects.
 #
-# Not reachable here: the flaw is in gRPC-Go's xDS *server*, imgproxy links gRPC only as an
-# OpenTelemetry client, and the sidecar answers on loopback inside the importer pod, which ADR-020
-# requires and one network rule enforces.
-#
-# **Revisit on 2026-10-22, or sooner if imgproxy ships v4.0.15.** Releases have come about monthly
-# (v4.0.10 to v4.0.14 between 2026-07-02 and 2026-08-24), so a build with the fix is the expected
-# outcome rather than a hope. Delete this entry then. See #1273.
-#
-# First entry for this cause. Per the note above, a second one for the same cause is the signal that
-# the question has become "why are we still shipping the thing that generates them?".
-CVE-2026-84445
+# 2026-09-15 — back to empty for the third time. The CVE-2026-84445 waiver (grpc-go in the imgproxy
+# sidecar, added 2026-09-10, #1273) named its own deletion condition — "revisit sooner if imgproxy
+# ships v4.0.15" — and that condition held five weeks before the calendar date it also carried.
+# v4.0.15 ships grpc v1.83.2, the fixed version, so the entry went away with a digest bump rather
+# than a re-dating. The waiver was written to expire and it expired; that is the outcome this file
+# wants, and the reason every entry above is required to say what would end it.
