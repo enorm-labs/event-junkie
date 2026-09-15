@@ -254,9 +254,9 @@ snapshots _by omission_ is one careless `-0` away from being wrong.
 
 **The signature check lives on the `OCIRepository` too** (#1425). `spec.verify` matches the Fulcio certificate cosign stored next to the chart against the
 release workflow's identity, `…/.github/workflows/release.yml@refs/heads/main` or `@refs/tags/vX.Y.Z`. A chart pushed by any other path never reconciles: the source reports
-`failed to verify the signature using provider 'cosign keyless': no signatures found` and keeps the last verified artifact, observed on k3d. Staging and k3d carry it. Production takes it after the first signed release is cut,
-because its range resolves the newest release and an unsigned one would fail the source until then. k3d copies staging's block verbatim for the same reason
-it copies the range.
+`failed to verify the signature using provider 'cosign keyless': no signatures found` and keeps the last verified artifact, observed on k3d and on staging. All three
+clusters carry the same block; production got it last, once `v0.16.1` — the first release cut after signing — was what its range resolved. k3d copies staging's
+block verbatim for the same reason it copies the range.
 
 **And the range only means "newest" if the versions order** (#455). The `-0` picks the candidates; the version scheme picks the winner. Snapshots are
 `0.1.1-snapshot.<utc-timestamp>.g<sha>` because SemVer compares a digits-only identifier numerically and a letter-bearing one lexically in ASCII — the previous

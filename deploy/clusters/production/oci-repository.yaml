@@ -32,3 +32,11 @@ spec:
   layerSelector:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
+  # Refuses a chart not signed by our own release workflow (#1425) — staging's block, the same two
+  # regexes: a release runs `release.yml` at `refs/tags/vX.Y.Z`, which the subject admits. A chart
+  # pushed by hand carries no signature and never reconciles; the last verified artifact stays.
+  verify:
+    provider: cosign
+    matchOIDCIdentity:
+      - issuer: "^https://token\\.actions\\.githubusercontent\\.com$"
+        subject: "^https://github\\.com/enorm-labs/event-junkie/\\.github/workflows/release\\.yml@refs/(heads/main|tags/v[0-9]+\\.[0-9]+\\.[0-9]+)$"

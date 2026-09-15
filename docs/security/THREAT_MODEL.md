@@ -185,7 +185,7 @@ The importer is the one workload that talks to the open internet. Everything it 
 | A pull request from a fork runs with secrets          | E      | low        | high   | Mitigated. `pull_request` triggers, `persist-credentials: false`, zizmor in `validate-workflows.yml`. The two `pull_request_target` workflows check out nothing |
 | A bot branch runs a hostile install script            | E      | low        | medium | Mitigated. `fix-notices-on-bot-prs.yml` mints the App token only at the push step, after `npm ci`                                                               |
 | A dependency ships malware                            | T      | medium     | high   | Mitigated in part. Dependency review on each PR, Dependency-Check nightly, Trivy on each image. Nothing checks a package's provenance                           |
-| A chart or image in GHCR is replaced and Flux runs it | T, E   | low        | high   | Mitigated on staging and k3d, open on production until the next release (#1425). `release.yml` signs, `spec.verify` matches the workflow's identity             |
+| A chart or image in GHCR is replaced and Flux runs it | T, E   | low        | high   | Mitigated. `release.yml` signs the chart and the images, keyless, on the digest; every cluster's `spec.verify` matches the workflow's identity (#1425)          |
 | A chart fails verification and nobody hears of it     | R      | low        | medium | Mitigated. The `source-failure` Alert dispatches every OCIRepository error to `flux-source-failure.yml`, which goes red (#1454)                                 |
 | A commit reaches `main` without a review              | T      | low        | high   | Mitigated. `merge-gate.yml`, a required check on `pull_request_target`, fails an unlisted App's pull request until a person approves its head (#1424)           |
 | A tag or an action is unpinned                        | T      | low        | medium | Mitigated. Every action is pinned by SHA, every tool by version. zizmor and Dependabot keep it so                                                               |
@@ -241,8 +241,7 @@ That App holds `contents`, `pull_requests`, `workflows` and `actions` at `write`
 
 ### Open, ranked
 
-1. **#1425 — production's OCIRepository does not verify yet.** Likelihood low, impact high. Six lines, after the first signed release is cut.
-2. **#709 — `observability` is `privileged`.** Likelihood low, impact high. Move the collector agent to its own namespace.
+1. **#709 — `observability` is `privileged`.** Likelihood low, impact high. Move the collector agent to its own namespace.
 
 ### Accepted
 
