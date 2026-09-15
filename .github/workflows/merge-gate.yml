@@ -5,11 +5,19 @@
 #  This file reads two fields from the event payload and exits. That is all it may ever do.
 # ==============================================================================================
 #
-# A required check that refuses a pull request opened by a GitHub App we did not list. The control
-# #1424 exists for: three Apps hold `contents: write` and `pull_requests: write`, the `main` ruleset
-# needs zero approvals, and one of the Apps runs agents with a shell that read venue pages. A
-# "restrict updates" ruleset closed that and broke auto-merge — GitHub's deferred merge runs without
-# bypass, a known limitation with no fix planned — so this check is what replaced it.
+# A required check that refuses a pull request opened by a GitHub App we did not list, unless a
+# person has approved the head it is at. The control #1424 exists for: three Apps hold `contents:
+# write` and `pull_requests: write`, the `main` ruleset needs zero approvals, and one of the Apps
+# runs agents with a shell that read venue pages. A "restrict updates" ruleset closed that and broke
+# auto-merge — GitHub's deferred merge runs without bypass, a known limitation with no fix planned —
+# so this check is what replaced it.
+#
+# **The approval is what lets an agent's pull request land at all.** A required check with no
+# bypass actor blocks the merge button for everyone, the person included, so "a person merges it"
+# needs a way to say so that the gate can read: an approving review, by a User and not a Bot, on
+# the pull request's current head. A push after the approval moves the head and the gate is red
+# again until the new head is approved. The `claude` App cannot approve as a person and cannot edit
+# this file into passing, so the review is the one thing only a person can supply.
 #
 # **`pull_request_target` is load-bearing here, not a convenience.** It runs THIS file as it stands
 # on `main`, never the pull request's copy. The `claude` App holds `workflows: write`, so a
@@ -34,9 +42,14 @@ on:
   # `synchronize`, because a required check has to report on every head the pull request gets.
   pull_request_target:
     types: [ opened, reopened, synchronize ]
+  # A review is the event that can turn a red gate green, so the check runs again on each one. The
+  # payload carries the same `pull_request` object, and the run reports on the same head.
+  pull_request_review:
+    types: [ submitted, edited, dismissed ]
 
-# Nothing. The job reads the event payload, which needs no token at all.
-permissions: {}
+# To list the pull request's reviews. Nothing is written.
+permissions:
+  pull-requests: read
 
 concurrency:
   group: merge-gate-${{ github.event.pull_request.number }}
@@ -49,25 +62,43 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - name: Refuse a pull request from an App that is not on the list
+      - name: Refuse a pull request from an App that is not on the list, unless a person approved this head
         env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           AUTHOR: ${{ github.event.pull_request.user.login }}
           TYPE: ${{ github.event.pull_request.user.type }}
         run: |
           set -euo pipefail
           # Bots that may open a pull request here. Dependabot and Renovate propose dependency bumps
           # (ADR-024); the release App opens the version bump after a cut. `claude[bot]` is absent
-          # on purpose: the agent workflows open pull requests a person merges by hand, and a person
-          # reads them first.
+          # on purpose: the agent workflows open pull requests a person reads first, and the
+          # approval below is how the person says so.
           allowed='dependabot[bot] renovate[bot] event-junkie-release[bot]'
-          if [[ "$TYPE" == "Bot" ]]; then
-            for bot in $allowed; do
-              if [[ "$AUTHOR" == "$bot" ]]; then
-                echo "::notice::${AUTHOR} is a listed App — passing"
-                exit 0
-              fi
-            done
-            echo "::error::${AUTHOR} is a GitHub App that is not allowed to land pull requests here (#1424). A person merges it, after reading it."
-            exit 1
+          if [[ "$TYPE" != "Bot" ]]; then
+            echo "::notice::${AUTHOR} is a ${TYPE} — passing"
+            exit 0
           fi
-          echo "::notice::${AUTHOR} is a ${TYPE} — passing"
+          for bot in $allowed; do
+            if [[ "$AUTHOR" == "$bot" ]]; then
+              echo "::notice::${AUTHOR} is a listed App — passing"
+              exit 0
+            fi
+          done
+          # An approval counts only from a User with write access, on this exact head. The reviews
+          # API returns every review ever submitted, so the newest one per reviewer decides: an
+          # approval followed by a dismissal or a request for changes is not an approval.
+          approver=$(gh api --paginate "repos/${REPO}/pulls/${NUMBER}/reviews" --jq '
+            [ .[] | select(.user.type == "User")
+                  | select(.author_association == "OWNER" or .author_association == "MEMBER" or .author_association == "COLLABORATOR") ]
+            | group_by(.user.login) | map(max_by(.submitted_at))
+            | map(select(.state == "APPROVED" and .commit_id == env.HEAD_SHA))
+            | .[0].user.login // empty')
+          if [[ -n "$approver" ]]; then
+            echo "::notice::${AUTHOR} is a GitHub App, and ${approver} approved ${HEAD_SHA:0:7} — passing"
+            exit 0
+          fi
+          echo "::error::${AUTHOR} is a GitHub App that is not allowed to land pull requests here on its own (#1424). A person reads it and approves this head, ${HEAD_SHA:0:7}; the gate runs again on the review."
+          exit 1
