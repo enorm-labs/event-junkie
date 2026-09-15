@@ -75,7 +75,7 @@
 90001	WARN	(Insecure JSF ViewState)
 90002	FAIL	(Java Serialization Object)
 90003	WARN	(Sub Resource Integrity Attribute Missing)
-# WARN until the first release carrying #1442 is live on production, then FAIL. Production takes a chart change only with a release, so the chart already renders the header while the site does not send it.
+# WARN until the first release carrying #1442 and #1464 is live on production, then FAIL. Production takes a chart change only with a release, so the chart already renders the three headers while the site does not send them.
 90004	WARN	(Insufficient Site Isolation Against Spectre Vulnerability)
 90011	WARN	(Charset Mismatch)
 90022	FAIL	(Application Error Disclosure)

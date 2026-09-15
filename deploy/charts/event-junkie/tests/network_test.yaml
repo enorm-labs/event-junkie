@@ -337,6 +337,14 @@ tests:
       - equal:
           path: spec.headers.customResponseHeaders["Cross-Origin-Resource-Policy"]
           value: same-origin
+      # The other two of ZAP's site-isolation trio (#1464). `credentialless` and not `require-corp`,
+      # because with image serving off every image is a venue's URL and carries no CORP header.
+      - equal:
+          path: spec.headers.customResponseHeaders["Cross-Origin-Embedder-Policy"]
+          value: credentialless
+      - equal:
+          path: spec.headers.customResponseHeaders["Cross-Origin-Opener-Policy"]
+          value: same-origin
       # X-XSS-Protection is removed from every current browser and its last implementations
       # introduced vulnerabilities of their own. Setting it is cargo cult, and this says so in a
       # place that fails rather than in a comment that does not.

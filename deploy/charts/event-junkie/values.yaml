@@ -294,6 +294,10 @@ ingress:
     permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
     # ingress.securityHeaders.crossOriginResourcePolicy: no other origin may load the cached images (ADR-019).
     crossOriginResourcePolicy: "same-origin"
+    # `credentialless`, not `require-corp`: with serving off, images are venue URLs without CORP, and `require-corp` would blank them (#1464).
+    crossOriginEmbedderPolicy: "credentialless"
+    # ingress.securityHeaders.crossOriginOpenerPolicy: the site opens no popup, so nothing needs the opener.
+    crossOriginOpenerPolicy: "same-origin"
     # ingress.securityHeaders.contentSecurityPolicy is the header the image cache made possible
     # (#846). While the site hotlinked, any venue domain could appear in an `<img src>`, so the only
     # workable `img-src` was one that permitted the whole web — which is not a rule. ADR-019 named a
