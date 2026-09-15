@@ -957,13 +957,27 @@ cmd_flux_verify() {
   fi
 
   # Every image tag must equal the chart's appVersion, which is what #264's fallback promises. If
-  # that fallback ever breaks, this is where it shows up as three tags that disagree.
+  # that fallback ever breaks, this is where it shows up as three tags that disagree. The digest
+  # behind the tag is stripped first: since #1473 a published chart names each image
+  # `repo:tag@sha256:…`, and four digests are four different strings by design.
   local distinct
-  distinct="$(printf '%s\n' "$images" | sed 's/.*://' | sort -u | wc -l | tr -d ' ')"
+  distinct="$(printf '%s\n' "$images" | sed -e 's/@sha256:[0-9a-f]*$//' -e 's/.*://' | sort -u | wc -l | tr -d ' ')"
   if [ "$distinct" = 1 ]; then
     ok "all three images carry one tag — the appVersion fallback holds"
   else
     bad "$distinct distinct image tags; the chart and the images have drifted"
+  fi
+
+  # And every one of ours carries that digest, so a repointed tag on GHCR changes nothing a node
+  # pulls (#1473). A chart built locally has none; this is the Flux path and its chart came from
+  # release.yml, which stamps or fails.
+  local ours undigested
+  ours="$(printf '%s\n' "$images" | tr ' ' '\n' | grep '^ghcr.io/enorm-labs/event-junkie/' || true)"
+  undigested="$(printf '%s\n' "$ours" | grep -vc '@sha256:[0-9a-f]\{64\}$' || true)"
+  if [ -n "$ours" ] && [ "$undigested" = 0 ]; then
+    ok "every image of ours is pulled by digest"
+  else
+    bad "$undigested image(s) of ours carry no digest: the stamp in release.yml did not reach the chart"
   fi
 
   # Flux runs the chart's own `helm test` hook as part of reconciliation and records the result as a

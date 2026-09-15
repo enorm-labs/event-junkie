@@ -60,6 +60,8 @@ bff:
     # bff.image.tag falls back to `.Chart.AppVersion`, which #264 stamps from the build that pushed
     # the image. Never `latest` — the render assertions fail the build on a floating tag.
     tag: ""
+    # bff.image.digest is stamped by release.yml from the push it just made (#1473); the node pulls the digest, the tag stays for the reader.
+    digest: ""
   # bff.basePath is the ingress path rule, and it matches the prefix the controllers already carry
   # in their own `@RequestMapping`. That is why the ingress needs no rewrite and the chart stays free
   # of a Traefik-specific Middleware CRD (§3.1). Nothing sets `spring.webflux.base-path`.
@@ -113,6 +115,7 @@ importer:
   image:
     repository: "enorm-labs/event-junkie/importer"
     tag: ""
+    digest: ""
   service:
     # importer.service.port is the application port. Reachable in-cluster only: the importer gets no
     # Ingress anywhere in this chart, and `/api/admin/**` stays behind `kubectl port-forward` over
@@ -166,6 +169,7 @@ frontend:
     # Built by #262.
     repository: "enorm-labs/event-junkie/frontend"
     tag: ""
+    digest: ""
   service:
     # frontend.service.port must match what nginx listens on, and it cannot be 80: a non-root
     # process cannot bind a privileged port, and `runAsNonRoot` is not negotiable (§3.5). This is a
@@ -200,6 +204,7 @@ frontend:
       # image — the two ship one tree, and the injector serves the shell the frontend image holds.
       repository: "enorm-labs/event-junkie/injector"
       tag: ""
+      digest: ""
     # frontend.injector.port is loopback-only: nginx.conf proxies to 127.0.0.1:3000, and that literal
     # is in the image, so changing this alone changes nothing. It is here for the probes.
     port: 3000

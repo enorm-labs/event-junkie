@@ -98,13 +98,24 @@ operator did — so a hand-made RBAC binding still lines up.
 
 {{/*
 A fully-qualified image reference. `tag` falls back to `.Chart.AppVersion` so the chart version and
-the image tag move together (#264 stamps both from one build).
+the image tag move together (#264 stamps both from one build). With a `digest` — release.yml stamps
+one per image from the push it made (#1473) — the reference is `repo:tag@sha256:…`: the node pulls
+the digest and a repointed tag changes nothing, while the tag stays readable in every pod listing.
 */}}
+{{- define "event-junkie.imageRef" -}}
+{{- $registry := .image.registry | default .defaultRegistry -}}
+{{- $tag := .image.tag | default .appVersion -}}
+{{- $ref := printf "%s/%s:%s" $registry .image.repository $tag -}}
+{{- if .image.digest -}}
+{{- printf "%s@%s" $ref .image.digest -}}
+{{- else -}}
+{{- $ref -}}
+{{- end -}}
+{{- end }}
+
 {{- define "event-junkie.image" -}}
 {{- $component := index .ctx.Values .component -}}
-{{- $registry := $component.image.registry | default .ctx.Values.image.registry -}}
-{{- $tag := $component.image.tag | default .ctx.Chart.AppVersion -}}
-{{- printf "%s/%s:%s" $registry $component.image.repository $tag -}}
+{{- include "event-junkie.imageRef" (dict "image" $component.image "defaultRegistry" .ctx.Values.image.registry "appVersion" .ctx.Chart.AppVersion) -}}
 {{- end }}
 
 {{/*

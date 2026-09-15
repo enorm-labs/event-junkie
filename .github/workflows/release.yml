@@ -510,6 +510,30 @@ jobs:
           yq -i '.version = strenv(VERSION) | .appVersion = strenv(VERSION)' "$CHART/Chart.yaml"
           yq -N '{"version": .version, "appVersion": .appVersion}' "$CHART/Chart.yaml"
 
+      # The second stamp (#1473): each image's digest, from the push this run made, into the chart's
+      # values, so the reference a node pulls is `repo:tag@sha256:…` and a tag repointed on GHCR
+      # changes nothing. Only on a publish — the pull-request self-test pushes nothing and its chart
+      # renders tags alone, which is the other shape the chart's tests cover. An empty digest fails
+      # here rather than stamping `""` and passing (#1087); the lint step below then validates the
+      # stamped values against the schema's digest pattern.
+      - name: Stamp the chart with the image digests
+        if: steps.version.outputs.publish == 'true'
+        env:
+          BFF_DIGEST: ${{ steps.push-bff.outputs.digest }}
+          IMPORTER_DIGEST: ${{ steps.push-importer.outputs.digest }}
+          FRONTEND_DIGEST: ${{ steps.push-frontend.outputs.digest }}
+          INJECTOR_DIGEST: ${{ steps.push-injector.outputs.digest }}
+        run: |
+          set -euo pipefail
+          for pair in bff:BFF_DIGEST importer:IMPORTER_DIGEST frontend:FRONTEND_DIGEST frontend.injector:INJECTOR_DIGEST; do
+            key="${pair%%:*}"
+            var="${pair#*:}"
+            digest="${!var}"
+            [[ "$digest" == sha256:* ]] || { echo "::error::no digest for ${key}"; exit 1; }
+            DIGEST="$digest" yq -i ".${key}.image.digest = strenv(DIGEST)" "$CHART/values.yaml"
+          done
+          yq -N '{"bff": .bff.image.digest, "importer": .importer.image.digest, "frontend": .frontend.image.digest, "injector": .frontend.injector.image.digest}' "$CHART/values.yaml"
+
       # Re-run the gates on the *stamped* chart rather than trusting the PR run on the unstamped one.
       # `helm lint --strict` is what rejects a version string that is not SemVer, which is the failure
       # mode a computed version introduces and a hand-written one never had.
