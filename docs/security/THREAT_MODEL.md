@@ -142,7 +142,7 @@ Likelihood and impact are each `low`, `medium` or `high`, judged for this system
 | Threat                                                         | STRIDE | Likelihood | Impact | Status                                                                                                                                  |
 | -------------------------------------------------------------- | ------ | ---------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------- |
 | Scraped text carries a script and the page renders it          | T      | medium     | medium | Mitigated. Vue escapes by default and the tree has no `v-html`. The injector escapes every value. CSP allows one script hash (#854)     |
-| A venue title with `$'` or `` $` `` corrupts the injected head | T, D   | low        | low    | Open. `rewrite.ts` passes the value to `String.replace`, which expands `$` patterns. Duplicated markup, not a script. #1426             |
+| A venue title with `$'` or `` $` `` corrupts the injected head | T, D   | low        | low    | Mitigated. `rewrite.ts` replaces through a function, so `$` patterns are inserted as they are (#1426). `rewrite.spec.ts` asserts it     |
 | An expensive query holds a connection                          | D      | medium     | medium | Mitigated. Page size ≤ 100 (`application.yaml`), calendar range ≤ `MAX_CALENDAR_DAYS` (`EventService.kt`), unknown parameters are a 400 |
 | A 500 leaks a stack trace or a query                           | I      | low        | low    | Mitigated. `GlobalExceptionHandler.kt` answers with a `ProblemDetail`. #1421 tests the body                                             |
 | Another site's script reads the API                            | I      | low        | low    | Accepted. The data is public. CORS allows `GET` for the listed origins only (`WebFluxConfiguration.kt`), and is not an access control   |
@@ -242,7 +242,7 @@ That App holds `contents`, `pull_requests`, `workflows` and `actions` at `write`
 
 1. **#1425 — production's OCIRepository does not verify yet.** Likelihood low, impact high. Six lines, after the first signed release is cut.
 2. **#709 — `observability` is `privileged`.** Likelihood low, impact high. Move the collector agent to its own namespace.
-3. **#1426 — the injector expands `$` patterns.** Likelihood low, impact low. One `replace` call with a function argument.
+3. **#1454 — a chart that fails signature verification alerts nobody.** Likelihood low, impact medium. The Flux `Alert` watches the HelmRelease only.
 
 ### Accepted
 
