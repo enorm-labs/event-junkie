@@ -127,6 +127,10 @@ check_image_tags() {
     for component in bff importer frontend frontend.injector; do
       assert_equals "helm-release.yaml: $component.image.tag is empty, so it falls back to appVersion" \
         "" "$(yq -N ".spec.values.${component}.image.tag // \"\"" "$file")"
+      # Same trap one field over: release.yml stamps the digest (#1473), and a published one would
+      # pin a workload to an image nobody chose, silently, whatever the chart says.
+      assert_equals "helm-release.yaml: $component.image.digest is empty, so release.yml's stamp holds" \
+        "" "$(yq -N ".spec.values.${component}.image.digest // \"\"" "$file")"
     done
   done
 }

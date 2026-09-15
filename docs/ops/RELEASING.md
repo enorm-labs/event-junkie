@@ -39,7 +39,7 @@ flowchart TB
         ver["scripts/version.sh compute<br/><b>one version, once</b>"]
         build["Build 4 images<br/>amd64 · arm64"]
         scan{"Trivy<br/>fixable CRITICAL/HIGH"}
-        stamp["Stamp Chart.yaml<br/>version = appVersion = VERSION"]
+        stamp["Stamp Chart.yaml<br/>version = appVersion = VERSION<br/>+ image digests into values.yaml"]
         push["Push images, then chart"]
         sign["cosign sign, by digest<br/>4 images + chart, keyless"]
     end
@@ -90,6 +90,9 @@ cosign verify ghcr.io/enorm-labs/charts/event-junkie:<version> \
 
 The signature is separate from the provenance attestation (#443), which `gh attestation verify` reads and Flux cannot. Flux verifies cosign
 signatures and nothing else, so the signature is the half a cluster can enforce through `spec.verify` on its OCIRepository.
+
+**The chart names its images by digest** (#1473). After the pushes, the same run stamps each image's digest into the chart's `values.yaml`. A verified
+chart therefore pulls `repo:VERSION@sha256:…`: the bytes the run built and signed, whatever a tag on GHCR points at later. A missing digest fails the run.
 
 ## What triggers what
 

@@ -309,6 +309,11 @@ keeping the chart and the images in step (#264). Pinning a tag opts one componen
 image carries a plausible tag, one of them just isn't the one this build produced. `values-k3d.yaml` is the sole exception (`dev`, never leaves a laptop);
 `tests/invariants_test.yaml` enforces the chart's own default and `scripts/cluster-assertions.sh` enforces every HelmRelease.
 
+**The same holds for `<component>.image.digest`, one field over** (#1473). `release.yml` stamps each image's digest into the chart it packages, from the
+push it just made, so a published chart names its images `repo:tag@sha256:…` — the node pulls the digest, a tag repointed on GHCR changes nothing, and the tag
+stays in every pod listing. A digest in a values file pins a workload to an image nobody chose, the same way a tag does. `flux-verify` on k3d asserts every
+image of ours carries one.
+
 ## Never put a credential in a values file
 
 Not in `values.yaml`, not in an environment overlay, not guarded behind a conditional, not "temporarily". **There is no inline-password path in this chart and

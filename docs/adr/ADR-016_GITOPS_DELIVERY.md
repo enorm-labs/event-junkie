@@ -130,7 +130,7 @@ costs.
 - **The cluster trusts a signature, not a registry** (#1425). `release.yml` signs every image and the chart with cosign, keyless, under the
   workflow's own identity, and each OCIRepository carries `spec.verify` matching that identity. A chart pushed to GHCR by any other path — a person
   with `packages: write`, a compromised token — never reconciles. Production took its `verify:` once `v0.16.1`, the first signed release, was
-  what its range resolved.
+  what its range resolved. The verified chart names its images by digest (#1473), so the trust reaches the bytes a node pulls and not only a tag.
 - **Verification runs where the workloads do.** CI cannot reach staging by design, so the chart's `helm test` hook is
   the smoke test. Flux runs it as part of reconciliation, and remediates on failure.
 

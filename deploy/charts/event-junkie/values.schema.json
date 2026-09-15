@@ -109,6 +109,9 @@
           "type": "integer",
           "minimum": 0
         },
+        "image": {
+          "$ref": "#/definitions/componentImage"
+        },
         "basePath": {
           "description": "Served by Spring itself, so the ingress path and this must agree. A leading slash and no trailing one.",
           "type": "string",
@@ -196,6 +199,20 @@
         "replicaCount": {
           "type": "integer",
           "minimum": 0
+        },
+        "image": {
+          "$ref": "#/definitions/componentImage"
+        },
+        "injector": {
+          "type": "object",
+          "properties": {
+            "image": {
+              "$ref": "#/definitions/componentImage"
+            }
+          }
+        },
+        "image": {
+          "$ref": "#/definitions/componentImage"
         },
         "service": {
           "type": "object",
@@ -565,6 +582,29 @@
     }
   },
   "definitions": {
+    "componentImage": {
+      "description": "One of the four images release.yml builds. `tag` falls back to appVersion; `digest`, when release.yml stamps it, is what the node pulls (#1473).",
+      "type": "object",
+      "required": [
+        "repository"
+      ],
+      "properties": {
+        "registry": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "type": "string"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^(sha256:[0-9a-f]{64})?$"
+        }
+      }
+    },
     "jvmService": {
       "type": "object",
       "required": [

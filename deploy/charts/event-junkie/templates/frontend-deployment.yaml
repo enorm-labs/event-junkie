@@ -121,7 +121,7 @@ spec:
                contract hold. It shares the pod's network namespace, so `allow-frontend-to-bff` in
                networkpolicy.yaml is the frontend pod's egress, and the only one it has beyond DNS. */}}
         - name: injector
-          image: {{ printf "%s/%s:%s" ($injector.image.registry | default .Values.image.registry) $injector.image.repository ($injector.image.tag | default .Chart.AppVersion) | quote }}
+          image: {{ include "event-junkie.imageRef" (dict "image" $injector.image "defaultRegistry" .Values.image.registry "appVersion" .Chart.AppVersion) | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
             {{- include "event-junkie.containerSecurityContext" $args | nindent 12 }}

@@ -188,13 +188,35 @@ tests:
       # it follows the first rule: a SemVer tag from the same release as the frontend it serves.
       #
       # **The imgproxy sidecar is the one image this chart does not build**, and it is the second
-      # alternative rather than an escape hatch: ours must carry a SemVer tag and never a digest, and
-      # it must carry a digest and never a tag (ADR-017, ADR-020). Renders with the sidecar off match
-      # only the first half, which is why `images.imgproxy.enabled` is set explicitly below — staging
-      # turned it on and this assertion had never seen a second container.
+      # alternative rather than an escape hatch: ours carry a SemVer tag, and a digest behind it once
+      # release.yml has stamped one (#1473); it carries a digest and never a tag (ADR-017, ADR-020).
+      # Renders with the sidecar off match only the first half, which is why `images.imgproxy.enabled`
+      # is set explicitly below — staging turned it on and this assertion had never seen a second
+      # container.
       - matchRegex:
           path: "$..image"
-          pattern: '^(ghcr\.io/enorm-labs/event-junkie/(bff|importer|frontend|injector):[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?|ghcr\.io/imgproxy/imgproxy@sha256:[0-9a-f]{64})$'
+          pattern: '^(ghcr\.io/enorm-labs/event-junkie/(bff|importer|frontend|injector):[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?(@sha256:[0-9a-f]{64})?|ghcr\.io/imgproxy/imgproxy@sha256:[0-9a-f]{64})$'
+
+  - it: a stamped digest rides behind the tag on all four of our images, and the tag stays
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.imgproxy.enabled: false
+      bff.image.digest: "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+      importer.image.digest: "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+      frontend.image.digest: "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+      frontend.injector.image.digest: "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+    documentSelector:
+      path: kind
+      value: Deployment
+      matchMany: true
+    asserts:
+      # Four containers, four digests, each behind a SemVer tag: `repo:tag@sha256:…`. A digest with
+      # no tag would pass a node and lose the version from every pod listing.
+      - matchRegex:
+          path: "$..image"
+          pattern: '^ghcr\.io/enorm-labs/event-junkie/(bff|importer|frontend|injector):[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?@sha256:(1{64}|2{64}|3{64}|4{64})$'
 
   - it: control — the image path above reaches the imgproxy sidecar too
     set:
@@ -211,7 +233,7 @@ tests:
     asserts:
       - matchRegex:
           path: "$..image"
-          pattern: '^(ghcr\.io/enorm-labs/event-junkie/(bff|importer|frontend|injector):[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?|ghcr\.io/imgproxy/imgproxy@sha256:[0-9a-f]{64})$'
+          pattern: '^(ghcr\.io/enorm-labs/event-junkie/(bff|importer|frontend|injector):[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?(@sha256:[0-9a-f]{64})?|ghcr\.io/imgproxy/imgproxy@sha256:[0-9a-f]{64})$'
 
   - it: control — the ConfigMap data path above reaches the shared ConfigMap
     set:
