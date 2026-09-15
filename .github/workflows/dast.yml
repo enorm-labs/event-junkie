@@ -4,16 +4,20 @@ name: DAST
 # and no credential (#1421, epic #1419). Every other scanner here reads an artifact — CodeQL the
 # source, Trivy the image layers, `helm unittest` the rendered chart. This one talks to the site.
 #
-# **Two jobs, two targets, and the split is the design.** `dast-k3d` is the active scan: ZAP's full
-# scan and API scan, fuzzing every parameter of every endpoint, then Nuclei (#1423) asking the other
-# question — not "does the app misbehave under hostile input" but "is a known bad thing exposed":
-# one template per CVE, exposure or misconfiguration, thousands of them, kept current upstream. It
-# runs against the chart on an ephemeral k3d cluster on this runner, built the way Hetzner runs it (ADR-012) — same chart, same
-# images, same Traefik with the same header, CSP and rate-limit middlewares. `dast-production` is
-# the passive baseline: a spider and the passive rules against the public site, from the outside.
-# An active scan against a CX33 with visitors on it would be a self-inflicted load test that trips
-# the rate limit and tests nothing else; staging is on the WireGuard tunnel and is not reachable
-# from here, on purpose (PLATFORM_SETUP §4a).
+# **Three jobs, two targets, and the split is the design.** `dast-k3d` is the active scan: ZAP's
+# full scan and API scan, fuzzing every parameter of every endpoint, then Nuclei (#1423) asking the
+# other question — not "does the app misbehave under hostile input" but "is a known bad thing
+# exposed": one template per CVE, exposure or misconfiguration, thousands of them, kept current
+# upstream. It runs against the chart on an ephemeral k3d cluster on this runner, built the way
+# Hetzner runs it (ADR-012) — same chart, same images, same Traefik with the same header, CSP and
+# rate-limit middlewares. `dast-production` is the passive baseline: a spider and the passive rules
+# against the public site, from the outside. An active scan against a CX33 with visitors on it
+# would be a self-inflicted load test that trips the rate limit and tests nothing else; staging is
+# on the WireGuard tunnel and is not reachable from here, on purpose (PLATFORM_SETUP §4a).
+# `nuclei-production` (#1461) is the same Nuclei pass against the public site, weekly, at a quarter
+# of the k3d rate: the load argument is about rate, not about the tool, and what production has
+# that k3d does not — the release chart, real TLS, the firewall, whatever answers on the hostname
+# that the chart did not put there — is the surface the template library exists to check.
 #
 # **Neither job holds a credential to any cluster, and that is a property to keep.** The k3d cluster
 # is created and deleted inside the job. The production job sends HTTPS requests to a public
@@ -45,6 +49,7 @@ on:
     # Off-the-hour and clear of every other schedule here, for the reason `site-probe.yml` gives.
     # Each job reads `github.event.schedule` to know which cron woke it.
     - cron: '52 3 * * *' # dast-k3d, nightly
+    - cron: '19 4 * * 0' # nuclei-production, weekly on Sunday
     - cron: '46 5 * * 0' # dast-production, weekly on Sunday
   workflow_dispatch:
     inputs:
@@ -57,7 +62,7 @@ on:
           - production
         default: both
       target:
-        description: URL for the production baseline. Empty means SITE_URL, then the apex.
+        description: URL for the two production jobs. Empty means SITE_URL, then the apex.
         type: string
         default: ''
 
@@ -254,14 +259,19 @@ jobs:
       # server, so the run calls nothing outside the runner. Info-severity templates are not run:
       # `tech-detect` and its like describe the stack rather than find a hole. nuclei exits 0
       # whatever it matches, so red is the JSONL having a line — after the floor, so a run that
-      # loaded too few templates says so first. Waivers come from `.nuclei/waivers.tsv`, one
+      # loaded too few templates says so first. Waivers come from `.nuclei/waivers-k3d.tsv`, one
       # template id per row with the date and the reason, the way `.zap/*.tsv` carries IGNOREs.
       - name: Nuclei through Traefik
         if: ${{ !cancelled() }}
         run: |
           set -euo pipefail
           status=0
-          waived=$(grep -v '^#' .nuclei/waivers.tsv | cut -f1 | grep . | paste -sd, - || true)
+          # nuclei against a target that never came up loads every template, sends every probe
+          # into a refused connection and reports zero matches — the floor passes and the step is
+          # green. The first runner exercise did exactly that behind a failed flux-up.
+          curl -sf -o /dev/null -H 'Host: event-junkie.localhost' http://127.0.0.1:8080/ \
+            || { echo '::error::the site does not answer on :8080, so there is nothing to scan'; exit 1; }
+          waived=$(grep -v '^#' .nuclei/waivers-k3d.tsv | cut -f1 | grep . | paste -sd, - || true)
           nuclei -duc -ni -nc -stats -si 60 -t ~/nuclei-templates -type http \
             -tags misconfig,exposure,tech,cve -severity medium,high,critical \
             -rate-limit 40 ${waived:+-exclude-id "$waived"} \
@@ -378,4 +388,85 @@ jobs:
             build/zap/*.html
             build/zap/*.json
             build/zap/*.txt
+          retention-days: 90
+
+  nuclei-production:
+    name: Nuclei against production
+    runs-on: ubuntu-latest
+    # Measured against prod-check at this rate: 11,967 requests in 14 minutes, 13 a second.
+    timeout-minutes: 40
+    if: >-
+      (github.event_name == 'schedule' && github.event.schedule == '19 4 * * 0')
+      || (github.event_name == 'workflow_dispatch' && inputs.job != 'k3d')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The same install as `dast-k3d`, and its comment says why the templates go where they go.
+      - name: Install nuclei and its templates
+        run: |
+          set -euo pipefail
+          curl -fsSL -o "${RUNNER_TEMP}/nuclei.zip" \
+            "https://github.com/projectdiscovery/nuclei/releases/download/v${NUCLEI_VERSION}/nuclei_${NUCLEI_VERSION}_linux_amd64.zip"
+          unzip -oq "${RUNNER_TEMP}/nuclei.zip" nuclei -d /usr/local/bin
+          mkdir -p build/nuclei ~/.config/nuclei
+          curl -fsSL \
+            "https://github.com/projectdiscovery/nuclei-templates/archive/refs/tags/v${NUCLEI_TEMPLATES_VERSION}.tar.gz" \
+            | tar -xz -C "${RUNNER_TEMP}"
+          mv "${RUNNER_TEMP}/nuclei-templates-${NUCLEI_TEMPLATES_VERSION}" ~/nuclei-templates
+          cp ~/nuclei-templates/.nuclei-ignore ~/.config/nuclei/.nuclei-ignore
+          nuclei -version 2>&1 | head -1
+
+      # The `dast-k3d` step against the public hostname: same templates, same filters, the same red
+      # — a match outside `.nuclei/waivers-production.tsv` — and a quarter of the rate. Ten requests
+      # a second is a fifth of the per-source limit's average, and a probe is one request, so no
+      # burst builds up. No `Host` header: the hostname is real here.
+      - name: Nuclei against the site
+        run: |
+          set -euo pipefail
+          status=0
+          curl -sf -o /dev/null "$SITE_URL/" \
+            || { echo "::error::$SITE_URL does not answer, so there is nothing to scan"; exit 1; }
+          waived=$(grep -v '^#' .nuclei/waivers-production.tsv | cut -f1 | grep . | paste -sd, - || true)
+          nuclei -duc -ni -nc -stats -si 60 -t ~/nuclei-templates -type http \
+            -tags misconfig,exposure,tech,cve -severity medium,high,critical \
+            -rate-limit 10 ${waived:+-exclude-id "$waived"} \
+            -u "$SITE_URL" \
+            -jsonl -o build/nuclei/nuclei.jsonl 2>&1 | tee build/nuclei/nuclei.txt || status=$?
+          touch build/nuclei/nuclei.jsonl
+          scripts/scan-coverage.sh baseline nuclei-production-templates build/nuclei/nuclei.txt
+          if [ -s build/nuclei/nuclei.jsonl ]; then
+            jq -r '"::error title=Nuclei match::\(.["template-id"]) [\(.info.severity)] \(.["matched-at"])"' build/nuclei/nuclei.jsonl
+            exit 1
+          fi
+          exit "$status"
+
+      - name: Summarise
+        if: always()
+        run: |
+          {
+            echo "## Nuclei against production"
+            echo
+            echo "- target: \`$SITE_URL\`"
+            f=build/nuclei/nuclei.txt
+            if [ -f "$f" ]; then
+              echo "- $(grep -oE 'Templates loaded for current scan: [0-9]+' "$f" || echo 'no template count') — $(grep -c '' build/nuclei/nuclei.jsonl 2>/dev/null || echo 0) matches"
+            else
+              echo "- no output"
+            fi
+            echo
+            echo "The JSONL and the log are in the \`nuclei-production\` artifact. A match is a regression unless it is waived in \`.nuclei/waivers-production.tsv\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nuclei-production
+          path: |
+            build/nuclei/*.jsonl
+            build/nuclei/*.txt
           retention-days: 90

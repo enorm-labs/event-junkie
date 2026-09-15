@@ -262,8 +262,8 @@ Each of these is a choice. A reviewer who disagrees with one changes the row and
 
 ### What tests this model
 
-- **`dast.yml`** (#1421, #1423) sends hostile requests from outside. ZAP's active scans and Nuclei's exposure templates run nightly against the
-  chart on k3d, and the passive baseline weekly against production. It tests B1, B2, B3 and B10 against the running chart, and nothing else can.
+- **`dast.yml`** (#1421, #1423, #1461) sends hostile requests from outside. ZAP's active scans and Nuclei's exposure templates run nightly against
+  the chart on k3d. The passive ZAP baseline and the same Nuclei pass, at a quarter of the rate, run weekly against production. It tests B1, B2, B3 and B10 against the running chart, and nothing else can.
 - **`agent-owasp.yml`** (#1422) reads B4 to B9 each week, against the OWASP Top 10:2025 categories a scanner cannot observe, and leads with what moved.
 - `tests/ingress_test.yaml`, `scripts/cluster-assertions.sh` and `validate-workflows.yml` fail a pull request that breaks a _mitigated_ row in B1, B2 or B6.
 

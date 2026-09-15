@@ -539,7 +539,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | CI: dependency graph submission             | `.github/workflows/dependency-submission.yml`                                                                                     |
 | CI: nightly OWASP scan                      | `.github/workflows/dependency-check-scheduled.yml`                                                                                |
 | CI: nightly scan of deployed images         | `.github/workflows/image-scan-scheduled.yml` — a published tag, both arches; thresholds match release.yml                         |
-| CI: DAST, ZAP and Nuclei against k3d        | `.github/workflows/dast.yml` — active nightly on an ephemeral k3d, passive weekly on the site; `.zap/`, `.nuclei/`                |
+| CI: DAST, ZAP and Nuclei, k3d and the site  | `.github/workflows/dast.yml` — active nightly on an ephemeral k3d, passive and Nuclei weekly on the site; `.zap/`, `.nuclei/`     |
 | CI: quarterly restore-drill reminder        | `.github/workflows/restore-drill-reminder.yml` — opens the drill as an assigned issue                                             |
 | CI: blocker issue for a red publish         | `.github/workflows/publish-failure-issue.yml` — one issue per red streak on `main`, closed by the next green publish              |
 | CI: credential expiry reminder              | `.github/workflows/credential-expiry-reminder.yml` — dates live in the workflow, mirrored in docs/CREDENTIALS.md §2               |
