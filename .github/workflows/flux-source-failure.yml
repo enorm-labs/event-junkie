@@ -2,7 +2,8 @@
 # `deploy/clusters/<cluster>/notification.yaml` fires a `repository_dispatch` when the OCIRepository
 # reports an error — a chart that fails cosign verification (#1425), a registry that cannot be
 # reached, a range that matches nothing. source-controller keeps the last good artifact in every one
-# of those cases, so the HelmRelease stays Ready and `deployment-status.yml` records nothing.
+# of those cases; the HelmRelease turns not-Ready with the source's message but emits no event, so
+# `deployment-status.yml` records nothing.
 #
 # THIS JOB IS RED BY CONSTRUCTION. The Alert is `eventSeverity: error`, so every dispatch that reaches
 # it is a failure, and a failed run is the only shape GitHub notifies anyone about: the actor of a
