@@ -44,6 +44,10 @@ touching. The architecture decisions behind them live in [docs/adr/](./docs/adr)
 A few that catch people out:
 
 - **Conventional Commits in the PR title.** It drives the labels and the release notes, so `feat(importer): import events from SO36`, not `Add SO36`.
+- **`feat` is for a change a visitor to the site can see** — a venue, a page, a filter, a row shown differently — in a product scope (`frontend`, `events`,
+  `promoters`, `venues`, `artists`, `importer`, `scraper`, `bff`, `images`, `branding`). A `feat` earns a minor and opens the release notes, so a new CI
+  capability is `ci`, a chart change `chore(deploy)` or `build`, a skill `chore(agents)`; the labeller goes red on a `feat` outside those scopes. `fix`
+  and `perf` take any scope.
 - **Rebase, never merge `main` in.** PRs are merged with "Rebase and merge"; a merge commit blocks the button.
 - **One commit per pull request.** "Rebase and merge" replays every commit on the branch onto `main` exactly as written, so three "fix the lint" commits
   become three commits on `main` for good. Fold review fixes into the commit (`git commit --amend`, then `git push --force-with-lease`) and keep the commit

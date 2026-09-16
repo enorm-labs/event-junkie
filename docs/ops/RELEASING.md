@@ -113,14 +113,21 @@ the version from `gradle.properties`, checks it against what the commits deserve
 creates the release, and opens the pull request that moves `main` to the next snapshot. Both halves in one run, because the second is the one a person skips
 without noticing (#868).
 
-**The notes open with a summary.** [`scripts/release-highlights.sh`](../../scripts/release-highlights.sh) reads the Conventional Commits since the last
-release. It names at most five changes a visitor to the site would notice, under one counted sentence. Breaking changes come first, then features, new event
-sources, fixes and performance work. `cut-release.yml` puts that summary above the label categories from
-[`.github/release.yml`](../../.github/release.yml), and the dispatch's own `notes` input between the two. A release whose commits earn no highlight gets the
-plain notes rather than an empty heading. Run the script at a terminal to see what a release would say:
+**The notes open with a summary, written for a visitor to the site.** Claude writes it, driven by
+[`/release-highlights`](../../.github/prompts/release-highlights.prompt.md). It reads the Conventional Commits since the last release and keeps the ones
+whose effect shows on the site. It names them in the visitor's words: three to five bullets under one sentence. Breaking changes come first, then new
+event sources, then what the site newly does, then what it now does correctly. A release with nothing visible says so in one line. `cut-release.yml` puts
+that summary above the label categories from [`.github/release.yml`](../../.github/release.yml), and the dispatch's own `notes` input between the two.
+
+The text comes from one of three places, and the run summary says which. The `highlights` input wins when it is set. A dry run prints the model's text.
+You read it, edit it or not, and paste it into the real dispatch. What ships is then what you read, not a second answer. Otherwise the model writes it.
+The model step is `continue-on-error`, and it reports success without running when the workflow file differs from `main`'s. When it writes nothing,
+[`scripts/release-highlights.sh`](../../scripts/release-highlights.sh) writes the summary instead, from the commits' subjects verbatim. An outage at the
+model delays no release. At a terminal, both are one command:
 
 ```bash
-scripts/release-highlights.sh            # since the last release tag
+claude -p '/release-highlights'          # what the model would write, since the last release tag
+scripts/release-highlights.sh            # the fallback, since the last release tag
 scripts/release-highlights.sh v0.13.0    # since a named tag
 ```
 
@@ -236,10 +243,12 @@ tag. The rule is [SemVer 2.0.0](https://semver.org/) applied to what the commits
 | The commits since the last tag contain                          | Before `1.0.0` | From `1.0.0` |
 | --------------------------------------------------------------- | -------------- | ------------ |
 | a breaking change (`!` in the subject, or `BREAKING CHANGE:`)   | **minor**      | **major**    |
-| a `feat`, in any scope, and no breaking change                  | **minor**      | **minor**    |
+| a `feat`, and no breaking change                                | **minor**      | **minor**    |
 | only `fix`, `perf`, `refactor`, `docs`, `chore`, `ci`, and such | **patch**      | **patch**    |
 
-A new event source is a `feat`, so a release that adds one is a minor. A subject that is not Conventional Commits counts as a patch. The summary lists it,
+A new event source is a `feat`, so a release that adds one is a minor. `feat` is reserved for a change a visitor can see, in a product scope:
+`frontend`, `events`, `promoters`, `venues`, `artists`, `importer`, `scraper`, `bff`, `images`, `branding`. `label-pr.yml` goes red on one outside them.
+A minor then says the site grew, not that the pipeline did. A subject that is not Conventional Commits counts as a patch. The summary lists it,
 so an unlabelled feature is visible rather than silently cheap. A revert is a patch. The floor `at_least` is for the one decision the commits cannot
 show: `1.0.0` is cut with `major`. It never lowers the verdict.
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# release-highlights.sh — the summary that goes on top of a release's notes.
+# release-highlights.sh — the fallback summary on top of a release's notes.
 #
 # Usage:
 #   scripts/release-highlights.sh                 # since the last release tag
@@ -10,7 +10,8 @@
 # GitHub's generated notes are one bucket per label and list everything, in no order of importance
 # — a reader looking for what changed for *them* reads twenty rows to find two. This prints a
 # heading, one counted sentence and the few changes worth naming, which `cut-release.yml` puts
-# above those buckets.
+# above those buckets — when the `/release-highlights` prompt, which writes the same section in a
+# visitor's words, wrote nothing. This one reaches no model, so it always answers.
 #
 # What it names is the part of a release a visitor to the site would notice: breaking changes
 # first, then features, new event sources, fixes and performance work. Everything else — chores,

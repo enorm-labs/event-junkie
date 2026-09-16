@@ -23,7 +23,9 @@ for readability, not at a fixed column width.
 2. **Read every commit message** — use `git --no-pager log --format='%B' main..HEAD` (or equivalent) to get the full messages including bodies, not just the
    subject lines.
 3. **Analyze the combined changeset** — consider all commits together to determine the single most appropriate Conventional Commits _type_ and optional _scope_:
-    - If the branch introduces a new feature (even alongside docs, CI, refactoring), use `feat`.
+    - If the branch introduces a new feature a visitor to the site can see (even alongside docs, CI, refactoring), use `feat`, in a product scope
+      (`frontend`, `events`, `promoters`, `venues`, `artists`, `importer`, `scraper`, `bff`, `images`, `branding`). A new CI capability is `ci`, a chart
+      or cluster change `chore(deploy)` or `build`, a skill `chore(agents)` — never `feat`; `label-pr.yml` refuses it.
     - If the branch is purely a bug fix, use `fix`.
     - If no feature or fix is present, pick the most prominent type (`ci`, `docs`, `build`, `chore`, `refactor`, etc.).
     - Choose a _scope_ that reflects the primary area of change (e.g., `importer`, `bff`, `frontend`). Omit the scope if changes span the entire project

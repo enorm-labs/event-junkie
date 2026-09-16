@@ -39,6 +39,8 @@ Slash commands available under `.claude/skills/`:
 - `/plausibility-check` — read the next days' events from the public site, check each row for what cannot be right, compare a sample against the venue's
   own page, and report; files nothing, and `agent-plausibility.yml` runs it nightly
 - `/refactor` — change the shape of the code without changing what it does; the acting counterpart to `/codebase-audit`
+- `/release-highlights` — write the summary that opens a release's notes, for a visitor to the site rather than a maintainer; `cut-release.yml` runs it
+  before every cut, and falls back to `scripts/release-highlights.sh` when it writes nothing
 - `/start-issue <n>` — pick up an issue: claim it, move the board, cut the branch, read its dependencies, and plan before writing code
 - `/scaffold-importer` — scaffold a new venue event importer (scraper) end to end
 - `/security-report` — read-only report on the latest OWASP Dependency-Check findings and GitHub Dependabot alerts, reconciled and triaged

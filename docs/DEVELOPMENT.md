@@ -682,11 +682,12 @@ the notes `.github/release.yml` generates from the merged PRs' labels.
 # What the commits since the last tag deserve, and which commits decided it.
 scripts/version.sh deserved
 
-# Dry run first: resolves the version, creates nothing.
+# Dry run first: resolves the version, prints the notes, creates nothing.
 gh workflow run cut-release.yml -f dry_run=true
 
-# Then for real.
-gh workflow run cut-release.yml -f dry_run=false
+# Then for real. The highlights the dry run printed can ride along, edited or not, so what ships
+# is what was read (RELEASING.md § The notes open with a summary).
+gh workflow run cut-release.yml -f dry_run=false -f highlights="$(cat highlights.md)"
 ```
 
 [`cut-release.yml`](../.github/workflows/cut-release.yml) reads the version from `gradle.properties`. It does both
