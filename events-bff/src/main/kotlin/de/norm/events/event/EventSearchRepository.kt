@@ -172,14 +172,18 @@ class EventSearchRepository(
     }
 
     /**
-     * The rows that are not over on [day], bound as [dayParam]: their effective end is on or after
-     * it, or the late-night grace covers them.
+     * The rows that are not over on [day], bound as [dayParam]: their effective end is after it, or
+     * on it and not yet passed, or the late-night grace covers them.
+     *
+     * On the clock's own day a stated `end_time` (ADR-029) is the venue's word: a night that ends
+     * at 04:00 is over at 04:00, not at midnight after. Any other day, or no end time, keeps the
+     * row through its whole end date.
      *
      * The grace is the club night's shape (#299): a `23:00` start with no stated end is not over at
      * 00:00, it is over at 06:00. So before 06:00 on the clock, and only when [day] is the clock's
      * own day, yesterday's events with no `end_date` and an effective start of 22:00 or later are
      * still on. The effective start includes the #1384 slot, so a timeless club night counts. A
-     * stated end (ADR-029) is the venue's word and gets no grace either way.
+     * stated end gets no grace either way.
      */
     private fun notOverOn(
         dayParam: String,
@@ -187,9 +191,17 @@ class EventSearchRepository(
         params: MutableMap<String, Any>
     ): String {
         val now = LocalDateTime.now(clock)
-        if (day != now.toLocalDate() || now.toLocalTime() >= GRACE_ENDS) return "$EFFECTIVE_END >= $dayParam"
-        params["graceDay"] = day.minusDays(1)
-        return "($EFFECTIVE_END >= $dayParam OR (e.end_date IS NULL AND e.event_date = :graceDay AND $EFFECTIVE_START >= TIME '$LATE_START'))"
+        if (day != now.toLocalDate()) return "$EFFECTIVE_END >= $dayParam"
+        params["now"] = now.toLocalTime()
+        val notEnded = "($EFFECTIVE_END > $dayParam OR ($EFFECTIVE_END = $dayParam AND (e.end_time IS NULL OR e.end_time > :now)))"
+        val grace =
+            if (now.toLocalTime() >= GRACE_ENDS) {
+                ""
+            } else {
+                params["graceDay"] = day.minusDays(1)
+                " OR (e.end_date IS NULL AND e.event_date = :graceDay AND $EFFECTIVE_START >= TIME '$LATE_START')"
+            }
+        return "($notEnded$grace)"
     }
 
     /** Applies filters on columns of the `event` table itself (event type, venue). */

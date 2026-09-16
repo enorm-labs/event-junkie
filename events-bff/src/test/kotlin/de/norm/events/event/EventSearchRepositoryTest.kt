@@ -178,4 +178,30 @@ class EventSearchRepositoryTest : BaseControllerTest() {
             // Tonight for a day that is not the clock's own gets no grace: Sunday at 03:00 asks about Sunday.
             at(3).searchAll(EventFilter(on = saturday.plusDays(1))) shouldBe emptyList()
         }
+
+    /**
+     * A stated end on the clock's own day is over once the clock passes it (ADR-029): a night that
+     * ends at 04:00 leaves the default window and Tonight at 04:00, not at midnight after. A run
+     * that ends today with no time stays all day, and an end later today stays until then.
+     */
+    @Test
+    fun `an event that ended this morning is not listed at noon`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Klunkerkranich", "klunkerkranich")
+            val friday = LocalDate.of(2030, 6, 14)
+            val saturday = friday.plusDays(1)
+            val night = insertEvent(venueId, "Night", "night", friday, startTime = LocalTime.of(19, 0), endDate = saturday, endTime = LocalTime.of(4, 0))
+            val run = insertEvent(venueId, "Run", "run", friday, endDate = saturday)
+            val brunch = insertEvent(venueId, "Brunch", "brunch", saturday, startTime = LocalTime.of(11, 0), endDate = saturday, endTime = LocalTime.of(15, 0))
+            val saturdayNight = insertEvent(venueId, "Next", "next", saturday, startTime = LocalTime.of(23, 0))
+
+            fun at(hour: Int) = EventSearchRepository(databaseClient, Clock.fixed(saturday.atTime(hour, 0).toInstant(ZoneOffset.UTC), ZoneOffset.UTC))
+
+            at(3).searchAll(EventFilter()) shouldContainExactlyInAnyOrder listOf(night, run, brunch, saturdayNight)
+            at(12).searchAll(EventFilter()) shouldContainExactlyInAnyOrder listOf(run, brunch, saturdayNight)
+            at(12).searchAll(EventFilter(on = saturday)) shouldContainExactlyInAnyOrder listOf(run, brunch, saturdayNight)
+            at(16).searchAll(EventFilter()) shouldContainExactlyInAnyOrder listOf(run, saturdayNight)
+            // Asked about today from another day, the whole end date counts.
+            repositoryOn(friday).searchAll(EventFilter(on = saturday)) shouldContainExactlyInAnyOrder listOf(night, run, brunch, saturdayNight)
+        }
 }

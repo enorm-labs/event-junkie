@@ -153,6 +153,40 @@ describe('isPastEvent', () => {
     expect(isRunningEvent(on('2026-07-06'))).toBe(false)
   })
 
+  it('ends at the stated end time when the end is today', () => {
+    vi.useFakeTimers()
+    // 12:00 Berlin on the 7th (10:00 UTC in July).
+    vi.setSystemTime(new Date('2026-07-07T10:00:00Z'))
+
+    // A club night that ended at 04:00 this morning is over, and not "running since" yesterday.
+    const night = on('2026-07-06', {
+      startTime: '23:00:00',
+      endDate: '2026-07-07',
+      endTime: '04:00:00',
+    })
+    expect(isPastEvent(night)).toBe(true)
+    expect(isRunningEvent(night)).toBe(false)
+    // An end at midnight sharp is over the whole next day.
+    expect(isPastEvent(on('2026-07-06', { endDate: '2026-07-07', endTime: '00:00:00' }))).toBe(true)
+    // An end later today is not over yet, and a run ending today with no time lasts all day.
+    const later = on('2026-07-06', { endDate: '2026-07-07', endTime: '18:00:00' })
+    expect(isPastEvent(later)).toBe(false)
+    expect(isRunningEvent(later)).toBe(true)
+    expect(isPastEvent(on('2026-07-01', { endDate: '2026-07-07' }))).toBe(false)
+    // A show today with a stated end this evening is over once the clock passes it.
+    expect(
+      isPastEvent(
+        on('2026-07-07', { startTime: '20:00:00', endDate: '2026-07-07', endTime: '23:00:00' }),
+      ),
+    ).toBe(false)
+    vi.setSystemTime(new Date('2026-07-07T21:30:00Z'))
+    expect(
+      isPastEvent(
+        on('2026-07-07', { startTime: '20:00:00', endDate: '2026-07-07', endTime: '23:00:00' }),
+      ),
+    ).toBe(true)
+  })
+
   it('keeps last night until six in the morning when it started late (#299)', () => {
     vi.useFakeTimers()
     // 03:00 Berlin on the 7th (01:00 UTC in July).
