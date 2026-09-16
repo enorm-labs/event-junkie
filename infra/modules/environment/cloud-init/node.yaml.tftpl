@@ -21,13 +21,22 @@ users:
       - "${key}"
 %{~ endfor }
 
+# The scripts travel gzipped and base64-encoded, the small config files as they are. Hetzner caps
+# user_data at 32 KiB and the plain scripts alone passed it (#1482); cloud-init decodes `gz+b64`
+# itself, so the node still gets the script byte for byte, comments included. infra/check_user_data.py
+# renders this with sample values and fails when either role nears the cap.
 write_files:
 %{~ for file in files }
   - path: ${file.path}
     owner: root:root
     permissions: "${file.permissions}"
+%{~ if endswith(file.path, ".sh") }
+    encoding: gz+b64
+    content: ${base64gzip(file.content)}
+%{~ else }
     content: |
       ${indent(6, file.content)}
+%{~ endif }
 %{~ endfor }
 
 runcmd:

@@ -7,8 +7,8 @@ paths:
 
 # Python
 
-The scripts under `scripts/`, `deploy/alerts/` and `deploy/dashboards/`, and nothing else. Not a Python project: no `pyproject.toml`, no venv, no test
-runner. `scripts/README.md` § The short version carries the decisions; this is what they mean when you edit a `.py` file.
+The scripts under `scripts/`, `deploy/alerts/` and `deploy/dashboards/`, plus `infra/check_user_data.py`, and nothing else. Not a Python project: no
+`pyproject.toml`, no venv, no test runner. `scripts/README.md` § The short version carries the decisions; this is what they mean when you edit a `.py` file.
 
 - **Standard library only, with `argparse`.** `ste_lint.py` and everything under `deploy/` are copied to a node and run under the `python3` there, where
   nothing is installed. `outline_text.py` is the one exception, and its wrapper builds the venv it needs. A CLI library (click, typer) is the same

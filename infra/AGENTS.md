@@ -61,8 +61,9 @@ unasked. **So a `validation` block is documentation until somebody applies the s
 will go green on a value the variable itself rejects.
 
 **`validate` does not render `templatefile`.** A change to `cloud-init/node.yaml.tftpl` or to any of the `.sh` files can pass `validate` and still produce
-cloud-init that does not parse. To check it, render the template with sample data in a scratch directory and parse the result as YAML — the scripts should
-round-trip byte-identically through `indent()`. That check has caught real breakage; do not skip it after touching the templating.
+cloud-init that does not parse, or one that Hetzner refuses for its size. `python3 infra/check_user_data.py` is the check for both — it renders the template
+with sample data, parses the result, proves the scripts round-trip and measures each role against the cap (§ `user_data` forces replacement, below). It has
+caught real breakage; do not skip it after touching the templating.
 
 ## Looking a provider or module up
 
@@ -199,19 +200,20 @@ argument behind it. If you contradict one of those documents, change the documen
   that keeps the cluster, Flux, the Secrets and the backup credential. Take
   [`docs/ops/K3S_UPGRADE.md`](../docs/ops/K3S_UPGRADE.md) and bump the pin in the same change. The
   same shape applies to `walg_version`, in `docs/ops/BACKUPS.md` §8.
-- **`user_data` forces replacement.** Any edit under `cloud-init/` rebuilds the node, production included. It is also capped at **32 KiB**, and since #270 that
-  is no longer a comfortable margin. Measured on this tree:
+- **`user_data` forces replacement.** Any edit under `cloud-init/` rebuilds the node, production included. It is also capped at **32 KiB**, and the
+  scripts alone passed that in September 2026 without anything going red (#1482): a rebuild of staging would have failed at the API after a clean plan.
+  Two things follow from it:
 
-    | Node                                 | Rendered | Of the cap | Scripts                                   |
-    | ------------------------------------ | -------- | ---------- | ----------------------------------------- |
-    | k3s, co-located database (staging)   | 29.6 KiB | **92%**    | harden, wireguard, k3s, postgres, backups |
-    | PostgreSQL, dedicated (production)   | 22.9 KiB | 71%        | harden, postgres, backups                 |
-    | k3s, dedicated database (production) | 12.0 KiB | 37%        | harden, wireguard, k3s                    |
+    - **The scripts travel `gz+b64`.** `node.yaml.tftpl` writes every `.sh` as `base64gzip(...)` with `encoding: gz+b64`; cloud-init decodes it, and the node
+      gets the script byte for byte, comments included. The small config files stay plain. The plain scripts measured 33.9 KiB; encoded, 20.5 KiB.
+    - **`python3 infra/check_user_data.py` is the measurement**, and `validate-infra.yml` runs it. It renders both roles with sample values, parses each
+      with `yq`, proves each gzipped script decodes back to its source, and fails at 30 KiB — 2 KiB under the cap, so a change that spends the margin is one
+      to read. It mirrors the template and the two file lists in `cloudinit.tf` rather than calling OpenTofu, because the module's locals read state; the
+      mirror asserts the three template lines it depends on and that every `.sh` under `cloud-init/` is shipped by some role. Run it after any edit under
+      `cloud-init/`; do not estimate. On this tree it reports 23.0 KiB (72%) for the co-located staging node and 17.9 KiB (56%) for production's database node.
 
-    **The co-located node is the binding constraint and it is nearly full.** `backups.sh` is deliberately under-commented for that reason, and `postgres.sh` and
-    `backups.sh` are no longer shipped to a k3s node that has a database next door — that conditional in `cloudinit.tf` is what buys production its headroom, and
-    removing it would take the production k3s node from 37% to 91% for two files nothing on it runs. **Measure after any edit under `cloud-init/`**, with the
-    render check described above; do not estimate.
+    `postgres.sh` and `backups.sh` are still not shipped to a k3s node that has a database next door — that conditional in `cloudinit.tf` is what keeps
+    production's k3s node smallest of the three, for two files nothing on it runs.
 
 - **"In-place" is a property of an attribute, never a prediction about an apply.** `server_type` updates in place within an architecture — and staging's
   2026-08-20 plan still replaced the node, because `user_data` had drifted and that forces replacement. The two are independent, and the field-level fact says

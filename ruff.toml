@@ -1,4 +1,4 @@
-# ruff — lint and format for the Python under scripts/, deploy/alerts/ and deploy/dashboards/.
+# ruff — lint and format for the Python under scripts/, deploy/alerts/, deploy/dashboards/ and infra/.
 #
 # The pin is `RUFF_VERSION` in .github/workflows/validate-python.yml; the commit hook uses whatever
 # `ruff` is on $PATH, the same arrangement as ShellCheck. This file is the configuration both read.

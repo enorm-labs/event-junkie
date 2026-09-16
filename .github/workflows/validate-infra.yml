@@ -20,7 +20,8 @@ on:
     # ruleset, and a required check that never runs stays Pending forever — GitHub's own words:
     # "A pull request that requires those checks to be successful will be blocked from merging."
     # So a filter here would deadlock every pull request that happens not to touch these paths.
-    # Affordable because the whole workflow is seconds: `tofu fmt`/`validate` and the cloud-init ShellCheck.
+    # Affordable because the whole workflow is seconds: `tofu fmt`/`validate`, the cloud-init
+    # ShellCheck and the user_data size check.
     # The `push:` filter above keeps its paths — nothing requires those runs.
   workflow_dispatch:
 
@@ -104,3 +105,10 @@ jobs:
           docker run --rm -v "$PWD:/mnt" -w /mnt \
             "koalaman/shellcheck:${SHELLCHECK_VERSION}" \
             -x infra/*.sh infra/modules/environment/cloud-init/*.sh
+
+      # `tofu validate` never renders `templatefile`, so the size of what `cloudinit.tf` assembles
+      # was seen by nobody until staging's render passed Hetzner's 32 KiB `user_data` cap (#1482).
+      # The script mirrors the template with sample values, parses each document with the runner's
+      # `yq`, proves every gzipped script decodes back to its source, and fails 2 KiB under the cap.
+      - name: Measure the rendered cloud-init against the user_data cap
+        run: python3 infra/check_user_data.py
