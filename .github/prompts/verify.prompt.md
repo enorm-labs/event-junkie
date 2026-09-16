@@ -57,6 +57,7 @@ scripts/comment-lint.sh check
 scripts/skill-parity.sh
 scripts/rules-parity.sh
 scripts/collector-parity.sh
+scripts/scope-parity.sh
 scripts/index-parity.sh
 ```
 
@@ -91,6 +92,11 @@ half with a history: #982 and #953 each left pointers at something that had been
 
 **It also matches every glob against the index**, via `git ls-files -- ':(glob)…'`, because a glob that hits nothing is a rule that loads for no file while
 every other check passes. `deploy/**/*.yml` shipped in a first draft of the kubernetes rule and matched none of the 70 files there, all of which are `.yaml`.
+
+`scope-parity.sh` is the fifth, over the list of scopes `feat` is allowed: `label-pr.yml` goes red outside it, `version.sh deserved` counts a `feat`
+outside it as a patch, `release-highlights.sh` leaves one out, and six documents quote it. The labeller runs with no checkout, so it cannot read a shared
+file, and its copy is the one the other eight must equal, in order. The failure it prevents is two green checks disagreeing: a scope in the labeller alone
+lets a title through that `deserved` reads as a patch, and a scope in `deserved` alone earns a minor the labeller refused.
 
 ### Infrastructure (from repo root, only when the diff touches `infra/`)
 

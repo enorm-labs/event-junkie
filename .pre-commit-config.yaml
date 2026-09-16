@@ -76,6 +76,14 @@ repos:
         files: ^(\.claude/rules/|\.github/instructions/|AGENTS\.md$)
         pass_filenames: false
 
+      # The product scopes `feat` is allowed, held in the labeller, two scripts and six documents.
+      - id: scope-parity
+        name: product scope parity
+        entry: scripts/scope-parity.sh
+        language: system
+        files: ^(\.github/workflows/label-pr\.yml|scripts/(version|release-highlights|scope-parity)\.sh|\.github/prompts/(release-highlights|commit-message|squash-commit-message)\.prompt\.md|\.github/instructions/ci-cd\.instructions\.md|docs/ops/RELEASING\.md|CONTRIBUTING\.md)$
+        pass_filenames: false
+
       # Every file under `scripts/` has a row in `scripts/README.md`, every path named there
       # exists, and every script answers `--help`. Scoped to the directory: the check's tree-wide
       # half — a `scripts/<name>` reference in a runbook that no longer resolves — is CI's job in

@@ -93,7 +93,7 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
     - `label-pr.yml` — Derives the type labels from the Conventional Commits PR title (`fix(api)!: …` → `fix` + `breaking-change`) and the `importer` label
       from the files. **It goes red on a `feat` outside a product scope** (`frontend`, `events`, `promoters`, `venues`, `artists`, `importer`, `scraper`,
       `bff`, `images`, `branding`), labels still applied: a `feat` earns a minor and opens the release notes, and `feat(ci)` had done both for a scanner
-      (v0.17.0). It is a required check since 2026-09-16, so the red blocks the merge until the title is edited, and the edit re-runs it. The `importer` label
+      (v0.17.0). It is a required check since 2026-09-16, so the red blocks the merge until the title is edited, and the edit re-runs it. The scope list is the copy `scripts/scope-parity.sh` holds the two scripts and six documents to. The `importer` label
       comes from the files: an added `*Importer.kt` in its own package under `scraper/` is a new event source, whatever the scope says. The scope rule it replaced
       filed the dropped-events counter and the force-fetch trigger under "New Event Sources", because `scraper` and `importer` both carry infrastructure
       work too. Via `actions/github-script`; creates any missing label on demand and re-syncs on a title edit or a push. Uses `pull_request_target` so fork
