@@ -87,7 +87,7 @@ env:
   # Renovate-managed; `-update-templates` at run time would be the unpinned dependency ADR-024
   # exists to refuse. No `v`: the download URLs add it, so a bump rewrites a plain number.
   NUCLEI_VERSION: 3.11.1
-  NUCLEI_TEMPLATES_VERSION: 10.4.8
+  NUCLEI_TEMPLATES_VERSION: 10.4.9
   # The public target. Same convention as site-probe.yml: the repository variable while production
   # serves a rehearsal hostname, the apex once it is deleted at go-live. A dispatch input wins over
   # both. The issue asked for a loud skip when unset; with the apex as the fallback it is never
