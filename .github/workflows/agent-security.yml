@@ -107,7 +107,7 @@ jobs:
       # `.github/prompts/`, so checkout above is what makes it resolvable at all.
       - name: Run /security-triage
         id: claude
-        uses: anthropics/claude-code-action@5ccc3a35a6367cdb8e6fbd0728287467540ecfe2 # v1
+        uses: anthropics/claude-code-action@9cdae7f0d995e3ba7c33f226087fdf82a59cd520 # v1
         env:
           # The Actions token, under a name the action does not overwrite. Read-only, and the whole
           # of what the `permissions:` block above grants.
