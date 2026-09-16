@@ -1,4 +1,4 @@
-# comment-lint: allow 17 of these lines are the arrow inventory, and the rest are silent-failure traps
+# comment-lint: allow 18 of these lines are the arrow inventory, and the rest are silent-failure traps
 # Default-deny for the `observability` namespace, plus one named allowance per real conversation
 # (#662). This replaces `openobserve-netpol.yaml`, whose egress rules are folded in below.
 #
@@ -23,6 +23,7 @@
 #     gateway          -> kube-state-metrics:8080   `kube_*`, which `ej-site-down` reads
 #     gateway          -> flux-system:8080          `gotk_*` and the reconcile meters
 #     gateway          -> traefik:9100              the edge's request counts and latencies
+#     gateway          -> nodes:9100                node_exporter's patch state, the one node here (#419)
 #     otel-operator    -> apiserver:6443            reconciling the two collector CRs
 #     postgres-exporter-> 10.1.1.10:5432            the only pod here that may reach the private network
 #     OpenObserve      -> the internet:443          Hetzner Object Storage, where the data lives
@@ -158,7 +159,9 @@ spec:
           port: 443
 
     # The scrape jobs that target the node: `cadvisor` through the kubelet, and k3s's in-process
-    # apiserver, scheduler and controller-manager on their metrics ports.
+    # apiserver, scheduler and controller-manager on their metrics ports. 9100 is node_exporter
+    # (#419), bound to each node's private address — the same unbounded-address, bounded-port rule
+    # reaches the database node on production, which has no other way to be scraped.
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
@@ -171,6 +174,8 @@ spec:
           port: 10257
         - protocol: TCP
           port: 10259
+        - protocol: TCP
+          port: 9100
 
     # The `coredns` scrape job — its metrics port, not its DNS port, which the DNS policy covers.
     - to:

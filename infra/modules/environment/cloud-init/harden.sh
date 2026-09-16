@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #
-# Baseline host hardening: SSH, and unattended security upgrades.
+# Baseline host hardening: SSH, unattended security upgrades, and the metric that says a reboot is
+# pending (#419).
 #
 # Runs on every node. Idempotent — safe to re-run by hand after a config change.
 
@@ -71,8 +72,45 @@ EOF
 systemctl enable --now unattended-upgrades
 
 # Kernel and k3s updates still need a reboot, and nothing here will do it for you.
-# `/var/run/reboot-required` is the flag. PLATFORM_SETUP.md §8b covers what is and is not
-# automatic, and is honest that noticing that flag is still a calendar reminder rather than a
-# control until #419 turns it into an alert.
+# `/var/run/reboot-required` is the flag, and what follows is what makes it visible (#419): a
+# timer writes its age, and the age of the updater's last run, as node_exporter textfile metrics
+# on the private address, where the collector gateway scrapes them and OpenObserve alerts on them.
+# Textfile only: hostmetrics already covers the k3s node, and nothing here is exposed publicly.
+# shellcheck source=/dev/null
+source /etc/event-junkie/bootstrap.env
+apt-get install -y --no-install-recommends prometheus-node-exporter
+cat >/etc/default/prometheus-node-exporter <<EOF
+ARGS="--web.listen-address=${PRIVATE_IPV4}:9100 --collector.disable-defaults --collector.textfile --collector.textfile.directory=/var/lib/prometheus/node-exporter"
+EOF
+install -d -m 0755 /var/lib/prometheus/node-exporter
+# A missing flag is a node that needs no reboot, so 0. A missing updater stamp is an updater that
+# has never run, so the age is the whole epoch and the alert fires rather than staying quiet.
+cat >/usr/local/sbin/ej-patch-state <<'EOF'
+#!/bin/sh
+d=/var/lib/prometheus/node-exporter; now=$(date +%s)
+age() { if [ -e "$1" ]; then echo $((now - $(stat -c %Y "$1"))); else echo "$2"; fi; }
+{
+  echo "node_reboot_required_age_seconds $(age /var/run/reboot-required 0)"
+  echo "node_unattended_upgrades_last_run_age_seconds $(age /var/lib/apt/periodic/unattended-upgrades-stamp "$now")"
+  echo "node_patch_state_timestamp_seconds $now"
+} >"$d/.patch-state.prom" && mv "$d/.patch-state.prom" "$d/patch-state.prom"
+EOF
+chmod 0755 /usr/local/sbin/ej-patch-state
+cat >/etc/systemd/system/ej-patch-state.service <<'EOF'
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/ej-patch-state
+EOF
+cat >/etc/systemd/system/ej-patch-state.timer <<'EOF'
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=10min
+[Install]
+WantedBy=timers.target
+EOF
+systemctl daemon-reload
+systemctl enable --now ej-patch-state.timer
+/usr/local/sbin/ej-patch-state
+systemctl restart prometheus-node-exporter
 
 echo "harden: done"

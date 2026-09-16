@@ -54,6 +54,16 @@ patches:
       - op: replace
         path: /spec/values/k8sCluster
         value: staging
+  # The nodes whose patch state the gateway scrapes (#419): node_exporter on each private address.
+  # `replace`, like `k8sCluster`, so the base's `unset` placeholder has to exist to be overwritten.
+  - target:
+      kind: HelmRelease
+      name: openobserve-collector
+    patch: |
+      - op: replace
+        path: /spec/values/gateway/receivers/prometheus~1nodes/config/scrape_configs/0/static_configs/0/targets
+        value:
+          - 10.1.1.10:9100
   # Twice, because the agent is its own release since #709. One patch with a name regex would also
   # work and would hide a third release; two literal targets fail loudly when either is renamed.
   - target:

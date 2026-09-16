@@ -987,7 +987,7 @@ Three things that are _not_ automatic:
 
 |                      | Why not                                                                                         | What covers it                                                                                                              |
 | -------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **Reboots**          | On a single-node cluster an unannounced 04:00 reboot is an outage nobody scheduled              | A deliberate reboot, when `/var/run/reboot-required` exists                                                                 |
+| **Reboots**          | On a single-node cluster an unannounced 04:00 reboot is an outage nobody scheduled              | A deliberate reboot. `ej-reboot-pending` fires once `/var/run/reboot-required` is three days old (#419)                     |
 | **k3s**              | Not apt-managed — installed pinned from `get.k3s.io`, and restarting it disrupts every workload | `node-pin-reminder.yml` opens an issue when `k3s_version` falls behind. Take it in place — [K3S_UPGRADE.md](K3S_UPGRADE.md) |
 | **Container images** | The applications' libraries come from their images, not the host's apt                          | Rebuild in CI, with Trivy scanning the result — §8 item 11                                                                  |
 
@@ -1003,10 +1003,18 @@ interactive. Run non-interactively from `unattended-upgrades`, that silently fal
 patched while every running process still has the old library mapped. `harden.sh` therefore sets `$nrconf{restart} = 'a'`, excluding k3s alone, so a patched
 library takes effect within the hour rather than at the next reboot.
 
-**The remaining gap, stated rather than hidden: nothing tells you a reboot is pending.** `/var/run/reboot-required` is written, and a login shows it. But the whole
-design is that nobody logs in for weeks at a time. That is [#419](https://github.com/enorm-labs/event-junkie/issues/419), blocked on
-[#271](https://github.com/enorm-labs/event-junkie/issues/271) for somewhere to send the alert. Until then this is a calendar reminder, not an engineering
-control. It is worth fixing early, because a kernel CVE with no reboot is indistinguishable from being patched.
+**What tells you a reboot is pending, since nobody logs in for weeks at a time** ([#419](https://github.com/enorm-labs/event-junkie/issues/419)). On every
+node `harden.sh` installs `prometheus-node-exporter` bound to the private address, textfile collector only. A timer (`ej-patch-state.timer`, every ten
+minutes) writes two ages. `node_reboot_required_age_seconds` is the age of `/var/run/reboot-required`, or 0 when it is absent.
+`node_unattended_upgrades_last_run_age_seconds` is the age of the updater's stamp file. The collector gateway scrapes both nodes on 9100: `prometheus/nodes`
+in `collector.yaml`, one target per node in each cluster's `kustomization.yaml`. Two rules in `deploy/alerts/gen_alerts.py` read them: `ej-reboot-pending`
+at three days, `ej-patching-stalled` at two. Three days of grace, because the flag appears after most kernel updates. An immediate alert is one that gets
+muted. Both route where every other rule does, so a person is told once [#877](https://github.com/enorm-labs/event-junkie/issues/877) lands. Until then
+the firing is a row in `alert_history`, which is still one more sign than the login banner. A kernel CVE with no reboot is otherwise indistinguishable from
+being patched.
+
+Live nodes do not get a `harden.sh` change by themselves. [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) § Applying a `cloud-init` fix without rebuilding
+carries the hand-apply block for this one.
 
 ### 8.3 What the hardening guides changed
 
@@ -1077,7 +1085,6 @@ Every decision in this document is made. What remains is work, tracked in the
 | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | **Monitoring and alerting** — [#271](https://github.com/enorm-labs/event-junkie/issues/271)         | The zero-events alert is a **go-live blocker**, not a nice-to-have          |
 | **Rate limiting and abuse control** — [#268](https://github.com/enorm-labs/event-junkie/issues/268) | §8 item 9's other half                                                      |
-| **Reboot-pending alert** — [#419](https://github.com/enorm-labs/event-junkie/issues/419)            | Blocked on #271 for somewhere to send it                                    |
 | **Deploy to production** — [#285](https://github.com/enorm-labs/event-junkie/issues/285)            | The application is installed; go-live is flipping `publish_dns`             |
 | **Legal sign-off** — [LEGAL.md](../LEGAL.md) §14                                                    | Clearing `INFRASTRUCTURE_IS_PROPOSED` only after the notice matches reality |
 | **SEO** — `sitemap.xml` and the ADR-014 sidecar                                                     | Neither is built                                                            |
