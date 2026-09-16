@@ -4,6 +4,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
@@ -61,6 +62,18 @@ class BadehausDetailPageScraperTest {
         event.promoters shouldHaveSize 0
         event.description.shouldNotBeNull()
         event.description shouldContain "ECHOS ALTER TAGE"
+    }
+
+    @Test
+    fun `reads doors and start from the English Doors and Start labels`() {
+        // Kemo The Blaxican: "Doors: 19:00h | Start 20:00h" — the page labels in English with an `h` suffix (#1497).
+        val url = "https://badehaus-berlin.com/events/kemo-the-blaxican/"
+        val event = scraper.scrape(fixture("badehaus-detail-english-labels.html", url), url)
+        event.shouldNotBeNull()
+
+        event.doorsTime shouldBe LocalTime.of(19, 0)
+        event.startTime shouldBe LocalTime.of(20, 0)
+        event.description.shouldNotBeNull() shouldNotContain "Doors:"
     }
 
     @Test

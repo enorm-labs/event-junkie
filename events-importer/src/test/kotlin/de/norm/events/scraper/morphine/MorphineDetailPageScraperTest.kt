@@ -2,6 +2,7 @@ package de.norm.events.scraper.morphine
 
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -141,6 +142,19 @@ class MorphineDetailPageScraperTest {
         event.doorsTime shouldBe LocalTime.of(20, 0)
         event.startTime shouldBe LocalTime.of(20, 30)
         event.priceNote shouldBe "10 - 20 Euro sliding scale"
+    }
+
+    @Test
+    fun `reads the start from a set entry that carries a time and no name`() {
+        // The Attention Span Crisis: "door 20:00" and a bare "20:30" set line under it (#1497).
+        val url = "http://www.morphinerecords.com/events/the-attention-span-crisis"
+        val event = parse("morphine-detail-nameless-set.html", url).shouldNotBeNull()
+
+        event.eventDate shouldBe LocalDate.of(2026, 9, 16)
+        event.doorsTime shouldBe LocalTime.of(20, 0)
+        event.startTime shouldBe LocalTime.of(20, 30)
+        // No act is billed; the night is its title.
+        event.artists.shouldBeEmpty()
     }
 
     @Test
