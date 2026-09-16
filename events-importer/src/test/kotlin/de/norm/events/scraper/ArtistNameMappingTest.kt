@@ -230,6 +230,15 @@ class ArtistNameMappingTest {
         isNonArtistEvent("Fettes Brot") shouldBe false
     }
 
+    // --- isNonArtistName title fragment (#1494) ---
+
+    @Test
+    fun `isNonArtistName drops a slice of a title that still carries its pipe separator`() {
+        isNonArtistName("Sketchy Sessions | jazz") shouldBe true
+        // A long or many-worded name is still a name.
+        isNonArtistName("...And You Will Know Us by the Trail of Dead") shouldBe false
+    }
+
     // --- isNonArtistName curated denylist ---
 
     @Test

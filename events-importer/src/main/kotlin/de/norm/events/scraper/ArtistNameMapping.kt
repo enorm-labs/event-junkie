@@ -499,7 +499,16 @@ fun isGuestSlotLabel(name: String): Boolean = GUEST_SLOT_PATTERN.matches(name.tr
  */
 fun isNonArtistName(name: String): Boolean =
     isPlaceholderName(name) || isNonArtistLabel(name) || isEventSegmentLabel(name) ||
-        isNonArtistEvent(name) || isDjSetFormatLabel(name) || isGuestSlotLabel(name) || isDenylistedNonArtist(name)
+        isNonArtistEvent(name) || isDjSetFormatLabel(name) || isGuestSlotLabel(name) || isDenylistedNonArtist(name) ||
+        isTitleFragment(name)
+
+/**
+ * A candidate that still carries a title's own separator — the `|` a venue puts between a night's
+ * name and its tagline ("SKETCHY SESSIONS | jazz") — is a slice of the title, not an act (#1494).
+ * No performer writes a pipe into their name; the length of a candidate says nothing, because
+ * "…And You Will Know Us by the Trail of Dead" is one band.
+ */
+private fun isTitleFragment(name: String): Boolean = name.contains('|')
 
 /**
  * Well-known single acts whose name legitimately contains a conjunction that

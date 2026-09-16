@@ -157,12 +157,17 @@ class KlunkerkranichOverviewPageScraper(
      * whole title is then the night's name and there is no act to mint from it. Otherwise the tail
      * is split on commas into one billing per slot, each parsed by [parseBilling].
      *
+     * The **last** marker opens the tail. A hosted night carries both — "COUNTERCULT presents:
+     * SKETCHY SESSIONS | jazz & draw rooftop sunset jam w. Analog Beats Collective, …" — where the
+     * promoter's `presents:` names the night and the venue's `w.` names the acts; read from the
+     * first, the night's name came out as two prose acts and the real line-up was lost (#1494).
+     *
      * An act billed twice on one night would produce two `event_artist` rows for the same
      * (event, artist) pair and hit that table's unique constraint, failing the whole import, so the
      * first billing wins.
      */
     private fun parseLineup(title: String): List<ScrapedArtist> {
-        val lineup = LINEUP_MARKER.find(title)?.let { title.substring(it.range.last + 1) } ?: return emptyList()
+        val lineup = LINEUP_MARKER.findAll(title).lastOrNull()?.let { title.substring(it.range.last + 1) } ?: return emptyList()
         return lineup
             .split(',')
             .flatMap(::parseBilling)
@@ -218,7 +223,7 @@ class KlunkerkranichOverviewPageScraper(
         /**
          * The marker introducing a night's billing — `w.` (the venue's usual spelling, also written
          * `w/`) or a promoter's `presents:` / `präsentiert:`. Space-padded on the left so a name
-         * ending in "w" is never mistaken for it.
+         * ending in "w" is never mistaken for it. [parseLineup] takes the last one on the title.
          */
         val LINEUP_MARKER = Regex("""\sw[./]\s|\s(?:presents|präsentiert)\s*:\s*""", RegexOption.IGNORE_CASE)
 
