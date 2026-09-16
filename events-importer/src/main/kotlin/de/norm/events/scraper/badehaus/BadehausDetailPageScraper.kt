@@ -15,7 +15,8 @@ import java.time.LocalDate
  * Pure HTML parser for Badehaus Berlin event detail (`/events/<slug>/`) pages.
  *
  * The detail page is the **primary source for the richer fields the listing card
- * omits**: the full description, the start time (`Beginn`) and the promoter
+ * omits**: the full description, the start time (`Beginn`, or `Start` on the pages
+ * that label in English — "Doors: 19:00h | Start 20:00h") and the promoter
  * (`a.promoterbtn`). It reuses the same `.em-event-single` container the theme
  * renders for a single event and also carries the title, date, doors time, image
  * and ticket link, which serve as fallbacks.
@@ -108,10 +109,10 @@ class BadehausDetailPageScraper {
         /** Matches a `DD.MM.YYYY` date. */
         private val DATE_PATTERN = Regex("""\d{2}\.\d{2}\.\d{4}""")
 
-        /** Matches the doors time: "Einlass: 19:00" or "Einlass 19:00". */
-        private val EINLASS_PATTERN = Regex("""Einlass:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
+        /** Matches the doors time: "Einlass: 19:00", "Einlass 19:00" or, on the pages that label in English, "Doors: 19:00h" (#1497). */
+        private val EINLASS_PATTERN = Regex("""(?:Einlass|Doors):?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
 
-        /** Matches the start time: "Beginn: 20:00" or "Beginn 20:00". */
-        private val BEGINN_PATTERN = Regex("""Beginn:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
+        /** Matches the start time: "Beginn: 20:00", "Beginn 20:00" or "Start 20:00h". */
+        private val BEGINN_PATTERN = Regex("""(?:Beginn|Start):?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
     }
 }

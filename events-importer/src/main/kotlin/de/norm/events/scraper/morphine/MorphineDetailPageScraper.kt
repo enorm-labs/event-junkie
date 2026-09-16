@@ -99,7 +99,10 @@ class MorphineDetailPageScraper {
             priceNote = priceNote,
             artists =
                 readPerformers(overlay).ifEmpty {
-                    lineup.flatMap { headlinersFromTitle(stripLiveRecordingSuffix(it.name)) }.distinctBy { it.name.lowercase() }
+                    lineup
+                        .filter { it.name.isNotBlank() }
+                        .flatMap { headlinersFromTitle(stripLiveRecordingSuffix(it.name)) }
+                        .distinctBy { it.name.lowercase() }
                 }
         )
     }
@@ -130,7 +133,9 @@ class MorphineDetailPageScraper {
 
     /**
      * Reads the `ul.lineup` set entries, each an `<li>` of two spans: the set's start time and the
-     * billed name. An entry missing either span is skipped.
+     * billed name. An entry missing either span, or blank in both, is skipped. One with a time and
+     * no name stays: the venue writes a bare `20:30` under `door 20:00` when the night is billed by
+     * its title alone, and that time is the start (#1497).
      */
     private fun readLineup(overlay: Element): List<LineupEntry> =
         overlay.select("div.block.day ul.lineup li").mapNotNull { item ->
@@ -139,7 +144,7 @@ class MorphineDetailPageScraper {
                 null
             } else {
                 LineupEntry(startTime = spans[TIME_SPAN].text().trim(), name = spans[NAME_SPAN].text().trim())
-                    .takeIf { it.name.isNotBlank() }
+                    .takeIf { it.name.isNotBlank() || it.startTime.isNotBlank() }
             }
         }
 
