@@ -580,8 +580,8 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | Agentic workflow (refactor)                 | `.github/workflows/agent-refactor.yml` — fenced away from shared normalization                                                    |
 | Agentic workflow (comments)                 | `.github/workflows/agent-comments.yml` — whole tree nightly, capped at twelve files per PR                                        |
 | Plausibility check prompt                   | `.github/prompts/plausibility-check.prompt.md` — the site against the venues' pages, read-only                                    |
-| Agentic workflow (plausibility)             | `.github/workflows/agent-plausibility.yml` — nightly report, opens nothing and files nothing                                      |
-| Agentic workflow (OWASP Top 10)             | `.github/workflows/agent-owasp.yml` — weekly report, one line per category, opens nothing and files nothing                       |
+| Agentic workflow (plausibility)             | `.github/workflows/agent-plausibility.yml` — nightly report, opens nothing; commented on a monthly issue (#1499)                  |
+| Agentic workflow (OWASP Top 10)             | `.github/workflows/agent-owasp.yml` — weekly report, one line per category, opens nothing; commented on a monthly issue (#1499)   |
 | Refactor prompt                             | `.github/prompts/refactor.prompt.md`                                                                                              |
 | Documentation currency prompt               | `.github/prompts/update-docs.prompt.md`                                                                                           |
 | Agentic workflow (documentation)            | `.github/workflows/agent-docs.yml` — corrects facts, rewrites no argument, never touches an ADR                                   |

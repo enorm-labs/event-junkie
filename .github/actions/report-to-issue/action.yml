@@ -1,0 +1,89 @@
+# Posts an agent's report as a comment on one rolling issue per month, assigned to a person, so a
+# scheduled report reaches an inbox instead of waiting in a job summary nobody opens. The issue is
+# found by exact title through the list API, never search, and created once when missing.
+#
+# The caller's job needs `issues: write`, and it must be a job the agent does not run in: the
+# agent's shell holds whatever token its job holds, and a report is text from wherever the agent
+# read — a venue page, a commit — so the write permission stays one job away from it.
+name: Report to a rolling issue
+description: Comment an agent's report on this month's rolling issue, creating it when missing
+
+inputs:
+  title:
+    description: The rolling issue's title; the month is appended
+    required: true
+  report:
+    description: Path of the markdown report to post
+    required: true
+  assignee:
+    description: Who gets the issue, and so the email
+    required: true
+  labels:
+    description: Comma-separated labels for the issue
+    required: true
+  about:
+    description: One sentence for the issue body saying what the reports are
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Comment the report on the rolling issue
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      env:
+        REPORT_TITLE: ${{ inputs.title }}
+        REPORT_PATH: ${{ inputs.report }}
+        REPORT_ASSIGNEE: ${{ inputs.assignee }}
+        REPORT_LABELS: ${{ inputs.labels }}
+        REPORT_ABOUT: ${{ inputs.about }}
+      with:
+        script: |
+          const fs = require('fs');
+          const { owner, repo } = context.repo;
+          const month = new Date().toISOString().slice(0, 7);
+          const title = `${process.env.REPORT_TITLE} — ${month}`;
+          const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+
+          // A comment is capped at 65,536 characters; the artifact keeps the whole report.
+          const cap = 60000;
+          let report = fs.readFileSync(process.env.REPORT_PATH, 'utf8').trim();
+          if (report.length > cap) {
+            report = `${report.slice(0, cap)}\n\n_Truncated at ${cap} characters. The full report is the \`agent-report\` artifact of the run._`;
+          }
+
+          // Listing is authoritative; the search index is eventually consistent.
+          const open = await github.paginate(github.rest.issues.listForRepo, { owner, repo, state: 'open', per_page: 100 });
+          let issue = open.find((candidate) => !candidate.pull_request && candidate.title === title);
+
+          if (!issue) {
+            const body = [
+              `> Opened by the workflow \`${context.workflow}\`. ${process.env.REPORT_ABOUT}`,
+              '',
+              'Each run posts its report as a comment below, which is what emails the assignee. Nothing here',
+              'is an issue yet: read the report, then file what holds with `/new-issue`. Close this at the end',
+              'of the month; the next run opens the next one.',
+            ].join('\n');
+            const { data } = await github.rest.issues.create({
+              owner,
+              repo,
+              title,
+              body,
+              labels: process.env.REPORT_LABELS.split(',').map((label) => label.trim()).filter(Boolean),
+              assignees: [process.env.REPORT_ASSIGNEE],
+              type: 'Task',
+            });
+            issue = data;
+            core.notice(`Opened #${issue.number} "${title}".`);
+          }
+
+          const date = new Date().toISOString().slice(0, 10);
+          const { data: comment } = await github.rest.issues.createComment({
+            owner,
+            repo,
+            issue_number: issue.number,
+            body: `**${date}** — [run ${context.runId}](${runUrl})\n\n${report}`,
+          });
+          await core.summary
+            .addHeading('📬 Report posted', 2)
+            .addRaw(`[#${issue.number}](${issue.html_url}) — <em>${title}</em>, <a href="${comment.html_url}">comment</a>.`)
+            .write();

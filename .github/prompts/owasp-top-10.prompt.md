@@ -163,8 +163,9 @@ formatter is not run: the runner carries no `node_modules`.
 
 ## Running unattended
 
-[`agent-owasp.yml`](../workflows/agent-owasp.yml) invokes this prompt as `/owasp-top-10 --since 7 --unattended` weekly, and the report lands in the job summary
-and the `agent-report` artifact. The same contract as `/plausibility-check`:
+[`agent-owasp.yml`](../workflows/agent-owasp.yml) invokes this prompt as `/owasp-top-10 --since 7 --unattended` weekly, and the report lands in the job summary,
+the `agent-report` artifact, and as a comment on the month's `OWASP Top 10 — weekly reports` issue, which a second job posts after this one ends (#1499).
+The same contract as `/plausibility-check`:
 
 - **No `--dry-run`, because every run is one.** The prompt writes nothing anywhere. `gh api` is read-only and goes through `ACTIONS_GITHUB_TOKEN`, the
   Actions token, which is the one that can read rulesets; the App token the shell also holds must not be used for anything but reading the tree.
