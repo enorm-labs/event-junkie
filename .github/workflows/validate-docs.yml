@@ -19,6 +19,10 @@ on:
       - 'scripts/skill-parity.sh'
       - 'scripts/rules-parity.sh'
       - 'scripts/collector-parity.sh'
+      - 'scripts/scope-parity.sh'
+      - '.github/workflows/label-pr.yml'
+      - 'scripts/version.sh'
+      - 'scripts/release-highlights.sh'
       - 'scripts/index-parity.sh'
       - 'events-importer/src/main/kotlin/de/norm/events/scraper/LogContext.kt'
       - 'events-importer/src/main/kotlin/de/norm/events/scraper/LogFields.kt'
@@ -47,6 +51,10 @@ on:
       - 'scripts/skill-parity.sh'
       - 'scripts/rules-parity.sh'
       - 'scripts/collector-parity.sh'
+      - 'scripts/scope-parity.sh'
+      - '.github/workflows/label-pr.yml'
+      - 'scripts/version.sh'
+      - 'scripts/release-highlights.sh'
       - 'scripts/index-parity.sh'
       - 'events-importer/src/main/kotlin/de/norm/events/scraper/LogContext.kt'
       - 'events-importer/src/main/kotlin/de/norm/events/scraper/LogFields.kt'
@@ -76,7 +84,7 @@ jobs:
   # runbook or a prompt, which validate-scripts.yml never sees. No Node, so this does not wait on
   # the setup the formatting job needs.
   parity:
-    name: Check skill, rule, log field and scripts index parity
+    name: Check skill, rule, log field, product scope and scripts index parity
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -93,6 +101,9 @@ jobs:
 
       - name: Check log field parity
         run: scripts/collector-parity.sh
+
+      - name: Check product scope parity
+        run: scripts/scope-parity.sh
 
       - name: Check the scripts index
         run: scripts/index-parity.sh

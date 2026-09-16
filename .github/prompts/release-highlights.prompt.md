@@ -13,8 +13,8 @@ leaves the rest out.
 - **The reader is a visitor to the site, not a maintainer.** They see the site and its data: venues, events, times, posters, filters, pages, search.
   They do not see the chart, the pipeline, the scrapers, the scanners, the headers or the agents. A change they cannot see or feel on the site is not a
   highlight, however large.
-- **Type and scope are hints, not verdicts.** A `feat` in a product scope (`frontend`, `events`, `promoters`, `venues`, `importer`, `scraper`, `bff`,
-  `images`, `branding`, `artists`) is a candidate, and so is a `fix` or `perf` there whose effect shows on the site — a time now correct, a search that now
+- **Type and scope are hints, not verdicts.** A `feat` in a product scope (`frontend`, `events`, `promoters`, `venues`, `artists`, `importer`, `scraper`,
+  `bff`, `images`, `branding`) is a candidate, and so is a `fix` or `perf` there whose effect shows on the site — a time now correct, a search that now
   finds what it should, a page that loads faster. `ci`, `build`, `chore`, `docs`, `test`, `refactor`, `style`, `revert`, `deps` and `chore(release)` never
   qualify. A product-scope commit whose effect the visitor cannot see — a translation that is now cached instead of bought again, a counter, a retry —
   does not qualify either.
