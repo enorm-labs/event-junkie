@@ -165,7 +165,8 @@ runner carries no `node_modules`, the pinned oxfmt is the only one allowed, and 
 ## Running unattended
 
 [`agent-plausibility.yml`](../workflows/agent-plausibility.yml) invokes this prompt as `/plausibility-check --unattended` nightly, and the report lands in the
-job summary and the `agent-report` artifact. Two things make this workload different from the rest of the family:
+job summary, the `agent-report` artifact, and as a comment on the month's `Plausibility check — nightly reports` issue, which a second job posts after
+this one ends (#1499). Two things make this workload different from the rest of the family:
 
 - **It has no `--dry-run`, because every run is one.** The prompt writes nothing anywhere, so there is no pull request to withhold and nothing irreversible to
   guard. The only cost it can incur is on the venues' side, and `--sample` is the ceiling on that.

@@ -2,7 +2,8 @@
 # against the tree as deployed — the workflows, the chart, the cluster manifests, the ADRs, the
 # threat model — and writes a report with one line per category. It opens nothing, files nothing
 # and edits nothing, which is the whole safety argument and the reason there is no `dry_run`
-# input: every run is one. The shared shape is documented once in ci-cd.instructions.md.
+# input: every run is one. A second job, without the agent, comments the report on a monthly
+# issue so it is read (#1499). The shared shape is documented once in ci-cd.instructions.md.
 #
 # **Weekly, not quarterly, and diff-first is what makes weekly readable** (#1422). The categories
 # move when a boundary changes, not when a week passes, so the prompt leads with the commits of
@@ -39,9 +40,7 @@ on:
         type: string
         default: '7'
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 concurrency:
   group: agent-owasp
@@ -51,6 +50,10 @@ jobs:
   review:
     name: OWASP Top 10 review (agent)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # The OIDC exchange for the Claude App's token.
+      id-token: write
     # Reading, not fetching: the wall clock is the model's, and `--max-turns` below is the ceiling.
     timeout-minutes: 30
     env:
@@ -126,3 +129,39 @@ jobs:
             cat agent-report.md
             exit 1
           fi
+
+  # The report reaches a person by email, which a job summary and an artifact never do (#1499).
+  # Its own job, so `issues: write` never exists in the job the agent runs in — the agent's shell
+  # holds its job's token, and a report is text read from the tree and the commits of the week.
+  notify:
+    name: Post the report on the rolling issue
+    needs: review
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      # A local action needs the tree; `$/` would not, and actionlint 1.7.12 rejects it.
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/actions/report-to-issue
+
+      - name: Download the report
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: agent-report
+
+      - name: Comment it on this month's issue
+        uses: ./.github/actions/report-to-issue
+        with:
+          title: OWASP Top 10 — weekly reports
+          report: agent-report.md
+          assignee: enorm
+          labels: area:agents, area:security, size:S
+          about: >-
+            Weekly `/owasp-top-10` reports: one line per category against the tree as deployed,
+            diff-first over the week's commits.

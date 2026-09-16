@@ -158,8 +158,12 @@ updates:
   # repository root in the usual sense — for this ecosystem Dependabot always reads .github/workflows.
   # One group, because an action bump is a one-line change and fourteen separate PRs for fourteen
   # actions is how people learn to ignore Dependabot.
+  # `/` is `.github/workflows/`; a composite action under `.github/actions/` is a directory of its
+  # own or its `uses:` pins rot unseen. Both land in the one group.
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directories:
+      - "/"
+      - "/.github/actions/report-to-issue"
     schedule:
       interval: "weekly"
     groups:

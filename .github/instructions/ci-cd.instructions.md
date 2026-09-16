@@ -1,7 +1,8 @@
 ---
-applyTo: ".github/workflows/**,.github/dependabot.yml,.github/renovate.json5,.github/release.yml,zizmor.yml,.pre-commit-config.yaml"
+applyTo: ".github/workflows/**,.github/actions/**,.github/dependabot.yml,.github/renovate.json5,.github/release.yml,zizmor.yml,.pre-commit-config.yaml"
 paths:
     - ".github/workflows/**"
+    - ".github/actions/**"
     - ".github/dependabot.yml"
     - ".github/renovate.json5"
     - ".github/release.yml"
@@ -226,16 +227,23 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
     - `agent-plausibility.yml` — the [`/plausibility-check`](../prompts/plausibility-check.prompt.md) workload, and the first that opens nothing. It reads
       the running site's API for the next days, checks each row for what cannot be right, fetches a rationed sample of the venues' own pages, and writes a
       report to the job summary and the `agent-report` artifact. Three things about it are decisions. **It has no `dry_run` input, because every run is
-      one**: the prompt writes to no database, no tracker and no tree, so there is nothing to withhold. **It files nothing and holds no `issues: write`**, on
-      purpose — a comparison between two texts can be confidently wrong, and the report is what a person reads before anything becomes an issue. **It
+      one**: the prompt writes to no database, no tracker and no tree, so there is nothing to withhold. **It files no findings, and the agent's job holds no
+      `issues: write`**, on purpose — a comparison between two texts can be confidently wrong, and the report is what a person reads before anything
+      becomes an issue. **It
       scrapes venue websites from a runner**, so the prompt carries ADR-007's politeness rules and the `sample` input is the ceiling on the venues' side. Its
       origin is `SITE_URL`, the variable `site-probe.yml` reads with the same apex fallback, so launch day's deletion of that variable retargets both.
+      **The report is read because it is mailed** (#1499): a second job, `notify`, downloads the `agent-report` artifact and comments it on one issue per
+      month — `Plausibility check — nightly reports — <YYYY-MM>` — assigned to the maintainer, through
+      [`.github/actions/report-to-issue`](../actions/report-to-issue/action.yml). That job alone carries `issues: write`, and the agent never runs in it:
+      the agent's shell holds its job's token, and the report is text from pages the repository does not control. The issue is found by exact title
+      through the list API, created once when missing, and closed by hand; nothing in the report becomes an issue until a person files it.
     - `agent-owasp.yml` — the [`/owasp-top-10`](../prompts/owasp-top-10.prompt.md) workload, the second that opens nothing (#1422). It walks the OWASP
       Top 10:2025 against the tree as deployed — workflows, chart, cluster manifests, ADRs, the threat model — and writes one line per category plus the
       findings. **Weekly, Monday 06:31, and diff-first is what makes weekly readable**: the prompt leads with the window's commits that touched a category's
       evidence and gives an unmoved category one line, so a quiet week is a short report where a quarter of commits would be a wall. `gh api` reads the
       ruleset through `ACTIONS_GITHUB_TOKEN`, the `agent-security.yml` wiring; `curl -sI` reads production's live headers for A02 and A04. It says per
-      category what `dast.yml` already asserts, so the report carries the gap and not a second alert list.
+      category what `dast.yml` already asserts, so the report carries the gap and not a second alert list. Its report is mailed the same way as the
+      plausibility one — a `notify` job, `OWASP Top 10 — weekly reports — <YYYY-MM>`, `issues: write` on that job only (#1499).
     - `cut-release.yml` — publishes the GitHub Release that `release.yml` keys on, then opens the pull request that moves `main` to the next snapshot (#868).
       `workflow_dispatch` only, `dry_run` on by default. **It refuses a commit whose snapshot publish is not green**, because a release rebuilds what the
       snapshot built and fails the same gate — v0.3.10 was cut over four red runs and left an empty tag (#1117). Four things about it are decisions. **The version is never typed** — it comes from
@@ -450,7 +458,8 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       member (`eslint-plugin-oxlint`, `@types/node`, `@vue/test-utils`) away from its family, which is what split the oxlint pair twice (#494). Majors outside a
       family stay ungrouped deliberately — a Vite or Vue major deserves its own PR.
     - **`github-actions`** (`/`) — one group for all of them. `/` here does not mean the repository root in the usual sense; for this ecosystem Dependabot
-      always reads `.github/workflows/`.
+      always reads `.github/workflows/`. `.github/actions/report-to-issue` is a second directory in the same entry, because a composite action's
+      own `uses:` pins are outside that default and rot unseen otherwise.
     - **`opentofu`** (`/infra/**`) — **not `terraform`**. They are separate ecosystems with separate registries, and the lock files there record providers as
       `registry.opentofu.org/…`, which the `terraform` updater would rewrite to `registry.terraform.io`. All four directories are grouped into one PR, since a
       single provider release otherwise opens four identical ones. Expect it to change **`.terraform.lock.hcl` and not `versions.tf`**: the `~> 1.68` constraint
