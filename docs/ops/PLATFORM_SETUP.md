@@ -749,6 +749,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `importer.source.has_succeeded`                | Gauge, tagged `source`                | 1/0 — **exists for a source that has never worked**, which the row above does not  |
 | `importer.source.running`                      | Gauge                                 | Catches the ADR-008 `RUNNING`-forever state a restart can strand                   |
 | `importer.source.events_future{source}`        | Gauge                                 | Future events held per source — **the silently-broken-scraper alarm** (#700)       |
+| `importer.source.days_since_future_event`      | Gauge, tagged `source`, `known_quiet` | How long a source has held no future event; a floor, with the known venues marked  |
 | `importer.source.field_coverage{source,field}` | Gauge                                 | The partial-failure alarm — alert on a **drop against history**, not a floor       |
 | `bff.events.served`                            | Counter, tagged endpoint              | Is anyone actually using it                                                        |
 | `db.events{horizon="all"\|"future"}`           | Gauge                                 | A future count trending to zero is a broken pipeline seen from the other end       |
@@ -793,6 +794,10 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
   exposition reads as healthy. **Zero is not broken, though.** A venue on summer break is legitimately empty. So the rule (`ej-source-emptied`) asks for zero _now_ against a
   non-zero recent history for the same series, rather than for a floor. `db.events{horizon="future"}` stays as the aggregate — it catches what no per-source rule
   can, because the importer being down empties every source at once.
+- **A source that emptied more than a week ago is invisible to that rule, so a second gauge carries the duration** (#1498).
+  `importer.source.days_since_future_event` is today minus the source's newest event date, re-read from the `event` table every tick. It is a floor —
+  `ej-source-quiet` fires past 30 days — and the summer-break objection is answered by its `known_quiet` tag. `KnownQuietSource.kt` in the importer
+  names each venue checked by hand, with a date and a reason. The rule selects `known_quiet="false"`. Delete the entry when the venue publishes again.
 - **A 304 counts as a success**, for both the column and the gauge. The request went out, the venue answered, and the conditional headers did their job.
   Treating it as "no success" would make a stable venue look broken after three quiet days.
 - **A venue forbidding us is a decision, and it gets its own rule** (`ej-robots-disallowed`, #796). `scrape.failures{reason="robots_disallowed"}` is the one

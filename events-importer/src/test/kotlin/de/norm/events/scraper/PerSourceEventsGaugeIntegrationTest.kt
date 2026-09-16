@@ -88,6 +88,18 @@ class PerSourceEventsGaugeIntegrationTest : BaseControllerTest() {
     @Test
     fun `events with no source produce no series`() {
         registry.find(ImporterMetrics.SOURCE_EVENTS_FUTURE).tag("source", "manual").gauge() shouldBe null
+        registry.find(ImporterMetrics.SOURCE_DAYS_SINCE_FUTURE_EVENT).tag("source", "manual").gauge() shouldBe null
+    }
+
+    /**
+     * The same rows' `newest_event_date` (#1498): the alias is the mapping here too. `emptied-out`
+     * lost its programme a week ago; `never-ran` was created by this test's seeding, today.
+     */
+    @Test
+    fun `each source publishes how long it has held no future event`() {
+        daysSince("busy") shouldBe 0.0
+        daysSince("emptied-out") shouldBe 7.0
+        daysSince("never-ran") shouldBe 0.0
     }
 
     /**
@@ -110,7 +122,8 @@ class PerSourceEventsGaugeIntegrationTest : BaseControllerTest() {
 
         listOf(
             """importer_source_events_future{source="busy"}""",
-            """importer_source_events_future{source="emptied-out"}"""
+            """importer_source_events_future{source="emptied-out"}""",
+            """importer_source_days_since_future_event{known_quiet="false",source="emptied-out"}"""
         ).forEach {
             assert(body.contains(it)) { "expected '$it' in the exposition; got:\n${body.take(3000)}" }
         }
@@ -119,6 +132,13 @@ class PerSourceEventsGaugeIntegrationTest : BaseControllerTest() {
     private fun gauge(source: String): Double =
         registry
             .find(ImporterMetrics.SOURCE_EVENTS_FUTURE)
+            .tag("source", source)
+            .gauge()!!
+            .value()
+
+    private fun daysSince(source: String): Double =
+        registry
+            .find(ImporterMetrics.SOURCE_DAYS_SINCE_FUTURE_EVENT)
             .tag("source", source)
             .gauge()!!
             .value()

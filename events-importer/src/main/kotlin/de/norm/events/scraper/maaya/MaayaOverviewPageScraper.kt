@@ -58,16 +58,19 @@ class MaayaOverviewPageScraper {
      * @param baseUrl the URL the document was fetched from; stored as every event's `sourceUrl`,
      *   since the venue publishes no per-event pages.
      * @return a list of [ScrapedEvent] instances in listing order.
+     * @throws IllegalStateException when the page has no programme section at all. A home page
+     *   without the block is a redesign, not an empty programme — a venue with nothing on still
+     *   renders the section — and the run fails so the source reads as failing rather than as
+     *   quiet. It read as quiet for a year (#1498); the rebuilt page is #1517.
      */
     fun scrape(
         document: Document,
         baseUrl: String
     ): List<ScrapedEvent> {
-        val section = document.selectFirst(PROGRAMME_SECTION)
-        if (section == null) {
-            logger.warn { "No '$PROGRAMME_ANCHOR' section on the MAAYA home page — the programme block moved or was renamed" }
-            return emptyList()
-        }
+        val section =
+            checkNotNull(document.selectFirst(PROGRAMME_SECTION)) {
+                "No '$PROGRAMME_ANCHOR' section on the MAAYA home page — the programme block moved or was renamed"
+            }
 
         val cards = section.select(EVENT_CARD)
         logger.info { "Found ${cards.size} programme card(s) in the MAAYA NEXT DATES section" }

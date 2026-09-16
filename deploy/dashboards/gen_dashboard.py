@@ -249,9 +249,25 @@ panels = [
         "topk(20, %s / 3600)" % AGE,
         x=0,
         y=10,
-        w=96,
+        w=64,
         h=18,
         decimals=1,
+    ),
+    panel(
+        "p_quiet_sources",
+        "Sources quiet for over 30 days (days since their newest event)",
+        "A source at zero future events reads the same on its first day and its four-hundredth, and "
+        "`ej-source-emptied` sees only a week back — four sources sat at zero for a year unseen (#1498). This is "
+        'the duration, re-read from the database. **`known_quiet="true"` is a venue somebody checked by hand** — '
+        "`KnownQuietSource.kt` carries the date and the reason, and `ej-source-quiet` leaves those out. Anything "
+        "else here is a scraper to look at, or an entry to write.",
+        "bar",
+        "topk(20, max by (source, known_quiet) (importer_source_days_since_future_event) > 30)",
+        x=64,
+        y=10,
+        w=64,
+        h=18,
+        decimals=0,
     ),
     panel(
         "p_events_trend",
@@ -259,9 +275,9 @@ panels = [
         "Both horizons. `all` only ever grows; `future` is the one that matters and the one that can fall.",
         "line",
         "max by (horizon) (db_events)",
-        x=96,
+        x=128,
         y=10,
-        w=96,
+        w=64,
         h=18,
         decimals=0,
     ),

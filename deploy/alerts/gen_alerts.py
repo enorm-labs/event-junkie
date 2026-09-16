@@ -14,6 +14,7 @@ it produces an alert that never fires rather than an error.
     certificate expiry             -> ej-certificate-expiry
     a source that never worked     -> ej-source-never-succeeded   (#618)
     a source that emptied out      -> ej-source-emptied           (#700)
+    a source quiet for a month     -> ej-source-quiet             (#1498)
     metrics being dropped          -> ej-ingest-shedding          (#625)
     translation failing open       -> ej-translations-failing      (#1301)
     a node waiting for a reboot    -> ej-reboot-pending            (#419)
@@ -297,6 +298,35 @@ rule(
     stream_name="importer_source_events_future",
     period_minutes=15,
     frequency_minutes=30,
+    silence_minutes=24 * 60,
+)
+
+# What the rule above cannot see, by construction (#1498): a source that emptied
+# before the 7d window, or that never held twenty, has no history to be contrasted
+# against and is never named. Four sources sat at zero for a year that way. A
+# duration needs no window — `importer_source_days_since_future_event` is today
+# minus the source's newest event date, re-read from the database every tick —
+# so this rule is a plain floor, and the summer-break objection #700 raised
+# against a floor is answered by the `known_quiet` tag: `KnownQuietSource.kt`
+# in the importer marks the venues checked by hand, with a date and a reason,
+# and the rule selects the rest. A venue that starts publishing again drops to
+# zero on its own.
+#
+# 30 days is longer than any venue's ordinary gap between two listings and
+# shorter than a season; the three known ones were at 365 when this was written.
+rule(
+    "ej-source-quiet",
+    "A source has held no future event for more than 30 days and nobody has said why. "
+    "`ej-source-emptied` sees a collapse within a week of it; this sees the source that emptied "
+    "earlier, or never held twenty, which that rule cannot name at all. The venues known to be "
+    'quiet are marked `known_quiet="true"` from `KnownQuietSource.kt` and left out here — the '
+    "answer to one of those is an entry with a date, not a scraper change.",
+    'sum(max by (source) (importer_source_days_since_future_event{known_quiet="false"}) > bool 30)',
+    ">",
+    0,
+    stream_name="importer_source_days_since_future_event",
+    period_minutes=15,
+    frequency_minutes=60,
     silence_minutes=24 * 60,
 )
 

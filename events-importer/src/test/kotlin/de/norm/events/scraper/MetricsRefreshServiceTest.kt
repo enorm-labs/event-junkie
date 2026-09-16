@@ -2,6 +2,7 @@ package de.norm.events.scraper
 
 import de.norm.events.event.EventRepository
 import de.norm.events.event.SourceFutureEventsRow
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
@@ -49,7 +50,8 @@ class MetricsRefreshServiceTest {
         status: ImportStatus,
         lastImportAt: Instant? = null,
         lastSuccessAt: Instant? = null,
-        id: Long = 1L
+        id: Long = 1L,
+        createdAt: Instant? = null
     ) = EventSourceEntity(
         id = id,
         venueId = 1L,
@@ -59,8 +61,16 @@ class MetricsRefreshServiceTest {
         sourceType = "CASSIOPEIA",
         status = status.name,
         lastImportAt = lastImportAt,
-        lastSuccessAt = lastSuccessAt
+        lastSuccessAt = lastSuccessAt,
+        createdAt = createdAt
     )
+
+    private fun daysSince(source: String): Double =
+        registry
+            .find(ImporterMetrics.SOURCE_DAYS_SINCE_FUTURE_EVENT)
+            .tag("source", source)
+            .gauge()!!
+            .value()
 
     @Test
     fun `a refresh reads the counts and publishes them`() =
@@ -264,8 +274,8 @@ class MetricsRefreshServiceTest {
                 ).asFlow()
             coEvery { eventRepository.countFuturePerSource(today) } returns
                 listOf(
-                    SourceFutureEventsRow(eventSourceId = 7L, futureEvents = 41),
-                    SourceFutureEventsRow(eventSourceId = 8L, futureEvents = 3)
+                    SourceFutureEventsRow(eventSourceId = 7L, futureEvents = 41, newestEventDate = today.plusDays(30)),
+                    SourceFutureEventsRow(eventSourceId = 8L, futureEvents = 3, newestEventDate = today.plusDays(30))
                 ).asFlow()
 
             service.refreshGauges()
@@ -298,7 +308,7 @@ class MetricsRefreshServiceTest {
                     source("emptied-out", ImportStatus.SUCCESS, id = 9L)
                 ).asFlow()
             coEvery { eventRepository.countFuturePerSource(today) } returns
-                listOf(SourceFutureEventsRow(eventSourceId = 7L, futureEvents = 41)).asFlow()
+                listOf(SourceFutureEventsRow(eventSourceId = 7L, futureEvents = 41, newestEventDate = today.plusDays(30))).asFlow()
 
             service.refreshGauges()
 
@@ -320,7 +330,7 @@ class MetricsRefreshServiceTest {
             coEvery { eventSourceRepository.findByEnabledTrue() } returns
                 listOf(source("busy", ImportStatus.SUCCESS, id = 7L)).asFlow()
             coEvery { eventRepository.countFuturePerSource(today) } returns
-                listOf(SourceFutureEventsRow(eventSourceId = 7L, futureEvents = 12)).asFlow()
+                listOf(SourceFutureEventsRow(eventSourceId = 7L, futureEvents = 12, newestEventDate = today.plusDays(30))).asFlow()
 
             service.refreshGauges()
 
@@ -330,5 +340,61 @@ class MetricsRefreshServiceTest {
                 .tag("source", "busy")
                 .gauge()!!
                 .value() shouldBe 12.0
+        }
+
+    /**
+     * The duration `events_future` cannot express (#1498): a source at zero reads the same on its
+     * first day and its four-hundredth, and `ej-source-emptied` only ever sees a week back.
+     */
+    @Test
+    fun `every source publishes how many days it has held no future event`() =
+        runTest {
+            coEvery { eventSourceRepository.findByEnabledTrue() } returns
+                listOf(
+                    source("busy", ImportStatus.SUCCESS, id = 7L),
+                    source("emptied-out", ImportStatus.SUCCESS, id = 8L),
+                    source("amt", ImportStatus.SUCCESS, id = 9L)
+                ).asFlow()
+            coEvery { eventRepository.countFuturePerSource(today) } returns
+                listOf(
+                    SourceFutureEventsRow(eventSourceId = 7L, futureEvents = 3, newestEventDate = today.plusDays(12)),
+                    SourceFutureEventsRow(eventSourceId = 8L, futureEvents = 0, newestEventDate = today.minusDays(40)),
+                    SourceFutureEventsRow(eventSourceId = 9L, futureEvents = 0, newestEventDate = today.minusDays(365))
+                ).asFlow()
+
+            service.refreshGauges()
+
+            // A future event floors the duration at zero; the day of the newest event counts as held.
+            daysSince("busy") shouldBe 0.0
+            daysSince("emptied-out") shouldBe 40.0
+            registry
+                .find(ImporterMetrics.SOURCE_DAYS_SINCE_FUTURE_EVENT)
+                .tag("source", "emptied-out")
+                .tag("known_quiet", "false")
+                .gauge()
+                .shouldNotBeNull()
+            // The venue-side ones are marked from KNOWN_QUIET_SOURCES, so the rule can leave them out.
+            registry
+                .find(ImporterMetrics.SOURCE_DAYS_SINCE_FUTURE_EVENT)
+                .tag("source", "amt")
+                .tag("known_quiet", "true")
+                .gauge()!!
+                .value() shouldBe 365.0
+        }
+
+    // A source with no event at all has been quiet for as long as it has existed — a value, not an absence.
+    @Test
+    fun `a source with no event counts from the day its row was created`() =
+        runTest {
+            coEvery { eventSourceRepository.findByEnabledTrue() } returns
+                listOf(
+                    source("never-ran", ImportStatus.SUCCESS, id = 7L, createdAt = today.minusDays(9).atStartOfDay().toInstant(ZoneOffset.UTC)),
+                    source("just-added", ImportStatus.SUCCESS, id = 8L)
+                ).asFlow()
+
+            service.refreshGauges()
+
+            daysSince("never-ran") shouldBe 9.0
+            daysSince("just-added") shouldBe 0.0
         }
 }

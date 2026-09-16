@@ -48,9 +48,11 @@ interface EventRepository : CoroutineCrudRepository<EventEntity, Long> {
      */
     @Query(
         """
-        SELECT e.event_source_id AS event_source_id, COUNT(*) AS future_events
+        SELECT e.event_source_id AS event_source_id,
+               COUNT(*) FILTER (WHERE e.event_date >= :date) AS future_events,
+               MAX(e.event_date) AS newest_event_date
         FROM $EVENTS_SCHEMA.event e
-        WHERE e.event_date >= :date AND e.event_source_id IS NOT NULL
+        WHERE e.event_source_id IS NOT NULL
         GROUP BY e.event_source_id
         """
     )
@@ -145,15 +147,18 @@ interface EventRepository : CoroutineCrudRepository<EventEntity, Long> {
 }
 
 /**
- * One row of [EventRepository.countFuturePerSource]: a source and how many future events it holds.
+ * One row of [EventRepository.countFuturePerSource]: a source, how many future events it holds, and
+ * the newest date among all its events (#1498) — past rows are never deleted, so for a source at
+ * zero this is the day its programme ran out.
  *
- * `eventSourceId` is non-null because the query excludes the manual bucket, and both properties are
+ * `eventSourceId` is non-null because the query excludes the manual bucket, and the two counts are
  * `Long` because Postgres' `COUNT` is `bigint` — mapping it to `Int` would work until the day it
  * did not.
  */
 data class SourceFutureEventsRow(
     val eventSourceId: Long,
-    val futureEvents: Long
+    val futureEvents: Long,
+    val newestEventDate: LocalDate
 )
 
 /**

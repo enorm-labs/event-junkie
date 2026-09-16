@@ -145,6 +145,35 @@
     ]
   },
   {
+    "name": "ej-source-quiet",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "importer_source_days_since_future_event",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "A source has held no future event for more than 30 days and nobody has said why. `ej-source-emptied` sees a collapse within a week of it; this sees the source that emptied earlier, or never held twenty, which that rule cannot name at all. The venues known to be quiet are marked `known_quiet=\"true\"` from `KnownQuietSource.kt` and left out here \u2014 the answer to one of those is an entry with a date, not a scraper change.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(max by (source) (importer_source_days_since_future_event{known_quiet=\"false\"}) > bool 30)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0
+      }
+    },
+    "trigger_condition": {
+      "period": 15,
+      "frequency": 60,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 1440
+    },
+    "destinations": [
+      "record-only"
+    ]
+  },
+  {
     "name": "ej-translations-failing",
     "org_id": "default",
     "stream_type": "metrics",

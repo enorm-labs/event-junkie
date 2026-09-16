@@ -221,9 +221,52 @@
           "layout": {
             "x": 0,
             "y": 10,
-            "w": 96,
+            "w": 64,
             "h": 18,
             "i": 5
+          }
+        },
+        {
+          "id": "p_quiet_sources",
+          "type": "bar",
+          "title": "Sources quiet for over 30 days (days since their newest event)",
+          "description": "A source at zero future events reads the same on its first day and its four-hundredth, and `ej-source-emptied` sees only a week back \u2014 four sources sat at zero for a year unseen (#1498). This is the duration, re-read from the database. **`known_quiet=\"true\"` is a venue somebody checked by hand** \u2014 `KnownQuietSource.kt` carries the date and the reason, and `ej-source-quiet` leaves those out. Anything else here is a scraper to look at, or an entry to write.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "topk(20, max by (source, known_quiet) (importer_source_days_since_future_event) > 30)",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 64,
+            "y": 10,
+            "w": 64,
+            "h": 18,
+            "i": 6
           }
         },
         {
@@ -262,11 +305,11 @@
             }
           ],
           "layout": {
-            "x": 96,
+            "x": 128,
             "y": 10,
-            "w": 96,
+            "w": 64,
             "h": 18,
-            "i": 6
+            "i": 7
           }
         },
         {
@@ -310,7 +353,7 @@
             "y": 28,
             "w": 48,
             "h": 16,
-            "i": 7
+            "i": 8
           }
         },
         {
@@ -376,7 +419,7 @@
             "y": 28,
             "w": 48,
             "h": 16,
-            "i": 8
+            "i": 9
           }
         },
         {
@@ -420,7 +463,7 @@
             "y": 28,
             "w": 48,
             "h": 16,
-            "i": 9
+            "i": 10
           }
         },
         {
@@ -464,7 +507,7 @@
             "y": 28,
             "w": 48,
             "h": 16,
-            "i": 10
+            "i": 11
           }
         },
         {
@@ -530,7 +573,7 @@
             "y": 44,
             "w": 96,
             "h": 16,
-            "i": 11
+            "i": 12
           }
         },
         {
@@ -574,7 +617,7 @@
             "y": 44,
             "w": 96,
             "h": 16,
-            "i": 12
+            "i": 13
           }
         },
         {
@@ -631,7 +674,7 @@
             "y": 60,
             "w": 112,
             "h": 16,
-            "i": 13
+            "i": 14
           }
         },
         {
@@ -694,7 +737,7 @@
             "y": 60,
             "w": 80,
             "h": 16,
-            "i": 14
+            "i": 15
           }
         }
       ]
