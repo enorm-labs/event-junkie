@@ -44,9 +44,14 @@ runs:
           const title = `${process.env.REPORT_TITLE} — ${month}`;
           const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
 
+          // The agent's final message can open with a sentence about itself before the report. The
+          // report starts at its first H1; a message with none is posted whole.
+          let report = fs.readFileSync(process.env.REPORT_PATH, 'utf8').trim();
+          const heading = report.search(/^# /m);
+          if (heading > 0) report = report.slice(heading);
+
           // A comment is capped at 65,536 characters; the artifact keeps the whole report.
           const cap = 60000;
-          let report = fs.readFileSync(process.env.REPORT_PATH, 'utf8').trim();
           if (report.length > cap) {
             report = `${report.slice(0, cap)}\n\n_Truncated at ${cap} characters. The full report is the \`agent-report\` artifact of the run._`;
           }
