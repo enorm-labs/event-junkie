@@ -1,0 +1,17 @@
+# What CodeQL reads, narrowed by one directory (#1480).
+#
+# `events-importer/src/test/resources/scraper/` holds venue pages saved verbatim as scraper fixtures
+# — 233 `.html` files across 82 venues at the time of writing — and the JavaScript extractor walks
+# `.html` by default. Every finding there is a venue's own markup: a `<script src>` without an
+# integrity attribute, an `innerHTML` in a theme's bundle. Sixty-two such alerts were dismissed as
+# "used in tests" before this file existed, two in the nine days before it, and each dismissal is a
+# reflex that one day hides a real finding.
+#
+# **The fixture directory alone, not `src/test`.** The Kotlin and TypeScript tests are this
+# repository's code and stay in scope. `docs/ops/dashboard/*.js`, `perf/ratelimit.js` and
+# `docs/event-junkie-bookmarks.html` are ours too and are not listed.
+#
+# No `queries:` here, on purpose. The suite is a decision `codeql.yml` records beside its `init`
+# step, and this file changes what is read, not what it is read for.
+paths-ignore:
+  - events-importer/src/test/resources/scraper

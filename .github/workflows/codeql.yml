@@ -20,6 +20,11 @@ name: CodeQL
 # A workflow-level filter produces no check run, while a job that runs and skips its steps still
 # reports, so a docs-only pull request pays ~10s a language instead of the 340s `java-kotlin` costs.
 #
+# **One directory is excluded from what CodeQL reads**, and `.github/codeql/codeql-config.yml`
+# says which and why: the venue pages saved as scraper fixtures, whose findings were always the
+# venue's and were dismissed by hand sixty-two times (#1480). That file narrows the input; the
+# suite stays the default, as the `init` step below records.
+#
 # **The matrix defines the check contexts.** Each language produces its own `Analyze (<language>)`
 # context and the ruleset names each one exactly, so adding a language here creates a check that is
 # *not* required and removing one leaves a required check that never reports. Change the ruleset in
@@ -122,9 +127,9 @@ jobs:
           # so a change to the patterns is always validated by the pull request that makes it.
           case "$LANGUAGE" in
             java-kotlin)
-              PATTERN='^(events-core/|events-bff/|events-importer/|detekt-rules/|gradle/|gradlew|build\.gradle\.kts$|settings\.gradle\.kts$|gradle\.properties$|\.github/workflows/codeql\.yml$)' ;;
+              PATTERN='^(events-core/|events-bff/|events-importer/|detekt-rules/|gradle/|gradlew|build\.gradle\.kts$|settings\.gradle\.kts$|gradle\.properties$|\.github/workflows/codeql\.yml$|\.github/codeql/)' ;;
             javascript-typescript)
-              PATTERN='^(events-frontend/|perf/|\.github/workflows/codeql\.yml$)' ;;
+              PATTERN='^(events-frontend/|perf/|docs/ops/dashboard/|\.github/workflows/codeql\.yml$|\.github/codeql/)' ;;
             actions)
               PATTERN='^\.github/' ;;
             *)
@@ -171,6 +176,10 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
+          # The one `paths-ignore`, and why it is a directory of venue pages and nothing wider
+          # (#1480). A change to that file re-runs every language: the relevance patterns above
+          # name `.github/codeql/`, and the `actions` pattern covers `.github/` whole.
+          config-file: .github/codeql/codeql-config.yml
           # **Off, because it was evicting every other cache in the repository** (#589).
           #
           # The `java-kotlin` analysis stores ~333 MB of Gradle dependencies per run. Within a day of
