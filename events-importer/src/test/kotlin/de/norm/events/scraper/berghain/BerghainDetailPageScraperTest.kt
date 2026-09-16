@@ -68,6 +68,20 @@ class BerghainDetailPageScraperTest {
         event.sourceId shouldBe "berghain:80784"
     }
 
+    // The Kantine writes a cancellation into the heading; the persistence boundary reads it (#1493).
+    @Test
+    fun `stores a heading that ends in Abgesagt as a cancelled event under the bare name`() {
+        val url = "https://www.berghain.berlin/de/event/82554/"
+        val event = scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-cancelled.html"), url), url)!!
+
+        event.title shouldBe "Olga Myko - Abgesagt"
+        event.eventDate shouldBe LocalDate.of(2026, 9, 16)
+        val entity = event.toEventEntity(venueId = 1, venueSlug = "kantine-am-berghain", eventSourceId = 1)
+        entity.status shouldBe "CANCELLED"
+        entity.title shouldBe "Olga Myko"
+        entity.slug shouldBe "2026-09-16-kantine-am-berghain-olga-myko"
+    }
+
     @Test
     fun `returns null for a page without the main container`() {
         val url = "https://www.berghain.berlin/de/event/1/"

@@ -117,6 +117,29 @@ class BerghainOverviewPageScraperTest {
         events.shouldBeEmpty()
     }
 
+    // The Kantine writes a cancellation into the heading; the persistence boundary reads it (#1493).
+    @Test
+    fun `stores a heading that ends in Abgesagt as a cancelled concert under the bare name`() {
+        val html =
+            """
+            <html><body>
+              <a href="/de/event/82554/">
+                <p>Mittwoch <span class="font-bold">16.09.2026</span> tür 19:00 beginn 20:00</p>
+                <h2>Olga Myko - Abgesagt</h2>
+                <h3>Kantine am Berghain</h3>
+                <h4><span class="font-bold"><span>Olga Myko</span> <span class="uppercase">Live</span></span></h4>
+              </a>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, kantineUrl), kantineUrl).single()
+
+        event.title shouldBe "Olga Myko - Abgesagt"
+        event.artists.map { it.name } shouldBe listOf("Olga Myko")
+        val entity = event.toEventEntity(venueId = 1, venueSlug = "kantine-am-berghain", eventSourceId = 1)
+        entity.status shouldBe "CANCELLED"
+        entity.title shouldBe "Olga Myko"
+    }
+
     @Test
     fun `skips a block with no title or unparseable date without aborting the import`() {
         val html =

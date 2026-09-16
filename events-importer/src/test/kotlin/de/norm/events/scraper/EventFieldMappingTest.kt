@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -175,6 +176,48 @@ class EventFieldMappingTest {
         parseEventStatus("Ausverkauft") shouldBe "SCHEDULED"
         parseEventStatus("Sold Out") shouldBe "SCHEDULED"
         parseEventStatus("") shouldBe "SCHEDULED"
+    }
+
+    @Test
+    fun `parseEventStatus reads the other German cancellation, with or without the umlaut`() {
+        parseEventStatus("fällt aus") shouldBe "CANCELLED"
+        parseEventStatus("faellt leider aus!") shouldBe "CANCELLED"
+        parseEventStatus("Entfällt") shouldBe "CANCELLED"
+    }
+
+    // --- parseTitleStatus / stripTitleStatusMarker (#1493) ---
+
+    @Test
+    fun `parseTitleStatus reads a status a venue wrote into the title`() {
+        parseTitleStatus("Olga Myko - Abgesagt") shouldBe "CANCELLED"
+        parseTitleStatus("Da Konzert von Scarfold und Los Mierda faellt leider aus!") shouldBe "CANCELLED"
+        parseTitleStatus("CANCELLED: The Act") shouldBe "CANCELLED"
+        parseTitleStatus("The Act (verschoben)") shouldBe "POSTPONED"
+        parseTitleStatus("Verlegt ins Bi Nuu – BRKN") shouldBe "RELOCATED"
+    }
+
+    @Test
+    fun `parseTitleStatus reads nothing into a title that only resembles a notice`() {
+        parseTitleStatus("Berliner Weisse").shouldBeNull()
+        // Prose, not a badge: the bare "cancel" a badge may carry is not a title marker.
+        parseTitleStatus("Cancel Culture – Ein Film").shouldBeNull()
+        parseTitleStatus("Ausfall der Sinne").shouldBeNull()
+    }
+
+    @Test
+    fun `stripTitleStatusMarker removes a cancellation glued to either end of a name`() {
+        stripTitleStatusMarker("Olga Myko - Abgesagt") shouldBe "Olga Myko"
+        stripTitleStatusMarker("The Act [ABGESAGT!]") shouldBe "The Act"
+        stripTitleStatusMarker("(cancelled) The Act") shouldBe "The Act"
+        stripTitleStatusMarker("Cancelled: The Act") shouldBe "The Act"
+    }
+
+    @Test
+    fun `stripTitleStatusMarker leaves a sentence that is the notice, and a marker-free title, alone`() {
+        stripTitleStatusMarker("Da Konzert von Scarfold und Los Mierda faellt leider aus!") shouldBe
+            "Da Konzert von Scarfold und Los Mierda faellt leider aus!"
+        stripTitleStatusMarker("Berliner Weisse") shouldBe "Berliner Weisse"
+        stripTitleStatusMarker("Abgesagt") shouldBe "Abgesagt"
     }
 
     // --- parseSchemaEventStatus ---

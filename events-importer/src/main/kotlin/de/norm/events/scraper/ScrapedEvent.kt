@@ -117,6 +117,11 @@ data class ScrapedEvent(
         // Guard the doors ≤ start invariant: a source that lists them the wrong way round
         // (e.g. SO36's "Einlass: 19:30, Beginn: 19:00") has transposed the labels — swap back.
         val (doors, start) = orderDoorsBeforeStart(doorsTime, startTime)
+        // A venue with no status badge writes the cancellation into the title (#1493). The title
+        // decides only where the scraper found nothing, and a marker glued to a name comes off.
+        val badge = EventStatus.parseOrDefault(status)
+        val storedStatus = if (badge == EventStatus.SCHEDULED) parseTitleStatus(title) ?: badge.name else badge.name
+        val storedTitle = stripTitleStatusMarker(title)
         val storedDescription = if (licences.withholdsDescription()) null else description
         val detected = DescriptionLanguage.detect(storedDescription)
         // The second-language text is not scraped, it is derived from the description after the
@@ -135,7 +140,7 @@ data class ScrapedEvent(
             createdAt = existing?.createdAt,
             venueId = venueId,
             eventSourceId = eventSourceId,
-            title = title,
+            title = storedTitle,
             subtitle = subtitle,
             // A source that forbids its prose gets none of it stored, not merely hidden (#807).
             // Blanking on read would leave the § 16 reproduction in place, and this is the only
@@ -155,9 +160,9 @@ data class ScrapedEvent(
             // promote an under-classified festival title (a "Konzert"-labelled festival
             // day, or a category-less "… Festival") to FESTIVAL, or recover a
             // reading/exhibition/screening a venue filed under the genre field.
-            eventType = resolveEventType(eventType, title, genre).name,
-            status = EventStatus.parseOrDefault(status).name,
-            slug = SlugGenerator.slugify(listOfNotNull(eventDate, venueSlug, title, slugDiscriminator).joinToString("-")),
+            eventType = resolveEventType(eventType, storedTitle, genre).name,
+            status = storedStatus,
+            slug = SlugGenerator.slugify(listOfNotNull(eventDate, venueSlug, storedTitle, slugDiscriminator).joinToString("-")),
             eventDate = eventDate,
             doorsTime = doors,
             startTime = start,
@@ -174,7 +179,7 @@ data class ScrapedEvent(
             priceNote = priceNote,
             soldOut = soldOut,
             // Honour an explicit scraper flag, otherwise derive from prices/note/title.
-            free = free || detectFree(pricePresale, priceBoxOffice, priceNote, title)
+            free = free || detectFree(pricePresale, priceBoxOffice, priceNote, storedTitle)
         )
     }
 }
