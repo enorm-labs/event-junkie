@@ -26,6 +26,15 @@
 # force-fetch trigger under "New Event Sources" (#1162, in v0.4.0's notes). A new venue adds a class named
 # `*Importer.kt` in its own package under `scraper/`, and nothing else does.
 #
+# **`feat` is reserved for what a visitor to the site can see, and this check goes red on any
+# other.** Two things read the type as a promise to the visitor: `scripts/version.sh deserved`
+# makes a `feat` a minor (ADR-025), and the release notes open with the features. So `feat(ci)`
+# moved the number and led the Highlights with a scanner — v0.17.0 was a minor for five of them
+# and nothing on the site had changed. A new CI capability is `ci`, a chart or cluster change
+# `chore(deploy)` or `build`, a skill `chore(agents)`; `fix` and `perf` stay open to any scope,
+# because a fixed pipeline is honestly a fix, and both earn a patch. The labels are still applied
+# on a red run, so the notes stay right while the title is being corrected.
+#
 # Conventional Commits Spec: https://www.conventionalcommits.org/en/v1.0.0/
 #
 # Runs on pull_request_target because a `pull_request` run from a fork gets a read-only
@@ -87,6 +96,9 @@ jobs:
             // The Conventional Commits types that map 1:1 onto a label of the same name.
             // `breaking-change` and `importer` are derived below instead.
             const TYPES = new Set(['feat', 'fix', 'perf', 'refactor', 'docs', 'test', 'build', 'ci', 'style', 'chore', 'revert']);
+            // The scopes a visitor to the site can see, and the only ones `feat` is allowed. Grows
+            // when the site grows a surface; never for a pipeline, a chart, a script or an agent.
+            const PRODUCT_SCOPES = new Set(['frontend', 'events', 'promoters', 'venues', 'artists', 'importer', 'scraper', 'bff', 'images', 'branding']);
 
             // A new event source: an importer class added in its own package under `scraper/`.
             // The package's other files (scrapers, fixtures) and the shared classes at the top of
@@ -102,8 +114,18 @@ jobs:
               return;
             }
 
-            const [, rawType, , bang] = match;
+            const [, rawType, rawScope, bang] = match;
             const type = rawType.toLowerCase();
+            const scope = (rawScope ?? '').trim().toLowerCase();
+
+            // `setFailed` marks the run and carries on, so the labels below are still applied.
+            if (type === 'feat' && !PRODUCT_SCOPES.has(scope)) {
+              const shown = scope ? `feat(${scope})` : 'feat';
+              core.setFailed(`"${shown}" is not a product feature: \`feat\` is reserved for a change a visitor to the site can see, ` +
+                             `in one of these scopes: ${[...PRODUCT_SCOPES].join(', ')}. ` +
+                             'A CI capability is `ci`, a chart or cluster change `chore(deploy)` or `build`, a skill `chore(agents)`. ' +
+                             'Retitle the pull request; the check re-runs on the edit.');
+            }
             // Either the `!` marker or a BREAKING CHANGE footer marks a breaking change.
             const breaking = Boolean(bang) || /^BREAKING[ -]CHANGE:/m.test(pr.body ?? '');
 

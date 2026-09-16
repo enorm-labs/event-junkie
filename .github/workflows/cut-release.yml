@@ -16,10 +16,19 @@ name: Cut release
 # `>=0.0.0-0` range keeps resolving the release itself and nothing reports it (#455). Doing both
 # halves in one run is the whole point.
 #
-# **The notes open with a summary.** `scripts/release-highlights.sh` names the few changes a visitor
-# to the site would notice, above the label buckets `.github/release.yml` groups everything into.
-# That file also drops this project's own version bumps from the notes, by author: they are
-# bookkeeping, and there is one in every release cycle.
+# **The notes open with a summary, written for a visitor to the site.** Claude, driven by this
+# repository's own `/release-highlights` prompt, reads the commits since the last tag and names the
+# few changes a visitor would notice, in the visitor's words, above the label buckets
+# `.github/release.yml` groups everything into. Three sources, in order: the `highlights` input,
+# which is how the text a dry run printed is shipped unchanged; otherwise the model; otherwise
+# `scripts/release-highlights.sh`, which names the commits' subjects verbatim, so an outage at the
+# model delays no release. `.github/release.yml` also drops this project's own version bumps from
+# the notes, by author: they are bookkeeping, and there is one in every release cycle.
+#
+# **The model step cannot be tried from a branch.** The action runs only a workflow file that is
+# byte-identical to the copy on `main`, and reports success when it is not (ci-cd.instructions.md
+# § agent workloads). So a change to it is proved after it merges, by a dry run — which is the
+# default, and is where the highlights are read before a real cut anyway.
 #
 # **A release is a rebuild of what `main` already published as a snapshot**, so a red snapshot
 # publish is a red release: v0.3.10 was cut over four failed runs and left a tag with nothing
@@ -36,13 +45,26 @@ on:
         type: choice
         options: [ auto, minor, major ]
         default: auto
+      highlights:
+        description: >-
+          The Highlights section to ship, heading included, as a dry run printed it — edited or not.
+          Empty asks the model again, whose answer can differ from the one that was read.
+        type: string
+        default: ''
       notes:
         description: >-
-          A paragraph of its own for this release, between the generated summary and the categories.
-          The summary comes from scripts/release-highlights.sh; the categories from
+          A paragraph of its own for this release, between the highlights and the categories from
           .github/release.yml.
         type: string
         default: ''
+      model:
+        description: Model to write the highlights with
+        type: choice
+        default: claude-opus-4-8
+        options:
+          - claude-opus-4-8
+          - claude-opus-4-6
+          - claude-opus-5
       dry_run:
         description: >-
           Resolve the version and print the notes, creating nothing. On by default, the same posture
@@ -59,12 +81,15 @@ permissions:
   contents: read
   # To read release.yml's runs for the snapshot check below.
   actions: read
+  # The highlights step exchanges an OIDC token for the Claude App's, like every agent workload.
+  id-token: write
 
 jobs:
   cut:
     name: Cut the release and open the bump
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # Ten before the model wrote the highlights; its step alone is allowed five.
+    timeout-minutes: 20
 
     steps:
       # The whole history and every tag, because `deserved` measures from the last release tag.
@@ -173,20 +198,66 @@ jobs:
           fi
           echo "Snapshot publish for ${sha} is green: ${url}"
 
-      # The few changes worth naming, above the buckets `.github/release.yml` groups everything into.
-      # Written outside the working tree, like the notes below, so it cannot be swept into the bump
-      # commit. Empty for a release whose commits earn no highlight, and then the notes are
-      # unchanged rather than opening with a bare heading.
-      - name: Summarise what the release changes
+      # The few changes worth naming, above the buckets `.github/release.yml` groups everything into,
+      # in the words of a visitor to the site. Skipped when the operator pasted them in. Written
+      # outside the working tree, like the notes below, so it cannot be swept into the bump commit.
+      #
+      # `continue-on-error`, because the release must not wait on the model: the step below falls
+      # back to the script. `--allowedTools` is load-bearing, as in every agent workload — the prompt
+      # carries no frontmatter, so without it the agent has no shell and reads no history. No
+      # `github_token`, for the reason agent-security.yml records. `display_report` puts the agent's
+      # final message in the job summary, which is where its reason for writing nothing would be.
+      - name: Ask the model for the highlights
+        if: ${{ steps.version.outputs.raise != 'true' && inputs.highlights == '' }}
+        id: claude
+        continue-on-error: true
+        timeout-minutes: 5
+        uses: anthropics/claude-code-action@5ccc3a35a6367cdb8e6fbd0728287467540ecfe2 # v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          display_report: true
+          prompt: /release-highlights --out ${{ runner.temp }}/highlights.md --unattended
+          claude_args: |
+            --model ${{ inputs.model || 'claude-opus-4-8' }}
+            --max-turns 40
+            --allowedTools "Bash,Read,Glob,Grep"
+
+      # The one place that decides which text the release carries, and says which. The model step
+      # ends `outcome=success` having written nothing when the workflow file differs from `main`'s,
+      # so the file is what is checked, not the outcome: a file that opens with the heading is the
+      # model's answer, anything else is the script's turn.
+      - name: Settle the highlights
         if: ${{ steps.version.outputs.raise != 'true' }}
         id: highlights
+        env:
+          HIGHLIGHTS: ${{ inputs.highlights }}
+          CLAUDE_OUTCOME: ${{ steps.claude.outcome }}
         run: |
-          scripts/release-highlights.sh >"$RUNNER_TEMP/highlights.md"
-          if [ -s "$RUNNER_TEMP/highlights.md" ]; then
-            cat "$RUNNER_TEMP/highlights.md" >>"$GITHUB_STEP_SUMMARY"
+          file="$RUNNER_TEMP/highlights.md"
+          if [ -n "$HIGHLIGHTS" ]; then
+            source="the highlights input"
+            case "$HIGHLIGHTS" in
+              "## Highlights"*) printf '%s' "$HIGHLIGHTS" >"$file" ;;
+              *) printf '## Highlights\n\n%s' "$HIGHLIGHTS" >"$file" ;;
+            esac
+          elif [ -s "$file" ] && [ "$(head -1 "$file")" = "## Highlights" ]; then
+            source="the model"
           else
-            echo "No commit since the last release earns a highlight." >>"$GITHUB_STEP_SUMMARY"
+            echo "::warning::The model wrote no highlights (step outcome: ${CLAUDE_OUTCOME:-skipped}); scripts/release-highlights.sh writes them instead."
+            scripts/release-highlights.sh >"$file"
+            source="scripts/release-highlights.sh"
           fi
+          echo "source=$source" >>"$GITHUB_OUTPUT"
+          {
+            echo "_Highlights from $source:_"
+            echo
+            if [ -s "$file" ]; then
+              cat "$file"
+              echo
+            else
+              echo "No commit since the last release earns a highlight."
+            fi
+          } >>"$GITHUB_STEP_SUMMARY"
 
       # `generate-notes` renders what `gh release create --generate-notes` would produce and creates
       # nothing, so a dry run can show the notes rather than only the number. The categories come
@@ -303,6 +374,7 @@ jobs:
           RAISE: ${{ steps.version.outputs.raise }}
           AT_LEAST: ${{ inputs.at_least }}
           DRY_RUN: ${{ inputs.dry_run }}
+          HIGHLIGHTS_SOURCE: ${{ steps.highlights.outputs.source }}
         run: |
           {
             if [ "$RAISE" = true ]; then
@@ -321,6 +393,7 @@ jobs:
               echo "| Next | merge the raise pull request, wait for the snapshot publish, dispatch again |"
             else
               echo "| Release | \`v$VERSION\` |"
+              echo "| Highlights | from $HIGHLIGHTS_SOURCE |"
               echo "| Bump | \`$NEXT-SNAPSHOT\` |"
             fi
           } >>"$GITHUB_STEP_SUMMARY"

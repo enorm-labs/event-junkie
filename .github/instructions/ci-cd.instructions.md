@@ -91,7 +91,10 @@ validate`'s `resources found in N files`. A drop fails and names the update comm
 Scanned: 0` incident actually happened to — did not until #1087, and needed `"JSON"` added
           to `formats` in `build.gradle.kts` to get a count at all.
     - `label-pr.yml` — Derives the type labels from the Conventional Commits PR title (`fix(api)!: …` → `fix` + `breaking-change`) and the `importer` label
-      from the files: an added `*Importer.kt` in its own package under `scraper/` is a new event source, whatever the scope says. The scope rule it replaced
+      from the files. **It goes red on a `feat` outside a product scope** (`frontend`, `events`, `promoters`, `venues`, `artists`, `importer`, `scraper`,
+      `bff`, `images`, `branding`), labels still applied: a `feat` earns a minor and opens the release notes, and `feat(ci)` had done both for a scanner
+      (v0.17.0). It is not a required check, so the red is a signal to retitle rather than a block. The `importer` label
+      comes from the files: an added `*Importer.kt` in its own package under `scraper/` is a new event source, whatever the scope says. The scope rule it replaced
       filed the dropped-events counter and the force-fetch trigger under "New Event Sources", because `scraper` and `importer` both carry infrastructure
       work too. Via `actions/github-script`; creates any missing label on demand and re-syncs on a title edit or a push. Uses `pull_request_target` so fork
       PRs get a writable token; safe because it never checks out or runs PR code — listing file paths through the REST API executes nothing.
@@ -510,10 +513,14 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
   precede general ones (`feat`, `build`). Label a PR `ignore-for-release` to keep it out of the notes entirely. **The release App's own pull requests are
   excluded by author**: `cut-release.yml` opens a bump after every release and a raise whenever the tree says less than the commits deserve, and those are the
   only pull requests it ever opens — bookkeeping, in every release cycle, that told a reader nothing.
-- **A summary sits above those categories**, written by [`scripts/release-highlights.sh`](../../scripts/release-highlights.sh) and prepended by
-  `cut-release.yml`: one counted sentence and at most five changes a visitor to the site would notice, breaking changes first. Everything else — chores, CI,
-  docs, tests, refactors and dependency bumps — is left to the categories. It prints nothing when no commit qualifies, so a maintenance release keeps plain
-  notes instead of an empty heading. `scripts/release-highlights-test.sh` asserts each rule, from `validate-scripts.yml`.
+- **A summary sits above those categories, written for a visitor to the site.** `cut-release.yml` runs
+  [`/release-highlights`](../prompts/release-highlights.prompt.md) through `claude-code-action`, the same wiring as the agent workloads: the model reads
+  the commits since the last tag, keeps what shows on the site, and writes three to five bullets in the visitor's words — no scopes, no identifiers — or
+  one line saying nothing visible changed. Three sources, in order, and the run summary names the one used: the `highlights` input, which is how a dry
+  run's text ships unchanged; the model; and [`scripts/release-highlights.sh`](../../scripts/release-highlights.sh), which names the commits' subjects
+  verbatim and is what runs when the model step wrote nothing — it is `continue-on-error`, and it reports success without running when the workflow file
+  differs from `main`'s, so the file is what the next step checks and never the outcome. `scripts/release-highlights-test.sh` still asserts the
+  fallback's rules, from `validate-scripts.yml`.
 - **Opening a PR** — the `/open-pr` skill (`.github/prompts/open-pr.prompt.md`) runs the full ship flow: cut a branch, commit with a Conventional Commits
   message, push, and open the PR via `gh`. Invoking it is the explicit go-ahead for the commit/push that the "no unsolicited commits/pushes" rule above
   otherwise withholds.

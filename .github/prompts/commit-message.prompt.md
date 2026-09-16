@@ -16,6 +16,10 @@ for readability, not at a fixed column width.
   The conversation often contains motivation, root cause analysis, and design trade-offs that the diff alone doesn't reveal.
 - Look at the staged diff (`git --no-pager diff --staged`) to understand what changed.
 - Infer the type and scope from the nature of the changes.
+- **`feat` only for a change a visitor to the site can see**, in a product scope: `frontend`, `events`, `promoters`, `venues`, `artists`, `importer`,
+  `scraper`, `bff`, `images`, `branding`. A `feat` earns a minor (`scripts/version.sh deserved`) and opens the release notes, and `label-pr.yml` goes red
+  on one outside those scopes. A new CI capability is `ci`, a chart or cluster change `chore(deploy)` or `build`, a skill or prompt `chore(agents)`, a
+  script `chore(scripts)`. `fix` and `perf` take any scope: a repaired pipeline is honestly a `fix(ci)`.
 - Keep the message useful for someone reading `git log` months later.
 
 ---

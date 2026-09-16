@@ -8,6 +8,11 @@ a tree that says less. A `feat` earns a minor, a breaking change a major (a mino
 **Implemented in [#1163](https://github.com/enorm-labs/event-junkie/pull/1163) on 2026-09-05.** `scripts/version.sh deserved` applies the rule,
 `scripts/version-deserved-test.sh` asserts it, and the first dry run on `main` reported "not cut, raise to 0.4.0" as designed.
 
+**Amended (2026-09-16): `feat` is reserved for a change a visitor to the site can see**, in a product scope. `label-pr.yml` goes red on any other.
+The rule below read "a `feat` in any scope". By then twenty `feat(ci)`, forty-five `feat(deploy)` and nine `feat(agents)` earned minors. v0.17.0 was a
+minor for five of them, with nothing on the site changed. The _When to revisit_ entry on a title check fired early, for a different reason than a second
+committer. A new CI capability is `ci`, a chart change `chore(deploy)` or `build`, a skill `chore(agents)`. `fix` and `perf` keep any scope.
+
 **Does not supersede anything.** [ADR-016](ADR-016_GITOPS_DELIVERY.md) decided how a version reaches a cluster and constrained the snapshot scheme to
 order. It did not decide what number a release gets. [DEVELOPMENT.md §Versions](../DEVELOPMENT.md#versions-and-cutting-a-release) records the scheme
 and the four files. This ADR decides the one thing both left to a person: how far the number moves.
@@ -58,7 +63,7 @@ Option 2. The number is read from the commits since the last release tag and the
 
 - A breaking change, marked `!` in the subject or `BREAKING CHANGE:` in the body, is a **major**. Before `1.0.0` it is a **minor**, because SemVer §4 says a
   `0.y.z` release may change anything, and the minor is the number that signals it.
-- A `feat` in any scope is a **minor**. A new event source is a `feat`.
+- A `feat` in any scope is a **minor**. A new event source is a `feat`. (Amended: `feat` in a product scope only, see Status.)
 - Everything else is a **patch**. A subject that is not Conventional Commits is a patch and is listed, so an unlabelled feature is visible.
 - A revert is a patch. The commits it reverts still count, and undoing that is a judgement the rule does not make.
 - `at_least` is a floor on the dispatch, for the one decision the commits cannot show. `1.0.0` is cut with `major`. The floor never lowers the verdict.
