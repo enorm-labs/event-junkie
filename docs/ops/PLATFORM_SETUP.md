@@ -848,7 +848,7 @@ What had to be added — all of it now in place except where noted:
 | 2   | **Default-deny NetworkPolicies per namespace**                           | Enforcement being _on_ means nothing while every pod may talk to every pod. Deny, then allow. `event-junkie`, `observability` and `cert-manager`; `flux-system` deliberately not — below                                     |
 | 3   | **The importer's admin API is cluster-internal only**                    | ADR-012 is explicit. No Ingress rule, ever. `kubectl port-forward` is the launch answer                                                                                                                                      |
 | 4   | **The admin frontend is not deployed at launch**                         | Runs locally against the port-forward. When it _is_ deployed, §8.1's WireGuard is its access control                                                                                                                         |
-| 5   | **Pod Security Admission, per namespace**                                | Blocks privileged pods, host mounts, root. Four namespaces at `restricted`, one deliberately not — the table below                                                                                                           |
+| 5   | **Pod Security Admission, per namespace**                                | Blocks privileged pods, host mounts, root. Five namespaces at `restricted`, one deliberately not — the table below                                                                                                           |
 | 6   | **Non-root, read-only rootfs, drop ALL capabilities**                    | In the Helm chart's `securityContext`. The JVM and nginx images both cope                                                                                                                                                    |
 | 7   | **A ServiceAccount per workload, `automountServiceAccountToken: false`** | Default is the namespace's SA with a mounted token — a container escape becomes an API credential                                                                                                                            |
 | 8   | **SOPS + age for secrets**                                               | Encrypted in git, decrypted at apply. Simpler than Sealed Secrets for one developer, and it survives a cluster rebuild — which Sealed Secrets does not, since the key lives in the cluster                                   |
@@ -916,15 +916,20 @@ namespace whose failure costs metrics (#662).
 | `cert-manager`                   | `restricted`     | verified against the pinned v1.21.1 render — three Deployments and the startupapicheck Job        |
 | `flux-system`                    | `restricted`     | verified against the pinned `gotk-components.yaml` — all four controllers                         |
 | `default`                        | `restricted`     | nothing runs there, and enforcing is what stops it becoming somewhere things do                   |
-| `observability`                  | **`privileged`** | the collector agent DaemonSet mounts `/`, `/var/log` and `/var/lib/docker/containers` — see below |
+| `observability`                  | `restricted`     | verified by a server dry run of the label on both clusters, once the agent had moved out (#709)   |
+| `observability-agent`            | **`privileged`** | the collector agent DaemonSet mounts `/`, `/var/log` and `/var/lib/docker/containers` — see below |
 | `kube-system`                    | **exempt**       | k3s's own components need host mounts and privileged pods; a blanket sweep breaks the cluster     |
 | `kube-node-lease`, `kube-public` | **exempt**       | no pods, ever. Labelling them buys nothing and adds two objects Flux would then own               |
 
-**`observability` enforces nothing, and its `audit`/`warn` labels are the point.** `hostPath` is a restricted field in `baseline` as well as `restricted`, so
-no enforcing level admits the collector agent. Rejecting it means losing every log line in the cluster. What the namespace does carry is `audit: restricted`
-and `warn: restricted`, which record every violation without rejecting it. The next workload added there therefore arrives with its violations named. Real
-enforcement needs the agent moved to a namespace of its own, since PSA has no per-workload exemption. That is
-[#709](https://github.com/enorm-labs/event-junkie/issues/709).
+**`observability-agent` enforces nothing, and its `audit`/`warn` labels are the point.** `hostPath` is a restricted field in `baseline` as well as
+`restricted`, so no enforcing level admits the collector agent. Rejecting it means losing every log line in the cluster. PSA has no per-workload exemption, so
+the agent has a namespace to itself (#709): one DaemonSet, one ServiceAccount, no credential. `observability` then enforces `restricted` around OpenObserve,
+the gateway, the exporter and the bridge. What the agent's namespace does carry is `audit: restricted` and `warn: restricted`. They record every violation
+without rejecting it. The agent itself is named on every restart, by design. Anything else added there arrives with its violations named too.
+
+**The dry run is the check, not the label.** `kubectl label --dry-run=server --overwrite ns observability pod-security.kubernetes.io/enforce=restricted`
+names every running pod the level would reject. Before #709 it named three. Two of them, the gateway and OpenObserve, were fixed by values rather than by
+moving: `allowPrivilegeEscalation: false`, `capabilities.drop: ALL` and a `RuntimeDefault` seccomp profile. Re-run it before bumping either chart.
 
 Two things worth having written down before touching items 2 or 5:
 

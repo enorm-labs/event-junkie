@@ -13,8 +13,8 @@ resources:
   # nothing but a `flux bootstrap` re-run — and the `decryption` patch then renders, merges and
   # never reaches the cluster (#416). **Rendering is not applying.**
   - flux-system
-  # The four namespaces, the cert-manager and OpenObserve chart repositories, PostgreSQL metrics and
-  # the collector, shared with staging (#953, #1080). The namespaces are declared rather than left to
+  # The five namespaces, the cert-manager and OpenObserve chart repositories, PostgreSQL metrics and
+  # the two collectors, shared with staging (#953, #1080). The namespaces are declared rather than left to
   # `createNamespace: true`, which creates an unlabelled one PSA cannot govern (#604).
   - ../base
   # Encrypted; decrypted by the sops-age patch in flux-system/kustomization.yaml, which is exactly
@@ -42,6 +42,15 @@ patches:
   - target:
       kind: HelmRelease
       name: openobserve-collector
+    patch: |
+      - op: replace
+        path: /spec/values/k8sCluster
+        value: production
+  # Twice, because the agent is its own release since #709. One patch with a name regex would also
+  # work and would hide a third release; two literal targets fail loudly when either is renamed.
+  - target:
+      kind: HelmRelease
+      name: openobserve-collector-agent
     patch: |
       - op: replace
         path: /spec/values/k8sCluster

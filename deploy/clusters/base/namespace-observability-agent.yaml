@@ -1,0 +1,34 @@
+# comment-lint: allow-file 12 lines of Namespace, and the reason it enforces nothing does not fit in 12.
+# The namespace the collector agent DaemonSet runs in, alone (#709).
+#
+# **This namespace enforces nothing, and that is the honest state rather than an oversight.** The
+# agent collects every log line in the cluster by mounting the node — rendering `openobserve-collector`
+# 0.4.6, the version `collector.yaml` pins, gives `hostPath` mounts of `/`, `/var/log` and
+# `/var/lib/docker/containers`, and the checkpoint the postRenderer adds is a fourth. `hostPath` is
+# restricted in **both** `restricted` and `baseline`, so neither level admits this pod. `privileged`
+# is not a preference here; it is the only level that does not reject the agent, and a rejected agent
+# is a log pipeline that stops quietly, the way #625 did.
+#
+# **What the split buys is the blast radius.** Pod Security Admission is a namespace label with no
+# per-workload exemption, so before #709 this one pod held OpenObserve, the Postgres exporter, the
+# Signal bridge and the gateway at `privileged` beside it. Now the ungoverned namespace holds one
+# DaemonSet, one ServiceAccount and nothing with a credential in it, and `observability` enforces
+# `restricted` like the application namespace does.
+#
+# **`audit` and `warn` will name the agent on every restart, and that is the design.** They record
+# and report every violation without rejecting it, so the agent's own drift — a new mount, a new
+# capability — arrives named rather than silent, and so does anything else that lands here by
+# mistake. Read them as "this pod is the reason the level is what it is", not as a finding.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability-agent
+  labels:
+    # NOT ENFORCING. See the header — the agent's hostPath mounts are inadmissible under every level
+    # except this one, and rejecting it costs the cluster its logs.
+    pod-security.kubernetes.io/enforce: privileged
+    # The half that does work. Every violation is recorded and reported without being rejected.
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+    app.kubernetes.io/part-of: event-junkie
+    app.kubernetes.io/managed-by: flux

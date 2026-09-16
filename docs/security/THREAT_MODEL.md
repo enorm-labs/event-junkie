@@ -15,7 +15,8 @@ Every _mitigated_ row names the file that does the work. A reader can check each
   staging on the WireGuard tunnel only.
 - **The strongest credential in the system is write access to `main`.** What lands there is what the cluster runs
   ([ADR-016](../adr/ADR-016_GITOPS_DELIVERY.md)). Three GitHub Apps can open a pull request there. A required check refuses the unlisted one (#1424).
-- **The top open threats** are in §3. An unsigned chart that Flux does not verify, and a `privileged` namespace.
+- **No open threat is ranked in §3 today.** The last two — an unsigned chart on production (#1425) and a `privileged` namespace (#709) — are closed. The
+  accepted rows there are the trade-offs still standing.
 
 ## 1 · What we are working on
 
@@ -52,7 +53,8 @@ flowchart LR
             end
             flux["flux-system"]
             certmgr["cert-manager"]
-            obs["observability · privileged"]
+            obs["observability · restricted"]
+            agent["observability-agent · privileged"]
         end
         pg[("PostgreSQL · private network")]
         s3[("Object Storage · images · backups")]
@@ -234,7 +236,8 @@ That App holds `contents`, `pull_requests`, `workflows` and `actions` at `write`
 | Threat                                       | STRIDE | Likelihood | Impact | Status                                                                                                                   |
 | -------------------------------------------- | ------ | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------ |
 | A pod escapes to the node                    | E      | low        | high   | Mitigated. Pod Security `restricted` on `event-junkie`, `default` and `cert-manager`. Containers run as UID 10001 (#448) |
-| A pod in `observability` escapes to the node | E      | low        | high   | Open. The namespace enforces `privileged` because the collector agent mounts the node. #709                              |
+| A pod in `observability` escapes to the node | E      | low        | high   | Mitigated. `restricted` since #709; the collector agent that held it at `privileged` runs alone in `observability-agent` |
+| The collector agent escapes to the node      | E      | low        | high   | Accepted. It reads every container log by mounting `/var/log`, so no level admits it. Alone in its namespace (#709)      |
 | A leaked credential's liveness is unknown    | I      | low        | low    | Mitigated. `secret_scanning_validity_checks` is on (#1427), beside secret scanning and push protection                   |
 | A debug pod has unrestricted egress          | E      | low        | medium | Mitigated. `default-deny` selects every pod in the namespace, not only the chart's                                       |
 
@@ -242,7 +245,7 @@ That App holds `contents`, `pull_requests`, `workflows` and `actions` at `write`
 
 ### Open, ranked
 
-1. **#709 — `observability` is `privileged`.** Likelihood low, impact high. Move the collector agent to its own namespace.
+None. The last entry, #709, closed when the collector agent moved out of `observability`. A new row in §2 whose status starts with _Open_ goes here.
 
 ### Accepted
 
@@ -255,6 +258,8 @@ Each of these is a choice. A reviewer who disagrees with one changes the row and
 - The images key can write to every bucket the account holds. Hetzner scopes a key to a bucket, not a verb.
 - Venue text can steer a translation. The result is text, rendered escaped.
 - One operator, so repudiation is not a threat this system defends against.
+- The collector agent runs `privileged`. Reading every container log means mounting the node, and Pod Security has no per-workload exemption. So it
+  has a namespace to itself, and nothing else lives there (#709).
 - An App with `contents: write` can push onto a person's open, auto-merge-armed branch. The check that gates merges cannot see who pushed, and
   the ruleset that could stop it broke auto-merge (#1424).
 

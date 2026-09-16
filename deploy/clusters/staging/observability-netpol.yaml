@@ -1,4 +1,4 @@
-# comment-lint: allow 19 of these lines are the arrow inventory, and the rest are silent-failure traps
+# comment-lint: allow 17 of these lines are the arrow inventory, and the rest are silent-failure traps
 # Default-deny for the `observability` namespace, plus one named allowance per real conversation
 # (#662). This replaces `openobserve-netpol.yaml`, whose egress rules are folded in below.
 #
@@ -12,19 +12,17 @@
 # document intent and enforce nothing. Read the allowances as the architecture: **an arrow not written
 # down does not happen**, and every one was read off the pinned charts rather than guessed.
 #
-#     agent            -> OpenObserve:5080          otlphttp export
-#     agent            -> kubelet:10250             the kubeletstats receiver
+#     agent            -> OpenObserve:5080          otlphttp export, from `observability-agent` (#709)
 #     gateway          -> OpenObserve:5080          otlphttp export
 #     gateway          -> apiserver:6443            27 k8sobjects receivers, through the node
 #     gateway          -> node:10250/6443/…         the cadvisor and control-plane scrape jobs
 #     gateway          -> coredns:9153              the coredns scrape job
 #     gateway          -> event-junkie:9001         prometheus-autodiscovery, the app's meters
 #     gateway          -> postgres-exporter:9187    the database's meters
-#     gateway          -> collectors:8888           the collectors' own meters
+#     gateway          -> collectors:8888           the collectors' own meters, the agent's across a namespace
 #     gateway          -> kube-state-metrics:8080   `kube_*`, which `ej-site-down` reads
 #     gateway          -> flux-system:8080          `gotk_*` and the reconcile meters
 #     gateway          -> traefik:9100              the edge's request counts and latencies
-#     agent            -> apiserver:6443            the k8sattributes processor
 #     otel-operator    -> apiserver:6443            reconciling the two collector CRs
 #     postgres-exporter-> 10.1.1.10:5432            the only pod here that may reach the private network
 #     OpenObserve      -> the internet:443          Hetzner Object Storage, where the data lives
@@ -35,10 +33,14 @@
 # **Two selector hazards, both silent.** The operator labels both collector pods
 # `app.kubernetes.io/name: openobserve-collector` — the *chart* name — so `name` cannot tell agent
 # from gateway. The discriminator is `app.kubernetes.io/instance`, set to `<namespace>.<collector>`,
-# which embeds **both the namespace and the Helm release name (`o2c`)**: renaming the release, or
-# moving the agent to its own namespace as #709 proposes, invalidates these selectors without
-# erroring — a `podSelector` matching nothing just leaves the pod under the deny-all, and a collector
-# that cannot reach OpenObserve queues, retries and drops, which is what #625 looked like for days.
+# which embeds **both the namespace and the Helm release name (`o2c`)**: renaming the release
+# invalidates these selectors without erroring — a `podSelector` matching nothing just leaves the
+# pod under the deny-all, and a collector that cannot reach OpenObserve queues, retries and drops,
+# which is what #625 looked like for days. #709 moved the agent to `observability-agent`, so its
+# selector reads `observability-agent.o2c-agent-…` and lives in `observability-agent-netpol.yaml`;
+# **the two arrows that cross that boundary are written twice**, an egress in one file and the
+# matching ingress in the other, each naming the other namespace by `kubernetes.io/metadata.name`
+# beside the pod labels — a `podSelector` alone never matches a pod in another namespace.
 # Verify with `kubectl -n observability get pods --show-labels`, not by reading this file. Second:
 # **the node is reached by port, not address** — its address is public here and changed once when
 # #271 resized it, so `ipBlock: 0.0.0.0/0` bounded by port names no host and survives a rebuild.
@@ -121,46 +123,6 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: observability-allow-agent-egress
-  namespace: observability
-  annotations:
-    kubernetes.io/description: >-
-      The collector agent DaemonSet — the pod that reads every container log on the node. It ships them to OpenObserve and reads the kubelet, and needs nothing
-      else.
-spec:
-  podSelector:
-    matchLabels:
-      # NOT app.kubernetes.io/name — see the header. That label is the chart name and both
-      # collectors share it.
-      app.kubernetes.io/instance: observability.o2c-openobserve-collector-agent
-  policyTypes:
-    - Egress
-  egress:
-    - to:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: openobserve-standalone
-      ports:
-        - protocol: TCP
-          port: 5080
-
-    # The `kubeletstats` receiver on 10250, and the API server on 6443 for `k8sattributes` — the
-    # processor that names the pod every log line came from, and which the chart puts in all three of
-    # the agent's pipelines. By port rather than by address, because the node's is public on this
-    # cluster and has already changed once, and because 6443 is where the `kubernetes` service DNATs
-    # to. **An allowance on the service address would not work**; the operator's policy has why.
-    - to:
-        - ipBlock:
-            cidr: 0.0.0.0/0
-      ports:
-        - protocol: TCP
-          port: 10250
-        - protocol: TCP
-          port: 6443
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -248,7 +210,9 @@ spec:
         - protocol: TCP
           port: 9402
 
-    # The database's meters, and the collectors' own.
+    # The database's meters, and the collectors' own — this pod's, and the agent's one namespace
+    # over. The agent peer needs both selectors: without the `namespaceSelector` it is a rule about
+    # this namespace, matches nothing, and the agent's target reads `up=0` with no error anywhere.
     - to:
         - podSelector:
             matchLabels:
@@ -258,6 +222,12 @@ spec:
           port: 9187
     - to:
         - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: opentelemetry-collector
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability-agent
+          podSelector:
             matchLabels:
               app.kubernetes.io/component: opentelemetry-collector
       ports:
@@ -479,8 +449,17 @@ spec:
   policyTypes:
     - Ingress
   ingress:
+    # The gateway here, and the agent from `observability-agent` (#709). The second peer is the
+    # ingress half of `observability-agent-allow-agent-egress`; drop it and every log line in the
+    # cluster queues in the agent until it is dropped, which is what #625 looked like.
     - from:
         - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: opentelemetry-collector
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability-agent
+          podSelector:
             matchLabels:
               app.kubernetes.io/component: opentelemetry-collector
       ports:
@@ -494,7 +473,7 @@ metadata:
   namespace: observability
   annotations:
     kubernetes.io/description: >-
-      The gateway reaching the meters it collects inside this namespace — the Postgres exporter's, and the collectors' own. The matching half of its egress
+      The gateway reaching the meters it collects inside this namespace — the Postgres exporter's, and its own. The matching half of its egress
       policy; both are required, and omitting either produces a target that is silently unreachable.
 spec:
   podSelector:
