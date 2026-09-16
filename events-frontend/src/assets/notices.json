@@ -1723,7 +1723,7 @@
         },
         {
           "name": "postcss",
-          "version": "8.5.26",
+          "version": "8.5.28",
           "url": "https://github.com/postcss/postcss",
           "ecosystem": "frontend"
         },
@@ -1771,13 +1771,13 @@
         },
         {
           "name": "temporal-polyfill",
-          "version": "1.0.4",
+          "version": "1.0.5",
           "url": "https://github.com/fullcalendar/temporal-polyfill",
           "ecosystem": "frontend"
         },
         {
           "name": "temporal-utils",
-          "version": "1.0.2",
+          "version": "1.0.3",
           "url": "https://github.com/fullcalendar/temporal-polyfill",
           "ecosystem": "frontend"
         },
@@ -2089,7 +2089,7 @@
       "components": [
         {
           "name": "@lucide/vue",
-          "version": "1.43.0",
+          "version": "1.45.0",
           "url": "https://github.com/lucide-icons/lucide",
           "ecosystem": "frontend"
         },
