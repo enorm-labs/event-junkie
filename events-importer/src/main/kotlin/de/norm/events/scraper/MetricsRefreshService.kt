@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.time.Clock
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 /**
  * Keeps the gauges current, because a gauge in a reactive application cannot fetch its own value.
@@ -68,7 +69,7 @@ class MetricsRefreshService(
 
     /**
      * Publishes the per-source gauges: `last_success` for every source that has ever succeeded, and
-     * `has_succeeded` and `events_future` for **every** source.
+     * `has_succeeded`, `events_future` and `days_since_future_event` for **every** source.
      *
      * Republished every tick rather than once at start-up. That costs one query and buys two things:
      * the gauge exists within a minute of a restart rather than only after that source's next run —
@@ -90,13 +91,15 @@ class MetricsRefreshService(
      *
      * One extra query per tick, grouped over `event` on `idx_event_event_source_id`, inside the same
      * `try` as the rest: an unwell database freezes the gauges rather than killing the scheduler.
+     *
+     * `days_since_future_event` is today minus the source's newest event date, floored at zero, so a
+     * source holding a future event reads 0 and one whose programme ran out counts up from the day
+     * it did (#1498). A source with no event at all counts from the day its row was created: it
+     * has been quiet for exactly as long as it has existed, and a value it is, not an absence.
      */
     private suspend fun republishSourceState() {
-        val futureEventsBySourceId =
-            eventRepository
-                .countFuturePerSource(LocalDate.now(clock))
-                .toList()
-                .associate { it.eventSourceId to it.futureEvents }
+        val today = LocalDate.now(clock)
+        val rowsBySourceId = eventRepository.countFuturePerSource(today).toList().associateBy { it.eventSourceId }
 
         eventSourceRepository
             .findByEnabledTrue()
@@ -111,7 +114,14 @@ class MetricsRefreshService(
                 }
                 // Iterating the sources rather than the query result is the point: a source with no
                 // future events has no row, and it is the one the alert exists for.
-                metrics.publishFutureEvents(source.slug, source.id?.let { futureEventsBySourceId[it] } ?: 0L)
+                val row = source.id?.let { rowsBySourceId[it] }
+                metrics.publishFutureEvents(source.slug, row?.futureEvents ?: 0L)
+                val quietSince = row?.newestEventDate ?: source.createdAt?.atZone(clock.zone)?.toLocalDate() ?: today
+                metrics.publishDaysSinceFutureEvent(
+                    source.slug,
+                    days = maxOf(0L, ChronoUnit.DAYS.between(quietSince, today)),
+                    knownQuiet = source.slug in KNOWN_QUIET_SOURCES
+                )
             }
     }
 }

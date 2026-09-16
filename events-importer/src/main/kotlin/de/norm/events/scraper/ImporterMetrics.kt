@@ -71,6 +71,9 @@ class ImporterMetrics(
      */
     private val futureEvents = ConcurrentHashMap<String, AtomicLong>()
 
+    /** Days since each source last held a future event, backing the `days_since_future_event` gauge (#1498). */
+    private val daysSinceFutureEvent = ConcurrentHashMap<String, AtomicLong>()
+
     /**
      * Per-source, per-field coverage ratios. A `Double` holder rather than an [AtomicLong], because
      * this is the one meter here that is a fraction and rounding it to a long would make every value
@@ -286,6 +289,37 @@ class ImporterMetrics(
     }
 
     /**
+     * `importer.source.days_since_future_event{source,known_quiet}` — **how long this source has
+     * held no future event**, in days: 0 while it holds one, else today minus its newest event date
+     * (#1498).
+     *
+     * [SOURCE_EVENTS_FUTURE] says a source is at zero; this says for how long. `ej-source-emptied`
+     * reads the first against a week of history, so a source that emptied earlier than that, or
+     * never held twenty, is invisible to it for good — four sources sat at zero for a year and no
+     * rule could see them. A duration needs no history window: `> 30` is the rule.
+     *
+     * The `known_quiet` tag carries [KNOWN_QUIET_SOURCES] into the exposition, so the rule can
+     * select the sources nobody has accounted for and the panel can name the rest as known. Two
+     * values, both constants.
+     */
+    fun publishDaysSinceFutureEvent(
+        sourceSlug: String,
+        days: Long,
+        knownQuiet: Boolean
+    ) {
+        daysSinceFutureEvent
+            .computeIfAbsent(sourceSlug) { slug ->
+                val holder = AtomicLong(0)
+                registry.gauge(
+                    SOURCE_DAYS_SINCE_FUTURE_EVENT,
+                    Tags.of(TAG_SOURCE, slug, TAG_KNOWN_QUIET, knownQuiet.toString()),
+                    holder
+                ) { it.get().toDouble() }
+                holder
+            }.set(days)
+    }
+
+    /**
      * `importer.source.field_coverage{source,field}` — the fraction of a run's events carrying one
      * field (#472).
      *
@@ -438,6 +472,14 @@ class ImporterMetrics(
          * suffix costs.
          */
         const val SOURCE_EVENTS_FUTURE = "importer.source.events_future"
+
+        /**
+         * `importer.source.days_since_future_event{source,known_quiet}` — how long a source has been
+         * at zero, which [SOURCE_EVENTS_FUTURE] and its week of history cannot say (#1498). See
+         * [publishDaysSinceFutureEvent].
+         */
+        const val SOURCE_DAYS_SINCE_FUTURE_EVENT = "importer.source.days_since_future_event"
+        const val TAG_KNOWN_QUIET = "known_quiet"
         const val SOURCE_RUNNING = "importer.source.running"
 
         /**

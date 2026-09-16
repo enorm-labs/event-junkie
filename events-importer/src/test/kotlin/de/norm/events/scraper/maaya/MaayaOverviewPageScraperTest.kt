@@ -2,6 +2,7 @@ package de.norm.events.scraper.maaya
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -142,10 +143,11 @@ class MaayaOverviewPageScraperTest {
         events.all { it.artists.isEmpty() } shouldBe true
     }
 
+    // A page without the block is a redesign, and the run fails rather than reporting a quiet venue (#1498).
     @Test
-    fun `returns nothing when the programme section is gone`() {
+    fun `fails when the programme section is gone`() {
         val doc = Jsoup.parse("<html><body><section class='elementor-top-section'></section></body></html>", sourceUrl)
-        scraper.scrape(doc, sourceUrl).shouldBeEmpty()
+        shouldThrow<IllegalStateException> { scraper.scrape(doc, sourceUrl) }
     }
 
     @Test

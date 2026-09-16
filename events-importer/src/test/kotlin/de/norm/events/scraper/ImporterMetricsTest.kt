@@ -336,5 +336,26 @@ class ImporterMetricsTest {
                 .gauge()!!
                 .value() shouldBe 0.0
         }
+
+        // The rule selects on `known_quiet`, so the tag is asserted by the string a rule would write (#1498).
+        @Test
+        fun `days_since_future_event carries the source and whether it is known to be quiet`() {
+            metrics.publishDaysSinceFutureEvent("emptied-out", 41, knownQuiet = false)
+            metrics.publishDaysSinceFutureEvent("amt", 365, knownQuiet = true)
+            metrics.publishDaysSinceFutureEvent("emptied-out", 42, knownQuiet = false)
+
+            registry
+                .find("importer.source.days_since_future_event")
+                .tag("source", "emptied-out")
+                .tag("known_quiet", "false")
+                .gauge()!!
+                .value() shouldBe 42.0
+            registry
+                .find("importer.source.days_since_future_event")
+                .tag("source", "amt")
+                .tag("known_quiet", "true")
+                .gauge()!!
+                .value() shouldBe 365.0
+        }
     }
 }

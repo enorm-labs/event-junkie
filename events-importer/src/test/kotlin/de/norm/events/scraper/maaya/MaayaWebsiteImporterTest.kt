@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -78,16 +79,15 @@ class MaayaWebsiteImporterTest {
             result.shouldBeInstanceOf<ImportResult.NotModified>()
         }
 
+    // The failure reaches `EventImportService` and the source reads FAILED, not SUCCESS with nothing (#1498).
     @Test
-    fun `importEvents returns empty list for a page without a programme`() =
+    fun `importEvents fails for a page without a programme`() =
         runTest {
             val emptyDoc = Jsoup.parse("<html><body><main></main></body></html>", sourceUrl)
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
                 FetchResult.Success(document = emptyDoc, etag = null, lastModified = null)
 
-            val result = importer.importEvents(sourceUrl)
-            result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events.shouldBeEmpty()
+            shouldThrow<IllegalStateException> { importer.importEvents(sourceUrl) }
         }
 
     @Test
