@@ -148,7 +148,8 @@ jobs:
         if: steps.changed.outputs.result == 'changed'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ vars.RELEASE_APP_ID }}
+          # The numeric App id, which `client-id` accepts; cut-release.yml says why.
+          client-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
           # One permission. This job commits a file and pushes it, and does nothing else.
           permission-contents: write

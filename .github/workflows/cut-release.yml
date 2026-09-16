@@ -154,7 +154,10 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ vars.RELEASE_APP_ID }}
+          # `client-id` is the input's name since the action's v2.1 (`app-id` warns on every run), and
+          # it takes the numeric App id as well: the action reads one input or the other into the
+          # same field, and GitHub mints the JWT from either. The variable keeps the id it holds.
+          client-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
           # Narrowed to the two the job uses. Without these the token inherits everything the
           # installation holds, which today is the same two — and would silently widen the moment
