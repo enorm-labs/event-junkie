@@ -160,7 +160,7 @@ jobs:
       # --- Build the artifacts the images copy ---------------------------------------------------
 
       - name: Set up Java 25 (Temurin)
-        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: '25'
@@ -629,19 +629,19 @@ jobs:
       # happens when the scan itself died rather than found something.
       - name: Upload Trivy SARIF (bff)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('trivy-bff.sarif') != ''
-        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
         with:
           sarif_file: trivy-bff.sarif
           category: trivy-bff
       - name: Upload Trivy SARIF (importer)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('trivy-importer.sarif') != ''
-        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
         with:
           sarif_file: trivy-importer.sarif
           category: trivy-importer
       - name: Upload Trivy SARIF (frontend)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('trivy-frontend.sarif') != ''
-        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
         with:
           sarif_file: trivy-frontend.sarif
           category: trivy-frontend
