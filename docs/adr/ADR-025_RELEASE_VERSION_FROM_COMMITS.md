@@ -12,6 +12,8 @@ a tree that says less. A `feat` earns a minor, a breaking change a major (a mino
 The rule below read "a `feat` in any scope". By then twenty `feat(ci)`, forty-five `feat(deploy)` and nine `feat(agents)` earned minors. v0.17.0 was a
 minor for five of them, with nothing on the site changed. The _When to revisit_ entry on a title check fired early, for a different reason than a second
 committer. A new CI capability is `ci`, a chart change `chore(deploy)` or `build`, a skill `chore(agents)`. `fix` and `perf` keep any scope.
+`scripts/version.sh deserved` applies the same list: a `feat` outside it is a patch, listed as one. Two landed on `main` before the labeller became a
+required check. Without the list they made 0.18.0 of a cycle in which nothing on the site changed.
 
 **Does not supersede anything.** [ADR-016](ADR-016_GITOPS_DELIVERY.md) decided how a version reaches a cluster and constrained the snapshot scheme to
 order. It did not decide what number a release gets. [DEVELOPMENT.md §Versions](../DEVELOPMENT.md#versions-and-cutting-a-release) records the scheme
