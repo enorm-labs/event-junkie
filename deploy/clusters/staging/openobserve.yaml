@@ -74,6 +74,8 @@ spec:
     # dry run in `namespace-observability.yaml` named exactly them. `podSecurityContext` merges with
     # the chart's map, so `fsGroup`, `runAsUser` and `runAsGroup` keep their defaults. Object storage
     # is reached over HTTPS and 5080 is unprivileged, so dropping every capability costs nothing.
+    # `OnRootMismatch` skips the kubelet's chown of every inode on the data volume at each start
+    # (#1519): 13 GB and 1.26 million files on production, four minutes per pod start.
     securityContext:
       allowPrivilegeEscalation: false
       capabilities:
@@ -82,6 +84,7 @@ spec:
     podSecurityContext:
       seccompProfile:
         type: RuntimeDefault
+      fsGroupChangePolicy: OnRootMismatch
 
     auth:
       # Root credentials from the same hand-made Secret. The chart reads the two keys named here
