@@ -61,6 +61,9 @@ curl -fsS "$ORIGIN/api/events?from=$FROM&to=$TO&size=200&page=0"   # PageRespons
 Loop over `totalPages` and save every row to one JSON file under `temp/`. Then fetch the detail for each slug — `GET /api/events/{slug}` carries `sourceUrl`,
 `ticketUrl`, `description` and `lineup`, and the summary does not. These are requests to our own API and need no throttling beyond running them sequentially.
 
+Pull the default listing too — `GET /api/events?size=200` with no dates — and keep every row whose `eventDate` is before `$FROM`. `from=` excludes them,
+and they are the rows the site labels _Running since_: the read side's own verdict that an event is still on, which the last check in Step 3 tests.
+
 Report the shape before checking anything: rows in the window, rows per venue, and the count of venues with zero rows against the 86 the site registers. **A
 venue that always has events and has none tonight is itself a finding** — a source that failed silently looks exactly like a quiet night.
 
@@ -103,6 +106,7 @@ category in [`/data-quality-audit`](data-quality-audit.prompt.md), so a finding 
 | —                                    | Title empty, a placeholder (`TBA`, `TBC`, `-`), ALL CAPS, or the venue's own name [1]                                                                                      | A listing scraped as an event, or a title taken from the wrong element                                                           |
 | —                                    | Two rows at one venue with one date and near-identical titles [2]                                                                                                          | Cross-source duplicates, or a listing and its detail page both imported                                                          |
 | —                                    | Every row of one venue sharing one `startTime` [5]                                                                                                                         | The parser collapsed to a default                                                                                                |
+| —                                    | A default-listing row dated before today that is over: `endDate` past, or today with `endTime` behind the Berlin clock, or no end and outside the #299 grace               | The site says _Running since_ about a night that is over: the BFF window or `isPastEvent`, not a scraper                         |
 
 Category 6 of the audit, referential integrity, is the one this prompt cannot reach: join rows and orphans are invisible from the API, and the audit is
 where they are found.

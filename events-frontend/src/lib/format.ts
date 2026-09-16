@@ -170,6 +170,7 @@ export function addDays(isoDate: string, days: number): string {
 export type EventSpan = {
   eventDate?: string | null
   endDate?: string | null
+  endTime?: string | null
   startTime?: string | null
   doorsTime?: string | null
   assumedStartTime?: string | null
@@ -184,7 +185,9 @@ const GRACE_ENDS = '06:00'
 /**
  * Whether an event is over. It ends on `endDate` when the venue stated one, else on its date, and
  * today counts as not over — matching the importer's `dropPastEvents` and the BFF's default window
- * on `COALESCE(end_date, event_date)`; one function keeps the three agreeing (ADR-029).
+ * on `COALESCE(end_date, event_date)`; one function keeps the three agreeing (ADR-029). A stated
+ * `endTime` on today's date is over once the Berlin clock passes it: a night that ends at 04:00 is
+ * not still running at noon.
  *
  * Last night gets a grace (#299): before 06:00 Berlin, an event dated yesterday with no stated end
  * and an effective start of 22:00 or later (start, else doors, else the BFF's assumed slot) is not
@@ -194,7 +197,8 @@ export function isPastEvent(event: EventSpan): boolean {
   const ends = event.endDate ?? event.eventDate
   if (!ends) return false
   const today = todayIso()
-  if (ends >= today) return false
+  if (ends > today) return false
+  if (ends === today) return !!event.endTime && event.endTime.slice(0, 5) <= berlinTimeIso()
   if (event.endDate || ends !== yesterdayIso() || berlinTimeIso() >= GRACE_ENDS) return true
   // No time at all is a night too, as the importer counts it; the BFF sends a slot anyway.
   const start = event.startTime ?? event.doorsTime ?? event.assumedStartTime
