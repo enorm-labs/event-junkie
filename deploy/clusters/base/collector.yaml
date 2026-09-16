@@ -249,6 +249,13 @@ spec:
       # same `unset` rule `k8sCluster` has — staging has one node, production two, and a base that
       # ships `unset` scrapes a hostname that does not resolve rather than the wrong cluster's node.
       # Every 60s: the metrics are ages that change by the minute, and the alerts read hours.
+      #
+      # **`node` is the label that tells the two production nodes apart, and `instance` is not.**
+      # The receiver puts `instance` into `service.instance.id`, which
+      # `resource/strip_metric_identity` below deletes on purpose — so without the relabel both
+      # nodes' samples land in ONE series, the alert still fires but cannot say which node, and a
+      # node whose exporter is down is invisible behind the other's samples. A metric label
+      # survives the strip; a resource attribute does not.
       receivers:
         prometheus/nodes:
           config:
@@ -258,6 +265,9 @@ spec:
                 static_configs:
                   - targets:
                       - unset
+                relabel_configs:
+                  - source_labels: [ __address__ ]
+                    target_label: node
 
       processors:
         # comment-lint: allow the six-line measurement is what every drop rule below is argued from.

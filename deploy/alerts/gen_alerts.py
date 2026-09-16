@@ -528,16 +528,18 @@ rule(
 # immediate rule fires roughly weekly and gets muted in a month, which is the failure
 # the issue names as worse than no rule. Three days is enough for a reboot to be
 # scheduled and short enough that a CVE with a public exploit is not waiting on a
-# calendar. `max by (instance)` so two nodes stay two series and the `sum` counts the
-# ones over the line, per trap 4; the `bool` comparison makes an absent series a 0
-# rather than an empty result, per trap 2.
+# calendar. `max by (node)` so two nodes stay two series and the `sum` counts the ones
+# over the line, per trap 4; the `bool` comparison makes an absent series a 0 rather
+# than an empty result, per trap 2. `node`, not `instance`: the gateway strips
+# `service.instance.id` from every metric, so `instance` is gone by the time the row
+# is stored, and a scrape relabel writes the target address into `node` instead.
 rule(
     "ej-reboot-pending",
     "A node has had `/var/run/reboot-required` set for more than three days. Its kernel or "
     "k3s update is installed but not running, and `apt` reports it as patched. Reboot it: "
     "`docs/ops/PLATFORM_SETUP.md` §8b says how and what to check first. Which node: the "
-    "`instance` label is its private address and node_exporter port.",
-    "sum(max by (instance) (node_reboot_required_age_seconds) > bool 3 * 86400)",
+    "`node` label is its private address and node_exporter port.",
+    "sum(max by (node) (node_reboot_required_age_seconds) > bool 3 * 86400)",
     ">",
     0,
     stream_name="node_reboot_required_age_seconds",
@@ -555,8 +557,8 @@ rule(
     "ej-patching-stalled",
     "A node's `unattended-upgrades` has not completed a run in two days; it runs daily. Read "
     "`/var/log/unattended-upgrades/unattended-upgrades.log` on that node and "
-    "`systemctl status apt-daily-upgrade.timer`. Which node: the `instance` label.",
-    "sum(max by (instance) (node_unattended_upgrades_last_run_age_seconds) > bool 2 * 86400)",
+    "`systemctl status apt-daily-upgrade.timer`. Which node: the `node` label.",
+    "sum(max by (node) (node_unattended_upgrades_last_run_age_seconds) > bool 2 * 86400)",
     ">",
     0,
     stream_name="node_unattended_upgrades_last_run_age_seconds",
