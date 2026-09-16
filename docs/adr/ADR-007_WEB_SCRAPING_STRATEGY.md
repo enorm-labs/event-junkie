@@ -500,6 +500,7 @@ cohesive responsibility, keeping the codebase organized as the number of utiliti
 | `isPlaceholderName(name)`              | Detects placeholder artist names ("TBA", "N.N.") that should not be persisted       |
 | `buildArtistList(title, supportNames)` | Constructs headliner + support artist list from the common title/subtitle pattern   |
 | `parseEventStatus(statusText)`         | German/English status badge → `EventStatus` (sold-out stays a flag, not a status)   |
+| `parseTitleStatus(title)`              | The status a venue wrote into the title itself, applied at the persistence boundary |
 | `orderDoorsBeforeStart(doors, start)`  | Recovers a source's transposed doors/start labels by swapping them back             |
 | `stripRelocationPrefix(title)`         | Strips a `"verlegt in(s) <venue> –"` note a venue prepends to a moved show's title  |
 

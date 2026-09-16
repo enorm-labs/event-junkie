@@ -20,11 +20,58 @@ import java.time.LocalTime
 fun parseEventStatus(statusText: String): String {
     val text = statusText.lowercase()
     return when {
-        text.contains("abgesagt") || text.contains("cancel") -> EventStatus.CANCELLED.name
+        text.contains("abgesagt") || text.contains("cancel") || FAELLT_AUS.containsMatchIn(text) -> EventStatus.CANCELLED.name
         text.contains("verschoben") || text.contains("postpon") -> EventStatus.POSTPONED.name
         text.contains("verlegt") || text.contains("reloc") -> EventStatus.RELOCATED.name
         else -> EventStatus.SCHEDULED.name
     }
+}
+
+/**
+ * The other German cancellation: "fällt aus" / "fällt leider aus" / "entfällt", with or without the
+ * umlaut — Wild at Heart types `faellt`.
+ */
+private val FAELLT_AUS = Regex("""\b(?:f(?:ä|ae)llt\s+(?:\w+\s+)?aus|entf(?:ä|ae)llt)\b""")
+
+/**
+ * A status word a venue writes into the event title itself, where it has no badge to put it in:
+ * Kantine am Berghain's `Olga Myko - Abgesagt`, Wild at Heart's `Da Konzert von Scarfold und Los
+ * Mierda faellt leider aus!`. Word-anchored, and the bare "cancel" of [parseEventStatus] is not
+ * accepted here — a title is prose, and "Cancel Culture" is a film, not a cancellation.
+ */
+private val TITLE_STATUS_PATTERN =
+    Regex(
+        """\b(?:abgesagt|cancell?ed|f(?:ä|ae)llt\s+(?:\w+\s+)?aus|entf(?:ä|ae)llt|verschoben|verlegt)\b""",
+        RegexOption.IGNORE_CASE
+    )
+
+/**
+ * The status a [title] carries in its own words ([TITLE_STATUS_PATTERN]), or `null` when it
+ * carries none. Applied at the [ScrapedEvent.toEventEntity] persistence boundary to a row whose
+ * scraper found no badge, so every venue that publishes the notice as prose is covered once (#1493).
+ */
+fun parseTitleStatus(title: String): String? = TITLE_STATUS_PATTERN.find(title)?.let { parseEventStatus(it.value) }
+
+/**
+ * A cancellation marker glued to the front or the end of a title — `Olga Myko - Abgesagt`,
+ * `(cancelled) The Act`, `The Act [ABGESAGT!]` — together with its separator and brackets. A
+ * "verschoben"/"verlegt" tail is [cleanEventTitle]'s, and a sentence that *is* the notice
+ * (Wild at Heart) has no marker to strip: it stays the title, with the status read from it.
+ */
+private val TITLE_STATUS_MARKER =
+    Regex(
+        """^\s*[(\[]?\s*(?:abgesagt|cancell?ed)!?\s*[)\]]?\s*[-–—:|]*\s*""" +
+            """|\s*[-–—:|]*\s*[(\[]?\s*(?:abgesagt|cancell?ed)!?\s*[)\]]?\s*$""",
+        RegexOption.IGNORE_CASE
+    )
+
+/**
+ * Strips a leading or trailing [TITLE_STATUS_MARKER] from a title, keeping the input unchanged
+ * when there is none or when stripping would leave nothing.
+ */
+fun stripTitleStatusMarker(title: String): String {
+    val stripped = title.replace(TITLE_STATUS_MARKER, "").trim()
+    return stripped.ifBlank { title.trim() }
 }
 
 /**

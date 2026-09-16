@@ -136,6 +136,28 @@ class WildAtHeartOverviewPageScraperTest {
         event.startTime shouldBe LocalTime.of(14, 0)
     }
 
+    // The 17.09 row is one sentence and nothing else: no band, no event behind it (#1493).
+    @Test
+    fun `stores a banner that announces a cancellation as a cancelled event`() {
+        val html =
+            """
+            <html><body><table>
+              <tr>
+                <td><span class="datum">Do<br>17.09.</span></td>
+                <td><p class="headlines">Da Konzert von Scarfold und Los Mierda faellt leider aus!</p></td>
+              </tr>
+            </table></body></html>
+            """.trimIndent()
+
+        val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        event.title shouldBe "Da Konzert von Scarfold und Los Mierda faellt leider aus!"
+        event.artists shouldHaveSize 0
+        // The venue's own words stay the title; the status is read from them at the persistence boundary.
+        val entity = event.toEventEntity(venueId = 1, venueSlug = "wild-at-heart", eventSourceId = 1)
+        entity.status shouldBe "CANCELLED"
+        entity.title shouldBe event.title
+    }
+
     @Test
     fun `reads an ab-Uhr banner time and gives a row with no published time the house doors`() {
         // The 5 September 2026 programme: the flea market says "ab 14 Uhr"; Les Calcatoggios states no time at all.

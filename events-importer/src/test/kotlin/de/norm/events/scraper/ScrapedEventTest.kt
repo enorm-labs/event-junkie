@@ -27,9 +27,11 @@ class ScrapedEventTest {
         imageUrl: String? = null,
         eventDate: LocalDate = LocalDate.of(2026, 12, 30),
         endDate: LocalDate? = null,
-        endTime: LocalTime? = null
+        endTime: LocalTime? = null,
+        status: String = "SCHEDULED"
     ) = ScrapedEvent(
         title = title,
+        status = status,
         eventType = eventType,
         genre = genre,
         eventDate = eventDate,
@@ -60,6 +62,22 @@ class ScrapedEventTest {
 
         entity.doorsTime shouldBe LocalTime.of(19, 0)
         entity.startTime shouldBe LocalTime.of(20, 0)
+    }
+
+    // A venue with no badge writes the cancellation into the title (#1493).
+    @Test
+    fun `toEventEntity reads a cancellation from the title when the scraper found no badge`() {
+        val entity = scrapedEvent(title = "Olga Myko - Abgesagt").toEntity()
+
+        entity.status shouldBe "CANCELLED"
+        entity.title shouldBe "Olga Myko"
+        entity.slug shouldBe "2026-12-30-so36-olga-myko"
+    }
+
+    @Test
+    fun `toEventEntity keeps a scraper's own status over the title, and a plain title scheduled`() {
+        scrapedEvent(title = "The Act (verschoben)", status = "RELOCATED").toEntity().status shouldBe "RELOCATED"
+        scrapedEvent(title = "Berliner Weisse").toEntity().status shouldBe "SCHEDULED"
     }
 
     @Test
