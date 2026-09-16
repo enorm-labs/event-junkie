@@ -129,11 +129,12 @@ class FrannzOverviewPageScraper(
         val startTime = parseTime(article.textAt("ul.event-times li.event-start .value"))
 
         val (pricePresale, priceBoxOffice) = parsePrices(article)
+        val lines = descriptionLines(article)
 
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
-            description = parseDescription(article),
+            description = parseDescription(lines),
             eventType = eventType,
             eventDate = eventDate,
             doorsTime = doorsTime,
@@ -142,7 +143,7 @@ class FrannzOverviewPageScraper(
             // Frannz has no per-event pages; deep-link into the listing via the post-id anchor.
             sourceUrl = resolveUrl(baseUrl, "#post-$postId"),
             sourceId = "${EventSource.FRANNZ.sourceIdPrefix}$postId",
-            ticketUrl = article.hrefAt(".entry-content-wrap a[href*=\"shop.copilot.events\"]"),
+            ticketUrl = parseTicketUrl(article, lines),
             pricePresale = pricePresale,
             priceBoxOffice = priceBoxOffice,
             status = status,
@@ -222,16 +223,29 @@ class FrannzOverviewPageScraper(
     }
 
     /**
-     * Extracts the description from the hidden `.entry-content` body.
+     * The ticket link: the venue's own shop first. A show sold through Eventim has no such anchor
+     * and names the seller in its "Tickets im VVK gibt es bei …" line instead (#1496) — the event's
+     * own Eventim page when the CMS linked it, else the seller's front page when the line only
+     * spells the host. Less than a per-event link, but the venue's own pointer rather than nothing.
+     */
+    private fun parseTicketUrl(
+        article: Element,
+        lines: List<String>
+    ): String? =
+        article.hrefAt(".entry-content-wrap a[href*=\"shop.copilot.events\"]")
+            ?: article.hrefAt(".entry-content-wrap a[href*=\"eventim\"]")
+            ?: lines.firstOrNull { TICKET_PROMO_LINE.containsMatchIn(it) && it.contains(EVENTIM_HOST, ignoreCase = true) }?.let { EVENTIM_URL }
+
+    /**
+     * The cleaned `<br>`-delimited lines of the hidden `.entry-content` body.
      *
      * The content element mixes the `.sidebar` (image + info/price facts) with the
      * free-text blurb as `<br>`-separated sibling text nodes. The sidebar subtree
-     * is skipped, and the leading "Tickets im VVK gibt es bei …" line — a
-     * markdown-link artifact Frannz renders raw — is dropped. Returns `null` when
-     * no prose remains.
+     * is skipped, each line is [cleaned][cleanDescriptionLine], and blank or bullet-only
+     * residue is dropped.
      */
-    private fun parseDescription(article: Element): String? {
-        val content = article.selectFirst(".entry-content-wrap > .content") ?: return null
+    private fun descriptionLines(article: Element): List<String> {
+        val content = article.selectFirst(".entry-content-wrap > .content") ?: return emptyList()
 
         val lines = mutableListOf<String>()
         val current = StringBuilder()
@@ -260,10 +274,19 @@ class FrannzOverviewPageScraper(
 
         return lines
             .map { cleanDescriptionLine(it) }
-            .filter { it.isNotBlank() && !BULLET_ONLY.matches(it) && !TICKET_PROMO_LINE.containsMatchIn(it) }
+            .filter { it.isNotBlank() && !BULLET_ONLY.matches(it) }
+    }
+
+    /**
+     * The description: the [lines][descriptionLines] without the "Tickets im VVK gibt es bei …"
+     * promo line — a markdown-link artifact Frannz renders raw, read for the ticket link by
+     * [parseTicketUrl] before it goes. Returns `null` when no prose remains.
+     */
+    private fun parseDescription(lines: List<String>): String? =
+        lines
+            .filterNot { TICKET_PROMO_LINE.containsMatchIn(it) }
             .joinToString("\n")
             .takeIf { it.isNotBlank() }
-    }
 
     /**
      * Cleans one `<br>`-delimited description line of the raw Markdown the copilot.events CMS emits.
@@ -303,14 +326,20 @@ class FrannzOverviewPageScraper(
         private const val HIGHLIGHT_CLASS = "event_typ-highlight"
 
         /**
-         * A copilot.events ticket-shop promo line to drop entirely. The connector word varies across
-         * events ("… gibt es bei / unter / hier: <shop>"), so the match keys only on the stable opening
-         * — a line starting with "Tickets" immediately followed by "im VVK" or "gibt es im VVK". That
+         * A ticket-shop promo line, read for the seller and then dropped. The connector word varies
+         * across events ("… gibt es bei / unter / hier: <shop>"), so the match keys only on the stable
+         * opening — a line starting with "Tickets" immediately followed by "im VVK" or "gibt es". That
          * anchoring keeps a genuine sentence that happens to mention tickets ("Tickets **für den** …
          * behalten ihre Gültigkeit, …"), whose second word is not "im"/"gibt".
          */
         private val TICKET_PROMO_LINE =
-            Regex("""^Tickets\s+(?:im\s+VVK|gibt\s+es\s+im\s+VVK)\b""", RegexOption.IGNORE_CASE)
+            Regex("""^Tickets\s+(?:im\s+VVK|gibt\s+es)\b""", RegexOption.IGNORE_CASE)
+
+        /** The seller a promo line names when the venue does not sell the show itself. */
+        private const val EVENTIM_HOST = "eventim.de"
+
+        /** Where a promo line that only spells [EVENTIM_HOST] points: the seller's front page. */
+        private const val EVENTIM_URL = "https://www.eventim.de/"
 
         /** A leading Markdown list-item bullet ("- ", "* ", "• ") to strip from a description line. */
         private val LEADING_BULLET = Regex("""^\s*[-–—*•]\s*""")
