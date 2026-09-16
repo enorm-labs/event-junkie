@@ -16,6 +16,8 @@ it produces an alert that never fires rather than an error.
     a source that emptied out      -> ej-source-emptied           (#700)
     metrics being dropped          -> ej-ingest-shedding          (#625)
     translation failing open       -> ej-translations-failing      (#1301)
+    a node waiting for a reboot    -> ej-reboot-pending            (#419)
+    a node not being patched       -> ej-patching-stalled          (#419)
 
 **The zero-events failure is two rules, not one, and they see different things.**
 ADR-015's criterion 1 is per-source: a venue whose scraper still returns 200 while
@@ -510,6 +512,56 @@ rule(
     stream_name="importer_scrape_failures_total",
     period_minutes=60,
     frequency_minutes=15,
+    silence_minutes=24 * 60,
+)
+
+# --- The patching a person has to finish -----------------------------------------
+#
+# #419: `unattended-upgrades` installs kernel updates and never reboots, on purpose
+# (harden.sh), so a patched kernel sits on disk while the vulnerable one keeps running,
+# and every tool reports the node as patched. `/var/run/reboot-required` is the only
+# sign, and it is shown at login on nodes nobody logs into. `ej-patch-state.timer` on
+# each node writes its age as `node_reboot_required_age_seconds` — 0 when the flag is
+# absent — and the gateway scrapes it from node_exporter on the private address.
+#
+# **Three days of grace, not zero.** The flag appears after most kernel updates, so an
+# immediate rule fires roughly weekly and gets muted in a month, which is the failure
+# the issue names as worse than no rule. Three days is enough for a reboot to be
+# scheduled and short enough that a CVE with a public exploit is not waiting on a
+# calendar. `max by (instance)` so two nodes stay two series and the `sum` counts the
+# ones over the line, per trap 4; the `bool` comparison makes an absent series a 0
+# rather than an empty result, per trap 2.
+rule(
+    "ej-reboot-pending",
+    "A node has had `/var/run/reboot-required` set for more than three days. Its kernel or "
+    "k3s update is installed but not running, and `apt` reports it as patched. Reboot it: "
+    "`docs/ops/PLATFORM_SETUP.md` §8b says how and what to check first. Which node: the "
+    "`instance` label is its private address and node_exporter port.",
+    "sum(max by (instance) (node_reboot_required_age_seconds) > bool 3 * 86400)",
+    ">",
+    0,
+    stream_name="node_reboot_required_age_seconds",
+    period_minutes=60,
+    frequency_minutes=60,
+    silence_minutes=24 * 60,
+)
+
+# The updater's own silence looks exactly like a fully patched node, which is the
+# fourth line of #419. `apt.systemd.daily` touches the stamp after every run, so an age
+# past two days is a timer that stopped or a run that has failed daily since — and a
+# stamp that was never written reports the whole epoch, so a fresh node whose
+# `unattended-upgrades` never started fires too.
+rule(
+    "ej-patching-stalled",
+    "A node's `unattended-upgrades` has not completed a run in two days; it runs daily. Read "
+    "`/var/log/unattended-upgrades/unattended-upgrades.log` on that node and "
+    "`systemctl status apt-daily-upgrade.timer`. Which node: the `instance` label.",
+    "sum(max by (instance) (node_unattended_upgrades_last_run_age_seconds) > bool 2 * 86400)",
+    ">",
+    0,
+    stream_name="node_unattended_upgrades_last_run_age_seconds",
+    period_minutes=60,
+    frequency_minutes=60,
     silence_minutes=24 * 60,
 )
 

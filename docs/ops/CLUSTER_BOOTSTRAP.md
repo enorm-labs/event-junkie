@@ -648,6 +648,26 @@ sudo ss -lntp | grep 5432
 
 The output must name the private address. Only `127.0.0.1` and `::1` means the node is in the broken state, whatever `systemctl status` says.
 
+#### The reboot-pending metric ([#419](https://github.com/enorm-labs/event-junkie/issues/419))
+
+`harden.sh` is idempotent by design, and its header says so. So this one is applied by running the current script on each node. Copying its tail out by hand
+is where the two would drift. Staging's single node first, then production's k3s node, then production's database node through the k3s node as a jump host:
+
+```bash
+scp infra/modules/environment/cloud-init/harden.sh ops@10.10.1.1:/tmp/harden.sh && ssh ops@10.10.1.1 'sudo bash /tmp/harden.sh && rm /tmp/harden.sh'
+scp infra/modules/environment/cloud-init/harden.sh ops@10.10.0.1:/tmp/harden.sh && ssh ops@10.10.0.1 'sudo bash /tmp/harden.sh && rm /tmp/harden.sh'
+scp -J ops@10.10.0.1 infra/modules/environment/cloud-init/harden.sh ops@10.0.1.20:/tmp/harden.sh && ssh -J ops@10.10.0.1 ops@10.0.1.20 'sudo bash /tmp/harden.sh && rm /tmp/harden.sh'
+```
+
+**Check the metric, not the unit state.** node_exporter is bound to the private address alone, so ask it from the node:
+
+```bash
+curl -s "$(. /etc/event-junkie/bootstrap.env; echo "$PRIVATE_IPV4"):9100/metrics" | grep ^node_
+```
+
+Three lines: `node_reboot_required_age_seconds`, `node_unattended_upgrades_last_run_age_seconds`, `node_patch_state_timestamp_seconds`. Then, from the
+repository, `deploy/alerts/apply.sh --check` says `ok` or `WOULD FIRE` for `ej-reboot-pending`, not `NO DATA`. `NO DATA` means the gateway is not reaching 9100. The place to look is the `node-patch-state` job in `up`.
+
 ### Upgrading k3s is not a rebuild
 
 **A `k3s_version` bump does not need one.** k3s upgrades in place through the same installer the node

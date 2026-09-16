@@ -242,6 +242,23 @@ spec:
           memory: "1280Mi"
           cpu: "1"
 
+      # **The two nodes' patch state, scraped from node_exporter on their private addresses**
+      # (#419). A second `prometheus` receiver rather than a job added to the chart's: the chart's
+      # `scrape_configs` is a list, Helm replaces lists, and restating nine jobs to add one is how a
+      # scrape job goes missing silently. `targets` is the one field each cluster patches, with the
+      # same `unset` rule `k8sCluster` has — staging has one node, production two, and a base that
+      # ships `unset` scrapes a hostname that does not resolve rather than the wrong cluster's node.
+      # Every 60s: the metrics are ages that change by the minute, and the alerts read hours.
+      receivers:
+        prometheus/nodes:
+          config:
+            scrape_configs:
+              - job_name: node-patch-state
+                scrape_interval: 60s
+                static_configs:
+                  - targets:
+                      - unset
+
       processors:
         # comment-lint: allow the six-line measurement is what every drop rule below is argued from.
         # **Dropping the metrics nothing here will ever query.** The k3s API server's
@@ -407,6 +424,12 @@ spec:
               - k8sattributes
               - batch
           metrics:
+            # The chart's three plus the node scrape above — restated, because Helm replaces lists.
+            receivers:
+              - otlp
+              - servicegraph
+              - prometheus
+              - prometheus/nodes
             # **Restated in full because Helm replaces lists rather than merging them**, so naming
             # only the new processor here would drop the other five. Order matters: this has to run
             # after `k8sattributes`, which is what adds most of the attributes being deleted, and

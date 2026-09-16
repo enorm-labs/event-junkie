@@ -375,5 +375,63 @@
     "destinations": [
       "record-only"
     ]
+  },
+  {
+    "name": "ej-reboot-pending",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "node_reboot_required_age_seconds",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "A node has had `/var/run/reboot-required` set for more than three days. Its kernel or k3s update is installed but not running, and `apt` reports it as patched. Reboot it: `docs/ops/PLATFORM_SETUP.md` \u00a78b says how and what to check first. Which node: the `instance` label is its private address and node_exporter port.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(max by (instance) (node_reboot_required_age_seconds) > bool 3 * 86400)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0
+      }
+    },
+    "trigger_condition": {
+      "period": 60,
+      "frequency": 60,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 1440
+    },
+    "destinations": [
+      "record-only"
+    ]
+  },
+  {
+    "name": "ej-patching-stalled",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "node_unattended_upgrades_last_run_age_seconds",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "A node's `unattended-upgrades` has not completed a run in two days; it runs daily. Read `/var/log/unattended-upgrades/unattended-upgrades.log` on that node and `systemctl status apt-daily-upgrade.timer`. Which node: the `instance` label.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(max by (instance) (node_unattended_upgrades_last_run_age_seconds) > bool 2 * 86400)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0
+      }
+    },
+    "trigger_condition": {
+      "period": 60,
+      "frequency": 60,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 1440
+    },
+    "destinations": [
+      "record-only"
+    ]
   }
 ]
