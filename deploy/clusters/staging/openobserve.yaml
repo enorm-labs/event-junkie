@@ -287,8 +287,8 @@ spec:
         # raise safe, and why it was still not the fix for #625: rejected writes were bounded by the
         # 256 MiB ceiling rather than by the cgroup.
         #
-        # **Production stays at 1Gi**, where it sits at 621Mi with no backlog and no restart. It
-        # never had #924's crash loop, so it is still the live test of the tighter number.
+        # **Production followed**, after one OOMKill at the 1Gi it had kept as the live test of the
+        # tighter number; its file records the day and the two causes.
         memory: "1536Mi"
         cpu: "1"
 

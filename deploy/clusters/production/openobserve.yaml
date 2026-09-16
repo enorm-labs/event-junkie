@@ -268,21 +268,19 @@ spec:
         memory: "512Mi"
         cpu: "100m"
       limits:
-        # Measured, not guessed: a k3d rehearsal put standalone at 634Mi under load and the whole
-        # metrics path — this, the collector gateway, two agents and the operator — at 938Mi against
-        # ADR-015's ~1.5 GB ceiling. **1Gi is deliberately tighter than that ceiling**, because
-        # criterion 2 is a real test only if breaching it is observable and an OOMKill says so
-        # immediately. Raise it as a decision and record the number: 1.5 GB is where ADR-015's
-        # fallback triggers.
-        #
-        # **This number is not only a limit — it sizes two things inside the process**, which cost
-        # #625 a wrong diagnosis: the memtable ceiling is a quarter of it (`config.rs:3612`), so 1Gi
-        # means 256 MiB, and `config.rs:3060` caps worker threads at one core per GiB floored at two
-        # (`cpu_num = min(real_cpu, mem_total / 1GiB)`), which sizes the persist and file-move pools
-        # — so raising `cpu` below buys nothing while this stays at 1Gi. Both are why #625's fix is
-        # the rotation threshold in `config` above and not a bigger number here: the memtable sat at
-        # 759Mi of 1Gi while rejecting writes, bounded by its own 256 MiB ceiling, not the cgroup.
-        memory: "1Gi"
+        # **1Gi became 1536Mi here too, and this is the recorded number.** 1Gi was set deliberately
+        # under ADR-015's ~1.5 GB ceiling, so that a breach would be observable as an OOMKill, and
+        # production was the live test of the tighter number after staging left it. The breach
+        # arrived: one OOMKill (exit 137) at 09:17Z on the day #419 landed, with the pod at
+        # 1008–1012Mi of 1024Mi afterwards. Two things met at once — a node_exporter that ran for
+        # twenty minutes with every default collector on (its config step had not run yet, see
+        # CLUSTER_BOOTSTRAP.md § The reboot-pending metric) and created 260 metric streams, and
+        # fifteen PromQL evaluations in a burst from `deploy/alerts/apply.sh --check`. The streams
+        # were deleted; the burst is what every `--check` does, and a limit the operator's own
+        # check can trip is a limit that has stopped being a test. Staging's file has the sizing
+        # argument for why 1536Mi is safe: the memtable ceiling becomes 384 MiB, and `cpu: "1"`
+        # keeps the worker pool at two whatever this says.
+        memory: "1536Mi"
         cpu: "1"
 
   # **The chart cannot express this, and the default kills the pod** (#924). Its `probes:` block
