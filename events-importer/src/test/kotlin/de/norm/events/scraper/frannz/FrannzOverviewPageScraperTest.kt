@@ -249,6 +249,68 @@ class FrannzOverviewPageScraperTest {
     }
 
     @Nested
+    inner class EventimTicketLine {
+        private val eventimPage = "https://www.eventim.de/noapp/event/lime-garden-frannz-club-21348630/"
+
+        private fun article(promoLine: String) =
+            """
+            <article id="post-1" class="events event_typ-konzert">
+                <h2 class="event-title">Lime Garden</h2>
+                <div class="event-day">10</div>
+                <div class="event-month">Dezember</div>
+                <div class="entry-content">
+                    <div class="entry-content-wrap">
+                        <div class="content">
+                            <div class="sidebar"><span class="sidebar-val">Ort: Club</span></div>
+                            $promoLine<br />
+                            Die große neue Hoffnung des britischen Indie.
+                        </div>
+                    </div>
+                </div>
+            </article>
+            """.trimIndent()
+
+        // A show sold through Eventim has no copilot anchor; the promo line is where the link is (#1496).
+        @Test
+        fun `reads the event's Eventim page from the promo line's anchor`() {
+            val event =
+                scraper
+                    .scrape(
+                        Jsoup.parse(
+                            article("""-Tickets im VVK gibt es bei [<a href="$eventimPage">www.eventim.de</a>](<a href="$eventimPage">www.eventim.de</a>) -"""),
+                            baseUrl
+                        ),
+                        baseUrl
+                    ).single()
+
+            event.ticketUrl shouldBe eventimPage
+            // Read, then still dropped from the description.
+            event.description shouldBe "Die große neue Hoffnung des britischen Indie."
+        }
+
+        @Test
+        fun `falls back to the seller's front page when the line only spells the host`() {
+            val event =
+                scraper
+                    .scrape(Jsoup.parse(article("-Tickets im VVK gibt es bei [www.eventim.de](www.eventim.de) -"), baseUrl), baseUrl)
+                    .single()
+
+            event.ticketUrl shouldBe "https://www.eventim.de/"
+            event.description shouldBe "Die große neue Hoffnung des britischen Indie."
+        }
+
+        @Test
+        fun `leaves the link empty when the promo line names no seller`() {
+            val event =
+                scraper
+                    .scrape(Jsoup.parse(article("Tickets im VVK gibt es bei"), baseUrl), baseUrl)
+                    .single()
+
+            event.ticketUrl.shouldBeNull()
+        }
+    }
+
+    @Nested
     inner class DateYearRollover {
         @Test
         fun `assigns next year when the month-day has already passed`() {
