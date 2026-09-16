@@ -28,8 +28,14 @@
 #
 # `deserved` reads the Conventional Commits subjects and bodies since the last release and applies
 # the rule in docs/ops/RELEASING.md § What a release deserves: a breaking change is a major (a minor
-# before 1.0.0), a `feat` is a minor, anything else is a patch. It prints the version and, on stderr,
-# the commits that decided it. `cut-release.yml` refuses a tree whose number is not this one.
+# before 1.0.0), a `feat` in a product scope is a minor, anything else is a patch. It prints the
+# version and, on stderr, the commits that decided it. `cut-release.yml` refuses a tree whose number
+# is not this one.
+#
+# The scope list is the one `label-pr.yml` goes red on, and it is here as well as there because the
+# labeller guards a title on its way in and this reads the history as it is: two `feat` commits
+# outside it landed on `main` in the hours between the labeller's rule and its becoming a required
+# check, and would have made 0.18.0 of a cycle in which nothing on the site changed.
 #
 # Requires: yq (for Chart.yaml), git. Reaches no network. VERSION_GIT_ROOT points the history
 # commands at another repository, which is how `scripts/version-deserved-test.sh` fabricates one.
@@ -240,19 +246,28 @@ cmd_deserved() {
   mapfile -t shas < <(git -C "$GIT_ROOT" rev-list --no-merges --reverse "v$last..HEAD")
   ((${#shas[@]} > 0)) || die "no commits since v$last, so there is nothing to release"
 
-  local sha subject body type bang kind
+  # What a visitor to the site can see. A `feat` elsewhere is a change to the pipeline, the chart,
+  # a script or an agent, and earns what any other such change earns: a patch.
+  local product_scopes=" frontend events promoters venues artists importer scraper bff images branding "
+
+  local sha subject body type scope bang kind
   local kind_count_breaking=0 kind_count_feat=0 kind_count_other=0 kind_count_unclassified=0
   local -a deciding=() unclassified=()
   for sha in "${shas[@]}"; do
     subject="$(git -C "$GIT_ROOT" show -s --format=%s "$sha")"
     body="$(git -C "$GIT_ROOT" show -s --format=%b "$sha")"
-    if [[ "$subject" =~ ^([a-zA-Z]+)(\([^\)]*\))?(!)?:[[:space:]] ]]; then
+    if [[ "$subject" =~ ^([a-zA-Z]+)(\(([^\)]*)\))?(!)?:[[:space:]] ]]; then
       type="${BASH_REMATCH[1],,}"
-      bang="${BASH_REMATCH[3]}"
+      scope="${BASH_REMATCH[3],,}"
+      bang="${BASH_REMATCH[4]}"
       if [[ -n "$bang" ]] || grep -qE '^BREAKING[ -]CHANGE:' <<<"$body"; then
         kind=breaking
-      elif [[ "$type" == feat ]]; then
+      elif [[ "$type" == feat && "$product_scopes" == *" $scope "* ]]; then
         kind=feat
+      elif [[ "$type" == feat ]]; then
+        # Listed, so the summary shows the `feat` that did not move the number and why.
+        kind=other
+        deciding+=("  patch     ${sha:0:8} $subject  (feat outside a product scope)")
       else
         kind=other
       fi

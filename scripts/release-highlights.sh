@@ -15,8 +15,9 @@
 #
 # What it names is the part of a release a visitor to the site would notice: breaking changes
 # first, then features, new event sources, fixes and performance work. Everything else — chores,
-# CI, docs, tests, refactors, dependency bumps and this project's own version bumps — is left to
-# the buckets below. Prints nothing at all when no commit qualifies, so a maintenance release
+# CI, docs, tests, refactors, dependency bumps, this project's own version bumps and a `feat`
+# outside a product scope, which is pipeline work under the wrong type — is left to the buckets
+# below. Prints nothing at all when no commit qualifies, so a maintenance release
 # keeps the plain notes rather than gaining an empty heading.
 #
 # Requires: git. Reaches no network and writes nothing. VERSION_GIT_ROOT points the history
@@ -54,6 +55,10 @@ latest_tag() {
 range="HEAD"
 [ -z "$SINCE" ] || range="$SINCE..HEAD"
 
+# The same list as `label-pr.yml` and `scripts/version.sh deserved`: a `feat` elsewhere is not a
+# feature a visitor sees, and v0.17.0's summary was five of them.
+PRODUCT_SCOPES=" frontend events promoters venues artists importer scraper bff images branding "
+
 # Rank decides both the order and what is left out: 0 breaking, 1 feature, 2 new event source,
 # 3 fix, 4 performance. Anything else answers nothing and never reaches the summary.
 rank_of() {
@@ -75,7 +80,13 @@ rank_of() {
     *BREAKING\ CHANGE*) printf '0\n'; return 0 ;;
   esac
   case "$type" in
-    feat) if [ "$scope" = importer ]; then printf '2\n'; else printf '1\n'; fi ;;
+    feat)
+      case "$PRODUCT_SCOPES" in
+        *" $(printf '%s' "$scope" | tr '[:upper:]' '[:lower:]') "*) ;;
+        *) return 1 ;;
+      esac
+      if [ "$scope" = importer ]; then printf '2\n'; else printf '1\n'; fi
+      ;;
     fix) printf '3\n' ;;
     perf) printf '4\n' ;;
     *) return 1 ;;

@@ -125,13 +125,33 @@ repo="$(fresh_repo v0.3.12)"
 commit "$repo" "FEAT(frontend): shout the type"
 assert_deserved "the type is matched case-insensitively, like label-pr.yml" 0.4.0 "$repo"
 
+# --- Only a product feat is a feat ----------------------------------------------------------------
+
+repo="$(fresh_repo v0.3.12)"
+commit "$repo" "feat(ci): Nuclei runs behind ZAP"
+commit "$repo" "feat(deploy): the chart names its images by digest"
+commit "$repo" "feat(agents): /owasp-top-10 walks the list"
+assert_deserved "a feat outside a product scope is a patch, like label-pr.yml says" 0.3.13 "$repo"
+
+repo="$(fresh_repo v0.3.12)"
+commit "$repo" "feat: no scope at all"
+assert_deserved "a feat without a scope is a patch" 0.3.13 "$repo"
+
+repo="$(fresh_repo v0.3.12)"
+commit "$repo" "feat(Events): the scope is matched case-insensitively too"
+assert_deserved "the scope is matched case-insensitively" 0.4.0 "$repo"
+
+repo="$(fresh_repo v0.3.12)"
+commit "$repo" "feat(deploy)!: the values key moves"
+assert_deserved "a breaking feat outside a product scope still breaks" 0.4.0 "$repo"
+
 # --- From 1.0.0 on ---------------------------------------------------------------------------------
 
 repo="$(fresh_repo v1.2.3)"
-commit "$repo" "feat(api): add a field"
+commit "$repo" "feat(bff): add a field"
 assert_deserved "a feat after 1.0.0 is a minor" 1.3.0 "$repo"
 
-commit "$repo" "feat(api)!: remove the field"
+commit "$repo" "feat(bff)!: remove the field"
 assert_deserved "a breaking change after 1.0.0 is a major" 2.0.0 "$repo"
 
 # --- The floor -------------------------------------------------------------------------------------
@@ -159,7 +179,7 @@ assert_deserved "a tag on a branch that never landed is not the baseline" 0.3.13
 repo="$(fresh_repo v0.3.12)"
 commit "$repo" "fix: first"
 git -C "$repo" tag v0.3.13
-commit "$repo" "feat: second"
+commit "$repo" "feat(events): second"
 assert_deserved "the newest reachable tag is the baseline, not the first" 0.4.0 "$repo"
 
 repo="$(fresh_repo v0.3.12)"

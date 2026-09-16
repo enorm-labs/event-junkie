@@ -93,6 +93,7 @@ commit "$repo" "chore(deps): bump kotlin from 2.4.10 to 2.4.20"
 commit "$repo" "docs(adr): record the scraping decision"
 commit "$repo" "refactor(modulith): drop two allowedDependencies entries"
 commit "$repo" "ci: pin actionlint"
+commit "$repo" "feat(ci): Nuclei runs behind ZAP in dast-k3d"
 out="$(highlights "$repo")"
 
 assert_contains "a feature is named" "- Add a compact view that hides the posters" "$out"
@@ -102,6 +103,7 @@ assert_lacks "a dependency bump is left out" "bump kotlin" "$out"
 assert_lacks "documentation is left out" "scraping decision" "$out"
 assert_lacks "a refactor is left out" "allowedDependencies" "$out"
 assert_lacks "CI work is left out" "actionlint" "$out"
+assert_lacks "a feat outside a product scope is left out, whatever its type says" "Nuclei" "$out"
 assert_contains "the counts read in order" "**1 feature · 1 fix** since v1.0.0." "$out"
 
 # --- A breaking change comes first and says so --------------------------------------------------

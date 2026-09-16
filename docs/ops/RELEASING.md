@@ -243,12 +243,12 @@ tag. The rule is [SemVer 2.0.0](https://semver.org/) applied to what the commits
 | The commits since the last tag contain                          | Before `1.0.0` | From `1.0.0` |
 | --------------------------------------------------------------- | -------------- | ------------ |
 | a breaking change (`!` in the subject, or `BREAKING CHANGE:`)   | **minor**      | **major**    |
-| a `feat`, and no breaking change                                | **minor**      | **minor**    |
+| a `feat` in a product scope, and no breaking change             | **minor**      | **minor**    |
 | only `fix`, `perf`, `refactor`, `docs`, `chore`, `ci`, and such | **patch**      | **patch**    |
 
 A new event source is a `feat`, so a release that adds one is a minor. `feat` is reserved for a change a visitor can see, in a product scope:
-`frontend`, `events`, `promoters`, `venues`, `artists`, `importer`, `scraper`, `bff`, `images`, `branding`. `label-pr.yml` goes red on one outside them.
-A minor then says the site grew, not that the pipeline did. A subject that is not Conventional Commits counts as a patch. The summary lists it,
+`frontend`, `events`, `promoters`, `venues`, `artists`, `importer`, `scraper`, `bff`, `images`, `branding`. `label-pr.yml` goes red on one outside them,
+and `deserved` counts one that landed anyway as a patch, listed in its summary. A minor then says the site grew, not that the pipeline did. A subject that is not Conventional Commits counts as a patch. The summary lists it,
 so an unlabelled feature is visible rather than silently cheap. A revert is a patch. The floor `at_least` is for the one decision the commits cannot
 show: `1.0.0` is cut with `major`. It never lowers the verdict.
 

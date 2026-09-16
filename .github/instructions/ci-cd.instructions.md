@@ -93,7 +93,7 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
     - `label-pr.yml` — Derives the type labels from the Conventional Commits PR title (`fix(api)!: …` → `fix` + `breaking-change`) and the `importer` label
       from the files. **It goes red on a `feat` outside a product scope** (`frontend`, `events`, `promoters`, `venues`, `artists`, `importer`, `scraper`,
       `bff`, `images`, `branding`), labels still applied: a `feat` earns a minor and opens the release notes, and `feat(ci)` had done both for a scanner
-      (v0.17.0). It is not a required check, so the red is a signal to retitle rather than a block. The `importer` label
+      (v0.17.0). It is a required check since 2026-09-16, so the red blocks the merge until the title is edited, and the edit re-runs it. The `importer` label
       comes from the files: an added `*Importer.kt` in its own package under `scraper/` is a new event source, whatever the scope says. The scope rule it replaced
       filed the dropped-events counter and the force-fetch trigger under "New Event Sources", because `scraper` and `importer` both carry infrastructure
       work too. Via `actions/github-script`; creates any missing label on demand and re-syncs on a title edit or a push. Uses `pull_request_target` so fork
@@ -241,8 +241,10 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       snapshot built and fails the same gate — v0.3.10 was cut over four red runs and left an empty tag (#1117). Four things about it are decisions. **The version is never typed** — it comes from
       `scripts/version.sh base`, so a tag cannot claim a number the tree does not carry, and the same script writes the four files for the bump so a workflow
       and a person edit them identically. **And it is never chosen** — `scripts/version.sh deserved` reads the Conventional Commits since the last release
-      tag and applies SemVer (`docs/ops/RELEASING.md` § What a release deserves): a `feat` is a minor, a breaking change a major (a minor before 1.0.0), the
-      rest a patch. A tree that says less is not cut; the run opens the pull request that raises it and ends red, so a release that was asked for and not
+      tag and applies SemVer (`docs/ops/RELEASING.md` § What a release deserves): a `feat` in a product scope is a minor, a breaking change a major (a minor
+      before 1.0.0), the rest a patch — a `feat(ci)` included, and listed in the summary as the patch it is. The scope list is the labeller's, and it is
+      in the script too because the labeller guards a title on its way in while the script reads `main` as it is: two `feat` commits outside it landed in
+      the hours before the labeller became a required check. A tree that says less is not cut; the run opens the pull request that raises it and ends red, so a release that was asked for and not
       made never reads as green. The only input is `at_least`, a floor for the one decision the commits cannot show, which is `1.0.0`.
       `scripts/version-deserved-test.sh` asserts each rule against a fabricated history, from `validate-scripts.yml`. **It mints a GitHub App token rather than using `GITHUB_TOKEN`**, because GitHub suppresses the events its own token
       raises: a release created with it fires no `release: published`, so nothing is published and every job is green, and a pull request it opens starts no
@@ -532,7 +534,9 @@ in [AGENTS.md](../../AGENTS.md) § Automating GitHub with `gh`.
 
 - **Fork pull requests work, and the property that makes them work is fragile** (#479 — first one opened _and merged_ 2026-08-19, #579). Every required check
   declares only `contents: read` and depends on no secret, so a fork's read-only `GITHUB_TOKEN` runs all of them — there is no required-but-skipped check,
-  which is the failure mode that makes a pull request unmergeable forever and look like a broken repository to a first-time contributor. **Adding a secret or a
+  which is the failure mode that makes a pull request unmergeable forever and look like a broken repository to a first-time contributor. The two on
+  `pull_request_target` (`Merge gate`, `Apply Conventional Commits labels`) are the exception that proves it: that trigger runs with the base repository's
+  token whoever opened the pull request, which is what lets the labeller write labels on a fork's. **Adding a secret or a
   `write` permission that a step actually depends on breaks the fork path**, and it breaks it invisibly, because pull requests from forks are rare enough here
   that nothing routinely exercises it.
     - **This is why `Build & Test`'s required context is the `gate` job rather than the build.** The build declares `pull-requests: write` and
