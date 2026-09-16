@@ -139,6 +139,23 @@ class KlunkerkranichOverviewPageScraperTest {
     }
 
     @Test
+    fun `reads a hosted night's acts from the venue's w marker, not the promoter's presents`() {
+        // The 17.09.2026 card (#1494): "presents:" names the night, "w." names the four acts.
+        val night =
+            scrape(
+                cardHtml(
+                    href = "https://klunkerkranich.org/events/2026-09-17-countercult-presents-sketchy-sessions/",
+                    dateLine = "Donnerstag, 17. September",
+                    title =
+                        "COUNTERCULT presents: SKETCHY SESSIONS | jazz &amp; draw rooftop sunset jam " +
+                            "w. Analog Beats Collective, Sketchy Shona, Mad Mod, Natascha Roze"
+                )
+            ).single()
+
+        night.artists.map { it.name } shouldContainExactly listOf("Analog Beats Collective", "Sketchy Shona", "Mad Mod", "Natascha Roze")
+    }
+
+    @Test
     fun `bills a live act as a headliner and a DJ night's acts as DJs`() {
         on(LocalDate.of(2026, 8, 13), "SOULJAM x KLUNKERKRANICH w. Soul Jam Collective *live").artists shouldContainExactly
             listOf(ScrapedArtist(name = "Soul Jam Collective", role = "HEADLINER"))
