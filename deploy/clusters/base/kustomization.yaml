@@ -3,7 +3,7 @@
 #
 # **A file earns a place here by having zero config differences between the two copies**, comments
 # aside — which is what keeps this directory free of patches. `collector.yaml` is the one exception,
-# differing in a single field each cluster patches. `openobserve.yaml`, `observability-netpol.yaml`,
+# differing in a single field each cluster patches, once per collector release (#709). `openobserve.yaml`, `observability-netpol.yaml`,
 # `cert-manager.yaml` and `notification.yaml` stay duplicated: a patch that large reads worse than
 # the second copy (#953).
 #
@@ -16,8 +16,12 @@ resources:
   - namespace.yaml
   - namespace-cert-manager.yaml
   - namespace-observability.yaml
+  - namespace-observability-agent.yaml
   - namespace-default.yaml
   - helm-repository-jetstack.yaml
   - helm-repository-openobserve.yaml
   - postgres-exporter.yaml
   - collector.yaml
+  # The agent's namespace has no cluster-specific value in it — the database address that keeps the
+  # two `observability-netpol.yaml` copies apart is not among its arrows — so its policies live here.
+  - observability-agent-netpol.yaml

@@ -69,6 +69,20 @@ spec:
       targetPath: auth.ZO_S3_SECRET_KEY
 
   values:
+    # **What `restricted` asks of a pod that needs no privilege** (#709). The chart already runs the
+    # server as UID 10000 with `runAsNonRoot`; these are the three fields it leaves empty, and the
+    # dry run in `namespace-observability.yaml` named exactly them. `podSecurityContext` merges with
+    # the chart's map, so `fsGroup`, `runAsUser` and `runAsGroup` keep their defaults. Object storage
+    # is reached over HTTPS and 5080 is unprivileged, so dropping every capability costs nothing.
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+    podSecurityContext:
+      seccompProfile:
+        type: RuntimeDefault
+
     auth:
       # Root credentials from the same hand-made Secret. The chart reads the two keys named here
       # directly, so they never pass through Helm values at all.

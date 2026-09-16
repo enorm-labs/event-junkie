@@ -1,37 +1,34 @@
-# comment-lint: allow-file 10 lines of Namespace, and the reason it enforces nothing does not fit in 12.
+# comment-lint: allow-file 14 lines of Namespace, and the dry run that proves the level does not fit in 12.
 # The observability namespace, declared here so it can carry Pod Security Admission labels (#604).
 #
-# **This namespace enforces nothing, and that is the honest state rather than an oversight.** The
-# **collector agent DaemonSet** collects every log line in the cluster by mounting the node —
-# rendering `openobserve-collector` 0.4.6, the version `collector.yaml` pins, gives `hostPath`
-# mounts of `/`, `/var/log` and `/var/lib/docker/containers`. `hostPath` is restricted in **both**
-# `restricted` and `baseline`, so neither level admits this pod. `privileged` is not a preference
-# here; it is the only level that does not reject the agent, and a rejected agent is a log pipeline
-# that stops quietly, the way #625 did.
+# **`restricted` is verified against the cluster, not read off the charts.** The check is a server
+# dry run of this very label — `kubectl label --dry-run=server --overwrite ns observability
+# pod-security.kubernetes.io/enforce=restricted` — which names every running pod the level would
+# reject. Before #709 it named three: the collector agent (hostPath mounts of `/`, `/var/log` and
+# `/var/lib/docker/containers`, plus a root initContainer), the collector gateway and OpenObserve
+# (both missing `allowPrivilegeEscalation: false`, `capabilities.drop: ALL` and a seccomp profile).
+# The operator, the Postgres exporter and the Signal bridge already passed.
 #
-# **`audit` and `warn` are what this file buys.** They record and report every violation without
-# rejecting it, so the collector keeps its mounts while the **next** workload added here arrives
-# with its violations named rather than silent. A bare namespace gives neither.
-#
-# **Getting to real enforcement** means moving the agent to a namespace of its own, PSA being
-# namespace-scoped with no per-workload exemption — a live DaemonSet with its own RBAC, service
-# references and NetworkPolicies (#662), so its own change. See #709.
-#
-# **On production, which is the cluster #709 is actually about.** Porting the stack ports the
-# exemption, and the node it lands on serves the public site and holds the credentials for the
-# live database. Nothing about the argument changes — the agent still cannot run under `baseline`
-# — but the cost of the ungoverned namespace does, and this line is here so that is a recorded
-# consequence of #880 rather than something discovered by reading a label later.
+# **The agent is gone from here, and the other two are hardened where they are.** `hostPath` is
+# restricted under `baseline` as well as `restricted`, so no enforcing level admits the agent, and
+# PSA has no per-workload exemption — one pod that needs the node holds its whole namespace at
+# `privileged`. So the agent runs alone in `observability-agent`
+# (`namespace-observability-agent.yaml`), and the gateway and OpenObserve carry the four fields
+# `restricted` asks for in `collector.yaml` and `openobserve.yaml`. **Run the dry run again before
+# bumping either chart**: a new version that drops a securityContext field fails the *release*
+# rather than a pod, which reads as a chart problem rather than a policy one.
 apiVersion: v1
 kind: Namespace
 metadata:
   name: observability
   labels:
-    # NOT ENFORCING. See the header — the collector agent's hostPath mounts are inadmissible under
-    # every level except this one, and rejecting it costs the cluster its logs.
-    pod-security.kubernetes.io/enforce: privileged
-    # The half that does work. Every violation is recorded and reported without being rejected, so a
-    # workload added here is visible on arrival instead of after an incident.
+    # ENFORCING. Every pod here — OpenObserve with every log line in the system, the exporter with
+    # the database credential, the bridge with a registered account — is held to the profile the
+    # application namespace already runs under.
+    pod-security.kubernetes.io/enforce: restricted
+    # Pinned for the reason `namespace-cert-manager.yaml` gives: a cluster upgrade must not tighten
+    # the profile under a running release.
+    pod-security.kubernetes.io/enforce-version: v1.34
     pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/warn: restricted
     app.kubernetes.io/part-of: event-junkie

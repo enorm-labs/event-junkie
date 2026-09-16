@@ -307,9 +307,9 @@ check_version_pins() {
 #
 # So: for every HelmRelease that creates its own namespace, this asserts that some file in the same
 # cluster directory declares that Namespace with a `pod-security.kubernetes.io/enforce` label. It
-# does not assert *which* level — `observability` is deliberately `privileged` because the collector
-# agent mounts the node, and a check that demanded `restricted` would be a check that had to be
-# suppressed. Declaring a level is the reviewable act; choosing it is the human one.
+# does not assert *which* level — `observability-agent` is deliberately `privileged` because the
+# collector agent mounts the node (#709), and a check that demanded `restricted` would be a check
+# that had to be suppressed. Declaring a level is the reviewable act; choosing it is the human one.
 check_namespace_governance() {
   printf '\n== namespaces are declared, not conjured by createNamespace ==\n'
 
