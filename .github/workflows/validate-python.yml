@@ -38,7 +38,7 @@ env:
   # runner ships fails on files the author's own copy had just passed, and ruff's formatter style
   # moves between releases. Invisible to Dependabot — a string in YAML — so Renovate's
   # `customManagers` watch it, beside SHELLCHECK_VERSION (ADR-024). The tag carries no `v`.
-  RUFF_VERSION: 0.16.7
+  RUFF_VERSION: 0.16.8
 
 jobs:
   python:
