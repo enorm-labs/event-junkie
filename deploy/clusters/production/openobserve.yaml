@@ -189,6 +189,19 @@ spec:
       # it, while a rejected write is data that no longer exists.
       ZO_MAX_FILE_SIZE_IN_MEMORY: "32"
 
+      # **The disk cache sizes itself from the node's disk, not from the claim (#1521).** With
+      # `ZO_DISK_CACHE_MAX_SIZE` unset, `check_disk_cache_config` in `v0.92.2`'s `config.rs` takes
+      # half of the free space on the disk the data directory sits on — `local-path` puts that on
+      # the node's root disk and enforces nothing — so the cache grew to 13 GB on a `5Gi` claim,
+      # half of a node's headroom with PostgreSQL beside it on staging. 3072 MB leaves room inside
+      # the claim for `db/`, `wal/` and the two 10% caches derived from this. The corpus is in the
+      # bucket, same region; a miss reads it.
+      ZO_DISK_CACHE_MAX_SIZE: "3072"
+      # **The chart pauses the cache's own GC** — it ships `"0"`, and `spawn_pausable_job!` treats
+      # `<= 0` as paused — so nothing above the cap is released until a write forces it. 60 is
+      # the application's default: 100 MB (`ZO_DISK_CACHE_GC_SIZE`) a minute while over the cap.
+      ZO_DISK_CACHE_GC_INTERVAL: "60"
+
       # **Let it report its own pressure — the chart turns this off, the app defaults it on.**
       # `config.rs:1447` has `ZO_PROMETHEUS_ENABLED` defaulting to **true**; the chart sets it to
       # `false`, so `/metrics` answers 200 with an empty body and **the store that holds every metric
@@ -252,6 +265,10 @@ spec:
       # than nothing. `ZO_SKIP_SSRF_CHECKS` is deliberately absent — see above.
       - name: ZO_SSRF_ALLOW_LOOPBACK
         value: "true"
+      # Files older than this are read from the bucket rather than cached (#1521); the dashboards
+      # query hours. Not in `config:` — the chart does not know the key and would drop it.
+      - name: ZO_DISK_CACHE_MAX_AGE_DAYS
+        value: "3"
 
     # The gateway's `prometheus-autodiscovery` job keys on these, as postgres-exporter.yaml does.
     # Without them the setting above exposes metrics nothing collects.
@@ -262,7 +279,8 @@ spec:
 
     persistence:
       # Small on purpose: with S3 as the store this is the write-ahead and cache directory, not the
-      # corpus. The corpus is in the bucket.
+      # corpus. The corpus is in the bucket. `local-path` does not enforce the size; what bounds the
+      # directory is `ZO_DISK_CACHE_MAX_SIZE` above.
       enabled: true
       size: 5Gi
 
