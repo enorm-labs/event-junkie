@@ -91,3 +91,4 @@ look. None of them wraps `tofu`, `helm upgrade`, or anything that writes to prod
 | `deploy/dashboards/apply.sh` | Import the OpenObserve dashboards, and check their panels return data                                                           | `docs/ops/OPENOBSERVE.md`                               |
 | `deploy/alerts/apply.sh`     | Push the alert rules into OpenObserve, or check that they can fire at all                                                       | `docs/ops/OPENOBSERVE.md`, `docs/ops/DAILY_COMMANDS.md` |
 | `infra/check-capacity.sh`    | Can Hetzner deliver the server the plan orders? Only `--probe` answers                                                          | `infra/README.md`, `docs/ops/DAILY_COMMANDS.md`         |
+| `infra/check_user_data.py`   | Render both cloud-init roles with sample values and measure them against Hetzner's 32 KiB `user_data` cap (#1482)               | `infra/AGENTS.md`                                       |
