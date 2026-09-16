@@ -1,5 +1,6 @@
 package de.norm.events.scraper.schokoladen
 
+import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -59,6 +60,56 @@ class SchokoladenOverviewPageScraperTest {
             concert.subtitle shouldContain "after 22h"
             concert.description shouldContain "Punk in Moll"
             concert.promoters shouldContainExactly listOf("lose temper")
+            concert.soldOut shouldBe false
+            // The "(genre, origin)" annotations name the genres; "bln" is an origin, not a genre (#1495).
+            concert.genre shouldBe "punk, scumpunk"
+        }
+
+        @Test
+        fun `reads the sold-out banner and the title genres of a sold-out show`() {
+            // 17 September 2026 (#1495): the banner is the subtitle and the last description paragraph.
+            val autumn =
+                javaClass.classLoader
+                    .getResourceAsStream("scraper/schokoladen/schokoladen-overview-sold-out.html")!!
+                    .bufferedReader()
+                    .readText()
+            val events = scraper.scrape(Jsoup.parse(autumn, baseUrl), baseUrl)
+            val rabbits = events.first { it.sourceId == "schokoladen:e20260917" }
+
+            rabbits.title shouldBe "1000 Rabbits (art-pop, uk) + Lande Hekt (indie-pop/songwriter, uk)"
+            rabbits.soldOut shouldBe true
+            // The page keeps its shop button; its own words are "10 Tickets on the Doors".
+            rabbits.ticketUrl.shouldBeNull()
+            rabbits.genre shouldBe "art-pop, indie-pop/songwriter"
+            // What the shared normalizer makes of them is its own call; this pins the hand-over.
+            normalizeGenre(rabbits.genre) shouldContainExactly listOf("Art-pop", "Indie", "Songwriter")
+
+            // Lothario's bio says a tape "sold out in a record 3 months"; that is prose, not the banner.
+            val lothario = events.first { it.title.startsWith("Lothario") }
+            lothario.soldOut shouldBe false
+            lothario.ticketUrl shouldBe "https://vvk.link/4hkv9w0"
+        }
+
+        @Test
+        fun `keeps an origin out of the genres whichever way the venue wrote the annotation`() {
+            fun genreOf(title: String): String? =
+                scraper
+                    .scrape(
+                        Jsoup.parse(
+                            """
+                            <div class="event"><h6 class="category">Musik</h6><h2 class="fw-bold">$title</h2>
+                              <div class="event-info" id="e20260101" data-event-date="2026-01-01"></div></div>
+                            """.trimIndent(),
+                            baseUrl
+                        ),
+                        baseUrl
+                    ).single()
+                    .genre
+
+            genreOf("CÚT LỘN (Ho Chi Minh City, hardcore punk) + I HATE THE BOUNCERS (Bln, punk)") shouldBe "hardcore punk, punk"
+            genreOf("OCCRASY (SWE) + Social Torsten (Alternative-Punkrock/ Bernau)") shouldBe "Alternative-Punkrock"
+            genreOf("BELAKO (Post-Punk/New-Wave, Basque Country) + Ghosts of Berlin (neo grunge)") shouldBe "Post-Punk/New-Wave, neo grunge"
+            genreOf("Karaoke Night w/ KJ Der Käpt'n").shouldBeNull()
         }
 
         @Test

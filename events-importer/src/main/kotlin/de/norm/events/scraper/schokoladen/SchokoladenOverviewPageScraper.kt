@@ -95,6 +95,7 @@ class SchokoladenOverviewPageScraper {
         val eventType = mapEventType(block.textAt("h6.category"), CATEGORY_SYNONYMS)
         val subtitle = block.textAt("h6.subtitle")
         val (doorsTime, startTime) = parseTimes(info, block)
+        val soldOut = isSoldOut(subtitle, info)
 
         return ScrapedEvent(
             title = title,
@@ -107,11 +108,43 @@ class SchokoladenOverviewPageScraper {
             imageUrl = parseImageUrl(info, baseUrl),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.SCHOKOLADEN.sourceIdPrefix}$eventId",
-            ticketUrl = block.hrefAt("a.ticket-btn"),
+            // The page keeps the shop button on a sold-out show; its own words are "Tickets on the Doors".
+            ticketUrl = block.hrefAt("a.ticket-btn").takeUnless { soldOut },
+            genre = parseGenre(title),
+            soldOut = soldOut,
             artists = parseArtists(title, subtitle, eventType),
             promoters = parsePromoters(block)
         )
     }
+
+    /**
+     * Whether the venue has put its sold-out banner on the entry — "---> Ausverkauft / Sold Out /
+     * 10 Tickets on the Doors at 19:00 <---" as the subtitle, repeated as a description paragraph
+     * (#1495). Each is matched at its own start, so a band's bio that mentions a record that "sold
+     * out in a record 3 months" does not mark the night sold out.
+     */
+    private fun isSoldOut(
+        subtitle: String?,
+        info: Element?
+    ): Boolean =
+        SOLD_OUT_BANNER.containsMatchIn(subtitle.orEmpty()) ||
+            info?.select(".event-description p")?.any { SOLD_OUT_BANNER.containsMatchIn(it.text()) } == true
+
+    /**
+     * The genres the title's per-act "(genre, origin)" annotations name, joined for the shared
+     * genre normalizer — "1000 Rabbits (art-pop, uk) + Lande Hekt (indie-pop/songwriter, uk)" →
+     * "art-pop, indie-pop/songwriter" (#1495). The origin is not a genre (#314): an annotation with
+     * more than one comma-separated part loses its last one, or its first when that is the country
+     * or city code ("(Bln, punk)"), and a code or a place the venue spells out is dropped wherever
+     * it stands. A one-part annotation is a genre unless it is a code ("(SWE)").
+     */
+    private fun parseGenre(title: String): String? =
+        GENRE_PARENTHETICAL
+            .findAll(title)
+            .flatMap { genresFromAnnotation(it.groupValues[1]) }
+            .distinct()
+            .joinToString(", ")
+            .takeIf { it.isNotBlank() }
 
     /**
      * Parses the doors and show times from the event-facts "Time" line.
@@ -220,8 +253,11 @@ class SchokoladenOverviewPageScraper {
         /** Venue category labels that the shared [mapEventType] table doesn't cover. "Musik" is live music → CONCERT. */
         private val CATEGORY_SYNONYMS = mapOf("musik" to "CONCERT")
 
-        /** A "(genre, origin)" annotation appended to each act in a title, stripped before artist derivation. */
-        private val GENRE_PARENTHETICAL = Regex("""\s*\([^)]*\)""")
+        /** A "(genre, origin)" annotation appended to each act in a title, stripped before artist derivation and read for [parseGenre]. */
+        private val GENRE_PARENTHETICAL = Regex("""\s*\(([^)]*)\)""")
+
+        /** The venue's sold-out banner, at the start of the subtitle or of a description paragraph: "---> Ausverkauft / Sold Out / …". */
+        private val SOLD_OUT_BANNER = Regex("""^\W*(?:ausverkauft|sold\s*out)\b""", RegexOption.IGNORE_CASE)
 
         /** What the venue joins co-promoters with inside one `span.promoter`. */
         private val CO_PROMOTER_SEPARATOR = Regex("""\s*(?:,|&)\s*""")
@@ -254,3 +290,32 @@ class SchokoladenOverviewPageScraper {
         private val HEADER_TIME_PATTERN = Regex("""(\d{1,2}):(\d{2})""")
     }
 }
+
+/** The genres one "(genre, origin)" annotation names, with the origin left out — see [SchokoladenOverviewPageScraper.parseGenre]. */
+private fun genresFromAnnotation(annotation: String): List<String> {
+    val parts = annotation.split(',').map { it.trim() }.filter { it.isNotBlank() }
+    val genres =
+        when {
+            parts.size < 2 -> parts
+            isOrigin(parts.last()) -> parts.dropLast(1)
+            isOrigin(parts.first()) -> parts.drop(1)
+            else -> parts.dropLast(1)
+        }
+    return genres
+        .map { part ->
+            part
+                .split('/')
+                .map { it.trim() }
+                .filterNot { it.isBlank() || isOrigin(it) }
+                .joinToString("/")
+        }.filter { it.isNotBlank() }
+}
+
+/** A two- or three-letter country or city code, possibly two of them ("bln/aus"), or a place the venue spells out. */
+private fun isOrigin(part: String): Boolean = ORIGIN_CODE.matches(part) || part.lowercase() in ORIGIN_PLACES
+
+/** A country or city code inside an annotation — "uk", "bln", "aus", "bln/tlv". */
+private val ORIGIN_CODE = Regex("""[a-z]{2,3}(?:\s*/\s*[a-z]{2,3})*""", RegexOption.IGNORE_CASE)
+
+/** The places the venue spells out instead of coding, as met in its titles. */
+private val ORIGIN_PLACES = setOf("berlin", "hamburg", "bernau", "aachen", "warsaw", "basque country", "ho chi minh city")
