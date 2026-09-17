@@ -6,8 +6,10 @@
 MusicBrainz id are stored. The name is never rewritten from it. Enrichment from the id is a second step, and it runs
 only for a row with an `EXACT` verdict.**
 
-**Not implemented.** The verify sweep, the queue column for #1145 and the enrichment step are filed as their own
-issues, listed under References. Decided in [#1549](https://github.com/enorm-labs/event-junkie/issues/1549).
+**Not implemented.** Step B is [#1567](https://github.com/enorm-labs/event-junkie/issues/1567). Step C is
+[#1568](https://github.com/enorm-labs/event-junkie/issues/1568). Step C+ is decided in
+[#1569](https://github.com/enorm-labs/event-junkie/issues/1569). The queue column is a note on #1145. Decided in
+[#1549](https://github.com/enorm-labs/event-junkie/issues/1549).
 
 **Does not supersede anything.** [ADR-026](ADR-026_MULTILINGUAL_EVENT_TEXT.md) and
 [ADR-027](ADR-027_TRANSLATION_FOLLOWS_THE_DISPLAY_RULE.md) put a third-country service behind the importer and said how
@@ -181,6 +183,7 @@ staging. An outage is a counter and a retry, never a `FAILED` source. One host i
 ## References
 
 - [#1549](https://github.com/enorm-labs/event-junkie/issues/1549) — the decision
+- [#1567](https://github.com/enorm-labs/event-junkie/issues/1567) · [#1568](https://github.com/enorm-labs/event-junkie/issues/1568) · [#1569](https://github.com/enorm-labs/event-junkie/issues/1569) — steps B, C and C+
 - [#1145](https://github.com/enorm-labs/event-junkie/issues/1145) — title-derived headliners, the queue this feeds
 - [#322](https://github.com/enorm-labs/event-junkie/issues/322) · [#473](https://github.com/enorm-labs/event-junkie/issues/473) — AI-assisted data quality
 - [#1277](https://github.com/enorm-labs/event-junkie/issues/1277) — Wikidata `P18` → Commons, the image path step C reuses
