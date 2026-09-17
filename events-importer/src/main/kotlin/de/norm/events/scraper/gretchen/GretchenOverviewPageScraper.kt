@@ -230,17 +230,15 @@ class GretchenOverviewPageScraper {
      *
      * A `.rotated` badge carries "Abgesagt" (cancelled) or "neuer Ort" (new
      * location → relocated); the headline may append "// CANCELLED" / "// verlegt
-     * …". Both signals are combined, "neuer Ort" is normalised to the "verlegt"
-     * term the shared [parseEventStatus] understands, and the result is mapped to
-     * a status name (defaulting to `SCHEDULED`).
+     * …". Both signals are combined and mapped by the shared [parseEventStatus],
+     * which reads "neuer Ort" itself, defaulting to `SCHEDULED`.
      */
     private fun parseStatus(
         gig: Element,
         statusTail: String
     ): String {
         val badge = gig.textAt(".rotated").orEmpty()
-        val combined = "$badge $statusTail".replace("neuer ort", "verlegt", ignoreCase = true)
-        return parseEventStatus(combined)
+        return parseEventStatus("$badge $statusTail")
     }
 
     /**

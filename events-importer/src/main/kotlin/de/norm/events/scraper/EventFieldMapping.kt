@@ -15,14 +15,15 @@ import java.time.LocalTime
  * Matching is case-insensitive. "sold out" / "ausverkauft" is intentionally
  * **not** a status — venues capture it separately as the `soldOut` flag, leaving
  * the status [SCHEDULED][EventStatus.SCHEDULED]. Shared across Kulturhäuser-platform
- * scrapers (Astra, Lido) whose badges use these conventional labels.
+ * scrapers (Astra, Lido) whose badges use these conventional labels. A move is also
+ * "new venue" / "neuer Ort" — the badge Lido and Gretchen print beside the note.
  */
 fun parseEventStatus(statusText: String): String {
     val text = statusText.lowercase()
     return when {
         CANCELLED_TEXT.containsMatchIn(text) -> EventStatus.CANCELLED.name
         text.contains("verschoben") || text.contains("postpon") || VERLEGT_AUF_DATUM.containsMatchIn(text) -> EventStatus.POSTPONED.name
-        text.contains("verlegt") || text.contains("reloc") -> EventStatus.RELOCATED.name
+        text.contains("verlegt") || text.contains("reloc") || text.contains("new venue") || text.contains("neuer ort") -> EventStatus.RELOCATED.name
         else -> EventStatus.SCHEDULED.name
     }
 }
