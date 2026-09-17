@@ -12,6 +12,7 @@ import de.norm.events.translation.TranslationRequest
 import de.norm.events.venue.VenueRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Service
 
 /**
@@ -118,7 +119,12 @@ class DescriptionTranslationService(
                 to = to,
                 protectedTerms = protectedTermsFor(event, venueName)
             )
-        val translated = engine.translate(request)
+        // The engine's lines — a failed call, a refusal, a rejected result — name the event through
+        // the context, so the engine stays ignorant of what it translates.
+        val translated =
+            withContext(LogContext.forEvent(requireNotNull(event.id) { "A translation candidate is a stored row" })) {
+                engine.translate(request)
+            }
         metrics.recordTranslation(translated != null)
         translated?.let {
             eventRepository.save(

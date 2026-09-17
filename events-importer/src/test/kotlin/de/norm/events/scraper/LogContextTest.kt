@@ -296,6 +296,52 @@ class LogContextTest {
     }
 
     /**
+     * `eventId` is the second key written two ways: as a payload by [EventUpsertService], as MDC by
+     * [LogContext.forEvent] around the translation engine. Same tripwire as `url`.
+     */
+    @Nested
+    inner class ForEvent {
+        @Test
+        fun `puts the event id on a line that never mentions it, inside the run`() =
+            runTest {
+                withContext(LogContext.forImportRun("berghain")) {
+                    withContext(LogContext.forEvent(4711L)) {
+                        logger.warn { "The model declined to translate a description" }
+                    }
+                }
+
+                val mdc = appender.list.single().mdcPropertyMap
+                mdc[LogFields.EVENT_ID] shouldBe "4711"
+                mdc[LogContext.SOURCE_SLUG] shouldBe "berghain"
+            }
+
+        @Test
+        fun `throws rather than duplicating the key when MDC and payload both set eventId`() =
+            runTest {
+                withContext(LogContext.forEvent(4711L)) {
+                    logger.at(Level.INFO) {
+                        message = "both at once"
+                        payload = mapOf(LogFields.EVENT_ID to 4712L)
+                    }
+                }
+
+                val thrown = shouldThrow<IllegalStateException> { encodeAsEcs(appender.list.single()) }
+                thrown.message!! shouldContain "eventId"
+            }
+
+        @Test
+        fun `leaves no event id behind once the engine returns`() =
+            runTest {
+                withContext(LogContext.forImportRun("renate")) {
+                    withContext(LogContext.forEvent(4711L)) { logger.info { "during" } }
+                    logger.info { "after" }
+                }
+
+                appender.list.last().mdcPropertyMap[LogFields.EVENT_ID] shouldBe null
+            }
+    }
+
+    /**
      * Encodes a captured event exactly as the running container does — Spring Boot's own ECS
      * encoder, the one `LOGGING_STRUCTURED_FORMAT_CONSOLE=ecs` installs. Asserting against this
      * rather than a hand-written JSON shape is what makes the test worth having: it fails if Boot
