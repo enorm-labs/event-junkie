@@ -27,7 +27,9 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.slf4j.MDC
 import java.time.LocalDate
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * The gate, and what a translation is made from.
@@ -92,6 +94,25 @@ class DescriptionTranslationServiceTest {
             saved.captured.descriptionAltOrigin shouldBe "MACHINE"
             saved.captured.descriptionAltEngine shouldBe "test:engine"
             saved.captured.descriptionAltSourceHash shouldBe DescriptionLanguage.hash(GERMAN_TEXT)
+        }
+
+    // The engine's own lines say why a description was refused. Without the id they say it about
+    // one of fifty, and the engine is not told which event it is translating.
+    @Test
+    @DisplayName("the engine is called inside the event's log context")
+    fun `names the event for the engine's lines`(): Unit =
+        runBlocking {
+            givenOneCandidate(event(description = GERMAN_TEXT, language = "de"))
+            val seen = AtomicReference<String?>()
+            coEvery { engine.translate(any()) } answers {
+                seen.set(MDC.get(LogFields.EVENT_ID))
+                null
+            }
+
+            service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED))
+
+            seen.get() shouldBe EVENT_ID.toString()
+            MDC.get(LogFields.EVENT_ID) shouldBe null
         }
 
     // The venue and the acts on the bill are the words a translation is most likely to damage.

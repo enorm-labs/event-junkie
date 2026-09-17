@@ -22,7 +22,11 @@ object LogFields {
      */
     const val HTTP_STATUS = "httpStatus"
 
-    /** Our database id, and in practice always an event we **removed** — see §7 (#984). */
+    /**
+     * Our database id. As a payload, in practice always an event we **removed** — see §7 (#984).
+     * As MDC, through [LogContext.forEvent], the event whose description the translation engine
+     * is talking about.
+     */
     const val EVENT_ID = "eventId"
 
     /** The venue's id for an event, not ours. On a duplicate skipped and a stale removal (#984). */

@@ -47,6 +47,12 @@ object LogContext {
     fun forPage(url: String): MDCContext = MDCContext((MDC.getCopyOfContextMap() ?: emptyMap()) + mapOf(LogFields.URL to url))
 
     /**
+     * The context for **one event's** translation, so the engine's lines name the event. Around the
+     * engine call only: [EventUpsertService] writes [LogFields.EVENT_ID] as a payload.
+     */
+    fun forEvent(eventId: Long): MDCContext = MDCContext((MDC.getCopyOfContextMap() ?: emptyMap()) + mapOf(LogFields.EVENT_ID to eventId.toString()))
+
+    /**
      * The context for one source's import run, merged over whatever the caller already carries so a
      * nested run cannot silently drop an outer field.
      */

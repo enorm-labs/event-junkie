@@ -660,13 +660,15 @@ code writes — see the warning below the table:
 | `url`                        | `url`                       | the page being fetched or parsed — `HtmlFetcher`, the importers |
 | `httpstatus`                 | `httpStatus`                | **both directions** — see the warning below the next paragraph  |
 | `httpmethod`, `path`         | `httpMethod`, `path`        | the BFF's access line, one per request                          |
-| `eventid`                    | `eventId`                   | our id — in practice only ever an event **removed**, see below  |
+| `eventid`                    | `eventId`                   | our id — a removal, or the event a translation line is about    |
 | `eventsourceid`              | `eventSourceId`             | the venue's id — a duplicate skipped, and a stale removal       |
 | `storagekey`                 | `storageKey`                | the object the BFF could not read — two lines only, see below   |
 
-**`eventid` never means "an event we wrote", and the table above used to say it did (#984).** It is written on two lines. The created-or-updated line is
-**DEBUG**, and the cluster runs at INFO, so it never arrives. The stale-removal line is INFO, so it always does. Anyone querying `eventid` to see what a run
-wrote gets deletions only.
+**`eventid` never means "an event we wrote", and the table above used to say it did (#984).** As a payload it is written on two lines. The
+created-or-updated line is **DEBUG**, and the cluster runs at INFO, so it never arrives. The stale-removal line is INFO, so it always does. Anyone querying
+`eventid` to see what a run wrote gets deletions only. It is also MDC around one call. `LogContext.forEvent` wraps the translation engine, so a line about a
+refused or rejected description names the event. The scope closes before anything writes the key as a payload. `forPage` follows the same rule for
+`url`.
 
 **The DEBUG level is deliberate and should stay.** That line is written once per event. `admiralspalast` alone would add 227 lines to one run, which is the
 noise `RequestLoggingFilter`'s actuator suppression exists to avoid. A removal is also the better moment for the id: it is the one operation that leaves no row
