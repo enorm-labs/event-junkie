@@ -50,12 +50,12 @@ class LogeDetailPageScraper {
     ): ScrapedEvent? {
         val event = parseEventNode(document)
         if (event == null) {
-            logger.warn { "Detail page at $sourceUrl has no schema.org Event JSON-LD, skipping" }
+            logger.warn { "Detail page has no schema.org Event JSON-LD, skipping" }
             return null
         }
         val title = event.stringOrNull("name")
         if (title == null) {
-            logger.warn { "Detail page at $sourceUrl has no event name, skipping" }
+            logger.warn { "Detail page has no event name, skipping" }
             return null
         }
 

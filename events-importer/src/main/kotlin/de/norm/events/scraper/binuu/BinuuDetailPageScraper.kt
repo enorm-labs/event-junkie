@@ -46,17 +46,17 @@ class BinuuDetailPageScraper {
     ): ScrapedEvent? {
         val item = BinuuSvelteKitPayload.dataNode(document, "item", '{')
         if (item == null || !item.isObject) {
-            logger.warn { "Detail page at $sourceUrl has no Bi Nuu item payload, skipping" }
+            logger.warn { "Detail page has no Bi Nuu item payload, skipping" }
             return null
         }
         val id = item.stringOrNull("id") ?: item.stringOrNull("dbId")
         if (id == null) {
-            logger.warn { "Detail page at $sourceUrl has no event id, skipping" }
+            logger.warn { "Detail page has no event id, skipping" }
             return null
         }
         val title = item.stringOrNull("title")
         if (title == null) {
-            logger.warn { "Detail page at $sourceUrl has no event title, skipping" }
+            logger.warn { "Detail page has no event title, skipping" }
             return null
         }
 

@@ -45,7 +45,7 @@ class TresorDetailPageScraper {
         val slug = extractEventSlug(sourceUrl, EVENT_PATH_PREFIX)
         val title = parseTitle(document)
         if (title == null) {
-            logger.warn { "Event page at $sourceUrl has no title, skipping" }
+            logger.warn { "Event page has no title, skipping" }
             return null
         }
 

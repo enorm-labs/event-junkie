@@ -61,7 +61,7 @@ class So36DetailPageScraper {
     ): ScrapedEvent? {
         val title = document.textAt("h1 [itemprop=name]")
         if (title.isNullOrBlank()) {
-            logger.warn { "Detail page at $sourceUrl has no event title, skipping" }
+            logger.warn { "Detail page has no event title, skipping" }
             return null
         }
 

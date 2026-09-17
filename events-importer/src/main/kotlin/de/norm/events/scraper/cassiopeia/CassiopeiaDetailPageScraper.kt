@@ -75,13 +75,13 @@ class CassiopeiaDetailPageScraper {
         // This excludes navigation, footer, scripts, and other page chrome.
         val content = document.selectFirst(CONTENT_CONTAINER)
         if (content == null) {
-            logger.warn { "Detail page at $sourceUrl has no '$CONTENT_CONTAINER' container, skipping" }
+            logger.warn { "Detail page has no '$CONTENT_CONTAINER' container, skipping" }
             return null
         }
 
         val title = content.textAt("h1.event-date.dark.event")
         if (title == null) {
-            logger.warn { "Detail page at $sourceUrl has no title, skipping" }
+            logger.warn { "Detail page has no title, skipping" }
             return null
         }
 
@@ -90,7 +90,7 @@ class CassiopeiaDetailPageScraper {
         val eventType = mapEventType(content.textAt(".subheading.invert.gap"))
         val eventDate =
             parseEventDate(content) ?: run {
-                logger.warn { "Detail page at $sourceUrl has no parseable date, skipping" }
+                logger.warn { "Detail page has no parseable date, skipping" }
                 return null
             }
 

@@ -45,7 +45,7 @@ class AegDetailPageScraper {
     ): ScrapedEvent? {
         val heading = document.textAt("h1.summary")
         if (heading == null) {
-            logger.warn { "$eventSource detail page at $sourceUrl has no heading, skipping" }
+            logger.warn { "$eventSource detail page has no heading, skipping" }
             return null
         }
         val slug = extractEventSlug(sourceUrl, "/events/detail/")

@@ -50,7 +50,7 @@ class WuhlheideDetailPageScraper {
     ): ScrapedEvent? {
         val rawTitle = document.textAt(".details h1")
         if (rawTitle == null) {
-            logger.warn { "Parkbühne Wuhlheide detail page at $sourceUrl has no title, skipping" }
+            logger.warn { "Parkbühne Wuhlheide detail page has no title, skipping" }
             return null
         }
         val slug = extractEventSlug(sourceUrl, "/programm/")

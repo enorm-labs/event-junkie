@@ -59,25 +59,25 @@ class ClubOstDetailPageScraper {
         // matching the site header and footer, which use the same tags.
         val content = document.selectFirst(CONTENT_CONTAINER)
         if (content == null) {
-            logger.warn { "Club OST detail page at $sourceUrl has no content container, skipping" }
+            logger.warn { "Club OST detail page has no content container, skipping" }
             return null
         }
 
         val eventId = extractClubOstEventId(sourceUrl)
         if (eventId == null) {
-            logger.warn { "Club OST detail URL $sourceUrl carries no event id, skipping" }
+            logger.warn { "Club OST detail URL carries no event id, skipping" }
             return null
         }
 
         val title = content.textAt("h1")?.let(::cleanEventTitle)
         if (title.isNullOrBlank()) {
-            logger.warn { "Club OST detail page at $sourceUrl has no title, skipping" }
+            logger.warn { "Club OST detail page has no title, skipping" }
             return null
         }
 
         val eventDate = parseClubOstDate(content.valueForLabel(DATE_LABEL))
         if (eventDate == null) {
-            logger.warn { "Club OST detail page at $sourceUrl has no parseable date, skipping" }
+            logger.warn { "Club OST detail page has no parseable date, skipping" }
             return null
         }
 

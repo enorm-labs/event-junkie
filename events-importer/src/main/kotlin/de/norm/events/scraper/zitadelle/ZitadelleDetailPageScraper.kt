@@ -65,7 +65,7 @@ class ZitadelleDetailPageScraper {
     ): ScrapedEvent? {
         val heading = document.textAt(".event-hero h1")?.let { cleanEventTitle(it) }
         if (heading.isNullOrBlank()) {
-            logger.warn { "Zitadelle detail page at $sourceUrl has no heading, skipping" }
+            logger.warn { "Zitadelle detail page has no heading, skipping" }
             return null
         }
         val slug = extractEventSlug(sourceUrl, "/event/")

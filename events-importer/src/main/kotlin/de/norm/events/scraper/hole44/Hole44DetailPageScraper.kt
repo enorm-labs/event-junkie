@@ -60,7 +60,7 @@ class Hole44DetailPageScraper {
 
         val title = content.textAt("h4.single-event-title") ?: jsonLd?.stringOrNull("name")
         if (title == null) {
-            logger.warn { "Detail page at $sourceUrl has no event title, skipping" }
+            logger.warn { "Detail page has no event title, skipping" }
             return null
         }
 
