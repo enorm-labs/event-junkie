@@ -489,7 +489,7 @@ A cluster with a certificate still serves an empty site. Nothing seeds the sourc
 inserts a row, and `dev-seed.http` is written for a local run. Production ran green and empty for
 nine days before anybody noticed (#876).
 
-`http/importer/dev-seed.http` is the source of truth for the 86 venues and their sources.
+`http/importer/dev-seed.http` is the source of truth for the 88 venues and their sources.
 `scripts/seed-sources.py` reads that file and writes it to any host, so there is no second copy to
 drift.
 
@@ -527,7 +527,7 @@ in the migration, and it does not run again — material stored after that stays
 source is expected to stay unreviewed: the venue whose site answers our user agent with `406`, which
 `docs/licence-review/README.md` §6 records. `--allow-unreviewed` acknowledges that one.
 
-Step 3 also makes production fetch 86 third-party websites for the first time. Do it deliberately.
+Step 3 also makes production fetch 88 third-party websites for the first time. Do it deliberately.
 
 ### The dry run is the drift report
 
@@ -535,8 +535,8 @@ Omit `--apply` and nothing is written. The output names what the target is missi
 target holds that the file does not:
 
 ```
-http/importer/dev-seed.http: 86 venues, 86 event sources
-http://localhost:18081 holds 86 venues and 86 sources
+http/importer/dev-seed.http: 88 venues, 88 event sources
+http://localhost:18081 holds 88 venues and 88 sources
   to create: 0 venues, 0 sources
 ```
 
