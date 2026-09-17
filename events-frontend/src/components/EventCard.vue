@@ -27,8 +27,14 @@ const props = withDefaults(
   { as: 'h3' },
 )
 
-const { formatEventDates, formatEventTime, eventTimeHint, formatEventType, formatWeekday } =
-  useFormat()
+const {
+  formatEventDates,
+  formatEventTime,
+  eventTimeHint,
+  formatEventType,
+  formatEventStatus,
+  formatWeekday,
+} = useFormat()
 
 // Set only when the time shown is the BFF's guess (#1384); the card carries it as a title.
 const timeHint = computed(() => eventTimeHint(props.event))
@@ -47,20 +53,26 @@ const isRunning = computed(() => isRunningEvent(props.event))
 
 // An event on today gets a pulsing "live" dot — it stands out in the Upcoming feed and on
 // venue/artist pages, and reinforces liveness in the Tonight feed. Self-contained, so any caller
-// gets it for free. A running weekender is on today too.
+// gets it for free. A running weekender is on today too; a cancelled or moved one is not live here.
+const status = computed(() => formatEventStatus(props.event.status))
 const isLive = computed(
-  () => (Boolean(props.event.eventDate) && props.event.eventDate === todayIso()) || isRunning.value,
+  () =>
+    !status.value &&
+    ((Boolean(props.event.eventDate) && props.event.eventDate === todayIso()) || isRunning.value),
 )
 
 /**
  * The one word on a card that changes what the reader does next, and the only coloured thing in the
- * meta line. Past wins the slot: "Sold out" on last month's gig is stale, not informative. Running
- * comes next, because "since Friday" is what a reader of a Sunday listing needs to know first.
+ * meta line. Past wins the slot: "Sold out" on last month's gig is stale, not informative. A
+ * cancelled, postponed or relocated night comes next — it is not running and it is not for sale,
+ * whatever else the row says (#1550) — then running, because "since Friday" is what a reader of a
+ * Sunday listing needs to know first.
  *
  * The colour is emphasis on top of the word, never instead of it (WCAG 1.4.1).
  */
 const state = computed(() => {
   if (isPast.value) return { label: t('events.card.past'), class: 'text-muted-foreground' }
+  if (status.value) return { label: status.value, class: 'text-destructive' }
   if (isRunning.value)
     return {
       label: t('events.card.runningSince', { day: formatWeekday(props.event.eventDate) }),

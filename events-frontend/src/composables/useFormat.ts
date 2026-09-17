@@ -120,5 +120,16 @@ export function useFormat() {
       const key = `eventType.${eventType}`
       return te(key) ? t(key) : humaniseEventType(eventType)
     },
+
+    /**
+     * The one word for a status that changes whether the reader goes, and `''` for `SCHEDULED`,
+     * which is every other event and says nothing. Same guard as `formatEventType`: `EventStatus`
+     * lives in `events-core`, and a value the catalogue lacks reads as its sentence-cased constant.
+     */
+    formatEventStatus: (status?: string | null) => {
+      if (!status || status === 'SCHEDULED') return ''
+      const key = `events.status.${status}`
+      return te(key) ? t(key) : humaniseEventType(status)
+    },
   }
 }

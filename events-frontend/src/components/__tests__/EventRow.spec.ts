@@ -81,6 +81,22 @@ describe('EventRow', () => {
     expect(past.text()).not.toContain('Sold out')
   })
 
+  it('shows the status over Sold out, and Past over the status (#1550)', () => {
+    const cancelled = mount(EventRow, {
+      props: { event: { ...event, status: 'CANCELLED' } },
+      global: { stubs },
+    })
+    expect(cancelled.text()).toContain('Cancelled')
+    expect(cancelled.text()).not.toContain('Sold out')
+
+    const past = mount(EventRow, {
+      props: { event: { ...event, status: 'CANCELLED', eventDate: '2026-06-14' } },
+      global: { stubs },
+    })
+    expect(past.text()).toContain('Past')
+    expect(past.text()).not.toContain('Cancelled')
+  })
+
   it('marks an event happening today as live', () => {
     const wrapper = mount(EventRow, {
       props: { event: { ...event, eventDate: todayIso() } },

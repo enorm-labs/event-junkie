@@ -23,21 +23,31 @@ const props = withDefaults(
   { as: 'h3' },
 )
 
-const { formatShortDate, formatEventTime, eventTimeHint, formatEventType, formatWeekday } =
-  useFormat()
+const {
+  formatShortDate,
+  formatEventTime,
+  eventTimeHint,
+  formatEventType,
+  formatEventStatus,
+  formatWeekday,
+} = useFormat()
 const timeHint = computed(() => eventTimeHint(props.event))
 const { t } = useI18n()
 const localePath = useLocalePath()
 
 const isPast = computed(() => isPastEvent(props.event))
 const isRunning = computed(() => isRunningEvent(props.event))
+const status = computed(() => formatEventStatus(props.event.status))
 const isLive = computed(
-  () => (Boolean(props.event.eventDate) && props.event.eventDate === todayIso()) || isRunning.value,
+  () =>
+    !status.value &&
+    ((Boolean(props.event.eventDate) && props.event.eventDate === todayIso()) || isRunning.value),
 )
 
-// The same one word, chosen the same way as on the card: past beats running beats sold out beats free.
+// The same one word, chosen the same way as on the card: past beats status beats running beats sold out beats free.
 const state = computed(() => {
   if (isPast.value) return { label: t('events.card.past'), class: 'text-muted-foreground' }
+  if (status.value) return { label: status.value, class: 'text-destructive' }
   if (isRunning.value)
     return {
       label: t('events.card.runningSince', { day: formatWeekday(props.event.eventDate) }),
