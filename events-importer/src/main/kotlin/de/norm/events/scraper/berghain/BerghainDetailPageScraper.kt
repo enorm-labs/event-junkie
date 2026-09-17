@@ -50,13 +50,13 @@ class BerghainDetailPageScraper {
     ): ScrapedEvent? {
         val content =
             document.selectFirst("main") ?: run {
-                logger.warn { "Berghain detail page at $sourceUrl has no <main> container, skipping" }
+                logger.warn { "Berghain detail page has no <main> container, skipping" }
                 return null
             }
 
         val title =
             content.textAt("h1") ?: run {
-                logger.warn { "Berghain detail page at $sourceUrl has no title, skipping" }
+                logger.warn { "Berghain detail page has no title, skipping" }
                 return null
             }
 
@@ -64,7 +64,7 @@ class BerghainDetailPageScraper {
             content.select("p").firstOrNull { parseGermanDate(it.selectFirst("span.font-bold")?.text()) != null }
         val eventDate =
             parseGermanDate(dateLine?.selectFirst("span.font-bold")?.text()) ?: run {
-                logger.warn { "Berghain detail page at $sourceUrl has no parseable date, skipping" }
+                logger.warn { "Berghain detail page has no parseable date, skipping" }
                 return null
             }
 

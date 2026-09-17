@@ -50,7 +50,7 @@ class ModusDetailPageScraper {
     ): ScrapedEvent? {
         val rawTitle = document.textAt(".event-view-right h1")
         if (rawTitle == null) {
-            logger.warn { "Modus detail page at $sourceUrl has no title, skipping" }
+            logger.warn { "Modus detail page has no title, skipping" }
             return null
         }
         val slug = extractEventSlug(sourceUrl, "/event/")

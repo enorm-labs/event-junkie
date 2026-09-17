@@ -50,7 +50,7 @@ class MetropolDetailPageScraper {
     ): ScrapedEvent? {
         val rawTitle = document.textAt(".em-event-single h1") ?: document.textAt("h1")
         if (rawTitle == null) {
-            logger.warn { "Metropol detail page at $sourceUrl has no title, skipping" }
+            logger.warn { "Metropol detail page has no title, skipping" }
             return null
         }
         val slug = extractEventSlug(sourceUrl, "/event/")

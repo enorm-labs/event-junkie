@@ -53,7 +53,7 @@ class BadehausDetailPageScraper {
                 ?.trim()
                 ?.takeIf { it.isNotBlank() }
         if (title.isNullOrBlank()) {
-            logger.warn { "Detail page at $sourceUrl has no event title, skipping" }
+            logger.warn { "Detail page has no event title, skipping" }
             return null
         }
 

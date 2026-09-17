@@ -67,13 +67,13 @@ class MorphineDetailPageScraper {
     ): ScrapedEvent? {
         val overlay = document.selectFirst("section.content.overlay")
         if (overlay == null) {
-            logger.warn { "Detail page at $sourceUrl has no event overlay, skipping" }
+            logger.warn { "Detail page has no event overlay, skipping" }
             return null
         }
 
         val rawTitle = overlay.textAt("div.title")
         if (rawTitle == null) {
-            logger.warn { "Detail page at $sourceUrl has no event title, skipping" }
+            logger.warn { "Detail page has no event title, skipping" }
             return null
         }
         val title = cleanEventTitle(rawTitle)

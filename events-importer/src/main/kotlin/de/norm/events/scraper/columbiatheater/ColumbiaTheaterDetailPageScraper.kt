@@ -51,12 +51,12 @@ class ColumbiaTheaterDetailPageScraper {
     ): ScrapedEvent? {
         val content = document.selectFirst("div.event-content")
         if (content == null) {
-            logger.warn { "Detail page at $sourceUrl has no event content block, skipping" }
+            logger.warn { "Detail page has no event content block, skipping" }
             return null
         }
         val title = content.textAt("h1.header-title")?.let(::cleanEventTitle)
         if (title == null) {
-            logger.warn { "Detail page at $sourceUrl has no event title, skipping" }
+            logger.warn { "Detail page has no event title, skipping" }
             return null
         }
 

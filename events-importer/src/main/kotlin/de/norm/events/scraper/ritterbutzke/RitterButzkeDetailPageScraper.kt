@@ -51,7 +51,7 @@ class RitterButzkeDetailPageScraper {
     ): ScrapedEvent? {
         val rawTitle = document.textAt("h1")
         if (rawTitle == null) {
-            logger.warn { "Ritter Butzke detail page at $sourceUrl has no title, skipping" }
+            logger.warn { "Ritter Butzke detail page has no title, skipping" }
             return null
         }
         val slug = extractEventSlug(sourceUrl, "/event/")

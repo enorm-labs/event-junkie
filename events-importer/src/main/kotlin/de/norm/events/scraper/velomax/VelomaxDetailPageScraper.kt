@@ -51,12 +51,12 @@ class VelomaxDetailPageScraper {
     ): ScrapedEvent? {
         val event = document.selectFirst("[itemtype='https://schema.org/Event']")
         if (event == null) {
-            logger.warn { "Detail page at $sourceUrl has no schema.org Event block, skipping" }
+            logger.warn { "Detail page has no schema.org Event block, skipping" }
             return null
         }
         val title = event.textAt("[itemprop=name]")?.let(::cleanEventTitle)
         if (title == null) {
-            logger.warn { "Detail page at $sourceUrl has no event name, skipping" }
+            logger.warn { "Detail page has no event name, skipping" }
             return null
         }
 

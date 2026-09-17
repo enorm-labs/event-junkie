@@ -51,13 +51,13 @@ class ArkaodaDetailPageScraper {
         val excerpt = document.selectFirst("#posts-list .box .excerpt") ?: return null
         val rawTitle = excerpt.selectFirst("h6.heading")?.text()?.trim()
         if (rawTitle.isNullOrBlank()) {
-            logger.warn { "arkaoda detail page $sourceUrl has no event title, skipping" }
+            logger.warn { "arkaoda detail page has no event title, skipping" }
             return null
         }
 
         val eventId = EVENT_ID_PATTERN.find(sourceUrl)?.groupValues?.get(1)
         if (eventId == null) {
-            logger.warn { "arkaoda detail URL $sourceUrl carries no numeric id, skipping" }
+            logger.warn { "arkaoda detail URL carries no numeric id, skipping" }
             return null
         }
 
