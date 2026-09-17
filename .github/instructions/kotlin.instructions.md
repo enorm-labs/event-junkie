@@ -51,7 +51,8 @@ How code here is written, and where its versions and thresholds live. Comments h
     - **A CVE-remediation override is temporary by design: delete it once a Spring Boot release ships an equal or newer version.** Setting a BOM property name
       in `gradle.properties` overrides it for every module applying the Boot plugin, which is how such an override is written — and an override kept past its
       purpose pins the project _behind_ the BOM, so later Boot upgrades stop raising that dependency and the staleness is invisible. `/update-dependencies`
-      checks this on every run. Boot 4.1.1 emptied the block, so there is nothing here overriding the BOM today.
+      checks this on every run. Boot 4.1.1 emptied the block; it holds one entry again since 2026-09-17 — `netty.version`, raising the BOM's 4.2.17.Final to
+      4.2.18.Final for CVE-2026-89044, deletable as soon as a Boot release pins 4.2.18.Final or later.
     - **`log4j-api.version` is deliberately not called `log4j2.version`, and `spring-framework-bom.version` not `spring-framework.version`.** Each is the BOM's
       own property, and a pin `events-core` needs would silently become an override every Boot module resolves — the trap above, entered by naming rather than
       by intent. **When pinning for `events-core`, check whether the name collides with a BOM property**; verifying only the two Boot modules reports success

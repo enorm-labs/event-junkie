@@ -217,145 +217,145 @@
         },
         {
           "name": "io.netty:netty-buffer",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-codec",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-codec-base",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-codec-classes-quic",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-codec-compression",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-codec-dns",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-codec-http",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-codec-http2",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-codec-http3",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-codec-marshalling",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-codec-native-quic",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-codec-protobuf",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-codec-socks",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-common",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-handler",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-handler-proxy",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-resolver",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-resolver-dns",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-resolver-dns-classes-macos",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-resolver-dns-native-macos",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-transport",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-transport-classes-epoll",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-transport-native-epoll",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
         {
           "name": "io.netty:netty-transport-native-unix-common",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
@@ -2047,7 +2047,7 @@
       "components": [
         {
           "name": "io.netty:netty-codec-native-quic",
-          "version": "4.2.17.Final",
+          "version": "4.2.18.Final",
           "url": "https://netty.io/",
           "ecosystem": "backend"
         },
