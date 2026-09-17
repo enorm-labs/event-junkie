@@ -90,6 +90,7 @@ class MaayaOverviewPageScraperTest {
         val homecoming = event("maaya:2026-08-07-homecoming-x-fdla")
         homecoming.startTime shouldBe LocalTime.of(11, 0)
         homecoming.endTime shouldBe LocalTime.of(17, 0)
+        homecoming.endDate shouldBe LocalDate.of(2026, 8, 7)
         // A genuinely late night reads the same way and must stay late, with no end to store.
         val afterparty = event("maaya:2026-08-15-rave-the-planet-afterparty")
         afterparty.startTime shouldBe LocalTime.of(23, 0)
@@ -216,6 +217,8 @@ class MaayaOverviewPageScraperTest {
             val elGrito = event("maaya:2026-09-16-el-grito-fiesta-mexicana")
             elGrito.startTime shouldBe LocalTime.of(16, 0)
             elGrito.endTime shouldBe LocalTime.of(22, 0)
+            // An end time carries its day, which is what the persistence boundary insists on.
+            elGrito.endDate shouldBe LocalDate.of(2026, 9, 16)
             // "23:00 until late" and "14:00 to 22:00" — plain 24-hour, with and without an end.
             event("maaya:2026-09-19-summer-closing-afrohaus").startTime shouldBe LocalTime.of(23, 0)
             event("maaya:2026-09-19-summer-closing-afrohaus").endTime.shouldBeNull()
@@ -229,6 +232,11 @@ class MaayaOverviewPageScraperTest {
             afroeclipse.endDate shouldBe LocalDate.of(2026, 10, 11)
             afroeclipse.startTime shouldBe LocalTime.of(18, 0)
             afroeclipse.endTime.shouldBeNull()
+        }
+
+        @Test
+        fun `every card survives the persistence boundary`() {
+            events.forEach { it.toEventEntity(venueId = 1L, venueSlug = "maaya", eventSourceId = 1L) }
         }
 
         @Test

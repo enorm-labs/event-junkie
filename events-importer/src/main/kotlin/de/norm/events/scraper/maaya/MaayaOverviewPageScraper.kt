@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.detectFree
+import de.norm.events.scraper.endOn
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferUnmarkedTitleType
@@ -118,8 +119,10 @@ class MaayaOverviewPageScraper(
         if (title.isNullOrBlank()) return null
 
         val schedule = card.textAt(SCHEDULE).orEmpty()
-        val (eventDate, endDate) = parseEventDates(schedule) ?: return null
+        val (eventDate, lastDay) = parseEventDates(schedule) ?: return null
         val (startTime, endTime) = parseTimes(schedule)
+        // An end time needs its day at the persistence boundary; a stated span already has one.
+        val endDate = lastDay ?: endTime?.let { endOn(eventDate, startTime, it) }
 
         val entryNote = entryNoteOf(card)
         return ScrapedEvent(
