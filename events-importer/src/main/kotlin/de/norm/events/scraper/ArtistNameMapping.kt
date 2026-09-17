@@ -853,11 +853,14 @@ fun stripArtistPrefix(name: String): String {
  */
 @Suppress("ReturnCount") // Three guard clauses (label-led title, presenter credit, w/ frame) read better than nesting
 fun headlinersFromTitle(
-    title: String,
+    rawTitle: String,
     splitOnSlash: Boolean = true,
     unpackWithFrame: Boolean = false,
     subtitle: String? = null
 ): List<ScrapedArtist> {
+    // The persistence boundary strips a cancellation from the title after the acts are built, so
+    // `Absage: The Act` must lose the marker here or bill it (#1560).
+    val title = stripTitleStatusMarker(rawTitle)
     // A title led by a label's own name announces that label's event; nothing in it is an act.
     if (isLedByNonArtistLabel(title)) return emptyList()
     // Same conclusion, reached structurally: the subtitle credits the label and the title repeats it.
