@@ -83,6 +83,14 @@ class AdmiralspalastDetailPageScraperTest {
         // The venue publishes no prices anywhere — tickets are sold on Eventim.
         event.pricePresale shouldBe null
         event.priceBoxOffice shouldBe null
+        // "Veranstalter: Concertbüro Zahlmann GmbH", printed once for the production (#1532).
+        event.promoters shouldBe listOf("Concertbüro Zahlmann GmbH")
+    }
+
+    @Test
+    fun `every night of a run carries the production's promoter`() {
+        val events = scrape("admiralspalast-detail-matinee.html", "mamma-mia")
+        events.map { it.promoters }.distinct() shouldBe listOf(listOf("Live Nation GmbH"))
     }
 
     @Test
