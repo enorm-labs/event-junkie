@@ -1,5 +1,9 @@
 package de.norm.events.translation
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import de.norm.events.event.DescriptionLanguage
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -13,6 +17,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 
 /**
  * Drives the real request pipeline against a local [MockWebServer], like [de.norm.events.scraper.ApiClientTest].
@@ -126,6 +131,26 @@ class AnthropicTranslationEngineTest {
             engine(apiKey = "").translate(request()).shouldBeNull()
 
             server.requestCount shouldBe 0
+        }
+
+    // `translate` runs once per stale description, up to `maxPerRun` per source per run, so a line
+    // written there is written thousands of times per cycle.
+    @Test
+    @DisplayName("a missing key is said once, at construction, and not once per description")
+    fun `warns once without a key`() =
+        runTest {
+            val log = LoggerFactory.getLogger(AnthropicTranslationEngine::class.java) as Logger
+            val appender = ListAppender<ILoggingEvent>().apply { start() }
+            log.addAppender(appender)
+            try {
+                val engine = engine(apiKey = "")
+                repeat(3) { engine.translate(request()) }
+
+                appender.list.count { it.level == Level.WARN } shouldBe 1
+            } finally {
+                log.detachAppender(appender)
+                appender.stop()
+            }
         }
 
     @Test

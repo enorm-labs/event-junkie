@@ -283,7 +283,11 @@ class EventImportService(
             }
         } catch (e: Exception) {
             val error = e.message ?: "Unknown error during import"
-            logger.error(e) { "Import failed for source '${runningSource.slug}': $error" }
+            // The streak, because one broken venue writes this line once per attempt and the
+            // attempts are otherwise identical. Not "of maxRetries": a source past its budget keeps
+            // running on its plain interval (#659), so the count can exceed it. `retryCount` is the
+            // value before `markFailed` adds this failure.
+            logger.error(e) { "Import failed for source '${runningSource.slug}' (consecutive failures: ${runningSource.retryCount + 1}): $error" }
             metrics.recordScrapeFailure(runningSource.slug, scrapeFailureReason(e))
             markFailed(runningSource, error)
             ImportResultResponse(sourceSlug = runningSource.slug, imported = false, eventCount = 0, error = error) to

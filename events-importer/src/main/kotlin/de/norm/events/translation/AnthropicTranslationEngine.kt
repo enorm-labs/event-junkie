@@ -66,11 +66,16 @@ class AnthropicTranslationEngine(
 
     override val id = "anthropic:${properties.model}"
 
-    override suspend fun translate(request: TranslationRequest): String? {
+    init {
+        // Said once here rather than on every call: `translate` runs once per stale description,
+        // so a missing key used to write the same line up to `maxPerRun` times per source per run.
         if (properties.apiKey.isEmpty()) {
             logger.warn { "app.translation.engine is anthropic but no API key is set, so nothing is translated" }
-            return null
         }
+    }
+
+    override suspend fun translate(request: TranslationRequest): String? {
+        if (properties.apiKey.isEmpty()) return null
         val translated =
             runCatching { call(request) }.getOrElse { error ->
                 logger.warn(error) { "Translation ${request.from.code}->${request.to.code} failed" }
