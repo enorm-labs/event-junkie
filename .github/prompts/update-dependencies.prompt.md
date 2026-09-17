@@ -121,9 +121,10 @@ and must NOT be overridden.
 
 #### ⚠️ Exception: existing CVE-remediation overrides
 
-`gradle.properties` can carry properties that deliberately _do_ override BOM-managed versions, because the BOM's own version carried a known CVE. The block is
-**empty of overrides today** — Boot 4.1.1 caught up with every one and they were deleted — but the shape returns the next time an advisory lands ahead of a Boot
-release, so recognise it: a property named exactly as the Boot BOM names it (`netty.version`, `postgresql.version`, `jackson-bom.version`). What remains under
+`gradle.properties` can carry properties that deliberately _do_ override BOM-managed versions, because the BOM's own version carried a known CVE. Recognise the
+shape: a property named exactly as the Boot BOM names it (`netty.version`, `postgresql.version`, `jackson-bom.version`). The block holds **one entry today** —
+`netty.version=4.2.18.Final`, raising Boot 4.1.1's 4.2.17.Final past CVE-2026-89044, added 2026-09-17 and deletable as soon as a Boot release pins
+4.2.18.Final or later. What remains under
 "Pins that are not ordinary project versions" is `log4j-api.version`, `scram.version` and `spring-framework-bom.version`, none of which is BOM-managed. There
 may also be `constraints` blocks in module build scripts pinning a transitive for the same reason (e.g. `com.ongres.scram`).
 
