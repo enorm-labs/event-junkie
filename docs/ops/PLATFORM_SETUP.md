@@ -653,7 +653,7 @@ code writes — see the warning below the table:
 | ---------------------------- | --------------------------- | --------------------------------------------------------------- |
 | `severity` / `severity_text` | —                           | `log.level`, mapped to real OTLP severity numbers by the agent  |
 | `sourceslug`, `importrunid`  | `sourceSlug`, `importRunId` | MDC, set once per import run                                    |
-| `requestid`                  | `requestId`                 | MDC, one per BFF request                                        |
+| `requestid`                  | `requestId`                 | MDC, one per BFF request — the same id a `ProblemDetail` quotes |
 | `logger`                     | —                           | `log.logger` — exclude a noisy class without excluding its pod  |
 | `errortype`, `stacktrace`    | `errorType`, `stackTrace`   | one field each, rather than forty unparented lines              |
 | `service_version`            | —                           | the collector's `k8sattributes`, read off the pod's own label   |

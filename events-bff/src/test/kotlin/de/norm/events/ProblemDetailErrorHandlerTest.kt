@@ -1,11 +1,19 @@
 package de.norm.events
 
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
+import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
 import java.net.URI
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Every error that reaches Boot's handler is a problem, whatever the client accepts (#1446). The
@@ -71,6 +79,48 @@ class ProblemDetailErrorHandlerTest : BaseControllerTest() {
             .expectBody()
             .jsonPath("$.status")
             .isEqualTo(404)
+    }
+
+    /**
+     * The 5xx detail tells the reader to quote the request id, so the id in the body has to be the
+     * one the `requestid` column holds (#1527). Asserted on a 404, which carries the same field
+     * through the same handler, because nothing from outside provokes a 500.
+     */
+    @Test
+    fun `the request id in a problem body is the one on the access line`() {
+        val root = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        root.addAppender(appender)
+        try {
+            val quoted = AtomicReference<String>()
+            webTestClient
+                .get()
+                .uri("/nothing-here")
+                .exchange()
+                .expectStatus()
+                .isNotFound
+                .expectBody()
+                .jsonPath("$.requestId")
+                .value<String> { quoted.set(it) }
+
+            // The access line is written in `doFinally`, after the response the client already has.
+            runBlocking {
+                eventually(5.seconds) {
+                    val accessLine =
+                        appender.list.single {
+                            it.keyValuePairs?.any { kv ->
+                                kv.key == LogContextConfiguration.PATH &&
+                                    kv.value == "/api/nothing-here"
+                            } ==
+                                true
+                        }
+                    accessLine.mdcPropertyMap[LogContextConfiguration.REQUEST_ID] shouldBe quoted.get()
+                }
+            }
+        } finally {
+            root.detachAppender(appender)
+            appender.stop()
+        }
     }
 
     @Test
