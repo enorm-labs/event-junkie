@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.artist.ArtistRepository
 import de.norm.events.event.EventArtistRepository
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventPromoterRepository
@@ -46,6 +47,9 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
 
     @Autowired
     private lateinit var promoterRepository: PromoterRepository
+
+    @Autowired
+    private lateinit var artistRepository: ArtistRepository
 
     private suspend fun persistEvent(sourceId: String): EventEntity {
         val venue = venueRepository.save(VenueEntity(name = "Test Venue", slug = "test-venue-$sourceId"))
@@ -156,6 +160,23 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
                 )
             )
 
+            eventArtistRepository.findByEventIdIn(listOf(requireNotNull(event.id))).toList().size shouldBe 1
+        }
+    }
+
+    // #1553: a name that slugs to nothing would take the empty slug, and the next one would collide.
+    @Test
+    fun `an artist whose name slugs to nothing is dropped, and the rest of the lineup is kept`() {
+        runBlocking {
+            val sourceId = "slugless-artist:1"
+            val event = persistEvent(sourceId)
+
+            associationSyncService.resolveAndSyncAssociations(
+                listOf(event),
+                listOf(scraped(sourceId, artists = listOf(ScrapedArtist(name = "-"), ScrapedArtist(name = "Real Band"))))
+            )
+
+            artistRepository.findBySlug("") shouldBe null
             eventArtistRepository.findByEventIdIn(listOf(requireNotNull(event.id))).toList().size shouldBe 1
         }
     }

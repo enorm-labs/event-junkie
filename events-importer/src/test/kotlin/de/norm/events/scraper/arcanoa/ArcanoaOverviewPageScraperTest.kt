@@ -186,6 +186,18 @@ class ArcanoaOverviewPageScraperTest {
         }
 
         @Test
+        fun `skips a private function wherever the marker sits in the line`() {
+            val page =
+                fragment(
+                    "Fr 16.10. Larp Taverne zur schwarzen Tatze - geschlossene Gesellschaft<br>" +
+                        "Sa 17.10.Live: Real Band<br>" +
+                        "Sa 19.12.Live: -- geschlossene Gesellschaft --"
+                )
+
+            scraper.scrape(page, baseUrl).map { it.title } shouldContainExactly listOf("Real Band")
+        }
+
+        @Test
         fun `strips a leading plus from the style tail`() {
             val events = scraper.scrape(fragment("Sa 03.10.Live: Some Band - + open stage"), baseUrl)
 

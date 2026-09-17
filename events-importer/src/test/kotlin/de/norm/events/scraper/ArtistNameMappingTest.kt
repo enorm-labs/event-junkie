@@ -230,6 +230,18 @@ class ArtistNameMappingTest {
         isNonArtistEvent("Fettes Brot") shouldBe false
     }
 
+    // --- isNonArtistName slugless (#1553) ---
+
+    @Test
+    fun `isNonArtistName drops a name that slugs to nothing`() {
+        isNonArtistName("-") shouldBe true
+        isNonArtistName("--") shouldBe true
+        isNonArtistName("...") shouldBe true
+        isNonArtistName("?!") shouldBe true
+        isNonArtistName("Mittelalter-Irish Folk") shouldBe false
+        isNonArtistName("2") shouldBe false
+    }
+
     // --- isNonArtistName title fragment (#1494) ---
 
     @Test

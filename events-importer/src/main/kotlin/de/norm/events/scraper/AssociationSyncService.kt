@@ -93,11 +93,13 @@ class AssociationSyncService(
         // NAME_CORRECTIONS entry can — "OXO86" resolves to "Oxo 86", i.e. slug `oxo-86` rather
         // than `oxo86`. Slugging the raw name here would then look up a different row than
         // resolveOrCreateArtist creates, and the two spellings would stay fragmented.
-        val allArtistSlugs =
-            scrapedEvents
-                .flatMap { it.artists }
-                .map { SlugGenerator.slugify(canonicalArtistName(it.name)) }
-                .toSet()
+        scrapedEvents.forEach { event ->
+            event.artists
+                .filter { isSlugless(it.name) }
+                .forEach { logger.warn { "Dropping artist '${it.name}' of '${event.sourceId}': its name slugs to nothing" } }
+        }
+        val scrapedArtists = scrapedEvents.flatMap { it.storableArtists() }
+        val allArtistSlugs = scrapedArtists.map { SlugGenerator.slugify(canonicalArtistName(it.name)) }.toSet()
         val artistCache =
             artistRepository
                 .findBySlugIn(allArtistSlugs)
@@ -108,13 +110,19 @@ class AssociationSyncService(
         // Auto-create only the artists not already in the database. The stored display name is
         // canonicalized first (see canonicalArtistName): de-shouting so an act isn't frozen
         // SHOUTING by whichever venue imported it first, plus any curated spelling correction.
-        scrapedEvents
-            .flatMap { it.artists }
+        scrapedArtists
             .distinctBy { SlugGenerator.slugify(canonicalArtistName(it.name)) }
             .forEach { resolveOrCreateArtist(canonicalArtistName(it.name), artistCache) }
 
         return artistCache
     }
+
+    /**
+     * The scraped artists that can be stored. A name that slugs to nothing has escaped
+     * [isNonArtistName], and inserting it would take the empty slug that every later one
+     * collides with (#1553), so it is dropped rather than saved.
+     */
+    private fun ScrapedEvent.storableArtists(): List<ScrapedArtist> = artists.filterNot { isSlugless(it.name) }
 
     /**
      * Resolves an artist by slug (derived from name) from the [artistCache],
@@ -164,7 +172,7 @@ class AssociationSyncService(
                 EventArtistEntity::eventId
             ) ?: return
 
-        val artistsBySourceId = scrapedEvents.associate { it.sourceId to it.artists }
+        val artistsBySourceId = scrapedEvents.associate { it.sourceId to it.storableArtists() }
         val toInsert = mutableListOf<EventArtistEntity>()
         val toUpdate = mutableListOf<EventArtistEntity>()
         val toDeleteIds = mutableListOf<Long>()
