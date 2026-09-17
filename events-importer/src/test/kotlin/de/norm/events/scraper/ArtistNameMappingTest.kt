@@ -406,6 +406,15 @@ class ArtistNameMappingTest {
         stripArtistPrefix("Support:") shouldBe "Support:"
     }
 
+    // #1560: the marker comes off the title at persistence, after the acts were built from it.
+    @Test
+    fun `headlinersFromTitle bills the act, not the cancellation glued to it`() {
+        headlinersFromTitle("ABSAGE: MY HERO ACADEMIA - In Concert") shouldBe
+            listOf(ScrapedArtist("MY HERO ACADEMIA - In Concert", "HEADLINER"))
+        headlinersFromTitle("Olga Myko - Abgesagt") shouldBe listOf(ScrapedArtist("Olga Myko", "HEADLINER"))
+        headlinersFromTitle("Canceled: Modern English") shouldBe listOf(ScrapedArtist("Modern English", "HEADLINER"))
+    }
+
     @Test
     fun `headlinersFromTitle bills a labelled support act as SUPPORT and drops the label`() {
         headlinersFromTitle("Chelsea Wolfe + Support: A.A. Williams") shouldBe

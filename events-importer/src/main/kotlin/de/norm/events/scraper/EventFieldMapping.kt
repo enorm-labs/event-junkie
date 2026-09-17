@@ -20,7 +20,7 @@ import java.time.LocalTime
 fun parseEventStatus(statusText: String): String {
     val text = statusText.lowercase()
     return when {
-        text.contains("abgesagt") || text.contains("cancel") || FAELLT_AUS.containsMatchIn(text) -> EventStatus.CANCELLED.name
+        CANCELLED_TEXT.containsMatchIn(text) -> EventStatus.CANCELLED.name
         text.contains("verschoben") || text.contains("postpon") -> EventStatus.POSTPONED.name
         text.contains("verlegt") || text.contains("reloc") -> EventStatus.RELOCATED.name
         else -> EventStatus.SCHEDULED.name
@@ -28,20 +28,21 @@ fun parseEventStatus(statusText: String): String {
 }
 
 /**
- * The other German cancellation: "fällt aus" / "fällt leider aus" / "entfällt", with or without the
- * umlaut — Wild at Heart types `faellt`.
+ * A cancellation in a badge: `abgesagt`, `Absage` (#1560), `cancel…`, and "fällt aus" / "fällt leider
+ * aus" / "entfällt" with or without the umlaut — Wild at Heart types `faellt`.
  */
-private val FAELLT_AUS = Regex("""\b(?:f(?:ä|ae)llt\s+(?:\w+\s+)?aus|entf(?:ä|ae)llt)\b""")
+private val CANCELLED_TEXT = Regex("""abgesagt|absage|cancel|\b(?:f(?:ä|ae)llt\s+(?:\w+\s+)?aus|entf(?:ä|ae)llt)\b""")
 
 /**
  * A status word a venue writes into the event title itself, where it has no badge to put it in:
  * Kantine am Berghain's `Olga Myko - Abgesagt`, Wild at Heart's `Da Konzert von Scarfold und Los
- * Mierda faellt leider aus!`. Word-anchored, and the bare "cancel" of [parseEventStatus] is not
- * accepted here — a title is prose, and "Cancel Culture" is a film, not a cancellation.
+ * Mierda faellt leider aus!`, Uber Eats Music Hall's `ABSAGE: …` (#1560). Word-anchored, and the
+ * bare "cancel" of [parseEventStatus] is not accepted here — a title is prose, and "Cancel Culture"
+ * is a film, not a cancellation.
  */
 private val TITLE_STATUS_PATTERN =
     Regex(
-        """\b(?:abgesagt|cancell?ed|f(?:ä|ae)llt\s+(?:\w+\s+)?aus|entf(?:ä|ae)llt|verschoben|verlegt)\b""",
+        """\b(?:abgesagt|absage|cancell?ed|f(?:ä|ae)llt\s+(?:\w+\s+)?aus|entf(?:ä|ae)llt|verschoben|verlegt)\b""",
         RegexOption.IGNORE_CASE
     )
 
@@ -60,8 +61,8 @@ fun parseTitleStatus(title: String): String? = TITLE_STATUS_PATTERN.find(title)?
  */
 private val TITLE_STATUS_MARKER =
     Regex(
-        """^\s*[(\[]?\s*(?:abgesagt|cancell?ed)!?\s*[)\]]?\s*[-–—:|]*\s*""" +
-            """|\s*[-–—:|]*\s*[(\[]?\s*(?:abgesagt|cancell?ed)!?\s*[)\]]?\s*$""",
+        """^\s*[(\[]?\s*(?:abgesagt|absage|cancell?ed)!?\s*[)\]]?\s*[-–—:|]*\s*""" +
+            """|\s*[-–—:|]*\s*[(\[]?\s*(?:abgesagt|absage|cancell?ed)!?\s*[)\]]?\s*$""",
         RegexOption.IGNORE_CASE
     )
 

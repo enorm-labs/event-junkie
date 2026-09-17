@@ -192,6 +192,7 @@ class EventFieldMappingTest {
         parseTitleStatus("Olga Myko - Abgesagt") shouldBe "CANCELLED"
         parseTitleStatus("Da Konzert von Scarfold und Los Mierda faellt leider aus!") shouldBe "CANCELLED"
         parseTitleStatus("CANCELLED: The Act") shouldBe "CANCELLED"
+        parseTitleStatus("ABSAGE: MY HERO ACADEMIA - In Concert") shouldBe "CANCELLED"
         parseTitleStatus("The Act (verschoben)") shouldBe "POSTPONED"
         parseTitleStatus("Verlegt ins Bi Nuu – BRKN") shouldBe "RELOCATED"
     }
@@ -210,6 +211,7 @@ class EventFieldMappingTest {
         stripTitleStatusMarker("The Act [ABGESAGT!]") shouldBe "The Act"
         stripTitleStatusMarker("(cancelled) The Act") shouldBe "The Act"
         stripTitleStatusMarker("Cancelled: The Act") shouldBe "The Act"
+        stripTitleStatusMarker("ABSAGE: MY HERO ACADEMIA - In Concert") shouldBe "MY HERO ACADEMIA - In Concert"
     }
 
     @Test
