@@ -1,12 +1,14 @@
 package de.norm.events.scraper.lido
 
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ISO_DATE_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseEventStatus
+import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseRealDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.refineConcertVenueType
@@ -33,7 +35,9 @@ import java.time.LocalTime
  *
  * Upcoming events are listed on the homepage (`/`) as a series of
  * `article.event-ticket` blocks — the `/events` path is the (broken-dated) past
- * archive, not the program, so the event source points at the homepage.
+ * archive, not the program, so the event source points at the homepage. The
+ * `teaser__next-events` block above the list is read too, for the day's own event the
+ * list can leave out ([parseTeaser], #1530).
  *
  * The overview page is the source for the event type, sold-out flag, status,
  * date, and the artist roster (which needs both the subtitle and the type). The
@@ -61,15 +65,55 @@ class LidoOverviewPageScraper {
         logger.info { "Found ${articles.size} event article(s) on overview page" }
 
         @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the entire import
-        return articles.mapNotNull { article ->
-            try {
-                parseArticle(article, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse event article, skipping" }
-                null
+        val listed =
+            articles.mapNotNull { article ->
+                try {
+                    parseArticle(article, baseUrl)
+                } catch (e: Exception) {
+                    logger.warn(e) { "Failed to parse event article, skipping" }
+                    null
+                }
             }
-        }
+        val listedUrls = listed.mapTo(mutableSetOf()) { it.sourceUrl }
+        return listed + parseTeaser(document, baseUrl).filterNot { it.sourceUrl in listedUrls }
     }
+
+    /**
+     * The `teaser__next-events` block at the top of the home page, as a second source of events
+     * (#1530). On a Lido night it read `Today / 19:00 / VTOROI KA` while the article list began two
+     * days later, so the night's own event was on the page and not in the block this scraper reads.
+     * A teaser entry that the list also carries is dropped by the caller; one it does not carry
+     * becomes an event with the date from its `/events/<yyyy-MM-dd-…>` slug, the teaser's time as
+     * the doors (the venue prints doors there — 19:00 for a 20:00 start) and the board lines as the
+     * title. The detail page fills in the rest, as for every other event.
+     */
+    private fun parseTeaser(
+        document: Document,
+        baseUrl: String
+    ): List<ScrapedEvent> =
+        document.select(".teaser__next-events__wrapper__event").mapNotNull { entry ->
+            val link = entry.selectFirst(".teaser__next-events__wrapper__event__title a[href]") ?: return@mapNotNull null
+            val sourceUrl = resolveUrl(baseUrl, link.attr("href"))
+            val slug = extractEventSlug(sourceUrl)
+            val eventDate = parseIsoDate(slug.take(ISO_DATE_LENGTH)) ?: return@mapNotNull null
+            val title =
+                link
+                    .select(".boad-line")
+                    .joinToString(" ") { it.text().trim() }
+                    .trim()
+                    .ifBlank { link.text().trim() }
+            if (title.isBlank()) return@mapNotNull null
+            val eventType = refineConcertVenueType(null, title)
+            ScrapedEvent(
+                title = title,
+                eventType = eventType,
+                eventDate = eventDate,
+                doorsTime = parseTime(entry.textAt(".teaser__next-events__wrapper__event__date__time")),
+                sourceUrl = sourceUrl,
+                sourceId = "${EventSource.LIDO.sourceIdPrefix}$slug",
+                artists = buildArtistsForEventType(title, null, eventType)
+            )
+        }
 
     /** Parses a single `article.event-ticket` block into a [ScrapedEvent]. */
     private fun parseArticle(
