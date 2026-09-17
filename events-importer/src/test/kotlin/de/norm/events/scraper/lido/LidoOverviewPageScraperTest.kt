@@ -103,4 +103,52 @@ class LidoOverviewPageScraperTest {
         soldOut.soldOut shouldBe true
         soldOut.status shouldBe "SCHEDULED"
     }
+
+    // The 2026-09-16 home page: the teaser named the night's event, the article list began on the 18th (#1530).
+    @Test
+    fun `reads the teaser's event when the article list does not carry it`() {
+        val html =
+            """
+            <html><body><div class="teaser"><div class="teaser__next-events"><div class="teaser__next-events__wrapper">
+              <div class="teaser__next-events__wrapper__event">
+                <div class="teaser__next-events__wrapper__event__date">
+                  <div class="teaser__next-events__wrapper__event__date__label">Today</div>
+                  <div class="teaser__next-events__wrapper__event__date__time">19:00</div>
+                </div>
+                <div class="teaser__next-events__wrapper__event__title teaser__next-events__wrapper__event__title--no-status">
+                  <a href="/events/2026-09-16-vtoroi-ka-"><div class="boad-line board-line--0">VTOROI KA </div></a>
+                </div>
+              </div>
+            </div></div></div>
+            <article class="event-ticket" data-realdate="2026-09-18 19:00:00 +0200">
+              <div class="event-ticket__content__title"><a href="/events/2026-09-18-perot--ching-">PEROTÁ CHINGÓ</a></div>
+            </article>
+            </body></html>
+            """.trimIndent()
+        val scraped = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+
+        scraped.map { it.sourceId } shouldContainExactly listOf("lido:2026-09-18-perot--ching-", "lido:2026-09-16-vtoroi-ka-")
+        val teased = scraped.last()
+        teased.title shouldBe "VTOROI KA"
+        teased.eventDate shouldBe LocalDate.of(2026, 9, 16)
+        teased.doorsTime shouldBe LocalTime.of(19, 0)
+        teased.sourceUrl shouldBe "https://www.lido-berlin.de/events/2026-09-16-vtoroi-ka-"
+        teased.artists shouldContainExactly listOf(ScrapedArtist("VTOROI KA", "HEADLINER"))
+    }
+
+    @Test
+    fun `adds nothing for a teaser the article list already carries`() {
+        val html =
+            """
+            <html><body><div class="teaser__next-events__wrapper__event">
+              <div class="teaser__next-events__wrapper__event__date__time">19:00</div>
+              <div class="teaser__next-events__wrapper__event__title"><a href="/events/2026-09-18-perot--ching-"><div class="boad-line">PEROTÁ CHINGÓ </div><div class="boad-line">+ PAULA PRIETO </div></a></div>
+            </div>
+            <article class="event-ticket" data-realdate="2026-09-18 19:00:00 +0200">
+              <div class="event-ticket__content__title"><a href="/events/2026-09-18-perot--ching-">PEROTÁ CHINGÓ</a></div>
+            </article></body></html>
+            """.trimIndent()
+
+        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl) shouldHaveSize 1
+    }
 }
