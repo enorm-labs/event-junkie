@@ -9,10 +9,14 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.time.Clock
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneOffset
 
 /**
  * Unit tests for [MaayaOverviewPageScraper].
@@ -82,10 +86,14 @@ class MaayaOverviewPageScraperTest {
 
     @Test
     fun `ignores the decorative meridiem the venue glues onto every 24-hour time`() {
-        // "from 11:00pm – 17:00pm" is a daytime event, not a night one.
-        event("maaya:2026-08-07-homecoming-x-fdla").startTime shouldBe LocalTime.of(11, 0)
-        // A genuinely late night reads the same way and must stay late.
-        event("maaya:2026-08-15-rave-the-planet-afterparty").startTime shouldBe LocalTime.of(23, 0)
+        // "from 11:00pm – 17:00pm" is a daytime event, not a night one: the end gives the suffix away.
+        val homecoming = event("maaya:2026-08-07-homecoming-x-fdla")
+        homecoming.startTime shouldBe LocalTime.of(11, 0)
+        homecoming.endTime shouldBe LocalTime.of(17, 0)
+        // A genuinely late night reads the same way and must stay late, with no end to store.
+        val afterparty = event("maaya:2026-08-15-rave-the-planet-afterparty")
+        afterparty.startTime shouldBe LocalTime.of(23, 0)
+        afterparty.endTime.shouldBeNull()
         // The end of the stated range is never mistaken for the start.
         event("maaya:2026-08-08-the-cavemen").startTime shouldBe LocalTime.of(19, 30)
         events.none { it.startTime == null } shouldBe true
@@ -158,5 +166,94 @@ class MaayaOverviewPageScraperTest {
                 sourceUrl
             )
         scraper.scrape(doc, sourceUrl).shouldBeEmpty()
+    }
+
+    // The venue's rebuild of September 2026 dropped the year from every date (#1517).
+    @Nested
+    inner class RebuiltPage {
+        private val scraper = MaayaOverviewPageScraper(Clock.fixed(Instant.parse("2026-09-17T10:00:00Z"), ZoneOffset.UTC))
+
+        private val events: List<ScrapedEvent> by lazy {
+            val html =
+                javaClass.classLoader
+                    .getResourceAsStream("scraper/maaya/maaya-overview-2026-09.html")!!
+                    .bufferedReader()
+                    .readText()
+            scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)
+        }
+
+        private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
+
+        @Test
+        fun `reads every card, giving a year-less date the occurrence nearest to today`() {
+            // The section renders 16 columns; 10 are events, the rest a heading, spacers and the area blurbs.
+            events shouldHaveSize 10
+            events.map { it.eventDate } shouldContainExactly
+                listOf(
+                    LocalDate.of(2026, 9, 16),
+                    LocalDate.of(2026, 9, 17),
+                    LocalDate.of(2026, 9, 19),
+                    LocalDate.of(2026, 9, 19),
+                    LocalDate.of(2026, 9, 20),
+                    LocalDate.of(2026, 9, 24),
+                    LocalDate.of(2026, 9, 25),
+                    LocalDate.of(2026, 9, 24),
+                    LocalDate.of(2026, 10, 10),
+                    LocalDate.of(2026, 10, 31)
+                )
+            events.map { it.title }.first() shouldBe "EL GRITO FIESTA MEXICANA"
+        }
+
+        @Test
+        fun `honours a real meridiem and ignores a decorative one`() {
+            // "06:00pm to 10:00pm" — the shop page says 18:00.
+            val twoCanPlay = event("maaya:2026-09-24-two-can-play-this-game")
+            twoCanPlay.startTime shouldBe LocalTime.of(18, 0)
+            twoCanPlay.endTime shouldBe LocalTime.of(22, 0)
+            // "2:00 p.m. to 10:00 p.m" — dotted, and a real afternoon.
+            event("maaya:2026-09-19-afrolatin-open-air-festival").startTime shouldBe LocalTime.of(14, 0)
+            // "16:00pm to 10:00pm" — the hour is already 24-hour, the suffix says nothing.
+            val elGrito = event("maaya:2026-09-16-el-grito-fiesta-mexicana")
+            elGrito.startTime shouldBe LocalTime.of(16, 0)
+            elGrito.endTime shouldBe LocalTime.of(22, 0)
+            // "23:00 until late" and "14:00 to 22:00" — plain 24-hour, with and without an end.
+            event("maaya:2026-09-19-summer-closing-afrohaus").startTime shouldBe LocalTime.of(23, 0)
+            event("maaya:2026-09-19-summer-closing-afrohaus").endTime.shouldBeNull()
+            event("maaya:2026-09-20-asian-food-festival").endTime shouldBe LocalTime.of(22, 0)
+        }
+
+        @Test
+        fun `reads a two-day festival as a span, and its second start as no end`() {
+            // "Sat. & Sun. 10/11.10 from 06:00pm and from 05:00pm"
+            val afroeclipse = event("maaya:2026-10-10-afroeclipse")
+            afroeclipse.endDate shouldBe LocalDate.of(2026, 10, 11)
+            afroeclipse.startTime shouldBe LocalTime.of(18, 0)
+            afroeclipse.endTime.shouldBeNull()
+        }
+
+        @Test
+        fun `keeps the entry note and the shop link as before`() {
+            val angola = event("maaya:2026-09-17-beats-bites-angola")
+            angola.free shouldBe true
+            angola.priceNote.shouldBeNull()
+            angola.ticketUrl.shouldBeNull()
+            event("maaya:2026-10-31-maaya-halloween").ticketUrl shouldBe
+                "https://xceed.me/en/berlin/event/maaya-halloween/243650/channel/maaya-berlin"
+            events.none { it.imageUrl == null } shouldBe true
+        }
+
+        @Test
+        fun `fails when the cards state schedules and none yields a date`() {
+            val doc =
+                Jsoup.parse(
+                    """<section class="elementor-top-section"><section id="events">
+                    <section class="elementor-inner-section"><div class="elementor-column"><div class="elementor-widget-wrap">
+                    <div class="elementor-widget-heading"><h3 class="elementor-heading-title">SUPAFLY</h3></div>
+                    <div class="elementor-widget-text-editor"><p>Friday, September 19th from 23:00</p></div>
+                    </div></div></section></section></section>""",
+                    sourceUrl
+                )
+            shouldThrow<IllegalStateException> { scraper.scrape(doc, sourceUrl) }
+        }
     }
 }

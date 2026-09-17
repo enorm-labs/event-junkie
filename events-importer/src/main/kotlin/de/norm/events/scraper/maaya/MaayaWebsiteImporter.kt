@@ -10,6 +10,7 @@ import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
+import java.time.Clock
 
 /**
  * Website importer for MAAYA Berlin, the Afro-diasporic cultural venue and open-air pool on the
@@ -34,13 +35,15 @@ import org.springframework.stereotype.Component
  */
 @Component
 class MaayaWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher
+    private val htmlFetcher: HtmlFetcher,
+    /** Clock for the scraper's year inference on a year-less date. Defaults to the system clock; override in tests. */
+    clock: Clock = Clock.systemDefaultZone()
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.MAAYA
 
-    private val overviewPageScraper = MaayaOverviewPageScraper()
+    private val overviewPageScraper = MaayaOverviewPageScraper(clock)
 
     override suspend fun importEvents(
         url: String,
