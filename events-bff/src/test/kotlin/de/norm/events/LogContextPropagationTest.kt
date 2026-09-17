@@ -117,6 +117,18 @@ class LogContextPropagationTest {
     }
 
     @Test
+    fun `the request id is the exchange's own, which is the one an error body quotes`() {
+        val exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/venues"))
+
+        RequestLoggingFilter("/actuator").filter(exchange) { Mono.empty() }.block()
+
+        // Boot's `DefaultErrorAttributes` writes `request.id` into a problem body as `requestId`.
+        // A UUID minted in the filter gave the body and the column different values (#1527).
+        val event = appender.list.single { it.field(LogContextConfiguration.PATH) == "/venues" }
+        event.mdcPropertyMap[LogContextConfiguration.REQUEST_ID] shouldBe exchange.request.id
+    }
+
+    @Test
     fun `carries the method, path and status as fields rather than inside the sentence`() {
         val exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/venues?q=astra"))
 
@@ -167,10 +179,10 @@ class LogContextPropagationTest {
 
     @Test
     fun `gives two requests different ids`() {
-        repeat(2) {
-            val exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/venues"))
-            RequestLoggingFilter("/actuator").filter(exchange) { Mono.empty() }.block()
-        }
+        // Both exchanges stay reachable until the end: a mock request's id is its identity hash,
+        // which the JVM may hand to a new object once the old one is collected.
+        val exchanges = List(2) { MockServerWebExchange.from(MockServerHttpRequest.get("/venues")) }
+        exchanges.forEach { RequestLoggingFilter("/actuator").filter(it) { Mono.empty() }.block() }
 
         val ids = appender.list.mapNotNull { it.mdcPropertyMap[LogContextConfiguration.REQUEST_ID] }
         ids.size shouldBe 2

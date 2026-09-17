@@ -11,7 +11,6 @@ import org.springframework.web.server.ServerWebExchange
 import org.springframework.web.server.WebFilter
 import org.springframework.web.server.WebFilterChain
 import reactor.core.publisher.Mono
-import java.util.UUID
 
 private val logger = KotlinLogging.logger {}
 
@@ -27,6 +26,12 @@ private val logger = KotlinLogging.logger {}
  * chain because the Reactor context propagates **upwards**: written here, it is visible to every
  * operator above, which is the whole chain. [LogContextConfiguration] is what turns that context
  * entry back into an MDC field on whichever thread ends up running each one.
+ *
+ * **The id is the exchange's own, not one minted here (#1527).** Boot's `DefaultErrorAttributes`
+ * puts `request.id` into every error body as `requestId`, and its 5xx line carries the same id in
+ * its text, so a reporter who quotes the id from a problem body has to find the same value in the
+ * `requestid` column. A UUID minted here gave every request two ids, and the body named the one
+ * no column carried.
  *
  * **Actuator requests are handled and not logged**, which is the one exception and worth the
  * paragraph. Kubernetes probes liveness and readiness every few seconds and the collector scrapes
@@ -79,7 +84,7 @@ class RequestLoggingFilter(
                             )
                     }
                 }
-            }.contextWrite { it.put(REQUEST_ID, UUID.randomUUID().toString()) }
+            }.contextWrite { it.put(REQUEST_ID, request.id) }
     }
 
     /**

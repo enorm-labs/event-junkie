@@ -37,7 +37,9 @@ class LogContextConfiguration {
 
     companion object {
         /**
-         * One id per HTTP request, so every line a request produced can be read together.
+         * One id per HTTP request, so every line a request produced can be read together. The
+         * value is Spring's own exchange id — the one a `ProblemDetail` body carries under the same
+         * name (#1527), so the id a client quotes is the one the column holds.
          *
          * Named `requestId` and not `traceId` on purpose: nothing here issues a W3C trace context,
          * and a field named after a tracing system that is not on the classpath would invite joins
