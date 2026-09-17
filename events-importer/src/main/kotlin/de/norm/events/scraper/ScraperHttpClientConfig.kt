@@ -43,9 +43,9 @@ const val SCRAPER_USER_AGENT = "Mozilla/5.0 (compatible; EventJunkie/1.0; +https
  * the *same* host are politeness-throttled **together** rather than each keeping its own
  * independent timer (ADR-007 §"Per-Host Politeness Throttling").
  *
- * The client is configured to **follow HTTP redirects** (`followRedirect(true)`), a response
- * timeout, a transparent identifying `User-Agent` (ADR-007 best-practice #3), and the throttling
- * filter. Redirect following is on because some venues expose only redirecting entry/detail URLs —
+ * The client is configured to **follow HTTP redirects** (`followRedirect(true)`), to ask for and
+ * decode a compressed body (`compress(true)`, #1542), a response timeout, a transparent identifying
+ * `User-Agent` (ADR-007 best-practice #3), and the throttling filter. Redirect following is on because some venues expose only redirecting entry/detail URLs —
  * e.g. Alte Kantine's overview links each event as a `?p=<id>` permalink that 301-redirects to its
  * canonical `/portfolio/<slug>/` page (ADR-007 best-practice #6, canonical URLs); Reactor Netty
  * follows redirects on the same host transparently, so scrapers receive the final document. The
@@ -93,6 +93,11 @@ class ScraperHttpClientConfig {
                     HttpClient
                         .create()
                         .followRedirect(true)
+                        // Sends `Accept-Encoding` and decodes what comes back. Reactor Netty does
+                        // neither by default, and Uber Arena answers `Content-Encoding: gzip` even
+                        // to a request that asked for `identity` — Jsoup then parsed 18 KB of gzip
+                        // bytes as HTML and found 0 rows on every run, reported as SUCCESS (#1542).
+                        .compress(true)
                         .responseTimeout(scraperProperties.responseTimeout)
                 )
             ).defaultHeader("User-Agent", SCRAPER_USER_AGENT)
