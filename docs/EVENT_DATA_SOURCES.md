@@ -76,7 +76,7 @@ schema change.
 | LARK                             | https://larkberlin.com/events/                              | Club         | WP REST + ACF; post date is the event date             |
 | Lido                             | https://www.lido-berlin.de/                                 | Concert Hall | Clean slugs; doors + start; "Ausverkauft" badge        |
 | Loge                             | https://www.loge-berlin.org/                                | Club         | Wix; tickets on-site; support via "+" in title         |
-| MAAYA                            | https://maaya.de/                                           | Club         | Elementor home page; every time written "pm"           |
+| MAAYA                            | https://maaya.de/                                           | Club         | Elementor home page; year-less dates; `pm` half real   |
 | Madame Claude                    | https://madameclaude.de/                                    | Bar          | WordPress `event` REST API (ACF)                       |
 | Matrix Club Berlin               | https://www.matrix-berlin.de/                               | Club         | WordPress; month pages walked; DJs + door prices       |
 | Max-Schmeling-Halle              | https://www.velomax.de/events                               | Arena        | Shared VELOMAX listing; no sport imported              |
