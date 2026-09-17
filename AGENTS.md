@@ -646,6 +646,7 @@ a PR without one is the exception that makes the milestone view stop meaning any
 | ADR: Our own photographs' hosting           | `docs/adr/ADR-028_OWN_PHOTOGRAPH_HOSTING.md` — a second public bucket for own work, credited on the About page                    |
 | ADR: An event's optional end                | `docs/adr/ADR-029_EVENT_END.md` — `end_date` + `end_time`, stored only when the venue states them. Listed until the end           |
 | ADR: `RELOCATED` marks the origin           | `docs/adr/ADR-030_RELOCATED_IS_THE_ORIGIN.md` — a `verlegt` row is the house the show left; `relocated_to` names where to         |
+| ADR: MusicBrainz is the artist identity hub | `docs/adr/ADR-031_ARTIST_IDENTITY_HUB.md` — every artist row is looked up, the verdict stored, the name never rewritten           |
 | Plan: Hetzner + k3s setup, go-live          | `docs/ops/PLATFORM_SETUP.md`                                                                                                      |
 | Releasing & deploying, end to end           | `docs/ops/RELEASING.md` — the diagram; ADR-016 has the reasoning                                                                  |
 | Bootstrapping a cluster, once               | `docs/ops/CLUSTER_BOOTSTRAP.md` — ordered runbook, first run 2026-08-13; traps table at the bottom                                |
