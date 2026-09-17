@@ -11,6 +11,8 @@ import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okio.Buffer
+import okio.GzipSink
+import okio.buffer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -133,6 +135,55 @@ class HtmlFetcherTest {
                 )
 
                 fetcher.fetchHtml(baseUrl() + "/page") shouldBe body
+            }
+    }
+
+    /**
+     * Uber Arena's server gzips the body whatever `Accept-Encoding` says (#1542). A client that
+     * does not decode hands Jsoup the compressed bytes, which parse to a document with no rows —
+     * a run that reports SUCCESS with 0 events, every time, with nothing in the log to say why.
+     */
+    @Nested
+    inner class ContentEncoding {
+        private val page = "<html><body><div data-category=\"concert\">Rammstein</div></body></html>"
+
+        private fun gzipped(text: String): Buffer =
+            Buffer().also { buffer ->
+                GzipSink(buffer).buffer().use { it.writeUtf8(text) }
+            }
+
+        @Test
+        fun `fetch decodes a gzip body the server sent unasked`() =
+            runTest {
+                server.enqueue(
+                    MockResponse
+                        .Builder()
+                        .code(200)
+                        .addHeader("Content-Type", "text/html; charset=UTF-8")
+                        .addHeader("Content-Encoding", "gzip")
+                        .body(gzipped(page))
+                        .build()
+                )
+
+                val result = fetcher.fetch(baseUrl() + "/events/all").shouldBeInstanceOf<FetchResult.Success>()
+                result.document.select("div[data-category]").size shouldBe 1
+                result.document.text() shouldContain "Rammstein"
+            }
+
+        @Test
+        fun `fetch asks for a compressed body, which is the polite request to make`() =
+            runTest {
+                server.enqueue(
+                    MockResponse
+                        .Builder()
+                        .code(200)
+                        .body(page)
+                        .build()
+                )
+
+                fetcher.fetch(baseUrl() + "/events/all")
+
+                server.takeRequest().headers["Accept-Encoding"]!! shouldContain "gzip"
             }
     }
 
