@@ -69,11 +69,20 @@ class AdmiralspalastDetailPageScraper {
     ): List<ScrapedEvent> {
         val slug = extractEventSlug(sourceUrl, PRODUCTION_PATH_PREFIX).removeSuffix(PAGE_SUFFIX)
         val rows = document.select("$EVENT_LIST .item")
+        // The credit is the production's, printed once beside the description, so every night shares it (#1532).
+        val promoters =
+            listOfNotNull(
+                document
+                    .textAt(PROMOTER)
+                    ?.replaceFirst(PROMOTER_LABEL, "")
+                    ?.trim()
+                    ?.takeIf { it.isNotBlank() }
+            )
 
         @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed rows without aborting the whole import
         return rows.mapNotNull { row ->
             try {
-                parsePerformance(row, sourceUrl, slug, category)
+                parsePerformance(row, sourceUrl, slug, category, promoters)
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to parse an Admiralspalast performance on $sourceUrl, skipping" }
                 null
@@ -97,7 +106,8 @@ class AdmiralspalastDetailPageScraper {
         row: Element,
         sourceUrl: String,
         slug: String,
-        category: String?
+        category: String?,
+        promoters: List<String>
     ): ScrapedEvent? {
         val title = row.textAt(TITLE)?.let(::cleanEventTitle)
         if (title == null) {
@@ -141,7 +151,8 @@ class AdmiralspalastDetailPageScraper {
             // The venue bills no lineup, so the act is whatever the production title names. The
             // subtitle is deliberately not offered as a support-act source: it only ever carries the
             // reschedule note, which would be minted as a performer.
-            artists = buildArtistsForEventType(title, subtitle = null, eventType = eventType)
+            artists = buildArtistsForEventType(title, subtitle = null, eventType = eventType),
+            promoters = promoters
         )
     }
 
@@ -202,6 +213,12 @@ class AdmiralspalastDetailPageScraper {
         const val TITLE = ".value.eventname"
         const val RESCHEDULE_NOTE = ".value.eventzusatz"
         const val TICKET_CELL = ".field.eventtix"
+
+        /** The production's promoter, once per page: `Veranstalter: d2m berlin GmbH`. */
+        const val PROMOTER = ".field.promap .value .text"
+
+        /** The label in front of the promoter's name. */
+        val PROMOTER_LABEL = Regex("""^\s*Veranstalter(?:\*in)?\s*:\s*""", RegexOption.IGNORE_CASE)
 
         /** What the ticket cell says instead of offering a link once a performance has sold out. */
         val SOLD_OUT = Regex("""\bausverkauft\b""", RegexOption.IGNORE_CASE)

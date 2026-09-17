@@ -18,6 +18,7 @@ import de.norm.events.scraper.stripRelocationPrefix
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 
 /**
  * Pure HTML parser for Mikropol Berlin event detail pages (`/event/<date-slug>/`).
@@ -25,7 +26,8 @@ import org.jsoup.nodes.Document
  * Each detail page renders a `.single-event` block: an `h1.entry-title`, an optional
  * `h2.support` line, an inline `.event-details` box (`DD.MM.YYYY` date plus `Beginn` /
  * `Einlass` times), a `.ticket-links` Eventim button, a `a.event-image` poster, and an
- * `.eventnotes` description. A sold-out / cancelled show carries a `.canceledsoldout`
+ * `.eventnotes` description, and a `.promoter` credit ("Trinity Music presents:") above the
+ * title. A sold-out / cancelled show carries a `.canceledsoldout`
  * badge (`Ausverkauft` / `Abgesagt`); a relocated show opens its title with a
  * "verlegt in den … –" note. The theme embeds no schema.org JSON-LD.
  *
@@ -89,12 +91,30 @@ class MikropolDetailPageScraper {
             // Sold-out and cancelled render in the `.canceledsoldout` badge; a relocation lives in the title.
             soldOut = statusBadge.contains(SOLD_OUT_TEXT, ignoreCase = true),
             status = parseEventStatus("$statusBadge $rawTitle"),
-            artists = buildArtistsForEventType(title, support, eventType)
+            artists = buildArtistsForEventType(title, support, eventType),
+            promoters = parsePromoters(content)
         )
     }
+
+    /**
+     * The promoter credit above the title — `<div class="promoter">Trinity Music presents:</div>` —
+     * with its `presents:` / `präsentiert:` frame stripped (#1532). One name per credit; the venue
+     * writes one promoter per show.
+     */
+    private fun parsePromoters(content: Element): List<String> =
+        listOfNotNull(
+            content
+                .textAt("div.single-event div.promoter")
+                ?.replace(PRESENTS_SUFFIX, "")
+                ?.trim()
+                ?.takeIf { it.isNotBlank() }
+        )
 
     private companion object {
         /** The Events-Manager sold-out badge text (`Ausverkauft`). */
         private const val SOLD_OUT_TEXT = "ausverkauft"
+
+        /** The billing frame the venue appends to a promoter's name. */
+        private val PRESENTS_SUFFIX = Regex("""\s*(?:presents|pr(?:ä|ae)sentiert)\s*:?\s*$""", RegexOption.IGNORE_CASE)
     }
 }

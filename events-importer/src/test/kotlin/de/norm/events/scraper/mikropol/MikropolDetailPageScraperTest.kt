@@ -91,6 +91,19 @@ class MikropolDetailPageScraperTest {
         event.artists shouldBe listOf(ScrapedArtist("DUEJA", "HEADLINER"))
     }
 
+    // The credit sits above the title as "<promoter> presents:"; a page without one stores none (#1532).
+    @Test
+    fun `reads the promoter credit above the title`() {
+        val url = "https://mikropol-berlin.de/event/2026-09-17-dice/"
+        val event = parse("mikropol-detail-promoter.html", url).shouldNotBeNull()
+
+        event.title shouldBe "Dice"
+        event.promoters shouldBe listOf("Trinity Music")
+        parse("mikropol-detail-simple.html", "https://mikropol-berlin.de/event/2026-07-14-house-of-protection/")
+            .shouldNotBeNull()
+            .promoters shouldBe emptyList()
+    }
+
     @Test
     fun `returns null for a page without an event title`() {
         val url = "https://mikropol-berlin.de/event/missing/"
