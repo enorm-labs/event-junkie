@@ -205,7 +205,7 @@ class GlobalExceptionHandler {
      */
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgument(ex: IllegalArgumentException): ProblemDetail {
-        logger.error { "Illegal argument encountered: ${ex.message}" }
+        logger.error(ex) { "Illegal argument encountered: ${ex.message}" }
         return ProblemDetail.forStatusAndDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,
             ex.message ?: "An unexpected data inconsistency was detected."
