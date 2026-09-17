@@ -96,6 +96,7 @@ class HuxleysOverviewPageScraper {
             sourceId = "${EventSource.HUXLEYS.sourceIdPrefix}$slug",
             soldOut = card.hasClass(SOLD_OUT_CLASS),
             status = parseHuxleysStatus(card),
+            statusNote = card.textAt(".anderungen"),
             artists = buildArtistsForEventType(title, support, eventType)
         )
     }

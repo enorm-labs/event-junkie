@@ -88,6 +88,7 @@ class HuxleysWebsiteImporter(
             startTime = primary.startTime ?: fallback.startTime,
             soldOut = primary.soldOut || fallback.soldOut,
             status = fallback.status.takeIf { it != EventStatus.SCHEDULED.name } ?: primary.status,
+            statusNote = fallback.statusNote ?: primary.statusNote,
             // Built from the fields this merge actually stores — the listing's title and the joined
             // subtitle — so the lineup can never describe a title or a type the row does not carry.
             artists = buildArtistsForEventType(fallback.title, subtitle, primary.eventType)

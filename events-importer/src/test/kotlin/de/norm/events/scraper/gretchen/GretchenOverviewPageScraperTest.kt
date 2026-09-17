@@ -314,6 +314,9 @@ class GretchenOverviewPageScraperTest {
             event.status shouldBe "RELOCATED"
             // The .lineup carries a 10-word "verlegt" sentence that must not be minted as an artist.
             event.artists shouldContainExactly listOf(ScrapedArtist("Mucco", "HEADLINER"))
+            // The badge and the headline tail travel with the row; the boundary names the destination (#1551).
+            event.statusNote shouldBe "neuer Ort  verlegt ins Metropol"
+            event.toEventEntity(venueId = 1L, venueSlug = "gretchen", eventSourceId = 1L).relocatedTo shouldBe "Metropol"
         }
     }
 

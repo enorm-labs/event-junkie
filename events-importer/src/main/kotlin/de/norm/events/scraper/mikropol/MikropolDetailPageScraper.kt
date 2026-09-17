@@ -91,6 +91,7 @@ class MikropolDetailPageScraper {
             // Sold-out and cancelled render in the `.canceledsoldout` badge; a relocation lives in the title.
             soldOut = statusBadge.contains(SOLD_OUT_TEXT, ignoreCase = true),
             status = parseEventStatus("$statusBadge $rawTitle"),
+            statusNote = rawTitle,
             artists = buildArtistsForEventType(title, support, eventType),
             promoters = parsePromoters(content)
         )

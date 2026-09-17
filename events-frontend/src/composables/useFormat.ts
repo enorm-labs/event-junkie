@@ -123,11 +123,15 @@ export function useFormat() {
 
     /**
      * The one word for a status that changes whether the reader goes, and `''` for `SCHEDULED`,
-     * which is every other event and says nothing. Same guard as `formatEventType`: `EventStatus`
-     * lives in `events-core`, and a value the catalogue lacks reads as its sentence-cased constant.
+     * which is every other event and says nothing. A relocated event that knows where it went says
+     * so ("Moved to Hole44") — that is the fact a ticket holder needs. Same guard as
+     * `formatEventType`: `EventStatus` lives in `events-core`, and a value the catalogue lacks reads
+     * as its sentence-cased constant.
      */
-    formatEventStatus: (status?: string | null) => {
+    formatEventStatus: (status?: string | null, relocatedTo?: string | null) => {
       if (!status || status === 'SCHEDULED') return ''
+      if (status === 'RELOCATED' && relocatedTo)
+        return t('events.status.movedTo', { venue: relocatedTo })
       const key = `events.status.${status}`
       return te(key) ? t(key) : humaniseEventType(status)
     },

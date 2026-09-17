@@ -100,6 +100,8 @@ class MetropolDetailPageScraperTest {
         val event = scrape("brkn", "2026-10-04-brkn")
         event.title shouldBe "BRKN"
         event.status shouldBe EventStatus.RELOCATED.name
+        // The prefix names where to; the boundary stores it (#1551).
+        event.toEventEntity(venueId = 1L, venueSlug = "metropol", eventSourceId = 1L).relocatedTo shouldBe "Bi Nuu"
     }
 
     @Test

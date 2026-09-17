@@ -106,6 +106,7 @@ class FrannzOverviewPageScraper(
         // Read the status off the *raw* title first — cleanEventTitle strips the very note it is
         // derived from ("… -verlegt ins Gretchen-", "… Nachholtermin vom …").
         val status = parseEventStatus(rawTitle)
+        val statusNote = rawTitle
         // Strip a trailing "Nachholtermin vom …" reschedule note the venue appends to moved shows.
         val title = cleanEventTitle(rawTitle)
 
@@ -147,6 +148,7 @@ class FrannzOverviewPageScraper(
             pricePresale = pricePresale,
             priceBoxOffice = priceBoxOffice,
             status = status,
+            statusNote = statusNote,
             artists = buildArtistsForEventType(title, subtitle, eventType),
             promoters = parsePromoters(article.textAt("h4.event-otitle"))
         )

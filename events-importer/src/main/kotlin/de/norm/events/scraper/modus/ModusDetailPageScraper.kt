@@ -71,6 +71,7 @@ class ModusDetailPageScraper {
             sourceId = "${EventSource.MODUS.sourceIdPrefix}$slug",
             ticketUrl = document.hrefAt(".all-events-button a"),
             status = parseEventStatus(rawTitle),
+            statusNote = rawTitle,
             artists = buildArtistsForEventType(title, subtitle = null, eventType = eventType)
         )
     }

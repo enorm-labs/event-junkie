@@ -70,6 +70,13 @@ data class ScrapedEvent(
     /** Scheduling status (e.g. "SCHEDULED", "CANCELLED", "POSTPONED", "RELOCATED"). */
     val status: String = "SCHEDULED",
     /**
+     * The venue's own words about the status, where they are neither the title nor the
+     * description — a change note, a badge, or the raw title before [cleanEventTitle] strips
+     * the "verlegt ins …" tail. Never stored; [toEventEntity] reads the destination of a move
+     * out of it (#1551).
+     */
+    val statusNote: String? = null,
+    /**
      * Raw artist names extracted from the event listing.
      * Each pair contains the artist name and their role (e.g. "HEADLINER", "SUPPORT", "DJ").
      * The service layer resolves these to database artist entities.
@@ -120,7 +127,11 @@ data class ScrapedEvent(
         // A venue with no status badge writes the cancellation into the title (#1493). The title
         // decides only where the scraper found nothing, and a marker glued to a name comes off.
         val badge = EventStatus.parseOrDefault(status)
-        val storedStatus = if (badge == EventStatus.SCHEDULED) parseTitleStatus(title) ?: badge.name else badge.name
+        val badgeStatus = if (badge == EventStatus.SCHEDULED) parseTitleStatus(title) ?: badge.name else badge.name
+        // A "verlegt" badge sits on both ends of a move; which end this row is depends on the
+        // venue, which only this boundary knows (#1551).
+        val relocation = listOfNotNull(statusNote, title, subtitle, description).firstNotNullOfOrNull(::parseRelocation)
+        val (storedStatus, relocatedTo) = resolveRelocation(badgeStatus, relocation, venueSlug)
         val storedTitle = stripTitleStatusMarker(title)
         val storedDescription = if (licences.withholdsDescription()) null else description
         val detected = DescriptionLanguage.detect(storedDescription)
@@ -162,6 +173,7 @@ data class ScrapedEvent(
             // reading/exhibition/screening a venue filed under the genre field.
             eventType = resolveEventType(eventType, storedTitle, genre).name,
             status = storedStatus,
+            relocatedTo = relocatedTo,
             slug = SlugGenerator.slugify(listOfNotNull(eventDate, venueSlug, storedTitle, slugDiscriminator).joinToString("-")),
             eventDate = eventDate,
             doorsTime = doors,

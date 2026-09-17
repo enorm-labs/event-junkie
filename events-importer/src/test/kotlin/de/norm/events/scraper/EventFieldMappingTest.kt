@@ -188,6 +188,12 @@ class EventFieldMappingTest {
     // --- parseTitleStatus / stripTitleStatusMarker (#1493) ---
 
     @Test
+    fun `parseEventStatus reads a date moved with the relocation verb as postponed`() {
+        parseEventStatus("ACHTUNG VERLEGT! Die Show wird auf den 30.05.2027 verlegt.") shouldBe "POSTPONED"
+        parseEventStatus("Achtung: Die Show wird vom Huxleys ins Hole44 verlegt!") shouldBe "RELOCATED"
+    }
+
+    @Test
     fun `parseTitleStatus reads a status a venue wrote into the title`() {
         parseTitleStatus("Olga Myko - Abgesagt") shouldBe "CANCELLED"
         parseTitleStatus("Da Konzert von Scarfold und Los Mierda faellt leider aus!") shouldBe "CANCELLED"
@@ -203,6 +209,60 @@ class EventFieldMappingTest {
         // Prose, not a badge: the bare "cancel" a badge may carry is not a title marker.
         parseTitleStatus("Cancel Culture – Ein Film").shouldBeNull()
         parseTitleStatus("Ausfall der Sinne").shouldBeNull()
+    }
+
+    // --- parseRelocation / resolveRelocation (#1551) ---
+
+    @Test
+    fun `parseRelocation reads both houses off the sentence a venue prints on either end of a move`() {
+        parseRelocation("Achtung: Die Show wird vom Huxleys ins Hole44 verlegt") shouldBe Relocation(from = "Huxleys", to = "Hole44")
+        parseRelocation("Die Show wird aus dem Gretchen in das Frannz VERLEGT") shouldBe Relocation(from = "Gretchen", to = "Frannz")
+        parseRelocation("Die Show wird von der Uber Eats Music Hall ins Huxleys verlegt") shouldBe
+            Relocation(from = "Uber Eats Music Hall", to = "Huxleys")
+        parseRelocation("Hinweis: Das Konzert wurde vom Lido in den Privatclub verlegt! Tickets behalten ihre Gültigkeit") shouldBe
+            Relocation(from = "Lido", to = "Privatclub")
+        parseRelocation("Das Konzert wurde vom Lido in Cassiopeia verlegt") shouldBe Relocation(from = "Lido", to = "Cassiopeia")
+    }
+
+    @Test
+    fun `parseRelocation reads a note that names one house, or none`() {
+        parseRelocation("Verlegt ins Mikropol") shouldBe Relocation(from = null, to = "Mikropol")
+        parseRelocation("Zoh Amba - Verlegt ins Bi Nuu") shouldBe Relocation(from = null, to = "Bi Nuu")
+        parseRelocation("Trinity präsentiert: MAD TSAI -verlegt ins Gretchen- **The BITE BACK Tour**") shouldBe Relocation(from = null, to = "Gretchen")
+        parseRelocation("HOCHVERLEGT IN DAS COLUMBIA THEATER") shouldBe Relocation(from = null, to = "COLUMBIA THEATER")
+        parseRelocation("Mad Tsai (US) *live* verlegt vom Frannz *Vorverkauf 29,45 €") shouldBe Relocation(from = "Frannz", to = null)
+        parseRelocation("Verlegt / Relocated") shouldBe Relocation(from = null, to = null)
+        parseRelocation("GENESIS OWUSU VERLEGT") shouldBe Relocation(from = null, to = null)
+    }
+
+    @Test
+    fun `parseRelocation prefers the contracted preposition over the bare in of prose, and reads no act as an origin`() {
+        // "in Berlin" comes first in the sentence; "ins Mikropol" is the note.
+        val forager = parseRelocation("Aus Termingründen wird das Konzert von Forager in Berlin vom Badehaus ins Mikropol verlegt")
+        forager shouldBe Relocation(from = "Badehaus", to = "Mikropol")
+        parseRelocation("Support: Joy Forever, 20:00 Uhr").shouldBeNull()
+    }
+
+    @Test
+    fun `resolveRelocation makes the row at the house the show left the origin, and the other one a plain event`() {
+        val move = Relocation(from = "Huxleys", to = "Hole44")
+        resolveRelocation("RELOCATED", move, "huxleys-neue-welt") shouldBe ("RELOCATED" to "Hole44")
+        resolveRelocation("RELOCATED", move, "hole-44") shouldBe ("SCHEDULED" to null)
+        // Only the destination named: the origin is whoever printed it.
+        resolveRelocation("RELOCATED", Relocation(null, "Mikropol"), "badehaus") shouldBe ("RELOCATED" to "Mikropol")
+        // Only the origin named, and it is another house: the show arrived here.
+        resolveRelocation("RELOCATED", Relocation("Frannz", null), "gretchen") shouldBe ("SCHEDULED" to null)
+        // "Hole" is how Metropol writes Hole 44.
+        resolveRelocation("RELOCATED", Relocation("Hole", "Metropol"), "hole-44") shouldBe ("RELOCATED" to "Metropol")
+        resolveRelocation("RELOCATED", Relocation("Hole", "Metropol"), "metropol") shouldBe ("SCHEDULED" to null)
+    }
+
+    @Test
+    fun `resolveRelocation leaves a nameless note and every other status alone`() {
+        resolveRelocation("RELOCATED", Relocation(null, null), "columbia-theater") shouldBe ("RELOCATED" to null)
+        resolveRelocation("RELOCATED", null, "columbia-theater") shouldBe ("RELOCATED" to null)
+        resolveRelocation("CANCELLED", Relocation("Huxleys", "Hole44"), "huxleys-neue-welt") shouldBe ("CANCELLED" to null)
+        resolveRelocation("SCHEDULED", null, "lido") shouldBe ("SCHEDULED" to null)
     }
 
     @Test

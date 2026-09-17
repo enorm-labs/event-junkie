@@ -654,6 +654,11 @@ export interface components {
              */
             status?: "SCHEDULED" | "RELOCATED" | "CANCELLED" | "POSTPONED";
             /**
+             * @description Where a RELOCATED event moved to, as the venue's own note names the house; absent on every other status
+             * @example Hole44
+             */
+            relocatedTo?: string;
+            /**
              * Format: date
              * @description Calendar date of the event
              * @example 2026-06-12
@@ -881,6 +886,11 @@ export interface components {
              * @enum {string}
              */
             status?: "SCHEDULED" | "RELOCATED" | "CANCELLED" | "POSTPONED";
+            /**
+             * @description Where a RELOCATED event moved to, as the venue's own note names the house; absent on every other status
+             * @example Hole44
+             */
+            relocatedTo?: string;
             /**
              * Format: date
              * @description Calendar date of the event

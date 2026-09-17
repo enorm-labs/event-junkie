@@ -71,10 +71,17 @@ class Hole44OverviewPageScraperTest {
     }
 
     @Test
-    fun `flags a relocated event from its changes note`() {
+    fun `flags a relocated event from its changes note, and carries the note for the boundary to read the direction`() {
         event("2026-11-20-luke-combs-uk-tribute").status shouldBe "RELOCATED"
         event("2026-10-29-kate-ryan").status shouldBe "RELOCATED"
+        event("2026-10-29-kate-ryan").statusNote shouldBe "Achtung: Die Show wird vom Huxleys ins Hole44 verlegt!"
+        // Kate Ryan arrived here; Luke Combs and Killerpilze left (#1551).
+        entity("2026-10-29-kate-ryan").status shouldBe "SCHEDULED"
+        entity("2026-11-20-luke-combs-uk-tribute").relocatedTo shouldBe "Metropol"
+        entity("2027-01-29-killerpilze").relocatedTo shouldBe "Huxleys"
     }
+
+    private fun entity(sourceIdSuffix: String) = event(sourceIdSuffix).toEventEntity(venueId = 1L, venueSlug = "hole-44", eventSourceId = 1L)
 
     @Test
     fun `does not treat an informational Zusatzshow note as a status change`() {

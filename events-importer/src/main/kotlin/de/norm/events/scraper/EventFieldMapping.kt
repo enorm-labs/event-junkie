@@ -21,11 +21,17 @@ fun parseEventStatus(statusText: String): String {
     val text = statusText.lowercase()
     return when {
         CANCELLED_TEXT.containsMatchIn(text) -> EventStatus.CANCELLED.name
-        text.contains("verschoben") || text.contains("postpon") -> EventStatus.POSTPONED.name
+        text.contains("verschoben") || text.contains("postpon") || VERLEGT_AUF_DATUM.containsMatchIn(text) -> EventStatus.POSTPONED.name
         text.contains("verlegt") || text.contains("reloc") -> EventStatus.RELOCATED.name
         else -> EventStatus.SCHEDULED.name
     }
 }
+
+/**
+ * "auf den 30.05.2027 verlegt" moves the date, not the house: a postponement the venue wrote with
+ * the relocation verb (Hole 44). Only a date after "auf" counts; "verlegt ins" stays a move.
+ */
+private val VERLEGT_AUF_DATUM = Regex("""verlegt\s+auf\s+(?:den\s+)?\d|auf\s+(?:den\s+)?\d[\d.]*\s+verlegt""")
 
 /**
  * A cancellation in a badge: `abgesagt`, `Absage` (#1560), `cancel…`, and "fällt aus" / "fällt leider

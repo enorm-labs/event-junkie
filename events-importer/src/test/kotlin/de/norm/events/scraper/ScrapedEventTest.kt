@@ -4,6 +4,7 @@ import de.norm.events.event.EventEntity
 import de.norm.events.licence.SourceLicence
 import de.norm.events.licence.SourceLicences
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.time.Clock
@@ -28,10 +29,14 @@ class ScrapedEventTest {
         eventDate: LocalDate = LocalDate.of(2026, 12, 30),
         endDate: LocalDate? = null,
         endTime: LocalTime? = null,
-        status: String = "SCHEDULED"
+        status: String = "SCHEDULED",
+        statusNote: String? = null,
+        subtitle: String? = null
     ) = ScrapedEvent(
         title = title,
+        subtitle = subtitle,
         status = status,
+        statusNote = statusNote,
         eventType = eventType,
         genre = genre,
         eventDate = eventDate,
@@ -78,6 +83,41 @@ class ScrapedEventTest {
     fun `toEventEntity keeps a scraper's own status over the title, and a plain title scheduled`() {
         scrapedEvent(title = "The Act (verschoben)", status = "RELOCATED").toEntity().status shouldBe "RELOCATED"
         scrapedEvent(title = "Berliner Weisse").toEntity().status shouldBe "SCHEDULED"
+    }
+
+    // A "verlegt" badge sits on both ends of a move; the venue decides which end this row is (#1551).
+    @Test
+    fun `toEventEntity keeps RELOCATED with the destination on the row at the house the show left`() {
+        val note = "Achtung: Die Show wird vom SO36 ins Hole44 verlegt"
+        val entity = scrapedEvent(title = "KATE RYAN", status = "RELOCATED", statusNote = note).toEntity()
+
+        entity.status shouldBe "RELOCATED"
+        entity.relocatedTo shouldBe "Hole44"
+    }
+
+    @Test
+    fun `toEventEntity schedules the row at the house the show moved to`() {
+        val note = "Achtung: Die Show wird vom Huxleys ins SO36 verlegt"
+        val arrived = scrapedEvent(title = "KATE RYAN", status = "RELOCATED", statusNote = note).toEntity()
+        arrived.status shouldBe "SCHEDULED"
+        arrived.relocatedTo.shouldBeNull()
+
+        // Only the origin named, and it is another house.
+        scrapedEvent(status = "RELOCATED", description = "Mad Tsai *live* verlegt vom Frannz").toEntity().status shouldBe "SCHEDULED"
+    }
+
+    @Test
+    fun `toEventEntity reads the destination off the title, the subtitle or the description when there is no note`() {
+        scrapedEvent(title = "Zoh Amba - Verlegt ins Bi Nuu", status = "RELOCATED").toEntity().relocatedTo shouldBe "Bi Nuu"
+        scrapedEvent(status = "RELOCATED", subtitle = "Das Konzert wurde vom SO36 in Cassiopeia verlegt").toEntity().relocatedTo shouldBe "Cassiopeia"
+        val moved = scrapedEvent(status = "RELOCATED", description = "Hinweis: Das Konzert wurde vom SO36 in den Privatclub verlegt!").toEntity()
+        moved.relocatedTo shouldBe "Privatclub"
+        // A badge that names nothing stays a bare RELOCATED, as before.
+        val bare = scrapedEvent(title = "Turbopaolo", status = "RELOCATED", statusNote = "Verlegt / Relocated").toEntity()
+        bare.status shouldBe "RELOCATED"
+        bare.relocatedTo.shouldBeNull()
+        // Any other status ignores a relocation sentence in the prose.
+        scrapedEvent(status = "CANCELLED", description = "vom SO36 ins Hole44 verlegt, dann abgesagt").toEntity().relocatedTo.shouldBeNull()
     }
 
     @Test

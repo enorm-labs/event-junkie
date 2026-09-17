@@ -188,6 +188,14 @@ describe('EventCard', () => {
     expect(relocated.text()).toContain('Relocated')
     expect(relocated.text()).not.toContain('Live tonight')
 
+    // A relocated event that knows where it went says so.
+    const moved = mount(EventCard, {
+      props: { event: { ...event, status: 'RELOCATED', relocatedTo: 'Hole44' } },
+      global: { stubs },
+    })
+    expect(moved.text()).toContain('Moved to Hole44')
+    expect(moved.text()).not.toContain('Relocated')
+
     // Scheduled says nothing; past says only that.
     const scheduled = mount(EventCard, {
       props: { event: { ...event, status: 'SCHEDULED' } },

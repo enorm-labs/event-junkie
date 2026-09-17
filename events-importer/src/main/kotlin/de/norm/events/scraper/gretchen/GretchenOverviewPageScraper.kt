@@ -120,6 +120,7 @@ class GretchenOverviewPageScraper {
         val title = titleWithoutStatus.replaceFirst(SERIES_PREFIX, "").trim().ifBlank { titleWithoutStatus }
         val statusTail = rawTitle.substringAfter("//", "")
         val status = parseStatus(gig, statusTail)
+        val statusNote = "${gig.textAt(".rotated").orEmpty()} $statusTail".trim()
 
         val (doorsTime, startTime) = parseTimes(gig)
         val (pricePresale, priceBoxOffice, priceNote) = parsePrices(gig)
@@ -145,6 +146,7 @@ class GretchenOverviewPageScraper {
             priceBoxOffice = priceBoxOffice,
             priceNote = priceNote,
             status = status,
+            statusNote = statusNote,
             artists = parseArtists(gig).ifEmpty { headlinerFromPresentsTitle(title) },
             promoters = parsePromoters(gig)
         )

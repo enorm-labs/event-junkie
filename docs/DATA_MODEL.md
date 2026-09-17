@@ -43,6 +43,7 @@ classDiagram
         String description
         EventType eventType
         EventStatus status
+        String relocatedTo
         String slug
         LocalDate eventDate
         LocalTime doorsTime
@@ -203,6 +204,7 @@ Core entity representing a single music event at a venue on a specific date.
 | `description`        | `TEXT`          | Yes      | Longer description / artist bio                                 | `Formed in Ipswich in the late 1970s…`                     |
 | `event_type`         | `TEXT`          | No       | Event category (see `EventType` enum)                           | `CONCERT`                                                  |
 | `status`             | `TEXT`          | No       | Scheduling status (see `EventStatus` enum, default `SCHEDULED`) | `SCHEDULED`                                                |
+| `relocated_to`       | `TEXT`          | Yes      | Where a `RELOCATED` show moved to, as its note says (ADR-030)   | `Hole44`                                                   |
 | `slug`               | `TEXT`          | No       | URL-friendly identifier                                         | `2026-06-12-the-adicts`                                    |
 | `event_date`         | `DATE`          | No       | Calendar date of the event                                      | `2026-06-12`                                               |
 | `doors_time`         | `TIME`          | Yes      | When doors open                                                 | `19:00`                                                    |
@@ -380,6 +382,10 @@ venue's own event page). Nearly every event on Berlin venue websites links to an
 
 Berlin venues frequently update event listings to mark events as relocated ("VERLEGT"), cancelled, or postponed. The `status` field captures this state so the
 frontend can display appropriate badges and the importer can update events without losing the original record.
+
+`RELOCATED` means the show moved **away** from this venue. Both houses print the same "verlegt" note. The importer reads the direction out of it at the
+persistence boundary and stores the destination's name in `relocated_to`. The row at the house the show moved to is a plain `SCHEDULED` event
+([ADR-030](adr/ADR-030_RELOCATED_IS_THE_ORIGIN.md)).
 
 ### `slug` Fields on All Main Entities
 

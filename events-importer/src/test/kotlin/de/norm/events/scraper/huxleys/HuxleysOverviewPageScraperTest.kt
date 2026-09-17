@@ -83,8 +83,15 @@ class HuxleysOverviewPageScraperTest {
     fun `reads a relocation from the change note, which is the only place it is stated`() {
         // "ACHTUNG! Das Konzert wird ins Hole44 verlegt." — no badge, no CSS class.
         event("2026-08-18-current-joys").status shouldBe "RELOCATED"
-        // A show moved *into* Huxleys is flagged the same way by the venue.
-        event("2026-10-26-kitty-daisy-lewis").status shouldBe "RELOCATED"
+        // A show moved *into* Huxleys is flagged the same way by the venue; the note travels with
+        // the row so the persistence boundary can tell the two ends apart (#1551).
+        val arrived = event("2026-10-26-kitty-daisy-lewis")
+        arrived.status shouldBe "RELOCATED"
+        arrived.statusNote shouldBe "VERLEGT! Die Show wird aus dem Metropol ins Huxleys verlegt."
+        arrived.toEventEntity(venueId = 1L, venueSlug = "huxleys-neue-welt", eventSourceId = 1L).status shouldBe "SCHEDULED"
+        val left = event("2026-10-29-kate-ryan").toEventEntity(venueId = 1L, venueSlug = "huxleys-neue-welt", eventSourceId = 1L)
+        left.status shouldBe "RELOCATED"
+        left.relocatedTo shouldBe "Hole44"
     }
 
     @Test

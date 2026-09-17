@@ -99,6 +99,7 @@ class MikropolOverviewPageScraper {
             // Sold-out and cancelled are CSS classes on the anchor; a relocation lives in the title.
             soldOut = card.hasClass(SOLD_OUT_CLASS),
             status = parseEventStatus("${card.className()} $rawTitle"),
+            statusNote = rawTitle,
             artists = buildArtistsForEventType(title, support, eventType)
         )
     }

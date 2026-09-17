@@ -138,8 +138,11 @@ useStructuredData((): JsonLd[] => {
             The status pill is the exception the rest of #1248 flattened: a cancelled event is the
             one thing on this page that must not read as another word in a grey row.
           -->
-          <BaseBadge v-if="formatEventStatus(event.status)" variant="destructive">
-            {{ formatEventStatus(event.status) }}
+          <BaseBadge
+            v-if="formatEventStatus(event.status, event.relocatedTo)"
+            variant="destructive"
+          >
+            {{ formatEventStatus(event.status, event.relocatedTo) }}
           </BaseBadge>
           <span v-if="isPast">· {{ t('events.card.past') }}</span>
           <span v-else-if="isRunning" class="text-primary">
@@ -323,12 +326,19 @@ useStructuredData((): JsonLd[] => {
         </p>
       </section>
 
-      <!-- No ticket CTA once the night has happened; source and Facebook stay honest. -->
+      <!--
+        No ticket CTA once the night has happened, nor on the row a show left — the house it
+        moved to sells the tickets (#1551); source and Facebook stay honest.
+      -->
       <section
-        v-if="(event.ticketUrl && !isPast) || event.sourceUrl || event.facebookEventUrl"
+        v-if="
+          (event.ticketUrl && !isPast && !event.relocatedTo) ||
+          event.sourceUrl ||
+          event.facebookEventUrl
+        "
         class="flex flex-wrap gap-3"
       >
-        <Button v-if="event.ticketUrl && !isPast" as-child>
+        <Button v-if="event.ticketUrl && !isPast && !event.relocatedTo" as-child>
           <a :href="event.ticketUrl" rel="noopener noreferrer" target="_blank">{{
             t('events.detail.buyTickets')
           }}</a>
