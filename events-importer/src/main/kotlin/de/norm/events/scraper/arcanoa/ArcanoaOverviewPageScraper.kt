@@ -138,17 +138,18 @@ class ArcanoaOverviewPageScraper(
                 return null
             }
 
+        // A "geschlossene Gesellschaft" is a private booking, not a public event — the venue
+        // lists it only to mark the night as taken. Tested on the whole body: the marker also
+        // arrives as `-- geschlossene Gesellschaft --` and behind a name (#1553).
+        if (PRIVATE_FUNCTION_PATTERN.containsMatchIn(entry.body)) {
+            logger.debug { "Arcanoa night on $eventDate is a private function ('${entry.body}'), skipping" }
+            return null
+        }
+
         val (rawTitle, rawSubtitle) = splitTitleAndSubtitle(entry.body)
         val title = normalizeDashSpacing(rawTitle)
         if (title.isBlank()) {
             logger.warn { "Arcanoa entry on $eventDate has no title, skipping" }
-            return null
-        }
-
-        // A "geschlossene Gesellschaft" is a private booking, not a public event — the venue
-        // lists it only to mark the night as taken.
-        if (PRIVATE_FUNCTION_PATTERN.containsMatchIn(title)) {
-            logger.debug { "Arcanoa night on $eventDate is a private function ('$title'), skipping" }
             return null
         }
 

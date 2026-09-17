@@ -3,6 +3,7 @@
 package de.norm.events.scraper
 
 import de.norm.events.event.EventType
+import de.norm.events.slug.SlugGenerator
 import java.text.Normalizer
 
 // Artist-name resolution for scraped events: extracts and cleans performer names
@@ -498,13 +499,21 @@ fun isGuestSlotLabel(name: String): Boolean = GUEST_SLOT_PATTERN.matches(name.tr
  * True when [name] must never be stored as an artist: a placeholder ("TBA"), a bare
  * role label ("Special Guest"), an event-segment label ("Acid Aftershow"), an event
  * label ("Shred Fest"), a bare "DJ set" format label ("DJ-Set / Berlin"), an unannounced
- * guest slot ("+ Guest"), or a curated one-off non-artist title ("The Revival Tour"). The
- * single predicate applied wherever scraped headliner/support names are resolved.
+ * guest slot ("+ Guest"), a curated one-off non-artist title ("The Revival Tour"), or a name
+ * that slugs to nothing ("-"). The single predicate applied wherever scraped headliner/support
+ * names are resolved.
  */
 fun isNonArtistName(name: String): Boolean =
     isPlaceholderName(name) || isNonArtistLabel(name) || isEventSegmentLabel(name) ||
         isNonArtistEvent(name) || isDjSetFormatLabel(name) || isGuestSlotLabel(name) || isDenylistedNonArtist(name) ||
-        isTitleFragment(name)
+        isTitleFragment(name) || isSlugless(name)
+
+/**
+ * A name with nothing a slug can keep is a separator the split left behind, never an act
+ * (#1553). `artist.slug` is UNIQUE, so the second such name from any source would fail its
+ * whole import on the empty string.
+ */
+fun isSlugless(name: String): Boolean = SlugGenerator.slugify(name).isBlank()
 
 /**
  * A candidate that still carries a title's own separator — the `|` a venue puts between a night's
