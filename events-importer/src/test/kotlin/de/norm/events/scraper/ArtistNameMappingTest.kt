@@ -443,7 +443,8 @@ class ArtistNameMappingTest {
         // Tail carries lowercase — it is a name, not a shouted tour title.
         stripArtistSuffix("BAD COMPANY LEGACY - Dave Colwell") shouldBe "BAD COMPANY LEGACY - Dave Colwell"
         stripArtistSuffix("Sinem - Hatun") shouldBe "Sinem - Hatun"
-        // Head is all-caps, so an all-caps co-bill is never cut down to its first token.
+        // Head is all-caps, so a name the venue wrote with a dash (Urban Spree's spelling of DZ
+        // Deathrays) is never cut down to its first token.
         stripArtistSuffix("DZ - DEATHRAY") shouldBe "DZ - DEATHRAY"
         // A one-word shouted tail could be an alias or initialism, so it is left alone.
         stripArtistSuffix("Someone - ALIEN") shouldBe "Someone - ALIEN"
@@ -739,6 +740,17 @@ class ArtistNameMappingTest {
     }
 
     // --- splitHeadlinerTitle ---
+
+    // The Portuguese and Italian `e` is a co-bill join; a title spelled out letter by letter is not (#1533).
+    @Test
+    fun `splitHeadlinerTitle splits on a Portuguese e between two names but not inside spelled-out letters`() {
+        splitHeadlinerTitle("Cleiton Rasta E Victor Cena") shouldContainExactly listOf("Cleiton Rasta", "Victor Cena")
+        splitHeadlinerTitle("KAT FRANKIE - B O D I E S") shouldContainExactly listOf("KAT FRANKIE - B O D I E S")
+        // The spelled-out tail is the record, not part of the act, whatever the head's casing;
+        // a dash tail of real words under a shouted head stays (`DZ - DEATHRAY`, one band).
+        stripArtistSuffix("KAT FRANKIE - B O D I E S") shouldBe "KAT FRANKIE"
+        stripArtistSuffix("DZ - DEATHRAY") shouldBe "DZ - DEATHRAY"
+    }
 
     @Test
     fun `splitHeadlinerTitle splits space-padded plus and slash co-bills`() {

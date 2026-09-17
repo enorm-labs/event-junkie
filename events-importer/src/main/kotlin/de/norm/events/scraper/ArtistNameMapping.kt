@@ -183,7 +183,9 @@ fun isNonArtistEvent(name: String): Boolean {
  * separate "<format> Release" rules below do not cover. Trailing tails: "Live" or "Live in <city>",
  * a performance-format annotation either parenthesized or a bare "DJ-Set", a German relocation note
  * ("Nachholtermin vom <date>", "Hochverlegung"), a "singt <repertoire>" tribute framing, and an
- * "<Album/EP/…> Release" or "Release Party" promo tag.
+ * "<Album/EP/…> Release" or "Release Party" promo tag, and a record title spelled out letter by
+ * letter after a dash (`KAT FRANKIE - B O D I E S`), which no act is called and which the
+ * shouted-tail rule below cannot reach because its head is shouted too (#1533).
  *
  * **The boundaries are what keep real names intact**, and each guards a specific collision:
  * - Hyphen tails need a `<space>-<space>` boundary and a recognised marker, so an undecorated
@@ -208,7 +210,8 @@ private val ARTIST_SUFFIX_PATTERN =
             """|\s+[-–—(]*\s*(?:nachholtermin|hochverlegung|verschoben)\b.*$""" +
             """|\s+singt\s+\S.*$""" +
             """|\s+(?:album|ep|single|mixtape|record|tape)\s+release(?:\s+(?:party|show|special))?$""" +
-            """|\s+release\s+(?:party|show)$""",
+            """|\s+release\s+(?:party|show)$""" +
+            """|\s+[-–—]\s+(?:\p{L}\s+){2,}\p{L}\s*$""",
         RegexOption.IGNORE_CASE
     )
 
@@ -245,8 +248,9 @@ private val DASH_SEPARATOR = Regex("""\s[-–—]\s""")
  * name intact:
  *  - the **tail must be fully shouted** (no lowercase letter), so `"BAD COMPANY LEGACY -
  *    Dave Colwell"` and `"Sinem - Hatun"` keep their second half;
- *  - the **head must contain a lowercase letter**, so an all-caps co-bill written with a
- *    hyphen — `"DZ - DEATHRAY"` — is never cut down to its first token;
+ *  - the **head must contain a lowercase letter**, so an all-caps name a venue wrote with a
+ *    dash — Urban Spree's `"DZ - DEATHRAY"`, its spelling of DZ Deathrays — is never cut down
+ *    to its first token;
  *  - the tail must be at least [MIN_SHOUTED_TAIL_WORDS] words, so a one-word alias or
  *    initialism after a hyphen is left alone.
  *
@@ -570,12 +574,14 @@ private val SAFE_TITLE_SEPARATOR = Regex("""\s+[/+]\s+""")
 private val PLUS_ONLY_TITLE_SEPARATOR = Regex("""\s+\+\s+""")
 
 /**
- * Space-padded conjunction (`&`, `and`, `und`) — split only at boundaries that
- * pass the [splitSegmentOnConjunctions] guardrails. The `and`/`und` word forms
- * are space-padded so they match only the standalone conjunction, never a
- * substring (e.g. the "and" in "Portland"), and case-insensitive for `AND`/`UND`.
+ * Space-padded conjunction (`&`, `and`, `und`, and the Portuguese and Italian `e`) — split only
+ * at boundaries that pass the [splitSegmentOnConjunctions] guardrails. The word forms are
+ * space-padded so they match only the standalone conjunction, never a substring (e.g. the "and"
+ * in "Portland"), and case-insensitive for `AND`/`UND`. The one-letter `e` also needs two
+ * non-space characters on each side, so a title spelled out letter by letter
+ * (`KAT FRANKIE - B O D I E S`) is not cut at its E (#1533).
  */
-private val CONJUNCTION_SEPARATOR = Regex("""\s+(?:&|and|und)\s+""", RegexOption.IGNORE_CASE)
+private val CONJUNCTION_SEPARATOR = Regex("""\s+(?:&|and|und)\s+|(?<=\S{2})\s+e\s+(?=\S{2})""", RegexOption.IGNORE_CASE)
 
 /**
  * True when [name] is a [KNOWN_SINGLE_ACTS] entry — an act whose own name contains a
