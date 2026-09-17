@@ -51,8 +51,11 @@ on:
   # and calls the REST API. There is no `actions/checkout` step in this file at all, which is the
   # property that makes the trigger safe and the one to re-check before adding any step here.
   # `synchronize` as well, because the importer label follows the files and a push can add one.
+  # `labeled` and `unlabeled` because a managed label can be set by hand — `gh pr create --label
+  # importer` put a refactor under "New Event Sources" in v0.19.0 (#1546) — and this workflow is the
+  # one that owns them. Its own label calls fire the same events; those runs find nothing to change.
   pull_request_target:
-    types: [ opened, edited, reopened, synchronize ]
+    types: [ opened, edited, reopened, synchronize, labeled, unlabeled ]
 
 permissions:
   contents: read
@@ -146,9 +149,12 @@ jobs:
             }
 
             const issue = { owner: context.repo.owner, repo: context.repo.repo, issue_number: pr.number };
-            const current = new Set(pr.labels.map((label) => label.name));
+            // The live set, not `pr.labels`: the payload is a snapshot from when the event fired, and a
+            // label applied by hand in the seconds before this run started is missing from it (#1546).
+            const labels = await github.paginate(github.rest.issues.listLabelsOnIssue, { ...issue, per_page: 100 });
+            const current = new Set(labels.map((label) => label.name));
 
-            // Drop managed labels that no longer apply — the title may have been edited.
+            // Drop managed labels that no longer apply — the title may have been edited, or one set by hand.
             for (const name of current) {
               if (name in MANAGED && !wanted.has(name)) {
                 await github.rest.issues.removeLabel({ ...issue, name });
