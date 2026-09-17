@@ -43,7 +43,8 @@ onMounted(run)
 watch(slug, run)
 
 const localePath = useLocalePath()
-const { formatEventDates, formatEventTime, eventTimeHint, formatWeekday } = useFormat()
+const { formatEventDates, formatEventTime, eventTimeHint, formatEventStatus, formatWeekday } =
+  useFormat()
 // The header has room for the words behind a `~` time, where the card only has a title (#1384).
 const timeHint = computed(() => (event.value ? eventTimeHint(event.value) : null))
 
@@ -59,9 +60,9 @@ const description = computed(() =>
 /**
  * A backend enum's label, falling back to the raw value.
  *
- * `ArtistRole` and `EventStatus` live in `events-core`, so the BFF can gain a value in a release
- * that ships before the frontend — the same reason `humaniseEventType` exists for event types.
- * Showing `CANCELLED` is poor; showing `events.status.CANCELLED` is a bug report, and that is what
+ * `ArtistRole` lives in `events-core`, so the BFF can gain a value in a release that ships before
+ * the frontend — the same reason `formatEventStatus` and `formatEventType` guard their lookups.
+ * Showing `HEADLINER` is poor; showing `events.role.HEADLINER` is a bug report, and that is what
  * an unguarded lookup renders.
  */
 function enumLabel(namespace: string, value: string): string {
@@ -137,8 +138,8 @@ useStructuredData((): JsonLd[] => {
             The status pill is the exception the rest of #1248 flattened: a cancelled event is the
             one thing on this page that must not read as another word in a grey row.
           -->
-          <BaseBadge v-if="event.status && event.status !== 'SCHEDULED'" variant="destructive">
-            {{ enumLabel('events.status', event.status) }}
+          <BaseBadge v-if="formatEventStatus(event.status)" variant="destructive">
+            {{ formatEventStatus(event.status) }}
           </BaseBadge>
           <span v-if="isPast">· {{ t('events.card.past') }}</span>
           <span v-else-if="isRunning" class="text-primary">

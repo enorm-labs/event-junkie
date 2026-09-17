@@ -171,6 +171,37 @@ describe('EventCard', () => {
     expect(wrapper.text()).not.toContain('Past')
   })
 
+  it('shows the status over Sold out, and Past over the status (#1550)', () => {
+    // A cancelled night is not for sale, whatever the sell-out flag says.
+    const cancelled = mount(EventCard, {
+      props: { event: { ...event, status: 'CANCELLED', soldOut: true } },
+      global: { stubs },
+    })
+    expect(cancelled.text()).toContain('Cancelled')
+    expect(cancelled.text()).not.toContain('Sold out')
+
+    // The status beats "Live tonight" too: a relocated show is not on here.
+    const relocated = mount(EventCard, {
+      props: { event: { ...event, status: 'RELOCATED', eventDate: todayIso() } },
+      global: { stubs },
+    })
+    expect(relocated.text()).toContain('Relocated')
+    expect(relocated.text()).not.toContain('Live tonight')
+
+    // Scheduled says nothing; past says only that.
+    const scheduled = mount(EventCard, {
+      props: { event: { ...event, status: 'SCHEDULED' } },
+      global: { stubs },
+    })
+    expect(scheduled.text()).toContain('Sold out')
+    const past = mount(EventCard, {
+      props: { event: { ...event, status: 'POSTPONED', eventDate: '2026-06-14' } },
+      global: { stubs },
+    })
+    expect(past.text()).toContain('Past')
+    expect(past.text()).not.toContain('Postponed')
+  })
+
   it('shows Past instead of Sold out once the event has happened', () => {
     // One badge slot: "Sold out" on a past gig is stale, not informative.
     const wrapper = mount(EventCard, {
