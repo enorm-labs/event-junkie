@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import BaseInput from '@/components/BaseInput.vue'
@@ -7,6 +7,7 @@ import BaseSelect from '@/components/BaseSelect.vue'
 import VenueCard from '@/components/VenueCard.vue'
 import VenueRow from '@/components/VenueRow.vue'
 import { useCompactView } from '@/composables/useCompactView'
+import { usePagedList } from '@/composables/usePagedList'
 import { useVenueSearch, type VenueSearchParams } from '@/composables/useVenues'
 import { DISTRICTS } from '@/lib/districts'
 import { useI18n } from 'vue-i18n'
@@ -41,8 +42,8 @@ watch(
   },
 )
 
-const currentPage = computed(() => page.value?.page ?? 0)
-const totalPages = computed(() => page.value?.totalPages ?? 0)
+// Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
+const { currentPage, totalPages, goToPage } = usePagedList(page, run)
 
 function applyFilters(patch: LocationQueryRaw) {
   // Any filter change resets to the first page; empty values drop out of the URL.
@@ -53,30 +54,13 @@ function applyFilters(patch: LocationQueryRaw) {
   router.push({ query: next })
 }
 
-function goToPage(target: number) {
-  const next: LocationQueryRaw = { ...route.query, page: target > 0 ? String(target) : undefined }
-  if (next.page === undefined) delete next.page
-  router.push({ query: next })
-}
-
 /** Whether anything narrows the list, which is what a "clear" control has to have to offer. */
 const isFiltered = computed(() => Object.keys(route.query).some((key) => key !== 'page'))
-
-// A `page` past the last one is not an empty search, so it is clamped rather than reported as one
-// (#1267). `replace` keeps the dead number out of the history.
-watch(page, (loaded) => {
-  const last = (loaded?.totalPages ?? 0) - 1
-  if (!loaded || loaded.content?.length || last < 0 || currentPage.value <= last) return
-  router.replace({ query: { ...route.query, page: last > 0 ? String(last) : undefined } })
-})
 
 function clearSearch() {
   search.value = ''
   router.push({ query: {} })
 }
-
-onMounted(run)
-watch(() => route.query, run, { deep: true })
 
 const { t } = useI18n()
 // The compact view is a global display preference — see `useCompactView`.

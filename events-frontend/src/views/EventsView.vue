@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { computed, onMounted, watch } from 'vue'
-import { type LocationQueryRaw, RouterLink, useRoute, useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
@@ -9,6 +9,7 @@ import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import { type EventSearchParams, useEventSearch } from '@/composables/useEvents'
 import { useEventFilters } from '@/composables/useEventFilters'
+import { usePagedList } from '@/composables/usePagedList'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '@/composables/useLocalePath'
 
@@ -32,39 +33,15 @@ const params = computed<EventSearchParams>(() => ({
 
 const { data: page, error, loading, run } = useEventSearch(() => params.value)
 
-const currentPage = computed(() => page.value?.page ?? 0)
-const totalPages = computed(() => page.value?.totalPages ?? 0)
+// Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
+const { currentPage, totalPages, goToPage } = usePagedList(page, run)
 
 /** Whether anything narrows the list, which is what a "clear" control has to have to offer. */
 const isFiltered = computed(() => Object.keys(route.query).some((key) => key !== 'page'))
 
-/**
- * A `page` past the last one is not an empty result, and saying so as "nothing matches those
- * filters" names a cause that is not the cause (#1267).
- *
- * It happens without anyone typing a number: the list shortens every night as events pass, so a
- * shared link or a crawler's `?page=` can outlive its own range. Clamping keeps one canonical
- * route, and `replace` keeps the dead number out of the history.
- */
-watch(page, (loaded) => {
-  const last = (loaded?.totalPages ?? 0) - 1
-  if (!loaded || loaded.content?.length || last < 0 || currentPage.value <= last) return
-  router.replace({ query: { ...route.query, page: last > 0 ? String(last) : undefined } })
-})
-
 function clearFilters() {
   router.push({ query: {} })
 }
-
-function goToPage(target: number) {
-  // Unlike filter changes, paging keeps the current filters and only moves the page.
-  const next: LocationQueryRaw = { ...route.query, page: target > 0 ? String(target) : undefined }
-  if (next.page === undefined) delete next.page
-  router.push({ query: next })
-}
-
-onMounted(run)
-watch(() => route.query, run, { deep: true })
 
 const localePath = useLocalePath()
 
