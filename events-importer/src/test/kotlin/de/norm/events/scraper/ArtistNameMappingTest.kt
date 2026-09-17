@@ -239,7 +239,16 @@ class ArtistNameMappingTest {
         isNonArtistName("...") shouldBe true
         isNonArtistName("?!") shouldBe true
         isNonArtistName("Mittelalter-Irish Folk") shouldBe false
-        isNonArtistName("2") shouldBe false
+    }
+
+    // --- isNonArtistName bare number (#1556) ---
+
+    @Test
+    fun `isNonArtistName drops a digits-only name`() {
+        isNonArtistName("2") shouldBe true
+        isNonArtistName(" 2027 ") shouldBe true
+        isNonArtistName("100 Kilo Herz") shouldBe false
+        isNonArtistName("1-800-Mikey") shouldBe false
     }
 
     // --- isNonArtistName title fragment (#1494) ---
@@ -353,6 +362,15 @@ class ArtistNameMappingTest {
         splitSegmentOnConjunctions("Morimoto / Wong duo") shouldBe listOf("Morimoto / Wong duo")
         // Backing-band article tail stays joined.
         splitSegmentOnConjunctions("Scott Hepple & The Sun Band") shouldBe listOf("Scott Hepple & The Sun Band")
+    }
+
+    // #1556: Tempodrom's `Eiskönigin 1 & 2` was cut into `Eiskönigin 1` and `2`.
+    @Test
+    fun `splitSegmentOnConjunctions keeps a sequel or volume number on its show`() {
+        splitSegmentOnConjunctions("Eiskönigin 1 & 2") shouldBe listOf("Eiskönigin 1 & 2")
+        splitSegmentOnConjunctions("Vol. 1 und 2") shouldBe listOf("Vol. 1 und 2")
+        splitSegmentOnConjunctions("Blink & 182 Tribute") shouldBe listOf("Blink & 182 Tribute")
+        splitSegmentOnConjunctions("Lichene & Neue K") shouldBe listOf("Lichene", "Neue K")
     }
 
     // Audit T-5: a conjunction inside a parenthetical belongs to that act's own affiliation list,
