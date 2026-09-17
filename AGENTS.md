@@ -466,6 +466,9 @@ first time you hit it. The workflow-file counterparts — fork pull requests, re
 
 - **Pace bulk mutations.** GitHub's _secondary_ rate limit bites long before the documented hourly one. A `sleep 0.45` between calls carried 255 PR edits and
   146 issue creations with zero failures; without it, a few hundred back-to-back writes reliably trip it.
+- **No `--label` on `gh pr create`.** `.github/workflows/label-pr.yml` sets a pull request's labels itself — the type from the title, `importer` from an
+  added `*Importer.kt`, `breaking-change` from the `!` or footer — and removes a managed label set by hand. `importer` is an area label _on issues_; on a
+  pull request it means one thing, a new venue, and `.github/release.yml` files it under "New Event Sources" ahead of every other category (#1546).
 - **`gh issue create` and `gh issue edit` do not share a label flag.** Create takes `--label`; edit takes `--add-label` / `--remove-label`. One argument list
   for both works perfectly on creates and dies on the first update — invisible until something already exists. And an update must reconcile labels in _both_
   directions: `--add-label` alone lets a removed label survive forever with nothing reporting the drift.
