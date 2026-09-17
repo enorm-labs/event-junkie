@@ -93,6 +93,8 @@ The decisions the three backend modules are built on. Each one has a failure mod
   relative to each module directory — so a run can be grepped after the fact instead of scrolled in the IDE console. The filenames differ so running both at
   once keeps two logs. It is profile-gated because a container platform wants the log on stdout. `scripts/dev-env.sh up` does not need the profile — it
   redirects the importer's stdout to the repository-root `build/dev-env/importer.log` itself.
+  How a line is written — its level, the exception as argument, MDC versus payload, where a field name lives — is
+  [logging.instructions.md](logging.instructions.md).
 - **Error handling**: The importer has a `GlobalExceptionHandler` (`@RestControllerAdvice`) that translates domain exceptions into RFC 9457 Problem Details
   (`ProblemDetail`). Domain exceptions follow the `*NotFoundException` naming pattern (e.g. `VenueNotFoundException`)
   and map to 404. `DataIntegrityViolationException` maps to 409 CONFLICT for duplicate records. `WebExchangeBindException` maps to 400 BAD REQUEST for Bean

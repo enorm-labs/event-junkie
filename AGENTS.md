@@ -35,6 +35,7 @@ only this file should follow the links.
 | ------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | [architecture](.github/instructions/architecture.instructions.md)   | `events-core/`, `events-bff/`, `events-importer/`                       | The reactive stack, the schema, migrations, DTOs, metrics                       |
 | [kotlin](.github/instructions/kotlin.instructions.md)               | `*.kt`, `*.kts`, `gradle.properties`, `detekt.yml`                      | Idioms, where versions live, ktlint · detekt · Kover                            |
+| [logging](.github/instructions/logging.instructions.md)             | `events-core/`, `events-bff/`, `events-importer/`                       | Levels, exception as argument, MDC vs payload, the three places a field lives   |
 | [python](.github/instructions/python.instructions.md)               | `*.py`, `ruff.toml`                                                     | Standard library only, ruff, and tests that are plain scripts                   |
 | [comments](.github/instructions/comments.instructions.md)           | Every source language                                                   | Few, short, about _why_ — and what lint already enforces                        |
 | [documentation](.github/instructions/documentation.instructions.md) | `docs/**/*.md`                                                          | Simplified Technical English: how the sentences are written                     |
@@ -125,6 +126,11 @@ covers the SPA.
 - **A red `release.yml` on `main` blocks every release, and the cause is usually not the change that landed.** The image scan gates on fixable findings
   in the base images, so an Alpine advisory turns `main` red with nothing in the diff to show for it. Look at the latest run before cutting; `cut-release.yml`
   refuses a red one. The levers, and the amd64 trap, are in [docs/ops/RELEASING.md § Publishing is blocked](docs/ops/RELEASING.md#publishing-is-blocked).
+- **Logging is part of the change.** Before calling a backend change done, ask what someone on the cluster with one `sourceslug` or one `requestid` would
+  need to see: a new caught-and-continued path gets a `WARN` with the exception as the argument, a new call out of the process gets its outcome, a new
+  scheduled pass gets its start, result and failure, and a line that has lost its reader is deleted. Level, MDC versus payload, and the three places a new
+  field name has to be written are in [.github/instructions/logging.instructions.md](.github/instructions/logging.instructions.md), which loads itself when
+  you touch a backend module. A change to _what_ is logged is also a privacy change — see [Privacy & GDPR](#privacy--gdpr--re-check-when-infrastructure-or-features-change).
 - **Correct the docs in the same change that makes them wrong.** A behaviour change that leaves a document describing the old behaviour is incomplete work, not
   a follow-up — and the document to fix is the one a reader would reach for, which is usually not the one you were editing.
 - **ADR numbers are claimed by writing the ADR, never by planning one.** A document that says _"needs ADR-0NN"_ for an ADR nobody has written yet is a

@@ -61,6 +61,9 @@ Review the code changes in this pull request (or diff) for correctness, maintain
 - `GlobalExceptionHandler` (`@RestControllerAdvice`) catches and translates exceptions to RFC 9457 Problem Details.
 - Appropriate HTTP status codes are returned (404, 409, 400, etc.).
 - No swallowed exceptions — errors are logged or propagated.
+- Logging follows [logging.instructions.md](../instructions/logging.instructions.md): a caught-and-continued path logs at `WARN` with the exception as
+  the argument, a per-line value is a `payload` and not text, a new field name is written in `LogFields`/`LogContextConfiguration`, the collector and
+  PLATFORM_SETUP § 7 together, and nothing per event is above `DEBUG`.
 
 #### API Design
 
