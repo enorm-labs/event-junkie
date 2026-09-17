@@ -506,7 +506,7 @@ fun isGuestSlotLabel(name: String): Boolean = GUEST_SLOT_PATTERN.matches(name.tr
 fun isNonArtistName(name: String): Boolean =
     isPlaceholderName(name) || isNonArtistLabel(name) || isEventSegmentLabel(name) ||
         isNonArtistEvent(name) || isDjSetFormatLabel(name) || isGuestSlotLabel(name) || isDenylistedNonArtist(name) ||
-        isTitleFragment(name) || isSlugless(name)
+        isTitleFragment(name) || isSlugless(name) || isBareNumber(name)
 
 /**
  * A name with nothing a slug can keep is a separator the split left behind, never an act
@@ -514,6 +514,11 @@ fun isNonArtistName(name: String): Boolean =
  * whole import on the empty string.
  */
 fun isSlugless(name: String): Boolean = SlugGenerator.slugify(name).isBlank()
+
+private val BARE_NUMBER = Regex("""\d+""")
+
+/** A digits-only name is the tail of a `<show> 1 & 2` billing, never an act (#1556). */
+fun isBareNumber(name: String): Boolean = BARE_NUMBER.matches(name.trim())
 
 /**
  * A candidate that still carries a title's own separator — the `|` a venue puts between a night's
@@ -630,12 +635,10 @@ fun splitSegmentOnConjunctions(segment: String): List<String> {
             .findAll(segment)
             .filter { !isInsideBrackets(segment, it.range.first) }
             .filter { match ->
-                segment
-                    .substring(match.range.last + 1)
-                    .trimStart()
-                    .substringBefore(' ')
-                    .lowercase() !in
-                    CONJUNCTION_TAIL_MARKERS
+                val nextWord = segment.substring(match.range.last + 1).trimStart().substringBefore(' ')
+                // `Eiskönigin 1 & 2` is one billing: a number after the conjunction is a
+                // sequel or a volume, not a second act (#1556).
+                nextWord.lowercase() !in CONJUNCTION_TAIL_MARKERS && !isBareNumber(nextWord)
             }.map { it.range }
             .toList()
     return cutAt(segment, cuts)
