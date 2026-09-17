@@ -37,7 +37,7 @@ const localePath = useLocalePath()
 
 const isPast = computed(() => isPastEvent(props.event))
 const isRunning = computed(() => isRunningEvent(props.event))
-const status = computed(() => formatEventStatus(props.event.status))
+const status = computed(() => formatEventStatus(props.event.status, props.event.relocatedTo))
 const isLive = computed(
   () =>
     !status.value &&

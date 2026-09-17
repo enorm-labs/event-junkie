@@ -79,6 +79,7 @@
   "status": {
     "RELOCATED": "Relocated",
     "CANCELLED": "Cancelled",
-    "POSTPONED": "Postponed"
+    "POSTPONED": "Postponed",
+    "movedTo": "Moved to {venue}"
   }
 }

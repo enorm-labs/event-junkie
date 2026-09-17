@@ -70,6 +70,7 @@ class MikropolWebsiteImporter(
             // whenever either page reports it.
             soldOut = primary.soldOut || fallback.soldOut,
             status = primary.status.takeIf { it != EventStatus.SCHEDULED.name } ?: fallback.status,
+            statusNote = primary.statusNote ?: fallback.statusNote,
             artists = primary.artists.ifEmpty { fallback.artists }
         )
 }

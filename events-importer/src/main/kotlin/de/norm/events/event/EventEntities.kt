@@ -38,6 +38,8 @@ data class EventEntity(
     val descriptionAltSourceHash: String? = null,
     val eventType: String = EventType.CONCERT.name,
     val status: String = EventStatus.SCHEDULED.name,
+    /** Where a `RELOCATED` event moved to, as the venue's note names it; null when the note names nothing (#1551). */
+    val relocatedTo: String? = null,
     val slug: String,
     val eventDate: LocalDate,
     val doorsTime: LocalTime? = null,

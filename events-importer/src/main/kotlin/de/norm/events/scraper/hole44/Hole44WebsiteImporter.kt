@@ -69,6 +69,7 @@ class Hole44WebsiteImporter(
             // A relocation/cancellation note may render on the overview but not the detail header, so keep
             // any non-scheduled overview status when the detail page reports plain SCHEDULED.
             status = primary.status.takeIf { it != EventStatus.SCHEDULED.name } ?: fallback.status,
+            statusNote = primary.statusNote ?: fallback.statusNote,
             promoters = primary.promoters.ifEmpty { fallback.promoters },
             artists = primary.artists.ifEmpty { fallback.artists }
         )

@@ -112,6 +112,7 @@ class MetropolOverviewPageScraper {
             // title prefix. The neighbouring `.changes` prose is deliberately not read — see
             // MetropolDetailPageScraper.parseStatus.
             status = parseEventStatus("${row.textAt(".info .attention").orEmpty()} $rawTitle"),
+            statusNote = rawTitle,
             artists = buildMetropolArtists(title, support, eventType)
         )
     }

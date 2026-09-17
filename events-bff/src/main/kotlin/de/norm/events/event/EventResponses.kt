@@ -32,6 +32,11 @@ data class EventSummaryResponse(
     val eventType: EventType,
     @Schema(description = "Scheduling status of the event", example = "SCHEDULED")
     val status: EventStatus,
+    @Schema(
+        description = "Where a RELOCATED event moved to, as the venue's own note names the house; absent on every other status",
+        example = "Hole44"
+    )
+    val relocatedTo: String? = null,
     @Schema(description = "Calendar date of the event", example = "2026-06-12")
     val eventDate: LocalDate,
     @Schema(description = "Time when doors open to the public", example = "19:00")
@@ -113,6 +118,7 @@ data class EventSummaryResponse(
                 subtitle = entity.subtitle,
                 eventType = EventType.parseOrDefault(entity.eventType),
                 status = EventStatus.parseOrDefault(entity.status),
+                relocatedTo = entity.relocatedTo,
                 eventDate = entity.eventDate,
                 doorsTime = entity.doorsTime,
                 startTime = entity.startTime,
@@ -179,6 +185,11 @@ data class EventDetailResponse(
     val eventType: EventType,
     @Schema(description = "Scheduling status of the event", example = "SCHEDULED")
     val status: EventStatus,
+    @Schema(
+        description = "Where a RELOCATED event moved to, as the venue's own note names the house; absent on every other status",
+        example = "Hole44"
+    )
+    val relocatedTo: String? = null,
     @Schema(description = "Calendar date of the event", example = "2026-06-12")
     val eventDate: LocalDate,
     @Schema(description = "Time when doors open to the public", example = "19:00")
@@ -284,6 +295,7 @@ data class EventDetailResponse(
                 descriptionAltOrigin = entity.descriptionAltOrigin,
                 eventType = EventType.parseOrDefault(entity.eventType),
                 status = EventStatus.parseOrDefault(entity.status),
+                relocatedTo = entity.relocatedTo,
                 eventDate = entity.eventDate,
                 doorsTime = entity.doorsTime,
                 startTime = entity.startTime,

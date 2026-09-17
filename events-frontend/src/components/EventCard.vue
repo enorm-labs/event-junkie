@@ -54,7 +54,7 @@ const isRunning = computed(() => isRunningEvent(props.event))
 // An event on today gets a pulsing "live" dot — it stands out in the Upcoming feed and on
 // venue/artist pages, and reinforces liveness in the Tonight feed. Self-contained, so any caller
 // gets it for free. A running weekender is on today too; a cancelled or moved one is not live here.
-const status = computed(() => formatEventStatus(props.event.status))
+const status = computed(() => formatEventStatus(props.event.status, props.event.relocatedTo))
 const isLive = computed(
   () =>
     !status.value &&

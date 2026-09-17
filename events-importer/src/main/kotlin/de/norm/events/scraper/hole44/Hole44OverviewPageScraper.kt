@@ -89,6 +89,7 @@ class Hole44OverviewPageScraper {
             sourceId = "${EventSource.HOLE44.sourceIdPrefix}$slug",
             genre = parseGenres(item),
             status = parseEventStatus(item.textAt("span.changes").orEmpty()),
+            statusNote = item.textAt("span.changes"),
             artists = buildArtistsForEventType(title, support, eventType)
         )
     }

@@ -87,6 +87,7 @@ class ModusOverviewPageScraper {
             // The venue marks a move only in the title prose ("(verschoben aus 2026)"), which
             // cleanEventTitle strips — so the status is read from the raw title.
             status = parseEventStatus(rawTitle),
+            statusNote = rawTitle,
             artists = buildArtistsForEventType(title, subtitle = null, eventType = eventType)
         )
     }

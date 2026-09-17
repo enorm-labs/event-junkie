@@ -182,6 +182,9 @@ class FrannzOverviewPageScraperTest {
             event.title shouldBe "MAD TSAI"
             event.title shouldNotContain "verlegt"
             event.artists shouldContainExactly listOf(ScrapedArtist(name = "MAD TSAI", role = "HEADLINER"))
+            // The raw title is the note; the boundary reads the destination off it (#1551).
+            event.statusNote shouldBe "MAD TSAI -verlegt ins Gretchen-"
+            event.toEventEntity(venueId = 1L, venueSlug = "frannz-club", eventSourceId = 1L).relocatedTo shouldBe "Gretchen"
         }
 
         // The mirror case, and the reason the status is read from the title and never the subtitle:

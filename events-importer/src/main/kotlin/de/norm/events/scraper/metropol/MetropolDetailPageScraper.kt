@@ -71,6 +71,7 @@ class MetropolDetailPageScraper {
             sourceId = "${EventSource.METROPOL.sourceIdPrefix}$slug",
             ticketUrl = document.hrefAt("a.button.ticket"),
             status = parseStatus(document, rawTitle),
+            statusNote = rawTitle,
             promoters = listOfNotNull(parsePromoter(document))
         )
     }
