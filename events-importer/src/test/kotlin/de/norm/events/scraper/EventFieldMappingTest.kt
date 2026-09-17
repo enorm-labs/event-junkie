@@ -188,6 +188,13 @@ class EventFieldMappingTest {
     // --- parseTitleStatus / stripTitleStatusMarker (#1493) ---
 
     @Test
+    fun `parseEventStatus reads the new-venue badge as a move`() {
+        // Lido's label switched from "verlegt" to "new venue" on 2026-09-17; Gretchen prints "neuer Ort".
+        parseEventStatus("new venue") shouldBe "RELOCATED"
+        parseEventStatus("Neuer Ort") shouldBe "RELOCATED"
+    }
+
+    @Test
     fun `parseEventStatus reads a date moved with the relocation verb as postponed`() {
         parseEventStatus("ACHTUNG VERLEGT! Die Show wird auf den 30.05.2027 verlegt.") shouldBe "POSTPONED"
         parseEventStatus("Achtung: Die Show wird vom Huxleys ins Hole44 verlegt!") shouldBe "RELOCATED"
