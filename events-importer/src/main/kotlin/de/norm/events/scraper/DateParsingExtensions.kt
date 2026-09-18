@@ -155,6 +155,23 @@ fun parseGermanMonthAbbreviation(text: String?): Month? = GERMAN_MONTH_ABBREVIAT
  */
 fun parseGermanWeekdayAbbreviation(text: String?): DayOfWeek? = GERMAN_WEEKDAY_ABBREVIATIONS[text?.lowercase()]
 
+/**
+ * Maps a full German weekday name onto its [DayOfWeek], case-insensitively.
+ *
+ * The spelled-out counterpart to [parseGermanWeekdayAbbreviation], for the venues that write
+ * "Donnerstag" rather than "Do" — Roadrunner's date line and Soda's calendar block.
+ */
+fun parseGermanWeekday(text: String?): DayOfWeek? = GERMAN_WEEKDAYS[text?.lowercase()]
+
+/**
+ * Maps an English three-letter weekday abbreviation onto its [DayOfWeek], case-insensitively.
+ *
+ * Read by the venues that print their programme in English — Junction Bar's DJ date bars and
+ * Monster Ronsons' cards. Renate mixes both spellings on one page and falls back to
+ * [parseGermanWeekdayAbbreviation]; the two key spaces are disjoint, so the order does not matter.
+ */
+fun parseEnglishWeekdayAbbreviation(text: String?): DayOfWeek? = ENGLISH_WEEKDAY_ABBREVIATIONS[text?.lowercase()]
+
 private val GERMAN_WEEKDAY_ABBREVIATIONS: Map<String, DayOfWeek> =
     mapOf(
         "mo" to DayOfWeek.MONDAY,
@@ -164,6 +181,28 @@ private val GERMAN_WEEKDAY_ABBREVIATIONS: Map<String, DayOfWeek> =
         "fr" to DayOfWeek.FRIDAY,
         "sa" to DayOfWeek.SATURDAY,
         "so" to DayOfWeek.SUNDAY
+    )
+
+private val GERMAN_WEEKDAYS: Map<String, DayOfWeek> =
+    mapOf(
+        "montag" to DayOfWeek.MONDAY,
+        "dienstag" to DayOfWeek.TUESDAY,
+        "mittwoch" to DayOfWeek.WEDNESDAY,
+        "donnerstag" to DayOfWeek.THURSDAY,
+        "freitag" to DayOfWeek.FRIDAY,
+        "samstag" to DayOfWeek.SATURDAY,
+        "sonntag" to DayOfWeek.SUNDAY
+    )
+
+private val ENGLISH_WEEKDAY_ABBREVIATIONS: Map<String, DayOfWeek> =
+    mapOf(
+        "mon" to DayOfWeek.MONDAY,
+        "tue" to DayOfWeek.TUESDAY,
+        "wed" to DayOfWeek.WEDNESDAY,
+        "thu" to DayOfWeek.THURSDAY,
+        "fri" to DayOfWeek.FRIDAY,
+        "sat" to DayOfWeek.SATURDAY,
+        "sun" to DayOfWeek.SUNDAY
     )
 
 private val GERMAN_MONTH_ABBREVIATIONS: Map<String, Month> =
