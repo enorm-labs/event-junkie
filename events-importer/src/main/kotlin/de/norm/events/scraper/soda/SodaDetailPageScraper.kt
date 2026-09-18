@@ -36,8 +36,9 @@ import java.math.BigDecimal
  * Three quirks drive the parser:
  *  - the `Einlass` info box is an **age limit** ("Ab 18"), not a doors time — the venue
  *    publishes no doors time at all, so [ScrapedEvent.doorsTime] is always null;
- *  - the `Eintritt` box is the admission price, which is a box-office price only when the
- *    page also shows the "Abendkasse verfügbar" badge (see [parsePrices]);
+ *  - the `Eintritt` box is the venue's admission price, which is a box-office price only when
+ *    the page also shows the "Abendkasse verfügbar" badge; the JSON-LD offer is the shop's
+ *    fee-inclusive figure and never a price column (see [parsePrices]);
  *  - the JSON-LD `performer` is always the placeholder `"Unbekannt"` and the `organizer`
  *    is the venue itself, so neither is read — every night is typed
  *    [PARTY][EventType.PARTY] and carries no artists or promoters.
@@ -79,7 +80,7 @@ class SodaDetailPageScraper {
                 ?.takeIf { it.isArray }
                 ?.toList()
                 .orEmpty()
-        val (pricePresale, priceBoxOffice, entryPrice) = parsePrices(content, offers)
+        val prices = parsePrices(content, offers)
 
         return ScrapedEvent(
             title = title,
@@ -93,12 +94,13 @@ class SodaDetailPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.SODA.sourceIdPrefix}${sodaEventSlug(sourceUrl)}",
             ticketUrl = content.attrAt("a.ticket-btn", "href")?.let { resolveUrl(sourceUrl, it) },
-            pricePresale = pricePresale,
-            priceBoxOffice = priceBoxOffice,
+            pricePresale = prices.presale,
+            priceBoxOffice = prices.boxOffice,
+            priceNote = prices.note,
             soldOut = isSoldOut(offers),
             // A €0 admission is the venue's free-entry marker; keep it explicit so it survives
             // even when the price itself is not stored as a box-office price.
-            free = entryPrice?.signum() == 0,
+            free = prices.admission?.signum() == 0,
             // The schema.org URL uses `EventScheduled` / `EventCancelled` / `EventPostponed`,
             // whose keywords parseEventStatus already recognizes.
             status = parseEventStatus(jsonLd?.stringOrNull("eventStatus").orEmpty())
@@ -106,16 +108,20 @@ class SodaDetailPageScraper {
     }
 
     /**
-     * Splits the page's pricing into (presale, box office, admission).
+     * Splits the page's pricing into presale, box office, a note, and the raw admission.
      *
-     * The `Eintritt` info box states the **admission** price; the "Abendkasse verfügbar"
-     * badge states whether it can be paid at the door. So the admission price becomes the
-     * box-office price only when that badge is present — an open air that sells online
-     * only (no badge) would otherwise be recorded as having a door price it does not
-     * offer. The JSON-LD offer carries the online price, which includes the booking fee
-     * and is therefore slightly above the stated admission (15,43 € vs. "15 €"). When the
-     * venue offers neither a badge nor an online ticket, the admission price is the only
-     * price it states, so it is recorded as the presale price rather than dropped.
+     * The `Eintritt` info box states the venue's **admission** price and is the only price
+     * the venue itself names, so it fills both price columns. The "Abendkasse verfügbar"
+     * badge states whether it can be paid at the door: the admission becomes the box-office
+     * price only when that badge is present — an open air that sells online only (no badge)
+     * would otherwise be recorded as having a door price it does not offer. It becomes the
+     * presale price when the page sells online, or when it names no other price at all.
+     *
+     * The JSON-LD offer carries the shop's price, which includes the booking fee and so
+     * sits above the admission by a margin the shop sets (15,43 € vs. "15 €", 27,17 € vs.
+     * "25 €"). Stored as the presale price it told a visitor that buying ahead costs more
+     * than the door (#1583), so it is kept out of the price columns and named in the note
+     * instead, where the detail page shows it under the two prices.
      *
      * The raw admission price is returned alongside so the caller can read a €0 admission
      * as the free-entry marker it is, independently of which slot it landed in.
@@ -123,18 +129,29 @@ class SodaDetailPageScraper {
     private fun parsePrices(
         content: Element,
         offers: List<JsonNode>
-    ): Triple<BigDecimal?, BigDecimal?, BigDecimal?> {
-        val entryPrice = parsePriceValue(infoBoxValue(content, "Eintritt"))
+    ): Prices {
+        val admission = parsePriceValue(infoBoxValue(content, "Eintritt"))
         val offerPrice = offers.firstNotNullOfOrNull { it.stringOrNull("price") }?.let { runCatching { BigDecimal(it) }.getOrNull() }
         val boxOfficeAvailable =
             content.select(".rn-office-badge").any { it.text().contains("abendkasse", ignoreCase = true) }
+        val soldOnline = offerPrice != null
 
-        return Triple(
-            offerPrice ?: entryPrice.takeIf { !boxOfficeAvailable },
-            entryPrice.takeIf { boxOfficeAvailable },
-            entryPrice
+        return Prices(
+            // The shop's figure fills the presale slot only when the page names no admission at all.
+            presale = admission?.takeIf { soldOnline || !boxOfficeAvailable } ?: offerPrice,
+            boxOffice = admission.takeIf { boxOfficeAvailable },
+            note = offerPrice?.takeIf { admission != null && it > admission }?.let { "online ${formatEuro(it)} inkl. Gebühren" },
+            admission = admission
         )
     }
+
+    /** The page's prices, split by where each one belongs on the stored row. */
+    private data class Prices(
+        val presale: BigDecimal?,
+        val boxOffice: BigDecimal?,
+        val note: String?,
+        val admission: BigDecimal?
+    )
 
     /**
      * Whether every ticket the page offers is marked `schema.org/SoldOut`. An event with no
@@ -195,6 +212,9 @@ class SodaDetailPageScraper {
     private companion object {
         /** The schema.org `@type` Soda uses for every event. */
         private const val MUSIC_EVENT_TYPE = "MusicEvent"
+
+        /** Renders `15.43` as the German `15,43 €` the venue's own pages print. */
+        private fun formatEuro(amount: BigDecimal): String = "${amount.setScale(2).toPlainString().replace('.', ',')} €"
     }
 }
 

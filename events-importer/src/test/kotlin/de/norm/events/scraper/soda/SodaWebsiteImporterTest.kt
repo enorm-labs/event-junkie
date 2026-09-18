@@ -110,8 +110,9 @@ class SodaWebsiteImporterTest {
             val famous = event(importer.importEvents(overviewUrl), "famous-friday-31-07-2026")
             // From the detail page:
             famous.startTime shouldBe LocalTime.of(22, 0)
-            famous.pricePresale shouldBe BigDecimal("15.43")
+            famous.pricePresale shouldBe BigDecimal("15")
             famous.priceBoxOffice shouldBe BigDecimal("15")
+            famous.priceNote shouldBe "online 15,43 € inkl. Gebühren"
             famous.description.shouldNotBeNull()
             // Shared fields resolve consistently across both pages:
             famous.eventDate shouldBe LocalDate.of(2026, 7, 31)
@@ -133,7 +134,7 @@ class SodaWebsiteImporterTest {
         runTest {
             val ballermann = event(importer.importEvents(overviewUrl), "ballermann-open-air-150826")
             ballermann.eventDate shouldBe LocalDate.of(2026, 8, 15)
-            ballermann.pricePresale shouldBe BigDecimal("27.17")
+            ballermann.pricePresale shouldBe BigDecimal("25")
         }
 
     @Test

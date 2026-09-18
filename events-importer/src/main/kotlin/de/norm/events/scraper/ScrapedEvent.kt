@@ -9,11 +9,15 @@ import de.norm.events.event.EventType
 import de.norm.events.event.normalizeMoneyScale
 import de.norm.events.licence.SourceLicences
 import de.norm.events.slug.SlugGenerator
+import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * Intermediate representation of a scraped event before domain mapping.
@@ -133,6 +137,14 @@ data class ScrapedEvent(
         val relocation = listOfNotNull(statusNote, title, subtitle, description).firstNotNullOfOrNull(::parseRelocation)
         val (storedStatus, relocatedTo) = resolveRelocation(badgeStatus, relocation, venueSlug)
         val storedTitle = stripTitleStatusMarker(title)
+        // Presale dearer than the door is a misread price, not a tariff (#1583). Named here so
+        // the nightly log says which source, and stored as read, because the fix is per parser.
+        if (presaleAboveDoor(pricePresale, priceBoxOffice)) {
+            logger.at(Level.WARN) {
+                message = "Presale $pricePresale above box office $priceBoxOffice on '$title'"
+                payload = mapOf(LogFields.EVENT_SOURCE_ID to sourceId)
+            }
+        }
         val storedDescription = if (licences.withholdsDescription()) null else description
         val detected = DescriptionLanguage.detect(storedDescription)
         // The second-language text is not scraped, it is derived from the description after the
