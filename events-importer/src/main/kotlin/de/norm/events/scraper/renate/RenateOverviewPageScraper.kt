@@ -10,6 +10,8 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
+import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
@@ -18,7 +20,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.MonthDay
 
@@ -113,7 +114,9 @@ class RenateOverviewPageScraper(
         val monthDay =
             runCatching { MonthDay.of(match.groupValues[MONTH_GROUP].toInt(), match.groupValues[DAY_GROUP].toInt()) }
                 .getOrNull() ?: return null
-        val weekday = GERMAN_ENGLISH_WEEKDAYS[row.textAt(".prog-day")?.trim(' ', '.')?.lowercase()]
+        // The venue writes the weekday in English on this page and in German on some rows.
+        val day = row.textAt(".prog-day")?.trim(' ', '.')
+        val weekday = parseEnglishWeekdayAbbreviation(day) ?: parseGermanWeekdayAbbreviation(day)
         return inferYearForWeekday(monthDay, weekday, clock)
     }
 
@@ -247,24 +250,5 @@ class RenateOverviewPageScraper(
 
         const val DAY_GROUP = 1
         const val MONTH_GROUP = 2
-
-        /** Weekday abbreviations as the venue writes them — English on this page, German on some rows. */
-        val GERMAN_ENGLISH_WEEKDAYS: Map<String, DayOfWeek> =
-            mapOf(
-                "mon" to DayOfWeek.MONDAY,
-                "mo" to DayOfWeek.MONDAY,
-                "tue" to DayOfWeek.TUESDAY,
-                "di" to DayOfWeek.TUESDAY,
-                "wed" to DayOfWeek.WEDNESDAY,
-                "mi" to DayOfWeek.WEDNESDAY,
-                "thu" to DayOfWeek.THURSDAY,
-                "do" to DayOfWeek.THURSDAY,
-                "fri" to DayOfWeek.FRIDAY,
-                "fr" to DayOfWeek.FRIDAY,
-                "sat" to DayOfWeek.SATURDAY,
-                "sa" to DayOfWeek.SATURDAY,
-                "sun" to DayOfWeek.SUNDAY,
-                "so" to DayOfWeek.SUNDAY
-            )
     }
 }
