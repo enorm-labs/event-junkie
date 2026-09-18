@@ -99,7 +99,9 @@ class BerghainDetailPageScraper {
      * (`Abendkasse`) prices, and the sold-out state. A presale line reading
      * "Vorverkauf ausverkauft" yields a null presale price, but the event counts as
      * sold out only when there is no purchasable option left at all — no ticket
-     * link and neither price available.
+     * link and neither price available. The CMS prints `0,00€ Abendkasse` for a door
+     * price nobody set, so a zero beside a paid presale is dropped rather than stored
+     * as a free door (#1589); a zero with no paid presale is how a free night prints.
      */
     private fun parseTickets(content: Element): Tickets {
         val block =
@@ -117,12 +119,13 @@ class BerghainDetailPageScraper {
             }
         }
 
+        val doorUnset = boxOffice?.signum() == 0 && (presale?.signum() ?: 0) > 0
         val ticketUrl = block.hrefAt("a[href]")
         val soldOut =
             block.text().contains(SOLD_OUT_MARKER, ignoreCase = true) &&
                 presale == null && boxOffice == null && ticketUrl == null
 
-        return Tickets(ticketUrl = ticketUrl, presale = presale, boxOffice = boxOffice, soldOut = soldOut)
+        return Tickets(ticketUrl = ticketUrl, presale = presale, boxOffice = boxOffice.takeUnless { doorUnset }, soldOut = soldOut)
     }
 
     /** Joins the `.rich-text` description paragraphs, or `null` when the page carries none. */
