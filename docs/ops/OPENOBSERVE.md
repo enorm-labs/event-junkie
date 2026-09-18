@@ -29,7 +29,7 @@ environments). Both tunnels can be up at once, so the context is the only thing 
 
 |              |                                                                                                                               |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| Chart        | `openobserve-standalone` **0.92.2**, pinned. A trial whose subject changes under it is not a trial                            |
+| Chart        | `openobserve-standalone`, pinned per cluster: **1.0.1** on staging, **0.92.2** on production until staging has held a night   |
 | Mode         | `ZO_LOCAL_MODE=true` — **single-node, not single-disk**. The flag chooses standalone-vs-cluster; storage is the line below it |
 | Storage      | `ZO_LOCAL_MODE_STORAGE=s3` → `event-junkie-o2` in `fsn1`. The corpus is in the bucket                                         |
 | Key prefix   | `ZO_S3_BUCKET_PREFIX` — `production/` and `staging/`. **Changing it needs the PVC wiped**, §Changing the prefix               |
@@ -231,7 +231,7 @@ What still needs a person is the review, because a bump here changes what is run
 
 | Component                                    | Pinned at      |
 | -------------------------------------------- | -------------- |
-| `openobserve-standalone`                     | 0.92.2         |
+| `openobserve-standalone`                     | 1.0.1 / 0.92.2 |
 | `openobserve-collector`                      | 0.4.6          |
 | `opentelemetry-operator`                     | 0.121.0        |
 | `cert-manager`                               | v1.21.1        |
@@ -239,6 +239,9 @@ What still needs a person is the review, because a bump here changes what is run
 | `signal-cli-rest-api` (image, digest-pinned) | 0.100-rootless |
 | `postgres-exporter` (image, digest-pinned)   | v0.20.1        |
 | `busybox` (initContainer image)              | 1.37.0         |
+
+The two OpenObserve numbers are staging and production. A major release goes to staging first and holds a night there. The
+application migrates its metadata sqlite forward on start, and a rollback across that is untested.
 
 Renovate groups the three observability charts into one pull request, because they move as a set. The operator owns the CRDs that the collector's custom
 resources need. A collector ahead of its operator is therefore a reconcile error, not a version mismatch. `cert-manager` is grouped across both clusters for the same
