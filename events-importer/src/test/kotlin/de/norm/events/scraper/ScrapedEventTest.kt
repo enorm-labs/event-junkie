@@ -1,12 +1,19 @@
 package de.norm.events.scraper
 
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import de.norm.events.event.EventEntity
 import de.norm.events.licence.SourceLicence
 import de.norm.events.licence.SourceLicences
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
+import java.math.BigDecimal
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
@@ -31,10 +38,14 @@ class ScrapedEventTest {
         endTime: LocalTime? = null,
         status: String = "SCHEDULED",
         statusNote: String? = null,
-        subtitle: String? = null
+        subtitle: String? = null,
+        pricePresale: BigDecimal? = null,
+        priceBoxOffice: BigDecimal? = null
     ) = ScrapedEvent(
         title = title,
         subtitle = subtitle,
+        pricePresale = pricePresale,
+        priceBoxOffice = priceBoxOffice,
         status = status,
         statusNote = statusNote,
         eventType = eventType,
@@ -335,6 +346,43 @@ class ScrapedEventTest {
         val night = scrapedEvent(startTime = LocalTime.of(22, 0)).toEntity()
         night.endDate shouldBe null
         night.endTime shouldBe null
+    }
+
+    // Presale dearer than the door is a misread, reported at the one boundary every source crosses (#1583).
+    @Test
+    fun `toEventEntity warns with the source id when presale is dearer than the door, and stores the row as read`() {
+        val entity = withWarnings { scrapedEvent(pricePresale = BigDecimal("15.43"), priceBoxOffice = BigDecimal("15")).toEntity() }
+
+        entity.first.pricePresale shouldBe BigDecimal("15.43")
+        entity.first.priceBoxOffice shouldBe BigDecimal("15.00")
+        val warning = entity.second.single()
+        warning.formattedMessage shouldContain "15.43 above box office 15"
+        warning.keyValuePairs.single { it.key == LogFields.EVENT_SOURCE_ID }.value shouldBe "so36:98223"
+    }
+
+    @Test
+    fun `toEventEntity stays quiet when the door is dearer, equal, or one price is missing`() {
+        val (_, warnings) =
+            withWarnings {
+                scrapedEvent(pricePresale = BigDecimal("15"), priceBoxOffice = BigDecimal("18")).toEntity()
+                scrapedEvent(pricePresale = BigDecimal("15"), priceBoxOffice = BigDecimal("15")).toEntity()
+                scrapedEvent(pricePresale = BigDecimal("15"), priceBoxOffice = null).toEntity()
+            }
+
+        warnings.shouldBeEmpty()
+    }
+
+    /** Runs [block] with a list appender on the root logger and returns its result beside the WARN lines it logged. */
+    private fun <T> withWarnings(block: () -> T): Pair<T, List<ILoggingEvent>> {
+        val root = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        root.addAppender(appender)
+        return try {
+            block() to appender.list.filter { it.level == ch.qos.logback.classic.Level.WARN }
+        } finally {
+            root.detachAppender(appender)
+            appender.stop()
+        }
     }
 
     @Test

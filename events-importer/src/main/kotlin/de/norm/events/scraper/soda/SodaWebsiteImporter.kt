@@ -24,7 +24,7 @@ import java.time.Clock
  *    link) for when a detail page cannot be fetched.
  * 3. For each event, fetches and parses its detail page via [SodaDetailPageScraper] — the
  *    primary source, reading the schema.org `MusicEvent` JSON-LD (exact date, start time,
- *    status, online price) plus the description and admission price from the markup.
+ *    status, the shop's online price) plus the description and admission price from the markup.
  *
  * @see SodaOverviewPageScraper for overview parsing (discovery, year-less date fallback).
  * @see SodaDetailPageScraper for detail parsing (date, time, prices, description, status).

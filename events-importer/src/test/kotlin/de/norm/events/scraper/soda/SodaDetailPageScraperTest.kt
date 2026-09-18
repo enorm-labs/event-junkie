@@ -60,15 +60,28 @@ class SodaDetailPageScraperTest {
         event.sourceId shouldBe "soda:famous-friday-31-07-2026"
         event.ticketUrl shouldBe "https://www.soda-berlin.de/de/events/famous-friday-31-07-2026#tickets"
         event.imageUrl shouldBe "https://soda.disco2app.com/media/events/828/image/23623"
-        // The online offer includes the booking fee; the "Eintritt" box is the door price.
-        event.pricePresale shouldBe BigDecimal("15.43")
+        // The "Eintritt" box is the venue's price for both slots; the shop's fee-inclusive offer
+        // stays out of the columns and in the note (#1583).
+        event.pricePresale shouldBe BigDecimal("15")
         event.priceBoxOffice shouldBe BigDecimal("15")
+        event.priceNote shouldBe "online 15,43 € inkl. Gebühren"
         // The full blurb comes from the markup, not the truncated JSON-LD description.
         event.description.shouldNotBeNull() shouldStartWith "🔥 Achtung Ladies & Gentlemen:"
         event.description.shouldNotBeNull() shouldContain "Booking"
         // Soda bills no acts — the JSON-LD performer is the placeholder "Unbekannt".
         event.artists.shouldBeEmpty()
         event.promoters.shouldBeEmpty()
+    }
+
+    @Test
+    fun `a night sold online and at the door survives the persistence boundary with the door no dearer than presale`() {
+        val url = "https://www.soda-berlin.de/de/events/famous-friday-31-07-2026"
+        val entity = parse("soda-detail-famous-friday.html", url).shouldNotBeNull().toEventEntity(venueId = 1L, venueSlug = "soda", eventSourceId = 1L)
+
+        entity.pricePresale shouldBe BigDecimal("15.00")
+        entity.priceBoxOffice shouldBe BigDecimal("15.00")
+        entity.priceNote shouldBe "online 15,43 € inkl. Gebühren"
+        entity.free shouldBe false
     }
 
     @Test
@@ -80,9 +93,10 @@ class SodaDetailPageScraperTest {
         event.startTime shouldBe LocalTime.of(14, 0)
         event.sourceId shouldBe "soda:ballermann-open-air-150826"
         // No "Abendkasse verfügbar" badge, so the 25 € admission is not a door price;
-        // the online offer (fee included) is the price that stands.
-        event.pricePresale shouldBe BigDecimal("27.17")
+        // it is the presale price, and the fee-inclusive shop figure is only noted.
+        event.pricePresale shouldBe BigDecimal("25")
         event.priceBoxOffice.shouldBeNull()
+        event.priceNote shouldBe "online 27,17 € inkl. Gebühren"
         event.free shouldBe false
     }
 
@@ -97,6 +111,7 @@ class SodaDetailPageScraperTest {
         event.free shouldBe true
         event.priceBoxOffice shouldBe BigDecimal("0")
         event.pricePresale.shouldBeNull()
+        event.priceNote.shouldBeNull()
         // Nothing is sold online for this night, so there is no ticket link.
         event.ticketUrl.shouldBeNull()
         event.soldOut shouldBe false

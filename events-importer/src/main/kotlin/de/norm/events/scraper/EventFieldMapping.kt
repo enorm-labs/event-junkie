@@ -122,6 +122,18 @@ fun orderDoorsBeforeStart(
 ): Pair<LocalTime?, LocalTime?> = if (doors != null && start != null && doors > start) start to doors else doors to start
 
 /**
+ * Whether [presale] is dearer than [boxOffice]. Advance sale is never priced above the door,
+ * so the shape is always a scraper reading the wrong number: a shop's fee-inclusive figure
+ * (Soda, #1583) or a zero the page meant as "no door sale". Checked once at the
+ * [ScrapedEvent.toEventEntity] boundary, which reports and stores the row as scraped —
+ * the right correction differs per source, so it belongs in that source's parser.
+ */
+fun presaleAboveDoor(
+    presale: BigDecimal?,
+    boxOffice: BigDecimal?
+): Boolean = presale != null && boxOffice != null && presale > boxOffice
+
+/**
  * The day an event that starts at [start] on [eventDate] ends, given only the end [time] the venue
  * printed beside it (ADR-029). A club's `23:00 – 06:00` ends the next morning, so an end at or
  * before the start rolls to the following day. `22:00 – 23:30` stays on the day. A venue that

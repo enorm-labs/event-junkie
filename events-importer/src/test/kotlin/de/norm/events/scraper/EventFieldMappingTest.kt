@@ -130,6 +130,18 @@ class EventFieldMappingTest {
         endOn(night, null, LocalTime.of(6, 0)) shouldBe night
     }
 
+    // --- presaleAboveDoor ---
+
+    @Test
+    fun `presaleAboveDoor fires only when both prices exist and presale is the dearer`() {
+        presaleAboveDoor(BigDecimal("16"), BigDecimal("15")) shouldBe true
+        presaleAboveDoor(BigDecimal("15.43"), BigDecimal("15.00")) shouldBe true
+        presaleAboveDoor(BigDecimal("15"), BigDecimal("15")) shouldBe false
+        presaleAboveDoor(BigDecimal("15"), BigDecimal("16")) shouldBe false
+        presaleAboveDoor(BigDecimal("16"), null) shouldBe false
+        presaleAboveDoor(null, BigDecimal("15")) shouldBe false
+    }
+
     // --- orderDoorsBeforeStart ---
 
     @Test
