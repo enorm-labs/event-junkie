@@ -89,10 +89,14 @@ jobs:
           done
           # An approval counts only from a User with write access, on this exact head. The reviews
           # API returns every review ever submitted, so the newest one per reviewer decides: an
-          # approval followed by a dismissal or a request for changes is not an approval.
+          # approval followed by a dismissal or a request for changes is not an approval. A comment
+          # review is left out before that choice — GitHub does not let one dismiss an approval, and
+          # an agent posting its notes as `gh pr review --comment` under the reviewer's account
+          # turned two approved pull requests red (#1574, #1575).
           approver=$(gh api --paginate "repos/${REPO}/pulls/${NUMBER}/reviews" --jq '
             [ .[] | select(.user.type == "User")
-                  | select(.author_association == "OWNER" or .author_association == "MEMBER" or .author_association == "COLLABORATOR") ]
+                  | select(.author_association == "OWNER" or .author_association == "MEMBER" or .author_association == "COLLABORATOR")
+                  | select(.state != "COMMENTED") ]
             | group_by(.user.login) | map(max_by(.submitted_at))
             | map(select(.state == "APPROVED" and .commit_id == env.HEAD_SHA))
             | .[0].user.login // empty')
