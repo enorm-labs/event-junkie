@@ -6,13 +6,13 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
 import java.time.DateTimeException
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.MonthDay
@@ -130,7 +130,7 @@ class JunctionBarDjOverviewPageScraper(
             } catch (_: DateTimeException) {
                 return null
             }
-        val weekday = ENGLISH_WEEKDAY_ABBREVIATIONS[WEEKDAY_PATTERN.find(text)?.value?.lowercase()]
+        val weekday = parseEnglishWeekdayAbbreviation(WEEKDAY_PATTERN.find(text)?.value)
         return inferYearForWeekday(monthDay, weekday, clock)
     }
 
@@ -151,18 +151,6 @@ class JunctionBarDjOverviewPageScraper(
 
         /** An English weekday abbreviation (mon–sun) in a date bar. */
         private val WEEKDAY_PATTERN = Regex("""\b(mon|tue|wed|thu|fri|sat|sun)\b""", RegexOption.IGNORE_CASE)
-
-        /** English three-letter weekday abbreviations used in the DJ program. */
-        private val ENGLISH_WEEKDAY_ABBREVIATIONS: Map<String, DayOfWeek> =
-            mapOf(
-                "mon" to DayOfWeek.MONDAY,
-                "tue" to DayOfWeek.TUESDAY,
-                "wed" to DayOfWeek.WEDNESDAY,
-                "thu" to DayOfWeek.THURSDAY,
-                "fri" to DayOfWeek.FRIDAY,
-                "sat" to DayOfWeek.SATURDAY,
-                "sun" to DayOfWeek.SUNDAY
-            )
 
         private const val PRIVAT_PARTY = "PRIVAT PARTY"
         private const val THEME_SUFFIX = "with"
