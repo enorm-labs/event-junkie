@@ -32,4 +32,53 @@ interface ArtistRepository : CoroutineCrudRepository<ArtistEntity, Long> {
         name: String,
         slug: String
     ): Int
+
+    /**
+     * The rows the MusicBrainz sweep still owes a verdict, among [ids]: never checked, or renamed
+     * since they were (`updated_at` moves on every save, `musicbrainz_checked_at` only on a verdict).
+     */
+    @Query(
+        """
+        SELECT * FROM $EVENTS_SCHEMA.artist
+        WHERE id IN (:ids)
+          AND (musicbrainz_match = 'UNCHECKED' OR updated_at > musicbrainz_checked_at)
+        ORDER BY id
+        """
+    )
+    fun findNeedingMusicBrainzLookup(ids: Collection<Long>): Flow<ArtistEntity>
+
+    /** The oldest rows the sweep has never looked at — the backfill's slice, served by the partial index of V037. */
+    @Query("SELECT * FROM $EVENTS_SCHEMA.artist WHERE musicbrainz_match = 'UNCHECKED' ORDER BY id LIMIT :limit")
+    fun findUncheckedByMusicBrainz(limit: Int): Flow<ArtistEntity>
+
+    /** How many rows still carry [MusicBrainzMatch.UNCHECKED]; the gauge that shows the backfill draining. */
+    @Query("SELECT count(*) FROM $EVENTS_SCHEMA.artist WHERE musicbrainz_match = 'UNCHECKED'")
+    suspend fun countUncheckedByMusicBrainz(): Long
+
+    /**
+     * Stores one verdict and touches nothing else.
+     *
+     * Not a `save`, on purpose: `save` writes every column, and the name is never rewritten from a
+     * verdict (ADR-031). The id is nulled unless the match is EXACT, which is also what the CHECK
+     * constraint of V037 demands.
+     *
+     * **`now()` in SQL, not a timestamp from the JVM.** `trg_artist_updated_at` (V001) sets
+     * `updated_at = now()` on every UPDATE, this one included, and [findNeedingMusicBrainzLookup]
+     * reads `updated_at > musicbrainz_checked_at` as "renamed since". Both `now()` calls in one
+     * statement are the same instant, so the two columns come out equal and the row is not queued
+     * again; a clock read a millisecond earlier on the JVM would queue every row forever.
+     */
+    @Modifying
+    @Query(
+        """
+        UPDATE $EVENTS_SCHEMA.artist
+        SET musicbrainz_match = :match, musicbrainz_id = :mbid, musicbrainz_checked_at = now()
+        WHERE id = :id
+        """
+    )
+    suspend fun storeMusicBrainzVerdict(
+        id: Long,
+        match: String,
+        mbid: String?
+    ): Int
 }

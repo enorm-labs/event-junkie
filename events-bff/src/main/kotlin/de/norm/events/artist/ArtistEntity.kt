@@ -23,6 +23,9 @@ data class ArtistEntity(
     val facebookUrl: String? = null,
     val instagramUrl: String? = null,
     val youtubeUrl: String? = null,
+    val musicbrainzId: String? = null,
+    val musicbrainzMatch: String = MusicBrainzMatch.UNCHECKED.name,
+    val musicbrainzCheckedAt: Instant? = null,
     val createdAt: Instant? = null,
     val updatedAt: Instant? = null
 )

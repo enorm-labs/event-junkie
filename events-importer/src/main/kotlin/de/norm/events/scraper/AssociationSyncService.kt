@@ -64,11 +64,13 @@ class AssociationSyncService(
      *
      * @param savedEvents the persisted event entities (must have non-null IDs).
      * @param scrapedEvents the raw scraped events (source of artist/promoter/genre data).
+     * @return the ids of every artist row this run billed, new or existing — what the MusicBrainz
+     *   sweep looks up after the commit (#1567).
      */
     suspend fun resolveAndSyncAssociations(
         savedEvents: List<EventEntity>,
         scrapedEvents: List<ScrapedEvent>
-    ) {
+    ): Set<Long> {
         val artistCache = resolveAllArtists(scrapedEvents)
         syncArtistAssociations(savedEvents, scrapedEvents, artistCache)
 
@@ -77,6 +79,7 @@ class AssociationSyncService(
 
         val genreTagCache = resolveAllGenreTags(scrapedEvents)
         syncGenreTagAssociations(savedEvents, scrapedEvents, genreTagCache)
+        return artistCache.values.mapNotNullTo(mutableSetOf()) { it.id }
     }
 
     // -- Artist resolution --

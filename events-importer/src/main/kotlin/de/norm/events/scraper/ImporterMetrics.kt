@@ -90,10 +90,14 @@ class ImporterMetrics(
     /** Backs `db.events{horizon="future"}`. */
     private val eventsFuture = AtomicLong(0)
 
+    /** Backs [MUSICBRAINZ_UNCHECKED]: artist rows the MusicBrainz sweep has not looked at yet (#1567). */
+    private val musicBrainzUnchecked = AtomicLong(0)
+
     init {
         registry.gauge(SOURCE_RUNNING, sourcesRunning) { it.get().toDouble() }
         registry.gauge(DB_EVENTS, Tags.of(TAG_HORIZON, HORIZON_ALL), eventsTotal) { it.get().toDouble() }
         registry.gauge(DB_EVENTS, Tags.of(TAG_HORIZON, HORIZON_FUTURE), eventsFuture) { it.get().toDouble() }
+        registry.gauge(MUSICBRAINZ_UNCHECKED, musicBrainzUnchecked) { it.get().toDouble() }
     }
 
     /**
@@ -198,6 +202,26 @@ class ImporterMetrics(
     fun recordTranslation(written: Boolean) {
         registry.counter(TRANSLATIONS, TAG_OUTCOME, if (written) "written" else "skipped").increment()
     }
+
+    /**
+     * Counts one MusicBrainz lookup by what it decided — `exact`, `ambiguous`, `none` — or `error`
+     * when MusicBrainz did not answer. The shares are the number ADR-031 was decided on, so the
+     * counter is how a drift from them shows.
+     */
+    fun recordMusicBrainzLookup(state: String) {
+        registry.counter(MUSICBRAINZ_LOOKUPS, TAG_STATE, state).increment()
+    }
+
+    /**
+     * Counts one head pass — the part before ` - ` or `: ` of a name MusicBrainz did not know —
+     * by its own verdict. Reported and never stored: #1145 owns what to do with it.
+     */
+    fun recordMusicBrainzHead(state: String) {
+        registry.counter(MUSICBRAINZ_HEADS, TAG_STATE, state).increment()
+    }
+
+    /** Publishes how many artist rows are still `UNCHECKED`; refreshed by [MetricsRefreshService]. */
+    fun updateMusicBrainzUnchecked(count: Long) = musicBrainzUnchecked.set(count)
 
     /**
      * Publishes [epochSeconds] as the source's last success.
@@ -456,6 +480,17 @@ class ImporterMetrics(
 
         /** `importer.translations{outcome}` — attempts and how many produced a text. See [recordTranslation]. */
         const val TRANSLATIONS = "importer.translations"
+
+        /** `importer.musicbrainz.lookups{state}` — one per name looked up. See [recordMusicBrainzLookup]. */
+        const val MUSICBRAINZ_LOOKUPS = "importer.musicbrainz.lookups"
+
+        /** `importer.musicbrainz.heads{state}` — the head pass, reported only. See [recordMusicBrainzHead]. */
+        const val MUSICBRAINZ_HEADS = "importer.musicbrainz.heads"
+
+        /** `importer.musicbrainz.unchecked` — rows still awaiting a verdict; the backfill draining. */
+        const val MUSICBRAINZ_UNCHECKED = "importer.musicbrainz.unchecked"
+
+        const val TAG_STATE = "state"
 
         /**
          * `importer.source.has_succeeded{source}` — the series that exists for a source which has

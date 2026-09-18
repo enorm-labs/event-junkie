@@ -26,6 +26,10 @@ data class ArtistEntity(
     val facebookUrl: String? = null,
     val instagramUrl: String? = null,
     val youtubeUrl: String? = null,
+    val musicbrainzId: String? = null,
+    /** [MusicBrainzMatch] by name; a String so R2DBC needs no converter, as `event.status` does it. */
+    val musicbrainzMatch: String = MusicBrainzMatch.UNCHECKED.name,
+    val musicbrainzCheckedAt: Instant? = null,
     @CreatedDate val createdAt: Instant? = null,
     @LastModifiedDate val updatedAt: Instant? = null
 ) {
@@ -43,6 +47,9 @@ data class ArtistEntity(
             facebookUrl = facebookUrl,
             instagramUrl = instagramUrl,
             youtubeUrl = youtubeUrl,
+            musicbrainzId = musicbrainzId,
+            musicbrainzMatch = MusicBrainzMatch.valueOf(musicbrainzMatch),
+            musicbrainzCheckedAt = musicbrainzCheckedAt,
             createdAt = createdAt,
             updatedAt = updatedAt
         )
@@ -62,6 +69,9 @@ data class ArtistEntity(
                 facebookUrl = artist.facebookUrl,
                 instagramUrl = artist.instagramUrl,
                 youtubeUrl = artist.youtubeUrl,
+                musicbrainzId = artist.musicbrainzId,
+                musicbrainzMatch = artist.musicbrainzMatch.name,
+                musicbrainzCheckedAt = artist.musicbrainzCheckedAt,
                 createdAt = artist.createdAt,
                 updatedAt = artist.updatedAt
             )

@@ -106,6 +106,9 @@ class EventImportServiceTest {
     /** TranslationRequest runs after the transaction and is gated on a grant no test source holds (#470). */
     private val descriptionTranslationService: DescriptionTranslationService = mockk(relaxed = true)
 
+    /** The MusicBrainz sweep runs after the transaction too, and reaches the network in production (#1567). */
+    private val musicBrainzLookupService: MusicBrainzLookupService = mockk(relaxed = true)
+
     /**
      * Stubbed rather than real: the cache would reach the network for a `robots.txt`, and what these
      * tests assert is the import pipeline. [RobotsRulesCacheTest] covers the cache itself.
@@ -199,6 +202,7 @@ class EventImportServiceTest {
                 metrics = metrics,
                 fieldCoverageService = fieldCoverageService,
                 descriptionTranslationService = descriptionTranslationService,
+                musicBrainzLookupService = musicBrainzLookupService,
                 robotsRulesCache = robotsRulesCache,
                 maxConcurrency = EventImportService.DEFAULT_MAX_CONCURRENCY
             )
@@ -335,6 +339,7 @@ class EventImportServiceTest {
                         metrics = metrics,
                         fieldCoverageService = fieldCoverageService,
                         descriptionTranslationService = descriptionTranslationService,
+                        musicBrainzLookupService = musicBrainzLookupService,
                         robotsRulesCache = robotsRulesCache,
                         maxConcurrency = EventImportService.DEFAULT_MAX_CONCURRENCY
                     )
@@ -465,6 +470,21 @@ class EventImportServiceTest {
                 coVerify {
                     eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name && it.lastEventCount == 1 })
                 }
+            }
+
+        @Test
+        fun `a MusicBrainz pass that throws leaves the source SUCCESS`() =
+            runTest {
+                val src = source()
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
+                    ImportResult.Success(events = listOf(scrapedEvent()), etag = null, lastModified = null)
+                coEvery { musicBrainzLookupService.lookupFor(any(), any()) } throws IllegalStateException("boom")
+
+                val result = service.importFromSource(src)
+
+                result.imported shouldBe true
+                coVerify { musicBrainzLookupService.lookupFor(match { it.slug == src.slug }, any()) }
+                coVerify { eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name }) }
             }
     }
 
@@ -1256,6 +1276,7 @@ class EventImportServiceTest {
                         metrics = metrics,
                         fieldCoverageService = fieldCoverageService,
                         descriptionTranslationService = descriptionTranslationService,
+                        musicBrainzLookupService = musicBrainzLookupService,
                         robotsRulesCache = robotsRulesCache,
                         maxConcurrency = maxConcurrency
                     )

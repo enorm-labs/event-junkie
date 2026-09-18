@@ -3,6 +3,7 @@ package de.norm.events.artist
 import de.norm.events.BaseControllerTest
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
+import org.springframework.r2dbc.core.awaitRowsUpdated
 
 class ArtistControllerTest : BaseControllerTest() {
     @Test
@@ -103,6 +104,36 @@ class ArtistControllerTest : BaseControllerTest() {
                 .isEqualTo("The Adicts")
                 .jsonPath("$.description")
                 .isEqualTo("Punk band from Ipswich")
+                .jsonPath("$.musicbrainzMatch")
+                .isEqualTo("UNCHECKED")
+                .jsonPath("$.musicbrainzId")
+                .doesNotExist()
+        }
+
+    @Test
+    fun `GET artist by slug carries the MusicBrainz verdict once the importer stored one`(): Unit =
+        runBlocking {
+            val id = insertArtist("Accept", "accept")
+            databaseClient
+                .sql("UPDATE events.artist SET musicbrainz_match = 'EXACT', musicbrainz_id = :mbid, musicbrainz_checked_at = now() WHERE id = :id")
+                .bind("mbid", "41f4d85a-0bd7-4602-a3e3-8c47f36efb0a")
+                .bind("id", id)
+                .fetch()
+                .awaitRowsUpdated()
+
+            webTestClient
+                .get()
+                .uri("/artists/accept")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.musicbrainzMatch")
+                .isEqualTo("EXACT")
+                .jsonPath("$.musicbrainzId")
+                .isEqualTo("41f4d85a-0bd7-4602-a3e3-8c47f36efb0a")
+                .jsonPath("$.musicbrainzCheckedAt")
+                .exists()
         }
 
     @Test

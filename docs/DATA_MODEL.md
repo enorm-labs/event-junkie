@@ -229,19 +229,22 @@ Core entity representing a single music event at a venue on a specific date.
 
 Represents a musical artist or band. Normalized separately so artists can appear in multiple events.
 
-| Field           | Type          | Nullable | Description                 | Example                                        |
-| --------------- | ------------- | -------- | --------------------------- | ---------------------------------------------- |
-| `id`            | `BIGINT`      | No       | Auto-generated primary key  | `7`                                            |
-| `name`          | `TEXT`        | No       | Stage or band name          | `The Adicts`                                   |
-| `slug`          | `TEXT` (UQ)   | No       | URL-friendly identifier     | `the-adicts`                                   |
-| `description`   | `TEXT`        | Yes      | Artist biography            | `Formed in Ipswich in the late 1970s…`         |
-| `image_url`     | `TEXT`        | Yes      | Photo or logo URL           | `https://example.com/adicts.jpg`               |
-| `website_url`   | `TEXT`        | Yes      | Official homepage           | `https://theadicts.net/`                       |
-| `facebook_url`  | `TEXT`        | Yes      | Facebook page URL           | `https://www.facebook.com/theadicts`           |
-| `instagram_url` | `TEXT`        | Yes      | Instagram profile URL       | `https://www.instagram.com/theadictsofficial/` |
-| `youtube_url`   | `TEXT`        | Yes      | YouTube channel URL         | `https://www.youtube.com/@theadictsofficial`   |
-| `created_at`    | `TIMESTAMPTZ` | No       | Record creation timestamp   |                                                |
-| `updated_at`    | `TIMESTAMPTZ` | No       | Last modification timestamp |                                                |
+| Field                    | Type          | Nullable | Description                                                             | Example                                        |
+| ------------------------ | ------------- | -------- | ----------------------------------------------------------------------- | ---------------------------------------------- |
+| `id`                     | `BIGINT`      | No       | Auto-generated primary key                                              | `7`                                            |
+| `name`                   | `TEXT`        | No       | Stage or band name                                                      | `The Adicts`                                   |
+| `slug`                   | `TEXT` (UQ)   | No       | URL-friendly identifier                                                 | `the-adicts`                                   |
+| `description`            | `TEXT`        | Yes      | Artist biography                                                        | `Formed in Ipswich in the late 1970s…`         |
+| `image_url`              | `TEXT`        | Yes      | Photo or logo URL                                                       | `https://example.com/adicts.jpg`               |
+| `website_url`            | `TEXT`        | Yes      | Official homepage                                                       | `https://theadicts.net/`                       |
+| `facebook_url`           | `TEXT`        | Yes      | Facebook page URL                                                       | `https://www.facebook.com/theadicts`           |
+| `instagram_url`          | `TEXT`        | Yes      | Instagram profile URL                                                   | `https://www.instagram.com/theadictsofficial/` |
+| `youtube_url`            | `TEXT`        | Yes      | YouTube channel URL                                                     | `https://www.youtube.com/@theadictsofficial`   |
+| `musicbrainz_id`         | `TEXT`        | Yes      | MBID, set exactly when the verdict is `EXACT` (ADR-031)                 | `41f4d85a-0bd7-4602-a3e3-8c47f36efb0a`         |
+| `musicbrainz_match`      | `TEXT`        | No       | `EXACT` / `AMBIGUOUS` / `NONE` / `UNCHECKED` — the lookup's verdict     | `EXACT`                                        |
+| `musicbrainz_checked_at` | `TIMESTAMPTZ` | Yes      | When the verdict was reached; a later `updated_at` queues the row again |                                                |
+| `created_at`             | `TIMESTAMPTZ` | No       | Record creation timestamp                                               |                                                |
+| `updated_at`             | `TIMESTAMPTZ` | No       | Last modification timestamp                                             |                                                |
 
 ### Promoter
 

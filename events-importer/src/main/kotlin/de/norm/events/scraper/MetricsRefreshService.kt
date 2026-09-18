@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.artist.ArtistRepository
 import de.norm.events.event.EventRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
@@ -18,7 +19,7 @@ import java.time.temporal.ChronoUnit
  * everywhere else in this codebase. The values are therefore refreshed on a schedule into the
  * atomics [ImporterMetrics] holds, and each gauge only reads a number.
  *
- * **The cost, stated so nobody reads one of these as live:** all five are as stale as
+ * **The cost, stated so nobody reads one of these as live:** all six are as stale as
  * `app.metrics.refresh-interval-ms` (default 60s). For counts that move on an import cycle measured
  * in hours that is irrelevant; it would matter for anything driving a synchronous decision, and
  * nothing here does.
@@ -30,6 +31,7 @@ import java.time.temporal.ChronoUnit
 class MetricsRefreshService(
     private val eventRepository: EventRepository,
     private val eventSourceRepository: EventSourceRepository,
+    private val artistRepository: ArtistRepository,
     private val metrics: ImporterMetrics,
     /** Injected clock for deterministic time in tests, as elsewhere in this module. */
     private val clock: Clock = Clock.systemUTC()
@@ -61,6 +63,7 @@ class MetricsRefreshService(
                 future = eventRepository.countByEventDateGreaterThanEqual(LocalDate.now(clock))
             )
             metrics.updateSourcesRunning(eventSourceRepository.countByStatus(ImportStatus.RUNNING.name))
+            metrics.updateMusicBrainzUnchecked(artistRepository.countUncheckedByMusicBrainz())
             republishSourceState()
         } catch (e: Exception) {
             logger.warn(e) { "Could not refresh the metric gauges; they keep their previous values" }

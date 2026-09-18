@@ -33,8 +33,36 @@ data class Artist(
     val instagramUrl: String? = null,
     /** URL of the artist's YouTube channel. */
     val youtubeUrl: String? = null,
+    /** The MusicBrainz artist id (MBID) this row resolved to. Set exactly when [musicbrainzMatch] is [MusicBrainzMatch.EXACT]. */
+    val musicbrainzId: String? = null,
+    /** What the MusicBrainz lookup decided about [name] (ADR-031). */
+    val musicbrainzMatch: MusicBrainzMatch = MusicBrainzMatch.UNCHECKED,
+    /** When [musicbrainzMatch] was reached. A row modified after this is looked up again. */
+    val musicbrainzCheckedAt: Instant? = null,
     /** Timestamp when this record was first created. Set by the database. */
     val createdAt: Instant? = null,
     /** Timestamp when this record was last modified. Set by the database. */
     val updatedAt: Instant? = null
 )
+
+/**
+ * The verdict of a MusicBrainz lookup on an artist's stored name (ADR-031).
+ *
+ * The rule that produces it: a candidate counts only when its primary name equals the stored name
+ * after folding; one such candidate is [EXACT], several narrow to `country = DE` and exactly one left
+ * is [EXACT] too; anything else with a candidate is [AMBIGUOUS]. The search score is never read, and
+ * the stored name is never rewritten from a verdict.
+ */
+enum class MusicBrainzMatch {
+    /** One MusicBrainz artist carries this name; its MBID is stored. */
+    EXACT,
+
+    /** Several artists carry the name, or only an alias or sort name does. A queue for review, not a match. */
+    AMBIGUOUS,
+
+    /** No MusicBrainz artist carries the name. Often a title stored as an act. */
+    NONE,
+
+    /** The sweep has not looked yet, or the name changed since it did. */
+    UNCHECKED
+}

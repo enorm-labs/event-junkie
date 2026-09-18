@@ -35,6 +35,12 @@ data class ArtistResponse(
     val instagramUrl: String?,
     @Schema(description = "URL of the artist's YouTube channel", example = "https://www.youtube.com/@theadictsofficial")
     val youtubeUrl: String?,
+    @Schema(description = "MusicBrainz artist id (MBID), set exactly when `musicbrainzMatch` is `EXACT`", example = "3ec6ee6a-88e6-4e7b-8f3f-7a4b2d5c8a1e")
+    val musicbrainzId: String?,
+    @Schema(description = "What the MusicBrainz lookup decided about the name (ADR-031)", example = "EXACT")
+    val musicbrainzMatch: MusicBrainzMatch,
+    @Schema(description = "When that verdict was reached")
+    val musicbrainzCheckedAt: Instant?,
     @Schema(description = "Timestamp when this record was first created")
     val createdAt: Instant?,
     @Schema(description = "Timestamp when this record was last modified")
@@ -55,6 +61,9 @@ data class ArtistResponse(
                 facebookUrl = artist.facebookUrl,
                 instagramUrl = artist.instagramUrl,
                 youtubeUrl = artist.youtubeUrl,
+                musicbrainzId = artist.musicbrainzId,
+                musicbrainzMatch = artist.musicbrainzMatch,
+                musicbrainzCheckedAt = artist.musicbrainzCheckedAt,
                 createdAt = artist.createdAt,
                 updatedAt = artist.updatedAt
             )

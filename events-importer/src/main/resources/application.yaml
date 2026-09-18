@@ -88,6 +88,19 @@ app:
     # A source that grants translation and publishes 300 events spreads over several runs rather
     # than spending the whole budget at once. The remainder stays a candidate.
     max-per-run: 50
+  musicbrainz:
+    # After each import, every artist it billed is looked up in MusicBrainz and the verdict stored;
+    # nothing else is read or written from it in this step (ADR-031). Only the stage name is sent.
+    enabled: ${APP_MUSICBRAINZ_ENABLED:true}
+    base-url: https://musicbrainz.org/ws/2/
+    # MusicBrainz allows one request a second per address, and the limit is shared by every process
+    # behind that address. A little slower than the limit, because a 503 costs a five-second pause.
+    polite-delay-millis: 1100
+    timeout: 30s
+    backoff: 5s
+    # The backfill's slice: the rows nobody has looked at yet, drained this many per import. About
+    # nine minutes at the pace above, inside the sweep and without a separate job.
+    max-per-run: 500
   scheduling:
     # Reset sources stuck in RUNNING longer than this to FAILED (Duration format, e.g. 30m, 1h)
     staleness-timeout: 30m

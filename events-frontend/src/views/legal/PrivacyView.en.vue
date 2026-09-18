@@ -149,6 +149,10 @@ const { t } = useI18n()
         the information public instead, which is what this page does.
       </p>
       <p>
+        Artist profiles are checked against MusicBrainz, an open music database. Only the artist's
+        stage name is sent.
+      </p>
+      <p>
         <strong>Purpose:</strong> informing the public about publicly announced cultural events.
       </p>
       <p>
