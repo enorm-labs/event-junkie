@@ -49,6 +49,7 @@ class EventImportService(
     private val fieldCoverageService: FieldCoverageService,
     /** Fills in the missing language, for the sources whose grant allows it (ADR-026, #470). */
     private val descriptionTranslationService: DescriptionTranslationService,
+    private val musicBrainzLookupService: MusicBrainzLookupService,
     /**
      * The `robots.txt` rules behind [RobotsTxtFilter], read again here to record what they said
      * about this source's own entry URL (#790).
@@ -351,7 +352,9 @@ class EventImportService(
      *
      * The translation pass is guarded, for the opposite reason: it is derived text, so an engine
      * that is slow, down or unpaid must never fail a scrape that worked. It does nothing unless the
-     * source's grant names translation (ADR-026).
+     * source's grant names translation (ADR-026). The MusicBrainz pass is guarded the same way and
+     * runs last, because it is the slowest: one request a second, over the artists this run billed
+     * and a slice of the backfill (ADR-031).
      */
     private suspend fun afterCommit(
         source: EventSourceEntity,
@@ -364,6 +367,8 @@ class EventImportService(
         fieldCoverageService.record(source, result.events)
         runCatching { descriptionTranslationService.translateFor(source, venueName, licences) }
             .onFailure { logger.warn(it) { "TranslationRequest pass failed for '${source.slug}'" } }
+        runCatching { musicBrainzLookupService.lookupFor(source, upsert.touchedArtistIds) }
+            .onFailure { logger.warn(it) { "MusicBrainz pass failed for '${source.slug}'" } }
     }
 
     /**

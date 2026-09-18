@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.artist.ArtistRepository
 import de.norm.events.event.EventRepository
 import de.norm.events.event.SourceFutureEventsRow
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -25,6 +26,7 @@ import java.time.ZoneOffset
 class MetricsRefreshServiceTest {
     private val eventRepository: EventRepository = mockk(relaxed = true)
     private val eventSourceRepository: EventSourceRepository = mockk(relaxed = true)
+    private val artistRepository: ArtistRepository = mockk(relaxed = true)
     private val today = LocalDate.of(2026, 6, 15)
     private val clock = Clock.fixed(today.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
 
@@ -36,14 +38,25 @@ class MetricsRefreshServiceTest {
     fun setUp() {
         registry = SimpleMeterRegistry()
         metrics = ImporterMetrics(registry)
-        service = MetricsRefreshService(eventRepository, eventSourceRepository, metrics, clock)
+        service = MetricsRefreshService(eventRepository, eventSourceRepository, artistRepository, metrics, clock)
 
         coEvery { eventRepository.count() } returns 0
         coEvery { eventRepository.countByEventDateGreaterThanEqual(any()) } returns 0
         coEvery { eventRepository.countFuturePerSource(any()) } returns emptyFlow()
         coEvery { eventSourceRepository.countByStatus(any()) } returns 0
         coEvery { eventSourceRepository.findByEnabledTrue() } returns emptyFlow()
+        coEvery { artistRepository.countUncheckedByMusicBrainz() } returns 0
     }
+
+    @Test
+    fun `publishes how many artist rows the MusicBrainz sweep still owes`() =
+        runTest {
+            coEvery { artistRepository.countUncheckedByMusicBrainz() } returns 5730
+
+            service.refreshGauges()
+
+            registry.get(ImporterMetrics.MUSICBRAINZ_UNCHECKED).gauge().value() shouldBe 5730.0
+        }
 
     private fun source(
         slug: String,

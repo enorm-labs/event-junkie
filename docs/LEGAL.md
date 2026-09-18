@@ -212,11 +212,20 @@ disclosure, which is what [#1233](https://github.com/enorm-labs/event-junkie/iss
 - **Only the description and the protected names go.** No log data, and nothing about a visitor. §5 of the notice says
   that too, because a reader cannot check it.
 
+**MusicBrainz is a source, not a processor, and this is where that is decided so it is not asked again** (ADR-031,
+[#1567](https://github.com/enorm-labs/event-junkie/issues/1567)). After each import the importer sends every billed
+artist's stage name as a search term to the MetaBrainz Foundation (California). It stores what came back: the verdict
+and, on an exact match, the MusicBrainz id. A read-only lookup of a public database is not processing on our behalf.
+MetaBrainz decides nothing for us and holds nothing of ours, and the name it receives is one it already publishes. So
+there is no Art. 28 contract to conclude, and the Hetzner AVV is untouched. The warning above about a new category does
+not fire either: the two columns sit under personal master data, in the row below. §4 of the notice names the lookup
+and says that only the stage name is sent, because a reader cannot check that either.
+
 **Categories of personal data**, mapped to the vocabulary these forms use:
 
 | Category                        | Applies                      | What it actually is here                                                                                                                                                                                                                                                  |
 | ------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Personal master data**        | **yes**                      | Artist names, and each artist's `description`, `imageUrl`, `websiteUrl`, `facebookUrl`, `instagramUrl`, `youtubeUrl`. The largest category by far, and see §7.3 for why it counts                                                                                         |
+| **Personal master data**        | **yes**                      | Artist names, and each artist's `description`, `imageUrl`, `websiteUrl`, `facebookUrl`, `instagramUrl`, `youtubeUrl`, `musicbrainzId` and the MusicBrainz verdict (ADR-031). The largest category by far, and see §7.3 for why it counts                                  |
 | **Image files**                 | **yes**                      | Copies of the images venues, promoters and artists publish, and of venue photographs from open archives (#1275), stored in `event-junkie-images` at Hetzner (ADR-019, #833). An artist photograph shows an identifiable person, so this is personal data in its own right |
 | **Communication data**          | **yes, on a strict reading** | No phone numbers and no email addresses are stored anywhere. The artist profile and social URLs are what a strict reading catches. Declared deliberately: the cost was nil and omitting it would have left a scope gap                                                    |
 | Contractual master data         | no                           | There is no contract with any data subject                                                                                                                                                                                                                                |

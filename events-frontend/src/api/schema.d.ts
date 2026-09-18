@@ -1163,6 +1163,22 @@ export interface components {
             instagramUrl?: string | null;
             /** @description URL of the artist's YouTube channel */
             youtubeUrl?: string | null;
+            /**
+             * @description MusicBrainz artist id (MBID), set exactly when `musicbrainzMatch` is `EXACT`
+             * @example 41f4d85a-0bd7-4602-a3e3-8c47f36efb0a
+             */
+            musicbrainzId?: string | null;
+            /**
+             * @description What the MusicBrainz lookup decided about the name (ADR-031)
+             * @example EXACT
+             * @enum {string}
+             */
+            musicbrainzMatch?: "EXACT" | "AMBIGUOUS" | "NONE" | "UNCHECKED";
+            /**
+             * Format: date-time
+             * @description When that verdict was reached
+             */
+            musicbrainzCheckedAt?: string | null;
         };
     };
     responses: never;

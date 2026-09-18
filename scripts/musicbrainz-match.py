@@ -23,6 +23,9 @@ The match rule, which the ADR quotes:
    (#302); the head pass is the detector, and its false-positive count is what says whether it is
    usable.
 
+The importer runs this rule for real since #1567 (`MusicBrainzMatcher.kt`), with one tightening the
+spike's numbers argued for: there, a sort-name or alias hit alone is `ambiguous`, never `exact`.
+
 MusicBrainz allows one request a second per address and wants a User-Agent it can write to, so the
 pause below is not tunable and a 503 is slept off rather than retried at once. Standard library only.
 The run is long -- a second per row, and staging held 5,730 rows on 2026-09-17 -- so every row is

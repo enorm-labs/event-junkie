@@ -9,6 +9,7 @@ import de.norm.events.image.INTRINSIC_WIDTH_DESCRIPTION
 import de.norm.events.image.ImageSourceResponse
 import de.norm.events.image.ServedImage
 import io.swagger.v3.oas.annotations.media.Schema
+import java.time.Instant
 
 /**
  * Compact artist representation embedded in event lineups and returned by the artist list.
@@ -93,7 +94,13 @@ data class ArtistDetailResponse(
     @Schema(description = "URL of the artist's Instagram profile")
     val instagramUrl: String?,
     @Schema(description = "URL of the artist's YouTube channel")
-    val youtubeUrl: String?
+    val youtubeUrl: String?,
+    @Schema(description = "MusicBrainz artist id (MBID), set exactly when `musicbrainzMatch` is `EXACT`", example = "41f4d85a-0bd7-4602-a3e3-8c47f36efb0a")
+    val musicbrainzId: String?,
+    @Schema(description = "What the MusicBrainz lookup decided about the name (ADR-031)", example = "EXACT")
+    val musicbrainzMatch: MusicBrainzMatch,
+    @Schema(description = "When that verdict was reached")
+    val musicbrainzCheckedAt: Instant?
 ) {
     companion object {
         fun fromEntity(
@@ -115,7 +122,10 @@ data class ArtistDetailResponse(
                 websiteUrl = entity.websiteUrl,
                 facebookUrl = entity.facebookUrl,
                 instagramUrl = entity.instagramUrl,
-                youtubeUrl = entity.youtubeUrl
+                youtubeUrl = entity.youtubeUrl,
+                musicbrainzId = entity.musicbrainzId,
+                musicbrainzMatch = MusicBrainzMatch.valueOf(entity.musicbrainzMatch),
+                musicbrainzCheckedAt = entity.musicbrainzCheckedAt
             )
     }
 }

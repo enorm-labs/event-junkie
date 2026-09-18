@@ -313,6 +313,72 @@
           }
         },
         {
+          "id": "p_musicbrainz",
+          "type": "line",
+          "title": "Artists awaiting a MusicBrainz verdict, and verdicts per hour by state",
+          "description": "Every artist an import bills is looked up in MusicBrainz afterwards and the verdict stored (ADR-031, #1567). The gauge is the backlog: about 5,700 on either cluster the day the columns landed, drained 500 per import, and zero from then on \u2014 **a gauge that stops falling, or climbs, is MusicBrainz refusing us**, which no source status shows. The rates are the shares the decision rested on: roughly half `exact`, an eighth `ambiguous`, a third `none`. A drift from those is either the rule or the data changing.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "max(importer_musicbrainz_unchecked)",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            },
+            {
+              "query": "sum by (state) (rate(importer_musicbrainz_lookups_total[1h])) * 3600",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 28,
+            "w": 192,
+            "h": 12,
+            "i": 8
+          }
+        },
+        {
           "id": "p_pg",
           "type": "line",
           "title": "PostgreSQL \u2014 database size",
@@ -350,10 +416,10 @@
           ],
           "layout": {
             "x": 0,
-            "y": 28,
+            "y": 40,
             "w": 48,
             "h": 16,
-            "i": 8
+            "i": 9
           }
         },
         {
@@ -416,10 +482,10 @@
           ],
           "layout": {
             "x": 48,
-            "y": 28,
+            "y": 40,
             "w": 48,
             "h": 16,
-            "i": 9
+            "i": 10
           }
         },
         {
@@ -460,10 +526,10 @@
           ],
           "layout": {
             "x": 96,
-            "y": 28,
+            "y": 40,
             "w": 48,
             "h": 16,
-            "i": 10
+            "i": 11
           }
         },
         {
@@ -504,10 +570,10 @@
           ],
           "layout": {
             "x": 144,
-            "y": 28,
+            "y": 40,
             "w": 48,
             "h": 16,
-            "i": 11
+            "i": 12
           }
         },
         {
@@ -570,10 +636,10 @@
           ],
           "layout": {
             "x": 0,
-            "y": 44,
+            "y": 56,
             "w": 96,
             "h": 16,
-            "i": 12
+            "i": 13
           }
         },
         {
@@ -614,10 +680,10 @@
           ],
           "layout": {
             "x": 96,
-            "y": 44,
+            "y": 56,
             "w": 96,
             "h": 16,
-            "i": 13
+            "i": 14
           }
         },
         {
@@ -671,10 +737,10 @@
           ],
           "layout": {
             "x": 0,
-            "y": 60,
+            "y": 72,
             "w": 112,
             "h": 16,
-            "i": 14
+            "i": 15
           }
         },
         {
@@ -734,10 +800,10 @@
           ],
           "layout": {
             "x": 112,
-            "y": 60,
+            "y": 72,
             "w": 80,
             "h": 16,
-            "i": 15
+            "i": 16
           }
         }
       ]

@@ -159,6 +159,10 @@ const { t } = useI18n()
         bereitstehen.
       </p>
       <p>
+        Künstlerprofile werden mit MusicBrainz abgeglichen, einer offenen Musikdatenbank. Übermittelt
+        wird nur der Künstlername.
+      </p>
+      <p>
         <strong>Zweck:</strong> Information der Öffentlichkeit über öffentlich angekündigte
         kulturelle Veranstaltungen.
       </p>

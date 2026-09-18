@@ -153,7 +153,7 @@ class EventUpsertService(
                 unchanged
             }
 
-        associationSyncService.resolveAndSyncAssociations(savedEvents, scrapedEvents)
+        val touchedArtistIds = associationSyncService.resolveAndSyncAssociations(savedEvents, scrapedEvents)
 
         // Only changed/new events are logged here — unchanged ones already are, in partitionByChanged.
         // Count the same distinction for `importer.events.written{operation}` while it is in hand.
@@ -166,7 +166,12 @@ class EventUpsertService(
                 payload = mapOf(LogFields.EVENT_ID to saved.id, LogFields.EVENT_SOURCE_ID to saved.sourceId)
             }
         }
-        return UpsertOutcome(inserted = inserted, updated = changed.size - inserted, skipped = unchanged.size)
+        return UpsertOutcome(
+            inserted = inserted,
+            updated = changed.size - inserted,
+            skipped = unchanged.size,
+            touchedArtistIds = touchedArtistIds
+        )
     }
 
     /**
@@ -371,7 +376,15 @@ data class UpsertOutcome(
      */
     val droppedPast: Int = 0,
     /** Scraped events discarded as duplicates within one scrape (#982). */
-    val droppedDuplicate: Int = 0
+    val droppedDuplicate: Int = 0,
+    /**
+     * The artist rows this run billed, whether it created them or found them.
+     *
+     * Carried out for the same reason [droppedPast] is: the MusicBrainz sweep runs after the commit
+     * and only over what the import touched, and `EventImportService` is where "after the commit"
+     * happens (#1567).
+     */
+    val touchedArtistIds: Set<Long> = emptySet()
 ) {
     /**
      * Every event the run touched.
