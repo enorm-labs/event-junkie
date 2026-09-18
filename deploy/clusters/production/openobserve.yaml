@@ -45,7 +45,7 @@ spec:
       chart: openobserve-standalone
       # Pinned, not a range. This is the version ADR-015's measurements were taken against, and a
       # trial whose subject changes under it is not a trial.
-      version: "0.92.2"
+      version: "1.0.1"
       sourceRef:
         kind: HelmRepository
         name: openobserve
