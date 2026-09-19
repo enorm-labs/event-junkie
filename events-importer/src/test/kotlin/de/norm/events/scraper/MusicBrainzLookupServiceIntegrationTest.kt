@@ -14,10 +14,14 @@ import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * The sweep against a real PostgreSQL (Testcontainers), with MusicBrainz replaced by a scripted
@@ -110,6 +114,52 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             matchOf(requireNotNull(backlogA.id)) shouldBe MusicBrainzMatch.NONE.name
             matchOf(requireNotNull(backlogB.id)) shouldBe MusicBrainzMatch.UNCHECKED.name
             artistRepository.countUncheckedByMusicBrainz() shouldBe 1
+        }
+    }
+
+    @Test
+    fun `two sweeps starting together look each unchecked row up once`() {
+        runBlocking {
+            repeat(4) { artist("Backlog $it") }
+            val searches = AtomicInteger()
+            coEvery { client.search(any()) } coAnswers {
+                searches.incrementAndGet()
+                delay(20)
+                emptyList()
+            }
+            val service = service()
+
+            coroutineScope {
+                launch { service.lookupFor(source(), emptySet()) }
+                launch { service.lookupFor(source(), emptySet()) }
+            }
+
+            searches.get() shouldBe 4
+            artistRepository.countUncheckedByMusicBrainz() shouldBe 0
+        }
+    }
+
+    @Test
+    fun `a sweep that finds the backfill held still looks up its own touched rows`() {
+        runBlocking {
+            val backlog = artist("Backlog")
+            val touched = artist("Touched")
+            coEvery { client.search("Backlog") } coAnswers {
+                delay(200)
+                emptyList()
+            }
+            coEvery { client.search("Touched") } returns emptyList()
+            val service = service()
+
+            coroutineScope {
+                launch { service.lookupFor(source(), emptySet()) }
+                delay(50)
+                service.lookupFor(source(), setOfNotNull(touched.id)) shouldBe 1
+                matchOf(requireNotNull(backlog.id)) shouldBe MusicBrainzMatch.UNCHECKED.name
+                matchOf(requireNotNull(touched.id)) shouldBe MusicBrainzMatch.NONE.name
+            }
+
+            matchOf(requireNotNull(backlog.id)) shouldBe MusicBrainzMatch.NONE.name
         }
     }
 

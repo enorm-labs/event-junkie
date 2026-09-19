@@ -278,6 +278,7 @@ class EventImportService(
                     afterCommit(runningSource, venue.name, result, upsert, licences)
 
                     markSuccess(runningSource, upsert.total, result.etag, result.lastModified)
+                    afterSuccess(runningSource, upsert)
                     ImportResultResponse(sourceSlug = runningSource.slug, imported = true, eventCount = upsert.total) to
                         ImporterMetrics.RunOutcome.SUCCESS
                 }
@@ -352,9 +353,8 @@ class EventImportService(
      *
      * The translation pass is guarded, for the opposite reason: it is derived text, so an engine
      * that is slow, down or unpaid must never fail a scrape that worked. It does nothing unless the
-     * source's grant names translation (ADR-026). The MusicBrainz pass is guarded the same way and
-     * runs last, because it is the slowest: one request a second, over the artists this run billed
-     * and a slice of the backfill (ADR-031).
+     * source's grant names translation (ADR-026). The MusicBrainz pass is not here: it runs in
+     * [afterSuccess], once the closing save is written.
      */
     private suspend fun afterCommit(
         source: EventSourceEntity,
@@ -367,6 +367,22 @@ class EventImportService(
         fieldCoverageService.record(source, result.events)
         runCatching { descriptionTranslationService.translateFor(source, venueName, licences) }
             .onFailure { logger.warn(it) { "TranslationRequest pass failed for '${source.slug}'" } }
+    }
+
+    /**
+     * The MusicBrainz pass, after `markSuccess` rather than before it (#1604).
+     *
+     * It is the slowest thing a run does — one request a second over the artists this run billed
+     * and a slice of the backfill (ADR-031), nine minutes for a full slice and five more per 503 —
+     * and a source that stays `RUNNING` for that long has `lastSuccessAt` late by as much, and is
+     * one bad slice away from `app.scheduling.staleness-timeout` reaping it as `FAILED`. Guarded
+     * like the translation pass: a verdict is derived, and MusicBrainz not answering is a counter,
+     * never a failed import.
+     */
+    private suspend fun afterSuccess(
+        source: EventSourceEntity,
+        upsert: UpsertOutcome
+    ) {
         runCatching { musicBrainzLookupService.lookupFor(source, upsert.touchedArtistIds) }
             .onFailure { logger.warn(it) { "MusicBrainz pass failed for '${source.slug}'" } }
     }
