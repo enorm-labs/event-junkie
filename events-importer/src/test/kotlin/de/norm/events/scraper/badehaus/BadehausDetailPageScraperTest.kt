@@ -1,6 +1,8 @@
 package de.norm.events.scraper.badehaus
 
+import de.norm.events.event.EventStatus
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -74,6 +76,41 @@ class BadehausDetailPageScraperTest {
         event.doorsTime shouldBe LocalTime.of(19, 0)
         event.startTime shouldBe LocalTime.of(20, 0)
         event.description.shouldNotBeNull() shouldNotContain "Doors:"
+    }
+
+    // The card's one VERLEGT class covers both changes; the opening notice says which (#1578).
+    @Test
+    fun `reads a postponement from the opening notice`() {
+        val url = "https://badehaus-berlin.com/events/max-grimm-2/"
+        val event = scraper.scrape(fixture("badehaus-detail-postponed.html", url), url).shouldNotBeNull()
+
+        event.title shouldBe "Max Grimm"
+        event.status shouldBe EventStatus.POSTPONED.name
+        event.statusNote shouldBe "Das Konzert wurde auf den 27.02.2027 verschoben;"
+        val entity = event.toEventEntity(venueId = 1, venueSlug = "badehaus", eventSourceId = 1)
+        entity.status shouldBe EventStatus.POSTPONED.name
+        entity.relocatedTo.shouldBeNull()
+    }
+
+    @Test
+    fun `reads a move from the opening notice, and the boundary finds the destination in it`() {
+        val url = "https://badehaus-berlin.com/events/forager/"
+        val event = scraper.scrape(fixture("badehaus-detail-relocated.html", url), url).shouldNotBeNull()
+
+        event.status shouldBe EventStatus.RELOCATED.name
+        event.statusNote.shouldNotBeNull() shouldContain "vom Badehaus ins Mikropol verlegt"
+        val entity = event.toEventEntity(venueId = 1, venueSlug = "badehaus", eventSourceId = 1)
+        entity.status shouldBe EventStatus.RELOCATED.name
+        entity.relocatedTo shouldBe "Mikropol"
+    }
+
+    @Test
+    fun `leaves a page whose blurb carries no notice scheduled`() {
+        val url = "https://badehaus-berlin.com/events/dominic-donner/"
+        val event = scraper.scrape(fixture("badehaus-detail-promoter.html", url), url).shouldNotBeNull()
+
+        event.status shouldBe EventStatus.SCHEDULED.name
+        event.statusNote.shouldBeNull()
     }
 
     @Test
