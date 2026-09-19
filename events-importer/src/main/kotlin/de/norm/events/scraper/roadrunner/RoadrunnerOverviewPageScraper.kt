@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
+import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.slug.SlugGenerator
@@ -11,7 +12,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.MonthDay
@@ -210,7 +210,7 @@ class RoadrunnerOverviewPageScraper(
     private fun parseGermanDate(text: String): LocalDate? {
         val match = DATE_PATTERN.find(text) ?: return null
         val (weekdayName, day, month) = match.destructured
-        val weekday = GERMAN_WEEKDAYS[weekdayName.lowercase()]
+        val weekday = parseGermanWeekday(weekdayName)
         return parseGermanMonthDay(day, month)?.let { inferYearForWeekday(it, weekday, clock) }
     }
 
@@ -258,17 +258,6 @@ class RoadrunnerOverviewPageScraper(
 
         /** Extracts "Einlass: HH:mm" (the "Uhr" suffix is ignored). */
         private val EINLASS_PATTERN = Regex("""Einlass:\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
-
-        private val GERMAN_WEEKDAYS: Map<String, DayOfWeek> =
-            mapOf(
-                "montag" to DayOfWeek.MONDAY,
-                "dienstag" to DayOfWeek.TUESDAY,
-                "mittwoch" to DayOfWeek.WEDNESDAY,
-                "donnerstag" to DayOfWeek.THURSDAY,
-                "freitag" to DayOfWeek.FRIDAY,
-                "samstag" to DayOfWeek.SATURDAY,
-                "sonntag" to DayOfWeek.SUNDAY
-            )
 
         /** Parses "29. Mai" using full German month names, case-insensitively. */
         private val GERMAN_DAY_MONTH_FORMATTER: DateTimeFormatter =

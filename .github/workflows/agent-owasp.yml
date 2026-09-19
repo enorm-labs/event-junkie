@@ -74,7 +74,7 @@ jobs:
       # Node. `helm` is on the runner image for the A01 render.
       - name: Run /owasp-top-10
         id: claude
-        uses: anthropics/claude-code-action@9cdae7f0d995e3ba7c33f226087fdf82a59cd520 # v1
+        uses: anthropics/claude-code-action@7b0b255830a1fab6e602658672acad11c12d841d # v1
         env:
           ACTIONS_GITHUB_TOKEN: ${{ github.token }}
         with:

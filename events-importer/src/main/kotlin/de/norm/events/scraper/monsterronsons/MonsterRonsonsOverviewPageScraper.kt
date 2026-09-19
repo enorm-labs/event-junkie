@@ -8,6 +8,7 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
+import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -15,7 +16,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Month
 import java.time.MonthDay
@@ -137,7 +137,7 @@ class MonsterRonsonsOverviewPageScraper(
      */
     private fun parseCardDate(card: Element): LocalDate? {
         val monthDay = parseMonthDay(card.textAt(DATE_SELECTOR)) ?: return null
-        val weekday = ENGLISH_WEEKDAY_ABBREVIATIONS[card.textAt(WEEKDAY_SELECTOR)?.lowercase()?.take(WEEKDAY_ABBREVIATION_LENGTH)]
+        val weekday = parseEnglishWeekdayAbbreviation(card.textAt(WEEKDAY_SELECTOR)?.lowercase()?.take(WEEKDAY_ABBREVIATION_LENGTH))
         return inferYearForWeekday(monthDay, weekday, clock)
     }
 
@@ -212,18 +212,6 @@ class MonsterRonsonsOverviewPageScraper(
 
         /** Splits a co-hosted night's `A & B` host list. */
         private val HOST_SEPARATOR_PATTERN = Regex("""\s*(?:&|\+|,)\s*""")
-
-        /** English weekday abbreviations as the site prints them. */
-        private val ENGLISH_WEEKDAY_ABBREVIATIONS: Map<String, DayOfWeek> =
-            mapOf(
-                "mon" to DayOfWeek.MONDAY,
-                "tue" to DayOfWeek.TUESDAY,
-                "wed" to DayOfWeek.WEDNESDAY,
-                "thu" to DayOfWeek.THURSDAY,
-                "fri" to DayOfWeek.FRIDAY,
-                "sat" to DayOfWeek.SATURDAY,
-                "sun" to DayOfWeek.SUNDAY
-            )
 
         /**
          * English month abbreviations. The shared [de.norm.events.scraper.parseGermanMonthAbbreviation]

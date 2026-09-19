@@ -127,16 +127,7 @@ class AssociationSyncService(
      */
     private fun ScrapedEvent.storableArtists(): List<ScrapedArtist> = artists.filterNot { isSlugless(it.name) }
 
-    /**
-     * Resolves an artist by slug (derived from name) from the [artistCache],
-     * or auto-creates a new artist entity if no match is found. Newly created
-     * artists are added to the cache so subsequent events in the same batch
-     * can reuse them without additional database queries.
-     *
-     * Handles concurrent artist creation gracefully: if another import creates
-     * the same artist between our cache check and save, the unique constraint
-     * violation on `artist.slug` is caught and we fall back to a lookup.
-     */
+    /** Resolves an artist by name from [artistCache], or auto-creates one. See [resolveOrCreate]. */
     private suspend fun resolveOrCreateArtist(
         name: String,
         artistCache: MutableMap<String, ArtistEntity>
@@ -290,14 +281,8 @@ class AssociationSyncService(
     }
 
     /**
-     * Resolves a promoter by slug (derived from its already-canonicalized [name]) from
-     * the [promoterCache], or auto-creates a new promoter entity if no match is found.
-     * Newly created promoters store the canonical name and are added to the cache so
-     * subsequent events in the same batch can reuse them without additional DB queries.
-     *
-     * Handles concurrent promoter creation gracefully: if another import creates
-     * the same promoter between our cache check and save, the unique constraint
-     * violation on `promoter.slug` is caught and we fall back to a lookup.
+     * Resolves a promoter by its already-canonicalized [name] from [promoterCache], or auto-creates
+     * one storing that canonical name. See [resolveOrCreate].
      */
     private suspend fun resolveOrCreatePromoter(
         name: String,
@@ -408,16 +393,7 @@ class AssociationSyncService(
         return genreTagCache
     }
 
-    /**
-     * Resolves a genre tag by slug (derived from name) from the [genreTagCache],
-     * or auto-creates a new genre tag entity if no match is found. Newly created
-     * tags are added to the cache so subsequent events in the same batch can reuse
-     * them without additional database queries.
-     *
-     * Handles concurrent creation gracefully: if another import creates the same
-     * tag between our cache check and save, the unique constraint violation on
-     * `genre_tag.slug` is caught and we fall back to a lookup.
-     */
+    /** Resolves a genre tag by name from [genreTagCache], or auto-creates one. See [resolveOrCreate]. */
     private suspend fun resolveOrCreateGenreTag(
         name: String,
         genreTagCache: MutableMap<String, GenreTagEntity>

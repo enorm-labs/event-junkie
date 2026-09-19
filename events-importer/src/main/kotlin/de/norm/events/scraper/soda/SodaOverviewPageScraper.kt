@@ -7,6 +7,7 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.parseGermanMonthAbbreviation
+import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -14,7 +15,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.net.URI
 import java.time.Clock
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.MonthDay
 
@@ -106,23 +106,9 @@ class SodaOverviewPageScraper(
     private fun parseCalendarDate(snippet: Element): LocalDate? {
         val day = snippet.textAt(".event-date-cal-day")?.toIntOrNull()
         val month = parseGermanMonthAbbreviation(snippet.textAt(".event-date-cal-month"))
-        val weekday = GERMAN_WEEKDAYS[snippet.textAt(".event-date-cal-weekday")?.lowercase()]
+        val weekday = parseGermanWeekday(snippet.textAt(".event-date-cal-weekday"))
         val monthDay = if (day == null || month == null) null else runCatching { MonthDay.of(month, day) }.getOrNull()
         return monthDay?.let { inferYearForWeekday(it, weekday, clock) }
-    }
-
-    private companion object {
-        /** Full German weekday names as rendered in the calendar block ("Donnerstag"). */
-        private val GERMAN_WEEKDAYS: Map<String, DayOfWeek> =
-            mapOf(
-                "montag" to DayOfWeek.MONDAY,
-                "dienstag" to DayOfWeek.TUESDAY,
-                "mittwoch" to DayOfWeek.WEDNESDAY,
-                "donnerstag" to DayOfWeek.THURSDAY,
-                "freitag" to DayOfWeek.FRIDAY,
-                "samstag" to DayOfWeek.SATURDAY,
-                "sonntag" to DayOfWeek.SUNDAY
-            )
     }
 }
 
