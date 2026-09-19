@@ -13,7 +13,14 @@
 # Pinned by tag *and* digest, like every base image here; Dependabot's `docker` ecosystem updates
 # both. `24-alpine` because Node 24 is the engine `package.json` declares, and the bundle targets
 # it. Alpine for the same reason nginx is on it: fewer packages in the scan.
-FROM node:24-alpine@sha256:50c8e8ca1d27439048670df5883f32d57cf81cff6233222c893fd0d9884cbd81
+#
+# **Verify the package, never the digest** (#770). What this pin has to satisfy is
+# `libssl3 >= 3.5.8-r0`, checked with
+# `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep -E "^libssl3"'` **on
+# `--platform linux/amd64`**, which is the architecture the gate scans. This digest carries it, so
+# no `apk upgrade` layer belongs here: an upgrade kept past its purpose hides that the base has
+# caught up and quietly becomes the thing choosing the version.
+FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1
 
 ARG VERSION=unspecified
 ARG REVISION=unknown
@@ -28,17 +35,11 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
 ENV NODE_ENV=production
 
 # **The base ships npm, and npm ships three fixable HIGH advisories this process never runs.** The
-# first publish gate on this image (2026-09-06) failed on `brace-expansion`, `ip-address` and
-# `tar` under /usr/local/lib/node_modules/npm — a package manager the container has no use for,
-# since the bundle below has every import inlined and nothing is ever installed. Removing npm,
-# npx, corepack and yarn deletes the findings rather than waiving them, and takes about 30 MB of
-# surface with it. The same publish reported `libssl3`/`libcrypto3 3.5.7-r0` against a fix in
-# `3.5.8-r0` that Alpine 3.24 already ships, so that upgrade is named here the way the frontend
-# Dockerfile names its `libuuid` one, with the same rule: delete the line once the base has caught
-# up, checked with `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep libssl3'`
-# **on --platform linux/amd64**, which is the architecture the gate scans.
-RUN apk upgrade --no-cache libssl3 libcrypto3 \
-    && rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /opt/yarn*
+# first publish gate on this image failed on `brace-expansion`, `ip-address` and `tar` under
+# /usr/local/lib/node_modules/npm — a package manager the container has no use for, since the
+# bundle below has every import inlined and nothing is ever installed. Removing npm, npx, corepack
+# and yarn deletes the findings rather than waiving them, and takes about 30 MB of surface with it.
+RUN rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /opt/yarn*
 
 WORKDIR /app
 COPY dist-injector/injector.mjs /app/injector.mjs
