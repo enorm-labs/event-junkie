@@ -43,9 +43,9 @@ spec:
   chart:
     spec:
       chart: openobserve-standalone
-      # Pinned, not a range. This is the version ADR-015's measurements were taken against, and a
-      # trial whose subject changes under it is not a trial.
-      version: "0.92.2"
+      # Pinned, not a range. 1.0.1 followed staging by a night, as a major always does here: v1.0.0
+      # migrates the metadata sqlite forward on start, and a rollback across that is untested (#1571).
+      version: "1.0.1"
       sourceRef:
         kind: HelmRepository
         name: openobserve
