@@ -19,6 +19,7 @@ import io.kotest.matchers.shouldNotBe
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.mockk
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -485,6 +486,21 @@ class EventImportServiceTest {
                 result.imported shouldBe true
                 coVerify { musicBrainzLookupService.lookupFor(match { it.slug == src.slug }, any()) }
                 coVerify { eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name }) }
+            }
+
+        @Test
+        fun `the MusicBrainz pass starts after the closing save, so lastSuccessAt is not late by the sweep`() =
+            runTest {
+                val src = source()
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
+                    ImportResult.Success(events = listOf(scrapedEvent()), etag = null, lastModified = null)
+
+                service.importFromSource(src)
+
+                coVerifyOrder {
+                    eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name })
+                    musicBrainzLookupService.lookupFor(match { it.slug == src.slug }, any())
+                }
             }
     }
 

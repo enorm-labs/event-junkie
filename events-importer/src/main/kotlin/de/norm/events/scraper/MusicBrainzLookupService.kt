@@ -9,6 +9,7 @@ import de.norm.events.musicbrainz.MusicBrainzProperties
 import de.norm.events.musicbrainz.MusicBrainzUnavailableException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.sync.Mutex
 import org.springframework.stereotype.Service
 
 /**
@@ -24,6 +25,12 @@ import org.springframework.stereotype.Service
  * 5,700 rows either cluster started with are checked inside the sweep's own pace rather than by a
  * separate job. `importer.musicbrainz.unchecked` shows it draining, and stays at zero afterwards.
  *
+ * **One sweep at a time drains it.** Imports run concurrently and each one sweeps after its commit,
+ * so without a lock every sweep read the same oldest-500 slice and looked it all up: staging's first
+ * day cost MusicBrainz 2.6 requests per row (#1604). [backfill] is a process-wide `Mutex` taken with
+ * `tryLock`; a sweep that finds it held looks up its touched rows only and leaves the slice to the
+ * holder. No claim column, no `FOR UPDATE SKIP LOCKED` outside a transaction, no second state.
+ *
  * **Nothing but the three columns is written.** The name is never rewritten from a verdict, and
  * the head pass — the part before ` - ` or `: ` of a name MusicBrainz did not know — is a log line
  * and a counter for #1145 to read, not a row.
@@ -36,9 +43,11 @@ class MusicBrainzLookupService(
     private val metrics: ImporterMetrics
 ) {
     private val logger = KotlinLogging.logger {}
+    private val backfill = Mutex()
 
     /**
-     * Looks up what this run owes: the touched rows without a current verdict, then the backfill.
+     * Looks up what this run owes: the touched rows without a current verdict, then the backfill
+     * when no other sweep is draining it.
      *
      * @return how many verdicts were stored. Zero when the lookup is disabled, when nothing is owed,
      *   or when MusicBrainz was unavailable before the first row — one answer, because none of the
@@ -49,8 +58,14 @@ class MusicBrainzLookupService(
         touchedArtistIds: Set<Long>
     ): Int {
         if (!properties.enabled) return 0
-        val candidates = candidatesFor(touchedArtistIds)
-        return if (candidates.isEmpty()) 0 else storeVerdicts(source, candidates)
+        val drainsBackfill = backfill.tryLock()
+        if (!drainsBackfill) logger.debug { "Another sweep holds the MusicBrainz backfill; '${source.slug}' looks up its touched rows only" }
+        try {
+            val candidates = candidatesFor(touchedArtistIds, drainsBackfill)
+            return if (candidates.isEmpty()) 0 else storeVerdicts(source, candidates)
+        } finally {
+            if (drainsBackfill) backfill.unlock()
+        }
     }
 
     /** One lookup per row until MusicBrainz stops answering; the rows after that wait for the next run. */
@@ -75,7 +90,10 @@ class MusicBrainzLookupService(
     }
 
     /** The touched rows that owe a verdict, then the oldest unchecked rows, bounded together. */
-    private suspend fun candidatesFor(touchedArtistIds: Set<Long>): List<ArtistEntity> {
+    private suspend fun candidatesFor(
+        touchedArtistIds: Set<Long>,
+        includeBackfill: Boolean
+    ): List<ArtistEntity> {
         val touched =
             if (touchedArtistIds.isEmpty()) {
                 emptyList()
@@ -83,7 +101,7 @@ class MusicBrainzLookupService(
                 artistRepository.findNeedingMusicBrainzLookup(touchedArtistIds).toList().take(properties.maxPerRun)
             }
         val room = properties.maxPerRun - touched.size
-        if (room <= 0) return touched
+        if (!includeBackfill || room <= 0) return touched
         val touchedIds = touched.mapTo(mutableSetOf()) { it.id }
         val backlog = artistRepository.findUncheckedByMusicBrainz(room + touched.size).toList().filterNot { it.id in touchedIds }
         return touched + backlog.take(room)
