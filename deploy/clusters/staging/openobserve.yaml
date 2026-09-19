@@ -41,9 +41,8 @@ spec:
   chart:
     spec:
       chart: openobserve-standalone
-      # Pinned, not a range. Staging runs the 1.x line one step ahead of production, which holds
-      # 0.92.2 until this one has held a night: v1.0.0 migrates the metadata sqlite forward, and a
-      # rollback across that is untested (#1571).
+      # Pinned, not a range. A major lands here a night before production: v1.0.0 migrates the
+      # metadata sqlite forward on start, and a rollback across that is untested (#1571).
       version: "1.0.1"
       sourceRef:
         kind: HelmRepository
