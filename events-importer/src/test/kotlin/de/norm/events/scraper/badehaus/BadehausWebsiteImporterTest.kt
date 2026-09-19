@@ -121,6 +121,19 @@ class BadehausWebsiteImporterTest {
             relocated.status shouldBe EventStatus.RELOCATED.name
         }
 
+    // The card's VERLEGT class also covers a date move; the detail page's notice wins (#1578).
+    @Test
+    fun `lets the detail page turn a VERLEGT card into a postponement`() =
+        runTest {
+            val foragerUrl = "https://badehaus-berlin.com/events/forager/"
+            coEvery { htmlFetcher.fetchDocument(foragerUrl) } returns
+                Jsoup.parse(fixture("badehaus-detail-postponed.html"), foragerUrl)
+
+            val postponed = events(importer.importEvents(sourceUrl)).first { it.sourceId == "badehaus:forager" }
+            postponed.status shouldBe EventStatus.POSTPONED.name
+            postponed.statusNote shouldBe "Das Konzert wurde auf den 27.02.2027 verschoben;"
+        }
+
     @Test
     fun `returns NotModified when the overview page is unchanged`() =
         runTest {

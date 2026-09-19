@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component
  * Follows the overview → detail pattern:
  * 1. Fetch the `/events/` listing via [HtmlFetcher] (with ETag / Last-Modified) and
  *    discover every event via [BadehausOverviewPageScraper] — the authoritative
- *    source for the sold-out / relocated status (a CSS class on the card), the
+ *    source for the sold-out flag (a CSS class on the card), the
  *    subtitle and the inferred event type, plus fallback title/date/doors/image.
  * 2. For each event, fetch its `/events/<slug>/` detail page and parse it via
  *    [BadehausDetailPageScraper] — the primary source for the full description,
@@ -54,10 +54,10 @@ class BadehausWebsiteImporter(
      * Merges detail-page data ([primary]) with overview-page data ([fallback]).
      *
      * The detail page is authoritative for the fields only it carries — description,
-     * start time and promoter. The overview page is authoritative for the sold-out /
-     * relocated status (from the listing card's CSS class), the subtitle and the
-     * inferred event type; the remaining fields fall back to the overview only when
-     * the detail page didn't supply them.
+     * start time, promoter and the status its notice announces. The overview page is
+     * authoritative for the sold-out flag (from the listing card's CSS class), the
+     * subtitle and the inferred event type; the remaining fields, the status among
+     * them, fall back to the overview only when the detail page didn't supply them.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
@@ -75,9 +75,11 @@ class BadehausWebsiteImporter(
             doorsTime = primary.doorsTime ?: fallback.doorsTime,
             imageUrl = primary.imageUrl ?: fallback.imageUrl,
             ticketUrl = primary.ticketUrl ?: fallback.ticketUrl,
-            // Status + sold-out are only reliable on the overview card, so it wins.
             soldOut = primary.soldOut || fallback.soldOut,
-            status = fallback.status.takeIf { it != EventStatus.SCHEDULED.name } ?: primary.status
+            // The card's one VERLEGT class covers a date move and a house move alike; the detail
+            // page's own notice tells them apart, so it wins and the class stays the fallback (#1578).
+            status = primary.status.takeIf { it != EventStatus.SCHEDULED.name } ?: fallback.status,
+            statusNote = primary.statusNote ?: fallback.statusNote
         )
 }
 

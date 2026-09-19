@@ -30,11 +30,13 @@ import java.time.LocalTime
  *    which [BadehausDetailPageScraper] then enriches with the description, start
  *    time (`Beginn`) and promoter.
  * 2. **Authoritative source** for the fields the detail page lacks or renders
- *    unreliably: the sold-out / relocated **status** (a CSS class on the card —
- *    `AUSVERKAUFT` sold out, `ABGESAGT` cancelled, `VERLEGT` relocated, turned into
+ *    unreliably: the sold-out flag and the status class (a CSS class on the card —
+ *    `AUSVERKAUFT` sold out, `ABGESAGT` cancelled, `VERLEGT` changed, turned into
  *    an overlay badge by the stylesheet), the subtitle, and the inferred event
- *    type (see [inferEventType]). It also supplies fallback title / date / doors /
- *    image. Merging is handled by [BadehausWebsiteImporter].
+ *    type (see [inferEventType]). `VERLEGT` covers a postponement and a move alike,
+ *    so the detail page's notice decides between them and the class is the fallback
+ *    (#1578). It also supplies fallback title / date / doors / image. Merging is
+ *    handled by [BadehausWebsiteImporter].
  *
  * @see BadehausWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://badehaus-berlin.com/events/">Badehaus Berlin programme</a>
@@ -155,7 +157,8 @@ class BadehausOverviewPageScraper {
 
     /**
      * Maps the card wrapper's status class to an [EventStatus] name. Sold-out
-     * (`AUSVERKAUFT`) is intentionally handled as a separate flag, not a status.
+     * (`AUSVERKAUFT`) is intentionally handled as a separate flag, not a status, and
+     * `VERLEGT` reads as relocated only until the detail page's notice says otherwise.
      */
     private fun parseStatus(className: String): String {
         val classes = className.uppercase()
