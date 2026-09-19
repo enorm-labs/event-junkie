@@ -235,12 +235,7 @@ class ImporterMetrics(
         sourceSlug: String,
         epochSeconds: Long
     ) {
-        lastSuccessEpochSeconds
-            .computeIfAbsent(sourceSlug) { slug ->
-                val holder = AtomicLong(0)
-                registry.gauge(SOURCE_LAST_SUCCESS, Tags.of(TAG_SOURCE, slug), holder) { it.get().toDouble() }
-                holder
-            }.set(epochSeconds)
+        lastSuccessEpochSeconds.publishPerSource(sourceSlug, SOURCE_LAST_SUCCESS, epochSeconds)
         // A published last-success IS a success, so the two can never disagree about this source.
         publishHasSucceeded(sourceSlug, succeeded = true)
     }
@@ -269,12 +264,7 @@ class ImporterMetrics(
         sourceSlug: String,
         succeeded: Boolean
     ) {
-        hasSucceeded
-            .computeIfAbsent(sourceSlug) { slug ->
-                val holder = AtomicLong(0)
-                registry.gauge(SOURCE_HAS_SUCCEEDED, Tags.of(TAG_SOURCE, slug), holder) { it.get().toDouble() }
-                holder
-            }.set(if (succeeded) 1L else 0L)
+        hasSucceeded.publishPerSource(sourceSlug, SOURCE_HAS_SUCCEEDED, if (succeeded) 1L else 0L)
     }
 
     /**
@@ -304,12 +294,7 @@ class ImporterMetrics(
         sourceSlug: String,
         count: Long
     ) {
-        futureEvents
-            .computeIfAbsent(sourceSlug) { slug ->
-                val holder = AtomicLong(0)
-                registry.gauge(SOURCE_EVENTS_FUTURE, Tags.of(TAG_SOURCE, slug), holder) { it.get().toDouble() }
-                holder
-            }.set(count)
+        futureEvents.publishPerSource(sourceSlug, SOURCE_EVENTS_FUTURE, count)
     }
 
     /**
@@ -331,16 +316,32 @@ class ImporterMetrics(
         days: Long,
         knownQuiet: Boolean
     ) {
-        daysSinceFutureEvent
-            .computeIfAbsent(sourceSlug) { slug ->
-                val holder = AtomicLong(0)
-                registry.gauge(
-                    SOURCE_DAYS_SINCE_FUTURE_EVENT,
-                    Tags.of(TAG_SOURCE, slug, TAG_KNOWN_QUIET, knownQuiet.toString()),
-                    holder
-                ) { it.get().toDouble() }
-                holder
-            }.set(days)
+        daysSinceFutureEvent.publishPerSource(
+            sourceSlug,
+            SOURCE_DAYS_SINCE_FUTURE_EVENT,
+            days,
+            Tags.of(TAG_SOURCE, sourceSlug, TAG_KNOWN_QUIET, knownQuiet.toString())
+        )
+    }
+
+    /**
+     * Sets [value] on this map's holder for [sourceSlug], registering [meterName] against that
+     * holder the first time the source is seen.
+     *
+     * [tags] reach the registry at that first registration only, so a source's tag values stay the
+     * ones its first publication carried.
+     */
+    private fun ConcurrentHashMap<String, AtomicLong>.publishPerSource(
+        sourceSlug: String,
+        meterName: String,
+        value: Long,
+        tags: Tags = Tags.of(TAG_SOURCE, sourceSlug)
+    ) {
+        computeIfAbsent(sourceSlug) { _ ->
+            val holder = AtomicLong(0)
+            registry.gauge(meterName, tags, holder) { it.get().toDouble() }
+            holder
+        }.set(value)
     }
 
     /**
