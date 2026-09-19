@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
+import de.norm.events.scraper.parseGermanShortDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.parseTitleStatus
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -66,16 +67,18 @@ class BadehausDetailPageScraper {
 
         val metaText = event.text()
         val description = parseDescription(event)
+        // Detail pages carry the real date; sentinel when absent so the overview
+        // value is used via BadehausWebsiteImporter.fillGapsFromOverview.
+        val eventDate = parseDate(event) ?: UNRESOLVED_EVENT_DATE
         val notice = description?.let(::parseNotice)
+        val status = notice?.let { noticeStatus(it, eventDate) } ?: EventStatus.SCHEDULED.name
 
         return ScrapedEvent(
             title = title,
             description = description,
-            status = notice?.let(::parseEventStatus) ?: EventStatus.SCHEDULED.name,
-            statusNote = notice,
-            // Detail pages carry the real date; sentinel when absent so the overview
-            // value is used via BadehausWebsiteImporter.fillGapsFromOverview.
-            eventDate = parseDate(event) ?: UNRESOLVED_EVENT_DATE,
+            status = status,
+            statusNote = notice.takeIf { status != EventStatus.SCHEDULED.name },
+            eventDate = eventDate,
             doorsTime = parseTime(EINLASS_PATTERN.find(metaText)?.groupValues?.get(1)),
             startTime = parseTime(BEGINN_PATTERN.find(metaText)?.groupValues?.get(1)),
             imageUrl = event.selectFirst(".single-event-image-wrap img")?.absUrl("src")?.takeIf { it.isNotBlank() },
@@ -116,6 +119,25 @@ class BadehausDetailPageScraper {
             .takeIf { parseTitleStatus(it) != null }
 
     /**
+     * The status a [notice] announces for the row dated [eventDate]. The venue keeps the notice on
+     * the page after the move ("vom 25.02.26 auf den 22.09.26 verschoben" on the 22.09. row), so
+     * a postponement whose target is this row's own date is history, not a change.
+     */
+    private fun noticeStatus(
+        notice: String,
+        eventDate: LocalDate
+    ): String {
+        val status = parseEventStatus(notice)
+        val target =
+            NOTICE_TARGET_DATE
+                .find(notice)
+                ?.groupValues
+                ?.get(1)
+                ?.let { parseGermanDate(it) ?: parseGermanShortDate(it) }
+        return if (status == EventStatus.POSTPONED.name && target == eventDate) EventStatus.SCHEDULED.name else status
+    }
+
+    /**
      * Extracts promoter names from `a.promoterbtn` anchors (the icon markup is
      * dropped by `.text()`), deduplicated while preserving order.
      */
@@ -140,6 +162,9 @@ class BadehausDetailPageScraper {
 
         /** Matches the start time: "Beginn: 20:00", "Beginn 20:00" or "Start 20:00h". */
         private val BEGINN_PATTERN = Regex("""(?:Beginn|Start):?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
+
+        /** The date a notice moves the show to: "auf den 27.02.2027" or "auf den 22.09.26". */
+        private val NOTICE_TARGET_DATE = Regex("""auf\s+den\s+(\d{1,2}\.\d{1,2}\.\d{2,4})""", RegexOption.IGNORE_CASE)
 
         /** A sentence boundary; a date's dots are followed by digits, so "27.02.2027" survives. */
         private val SENTENCE_END = Regex("""(?<=[.!?;])\s+""")
