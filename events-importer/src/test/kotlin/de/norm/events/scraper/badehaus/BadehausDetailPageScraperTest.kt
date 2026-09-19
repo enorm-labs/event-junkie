@@ -105,6 +105,17 @@ class BadehausDetailPageScraperTest {
     }
 
     @Test
+    fun `keeps a show scheduled when the notice moved it to this very date`() {
+        val url = "https://badehaus-berlin.com/events/futurebae/"
+        val event = scraper.scrape(fixture("badehaus-detail-moved-here.html", url), url).shouldNotBeNull()
+
+        event.eventDate shouldBe LocalDate.of(2026, 9, 22)
+        // "vom 25.02.26 auf den 22.09.26 verschoben" is the story of this date, not a change to it.
+        event.status shouldBe EventStatus.SCHEDULED.name
+        event.statusNote.shouldBeNull()
+    }
+
+    @Test
     fun `leaves a page whose blurb carries no notice scheduled`() {
         val url = "https://badehaus-berlin.com/events/dominic-donner/"
         val event = scraper.scrape(fixture("badehaus-detail-promoter.html", url), url).shouldNotBeNull()
