@@ -2089,7 +2089,7 @@
       "components": [
         {
           "name": "@lucide/vue",
-          "version": "1.45.0",
+          "version": "1.46.0",
           "url": "https://github.com/lucide-icons/lucide",
           "ecosystem": "frontend"
         },
