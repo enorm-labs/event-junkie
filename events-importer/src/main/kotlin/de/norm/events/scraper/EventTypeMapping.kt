@@ -56,40 +56,54 @@ fun mapEventType(
 private val SHOW_TITLE_KEYWORDS = listOf("wrestling", "burlesque", "circus")
 
 /**
- * Title keywords marking a film/match screening (mapped to [EventType.SCREENING]):
- * football public-viewings / live screenings — the audience watches a screen rather
- * than a live act. These are long/distinctive enough for a safe substring test; the
- * shorter cinema marker lives in [SCREENING_TITLE_WORD_PATTERN].
+ * Title keywords marking a screening on their own (mapped to [EventType.SCREENING]): the
+ * audience watches a screen rather than a live act. Long and distinctive enough for a safe
+ * substring test; the shorter cinema marker lives in [SCREENING_TITLE_WORD_PATTERN], and the
+ * sport words need a context (see [isScreeningTitle]).
  */
-private val SCREENING_TITLE_KEYWORDS =
-    listOf(
-        "public viewing",
-        "live-screening",
-        "screening",
-        "world cup",
-        "weltmeisterschaft",
-        "fußball",
-        "fussball",
-        "wm-quartier",
-        "11freunde"
+private val SCREENING_TITLE_KEYWORDS = listOf("public viewing", "live-screening", "screening", "übertragung", "uebertragung", "wm-quartier")
+
+/**
+ * A cinema, standalone or as the head of a German compound — `Kino`, `Nomadenkino`,
+ * `Freiluftkino` (#310). Anchored at the word's end, so a real act name that merely contains the
+ * letters ("Alkinoos Ioannidis") is untouched.
+ */
+private val SCREENING_TITLE_WORD_PATTERN = Regex("""\b\w*kinos?\b""", RegexOption.IGNORE_CASE)
+
+/**
+ * The sport and its tournaments. None of these types a screening alone: `Der Fussball mein Leben
+ * & Ich` is a talk with a football coach (#311). Two of them together (`Fußball
+ * Weltmeisterschaft`), or one beside a screening verb or a fixture (`EM Italien - Albanien`), is
+ * a public viewing.
+ */
+private val SPORT_WORD_PATTERN =
+    Regex(
+        """\b(?:fu(?:ß|ss)ball|football|soccer|11freunde|world\s+cup|weltmeisterschaft|europameisterschaft""" +
+            """|bundesliga|champions\s+league|em|wm)\b""",
+        RegexOption.IGNORE_CASE
     )
 
-/**
- * Whole-word screening keyword too short for a safe substring test: `kino` (cinema)
- * is a substring of real act names like "Alkinoos Ioannidis", so it is matched only
- * as a standalone word.
- */
-private val SCREENING_TITLE_WORD_PATTERN = Regex("""\bkino\b""", RegexOption.IGNORE_CASE)
+/** The space-padded separator between two sides of a fixture, or `vs`. */
+private val FIXTURE_PATTERN = Regex("""\s(?:[-–—:]|vs\.?)\s""")
+
+/** A live-broadcast marker beside a sport word. */
+private val LIVE_WORD_PATTERN = Regex("""\blive\b""", RegexOption.IGNORE_CASE)
+
+/** How many sport words type a screening without any other context. */
+private const val SPORT_WORDS_ALONE = 2
 
 /**
- * Whether [title] names a film/match screening — a football public-viewing / live
- * screening or a cinema night. Exposed for venues (e.g. Madame Claude) that type
- * from a category but want a title-based screening safety net when the category is
- * unknown.
+ * Whether [title] names a film/match screening — a cinema night, or a football public viewing
+ * said in so many words, named by its tournament, or naming a fixture. A bare sport word is not
+ * enough. Exposed for venues (e.g. Madame Claude) that type from a category but want a
+ * title-based screening safety net when the category is unknown.
  */
 fun isScreeningTitle(title: String): Boolean {
     val haystack = title.lowercase()
-    return SCREENING_TITLE_KEYWORDS.any { it in haystack } || SCREENING_TITLE_WORD_PATTERN.containsMatchIn(haystack)
+    if (SCREENING_TITLE_KEYWORDS.any { it in haystack } || SCREENING_TITLE_WORD_PATTERN.containsMatchIn(haystack)) return true
+    val sportWords = SPORT_WORD_PATTERN.findAll(haystack).count()
+    return sportWords >= SPORT_WORDS_ALONE ||
+        (sportWords == 1 && (FIXTURE_PATTERN.containsMatchIn(title) || LIVE_WORD_PATTERN.containsMatchIn(haystack)))
 }
 
 /**
