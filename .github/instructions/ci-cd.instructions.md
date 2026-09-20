@@ -514,7 +514,7 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       stacks and knows which Gradle versions are BOM-managed and must **not** be pinned.
 
 - **A skill is three files, and `scripts/skill-parity.sh` is what keeps them in step.** The prompt lives in `.github/prompts/<name>.prompt.md`; `.claude/skills/`
-  and `.claude/commands/` each hold a one-line `@` pointer to it; `CLAUDE.md` § Project skills lists it. Nothing joins those trees, so a skill added to one and
+  and `.claude/commands/` each hold a one-line `@` pointer to it; `AGENTS.md` § Project skills lists it. Nothing joins those trees, so a skill added to one and
   not the other is **silently absent** from the other — no error, the command simply is not there, which is how four skills went without commands. The check
   asserts all three copies agree and that every pointer resolves. `/verify` and `validate-docs.yml` both run it.
 - **Conventional Commits** — Commit messages follow the [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) spec. Reusable prompts are

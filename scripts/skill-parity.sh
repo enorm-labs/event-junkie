@@ -13,7 +13,7 @@
 # `/importer-smoke`, `/new-issue`, `/next-issue` and `/start-issue` went four releases as skills
 # with no command.
 #
-# The CLAUDE.md list is checked in the same pass because it is the third copy, and the one a
+# The AGENTS.md list is checked in the same pass because it is the third copy, and the one a
 # contributor reads first.
 #
 
@@ -61,17 +61,17 @@ for pointer in .claude/skills/*.md .claude/commands/*.md; do
     [ -f "$resolved" ] || note "$pointer points at ${target#@}, which does not exist"
 done
 
-# CLAUDE.md lists each one as a `- `/name`` bullet, optionally followed by arguments.
+# AGENTS.md lists each one as a `- `/name`` bullet, optionally followed by arguments.
 while read -r name; do
     [ -z "$name" ] && continue
-    grep -qE "^- \`/${name}[\` ]" CLAUDE.md || note "/$name is not listed in CLAUDE.md § Project skills"
+    grep -qE "^- \`/${name}[\` ]" AGENTS.md || note "/$name is not listed in AGENTS.md § Project skills"
 done <<< "$skills"
 
 # A here-string rather than a pipe: `note` has to reach `problems`, and a pipeline is a subshell.
-listed="$(grep -oE '^- `/[a-z][a-z0-9-]*' CLAUDE.md | sed 's/^- `\///' | sort -u)"
+listed="$(grep -oE '^- `/[a-z][a-z0-9-]*' AGENTS.md | sed 's/^- `\///' | sort -u)"
 while read -r name; do
     [ -z "$name" ] && continue
-    [ -f ".claude/skills/$name.md" ] || note "CLAUDE.md lists /$name, which is not a skill"
+    [ -f ".claude/skills/$name.md" ] || note "AGENTS.md lists /$name, which is not a skill"
 done <<< "$listed"
 
 # Directory skills are not slash commands, so `-maxdepth 1` above leaves them out; `.github/skills/`
@@ -97,9 +97,9 @@ done
 
 if [ "$problems" -ne 0 ]; then
     echo >&2
-    echo "Skills, commands and CLAUDE.md disagree. See AGENTS.md § Agent Instructions." >&2
+    echo "Skills, commands and AGENTS.md disagree. See AGENTS.md § Project skills." >&2
     exit 1
 fi
 
-printf 'Skills and commands agree: %s each, every pointer resolves, all listed in CLAUDE.md.\n' \
+printf 'Skills and commands agree: %s each, every pointer resolves, all listed in AGENTS.md.\n' \
     "$(echo "$skills" | grep -c .)"
