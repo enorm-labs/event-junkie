@@ -34,13 +34,13 @@ proposal it was.
 
 **Operational rules are not repeated here.** They live where the person changing the code will actually see them:
 
-| Rule                                                  | Where it lives                                                                                        |
-| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Privacy/GDPR re-check triggers                        | [`AGENTS.md` §Privacy & GDPR](../AGENTS.md)                                                           |
-| Version in `gradle.properties`, `package.json` mirror | [`AGENTS.md` §Versioning](../AGENTS.md) · [`events-frontend/AGENTS.md`](../events-frontend/AGENTS.md) |
-| Accessibility rules                                   | [`events-frontend/AGENTS.md` §Accessibility](../events-frontend/AGENTS.md)                            |
-| Localisation and SEO rules                            | [`events-frontend/AGENTS.md`](../events-frontend/AGENTS.md)                                           |
-| Open-source notice generation                         | [`events-frontend/AGENTS.md` §Open-source notices](../events-frontend/AGENTS.md)                      |
+| Rule                                            | Where it lives                                                                                        |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Privacy/GDPR re-check triggers                  | [`AGENTS.md` §Privacy & GDPR](../AGENTS.md)                                                           |
+| Version from the tags, placeholders in the tree | [`AGENTS.md` §Versioning](../AGENTS.md) · [`events-frontend/AGENTS.md`](../events-frontend/AGENTS.md) |
+| Accessibility rules                             | [`events-frontend/AGENTS.md` §Accessibility](../events-frontend/AGENTS.md)                            |
+| Localisation and SEO rules                      | [`events-frontend/AGENTS.md`](../events-frontend/AGENTS.md)                                           |
+| Open-source notice generation                   | [`events-frontend/AGENTS.md` §Open-source notices](../events-frontend/AGENTS.md)                      |
 
 ## 2. The footer and the legal pages, as built
 
@@ -89,7 +89,9 @@ _released_, not what is _running_. That is the question a version in the footer 
 
 ### 4.2 One authoritative source
 
-**`version` in the root `gradle.properties` is authoritative.** Nothing else may declare it independently.
+**The release tags and the commits since the last one are authoritative** ([ADR-032](adr/ADR-032_VERSION_FROM_TAGS.md)). `scripts/version.sh compute`
+reads the number from them, and every CI build passes it to Gradle as `-Pversion=…`. `version` in the root `gradle.properties` is a `0.0.0` placeholder,
+and nothing else may declare the number independently.
 
 ### 4.3 Stamped into the build
 
@@ -115,7 +117,7 @@ First public version **`0.1.1`**, and `main` carries `0.1.1-SNAPSHOT`. Reaching 
 **The footer links a version to its release page only when it is a released `X.Y.Z` triple.** It shows every other
 version as plain text: the number is always displayed, and only the link is withheld. That is stated positively on
 purpose, matching the `semverFilter` production's `OCIRepository` uses to answer the same question. The negative form
-(`-SNAPSHOT`) is a spelling that exists only in `gradle.properties`, while a deployed build reports a computed version
+(`-SNAPSHOT`) is a spelling that exists only in the `gradle.properties` placeholder, while a deployed build reports a computed version
 (`0.1.1-snapshot.20260817180146.g787d7d0`). Snapshots are published to GHCR and never tagged in git, so there is
 nothing for those links to point at.
 
@@ -614,7 +616,7 @@ Settled questions, so they are not re-litigated. The reasoning is in the section
 | 8   | Localisation           | English + German — [ADR-013](adr/ADR-013_LOCALISATION.md)                                                         | §6.2                 |
 | 9   | Accessibility          | Target **WCAG 2.1 AA**, with linting and an axe sweep enforcing it                                                | §12                  |
 | 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                           | §9.1                 |
-| 11  | Version source         | Build-stamped from `gradle.properties`, never the GitHub API                                                      | §4.1                 |
+| 11  | Version source         | Build-stamped from the release tags and commits, never the GitHub API                                             | §4.1                 |
 | 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor | `ops/EMAIL.md`       |
 | 13  | Art. 28 contracts      | One: Hetzner's AVV, concluded. No third-country transfer to name at all                                           | §14                  |
 | 14  | Event-data retention   | Kept while the calendar operates, no deletion by age; erased on Art. 21 objection — #362                          | §7.3a                |

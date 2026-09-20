@@ -303,13 +303,11 @@ The site is locale-routed: every page lives under `/<locale>/…`, and `src/i18n
 
 ## Versioning
 
-The application version lives in **`version` in the root `gradle.properties`** — that is the single source of truth.
+No file carries the application version ([ADR-032](../docs/adr/ADR-032_VERSION_FROM_TAGS.md)). `scripts/version.sh compute` reads it from the release
+tags and the commits since the last one, and the build stamps it.
 
-- `events-frontend/package.json` **mirrors** it, kept in step **by hand**. Nothing generates or verifies it, so a version bump is one change touching two files.
-- The mirror is deliberately **without** the `-SNAPSHOT` suffix that `gradle.properties` carries: npm's SemVer has no such convention, and `0.3.1-SNAPSHOT`
-  reads as a malformed prerelease. The two files are _intentionally_ not byte-identical — do not "fix" this.
-- **Do not bump `version` in `package.json` on its own.** It is `private: true` and never published, so nothing breaks visibly if it drifts — which is exactly
-  why it needs the discipline.
+- `events-frontend/package.json` holds `0.0.0`, a placeholder. It is `private: true` and never published, so the number there means nothing.
+- **Do not bump `version` in `package.json`.** There is nothing to keep it in step with.
 - **The version the site displays never comes from `package.json`.** The footer reads `GET /meta`, which the backend stamps from the Gradle build (see
   `useAppMeta.ts`). A stale `package.json` therefore cannot put a wrong version on screen; it only misleads people reading the repository.
 

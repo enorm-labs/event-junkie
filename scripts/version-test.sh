@@ -218,18 +218,6 @@ assert_eq \
   "$base-snapshot.20260814122042.gdf18a02" \
   "$("$VERSION_SH" compute refs/heads/main df18a02cafe 20260814122042)"
 
-assert_eq \
-  "a release tag matching gradle.properties computes the bare number" \
-  "$base" \
-  "$("$VERSION_SH" compute "refs/tags/v$base" df18a02cafe)"
-
-# The guard that stops a tag inventing a version — #264's, still standing.
-if "$VERSION_SH" compute refs/tags/v9.9.9 df18a02cafe >/dev/null 2>&1; then
-  fail "a release tag disagreeing with gradle.properties must fail"
-else
-  pass "a release tag disagreeing with gradle.properties fails"
-fi
-
 # Pure function of the commit, which is why the timestamp is read from the commit rather than from
 # the clock: re-running release.yml on the same sha has to produce the same version, or a re-run
 # publishes a second differently-named copy of byte-identical artifacts.

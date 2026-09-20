@@ -8,18 +8,18 @@ description: The event-junkie stack — BFF, importer and frontend behind one Tr
 type: application
 
 # version and appVersion are PLACEHOLDERS, stamped by `.github/workflows/release.yml` from one
-# computed number before packaging, so editing them here decides nothing. They must equal the base
-# version in `gradle.properties` and `scripts/version.sh check` fails the build if they drift — a
-# chart that lies about its own version in a local `helm install` is worth nothing. They move in
-# lockstep (#264): separate versioning suits a public chart with many consumers, and this one has
-# exactly one and ships from the same commit as the code. The cost is that a template-only fix
-# still consumes a version.
-version: 0.21.3
+# computed number before packaging, so editing them here decides nothing. No file carries the
+# version (ADR-032): `scripts/version.sh compute` reads it from the release tags and the commits.
+# A local `helm install` from a checkout therefore installs `0.0.0`, which is the honest number for
+# an unstamped chart. Chart and application move in lockstep (#264): separate versioning suits a
+# public chart with many consumers, and this one has exactly one and ships from the same commit as
+# the code. The cost is that a template-only fix still consumes a version.
+version: 0.0.0
 
 # appVersion is also the default image tag for all three workloads (`<component>.image.tag`
 # overrides it, and no published values file may), which is what keeps the chart and the images in
 # step: one number, stamped once per build, reaches all four artifacts. Never `latest`.
-appVersion: "0.21.3"
+appVersion: "0.0.0"
 
 # No `dependencies:` block, a decision rather than an omission: PostgreSQL runs on its own VM per
 # ADR-012, so vendoring the Bitnami subchart would put the database inside the blast radius of a

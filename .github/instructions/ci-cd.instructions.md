@@ -100,8 +100,7 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       work too. Via `actions/github-script`; creates any missing label on demand and re-syncs on a title edit or a push. Uses `pull_request_target` so fork
       PRs get a writable token; safe because it never checks out or runs PR code — listing file paths through the REST API executes nothing.
     - `milestone-dependabot.yml` — gives every bot pull request a milestone: Dependabot's, since `dependabot.yml` has no key for one, Renovate's, and the
-      release App's raise and bump (#1172), which `cut-release.yml` opens without one so the rule lives in one place. They are otherwise the single class
-      of pull request that arrives without one. Same shape and same banner as `label-pr.yml`: `pull_request_target`, no checkout, `github-script`.
+      release App's (#1172), should it open one again. They are otherwise the single class of pull request that arrives without one. Same shape and same banner as `label-pr.yml`: `pull_request_target`, no checkout, `github-script`.
       It picks the **oldest open milestone** — no milestone here carries a due date, so there is no string to keep current, and when one closes the next wins by
       itself. It never overwrites a milestone already set. Its `workflow_dispatch` sweeps every open bot pull request that has none, which is what covers
       the ones predating it.
@@ -244,21 +243,20 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
       ruleset through `ACTIONS_GITHUB_TOKEN`, the `agent-security.yml` wiring; `curl -sI` reads production's live headers for A02 and A04. It says per
       category what `dast.yml` already asserts, so the report carries the gap and not a second alert list. Its report is mailed the same way as the
       plausibility one — a `notify` job, `OWASP Top 10 — weekly reports — <YYYY-MM>`, `issues: write` on that job only (#1499).
-    - `cut-release.yml` — publishes the GitHub Release that `release.yml` keys on, then opens the pull request that moves `main` to the next snapshot (#868).
-      `workflow_dispatch` only, `dry_run` on by default. **It refuses a commit whose snapshot publish is not green**, because a release rebuilds what the
-      snapshot built and fails the same gate — v0.3.10 was cut over four red runs and left an empty tag (#1117). Four things about it are decisions. **The version is never typed** — it comes from
-      `scripts/version.sh base`, so a tag cannot claim a number the tree does not carry, and the same script writes the four files for the bump so a workflow
-      and a person edit them identically. **And it is never chosen** — `scripts/version.sh deserved` reads the Conventional Commits since the last release
-      tag and applies SemVer (`docs/ops/RELEASING.md` § What a release deserves): a `feat` in a product scope is a minor, a breaking change a major (a minor
-      before 1.0.0), the rest a patch — a `feat(ci)` included, and listed in the summary as the patch it is. The scope list is the labeller's, and it is
-      in the script too because the labeller guards a title on its way in while the script reads `main` as it is: two `feat` commits outside it landed in
-      the hours before the labeller became a required check. A tree that says less is not cut; the run opens the pull request that raises it and ends red, so a release that was asked for and not
-      made never reads as green. The only input is `at_least`, a floor for the one decision the commits cannot show, which is `1.0.0`.
-      `scripts/version-deserved-test.sh` asserts each rule against a fabricated history, from `validate-scripts.yml`. **It mints a GitHub App token rather than using `GITHUB_TOKEN`**, because GitHub suppresses the events its own token
-      raises: a release created with it fires no `release: published`, so nothing is published and every job is green, and a pull request it opens starts no
-      check, so the bump never merges. The token is narrowed with `permission-contents` and `permission-pull-requests` rather than inheriting the
-      installation's, which zizmor's `github-app` audit is what enforces. **And it does both halves in one run**, because the bump is the step nobody notices
-      missing: until `main` carries the next snapshot, staging keeps resolving the release itself (#455).
+    - `cut-release.yml` — publishes the GitHub Release that `release.yml` keys on (#868). `workflow_dispatch` only, `dry_run` on by default. **It refuses
+      a commit whose snapshot publish is not green**, because a release rebuilds what the snapshot built and fails the same gate — v0.3.10 was cut over four
+      red runs and left an empty tag (#1117). Three things about it are decisions. **The version is never typed, and never chosen** — no file in the tree
+      carries it (ADR-032), and `scripts/version.sh deserved` reads the Conventional Commits since the last release tag and applies SemVer
+      (`docs/ops/RELEASING.md` § What a release deserves): a `feat` in a product scope is a minor, a breaking change a major (a minor before 1.0.0), the
+      rest a patch — a `feat(ci)` included, and listed in the summary as the patch it is. The scope list is the labeller's, and it is in the script too
+      because the labeller guards a title on its way in while the script reads `main` as it is: two `feat` commits outside it landed in the hours before
+      the labeller became a required check. `release.yml` computes the same number from the same commits when it builds the tag and refuses a tag that
+      claims another, so the two cannot disagree. The only input is `at_least`, a floor for the one decision the commits cannot show, which is `1.0.0`.
+      `scripts/version-deserved-test.sh` asserts each rule, and what `compute` names a commit, against a fabricated history, from `validate-scripts.yml`.
+      **It mints a GitHub App token rather than using `GITHUB_TOKEN`**, because GitHub suppresses the events its own token raises: a release created with
+      it fires no `release: published`, so nothing is published and every job is green. The token is narrowed with `permission-contents` rather than
+      inheriting the installation's, which zizmor's `github-app` audit is what enforces. **And it opens no pull request**: the next commit's snapshot is
+      named after the next number by the same script, so staging follows `main` again the moment something merges (#455 is what the bump used to guard).
     - `validate-workflows.yml` — **actionlint** (correctness) and **zizmor** (security) over `.github/workflows/`, since #383. It is the only gate that looks at
       the workflows themselves, and on its first run zizmor found a template injection in `release.yml`, a cache-poisoning path into it, and two workflow-level
       permission grants that belonged to a single job. zizmor blocks at `--min-severity medium`; suppressions live in `zizmor.yml` or as inline
@@ -522,8 +520,8 @@ Scanned: 0` incident actually happened to — did not until #1087, and needed `"
 - **Release notes** (`.github/release.yml`) — GitHub's automatically generated release notes group merged PRs into categories (🎪 New Event Sources, ✨ Features,
   🐛 Bug Fixes, …) by the labels `label-pr.yml` applies. Categories are matched **in order**, first match wins, so specific ones (`importer`, `dependencies`)
   precede general ones (`feat`, `build`). Label a PR `ignore-for-release` to keep it out of the notes entirely. **The release App's own pull requests are
-  excluded by author**: `cut-release.yml` opens a bump after every release and a raise whenever the tree says less than the commits deserve, and those are the
-  only pull requests it ever opens — bookkeeping, in every release cycle, that told a reader nothing.
+  excluded by author**, kept from before ADR-032, when `cut-release.yml` opened a version bump in every cycle — bookkeeping that told a reader nothing.
+  It opens none now.
 - **A summary sits above those categories, written for a visitor to the site.** `cut-release.yml` runs
   [`/release-highlights`](../prompts/release-highlights.prompt.md) through `claude-code-action`, the same wiring as the agent workloads: the model reads
   the commits since the last tag, keeps what shows on the site, and writes three to five bullets in the visitor's words — no scopes, no identifiers — or

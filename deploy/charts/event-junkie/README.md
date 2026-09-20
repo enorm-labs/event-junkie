@@ -102,8 +102,8 @@ same for any cluster's `HelmRelease`.
 
 The chart version does **not** move independently of the application. That would be right for a
 public chart with many consumers; here the chart has one consumer and ships from the same commit as
-the code it deploys, so a second number would be bookkeeping. `scripts/version.sh check` fails the
-build if the two placeholders drift from `gradle.properties`. Full scheme in
+the code it deploys, so a second number would be bookkeeping. Both fields are `0.0.0` placeholders
+that `release.yml` stamps from the release tags and the commits (ADR-032). Full scheme in
 [DEVELOPMENT.md](../../../docs/DEVELOPMENT.md#versions-and-cutting-a-release).
 
 ### `/api` is the application's, not the ingress's
