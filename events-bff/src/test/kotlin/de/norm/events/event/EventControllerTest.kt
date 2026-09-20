@@ -48,9 +48,8 @@ class EventControllerTest : BaseControllerTest() {
             val venueId = insertVenue("Astra", "astra")
             insertEvent(venueId, "Today Show", "today-show", LocalDate.now())
 
-            // The wiring is what this covers: WebFluxConfiguration constructs the resolver by hand,
-            // so the cap reaches a request only if it is passed in. Spring's servlet-only
-            // `spring.data.web.pageable.max-page-size` cannot do it here (#268).
+            // The wiring is what this covers: WebFluxConfiguration constructs the resolver by hand, and the
+            // servlet-only `spring.data.web.pageable.max-page-size` cannot do it here (#268).
             webTestClient
                 .get()
                 .uri("/events?size=5000")
@@ -555,8 +554,8 @@ class EventControllerTest : BaseControllerTest() {
             .isNotFound
     }
 
-    // A retention policy (#350) has to fail here before it can turn every shared past-event
-    // link into a 404. See #362.
+    // A retention policy (#350) has to fail here before it turns every shared past-event link into a
+    // 404 (#362).
     @Test
     fun `GET event by slug resolves an event that has already happened`(): Unit =
         runBlocking {
@@ -622,9 +621,8 @@ class EventControllerTest : BaseControllerTest() {
             insertEvent(venueId, "Later", "later", LocalDate.now().plusDays(2))
             insertEvent(venueId, "Sooner", "sooner", LocalDate.now().plusDays(1))
 
-            // An unmapped sort property (here a SQL-injection attempt) is dropped by the
-            // ORDER BY whitelist, so the request succeeds with the default chronological order
-            // rather than erroring or executing the injected text.
+            // An unmapped sort property (a SQL-injection attempt) is dropped by the ORDER BY whitelist, so
+            // the request succeeds with the default order.
             webTestClient
                 .get()
                 .uri("/events?sort={sort}", "event_date; DROP TABLE events.event;--")
@@ -655,9 +653,8 @@ class EventControllerTest : BaseControllerTest() {
     @DisplayName("while image serving is off, the venue's own URL is handed out unchanged")
     fun `an uncached image url survives the default configuration`(): Unit =
         runBlocking {
-            // `app.images.serving.enabled` is false everywhere until an environment holds a full set
-            // of derivatives (ADR-019). If this ever returned null the cards would go blank on every
-            // environment that has not enabled serving yet, which is all of them today.
+            // `app.images.serving.enabled` is false until an environment holds a full set of derivatives
+            // (ADR-019); a null here would blank the cards on every such environment.
             val venueId = insertVenue("Astra", "astra")
             insertEvent(venueId, "Show", "show", LocalDate.now().plusDays(2), imageUrl = "https://venue.test/poster.jpg")
 
@@ -676,10 +673,8 @@ class EventControllerTest : BaseControllerTest() {
     @DisplayName("without bucket credentials the route reports the store unavailable, not the image missing")
     fun `serving without a storage client is a 503`(): Unit =
         runBlocking {
-            // A 404 here would tell a browser to remember an absence caused by our own
-            // configuration. The row says the object exists; the default context has no credentials,
-            // so no client is built — the state a local run and every not-yet-serving environment is
-            // in.
+            // A 404 would tell a browser to remember an absence caused by our own configuration: the row
+            // says the object exists, and the default context has no credentials, so no client is built.
             insertCachedImage("https://venue.test/poster.jpg", CONTENT_HASH, listOf(288))
 
             webTestClient

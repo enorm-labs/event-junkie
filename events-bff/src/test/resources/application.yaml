@@ -1,10 +1,7 @@
-# Test configuration for the BFF.
-#
-# Shadows the main application.yaml on the test classpath, so it must repeat the runtime
-# properties the BFF relies on (schema for the R2DBC NamingStrategy) and additionally enables
-# Flyway. The BFF owns no migrations; in tests Flyway runs the importer's migrations to provision
-# the `events` schema against the Testcontainers database. The migration location is supplied as
-# an absolute filesystem path via the `spring.flyway.locations` system property (see build.gradle.kts).
+# Test configuration for the BFF. Shadows the main application.yaml on the test classpath, so it
+# repeats the runtime properties the BFF relies on and enables Flyway, which runs the importer's
+# migrations against the Testcontainers database from the absolute path build.gradle.kts passes as
+# `spring.flyway.locations`.
 spring:
   application:
     name: events-bff
@@ -16,18 +13,15 @@ spring:
     schemas: events
     create-schemas: true
 
-# Mirrors the main application.yaml's exposure list and health groups, and has to (#415). **This
-# file shadows the main one rather than merging with it**: with the list absent here Spring falls
-# back to `health` only, so `/actuator/prometheus` 404s in tests while working in production, and
-# the groups fall back to `readinessState` alone, proving nothing about the group that ships. The
-# consequence worth knowing is that a test cannot catch a typo in the *main* file — it never reads
-# it — which is why `MetricsExposureConfigTest` and `ReadinessGroupConfigTest` assert that file
-# directly and assert the two agree.
+# Mirrors the main application.yaml's exposure list and health groups, and has to (#415): this
+# file shadows the main one rather than merging, so without the list `/actuator/prometheus` 404s
+# in tests while working in production, and the groups prove nothing about what ships. A test
+# cannot catch a typo in the main file, which is why `MetricsExposureConfigTest` and
+# `ReadinessGroupConfigTest` assert that file directly and that the two agree.
 #
-# Both contributors named here exist in every test context: all BFF tests are full @SpringBootTest
-# against a Testcontainers PostgreSQL. A future slice test (@WebFluxTest, no ConnectionFactory)
-# would fail to start on group-membership validation — the correct signal, and the fix is to exclude
-# the group, not the indicator.
+# Both contributors exist in every test context, all being full @SpringBootTest against a
+# Testcontainers PostgreSQL. A future @WebFluxTest would fail on group-membership validation; the
+# fix is to exclude the group, not the indicator.
 management:
   endpoints:
     web:
@@ -35,14 +29,9 @@ management:
         include: health,info,prometheus
   endpoint:
     health:
-      # `always` rather than the `never` default, and it is the same argument the exposure list above
-      # makes: this is safe *because of where the endpoint lives*. The chart moves the whole
-      # management port off the application port and no Ingress routes it, so /actuator/** is
-      # unreachable from outside the cluster (PLATFORM_SETUP.md §7).
-      #
-      # Without it the readiness group aggregates to a bare {"status":"DOWN"} and an operator cannot
-      # tell "the database is gone" from "the schema is not migrated yet" — which is the whole reason
-      # `r2dbc` and `eventsSchema` are two contributors rather than one.
+      # `always` rather than `never`, safe because the chart moves the management port off the
+      # application port and no Ingress routes it (PLATFORM_SETUP.md §7). Without it an operator cannot
+      # tell "the database is gone" from "the schema is not migrated yet".
       show-details: always
       group:
         readiness:
@@ -50,14 +39,13 @@ management:
         liveness:
           include: livenessState
 
-# Repeated from the main file because this one shadows it, and `WebFluxConfiguration` reads the
-# property with no fallback — so an absent value fails every test context rather than quietly
-# restoring Spring Data's 2000-row default. `MaxPageSizeConfigTest` asserts the two numbers agree.
+# Repeated because this file shadows the main one, and `WebFluxConfiguration` reads the property
+# with no fallback. `MaxPageSizeConfigTest` asserts the two numbers agree.
 app:
   api:
     max-page-size: 100
     cache:
-      # The shipped numbers, so the tests exercise the path that ships. BaseControllerTest empties
-      # the cache beside the TRUNCATE, which is what keeps one test's rows out of the next.
+      # The shipped numbers, so the tests exercise the path that ships; BaseControllerTest empties the
+      # cache beside the TRUNCATE.
       ttl-seconds: 60
       maximum-items: 20000

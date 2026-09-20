@@ -11,9 +11,8 @@ java {
     }
 }
 
-// `springBoot { buildInfo }` — which stamps the version and commit this module serves at
-// `GET /meta` and `/actuator/info` — is configured once for every Boot application in the root
-// build. See docs/LEGAL.md §4.3.
+// `springBoot { buildInfo }`, which stamps the version and commit `GET /meta` serves, is
+// configured once for every Boot application in the root build (docs/LEGAL.md §4.3).
 
 repositories {
     mavenCentral()
@@ -35,14 +34,10 @@ dependencies {
 
     // Spring Actuator
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    // The Prometheus exposition format, per PLATFORM_SETUP.md §7 and ADR-015. Version comes from the
-    // Boot BOM — do not pin it in gradle.properties; that file's version block is for BOM *overrides*
-    // forced by a CVE, and an ordinary pin there would silently hold this behind future Boot releases.
-    //
-    // Deliberately a registry, not the OTLP exporter. ADR-015 adopted OpenObserve on trial with a
-    // written exit, and the property that makes the exit cheap is that both apps emit vendor-neutral
-    // Prometheus-format metrics — so swapping the backend is a Helm release and a datasource, never a
-    // re-instrumentation.
+    // The Prometheus exposition format (PLATFORM_SETUP.md §7, ADR-015); version from the Boot BOM,
+    // never pinned in gradle.properties, whose version block is for CVE-forced overrides. A
+    // registry, not the OTLP exporter: ADR-015 adopted OpenObserve on trial, and swapping the backend
+    // stays a Helm release rather than a re-instrumentation.
     implementation("io.micrometer:micrometer-registry-prometheus")
     testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
 
@@ -53,9 +48,8 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("org.postgresql:r2dbc-postgresql")
 
-    // SCRAM authentication for r2dbc-postgresql. Constrained rather than declared, because it
-    // is a pure transitive: r2dbc-postgresql pins 3.2 in both 1.1.1 and 1.1.2, so upgrading it
-    // does not move scram. Drop this block once r2dbc-postgresql ships 3.3+ itself.
+    // SCRAM for r2dbc-postgresql, constrained because it is a pure transitive: r2dbc-postgresql pins
+    // 3.2. Drop once r2dbc-postgresql ships 3.3+ itself.
     constraints {
         runtimeOnly("com.ongres.scram:scram-client:${property("scram.version")}") {
             because("3.2 is affected by CVE-2026-53712 (high), fixed in 3.3")
@@ -75,27 +69,23 @@ dependencies {
     // See: https://springdoc.org/#getting-started
     implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:${property("springdoc.version")}")
 
-    // Swagger UI's webjar, constrained rather than declared, for the same reason as scram above:
-    // it is a pure transitive of the springdoc starter, which pins 5.32.11. See gradle.properties
-    // for why the pin exists and what removes it.
+    // Swagger UI's webjar, constrained for the same reason as scram: a pure transitive of the
+    // springdoc starter (gradle.properties has why the pin exists and what removes it).
     constraints {
         implementation("org.webjars:swagger-ui:${property("swagger-ui.version")}") {
             because("5.32.11 bundles DOMPurify 3.4.12, affected by GHSA-55q2-fjhq-7xh7; 5.32.13 bundles 3.4.13")
         }
     }
 
-    // Object storage — the cached venue images the BFF serves from our own origin (ADR-019).
-    // `apache-client` is excluded for the same reason as in the importer: the `s3` artifact pulls
-    // both HTTP implementations, the async client uses Netty, and the unused one is dead weight that
-    // still has to be patched every time it takes a finding.
+    // Object storage for the cached venue images (ADR-019). `apache-client` excluded as in the
+    // importer: the async client uses Netty, and the unused implementation still takes findings.
     implementation("software.amazon.awssdk:s3:${property("awssdk.version")}") {
         exclude(group = "software.amazon.awssdk", module = "apache-client")
     }
     implementation("software.amazon.awssdk:netty-nio-client:${property("awssdk.version")}")
 
-    // The read-through cache in front of that bucket (#847). Version-managed by Boot's BOM, so this
-    // pin does not exist and cannot go stale. Hetzner Object Storage is Ceph on spinning disks, so a
-    // miss is a seek — and without a cache every first visitor to a page pays one per image.
+    // The read-through cache in front of that bucket (#847), version-managed by Boot's BOM. Hetzner
+    // Object Storage is Ceph on spinning disks, so a miss is a seek per image per first visitor.
     implementation("com.github.ben-manes.caffeine:caffeine")
 
     // Logging — idiomatic SLF4J wrapper (see: https://github.com/oshai/kotlin-logging)
@@ -105,10 +95,8 @@ dependencies {
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-    // Micrometer's ContextRegistry, which is how a request's log context survives the reactive
-    // chain (#380). It arrives transitively at runtime through Reactor, but is not on the compile
-    // classpath, and LogContextConfiguration names the type — so it is declared rather than assumed.
-    // The version comes from the Boot BOM.
+    // Micrometer's ContextRegistry, how a request's log context survives the reactive chain (#380).
+    // Transitive at runtime through Reactor, but LogContextConfiguration names the type, so declared.
     implementation("io.micrometer:context-propagation")
     implementation("tools.jackson.module:jackson-module-kotlin")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
@@ -130,13 +118,12 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")
     testImplementation("org.testcontainers:testcontainers-postgresql")
     testImplementation("org.testcontainers:testcontainers-r2dbc")
-    // A real S3 API for the serving tests. A mocked client would prove the code compiles; what has
-    // to hold is that a key written by the importer reads back through this client's configuration.
+    // A real S3 API for the serving tests: what has to hold is that a key written by the importer
+    // reads back through this client's configuration.
     testImplementation("org.testcontainers:testcontainers-minio")
 
-    // Flyway (test only) — the BFF owns no migrations; integration tests provision the schema
-    // by running the importer's existing migrations (via a filesystem location, see Test config below).
-    // This keeps the BFF's read entities verified against the real schema with zero DDL duplication.
+    // Flyway (test only): the BFF owns no migrations, so integration tests run the importer's
+    // against the real schema with zero DDL duplication.
     testImplementation("org.springframework.boot:spring-boot-starter-flyway")
     testImplementation("org.flywaydb:flyway-database-postgresql")
 }
@@ -149,8 +136,7 @@ kotlin {
 
 tasks.withType<Test> {
     useJUnitPlatform()
-    // Point Flyway at the importer's migrations using an absolute filesystem path so the
-    // location is independent of the test working directory.
+    // An absolute filesystem path, independent of the test working directory.
     systemProperty(
         "spring.flyway.locations",
         "filesystem:${rootProject.projectDir}/events-importer/src/main/resources/db/migration"

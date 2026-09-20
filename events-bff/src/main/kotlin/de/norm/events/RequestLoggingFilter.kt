@@ -15,34 +15,21 @@ import reactor.core.publisher.Mono
 private val logger = KotlinLogging.logger {}
 
 /**
- * Emits a single INFO access-log line per request once the exchange completes:
- * `GET /venues?q=astra -> 200 (12ms)`. WebFlux does not log requests at INFO by
- * default, so without this the read API is effectively silent in the logs.
+ * Emits one INFO access-log line per request once the exchange completes:
+ * `GET /venues?q=astra -> 200 (12ms)`; WebFlux logs nothing at INFO by default. Registered with
+ * [Ordered.HIGHEST_PRECEDENCE] so the duration is total in-server time.
  *
- * Registered with [Ordered.HIGHEST_PRECEDENCE] so it wraps the whole filter chain
- * and the measured duration reflects total in-server time.
+ * Also establishes the request's log context (#380): `contextWrite` sits at the bottom of the
+ * chain because the Reactor context propagates upwards, and [LogContextConfiguration] turns the
+ * entry back into an MDC field on whichever thread runs each operator.
  *
- * It also establishes the request's log context (#380). `contextWrite` sits at the bottom of the
- * chain because the Reactor context propagates **upwards**: written here, it is visible to every
- * operator above, which is the whole chain. [LogContextConfiguration] is what turns that context
- * entry back into an MDC field on whichever thread ends up running each one.
+ * The id is the exchange's own, not one minted here (#1527): Boot's `DefaultErrorAttributes`
+ * puts `request.id` into every error body as `requestId`, so the id a reporter quotes has to be
+ * the one the column carries.
  *
- * **The id is the exchange's own, not one minted here (#1527).** Boot's `DefaultErrorAttributes`
- * puts `request.id` into every error body as `requestId`, and its 5xx line carries the same id in
- * its text, so a reporter who quotes the id from a problem body has to find the same value in the
- * `requestid` column. A UUID minted here gave every request two ids, and the body named the one
- * no column carried.
- *
- * **Actuator requests are handled and not logged**, which is the one exception and worth the
- * paragraph. Kubernetes probes liveness and readiness every few seconds and the collector scrapes
- * `/actuator/prometheus` beside them, so on an idle deployment this filter's own output is
- * effectively all there is: measured on production over six hours, 1,437 lines an hour, every one
- * of them an actuator request, against **one** line that was not. Logging them buries the requests
- * somebody might actually read, and a log nobody can find anything in has the same value as no log.
- *
- * The base path is read from `management.endpoints.web.base-path` rather than written here, so the
- * suppression follows the property instead of silently ceasing to match if anyone moves it. The
- * default repeats Spring's own.
+ * Actuator requests are handled and not logged: measured on production over six hours, 1,437
+ * lines an hour, every one an actuator request, against one that was not. The base path is read
+ * from `management.endpoints.web.base-path`, so the suppression follows the property.
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -59,21 +46,16 @@ class RequestLoggingFilter(
         return chain
             .filter(exchange)
             .doFinally {
-                // The request still gets its id and its trip through the chain; only the line is
-                // withheld. Keeping the filter in the path for actuator traffic means the timing
-                // and context behaviour stay identical for every request, and one `if` is the whole
-                // difference between them.
+                // The request still gets its id and its trip through the chain; only the line is withheld, so
+                // timing and context behaviour stay identical for every request.
                 if (!isActuatorRequest(request.path.value())) {
                     val durationMs = (System.nanoTime() - startNanos) / 1_000_000
                     val rawQuery = request.uri.rawQuery
                     val query = if (rawQuery == null) "" else "?$rawQuery"
                     val status = exchange.response.statusCode?.value() ?: 0
-                    // Fields, not prose (#945) — the only per-request line the read API produces.
-                    // Two values deliberately stay in the text: `durationMs`, because
-                    // `http.server.requests` already carries latency as a histogram, and the query
-                    // string, because `?q=astra` is user-typed input and a column is a different act
-                    // from a line (LEGAL.md §7.5). Both are asserted, so a tidy-up has to choose
-                    // them rather than drift into them.
+                    // Fields, not prose (#945). Two values stay in the text: `durationMs`, because
+                    // `http.server.requests` carries latency as a histogram, and the query string, because
+                    // `?q=astra` is user-typed input and a column is a different act (LEGAL.md §7.5). Both asserted.
                     logger.at(Level.INFO) {
                         message = "${request.path.value()}$query (${durationMs}ms)"
                         payload =
@@ -88,9 +70,8 @@ class RequestLoggingFilter(
     }
 
     /**
-     * Matches the base path itself and everything under it, and nothing that merely starts with the
-     * same letters — `/actuatorial` is a route this application could add tomorrow, and it would be
-     * silently unlogged if this compared prefixes alone.
+     * Matches the base path and everything under it, not `/actuatorial`, which a prefix comparison
+     * would silently unlog.
      */
     private fun isActuatorRequest(path: String): Boolean {
         val base = actuatorBasePath.removeSuffix("/")

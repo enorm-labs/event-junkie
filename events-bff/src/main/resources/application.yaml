@@ -8,68 +8,53 @@ spring:
 app:
   api:
     # The largest page the public read API returns (#268). `@PageableDefault` sets a default and
-    # never a maximum, and `spring.data.web.pageable.max-page-size` is servlet-only — see
-    # StableSortPageableArgumentResolver, which is the only place this can be applied. 100 rather
-    # than 20, because the venue detail feed asks for 50.
+    # never a maximum, and `spring.data.web.pageable.max-page-size` is servlet-only, so
+    # StableSortPageableArgumentResolver applies this. 100 because the venue detail feed asks for 50.
     max-page-size: 100
     cache:
-      # How long an assembled response may be reused, and how many responses are held. Imports run
-      # daily per source, so 60 seconds is a fraction of a cycle. ResponseCache carries the rest,
-      # including why the bound counts items. Both are overridable per environment as
-      # APP_API_CACHE_TTL_SECONDS and APP_API_CACHE_MAXIMUM_ITEMS.
+      # How long an assembled response may be reused, and how many are held. Imports run daily per
+      # source, so 60 seconds is a fraction of a cycle (ResponseCache has why the bound counts items).
+      # Overridable as APP_API_CACHE_TTL_SECONDS and APP_API_CACHE_MAXIMUM_ITEMS.
       ttl-seconds: 60
       maximum-items: 20000
   images:
     serving:
-      # Off means a response carries the venue's own URL, which is what the site does today. On means
-      # it carries a path on our own origin, and an image with no derivative yet is reported as
-      # absent rather than hotlinked (ADR-019).
-      #
-      # **Do not turn this on before the derivatives exist.** An environment that enables it while
-      # imgproxy is still working through the backlog shows blank cards for whatever is left.
+      # Off: a response carries the venue's own URL. On: a path on our own origin, and an image with
+      # no derivative yet is reported absent rather than hotlinked (ADR-019). Do not turn this on
+      # before the derivatives exist, or the backlog shows as blank cards.
       enabled: ${APP_IMAGES_SERVING_ENABLED:false}
     storage:
-      # The same four settings, under the same environment variable names, as the importer — which is
-      # what lets one Secret serve both workloads. There is no prefix here: a served key is read from
-      # the row that recorded it, so this side never builds one.
+      # The same four settings, under the same environment variable names, as the importer, so one
+      # Secret serves both. No prefix: a served key is read from the row that recorded it.
       endpoint: ${IMAGE_STORAGE_ENDPOINT:https://fsn1.your-objectstorage.com}
       region: ${IMAGE_STORAGE_REGION:fsn1}
       bucket: ${IMAGE_STORAGE_BUCKET:event-junkie-images}
-      # Empty by default. Without credentials no client is built and the route answers 503, which is
-      # the truth: the images exist and this instance cannot reach them.
+      # Empty by default: without credentials no client is built and the route answers 503.
       access-key: ${IMAGE_STORAGE_ACCESS_KEY:}
       secret-key: ${IMAGE_STORAGE_SECRET_KEY:}
 
-# `info` joins the default `health`, so operators can ask a running instance which build it is. It
-# must NOT be routed through the public ingress — the browser gets `GET /meta`, a curated
-# OpenAPI-documented contract rather than a framework-shaped payload (docs/LEGAL.md §4.4). The chart
-# enforces that split by setting MANAGEMENT_SERVER_PORT=9001 on both JVM services, putting the
-# actuator on a port no ingress rule names (PLATFORM_SETUP.md §7). Deliberately not set here, so
-# local development and the tests keep their single-port behaviour.
+# `info` joins the default `health`. It must NOT be routed through the public ingress: the
+# browser gets `GET /meta`, a curated contract (docs/LEGAL.md §4.4), and the chart sets
+# MANAGEMENT_SERVER_PORT=9001 so the actuator sits on a port no ingress names
+# (PLATFORM_SETUP.md §7). Not set here, so local development keeps its single port.
 management:
   endpoints:
     web:
       exposure:
-        # `prometheus` joins health and info, safe for the reason above: unreachable from outside
-        # the cluster because of where the endpoint lives, not because of what it contains.
+        # `prometheus` joins health and info, unreachable from outside for the reason above.
         include: health,info,prometheus
-  # `include` *replaces* a group's default membership, so `readinessState` has to be repeated —
-  # omitting it drops Spring's own signal that the context is up. The names are validated at startup,
-  # so a typo is a context failure and never a silently smaller readiness group.
+  # `include` replaces a group's default membership, so `readinessState` has to be repeated. The
+  # names are validated at startup, so a typo is a context failure.
   #
-  # **Readiness includes the database; liveness must never** (ADR-018). This service is a
-  # read-through API over one shared PostgreSQL, so a pod that cannot reach the database can serve
-  # nothing and reporting Ready would put Kubernetes' traffic into a black hole (#438). Liveness
-  # stays `livenessState`, because a database-dependent liveness probe restarts every replica during
-  # an outage and makes recovery slower than the outage. `r2dbc` is the stock indicator (reachable);
-  # `eventsSchema` is ours (migrated and readable) — EventsSchemaHealthIndicator has why the first
-  # alone would not have closed the window #263 measured.
+  # Readiness includes the database; liveness must never (ADR-018): a pod that cannot reach the
+  # database can serve nothing, and reporting Ready puts traffic into a black hole (#438), while a
+  # database-dependent liveness probe restarts every replica during an outage. `r2dbc` is
+  # reachable, `eventsSchema` is migrated and readable (EventsSchemaHealthIndicator has why the
+  # first alone would not have closed the window #263 measured).
   endpoint:
     health:
-      # `always` rather than the `never` default, safe for the same reason. Without it the readiness
-      # group aggregates to a bare {"status":"DOWN"} and an operator cannot tell "the database is
-      # gone" from "the schema is not migrated yet" — the whole reason `r2dbc` and `eventsSchema` are
-      # two contributors rather than one.
+      # `always` rather than `never`, so an operator can tell "the database is gone" from "the schema
+      # is not migrated yet", the reason `r2dbc` and `eventsSchema` are two contributors.
       show-details: always
       group:
         readiness:
@@ -81,20 +66,16 @@ management:
       # Reads META-INF/build-info.properties, stamped by the `bootBuildInfo` task.
       enabled: true
     git:
-      # Set explicitly because the *absence* of a git.properties file is a deliberate decision, not
-      # an oversight: the commit arrives through build-info.properties as `build.commit` instead, so
-      # no gradle-git-properties plugin is needed. Do not "fix" this by adding one.
+      # Set explicitly: the absence of a git.properties file is a decision. The commit arrives through
+      # build-info.properties as `build.commit`, so no gradle-git-properties plugin. Do not add one.
       enabled: false
 
 ---
-# Local development only — `--spring.profiles.active=local`. Mirrors console output to a file so a
-# run can be grepped afterwards, which matters here because `RequestLoggingFilter` emits one
-# access-log line per request. Profile-gated rather than global: on a container platform the log
-# belongs on stdout, and a file appender writes into the container's in-memory filesystem.
-#
-# The path is relative to the working directory (the module directory under `bootRun`), so it lands
-# in `events-bff/build/dev-env/` — gitignored at any depth, parents created by Logback. The filename
-# differs from the importer's so both services can run at once.
+# Local development only (`--spring.profiles.active=local`): mirrors console output to a file so
+# a run can be grepped, since `RequestLoggingFilter` emits one line per request. Profile-gated
+# because on a container platform the log belongs on stdout. The path is relative to the module
+# directory under `bootRun`, so it lands in `events-bff/build/dev-env/`, gitignored; the filename
+# differs from the importer's so both can run at once.
 spring:
   config:
     activate:

@@ -5,16 +5,11 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 /**
- * Pins the rule ADR-019 comes down to, in the one place it is written.
- *
- * **The switched-off case is the important one.** Serving is off everywhere until an environment has
- * a full set of derivatives, and a change that made it blank an image instead of passing the venue's
- * URL through would empty every card on every environment that has not enabled it yet.
- *
- * **The switched-on miss is the other one.** Returning null there is deliberate: falling back to the
- * venue would reinstate the disclosure that caching exists to remove
- * ([#792](https://github.com/enorm-labs/event-junkie/issues/792)), and it would do it silently, only
- * for the images we happen not to hold.
+ * Pins the rule ADR-019 comes down to. The switched-off case is the important one: serving is
+ * off until an environment has a full set of derivatives, and blanking an image instead of
+ * passing the venue's URL through would empty every card. The switched-on miss is the other:
+ * null is deliberate, since falling back to the venue would reinstate the disclosure caching
+ * exists to remove (#792), silently, for the images we happen not to hold.
  */
 class CachedImagesTest {
     private val poster = "https://venue.test/poster.jpg"
@@ -56,8 +51,7 @@ class CachedImagesTest {
     @Test
     @DisplayName("a card is offered the widths between its own and three times it")
     fun `the card band covers the plausible pixel ratios`() {
-        // 96 CSS px at 2x and 3x. The 768 and 1536 files exist and are not offered: a list of twenty
-        // cards carrying them is ten times the bytes anything will draw.
+        // 96 CSS px at 2x and 3x; 768 and 1536 exist and are not offered, ten times the bytes a card draws.
         val served = serving().serve(poster, CARD)
 
         served.url shouldBe "/api/images/$HASH/192.jpg"
@@ -67,9 +61,8 @@ class CachedImagesTest {
     @Test
     @DisplayName("a poster card is offered 512 upwards, not the thumbnail widths")
     fun `the poster band starts at the step that was added for it`() {
-        // Without 512 among the generated widths this band would hold 768 alone, and a 1x laptop
-        // would download a 36 KB file for a slot that 512 serves in about 16 KB (#1245). 1536 is
-        // outside the band: 480 at 3x is 1440, so the widest file stays a detail-page one.
+        // Without 512 this band would hold 768 alone, and a 1x laptop would download 36 KB for a slot
+        // 512 serves in 16 KB (#1245). 480 at 3x is 1440, so 1536 stays a detail-page file.
         val served = serving().serve(poster, POSTER_CARD)
 
         served.url shouldBe "/api/images/$HASH/512.jpg"
@@ -88,8 +81,7 @@ class CachedImagesTest {
     @Test
     @DisplayName("a slot wider than anything we hold gets the widest we hold")
     fun `an empty band falls back to the widest`() {
-        // Soft rather than absent. An image whose largest derivative is narrower than the slot is
-        // upscaled by the browser; refusing it would look like the image is missing, and it is not.
+        // Soft rather than absent: refusing an image narrower than the slot would look like it is missing.
         val served = serving(widths = setOf(192)).serve(poster, DETAIL)
 
         served.url shouldBe "/api/images/$HASH/192.jpg"
@@ -109,9 +101,8 @@ class CachedImagesTest {
     @Test
     @DisplayName("an image with no JPEG is not served at all")
     fun `the fallback format is required`() {
-        // AVIF and WebP alone would be a blank space on anything that cannot decode them, and the
-        // `<img src>` inside `<picture>` has no safe value. A half-generated image waits for the
-        // next pass instead.
+        // AVIF and WebP alone would be a blank space on anything that cannot decode them; a
+        // half-generated image waits for the next pass.
         serving(formats = listOf("avif", "webp")).serve(poster, CARD) shouldBe ServedImage.ABSENT
     }
 
@@ -132,8 +123,7 @@ class CachedImagesTest {
         local.serve(poster, CARD).url shouldBe "/images/$HASH/192.jpg"
     }
 
-    // Both or neither, decided here so a template can trust the pair. Reporting one reserves no
-    // space and is the same layout shift as reporting none (#848).
+    // Both or neither, decided here so a template can trust the pair (#848).
     @Test
     fun `an image measured on both axes reports both`() {
         val measured = imageWith(intrinsicWidth = 1200, intrinsicHeight = 630).serve(poster, CARD)
@@ -175,9 +165,8 @@ class CachedImagesTest {
         const val DETAIL = 704
 
         /**
-         * What a poster card will pass once #1246 rebuilds it: a two-column `max-w-5xl` grid puts
-         * the card at about 474 CSS px. Asserted here before the card exists, because the width
-         * step that serves it (512) ships now and nothing else would notice if the band broke.
+         * What a poster card passes: a two-column `max-w-5xl` grid puts the card at about 474 CSS px,
+         * and the width step that serves it (512) is what this holds.
          */
         const val POSTER_CARD = 480
 

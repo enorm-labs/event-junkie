@@ -6,11 +6,9 @@ import org.springframework.stereotype.Service
 import java.util.SortedSet
 
 /**
- * Answers, for a page of events at once, which venue images we can serve ourselves.
- *
- * Modelled on [de.norm.events.sourcelicence.SourceLicenceGate], and for the same reason: it returns
- * the answers rather than applying them, so the caller keeps ownership of the types it rewrites and
- * the module edge stays one-way.
+ * Answers, for a page of events at once, which venue images we can serve ourselves. Modelled on
+ * [de.norm.events.sourcelicence.SourceLicenceGate]: it returns the answers rather than applying
+ * them, so the caller keeps ownership of the types it rewrites.
  */
 @Service
 class CachedImageGate(
@@ -18,11 +16,9 @@ class CachedImageGate(
     private val properties: ImageServingProperties
 ) {
     /**
-     * Resolves [sourceUrls] to what can be served for each.
-     *
-     * Returns the disabled answer without querying while serving is off. That keeps the switch a
-     * single decision rather than one every caller has to remember, and it means the tables can fill
-     * up on an environment that is not serving yet at no cost per request.
+     * Resolves [sourceUrls] to what can be served for each. Returns the disabled answer without
+     * querying while serving is off, so the switch is one decision and the tables can fill on an
+     * environment that is not serving yet at no cost per request.
      */
     suspend fun forUrls(sourceUrls: Collection<String?>): CachedImages {
         if (!properties.serving.enabled) return CachedImages.disabled()
@@ -46,11 +42,10 @@ class CachedImageGate(
 }
 
 /**
- * What is servable for one page's worth of venue image URLs, and the rule for using it.
- *
- * A value rather than a map of strings, because the answer depends on the size being rendered: the
- * same image is a 96 px card and a 704 px detail header, and one width for both would give either a
- * blurred detail page or a card list that downloads ten times what it draws.
+ * What is servable for one page's worth of venue image URLs. A value rather than a map, because
+ * the answer depends on the size rendered: a 96 px card and a 704 px detail header share an
+ * image, and one width for both means a blurred header or a card list downloading ten times what
+ * it draws.
  */
 class CachedImages private constructor(
     private val byUrl: Map<String, ServableImage>,
@@ -60,14 +55,11 @@ class CachedImages private constructor(
     constructor(byUrl: Map<String, ServableImage>, urlPrefix: String) : this(byUrl, urlPrefix, serving = true)
 
     /**
-     * What the API should report for [sourceUrl] when the image is drawn [renderedWidth] CSS pixels wide.
-     *
-     * **The whole of ADR-019's decision is these three lines.** While serving is off the venue's own
-     * URL is returned unchanged, which is what the site does today. While it is on, an image we hold
-     * becomes a set of URLs on our own origin, and one we do not hold becomes null — reported as
-     * absent rather than hotlinked, because falling back to the venue would reinstate exactly the
-     * disclosure that caching exists to remove
-     * ([#792](https://github.com/enorm-labs/event-junkie/issues/792)).
+     * What the API should report for [sourceUrl] drawn [renderedWidth] CSS pixels wide. The whole
+     * of ADR-019's decision: while serving is off the venue's own URL is returned unchanged; while
+     * on, an image we hold becomes a set of URLs on our origin, and one we do not hold becomes null
+     * rather than hotlinked, since falling back to the venue reinstates the disclosure caching
+     * exists to remove (#792).
      */
     fun serve(
         sourceUrl: String?,
@@ -93,11 +85,9 @@ data class ServableImage(
     val intrinsicHeight: Int? = null
 ) {
     /**
-     * The URLs to offer for a slot [renderedWidth] CSS pixels wide.
-     *
-     * Empty unless a JPEG derivative exists. JPEG is the one format every browser reads, so an image
-     * without it has no safe `<img src>` — and offering only AVIF and WebP would be a blank space on
-     * anything that cannot decode them.
+     * The URLs to offer for a slot [renderedWidth] CSS pixels wide. Empty unless a JPEG derivative
+     * exists: JPEG is the one format every browser reads, and AVIF and WebP alone would be a blank
+     * space on anything that cannot decode them.
      */
     fun serve(
         urlPrefix: String,
@@ -111,8 +101,7 @@ data class ServableImage(
             ServedImage(
                 url = url(urlPrefix, fallback.first(), ImageFormats.FALLBACK),
                 sources = ImageFormats.ORDERED.mapNotNull { source(urlPrefix, it, widths) },
-                // The original's dimensions rather than the derivative's, because what the browser
-                // takes from them is the ratio, and imgproxy resizes on width alone.
+                // The original's dimensions, because the browser takes the ratio, and imgproxy resizes on width.
                 intrinsicWidth = intrinsicWidth.takeIf { hasBothDimensions },
                 intrinsicHeight = intrinsicHeight.takeIf { hasBothDimensions }
             )
@@ -120,24 +109,16 @@ data class ServableImage(
     }
 
     /**
-     * Whether this image can report a shape at all.
-     *
-     * **Dropped to neither rather than reported as one**, and normalised here rather than asserted
-     * in [ServedImage], because a single odd row must not fail a page of twenty events. The two
-     * columns are written together, so this is a guard and not an expected state.
+     * Whether this image can report a shape at all. Dropped to neither rather than reported as one,
+     * and normalised here rather than asserted, because one odd row must not fail a page of twenty.
      */
     private val hasBothDimensions: Boolean get() = intrinsicWidth != null && intrinsicHeight != null
 
     /**
-     * The generated widths worth offering for a slot [renderedWidth] CSS pixels wide.
-     *
-     * From the slot itself up to three times it, because a device pixel ratio above 3 is rarer than
-     * the bytes it would cost every other device. Narrower than the slot is upscaling the browser
-     * would have to do anyway, and wider is a file nothing will draw.
-     *
-     * Falls back to the widest we hold when the band is empty. Soft rather than absent: an image
-     * whose largest derivative is narrower than the slot still shows, and refusing it would look like
-     * the image is missing.
+     * The generated widths worth offering for a slot [renderedWidth] CSS pixels wide: the slot up to
+     * three times it, since a device pixel ratio above 3 is rarer than the bytes it costs every other
+     * device. Falls back to the widest we hold when the band is empty, because refusing it would look
+     * like a missing image.
      */
     private fun candidateWidths(renderedWidth: Int): Set<Int> {
         val all = widthsByFormat.values.flatten().toSortedSet()
@@ -176,20 +157,15 @@ data class ServableImage(
 }
 
 /**
- * What one image field carries: a URL to put in `src`, and the formats to offer above it.
- *
- * Both together rather than two independent lookups, so a caller cannot fill one field and forget
- * the other — which would be a `<picture>` that always falls through to JPEG, and nothing would fail.
+ * What one image field carries: a URL for `src`, and the formats to offer above it. Together, so
+ * a caller cannot fill one and forget the other, a `<picture>` that always falls through to JPEG.
  */
 data class ServedImage(
     val url: String?,
     val sources: List<ImageSourceResponse>,
     /**
-     * The image's own pixel dimensions, or null.
-     *
-     * **Both or neither**, which [ServableImage] guarantees. They reserve the space a lazy image
-     * will occupy, and a browser given one of the pair reserves nothing — so half an answer is the
-     * same layout shift as no answer, arrived at less obviously (#848).
+     * The image's own pixel dimensions, or null. Both or neither, which [ServableImage] guarantees: a
+     * browser given one of the pair reserves nothing, the same layout shift as no answer (#848).
      */
     val intrinsicWidth: Int? = null,
     val intrinsicHeight: Int? = null
@@ -213,11 +189,9 @@ data class ImageSourceResponse(
 )
 
 /**
- * The `@Schema` descriptions every response DTO shares for the fields a [ServedImage] fills.
- *
- * Four modules document the same fields, and nothing fails when one copy drifts from the others.
- * `EventSummaryResponse` and `EventDetailResponse` word `imageUrl` and `imageSources` for a poster
- * instead, which is deliberate.
+ * The `@Schema` descriptions every response DTO shares for the fields a [ServedImage] fills. Four
+ * modules document the same fields and nothing fails when one drifts. `EventSummaryResponse` and
+ * `EventDetailResponse` word them for a poster instead, deliberately.
  */
 const val IMAGE_SOURCES_DESCRIPTION =
     "Alternative formats of the same image, best first, for a <picture> element. Empty " +
@@ -233,10 +207,7 @@ const val INTRINSIC_HEIGHT_DESCRIPTION = "Pixel height of the original image, fo
 
 /**
  * The `@Schema` descriptions for the credit a venue, artist or promoter image carries (#1275).
- *
- * These come from the row rather than from a [ServedImage]. Resizing does not change who took the
- * photograph, so the credit survives every derivative and is shared for the same reason the three
- * above are: three modules document one field.
+ * From the row rather than a [ServedImage]: resizing does not change who took the photograph.
  */
 const val IMAGE_ATTRIBUTION_DESCRIPTION =
     "Who to credit for `imageUrl`, worded as the archive publishes it. Present whenever " +

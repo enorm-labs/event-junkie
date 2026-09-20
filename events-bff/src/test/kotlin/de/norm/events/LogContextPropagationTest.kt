@@ -20,12 +20,10 @@ import reactor.test.StepVerifier
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * The reactive half of #380, which is the half that fails **silently**.
- *
- * WebFlux runs one request across several threads and MDC is thread-local, so a value put in a
- * filter is absent by the time a handler logs — the line still appears, just without its fields.
- * Nothing throws, so only an assertion catches it. Each test below therefore reads the context back
- * from a thread that is deliberately not the one that wrote it.
+ * The reactive half of #380, the half that fails silently: WebFlux runs one request across
+ * several threads and MDC is thread-local, so a value put in a filter is absent by the time a
+ * handler logs, and nothing throws. Each test reads the context back from a thread that is
+ * deliberately not the one that wrote it.
  */
 class LogContextPropagationTest {
     private lateinit var appender: ListAppender<ILoggingEvent>
@@ -33,8 +31,7 @@ class LogContextPropagationTest {
 
     @BeforeEach
     fun setUp() {
-        // Registers the MDC accessor and enables automatic propagation, exactly as the running
-        // application does. Both are process-wide and idempotent.
+        // Registers the MDC accessor and enables automatic propagation, as the application does.
         LogContextConfiguration().enableRequestIdPropagation()
         root = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as Logger
         appender = ListAppender<ILoggingEvent>().apply { start() }
@@ -64,28 +61,22 @@ class LogContextPropagationTest {
             .block()
 
         seen.get() shouldBe "req-42"
-        // Guards the guard: if the read happened on the writing thread, a plain MDC.put would also
-        // have passed and the test would prove nothing.
+        // Guards the guard: a read on the writing thread would pass with a plain MDC.put.
         readerThread.get() shouldNotBe writer
     }
 
     @Test
     fun `does not reach a coroutine body, which is the boundary of what this buys`() {
-        // **A negative assertion on purpose.** `Hooks.enableAutomaticContextPropagation` restores
-        // the MDC around Reactor's own operator invocations; it does not reach inside a coroutine
-        // started by the `mono { }` builder, which is how Spring invokes a `suspend` handler. So a
-        // line logged in a suspend controller carries no `requestId` today.
-        //
-        // Written down as a test rather than a comment because the failure is invisible either way
-        // — the log line still appears, just without the field — and because the fix, threading a
-        // CoroutineContext through the Reactor context, is a change someone will make one day. On
-        // that day this test fails and says exactly what changed, which a comment would not.
+        // A negative assertion on purpose: `Hooks.enableAutomaticContextPropagation` does not reach
+        // inside a coroutine started by the `mono { }` builder, which is how Spring invokes a `suspend`
+        // handler, so a line logged there carries no `requestId` today. A test rather than a comment
+        // because the fix, threading a CoroutineContext through the Reactor context, will be made one
+        // day, and on that day this fails and says what changed.
         val chain =
             mono { MDC.get(LogContextConfiguration.REQUEST_ID) }
                 .contextWrite { it.put(LogContextConfiguration.REQUEST_ID, "req-99") }
 
-        // `mono { }` completes empty when its block returns null, so an empty sequence *is* the
-        // assertion that the MDC lookup found nothing.
+        // `mono { }` completes empty when its block returns null, so an empty sequence is the assertion.
         StepVerifier.create(chain).verifyComplete()
     }
 
@@ -109,8 +100,7 @@ class LogContextPropagationTest {
 
         RequestLoggingFilter("/actuator").filter(exchange) { Mono.empty() }.block()
 
-        // Found by its `path` field rather than by its text (#945). Matching on the message was
-        // what this assertion did before the values became fields, and it is precisely the coupling
+        // Found by its `path` field rather than its text (#945): matching on the message is the coupling
         // that made a wording change break an unrelated test.
         val event = appender.list.single { it.field(LogContextConfiguration.PATH) == "/venues" }
         event.mdcPropertyMap[LogContextConfiguration.REQUEST_ID].isNullOrBlank() shouldBe false
@@ -122,8 +112,8 @@ class LogContextPropagationTest {
 
         RequestLoggingFilter("/actuator").filter(exchange) { Mono.empty() }.block()
 
-        // Boot's `DefaultErrorAttributes` writes `request.id` into a problem body as `requestId`.
-        // A UUID minted in the filter gave the body and the column different values (#1527).
+        // Boot's `DefaultErrorAttributes` writes `request.id` into a problem body as `requestId`; a UUID
+        // minted in the filter gave the body and the column different values (#1527).
         val event = appender.list.single { it.field(LogContextConfiguration.PATH) == "/venues" }
         event.mdcPropertyMap[LogContextConfiguration.REQUEST_ID] shouldBe exchange.request.id
     }
@@ -132,8 +122,7 @@ class LogContextPropagationTest {
     fun `carries the method, path and status as fields rather than inside the sentence`() {
         val exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/venues?q=astra"))
 
-        // The status is set by the chain, not by the mock — an unset one reads back as 0, which
-        // would let the Int assertion below pass without proving the real value ever arrives.
+        // The status is set by the chain, not the mock; an unset one reads back as 0.
         RequestLoggingFilter("/actuator")
             .filter(exchange) {
                 exchange.response.statusCode = HttpStatus.OK
@@ -143,12 +132,10 @@ class LogContextPropagationTest {
         val event = appender.list.single()
         event.field(LogContextConfiguration.HTTP_METHOD) shouldBe "GET"
         event.field(LogContextConfiguration.PATH) shouldBe "/venues"
-        // An Int, not "200". OpenObserve types a column from its first row, so one string here
-        // would make every later range query on the status impossible.
+        // An Int, not "200": OpenObserve types a column from its first row.
         event.field(LogContextConfiguration.HTTP_STATUS) shouldBe 200
 
-        // The other half of the same guarantee: a value that is a field AND still welded into the
-        // sentence reads as working while leaving the prose to drift out of step with it.
+        // A value that is a field AND still welded into the sentence lets the prose drift.
         event.formattedMessage.startsWith("GET ") shouldBe false
     }
 
@@ -159,9 +146,8 @@ class LogContextPropagationTest {
         RequestLoggingFilter("/actuator").filter(exchange) { Mono.empty() }.block()
 
         val event = appender.list.single()
-        // `q=astra` is user-typed input. It stays in the message, where it already was — making it
-        // a filterable column is a different act, and LEGAL.md §7.5 says not to widen what request
-        // data is collected without deciding to. Asserted so a later "tidy-up" has to choose it.
+        // `q=astra` is user-typed input and stays in the message: making it a filterable column widens
+        // what request data is collected (LEGAL.md §7.5). Asserted so a later tidy-up has to choose it.
         event.formattedMessage.contains("?q=astra") shouldBe true
         event.field(LogContextConfiguration.PATH) shouldBe "/venues"
     }
@@ -172,15 +158,14 @@ class LogContextPropagationTest {
 
         RequestLoggingFilter("/actuator").filter(exchange) { Mono.empty() }.block()
 
-        // The suppression predates this change; asserted here because the conversion rewrote the
-        // line it guards and a silently-restored probe line is 1,437 rows an hour.
+        // The suppression predates this change; a silently restored probe line is 1,437 rows an hour.
         (appender.list.none { it.field(LogContextConfiguration.PATH) != null }) shouldBe true
     }
 
     @Test
     fun `gives two requests different ids`() {
-        // Both exchanges stay reachable until the end: a mock request's id is its identity hash,
-        // which the JVM may hand to a new object once the old one is collected.
+        // Both exchanges stay reachable to the end: a mock request's id is its identity hash, which the
+        // JVM may hand to a new object.
         val exchanges = List(2) { MockServerWebExchange.from(MockServerHttpRequest.get("/venues")) }
         exchanges.forEach { RequestLoggingFilter("/actuator").filter(it) { Mono.empty() }.block() }
 
@@ -190,11 +175,9 @@ class LogContextPropagationTest {
     }
 
     /**
-     * The value SLF4J carries for [key] as a key-value pair, or `null` when the line has none.
-     *
-     * `keyValuePairs` is what `logger.at(…) { payload = … }` writes and what Spring's ECS formatter
-     * serialises to the top level of the JSON — so this reads the same list the shipped log line is
-     * built from, rather than a rendered string.
+     * The value SLF4J carries for [key] as a key-value pair, or `null`. `keyValuePairs` is what
+     * `logger.at(…) { payload = … }` writes and Spring's ECS formatter serialises, so this reads
+     * the list the shipped line is built from.
      */
     private fun ILoggingEvent.field(key: String): Any? = keyValuePairs?.firstOrNull { it.key == key }?.value
 }

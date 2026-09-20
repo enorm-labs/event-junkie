@@ -25,11 +25,8 @@ import java.time.Clock
 import java.time.LocalDate
 
 /**
- * Read service assembling the public event responses for the frontend.
- *
- * List/calendar/today responses use batch loading to avoid N+1 queries: a page of events is
- * resolved first, then venue, artist, promoter, and genre tag associations are bulk-fetched
- * for the whole page (mirroring the importer's [de.norm.events.event] strategy).
+ * Read service assembling the public event responses. List/calendar/today responses batch-load
+ * venue, artist, promoter and genre tag associations for the whole page, as the importer does.
  */
 @Service
 @Suppress("LongParameterList") // Constructor injection: one parameter per collaborator; splitting the service hides the wiring.
@@ -62,10 +59,9 @@ class EventService(
     }
 
     /**
-     * Tonight's events — everything on today, including a weekender in its second night
-     * (ADR-029). Goes through the search repository rather than a derived query so a night of
-     * 23:00 doors gets the same seeded tiebreak as the list (#1380); a derived `OrderByStartTime`
-     * left tied rows in heap order.
+     * Tonight's events, everything on today including a weekender in its second night (ADR-029).
+     * Through the search repository so a night of 23:00 doors gets the same seeded tiebreak as the
+     * list (#1380); a derived `OrderByStartTime` left tied rows in heap order.
      */
     @Transactional(readOnly = true)
     suspend fun today(): List<EventSummaryResponse> {
@@ -75,10 +71,8 @@ class EventService(
 
     /**
      * Events within an inclusive date range, for the calendar view. [filter] carries the same
-     * optional criteria as [search] — the calendar is the search endpoint's other rendering —
-     * and its own date range is overridden by [from]/[to], which the view derives from the
-     * visible window. A span is in every window it overlaps — a run that opened before [from]
-     * and is still on is returned, and the view draws it as a bar across its days (#1405).
+     * criteria as [search]; its date range is overridden by [from]/[to] from the visible window. A
+     * span is in every window it overlaps, drawn as a bar across its days (#1405).
      *
      * @throws ResponseStatusException 400 if the range is inverted or exceeds [MAX_CALENDAR_DAYS].
      */
@@ -105,9 +99,8 @@ class EventService(
      */
     @Transactional(readOnly = true)
     suspend fun findBySlug(slug: String): EventDetailResponse {
-        // The detail path does not go through hydrateOrdered, so it applies the gate itself. This is
-        // the endpoint that renders the description in full (EventDetailView.vue), which makes it
-        // the one that matters most.
+        // The detail path does not go through hydrateOrdered, so it applies the gate itself; this is
+        // the endpoint that renders the description in full.
         val licensed =
             eventRepository.findBySlug(slug)?.let { withLicenceApplied(listOf(it)).first() }
                 ?: throw EventNotFoundException(slug)
@@ -130,9 +123,8 @@ class EventService(
         val genreTags =
             if (genreTagIds.isEmpty()) emptyList() else genreTagRepository.findAllById(genreTagIds).toList().map { it.name }
 
-        // One lookup for every image this response carries, not only the event's. An embedded venue
-        // or artist summary holds an `imageUrl` too, and leaving those unrewritten would hand out a
-        // venue's own URL from an endpoint that had just stopped doing it for the event (#833).
+        // One lookup for every image this response carries: an embedded venue or artist summary holds
+        // an `imageUrl` too, and leaving those unrewritten hands out a venue's own URL (#833).
         val images =
             cachedImageGate.forUrls(
                 listOf(event.imageUrl, venue.imageUrl) + artistsById.values.map { it.imageUrl } + promoterEntities.map { it.imageUrl }
@@ -164,11 +156,8 @@ class EventService(
     }
 
     /**
-     * Re-fetches events by ID via the CRUD repository, preserving the order of [ids].
-     *
-     * Ordering only. The licence gate and the image rewrite live in [summariesFor], because `today`
-     * does not come through here — it reads the repository directly, and while the gate lived here
-     * the Home page was the one list endpoint neither was applied to.
+     * Re-fetches events by ID, preserving the order of [ids]. Ordering only: the licence gate and
+     * the image rewrite live in [summariesFor], because `today` does not come through here.
      */
     private suspend fun hydrateOrdered(ids: List<Long>): List<EventEntity> {
         if (ids.isEmpty()) return emptyList()
@@ -177,20 +166,16 @@ class EventService(
     }
 
     /**
-     * Blanks `description` and `imageUrl` on every event whose source prohibits that field.
-     *
-     * Done on the entity rather than in [EventResponses], so the summary and detail mappers cannot
-     * diverge and neither can forget. One query for the whole page, matching the batch-loading
-     * strategy the rest of this service uses.
+     * Blanks `description` and `imageUrl` on every event whose source prohibits that field, on the
+     * entity so the summary and detail mappers cannot diverge. One query for the whole page.
      */
     private suspend fun withLicenceApplied(events: List<EventEntity>): List<LicensedEvent> {
         if (events.isEmpty()) return emptyList()
         val licences = sourceLicenceGate.forSources(events.mapNotNull { it.eventSourceId })
         return events.map { event ->
             val licence = event.eventSourceId?.let { licences[it] } ?: SourceLicences.UNKNOWN_SOURCE
-            // Withheld means something was taken away, not that the source would have withheld it.
-            // A prohibited source with no description had nothing removed, and reporting one would
-            // point a reader at a venue page that has nothing more to show (#811).
+            // Withheld means something was taken away: a prohibited source with no description had nothing
+            // removed, and reporting one would point a reader at a venue page with nothing more (#811).
             val descriptionWithheld = licence.withholdsDescription() && event.description != null
             val imageWithheld = licence.withholdsImage() && event.imageUrl != null
             LicensedEvent(
@@ -211,12 +196,9 @@ class EventService(
     }
 
     /**
-     * An event as it may be shown, and what the licence took out of it.
-     *
-     * **The response has to say why a field is absent, because `null` cannot.** A description a
-     * venue never wrote and one a prohibition removed are the same `null`, and on a seeded database
-     * that is 1,072 against 56 — so a note shown for every `null` would be wrong twenty times more
-     * often than right (#811).
+     * An event as it may be shown, and what the licence took out. The response has to say why a
+     * field is absent, because `null` cannot: a description a venue never wrote and one a
+     * prohibition removed are the same `null`, 1,072 against 56 on a seeded database (#811).
      */
     private data class LicensedEvent(
         val event: EventEntity,
@@ -225,15 +207,10 @@ class EventService(
     )
 
     /**
-     * Maps a page of events to summaries, batch-loading venue, artist, and genre tag
-     * associations in a fixed number of queries regardless of page size.
-     *
-     * **This is the choke point every list endpoint goes through**, so the licence gate and the image
-     * rewrite are applied here. A new list endpoint inherits both by building its summaries the only
-     * way there is, rather than by remembering to call something first.
-     *
-     * The image step runs after the licence gate and never before it: a source that prohibits its
-     * images has had the URL blanked already, so there is nothing left to look up.
+     * Maps a page of events to summaries, batch-loading associations in a fixed number of queries.
+     * The choke point every list endpoint goes through, so the licence gate and the image rewrite
+     * are applied here and a new endpoint inherits both. The image step runs after the gate: a
+     * prohibited image has had its URL blanked already.
      */
     private suspend fun summariesFor(unlicensed: List<EventEntity>): List<EventSummaryResponse> {
         if (unlicensed.isEmpty()) return emptyList()
@@ -242,8 +219,7 @@ class EventService(
         val eventIds = events.map { requireNotNull(it.id) { "Persisted event must have an ID" } }
 
         val venuesById = venueRepository.findByIdIn(events.map { it.venueId }.distinct()).toList().associateBy { it.id }
-        // The embedded venue summary carries an `imageUrl` of its own, so it is looked up here
-        // rather than left as the venue's URL on an endpoint that rewrote the event's (#833).
+        // The embedded venue summary carries an `imageUrl` of its own (#833).
         val images = cachedImageGate.forUrls(events.map { it.imageUrl } + venuesById.values.map { it.imageUrl })
 
         val artistLinks = eventArtistRepository.findByEventIdIn(eventIds).toList()
@@ -285,18 +261,11 @@ class EventService(
         private const val MAX_CALENDAR_DAYS = 92L
 
         /**
-         * How wide each image is drawn, in CSS pixels, which is what decides the derivatives offered.
-         *
-         * An event card draws its poster at the card's own width — about 474 px in the two-column
-         * `max-w-5xl` grid — so [POSTER_WIDTH] is offered 512 and 768. The venue, artist and
-         * promoter thumbnails an event carries stay small, and `BaseDetailView` draws them at 96 px.
-         * `EventDetailView` draws the image at the full width of a `max-w-3xl` column, 704 px after
-         * padding ([#804](https://github.com/enorm-labs/event-junkie/issues/804) is why the detail
-         * page is on this list at all).
-         *
-         * **CSS pixels, not file widths.** The device pixel ratio is the browser's to know, and it
-         * picks from the `srcset` this produces; a number here that already had a ratio baked in
-         * would multiply it twice.
+         * How wide each image is drawn, in CSS pixels, which decides the derivatives offered: a card
+         * draws its poster at about 474 px in the two-column grid, so [POSTER_WIDTH] is offered 512 and
+         * 768; `BaseDetailView` draws thumbnails at 96 px; `EventDetailView` draws the image at 704 px
+         * (#804). CSS pixels, not file widths: the device pixel ratio is the browser's to apply to the
+         * `srcset`, and a number with a ratio baked in would multiply it twice.
          */
         private const val POSTER_WIDTH = 480
         private const val CARD_WIDTH = 96
