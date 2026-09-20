@@ -12,105 +12,47 @@ paths:
 
 How code here is written, and where its versions and thresholds live. Comments have their own file, and so does Markdown.
 
-- **Application version**: no file carries it (ADR-032). `scripts/version.sh compute` reads it from the release tags and the commits since the last one,
-  and every CI build passes it as `-Pversion=…`, which Gradle applies to every project. `version` in the root `gradle.properties` is a `0.0.0-SNAPSHOT`
-  placeholder, `events-frontend/package.json` holds `0.0.0`, and `build.gradle.kts` must **not** assign `version` in its `subprojects` block; a leftover
-  assignment silently wins over the flag while the build stays green. The version the site displays always comes from `GET /meta`, which is stamped from
-  the build — never from `package.json`. See [docs/LEGAL.md](../../docs/LEGAL.md) §4.
-- **Package structure**: `de.norm.events.<module-name>` — organize by feature/domain, not layer.
-- **Kotlin DSL** for all Gradle build scripts (`build.gradle.kts`).
-- **Kotlin 2.4.10** with **Spring Boot 4.1.0**; plugin versions pinned in `settings.gradle.kts` `pluginManagement`.
-- **ktlint 1.8.0** enforced project-wide via root `subprojects` block; do not override per-module.
-- **detekt 2.0.0-alpha.6** (`dev.detekt` plugin, migrated from `io.gitlab.arturbosch.detekt`) applied project-wide, with this repository's own rules from
-  `:detekt-rules` on the analysis classpath (see the `event-junkie` section of `detekt.yml`). **The plugin version in `settings.gradle.kts` is the only place a
-  detekt version is written.** `:detekt-rules` compiles against `the<DetektExtension>().toolVersion` — the version the plugin resolves for analysis — so a
-  custom rule cannot be built against a different API than the one it is loaded with. Check it with `./gradlew :detekt-rules:detektToolVersion`; bumping the
-  plugin needs no second edit. The 2.0 line is still pre-release; the alpha
-  is tracked deliberately because it is what supports current Kotlin (see the compatibility-table link in `settings.gradle.kts`). Builds upon default config
-  with overrides in root `detekt.yml` (currently only `MaxLineLength: 160`). Run `./gradlew detekt` to analyze all modules.
-- **`detekt`, `detektMain` and `detektTest` run different rules, and CI runs all three** (#407). An entire class of rules — `UnsafeCallOnNullableType`,
-  `UseOrEmpty`, `UnusedPrivateProperty`, `LongParameterList` — needs resolved types, so `detekt` alone silently _skips_ them rather than passing them. The
-  other two compile the main and test source sets first and run them.
-- **Four rules are tuned for test sources in `detekt.yml`, each with its reason there.** A fixture builder's parameter list is the record it builds, every
-  `IgnoredReturnValue` in this tree is a call inside MockK's `coVerify` recording DSL, a test naming `Dispatchers.IO` _is_ the substitution
-  `InjectDispatcher` asks for, and `lateinit val` does not exist. Read the file before adding a `@Suppress` for one of them.
-- **Max line length**: 160 characters (enforced by both `.editorconfig` and `detekt.yml`).
-- Centralized library versions in **`gradle.properties`** (`java.version`, `jsoup.version`, `kotest.version`,
-  `kotlin-logging.version`, `mockk.version`, `mockwebserver.version`, `slugify.version`, `spring-modulith.version`,
-  `springdoc.version`), read in the module build scripts via `property("…")`; plugin versions in `settings.gradle.kts`
-  `pluginManagement`. They live in `gradle.properties` rather than root `extra[...]` because Gradle 10 removes the implicit lookup of parent-project properties
-  that the `extra[...]` form depended on.
-    - **`gradle.properties` also holds a second, different kind of entry** — `log4j-api.version`, `scram.version` and `spring-framework-bom.version`, under
-      "Pins that are not ordinary project versions". None is BOM-managed and none may be bumped on sight. **`scram`** is a transitive of `r2dbc-postgresql`,
-      which pins the vulnerable version in every release, and is raised by a `constraints` block in both Boot modules. **`log4j-api`** and
-      **`spring-framework-bom`** both exist because `events-core` applies `io.spring.dependency-management` but **not** the Boot plugin — so no Boot BOM reaches
-      it and Spring Modulith's transitives choose the versions. Importing the Boot BOM there is not a fix: without the Boot plugin nothing aligns the BOM's
-      `kotlin.version`, and `compileKotlin` fails with a null plugin classpath. **`spring-framework-bom` is the exception that can be imported**, because it
-      manages `org.springframework:spring-*` and nothing else — which is how the whole Framework family is raised without naming each artifact.
-    - **A CVE-remediation override is temporary by design: delete it once a Spring Boot release ships an equal or newer version.** Setting a BOM property name
-      in `gradle.properties` overrides it for every module applying the Boot plugin, which is how such an override is written — and an override kept past its
-      purpose pins the project _behind_ the BOM, so later Boot upgrades stop raising that dependency and the staleness is invisible. `/update-dependencies`
-      checks this on every run. Boot 4.1.1 emptied the block; it holds one entry again since 2026-09-17 — `netty.version`, raising the BOM's 4.2.17.Final to
-      4.2.18.Final for CVE-2026-89044, deletable as soon as a Boot release pins 4.2.18.Final or later.
-    - **`log4j-api.version` is deliberately not called `log4j2.version`, and `spring-framework-bom.version` not `spring-framework.version`.** Each is the BOM's
-      own property, and a pin `events-core` needs would silently become an override every Boot module resolves — the trap above, entered by naming rather than
-      by intent. **When pinning for `events-core`, check whether the name collides with a BOM property**; verifying only the two Boot modules reports success
-      either way.
-- Use `val` for injected dependencies; constructor injection only (no field injection).
-- Application config files use **`.yaml`** extension (not `.yml`).
-- Kotlin compiler flags: `-Xjsr305=strict` (all modules) and `-Xannotation-default-target=param-property` (BFF + importer) are set in `compilerOptions`.
-- **A Kotlin warning fails the build in CI, not locally.** The warning set is empty and stays that way because `build-backend.yml` sets
-  `ORG_GRADLE_PROJECT_warningsAsErrors=true` for its whole job, which the root `build.gradle.kts` turns into `allWarningsAsErrors` on every `KotlinCompile`
-  task (`main` and `test` alike). Locally it is off by default, deliberately: the warnings that appear unbidden come from a Kotlin or Spring Boot upgrade, and a
-  red local build punishes whoever runs the bump at the moment they can least act on it — in CI the same failure is a PR check.
-    - **Reproduce a CI failure locally with `./gradlew build -PwarningsAsErrors`**, and turn it off again with `-PwarningsAsErrors=false` (an explicit `false`
-      really disables it; the switch is not merely presence-based).
-    - **It does not cover the build scripts.** `build.gradle.kts` is compiled by Gradle's Kotlin DSL, not by these tasks, so a warning there only ever prints —
-      and Gradle caches the compiled script by content hash, so it prints exactly once and then never again until the file changes. If you are hunting one, add
-      a throwaway comment to bust the cache.
-- **Kover** (`org.jetbrains.kotlinx.kover`) is configured for code coverage reports. Run `./gradlew koverLog` for a console summary or
-  `./gradlew koverHtmlReport` for detailed HTML reports.
-    - **Exclusions live in three places, and filters never propagate between them.** A class hidden from one report is still counted in the others unless it is
-      excluded there too — this is the single thing to know before editing them.
-
-        | Where                                                                         | Scope                     | Holds                                                              |
-        | ----------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------ |
-        | root `build.gradle.kts`, `subprojects { configure<KoverProjectExtension> … }` | every module's own report | `de.norm.events.*Module`, `de.norm.events.*Fixtures`               |
-        | root `build.gradle.kts`, top-level `kover { }`                                | the aggregated report     | the shared patterns **again**, plus the events-core domain classes |
-        | `events-core/build.gradle.kts`, `kover { }`                                   | events-core's own report  | its plain domain data classes, by exact name                       |
-
-    - **What gets excluded, and why**: classes with no executable logic, whose synthetic members Kover would otherwise count as uncovered — Spring Modulith
-      `@ApplicationModule` markers (`*Module`), published `java-test-fixtures` factories (`*Fixtures`), and events-core's plain domain data classes. Everything
-      that carries logic stays measured.
-    - `*` **spans package segments** in a Kover class pattern, so `de.norm.events.*Module` matches `de.norm.events.meta.MetaModule`. That is why the domain data
-      classes are listed by exact name instead: a `de.norm.events.*Entity`-style pattern would silently swallow the BFF/importer persistence classes, which
-      _should_ be measured.
-    - Adding a new `*Module` marker or `*Fixtures` factory therefore needs no config change. Anything else does — in all three places.
-    - **`koverVerify` enforces a line-coverage floor per module**, and `check` (so `build`) runs it. Floors are set in `koverVerificationFloor(...)` in the root
-      `build.gradle.kts`, next to the number each module actually sits at.
-
-        | Module            | Actual | Floor |
-        | ----------------- | -----: | ----: |
-        | `events-core`     | 100.0% |    95 |
-        | `events-bff`      |  98.6% |    92 |
-        | `events-importer` |  95.4% |    90 |
-        | aggregate         |  95.6% |    90 |
-
-    - **They are floors, not targets, and the gap is deliberate.** A floor pinned to today's number fails the build for one uncovered line, which teaches people
-      to lower it — and a threshold that gets lowered on contact is worse than no threshold. These catch a _material_ regression: a feature landing untested, or
-      a test class quietly ceasing to run. **Do not raise a floor in the same PR that pushes the number up**; raise it when a module has held comfortably above
-      the next step for a while.
-    - **If `koverVerify` fails, write the test.** Lowering the floor is a decision to be argued for in the PR description, not a way to go green.
-    - **`-x test` implies `-x koverVerify`.** Skipping tests leaves no execution data, so every module reports 0% and the rule fails for a reason that has
-      nothing to do with coverage. `build-backend.yml` passes both flags in its build step and runs `koverVerify` in the coverage step instead, after `test`.
-      Any other `build -x test` invocation needs the same treatment.
-- **Kotlin idioms** (per [official coding conventions](https://kotlinlang.org/docs/coding-conventions.html)):
-    - **Trailing commas** at declaration sites (constructor params, function params, enum entries, collection literals) — produces cleaner VCS diffs.
-    - **Expression bodies** — prefer `fun foo() = expr` over `fun foo() { return expr }` for single-expression functions.
-    - **Named arguments** — use when a function has multiple parameters of the same type or Boolean parameters whose meaning isn't obvious from context.
-    - **Immutable collection interfaces** — declare parameters and return types as `List`, `Set`, `Map` (not `MutableList` etc.) when the collection is not
-      mutated. Use `listOf()`, `setOf()`, `mapOf()` factory functions.
-    - **Expression form of control flow** — prefer `if`/`when`/`try` as expressions returning a value over imperative `return` inside branches.
-    - **Higher-order functions over loops** — prefer `filter`, `map`, `flatMap`, `associate` over imperative `for` loops where readability is equal or better.
-    - **Default parameter values** — prefer over function overloads.
-    - **Scope functions** — use `let`, `apply`, `also`, `run`, `with` appropriately; avoid deep nesting of scope functions.
+- **No file carries the application version** (ADR-032). `scripts/version.sh compute` reads it from the release tags and the commits since the last one, and
+  every CI build passes it as `-Pversion=…`. `version` in `gradle.properties` is a `0.0.0-SNAPSHOT` placeholder, `package.json` holds `0.0.0`, and
+  `build.gradle.kts` must not assign `version` in `subprojects` — a leftover assignment silently wins over the flag. The site displays `GET /meta`, stamped
+  from the build.
+- **Versions live in two files, and nowhere in prose.** Plugin versions (Kotlin, ktlint, detekt, Kover) in `settings.gradle.kts` `pluginManagement`; library
+  versions in `gradle.properties`, read with `property("…")` — not root `extra[...]`, which Gradle 10 stops resolving from a parent project.
+    - **`gradle.properties` also holds "Pins that are not ordinary project versions"**, none BOM-managed and none bumped on sight. `scram` is a transitive of
+      `r2dbc-postgresql` raised by a `constraints` block in both Boot modules. `log4j-api` and `spring-framework-bom` exist because `events-core` applies
+      `io.spring.dependency-management` **without** the Boot plugin, so no Boot BOM reaches it and Modulith's transitives choose; importing the Boot BOM there
+      fails `compileKotlin` on a null plugin classpath, and `spring-framework-bom` is the one BOM that can be imported because it manages `spring-*` only.
+    - **A CVE-remediation override is temporary by design.** Setting a BOM property name in `gradle.properties` overrides it for every Boot module, and an
+      override kept past its purpose pins the project _behind_ the BOM invisibly. Delete it once a Boot release ships an equal or newer version;
+      `/update-dependencies` checks on every run. (`netty.version` is the current one, for CVE-2026-89044.)
+    - **`log4j-api.version` is deliberately not `log4j2.version`, and `spring-framework-bom.version` not `spring-framework.version`** — each is the BOM's own
+      property, and a pin `events-core` needs would silently become an override every Boot module resolves. Check a new pin's name against the BOM properties;
+      verifying only the Boot modules reports success either way.
+- **detekt: `settings.gradle.kts` is the only place a version is written.** `:detekt-rules` compiles against `the<DetektExtension>().toolVersion`
+  (`./gradlew :detekt-rules:detektToolVersion`), so a custom rule cannot be built against a different API than it is loaded with. The 2.0 pre-release line is
+  tracked deliberately because it supports current Kotlin. Overrides in root `detekt.yml` (`MaxLineLength: 160`; `.editorconfig` agrees).
+    - **`detekt`, `detektMain` and `detektTest` run different rules, and CI runs all three** (#407). `UnsafeCallOnNullableType`, `UseOrEmpty`,
+      `UnusedPrivateProperty`, `LongParameterList` need resolved types, so `detekt` alone silently _skips_ them.
+    - **Four rules are tuned for test sources in `detekt.yml`, each with its reason there** — a fixture builder's parameter list is the record it builds,
+      every `IgnoredReturnValue` is a `coVerify` recording, a test naming `Dispatchers.IO` _is_ the substitution `InjectDispatcher` asks for, `lateinit val`
+      does not exist. Read the file before a `@Suppress`.
+- **ktlint is enforced from the root `subprojects` block**; do not override per module. Package structure `de.norm.events.<module>` by feature, not layer.
+  Kotlin DSL for every build script; `.yaml`, not `.yml`, for application config; constructor injection into `val`s only; compiler flags `-Xjsr305=strict`
+  (all) and `-Xannotation-default-target=param-property` (Boot modules) in `compilerOptions`.
+- **A Kotlin warning fails the build in CI, not locally.** `build-backend.yml` sets `ORG_GRADLE_PROJECT_warningsAsErrors=true`, which the root build turns into
+  `allWarningsAsErrors` on every `KotlinCompile`. Off locally on purpose — unbidden warnings arrive with a Kotlin or Boot bump, and a red local build punishes
+  whoever runs it. **Reproduce with `./gradlew build -PwarningsAsErrors`**; `-PwarningsAsErrors=false` really disables it. It does not cover `build.gradle.kts`
+  itself, and Gradle caches the compiled script by hash, so a script warning prints once and never again until the file changes.
+- **Kover**: `koverLog` for a summary, `koverHtmlReport` for detail, and **`koverVerify` enforces a line-coverage floor per module** from
+  `koverVerificationFloor(...)` in the root `build.gradle.kts`, which runs under `check`.
+    - **Exclusions live in three places and never propagate**: the `subprojects { configure<KoverProjectExtension> … }` block (every module's own report), the
+      top-level `kover { }` (the aggregate — the shared patterns again, plus events-core's domain classes), `events-core/build.gradle.kts` (its own report).
+      Excluded: `*Module` markers, `*Fixtures` factories, events-core's plain data classes — nothing with logic. `*` spans package segments, so the data
+      classes are listed by exact name; a `*Entity` pattern would swallow the persistence classes. A new `*Module` or `*Fixtures` needs no change; anything
+      else needs all three.
+    - **Floors are floors, not targets, and the gap is deliberate.** A floor pinned to today's number fails on one uncovered line and teaches people to lower
+      it. Do not raise a floor in the PR that pushes the number up. **If `koverVerify` fails, write the test**; lowering is argued in the PR description.
+    - **`-x test` implies `-x koverVerify`** — no execution data, every module 0%. `build-backend.yml` passes both and runs `koverVerify` after `test`.
+- **Kotlin idioms** per the [official conventions](https://kotlinlang.org/docs/coding-conventions.html): trailing commas at declaration sites, expression
+  bodies, named arguments for same-typed or Boolean parameters, read-only collection interfaces, `if`/`when`/`try` as expressions, `filter`/`map` over loops
+  where readability holds, default values over overloads, scope functions without deep nesting.
