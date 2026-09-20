@@ -15,6 +15,10 @@ committer. A new CI capability is `ci`, a chart change `chore(deploy)` or `build
 `scripts/version.sh deserved` applies the same list: a `feat` outside it is a patch, listed as one. Two landed on `main` before the labeller became a
 required check. Without the list they made 0.18.0 of a cycle in which nothing on the site changed.
 
+**Amended by [ADR-032](ADR-032_VERSION_FROM_TAGS.md) (2026-09-20): the first constraint below, "the tag must equal `gradle.properties`", is
+superseded.** No file in the tree carries the version any more, and the raise and bump pull requests this ADR's decision opened no longer exist. The rule for
+how far the number moves is unchanged.
+
 **Does not supersede anything.** [ADR-016](ADR-016_GITOPS_DELIVERY.md) decided how a version reaches a cluster and constrained the snapshot scheme to
 order. It did not decide what number a release gets. [DEVELOPMENT.md §Versions](../DEVELOPMENT.md#versions-and-cutting-a-release) records the scheme
 and the four files. This ADR decides the one thing both left to a person: how far the number moves.
