@@ -58,7 +58,7 @@ class RenateWebsiteImporterTest {
             stubOverview()
             val result = importer.importEvents(overviewUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 13
+            result.events shouldHaveSize 14
             result.etag shouldBe "\"renate-etag\""
             result.lastModified shouldBe "Sat, 01 Aug 2026 03:00:00 GMT"
         }

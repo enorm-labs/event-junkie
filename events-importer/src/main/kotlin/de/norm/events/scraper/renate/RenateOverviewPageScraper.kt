@@ -39,6 +39,11 @@ import java.time.MonthDay
  * ([MAX_ACT_WORDS]); the venue mixes workshop schedules and multi-sentence policy text into the
  * same block, and those would otherwise be stored as DJs.
  *
+ * **A single-space night names no floor at all** — SENSUS lists eleven DJs under a bare `CLUB`
+ * badge with no heading (#1582). Then the one `.cat-btn` is the stage, but only when every line
+ * of the block reads as a name: a night that describes itself in prose under the same badge
+ * (House of Lunacy) still yields nothing.
+ *
  * @see RenateWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.renate.cc/">Renate Berlin</a>
  */
@@ -135,10 +140,11 @@ class RenateOverviewPageScraper(
      */
     private fun parseLineup(row: Element): List<ScrapedArtist> {
         val text = row.selectFirst(".prog-text") ?: return emptyList()
+        val lines = lineupLines(text)
         val artists = mutableListOf<ScrapedArtist>()
-        var stage: String? = null
+        var stage: String? = if (lines.none { floorNameOf(it) != null }) bareLineupStage(row, lines) else null
 
-        for (line in lineupLines(text)) {
+        for (line in lines) {
             val floor = floorNameOf(line)
             val current = stage
             when {
@@ -155,6 +161,20 @@ class RenateOverviewPageScraper(
         // for the same (event, artist) pair and hit that table's unique constraint, failing the
         // whole import — so the first billing wins, keeping its floor.
         return artists.distinctBy { it.name.lowercase() }
+    }
+
+    /**
+     * The stage for a block with no floor heading: the night's only space badge, when the block is
+     * nothing but names. `null` for a multi-space night (which floor?) or for prose.
+     */
+    private fun bareLineupStage(
+        row: Element,
+        lines: List<String>
+    ): String? {
+        val badges = row.select(".cat-btn").map { it.text().trim().uppercase() }.filter { it.isNotBlank() }
+        val names = lines.filter { it.isNotBlank() }
+        val readsAsLineup = names.size >= MIN_BARE_LINEUP_LINES && names.all { isActLine(it) && !SENTENCE_END.containsMatchIn(it) }
+        return badges.singleOrNull()?.takeIf { readsAsLineup }
     }
 
     /**
@@ -232,6 +252,11 @@ class RenateOverviewPageScraper(
 
         /** Longest an act line may be before it reads as prose rather than a name. */
         const val MAX_ACT_WORDS = 6
+
+        /** Fewer lines than this under a bare badge is a note, not a line-up. */
+        const val MIN_BARE_LINEUP_LINES = 3
+
+        val SENTENCE_END = Regex("""[.!?:,]$""")
 
         /** The back-to-back marker joining two DJs into one slot. */
         val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
