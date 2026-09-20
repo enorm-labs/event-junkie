@@ -115,7 +115,7 @@ class BarJederVernunftWebsiteImporterTest {
             concert.eventType shouldBe "CONCERT"
             concert.genre shouldBe "A cappella"
             concert.pricePresale shouldBe BigDecimal("12.90")
-            concert.artists shouldContainExactly listOf(ScrapedArtist(name = "The Happy Disharmonists", role = "HEADLINER"))
+            concert.artists shouldContainExactly listOf(ScrapedArtist(name = "The Happy Disharmonists", role = "HEADLINER", titleDerived = true))
         }
 
     @Test

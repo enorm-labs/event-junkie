@@ -52,7 +52,7 @@ class MikropolDetailPageScraperTest {
         event.ticketUrl.shouldNotBeNull() shouldStartWith "https://www.eventim.de/"
         event.artists shouldBe
             listOf(
-                ScrapedArtist("HOUSE OF PROTECTION", "HEADLINER"),
+                ScrapedArtist("HOUSE OF PROTECTION", "HEADLINER", titleDerived = true),
                 ScrapedArtist("noise of the voiceless", "SUPPORT")
             )
     }
@@ -65,7 +65,7 @@ class MikropolDetailPageScraperTest {
         event.title shouldBe "Vowws"
         event.status shouldBe "CANCELLED"
         event.soldOut shouldBe false
-        event.artists shouldBe listOf(ScrapedArtist("Vowws", "HEADLINER"))
+        event.artists shouldBe listOf(ScrapedArtist("Vowws", "HEADLINER", titleDerived = true))
     }
 
     @Test
@@ -75,7 +75,7 @@ class MikropolDetailPageScraperTest {
 
         event.title shouldBe "CULTURE WARS"
         event.status shouldBe "RELOCATED"
-        event.artists shouldBe listOf(ScrapedArtist("CULTURE WARS", "HEADLINER"))
+        event.artists shouldBe listOf(ScrapedArtist("CULTURE WARS", "HEADLINER", titleDerived = true))
     }
 
     @Test
@@ -88,7 +88,7 @@ class MikropolDetailPageScraperTest {
         event.startTime shouldBe LocalTime.of(20, 0)
         event.doorsTime shouldBe LocalTime.of(19, 0)
         event.description.shouldNotBeNull() shouldStartWith "Schwarz und Rosa"
-        event.artists shouldBe listOf(ScrapedArtist("DUEJA", "HEADLINER"))
+        event.artists shouldBe listOf(ScrapedArtist("DUEJA", "HEADLINER", titleDerived = true))
     }
 
     // The credit sits above the title as "<promoter> presents:"; a page without one stores none (#1532).

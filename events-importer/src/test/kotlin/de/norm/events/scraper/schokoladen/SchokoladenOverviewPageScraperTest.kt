@@ -118,8 +118,8 @@ class SchokoladenOverviewPageScraperTest {
 
             concert.artists shouldContainExactly
                 listOf(
-                    ScrapedArtist(name = "MOLOCH", role = "HEADLINER"),
-                    ScrapedArtist(name = "PINK WONDER", role = "HEADLINER")
+                    ScrapedArtist(name = "MOLOCH", role = "HEADLINER", titleDerived = true),
+                    ScrapedArtist(name = "PINK WONDER", role = "HEADLINER", titleDerived = true)
                 )
         }
 
@@ -127,7 +127,7 @@ class SchokoladenOverviewPageScraperTest {
         fun `strips a set-count note from a title-derived headliner`() {
             val event = scrape().first { it.sourceId == "schokoladen:e20260715" }
             event.title shouldBe "Toshìn & The Teleporters - 2 Sets!"
-            event.artists shouldContainExactly listOf(ScrapedArtist(name = "Toshìn & The Teleporters", role = "HEADLINER"))
+            event.artists shouldContainExactly listOf(ScrapedArtist(name = "Toshìn & The Teleporters", role = "HEADLINER", titleDerived = true))
         }
 
         @Test

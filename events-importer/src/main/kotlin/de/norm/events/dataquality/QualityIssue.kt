@@ -2,6 +2,16 @@ package de.norm.events.dataquality
 
 import de.norm.events.EVENTS_SCHEMA
 
+/** A title-derived headliner of `e` whose artist row is linked to exactly one event. */
+private const val ONE_EVENT_TITLE_DERIVED =
+    "SELECT 1 FROM $EVENTS_SCHEMA.event_artist ea JOIN $EVENTS_SCHEMA.artist a ON a.id = ea.artist_id " +
+        "WHERE ea.event_id = e.id AND ea.title_derived " +
+        "AND (SELECT COUNT(*) FROM $EVENTS_SCHEMA.event_artist ea2 WHERE ea2.artist_id = a.id) = 1"
+
+private const val TITLE_DERIVED_SINGLETON_PREDICATE = "EXISTS ($ONE_EVENT_TITLE_DERIVED AND lower(a.name) = lower(e.title))"
+
+private const val TITLE_DERIVED_UNMATCHED_PREDICATE = "EXISTS ($ONE_EVENT_TITLE_DERIVED AND a.musicbrainz_match = 'NONE')"
+
 /**
  * The metrics this pillar measures, and the single place each one's definition lives.
  *
@@ -76,7 +86,21 @@ enum class QualityIssue(
         Dimension.COMPLETENESS,
         "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_source es " +
             "WHERE es.id = e.event_source_id AND es.licence_reviewed_at IS NULL)"
-    );
+    ),
+
+    /**
+     * Events whose headliner was read off the title, plays nothing else, and is named exactly like
+     * the event (#1145). That is the signature of the night stored as an act — `Kein Bock auf
+     * Nazis`, `DLTLLY`, `Sadtember`, `Vinyl Reduction` all matched it before their fixes — and also
+     * of a real act on its first Berlin date, so the count is a queue to read, not a defect count.
+     */
+    TITLE_DERIVED_SINGLETONS(Dimension.ACCURACY, TITLE_DERIVED_SINGLETON_PREDICATE),
+
+    /**
+     * The same one-event, title-derived headliner, where MusicBrainz knows no artist of that name
+     * (ADR-031) instead of the name matching the title. Shorter and denser than the name test.
+     */
+    TITLE_DERIVED_UNMATCHED(Dimension.ACCURACY, TITLE_DERIVED_UNMATCHED_PREDICATE);
 
     /** The JSON name, and the `?issue=` value: `concertsWithoutArtist`. */
     val key: String =

@@ -82,7 +82,22 @@ data class SourceQualityMetrics(
     )
     val unreviewedLicence: Long,
     @Schema(description = "unreviewedLicence as a percentage of totalEvents", example = "100.0")
-    val unreviewedLicencePct: Double
+    val unreviewedLicencePct: Double,
+    @Schema(
+        description =
+            "Events whose headliner was read off the title, is linked to no other event, and is " +
+                "named exactly like the event (#1145) — the shape of a night stored as an act, " +
+                "and of a touring act on its first Berlin date. A queue to read, not a defect count",
+        example = "3"
+    )
+    val titleDerivedSingletons: Long,
+    @Schema(
+        description =
+            "Events whose headliner was read off the title, is linked to no other event, and has " +
+                "no MusicBrainz match (ADR-031). The denser half of the same queue",
+        example = "2"
+    )
+    val titleDerivedUnmatched: Long
 )
 
 /** One event failing one metric, in the shape a steward needs to decide whether to open it. */

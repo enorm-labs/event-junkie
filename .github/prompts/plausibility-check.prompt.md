@@ -100,7 +100,8 @@ Referential integrity (audit category 6) is invisible from the API. A row wrong 
 **The line-up gets its own pass, because a wrong artist is public twice** — the event line and `$ORIGIN/en/artists/<slug>` (#1110, `Kein Bock auf Nazis`).
 For every `lineup` name ask whether a person or band could be called that, and read it against `isNonArtistName` and `NON_ARTIST_NAMES` in
 `ArtistNameMapping.kt` before calling it NEW. One gig at one venue whose title is the name is the #1110 shape; a `CONCERT` whose page says the acts are
-unannounced must have an empty line-up.
+unannounced must have an empty line-up. The importer counts that shape itself since #1145 — `titleDerivedSingletons` and `titleDerivedUnmatched` in the
+data-quality report, per source, with the rows behind them on `/api/admin/data-quality/worklist` — so a hit here that the report already lists is KNOWN.
 
 ## Step 4 — Compare a sample against the source
 

@@ -65,7 +65,7 @@ class TempodromOverviewPageScraperTest {
         babyKeem.soldOut shouldBe false
         babyKeem.sourceUrl shouldStartWith "https://www.tempodrom.de/event/"
         babyKeem.imageUrl.shouldNotBeNull() shouldStartWith "https://www.tempodrom.de/"
-        babyKeem.artists shouldContainExactly listOf(ScrapedArtist("Baby Keem", "HEADLINER"))
+        babyKeem.artists shouldContainExactly listOf(ScrapedArtist("Baby Keem", "HEADLINER", titleDerived = true))
     }
 
     @Test
@@ -143,7 +143,7 @@ class TempodromOverviewPageScraperTest {
         // Decoding exposes the `&` to the co-bill splitter; this choir is one act, not two.
         val scala = events.first { it.title == "Scala & Kolacny Brothers" }
 
-        scala.artists shouldContainExactly listOf(ScrapedArtist("Scala & Kolacny Brothers", "HEADLINER"))
+        scala.artists shouldContainExactly listOf(ScrapedArtist("Scala & Kolacny Brothers", "HEADLINER", titleDerived = true))
     }
 
     @Test

@@ -53,7 +53,7 @@ class FestsaalApiScraperTest {
         elenaRose.ticketUrl shouldBe "https://ticket.deputamadreclub.eu/elena26bln/"
         elenaRose.status shouldBe "SCHEDULED"
         elenaRose.soldOut shouldBe false
-        elenaRose.artists shouldContainExactly listOf(ScrapedArtist("ELENA ROSE", "HEADLINER"))
+        elenaRose.artists shouldContainExactly listOf(ScrapedArtist("ELENA ROSE", "HEADLINER", titleDerived = true))
     }
 
     @Test
@@ -79,7 +79,7 @@ class FestsaalApiScraperTest {
         internationalMusic.genre shouldBe "Krautrock"
         internationalMusic.artists shouldContainExactly
             listOf(
-                ScrapedArtist("INTERNATIONAL MUSIC", "HEADLINER"),
+                ScrapedArtist("INTERNATIONAL MUSIC", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Gregor", "SUPPORT")
             )
     }
@@ -147,7 +147,7 @@ class FestsaalApiScraperTest {
         // signal in the title, so this stays a concert with its headliner intact.
         val wepaBunny = event("festsaal:wepa-bunny")
         wepaBunny.eventType shouldBe "CONCERT"
-        wepaBunny.artists shouldContainExactly listOf(ScrapedArtist("¡Wepa! Bunny", "HEADLINER"))
+        wepaBunny.artists shouldContainExactly listOf(ScrapedArtist("¡Wepa! Bunny", "HEADLINER", titleDerived = true))
     }
 
     @Test

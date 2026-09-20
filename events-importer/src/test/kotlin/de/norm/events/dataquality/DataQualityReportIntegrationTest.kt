@@ -32,6 +32,9 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
      *
      * `alpha` — 3 events: one clean concert, one concert with no artist, one typed OTHER.
      * `beta`  — 2 events: both concerts with no artist, one with no start time, one free.
+     * `gamma` — 6 events: the four series-as-artist shapes #1145 was filed on, each a title-derived
+     *           one-event headliner named like its event (two of them unknown to MusicBrainz), plus a
+     *           title-derived act billed twice and a line-up act named like its event — neither counts.
      * manual  — 1 event: a concert with an artist whose name the vocabulary rejects.
      */
     @BeforeEach
@@ -59,6 +62,19 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
             val manual = insertEvent(null, venueId, "manual-one", genre = "Pop", price = "5.00", startTime = "19:00")
             linkArtist(manual, insertArtist("TBA"))
             linkPromoter(manual, insertPromoter("Another Promoter"))
+
+            val gamma = insertSource("gamma", venueId)
+            listOf("Kein Bock auf Nazis" to "NONE", "DLTLLY" to "NONE", "Sadtember" to "UNCHECKED", "Vinyl Reduction" to "EXACT")
+                .forEachIndexed { i, (night, verdict) ->
+                    val event = insertEvent(gamma, venueId, "gamma-night-$i", title = night)
+                    linkArtist(event, insertArtist(night, musicbrainzMatch = verdict), titleDerived = true)
+                }
+            // Title-derived and named like the event, but billed on two nights: a real act, not a night.
+            val touring = insertArtist("Touring Act", musicbrainzMatch = "NONE")
+            linkArtist(insertEvent(gamma, venueId, "gamma-tour-1", title = "Touring Act"), touring, titleDerived = true)
+            linkArtist(insertEvent(gamma, venueId, "gamma-tour-2", title = "Touring Act"), touring, titleDerived = true)
+            // Named like the event and unknown to MusicBrainz, but read off a line-up element: not the queue's shape.
+            linkArtist(insertEvent(gamma, venueId, "gamma-lineup", title = "Lineup Act"), insertArtist("Lineup Act", musicbrainzMatch = "NONE"))
         }
 
     @Test
@@ -67,7 +83,7 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
             val report = service.report()
             val bySource = report.perSource.associateBy { it.source }
 
-            bySource.keys shouldBe setOf("alpha", "beta", "manual")
+            bySource.keys shouldBe setOf("alpha", "beta", "gamma", "manual")
 
             val alpha = bySource.getValue("alpha")
             alpha.totalEvents shouldBe 3L
@@ -86,6 +102,12 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
             // `beta-two` is free, so it is not missing a price — only `beta-one` is.
             beta.missingPrice shouldBe 1L
             beta.missingStartTime shouldBe 1L
+
+            val gamma = bySource.getValue("gamma")
+            gamma.titleDerivedSingletons shouldBe 4L
+            gamma.titleDerivedUnmatched shouldBe 2L
+            alpha.titleDerivedSingletons shouldBe 0L
+            report.overall.titleDerivedSingletons shouldBe 4L
         }
 
     /**
@@ -100,7 +122,7 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
 
             manual.totalEvents shouldBe 1L
             manual.concertsWithoutArtist shouldBe 0L
-            report.overall.totalEvents shouldBe 6L
+            report.overall.totalEvents shouldBe 13L
         }
 
     /**
@@ -114,7 +136,8 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
 
             report.perSource.single { it.source == "manual" }.suspectNonArtistTitles shouldBe 1L
             report.perSource.single { it.source == "alpha" }.suspectNonArtistTitles shouldBe 0L
-            report.overall.suspectNonArtistTitles shouldBe 1L
+            // `gamma` carries the four names #1145 was filed on, and the vocabulary has since learned some of them.
+            report.overall.suspectNonArtistTitles shouldBe report.perSource.sumOf { it.suspectNonArtistTitles }
         }
 
     @Test
@@ -126,6 +149,16 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
             list.entries.map { it.slug }.toSet() shouldBe setOf("alpha-no-artist", "beta-one", "beta-two")
             // The count and the list are the same predicate, and this is what keeps them that way.
             list.count.toLong() shouldBe service.report().overall.concertsWithoutArtist
+        }
+
+    @Test
+    fun `the title-derived queue lists the four known shapes and neither control`(): Unit =
+        runBlocking {
+            val singletons = service.worklist(QualityIssue.TITLE_DERIVED_SINGLETONS, source = null, limit = 50, offset = 0)
+            singletons.entries.map { it.slug }.toSet() shouldBe setOf("gamma-night-0", "gamma-night-1", "gamma-night-2", "gamma-night-3")
+
+            val unmatched = service.worklist(QualityIssue.TITLE_DERIVED_UNMATCHED, source = null, limit = 50, offset = 0)
+            unmatched.entries.map { it.slug }.toSet() shouldBe setOf("gamma-night-0", "gamma-night-1")
         }
 
     @Test
@@ -170,10 +203,15 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
             ).map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
             .awaitSingle()
 
-    private suspend fun insertArtist(name: String): Long =
+    private suspend fun insertArtist(
+        name: String,
+        musicbrainzMatch: String = "UNCHECKED"
+    ): Long =
         databaseClient
-            .sql("INSERT INTO events.artist (name, slug) VALUES ('$name', '${name.lowercase().replace(' ', '-')}') RETURNING id")
-            .map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
+            .sql(
+                "INSERT INTO events.artist (name, slug, musicbrainz_match) " +
+                    "VALUES ('$name', '${name.lowercase().replace(' ', '-')}', '$musicbrainzMatch') RETURNING id"
+            ).map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
             .awaitSingle()
 
     private suspend fun insertPromoter(name: String): Long =
@@ -191,14 +229,15 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
         genre: String? = null,
         price: String? = null,
         startTime: String? = null,
-        free: Boolean = false
+        free: Boolean = false,
+        title: String = slug
     ): Long =
         databaseClient
             .sql(
                 """
                 INSERT INTO events.event (venue_id, event_source_id, title, event_type, slug, event_date,
                                           start_time, source_id, genre, price_presale, free)
-                VALUES ($venueId, ${sourceId ?: "NULL"}, '$slug', '$eventType', '$slug', DATE '2026-09-12',
+                VALUES ($venueId, ${sourceId ?: "NULL"}, '$title', '$eventType', '$slug', DATE '2026-09-12',
                         ${startTime?.let { "TIME '$it'" } ?: "NULL"}, '$slug', ${genre?.let { "'$it'" } ?: "NULL"},
                         ${price ?: "NULL"}, $free)
                 RETURNING id
@@ -208,8 +247,11 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
 
     private suspend fun linkArtist(
         eventId: Long,
-        artistId: Long
-    ) = databaseClient.sql("INSERT INTO events.event_artist (event_id, artist_id) VALUES ($eventId, $artistId)").await()
+        artistId: Long,
+        titleDerived: Boolean = false
+    ) = databaseClient
+        .sql("INSERT INTO events.event_artist (event_id, artist_id, title_derived) VALUES ($eventId, $artistId, $titleDerived)")
+        .await()
 
     private suspend fun linkPromoter(
         eventId: Long,

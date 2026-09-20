@@ -53,7 +53,7 @@ class ColumbiaTheaterDetailPageScraperTest {
         soulfly.description.shouldNotBeNull() shouldStartWith "Mit der Tribal Technology Tour 2026"
         soulfly.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Soulfly", "HEADLINER"),
+                ScrapedArtist("Soulfly", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Botulism", "SUPPORT")
             )
         soulfly.promoters.shouldBeEmpty()
@@ -76,7 +76,7 @@ class ColumbiaTheaterDetailPageScraperTest {
             "https://www.eventim.de/event/temples-2026-uk-eu-bliss-tour-columbia-theater-21537121/?affiliate=SZ3"
         temples.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Temples", "HEADLINER"),
+                ScrapedArtist("Temples", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Jewls", "SUPPORT")
             )
     }
@@ -90,7 +90,7 @@ class ColumbiaTheaterDetailPageScraperTest {
         oreillys.startTime shouldBe LocalTime.of(20, 0)
         oreillys.artists shouldContainExactly
             listOf(
-                ScrapedArtist("The O'Reillys and The Paddyhats", "HEADLINER"),
+                ScrapedArtist("The O'Reillys and The Paddyhats", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Harpyie", "SUPPORT")
             )
     }

@@ -78,7 +78,9 @@ data class EventArtistEntity(
     val role: String = ArtistRole.HEADLINER.name,
     val billingOrder: Int = 0,
     /** Room / stage the artist plays at this event (e.g. "Panorama Bar"). Null for single-room venues. */
-    val stage: String? = null
+    val stage: String? = null,
+    /** The name was read off the event title (#1145); see `ScrapedArtist.titleDerived`. */
+    val titleDerived: Boolean = false
 )
 
 /**

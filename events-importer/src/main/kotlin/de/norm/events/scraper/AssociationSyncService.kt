@@ -195,11 +195,10 @@ class AssociationSyncService(
                 val current = existingByArtistId[artistId]
                 if (current == null) {
                     toInsert.add(desired)
-                } else if (current.role != desired.role ||
-                    current.billingOrder != desired.billingOrder ||
-                    current.stage != desired.stage
-                ) {
-                    toUpdate.add(current.copy(role = desired.role, billingOrder = desired.billingOrder, stage = desired.stage))
+                } else {
+                    // The row keeps its id; everything the scrape decides is compared at once.
+                    val updated = desired.copy(id = current.id)
+                    if (updated != current) toUpdate.add(updated)
                 }
             }
 

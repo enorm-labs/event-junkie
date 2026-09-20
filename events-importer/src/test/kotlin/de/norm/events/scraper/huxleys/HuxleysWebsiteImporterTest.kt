@@ -138,7 +138,7 @@ class HuxleysWebsiteImporterTest {
         runTest {
             event(importer.importEvents(overviewUrl), "2026-08-02-thievery-corporation").artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("Thievery Corporation", "HEADLINER"),
+                    ScrapedArtist("Thievery Corporation", "HEADLINER", titleDerived = true),
                     ScrapedArtist("PECES RAROS", "SUPPORT")
                 )
         }

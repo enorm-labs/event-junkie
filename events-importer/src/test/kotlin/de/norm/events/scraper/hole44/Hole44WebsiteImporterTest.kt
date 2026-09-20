@@ -113,7 +113,7 @@ class Hole44WebsiteImporterTest {
             municipal.startTime shouldBe LocalTime.of(20, 0)
             municipal.artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("Municipal Waste", "HEADLINER"),
+                    ScrapedArtist("Municipal Waste", "HEADLINER", titleDerived = true),
                     ScrapedArtist("Battlecreek", "SUPPORT")
                 )
         }

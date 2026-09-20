@@ -76,8 +76,9 @@ class DataQualitySnapshotIntegrationTest : BaseControllerTest() {
 
             val rows = snapshots.findBySnapshotDate(today).toList()
             rows.map { it.sourceSlug }.toSet() shouldBe setOf("alpha")
-            // totalEvents + seven QualityIssue metrics + suspectNonArtistTitles.
-            rows.size shouldBe 9
+            // totalEvents + every QualityIssue metric + suspectNonArtistTitles.
+            rows.size shouldBe QualityIssue.entries.size + 2
+            rows.single { it.metric == "titleDerivedSingletons" }.metricCount shouldBe 0L
             rows.single { it.metric == "totalEvents" }.metricCount shouldBe 1L
             rows.single { it.metric == "concertsWithoutArtist" }.metricCount shouldBe 1L
             // The seeded source has no licence_reviewed_at, which is the state every source is in

@@ -49,7 +49,17 @@ interface DataQualityRepository : CoroutineCrudRepository<EventEntity, Long> {
             COUNT(*) FILTER (WHERE e.start_time IS NULL)                   AS missing_start_time,
             COUNT(*) FILTER (WHERE EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_source es
                 WHERE es.id = e.event_source_id AND es.licence_reviewed_at IS NULL))
-                                                                           AS unreviewed_licence
+                                                                           AS unreviewed_licence,
+            COUNT(*) FILTER (WHERE EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_artist ea
+                JOIN $EVENTS_SCHEMA.artist a ON a.id = ea.artist_id
+                WHERE ea.event_id = e.id AND ea.title_derived AND lower(a.name) = lower(e.title)
+                AND (SELECT COUNT(*) FROM $EVENTS_SCHEMA.event_artist ea2 WHERE ea2.artist_id = a.id) = 1))
+                                                                           AS title_derived_singletons,
+            COUNT(*) FILTER (WHERE EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_artist ea
+                JOIN $EVENTS_SCHEMA.artist a ON a.id = ea.artist_id
+                WHERE ea.event_id = e.id AND ea.title_derived AND a.musicbrainz_match = 'NONE'
+                AND (SELECT COUNT(*) FROM $EVENTS_SCHEMA.event_artist ea2 WHERE ea2.artist_id = a.id) = 1))
+                                                                           AS title_derived_unmatched
         FROM $EVENTS_SCHEMA.event e
         GROUP BY e.event_source_id
         """
@@ -90,7 +100,9 @@ data class SourceQualityRow(
     val missingPromoter: Long,
     val missingPrice: Long,
     val missingStartTime: Long,
-    val unreviewedLicence: Long
+    val unreviewedLicence: Long,
+    val titleDerivedSingletons: Long,
+    val titleDerivedUnmatched: Long
 )
 
 /** One `(source, artist name)` pair — see [DataQualityRepository.artistNamesPerSource]. */

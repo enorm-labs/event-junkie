@@ -56,8 +56,8 @@ class NeueZukunftApiScraperTest {
         backengrillen.sourceUrl shouldBe "https://neue-zukunft.org/"
         backengrillen.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Backengrillen", "HEADLINER"),
-                ScrapedArtist("Stinking Lizaveta", "HEADLINER")
+                ScrapedArtist("Backengrillen", "HEADLINER", titleDerived = true),
+                ScrapedArtist("Stinking Lizaveta", "HEADLINER", titleDerived = true)
             )
     }
 
@@ -95,8 +95,8 @@ class NeueZukunftApiScraperTest {
         tvod.imageUrl.shouldStartWith("https://dice-media.imgix.net/attachments/2026-03-16/")
         tvod.artists shouldContainExactly
             listOf(
-                ScrapedArtist("TVOD", "HEADLINER"),
-                ScrapedArtist("Twiggy", "HEADLINER")
+                ScrapedArtist("TVOD", "HEADLINER", titleDerived = true),
+                ScrapedArtist("Twiggy", "HEADLINER", titleDerived = true)
             )
     }
 
@@ -109,8 +109,8 @@ class NeueZukunftApiScraperTest {
         minimal.soldOut shouldBe false
         minimal.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Daniela Ljungsberg", "HEADLINER"),
-                ScrapedArtist("Shaul Dahan", "HEADLINER")
+                ScrapedArtist("Daniela Ljungsberg", "HEADLINER", titleDerived = true),
+                ScrapedArtist("Shaul Dahan", "HEADLINER", titleDerived = true)
             )
     }
 

@@ -85,6 +85,8 @@ class DataQualityReportLogger(
                     "${overall.missingPromoter} without promoter, ${overall.missingPrice} without price, " +
                     "${overall.missingStartTime} without start time, " +
                     "${overall.suspectNonArtistTitles} suspect artist names, " +
+                    "${overall.titleDerivedSingletons} title-named one-event headliners " +
+                    "(${overall.titleDerivedUnmatched} unknown to MusicBrainz), " +
                     "${overall.unreviewedLicence} from unreviewed sources (${overall.unreviewedLicencePct}%) — " +
                     "${rows.size} snapshot rows for $today across ${report.perSource.size} source(s)"
             }
@@ -115,6 +117,8 @@ class DataQualityReportLogger(
             QualityIssue.MISSING_PRICE.key to source.missingPrice,
             QualityIssue.MISSING_START_TIME.key to source.missingStartTime,
             QualityIssue.UNREVIEWED_LICENCE.key to source.unreviewedLicence,
+            QualityIssue.TITLE_DERIVED_SINGLETONS.key to source.titleDerivedSingletons,
+            QualityIssue.TITLE_DERIVED_UNMATCHED.key to source.titleDerivedUnmatched,
             SUSPECT_NON_ARTIST_TITLES to source.suspectNonArtistTitles
         )
 

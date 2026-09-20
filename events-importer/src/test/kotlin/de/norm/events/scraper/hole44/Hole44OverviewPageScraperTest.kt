@@ -54,7 +54,7 @@ class Hole44OverviewPageScraperTest {
         kang.genre shouldBe "K-Pop"
         kang.status shouldBe "SCHEDULED"
         kang.sourceUrl shouldBe "https://hole-berlin.de/event/2026-07-27-kang-yuchan/"
-        kang.artists shouldContainExactly listOf(ScrapedArtist("KANG YUCHAN", "HEADLINER"))
+        kang.artists shouldContainExactly listOf(ScrapedArtist("KANG YUCHAN", "HEADLINER", titleDerived = true))
     }
 
     @Test
@@ -65,7 +65,7 @@ class Hole44OverviewPageScraperTest {
         municipal.startTime shouldBe LocalTime.of(20, 0)
         municipal.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Municipal Waste", "HEADLINER"),
+                ScrapedArtist("Municipal Waste", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Battlecreek", "SUPPORT")
             )
     }

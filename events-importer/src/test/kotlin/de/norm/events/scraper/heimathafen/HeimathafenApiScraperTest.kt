@@ -226,7 +226,7 @@ class HeimathafenApiScraperTest {
             .scrape(json)
             .events
             .single()
-            .artists shouldContainExactly listOf(ScrapedArtist("DRANGSAL", "HEADLINER"))
+            .artists shouldContainExactly listOf(ScrapedArtist("DRANGSAL", "HEADLINER", titleDerived = true))
     }
 
     @Test
