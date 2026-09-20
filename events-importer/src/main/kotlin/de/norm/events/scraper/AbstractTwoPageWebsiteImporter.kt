@@ -2,8 +2,10 @@ package de.norm.events.scraper
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.jsoup.nodes.Document
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Abstract base class for venue importers that follow the overview → detail page pattern:
@@ -90,23 +92,51 @@ abstract class AbstractTwoPageWebsiteImporter(
         return resolved
     }
 
+    /**
+     * Degrades to the overview row when the detail page is unavailable — except for a row that has
+     * no date without it (a Kulturhäuser featured teaser, #312), which is dropped rather than
+     * degraded, so that one gets a second fetch after [RETRY_PAUSE] before the run gives up on it.
+     */
     @Suppress("TooGenericExceptionCaught") // Intentional: degrade to overview data if detail page is unavailable
-    private suspend fun parseDetailOrFallback(overview: ScrapedEvent): ScrapedEvent =
-        try {
-            val detailDoc = htmlFetcher.fetchDocument(overview.sourceUrl)
-            // The scope opens AFTER the fetch, deliberately: the fetch already writes `url` as a
-            // payload field, and a line inside both would carry the key twice (#982). Everything
-            // inside is the scraper's own parsing, which is what needed the URL and never had it.
-            withContext(LogContext.forPage(overview.sourceUrl)) {
-                val detail = scrapeDetail(detailDoc, overview.sourceUrl)
-                if (detail != null) fillGapsFromOverview(primary = detail, fallback = overview) else overview
+    private suspend fun parseDetailOrFallback(overview: ScrapedEvent): ScrapedEvent {
+        val attempts = if (overview.eventDate == UNRESOLVED_EVENT_DATE) DATELESS_ATTEMPTS else 1
+        repeat(attempts) { attempt ->
+            try {
+                return mergeDetail(overview)
+            } catch (e: Exception) {
+                val last = attempt == attempts - 1
+                logger.at(Level.WARN) {
+                    message =
+                        if (last) {
+                            "Failed to fetch detail page for '${overview.title}', using overview data"
+                        } else {
+                            "Failed to fetch detail page for '${overview.title}', which has no date without it; retrying once"
+                        }
+                    cause = e
+                    payload = mapOf(LogFields.URL to overview.sourceUrl, LogFields.EVENT_SOURCE_ID to overview.sourceId)
+                }
+                if (!last) delay(RETRY_PAUSE)
             }
-        } catch (e: Exception) {
-            logger.at(Level.WARN) {
-                message = "Failed to fetch detail page for '${overview.title}', using overview data"
-                cause = e
-                payload = mapOf(LogFields.URL to overview.sourceUrl, LogFields.EVENT_SOURCE_ID to overview.sourceId)
-            }
-            overview
         }
+        return overview
+    }
+
+    private suspend fun mergeDetail(overview: ScrapedEvent): ScrapedEvent {
+        val detailDoc = htmlFetcher.fetchDocument(overview.sourceUrl)
+        // The scope opens AFTER the fetch, deliberately: the fetch already writes `url` as a
+        // payload field, and a line inside both would carry the key twice (#982). Everything
+        // inside is the scraper's own parsing, which is what needed the URL and never had it.
+        return withContext(LogContext.forPage(overview.sourceUrl)) {
+            val detail = scrapeDetail(detailDoc, overview.sourceUrl)
+            if (detail != null) fillGapsFromOverview(primary = detail, fallback = overview) else overview
+        }
+    }
+
+    private companion object {
+        /** Fetches for a row whose date lives only on its detail page. */
+        const val DATELESS_ATTEMPTS = 2
+
+        /** Long enough for a momentary refusal to pass; short enough not to stall the run. */
+        val RETRY_PAUSE = 5.seconds
+    }
 }
