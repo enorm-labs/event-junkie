@@ -14,6 +14,7 @@ import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripArtistSuffix
+import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -83,14 +84,7 @@ class KaterOverviewPageScraper(
         baseUrl: String
     ): ScrapedEvent? {
         val eventId = EVENT_ID_PATTERN.find(article.id())?.groupValues?.get(1) ?: return null
-        val title =
-            article
-                .selectFirst(".date-title")
-                ?.text()
-                ?.trim()
-                ?.takeIf { it.isNotBlank() }
-                ?.let(::cleanEventTitle)
-                ?: return null
+        val title = article.textAt(".date-title")?.let(::cleanEventTitle) ?: return null
 
         val lines = summaryLines(article)
         val schedule = lines.firstOrNull()?.let(::parseSchedule)

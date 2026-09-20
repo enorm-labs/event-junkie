@@ -9,6 +9,7 @@ import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseGermanShortDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.parseTitleStatus
+import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -54,12 +55,7 @@ class BadehausDetailPageScraper {
         sourceUrl: String
     ): ScrapedEvent? {
         val event = document.selectFirst(".em-event-single") ?: return null
-        val title =
-            event
-                .selectFirst("h1")
-                ?.text()
-                ?.trim()
-                ?.takeIf { it.isNotBlank() }
+        val title = event.textAt("h1")
         if (title.isNullOrBlank()) {
             logger.warn { "Detail page has no event title, skipping" }
             return null
