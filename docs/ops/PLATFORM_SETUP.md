@@ -760,7 +760,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `images.derivatives.backlog`                   | Gauge                                 | Stored images still short of their variants. **No alert** — see below              |
 | `images.fetch{outcome}`                        | Counter                               | fetched / unchanged / failed                                                       |
 | `images.derivatives{outcome}`                  | Counter                               | written / refused, counted in files rather than images                             |
-| `importer.musicbrainz.lookups{state}`          | Counter                               | exact / ambiguous / none / error — the shares ADR-031 rests on, and its outages    |
+| `importer.musicbrainz.lookups{state}`          | Counter                               | exact / ambiguous / none / error — the ADR-031 shares, and the rows given up on    |
 | `importer.musicbrainz.unchecked`               | Gauge                                 | Artist rows still owed a verdict. Drains after the columns land; then a flat zero  |
 | `images.sweep.candidates{kind}`                | Gauge                                 | What the last sweep would delete, whether or not it may. rows / strays             |
 | `images.sweep.deleted{kind}`                   | Counter                               | What it removed. Moves only while `app.images.sweep.enabled` is on                 |

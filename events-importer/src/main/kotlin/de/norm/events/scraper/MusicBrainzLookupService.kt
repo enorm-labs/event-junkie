@@ -68,22 +68,27 @@ class MusicBrainzLookupService(
         }
     }
 
-    /** One lookup per row until MusicBrainz stops answering; the rows after that wait for the next run. */
+    /**
+     * One lookup per row. A row MusicBrainz will not answer for is counted and left for the next
+     * run; the run itself stops only after [STOP_AFTER_CONSECUTIVE_FAILURES] such rows in a row,
+     * which is an outage rather than a burst (#1610).
+     */
     private suspend fun storeVerdicts(
         source: EventSourceEntity,
         candidates: List<ArtistEntity>
     ): Int {
         var stored = 0
+        var consecutiveFailures = 0
         for (artist in candidates) {
-            val verdictStored =
-                try {
-                    lookup(artist)
-                } catch (e: MusicBrainzUnavailableException) {
-                    metrics.recordMusicBrainzLookup(STATE_ERROR)
-                    logger.warn { "MusicBrainz unavailable after $stored of ${candidates.size} lookup(s) for '${source.slug}': ${e.message}" }
-                    break
-                }
-            if (verdictStored) stored++
+            try {
+                if (lookup(artist)) stored++
+                consecutiveFailures = 0
+            } catch (e: MusicBrainzUnavailableException) {
+                metrics.recordMusicBrainzLookup(STATE_ERROR)
+                consecutiveFailures++
+                logger.warn { "MusicBrainz unavailable for '${artist.name}' ($consecutiveFailures in a row) during '${source.slug}': ${e.message}" }
+                if (consecutiveFailures >= STOP_AFTER_CONSECUTIVE_FAILURES) break
+            }
         }
         logger.info { "Stored $stored MusicBrainz verdict(s) of ${candidates.size} owed after '${source.slug}'" }
         return stored
@@ -111,20 +116,32 @@ class MusicBrainzLookupService(
         val id = artist.id ?: return false
         val verdict = MusicBrainzMatcher.decide(artist.name, client.search(artist.name))
         metrics.recordMusicBrainzLookup(verdict.match.name.lowercase())
-        if (verdict.match == MusicBrainzMatch.NONE) reportHead(artist.name)
         artistRepository.storeMusicBrainzVerdict(id, verdict.match.name, verdict.musicbrainzId)
+        if (verdict.match == MusicBrainzMatch.NONE) reportHead(artist.name)
         return true
     }
 
-    /** The head pass of ADR-031: reported, counted, and not stored in this step. */
+    /**
+     * The head pass of ADR-031: reported, counted, and not stored in this step. It runs after the
+     * verdict is stored and swallows its own outage, so a burst here costs a log line, never a row.
+     */
     private suspend fun reportHead(name: String) {
         val head = MusicBrainzMatcher.headOf(name) ?: return
-        val verdict = MusicBrainzMatcher.decide(head, client.search(head))
+        val candidates =
+            try {
+                client.search(head)
+            } catch (e: MusicBrainzUnavailableException) {
+                metrics.recordMusicBrainzHead(STATE_ERROR)
+                logger.info { "Head '$head' of '$name' not looked up: ${e.message}" }
+                return
+            }
+        val verdict = MusicBrainzMatcher.decide(head, candidates)
         metrics.recordMusicBrainzHead(verdict.match.name.lowercase())
         logger.info { "Head '$head' of '$name' is ${verdict.match} in MusicBrainz${verdict.musicbrainzId?.let { " ($it)" }.orEmpty()}" }
     }
 
     private companion object {
         const val STATE_ERROR = "error"
+        const val STOP_AFTER_CONSECUTIVE_FAILURES = 3
     }
 }
