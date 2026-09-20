@@ -1,29 +1,22 @@
 # Plausibility Check
 
 Read the events the public site publishes for the next days, check each row for what cannot be right, compare a sample against the venue's own page, and
-write a report. **Read-only, outside-in, and it files nothing**: the site's API is the input, the venue's page is the reference, and the report is the whole
-deliverable. A person reads it and decides what becomes an issue.
-
-This is the sibling of [`/data-quality-audit`](data-quality-audit.prompt.md), which reads the database from the inside and needs one running locally. This
-one needs a URL and a network, so it runs against staging or production, and it runs from a schedule.
+write a report. **Read-only, outside-in, and it files nothing**: the API is the input, the venue's page is the reference, the report is the deliverable, and a
+person decides what becomes an issue. The sibling of [`/data-quality-audit`](data-quality-audit.prompt.md), which reads the database from inside.
 
 ## Important
 
-- **Two halves, and the cheap one runs first.** The plausibility checks in Step 3 need nothing but the rows the API returns — no fetch, no model, no
-  judgement. The source comparison in Step 4 fetches a venue's page, and is rationed. Most findings come from Step 3, and Step 4 is pointed at what Step 3
-  flagged rather than at everything.
-- **Step 4 scrapes venue websites, from wherever this runs.** ADR-007's politeness rules apply exactly as they do to the importer, and the importer's own
-  User-Agent is the one to send: `Mozilla/5.0 (compatible; EventJunkie/1.0; +https://github.com/enorm-labs/event-junkie)` (`SCRAPER_USER_AGENT` in
-  `ScraperHttpClientConfig.kt`). One request per event, one second between requests to the same host, no retries, and a sample cap. Fetch only a `sourceUrl`
-  the site itself publishes — a page the importer already fetched under its robots check — and never crawl from it.
-- **A finding that matches [`docs/data-quality/ACCEPTED_LIMITATIONS.md`](../../docs/data-quality/ACCEPTED_LIMITATIONS.md) is KNOWN, not NEW.** The table is
-  keyed by source slug and aspect, and the aspects are `LimitedAspect` in `AcceptedLimitation.kt` — the same names Step 3 keys its checks by. The API shows the venue, not the source: match by venue name, and say so when a venue has more than one source. Open importer defects are
-  the second register: `grep -i '<venue>' build/BACKLOG.md`, or `gh issue list --label importer --search '<venue>'`.
-- **Never write.** Not to the database, not to the tracker, not to the tree. Issue drafts go in the report, in the shape of the 🔍 Importer / data defect
-  form, and a person files them with [`/new-issue`](new-issue.prompt.md) after reading the evidence.
-- **A site that cannot be reached is a finding, not an empty report.** If `/api/meta` does not answer, say that and stop. A clean report from a dead origin is
-  the worst output this prompt can produce.
-- `git` and `gh` non-interactively (`git --no-pager …`); see AGENTS.md.
+- **Two halves; the cheap one runs first.** Step 3 needs only the rows the API returns. Step 4 fetches venue pages, is rationed, and is pointed at what
+  Step 3 flagged.
+- **Step 4 scrapes venue websites.** ADR-007's politeness rules apply: the importer's User-Agent
+  `Mozilla/5.0 (compatible; EventJunkie/1.0; +https://github.com/enorm-labs/event-junkie)`, one request per event, one second between requests to a host,
+  no retries, a sample cap. Fetch only a `sourceUrl` the site publishes; never crawl from it.
+- **A finding that matches [`ACCEPTED_LIMITATIONS.md`](../../docs/data-quality/ACCEPTED_LIMITATIONS.md) is KNOWN, not NEW.** The table is keyed by source slug
+  and aspect (`LimitedAspect` in `AcceptedLimitation.kt`, the same names Step 3 uses); the API shows the venue, so match by venue name and say so when a venue
+  has more than one source. Open importer defects are the second register: `gh issue list --label importer --search '<venue>'`.
+- **Never write** — not the database, the tracker or the tree. Issue drafts go in the report in the 🔍 Importer / data defect form's shape.
+- **A site that cannot be reached is a finding, not an empty report.** If `/api/meta` does not answer, say so and stop.
+- `git --no-pager`, `gh` non-interactive.
 
 ## Arguments
 
@@ -31,11 +24,9 @@ one needs a URL and a network, so it runs against staging or production, and it 
 /plausibility-check [origin] [--days N] [--sample N] [--unattended]
 ```
 
-- **`origin`** — the site to check, scheme included. Defaults to `$SITE_URL`, then to `https://event-junkie.de`. Staging is reachable only through WireGuard
-  (`docs/ops/CLUSTER_ACCESS.md`), so a local run against it needs the tunnel up first.
-- **`--days N`** — the window, counted from today in `Europe/Berlin`. Default `2`: today and tomorrow. The site's day is Berlin's, and a runner's clock is
-  UTC, so always `TZ=Europe/Berlin date +%F` rather than `date +%F`.
-- **`--sample N`** — how many source pages Step 4 may fetch. Default `20`. This is the cost ceiling on the venues' side, and the reason the default is small.
+- **`origin`** — scheme included; defaults to `$SITE_URL`, then `https://event-junkie.de`. Staging needs the WireGuard tunnel (`docs/ops/CLUSTER_ACCESS.md`).
+- **`--days N`** — the window from today in `Europe/Berlin` (default `2`). A runner's clock is UTC: always `TZ=Europe/Berlin date +%F`.
+- **`--sample N`** — source pages Step 4 may fetch (default `20`); the cost ceiling on the venues' side.
 - **`--unattended`** — the runner mode; see below.
 
 ## Step 1 — Establish the origin and the window
@@ -47,8 +38,7 @@ FROM="$(TZ=Europe/Berlin date +%F)"
 TO="$(TZ=Europe/Berlin date -d "+$((DAYS-1)) day" +%F)"           # GNU date; on macOS: date -v+1d +%F
 ```
 
-Record the version the site reports. A finding is only reproducible against the build that produced it, and the importer's version is what decides which
-scraper code was running.
+Record the version: a finding is reproducible only against the build that produced it.
 
 ## Step 2 — Pull the window
 
@@ -58,24 +48,20 @@ The list endpoint pages, and defaults to twenty rows:
 curl -fsS "$ORIGIN/api/events?from=$FROM&to=$TO&size=200&page=0"   # PageResponseEventSummaryResponse: content, totalPages, totalElements
 ```
 
-Loop over `totalPages` and save every row to one JSON file under `temp/`. Then fetch the detail for each slug — `GET /api/events/{slug}` carries `sourceUrl`,
-`ticketUrl`, `description` and `lineup`, and the summary does not. These are requests to our own API and need no throttling beyond running them sequentially.
+Loop over `totalPages` into one JSON file under `temp/`, then `GET /api/events/{slug}` per row for `sourceUrl`, `ticketUrl`, `description`, `lineup`. Our own
+API; sequential is throttling enough. Pull the default listing too (`GET /api/events?size=200`, no dates) and keep rows dated before `$FROM` — the site's
+_Running since_ rows, which the last Step 3 check tests.
 
-Pull the default listing too — `GET /api/events?size=200` with no dates — and keep every row whose `eventDate` is before `$FROM`. `from=` excludes them,
-and they are the rows the site labels _Running since_: the read side's own verdict that an event is still on, which the last check in Step 3 tests.
-
-Report the shape before checking anything: rows in the window, rows per venue, and the count of venues with zero rows against the 86 the site registers. **A
-venue that always has events and has none tonight is itself a finding** — a source that failed silently looks exactly like a quiet night.
+Report the shape first: rows in the window, rows per venue, venues with zero rows against the count the site registers. **A venue that always has events and
+has none tonight is itself a finding** — a source that failed silently looks exactly like a quiet night.
 
 ## Step 3 — Plausibility checks on the rows alone
 
 Run every check below over the saved JSON with `jq`, and for each one report the count, the command, and up to five slugs with their site URL
 (`$ORIGIN/en/events/<slug>`). Break every count down by venue: a problem concentrated at one venue is that venue's scraper.
 
-**The checks are keyed by the aspects the limitations table uses** — `LimitedAspect` in `AcceptedLimitation.kt`, which is also what the per-source coverage
-series from #472 tracks through `TrackedField`. That makes KNOWN a lookup rather than a judgement: a hit is KNOWN when the table has a row for that venue's
-source and that aspect, and NEW otherwise. A check with `—` in the aspect column has no limitation that can excuse it. The number in brackets is the
-category in [`/data-quality-audit`](data-quality-audit.prompt.md), so a finding here and one there can be read as the same defect seen from both ends.
+**Checks are keyed by `LimitedAspect`**, so KNOWN is a lookup: a hit is KNOWN when the table has a row for that venue's source and that aspect. `—` in the
+aspect column has no limitation that can excuse it. The bracketed number is the [`/data-quality-audit`](data-quality-audit.prompt.md) category.
 
 | Aspect                               | Check                                                                                                                                                                      | What it usually means                                                                                                            |
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -108,24 +94,17 @@ category in [`/data-quality-audit`](data-quality-audit.prompt.md), so a finding 
 | —                                    | Every row of one venue sharing one `startTime` [5]                                                                                                                         | The parser collapsed to a default                                                                                                |
 | —                                    | A default-listing row dated before today that is over: `endDate` past, or today with `endTime` behind the Berlin clock, or no end and outside the #299 grace               | The site says _Running since_ about a night that is over: the BFF window or `isPastEvent`, not a scraper                         |
 
-Category 6 of the audit, referential integrity, is the one this prompt cannot reach: join rows and orphans are invisible from the API, and the audit is
-where they are found.
+Referential integrity (audit category 6) is invisible from the API. A row wrong in a way the table does not name is still a finding — show it.
 
-Do not stop at the table. A row that looks wrong in a way the table does not name is still a finding — say what is implausible about it and show the row.
-
-**The line-up deserves its own pass, because a wrong artist is public twice.** A name that is not a performer becomes an event line _and_ an artist page,
-`$ORIGIN/en/artists/<slug>`, and that page is what turned up `Kein Bock auf Nazis` on production (#1110, fixed by #1113 with one entry in
-`NON_ARTIST_NAMES`). For every `lineup` name in the window, ask whether a person or a band could be called that, and read it against `isNonArtistName` and
-`NON_ARTIST_NAMES` in `ArtistNameMapping.kt` before calling it NEW. A name with one gig at one venue whose title is the name is the #1110 shape. A `CONCERT`
-whose page says the acts are unannounced must have an empty line-up, and a line-up of one where the page bills three is a split the parser missed.
+**The line-up gets its own pass, because a wrong artist is public twice** — the event line and `$ORIGIN/en/artists/<slug>` (#1110, `Kein Bock auf Nazis`).
+For every `lineup` name ask whether a person or band could be called that, and read it against `isNonArtistName` and `NON_ARTIST_NAMES` in
+`ArtistNameMapping.kt` before calling it NEW. One gig at one venue whose title is the name is the #1110 shape; a `CONCERT` whose page says the acts are
+unannounced must have an empty line-up.
 
 ## Step 4 — Compare a sample against the source
 
-**Choose the sample deliberately, and say how.** First every row Step 3 flagged that has a `sourceUrl`, then fill up to `--sample` round-robin across venues so
-no single host takes more than a handful of requests. Prefer a venue whose source is one page per event over one whose `sourceUrl` is the whole programme:
-the second kind takes one fetch per venue, not per event, and reuse it.
-
-One fetch per event, and the politeness rules from above:
+**Choose the sample deliberately, and say how**: every Step 3 hit with a `sourceUrl` first, then round-robin across venues up to `--sample`. A programme-page
+`sourceUrl` is one fetch per venue, reused.
 
 ```sh
 curl -sS --max-time 20 -o "temp/source-<slug>.html" -w '%{http_code}' \
@@ -133,34 +112,26 @@ curl -sS --max-time 20 -o "temp/source-<slug>.html" -w '%{http_code}' \
 sleep 1                                                            # between requests to the same host
 ```
 
-**A venue with no rows has no `sourceUrl` to follow, and it is the venue most worth a fetch.** For those, take the listing URL from the importer's own
-configuration under `events-importer/src/main/kotlin/de/norm/events/scraper/<venue>/` — the page the importer fetches nightly under its robots check —
-one fetch per venue, counted against `--sample`, and say in the report that the URL came from the tree rather than from the site. That is how a
-scraper that fails silently is told apart from a quiet night, and it is the only fetch this prompt allows that the site did not publish.
+**A venue with no rows is the one most worth a fetch.** Take its listing URL from `events-importer/src/main/kotlin/de/norm/events/scraper/<venue>/` — one
+fetch, counted against `--sample`, and say the URL came from the tree. The only fetch allowed that the site did not publish.
 
-A `403` or `429` from a host ends fetching from that host for this run; say so, and do not try a different path or header. A `404` is a finding of its own:
-the site lists an event whose page is gone, which is often a cancellation the importer has not seen yet.
+A `403` or `429` ends fetching from that host for the run; no other path or header. A `404` is a finding: often a cancellation the importer has not seen.
 
-Reduce the page to text (`python3 -c 'import html.parser…'`, or `sed 's/<[^>]*>//g'` on a simple page) and read it for the fields the row carries. The page
-is in German or English or both, so look for both: _Einlass_ / _Doors_, _Beginn_ / _Start_, _ausverkauft_ / _sold out_, _abgesagt_ / _cancelled_,
-_verschoben_ / _postponed_, a `€` amount, the date in any of the formats `DateParsingExtensions.kt` accepts, and **the acts**: the billing in the
-heading, a line-up section, _Support:_, _feat._, _w/_, _+_. Then classify:
+Reduce the page to text and read it in German and English: _Einlass_ / _Doors_, _Beginn_ / _Start_, _ausverkauft_ / _sold out_, _abgesagt_ / _cancelled_,
+_verschoben_ / _postponed_, a `€` amount, the date, and the acts (heading billing, line-up section, _Support:_, _feat._, _w/_, _+_). Classify:
 
 - **MATCH** — the page says what the row says.
-- **DIFFERS** — quote the page and the row, side by side. Name the aspect. A different date or time, a cancellation the row does not carry, a sold-out the row does not carry,
-  a price the row lacks or contradicts, a headliner the page does not name, a support act the page names and the row lacks, or a name the page presents
-  as a series or a night rather than an act.
+- **DIFFERS** — quote the page and the row side by side, and name the aspect.
 - **NOT COMPARABLE** — the page is rendered by JavaScript, answered with a consent wall, or the field is simply absent from the text. Say which.
 - **SOURCE GONE** — `404` or a redirect to the programme.
 
-**The page is the reference, and it is not always right either.** A page that shows last year's date on a recurring event is a known venue-side pattern.
-When the page and the row disagree and the page looks wrong, say that too — the finding is the disagreement, and the reader decides.
+**The page is the reference, and not always right** (last year's date on a recurring event is a known pattern). The finding is the disagreement; say when
+the page looks wrong too.
 
 ## Step 5 — Write the report
 
-Locally, write it to `temp/plausibility-<YYYY-MM-DD>.md` and run `scripts/format-markdown.sh temp/plausibility-<YYYY-MM-DD>.md` on it, because the report
-ends up pasted into issues and unformatted tables are the tell. Unattended, the final message is the report (below), and the formatter is not run: the
-runner carries no `node_modules`, the pinned oxfmt is the only one allowed, and a person formats the report when they paste it somewhere.
+Locally, `temp/plausibility-<YYYY-MM-DD>.md`, then `scripts/format-markdown.sh` on it by name. Unattended, the final message is the report and the
+formatter is not run (no `node_modules` on the runner).
 
 ## Running unattended
 
@@ -224,10 +195,8 @@ a defect to fix, say so instead: the AcceptedLimitation for that source — aspe
 
 ## Notes
 
-- **The relationship to #474.** That issue builds the same comparison inside the importer, as admin endpoints with a model behind them, and it is blocked on
-  #473 deciding the model. This prompt needs neither, because the judgement runs in the agent rather than in the application. What it produces over a few
-  weeks is also the measurement #474 asks for before anyone trusts its output: which sources drift, how often, and in which field.
-- **A finding that recurs every night is a scraper defect**, whatever the limitations table says. A venue that started publishing start times after its row
-  was declared is the case the table cannot see, and the comparison can.
-- **Why the sample is small.** Twenty fetches spread across up to 86 hosts, one each, is a rounding error next to the importer's own nightly traffic. Two
-  hundred is not, and it is the venues' bandwidth. Raise `--sample` for one run when a venue needs a closer look, not in the workflow.
+- **#474** builds the same comparison inside the importer and is blocked on #473; what this produces over weeks is the measurement #474 asks for first.
+- **A finding that recurs every night is a scraper defect**, whatever the limitations table says — a venue that started publishing start times after its row
+  was declared is the case the table cannot see.
+- **The sample is small on purpose**: twenty fetches across up to 86 hosts is a rounding error next to the importer's traffic; two hundred is the venues'
+  bandwidth. Raise `--sample` for one run, not in the workflow.

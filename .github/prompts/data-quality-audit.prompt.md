@@ -6,25 +6,16 @@ fixes but do not apply them unless the user explicitly asks.
 
 ## Scope & intent
 
-The data is scraped from Berlin venue websites by the importers in `events-importer` (see `AGENTS.md` for the domain model). The goal is to surface
-**actionable** quality problems — parsing bugs, normalization gaps, and oddities worth a human's attention — and to distinguish them from limitations already
-documented and accepted.
+The data is scraped by the importers in `events-importer`. Surface **actionable** problems — parsing bugs, normalisation gaps, oddities worth a human's
+attention — and separate them from limitations already accepted. Two registers say what is known:
 
-Before reporting anything, check whether the finding is already known. Two places record that:
+- **[`ACCEPTED_LIMITATIONS.md`](../../docs/data-quality/ACCEPTED_LIMITATIONS.md)** — one row per source and aspect (#715), generated from `AcceptedLimitations.kt`
+  and asserted by `AcceptedLimitationsTest`. A lookup on (source, aspect): the aspects are `LimitedAspect`, every check below names the one it maps to, and a
+  check marked `—` has no limitation that can excuse it. **Read this instead of grepping scraper KDoc**; the KDoc explains how a parser copes, not what the
+  source withholds. A source absent from the table publishes everything, so a gap there is a finding.
+- **The open issues** — `build/BACKLOG.md`, or `gh issue list --label importer`.
 
-- **[`docs/data-quality/ACCEPTED_LIMITATIONS.md`](../../docs/data-quality/ACCEPTED_LIMITATIONS.md)** — one row per source and aspect, saying what that venue's
-  site does not publish and why (#715). It is generated from `AcceptedLimitations.kt`, and `AcceptedLimitationsTest` fails the build when the two disagree, so
-  it is a lookup rather than a reading: match the finding's `event_source` and its **aspect** against the table. The aspects are `LimitedAspect` in
-  `AcceptedLimitation.kt`, and every check below names the one it maps to, so the lookup is on (source, aspect) and not on a guess about which column a
-  row is about. Most aspects tie to a `TrackedField`, which is the per-source coverage series from #472, so a source that declares `PRICE` and climbs on
-  `priceAny` has gained a field or a parsing bug. A check marked `—` has no aspect and no limitation that can excuse it. **Read this instead of grepping
-  scraper KDoc.** The KDoc explains how each parser copes; it is not the register of what the source withholds, and treating it as one is what this table replaced.
-- **The open issues**, mirrored in `build/BACKLOG.md` (defects already queued for repair — `grep` it, or `gh issue list --label importer`).
-
-A finding matching either — artist-less concerts at Badehaus, `eventType` defaulting to `OTHER`, first-page-only pagination — must be labelled
-**known/accepted** and separated from genuinely new ones. Don't re-litigate accepted trade-offs.
-
-A source **absent** from the limitations table is one that publishes everything the model stores, so a gap there is a finding, not a trade-off.
+A finding matching either is **known/accepted**, reported separately, and not re-litigated.
 
 ## Connecting to the database
 
