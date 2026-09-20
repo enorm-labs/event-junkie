@@ -2,34 +2,26 @@
 #
 # upstream-node-pins.sh — are the two node pins behind upstream, right now?
 #
-# k3s and wal-g are pinned as `default =` strings in infra/modules/environment/variables.tf. No
-# manifest declares them, so neither Dependabot's `opentofu` ecosystem nor Renovate's allow-list can
-# see them, and `unattended-upgrades` never meets either (#1068, ADR-024).
+# k3s and wal-g are pinned as `default =` strings in infra/modules/environment/variables.tf, which no
+# manifest declares and no bot sees (#1068, ADR-024).
 #
 # Usage:
 #   scripts/upstream-node-pins.sh                    # one line per pin
 #   scripts/upstream-node-pins.sh --json             # for node-pin-reminder.yml
 #   scripts/upstream-node-pins.sh --skip-checksums   # faster: no wal-g tarball download
 #
-# Exit 0 both current, 1 something is behind, 2 the check could not be made. Those are three
-# different answers and a caller must not collapse them: a check that cannot reach upstream and
-# reports "up to date" is the exact failure this file exists to close.
+# Exit 0 both current, 1 something is behind, 2 the check could not be made — three answers a caller
+# must not collapse, because a check that cannot reach upstream and reports "up to date" is the
+# failure this exists to close.
 #
-# **Both versions are read out of the Terraform file, never restated here.** A constant in this
-# script would be the drift it is watching, one file over. An extraction that matches nothing is an
-# error rather than an empty result, for the same reason.
+# **Both versions are read out of the Terraform file, never restated here**, and an extraction that
+# matches nothing is an error. **A bump is not routine**: both values feed `user_data`, which is
+# force-new, and both also install in place on a running node (docs/ops/K3S_UPGRADE.md, BACKUPS.md
+# §8). A person decides; nothing here opens a pull request. **`walg_checksums` moves with
+# `walg_version` or the node does not boot** — backups.sh verifies the tarball against the pinned
+# SHA-256 — so this prints the two replacement checksums.
 #
-# **A bump is not a routine dependency bump.** Both values feed cloud-init and `user_data` is
-# force-new, so the OpenTofu plan says replace the server. Both also install in place on a running
-# node, which is k3s's own documented upgrade — docs/ops/K3S_UPGRADE.md, and docs/ops/BACKUPS.md §8
-# for wal-g. A person decides either way, which is why nothing here opens a pull request.
-#
-# **`walg_checksums` moves with `walg_version` or the node does not boot.** cloud-init's backups.sh
-# runs under `set -euo pipefail` and verifies the tarball against the pinned SHA-256, so a version
-# bumped alone aborts the boot. This prints the two replacement checksums for that reason.
-#
-# Requires: curl, jq, and sha256sum or shasum. Reads GITHUB_TOKEN or GH_TOKEN when set, which lifts
-# api.github.com's 60-per-hour anonymous limit.
+# Requires: curl, jq, sha256sum or shasum. GITHUB_TOKEN or GH_TOKEN lifts the 60-per-hour anonymous limit.
 
 set -euo pipefail
 
@@ -40,9 +32,8 @@ K3S_CHANNELS='https://update.k3s.io/v1-release/channels'
 WALG_RELEASE='https://api.github.com/repos/wal-g/wal-g/releases/latest'
 WALG_DOWNLOAD='https://github.com/wal-g/wal-g/releases/download'
 
-# The asset name backups.sh builds by hand, keyed by the dpkg architecture that names the checksum
-# in Terraform. The two vocabularies differ — `arm64` there, `aarch64` in the release — and the
-# mapping has to live somewhere.
+# The asset name backups.sh builds, keyed by the dpkg architecture that names the checksum in
+# Terraform (`arm64` there, `aarch64` in the release).
 WALG_ASSET_amd64='wal-g-pg-24.04-amd64'
 WALG_ASSET_arm64='wal-g-pg-24.04-aarch64'
 
@@ -100,10 +91,8 @@ fetch() {
     curl -fsSL --retry 3 "${auth[@]}" "$url" -o "$out" || die "could not fetch $url"
 }
 
-# hcl_default <variable> — the quoted `default =` of a scalar variable block.
-#
-# Both blocks carry a heredoc description that names the version in prose, which is why the match is
-# anchored to the assignment and not to the value.
+# hcl_default <variable> — the quoted `default =` of a scalar variable block. Anchored to the
+# assignment: both blocks name the version in prose too.
 hcl_default() {
     awk -v want="$1" '
         $0 ~ "^variable \"" want "\" \\{" { inblock = 1; next }
@@ -142,8 +131,8 @@ WALG_SHA_arm64="$(require 'walg_checksums.arm64' "$(hcl_map_default walg_checksu
 # k3s
 # ---------------------------------------------------------------------------
 
-# The stable channel, not the newest GitHub release. k3s publishes every supported minor line in one
-# release list, so "newest tag" regularly means a minor nobody is being asked to move to.
+# The stable channel, not the newest GitHub release: "newest tag" regularly means a minor nobody is
+# being asked to move to.
 fetch "$K3S_CHANNELS" "$WORK/channels.json"
 
 K3S_STABLE="$(jq -r '.data[] | select(.id == "stable") | .latest // empty' "$WORK/channels.json")"
@@ -152,8 +141,8 @@ K3S_STABLE="$(jq -r '.data[] | select(.id == "stable") | .latest // empty' "$WOR
 K3S_PINNED_MINOR="$(minor_of "$K3S_PINNED")"
 K3S_STABLE_MINOR="$(minor_of "$K3S_STABLE")"
 
-# What the pinned line itself offers. When stable has moved on to a newer minor this is the
-# conservative bump, and it is a different piece of work from crossing a minor.
+# What the pinned line itself offers — the conservative bump, a different piece of work from
+# crossing a minor.
 K3S_LINE_LATEST="$(jq -r --arg c "$K3S_PINNED_MINOR" '.data[] | select(.id == $c) | .latest // empty' "$WORK/channels.json")"
 [[ -n "$K3S_LINE_LATEST" ]] || die "$K3S_CHANNELS carries no ${K3S_PINNED_MINOR} channel — the pinned line may be out of support"
 
@@ -169,8 +158,7 @@ fi
 # wal-g
 # ---------------------------------------------------------------------------
 
-# `/releases/latest` rather than the release list: it excludes drafts and prereleases by itself, and
-# wal-g ships those (v3.0.6 was one).
+# `/releases/latest` excludes drafts and prereleases by itself, and wal-g ships those.
 fetch "$WALG_RELEASE" "$WORK/walg.json"
 
 WALG_LATEST="$(jq -r '.tag_name // empty' "$WORK/walg.json")"
@@ -183,12 +171,9 @@ else
     WALG_STATUS=behind
 fi
 
-# walg_checksum <asset> — the SHA-256 of the release asset the node would download.
-#
-# Computed from the tarball rather than trusted from the `.sha256` beside it, and then compared with
-# it. Both come from the same release, so this is not independent verification and must not be
-# described as any; what the pin in Terraform buys is a value a person reviewed once, and a mismatch
-# between the two is still worth refusing to report.
+# walg_checksum <asset> — the SHA-256 of the release asset the node would download, computed from the
+# tarball and compared with the `.sha256` beside it. Both come from the same release, so this is not
+# independent verification; a mismatch is still worth refusing to report.
 walg_checksum() {
     local asset="$1" tarball="$WORK/$1.tar.gz" computed published
     fetch "${WALG_DOWNLOAD}/${WALG_LATEST}/${asset}.tar.gz" "$tarball"

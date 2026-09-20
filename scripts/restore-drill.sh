@@ -8,17 +8,11 @@
 #   scp -i ~/.ssh/id_ed25519_hetzner scripts/restore-drill.sh ops@10.10.1.1:/tmp/restore-drill.sh
 #   ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 'bash /tmp/restore-drill.sh'
 #
-# Runs on the database node itself, not from a workstation, and needs the wal-g credential in
-# /etc/wal-g/credentials.env. Every restore lands in /var/lib/postgresql/drill and is served on port
-# 5433. It never touches the live PGDATA and reads only the bucket.
-#
-# **It does write to the live database**, and that is the point of §5: a scratch table in the
-# `public` schema is what point-in-time recovery has something to recover past. §5 itself drops the
-# table again, so the database ends the run as it started. The drill belongs on staging, which is
-# what --force is the door out of.
-#
-# An assertion stands behind every claim the output makes, and a failed one stops the run rather
-# than letting the summary say the drill passed. Each run overwrites BACKUPS.md §9 with its numbers.
+# Runs on the database node itself, needs the wal-g credential in /etc/wal-g/credentials.env, restores
+# into /var/lib/postgresql/drill on port 5433, never touches the live PGDATA and reads only the bucket.
+# **It does write to the live database**: §5 needs a scratch table in `public` for point-in-time
+# recovery to recover past, and drops it again. The drill belongs on staging; --force is the door
+# out. An assertion stands behind every claim the output makes, and each run overwrites BACKUPS.md §9.
 set -euo pipefail
 
 case "${1:-}" in
@@ -35,8 +29,8 @@ case "${1:-}" in
 esac
 
 
-# The SSH client forwards LC_CTYPE, the node has no matching locale, and every sudo call then prints
-# five lines of perl warnings around the output that matters.
+# The SSH client forwards LC_CTYPE, the node has no matching locale, and every sudo call prints perl
+# warnings otherwise.
 export LC_ALL=C.UTF-8 LANG=C.UTF-8
 
 BOOTSTRAP_ENV=/etc/event-junkie/bootstrap.env
@@ -57,7 +51,7 @@ PGBIN="/usr/lib/postgresql/${PGVER}/bin"
 DRILL_LOG=/tmp/drill.log
 START_SCRIPT=/var/lib/postgresql/drill-start.sh
 
-# A guard rather than a comment: every rm -rf below goes through this, and the live cluster lives in
+# A guard, not a comment: every rm -rf below goes through this, and the live cluster lives in
 # /var/lib/postgresql/18/main.
 [[ "${DRILL_DIR}" == /var/lib/postgresql/drill ]] || { echo "refusing: unexpected drill directory" >&2; exit 1; }
 
@@ -68,9 +62,8 @@ walg() { pg bash -c 'set -a; . /etc/wal-g/wal-g.env; . /etc/wal-g/credentials.en
 banner() { printf '\n=== %s  (%s)\n' "$1" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"; }
 elapsed() { echo "$(( $(date +%s) - $1 ))"; }
 
-# Waits until the WAL segment that was current before a switch has reached the bucket. Without this
-# a PITR target that lies in the newest segment is beyond the end of the archive, and the restored
-# cluster stays in recovery instead of promoting.
+# Waits until the WAL segment current before a switch has reached the bucket; otherwise a PITR target
+# in the newest segment is beyond the end of the archive and the restored cluster never promotes.
 wait_for_archive() {
     local segment="$1" archived i
     for i in $(seq 1 90); do
@@ -92,8 +85,7 @@ switch_wal() {
     wait_for_archive "${segment}"
 }
 
-# RESTORE_RUNBOOK.md §4.2, verbatim. Installed on every run so the drill proves the script the
-# runbook publishes, rather than whatever a previous drill left behind.
+# RESTORE_RUNBOOK.md §4.2, verbatim, installed on every run so the drill proves the published script.
 install_start_script() {
     sudo tee "${START_SCRIPT}" >/dev/null <<'SCRIPT'
 #!/bin/bash
@@ -125,26 +117,21 @@ printf 'local all all trust\nhost all all 127.0.0.1/32 trust\n' > "$D/pg_hba.con
 touch "$D/recovery.signal"
 chmod 0700 "$D"
 SCRIPT
-    # Appended rather than written inside the heredoc above, which is quoted so that every `$D` and
-    # `$TARGET` in it reaches the file as itself. This is the one line that needs a value from here.
-    # shellcheck disable=SC2016 # `$D` belongs to the file being written, not to this shell.
+    # Appended rather than written inside the quoted heredoc, because this is the one line that needs a
+    # value from here.
+    # shellcheck disable=SC2016 # `$D` belongs to the file being written.
     printf '\n%s/pg_ctl -D "$D" -l /tmp/drill.log -w -t 120 start\n' "${PGBIN}" |
         sudo tee -a "${START_SCRIPT}" >/dev/null
     sudo chown postgres:postgres "${START_SCRIPT}"
     sudo chmod 0755 "${START_SCRIPT}"
 }
 
-# `pg_ctl -w stop` returns as soon as the PID file is gone, and a backend can outlive that by a
-# moment. A `rm -rf` that races it fails as "Directory not empty", because a shutting-down process is
-# still writing into pg_wal inside the directory being deleted. So wait for the processes, not for the
-# PID file.
-#
-# The bracket in the pattern is load-bearing. `pgrep -f` and `pkill -f` match a whole command line,
-# including their own and that of the shell that invoked them, so a plain pattern makes the cleanup
-# kill itself. `[p]ostgres` matches the running postmaster and not the text of the matcher.
+# `pg_ctl -w stop` returns as soon as the PID file is gone, and a backend can outlive that; a `rm -rf`
+# that races it fails "Directory not empty". So wait for the processes. The bracket in `[p]ostgres`
+# is load-bearing: `pgrep -f` matches its own command line too, so a plain pattern kills itself.
 readonly SCRATCH_PATTERN="[p]ostgres -D ${DRILL_DIR}"
-# The postmaster is not the only writer. `restore_command` runs `wal-g wal-fetch` as a child, and one
-# of those can still be writing a segment into pg_wal when the postmaster is already gone.
+# `restore_command` runs `wal-g wal-fetch` as a child, which can still be writing after the
+# postmaster is gone.
 readonly FETCH_PATTERN="[w]al-g wal-fetch"
 
 stop_scratch() {
@@ -163,8 +150,7 @@ stop_scratch() {
         echo "port 5433 is still bound - not deleting ${DRILL_DIR}" >&2
         return 1
     fi
-    # Quiet retries. A first attempt that loses the race is expected, and its error on a passing run
-    # reads like a failure. The last attempt is the one allowed to say why it could not.
+    # Quiet retries; losing the race once is expected. The last attempt says why.
     for i in 1 2; do
         if sudo rm -rf "${DRILL_DIR}" 2>/dev/null; then
             break
@@ -184,8 +170,7 @@ pg /usr/local/bin/walg check
 df -h /var/lib/postgresql | tail -1
 DB_SIZE="$(live "select pg_size_pretty(pg_database_size('events'))")"
 echo "events database size: ${DB_SIZE}"
-# An `if` rather than `cmd && { exit 1; }`: under `set -e` the second form exits the whole script
-# when the guard passes, which is the case that should continue.
+# An `if` rather than `cmd && { exit 1; }`: under `set -e` the second form exits when the guard passes.
 if sudo ss -lnt | grep -q ':5433'; then
     echo "port 5433 is already bound - a previous drill is still running" >&2
     exit 1
@@ -198,7 +183,7 @@ LIVE_BEFORE="$(live "select (select count(*) from events.event) || ' events, ' |
 echo "live: ${LIVE_BEFORE}"
 
 banner 'Phase 1 - a base backup, and a marker row written after it'
-# Dropped first, so a second run of this script counts its own two marker rows rather than four.
+# Dropped first, so a second run counts its own two marker rows rather than four.
 live "drop table if exists public.restore_drill" >/dev/null
 live "create table public.restore_drill (id serial primary key, note text, at timestamptz not null default now())" >/dev/null
 live "insert into public.restore_drill (note) values ('written before the base backup')" >/dev/null
@@ -207,9 +192,8 @@ sudo systemctl start walg-basebackup
 BASE_BACKUP_SECONDS="$(elapsed "${T0}")"
 echo "base backup: ${BASE_BACKUP_SECONDS}s"
 live "insert into public.restore_drill (note) values ('written after the base backup')" >/dev/null
-# The recovery target for §5: after both marker rows, before the drop. The pause puts a second
-# between the target and the row it has to include, so the target cannot land inside the same
-# timestamp as the commit it is meant to follow.
+# The recovery target for §5: after both marker rows, before the drop. The pause keeps the target out
+# of the same timestamp as the commit it must follow.
 sleep 2
 TARGET="$(live "select to_char(clock_timestamp() at time zone 'UTC', 'YYYY-MM-DD HH24:MI:SS.US+00')")"
 echo "recovery target for phase 3: ${TARGET}"
@@ -237,10 +221,8 @@ echo "dropped public.restore_drill on the live database"
 switch_wal
 walg wal-g backup-fetch "${DRILL_DIR}" LATEST
 pg "${START_SCRIPT}" "${TARGET}"
-# `pg_ctl -w start` returns when the server accepts connections, and a cluster still in recovery
-# accepts them. Promotion happens later, when replay reaches the target, and every WAL segment on the
-# way is a separate wal-g fetch from the bucket. So poll for the promotion rather than assume it has
-# already happened.
+# `pg_ctl -w start` returns when the server accepts connections, and a cluster still in recovery does;
+# promotion happens when replay reaches the target, one wal-g fetch per segment. Poll for it.
 IN_RECOVERY=t
 for i in $(seq 1 120); do
     IN_RECOVERY="$(scratch 'select pg_is_in_recovery()')"

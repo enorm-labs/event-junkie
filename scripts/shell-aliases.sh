@@ -4,33 +4,23 @@
 #
 #   echo 'source ~/repos/event-junkie/scripts/shell-aliases.sh' >> ~/.zshrc
 #
-# A file rather than a block pasted into a cheatsheet, because a cheatsheet drifts from reality
-# silently and this drifts loudly: it is reviewed in PRs, ShellCheck runs over it in `pre-commit`,
-# and a wrong path fails in your terminal instead of reading plausibly on a page.
-#
-# **Nothing here wraps `tofu`, `helm upgrade`, or anything that writes to production.** Those want
-# the friction; see infra/AGENTS.md and deploy/AGENTS.md, both of which open with what must never be
-# run on your own initiative.
-#
-# Functions rather than aliases throughout, so arguments pass through: `ejk get pods -A` works.
-#
-# The counterpart documentation is docs/ops/DAILY_COMMANDS.md.
+# A file rather than a cheatsheet block, because this drifts loudly: reviewed in PRs, ShellCheck in
+# `pre-commit`, a wrong path fails in your terminal. **Nothing here wraps `tofu`, `helm upgrade` or
+# anything that writes to production** — those want the friction (infra/AGENTS.md, deploy/AGENTS.md).
+# Functions rather than aliases, so arguments pass through. Counterpart: docs/ops/DAILY_COMMANDS.md.
 
 # shellcheck shell=bash
 
 EJ_SSH_KEY="${EJ_SSH_KEY:-$HOME/.ssh/id_ed25519_hetzner}"
-# Where the checkout is. `${BASH_SOURCE[0]}` is empty when this file is sourced by zsh, which is
-# what the install line above does, so the path is a variable with the documented clone as default.
+# `${BASH_SOURCE[0]}` is empty when sourced by zsh, so the path is a variable with the documented
+# clone as default.
 EJ_REPO="${EJ_REPO:-$HOME/repos/event-junkie}"
 EJ_STAGING="${EJ_STAGING:-10.10.1.1}"
 EJ_PRODUCTION="${EJ_PRODUCTION:-10.10.0.1}"
 EJ_PRODUCTION_DB="${EJ_PRODUCTION_DB:-10.0.1.20}"
 
 # --- the session --------------------------------------------------------------------------------
-#
-# Tunnels, the handshake check and the port-forwards live in scripts/ej.sh; these are its short
-# names and nothing more, so there is one copy of the mechanics. `ej-up` is the tunnel *and* the
-# three forwards (importer, BFF, OpenObserve); `ej-down` takes both down again.
+# Short names for scripts/ej.sh, so there is one copy of the mechanics.
 
 ej-up() { "$EJ_REPO/scripts/ej.sh" up staging; }
 ej-up-prod() { "$EJ_REPO/scripts/ej.sh" up production; }
@@ -40,9 +30,7 @@ ej-status() { "$EJ_REPO/scripts/ej.sh" status; }
 ej-versions() { "$EJ_REPO/scripts/ej.sh" versions; }
 
 # --- cluster ----------------------------------------------------------------------------------
-#
-# `--context` is pinned rather than relying on the current one. Both clusters live in the same
-# kubeconfig, so "which cluster am I on" is otherwise a question you have to remember to ask.
+# `--context` pinned: both clusters live in one kubeconfig.
 
 ejk() { kubectl --context event-junkie-staging "$@"; }
 ejkp() { kubectl --context event-junkie-production "$@"; }
@@ -52,9 +40,8 @@ ej9() { k9s --context event-junkie-staging "$@"; }
 ej9p() { k9s --context event-junkie-production "$@"; }
 
 # --- the site ---------------------------------------------------------------------------------
-#
-# `-k` is correct and must not be "fixed": staging issues from Let's Encrypt's *staging* CA so the
-# production rate limit is not burned. --resolve rather than /etc/hosts, so nothing is left behind.
+# `-k` is correct: staging issues from Let's Encrypt's *staging* CA. --resolve rather than
+# /etc/hosts, so nothing is left behind.
 
 ej-site() {
     curl -sS -k --max-time 20 --resolve "staging.event-junkie.de:443:${EJ_STAGING}" \
@@ -68,15 +55,10 @@ ej-api() {
 }
 
 # --- one venue, end to end ---------------------------------------------------------------------
-#
-# "Is this venue importing?" is answered from the APIs rather than from psql on the node: the
-# importer's admin API has the source row, and the public API says whether those events reached what
-# a visitor sees — the better question, and the one psql cannot answer.
-#
-# The importer is deliberately unroutable (#416 — no Ingress path names it, and nothing in its
-# namespace may reach it), so its half needs a port-forward. Node-originated traffic is not subject
-# to NetworkPolicy in k3s, which is why port-forward still works. The site's half goes through the
-# ingress on purpose: TLS, routing and middlewares are part of what is being checked.
+# Answered from the APIs rather than psql: the admin API has the source row, and the public API says
+# whether the events reached what a visitor sees. The importer is deliberately unroutable, so its
+# half needs a port-forward (node-originated traffic is not subject to NetworkPolicy in k3s); the
+# site's half goes through the ingress on purpose.
 
 ej-venue() {
     local slug="${1:?usage: ej-venue <slug>}"
@@ -84,8 +66,7 @@ ej-venue() {
     kubectl --context event-junkie-staging -n event-junkie port-forward svc/event-junkie-importer 8081:8081 >/dev/null 2>&1 &
     local pf=$!
     sleep 3
-    # The error body carries a `status` field of its own, so printing it unfiltered renders
-    # `"status": 404` where a source row's status belongs — which reads as a very broken venue
+    # The error body carries a `status` field of its own, which would render as a very broken venue
     # rather than a typo. Check the code instead.
     local code
     code=$(curl -sS -o /tmp/ej-venue.json -w '%{http_code}' --max-time 20 \
@@ -103,9 +84,8 @@ ej-venue() {
 }
 
 # --- database ---------------------------------------------------------------------------------
-#
-# Opens the forward, runs psql, and closes the forward again — an -f -N ssh left running is the
-# thing you find three days later wondering what is holding port 15432.
+# Opens the forward, runs psql, closes the forward — an -f -N ssh left running is what holds port
+# 15432 three days later.
 
 _ej_psql() {
     local ctx="$1" jump="$2" target="$3" port="$4"
@@ -121,8 +101,7 @@ _ej_psql() {
 ej-db() { _ej_psql event-junkie-staging "$EJ_STAGING" localhost 15432; }
 ej-db-prod() { _ej_psql event-junkie-production "$EJ_PRODUCTION" "$EJ_PRODUCTION_DB" 15433; }
 
-# A superuser shell, for anything CREATE ROLE-shaped. The forwards above connect as `events`,
-# which cannot do it.
+# A superuser shell for anything CREATE ROLE-shaped; the forwards above connect as `events`.
 ej-psql-super() { ssh -i "$EJ_SSH_KEY" "ops@${EJ_STAGING}" 'sudo -u postgres psql -d events'; }
 ej-psql-super-prod() {
     ssh -i "$EJ_SSH_KEY" -J "ops@${EJ_PRODUCTION}" "ops@${EJ_PRODUCTION_DB}" 'sudo -u postgres psql -d events'

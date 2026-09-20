@@ -13,22 +13,16 @@
 #   scripts/version.sh last                              # 0.1.0 — the newest release tag reachable from HEAD
 #   scripts/version.sh deserved [--at-least minor|major] # 0.2.0 — what the commits since `last` earn, with the reasoning on stderr
 #
-# `compute` defaults to $GITHUB_REF / $GITHUB_SHA and falls back to the working tree, so it produces
-# the same answer in CI and on a laptop. The third argument exists for `scripts/version-test.sh`,
-# which needs to drive the timestamp rather than read it from a commit. On a tag it checks the tag
-# against the commits and refuses one that claims another number, which is how a release number is
-# never typed (#868). With no release tag in reach it prints `0.0.0-local`, so a shallow clone still
-# builds; `deserved` dies instead, because a cut must not guess.
+# `compute` defaults to $GITHUB_REF / $GITHUB_SHA and falls back to the working tree, so CI and a
+# laptop agree. The third argument lets `scripts/version-test.sh` drive the timestamp. On a tag it
+# refuses one that claims another number than the commits earn (#868). With no release tag in reach
+# it prints `0.0.0-local`, so a shallow clone still builds; `deserved` dies, because a cut must not
+# guess.
 #
-# `deserved` reads the Conventional Commits subjects and bodies since the last release and applies
-# the rule: a breaking change is a major (a minor before 1.0.0), a `feat` in a product scope is a
-# minor, anything else is a patch. It prints the version and, on stderr, the commits that decided it.
-# `cut-release.yml` tags what it says.
-#
-# The scope list is the one `label-pr.yml` goes red on, and it is here as well as there because the
-# labeller guards a title on its way in and this reads the history as it is: two `feat` commits
-# outside it landed on `main` in the hours between the labeller's rule and its becoming a required
-# check, and would have made 0.18.0 of a cycle in which nothing on the site changed.
+# `deserved`: a breaking change is a major (a minor before 1.0.0), a `feat` in a product scope a
+# minor, anything else a patch; the deciding commits go to stderr. The scope list is the one
+# `label-pr.yml` goes red on, and it is here too because the labeller guards a title on its way in
+# while this reads the history as it is.
 #
 # Requires: git. Reaches no network. VERSION_GIT_ROOT points the history commands at another
 # repository, which is how `scripts/version-deserved-test.sh` fabricates one.
@@ -47,33 +41,23 @@ die() {
   exit 1
 }
 
-# The commit's own committer date, in UTC, as `YYYYMMDDHHMMSS`: `20260814122042`.
-#
-# The committer date rather than the author date, because that is when the commit landed on `main` —
-# a squash or rebase merge stamps it at merge time, so it increases in the order snapshots are
-# published. The author date is when the branch was written, which can be weeks earlier and is not
-# ordered by anything.
-#
-# The commit's date rather than `date -u`, because `compute` has to stay a pure function of the
-# commit. Re-running release.yml on the same sha must produce the same version — otherwise a re-run
-# publishes a second, differently-named copy of identical artifacts — and CI and a laptop must agree
-# about the same commit, which `date -u` cannot do by construction.
+# The commit's own committer date, UTC, `YYYYMMDDHHMMSS`. Committer rather than author: a squash or
+# rebase merge stamps it at merge time, so it increases in publication order. The commit's date
+# rather than `date -u`: `compute` must be a pure function of the commit, or a re-run of release.yml
+# publishes a second, differently-named copy of identical artifacts.
 commit_timestamp() {
   local sha="$1" stamp
   stamp="$(TZ=UTC0 git -C "$GIT_ROOT" show -s --format=%cd --date=format-local:%Y%m%d%H%M%S "$sha" 2>/dev/null)" ||
     die "cannot read the committer date of '$sha' — it is not a commit in this repository"
-  # Fourteen digits, and the first one is not a zero: a SemVer numeric identifier must not carry a
-  # leading zero, and the whole point of this identifier is that it compares numerically.
+  # Fourteen digits, the first not a zero: a SemVer numeric identifier must not carry a leading zero.
   [[ "$stamp" =~ ^[1-9][0-9]{13}$ ]] ||
     die "committer date of '$sha' produced '$stamp', which is not a 14-digit timestamp"
   printf '%s\n' "$stamp"
 }
 
-# The newest release tag reachable from HEAD, without its `v`: `0.3.12`.
-#
-# `--merged HEAD` rather than every tag, so a tag on a branch that never landed cannot become the
-# baseline the next release is measured from. Only the bare `vX.Y.Z` shape counts, which is the
-# same filter production's OCIRepository applies.
+# The newest release tag reachable from HEAD, without its `v`. `--merged HEAD`, so a tag on a branch
+# that never landed cannot become the baseline. Only the bare `vX.Y.Z` shape counts, the filter
+# production's OCIRepository applies.
 last_release() {
   find_last_release "${1:-}" || die "no release tag of the form vX.Y.Z is reachable from HEAD"
 }
@@ -114,15 +98,10 @@ apply_bump() {
   esac
 }
 
-# The version the commits since the last release deserve, with the reasoning on stderr.
-#
-# One `feat` is a minor. One breaking change (`!` in the subject, or a `BREAKING CHANGE:` footer)
-# is a major once the last release is 1.0.0 or later, and a minor before that: SemVer §4 says a
-# 0.y.z release may change anything, and the minor is the number that signals it. Anything else
-# is a patch. A subject that is not Conventional Commits counts as a patch and is listed, so
-# an unlabelled feature is visible rather than silently cheap.
-#
-# `--at-least` is a floor for the one decision the commits cannot show: 1.0.0. It never lowers.
+# The version the commits since the last release deserve, reasoning on stderr. One `feat` is a minor.
+# A breaking change (`!` or a `BREAKING CHANGE:` footer) is a major from 1.0.0 and a minor before —
+# SemVer §4 says a 0.y.z release may change anything. A non-Conventional subject counts as a patch
+# and is listed, so an unlabelled feature is visible. `--at-least` is a floor, for 1.0.0; it never lowers.
 cmd_deserved() {
   local floor=""
   while (($# > 0)); do
@@ -140,9 +119,8 @@ cmd_deserved() {
 
 # deserved_version <floor> <cut|snapshot|tag>
 #
-# The rule, once. `cut` refuses a tree with nothing to release. `snapshot` names the patch after the
-# last release when nothing landed yet, so a build at the tagged commit still has a number. `tag`
-# measures from the release before the one on HEAD, because the tag on HEAD is the thing being checked.
+# The rule, once. `cut` refuses a tree with nothing to release; `snapshot` names the patch after the
+# last release when nothing landed yet; `tag` measures from the release before the one on HEAD.
 deserved_version() {
   local floor="$1" mode="$2" last
   if [[ "$mode" == tag ]]; then
@@ -158,8 +136,7 @@ deserved_version() {
     return
   fi
 
-  # What a visitor to the site can see. A `feat` elsewhere is a change to the pipeline, the chart,
-  # a script or an agent, and earns what any other such change earns: a patch.
+  # What a visitor to the site can see. A `feat` elsewhere earns a patch.
   local product_scopes=" frontend events promoters venues artists importer scraper bff images branding "
 
   local sha subject body type scope bang kind

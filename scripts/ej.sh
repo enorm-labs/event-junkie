@@ -10,31 +10,23 @@
 #   scripts/ej.sh versions                      # what each cluster runs, and what Flux would resolve next
 #   scripts/ej.sh urls [staging|production]     # the local URLs the forwards serve
 #
-# Requires: wg-quick (with sudo), kubectl with both contexts in ~/.kube/config, curl, python3.
-# `versions` additionally needs what scripts/deployed-versions.sh needs: yq, helm. Nothing here writes
-# to a cluster — `kubectl get` and `kubectl port-forward` only. No helm, no flux, no tofu.
+# Requires: wg-quick (with sudo), kubectl with both contexts, curl, python3; `versions` needs yq and
+# helm. Nothing here writes to a cluster — `kubectl get` and `port-forward` only.
 #
-# Three forwards per environment, on ports that cannot collide with each other or with the local
-# stack (`dev-env.sh` owns 8080 and 8081). The `1` prefix is staging and `2` is production, which is
-# the convention http/http-client.env.json already uses for the importer.
+# Three forwards per environment, on ports that cannot collide with each other or with `dev-env.sh`'s
+# 8080/8081; the `1` prefix is staging, `2` production (http/http-client.env.json's convention):
 #
 #   forward     staging   production   what is behind it
-#   importer    18081     28081        admin API and its Swagger UI — no Ingress names it (#416, ADR-023)
-#   bff         18080     28080        Swagger UI — /webjars/** is not under /api, so Traefik never serves it
-#   openobserve  5080     25080        logs, metrics, dashboards — ClusterIP, deliberately unrouted
+#   importer    18081     28081        admin API and Swagger UI — no Ingress names it (ADR-023)
+#   bff         18080     28080        Swagger UI — /webjars/** is not under /api
+#   openobserve  5080     25080        logs, metrics, dashboards — ClusterIP, unrouted
 #
-# The tunnel state is read from what wg-quick itself writes — `/var/run/wireguard/<env>.name` on macOS,
-# the interface on Linux — rather than from a ping, so `down` knows what to take down and `up` does not
-# `wg-quick up` an interface that exists. The ping stays for the handshake check after `up`: an
-# interface appears and routes are added whether or not outbound UDP/51820 is open, and WireGuard never
-# answers an unauthenticated packet, so a missing handshake is the only symptom (CLUSTER_ACCESS.md §1).
-#
-# Everything this script starts is recorded under build/ej/ (gitignored): one pidfile and one log per
-# forward. `down` kills only pids it wrote, so a port-forward somebody started by hand is left alone.
-#
-# `up`, `status` and `versions` also write docs/ops/dashboard/status.js — `window.EJ_STATUS = {…}` — for
-# the local operations page (#1185). A page opened from file:// can fetch nothing, so this is how facts
-# reach it. The file is gitignored and regenerated on every call.
+# The tunnel state is read from what wg-quick writes (`/var/run/wireguard/<env>.name` on macOS, the
+# interface on Linux), not from a ping; the ping is the handshake check after `up`, because an
+# interface appears whether or not UDP/51820 is open and a missing handshake is the only symptom.
+# Everything started is recorded under build/ej/ (gitignored); `down` kills only pids it wrote.
+# `up`, `status` and `versions` also write docs/ops/dashboard/status.js for the local operations page
+# (#1185), which can fetch nothing from file://.
 
 set -euo pipefail
 
@@ -57,8 +49,7 @@ die() {
 }
 
 # --- per-environment facts ---------------------------------------------------------------------
-#
-# Functions rather than associative arrays keyed twice: bash 3.2, which macOS ships, has none.
+# Functions rather than associative arrays: macOS ships bash 3.2.
 
 node_of() { case "$1" in staging) echo 10.10.1.1 ;; production) echo 10.10.0.1 ;; esac; }
 context_of() { echo "event-junkie-$1"; }
@@ -136,10 +127,8 @@ tunnel_stop() {
 }
 
 # --- /etc/hosts ---------------------------------------------------------------------------------
-#
-# Checked, never written: it is the operator's file and a sudo write from a script is how a stale
-# line outlives the reason for it. Production passes on public DNS too, so the day `publish_dns`
-# flips (GO_LIVE_CHECKLIST.md) this stops asking for a line that is no longer needed.
+# Checked, never written: it is the operator's file. Production passes on public DNS too, so the day
+# `publish_dns` flips this stops asking for a line that is no longer needed.
 
 hosts_check() {
     local env="$1" host node
@@ -178,8 +167,8 @@ forward_start() {
         echo "forward $env/$name: already up on $port (pid $pid)"
         return 0
     fi
-    # A k9s shell or a hand-typed `kubectl port-forward` may hold the port already. Binding would
-    # fail while the port answers, which reads as success; so say whose it is and leave it alone.
+    # A k9s shell or a hand-typed `port-forward` may hold the port; binding would fail while the port
+    # answers, which reads as success. Say whose it is and leave it alone.
     if port_answers "$port"; then
         echo "forward $env/$name: $port is already served by something this script did not start — using it; 'down' will not stop it"
         echo "forward $env/$name: $(url_of "$env" "$name")"
@@ -213,13 +202,10 @@ forward_stop() {
 }
 
 # --- versions ------------------------------------------------------------------------------------
-#
-# Two numbers per cluster, and their disagreement is the finding. `running` is what the HelmRelease
-# has in storage — history[0] on helm.toolkit.fluxcd.io/v2; there is no lastAppliedRevision in that
-# version — and needs the tunnel. `resolvable` is what Flux would select from the registry right now,
-# reproduced by scripts/deployed-versions.sh without any cluster. Equal means the cluster is current.
-# Different means a publish has happened and the next reconcile will move it, or the range is holding
-# it back on purpose (production's `semverFilter`).
+# Two numbers per cluster, and their disagreement is the finding: `running` is history[0] on the
+# HelmRelease (needs the tunnel), `resolvable` is what Flux would select from the registry right now
+# (scripts/deployed-versions.sh, no cluster). Different means a publish will move it on the next
+# reconcile, or the range is holding it back on purpose.
 
 running_version() {
     local env="$1"
@@ -243,10 +229,8 @@ link_for() {
 }
 
 # --- status.js ----------------------------------------------------------------------------------
-#
-# One JSON document, assembled by python3 from environment variables so that nothing here has to
-# escape anything. Every value the page shows is here; the page computes nothing of its own beyond
-# "is this port answering right now", which it can do itself with a no-cors fetch.
+# One JSON document assembled by python3 from environment variables, so nothing here escapes
+# anything. The page computes nothing beyond "is this port answering right now".
 
 write_status_js() {
     local env name spec port up managed resolvable
@@ -342,12 +326,10 @@ cmd_urls() {
     done
 }
 
-# Deliberately reports "not ready" rather than "all good": a listing that is empty when healthy is
-# read in a second and cannot be mistaken for a stale success message. The Flux objects are parsed,
-# not `flux get all`'s table, whose SUSPENDED column reads "False" when healthy. Unknown is reported
-# beside False because `--status-selector ready=false` omits it, and it is what an in-progress
-# install — and a stuck one — reports. Suspended resources and those with no Ready condition yet
-# (Alerts and Providers before their first event) are skipped, or every fresh cluster is noisy.
+# Reports "not ready" rather than "all good": a listing empty when healthy cannot be mistaken for a
+# stale success. The Flux objects are parsed, not `flux get all`'s table. Unknown is reported beside
+# False — `--status-selector ready=false` omits it, and a stuck install reports it. Suspended
+# resources and those with no Ready condition yet are skipped.
 
 cmd_status() {
     local env name spec port pid
