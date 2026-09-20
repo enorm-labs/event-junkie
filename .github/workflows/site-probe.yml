@@ -1,60 +1,28 @@
 name: Public Site Probe
 
-# The outer half of #271's two-layer alerting, and the half that is not optional.
+# The outer half of #271's two-layer alerting. **The slower of two outer paths** (ADR-021): a Better
+# Stack monitor polls every three minutes; this runs once a day and pings a dead-man's switch, so
+# silence raises the alarm. Neither runs on Hetzner — an alerting path on the node it monitors cannot
+# report that node's death. **Do not restore a fast cron here**; the schedule block says why.
 #
-# **This is the slower of two outer paths, and ADR-021 records why there are two.** A Better Stack
-# monitor polls the site every three minutes and alerts in about six. This file runs once a day and
-# pings a dead-man's switch, so silence is what raises the alarm. The two share no infrastructure,
-# and neither runs on Hetzner. **Do not restore a fast cron here** — the schedule block says what
-# happened the last time this asked GitHub for one.
+# **A conditional ping.** It resolves the hostname, fetches the site over the public internet and
+# asserts status and content **before** pinging, so one check also catches DNS failure, an expired
+# certificate, misrouting and an application error.
 #
-# **An alerting path that runs on the node it monitors cannot report that node's death.** If the
-# Hetzner box is gone, OpenObserve and the Signal bridge are gone with it, and the silence is
-# indistinguishable from health. So this runs on GitHub's infrastructure — off Hetzner, notifying
-# through healthchecks.io's own channel and never through the in-cluster bridge.
+# **Arming it is two settings**: the `HEALTHCHECKS_PING_URL` secret and the `SITE_URL` variable
+# pointed at what production serves. The probe skips loudly when the secret is unset. Staging is not
+# on the internet and cannot be probed from here.
 #
-# **It is a *conditional* ping, and that is the whole design.**
-# A bare heartbeat proves the cron ran. This resolves the hostname, fetches the site over the public
-# internet, and asserts both the status code and expected content **before** pinging. That way one
-# check also catches DNS failure, an expired certificate, ingress misrouting and an application
-# error — none of which a heartbeat would notice.
-#
-# **Why it is inert until somebody arms it, and how.**
-# Staging is deliberately not on the internet at all (PLATFORM_SETUP §4a: no public `A` record, no
-# public 80/443, Ingress on the WireGuard tunnel), so it can never be probed from here. Production
-# can: it serves a rehearsal hostname over a real certificate while the domain stays dark.
-#
-# The probe **skips when `HEALTHCHECKS_PING_URL` is unset**, and says so in the job summary rather
-# than passing quietly — a silent skip is the failure mode this repository has been bitten by twice
-# (`hashFiles` in build-backend.yml, the Kustomize resource list in #416).
-#
-# **Arming it is two settings and no change to this file:** the `HEALTHCHECKS_PING_URL` secret, and
-# the `SITE_URL` variable below pointed at whatever production currently serves. Setting the secret
-# without the variable probes the apex, which does not resolve until go-live — a failure every
-# fifteen minutes, which is precisely how a monitor gets muted.
-#
-# **Do not self-host the other end.**
-# healthchecks.io is external on purpose. A dead-man's switch on the infrastructure it monitors
-# cannot report that infrastructure's death — the same argument as the first paragraph, one layer
-# out. The account already exists and `wal-g`'s backup drill pings it (infra/AGENTS.md).
+# **Do not self-host the other end**: a dead-man's switch on the infrastructure it monitors cannot
+# report that infrastructure's death. `wal-g`'s backup drill pings the same account.
 
 on:
   schedule:
-    # **Daily, because GitHub refuses a faster cron here.** This asked for every fifteen minutes
-    # until #889. It did not get one. Measured over five days, against 480 requested runs:
-    #
-    #   asked 15 min | shortest 29 min | median 129 min | longest 678 min | 39 runs delivered, 8%
-    #
-    # The daily schedules in this repository *are* honoured, and that is what sets the number below.
-    # `dependency-check-scheduled.yml` and `image-scan-scheduled.yml` both measure a median gap of
-    # about 24 hours and a worst gap of about 34. So the check that receives this ping wants a
-    # 24-hour period and a 24-hour grace, which leaves real headroom over that worst gap.
-    #
-    # **Derive those two numbers from the measurement, never from this line.** Reading the cron and
-    # doubling it is exactly what produced #889.
-    #
-    # Off-the-hour, and clear of 03:17 and 04:41, for the reason every scheduled workflow here gives:
-    # the top of the hour is a stampede on shared runners.
+    # **Daily, because GitHub refuses a faster cron here** (#889). A 15-minute cron delivered 39 of 480
+    # runs over five days: shortest 29 min, median 129, longest 678. The daily schedules here are
+    # honoured at a median gap of ~24 hours and a worst of ~34, so the check that receives this ping
+    # wants a 24-hour period and a 24-hour grace. **Derive those numbers from the measurement, never from
+    # this line.** Off-the-hour, clear of 03:17 and 04:41.
     - cron: '37 5 * * *'
   workflow_dispatch:
 
@@ -62,26 +30,19 @@ permissions:
   contents: read
 
 concurrency:
-  # Deliberately NOT `cancel-in-progress`. Cancelling the older run to start a newer one would
-  # discard exactly the probe that was mid-flight while the site was failing.
+  # Deliberately NOT `cancel-in-progress`: cancelling the older run discards the probe that was
+  # mid-flight while the site was failing.
   group: site-probe
   cancel-in-progress: false
 
 env:
-  # Pinned and visible, like every other tool version and endpoint here. This is `ingress.host` from
-  # the chart's values.yaml and the repository's homepage field — if it changes, it changes there
-  # first and here second.
-  #
-  # **A repository variable overrides it, and that is what lets this run before go-live.** Production
-  # serves a rehearsal hostname while `publish_dns` is false, so the apex resolves to nothing and a
-  # probe against it would fail every fifteen minutes for ever. Set `SITE_URL` to the name production
-  # actually serves; delete the variable at go-live and the default below is correct again.
-  #
-  # The default is the canonical host rather than the rehearsal one on purpose: the value that
-  # survives someone forgetting this workflow exists should be the one that is right at launch.
+  # `ingress.host` from the chart's values.yaml; if it changes, it changes there first. **A repository
+  # variable overrides it**: production serves a rehearsal hostname while `publish_dns` is false, so
+  # `SITE_URL` names that, and deleting the variable at go-live makes the default right again. The
+  # default is the canonical host so that forgetting this workflow exists leaves it correct at launch.
   SITE_URL: ${{ vars.SITE_URL || 'https://event-junkie.de' }}
-  # Asserted in the body. Chosen because it is the product name rather than a layout detail: a
-  # redesign should not page anyone, but a page that no longer says what it is should.
+  # Asserted in the body. The product name rather than a layout detail: a redesign should not page
+  # anyone; a page that no longer says what it is should.
   EXPECTED_CONTENT: Event Junkie
 
 jobs:
@@ -91,9 +52,7 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      # No `actions/checkout`. Nothing here reads the repository, so not checking out means no token
-      # is written to `.git/config` in the first place — the strongest form of the
-      # `persist-credentials: false` rule the other workflows apply.
+      # No `actions/checkout`: nothing reads the repository, so no token is written to `.git/config` at all.
       - name: Resolve, fetch, assert, then ping
         env:
           PING_URL: ${{ secrets.HEALTHCHECKS_PING_URL }}
@@ -122,24 +81,21 @@ jobs:
               echo
               echo "$1"
             } >> "$GITHUB_STEP_SUMMARY"
-            # Signal the failure immediately rather than waiting out the grace period. Silence still
-            # covers the case this cannot: GitHub itself being unable to run us at all.
+            # Signal the failure now rather than waiting out the grace period; silence still covers GitHub being
+            # unable to run us at all.
             curl -fsS -m 15 --retry 3 --retry-delay 2 "${PING_URL}/fail" >/dev/null || true
             exit 1
           }
 
-          # 1 — Fetch. `--retry` absorbs a single transient blip; three failures in a row over ~20s
-          #     is a real outage rather than a hiccup, and false alarms are how a pager gets muted.
-          #     No `-f`: a 5xx must reach the status assertion below rather than exit here.
+          # 1 — Fetch. `--retry` absorbs a blip; three failures over ~20s is an outage, and false alarms mute a
+          #     pager. No `-f`: a 5xx must reach the status assertion.
           body="$(mktemp)"
           code="$(curl -sS -m 20 --retry 3 --retry-delay 3 --retry-all-errors \
                     -o "${body}" -w '%{http_code}' "${SITE_URL}")"
           curl_status=$?
 
-          # 2 — Name curl's own failures rather than reporting an exit code. DNS, connection refused
-          #     and a bad certificate are three different outages with three different fixes, and the
-          #     first line of the alert is the one someone reads at 03:00. Deliberately not `getent`:
-          #     that is Linux-only, so it could not be exercised outside the runner.
+          # 2 — Name curl's own failures: DNS, connection refused and a bad certificate are three outages with
+          #     three fixes, and the first line is what someone reads at 03:00. Not `getent`: Linux-only.
           if [ "${curl_status}" -ne 0 ]; then
             case "${curl_status}" in
               6)      fail "DNS did not resolve ${SITE_URL} — the name is gone, not the site." ;;
@@ -150,15 +106,13 @@ jobs:
             esac
           fi
 
-          # 3 — Status and content, in that order: a 200 serving the wrong page is still an outage,
-          #     and an ingress problem shows up here as a non-200.
+          # 3 — Status and content, in that order: a 200 serving the wrong page is still an outage.
           [ "${code}" = "200" ] || fail "${SITE_URL} answered HTTP ${code}, expected 200."
           grep -qF "${EXPECTED_CONTENT}" "${body}" \
             || fail "${SITE_URL} answered 200 but the body does not contain '${EXPECTED_CONTENT}'."
 
-          # 4 — Only now. The ping is the *last* step and, unlike the SARIF uploads elsewhere in this
-          #     repository, it must NOT run on failure — reporting success is the one thing a
-          #     dead-man's switch can never do speculatively.
+          # 4 — Only now, and NOT on failure: reporting success is the one thing a dead-man's switch can never
+          #     do speculatively.
           curl -fsS -m 15 --retry 3 --retry-delay 2 "${PING_URL}" >/dev/null \
             || fail "Site is healthy but the healthchecks.io ping failed — the switch is now blind."
 
@@ -168,15 +122,10 @@ jobs:
             echo "\`${SITE_URL}\` answered 200 and contains '${EXPECTED_CONTENT}'. healthchecks.io pinged."
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # **This step must never ping healthchecks.io, in either direction.** Configuration drift is
-      # not an outage. The site can be perfectly healthy while the console has moved, and the check
-      # above has already reported that truthfully. So drift turns the *workflow* red and leaves the
-      # *check* green, which is what each of them means.
-      #
-      # It exists because ADR-021 conceded that half the assertions left git. The status code and
-      # the body string now live in a console form as well as in this file, and nothing compared
-      # them. This is the comparison. `SITE_URL` and `EXPECTED_CONTENT` above are the single source
-      # of truth, and the console is what gets checked against them.
+      # **This step must never ping healthchecks.io.** Configuration drift is not an outage: the site can be
+      # healthy while the console has moved, so drift turns the *workflow* red and leaves the *check* green.
+      # ADR-021 conceded that half the assertions left git; `SITE_URL` and `EXPECTED_CONTENT` above are the
+      # truth and the console is what gets checked against them.
       - name: Assert the Better Stack monitor still matches this file
         if: always()
         env:
@@ -195,17 +144,16 @@ jobs:
             exit 0
           fi
 
-          # A read-only GET. The token has no read-only scope, so this is the only call made with it,
-          # and the job checks out no code that could reach it.
+          # A read-only GET; the token has no read-only scope, so this is the only call made with it, and no
+          # code is checked out that could reach it.
           response="$(mktemp)"
           code="$(curl -sS -m 20 --retry 3 --retry-delay 3 --retry-all-errors \
                     -o "${response}" -w '%{http_code}' \
                     -H "Authorization: Bearer ${BS_TOKEN}" \
                     "https://uptime.betterstack.com/api/v2/monitors/${MONITOR_ID}")"
 
-          # **Failing to check is a state worth a red run.** A revoked token that skipped quietly
-          # would leave the console unwatched and everything looking green — the failure mode this
-          # repository has been bitten by twice.
+          # **Failing to check is a state worth a red run.** A revoked token that skipped quietly would leave
+          # the console unwatched and everything green.
           if [ "${code}" != "200" ]; then
             echo "::error::Better Stack API answered HTTP ${code} for monitor ${MONITOR_ID}. The monitor is unverified."
             {
@@ -229,11 +177,10 @@ jobs:
 
           a() { jq -r "$1" < "${response}"; }
 
-          # The two that matter most: they are the same values the probe above asserts.
+          # The two that matter most: the values the probe above asserts.
           expect url                 "$(a '.data.attributes.url')"                 "${SITE_URL}"
           expect required_keyword    "$(a '.data.attributes.required_keyword')"    "${EXPECTED_CONTENT}"
-          # A keyword monitor also alerts when the URL is unavailable, so this type is a superset.
-          # Any other type silently stops asserting the body.
+          # A keyword monitor also alerts when the URL is unavailable; any other type stops asserting the body.
           expect monitor_type        "$(a '.data.attributes.monitor_type')"        'keyword'
           expect check_frequency     "$(a '.data.attributes.check_frequency')"     '180'
           expect confirmation_period "$(a '.data.attributes.confirmation_period')" '180'
@@ -241,8 +188,8 @@ jobs:
           expect verify_ssl          "$(a '.data.attributes.verify_ssl')"          'true'
           expect email               "$(a '.data.attributes.email')"               'true'
           expect regions             "$(a '.data.attributes.regions | join(",")')"   'eu'
-          # `paused_at` is a timestamp, so null is the only healthy value. A paused monitor reports
-          # nothing and looks exactly like a passing one from outside.
+          # `paused_at` is a timestamp, so null is the only healthy value; a paused monitor looks exactly like a
+          # passing one from outside.
           expect paused_at           "$(a '.data.attributes.paused_at')"           'null'
 
           if [ "${drifted}" -ne 0 ]; then

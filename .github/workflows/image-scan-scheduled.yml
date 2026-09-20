@@ -1,55 +1,30 @@
 name: Scheduled Image Scan
 
-# Scans the images that are **deployed**, on a schedule — the half of image scanning that a
-# publish-time gate structurally cannot do.
+# Scans the images that are **deployed**, on a schedule — the half of image scanning a publish-time
+# gate structurally cannot do. `release.yml`'s Trivy gate runs only when something is published, so a
+# vulnerability disclosed against a running image triggers no build and the gate is silent exactly
+# when the risk is newest (#442). The same split `build-backend.yml` and
+# `dependency-check-scheduled.yml` make for dependencies.
 #
-# #264 put Trivy in front of every publish: each image is built for amd64, scanned, and pushed only
-# if it carries no fixable CRITICAL or HIGH. That gate earned its place on its first run, finding 10
-# fixable HIGH advisories in the frontend image. **But it only runs when something is published.** A
-# vulnerability disclosed against an image that is already running changes nothing about that image
-# and triggers no build, so the gate is silent exactly when the risk is newest. A quiet fortnight —
-# entirely normal here — is a fortnight of no scanning while advisories accumulate against what is
-# actually serving.
+# **It scans a published tag, not a rebuild of `main`.** `scripts/deployed-versions.sh` makes the
+# selection Flux makes — each cluster's `semver` range against what GHCR lists, through Helm's own
+# solver — so the target cannot drift from what is deployed. That guarantee is only as good as the
+# listing: the registry paginates at 100 tags, and a resolver that read one page scanned a
+# fortnight-old snapshot and called production unscannable (#1027). When this job looks wrong,
+# suspect the resolver's inputs before its logic.
 #
-# This is the same split already solved for dependencies: `build-backend.yml` runs an informational
-# OWASP scan on pull requests and `dependency-check-scheduled.yml` runs the authoritative one nightly
-# on `main`. Images had the first half and not the second (#442).
+# **Both architectures**, which the publish gate cannot do (a multi-platform image cannot be loaded
+# before it is pushed). arm64 is what the Hetzner nodes run (#424).
 #
-# **It scans a published tag, not a rebuild of `main`.**
-# Those diverge the moment a base image is rebuilt, and the deployed one is the one with users in
-# front of it. `scripts/deployed-versions.sh` makes the same selection Flux makes — it reads each
-# cluster's own `semver` range out of `deploy/clusters/*/oci-repository.yaml`, lists what is actually
-# published in GHCR, and resolves the two with Helm's own constraint solver. So the scan target
-# cannot drift from what is deployed, and production starts being scanned by itself the day it has a
-# release rather than the day somebody remembers to add it here.
-#
-# **That guarantee is only as good as "lists what is actually published", and for a while it was
-# not.** The registry paginates at 100 tags; the resolver read the first page and stopped, so this
-# job scanned a fortnight-old snapshot and reported production as having nothing to scan — with the
-# resolver's own comments explaining that as the correct answer (#1027). Nothing here changed to fix
-# it, which is the point: when this job looks wrong, suspect the resolver's inputs before its logic.
-#
-# **Both architectures, which is the gap the publish gate cannot close.**
-# `release.yml` scans only the amd64 variant, and not by choice: a multi-platform image cannot be
-# loaded into a local daemon before it is pushed, so there is nothing to scan yet. A scheduled scan
-# has no such constraint — the images are already in a registry and `--platform` reaches either one.
-# **arm64 is the architecture the Hetzner nodes actually run** (#424), so scanning amd64 only would
-# mean the one architecture nobody serves from was the only one ever examined.
-#
-# **No credential, deliberately.**
-# The GHCR packages are public — the same property `oci-repository.yaml` relies on for having no
-# `secretRef` — so both the tag listing and the pulls here are anonymous. That is not merely
-# convenient: it exercises the same anonymous registry path the clusters use, and it means this
-# workflow holds nothing worth stealing.
+# **No credential.** The packages are public, so listing and pulls are anonymous — the same path the
+# clusters use, and nothing here worth stealing.
 
 on:
   schedule:
-    # 04:41 UTC daily. Off-the-hour for the runner stampede, and well clear of
-    # dependency-check-scheduled.yml's 03:17 so the two are not competing for the same NVD/registry
-    # windows or interleaving in the Security tab.
+    # 04:41 UTC daily: off-the-hour for the runner stampede, clear of dependency-check-scheduled.yml's 03:17.
     - cron: '41 4 * * *'
-  # Also runs when the thing that decides *what* gets scanned changes, so a broken resolver or a
-  # narrowed range is caught by the change that caused it rather than at 04:41 the next morning.
+  # Also when the thing that decides *what* gets scanned changes, so a broken resolver is caught by the
+  # change that caused it.
   pull_request:
     branches: [ main ]
     paths:
@@ -68,21 +43,16 @@ on:
 
 permissions:
   contents: read
-  # Findings go to Code Scanning, where detekt, Dependency-Check and release.yml's own Trivy reports
-  # already are.
+  # Findings go to Code Scanning with detekt's, Dependency-Check's and release.yml's.
   security-events: write
 
 env:
   IMAGE_PREFIX: ghcr.io/enorm-labs/event-junkie
-  # Matched to the SDK helm-controller embeds, for the same reason release.yml and validate-chart.yml
-  # are: Flux's `deployed-versions.sh` borrows Helm's own solver precisely to reproduce the selection
-  # helm-controller makes, so this client has to be that SDK — Helm 4 since helm-controller v1.6.x.
-  # A Helm 3 client answers a slightly different question.
+  # Matched to the SDK helm-controller embeds: `deployed-versions.sh` borrows Helm's solver to reproduce
+  # helm-controller's selection, and a Helm 3 client answers a slightly different question.
   HELM_VERSION: 4.3.0
-  # **Must match release.yml's.** The two scans are meant to be comparable — a finding here that the
-  # publish gate did not raise should mean the advisory is new, not that the scanners are.
-  # Invisible to Dependabot (a string in YAML). Renovate watches it and groups by `depName`, so both
-  # copies arrive in one pull request (ADR-024).
+  # **Must match release.yml's**, so a finding here the publish gate did not raise means the advisory is
+  # new, not the scanner. Renovate groups both copies into one pull request (ADR-024).
   TRIVY_VERSION: 0.74.0
 
 jobs:
@@ -92,9 +62,8 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      # Needed for two things beyond the script: `.trivyignore`, which Trivy reads from the working
-      # directory, and the cluster sources the resolver reads. **One waiver file, one place to keep
-      # honest** — this workflow deliberately introduces no second ignore list of its own.
+      # For `.trivyignore`, which Trivy reads from the working directory, and the cluster sources the
+      # resolver reads. **One waiver file** — no second ignore list here.
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -105,8 +74,7 @@ jobs:
         with:
           version: ${{ env.HELM_VERSION }}
 
-      # From the release archive rather than an action, so the version is pinned in this file and
-      # visible — the same way release.yml and validate-chart.yml install their tools.
+      # From the release archive, so the version is pinned in this file and visible.
       - name: Install Trivy
         run: |
           curl -fsSL \
@@ -114,16 +82,13 @@ jobs:
             | tar -xz -C /usr/local/bin trivy
           trivy --version
 
-      # The resolver prints `cluster<TAB>version`, and `(none)` for a cluster whose range matches
-      # nothing published — which production does today, correctly, having never had a release.
-      #
-      # Distinct versions only: k3d copies staging's range verbatim, so the two resolve to the same
-      # tag and scanning it twice would buy nothing but a duplicate Code Scanning category.
+      # The resolver prints `cluster<TAB>version`, and `(none)` for a range matching nothing published.
+      # Distinct versions only: k3d copies staging's range, and scanning the same tag twice buys a
+      # duplicate category.
       - name: Work out what is deployed
         id: deployed
         env:
-          # Through the environment rather than interpolated into the script: a `${{ }}` expanding
-          # into a `run:` block is the shape of a template injection, and this input is free text.
+          # Through the environment: this input is free text, and `${{ }}` in a `run:` block is the injection shape.
           REQUESTED: ${{ inputs.version }}
         run: |
           if [[ -n "$REQUESTED" ]]; then
@@ -137,11 +102,8 @@ jobs:
             table="$(printf '%s\n' "$resolved" | awk -F'\t' '{printf "| %s | `%s` |\n", $1, $2}')"
           fi
 
-          # Nothing to scan at all means the resolver found no deployable version anywhere, which is
-          # a broken mechanism rather than a clean bill of health. Fail rather than go green having
-          # looked at nothing — the failure mode this repository has been bitten by before, when a
-          # misconfigured OWASP scan reported `Dependencies Scanned: 0` and passed its CVSS gate
-          # trivially.
+          # Nothing to scan means the resolver found no deployable version anywhere — a broken mechanism, not a
+          # clean bill of health. Fail rather than go green having looked at nothing.
           if [[ -z "$versions" ]]; then
             echo "::error::No cluster resolves a published version — nothing to scan. This is a broken resolver, not a clean result."
             exit 1
@@ -156,26 +118,15 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
-      # Thresholds match release.yml's exactly, and that is the point rather than a coincidence: a
-      # finding here that the publish gate did not raise should mean the advisory is new.
-      #
-      # `--ignore-unfixed` is load-bearing for the same reason it is there — a base-image CVE with no
-      # upstream fix would otherwise fail this job every night until somebody deleted the gate, which
-      # is how gates die.
-      #
-      # **What "fixable" means here differs from publish time, though, and it is worth knowing before
-      # reading a red run.** At publish time the fix is "bump the base digest and this build picks it
-      # up". These images are immutable and already deployed, so the fix is bump → merge → publish →
-      # let Flux reconcile. A failure here is a call to cut a release, not to re-run the job.
-      #
-      # Every image on every platform is scanned before the first failure is reported, so one bad
-      # image does not hide the state of the other seven.
+      # Thresholds match release.yml's exactly, so a finding here the publish gate did not raise means the
+      # advisory is new. `--ignore-unfixed` for the same reason: a base-image CVE with no upstream fix would
+      # fail every night until somebody deleted the gate. **A red run here is a call to cut a release, not
+      # to re-run the job** — these images are immutable and deployed. Every image on every platform is
+      # scanned before the first failure is reported.
       - name: Scan every deployed image, on both architectures
         id: scan
         env:
-          # Through the environment, never `${{ }}` inside the script. Nothing here is attacker-
-          # controlled today, but a lint that has to reason about which interpolations are currently
-          # harmless is not a lint — zizmor blocks the shape, and rightly.
+          # Through the environment, never `${{ }}` inside the script; zizmor blocks the shape, and rightly.
           VERSIONS: ${{ steps.deployed.outputs.versions }}
         run: |
           status=0
@@ -184,13 +135,10 @@ jobs:
             for component in bff importer frontend injector; do
               ref="${IMAGE_PREFIX}/${component}:${version}"
 
-              # **A component that a deployed version never shipped is a warning, not a failure.**
-              # The loop walks whatever is deployed, and a component added later — `injector`
-              # arrived in #287 — has no image for any version cut before it. Trivy reports that
-              # as "unable to find the specified image", the same words as a registry outage, so
-              # the two are told apart here: a manifest that is not there is skipped and said so;
-              # everything else still fails below. This warning is expected on every run until the
-              # first release that carries the component reaches both clusters, and wrong after.
+              # **A component a deployed version never shipped is a warning, not a failure.** `injector` (#287) has
+              # no image for a version cut before it, and Trivy reports that with the same words as a registry
+              # outage; a manifest that is not there is skipped and said so, everything else still fails below.
+              # Expected until the first release carrying the component reaches both clusters, wrong after.
               if ! docker manifest inspect "$ref" >/dev/null 2>&1; then
                 echo "::warning::${ref} is not in the registry — ${component} was not part of ${version}, or the registry is unreachable. Skipped."
                 continue
@@ -207,23 +155,17 @@ jobs:
                   --output "trivy-${component}-${arch}.json" \
                   --exit-code 1 || status=1
 
-                # A missing report means the scan itself failed rather than found something, and the
-                # conversions below would die with a confusing "no such file" that hides the real
-                # error. Same guard release.yml carries, for the same reason.
+                # A missing report means the scan itself failed; the conversions below would hide that behind a
+                # "no such file". Same guard as release.yml.
                 if [[ ! -s "trivy-${component}-${arch}.json" ]]; then
                   echo "::error::Trivy produced no report for ${ref} (linux/${arch}) — the scan failed, rather than finding vulnerabilities."
                   exit 1
                 fi
 
-                # **Zero findings is only good news if something was examined.** This repository has
-                # already been burned by the other kind: `scanProjects` was misconfigured for months,
-                # OWASP reported `Dependencies Scanned: 0`, and the build passed its CVSS gate
-                # trivially every time. A green scan is not evidence that the scan looked at
-                # anything, so `--list-all-pkgs` is asked for purely so this assertion can exist.
-                #
-                # The realistic way this fires is a base-image change Trivy cannot fingerprint: no OS
-                # family means no os-pkgs result, and Trivy reports that as a clean image rather than
-                # as an unknown one. A floor number would rot as the images grow; zero cannot.
+                # **Zero findings is only good news if something was examined** — a misconfigured OWASP scan once
+                # reported `Dependencies Scanned: 0` and passed for months. `--list-all-pkgs` exists so this assertion
+                # can. The realistic trigger is a base image Trivy cannot fingerprint: no OS family, no os-pkgs
+                # result, reported as clean rather than unknown. A floor of zero cannot rot.
                 packages="$(jq '[.Results[]?.Packages // [] | length] | add // 0' "trivy-${component}-${arch}.json")"
                 if [[ "$packages" -eq 0 ]]; then
                   echo "::error::Trivy enumerated 0 packages in ${ref} (linux/${arch}) — it looked at nothing, which is not the same as finding nothing."
@@ -241,23 +183,17 @@ jobs:
           done
           exit $status
 
-      # imgproxy is not ours and is pinned by digest, so it cannot join the loop above — that one
-      # walks our four components across the versions currently deployed. It is scanned because
-      # ADR-020 named this the strongest argument against adopting it: a third-party image we cannot
-      # rebuild when a finding has no fix. `--ignore-unfixed` is what keeps that from being a nightly
-      # red build for something nobody can act on, exactly as it does for the JRE base.
+      # imgproxy is not ours and is digest-pinned, so it cannot join the loop above. Scanned because ADR-020
+      # named this the strongest argument against adopting it: a third-party image we cannot rebuild when a
+      # finding has no fix. `--ignore-unfixed` keeps that from being a nightly red for something nobody can
+      # act on.
       - name: Scan the imgproxy sidecar
         id: scan-imgproxy
         if: success() || failure()
         run: |
-          # **Render the chart rather than read the file.** An earlier version grepped values.yaml
-          # for a digest within three lines of the repository name, and adding a comment above the
-          # digest broke it — the scan then had nothing to examine and failed, correctly but for a
-          # silly reason. Rendering asks the chart what it actually deploys, so no comment, key
-          # order or second digest elsewhere in the file can change the answer.
-          #
-          # The --set values are only what the chart `required`s to render; none of them reach the
-          # scan. helm is already installed in this job.
+          # **Render the chart rather than read the file.** A grep for the digest near the repository name broke
+          # when a comment was added above it. Rendering asks the chart what it deploys. The `--set` values are
+          # only what the chart `required`s; none reach the scan.
           ref="$(helm template scan deploy/charts/event-junkie \
             --set database.host=10.0.0.1 \
             --set database.existingSecret=scan \
@@ -275,8 +211,7 @@ jobs:
             echo "$ref"
             exit 1
           fi
-          # This step runs on `failure()` too, so it cannot assume the loop above got as far as
-          # creating the directory.
+          # Runs on `failure()` too, so it cannot assume the loop above created the directory.
           mkdir -p sarif
           echo "::group::trivy ${ref}"
           trivy image "$ref" \
@@ -327,30 +262,15 @@ jobs:
             echo "_A cluster showing \`(none)\` resolves no published version. Production does that until its first release._"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # Last in the job, after everything that scans (#507). `if:` carries an implicit `success()`,
-      # so a step that reports to GitHub placed above a step that verifies silently loses its
-      # annotations the moment anything below it fails — which has bitten this repository twice.
+      # Last in the job, after everything that scans (#507): `if:` carries an implicit `success()`, so a
+      # report step above a verify step loses its annotations the moment anything below fails.
       #
-      # **One upload per category, and one SARIF run per upload.** This started out as three
-      # directory uploads — both architectures of a component under one category — on the reasoning
-      # that an identical CVE on amd64 and arm64 is one problem and should be one alert. The CodeQL
-      # Action rejects that outright:
-      #
-      #     The CodeQL Action does not support uploading multiple SARIF runs with the same category.
-      #
-      # So the six-category shape is not a preference; it is the only one that uploads at all, and
-      # the pull-request trigger is what surfaced that before this ever ran on a schedule. The consequence to know when reading the Security tab: a CVE present on
-      # both architectures is **two alerts**, which has to be closed twice. In exchange each alert
-      # names the architecture it was found on, which the merged form could not.
-      #
-      # `trivy-deployed-*`, deliberately **not** release.yml's `trivy-*`: the same category would
-      # mean this nightly run replacing the publish-time findings for that image, and the two are
-      # answers to different questions.
-      #
-      # Each guarded with `success() || failure()` so findings are filed whether the scan passed or
-      # failed, and so one failing upload cannot take the other five with it. The `hashFiles` guard
-      # skips an upload whose report was never produced — what happens when the scan died rather
-      # than found something.
+      # **One upload per category, one SARIF run per upload.** Both architectures under one category was
+      # the intent — one CVE, one alert — and the CodeQL Action rejects it: `does not support uploading
+      # multiple SARIF runs with the same category`. So a CVE on both architectures is **two alerts**, closed
+      # twice, each naming its architecture. `trivy-deployed-*`, not release.yml's `trivy-*`: the same
+      # category would replace the publish-time findings with these. `success() || failure()` on each, and
+      # the `hashFiles` guard skips a report the scan never produced.
       - name: Upload Trivy SARIF (bff, amd64)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-bff-amd64.sarif') != ''
         uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0

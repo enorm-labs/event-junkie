@@ -1,21 +1,13 @@
 name: Validate Helm Chart
 
 # `helm lint`, `helm template`, `flux schema validate` and `helm unittest` are pure functions of the
-# working tree — they reach no cluster and need no kubeconfig, which is what makes them safe to run
-# in CI at all (docs/ops/PLATFORM_SETUP.md §4: nothing outside the cluster holds a credential for it).
-#
-# So this is a syntax and shape gate, not a correctness one — it cannot tell you a pod starts, which
-# is `scripts/k3d-rehearsal.sh`'s job. What it catches is the failure mode deployment code nobody
-# runs daily actually has: a chart that stopped rendering months ago, noticed on the afternoon it was
-# needed. `helm unittest` is the part that earns its keep, because lint and schema validation both
-# pass on a chart that quietly does the wrong thing — an ingress routing /actuator, an importer
-# scaled to two replicas — and it asserts what a render script structurally could not (#430): that
-# the chart *refuses* to render without `database.host` and says what to do.
+# working tree — no cluster, no kubeconfig — which is what makes them safe in CI at all. A syntax and
+# shape gate, not a correctness one: `scripts/k3d-rehearsal.sh` is what proves a pod starts. `helm
+# unittest` earns its keep because lint and schema both pass on a chart that quietly does the wrong
+# thing — an ingress routing /actuator, an importer at two replicas (#430).
 
-# `gradle.properties` and `events-frontend/package.json` are in the `push:` filter because the chart's
-# `version` and `appVersion` must equal the base version they declare (#264). Editing one of them
-# without the chart is exactly how they drift. On pull requests the question is moot — since #443
-# this workflow runs on every one of them.
+# The version scripts are in the `push:` filter because `version-test.sh` runs here, where Helm is.
+# On pull requests the filter is moot — since #443 this workflow runs on every one.
 
 on:
   push:
@@ -28,16 +20,13 @@ on:
       - 'scripts/version-test.sh'
       - 'scripts/uid-consistency.sh'
       - 'scripts/csp-parity.sh'
-      # The coverage floors this workflow asserts, and the script that reads them. Editing the
-      # baseline without a run is how a floor gets lowered unnoticed.
+      # The coverage floors this workflow asserts. Editing the baseline without a run lowers a floor unnoticed.
       - 'scripts/scan-coverage.sh'
       - 'scripts/scan-coverage-baseline.txt'
-      # The other two files csp-parity.sh reads. Editing one alone is the drift it catches.
+      # The other two files csp-parity.sh reads; editing one alone is the drift it catches.
       - 'events-frontend/scripts/csp.ts'
       - 'events-frontend/index.html'
-      # The Dockerfiles are here because `scripts/uid-consistency.sh` reads them: the UID they set
-      # has to match the chart's, and a Dockerfile-only change is exactly how that drifts. On pull
-      # requests the question is moot — since #443 this workflow runs on every one of them.
+      # The Dockerfiles, because `scripts/uid-consistency.sh` reads their `USER` line against the chart's.
       - 'events-bff/Dockerfile'
       - 'events-importer/Dockerfile'
       - 'events-frontend/Dockerfile'
@@ -46,12 +35,9 @@ on:
       - '.github/workflows/validate-chart.yml'
   pull_request:
     branches: [ main ]
-    # No `paths:` here, deliberately, since #443. These checks are **required** on the `main`
-    # ruleset, and a required check that never runs stays Pending forever — GitHub's own words:
-    # "A pull request that requires those checks to be successful will be blocked from merging."
-    # So a filter here would deadlock every pull request that happens not to touch these paths.
-    # Affordable because the whole workflow is seconds: the chart, the Flux resources and the version consistency check.
-    # The `push:` filter above keeps its paths — nothing requires those runs.
+    # No `paths:` here (#443): these checks are **required**, and a required check that never runs stays
+    # Pending forever, deadlocking every pull request that does not touch these paths. Affordable
+    # because the whole workflow is seconds. The `push:` filter keeps its paths.
   workflow_dispatch:
 
 permissions:
@@ -59,32 +45,21 @@ permissions:
 
 env:
   CHART: deploy/charts/event-junkie
-  # Matched to the Helm SDK helm-controller embeds, which is what actually installs this chart. The
-  # deployed controller is `helm-controller:v1.6.3` and its `go.mod` reads
-  # `replace helm.sh/helm/v4 => github.com/fluxcd/helm/v4 v4.2.4-flux.1`, so the client here is 4.2.4.
-  #
-  # **This was v3.21.4 until #1006, on the premise that helm-controller embeds the Helm 3 SDK.** That
-  # premise lapsed and the pin then cost something: Helm 4's `--strict` rejects an unknown `Chart.yaml`
-  # key and Helm 3's does not, so a malformed chart failed the pre-commit hook and passed here. **The
-  # gate must not be weaker than the hook in front of it.** All three copies move together.
+  # Matched to the Helm SDK helm-controller embeds — the client that gates the chart is the one that
+  # installs it. It was 3.x until #1006 on a lapsed premise, and Helm 4's `--strict` rejects an unknown
+  # `Chart.yaml` key that 3's let through: **the gate must not be weaker than the hook in front of
+  # it.** Every copy of this pin moves together.
   HELM_VERSION: 4.3.0
-  # `flux schema validate` replaced kubeconform in #414. Both pinned, both invisible to Dependabot —
-  # they are strings in YAML, not a manifest — so Renovate's `customManagers` watch them (ADR-024).
+  # `flux schema validate` replaced kubeconform (#414). Strings in YAML, invisible to Dependabot, so
+  # Renovate's `customManagers` watch them (ADR-024).
   FLUX_VERSION: 2.9.5
   FLUX_SCHEMA_VERSION: 0.13.0
-  # Pinned for the reason validate-scripts.yml sets out at length: `ubuntu-latest` preinstalls an
-  # older ShellCheck than a current local install, old enough to disagree about SC2015. **This pin
-  # appears in three workflows** — here, validate-infra.yml and validate-scripts.yml — and they must
-  # move together, the same rule HELM_VERSION carries. Three pins that can drift are a weaker
-  # version of the problem pinning was meant to remove.
+  # `ubuntu-latest` preinstalls an older ShellCheck than a local install, old enough to disagree about
+  # SC2015. **This pin appears in three workflows** and they move together.
   SHELLCHECK_VERSION: v0.11.0
-  # Pinned like everything else here, and installed onto the Helm above rather than run from the
-  # `helmunittest/helm-unittest` image (#430). The image's tags pin a Helm and a plugin version
-  # together, which reads like the safer option — but its newest Helm 3 tag carries plugin 1.0.3,
-  # which has no `--values` flag, and that flag is how `scripts/cluster-assertions.sh` feeds each
-  # cluster's `spec.values` in. Installing the plugin keeps HELM_VERSION exact and gets a plugin
-  # that can do it. Invisible to Dependabot, like the pins above, and watched by Renovate for the
-  # same reason.
+  # Installed onto the Helm above rather than run from the `helmunittest/helm-unittest` image (#430):
+  # the image pins a Helm and a plugin together, and its plugin has no `--values` flag, which is how
+  # `scripts/cluster-assertions.sh` feeds each cluster's `spec.values` in. Watched by Renovate.
   HELM_UNITTEST_VERSION: v1.1.2
 
 jobs:
@@ -94,27 +69,23 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      # The whole history and every tag, because `version-test.sh` below computes real snapshot
-      # versions from them (ADR-032); a shallow clone would compute `0.0.0-local`.
+      # The whole history and every tag: `version-test.sh` computes real snapshot versions from them
+      # (ADR-032); a shallow clone would compute `0.0.0-local`.
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      # A number written in four files, and a comment is not a gate: `security.runAsUser` carries
-      # "must match the UID the images actually run as", and nothing compared it with the `USER`
-      # line in the three Dockerfiles.
-      # The `helm unittest` suite asserts the chart renders a specific number, which catches the
-      # chart drifting from itself and cannot see a Dockerfile at all. A mismatch does not look like
-      # a values problem: the pod starts, the UID being non-root either way, and then the JVM cannot
-      # read its own jar. #448.
+      # `security.runAsUser` must match the `USER` line in the three Dockerfiles, and a comment is not a
+      # gate. `helm unittest` sees only the chart. A mismatch does not look like a values problem: the pod
+      # starts non-root either way, and then the JVM cannot read its own jar (#448).
       - name: Check the chart and the images agree about the UID
         run: scripts/uid-consistency.sh "$CHART"
 
-      # A third question of the same shape, about the Content-Security-Policy in the chart and in
-      # `events-frontend/scripts/csp.ts`. It also recomputes the `script-src` hash from index.html:
-      # editing the theme script without the policy blocks it, and the only symptom is a theme flash.
+      # The Content-Security-Policy in the chart and in `events-frontend/scripts/csp.ts`, plus the
+      # `script-src` hash from index.html: editing the theme script without the policy blocks it, and the
+      # only symptom is a theme flash.
       - name: Check the chart and the frontend agree about the CSP
         run: scripts/csp-parity.sh "$CHART"
 
@@ -123,31 +94,18 @@ jobs:
         with:
           version: ${{ env.HELM_VERSION }}
 
-      # The step above asks whether the four files agree; this one asks whether the versions they
-      # produce **order**, which is a different question and the one that went unasked for three
-      # days (#455). `0.1.0-snapshot.g<sha>` agreed with everything, lint-passed, published fine —
-      # and gave staging's `>=0.0.0-0` no way to mean "newest", so Flux resolved whichever short sha
-      # sorted highest in ASCII while reporting Ready throughout.
-      #
-      # It resolves fabricated version sets through Helm's own Masterminds solver, the library Flux's
-      # source-controller embeds, so this is the comparison the cluster makes. It runs here rather
-      # than in validate-scripts.yml because this is where Helm is, pinned to the Helm 3 the
-      # helm-controller uses — the version whose verdict matters.
+      # Whether the versions **order** (#455): `0.1.0-snapshot.g<sha>` lint-passed and published, and gave
+      # staging's `>=0.0.0-0` no way to mean "newest" — Flux resolved whichever short sha sorted highest in
+      # ASCII while reporting Ready. Fabricated version sets through Helm's own Masterminds solver, the
+      # library source-controller embeds, so this is the comparison the cluster makes. Here because this
+      # is where Helm is.
       - name: Assert snapshot versions order
         run: scripts/version-test.sh "$CHART"
 
-      # `flux schema validate` rather than kubeconform, since #414. It validates the same manifests
-      # against the same kind of JSON Schema, and then three things kubeconform cannot:
-      #
-      #   * **CEL rules, with the API server's own evaluation semantics** — so a manifest that passes
-      #     here is one the API server will accept, not merely one that is shaped correctly.
-      #   * **Duplicate YAML keys**, which parse silently and drop the earlier value. That is exactly
-      #     how the `annotations:` block in ingress.yaml lost `kubernetes.io/description` once.
-      #   * **SOPS-encrypted fields, without decrypting them** — which is what makes this still work
-      #     when #416 encrypts the Secrets.
-      #
-      # One tool covering the chart *and* the Flux resources, instead of two with different flags.
-      # The plugin is pinned and `flux plugin install` verifies its cosign signature.
+      # `flux schema validate` rather than kubeconform (#414): the same JSON Schema, plus CEL rules with
+      # the API server's semantics, duplicate YAML keys (which parse silently and once dropped
+      # `kubernetes.io/description` from ingress.yaml), and SOPS-encrypted fields without decrypting them.
+      # One tool for the chart and the Flux resources. `flux plugin install` verifies its cosign signature.
       - name: Install Flux and the schema plugin
         run: |
           curl -fsSL \
@@ -156,22 +114,13 @@ jobs:
           flux plugin install "schema@${FLUX_SCHEMA_VERSION}"
           flux schema --version
 
-      # --strict promotes the chart guide's own conventions — chart name, SemVer, unknown fields —
-      # from warnings to failures.
+      # `--strict` promotes the chart guide's conventions from warnings to failures.
       #
-      # The base values.yaml cannot render on its own: database.host, database.existingSecret and
-      # networkPolicy.databaseCidr have no safe default and the helpers `required` them, which is the
-      # point. So the default case gets the three on the command line, and the environment cases get
-      # theirs from their file.
-      #
-      # **`values-k3d-images.yaml` is an overlay, not a configuration.** Its own header says it is
-      # applied on top of `values-k3d.yaml`, and `k3d-rehearsal.sh` passes both. Rendering it alone
-      # can never succeed, so it is layered here the way it is used (#691). The guard above is what
-      # stops a third values file quietly inheriting the wrong one of those two shapes.
-      # Enumerated rather than globbed, because the two files compose differently and a glob cannot
-      # know that. This assertion is what keeps enumeration honest: add a values file and the gate
-      # fails here until somebody says how it composes, instead of rendering it standalone and
-      # reporting success — which is exactly what #691 was.
+      # The base values.yaml cannot render alone: `database.host`, `database.existingSecret` and
+      # `networkPolicy.databaseCidr` are `required`, which is the point. **`values-k3d-images.yaml` is an
+      # overlay** on `values-k3d.yaml`, rendered here the way `k3d-rehearsal.sh` uses it (#691). Enumerated,
+      # not globbed: a new values file fails here until somebody says how it composes, instead of rendering
+      # standalone and reporting success.
       - name: Assert the values files are the ones this job knows how to compose
         run: |
           set -euo pipefail
@@ -196,27 +145,17 @@ jobs:
           helm lint --strict "$CHART" \
             --values "$CHART/values-k3d.yaml" --values "$CHART/values-k3d-images.yaml"
 
-      # `ecosystem` is the catalog carrying the CRDs this chart renders instances of but does not
-      # ship — cert-manager's ClusterIssuer, Traefik's Middleware, Flux's own. Every render below
-      # reports **Skipped: 0**, and that number is the one to watch: a resource nothing can check is
-      # a resource nothing checks, which is why `--skip-missing-schemas` is deliberately not used.
-      #
-      # **`Skipped: 0` says nothing on its own, which is what #691 was.** It is equally true of an
-      # empty stream: `helm template` failing on the left of the pipe wrote nothing, `flux schema
-      # validate` reported `Valid: 0, Invalid: 0, Skipped: 0` on it, and the step passed. `set -o
-      # pipefail` is what makes the number mean something — read the `Valid:` count with it.
-      #
-      # The HelmRelease loop (#265) closed a gap #414 opened unnoticed: once per-environment
-      # configuration moved out of `values-staging.yaml` into each cluster's `spec.values`, this step
-      # covered only `values-k3d.yaml` — so the two configurations that actually deploy were the two
-      # nothing schema-checked. `cluster-assertions.sh` reads those values but asserts about content,
-      # and cannot tell you a Middleware is malformed.
+      # `ecosystem` carries the CRDs this chart renders instances of but does not ship. Every render
+      # reports **Skipped: 0**, and that is the number to watch — `--skip-missing-schemas` is deliberately
+      # absent. **`Skipped: 0` says nothing on its own** (#691): an empty stream from a failed `helm
+      # template` also reports `Valid: 0, Invalid: 0, Skipped: 0`, and `set -o pipefail` is what makes the
+      # number mean something. The HelmRelease loop (#265) is what schema-checks the two configurations that
+      # actually deploy; `cluster-assertions.sh` reads those values but cannot tell a malformed Middleware.
       - name: Validate rendered manifests
         run: |
           set -euo pipefail
-          # `scan-coverage.sh render` is what makes the paragraph above an assertion rather than a
-          # description: every rendered resource validated, none skipped, and the count positive so
-          # that an empty stream cannot report all three (#1087).
+          # `scan-coverage.sh render` makes the paragraph above an assertion: every resource validated, none
+          # skipped, the count positive (#1087).
           render() {
             helm template validate "$CHART" "$@" \
               | flux schema validate - -s ecosystem --verbose \
@@ -229,8 +168,7 @@ jobs:
           render --values "$CHART/values-k3d.yaml"
           echo "== values-k3d.yaml + values-k3d-images.yaml =="
           render --values "$CHART/values-k3d.yaml" --values "$CHART/values-k3d-images.yaml"
-          # A HelmRelease is not a values document, so `spec.values` is extracted the same way
-          # scripts/cluster-assertions.sh does it.
+          # A HelmRelease is not a values document; `spec.values` is extracted as cluster-assertions.sh does it.
           for release in deploy/clusters/*/helm-release.yaml; do
             echo "== $release =="
             yq -N '.spec.values' "$release" > /tmp/release-values.yaml
@@ -238,20 +176,11 @@ jobs:
             render --values /tmp/release-values.yaml
           done
 
-      # The Flux custom resources (#414), which nothing else here can see: `helm lint` does not know
-      # they exist and `cluster-assertions.sh` reads only their `spec.values`. A typo in
-      # `spec.ref.semver` is an environment that silently stops updating.
-      #
-      # The `kustomization.yaml` files are skipped by kind rather than filename: they are kustomize
-      # *build* files, legitimately without a `metadata.name`. `--skip-json-path v1/Secret:/sops`
-      # strips the block SOPS adds to an encrypted Secret — not part of the Kubernetes Secret schema,
-      # and removed by Flux at apply time, so validating against it would validate something that
-      # never reaches the cluster (#416).
-      #
-      # DELIBERATELY NOT `--skip-kind v1/Secret`, which would have been the one-word fix and would
-      # have switched the gate off for every Secret we ever add. Stripping one path keeps the Secret
-      # *validated*: with this flag the run reports `Valid: 54`, with `--skip-kind` it would report
-      # one more skipped instead. The difference is whether a malformed Secret is still caught.
+      # The Flux custom resources (#414), which nothing else here can see: a typo in `spec.ref.semver` is an
+      # environment that silently stops updating. `kustomization.yaml` is skipped by kind (a build file,
+      # legitimately without `metadata.name`). `--skip-json-path v1/Secret:/sops` strips the block SOPS adds,
+      # which Flux removes at apply time (#416). DELIBERATELY NOT `--skip-kind v1/Secret`, which would switch
+      # the gate off for every Secret; stripping one path keeps the Secret validated.
       - name: Validate the Flux manifests
         run: |
           set -euo pipefail
@@ -260,9 +189,8 @@ jobs:
             --skip-json-path v1/Secret:/sops \
             | tee "${RUNNER_TEMP}/flux-clusters.txt"
 
-      # The step above passes on a `deploy/clusters` that has quietly stopped being read — a changed
-      # target directory, a filename pattern the tool no longer matches, a `--skip-kind` that grew.
-      # Every one of those reports `Invalid: 0` (#1087). These two are how much it read.
+      # The step above passes on a `deploy/clusters` that has quietly stopped being read — every such case
+      # reports `Invalid: 0` (#1087). These two are how much it read.
       - name: Assert the Flux manifests are all still being read
         run: |
           scripts/scan-coverage.sh baseline flux-clusters-resources "${RUNNER_TEMP}/flux-clusters.txt"
@@ -270,38 +198,27 @@ jobs:
 
       - name: Install the helm-unittest plugin
         run: |
-          # `--verify=false` is required from Helm 4 on: plugin install verifies provenance by
-          # default, and this source publishes none, so the install fails rather than warning.
+          # `--verify=false` is required from Helm 4 on: this source publishes no provenance.
           helm plugin install https://github.com/helm-unittest/helm-unittest \
             --version "$HELM_UNITTEST_VERSION" --verify=false
           helm unittest --help >/dev/null
 
-      # The chart's own suites, under the two value sets it can be rendered from on its own:
-      # `values.yaml` plus the two required overrides, and `values-k3d.yaml`. `--strict` makes an
-      # unknown key in a suite an error rather than a silently ignored line.
+      # The chart's own suites under the two value sets it renders from alone. `--strict` makes an unknown
+      # key in a suite an error.
       - name: Assert on the rendered chart
         run: helm unittest --strict "$CHART"
 
-      # The other three value sets — k3d, staging and production — live in each cluster's HelmRelease
-      # and cannot be named inside a suite, a HelmRelease not being a values document. This extracts
-      # `spec.values` from each and re-runs the invariant suites against it, so the assertions gate
-      # what Flux deploys. It also carries the assertions about relationships *between* files, which
-      # no single render can see: no published HelmRelease pinning an image tag, a release creating a
-      # ClusterIssuer declaring `dependsOn`, every third-party chart pinned to one version.
+      # The other three value sets live in each cluster's HelmRelease and cannot be named in a suite. This
+      # extracts `spec.values` from each and re-runs the invariant suites, so the assertions gate what Flux
+      # deploys — and carries the assertions *between* files no single render can see: no pinned image tag,
+      # `dependsOn` on a ClusterIssuer, every third-party chart pinned.
       - name: Assert on the cluster configurations
         run: scripts/cluster-assertions.sh "$CHART"
 
-  # The job name is **`ShellCheck deploy-story scripts`** and it is load-bearing: it is a required
-  # status check on the `main` ruleset, and a required check that never runs stays Pending forever
-  # rather than failing — which deadlocks every pull request instead of one. #430 deleted this job
-  # on the reasoning that `deploy/scripts/` no longer exists, and that was wrong twice over: the
-  # deadlock, and the premise. The script did not vanish, it moved.
-  #
-  # It was `ShellCheck deploy scripts` until #430 renamed it, because that name read as
-  # `deploy/scripts/` — a directory that no longer exists — while every file it lints is under
-  # `scripts/`. The rename and the ruleset edit were one change, and that is the rule: **the name
-  # here and the context in the ruleset are one string in two places.** Change one without the
-  # other and pull requests stop being mergeable rather than start failing.
+  # The job name **`ShellCheck deploy-story scripts`** is a required status check on the `main` ruleset:
+  # **the name here and the context in the ruleset are one string in two places.** Change one without
+  # the other and pull requests stop being mergeable rather than start failing. #430 deleted this job
+  # once on the reasoning that `deploy/scripts/` no longer existed; the scripts had moved, not vanished.
   shellcheck:
     name: ShellCheck deploy-story scripts
     runs-on: ubuntu-latest
@@ -313,14 +230,10 @@ jobs:
         with:
           persist-credentials: false
 
-      # All six are part of the deploy story — cluster assertions (#430), installing this chart,
-      # deciding and ordering the published version (#455), and holding chart and images to one UID
-      # (#448) — so a chart change lints them even when nothing under `scripts/` was touched.
-      #
-      # **The overlap with validate-scripts.yml is deliberate.** That workflow is *not* on the
-      # required list and carries a `paths:` filter, so this is the job that makes shell linting a
-      # merge gate rather than a courtesy. Both take seconds. Runs from the pinned image rather than
-      # the runner's binary, so the two jobs cannot reach different verdicts through version skew.
+      # All six are part of the deploy story, so a chart change lints them even when nothing under
+      # `scripts/` moved. **The overlap with validate-scripts.yml is deliberate**: that one is not required
+      # and carries a `paths:` filter, so this is the job that makes shell linting a merge gate. From the
+      # pinned image, so the two cannot reach different verdicts.
       - name: Run ShellCheck
         run: |
           docker run --rm -v "$PWD:/mnt" -w /mnt \

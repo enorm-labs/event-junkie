@@ -11,31 +11,21 @@ on:
       - 'docs/**'
   pull_request:
     branches: [ main ]
-    # No `paths-ignore:` here, deliberately, since #494. `Build & Test (backend)` is **required** on
-    # the `main` ruleset, and a required check that never runs stays Pending forever, deadlocking
-    # every pull request that happens to touch only the ignored paths. The filtering moved to the
-    # `detect-changes` job below, which is what keeps a documentation-only pull request from paying
-    # for a 7-minute Gradle build: the work is skipped, the context still reports. The `push:` filter
-    # above keeps its paths — nothing requires those runs.
-  # Manual trigger, for when the automatic ones cannot be relied on: an Actions incident can drop
-  # most webhooks, and pull requests then merge with no run ever created — `gh run rerun` is no help
-  # when there is no run to re-run. Ignores the path filters above, so it
-  # also serves "build this ref anyway". Pick the branch to run it on from the Actions tab, or
-  # `gh workflow run build-backend.yml --ref <branch>`.
+    # No `paths-ignore:` here (#494): `Build & Test (backend)` is **required**, and a required check that
+    # never runs stays Pending forever. The filtering lives in `detect-changes` below, so a docs-only pull
+    # request skips the build while the context still reports. The `push:` filter keeps its paths.
+  # Manual trigger, for an Actions incident that drops webhooks and leaves nothing to re-run. Ignores
+  # the path filters: `gh workflow run build-backend.yml --ref <branch>`.
   workflow_dispatch:
 
-# Scoped per job rather than at workflow level, since #383: a workflow-level grant applies to every
-# job, including ones that have no use for it, and `pull-requests: write` is exactly the token an
-# attacker would want. Only `build` posts a coverage comment; only the two jobs that upload SARIF get
-# `security-events: write`.
+# Scoped per job (#383): a workflow-level `pull-requests: write` is exactly the token an attacker
+# wants. Only `build` comments; only the two SARIF jobs get `security-events: write`.
 permissions:
   contents: read
 
 jobs:
-  # Seconds, and no checkout: the pull request's file list comes from the API. This exists so the
-  # required context at the bottom can be unconditional while the 7-minute build stays conditional.
-  # The patterns mirror the `push:` trigger's `paths-ignore` — a change is irrelevant to the backend
-  # only when *every* file in it is under events-frontend/, docs/, or a root-level *.md.
+  # Seconds, and no checkout: the file list comes from the API, so the required context below can be
+  # unconditional while the build stays conditional. The patterns mirror the `push:` `paths-ignore`.
   detect-changes:
     name: Detect changes
     runs-on: ubuntu-latest
@@ -46,8 +36,7 @@ jobs:
       - name: Decide whether the backend is affected
         id: filter
         env:
-          # Read through `env:` rather than interpolated into the script — a `${{ }}` expression
-          # expanded inside `run:` is the template-injection shape zizmor rejects.
+          # Through `env:`, not interpolated: `${{ }}` inside `run:` is the template-injection shape zizmor rejects.
           GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -59,21 +48,16 @@ jobs:
             exit 0
           fi
           FILES="$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[].filename')"
-          # An empty list means the API call went wrong, not that nothing changed. Failing here is
-          # correct: the gate below refuses to report a pass when detection did not succeed, so the
-          # pull request blocks visibly instead of skipping a build that was needed.
+          # An empty list means the API call went wrong, not that nothing changed. Failing here is correct: the
+          # gate refuses to pass when detection did not succeed.
           if [ -z "$FILES" ]; then
             echo '::error::no changed files returned for this pull request'
             exit 1
           fi
           printf '%s\n' "$FILES" | sed 's/^/  /'
-          # Anything that is NOT ignorable makes the backend relevant. Note `^[^/]*\.md$` rather
-          # than `\.md$`: the `push:` filter's `*.md` matches root-level Markdown only, so
-          # .github/prompts/*.md is a backend-relevant change and is treated as one here too.
-          #
-          # Filter-then-test rather than `grep -qv`: the two forms are not equivalent in every grep,
-          # and this one says what it means — drop the ignorable paths, then ask whether anything is
-          # left.
+          # Anything NOT ignorable makes the backend relevant. `^[^/]*\.md$`, not `\.md$`: the `push:` filter's
+          # `*.md` is root-level only, so `.github/prompts/*.md` counts as backend-relevant. Filter-then-test
+          # rather than `grep -qv`, which is not equivalent in every grep.
           if printf '%s\n' "$FILES" | grep -vE '^(events-frontend/|docs/|[^/]*\.md$)' | grep -q .; then
             echo 'relevant=true' >> "$GITHUB_OUTPUT"
           else
@@ -93,18 +77,14 @@ jobs:
       # Uploading the three detekt SARIF reports to Code Scanning.
       security-events: write
 
-    # Kotlin warnings fail the build here, and only here — see `warningsAsErrors` in the root
-    # build.gradle.kts for why it is CI-only. Set as an environment variable rather than `-P` on
-    # each step for two reasons: every Gradle invocation in the job gets it without the flag being
-    # forgotten on a step added later, and the value stays identical across steps, so they keep
-    # sharing one configuration-cache entry (a project property is part of the cache key, so
-    # flagging some steps and not others would silently double the cache misses).
+    # Kotlin warnings fail the build here, and only here (`warningsAsErrors` in the root build.gradle.kts).
+    # An environment variable rather than `-P` per step: every invocation gets it, and a project property
+    # is part of the configuration-cache key, so flagging some steps and not others doubles the misses.
     env:
       ORG_GRADLE_PROJECT_warningsAsErrors: 'true'
 
     steps:
-      # The whole history and every tag, because the image label below reads the version from them
-      # (ADR-032).
+      # The whole history and every tag: the image label reads the version from them (ADR-032).
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -120,17 +100,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
-      # One invocation with `--parallel`, so ktlint of one module runs while another compiles, and
-      # bff and importer wait only for core. The flag is per step rather than `org.gradle.parallel`
-      # in gradle.properties because the licence-report plugin below cannot run under it.
-      #
-      # All three detekt tasks, because they are different analyses (#407). `detekt` runs the rules
-      # that read the syntax tree alone; `detektMain` and `detektTest` resolve types first and run
-      # the rules that need them — `UnsafeCallOnNullableType`, `UseOrEmpty`, `UnusedPrivateProperty`
-      # and the rest — over the main and test sources respectively. For a long time only the first
-      # ran, so the others' rules were **not run** rather than passing, and the gate was green
-      # because it never looked. The two type-resolution tasks compile their source sets to get a
-      # classpath; the build below reuses that output, so the cost is one compile of each, not two.
+      # One invocation with `--parallel` (per step, because the licence-report plugin cannot run under it).
+      # All three detekt tasks, because they are different analyses (#407): `detekt` reads the syntax tree,
+      # `detektMain` and `detektTest` resolve types first and run `UnsafeCallOnNullableType`, `UseOrEmpty`,
+      # `UnusedPrivateProperty` and the rest — rules that are **not run** when only the first task runs. The
+      # build below reuses their compiled output.
       - name: Lint with ktlint and analyse with detekt
         run: ./gradlew ktlintCheck detekt detektMain detektTest --parallel
 
@@ -154,33 +128,20 @@ jobs:
             echo "---" >> $GITHUB_STEP_SUMMARY
           done
 
-      # `-x koverVerify` alongside `-x test`: `koverVerify` is attached to `check` (so a local
-      # `./gradlew build` enforces the coverage floors), but skipping tests means there is no
-      # execution data — every module reports 0% and the rule fails for the wrong reason. The
-      # verification runs for real in the coverage step below, after `test`.
+      # `-x koverVerify` alongside `-x test`: without execution data every module reports 0% and the floor
+      # fails for the wrong reason. The coverage step below verifies for real, after `test`.
       - name: Build all modules
         run: ./gradlew build -x test -x koverVerify --parallel
 
-      # Enforces the runtime-dependency licence policy in config/allowed-licenses.json
-      # (docs/LEGAL.md §9.2). Deliberately a separate step rather than wired into
-      # `check`: the plugin is not configuration-cache compatible, so attaching it to the main
-      # build would discard the cache entry on every run. `--no-configuration-cache` keeps the cost
-      # contained to this step.
+      # The runtime-dependency licence policy (docs/LEGAL.md §9.2). A separate step because the plugin is
+      # not configuration-cache compatible; `--no-configuration-cache` keeps that cost here.
       - name: Check dependency licences
         run: ./gradlew checkLicense --no-configuration-cache
 
-      # `test` and the Kover tasks in ONE invocation, which is what makes the coverage number
-      # reproducible: the reports are read from the execution data produced by the same task graph
-      # that wrote it, rather than by a later Gradle run that inherits whatever is on disk.
-      #
-      # It also stops both Boot suites running twice. `bootBuildInfo` stamps `build.time` as
-      # `Instant.now()`, and that IS a task input (`properties.timeIfNotExcluded`), so the task is
-      # never up-to-date and drags `processResources` -> `jar` -> `test` with it on every fresh
-      # invocation. Splitting `test` from the report tasks therefore did not reuse the first run —
-      # it paid for a second one. See #1058.
-      #
-      # Still not folded into `build` above: that one runs with `-x test`, so a coverage rule there
-      # would measure nothing. The per-module floors are in the root build.gradle.kts.
+      # `test` and the Kover tasks in ONE invocation: the reports read the execution data the same task
+      # graph wrote. It also stops both Boot suites running twice — `bootBuildInfo` stamps `build.time` as
+      # `Instant.now()`, which IS a task input, so a second invocation re-runs `test` (#1058). Not folded
+      # into `build` above, which runs with `-x test`.
       - name: Run tests, then generate Kover coverage reports and verify the floors
         run: ./gradlew test koverXmlReport koverLog koverVerify --parallel
 
@@ -193,38 +154,21 @@ jobs:
           cat build/kover/coverage.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
-      # Build the container images, and deliberately do not push them. This workflow runs on every
-      # pull request, including from forks — publishing from here would put an image built from
-      # unreviewed code into GHCR. Pushing belongs to release.yml.
+      # Build the container images and do not push them: this runs on fork pull requests, and pushing
+      # belongs to release.yml. It catches a Dockerfile that stopped building; a built image is not a
+      # started one. Pull requests only (#264): a push to `main` builds the same images in release.yml.
       #
-      # What this catches is the rot `validate-infra.yml` exists to catch, in a different medium: a
-      # Dockerfile that stopped building months ago and nobody noticed until the afternoon it was
-      # needed. It is not a correctness gate — a built image is not a started one.
-      #
-      # Pull requests only, since #264: on a push to `main` release.yml builds the same two images
-      # from the same Dockerfiles and then pushes them, so doing it here as well would be six
-      # multi-platform builds per merge instead of three, to learn the same thing twice.
-      #
-      # **These five steps run BEFORE anything that posts to the pull request, and the order is
-      # load-bearing (#507).** `if: github.event_name == 'pull_request'` carries an implicit
-      # `success()`, so a failure anywhere above skips every step below it. With the coverage
-      # comment ahead of these, a GitHub API error — a 404 from the compare endpoint, a 503 during
-      # an incident — turned the job red for a cosmetic reason *and* silently dropped the image
-      # build. Silently, because a skipped step produces no annotation: the job is red for the
-      # comment, nobody reads further, and the missing build leaves no trace.
-      #
-      # It happened on #506, which changed the JRE base image in both Dockerfiles — the one pull
-      # request where "do these still build, on both architectures" mattered most was the one where
-      # it did not run. Verification first, reporting last.
+      # **These steps run BEFORE anything that posts to the pull request** (#507). `if: github.event_name
+      # == 'pull_request'` carries an implicit `success()`, so with the coverage comment ahead of them a
+      # GitHub API error turned the job red for a cosmetic reason and silently skipped the image build —
+      # on #506, the pull request that changed the JRE base image. Verification first, reporting last.
       - name: Extract the layered jars
         if: github.event_name == 'pull_request'
         run: ./gradlew :events-bff:bootJarLayers :events-importer:bootJarLayers --parallel
 
-      # `scripts/version.sh` is the single place that knows what version a commit is: the last
-      # release tag and the commits since it (ADR-032). On a pull request this yields the same
-      # snapshot string release.yml would compute, so the label matches what merging would publish.
-      # The jar itself carries the `0.0.0` placeholder here, because this build passes no
-      # `-Pversion`; release.yml does, and its image is the one that ships.
+      # `scripts/version.sh` knows what version a commit is (ADR-032); on a pull request this is the
+      # snapshot string release.yml would compute. The jar itself carries `0.0.0` here, because this build
+      # passes no `-Pversion`.
       - name: Read the project version
         id: version
         if: github.event_name == 'pull_request'
@@ -234,14 +178,10 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003 # v4.4.0
 
-      # No per-architecture runner and no QEMU setup step, because neither Dockerfile does build
-      # work in a `RUN` — see the header comment in events-bff/Dockerfile. The one `RUN` each
-      # carries, a named `apk upgrade`, runs for arm64 under the emulation the runner image already
-      # has (#770). Both platforms genuinely build here.
-      #
-      # `type=cacheonly` because a multi-platform image cannot be loaded into the local daemon:
-      # `load: true` would fail, and dropping to a single platform would leave arm64 unbuilt, which
-      # is the architecture the Hetzner nodes actually run (#424).
+      # No per-architecture runner and no QEMU step: neither Dockerfile does build work in a `RUN`, and the
+      # one `apk upgrade` runs under the emulation the runner image has (#770). `type=cacheonly` because a
+      # multi-platform image cannot be loaded, and a single platform would leave arm64 — the Hetzner nodes'
+      # architecture — unbuilt.
       - name: Build events-bff image (amd64 + arm64, no push)
         if: github.event_name == 'pull_request'
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -268,29 +208,14 @@ jobs:
             VERSION=${{ steps.version.outputs.value }}
             REVISION=${{ github.sha }}
 
-      # LAST ON PURPOSE — it reaches the GitHub API, so it is the step most likely to fail for a
-      # reason that has nothing to do with the code (#507). Nothing runs after it, so when it does,
-      # it takes nothing down with it.
+      # LAST ON PURPOSE — it reaches the GitHub API, so it is the step most likely to fail for a reason that
+      # has nothing to do with the code (#507). Not `continue-on-error`, because `min-coverage-changed-files:
+      # 80` is a gate nothing else carries (`min-coverage-overall` is redundant with `koverVerify`).
       #
-      # It is not merely cosmetic, which is why it is not `continue-on-error`. It carries one gate
-      # nothing else does:
-      #
-      #   * `min-coverage-overall: 60`      — redundant. `koverVerify` above already enforces an
-      #                                       aggregate floor of 90 and per-module floors, and it
-      #                                       runs earlier, so a real shortfall fails before here.
-      #   * `min-coverage-changed-files: 80` — UNIQUE. Gradle has per-module and aggregate rules and
-      #                                       nothing per-changed-file. Removing this loses it.
-      #
-      # SKIPPED ON A FORK'S PULL REQUEST, and that is not a nicety (#479). A fork PR gets a
-      # **read-only** `GITHUB_TOKEN`, so posting a comment is impossible however the step is
-      # written — and without this guard the run goes red on the one contribution path where a
-      # first-time contributor has no way to tell a broken repository from a permission they were
-      # never going to have. `release.yml` guards its SARIF uploads on the same expression.
-      #
-      # The cost is real and worth naming rather than hiding: **the `min-coverage-changed-files: 80`
-      # gate does not run on fork pull requests.** It is unique to this step, so on that path it has
-      # to be a review responsibility. `koverVerify` above still runs and still enforces the
-      # aggregate and per-module floors, which is the larger half.
+      # SKIPPED ON A FORK'S PULL REQUEST (#479): a fork gets a read-only `GITHUB_TOKEN`, so the comment is
+      # impossible however written, and without the guard the run goes red where a first-time contributor
+      # cannot tell a broken repository from a permission they never had. The cost: the changed-files gate
+      # does not run on that path and is a review responsibility.
       - name: Post coverage to Pull Request
         id: coverage
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork != true
@@ -302,10 +227,8 @@ jobs:
           min-coverage-overall: 60
           min-coverage-changed-files: 80
 
-      # The step above fails the same way for two very different reasons — coverage on changed files
-      # below 80%, or GitHub being unable to serve an API call — and its error message is the only
-      # thing that distinguishes them. This says so in the job summary, so the next person does not
-      # re-derive it from the log. Same shape as validate-scripts.yml's "Explain the fix".
+      # The step above fails for two different reasons — coverage below 80%, or GitHub unable to serve an
+      # API call — and only its message says which. This puts that in the job summary.
       - name: Say which kind of coverage failure this was
         if: always() && steps.coverage.outcome == 'failure'
         run: |
@@ -327,28 +250,15 @@ jobs:
             echo "plus per-module floors and runs earlier, so it would have failed first."
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # One upload for all nine detekt reports — three modules × the syntax-only, main and test
-      # analyses. Code Scanning keeps them apart by `runAutomationDetails.id`, which is what the
-      # `category` input of `upload-sarif` sets internally (the category plus a trailing slash). The
-      # ids written here are those categories, one per module and analysis, so each keeps its alert
-      # history. detekt writes no `automationDetails` itself; without the ids, nine runs of one tool
-      # under one category are one analysis, and the last run to land erases the others' alerts.
-      # One upload is ~7s; one per report is ~63s on the gate's critical path (#1394).
+      # One upload for all nine detekt reports (three modules × three analyses), kept apart by
+      # `runAutomationDetails.id` — what `upload-sarif`'s `category` sets internally. Without the ids, nine
+      # runs of one tool under one category are one analysis, and the last erases the others' alerts. One
+      # upload is ~7s; nine are ~63s on the critical path (#1394).
       #
-      # Last, with the other GitHub-API steps (#507), and `success() || failure()` so it runs
-      # regardless of what failed above. detekt wrote these files near the top of the job; nothing
-      # since then removes them. A module whose detekt never ran has no file and is skipped with a
-      # warning — but a module with zero findings still has a valid file and is uploaded, because an
-      # analysis that stops arriving reads to Code Scanning as the tool having been switched off.
-      #
-      # `head.repo.fork != true` for the same reason the coverage comment above carries it, and it is
-      # the same guard `release.yml` and `image-scan-scheduled.yml` already put on their own uploads
-      # (#479). A fork's `GITHUB_TOKEN` is read-only, so `security-events: write` is not granted and
-      # the Code Scanning API answers 403 — which fails the step, and turns every fork pull request
-      # red for a reason the contributor did not cause and cannot fix. The cost is worth naming: on
-      # that path **detekt findings do not reach Code Scanning at all**, so they are a review
-      # responsibility, exactly as the per-changed-file coverage threshold already is. detekt itself
-      # still runs and still fails the build, which is the larger half.
+      # Last, with the other API steps (#507), `success() || failure()`. A module with zero findings still
+      # has a valid file and is uploaded — an analysis that stops arriving reads as the tool switched off.
+      # `head.repo.fork != true` for the coverage comment's reason (#479): on that path detekt findings do
+      # not reach Code Scanning and are a review responsibility; detekt still fails the build.
       - name: Collect the detekt SARIF reports under their categories
         id: sarif
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true
@@ -379,14 +289,9 @@ jobs:
         with:
           sarif_file: build/sarif
 
-  # OWASP Dependency-Check runs as a separate job in parallel with the build to avoid
-  # slowing down the main feedback loop.
-  #
-  # On PRs this job is INFORMATIONAL and non-blocking: it surfaces newly introduced
-  # vulnerable dependencies in GitHub Code Scanning but never blocks a merge, so a
-  # flaky/unavailable NVD API can't hold up PRs. The authoritative, enforced scan runs
-  # nightly in dependency-check-scheduled.yml, which also seeds the shared NVD cache on
-  # main that this job restores (caches created on main are restorable from PR branches).
+  # A separate job in parallel with the build. On PRs it is INFORMATIONAL: findings reach Code Scanning
+  # and never block a merge, so a flaky NVD API cannot hold up PRs. The enforced scan is
+  # dependency-check-scheduled.yml, which seeds the NVD cache this job restores.
   dependency-check:
     name: OWASP Dependency-Check (informational)
     runs-on: ubuntu-latest
@@ -413,10 +318,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
-      # Restore the NVD database cache seeded by the nightly scheduled scan on main.
-      # A warm cache lets the build skip the NVD update entirely (see nvd.validForHours
-      # in build.gradle.kts), so PR runs are fast and not exposed to NVD API outages.
-      # This job is read-only on the cache — the scheduled workflow owns seeding it.
+      # The NVD cache the nightly scan seeds on main; a warm one skips the NVD update (`nvd.validForHours`).
+      # Read-only here.
       - name: Restore NVD database cache
         id: nvd-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -426,34 +329,21 @@ jobs:
           restore-keys: |
             dependency-check-data-
 
-      # Non-blocking: a failure here (e.g. NVD unreachable on a cold cache) is recorded
-      # but does not fail the job, so PRs are never blocked by the dependency scan.
-      # --no-configuration-cache: the Dependency-Check plugin's Aggregate task reaches for
-      # `project` at execution time and so cannot be used with the configuration cache
-      # (enabled in gradle.properties). Upstream PR #478, open at 13.0.0, would remove the need.
+      # Non-blocking, so PRs are never blocked by the scan. `--no-configuration-cache`: the Aggregate task
+      # reaches for `project` at execution time (upstream #478 would remove the need).
       - name: Run OWASP Dependency-Check
         id: depcheck
         continue-on-error: true
         run: ./gradlew dependencyCheckAggregate --no-configuration-cache
         env:
-          # Empty on a pull request from a fork — secrets are not exposed to forked `pull_request`
-          # runs. The scan then falls back to unauthenticated NVD access, which is heavily rate
-          # limited, which is why `continue-on-error` above matters more on that path than on ours.
-          # This is also the one place a pull request touches a repository secret at all, so it is
-          # the counter-example to "no pull request can reach a secret" (#479).
+          # Empty on a fork's pull request, where the scan falls back to rate-limited unauthenticated NVD —
+          # why `continue-on-error` matters most there. The one place a pull request touches a secret (#479).
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
-      # **Zero findings is only good news if something was examined.** `failBuildOnCVSS` passes
-      # trivially over an empty dependency set, which is what a misconfigured `scanProjects` did here
-      # for months while every build went green. Trivy gained this floor in image-scan-scheduled.yml;
-      # Dependency-Check, the tool it actually happened to, did not until #1087. A floor of zero
-      # rather than a number, because the count moves with every dependency change and a number would
-      # rot until somebody lowered it.
-      #
-      # Gated on the scan having completed: a fork run has no `NVD_API_KEY`, hits the unauthenticated
-      # rate limit and writes no report, and that is an absent scan rather than an empty one. This job
-      # is outside the `Build & Test (backend)` gate's `needs`, so a red mark here informs and blocks
-      # no merge — which is the whole point of the informational split.
+      # **Zero findings is only good news if something was examined.** `failBuildOnCVSS` passes trivially
+      # over an empty dependency set, which a misconfigured `scanProjects` produced for months (#1087). A
+      # floor of zero, not a number, because the count moves with every dependency change. Gated on the
+      # scan having completed: a fork run writes no report, and that is an absent scan, not an empty one.
       - name: Assert the scan examined something
         if: steps.depcheck.outcome == 'success'
         run: scripts/scan-coverage.sh owasp build/reports/dependency-check/dependency-check-report.json
@@ -471,14 +361,9 @@ jobs:
             echo "dependency-check-scheduled.yml." >> $GITHUB_STEP_SUMMARY
           fi
 
-      # Only upload when the report exists. If the scan aborts (e.g. an NVD update
-      # failure), no report is written and these steps would otherwise fail with a
-      # confusing "Path does not exist" error that masks the real cause.
-      # NOTE: the `hashFiles` guard fails *silently* — if this path ever stops matching
-      # where the plugin writes, the upload is skipped and the job still goes green while
-      # findings quietly stop reaching Code Scanning. Dependency-Check 13.0.0 moved the
-      # default output directory to build/reports/dependency-check/, so re-check this path
-      # whenever the plugin is upgraded.
+      # Only when the report exists; an aborted scan would otherwise fail with a "Path does not exist" that
+      # masks the cause. The `hashFiles` guard fails *silently*: if the plugin moves its output directory
+      # again (13.0.0 did), uploads stop and the job stays green. Re-check on every plugin upgrade.
       - name: Upload SARIF to GitHub Code Scanning
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('build/reports/dependency-check/dependency-check-report.sarif') != ''
         uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
@@ -494,17 +379,11 @@ jobs:
           path: build/reports/dependency-check/dependency-check-report.html
 
 
-  # **This is the required context, and it is the only job here that always runs.** The build above
-  # is conditional, and a conditional job cannot be a required check: GitHub leaves an unreported
-  # context Pending forever, which reads as a hung check rather than a misconfiguration (#443, #494).
-  # So the requirement is placed on a job that always reports, and which fails when the build failed.
-  #
-  # Deliberately not relying on "a skipped job counts as success" — GitHub documents that, but
-  # AGENTS.md recorded those semantics as unverified, and this shape does not need them to hold.
-  #
-  # `dependency-check` is deliberately NOT a dependency of this job: it is informational, it is
-  # `continue-on-error`, and its NVD_API_KEY is empty on a fork run. Gating merges on it would make
-  # an unauthenticated NVD rate limit into a blocked pull request.
+  # **The required context, and the only job here that always runs.** A conditional job cannot be a
+  # required check: GitHub leaves an unreported context Pending forever (#443, #494). This job always
+  # reports and fails when the build failed; it does not rely on "a skipped job counts as success".
+  # `dependency-check` is deliberately NOT a dependency: informational, `continue-on-error`, and its
+  # `NVD_API_KEY` is empty on a fork.
   gate:
     name: Build & Test (backend)
     needs: [ detect-changes, build ]

@@ -1,33 +1,18 @@
 name: Validate Scripts
 
-# ShellCheck over `scripts/`. The pre-commit hook already matches this directory
-# (`.pre-commit-config.yaml`, `^(infra|scripts)/.*\.sh$`), but a hook is advisory by
-# construction — `git commit --no-verify` skips it, and so does anything committed through the
-# GitHub web UI or by an agent that never installed pre-commit. This is the gate that makes it hold
-# on `main`, exactly as validate-docs.yml is for the Markdown formatter.
+# ShellCheck over `scripts/`. The pre-commit hook matches this directory, and a hook is advisory:
+# `--no-verify`, the web UI and an agent without pre-commit all skip it. This is the gate on `main`.
 #
-# It closes a gap the chart workflow names in its own comment: "The remaining scripts/ files are
-# covered by the pre-commit hook only — a gap, but a pre-existing one." `scripts/issue-board.sh`
-# grew a batch mode with real parsing in it, which is the point at which "linted only if the author
-# happened to have the hook installed" stopped being comfortable.
+# **`cluster-assertions.sh`, `k3d-rehearsal.sh`, `version.sh` and `version-test.sh` are linted
+# twice** — here and in validate-chart.yml's "ShellCheck deploy-story scripts" — deliberately: a chart
+# change should lint them and so should a scripts change. **That job is on the `main` ruleset's
+# required list and this one is not**, so that one makes shell linting a merge gate; #430 deleted it
+# once and the required check sat Pending forever. Do not remove either side without editing the
+# ruleset in the same change.
 #
-# **`scripts/cluster-assertions.sh`, `scripts/k3d-rehearsal.sh`, `scripts/version.sh` and
-# `scripts/version-test.sh` are linted twice** — here, and in validate-chart.yml's "ShellCheck
-# deploy-story scripts" job. That is deliberate rather than an oversight to tidy up. They belong to
-# the deploy story, so a chart change should lint them; they also live in `scripts/`, so a scripts
-# change should. Both jobs take seconds, and the alternative — narrowing one side — trades that for a
-# coverage hole that only opens when the other workflow's path filter misses.
-#
-# The overlap also carries more weight than it reads. **This job is not on the `main` ruleset's
-# required list and the one in validate-chart.yml is**, so that one is what makes shell linting a
-# merge gate. #430 deleted it on the reasoning that `deploy/scripts/` was gone; the required check
-# then sat Pending forever, which deadlocks a pull request rather than failing it. Do not remove
-# either side without editing the ruleset in the same change.
-#
-# The index check runs here and in validate-docs.yml, for the same reason as the double lint above:
-# a script is added or deleted under `scripts/`, which this workflow sees, and a reference to one is
-# written in Markdown, which it does not. `scripts/**` rather than `scripts/**.sh` because the
-# index covers every file in the directory, and a README-only change has to run it.
+# The index check runs here and in validate-docs.yml for the same reason: a script is added under
+# `scripts/`, which this sees, and a reference is written in Markdown, which it does not. `scripts/**`
+# rather than `scripts/**.sh` because the index covers every file there.
 
 on:
   push:
@@ -37,10 +22,8 @@ on:
       - '.github/workflows/validate-scripts.yml'
   pull_request:
     branches: [ main ]
-    # `paths:` is present here, like validate-docs.yml and unlike validate-infra.yml, because this
-    # check is **not** on the `main` ruleset's required list. Those workflows dropped their filters
-    # after #443: a required check that never runs stays Pending forever and deadlocks the pull
-    # request. **If this one is ever made required, delete this filter in the same change.**
+    # `paths:` is present because this check is **not** required. **If it is ever made required, delete
+    # this filter in the same change** — a required check that never runs stays Pending forever.
     paths:
       - 'scripts/**'
       - '.github/workflows/validate-scripts.yml'
@@ -50,23 +33,11 @@ permissions:
   contents: read
 
 env:
-  # Pinned, and not optional. `ubuntu-latest` preinstalls ShellCheck, and the version it ships is
-  # older than what a contributor has locally — old enough to disagree. v0.9.0 reports SC2015
-  # ("A && B || C is not if-then-else") for `[[ -n "$pids" ]] && kill $pids || true`; v0.11.0
-  # correctly does not, because `|| true` cannot be a mistaken else-branch. Three such lines in
-  # `scripts/dev-env.sh` failed this job on its first run while passing locally and in pre-commit.
-  #
-  # Same trap validate-docs.yml records for oxfmt: a gate run against "whatever the runner ships"
-  # fails on files the author's own copy had just passed, and the fix is not to edit the files.
-  # Invisible to Dependabot — a string in YAML, not a manifest — so Renovate's `customManagers`
-  # watch it, alongside HELM_VERSION, FLUX_VERSION, ACTIONLINT_VERSION and ZIZMOR_VERSION (ADR-024).
-  # Renovate groups by `depName`, so the three copies below arrive in one pull request.
-  #
-  # **This pin appears in three workflows** — here, validate-chart.yml and validate-infra.yml — and
-  # they must move together, the same rule HELM_VERSION carries. `k3d-rehearsal.sh`, `version.sh` and
-  # `version-test.sh` are linted by two of them, so a drifted pin would show up as two jobs
-  # disagreeing about the same file: three pins that can diverge are a weaker version of the problem
-  # pinning was meant to fix.
+  # Pinned, and not optional: `ubuntu-latest` preinstalls a ShellCheck old enough to disagree with a
+  # current local install — v0.9.0 reports SC2015 for `[[ -n "$pids" ]] && kill $pids || true`, v0.11.0
+  # correctly does not, and three such lines failed this job while passing pre-commit. A string in YAML,
+  # so Renovate's `customManagers` watch it (ADR-024). **This pin appears in three workflows** and they
+  # move together; a drifted pin shows up as two jobs disagreeing about the same file.
   SHELLCHECK_VERSION: v0.11.0
 
 jobs:
@@ -81,43 +52,36 @@ jobs:
         with:
           persist-credentials: false
 
-      # Run from the pinned image rather than the runner's preinstalled binary, for the version
-      # reason above — the same way validate-workflows.yml runs actionlint and zizmor. `-x` follows
-      # `source`d files, matching the pre-commit hook's invocation so the two cannot disagree about
-      # a finding.
+      # From the pinned image, not the runner's binary. `-x` follows `source`d files, matching the hook.
       - name: Run ShellCheck
         id: shellcheck
         run: |
           docker run --rm -v "$PWD:/mnt" -w /mnt \
             "koalaman/shellcheck:${SHELLCHECK_VERSION}" -x scripts/*.sh
 
-      # Every file in `scripts/` has a row in `scripts/README.md`, every `scripts/<name>` the tree
-      # names exists, and every script answers `--help` before it touches a tool — which is why this
-      # runs on a runner that has none of yq, helm or gh installed.
+      # Every file in `scripts/` has a row in `scripts/README.md`, every `scripts/<name>` the tree names
+      # exists, and every script answers `--help` before touching a tool — which is why this runs on a
+      # runner with none of yq, helm or gh.
       - name: Check the scripts index
         run: scripts/index-parity.sh
 
-      # `scan-coverage.sh` decides whether a scanner covered less than it did, and the expensive way
-      # for it to be wrong is to answer "covered everything" when it could not read the output at all.
-      # The assertions it makes run in two required workflows, so a crash is caught there — a silent
-      # always-pass is caught only here (#1087).
+      # `scan-coverage.sh` decides whether a scanner covered less than it did, and the expensive way for it
+      # to be wrong is "covered everything" when it could not read the output. A silent always-pass is
+      # caught only here (#1087).
       - name: Assert what scan-coverage.sh decides
         run: scripts/scan-coverage-test.sh
 
-      # `version.sh deserved` turns the commits since the last release into the number the release
-      # gets, and `cut-release.yml` refuses a tree that says less. A wrong verdict is a release
-      # numbered as if nothing changed, not a red build, so each rule is asserted against a
-      # fabricated history. It needs only git, which is why it runs here and not with the chart.
+      # `version.sh deserved` turns the commits since the last release into the number; a wrong verdict is
+      # a release numbered as if nothing changed, not a red build, so each rule is asserted against a
+      # fabricated history. Needs only git.
       - name: Assert what version.sh deserved decides
         run: scripts/version-deserved-test.sh
 
-      # Every way the release summary can be wrong is quiet — a version bump named as a highlight, a
-      # breaking change buried under a feature — and the release that shows it up is already out.
+      # Every way the release summary can be wrong is quiet, and the release that shows it up is already out.
       - name: Assert what release-highlights.sh summarises
         run: scripts/release-highlights-test.sh
 
-      # Gated on the step it explains. Without the condition a failing assertion above prints a
-      # paragraph about ShellCheck, which sends the reader to the wrong tool.
+      # Gated on the step it explains; otherwise a failing assertion above sends the reader to ShellCheck.
       - name: Explain the fix
         if: failure() && steps.shellcheck.outcome == 'failure'
         run: |

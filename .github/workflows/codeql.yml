@@ -1,46 +1,31 @@
 name: CodeQL
 
-# CodeQL as a workflow rather than as GitHub's "default setup", because default setup does not run
-# for a pull request from a fork — and `CodeQL` is a required check on the `main` ruleset, so a
-# check that never reports leaves the pull request `Pending` forever (#479). Measured on the
-# repository's first fork pull request (#579): every other required check ran, this one produced no
-# run at all.
+# CodeQL as a workflow rather than default setup, because default setup produces no run for a fork
+# pull request — and `CodeQL` is required, so the pull request sat Pending forever (#479, #579).
 #
-# **What makes it work on the fork path.** A fork's `GITHUB_TOKEN` is read-only, so
-# `security-events: write` is never granted and the Code Scanning upload would 403 — red instead of
-# Pending, which is no improvement. `analyze` therefore takes `upload: never` there: the analysis
-# runs, the job reports, and the required check is satisfied by real work rather than a stub. The
-# cost, stated rather than discovered: **on a fork pull request CodeQL findings do not reach the
-# Security tab**, so they are a review responsibility — the same trade `build-backend.yml` makes
-# for detekt and the coverage comment. Only the reporting is skipped, not the analysis.
+# **The fork path.** A fork's `GITHUB_TOKEN` is read-only, so `security-events: write` is never
+# granted and an upload would 403. `analyze` takes `upload: never` there: the analysis runs, the job
+# reports. **On a fork pull request CodeQL findings do not reach the Security tab** and are a review
+# responsibility, the trade `build-backend.yml` makes for detekt.
 #
-# **Never add a `paths:` filter to the `pull_request` trigger.** A required check skipped by path
-# filtering stays Pending forever; validate-workflows.yml, validate-chart.yml and validate-infra.yml
-# carry the same warning. Path filtering happens inside the job instead — see the `relevance` step.
-# A workflow-level filter produces no check run, while a job that runs and skips its steps still
-# reports, so a docs-only pull request pays ~10s a language instead of the 340s `java-kotlin` costs.
+# **Never add a `paths:` filter to the `pull_request` trigger** — a required check skipped by filter
+# stays Pending forever. Filtering happens inside the job (the `relevance` step): a job that runs and
+# skips its steps still reports, ~10s a language instead of 340s.
 #
-# **One directory is excluded from what CodeQL reads**, and `.github/codeql/codeql-config.yml`
-# says which and why: the venue pages saved as scraper fixtures, whose findings were always the
-# venue's and were dismissed by hand sixty-two times (#1480). That file narrows the input; the
-# suite stays the default, as the `init` step below records.
+# `.github/codeql/codeql-config.yml` excludes the venue pages saved as scraper fixtures, whose
+# findings were dismissed by hand sixty-two times (#1480); the suite stays the default.
 #
-# **The matrix defines the check contexts.** Each language produces its own `Analyze (<language>)`
-# context and the ruleset names each one exactly, so adding a language here creates a check that is
-# *not* required and removing one leaves a required check that never reports. Change the ruleset in
-# the same pull request, exactly as `validate-infra.yml`'s stack matrix requires.
+# **The matrix defines the check contexts.** Each language is an `Analyze (<language>)` context the
+# ruleset names exactly: add or remove one and the ruleset changes in the same pull request.
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-    # No `paths:` filter, deliberately — see the header. A required check that never runs is worse
-    # than one that runs unnecessarily.
+    # No `paths:` filter — see the header.
   schedule:
-    # Weekly, matching what default setup was configured to do, and off-the-hour for the reason every
-    # other scheduled workflow here gives: the top of the hour is a stampede on shared runners.
-    # The scheduled run is the one that catches a new query finding an old bug — no push required.
+    # Weekly, off-the-hour; the scheduled run is the one that catches a new query finding an old bug.
     - cron: '29 5 * * 1'
   workflow_dispatch:
 
@@ -48,32 +33,26 @@ permissions:
   contents: read
 
 concurrency:
-  # A second push supersedes the first: CodeQL is the longest check on the pull request path and
-  # there is no value in finishing an analysis of a commit nobody will merge.
+  # A second push supersedes the first: nobody will merge the earlier commit.
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   analyze:
-    # Named explicitly, and it is not cosmetic: without this the check context is composed from
-    # *every* matrix value, giving `Analyze (actions, none)` — so `build-mode` would leak into the
-    # ruleset's required-checks list, and changing a language's build mode would silently rename a
-    # required check and deadlock every pull request. Naming it by language alone also makes these
-    # contexts identical to the ones default setup produced, so the ruleset entry is the same string
-    # it would have been.
+    # Named explicitly: otherwise the context is composed from every matrix value — `Analyze (actions,
+    # none)` — so a change to `build-mode` would silently rename a required check. By language alone the
+    # contexts are the strings default setup produced.
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
-    # java-kotlin builds the whole backend, which is the long pole. The rest finish in about a
-    # minute. Generous enough that a cold Gradle cache is not a failure, tight enough that a hung
-    # analysis does not hold a pull request for six hours.
+    # java-kotlin builds the whole backend. Generous enough for a cold Gradle cache, tight enough that a
+    # hung analysis does not hold a pull request for six hours.
     timeout-minutes: 60
 
     permissions:
       contents: read
       # Reading the Actions API for the analysis metadata.
       actions: read
-      # Writing the results to Code Scanning. **Not granted on a fork pull request** — that is not a
-      # misconfiguration, it is GitHub's model, and `upload:` below is what accommodates it.
+      # **Not granted on a fork pull request** — GitHub's model, and `upload:` below accommodates it.
       security-events: write
 
     strategy:
@@ -81,11 +60,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # `build-mode` is required per language since CodeQL v3.
-          #
-          # `none` for the two that need no compilation: the analyser reads the source directly.
-          # `autobuild` for java-kotlin, which has to compile to produce a database — it finds the
-          # Gradle wrapper and runs it, which is what default setup did too.
+          # `build-mode` is required per language since CodeQL v3: `none` where the analyser reads source,
+          # `autobuild` for java-kotlin, which runs the Gradle wrapper as default setup did.
           - language: actions
             build-mode: none
           - language: javascript-typescript
@@ -94,23 +70,14 @@ jobs:
             build-mode: autobuild
 
     steps:
-      # **The job is deliberately unconditional; only its steps are gated.** These three names are
-      # the required check contexts, and a job skipped at job level would have to rely on "a skipped
-      # job counts as success" — the semantics `build-backend.yml` avoids depending on. Running the
-      # job and skipping its work costs ~10s and keeps the context reporting for real.
-      #
-      # **Every step below this one carries the `if:`.** A new step added without it runs on a
-      # docs-only pull request with nothing checked out, and fails for a reason that looks nothing
-      # like its cause.
-      #
-      # The blast radius of a wrong pattern is bounded, which is why this is an acceptable trade at
-      # all: `push:` to main and the weekly `schedule:` both analyse everything unconditionally, so
-      # a gap here delays a finding to the merge commit rather than losing it.
+      # **The job is unconditional; only its steps are gated.** These names are the required contexts, and
+      # a job skipped at job level would rely on "a skipped job counts as success". **Every step below
+      # carries the `if:`** — a step without it runs on a docs-only pull request with nothing checked out.
+      # The blast radius of a wrong pattern is bounded: `push:` to main and the schedule analyse everything.
       - name: Decide whether this language is affected
         id: relevance
         env:
-          # Read through `env:` rather than interpolated into the script — a `${{ }}` expression
-          # expanded inside `run:` is the template-injection shape zizmor rejects.
+          # Through `env:`, not interpolated — the template-injection shape zizmor rejects.
           GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -123,8 +90,8 @@ jobs:
             echo 'value=true' >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # Where each language's source actually lives. A change to this workflow re-runs all three,
-          # so a change to the patterns is always validated by the pull request that makes it.
+          # Where each language's source lives. A change to this workflow re-runs all three, so a change to the
+          # patterns is validated by the pull request that makes it.
           case "$LANGUAGE" in
             java-kotlin)
               PATTERN='^(events-core/|events-bff/|events-importer/|detekt-rules/|gradle/|gradlew|build\.gradle\.kts$|settings\.gradle\.kts$|gradle\.properties$|\.github/workflows/codeql\.yml$|\.github/codeql/)' ;;
@@ -137,8 +104,7 @@ jobs:
               exit 1 ;;
           esac
           FILES="$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[].filename')"
-          # An empty list means the API call went wrong, not that nothing changed. Fail loudly
-          # rather than skip an analysis that was needed.
+          # An empty list means the API call went wrong. Fail loudly rather than skip an analysis.
           if [ -z "$FILES" ]; then
             echo '::error::no changed files returned for this pull request'
             exit 1
@@ -155,14 +121,11 @@ jobs:
         if: steps.relevance.outputs.value == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # Every checkout here sets this: without it the job's token is written into `.git/config`,
-          # where any later step can read it. zizmor's `artipacked` audit blocks at medium on a
-          # SHA-pinned checkout that omits it.
+          # Without it the token is written into `.git/config`; zizmor's `artipacked` blocks at medium.
           persist-credentials: false
 
-      # java-kotlin's autobuild runs Gradle, which needs a JDK matching the toolchain in
-      # gradle.properties. Left to its own devices autobuild takes whatever the runner image ships,
-      # which is how a CodeQL run fails for a reason that has nothing to do with CodeQL.
+      # autobuild runs Gradle, which needs the JDK the toolchain names; the runner's default is how a CodeQL
+      # run fails for a reason unrelated to CodeQL.
       - name: Set up JDK
         if: steps.relevance.outputs.value == 'true' && matrix.language == 'java-kotlin'
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
@@ -176,41 +139,23 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
-          # The one `paths-ignore`, and why it is a directory of venue pages and nothing wider
-          # (#1480). A change to that file re-runs every language: the relevance patterns above
-          # name `.github/codeql/`, and the `actions` pattern covers `.github/` whole.
+          # The one `paths-ignore`, a directory of venue pages and nothing wider (#1480).
           config-file: .github/codeql/codeql-config.yml
-          # **Off, because it was evicting every other cache in the repository** (#589).
-          #
-          # The `java-kotlin` analysis stores ~333 MB of Gradle dependencies per run. Within a day of
-          # this workflow landing that was 43 entries and 8.99 GB, taking the repository to 10.6 GB
-          # against GitHub's **10 GB** limit — above which GitHub evicts least-recently-used entries.
-          # What it evicted was the Playwright browser cache, and the frontend job then took a
-          # 519-875s install every run and was killed by its own timeout, unable to save a cache
-          # because a timeout skips the post step. Six consecutive runs died that way.
-          #
-          # Deleting the entries by hand bought a day. They regrew to 8.73 GB and evicted Playwright
-          # again, which is what this change is for.
-          #
-          # **The cost is roughly two minutes on `Analyze (java-kotlin)`**, which refetches Gradle
-          # dependencies each run. That is the right trade: **the Gradle cache that shortens the
-          # actual feedback loop belongs to `Build & Test`**, and it was competing for the same
-          # budget with a scanner's private copy of the same jars. One gates every pull request; the
-          # other runs a scan nobody waits on.
+          # **Off, because it was evicting every other cache in the repository** (#589). `java-kotlin` stored
+          # ~333 MB of Gradle dependencies per run, 8.99 GB within a day, past GitHub's 10 GB limit — and what
+          # GitHub evicted was the Playwright browser cache, so the frontend job took a 500–900s install every
+          # run and died on its own timeout six times running. The cost is ~two minutes on `Analyze
+          # (java-kotlin)`; the Gradle cache that shortens the feedback loop belongs to `Build & Test`.
           dependency-caching: false
-          # No `queries:` input, deliberately. That leaves the **default** suite, which is what
-          # default setup was configured to run (`code-scanning/default-setup` reported
-          # `"query_suite": "default"`), so this migration changes *where* CodeQL runs and not *what
-          # it finds*. Widening to `security-extended` is a separate decision with its own noise
-          # budget, and mixing it into this change would make a regression in either impossible to
-          # attribute.
+          # No `queries:` input: the **default** suite, which default setup ran, so this migration changes where
+          # CodeQL runs and not what it finds. `security-extended` is a separate decision with its own noise
+          # budget.
 
       - name: Perform CodeQL analysis
         if: steps.relevance.outputs.value == 'true'
         uses: github/codeql-action/analyze@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
         with:
           category: /language:${{ matrix.language }}
-          # The fork accommodation, and the whole reason this file exists. `never` on a fork pull
-          # request: the analysis runs and the job reports, but nothing is written to Code Scanning,
-          # because a read-only token cannot and the 403 would fail the step.
+          # The fork accommodation, and the reason this file exists: `never` on a fork pull request, because a
+          # read-only token cannot upload and the 403 would fail the step.
           upload: ${{ github.event.pull_request.head.repo.fork == true && 'never' || 'always' }}
