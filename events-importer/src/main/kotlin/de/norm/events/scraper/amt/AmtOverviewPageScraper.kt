@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isPlaceholderName
@@ -106,7 +107,7 @@ class AmtOverviewPageScraper {
             ticketUrl = item.hrefAt("a.div-strela"),
             pricePresale = presale,
             priceBoxOffice = boxOffice,
-            artists = parseDjs(lineup)
+            artists = parseDjs(lineup).ifEmpty { hostedActsFromTitle(title, role = "DJ") }
         )
     }
 

@@ -88,7 +88,8 @@ class RenateOverviewPageScraperTest {
         // "Garten für alle!" is a <strong> heading on five nights, and the garden floor is spelled
         // GARDEN — so the German spelling must not open a stage.
         events.flatMap { it.artists }.map { it.stage }.distinct().forEach { stage ->
-            (stage in setOf("GARDEN", "GREEN", "BLACK", "RED", "SECRET", "TOP SECRET", "CLUB")) shouldBe true
+            // A curator read off the title (#339) has no floor.
+            (stage == null || stage in setOf("GARDEN", "GREEN", "BLACK", "RED", "SECRET", "TOP SECRET", "CLUB")) shouldBe true
         }
     }
 
