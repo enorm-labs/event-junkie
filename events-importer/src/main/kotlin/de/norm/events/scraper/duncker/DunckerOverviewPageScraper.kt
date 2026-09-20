@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
@@ -181,9 +182,7 @@ class DunckerOverviewPageScraper(
         baseUrl: String
     ): String? =
         cell
-            .selectFirst("img.listenLINK_img")
-            ?.attr("src")
-            ?.takeIf { it.isNotBlank() }
+            .attrAt("img.listenLINK_img", "src")
             ?.let { resolveUrl(baseUrl, it) }
 
     /**
