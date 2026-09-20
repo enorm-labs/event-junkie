@@ -1,25 +1,13 @@
 /**
- * The locales this site is published in, and how one is chosen.
- *
- * Kept separate from `i18n/index.ts` so the router can import it without pulling in vue-i18n and
- * the message catalogues — the router runs before the app is created.
- *
- * See docs/adr/ADR-013_LOCALISATION.md.
+ * The locales this site is published in, and how one is chosen. Separate from `i18n/index.ts` so
+ * the router can import it without vue-i18n and the catalogues (ADR-013).
  */
 
 /**
- * The locales this site actually publishes. The first is the fallback.
- *
- * Listing a locale here makes `/<locale>/*` routable **and** makes it resolvable from
- * `Accept-Language` — so a German-speaking visitor lands on `/de` from that moment on. It drives
- * the route matcher directly (see `router/index.ts`), so the two cannot drift apart, and the
- * key-parity test fails if a published locale has no message catalogue.
- *
- * **Before go-live, every published locale needs its legal pages in that language** — an
- * English-only imprint and privacy notice on a site presenting itself in German is the one
- * configuration LEGAL.md §6.1 rules out. Both published locales have them
- * (`ImprintView.de.vue`, `PrivacyView.de.vue`); a third locale would need the same before it
- * could be listed here.
+ * The locales this site publishes; the first is the fallback. Listing one makes `/<locale>/*`
+ * routable and resolvable from `Accept-Language`, drives the route matcher directly, and the
+ * key-parity test fails if it has no catalogue. Every published locale needs its legal pages in
+ * that language (LEGAL.md §6.1): `ImprintView.de.vue`, `PrivacyView.de.vue` for `de`.
  */
 export const LOCALES = ['en', 'de'] as const
 
@@ -28,23 +16,15 @@ export type Locale = (typeof LOCALES)[number]
 export const DEFAULT_LOCALE: Locale = 'en'
 
 /**
- * `localStorage` key holding the visitor's last locale.
- *
- * This is a **hint for resolving a bare `/` only** — the URL is always the source of truth
- * (ADR-013 §2). Keeping the choice out of the URL entirely would make every shared link a coin
- * flip for the recipient, and it is also what keeps the § 25 (2) 2 TDDDG position intact: a
- * preference the visitor set themselves is strictly necessary, so no consent banner. Do not start
- * storing anything else here — see the privacy rules in AGENTS.md.
+ * `localStorage` key holding the visitor's last locale: a hint for resolving a bare `/` only, the
+ * URL being the source of truth (ADR-013 §2). A preference the visitor set themselves is strictly
+ * necessary under § 25 (2) 2 TDDDG, so no consent banner; do not store anything else here.
  */
 export const LOCALE_STORAGE_KEY = 'locale'
 
 /**
- * The BCP-47 tag each UI locale formats dates and numbers with.
- *
- * A UI locale is not a formatting locale. Bare `en` resolves to US conventions in `Intl`, so dates
- * come out "Jun 12, 2026" — month first, which is wrong for a Berlin audience reading a European
- * site. `en-GB` gives "12 Jun 2026". This mapping was added after Phase 1 changed `formatDate` to
- * take the active locale and silently switched the English format to US ordering.
+ * The BCP-47 tag each UI locale formats with. Bare `en` resolves to US conventions in `Intl`
+ * ("Jun 12, 2026"); `en-GB` gives "12 Jun 2026", right for a Berlin audience.
  */
 export const INTL_LOCALES: Record<Locale, string> = {
   en: 'en-GB',
@@ -56,11 +36,9 @@ export function isLocale(value: unknown): value is Locale {
 }
 
 /**
- * Drops the locale segment from a routed path: `/de/legal/privacy` → `/legal/privacy`, `/en` → ``.
- *
- * The result is what every "same page, other language" calculation is built on — the locale
- * switcher's links, the canonical URL, and the `hreflang` alternates. One implementation because
- * three subtly different ones is how `/en/` and `/en` became two URLs for one page in Phase 1.
+ * Drops the locale segment: `/de/legal/privacy` to `/legal/privacy`, `/en` to ``. One
+ * implementation for the switcher's links, the canonical URL and the `hreflang` alternates,
+ * because three subtly different ones is how `/en/` and `/en` became two URLs for one page.
  */
 export function stripLocale(path: string): string {
   return path.replace(/^\/[^/]+/, '')
@@ -88,8 +66,8 @@ function browserLocale(): Locale | null {
 }
 
 /**
- * Which locale to send a visitor to when the URL does not say — i.e. a bare `/` or an unprefixed
- * path. Their own previous choice wins over what their browser asks for; `en` is the last resort.
+ * Which locale a bare `/` or an unprefixed path sends a visitor to: their previous choice, then
+ * the browser's, then `en`.
  */
 export function resolveLocale(): Locale {
   return storedLocale() ?? browserLocale() ?? DEFAULT_LOCALE
@@ -100,6 +78,6 @@ export function rememberLocale(locale: Locale): void {
   try {
     localStorage.setItem(LOCALE_STORAGE_KEY, locale)
   } catch {
-    // Ignore — the URL still carries the locale, so nothing is lost within this visit.
+    // The URL still carries the locale, so nothing is lost within this visit.
   }
 }

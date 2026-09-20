@@ -6,19 +6,15 @@ import { APP_NAME } from '@/lib/pageMeta'
 import type { Locale } from '@/i18n/locales'
 
 /**
- * schema.org documents, as JSON-LD.
+ * schema.org documents, as JSON-LD, for Google's event rich results, the only rich result this
+ * product is a candidate for. Two rules, both Google policy:
  *
- * The point of this file is Google's **event rich results** — the date-and-venue cards in Search.
- * It is the only rich result this product is a candidate for, and eligibility requires structured
- * data. Two rules govern everything below, both Google policy rather than taste:
+ * 1. Never describe anything the page does not show: every property here is rendered by
+ * `EventDetailView.vue` or `VenueDetailView.vue`.
+ * 2. Omit rather than guess: an absent property costs a recommendation, a wrong one is a
+ * misrepresentation we volunteered. Every `?? undefined` is deliberate.
  *
- * 1. **Never describe anything the page does not show.** Every property emitted here is rendered by
- *    `EventDetailView.vue` or `VenueDetailView.vue` — check before adding one.
- * 2. **Omit rather than guess.** An absent property costs a recommendation; a wrong one is a
- *    misrepresentation we volunteered. Every `?? undefined` below is deliberate.
- *
- * Unlike `seoTags.ts` this needs no prerendering: Googlebot runs JavaScript and reads JSON-LD
- * injected after boot, which is why it shipped before the rendering decision.
+ * Needs no prerendering: Googlebot runs JavaScript and reads JSON-LD injected after boot.
  */
 
 /** Anything JSON-serialisable that a schema.org document can hold. */
@@ -28,15 +24,9 @@ export type JsonLd = Record<string, unknown>
 const TIME_ZONE = 'Europe/Berlin'
 
 /**
- * The UTC offset Berlin was on for a given date, as `+02:00`.
- *
- * **Computed per date, never hardcoded.** Berlin is `+01:00` in winter and `+02:00` in summer, so
- * a fixed offset silently misstates the start time of roughly half the year's events — by exactly
- * one hour, which is small enough to look like a typo and large enough to make someone miss a
- * support act.
- *
- * `Intl` rather than the `temporal-polyfill` dependency: this is one lookup, and the polyfill is
- * not currently imported anywhere in the app.
+ * The UTC offset Berlin was on for a given date, as `+02:00`. Computed per date: Berlin is
+ * `+01:00` in winter and `+02:00` in summer, and a fixed offset misstates half the year's start
+ * times by one hour. `Intl` rather than `temporal-polyfill`, which nothing else imports.
  */
 function berlinOffset(isoDate: string): string {
   const parts = new Intl.DateTimeFormat('en', {
@@ -48,11 +38,9 @@ function berlinOffset(isoDate: string): string {
 }
 
 /**
- * `startDate` in the form Google prefers: a local datetime with an explicit offset.
- *
- * Falls back to the bare date when no start time is known — valid ISO 8601, and accepted. Guessing
- * a time would be worse than omitting one: a wrong start time is the single most damaging thing
- * this file could publish.
+ * `startDate` as Google prefers: a local datetime with an explicit offset. Falls back to the bare
+ * date when no start time is known; a wrong start time is the most damaging thing this file could
+ * publish.
  */
 export function eventStartDate(event: EventDetail): string | undefined {
   if (!event.eventDate) return undefined
@@ -62,8 +50,7 @@ export function eventStartDate(event: EventDetail): string | undefined {
 }
 
 /**
- * `endDate` in the same form, only when the venue stated an end (ADR-029): a weekender's Monday
- * morning, or the bare closing day of a run. Never derived — see `eventStartDate`.
+ * `endDate` only when the venue stated an end (ADR-029). Never derived.
  */
 export function eventEndDate(event: EventDetail): string | undefined {
   if (!event.endDate) return undefined
@@ -72,11 +59,9 @@ export function eventEndDate(event: EventDetail): string | undefined {
 }
 
 /**
- * The BFF's scheduling status, in schema.org's vocabulary.
- *
- * `RELOCATED` has no counterpart — schema.org offers `EventRescheduled` (a time change) and
- * `EventMovedOnline`, neither of which is a venue change. It is left undefined, which Google reads
- * as the default `EventScheduled`: true, since a relocated event is still going ahead.
+ * The BFF's scheduling status in schema.org's vocabulary. `RELOCATED` has no counterpart
+ * (`EventRescheduled` is a time change, `EventMovedOnline` is not a venue change), so it stays
+ * undefined, which Google reads as `EventScheduled`: true, the event is still going ahead.
  */
 const EVENT_STATUS: Record<string, string> = {
   SCHEDULED: 'https://schema.org/EventScheduled',
@@ -85,10 +70,8 @@ const EVENT_STATUS: Record<string, string> = {
 }
 
 /**
- * The most specific schema.org type each event kind maps to.
- *
- * Specificity helps only where it is accurate. `READING` and `SHOW` have no good subtype — there is
- * no `LiteraryEvent`, and `TheaterEvent` would assert a form we do not know — so they stay `Event`.
+ * The most specific schema.org type per event kind. `READING` and `SHOW` stay `Event`: there is no
+ * `LiteraryEvent`, and `TheaterEvent` would assert a form we do not know.
  */
 const EVENT_TYPES: Record<string, string> = {
   CONCERT: 'MusicEvent',
@@ -101,7 +84,7 @@ const EVENT_TYPES: Record<string, string> = {
 }
 
 function offers(event: EventDetail, url: string): JsonLd | undefined {
-  // Rule 1 above: a past event's page shows no ticket link, so this must not publish one either.
+  // Rule 1: a past event's page shows no ticket link, so this publishes none.
   if (isPastEvent(event)) return undefined
 
   const price = event.free ? 0 : (event.pricePresale ?? event.priceBoxOffice)
@@ -112,20 +95,16 @@ function offers(event: EventDetail, url: string): JsonLd | undefined {
     price,
     priceCurrency: event.priceCurrency ?? 'EUR',
     availability: event.soldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
-    // The ticket seller where we have one: they hold the authoritative price, and ours is a
-    // scraped snapshot that may already be stale. Our own page is the honest fallback.
+    // The ticket seller holds the authoritative price; ours is a scraped snapshot. Our page is the
+    // honest fallback.
     url: event.ticketUrl ?? url,
   }
 }
 
 /**
- * A performing artist.
- *
- * **`PerformingGroup`, not `Person`** — and the reason is not only that most of these are bands.
- * We cannot tell a solo act from a group, and of the two available guesses only one asserts that a
- * named individual is a natural person. LEGAL.md §7.3 treats artist names as personal
- * data precisely because some are; publishing a machine-readable claim about which is gratuitous.
- * Google accepts either type for `performer`.
+ * `PerformingGroup`, not `Person`: we cannot tell a solo act from a group, and only one guess
+ * asserts that a named individual is a natural person, which LEGAL.md §7.3 treats as personal
+ * data. Google accepts either for `performer`.
  */
 function performers(event: EventDetail): JsonLd[] | undefined {
   const names = (event.lineup ?? [])
@@ -153,11 +132,9 @@ function eventLocation(event: EventDetail): JsonLd | undefined {
 }
 
 /**
- * An event, as schema.org.
- *
- * Google's **required** properties are `name`, `startDate` and `location` (with an address); this
- * returns `null` rather than an incomplete document when any is missing, because partial
- * structured data is not partially useful — it is rejected, and it costs a crawl to find out.
+ * An event. Google requires `name`, `startDate` and `location` with an address; this returns
+ * `null` rather than an incomplete document, because partial structured data is rejected and
+ * costs a crawl to find out.
  */
 export function eventJsonLd(event: EventDetail, locale: Locale): JsonLd | null {
   const url = event.slug ? canonicalUrl(locale, `/events/${event.slug}`) : undefined
@@ -166,8 +143,8 @@ export function eventJsonLd(event: EventDetail, locale: Locale): JsonLd | null {
 
   if (!event.title || !startDate || !location) return null
 
-  // The language of the text this page shows, not of the page. A German description on /en/ says
-  // `de`, and an unclassified one says nothing rather than guessing (ADR-026).
+  // The language of the text shown, not of the page: a German description on /en/ says `de`, an
+  // unclassified one says nothing (ADR-026).
   const description = descriptionFor(event, locale)
 
   return {
@@ -225,10 +202,8 @@ export function venueJsonLd(venue: VenueDetail, locale: Locale): JsonLd | null {
 }
 
 /**
- * The trail Search shows in place of a bare URL.
- *
- * `items` are `[label, locale-relative path]`; the last one is the current page and carries no
- * link, per Google's guidance.
+ * The trail Search shows in place of a bare URL. `items` are `[label, locale-relative path]`;
+ * the last is the current page and carries no link.
  */
 export function breadcrumbJsonLd(items: [string, string][], locale: Locale): JsonLd {
   return {
@@ -244,11 +219,9 @@ export function breadcrumbJsonLd(items: [string, string][], locale: Locale): Jso
 }
 
 /**
- * The site itself.
- *
- * `WebSite` only — deliberately **not** `Organization`. The imprint states that Event Junkie is run
- * by a private individual and not a company (§ 5 DDG); publishing an `Organization` claim would
- * contradict our own legal page in a format built for machines to believe.
+ * The site itself, as `WebSite` and not `Organization`: the imprint states Event Junkie is run
+ * by a private individual (§ 5 DDG), and an `Organization` claim would contradict it in a format
+ * built for machines to believe.
  */
 export function websiteJsonLd(locale: Locale): JsonLd {
   return {

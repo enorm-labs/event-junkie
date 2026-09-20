@@ -1,67 +1,38 @@
-# events-frontend — the Vue 3 SPA, served as static files by nginx.
-#
-# Build context is the module directory, and `npm run build` must have run first:
+# events-frontend: the Vue 3 SPA, served as static files by nginx. Build context is the module
+# directory, and `npm run build` must have run first:
 #
 #     npm --prefix events-frontend ci && npm --prefix events-frontend run build
 #     docker buildx build events-frontend --platform linux/amd64,linux/arm64 \
 #       --build-arg VERSION=… --build-arg REVISION=…
 #
-# `.dockerignore` next to this file cuts the context down to `dist/` and `docker/` — without it the
-# context would carry node_modules, coverage and playwright-report.
+# `.dockerignore` cuts the context down to `dist/` and `docker/`.
 #
-# THERE IS DELIBERATELY NO BUILDER STAGE AND NO `RUN` THAT DOES BUILD WORK, which is where this
-# departs from every guide on the subject — Vue CLI's Docker/nginx page, and the community
-# write-ups, all run `RUN npm run build` inside a first stage. Two reasons, and the first is the
-# load-bearing one:
+# Deliberately no builder stage and no `RUN` that does build work, unlike every guide: build work
+# in a `RUN` executes target-architecture code, so a two-platform image would need a runner per
+# architecture plus a manifest merge, while `dist/` is identical on amd64 and arm64 (the same
+# reasoning as events-bff/Dockerfile, whose one exception, a named `apk upgrade`, this file does
+# not need). And `build-frontend.yml` already builds it with a cached node_modules.
 #
-#  1. **Multi-arch.** Build work in a `RUN` executes target-architecture code and produces
-#     architecture-specific output, so a two-platform image would need a runner per architecture
-#     plus a manifest merge. `dist/` is just text — it is identical on amd64 and arm64 — so with the
-#     build outside the Dockerfile a single runner emits both platforms. Same reasoning as
-#     events-bff/Dockerfile, which also records the one exception: a named `apk upgrade`, which
-#     runs under the runner's emulation for arm64 (#964, #1118). This file needs no such layer,
-#     for the reason on the `FROM` below.
-#  2. **CI already builds it.** `build-frontend.yml` runs `npm ci && npm run build` with a cached
-#     node_modules before it ever reaches this file. A builder stage here would be a second,
-#     uncached build of an artefact that already exists.
-#
-# The base image is the unprivileged variant, not `nginx:alpine`. It listens on 8080 rather than 80
-# (a non-root process cannot bind a privileged port), and its nginx.conf already relocates the pid
-# file and every temp path into /tmp. See docker/nginx.conf for why that matters.
+# The base image is the unprivileged variant: it listens on 8080, and its nginx.conf relocates the
+# pid file and every temp path into /tmp (docker/nginx.conf).
 
-# Pinned by tag *and* digest, per Docker's best-practices guide. Dependabot's `docker` ecosystem
-# updates both halves — the digest within a tag, and the tag itself.
+# Pinned by tag and digest; Dependabot's `docker` ecosystem updates both halves.
 #
-# **The pin has to be on a branch that is still being rebuilt.** This was `1.29-alpine` until #264's
-# Trivy gate reported 10 fixable HIGH advisories on its first run — openssl, curl, libxml2, libexpat,
-# c-ares, all in the Alpine base rather than in nginx. nginx 1.29 is a superseded *mainline* branch,
-# last rebuilt 2026-05-11, so it kept shipping Alpine 3.23.4 packages while 3.24 fixed them.
+# The pin has to be on a branch that is still being rebuilt: `1.29-alpine`, a superseded mainline
+# last rebuilt 2026-05-11, kept shipping Alpine 3.23.4 packages with 10 fixable HIGH advisories
+# after 3.24 fixed them (#264), while Dependabot's bump PR #437 sat open. An open Dependabot PR is
+# a live vulnerability, and the scan is what makes it blocking. Mainline (1.31) picks up refreshed
+# Alpine packages sooner, so two digest bumps in a fortnight are the design working; 1.30-alpine
+# is the conservative alternative.
 #
-# **Dependabot had already noticed** — PR #437 proposed 1.29-alpine → 1.30-alpine on 2026-08-11 and
-# was sitting open when the scan ran. That is the useful part: an open Dependabot PR is a live
-# vulnerability until someone merges it, and nothing in its title distinguishes ten fixable HIGH
-# advisories from a routine version bump. The scan is what makes the difference blocking rather than
-# advisory. (It was also unwatched for the three months before that: the `docker` ecosystem only
-# started covering this directory on 2026-08-11.)
-#
-# 1.31 is the current mainline and is rebuilt within days (Alpine 3.24.1). 1.30-alpine — the stable
-# branch, and what #437 proposed — is the conservative alternative if mainline ever churns too fast.
-# The reason to stay on mainline is that it picks up refreshed Alpine packages sooner, which is
-# exactly the failure above, and it is why two digest bumps inside a fortnight are the design working.
-#
-# **Verify the package, never the digest.** A rebuilt digest is not evidence: #770 was triaged
-# against a digest that had moved while still shipping the vulnerable openssl. What this pin has to
-# satisfy is `libssl3 >= 3.5.8-r0` (#770), `libexpat >= 2.8.4-r0` (#1009) and
-# `libuuid >= 2.42.3-r1` (#1117), all checked with
-# `docker run --rm --entrypoint sh <ref> -c 'apk list | grep -E "^libssl3|^libexpat|^libuuid"'` and
-# then with
-# `trivy image <ref> --severity CRITICAL,HIGH --ignore-unfixed --ignorefile /dev/null`, which is the
-# form that reports on the image rather than on the waiver. **Both on `--platform linux/amd64`**:
-# the gate scans the amd64 image, and Alpine builds each architecture separately, so a package can
-# exist for arm64 and not yet for x86_64 — which is how #1118 verified clean and changed nothing.
-#
-# This digest carries all three, so no `apk upgrade` layer belongs here: an upgrade kept past its
-# purpose hides that the base has caught up and quietly becomes the thing choosing the version.
+# Verify the package, never the digest: #770 was triaged against a digest that had moved while
+# still shipping the vulnerable openssl. This pin must satisfy `libssl3 >= 3.5.8-r0` (#770),
+# `libexpat >= 2.8.4-r0` (#1009) and `libuuid >= 2.42.3-r1` (#1117), checked with
+# `docker run --rm --entrypoint sh <ref> -c 'apk list | grep -E "^libssl3|^libexpat|^libuuid"'`
+# and `trivy image <ref> --severity CRITICAL,HIGH --ignore-unfixed --ignorefile /dev/null`, both
+# on `--platform linux/amd64`: Alpine builds each architecture separately, which is how #1118
+# verified clean and changed nothing. No `apk upgrade` layer: kept past its purpose it hides that
+# the base has caught up.
 FROM nginxinc/nginx-unprivileged:1.31-alpine@sha256:b54ac358b83fc6c965793fd271839b4ea4cdb6e99895bb19618cbc2ca152d972
 
 ARG VERSION=unspecified
@@ -74,32 +45,21 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}"
 
-# Config first, bundle second: the config changes rarely and the bundle changes every build, so
-# this ordering keeps the config layer cached.
+# Config first, bundle second, so the config layer stays cached.
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY dist/ /usr/share/nginx/html/
 
-# The base image defaults to UID 101. Overridden to 10001 to match `security.runAsUser` in the Helm
-# chart, so one value covers all three workloads; `scripts/uid-consistency.sh` asserts they agree.
-# Above 10000 per #448 — see events-bff/Dockerfile for why a low UID is worth avoiding.
-#
-# **This was the image expected to resist**, because `nginxinc/nginx-unprivileged` is built around a
-# specific unprivileged user and writes to `/tmp` paths owned by it, and an arbitrary `runAsUser`
-# would fail at start rather than at build. Verified instead of assumed: at 10001 with
-# `--read-only --tmpfs /tmp` it starts clean, logs no permission errors and serves 200. It works
-# because nginx here writes only to /tmp — a tmpfs owned by whoever mounts it — and reads only
-# world-readable files. If a future base image changes that, the chart still has a
-# `frontend.runAsUser` override waiting rather than needing a redesign.
+# UID 10001 to match the chart's `security.runAsUser` (`scripts/uid-consistency.sh`), above
+# 10000 per #448. Verified rather than assumed, since `nginxinc/nginx-unprivileged` is built
+# around one user: at 10001 with `--read-only --tmpfs /tmp` it starts clean and serves 200,
+# because nginx writes only to /tmp and reads only world-readable files. The chart keeps a
+# `frontend.runAsUser` override for a base image that changes that.
 USER 10001:10001
 
-# Documentation only. It must stay above 1024 — a non-root process cannot bind a privileged port,
-# which is the constraint this image places on the chart's `frontend.service.port`.
+# Documentation only. Must stay above 1024, the constraint on the chart's `frontend.service.port`.
 EXPOSE 8080
 
-# No HEALTHCHECK on purpose: Kubernetes ignores it and uses the chart's own probes, so adding one
-# would create a second definition of healthy that nothing reads and nobody maintains.
-#
-# Exec form, and the base image's docker-entrypoint.sh is deliberately bypassed: those scripts do
-# envsubst templating into /etc/nginx/conf.d, which fails on a read-only root filesystem. There are
-# no templates here to expand.
+# No HEALTHCHECK: Kubernetes uses the chart's probes, and a second definition of healthy is one
+# nobody maintains. Exec form, bypassing the base image's docker-entrypoint.sh, whose envsubst
+# templating into /etc/nginx/conf.d fails on a read-only root filesystem.
 ENTRYPOINT ["nginx", "-g", "daemon off;"]

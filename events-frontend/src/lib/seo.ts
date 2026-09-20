@@ -1,42 +1,28 @@
-// Relative and extension-bearing, unlike the rest of `src/`: `vite.config.ts` imports this module
-// through scripts/seoFiles.ts, so it is resolved before Vite's `resolve.alias` exists (hence no `@`
-// alias) and, under `configLoader: 'native'`, by Node's ESM resolver (hence the explicit `.ts`).
-// See the note in vite.config.ts. Same reason the router uses relative imports.
+// Relative and extension-bearing: `vite.config.ts` imports this through scripts/seoFiles.ts, before
+// Vite's `resolve.alias` exists and, under `configLoader: 'native'`, by Node's ESM resolver.
 import { DEFAULT_LOCALE, type Locale, LOCALES } from '../i18n/locales.ts'
 
 /**
- * The facts every SEO surface needs, in one place: the canonical origin, which pages are worth
- * indexing, and how a locale is named to a crawler.
- *
- * Imported by both the app (`lib/seoTags.ts`, at runtime) and the build (`scripts/seoFiles.ts`,
- * in Node). Keep it free of browser globals at module scope so the Vite config can import it.
+ * The facts every SEO surface needs: the canonical origin, which pages are worth indexing, how a
+ * locale is named to a crawler. Imported by the app (`lib/seoTags.ts`) and the build
+ * (`scripts/seoFiles.ts`, in Node), so no browser globals at module scope.
  */
 
 /**
- * The canonical origin. Every absolute URL this project emits is built from it.
- *
- * A single constant rather than an environment variable on purpose. Canonical URLs exist to name
- * **one** address for a page; deriving them from the request host instead means a preview
- * deployment, a `www.` alias and the apex each declare themselves canonical, which is the exact
- * duplicate-content problem the tag is there to prevent.
- *
- * `event-junkie.de` is registered (#259) and BRANDING.md §1 fixes it as the canonical host. Nothing
- * is deployed behind it yet, so no URL here resolves until #560 lands.
+ * The canonical origin, a constant rather than an environment variable: canonical URLs exist to
+ * name ONE address for a page, and deriving them from the request host would make a preview, a
+ * `www.` alias and the apex each declare themselves canonical. BRANDING.md §1 fixes the host.
  */
 export const SITE_URL = 'https://event-junkie.de'
 
 /**
  * The static pages worth putting in front of a crawler, as locale-relative paths (`''` is the
- * locale home). Every one gets a `<url>` entry per locale in the sitemap.
+ * locale home); each gets a `<url>` per locale in the sitemap.
  *
- * **Detail routes are deliberately absent** — this build is independent of the BFF and the
- * database (ADR-014 §Decision 1), so it cannot enumerate them, and that independence is worth
- * more than the listing would be. It is *not* because they are client-rendered: Googlebot runs
- * JavaScript and reaches them through internal links regardless. When they do get a sitemap it
- * belongs in the BFF, which holds the data and can leave out events that have already happened.
- *
- * A unit test holds this list against the router: adding a static route without deciding whether
- * it is indexable fails the build rather than silently going unlisted.
+ * Detail routes are deliberately absent: this build is independent of the BFF and the database
+ * (ADR-014 §Decision 1), and Googlebot reaches them through internal links regardless. Their
+ * sitemap belongs in the BFF, which can leave out past events. A unit test holds this list
+ * against the router, so a new static route has to decide whether it is indexable.
  */
 export const INDEXABLE_PATHS = [
   '',
@@ -52,15 +38,14 @@ export const INDEXABLE_PATHS = [
 ] as const
 
 /**
- * Static routes that exist but are intentionally kept out of the sitemap. Empty today — it exists
- * so the drift guard has somewhere to record a deliberate exclusion instead of being weakened.
+ * Static routes intentionally out of the sitemap. Empty today; the drift guard records a
+ * deliberate exclusion here instead of being weakened.
  */
 export const NON_INDEXABLE_PATHS: readonly string[] = []
 
 /**
- * Open Graph locale tags. OG wants `language_TERRITORY` with an underscore, which is neither the
- * UI locale (`en`) nor the BCP-47 formatting tag (`en-GB`) — three spellings of the same idea, so
- * this mapping is written out rather than derived by string surgery.
+ * Open Graph wants `language_TERRITORY` with an underscore, neither the UI locale (`en`) nor the
+ * BCP-47 tag (`en-GB`), so this is written out rather than derived by string surgery.
  */
 export const OG_LOCALES: Record<Locale, string> = {
   en: 'en_GB',
@@ -73,13 +58,9 @@ export function canonicalUrl(locale: Locale, path: string): string {
 }
 
 /**
- * An image URL a crawler can fetch, from whatever the API returned.
- *
- * The API returns two shapes. A cached image is a path on our own origin (`/api/images/…`), and a
- * venue's own image is an absolute URL — which one arrives depends on whether the environment serves
- * cached images yet (ADR-019). An `<img src>` resolves both against the page; `og:image` and the
- * JSON-LD `image` field are read by a crawler that has no page to resolve against, so a path has to
- * be made absolute before it goes into either.
+ * An image URL a crawler can fetch. The API returns a path on our origin for a cached image and
+ * an absolute URL for a venue's own (ADR-019); `<img src>` resolves both against the page, but
+ * `og:image` and JSON-LD `image` are read with no page to resolve against.
  */
 export function absoluteImageUrl(url: string | null | undefined): string | undefined {
   if (!url) return undefined
@@ -87,12 +68,9 @@ export function absoluteImageUrl(url: string | null | undefined): string | undef
 }
 
 /**
- * The `hreflang` set for one page: every published locale, plus `x-default`.
- *
- * **`x-default` points at the default locale, not at the unprefixed path.** The unprefixed path is
- * the more literal answer — it is the URL that negotiates `Accept-Language` — but it negotiates in
- * *JavaScript*, and Google asks that hreflang name canonical, indexable URLs rather than
- * redirects. `/en/...` is a real page; `/...` is a redirect that only resolves if scripts run.
+ * The `hreflang` set for one page: every published locale, plus `x-default`, which points at the
+ * default locale and not the unprefixed path: that path negotiates `Accept-Language` in
+ * JavaScript, and Google asks that hreflang name indexable URLs rather than redirects.
  */
 export function alternatesFor(path: string): { hreflang: string; href: string }[] {
   return [
@@ -109,18 +87,13 @@ const escapeXml = (value: string) =>
   )
 
 /**
- * The sitemap, as XML.
+ * The sitemap, as XML. This is where `hreflang` works today: the `<link>` tags `lib/seoTags.ts`
+ * injects after boot are script-injected, which Google treats as unreliable, while the sitemap is
+ * a static file. Each language version needs its own `<url>` carrying the full alternate set,
+ * including a self-reference; a one-way annotation is ignored.
  *
- * **This is where `hreflang` actually works today.** The equivalent `<link>` tags are injected by
- * `lib/seoTags.ts` after the app boots, and Google treats script-injected hreflang as unreliable —
- * but a sitemap is a static file the server hands over directly, no rendering involved. Until
- * prerendering lands, the sitemap is the primary annotation and the head links are the secondary
- * one. Each language version needs its own `<url>` carrying the **full** alternate set, including
- * a self-reference; a one-way annotation is ignored.
- *
- * No `lastmod`, `changefreq` or `priority`. Google ignores the latter two outright, and a
- * `lastmod` stamped with the build date on every page is precisely the untrustworthy signal it
- * discounts — worse than omitting it, because it invites the reader to believe it.
+ * No `lastmod`, `changefreq` or `priority`: Google ignores the latter two, and a `lastmod` stamped
+ * with the build date on every page is the untrustworthy signal it discounts.
  */
 export function sitemapXml(): string {
   const entries = LOCALES.flatMap((locale) =>
@@ -145,13 +118,8 @@ export function sitemapXml(): string {
 }
 
 /**
- * `robots.txt`.
- *
- * Open to everything, which is right for a public events guide — and a hazard for any environment
- * that is *not* the public site. A staging or preview deployment serving this build will be
- * indexed, and its sitemap will point at production. Overriding both per environment is a
- * deployment concern, flagged in the root AGENTS.md alongside the privacy checks rather than
- * solved here.
+ * `robots.txt`, open to everything. A hazard for any environment that is not the public site; the
+ * chart overrides both files for non-production (`ingress.noindex`, #286).
  */
 export function robotsTxt(): string {
   return ['User-agent: *', 'Allow: /', '', `Sitemap: ${SITE_URL}/sitemap.xml`, ''].join('\n')

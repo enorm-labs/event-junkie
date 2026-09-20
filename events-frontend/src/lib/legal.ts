@@ -1,22 +1,16 @@
 /**
- * Shared facts for the legal pages.
- *
- * One module because the imprint and the privacy notice must carry **the same** controller
- * details — §5 DDG and Art. 13 (1) (a) GDPR each require them, and two hand-maintained copies
- * would eventually disagree. See docs/LEGAL.md §8.3.
+ * Shared facts for the legal pages: the imprint and the privacy notice must carry the same
+ * controller details (§5 DDG, Art. 13 (1) (a) GDPR), and two copies would disagree
+ * (docs/LEGAL.md §8.3).
  */
 
 /**
- * The controller / service provider.
+ * The controller. Real since 2026-08-21: a rented ladungsfähige Anschrift from Postflex (#273)
+ * and a role mailbox that receives (#274).
  *
- * Real since 2026-08-21: a rented *ladungsfähige Anschrift* from Postflex (#273) and a real role
- * mailbox (#274). Both were placeholders until then, guarded by
- * {@link CONTACT_DETAILS_ARE_PROVISIONAL} — see docs/LEGAL.md §8.3.
- *
- * `careOf` is its own field rather than part of `street`, because German postal convention puts
- * it on its own line **between** the name and the street, and because the customer number in it
- * is what routes the post: an envelope without it may not arrive. Folding the two together would
- * render one line and read as an address that is almost right, which is the worst kind.
+ * `careOf` is its own field because German postal convention puts it on its own line between the
+ * name and the street, and the customer number in it is what routes the post; folded into
+ * `street` it would read as an address that is almost right.
  */
 export const CONTROLLER = {
   name: 'Norman Lange',
@@ -26,72 +20,51 @@ export const CONTROLLER = {
   email: 'hello@event-junkie.de',
 } as const
 
-// The country is deliberately *not* here. Street and city are proper nouns and read the same in
-// every language; a country name does not — "Germany" and "Deutschland" are the same fact worded
-// twice, which is what the message catalogue is for. It lives at `legal.country`.
+// The country is deliberately not here: "Germany" and "Deutschland" are one fact worded twice,
+// which is what the message catalogue is for (`legal.country`).
 
 /**
  * While `true`, the legal pages say so in a banner rather than presenting placeholder details as
- * fact — a legal page that quietly states a false address is worse than one that admits it is not
- * final.
- *
- * `false` since 2026-08-21: the Postflex address is rented and in {@link CONTROLLER}, and the
- * mailbox it names receives. **Set it back to `true` if either stops being true** — a lapsed
- * rental leaves an imprint naming an address that no longer forwards, which fails § 5 DDG while
- * looking entirely finished. The guard test in `__tests__/legal.spec.ts` holds this and the
- * placeholder in step in both directions.
+ * fact. `false` since 2026-08-21. Set it back to `true` if the rental lapses or the mailbox stops
+ * receiving: an imprint naming an address that no longer forwards fails § 5 DDG while looking
+ * finished. `__tests__/legal.spec.ts` holds this and the placeholder in step.
  */
 export const CONTACT_DETAILS_ARE_PROVISIONAL = false
 
 /**
- * The deployment the privacy notice describes — Hetzner in Germany, nothing in front of it, per
- * ADR-012 as amended to drop Cloudflare — is built and running (#285).
+ * `false` since the notice was re-read against what runs rather than the plan (#278): §5's
+ * processors are the real ones, §2 states that no IP address is logged (`nginx.conf`'s
+ * `ej_no_ip`, and Traefik logs nothing), and §2's retention is the volume bound it is.
  *
- * `false` since the notice was re-read against what actually runs rather than against the plan
- * (#278): §5's processors are the real ones, §2 no longer hedges on whether an IP address is logged
- * (it is not — `nginx.conf`'s `ej_no_ip` omits it and Traefik logs nothing), and §2's retention is
- * the volume bound it is instead of a period. **Provisioning alone was not the moment to flip
- * this**; re-reading the prose was, which is why it did not move with the deployment.
- *
- * **Set it back to `true` if the notice stops describing what runs** — a new processor, an edge
+ * Set it back to `true` if the notice stops describing what runs: a new processor, an edge
  * provider in front of the origin, an environment the notice does not cover. Move
- * {@link LAST_REVIEWED} in the same change: the flag and the date are one claim in two places.
+ * {@link LAST_REVIEWED} in the same change; the flag and the date are one claim in two places.
  */
 export const INFRASTRUCTURE_IS_PROPOSED = false
 
 /**
- * While `true`, the notice says the Art. 28 processor contract is **not yet concluded** (#275).
+ * While `true`, the notice says the Art. 28 processor contract is not yet concluded (#275); a
+ * notice naming processors without a DPA is worse than one naming none (LEGAL.md §14).
+ * [INFRASTRUCTURE_IS_PROPOSED] cannot stand in for it: a contract can be concluded before
+ * anything is deployed and lapse long after.
  *
- * §5 names Hetzner as an `Auftragsverarbeiter mit einem Vertrag nach Art. 28 DSGVO`, in the present
- * tense — a statement of fact, and [LEGAL.md](../../../docs/LEGAL.md) §14 is blunt about which way
- * it fails: *a notice naming processors without a DPA in place is worse than one naming none*.
- * [INFRASTRUCTURE_IS_PROPOSED] cannot stand in for it: a contract can be concluded before anything
- * is deployed and lapse long after, so they are two facts and two flags.
- *
- * Concluded 2026-08-19 via <https://accounts.hetzner.com/account/dpa>, so this is `false`. Nothing
- * in code can observe a signed PDF, which makes this constant the record, carrying the same date as
- * LEGAL.md §14. **Set it back to `true` if the contract lapses, is superseded, or a second
- * processor is added without one** — the failure is silent in both directions.
+ * Concluded 2026-08-19 via <https://accounts.hetzner.com/account/dpa>. Nothing in code can
+ * observe a signed PDF, so this constant is the record. Set it back to `true` if the contract
+ * lapses, is superseded, or a second processor is added without one.
  */
 export const PROCESSOR_CONTRACTS_PENDING = false
 
 /**
- * Date the legal pages were last reviewed against what the system actually does (§7.7).
- *
- * The review reads the deployed configuration, not the plan and not the previous review. #279's
- * pass found the notice still describing image requests to venue servers, which
- * `images.serving.enabled` had stopped three days earlier, and §3 claiming one stored key where the
- * site writes two.
+ * Date the legal pages were last reviewed against what the system does (§7.7). The review reads
+ * the deployed configuration, not the plan: #279's pass found the notice still describing image
+ * requests to venue servers that `images.serving.enabled` had stopped three days earlier.
  */
 export const LAST_REVIEWED = '2026-09-09'
 
 /**
- * The supervisory authority named under Art. 13 (2) (d) GDPR.
- *
- * Competence follows where the controller is **established**, which is not the rented
- * *ladungsfähige Anschrift* in {@link CONTROLLER}. The two therefore name different Bundesländer on
- * purpose, and a reader sees both. #279 asks a reviewer to confirm it and to say whether the page
- * has to reconcile them.
+ * The supervisory authority (Art. 13 (2) (d) GDPR). Competence follows where the controller is
+ * established, not the rented address in {@link CONTROLLER}, so the two name different
+ * Bundesländer on purpose. #279 asks a reviewer to confirm it.
  */
 export const SUPERVISORY_AUTHORITY = {
   name: 'Berliner Beauftragte für Datenschutz und Informationsfreiheit',
