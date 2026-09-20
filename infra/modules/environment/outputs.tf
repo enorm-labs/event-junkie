@@ -1,9 +1,7 @@
-# These three read the Primary IPs and not `hcloud_server.k3s`, and that is the whole point of them
-# (#883). `servers.tf` declares the Primary IPs so an address outlives the machine. Reading the
-# address off the server kept the value stable and made every consumer depend on the server anyway --
-# so `tofu apply -target=hcloud_zone_rrset.address`, which is meant to be the whole of a go-live,
-# pulled both nodes into the plan and replaced them on any pending `user_data` drift. The graph is
-# built from the expression, not from the value it happens to produce.
+# These read the Primary IPs and not `hcloud_server.k3s` (#883): reading the address off the
+# server made every consumer depend on the server, so `tofu apply -target=hcloud_zone_rrset.address`,
+# meant to be the whole of a go-live, pulled both nodes into the plan and replaced them on any
+# pending `user_data` drift. The graph is built from the expression, not the value.
 
 output "k3s_ipv4" {
   description = "Public IPv4 of the k3s node. The A record's value, and the SSH target for the very first login."
@@ -13,18 +11,13 @@ output "k3s_ipv4" {
 output "k3s_ipv6" {
   description = "The k3s node's public IPv6 address, the first host in its /64. The AAAA record's value."
 
-  # **`hcloud_primary_ip.ipv6.ip_address` is NOT a usable address, whatever its name says.** Measured
-  # against production: it returns the base of the /64, `2a01:4f8:c0c:9c82::`, while the server answers
-  # on `...::1`. The provider documents it as "IP address of the Primary IP", which reads like a host
-  # address and is not one.
-  #
-  # It is also not a CIDR, so it carries no `/` and looks entirely plausible in an AAAA record. It
-  # would be accepted by the zone and would simply never resolve. `cidrhost` on the network is what
-  # reproduces the address the server actually uses, without depending on the server to say so.
+  # `hcloud_primary_ip.ipv6.ip_address` is NOT a usable address: measured against production, it
+  # returns the base of the /64, `2a01:4f8:c0c:9c82::`, while the server answers on `...::1`. It
+  # carries no `/`, so it looks plausible in an AAAA record and would never resolve. `cidrhost` on
+  # the network reproduces the address the server uses without depending on the server to say so.
   value = cidrhost(hcloud_primary_ip.k3s_ipv6.ip_network, 1)
 
-  # Guards the mistake above rather than a malformed string: the base of the network is exactly the
-  # wrong answer, and it is the one the obvious attribute hands you.
+  # Guards the mistake above: the base of the network is exactly the wrong answer.
   precondition {
     condition     = cidrhost(hcloud_primary_ip.k3s_ipv6.ip_network, 1) != hcloud_primary_ip.k3s_ipv6.ip_address
     error_message = "k3s_ipv6 resolved to the base of the /64, which is the address the server does not answer on. See infra/modules/environment/outputs.tf."
@@ -73,9 +66,8 @@ output "wireguard_server_address" {
 
 output "next_steps" {
   description = "This apply's addresses, and the one command that must come next. The runbook is docs/ops/CLUSTER_BOOTSTRAP.md."
-  # Deliberately short. The full ordered runbook is docs/ops/CLUSTER_BOOTSTRAP.md and there is exactly
-  # one copy of it; this output exists to supply the two things that document cannot know -- the
-  # addresses this apply just created -- plus the single command that has to happen next.
+  # Deliberately short: the runbook is docs/ops/CLUSTER_BOOTSTRAP.md, and this supplies only what
+  # that document cannot know, the addresses this apply created, plus the next command.
   value = <<-EOT
     Addresses from this apply:
 

@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 #
-# k3s, single server node.
-#
-# Traefik and ServiceLB stay enabled: they are why MetalLB is not needed here (PLATFORM_SETUP.md
-# §6). NetworkPolicy enforcement also stays on — the default-deny policies that make it mean
-# something are the Helm chart's job (#261), not this file's.
+# k3s, single server node. Traefik and ServiceLB stay enabled, which is why MetalLB is not needed
+# (PLATFORM_SETUP.md §6). NetworkPolicy enforcement stays on; the default-deny policies are the
+# Helm chart's job (#261).
 
 set -euo pipefail
 
@@ -18,9 +16,8 @@ if systemctl is-active --quiet k3s; then
     exit 0
 fi
 
-# Kernel parameters the CIS hardening guide requires, and `protect-kernel-defaults` below makes
-# mandatory: with that flag set, the kubelet *exits* if these differ from its own defaults. They
-# have to be in place before k3s starts, not after.
+# Kernel parameters the CIS hardening guide requires: with `protect-kernel-defaults` the kubelet
+# exits if these differ from its defaults, so they go in before k3s starts.
 cat >/etc/sysctl.d/90-kubelet.conf <<'EOF'
 vm.panic_on_oom = 0
 vm.overcommit_memory = 1
@@ -29,17 +26,15 @@ kernel.panic_on_oops = 1
 EOF
 sysctl -p /etc/sysctl.d/90-kubelet.conf >/dev/null
 
-# Configuration goes in a file rather than INSTALL_K3S_EXEC. The hardening guide is written in
-# terms of this file, so keeping the same shape means a future item can be pasted in and diffed
-# rather than translated into flags.
+# A file rather than INSTALL_K3S_EXEC, because the hardening guide is written in terms of this
+# file, so a future item can be pasted in and diffed.
 install -d -m 0700 /etc/rancher/k3s
 {
-    # 0600, not the 0644 the installer would otherwise use: the file is a cluster-admin credential.
+    # 0600: the file is a cluster-admin credential.
     echo 'write-kubeconfig-mode: "0600"'
 
-    # Encrypts Secrets at rest in etcd, and cannot be enabled later without restarting the server.
-    # `secretbox` (XSalsa20-Poly1305) over the `aescbc` default because it is authenticated —
-    # aescbc provides confidentiality with no integrity. Available since v1.33.0+k3s1.
+    # Encrypts Secrets at rest in etcd; cannot be enabled later without a restart. `secretbox` over
+    # the `aescbc` default because it is authenticated. Available since v1.33.0+k3s1.
     echo 'secrets-encryption: true'
     echo 'secrets-encryption-provider: secretbox'
 
@@ -57,16 +52,11 @@ install -d -m 0700 /etc/rancher/k3s
 
     echo 'kubelet-arg:'
     echo '  - "streaming-connection-idle-timeout=5m"'
-    # Container log retention, and the only thing enforcing any bound today (#276). The privacy
-    # notice must state the retention that is *configured*, not the one intended, and until
-    # OpenObserve ships its bucket policy (#271, ADR-015) this pair is it. Without them the kubelet
-    # defaults apply and the honest answer to "how long are request logs kept" is "until the disk
-    # fills", which is not a period anyone can put in a notice.
-    #
-    # A **size** bound, not a duration — that distinction has to survive into the notice rather than
-    # be rounded to "seven days". 10Mi x 3 per container is roughly a fortnight of this site's
-    # traffic and a small fraction of the disk; the number to revisit is the *duration it buys*,
-    # once there is real traffic to measure it against.
+    # Container log retention, the only bound enforced today (#276). The privacy notice must state
+    # the retention that is configured, and until OpenObserve ships its bucket policy (#271, ADR-015)
+    # this pair is it; the kubelet default is "until the disk fills". A size bound, not a duration,
+    # and the notice must say so: 10Mi x 3 per container is roughly a fortnight of this site's
+    # traffic, and the number to revisit is the duration it buys once there is traffic to measure.
     echo '  - "container-log-max-size=10Mi"'
     echo '  - "container-log-max-files=3"'
     echo '  - "tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"'
@@ -81,14 +71,13 @@ chmod 0600 /etc/rancher/k3s/config.yaml
 curl -sfL https://get.k3s.io -o "${INSTALLER}"
 chmod 0700 "${INSTALLER}"
 
-# Pinned. Without INSTALL_K3S_VERSION the installer takes whatever is current at boot, so a
-# destroy/apply cycle would quietly produce a different cluster than the one it replaced.
+# Pinned: without INSTALL_K3S_VERSION a destroy/apply cycle would produce a different cluster.
 INSTALL_K3S_VERSION="${K3S_VERSION}" \
     INSTALL_K3S_EXEC="server" \
     "${INSTALLER}"
 
-# `systemctl enable` is done by the installer; this only waits for the API to answer, so that a
-# failure shows up in the cloud-init log rather than as a mystery two commands later.
+# `systemctl enable` is the installer's; this waits for the API so a failure shows in the
+# cloud-init log rather than two commands later.
 for _ in $(seq 1 60); do
     if k3s kubectl get --raw='/readyz' >/dev/null 2>&1; then
         echo "k3s: API is ready"

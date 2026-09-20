@@ -1,12 +1,7 @@
-# Two things about Hetzner Cloud Firewalls decide the shape of this file, and both are easy to get
-# wrong from the diagram alone:
-#
-#   1. They filter the **public interface only**. Traffic on the private network is never inspected,
-#      so "PostgreSQL reachable on 5432 from the private network only" is enforced by the *absence*
-#      of a public route plus PostgreSQL's own `listen_addresses` and `pg_hba.conf` — not by a rule
-#      here. See cloud-init/postgres.sh.
-#   2. They are stateful for outbound-initiated connections. A firewall with zero inbound rules
-#      still lets `apt` work; it does not need a companion "allow established" rule.
+# Two things about Hetzner Cloud Firewalls decide the shape of this file: they filter the public
+# interface only, so "PostgreSQL on 5432 from the private network only" is enforced by the absence
+# of a public route plus `listen_addresses` and `pg_hba.conf` (cloud-init/postgres.sh); and they
+# are stateful for outbound connections, so zero inbound rules still lets `apt` work.
 
 locals {
   world = ["0.0.0.0/0", "::/0"]
@@ -27,9 +22,8 @@ locals {
     },
   ] : []
 
-  # Open to the world on purpose. WireGuard does not reply to a packet without a valid key, so to a
-  # scanner this port is indistinguishable from a closed one — a far better public surface than SSH,
-  # which announces itself and its version to anyone who connects.
+  # Open to the world on purpose: WireGuard does not reply to a packet without a valid key, so to a
+  # scanner this port is indistinguishable from a closed one, unlike SSH.
   wireguard_rules = [
     {
       description = "WireGuard"
@@ -39,8 +33,8 @@ locals {
     },
   ]
 
-  # Break-glass only. With `admin_cidrs = []` these rules do not exist and neither port is reachable
-  # from the internet at any address; the tunnel is the only way in. See §8a.
+  # Break-glass only. With `admin_cidrs = []` these rules do not exist and the tunnel is the only
+  # way in (§8a).
   admin_rules = length(var.admin_cidrs) == 0 ? [] : [
     {
       description = "SSH - bootstrap and break-glass; use the tunnel for daily work"
@@ -84,13 +78,10 @@ resource "hcloud_firewall" "k3s" {
   }
 }
 
-# Deliberately empty: no inbound rule of any kind, at any port, from anywhere. Everything the node
-# needs — `apt`, the wal-g release from GitHub, and wal-g pushing to Object Storage — is outbound,
-# which the stateful firewall allows.
-#
-# This is also why `postgres_public_ipv4 = true` in production (#270) is not an exposure. The
-# address exists so the node can *reach* GitHub, which publishes no AAAA record; nothing can reach
-# back through it, because there is no rule here for anything to match.
+# Deliberately empty: no inbound rule of any kind. `apt`, the wal-g release from GitHub and wal-g
+# pushing to Object Storage are all outbound. This is why `postgres_public_ipv4 = true` in
+# production (#270) is not an exposure: the address exists so the node can reach GitHub, which
+# publishes no AAAA record, and nothing can reach back through it.
 resource "hcloud_firewall" "postgres" {
   count = local.dedicated_postgres ? 1 : 0
 

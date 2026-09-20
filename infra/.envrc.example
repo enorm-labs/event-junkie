@@ -1,75 +1,53 @@
-# Credentials for the OpenTofu stacks, loaded by direnv.
+# Credentials for the OpenTofu stacks, loaded by direnv:
 #
 #   cp .envrc.example .envrc && direnv allow
 #
-# `.envrc` rather than `.env`, for one reason that matters: direnv loads this on entering
-# `infra/` and *unloads it on leaving*. A `.env` has to be sourced by hand and then lingers for
-# the rest of the shell session, so a token with full read/write over the whole Hetzner project
-# ends up in the environment of every unrelated command you run afterwards. Neither file is read
-# by OpenTofu itself — both are just ways of getting variables into the environment — so the
-# scoping behaviour is the entire difference, and it is the one worth having.
+# `.envrc` rather than `.env` because direnv unloads it on leaving `infra/`; a sourced `.env`
+# leaves a token with full read/write over the Hetzner project in every unrelated command after.
 #
-# Nothing secret belongs in this file. The values come out of the macOS Keychain, so the copy you
-# actually use stays safe to read over your shoulder, safe in a backup, and harmless if it is ever
-# opened in a screen share. Store the three secrets once:
+# Nothing secret belongs in this file: the values come out of the macOS Keychain. Store the three
+# secrets once (`-w` with no value prompts, so nothing reaches shell history):
 #
 #   security add-generic-password -a "$USER" -s event-junkie-hcloud-token  -w
 #   security add-generic-password -a "$USER" -s event-junkie-s3-access-key -w
 #   security add-generic-password -a "$USER" -s event-junkie-s3-secret-key -w
 #
-# `-w` with no value prompts for it, so the secret never reaches your shell history.
-#
-# direnv evaluates this with bash regardless of your login shell — keep it bash-compatible.
+# direnv evaluates this with bash regardless of your login shell; keep it bash-compatible.
 
 keychain() { security find-generic-password -a "$USER" -s "$1" -w 2>/dev/null || true; }
 
 # Hetzner Cloud API token: servers, networks, firewalls, Primary IPs and DNS.
 export HCLOUD_TOKEN="$(keychain event-junkie-hcloud-token)"
 
-# Object Storage (S3) credentials. Used by the OpenTofu state backend *and* by the `aws` CLI for
-# the versioning and lifecycle setup in README.md. They are project-scoped, not bucket-scoped —
-# one pair reaches the state, observability and backup buckets alike.
+# Object Storage (S3) credentials, for the state backend and the `aws` CLI setup in README.md.
+# Project-scoped, not bucket-scoped: one pair reaches every bucket.
 export AWS_ACCESS_KEY_ID="$(keychain event-junkie-s3-access-key)"
 export AWS_SECRET_ACCESS_KEY="$(keychain event-junkie-s3-secret-key)"
 
-# Hetzner's S3 is not AWS: the "region" is the location, and the endpoint has to be stated.
-# Every `backend.tf` already carries both for OpenTofu; these two exist so that `aws s3api …`
-# works without `--endpoint-url` on every call. Change both together if you move location.
+# Hetzner's S3 is not AWS: the "region" is the location and the endpoint has to be stated. These
+# let `aws s3api …` work without `--endpoint-url`. Change both together if you move location.
 export AWS_DEFAULT_REGION=fsn1
 export AWS_ENDPOINT_URL_S3=https://fsn1.your-objectstorage.com
 
-# The MinIO provider manages the `-o2` bucket (#271). It reads MINIO_* rather than AWS_*, so these
-# are the SAME credential under the names that provider looks for — not a second secret to store,
-# rotate or leak. Nothing new goes in the Keychain.
-#
-# Note the endpoint has NO scheme here, unlike AWS_ENDPOINT_URL_S3 directly above: the provider
-# takes `host[:port]`. Passing the URL form fails at connect time rather than at validate time.
+# The MinIO provider manages the `-o2` bucket (#271) and reads MINIO_*, so these are the SAME
+# credential under its names, nothing new in the Keychain. The endpoint has NO scheme here, unlike
+# AWS_ENDPOINT_URL_S3: the provider takes `host[:port]`, and the URL form fails at connect time.
 export MINIO_ENDPOINT=fsn1.your-objectstorage.com
 export MINIO_USER="$AWS_ACCESS_KEY_ID"
 export MINIO_PASSWORD="$AWS_SECRET_ACCESS_KEY"
 
-# Behind a TLS-intercepting corporate proxy, the AWS CLI fails every call with
-# `CERTIFICATE_VERIFY_FAILED … self-signed certificate in certificate chain`. It is not a
-# credentials problem and not a Hetzner problem: the CLI ships its own Python CA bundle and
-# never consults the macOS keychain, so it does not know the proxy's root. `curl` and OpenTofu
-# are unaffected — both trust the system store — which is exactly what makes this confusing.
-#
-# Build the bundle once (see README, "Behind a TLS-intercepting proxy"); this stays inert on a
-# machine that does not have one, so the file works on any network.
+# Behind a TLS-intercepting proxy the AWS CLI fails every call with
+# `CERTIFICATE_VERIFY_FAILED … self-signed certificate in certificate chain`: it ships its own CA
+# bundle and never consults the macOS keychain, while `curl` and OpenTofu trust the system store.
+# Build the bundle once (README, "Behind a TLS-intercepting proxy"); inert on any other machine.
 if [ -f "$HOME/.certs/aws-ca-bundle.pem" ]; then
     export AWS_CA_BUNDLE="$HOME/.certs/aws-ca-bundle.pem"
 fi
 
 # An empty variable produces an authentication error three commands later that looks like a
-# broken backend config. Say so now instead.
-#
-# **The MINIO_* names were added to this list after they were missing from it cost an apply**
-# (2026-08-20, #271). `.envrc` is gitignored and personal, so adding exports to `.envrc.example`
-# does nothing for a copy somebody made weeks earlier — `direnv allow` re-reads their file, not
-# this one. The provider then signed anonymously and Hetzner answered `AccessDenied`, which reads
-# as a wrong key rather than as an absent one. **If you add a variable above, add it here too**;
-# this loop is the only thing that turns that into a message at the prompt instead of a failure
-# three commands later.
+# broken backend config. The MINIO_* names were added after their absence cost an apply (#271):
+# `.envrc` is personal and gitignored, so the provider signed anonymously and Hetzner answered
+# `AccessDenied`, which reads as a wrong key. If you add a variable above, add it here too.
 for _var in HCLOUD_TOKEN AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY MINIO_ENDPOINT MINIO_USER MINIO_PASSWORD; do
     if [ -z "${!_var}" ]; then
         echo "envrc: ${_var} is empty — is it in the Keychain under the name above?" >&2
@@ -78,14 +56,10 @@ done
 unset _var
 
 # ---------------------------------------------------------------------------
-# Plaintext alternative, if you would rather not use the Keychain.
-#
-# Only ever in `.envrc`, never in `.envrc.example`, and note what you are accepting: a file
-# holding cloud-admin credentials inside a *public* repository's working tree. `.gitignore` and
-# the gitleaks pre-commit hook both stand in the way, but they are the second and third lines of
-# defence, not the first.
+# Plaintext alternative, only ever in `.envrc`, never here: a file holding cloud-admin credentials
+# inside a public repository's working tree, with `.gitignore` and gitleaks as the second and
+# third lines of defence.
 #
 # export HCLOUD_TOKEN=...
 # export AWS_ACCESS_KEY_ID=...
 # export AWS_SECRET_ACCESS_KEY=...
-# ---------------------------------------------------------------------------

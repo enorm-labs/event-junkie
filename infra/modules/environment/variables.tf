@@ -34,8 +34,8 @@ variable "location" {
   nullable    = false
 
   validation {
-    # Changing location without changing the zone produces a subnet the servers cannot attach to,
-    # and silently forfeits the free-traffic property above.
+    # Changing location without the zone produces a subnet the servers cannot attach to, and forfeits
+    # the free-traffic property above.
     condition     = var.network_zone != "eu-central" || contains(["fsn1", "nbg1", "hel1"], var.location)
     error_message = "With network_zone = \"eu-central\", location must be fsn1, nbg1 or hel1. Moving outside the zone means changing network_zone too — and losing free internal traffic to the Object Storage buckets, which stay in fsn1."
   }
@@ -244,10 +244,8 @@ variable "wireguard_peers" {
   default  = []
   nullable = false
 
-  # These three checks exist because every one of them fails *silently and late* otherwise: the
-  # node boots, `wg-quick` fails or the tunnel comes up useless, and by then the firewall admits
-  # nobody — no 22, no 6443, and on staging no 80/443 either. The only way back in is Hetzner's
-  # browser console. A plan-time error costs seconds; that costs an evening.
+  # Every one of these fails silently and late otherwise: the node boots, the tunnel comes up
+  # useless, and the firewall admits nobody, leaving Hetzner's browser console as the only way in.
   validation {
     condition = alltrue([
       for peer in var.wireguard_peers : can(regex("^[A-Za-z0-9+/]{43}=$", peer.public_key))
@@ -349,9 +347,9 @@ variable "postgres_volume_delete_protection" {
 # Off-server backups — wal-g to Hetzner Object Storage (#270)
 # ---------------------------------------------------------------------------
 #
-# The S3 access key and secret are deliberately absent from this file and from every other. They
-# would reach the node through `user_data`, which is state, and nothing secret goes into state. The
-# operator writes them to /etc/wal-g/credentials.env by hand — CLUSTER_BOOTSTRAP.md §8b.
+# The S3 access key and secret are deliberately absent from every file: they would reach the node
+# through `user_data`, which is state. The operator writes /etc/wal-g/credentials.env by hand
+# (CLUSTER_BOOTSTRAP.md §8b).
 
 variable "backup_bucket" {
   description = <<-EOT
