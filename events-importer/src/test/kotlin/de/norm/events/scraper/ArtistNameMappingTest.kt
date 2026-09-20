@@ -1072,6 +1072,42 @@ class ArtistNameMappingTest {
         headlinersFromTitle("Methods of Dance II").shouldBeEmpty()
     }
 
+    // #305 — a `feat.` guest mid-title is support, and the act keeps its year-ended night name off.
+    @Test
+    fun `headlinersFromTitle bills a featured guest as support and keeps the act`() {
+        headlinersFromTitle("Stereoact: Ich liebe das Leben Party 2027 feat. Lena Marie Engel").map { it.name to it.role } shouldBe
+            listOf("Stereoact" to "HEADLINER", "Lena Marie Engel" to "SUPPORT")
+        headlinersFromTitle("Kraftklub feat. Tokio Hotel & Casper").map { it.name to it.role } shouldBe
+            listOf("Kraftklub" to "HEADLINER", "Tokio Hotel" to "SUPPORT", "Casper" to "SUPPORT")
+    }
+
+    // #314 — an origin tag comes off; a parenthesised alias stays.
+    @Test
+    fun `stripArtistSuffix drops an origin tag in codes or in full and keeps an alias`() {
+        stripArtistSuffix("Ipkiss (NL)") shouldBe "Ipkiss"
+        stripArtistSuffix("Marta Warelis (PL/USA)") shouldBe "Marta Warelis"
+        stripArtistSuffix("NIGHT NAIL (Dark Wave US/DE)") shouldBe "NIGHT NAIL"
+        stripArtistSuffix("Apichat Pakwan (Thailand-Live)") shouldBe "Apichat Pakwan"
+        stripArtistSuffix("Sickboyrari (Black Kray)") shouldBe "Sickboyrari (Black Kray)"
+    }
+
+    // #1561 — a band affiliation is a comma list or an `ex-` opener; a single bare name may be an alias.
+    @Test
+    fun `stripArtistSuffix drops a band affiliation and keeps a single parenthesised name`() {
+        stripArtistSuffix("Colin Newman (WIRE, IMMERSION)") shouldBe "Colin Newman"
+        stripArtistSuffix("Budgie (SIOUXSIE & THE BANSHEES, THE SLITS)") shouldBe "Budgie"
+        stripArtistSuffix("Alexander Hacke (ex-EINSTÜRZENDE NEUBAUTEN, HACKEDEPICCIOTTO)") shouldBe "Alexander Hacke"
+        stripArtistSuffix("Pauline Murray (PENETRATION)") shouldBe "Pauline Murray (PENETRATION)"
+    }
+
+    // #1564 — a line-up placeholder glued to the last act.
+    @Test
+    fun `stripArtistSuffix drops a more-to-come tail`() {
+        stripArtistSuffix("DaSoMaZo — more TBA") shouldBe "DaSoMaZo"
+        stripArtistSuffix("Peggy Gou + many more") shouldBe "Peggy Gou"
+        stripArtistSuffix("Moretti") shouldBe "Moretti"
+    }
+
     // Provenance for #1145: only what was read off the title carries the flag.
     @Test
     fun `headlinersFromTitle marks every act it reads off the title as title-derived`() {

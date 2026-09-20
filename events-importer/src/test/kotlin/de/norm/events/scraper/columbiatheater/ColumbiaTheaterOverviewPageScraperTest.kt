@@ -93,18 +93,19 @@ class ColumbiaTheaterOverviewPageScraperTest {
     }
 
     @Test
-    fun `keeps a guest's parenthesised band affiliations attached to their name`() {
+    fun `drops a guest's parenthesised band affiliations, keeping a single name that may be an alias`() {
+        // The comma list and the `ex-` opener are affiliations (#1561); `(PENETRATION)` alone could be an alias and stays.
         val johnRobb = event("20260926-john-robb-mark-reeder")
         johnRobb.artists shouldContainExactly
             listOf(
                 ScrapedArtist("John Robb", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Mark Reeder", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Pauline Murray (PENETRATION)", "SUPPORT"),
-                ScrapedArtist("Colin Newman (WIRE, IMMERSION)", "SUPPORT"),
-                ScrapedArtist("Budgie (SIOUXSIE & THE BANSHEES, THE SLITS)", "SUPPORT"),
-                ScrapedArtist("Annette Benjamin (HANS-A-PLAST, DIE BENJAMINS)", "SUPPORT"),
-                ScrapedArtist("Alexander Hacke (ex-EINSTÜRZENDE NEUBAUTEN, HACKEDEPICCIOTTO)", "SUPPORT"),
-                ScrapedArtist("Malka Spigel (MINIMAL COMPACT, IMMERSION)", "SUPPORT")
+                ScrapedArtist("Colin Newman", "SUPPORT"),
+                ScrapedArtist("Budgie", "SUPPORT"),
+                ScrapedArtist("Annette Benjamin", "SUPPORT"),
+                ScrapedArtist("Alexander Hacke", "SUPPORT"),
+                ScrapedArtist("Malka Spigel", "SUPPORT")
             )
     }
 

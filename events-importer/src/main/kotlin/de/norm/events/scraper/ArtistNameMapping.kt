@@ -188,7 +188,9 @@ fun isNonArtistEvent(name: String): Boolean {
  * letter after a dash (`KAT FRANKIE - B O D I E S`), which no act is called and which the
  * shouted-tail rule below cannot reach because its head is shouted too (#1533). From #1580: the
  * act's own backing (`Lacrimosa mit Orchester`), which the conjunction split keeps attached and
- * this takes off, and a dash tail ending in `!`, which is billing prose and never a name.
+ * this takes off, and a dash tail ending in `!`, which is billing prose and never a name. A
+ * `: <night> 2027` tail is the year-ended tour rule again with a colon (#305), and a `— more TBA`
+ * tail is a line-up placeholder glued to the last act (#1564).
  *
  * **The boundaries are what keep real names intact**, and each guards a specific collision:
  * - Hyphen tails need a `<space>-<space>` boundary and a recognised marker, so an undecorated
@@ -204,6 +206,8 @@ private val ARTIST_SUFFIX_PATTERN =
     Regex(
         """\s+[-–—]\s+(?:\S.*\btour\b|\d+\s+(?:years?|jahre|sets?)\b).*$""" +
             """|\s+[-–—]\s+\S.*\b(?:19|20)\d{2}\s*$""" +
+            """|(?<=\S):\s+\S.*\b(?:19|20)\d{2}\s*$""" +
+            """|(?:\s*[-–—]\s*|(?<!many|viele)\s+(?:(?:[&+]|and|und)\s+)?)(?:many\s+|viele\s+)?(?:more|mehr)\b(?:\s+(?:tba|tbc|tbd))?\.*$""" +
             """|\s+[-–—]\s*release\s?show\s*$""" +
             """|\s+live(?:\s+in\s+\S.*)?$""" +
             """|\s*\((?:dj[\s-]?set|live|acoustic|akustik|unplugged|solo|konzert|concert)\)\s*$""" +
@@ -234,7 +238,33 @@ fun stripArtistSuffix(name: String): String {
         if (next == stripped || next.isBlank()) return@repeat
         stripped = next
     }
-    return stripTrailingSeparator(stripWorkTitle(stripShoutedTourTail(stripped)))
+    return stripTrailingSeparator(stripWorkTitle(stripShoutedTourTail(stripTrailingParenthetical(stripped))))
+}
+
+/**
+ * A trailing origin tag: two- or three-letter country codes (`(NL)`, `(PL/USA)`), a genre in front
+ * of them (`(Dark Wave US/DE)`), or a spelled-out country with an optional `Live` (`(Thailand-Live)`)
+ * (#314). arkaoda's local rule, lifted here and widened to the spelled-out form.
+ */
+private val ORIGIN_TAG =
+    Regex(
+        // The codes are upper case by definition — `(An toi)` is an alias, not Antigua — so only the
+        // spelled-out alternative is case-insensitive.
+        """\s*\((?:[^()]*?\s)?[A-Z]{2,3}(?:\s*[/,+&-]\s*[A-Z]{2,3})*\)\s*$""" +
+            """|(?i:\s*\((?:$COUNTRY_NAMES)(?:\s*[-–—/]?\s*live)?\)\s*$)"""
+    )
+
+/**
+ * A trailing band affiliation, which is never an alias: a comma list (`(WIRE, IMMERSION)`) or an
+ * `ex-` opener (`(ex-EINSTÜRZENDE NEUBAUTEN, …)`) (#1561). A single bare name in parentheses
+ * (`(PENETRATION)`, `(Black Kray)`) is undecidable between the two and stays.
+ */
+private val AFFILIATION_TAG = Regex("""\s*\((?:ex-[^()]*|[^(),]+,[^()]*)\)\s*$""", RegexOption.IGNORE_CASE)
+
+/** Drops an [ORIGIN_TAG] or an [AFFILIATION_TAG] from the end of a name, keeping the input when nothing else is left. */
+private fun stripTrailingParenthetical(name: String): String {
+    val stripped = name.replace(ORIGIN_TAG, "").replace(AFFILIATION_TAG, "").trim()
+    return stripped.ifBlank { name }
 }
 
 /** Suffixes nest at most a few deep; a bound keeps a pathological title from looping. */
@@ -289,6 +319,16 @@ private fun readsAsWorkTitle(tail: String): Boolean {
             words.all { word -> word.first().isUpperCase() || word.lowercase() in TITLE_CASE_SMALL_WORDS }
     return words.isNotEmpty() && (tail.endsWith('!') || titleCased)
 }
+
+/** Countries and cities a venue writes after an act in full, in the two languages the pages use. */
+private const val COUNTRY_NAMES =
+    "germany|deutschland|austria|österreich|switzerland|schweiz|uk|england|scotland|schottland|wales|ireland|irland" +
+        "|usa|canada|kanada|mexico|mexiko|brazil|brasilien|argentina|argentinien|chile|colombia|kolumbien|peru|cuba|kuba" +
+        "|france|frankreich|italy|italien|spain|spanien|portugal|netherlands|niederlande|holland|belgium|belgien" +
+        "|denmark|dänemark|sweden|schweden|norway|norwegen|finland|finnland|iceland|island|poland|polen|czechia|tschechien" +
+        "|hungary|ungarn|greece|griechenland|turkey|türkei|israel|russia|russland|ukraine|georgia|georgien" +
+        "|japan|korea|china|india|indien|thailand|indonesia|indonesien|australia|australien|new zealand|neuseeland" +
+        "|south africa|südafrika|nigeria|ghana|senegal|mali|berlin|hamburg|köln|münchen|wien|zürich|london|paris"
 
 /** Minimum words in a shouted tail before it reads as a tour/album name rather than an act. */
 private const val MIN_SHOUTED_TAIL_WORDS = 2
@@ -944,14 +984,30 @@ fun headlinersFromTitle(
     // Same conclusion, reached structurally: the subtitle credits the label and the title repeats it.
     if (isPresenterOwnEventTitle(title, subtitle)) return emptyList()
     if (unpackWithFrame) withFrameActs(title)?.let { return it }
-    return splitHeadlinerTitle(stripSeriesPrefix(billedSideOfPres(title, splitOnSlash)), splitOnSlash)
+    // `<act> feat. <guest>` mid-title: the guest is billed as support, the act goes on (#305).
+    val (billing, guests) = splitFeaturedGuests(title)
+    return splitHeadlinerTitle(stripSeriesPrefix(billedSideOfPres(billing, splitOnSlash)), splitOnSlash)
         .map { segment ->
             // The role is decided from the *raw* segment, before its label is stripped: a title
             // that bills "… + Support: A.A. Williams" names a support act, not a second headliner.
             val role = if (SUPPORT_ROLE_PREFIX.containsMatchIn(segment.trim())) "SUPPORT" else "HEADLINER"
             stripFramingPrefix(stripArtistPrefix(stripArtistSuffix(segment))) to role
         }.filterNot { (name, _) -> isNonArtistName(name) }
-        .map { (name, role) -> ScrapedArtist(name = name, role = role, titleDerived = true) }
+        .map { (name, role) -> ScrapedArtist(name = name, role = role, titleDerived = true) } + guests
+}
+
+/** The `feat.` / `featuring` / `ft.` marker between an act and its guest, mid-title. */
+private val FEATURED_GUEST_MARKER = Regex("""\s+(?:feat\.?|featuring|ft\.)\s+""", RegexOption.IGNORE_CASE)
+
+/** The title's billing before a [FEATURED_GUEST_MARKER], and the guests after it as support acts. */
+private fun splitFeaturedGuests(title: String): Pair<String, List<ScrapedArtist>> {
+    val marker = FEATURED_GUEST_MARKER.find(title) ?: return title to emptyList()
+    val guests =
+        splitSupportActs(title.substring(marker.range.last + 1))
+            .map { stripArtistSuffix(it) }
+            .filterNot(::isNonArtistName)
+            .map { ScrapedArtist(name = it, role = "SUPPORT", titleDerived = true) }
+    return title.substring(0, marker.range.first) to guests
 }
 
 /** `<X> pres. <Y>` / `<X> pres: <Y>` — the abbreviated presenter marker, with what stands on either side. */

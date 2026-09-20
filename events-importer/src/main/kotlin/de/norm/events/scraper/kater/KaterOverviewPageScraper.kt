@@ -154,7 +154,8 @@ class KaterOverviewPageScraper(
                     expectFloorName = false
                 }
 
-                stage != null -> {
+                // `+ Darkroom`, `+ Daytime Market`: what else the floor offers, under its acts (#1564).
+                stage != null && !NOTE_LINE.containsMatchIn(line) -> {
                     artists += splitActs(line).map { ScrapedArtist(name = it, role = "DJ", stage = stage) }
                 }
             }
@@ -231,6 +232,9 @@ class KaterOverviewPageScraper(
 
         /** A `by <presenter>` tail on a floor name, dropped so the same floor groups across nights. */
         val FLOOR_PRESENTER_SUFFIX = Regex("""\s+by\s+.*$""", RegexOption.IGNORE_CASE)
+
+        /** A floor-block line that opens with a plus is a programme note, never an act. */
+        val NOTE_LINE = Regex("""^\+\s""")
 
         /** The back-to-back marker joining two DJs into one slot. */
         val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
