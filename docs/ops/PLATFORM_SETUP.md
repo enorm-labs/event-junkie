@@ -232,7 +232,7 @@ different thing: Hetzner charges nothing for traffic within `eu-central`, so the
 ([#460](https://github.com/enorm-labs/event-junkie/issues/460)).
 
 `user_data` is a force-new attribute, so any edit under `infra/modules/environment/cloud-init/` replaces the node. So does a `server_type` change across
-architectures, and so does the destroy/apply cycle. Each is correct behaviour for a node meant to be disposable — and each used to take the database with it.
+architectures, and so does the destroy/apply cycle. Each is correct behaviour for a node meant to be disposable, and the volume is what keeps the database out of it.
 
 **Hetzner recommends against this shape, and we do it anyway.**
 [Which storage is right for me](https://docs.hetzner.com/storage/general/which-storage-is-right-for-me/) marks _storing my
@@ -664,7 +664,7 @@ code writes — see the warning below the table:
 | `eventsourceid`              | `eventSourceId`             | the venue's id — a duplicate skipped, and a stale removal       |
 | `storagekey`                 | `storageKey`                | the object the BFF could not read — two lines only, see below   |
 
-**`eventid` never means "an event we wrote", and the table above used to say it did (#984).** As a payload it is written on two lines. The
+**`eventid` never means "an event we wrote" (#984).** As a payload it is written on two lines. The
 created-or-updated line is **DEBUG**, and the cluster runs at INFO, so it never arrives. The stale-removal line is INFO, so it always does. Anyone querying
 `eventid` to see what a run wrote gets deletions only. It is also MDC around one call. `LogContext.forEvent` wraps the translation engine, so a line about a
 refused or rejected description names the event. The scope closes before anything writes the key as a payload. `forPage` follows the same rule for
@@ -791,8 +791,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
   `"…skipping"` warnings are a **field-coverage** loss, which `field_coverage{source,field}` already measures. Reading them as lost events overstates the
   damage by roughly a factor of two.
 
-- **The silently-broken-scraper alarm is a gauge, not the counter this table used to name** (#700). `importer.events.written = 0 for N runs` was the obvious
-  form and cannot work. A Micrometer counter lives in the process, so it resets on every deploy and is absent from the exposition until it first increments.
+- **The silently-broken-scraper alarm is a gauge, not a counter** (#700). `importer.events.written = 0 for N runs` is the obvious form and cannot work. A Micrometer counter lives in the process, so it resets on every deploy and is absent from the exposition until it first increments.
   Against a 24h import interval, `increase(...[48h]) == 0` cannot tell _wrote nothing_ from _was restarted_. `importer.source.events_future` is the same
   question asked of the database. It is refreshed for **every** enabled source, including the ones holding nothing, because a source missing from the
   exposition reads as healthy. **Zero is not broken, though.** A venue on summer break is legitimately empty. So the rule (`ej-source-emptied`) asks for zero _now_ against a
@@ -849,7 +848,7 @@ exposure list therefore does not widen the public surface at all.
 
 What you get free: NetworkPolicy enforcement is on (kube-router, unless `--disable-network-policy`), the API server needs a token, and secrets are namespaced.
 
-What had to be added — all of it now in place except where noted:
+What had to be added:
 
 |     | What                                                                     | Why                                                                                                                                                                                                                          |
 | --- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -901,9 +900,9 @@ venue domain could appear in an `<img src>`. The only workable rule permitted th
 blank every image on the site, and the symptom looks like a broken image cache rather than a wrong header.
 
 **The policy is report-only by default, and both clusters enforce it.** A wrong policy is a blank page rather than a warning, so a new environment starts
-with the warning. An environment enforces it after somebody loads the site with the browser console open. Staging and production did that on 2026-09-07
-([#854](https://github.com/enorm-labs/event-junkie/issues/854)): every route family in both locales and both themes, zero violations. Each cluster's
-`HelmRelease` sets `ingress.securityHeaders.contentSecurityPolicy.reportOnly: false`. The chart default is untouched.
+with the warning. It enforces after somebody loads every route family, in both locales and both themes, with the browser console open and sees zero
+violations ([#854](https://github.com/enorm-labs/event-junkie/issues/854)). Each cluster's `HelmRelease` sets
+`ingress.securityHeaders.contentSecurityPolicy.reportOnly: false`. The chart default is untouched.
 
 **It is written twice, and `scripts/csp-parity.sh` is the gate.** The chart sends the header to a visitor. `events-frontend/scripts/csp.ts` applies the same
 policy to `npm run preview`, which is the server Playwright runs against on CI. The script also recomputes the `script-src` hash from `index.html`, because an

@@ -108,14 +108,10 @@ the OTel operator and `postgres-exporter`. It carries all twelve alert rules. So
 longer the only thing watching production. That layer still gives one thing an in-cluster stack cannot: a view from
 **outside** the cluster.
 
-**Two layers are pushed by hand, and one of them was silently missing for eleven days.** OpenObserve dashboards and
-alert rules are API objects rather than Kubernetes ones, so Flux cannot reconcile them. `OPENOBSERVE.md` calls this
-the seam where GitOps stops. Production had the alert rules and **not** the dashboard, from #880 until 2026-08-31.
-Nothing reported it. A missing dashboard is not an error, it is an empty list. Someone opened the console and asked
-why it was empty.
-
-**So after any production rebuild, and after any change to either file, run both.** `EJ_NODE` selects the cluster
-and defaults to **staging**, so omitting it succeeds against the wrong one and says nothing:
+**Two layers are pushed by hand, and a missing one is an empty list, not an error.** OpenObserve dashboards and
+alert rules are API objects, so Flux cannot reconcile them (`OPENOBSERVE.md`, the seam where GitOps stops). **After
+any production rebuild, and after any change to either file, run both.** `EJ_NODE` selects the cluster and defaults
+to **staging**, so omitting it succeeds against the wrong one and says nothing:
 
 ```sh
 cd deploy/dashboards && EJ_NODE=ops@10.10.0.1 ./apply.sh --diff   # is production running this file at all?
@@ -125,16 +121,10 @@ cd deploy/alerts     && EJ_NODE=ops@10.10.0.1 ./apply.sh --diff   # the same que
 `--diff` answers "is it there", `--check` answers "do its queries return data", and neither substitutes for the
 other. Drop the flag to push. Both are idempotent — the dashboard import matches on title and replaces.
 
-**The external layer works, and a drill proved it on 2026-08-31.** `site-production` went live on 2026-08-30 and
-alarmed within hours with the site healthy. GitHub delivers about 8% of a 15-minute cron, at a median interval of 129
-minutes. #889 replaced the shape rather than the numbers. A Better Stack monitor polls every three minutes and alerts
-in about six. The probe stays as a daily dead-man's switch at `24h`/`24h`, and it asserts the monitor's own settings
-against the repository once a day. ADR-021 has the reasoning.
-
-**One hop was genuinely in doubt and is now measured.** The free plan carries no on-call schedule, so nothing
-established that an alert routed to a human. The drill changed the monitor's keyword to a string the site does not
-serve, and the e-mail arrived. **The row _Alerts reach a person_ above still refers to the in-cluster path** (#877,
-OpenObserve to Signal). That is a different chain, and it stays unbuilt.
+**The external layer is a Better Stack monitor** (ADR-021). It polls every three minutes and alerts in about six. A
+drill proved it, by changing its keyword to a string the site does not serve. `site-probe.yml` stays as a daily
+dead-man's switch and asserts the monitor's settings against the repository. **The row _Alerts reach a person_ above
+refers to the in-cluster path** (#877, OpenObserve to Signal). That chain stays unbuilt.
 
 ### Content and data
 
@@ -150,33 +140,20 @@ OpenObserve to Signal). That is a different chain, and it stays unbuilt.
 | 2026-09-08 | Every description a venue has not prohibited translated on production                                     | #470         |
 |            | Machine-translated descriptions read on the site **by the maintainer**, in German and English             | ADR-027      |
 
-**Production serves the full catalogue.** All 86 sources are registered, enabled and carry their licence
-verdicts, and the importer runs on schedule (#876, #285). Two venues forbid their descriptions and images, and
-that was recorded before the sources were enabled. Images serve from the cache (#843), not from venue sites.
+**Production serves the full catalogue.** Every source is registered, enabled and carries its licence verdict. The
+importer runs on schedule. Images come from the cache (#843). Two venues forbid their descriptions and images, and
+that was recorded before the sources were enabled.
 
-**#329 audited district, address and coordinates on 2026-08-30**, and corrected 30 venue records (#986). A wrong
-coordinate puts a pin in the wrong place, and it drops the venue out of a radius search without saying so. The
-second failure is the quiet one, and it is the one the audit looked for.
+**A wrong coordinate drops a venue out of a radius search without saying so.** That is the quiet failure the address
+audit (#329, #986) looked for. **The venue descriptions were read against the venue, not the address** (#1124). A
+corrected address does not correct the sentence that quotes it. The faults found were a building the venue never
+occupied, or a genre the house does not play. The unsettled facts are on #1196. The maintainer's own read of all 86
+before the flip is the row above.
 
-**The descriptions are hand-written prose. Issue #1124 read each one against the venue itself on
-2026-09-07.** Issue #986 read them against the address only. It found two that were wrong. Both
-repeated something the row's address said. A corrected address does not correct the sentence that
-quotes it. Issue #1124 read all 86 against the venue's own site, Resident Advisor, Google's category and
-Wikipedia. 65 stood. 21 were corrected or rewritten, in the seed and in `V016`. One more sentence
-was correct in the seed and stale on both clusters, and `V016` carries it over. The address was
-rarely the fault. The faults were a building the venue never occupied, or a station that is not the
-nearest. Or a genre the house does not play, or a cinema that screens films again.
-The pass was made from sources, not from knowing the venues. The unsettled facts are listed on pull
-request #1196. The maintainer reads all 86 once more before the flip, as a reader who knows the city,
-and that read is the row above.
-
-**The machine translations exist on both clusters since 2026-09-08.** ADR-027 decided that a description may be
-translated wherever it may be displayed. So `translation_licence` is `PERMITTED` on 84 of the 86 sources. The
-other two are the venues that prohibit the description itself. The backfill then translated the whole corpus on
-production in one pass. Every translation carries the engine, its version and a hash of the text it was made
-from. A poor one is regenerated rather than repaired. Reading a sample of that output is the row above, and it
-is a read for quality. The plausibility checks in #1213 reject a summary or a lost proper noun. They cannot tell
-you that a sentence is merely bad German.
+**Translations follow the display rule** (ADR-027). `translation_licence` is `PERMITTED` on every source except the
+two that prohibit the description itself. Every translation carries the engine, its version and a hash of its input,
+so a poor one is regenerated rather than repaired. The plausibility checks (#1213) reject a summary or a lost proper
+noun. They cannot tell you a sentence is merely bad German. That is why the row above is a human read.
 
 **The prose is two independent documents in two languages.** The key-parity test proves every German
 key exists. It cannot tell you a translation is good, or that a claim is still true.

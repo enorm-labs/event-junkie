@@ -196,10 +196,9 @@ absent, rather than passing quietly.
 
 The monitor's id is `4876693`, and `BETTERSTACK_MONITOR_ID` overrides it for a new environment.
 
-**Proven on 2026-08-31, because a check nobody saw fire proves nothing.** The drill changed one expected value in the
-workflow, from a 180-second check frequency to 300. The probe step stayed green and pinged as usual. The assertion step
-failed with `Monitor 4876693: check_frequency is '180', this repository says '300'`. That is the split this design
-wants: the site was up, and only the comparison failed. The change was then reverted.
+**Proven by a drill, because a check nobody saw fire proves nothing** (the log at the end of this page). The drill changed the expected check
+frequency in the workflow. The probe step stayed green. The assertion step failed with
+`Monitor 4876693: check_frequency is '180', this repository says '300'`. The site was up and only the comparison was red, which is the split this design wants.
 
 ### 2. The healthchecks.io check — the slow path
 
@@ -218,8 +217,7 @@ rather than a day later. Do not wait for the schedule to tell you whether you ty
 
 ### The cron is a request, and GitHub refuses it
 
-`site-probe.yml` asked for a run every 15 minutes. **It did not get one.** Measured first over 30 scheduled runs on
-2026-08-30, and again over five days to 2026-08-31:
+A 15-minute cron on `site-probe.yml` **does not get one.** Measured over 30 scheduled runs, then again over five days:
 
 | Interval between scheduled runs | Value                       |
 | ------------------------------- | --------------------------- |
@@ -230,12 +228,8 @@ rather than a day later. Do not wait for the schedule to tell you whether you ty
 | Gaps longer than 30 min         | 37 of 38                    |
 | Runs delivered                  | **39 of 480 requested, 8%** |
 
-This page prescribed `15m`/`30m` before, on the reasoning that a grace of double the period absorbs one
-missed run. **The reasoning is sound. The numbers were 4 to 20 times too small.** The check went live on
-2026-08-30 and alarmed within hours. The site was healthy for all of that time: no pod restarts, the
-node at 25% CPU, and ten `200` responses in sequence.
-
-**The second measurement is the one that decided it.** A single bad day is an Actions incident. Five days is a policy.
+A grace of double the period absorbs one missed run. The reasoning is sound. Against these numbers, `15m`/`30m` was 4 to 20 times too small, and the
+check alarmed within hours with the site healthy. A single bad day is an Actions incident. Five days is a policy.
 
 ### The daily schedules are honoured, and that is where `24h` comes from
 
@@ -246,8 +240,8 @@ The same repository, measured the same way:
 | `dependency-check-scheduled.yml` | `17 3 * * *` | 24.0 h     | 34.2 h    |
 | `image-scan-scheduled.yml`       | `41 4 * * *` | 25.5 h     | 34.3 h    |
 
-GitHub holds back the high-frequency cron and delivers the daily ones. So the probe now runs daily, and its check sits
-at `24h`/`24h`. That is 48 hours of tolerance against a 34-hour worst case.
+GitHub holds back the high-frequency cron and delivers the daily ones. So the probe runs daily, and its check sits at `24h`/`24h`: 48 hours of
+tolerance against a 34-hour worst case.
 
 **Derive both numbers from this table, never from the cron line.** Reading the cron and doubling it is what produced
 the flapping.
@@ -406,13 +400,8 @@ curl -sS -H "Authorization: Bearer $TOKEN" \
   "https://uptime.betterstack.com/api/v2/monitors/4876693/sla?from=2026-08-31&to=2026-08-31"
 ```
 
-Record the answer here. If the window is shorter than a rolling 30 days, the long-term store is OpenObserve. OpenObserve already retains metrics in the Object
-Storage bucket under a retention policy ([ADR-015](../adr/ADR-015_OBSERVABILITY_STACK.md)). That path needs
-OpenObserve on production, which does not run there at all
-([#880](https://github.com/enorm-labs/event-junkie/issues/880)).
-
-**#880 therefore changed shape.** It used to block the figure. It now only blocks keeping the figure for longer than
-the monitor keeps it.
+Record the answer here. If the window is shorter than a rolling 30 days, the long-term store is OpenObserve. It runs on production and retains
+metrics in the Object Storage bucket under a retention policy ([ADR-015](../adr/ADR-015_OBSERVABILITY_STACK.md)).
 
 **This does not re-open the LEGAL.md §14 assessment**, and §14 records the reasoning for both services. The
 healthchecks.io ping stays a bare `GET` to an opaque UUID with no body. The monitor fetches a public page and receives
