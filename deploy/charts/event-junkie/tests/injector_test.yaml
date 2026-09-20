@@ -1,9 +1,7 @@
-# The meta-injection sidecar in the frontend pod (#287, ADR-014 §Decision 3).
-#
-# What is pinned here is the loopback contract and the off-switch. nginx.conf proxies detail routes
-# to 127.0.0.1:3000 and the sidecar fetches the shell from 127.0.0.1:8080 — two literals in two
-# images that have to agree with the values here, and a render that drifted from either would
-# install, pass every probe, and serve the plain shell on every detail page with no error anywhere.
+# The meta-injection sidecar in the frontend pod (#287, ADR-014 §Decision 3): the loopback
+# contract and the off-switch. nginx.conf proxies to 127.0.0.1:3000 and the sidecar fetches the
+# shell from 127.0.0.1:8080; a render that drifts from either passes every probe and serves the
+# plain shell on every detail page with no error anywhere.
 suite: the meta-injection sidecar
 
 templates:
@@ -46,7 +44,7 @@ tests:
           content:
             name: BFF_URL
             value: "http://RELEASE-NAME-event-junkie-bff:8080"
-      # Under nginx's 3s proxy_read_timeout, or the sidecar's answer arrives after nginx stopped listening.
+      # Under nginx's 3s proxy_read_timeout, or the answer arrives after nginx stopped listening.
       - contains:
           path: spec.template.spec.containers[1].env
           content:
