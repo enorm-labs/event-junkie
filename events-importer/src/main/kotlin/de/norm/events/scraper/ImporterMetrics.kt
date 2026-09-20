@@ -10,28 +10,16 @@ import kotlin.time.Duration
 
 /**
  * Every meter the importer publishes, and the only place their names and tags are written down.
+ * A scraper does not fail loudly: when a venue redesigns its site the importer reports success
+ * and silently writes zero events, which no HTTP monitoring sees and a business metric with an
+ * alert does (ADR-015). Names and tags follow `docs/ops/PLATFORM_SETUP.md` §7, which the
+ * dashboards and alert rules are written against; renaming a meter here silently breaks an alert.
  *
- * **A scraper does not fail loudly, and that is the whole reason this exists.** When a venue
- * redesigns its site the importer keeps running, reports success, and silently writes zero events —
- * unnoticed for a fortnight, because the site still shows last month's listings. No amount of HTTP
- * or infrastructure monitoring sees that; a business metric with an alert does, which ADR-015 calls
- * the requirement the whole observability decision turns on.
- *
- * Names and tags follow `docs/ops/PLATFORM_SETUP.md` §7, which the dashboards and alert rules are
- * written against. **Renaming a meter here silently breaks an alert elsewhere** — there is no
- * compiler between the two — so treat these strings as an interface, not an implementation detail.
- *
- * **Counters are recorded here; gauges are refreshed elsewhere.** Micrometer reads a gauge *at
- * scrape time*, synchronously, on the thread serving the actuator endpoint — and every query this
- * application can make is reactive, so answering "how many events are in the database" from a gauge
- * supplier would block a Netty event-loop thread. Each gauge therefore reads an [AtomicLong] that
- * [MetricsRefreshService] updates on a schedule, trading staleness bounded by the refresh interval
- * for the blocking call in a WebFlux request path that ADR-001 rules out everywhere else.
- *
- * **That refresh is also why the gauges survive a deploy and the counters do not.** A counter
- * accumulates in this process and resets with it, while a gauge re-reads state — and the importer
- * restarts on every deploy against a 24-hour import interval, so a counter is absent far more often
- * than it is wrong (#618).
+ * Counters are recorded here; gauges are refreshed elsewhere. Micrometer reads a gauge at scrape
+ * time on the actuator thread, and every query here is reactive, so each gauge reads an
+ * [AtomicLong] that [MetricsRefreshService] updates on a schedule. That is also why the gauges
+ * survive a deploy and the counters do not: the importer restarts on every deploy against a
+ * 24-hour interval, so a counter is absent far more often than it is wrong (#618).
  */
 @Component
 @Suppress("TooManyFunctions") // A metrics facade is one function per meter, and the meter names are the interface.
@@ -39,35 +27,25 @@ class ImporterMetrics(
     private val registry: MeterRegistry
 ) {
     /**
-     * Timers, one per source, created on first use.
-     *
-     * Micrometer de-duplicates by name and tags, so re-deriving a `Timer` on every run would be
-     * correct — but it is a map lookup plus tag construction on a hot-ish path, and caching makes
-     * the intent ("one timer per source") legible.
+     * Timers, one per source, created on first use; Micrometer de-duplicates by name and tags, and
+     * the cache makes "one timer per source" legible.
      */
     private val runTimers = ConcurrentHashMap<String, Timer>()
 
     /**
-     * Epoch-second of each source's last **successful** run, backing the `last_success` gauge.
-     *
-     * A `ConcurrentHashMap` rather than a field, because the set of sources changes at runtime:
-     * sources are created through the admin API, not through Flyway.
+     * Epoch-second of each source's last successful run, backing the `last_success` gauge. A map,
+     * because sources are created through the admin API at runtime.
      */
     private val lastSuccessEpochSeconds = ConcurrentHashMap<String, AtomicLong>()
 
     /**
-     * Whether each source has *ever* succeeded, backing the `has_succeeded` gauge — 1 or 0.
-     *
-     * Separate from [lastSuccessEpochSeconds] rather than derived from it, because the whole point is
-     * that this map has an entry for sources the other one does not.
+     * Whether each source has ever succeeded, backing the `has_succeeded` gauge. Separate from
+     * [lastSuccessEpochSeconds] because the point is an entry for sources the other map lacks.
      */
     private val hasSucceeded = ConcurrentHashMap<String, AtomicLong>()
 
     /**
      * Future events currently held per source, backing the `events_future` gauge (#700).
-     *
-     * Keyed by slug like the two above, and for the same reason: sources are created through the
-     * admin API at runtime, so the set is not known at construction time.
      */
     private val futureEvents = ConcurrentHashMap<String, AtomicLong>()
 
@@ -75,9 +53,7 @@ class ImporterMetrics(
     private val daysSinceFutureEvent = ConcurrentHashMap<String, AtomicLong>()
 
     /**
-     * Per-source, per-field coverage ratios. A `Double` holder rather than an [AtomicLong], because
-     * this is the one meter here that is a fraction and rounding it to a long would make every value
-     * either 0 or 1.
+     * Per-source, per-field coverage ratios; a `Double` holder because this is the one fraction here.
      */
     private val fieldCoverage = ConcurrentHashMap<Pair<String, String>, java.util.concurrent.atomic.AtomicReference<Double>>()
 
@@ -101,10 +77,8 @@ class ImporterMetrics(
     }
 
     /**
-     * Records one completed run: how long it took, and how it ended.
-     *
-     * [outcome] is an [RunOutcome] rather than a free string precisely because a typo in a tag value
-     * does not fail anything — it quietly creates a second time series that no alert matches.
+     * Records one completed run. [outcome] is an [RunOutcome] rather than a string because a typo
+     * in a tag value quietly creates a second series no alert matches.
      */
     fun recordRun(
         sourceSlug: String,
@@ -128,11 +102,8 @@ class ImporterMetrics(
     }
 
     /**
-     * Records what a run did to the database, split by operation.
-     *
-     * `skipped` is not noise — it is the change-detection working. A source reporting only skips for
-     * days is either genuinely static or silently broken, and the pair of this and [RUN_OUTCOME] is
-     * what tells those apart.
+     * Records what a run did to the database, by operation. `skipped` is the change-detection
+     * working; with [RUN_OUTCOME] it tells a static source from a silently broken one.
      */
     fun recordEventsWritten(
         sourceSlug: String,
@@ -146,15 +117,10 @@ class ImporterMetrics(
     }
 
     /**
-     * Every meter one upsert produces — three writes and three drops (#982).
-     *
-     * **One call rather than six at the call site**, because the mapping from an outcome to its
-     * meters is this class's job and `EventImportService` was carrying it — detekt said so, at the
-     * point that method passed sixty lines. [droppedUnresolvedDate] is separate because it is
-     * dropped before the upsert ever sees it.
-     *
-     * The `reason` values are constants, and that rule is [scrapeFailureReason]'s: a tag fed by a
-     * title or a URL is unbounded, and exhausting the backend reads as slow monitoring, not a bug.
+     * Every meter one upsert produces, three writes and three drops (#982), in one call because the
+     * mapping from an outcome to its meters is this class's job. [droppedUnresolvedDate] is separate
+     * because it is dropped before the upsert. The `reason` values are constants, as for
+     * [scrapeFailureReason]: a tag fed by a title or a URL is unbounded.
      */
     fun recordUpsertOutcome(
         sourceSlug: String,
@@ -165,10 +131,8 @@ class ImporterMetrics(
         recordEventsWritten(sourceSlug, WriteOperation.UPDATED, upsert.updated)
         recordEventsWritten(sourceSlug, WriteOperation.SKIPPED, upsert.skipped)
 
-        // A loop rather than three more calls, so this stays one function: the class is at detekt's
-        // eleven and a fourth `record…` helper would push it over. The `> 0` guard is the same one
-        // recordEventsWritten applies — a counter incremented by zero still creates the series,
-        // which would make "this source dropped events" true of every source.
+        // A loop, so this stays one function under detekt's count. The `> 0` guard: a counter
+        // incremented by zero still creates the series, making "dropped events" true of every source.
         mapOf(
             DropReason.PAST to upsert.droppedPast,
             DropReason.DUPLICATE to upsert.droppedDuplicate,
@@ -181,9 +145,8 @@ class ImporterMetrics(
     }
 
     /**
-     * Records a scrape failure with its cause, because **a 403 is not a parse failure** and the two
-     * need different responses: one is the venue blocking us, the other is the venue's markup having
-     * moved. Aggregated into a single counter they are indistinguishable.
+     * Records a scrape failure with its cause, because a 403 is not a parse failure: one is the
+     * venue blocking us, the other its markup having moved.
      */
     fun recordScrapeFailure(
         sourceSlug: String,
@@ -193,28 +156,25 @@ class ImporterMetrics(
     }
 
     /**
-     * Counts one attempt to translate a description, and whether a text came back.
-     *
-     * A refused, failed or implausible translation is an ordinary outcome rather than an error, so
-     * the two are one counter with an `outcome` tag: a grant that produces nothing is visible as a
-     * ratio rather than as silence (ADR-026).
+     * Counts one attempt to translate a description, and whether a text came back. A refused,
+     * failed or implausible translation is an ordinary outcome, so a grant that produces nothing is
+     * visible as a ratio rather than as silence (ADR-026).
      */
     fun recordTranslation(written: Boolean) {
         registry.counter(TRANSLATIONS, TAG_OUTCOME, if (written) "written" else "skipped").increment()
     }
 
     /**
-     * Counts one MusicBrainz lookup by what it decided — `exact`, `ambiguous`, `none` — or `error`
-     * when MusicBrainz did not answer. The shares are the number ADR-031 was decided on, so the
-     * counter is how a drift from them shows.
+     * Counts one MusicBrainz lookup by verdict, `exact`, `ambiguous`, `none`, or `error`. The shares
+     * are the number ADR-031 was decided on.
      */
     fun recordMusicBrainzLookup(state: String) {
         registry.counter(MUSICBRAINZ_LOOKUPS, TAG_STATE, state).increment()
     }
 
     /**
-     * Counts one head pass — the part before ` - ` or `: ` of a name MusicBrainz did not know —
-     * by its own verdict. Reported and never stored: #1145 owns what to do with it.
+     * Counts one head pass, the part before ` - ` or `: ` of a name MusicBrainz did not know.
+     * Reported, never stored (#1145).
      */
     fun recordMusicBrainzHead(state: String) {
         registry.counter(MUSICBRAINZ_HEADS, TAG_STATE, state).increment()
@@ -224,12 +184,9 @@ class ImporterMetrics(
     fun updateMusicBrainzUnchecked(count: Long) = musicBrainzUnchecked.set(count)
 
     /**
-     * Publishes [epochSeconds] as the source's last success.
-     *
-     * A **timestamp**, not an age, and that is the Prometheus idiom rather than a preference: an age
-     * computed here is only correct at the instant it is scraped, whereas a timestamp lets the alert
-     * say `time() - importer_source_last_success_seconds > 3 * interval` and stay true between
-     * scrapes. It is also what makes the rule expressible at all without knowing the scrape period.
+     * Publishes [epochSeconds] as the source's last success. A timestamp, not an age, the
+     * Prometheus idiom: an age is only correct at the instant it is scraped, while
+     * `time() - importer_source_last_success_seconds > 3 * interval` stays true between scrapes.
      */
     fun publishLastSuccess(
         sourceSlug: String,
@@ -241,24 +198,13 @@ class ImporterMetrics(
     }
 
     /**
-     * `importer.source.has_succeeded{source}` — **1 if this source has ever completed a run, 0 if it
-     * never has**, and the point is that the series exists either way (#618).
-     *
-     * **A second gauge, rather than reading the first one's absence.** [SOURCE_LAST_SUCCESS] only
-     * exists once a source has succeeded, so a venue that has never worked has no series at all —
-     * and something with no series cannot be stale, late or failing. Measured on staging: 86
-     * sources, 84 series, and the two missing were the only two that were broken, while the
-     * dashboard read "0 sources stale".
-     *
-     * **Not fixed by publishing `last_success = 0` for them.** That asserts a successful import at
-     * the epoch — false — and turns every age chart into a 56-year scale. *Never* and *long ago* are
-     * different facts.
-     *
-     * **Not fixed by `absent()` or `unless` in the rule either**, though OpenObserve does implement
-     * both. A rule of the form `tracked unless last_success` joins two series at query time and so
-     * reports every source as never-succeeded during any gap in the *other* metric — and this system
-     * has had gaps, #625 dropping roughly half of all metric points for days. One series carrying
-     * the fact is atomic; a join between two is only as reliable as the flakier side.
+     * `importer.source.has_succeeded{source}`: 1 if this source has ever completed a run, 0 if
+     * never, and the series exists either way (#618). [SOURCE_LAST_SUCCESS] only exists once a
+     * source has succeeded, so a venue that has never worked cannot be stale: 86 sources, 84
+     * series on staging, and the two missing were the only two broken. Not fixed by publishing
+     * `last_success = 0`, which asserts a success at the epoch, nor by `absent()` or `unless` in
+     * the rule, which joins two series and reports every source as never-succeeded during a gap in
+     * the other (#625 dropped half of all points for days). One series carrying the fact is atomic.
      */
     fun publishHasSucceeded(
         sourceSlug: String,
@@ -268,27 +214,14 @@ class ImporterMetrics(
     }
 
     /**
-     * `importer.source.events_future{source}` — **how many future events this source holds right
-     * now**, refreshed from the database rather than accumulated in the process (#700).
-     *
-     * **Not a tag on `db.events`.** That is the whole catalogue, and its rule (`ej-catalogue-emptying`)
-     * selects with `max`. Per-source series under the same name would put eighty-six smaller series
-     * beside the global one: `max` would keep picking the global series only because it is largest,
-     * and anything summing `db_events` would double-count. A separate name in the `importer.source.*`
-     * family is where an alert author is already looking.
-     *
-     * **Not `importer.events.written`, which sounds like the same number.** That is a counter, so it
-     * is absent from `/actuator/prometheus` until something increments it and
-     * `increase(...[48h]) == 0` cannot tell "wrote nothing" from "was restarted" (see the class
-     * KDoc).
-     *
-     * **Zero is a value here, not an absence**, and [MetricsRefreshService] publishes it for every
-     * enabled source that the count query returns no row for. A source missing from the exposition
-     * cannot be alerted on and reads as healthy, which is the #618 failure exactly.
-     *
-     * **Zero is also not the same as broken**, which is a constraint on the rule rather than on this
-     * meter: a venue with nothing on for three weeks is legitimately at zero. The alert therefore
-     * asks for zero *now* against a non-zero recent history for the same series, not for a floor.
+     * `importer.source.events_future{source}`: how many future events this source holds now,
+     * refreshed from the database (#700). Not a tag on `db.events`, whose rule selects with `max`
+     * and would keep picking the global series. Not `importer.events.written`, a counter that
+     * cannot tell "wrote nothing" from "was restarted". Zero is a value: [MetricsRefreshService]
+     * publishes it for every enabled source the count query returns no row for, since a source
+     * missing from the exposition reads as healthy. Zero is also not broken: a venue with nothing
+     * on for three weeks is legitimately at zero, so the rule asks for zero now against a non-zero
+     * recent history.
      */
     fun publishFutureEvents(
         sourceSlug: String,
@@ -298,18 +231,11 @@ class ImporterMetrics(
     }
 
     /**
-     * `importer.source.days_since_future_event{source,known_quiet}` — **how long this source has
-     * held no future event**, in days: 0 while it holds one, else today minus its newest event date
-     * (#1498).
-     *
-     * [SOURCE_EVENTS_FUTURE] says a source is at zero; this says for how long. `ej-source-emptied`
-     * reads the first against a week of history, so a source that emptied earlier than that, or
-     * never held twenty, is invisible to it for good — four sources sat at zero for a year and no
-     * rule could see them. A duration needs no history window: `> 30` is the rule.
-     *
-     * The `known_quiet` tag carries [KNOWN_QUIET_SOURCES] into the exposition, so the rule can
-     * select the sources nobody has accounted for and the panel can name the rest as known. Two
-     * values, both constants.
+     * `importer.source.days_since_future_event{source,known_quiet}`: how long this source has held
+     * no future event, in days (#1498). `ej-source-emptied` reads [SOURCE_EVENTS_FUTURE] against a
+     * week of history, so four sources sat at zero for a year and no rule could see them; a
+     * duration needs no window, `> 30` is the rule. The `known_quiet` tag carries
+     * [KNOWN_QUIET_SOURCES] so the rule can select the sources nobody has accounted for.
      */
     fun publishDaysSinceFutureEvent(
         sourceSlug: String,
@@ -325,11 +251,8 @@ class ImporterMetrics(
     }
 
     /**
-     * Sets [value] on this map's holder for [sourceSlug], registering [meterName] against that
-     * holder the first time the source is seen.
-     *
-     * [tags] reach the registry at that first registration only, so a source's tag values stay the
-     * ones its first publication carried.
+     * Sets [value] on this map's holder for [sourceSlug], registering [meterName] the first time the
+     * source is seen; [tags] reach the registry at that first registration only.
      */
     private fun ConcurrentHashMap<String, AtomicLong>.publishPerSource(
         sourceSlug: String,
@@ -345,18 +268,11 @@ class ImporterMetrics(
     }
 
     /**
-     * `importer.source.field_coverage{source,field}` — the fraction of a run's events carrying one
-     * field (#472).
-     *
-     * **Registered here rather than in a second metrics path**, which is what the issue asks for and
-     * is right for a reason worth stating: a meter is only useful next to the meters it is compared
-     * with. A field-coverage gauge in its own registry could not be graphed against
-     * `importer.run.outcome` or `importer.events.written`, and those three together are what tell
-     * "the venue changed its page" apart from "the scraper broke" apart from "nothing happened".
-     *
-     * A ratio rather than a count, because the count is meaningless without the run size and the
-     * run size is already `importer.events.written`. Cardinality is sources times fields — tens,
-     * and both sides are ours.
+     * `importer.source.field_coverage{source,field}`, the fraction of a run's events carrying one
+     * field (#472). Registered here because a meter is only useful next to the meters it is compared
+     * with: this, `importer.run.outcome` and `importer.events.written` together tell "the venue
+     * changed its page" from "the scraper broke" from "nothing happened". A ratio, because the run
+     * size is already `importer.events.written`. Cardinality is sources times fields, tens.
      */
     fun publishFieldCoverage(
         sourceSlug: String,
@@ -388,28 +304,18 @@ class ImporterMetrics(
     }
 
     /**
-     * How a run ended.
-     *
-     * **`partial` from PLATFORM_SETUP.md §7 is deliberately absent**, and the deviation is worth
-     * stating rather than quietly papering over: this pipeline has no partial outcome. A run either
-     * completes and upserts, is skipped because the source was unchanged or already claimed, or
-     * throws — and the upserts are inside one transaction, so there is no half-written state to
-     * name. Inventing a bucket nothing can ever emit would make a dashboard panel that is always
-     * zero, which reads as "never happens" rather than "cannot happen". These five are what the code
-     * can actually produce.
+     * How a run ended. `partial` from PLATFORM_SETUP.md §7 is absent: the upserts are inside one
+     * transaction, so there is no half-written state, and a bucket nothing can emit reads as "never
+     * happens" rather than "cannot happen".
      */
     enum class RunOutcome(
         val tag: String,
         /**
-         * Whether this outcome advances `importer.source.last_success`.
-         *
-         * **It has to agree with what [EventImportService] writes to `last_success_at`, and this flag
-         * is where that agreement is written down.** The gauge has two feeds — this one, which is
-         * immediate and in-memory, and [MetricsRefreshService], which republishes from the column
-         * every minute. If the two disagreed, the gauge would jump backwards or forwards once a
-         * minute and the disagreement would look like clock skew rather than like a bug. The rule is
-         * one line: **an outcome advances last-success exactly when the run reached the source and
-         * got an answer**, which is what `markSuccess` is called for.
+         * Whether this outcome advances `importer.source.last_success`. It has to agree with what
+         * [EventImportService] writes to `last_success_at`: the gauge has two feeds, this one and
+         * [MetricsRefreshService] republishing from the column every minute, and a disagreement would
+         * look like clock skew. An outcome advances last-success exactly when the run reached the source
+         * and got an answer.
          */
         val advancesLastSuccess: Boolean
     ) {
@@ -417,12 +323,8 @@ class ImporterMetrics(
         SUCCESS("success", advancesLastSuccess = true),
 
         /**
-         * The source answered 304 — nothing to do, and not a failure.
-         *
-         * It advances last-success because a 304 is a **working** scraper: the request went out, the
-         * venue answered, and the conditional headers did their job. Treating it as "no success" would
-         * make a stable venue look like a broken one after three quiet days, which is the false
-         * positive that gets a staleness alert muted.
+         * The source answered 304. It advances last-success because a 304 is a working scraper; treating
+         * it as "no success" makes a stable venue look broken after three quiet days.
          */
         NOT_MODIFIED("not_modified", advancesLastSuccess = true),
 
@@ -451,12 +353,9 @@ class ImporterMetrics(
     }
 
     /**
-     * Why an event the run scraped never reached the database.
-     *
-     * **Only reasons computed in shared code appear here**, so every value is counted for every
-     * importer that reaches it rather than for whichever venue remembered to increment. The ~93
-     * per-venue parse drops are deliberately absent: counting those needs each overview scraper to
-     * report rows-seen against events-returned, which is per-scraper work (#982).
+     * Why an event the run scraped never reached the database. Only reasons computed in shared code
+     * appear, so every value is counted for every importer; the ~93 per-venue parse drops need each
+     * overview scraper to report rows-seen against events-returned (#982).
      */
     enum class DropReason(
         val tag: String
@@ -494,24 +393,19 @@ class ImporterMetrics(
         const val TAG_STATE = "state"
 
         /**
-         * `importer.source.has_succeeded{source}` — the series that exists for a source which has
-         * never worked, which [SOURCE_LAST_SUCCESS] deliberately does not. See [publishHasSucceeded].
+         * `importer.source.has_succeeded{source}`, the series that exists for a source which has never
+         * worked. See [publishHasSucceeded].
          */
         const val SOURCE_HAS_SUCCEEDED = "importer.source.has_succeeded"
 
         /**
-         * `importer.source.events_future{source}` — the per-source half of ADR-015's criterion 1,
-         * which `db.events` can only see once the whole catalogue has drained. See
-         * [publishFutureEvents].
-         *
-         * **Not `events.total` or anything ending in `_total`** — see [DB_EVENTS] for what that
-         * suffix costs.
+         * `importer.source.events_future{source}`, the per-source half of ADR-015's criterion 1. See
+         * [publishFutureEvents]; not `_total`, see [DB_EVENTS].
          */
         const val SOURCE_EVENTS_FUTURE = "importer.source.events_future"
 
         /**
-         * `importer.source.days_since_future_event{source,known_quiet}` — how long a source has been
-         * at zero, which [SOURCE_EVENTS_FUTURE] and its week of history cannot say (#1498). See
+         * `importer.source.days_since_future_event{source,known_quiet}` (#1498). See
          * [publishDaysSinceFutureEvent].
          */
         const val SOURCE_DAYS_SINCE_FUTURE_EVENT = "importer.source.days_since_future_event"
@@ -519,28 +413,17 @@ class ImporterMetrics(
         const val SOURCE_RUNNING = "importer.source.running"
 
         /**
-         * `importer.source.field_coverage{source,field}` — #415's list plus one dimension (#472).
-         *
-         * The series to alert on is a **drop against this source's own history**, not a threshold: a
-         * venue that has never published a price sits at 0 forever and is not broken.
+         * `importer.source.field_coverage{source,field}` (#472). The series to alert on is a drop
+         * against this source's own history: a venue that has never published a price sits at 0.
          */
         const val FIELD_COVERAGE = "importer.source.field_coverage"
         const val TAG_FIELD = "field"
 
         /**
-         * **One gauge with a `horizon` tag, not the two separate names PLATFORM_SETUP.md §7 lists —
-         * and the deviation is forced rather than preferred.**
-         *
-         * `db.events.total` cannot survive contact with Prometheus. `_total` is the reserved suffix
-         * for counters, so Micrometer's Prometheus naming convention *strips* it: the meter would be
-         * published as `db_events`, silently, while every dashboard and alert written from the
-         * documented name looked for `db_events_total` and matched nothing. Measured, not assumed —
-         * the exposition showed `db_events 0.0` next to `db_events_future 0.0`.
-         *
-         * Given the rename was unavoidable, a tag is the right shape for it anyway: "all events" and
-         * "future events" are the same measurement over two windows, which is what a label is for,
-         * and `db_events{horizon="future"}` is one PromQL selector rather than a second metric name
-         * to remember. §7 states this shape.
+         * One gauge with a `horizon` tag, not the two names PLATFORM_SETUP.md §7 lists, forced:
+         * `_total` is the reserved suffix for counters, so Micrometer strips it and `db.events.total`
+         * was published as `db_events`, measured in the exposition. "All events" and "future events"
+         * are the same measurement over two windows, which is what a label is for; §7 states this shape.
          */
         const val DB_EVENTS = "db.events"
         const val TAG_HORIZON = "horizon"

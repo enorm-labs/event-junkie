@@ -16,10 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 
 /**
- * Service encapsulating event source CRUD business logic.
- *
- * All methods are suspending to align with the reactive R2DBC stack.
- * Slugs are always auto-generated from the source name using [SlugGenerator].
+ * Event source CRUD. Slugs are always generated from the name by [SlugGenerator].
  */
 @Service
 class EventSourceService(
@@ -30,11 +27,7 @@ class EventSourceService(
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Lists event sources with pagination and sorting.
-     *
-     * Pagination and sorting are controlled by the [pageable] parameter, which Spring
-     * resolves from `page`, `size`, and `sort` query parameters
-     * (e.g. `?page=0&size=20&sort=name,asc`).
+     * Lists event sources, paged and sorted by [pageable].
      */
     @Transactional(readOnly = true)
     suspend fun findAll(pageable: Pageable): PageResponse<EventSourceResponse> =
@@ -56,13 +49,8 @@ class EventSourceService(
     }
 
     /**
-     * Creates a new event source.
-     *
-     * The slug is auto-generated from the source name
-     * (e.g. `"Cassiopeia Website"` → `"cassiopeia-website"`).
-     *
-     * Certain slugs are reserved for API path segments (`import`, `retry`)
-     * to prevent routing conflicts.
+     * Creates a new event source; the slug is generated from the name. `import` and `retry` are
+     * reserved for API path segments.
      *
      * @throws VenueNotFoundException if the referenced venue does not exist.
      * @throws InvalidSourceTypeException if the source type is not a valid [EventSource] value.
@@ -91,35 +79,23 @@ class EventSourceService(
     }
 
     /**
-     * Validates the create request before persisting.
-     *
-     * - Ensures the `sourceType` is a valid [EventSource] enum value.
-     * - Ensures the referenced venue exists (avoids a misleading 409 from the FK constraint).
+     * Validates the create request: `sourceType` is an [EventSource] value, and the venue exists,
+     * so the client gets a clear error rather than a failure at import time or a 409 from the FK.
      */
     private suspend fun validateCreateRequest(request: EventSourceCreateRequest) {
-        // Validate sourceType against the EventSource enum early to provide a clear
-        // error message instead of failing at import time with a cryptic error.
         try {
             EventSource.valueOf(request.sourceType)
         } catch (_: IllegalArgumentException) {
             throw InvalidSourceTypeException(request.sourceType)
         }
 
-        // Validate that the referenced venue exists before persisting, so the client
-        // gets a clear 404 instead of a misleading 409 from the FK constraint violation.
         if (!venueRepository.existsById(request.venueId)) throw VenueNotFoundException(request.venueId)
     }
 
     /**
-     * Partially updates an event source's configuration.
-     *
-     * Supports toggling `enabled`, changing `importIntervalMinutes`, and adjusting `maxRetries`.
-     * Only non-null fields in the request are applied.
-     *
-     * **A null field means "leave unchanged", which is this route's existing semantic and applies to
-     * the licence columns too.** So a status can be corrected but not cleared back to unreviewed.
-     * That is deliberate rather than an oversight: reverting a review to "nobody looked" discards
-     * the fact that somebody did, and the honest correction is `UNCLEAR` with a note (#283).
+     * Partially updates a source; only non-null fields apply, the licence columns included, so a
+     * status can be corrected but not cleared back to unreviewed: reverting a review to "nobody
+     * looked" discards the fact that somebody did, and the honest correction is `UNCLEAR` (#283).
      *
      * @throws EventSourceNotFoundException if no source with the given [slug] exists.
      */
@@ -129,8 +105,7 @@ class EventSourceService(
     ): EventSourceResponse {
         val source = eventSourceRepository.findBySlug(slug) ?: throw EventSourceNotFoundException(slug)
         // A licence field in the request means somebody reviewed the source, so the timestamp moves
-        // with it rather than being sent by the caller. Sending it separately would let the two
-        // disagree, and the whole value of the timestamp is that it cannot.
+        // with it rather than being sent separately, where the two could disagree.
         val licenceReviewed =
             request.descriptionLicence != null || request.imageLicence != null || request.translationLicence != null
         val updated =
@@ -145,11 +120,8 @@ class EventSourceService(
                 licenceSourceUrl = request.licenceSourceUrl ?: source.licenceSourceUrl,
                 licenceNote = request.licenceNote ?: source.licenceNote
             )
-        // **Do not claim an update that did not happen (#814).** Every field of the request is
-        // nullable, so a body carrying nothing this endpoint recognises copies the row to itself and
-        // used to log an update all the same — leaving the server's own record of a failed apply
-        // saying it succeeded. Unknown fields are now a 400, but an explicitly empty body still
-        // reaches here and is still a no-op, so the log has to tell the two apart.
+        // Do not claim an update that did not happen (#814): every field is nullable, so an empty body
+        // copies the row to itself, and the log has to tell that from an update.
         if (updated == source) {
             logger.info { "No change for event source '${source.name}' (id=${source.id}): the request set nothing" }
             return EventSourceResponse.fromEntity(source)
@@ -161,17 +133,11 @@ class EventSourceService(
     }
 
     /**
-     * Deletes stored content the source now forbids.
-     *
-     * **Withholding a field and storing it are different acts, and `PROHIBITED` answers both (#807).**
-     * The gate stops the § 19a UrhG communication to the public. This stops the § 16 UrhG
-     * reproduction, at the moment the prohibition is recorded — which is what makes the promise on
-     * `ForVenuesView` true. Waiting for the next import would leave every past event untouched
-     * forever, because a past event is never scraped again.
-     *
-     * Runs on every update rather than only on a transition. Re-clearing an already-cleared source
-     * matches no rows, and a rule that fires only on a change is one stale read away from missing
-     * the case it exists for.
+     * Deletes stored content the source now forbids. Withholding and storing are different acts,
+     * and `PROHIBITED` answers both (#807): the gate stops the § 19a UrhG communication, this stops
+     * the § 16 reproduction the moment the prohibition is recorded, since a past event is never
+     * scraped again. Runs on every update rather than only on a transition: re-clearing matches no
+     * rows, and a rule that fires only on a change is one stale read away from missing its case.
      */
     private suspend fun clearProhibitedContent(source: EventSourceEntity) {
         val id = source.id ?: return
@@ -184,8 +150,7 @@ class EventSourceService(
             val cleared = eventRepository.clearImageUrls(id)
             if (cleared > 0) logger.info { "Cleared $cleared stored image URL(s) for prohibited source '${source.slug}'" }
         }
-        // A translation exists only while a grant does. Withdrawing the grant deletes the derived
-        // text on the spot, for the reason above: a past event is never scraped again.
+        // A translation exists only while a grant does; withdrawing it deletes the derived text now.
         if (!licences.allowsTranslation()) {
             val cleared = eventRepository.clearTranslations(id)
             if (cleared > 0) logger.info { "Cleared $cleared stored translation(s) for source '${source.slug}'" }
@@ -193,16 +158,9 @@ class EventSourceService(
     }
 
     /**
-     * Resets a failed or misconfigured event source for immediate retry.
-     *
-     * Clears the error state, resets `retryCount` to 0, and sets status back to IDLE
-     * so the scheduler will pick it up on the next tick. The `lastImportAt` timestamp
-     * is preserved as a historical record — [ScheduledImportService.isDue] treats IDLE
-     * sources as always-due regardless of when they last ran.
-     *
-     * For MISCONFIGURED sources, the underlying configuration issue (e.g. unknown source type,
-     * missing importer) must be fixed before retrying — otherwise the source will immediately
-     * be marked as MISCONFIGURED again.
+     * Resets a failed or misconfigured source for immediate retry: error state cleared,
+     * `retryCount` 0, status IDLE, `lastImportAt` preserved ([ScheduledImportService.isDue] treats
+     * IDLE as always-due). A MISCONFIGURED source's configuration must be fixed first.
      *
      * @throws EventSourceNotFoundException if no source with the given [slug] exists.
      */
@@ -221,13 +179,7 @@ class EventSourceService(
     }
 
     /**
-     * Resets all failed and misconfigured event sources back to IDLE for immediate retry.
-     *
-     * Useful after fixing a network issue, scraper bug, or configuration problem — all
-     * failed and misconfigured sources are picked up by the scheduler on the next tick.
-     *
-     * Uses a single bulk UPDATE statement instead of fetching and saving each
-     * source individually for better performance.
+     * Resets all failed and misconfigured sources to IDLE in one bulk UPDATE.
      *
      * @return the number of sources reset.
      */
@@ -250,11 +202,8 @@ class EventSourceService(
 
     companion object {
         /**
-         * Slugs reserved for API path segments to prevent routing conflicts.
-         *
-         * These correspond to sub-resource paths in [EventSourceController]:
-         * `POST /import` and `POST /retry`. Update this set if new
-         * sub-resource paths are added to the controller.
+         * Slugs reserved for API path segments: `POST /import` and `POST /retry` in
+         * [EventSourceController]. Extend when a sub-resource path is added.
          */
         private val RESERVED_SLUGS = setOf("import", "retry")
     }

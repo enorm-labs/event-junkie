@@ -20,20 +20,16 @@ import java.time.Instant
 import kotlin.time.Duration.Companion.nanoseconds
 
 /**
- * Orchestrates the event import pipeline: delegate to importer → upsert → cleanup.
- *
- * For each enabled [EventSourceEntity], the service:
- * 1. Resolves the matching [EventImporter] by [EventSource] enum.
- * 2. Delegates fetching and parsing to the importer.
- * 3. Delegates persistence (upsert, artist resolution, stale cleanup) to [EventUpsertService].
- * 4. Updates the event source metadata (status, event count, ETag, etc.).
+ * Orchestrates the import pipeline for each enabled [EventSourceEntity]: resolve the
+ * [EventImporter] by [EventSource], delegate fetching and parsing, delegate persistence to
+ * [EventUpsertService], update the source's metadata.
  */
 @Service
 @Suppress(
     // Constructor injection: one parameter per collaborator; splitting the service hides the wiring.
     "LongParameterList",
-    // Twelve functions, and eleven of them are one named step of this pipeline. The alternative to
-    // `afterCommit` is inlining it back into a method the LongMethod rule already caps.
+    // Twelve functions, eleven of them one named step of this pipeline; inlining `afterCommit` would
+    // push a method past the LongMethod cap.
     "TooManyFunctions"
 )
 class EventImportService(
@@ -41,7 +37,7 @@ class EventImportService(
     private val eventUpsertService: EventUpsertService,
     private val eventImporters: List<EventImporter>,
     private val venueRepository: VenueRepository,
-    /** Programmatic transaction control — used instead of @Transactional to avoid self-invocation issues. */
+    /** Programmatic transaction control rather than @Transactional, to avoid self-invocation issues. */
     private val transactionalOperator: TransactionalOperator,
     /** Every meter this pipeline publishes (#415). See [ImporterMetrics] for why the names are an interface. */
     private val metrics: ImporterMetrics,
@@ -51,21 +47,15 @@ class EventImportService(
     private val descriptionTranslationService: DescriptionTranslationService,
     private val musicBrainzLookupService: MusicBrainzLookupService,
     /**
-     * The `robots.txt` rules behind [RobotsTxtFilter], read again here to record what they said
-     * about this source's own entry URL (#790).
-     *
-     * A map read rather than a fetch, in every ordinary run: the filter has already read the host's
-     * file on the way to the listing page.
+     * The `robots.txt` rules behind [RobotsTxtFilter], read again to record what they said about
+     * this source's entry URL (#790). A map read, not a fetch: the filter has already read the file.
      */
     private val robotsRulesCache: RobotsRulesCache,
     /** Injected clock for deterministic time in tests. Defaults to system UTC clock in production. */
     private val clock: Clock = Clock.systemUTC(),
     /**
-     * Maximum number of event sources imported concurrently. Each source runs in its
-     * own coroutine, bounded by a [Semaphore] to limit database and network pressure.
-     * Per-host politeness is already enforced by [PerHostThrottlingFilter], so sources
-     * targeting different hosts benefit from true concurrency while same-host sources
-     * are naturally serialized at the HTTP layer.
+     * Maximum number of sources imported concurrently, each in its own coroutine bounded by a
+     * [Semaphore]. Per-host politeness is [PerHostThrottlingFilter]'s job.
      */
     @Value($$"${app.import.max-concurrency:4}")
     maxConcurrency: Int = DEFAULT_MAX_CONCURRENCY
@@ -73,13 +63,9 @@ class EventImportService(
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Global permit pool bounding the number of in-flight source imports.
-     *
-     * Because this service is a singleton and **every** import path funnels through
-     * [importFromSource] — the scheduler's [importConcurrently], [importBySlug], and both
-     * fire-and-forget triggers in `ImportJobLauncher` — acquiring a permit here caps total
-     * concurrency across *all* callers. A burst of manual admin triggers can no longer stack
-     * on top of a scheduled tick and overwhelm the R2DBC connection pool.
+     * Global permit pool. Every import path funnels through [importFromSource], so this caps total
+     * concurrency across all callers: a burst of manual admin triggers cannot stack on a scheduled
+     * tick and overwhelm the R2DBC pool.
      */
     private val importSemaphore = Semaphore(maxConcurrency)
 
@@ -89,11 +75,8 @@ class EventImportService(
     }
 
     /**
-     * Imports events from all enabled event sources.
-     *
-     * Sources are imported concurrently (up to [maxConcurrency] at a time).
-     * Each source is processed independently — a failure in one source does not
-     * prevent other sources from being imported.
+     * Imports events from all enabled sources, concurrently up to [maxConcurrency]; a failure in one
+     * does not prevent the others.
      */
     suspend fun importAll(): List<ImportResultResponse> {
         val sources = eventSourceRepository.findByEnabledTrue().toList()
@@ -112,15 +95,10 @@ class EventImportService(
     }
 
     /**
-     * Imports multiple sources concurrently, bounded by [maxConcurrency].
-     *
-     * Each source runs in its own coroutine; the shared [importSemaphore] acquired inside
-     * [importFromSource] limits how many execute simultaneously (globally, not just within
-     * this batch). This is safe because:
-     * - The artist cache in [EventUpsertService] is local to each [importFromSource] call.
-     * - Concurrent artist creation is handled via [DataIntegrityViolationException] fallback.
-     * - Per-host HTTP politeness is enforced by [PerHostThrottlingFilter].
-     * - Each source's upsert runs in its own transaction.
+     * Imports multiple sources concurrently, bounded by the shared [importSemaphore] inside
+     * [importFromSource]. Safe because the artist cache in [EventUpsertService] is per call,
+     * concurrent artist creation falls back on [DataIntegrityViolationException], per-host politeness
+     * is [PerHostThrottlingFilter]'s, and each source's upsert runs in its own transaction.
      */
     internal suspend fun importConcurrently(sources: List<EventSourceEntity>): List<ImportResultResponse> =
         coroutineScope {
@@ -134,67 +112,43 @@ class EventImportService(
         }
 
     /**
-     * Core import pipeline for a single source.
-     *
-     * Handles the full lifecycle: delegate to importer → upsert → update metadata.
-     * Errors are caught and recorded on the event source rather than propagated.
-     *
-     * Status updates (the [claimForImport] claim, markSuccess/markFailed) run outside the
-     * transactional boundary so they always commit, even if a DB error during
-     * upsert marks the transaction as rollback-only.
-     *
-     * The run begins by **claiming** the source (RUNNING only if not already RUNNING). A
-     * source another run already holds is skipped, returning an un-imported result — this is
-     * what keeps two callers from scraping and upserting the same source at once.
-     *
-     * **Precondition**: The [source] must be a persisted entity fetched from the repository.
-     * This method manages the source's import lifecycle status (RUNNING → SUCCESS/FAILED),
-     * so callers must not manipulate the source's status independently.
-     *
-     * Acquires a permit from the global [importSemaphore] for the full duration of the import,
-     * so the total number of concurrent imports never exceeds [maxConcurrency] regardless of the
-     * caller. The (fail-fast) persisted-id precondition is checked *before* taking a permit.
+     * Core import pipeline for a single source. Errors are recorded on the source rather than
+     * propagated. Status updates (the claim, markSuccess/markFailed) run outside the transaction so
+     * they always commit. The run begins by claiming the source (RUNNING only if not already), and a
+     * source another run holds is skipped. Precondition: [source] is a persisted entity, and callers
+     * must not manipulate its status. Acquires a permit from [importSemaphore] for the full duration;
+     * the persisted-id precondition is checked before taking one.
      *
      * @param force fetch the listing without the cached `If-None-Match` / `If-Modified-Since`
-     *   headers (#1159). A parser fix at a venue whose page has not changed otherwise 304s on
-     *   every run until the venue edits its page; this is the one exception, per call, and it
-     *   stores the response's validators like any other run so the next run is conditional again.
+     * headers (#1159): a parser fix at a venue whose page has not changed otherwise 304s on every
+     * run. Per call, and the run stores the response's validators like any other.
      */
     internal suspend fun importFromSource(
         source: EventSourceEntity,
         force: Boolean = false
     ): ImportResultResponse {
         requireNotNull(source.id) { "Event source must be persisted (have a non-null id) before importing" }
-        // The one place the log context for a run is established (#380). Every line any scraper,
-        // the upsert or the coverage check writes below this point carries the slug and run id,
-        // because MDCContext travels with the coroutine rather than with the thread. Outside the
-        // semaphore deliberately: a run that spends a minute waiting for a permit should still say
-        // which source it is waiting for.
+        // The one place the log context for a run is established (#380): MDCContext travels with the
+        // coroutine, so every line below carries the slug and run id. Outside the semaphore, so a run
+        // waiting for a permit says which source it is waiting for.
         return withContext(LogContext.forImportRun(source.slug)) {
             importSemaphore.withPermit { timedImportPipeline(source, force) }
         }
     }
 
     /**
-     * Wraps [runImportPipeline] with the run timer and the outcome counter (#415).
-     *
-     * The outcome is set at each exit rather than derived from the returned [ImportResultResponse],
-     * because the response cannot distinguish them: a not-modified run, a run skipped because
-     * another already held the claim, and a misconfigured source all come back as
-     * `imported=false, eventCount=0`, and two of those carry an error while meaning very different
-     * things. Deriving the tag from the response would quietly merge the states that matter.
-     *
-     * `finally` rather than a call on each path, so a run always records exactly once — including
-     * one that throws past every branch below.
+     * Wraps [runImportPipeline] with the run timer and the outcome counter (#415). The outcome is set
+     * at each exit rather than derived from the [ImportResultResponse], which cannot distinguish a
+     * not-modified run, a skipped claim and a misconfigured source: all `imported=false,
+     * eventCount=0`. `finally`, so a run records exactly once, including one that throws.
      */
     private suspend fun timedImportPipeline(
         source: EventSourceEntity,
         force: Boolean
     ): ImportResultResponse {
         val startedAt = System.nanoTime()
-        // FAILED rather than a nullable: if an exception escapes every branch, "the run failed" is
-        // the honest reading, and a missing sample would be indistinguishable from a run that never
-        // started.
+        // FAILED rather than a nullable: if an exception escapes every branch, "the run failed" is the
+        // honest reading.
         var outcome = ImporterMetrics.RunOutcome.FAILED
         try {
             val (response, runOutcome) = runImportPipeline(source, force)
@@ -216,8 +170,8 @@ class EventImportService(
             } catch (_: IllegalArgumentException) {
                 val error = "Unknown source type '${source.sourceType}'"
                 logger.error { error }
-                // Configuration error — will never self-resolve on retry, so mark as MISCONFIGURED
-                // instead of FAILED to avoid consuming retry budget (see review issue #1).
+                // Will never self-resolve on retry, so MISCONFIGURED instead of FAILED to avoid consuming retry
+                // budget.
                 markMisconfigured(source, error)
                 return ImportResultResponse(sourceSlug = source.slug, imported = false, eventCount = 0, error = error) to
                     ImporterMetrics.RunOutcome.MISCONFIGURED
@@ -244,12 +198,9 @@ class EventImportService(
             when (val result = importer.importEvents(runningSource.url, etag, lastModified)) {
                 is ImportResult.NotModified -> {
                     logger.info { "Source '${runningSource.slug}' not modified, skipping import" }
-                    // The count carries forward rather than resetting to 0 (#659). A 304 says the
-                    // listing has not changed, so the number of events it holds has not changed
-                    // either — the count from the run that last read it is still the true one.
-                    // Writing 0 here made an unchanged source indistinguishable from an emptied
-                    // one in the exact column an operator reaches for: `loge` reported
-                    // `lastEventCount = 0` on a run that succeeded, and it had six events all along.
+                    // The count carries forward rather than resetting to 0 (#659): a 304 says the listing has not
+                    // changed. Writing 0 made an unchanged source indistinguishable from an emptied one; `loge`
+                    // reported `lastEventCount = 0` on a run that succeeded with six events.
                     markSuccess(runningSource, runningSource.lastEventCount)
                     ImportResultResponse(sourceSlug = runningSource.slug, imported = false, eventCount = 0) to
                         ImporterMetrics.RunOutcome.NOT_MODIFIED
@@ -263,11 +214,8 @@ class EventImportService(
                         venueRepository.findById(runningSource.venueId)
                             ?: error("Venue with id ${runningSource.venueId} not found for source '${runningSource.slug}'")
 
-                    // Wrap upserts and cleanup in a transaction so partial failures roll back cleanly.
-                    // Uses TransactionalOperator instead of @Transactional to keep status updates
-                    // (the claim, markSuccess/markFailed) outside the transaction boundary —
-                    // they must always commit even if the upsert transaction rolls back.
-                    // What this source lets us keep. PROHIBITED means the field is never stored (#807).
+                    // One transaction for upserts and cleanup, via TransactionalOperator so the status updates stay
+                    // outside it and always commit. PROHIBITED means the field is never stored (#807).
                     val licences = runningSource.licences()
                     val upsert =
                         transactionalOperator.executeAndAwait {
@@ -285,10 +233,9 @@ class EventImportService(
             }
         } catch (e: Exception) {
             val error = e.message ?: "Unknown error during import"
-            // The streak, because one broken venue writes this line once per attempt and the
-            // attempts are otherwise identical. Not "of maxRetries": a source past its budget keeps
-            // running on its plain interval (#659), so the count can exceed it. `retryCount` is the
-            // value before `markFailed` adds this failure.
+            // The streak, because one broken venue writes this line once per attempt. Not "of maxRetries": a
+            // source past its budget keeps running on its plain interval (#659). `retryCount` is the value
+            // before `markFailed` adds this failure.
             logger.error(e) { "Import failed for source '${runningSource.slug}' (consecutive failures: ${runningSource.retryCount + 1}): $error" }
             metrics.recordScrapeFailure(runningSource.slug, scrapeFailureReason(e))
             markFailed(runningSource, error)
@@ -300,29 +247,17 @@ class EventImportService(
     // -- Event source status management --
 
     /**
-     * Claims [source] for this run by moving it to RUNNING, returning the claimed entity — or `null`
-     * when another run already holds the claim, in which case the caller must not import.
+     * Claims [source] for this run by moving it to RUNNING, or returns `null` when another run holds
+     * the claim. A conditional UPDATE decided by the database ([EventSourceRepository.claimForImport]):
+     * a read-then-save cannot serialize two callers queued on [importSemaphore]. Gated on the version
+     * [source] was read at, so it fails whenever the row changed since the read, which a status check
+     * misses: a scheduler tick can read a source while IDLE and reach its claim after a manual trigger
+     * has already imported it and left it SUCCESS again.
      *
-     * The claim is a conditional UPDATE decided by the database
-     * ([EventSourceRepository.claimForImport]), because a read-then-save in Kotlin cannot serialize
-     * two callers: imports queue on [importSemaphore] before reaching this point, so the same source
-     * can be requested twice and stay visibly un-started for the whole wait.
-     *
-     * It is gated on the version [source] was read at, so it fails not only when another run holds
-     * the source but whenever the row changed at all since the read. That covers what a status check
-     * alone misses: a scheduler tick can read a source while it is IDLE and reach its claim only
-     * after a manual trigger has already imported it — by which point the status is SUCCESS again,
-     * and a status-only guard would wave the duplicate through and re-scrape the venue.
-     *
-     * The returned entity mirrors the claim in memory rather than re-reading the row. The conditional
-     * UPDATE touches exactly the four columns reproduced here, so the copy matches what was written
-     * and the claim stays a single round trip. Because it succeeds only when the row was still at
-     * [EventSourceEntity.version], `version + 1` is the value actually persisted rather than a guess,
-     * so the closing `markSuccess`/`markFailed` save matches on the first attempt.
-     *
-     * A source left in RUNNING by a crashed run blocks its own next import until
-     * [ScheduledImportService.resetStuckSources] releases it (default: 30 minutes). That guard covers
-     * a manual trigger as well as the scheduler.
+     * The returned entity mirrors the claim in memory: the UPDATE touches exactly the four columns
+     * reproduced here, and `version + 1` is the value persisted, so the closing save matches on the
+     * first attempt. A source left RUNNING by a crashed run is released by
+     * [ScheduledImportService.resetStuckSources] (default 30 minutes).
      */
     private suspend fun claimForImport(source: EventSourceEntity): EventSourceEntity? {
         val sourceId = requireNotNull(source.id) { "Cannot claim an unpersisted event source" }
@@ -342,19 +277,12 @@ class EventImportService(
     }
 
     /**
-     * Everything a successful run does once its transaction has committed, in the order it must.
-     *
-     * **Counting writes that then rolled back would overstate the database, and an increment cannot
-     * be taken back**, so the meters wait for the commit. Field coverage is measured from what the
-     * scraper extracted rather than from the stored rows, which also hold what earlier runs wrote —
-     * a selector that stopped matching shows in the former and is invisible in the latter until the
-     * old rows age out (#472). It runs before `markSuccess` so a flagged run stays flagged even if
-     * the closing save is retried, and it is unguarded because `record` never throws.
-     *
-     * The translation pass is guarded, for the opposite reason: it is derived text, so an engine
-     * that is slow, down or unpaid must never fail a scrape that worked. It does nothing unless the
-     * source's grant names translation (ADR-026). The MusicBrainz pass is not here: it runs in
-     * [afterSuccess], once the closing save is written.
+     * Everything a successful run does once its transaction has committed, in order. The meters wait
+     * for the commit, since an increment cannot be taken back. Field coverage is measured from what
+     * the scraper extracted, not the stored rows, where a selector that stopped matching is invisible
+     * until old rows age out (#472); it runs before `markSuccess` and is unguarded because `record`
+     * never throws. The translation pass is guarded: derived text, so an engine that is down must
+     * never fail a scrape that worked (ADR-026). The MusicBrainz pass runs in [afterSuccess].
      */
     private suspend fun afterCommit(
         source: EventSourceEntity,
@@ -370,14 +298,10 @@ class EventImportService(
     }
 
     /**
-     * The MusicBrainz pass, after `markSuccess` rather than before it (#1604).
-     *
-     * It is the slowest thing a run does — one request a second over the artists this run billed
-     * and a slice of the backfill (ADR-031), nine minutes for a full slice and five more per 503 —
-     * and a source that stays `RUNNING` for that long has `lastSuccessAt` late by as much, and is
-     * one bad slice away from `app.scheduling.staleness-timeout` reaping it as `FAILED`. Guarded
-     * like the translation pass: a verdict is derived, and MusicBrainz not answering is a counter,
-     * never a failed import.
+     * The MusicBrainz pass, after `markSuccess` (#1604): the slowest thing a run does, one request a
+     * second over the billed artists and a slice of the backfill (ADR-031), nine minutes for a full
+     * slice and five more per 503, and a source `RUNNING` that long is one bad slice from
+     * `app.scheduling.staleness-timeout` reaping it. Guarded like the translation pass.
      */
     private suspend fun afterSuccess(
         source: EventSourceEntity,
@@ -388,18 +312,13 @@ class EventImportService(
     }
 
     /**
-     * Closes a run that worked, advancing both timestamps.
+     * Closes a run that worked. `lastSuccessAt` is written only here; `lastImportAt` also by
+     * [markFailed] and the claim, so it is a last-attempt time, and the pair keeps
+     * `importer.source.last_success` correct across a failure (#415). A 304 is a working scraper.
      *
-     * `lastSuccessAt` is written **only here**, which is what makes it mean what it says.
-     * `lastImportAt` is written by this, by [markFailed] and by the claim, so it is a last-*attempt*
-     * time; the pair is what lets `importer.source.last_success` stay correct across a failure
-     * instead of disappearing (#415). Every caller of this method is a run that reached the source
-     * and got an answer — including a 304, which is a working scraper and not a skipped one.
-     *
-     * @param eventCount how many events the run read, or `null` for a run that did not read the
-     *   listing at all (a 304), which carries the previous count forward rather than zeroing it.
-     *   `null` also survives to the column on the one run where it is the honest answer: a source
-     *   whose very first attempt is a 304, which cannot happen without an `etag` from an earlier one.
+     * @param eventCount how many events the run read, or `null` for a 304, which carries the
+     * previous count forward. `null` reaches the column only on a first attempt that is a 304,
+     * impossible without an `etag` from an earlier one.
      */
     private suspend fun markSuccess(
         source: EventSourceEntity,
@@ -428,8 +347,8 @@ class EventImportService(
         source: EventSourceEntity,
         error: String
     ): EventSourceEntity {
-        // Recorded on failure too, and that is the case worth having: a source blocked by robots.txt
-        // fails every run, and the columns are what say which of the two it is.
+        // Recorded on failure too: a source blocked by robots.txt fails every run, and the columns say
+        // which of the two it is.
         val robots = robotsRulesCache.check(source.url)
         return saveWithVersionConflictRetry(source) {
             it
@@ -443,13 +362,9 @@ class EventImportService(
     }
 
     /**
-     * Marks a source as misconfigured — a permanent configuration error that
-     * will never self-resolve on retry (e.g. unknown source type, missing importer).
-     *
-     * Unlike [markFailed], this does NOT increment [EventSourceEntity.retryCount]
-     * because retrying is pointless for configuration errors. The scheduler skips
-     * MISCONFIGURED sources entirely, so they require manual intervention
-     * (fix the config, then call retry to reset to IDLE).
+     * Marks a source as misconfigured, a permanent error that never self-resolves. Does NOT
+     * increment [EventSourceEntity.retryCount]; the scheduler skips MISCONFIGURED sources until a
+     * manual retry resets them to IDLE.
      */
     private suspend fun markMisconfigured(
         source: EventSourceEntity,
@@ -464,18 +379,10 @@ class EventImportService(
         }
 
     /**
-     * Saves the [source] entity after applying [mutation], with a single retry on
-     * [OptimisticLockingFailureException].
-     *
-     * An optimistic locking conflict can occur when an external writer (e.g.
-     * [ScheduledImportService.resetStuckSources]) modifies the `event_source` row
-     * between the [claimForImport] claim and `markSuccess`/`markFailed`, making the in-memory
-     * `@Version` stale. This is a rare but possible race condition (see ADR-009).
-     *
-     * On conflict, the entity is re-fetched from the database to obtain the latest
-     * version, the [mutation] is re-applied, and the save is retried once. If the
-     * retry also fails, the exception propagates — the scheduler will pick up the
-     * source on the next tick.
+     * Saves [source] after applying [mutation], with one retry on [OptimisticLockingFailureException]:
+     * [ScheduledImportService.resetStuckSources] can modify the row between the claim and
+     * `markSuccess`/`markFailed` (ADR-009). On conflict the entity is re-fetched, [mutation]
+     * re-applied, the save retried once; a second failure propagates to the next tick.
      */
     private suspend fun saveWithVersionConflictRetry(
         source: EventSourceEntity,
@@ -505,10 +412,8 @@ class EventImportService(
 private fun EventSourceEntity.licences(): SourceLicences = SourceLicences.of(descriptionLicence, imageLicence, translationLicence)
 
 /**
- * Applies what the host's `robots.txt` said about a source's entry URL (#790).
- *
- * A file-level extension rather than a method: it maps one value onto another and holds no service
- * state, and as a member it pushed [EventImportService] past detekt's `TooManyFunctions` cap.
+ * Applies what the host's `robots.txt` said about a source's entry URL (#790). A file-level
+ * extension because as a member it pushed [EventImportService] past `TooManyFunctions`.
  */
 private fun EventSourceEntity.withRobots(check: RobotsCheck): EventSourceEntity =
     copy(
@@ -518,9 +423,8 @@ private fun EventSourceEntity.withRobots(check: RobotsCheck): EventSourceEntity 
     )
 
 /**
- * The cached validators this run sends, as `etag to lastModified` — neither when [force] (#1159).
- *
- * Null validators are what makes `HtmlFetcher.fetch` unconditional, and every conditional importer
- * hands them straight through, so one call site covers all of them without a second fetch path.
+ * The cached validators this run sends, `etag to lastModified`, neither when [force] (#1159).
+ * Null validators make `HtmlFetcher.fetch` unconditional, so one call site covers every
+ * conditional importer.
  */
 private fun EventSourceEntity.validatorsFor(force: Boolean): Pair<String?, String?> = if (force) null to null else etag to lastModified

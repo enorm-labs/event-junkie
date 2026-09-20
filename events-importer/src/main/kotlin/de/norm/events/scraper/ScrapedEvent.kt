@@ -20,12 +20,9 @@ import java.time.LocalTime
 private val logger = KotlinLogging.logger {}
 
 /**
- * Intermediate representation of a scraped event before domain mapping.
- *
- * Contains raw data extracted from a venue website, closely matching the
- * fields of [de.norm.events.event.EventEntity] but using simple types.
- * Artist and promoter names are captured as raw strings — the service
- * layer resolves them to database entities (auto-creating if necessary).
+ * Intermediate representation of a scraped event: the fields of
+ * [de.norm.events.event.EventEntity] in simple types, with artist and promoter names as raw
+ * strings the service layer resolves.
  */
 data class ScrapedEvent(
     /** Main headline or name of the event. */
@@ -42,8 +39,8 @@ data class ScrapedEvent(
     /** Time when the show/performance starts. */
     val startTime: LocalTime? = null,
     /**
-     * Last day of the event, when the venue states one (ADR-029). Null for the usual single night.
-     * A scraper that has an end time but no end date derives this with [endOn].
+     * Last day of the event, when the venue states one (ADR-029). A scraper with an end time but
+     * no end date derives this with [endOn].
      */
     val endDate: LocalDate? = null,
     /** Time the event ends on [endDate], when the venue states one. Requires [endDate]. */
@@ -52,9 +49,8 @@ data class ScrapedEvent(
     val imageUrl: String? = null,
     val sourceUrl: String,
     /**
-     * Unique identifier for this event from the import source.
-     * Used for idempotent upserts — format: `"<source-slug>:<event-identifier>"`.
-     * Example: `"privatclub:2026-06-12-the-adicts"`.
+     * Unique identifier from the import source, for idempotent upserts:
+     * `"<source-slug>:<event-identifier>"`, e.g. `"privatclub:2026-06-12-the-adicts"`.
      */
     val sourceId: String,
     val ticketUrl: String? = null,
@@ -67,54 +63,44 @@ data class ScrapedEvent(
     val priceNote: String? = null,
     val soldOut: Boolean = false,
     /**
-     * Whether the event is free to attend. Scrapers may set this explicitly; when left false,
-     * [toEventEntity] still derives it from the prices and price note via [detectFree].
+     * Whether the event is free. When left false, [toEventEntity] still derives it via [detectFree].
      */
     val free: Boolean = false,
     /** Scheduling status (e.g. "SCHEDULED", "CANCELLED", "POSTPONED", "RELOCATED"). */
     val status: String = "SCHEDULED",
     /**
-     * The venue's own words about the status, where they are neither the title nor the
-     * description — a change note, a badge, or the raw title before [cleanEventTitle] strips
-     * the "verlegt ins …" tail. Never stored; [toEventEntity] reads the destination of a move
-     * out of it (#1551).
+     * The venue's own words about the status, where they are neither the title nor the description:
+     * a change note, a badge, or the raw title before [cleanEventTitle] strips the "verlegt ins …"
+     * tail. Never stored; [toEventEntity] reads the destination of a move out of it (#1551).
      */
     val statusNote: String? = null,
     /**
-     * Raw artist names extracted from the event listing.
-     * Each pair contains the artist name and their role (e.g. "HEADLINER", "SUPPORT", "DJ").
-     * The service layer resolves these to database artist entities.
+     * Raw artist names with their role ("HEADLINER", "SUPPORT", "DJ"), resolved by the service layer.
      */
     val artists: List<ScrapedArtist> = emptyList(),
     /**
-     * Raw promoter names extracted from the event listing.
-     * The service layer resolves these to database promoter entities (auto-creating if necessary)
-     * and creates event_promoter join table associations.
+     * Raw promoter names, resolved and auto-created by the service layer.
      */
     val promoters: List<String> = emptyList(),
     /**
-     * The website a venue links each promoter credit to, keyed by the raw name in [promoters].
-     * Fills `promoter.website_url` where the row has none; a row that has one keeps it (#1319).
+     * The website a venue links each promoter credit to, keyed by the raw name in [promoters]. Fills
+     * `promoter.website_url` where the row has none (#1319).
      */
     val promoterWebsites: Map<String, String> = emptyMap()
 ) {
     /**
-     * Converts this scraped event into an [EventEntity] for persistence.
+     * Converts this scraped event into an [EventEntity]; pure, no I/O. The slug is regenerated from
+     * the event date, venue slug and title, plus [slugDiscriminator]. On updates [existing]'s `id`,
+     * `sourceId` and `createdAt` are preserved.
      *
-     * This is a pure mapping function with no I/O — the caller is responsible for persisting
-     * the returned entity. The slug is always regenerated from the event date, venue slug and
-     * title — plus [slugDiscriminator] when one is supplied — to ensure uniqueness across venues.
-     * On updates, the [existing] entity's `id`, `sourceId`, and `createdAt` are preserved.
-     *
-     * @param venueId the database ID of the venue this event belongs to.
-     * @param venueSlug the URL-friendly slug of the venue, included in the event slug for cross-venue uniqueness.
-     * @param eventSourceId the database ID of the event source that imported this event.
-     * @param existing the previously persisted entity for updates, or null for new events.
-     * @param slugDiscriminator appended to the slug source to separate two sittings of the same
-     *   production on the same day (a matinee and an evening show share date, venue and title).
-     *   Only the caller can know a collision exists — it takes the whole scrape to see one — so
-     *   [EventUpsertService][de.norm.events.scraper.EventUpsertService] computes it and passes it
-     *   in. Null for the overwhelming majority of events, which keeps their slug unchanged.
+     * @param venueId the venue's database ID.
+     * @param venueSlug the venue's slug, in the event slug for cross-venue uniqueness.
+     * @param eventSourceId the database ID of the importing source.
+     * @param existing the previously persisted entity, or null.
+     * @param slugDiscriminator appended to separate two sittings of one production on one day. Only
+     * the whole scrape can see a collision, so
+     * [EventUpsertService][de.norm.events.scraper.EventUpsertService] computes it. Null for the
+     * overwhelming majority.
      */
     @Suppress("LongParameterList") // A row-to-response mapper takes one parameter per column it cannot read off the entity.
     fun toEventEntity(
@@ -125,20 +111,20 @@ data class ScrapedEvent(
         slugDiscriminator: String? = null,
         licences: SourceLicences = SourceLicences.UNKNOWN_SOURCE
     ): EventEntity {
-        // Guard the doors ≤ start invariant: a source that lists them the wrong way round
-        // (e.g. SO36's "Einlass: 19:30, Beginn: 19:00") has transposed the labels — swap back.
+        // Doors ≤ start: a source listing them the wrong way round (SO36's "Einlass: 19:30, Beginn:
+        // 19:00") has transposed the labels.
         val (doors, start) = orderDoorsBeforeStart(doorsTime, startTime)
-        // A venue with no status badge writes the cancellation into the title (#1493). The title
-        // decides only where the scraper found nothing, and a marker glued to a name comes off.
+        // A venue with no status badge writes the cancellation into the title (#1493); the title decides
+        // only where the scraper found nothing.
         val badge = EventStatus.parseOrDefault(status)
         val badgeStatus = if (badge == EventStatus.SCHEDULED) parseTitleStatus(title) ?: badge.name else badge.name
-        // A "verlegt" badge sits on both ends of a move; which end this row is depends on the
-        // venue, which only this boundary knows (#1551).
+        // A "verlegt" badge sits on both ends of a move; which end this row is, only this boundary knows
+        // (#1551).
         val relocation = listOfNotNull(statusNote, title, subtitle, description).firstNotNullOfOrNull(::parseRelocation)
         val (storedStatus, relocatedTo) = resolveRelocation(badgeStatus, relocation, venueSlug)
         val storedTitle = stripTitleStatusMarker(title)
-        // Presale dearer than the door is a misread price, not a tariff (#1583). Named here so
-        // the nightly log says which source, and stored as read, because the fix is per parser.
+        // Presale dearer than the door is a misread price (#1583); named so the nightly log says which
+        // source, stored as read because the fix is per parser.
         if (presaleAboveDoor(pricePresale, priceBoxOffice)) {
             logger.at(Level.WARN) {
                 message = "Presale $pricePresale above box office $priceBoxOffice on '$title'"
@@ -147,17 +133,13 @@ data class ScrapedEvent(
         }
         val storedDescription = if (licences.withholdsDescription()) null else description
         val detected = DescriptionLanguage.detect(storedDescription)
-        // The second-language text is not scraped, it is derived from the description after the
-        // import commits. Rebuilding it as null here made every translated row "changed", wiped the
-        // translation on save, and bought it again the same night — the whole catalogue, daily
-        // (#1301). It survives exactly as long as the text it was made from does.
+        // The second-language text is derived after the import commits, not scraped. Rebuilding it as
+        // null made every translated row "changed", wiped the translation and bought it again the same
+        // night, the whole catalogue daily (#1301).
         val alt = existing?.takeIf { storedDescription != null && it.description == storedDescription }
-        // priceCurrency is intentionally omitted — all scraped venues are currently in Berlin
-        // (EUR). EventEntity defaults to "EUR". If non-EUR venues are added, introduce a
-        // priceCurrency field on ScrapedEvent and pass it through here.
+        // priceCurrency omitted: every scraped venue is in Berlin, and EventEntity defaults to "EUR".
         return EventEntity(
-            // Preserve id and sourceId from existing entity on updates; sourceId is the
-            // immutable identity key for matching scraped events to persisted rows.
+            // `sourceId` is the immutable identity key matching scraped events to persisted rows.
             id = existing?.id,
             sourceId = existing?.sourceId ?: sourceId,
             createdAt = existing?.createdAt,
@@ -165,12 +147,10 @@ data class ScrapedEvent(
             eventSourceId = eventSourceId,
             title = storedTitle,
             subtitle = subtitle,
-            // A source that forbids its prose gets none of it stored, not merely hidden (#807).
-            // Blanking on read would leave the § 16 reproduction in place, and this is the only
-            // point every import passes through.
+            // A source that forbids its prose gets none of it stored, not merely hidden (#807): blanking on
+            // read would leave the § 16 reproduction in place.
             description = storedDescription,
-            // The page tells a reader and a crawler which language the text is in, so a German
-            // description under English chrome is marked rather than mislabelled (ADR-026).
+            // The page tells a reader and a crawler which language the text is in (ADR-026).
             descriptionLanguage = detected?.language?.code,
             descriptionLanguageConfidence = detected?.confidence,
             descriptionAlt = alt?.descriptionAlt,
@@ -178,11 +158,9 @@ data class ScrapedEvent(
             descriptionAltOrigin = alt?.descriptionAltOrigin,
             descriptionAltEngine = alt?.descriptionAltEngine,
             descriptionAltSourceHash = alt?.descriptionAltSourceHash,
-            // Fall back to OTHER (not CONCERT) when the source provided no category,
-            // so unclassifiable events aren't silently labelled as concerts; then
-            // promote an under-classified festival title (a "Konzert"-labelled festival
-            // day, or a category-less "… Festival") to FESTIVAL, or recover a
-            // reading/exhibition/screening a venue filed under the genre field.
+            // OTHER, not CONCERT, when the source provided no category; then promote an under-classified
+            // festival title to FESTIVAL, or recover a reading/exhibition/screening filed under the genre
+            // field.
             eventType = resolveEventType(eventType, storedTitle, genre).name,
             status = storedStatus,
             relocatedTo = relocatedTo,
@@ -191,8 +169,8 @@ data class ScrapedEvent(
             doorsTime = doors,
             startTime = start,
             endDate = endDate,
-            // The database refuses a time without a date, so a scraper's slip surfaces here, not as a
-            // constraint violation halfway through a bulk save.
+            // The database refuses a time without a date, so a scraper's slip surfaces here, not halfway
+            // through a bulk save.
             endTime = endTime?.also { requireNotNull(endDate) { "endTime without endDate on $sourceId" } },
             imageUrl = if (licences.withholdsImage()) null else imageUrl,
             sourceUrl = sourceUrl,
@@ -209,22 +187,13 @@ data class ScrapedEvent(
 }
 
 /**
- * Resolves the stored [EventType] from a scraped [rawType], event [title], and raw
- * [genre] text.
- *
- * The source's own category wins, defaulting to `OTHER` when it provided none. Two
- * overrides apply, but only to an under-classified `CONCERT`/`OTHER` (an explicit
- * `PARTY`/`QUIZ`/`FESTIVAL`/… from the source is trusted and never overridden):
- *  1. a title that unambiguously names a festival ([isFestivalTitle]) → `FESTIVAL`,
- *     recovering festival days a venue mislabelled "Konzert" (Astra) and
- *     category-less "… Festival" titles (SO36, Privatclub);
- *  2. otherwise, a non-musical format cue in the genre field
- *     ([classifyByGenreKeyword]) → the matching `READING`/`EXHIBITION`/`SCREENING`,
- *     recovering a reading/exhibition/screening a venue filed under `genre` while
- *     leaving the title cue-less (Festsaal `Lesung`, Cassiopeia `Immersive
- *     Ausstellung`).
- *
- * The title-based festival signal takes precedence over the noisier genre field.
+ * Resolves the stored [EventType] from [rawType], [title] and raw [genre]. The source's own
+ * category wins, `OTHER` when none. Two overrides apply only to an under-classified
+ * `CONCERT`/`OTHER`: a title that unambiguously names a festival ([isFestivalTitle]), recovering
+ * festival days mislabelled "Konzert" (Astra) and category-less "… Festival" titles (SO36,
+ * Privatclub); else a non-musical format cue in the genre field ([classifyByGenreKeyword]),
+ * recovering Festsaal's `Lesung` and Cassiopeia's `Immersive Ausstellung`. The title signal
+ * takes precedence over the noisier genre field.
  */
 private fun resolveEventType(
     rawType: String?,
@@ -243,15 +212,12 @@ private fun resolveEventType(
 }
 
 /**
- * Returns the events that are not over, passing the number dropped to [onDropped].
- *
- * An event is over after its `endDate`, else after its date (ADR-029), and today counts as not
- * over because the show may still be happening. Before 06:00 on [clock], last night's event with
- * no stated end is not over either when it started at 22:00 or later, or names no start at all
- * (#299) — the BFF applies the same grace with the assumed slot, and keeping one row too many
- * here costs nothing. [EventUpsertService] is the source of truth — a scraper applies the same
- * cutoff earlier only to spare a detail-page fetch. The callback keeps the log statement at the
- * call site, so each caller logs under its own logger and names its own source.
+ * Returns the events that are not over, passing the number dropped to [onDropped]. An event is
+ * over after its `endDate`, else after its date (ADR-029), and today counts as not over. Before
+ * 06:00 on [clock], last night's event with no stated end is not over either when it started at
+ * 22:00 or later, or names no start (#299); the BFF applies the same grace with the assumed
+ * slot. [EventUpsertService] is the source of truth; a scraper applies the cutoff earlier only
+ * to spare a detail-page fetch. The callback keeps the log at the call site.
  */
 fun List<ScrapedEvent>.dropPastEvents(
     clock: Clock,
@@ -270,15 +236,12 @@ fun List<ScrapedEvent>.dropPastEvents(
 }
 
 /**
- * Folds the days of an exhibition into one run (ADR-029, #337).
- *
- * A gallery lists a show once per day it is open, and the page linked from every one of those
- * days is the same. [key] names that page as the run's `sourceId` — or null for a row that is
- * not one day of a run — and every `EXHIBITION` row sharing a key becomes one event: the earliest
- * day's row, dated from the first listed day to the last, identified by the key alone. A row that
- * already carries a span from its page widens the fold to it. A single listed day stays a single
- * day with no end, and every other kind of event passes through untouched, in its place: a
- * festival's days differ in lineup and are not folded.
+ * Folds the days of an exhibition into one run (ADR-029, #337): a gallery lists a show once per
+ * day, linking the same page. [key] names that page as the run's `sourceId`, or null for a row
+ * that is not one day of a run, and every `EXHIBITION` row sharing a key becomes one event dated
+ * from the first listed day to the last. A row already carrying a span widens the fold. A single
+ * day stays a single day; every other kind of event passes through, since a festival's days
+ * differ in lineup.
  */
 fun List<ScrapedEvent>.collapseExhibitionRuns(key: (ScrapedEvent) -> String?): List<ScrapedEvent> {
     val runKey = { event: ScrapedEvent -> key(event)?.takeIf { event.eventType == EventType.EXHIBITION.name } }
@@ -316,20 +279,18 @@ data class ScrapedArtist(
     /** Room / stage the artist plays at this event (e.g. "Panorama Bar"). Null for single-room venues. */
     val stage: String? = null,
     /**
-     * The name was read off the event title by [headlinersFromTitle], not off a line-up element,
-     * a support field or a structured act list. Provenance, not a verdict: a touring act on its
-     * first Berlin date is title-derived and real (#1145).
+     * The name was read off the event title by [headlinersFromTitle], not a line-up element.
+     * Provenance, not a verdict: a touring act on its first Berlin date is title-derived and real
+     * (#1145).
      */
     val titleDerived: Boolean = false
 ) {
     /**
-     * Converts this scraped artist into an [EventArtistEntity] join-table entry.
+     * Converts this scraped artist into an [EventArtistEntity], parsing [role] with
+     * [ArtistRole.HEADLINER] as the fallback.
      *
-     * Parses the raw [role] string into a known [ArtistRole], falling back to
-     * [ArtistRole.HEADLINER] for unrecognized values.
-     *
-     * @param eventId the database ID of the event this artist is linked to.
-     * @param artistId the resolved database ID of the artist.
+     * @param eventId the event's database ID.
+     * @param artistId the resolved artist's database ID.
      * @param billingOrder the position in the lineup (0-based).
      */
     fun toEventArtistEntity(

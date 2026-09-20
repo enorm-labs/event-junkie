@@ -9,29 +9,17 @@ import java.time.Instant
 import java.util.UUID
 
 /**
- * Records what each run extracted, and says so when a source starts publishing less (#472).
+ * Records what each run extracted, and says so when a source starts publishing less (#472). #415
+ * catches a scraper that broke completely; the common failure is partial: one selector stops
+ * matching, the importer writes the same forty events, every one now missing a price, and no
+ * count-based alert fires.
  *
- * #415 alerts when a source imports **zero** events, which catches a scraper that broke completely.
- * The quieter and far more common failure is partial: a venue moves the price into a different
- * element, one selector stops matching, and the importer keeps running, reports success and writes
- * the same forty events it always does — every one now missing a price. **Counts are unchanged, so
- * no count-based alert fires.** The data just gets worse, and somebody finds it weeks later by
- * reading the site.
- *
- * **The baseline is derived from history, never from an expectation**, and that is what makes this
- * useful rather than annoying. It is the **median** coverage ratio over the last [baselineRuns] runs
- * of *that source*. Median rather than max, because a max makes one lucky run the standard forever;
- * per source, because a venue that has never published a price has a baseline of 0% and is never
- * flagged for missing one. A global "every event should have a price" expectation would flag half
- * the corpus permanently, and a permanently red dashboard stops being read. It also means a field
- * that **starts** arriving raises its own baseline, with no code change and no list to maintain.
- *
- * **Two guards, because without both this is a noise generator** — and a muted alert is strictly
- * worse than one never built:
- * - **A large enough sample.** A run that scraped three events proves nothing; below [minSampleSize]
- *   the run is recorded and never compared.
- * - **Persistence.** Flag on the *second* consecutive run below baseline. A single run can
- *   legitimately skew: a week of club nights has no lineup and no support act.
+ * The baseline is the median coverage ratio over the last [baselineRuns] runs of that source,
+ * never an expectation: median so one lucky run is not the standard, per source so a venue that
+ * never publishes a price has a baseline of 0% and is never flagged. A field that starts
+ * arriving raises its own baseline. Two guards, or this is a noise generator: a sample of at
+ * least [minSampleSize], and persistence, flagging on the second consecutive run below baseline,
+ * since a week of club nights legitimately has no lineup.
  */
 @Service
 class FieldCoverageService(
@@ -45,13 +33,9 @@ class FieldCoverageService(
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Records one run's coverage and evaluates every field against its baseline.
-     *
-     * Called after a successful scrape, from the events the scraper produced rather than from the
-     * rows in the database. That distinction matters: this measures **what was extracted**, which is
-     * what a broken selector affects, whereas the table also holds everything previous runs wrote.
-     *
-     * Returns the fields that flagged, which is what the caller logs and what the tests assert.
+     * Records one run's coverage and evaluates every field against its baseline, from the events the
+     * scraper produced rather than the rows in the database, which also hold what earlier runs
+     * wrote. Returns the fields that flagged.
      */
     @Suppress("TooGenericExceptionCaught") // Intentional: measurement must not be able to fail an import
     suspend fun record(
@@ -61,12 +45,10 @@ class FieldCoverageService(
         try {
             measure(source, events)
         } catch (e: Exception) {
-            // **A measurement that can fail an import is worse than no measurement**, and the
-            // guarantee lives here rather than at the call site so every caller gets it without
-            // remembering to. This runs after the upsert has already committed, so a throw would
-            // report a failed run that wrote every event, consume retry budget, and back the source
-            // off — the measurement costing exactly the thing it exists to observe. The visible
-            // cost is a gap in one source's coverage history, which is itself detectable.
+            // A measurement that can fail an import is worse than no measurement, guaranteed here so every
+            // caller gets it. This runs after the upsert committed, so a throw would report a failed run
+            // that wrote every event and back the source off. The visible cost is a gap in one source's
+            // history, itself detectable.
             logger.warn(e) { "Could not record field coverage for '${source.slug}'; its history will have a gap" }
             emptyList()
         }
@@ -75,9 +57,8 @@ class FieldCoverageService(
         source: EventSourceEntity,
         events: Collection<ScrapedEvent>
     ): List<CoverageFinding> {
-        // An unpersisted source has no history to compare against, and zero events is #415's alarm
-        // rather than this one — a row of all-zero coverage would drag every baseline down and make
-        // the next real run look like the regression.
+        // An unpersisted source has no history, and zero events is #415's alarm: a row of all-zero
+        // coverage would drag every baseline down.
         val sourceId = source.id
         if (sourceId == null || events.isEmpty()) return emptyList()
 
@@ -91,7 +72,7 @@ class FieldCoverageService(
             metrics.publishFieldCoverage(source.slug, field.key, ratio)
 
             // History BEFORE this run's row is written, so the baseline never includes the run it is
-            // judging. Written after, so a run that throws mid-evaluation leaves no half-record.
+            // judging; written after, so a run that throws leaves no half-record.
             val history = stats.findRecent(sourceId, field.key, baselineRuns + 1).toList()
             stats.save(
                 ImportRunFieldStatsEntity(
@@ -112,10 +93,8 @@ class FieldCoverageService(
     }
 
     /**
-     * The rule, in one place.
-     *
-     * `null` means "nothing to say" — either there is not enough history for a baseline, the sample
-     * is too small to compare, or the coverage is fine.
+     * The rule, in one place. `null` means nothing to say: not enough history, too small a sample,
+     * or fine.
      */
     private fun evaluate(
         field: TrackedField,
@@ -135,9 +114,8 @@ class FieldCoverageService(
 
             !isMaterialDrop(ratio, baseline) -> null
 
-            // Guard two: the previous run must have been below the SAME baseline. Comparing it
-            // against that number rather than against its own history is deliberate — otherwise a
-            // slow two-run slide would move the goalposts with it and never flag.
+            // Guard two: the previous run must have been below the SAME baseline, or a slow two-run slide
+            // would move the goalposts with it.
             !isMaterialDrop(previous.first(), baseline) -> null
 
             else -> CoverageFinding(field, observed = ratio, baseline = baseline, sampleSize = sampleSize)
@@ -145,13 +123,9 @@ class FieldCoverageService(
     }
 
     /**
-     * **Both conditions, and the second is what stops this being noise.**
-     *
-     * Halving is the relative test, and it is the one that catches a selector breaking — coverage
-     * goes to zero or near it. On its own it would fire on a field sitting at 8% that drifts to 3%,
-     * which is a difference of five events in a hundred and almost certainly the venue rather than
-     * us. The twenty-point floor is what excludes that, and it is why a genuinely low-coverage field
-     * is effectively unflaggable — correctly, because there is no signal there to lose.
+     * Both conditions. Halving catches a selector breaking; on its own it would fire on a field at
+     * 8% drifting to 3%, five events in a hundred and almost certainly the venue. The twenty-point
+     * floor excludes that, so a genuinely low-coverage field is effectively unflaggable, correctly.
      */
     private fun isMaterialDrop(
         observed: Double,
@@ -166,11 +140,8 @@ class FieldCoverageService(
     }
 
     /**
-     * Sets or clears the flag on the source row.
-     *
-     * **Cleared when a run looks normal again**, which is not optional: a flag that only ever gets
-     * set is a flag that is permanently on within a month, and then it is decoration. The clear is
-     * what makes the set mean something.
+     * Sets or clears the flag on the source row. Cleared when a run looks normal again, or the flag
+     * is permanently on within a month.
      */
     private suspend fun applyFlag(
         source: EventSourceEntity,
@@ -187,9 +158,7 @@ class FieldCoverageService(
 
         val reason = findings.joinToString("; ") { it.describe() }
         eventSourceRepository.setFlag(id, Instant.now(clock), reason.take(MAX_REASON_LENGTH))
-        // WARN rather than INFO: this is the line that should reach a human. It names the source, the
-        // field, the baseline and the observed ratio, so the log entry alone is enough to decide
-        // whether to look at the venue's page.
+        // WARN: the line that should reach a human, naming source, field, baseline and observed ratio.
         logger.warn { "Field coverage dropped for source '${source.slug}': $reason" }
     }
 
@@ -198,9 +167,8 @@ class FieldCoverageService(
         private const val DEFAULT_MIN_SAMPLE = 10
 
         /**
-         * At least three prior runs before a baseline means anything. Two would make the median the
-         * mean of two numbers, which is exactly the "one lucky run is the standard" failure the
-         * median was chosen to avoid.
+         * At least three prior runs; two would make the median the mean of two numbers, the "one lucky
+         * run" failure the median avoids.
          */
         const val MIN_BASELINE_RUNS = 3
 

@@ -18,28 +18,17 @@ import java.net.URI
 import java.nio.charset.Charset
 
 /**
- * Reactive HTML fetcher with conditional-request support and Jsoup parsing.
+ * Reactive HTML fetcher with conditional-request support and Jsoup parsing, over the shared
+ * politeness-throttled scraper [WebClient] ([SCRAPER_WEB_CLIENT]). Jsoup's `parse()` is
+ * CPU-bound, so it runs on an injected IO dispatcher.
  *
- * Uses the shared, politeness-throttled scraper [WebClient] ([SCRAPER_WEB_CLIENT]) for
- * non-blocking HTTP fetching and Jsoup for HTML parsing. Supports ETag / Last-Modified
- * conditional headers to skip re-downloading pages that haven't changed since the last import.
+ * Response bodies are read as bytes, not a decoded `String`: a retro host (Arcanoa) answers
+ * `Content-Type: text/html` with no `charset` while the page is Latin-1, and Spring's
+ * `StringDecoder` falls back to UTF-8, turning every umlaut into a replacement character. Raw
+ * bytes let Jsoup apply its detection chain (BOM, HTTP `charset`, `<meta charset>`, UTF-8).
  *
- * Jsoup's `parse()` is a CPU-bound blocking call, so it runs on an
- * injected IO dispatcher to avoid blocking the coroutine event loop.
- *
- * Response bodies are read as **bytes**, not as a decoded `String`: a retro venue host
- * (Arcanoa) answers `Content-Type: text/html` with no `charset` parameter while the page
- * is Latin-1, and Spring's `StringDecoder` falls back to UTF-8 in that case — which turns
- * every umlaut into a replacement character before a scraper ever sees it. Handing Jsoup
- * the raw bytes lets it apply the standard detection chain (BOM → HTTP `charset` →
- * `<meta charset>` → UTF-8), so the declared encoding wins wherever it is stated.
- *
- * Venues whose events come from a JSON/API source rather than a scrapeable HTML page use
- * [ApiClient] instead — it shares the same [WebClient] bean (and therefore the same per-host
- * throttle and User-Agent), so this class stays focused purely on HTML.
- *
- * Per-host politeness throttling is handled transparently by [PerHostThrottlingFilter],
- * registered as a filter on the shared [WebClient] (see [ScraperHttpClientConfig]).
+ * JSON/API sources use [ApiClient], which shares the same [WebClient] bean and so the same
+ * per-host throttle ([PerHostThrottlingFilter], [ScraperHttpClientConfig]) and User-Agent.
  */
 @Component
 class HtmlFetcher(
@@ -49,18 +38,16 @@ class HtmlFetcher(
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Fetches and parses HTML from [url] with optional conditional-request headers.
+     * Fetches and parses HTML from [url] with optional conditional-request headers. With both
+     * [etag] and [lastModified] `null` the GET is unconditional; a 304 returns
+     * [FetchResult.NotModified].
      *
-     * If both [etag] and [lastModified] are `null`, an unconditional GET is performed.
-     * If the server responds with 304 Not Modified, returns [FetchResult.NotModified].
-     * Otherwise, parses the HTML body and returns [FetchResult.Success].
-     *
-     * @param etag the ETag value from a previous fetch (sent as `If-None-Match`).
-     * @param lastModified the Last-Modified value from a previous fetch (sent as `If-Modified-Since`).
+     * @param etag the ETag from a previous fetch (`If-None-Match`).
+     * @param lastModified the Last-Modified from a previous fetch (`If-Modified-Since`).
      * @param cookies sent verbatim, for a source that serves its programme only to a request that
-     *   carries one. ROSA's age gate is the case: without `rosa_age_ok` the page renders the gate
-     *   and no events. A cookie belongs to one venue, so the value stays in that importer.
-     * @return a [FetchResult] indicating whether the page was modified or not.
+     * carries one: without `rosa_age_ok` ROSA renders its age gate and no events. A cookie belongs
+     * to one venue, so the value stays in that importer.
+     * @return a [FetchResult].
      */
     suspend fun fetch(
         url: String,
@@ -68,18 +55,16 @@ class HtmlFetcher(
         lastModified: String? = null,
         cookies: Map<String, String> = emptyMap()
     ): FetchResult {
-        // `url` as a payload field rather than inside the sentence (#945): it is the value the
-        // "did this source 304 or actually change" question filters on. The two validators stay in
-        // the text — opaque per-page hashes make a high-cardinality field nothing aggregates on.
+        // `url` as a payload field (#945): the value the "did this source 304 or change" question
+        // filters on. The validators stay in the text, opaque hashes nothing aggregates on.
         logger.at(Level.INFO) {
             message = "Fetching source page (etag=$etag, lastModified=$lastModified)"
             payload = mapOf(LogFields.URL to url)
         }
         return webClient
             .get()
-            // Pass a pre-built URI so WebClient uses the (already percent-encoded) URL verbatim.
-            // Passing a String treats it as a URI template and re-encodes '%', double-encoding
-            // already-escaped paths (e.g. non-ASCII slugs) into a 404.
+            // A pre-built URI so WebClient uses the percent-encoded URL verbatim; a String is a URI template
+            // and re-encodes '%', double-encoding non-ASCII slugs into a 404.
             .uri(URI.create(url))
             .apply {
                 etag?.let { header("If-None-Match", it) }
@@ -91,12 +76,8 @@ class HtmlFetcher(
     }
 
     /**
-     * Fetches and parses HTML from [url] without conditional-request headers.
-     *
-     * Convenience method for fetching secondary pages (e.g. event detail pages)
-     * where change detection is not needed. Returns a parsed Jsoup [Document]
-     * with parsing executed on the IO dispatcher to avoid blocking the coroutine
-     * event loop.
+     * Fetches and parses HTML from [url] without conditional headers, for secondary pages; parsing
+     * on the IO dispatcher.
      *
      * @return a parsed Jsoup [Document].
      */
@@ -106,16 +87,11 @@ class HtmlFetcher(
     }
 
     /**
-     * Fetches raw HTML from [url] without conditional-request headers.
+     * Fetches raw HTML from [url] without conditional headers. Prefer [fetchDocument], which also
+     * lets Jsoup detect the encoding from `<meta>`. Fails fast with [HttpFetchException] on any
+     * 4xx/5xx so error pages are never parsed as event data.
      *
-     * Lower-level convenience method for fetching secondary pages (e.g. event detail pages)
-     * where change detection is not needed. Prefer [fetchDocument] when a parsed [Document]
-     * is needed, as it also moves Jsoup parsing to the IO dispatcher and lets Jsoup detect
-     * the page's encoding from its `<meta>` tag. Fails fast with [HttpFetchException] on any
-     * 4xx/5xx so error pages are never parsed as valid event data.
-     *
-     * @return the raw HTML body as a string, decoded with the charset the server declared
-     *   (UTF-8 when it declared none — the meta tag cannot be honoured without parsing).
+     * @return the body decoded with the charset the server declared, UTF-8 when it declared none.
      */
     suspend fun fetchHtml(url: String): String {
         val body = fetchRawBody(url)
@@ -123,17 +99,14 @@ class HtmlFetcher(
     }
 
     /**
-     * Fetches [url] as raw bytes, failing fast with [HttpFetchException] on any 4xx/5xx.
-     *
-     * The bytes stay undecoded so the caller can apply the page's own declared encoding
-     * (see the class KDoc) rather than Spring's UTF-8 default.
+     * Fetches [url] as raw bytes, failing fast with [HttpFetchException] on any 4xx/5xx; undecoded
+     * so the caller can apply the page's own encoding (class KDoc).
      */
     private suspend fun fetchRawBody(url: String): RawBody {
         logger.debug { "Fetching HTML body: $url" }
         return webClient
             .get()
-            // Pass a pre-built URI so WebClient uses the (already percent-encoded) URL verbatim
-            // instead of re-encoding '%' and double-encoding non-ASCII slugs into a 404.
+            // A pre-built URI, so '%' is not re-encoded into a 404.
             .uri(URI.create(url))
             .awaitExchange { response ->
                 // Fail fast on HTTP errors to avoid returning error pages as valid data
@@ -145,8 +118,7 @@ class HtmlFetcher(
     }
 
     /**
-     * Processes the HTTP response: returns [FetchResult.NotModified] on 304,
-     * or parses the body into a [FetchResult.Success] otherwise.
+     * [FetchResult.NotModified] on 304, else the body parsed into a [FetchResult.Success].
      */
     private suspend fun handleResponse(
         response: ClientResponse,
@@ -183,11 +155,8 @@ class HtmlFetcher(
     }
 
     /**
-     * Parses a raw HTML body into a Jsoup [Document] on the IO dispatcher to avoid blocking
-     * the coroutine event loop.
-     *
-     * The server-declared charset is passed through when there is one; otherwise `null` hands
-     * Jsoup the detection job (BOM, then `<meta charset>`, then UTF-8).
+     * Parses a raw HTML body on the IO dispatcher. The server-declared charset is passed through when
+     * there is one; otherwise `null` hands Jsoup the detection job.
      */
     private suspend fun parseHtml(
         body: RawBody,
@@ -206,10 +175,8 @@ class HtmlFetcher(
             ?.name()
 
     /**
-     * An undecoded response body plus the charset name the server declared for it, if any.
-     *
-     * Deliberately not a `data class`: the payload is a [ByteArray], whose identity-based
-     * `equals`/`hashCode` would make generated ones misleading.
+     * An undecoded response body plus the charset the server declared, if any. Not a `data class`:
+     * a [ByteArray] payload would make generated `equals`/`hashCode` misleading.
      */
     private class RawBody(
         val bytes: ByteArray,
@@ -237,17 +204,14 @@ sealed interface FetchResult {
 }
 
 /**
- * Exception thrown when an HTTP fetch returns an error status code (4xx/5xx).
- *
- * Propagates up to [EventImportService.importFromSource]'s catch block where it is
- * recorded as a failure on the event source.
+ * Thrown when an HTTP fetch returns 4xx/5xx; recorded as a failure on the source by
+ * [EventImportService.importFromSource].
  */
 class HttpFetchException(
     /**
-     * Kept as a property rather than only being formatted into the message (#415): the metric tag
-     * `importer.scrape.failures{reason}` has to tell a 403 from a 500 from a parse failure, and
-     * re-extracting a number from a human-readable string to do that is the kind of parsing that
-     * breaks the next time someone improves the wording.
+     * A property rather than only formatted into the message (#415): `importer.scrape.failures{reason}`
+     * has to tell a 403 from a 500, and re-extracting a number from prose breaks the next time
+     * someone improves the wording.
      */
     val statusCode: Int,
     url: String

@@ -20,13 +20,9 @@ import java.time.LocalTime
 import java.time.ZoneOffset
 
 /**
- * Unit tests for the date-bounded pipeline logic in [EventUpsertService]: the
- * ingestion-side past-event filter (`dropPastEvents`) and the cleanup-side stale
- * removal (`removeStaleEvents`).
- *
- * Uses a fixed clock pinned to 2026-06-15 so all "today"/"tomorrow" calculations
- * are deterministic. Tests exercise both through the public
- * [EventUpsertService.upsertAndCleanup] method.
+ * The date-bounded pipeline logic in [EventUpsertService]: `dropPastEvents` on intake and
+ * `removeStaleEvents` on cleanup, through [EventUpsertService.upsertAndCleanup] with a clock
+ * pinned to 2026-06-15.
  */
 class EventUpsertServiceStaleCleanupTest {
     private val eventRepository: EventRepository = mockk(relaxed = true)
@@ -104,9 +100,8 @@ class EventUpsertServiceStaleCleanupTest {
         @Test
         fun `does not delete today's event even if missing from scraped results`() =
             runTest {
-                // Scenario: A today-event exists in DB but the venue website no longer
-                // lists it (common when venues show only "upcoming" from tomorrow).
-                // The scraper returns only a tomorrow event.
+                // A today-event exists in the DB but the venue no longer lists it; the scraper returns only a
+                // tomorrow event.
                 val scrapedEvents =
                     listOf(
                         scrapedEvent(title = "Tomorrow Gig", eventDate = tomorrow, sourceId = "src:tomorrow-gig")
@@ -114,8 +109,7 @@ class EventUpsertServiceStaleCleanupTest {
 
                 val tomorrowEvent = existingEvent(id = 2L, eventDate = tomorrow, sourceId = "src:tomorrow-gig")
 
-                // The repository query uses tomorrow..maxScrapedDate, so today's event
-                // should never even be returned by the query.
+                // The query uses tomorrow..maxScrapedDate, so today's event is never returned.
                 val fromDateSlot = slot<LocalDate>()
                 coEvery {
                     eventRepository.findByEventSourceIdAndEventDateBetween(
@@ -137,9 +131,7 @@ class EventUpsertServiceStaleCleanupTest {
         @Test
         fun `deletes stale tomorrow event that is no longer listed`() =
             runTest {
-                // Scenario: Tomorrow's event was previously imported but is now gone
-                // from the website (genuinely cancelled). Another event exists for the
-                // day after tomorrow.
+                // Tomorrow's event is gone from the website (genuinely cancelled).
                 val dayAfterTomorrow = tomorrow.plusDays(1)
 
                 val scrapedEvents =
@@ -168,9 +160,7 @@ class EventUpsertServiceStaleCleanupTest {
         @Test
         fun `does not delete today's cancelled event - it expires naturally`() =
             runTest {
-                // Scenario: Today's event was genuinely cancelled (removed from website).
-                // The scraper returns events starting from 3 days out.
-                // The event stays in DB until it becomes a past event — acceptable trade-off.
+                // Today's event was genuinely cancelled; it stays until it becomes past, the accepted trade-off.
                 val threeDaysOut = today.plusDays(3)
                 val fourDaysOut = today.plusDays(4)
 
@@ -226,8 +216,7 @@ class EventUpsertServiceStaleCleanupTest {
         @Test
         fun `does not delete events beyond the max scraped date`() =
             runTest {
-                // Scenario: Events exist in the DB beyond the scraper's date range
-                // (e.g. from a previous deeper scrape). They should not be touched.
+                // Events beyond the scraper's date range (a previous deeper scrape) are not touched.
                 val scrapedDate = tomorrow
 
                 val scrapedEvents =
@@ -236,8 +225,7 @@ class EventUpsertServiceStaleCleanupTest {
                     )
 
                 val tomorrowEvent = existingEvent(id = 1L, eventDate = scrapedDate, sourceId = "src:tomorrow")
-                // This event is beyond maxScrapedDate — it won't be in the query results
-                // because the repository query is bounded by toDate=scrapedDate
+                // Beyond maxScrapedDate, so not in the query results.
 
                 val toDateSlot = slot<LocalDate>()
                 coEvery {
@@ -261,9 +249,7 @@ class EventUpsertServiceStaleCleanupTest {
         @Test
         fun `all scraped events on same date uses that date as both min and max`() =
             runTest {
-                // Scenario: All scraped events are for the same day (e.g. a single-day festival).
-                // The cleanup window should be tomorrow..thatDate. If all events are for tomorrow,
-                // both bounds collapse to the same date.
+                // All scraped events on one day: the cleanup window collapses to tomorrow..thatDate.
                 val scrapedEvents =
                     listOf(
                         scrapedEvent(title = "Festival Act 1", eventDate = tomorrow, sourceId = "src:act-1"),
@@ -294,8 +280,7 @@ class EventUpsertServiceStaleCleanupTest {
         @Test
         fun `drops scraped events before today and keeps today onward`() =
             runTest {
-                // Calendar-style sources re-list past shows; the pipeline must drop them
-                // before upsert so they are never resurrected. Today is kept (may still run).
+                // Calendar-style sources re-list past shows; they are dropped before upsert. Today is kept.
                 val scrapedEvents =
                     listOf(
                         scrapedEvent(title = "Old Show", eventDate = today.minusDays(1), sourceId = "src:past"),
@@ -310,8 +295,8 @@ class EventUpsertServiceStaleCleanupTest {
 
                 // The past event is dropped before upsert; today + future survive.
                 upserted.total shouldBe 2
-                // Nothing existed beforehand (findBySourceIdIn is stubbed empty), so both are inserts
-                // rather than updates — the distinction `importer.events.written{operation}` reports.
+                // Nothing existed beforehand, so both are inserts, the distinction
+                // `importer.events.written{operation}` reports.
                 upserted.inserted shouldBe 2
                 upserted.updated shouldBe 0
                 upserted.skipped shouldBe 0
@@ -342,9 +327,7 @@ class EventUpsertServiceStaleCleanupTest {
         @Test
         fun `skips cleanup when all scraped events are for today`() =
             runTest {
-                // Scenario: The scraper returns only today's events. The cleanup window
-                // would be tomorrow..today which is an empty/invalid range, but the
-                // maxScrapedDate (today) < tomorrow, so no existing events should be found.
+                // Only today's events: the window would be tomorrow..today, an empty range.
                 val scrapedEvents =
                     listOf(
                         scrapedEvent(title = "Today Show", eventDate = today, sourceId = "src:today-show")
@@ -362,8 +345,7 @@ class EventUpsertServiceStaleCleanupTest {
 
                 service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
 
-                // The window is tomorrow..today — the repository should handle this
-                // as an empty range and return no results
+                // An empty range returns no results.
                 fromDateSlot.captured shouldBe tomorrow
                 toDateSlot.captured shouldBe today
 
@@ -375,9 +357,8 @@ class EventUpsertServiceStaleCleanupTest {
 
     /**
      * Two sittings of one production on one day, and the same night published twice, arrive
-     * looking identical: same venue, same date, same title. The start time is what separates
-     * them, and both `event.slug` and `event.source_id` are `UNIQUE`, so getting it wrong either
-     * loses a real event or fails the whole import.
+     * identical: the start time separates them, and both `event.slug` and `event.source_id` are
+     * `UNIQUE`, so getting it wrong loses a real event or fails the whole import.
      */
     @Nested
     inner class SameDayDuplicatesAndSittings {
@@ -395,8 +376,8 @@ class EventUpsertServiceStaleCleanupTest {
 
                 service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
 
-                // Both survive, and *both* carry the time — not just the later one, so neither
-                // reads as the "real" event and page order cannot swap two public URLs.
+                // Both survive and both carry the time, so neither reads as the real event and page order
+                // cannot swap two public URLs.
                 saved.captured.map { it.slug } shouldBe
                     listOf(
                         "$tomorrow-test-venue-schwanensee-1500",
@@ -407,8 +388,7 @@ class EventUpsertServiceStaleCleanupTest {
         @Test
         fun `drops a night the venue published twice at the same time`() =
             runTest {
-                // SO36's two-day festival: a combi ticket and a day-one ticket, same 19:30 start.
-                // Only one event is happening, and the first by page order wins.
+                // SO36's two-day festival: a combi ticket and a day-one ticket, same 19:30 start; first wins.
                 val scrapedEvents =
                     listOf(
                         scrapedEvent("Female-Fronted", tomorrow, "so36:93090", LocalTime.of(19, 30)),
@@ -427,8 +407,8 @@ class EventUpsertServiceStaleCleanupTest {
         @Test
         fun `collapses same-day duplicates that carry no time at all`() =
             runTest {
-                // Without times there is nothing to tell two sittings apart, and a venue that
-                // publishes none has far more likely listed one night twice.
+                // Without times there is nothing to tell two sittings apart, and a venue that publishes none
+                // has more likely listed one night twice.
                 val scrapedEvents =
                     listOf(
                         scrapedEvent("Untimed Show", tomorrow, "src:a"),
@@ -445,10 +425,8 @@ class EventUpsertServiceStaleCleanupTest {
         @Test
         fun `collapses two sittings that share one sourceId, whatever their times`() =
             runTest {
-                // Admiralspalast keys on the show and date, not the session, so its matinee and
-                // evening arrive under one id. `event.source_id` is UNIQUE, so they cannot both be
-                // stored: without this guard both entities carry the same database id and saveAll
-                // issues two UPDATEs to one row, whose slug then flips on every import.
+                // Admiralspalast keys on the show and date, so its matinee and evening arrive under one id;
+                // without this guard saveAll issues two UPDATEs to one row, whose slug flips every import.
                 val scrapedEvents =
                     listOf(
                         scrapedEvent("Mamma Mia", tomorrow, "admiralspalast:mamma-mia-2027-09-18", LocalTime.of(15, 0)),
@@ -459,16 +437,15 @@ class EventUpsertServiceStaleCleanupTest {
 
                 service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
 
-                // One row, and no discriminator — the surviving event has no same-slug sibling, so
-                // its slug must not churn just because the venue lists a second sitting.
+                // One row, no discriminator: its slug must not churn because the venue lists a second sitting.
                 saved.captured.map { it.slug } shouldBe listOf("$tomorrow-test-venue-mamma-mia")
             }
 
         @Test
         fun `frees a stale row's slug before inserting the row that needs it`() =
             runTest {
-                // The SO36 failure: a stale row holds the slug an incoming row is about to take.
-                // Deleting must happen first, or the INSERT collides and fails the whole batch.
+                // The SO36 failure: a stale row holds the slug an incoming row is about to take, so deleting
+                // must happen first.
                 val stale = existingEvent(id = 7L, eventDate = tomorrow, sourceId = "so36:90006")
                 coEvery {
                     eventRepository.findByEventSourceIdAndEventDateBetween(eventSourceId, any(), any())
@@ -489,12 +466,8 @@ class EventUpsertServiceStaleCleanupTest {
     }
 
     /**
-     * The counts `importer.events.dropped` is built from (#982).
-     *
-     * Asserted on [UpsertOutcome] rather than on a `MeterRegistry`, because that is where the
-     * boundary is: this service computes the numbers and deliberately does **not** hold the source
-     * slug the tag needs, so `EventImportService` is what records them. A test that reached for a
-     * registry here would be testing the wrong object.
+     * The counts `importer.events.dropped` is built from (#982), asserted on [UpsertOutcome] because
+     * this service does not hold the source slug the tag needs; `EventImportService` records them.
      */
     @Nested
     inner class DropCounts {
@@ -533,8 +506,7 @@ class EventUpsertServiceStaleCleanupTest {
 
                 val outcome = service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
 
-                // `total` means "events this source holds" and reaches event_source.last_event_count.
-                // Folding a dropped event into it would move a number every dashboard reads.
+                // `total` reaches event_source.last_event_count; a dropped event must not move it.
                 outcome.total shouldBe 1
                 outcome.droppedPast shouldBe 1
             }

@@ -10,36 +10,22 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import kotlin.math.abs
 
-// Shared date parsing utilities for venue scrapers. The clock readers are in
-// TimeParsingExtensions.
-//
-// Berlin venue websites write a date three common ways:
-// 1. ISO 8601 datetime — embedded in schema.org MusicEvent JSON-LD startDate
-//    fields (e.g. "2026-05-16T20:00"). Read by [parseIsoDate].
-// 2. European short date DD/MM/YY — used by some WordPress-based venue
-//    sites (e.g. "21/09/26"). Parsed by [parseShortDate].
-// 3. German dotted date DD.MM.YYYY / DD.MM.YY — rendered on many Berlin
-//    venue pages (e.g. "10.07.2026", "29.06.26"). Parsed by [parseGermanDate]
-//    (four-digit year) and [parseGermanShortDate] (two-digit year).
-//
-// All functions follow a null-safe convention: they return null for
-// unparseable, blank, or missing input rather than throwing exceptions.
+// Shared date parsing for venue scrapers; the clock readers are in TimeParsingExtensions. Berlin
+// venue websites write a date three ways: ISO 8601 in schema.org JSON-LD ([parseIsoDate]),
+// `DD/MM/YY` on some WordPress sites ([parseShortDate]), and German dotted `DD.MM.YYYY` /
+// `DD.MM.YY` ([parseGermanDate], [parseGermanShortDate]). Every function returns null for
+// unparseable input rather than throwing.
 
 /**
- * Sentinel for a [ScrapedEvent.eventDate] that could not be resolved on the
- * page being parsed. Two-page importers use it on the overview/detail step that
- * lacks a date (e.g. Astra's dateless featured teaser, or a Madame Claude detail
- * page with no parseable date) and rely on the other page to supply the real
- * value during merge. [AbstractTwoPageWebsiteImporter] drops any event still
- * carrying this sentinel after the merge so it never reaches persistence.
+ * Sentinel for a [ScrapedEvent.eventDate] the page being parsed could not resolve. Two-page
+ * importers use it on the step that lacks a date and rely on the other page during merge;
+ * [AbstractTwoPageWebsiteImporter] drops any event still carrying it after the merge.
  */
 val UNRESOLVED_EVENT_DATE: LocalDate = LocalDate.MIN
 
 /**
- * The wall clock every venue in this project programmes in.
- *
- * A scraper needs it for two jobs: to read an epoch or offset-stamped instant as the local time the
- * venue printed, and to give a [Clock] the zone whose "today" decides the year of a year-less date.
+ * The wall clock every venue here programmes in: to read an epoch or offset-stamped instant as
+ * the venue's local time, and to give a [Clock] the zone whose "today" decides a year-less date.
  */
 val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
 
@@ -53,15 +39,9 @@ private val GERMAN_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPatte
 private val GERMAN_SHORT_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("d.M.yy")
 
 /**
- * Parses the date portion from an ISO 8601 date-time string.
- *
- * Handles both full datetime (`"2026-05-16T20:00"`) and date-only
- * (`"2026-05-16"`) inputs — [String.substringBefore] returns the whole
- * string when "T" is absent.
- *
- * This is the standard date format used by schema.org `MusicEvent`
- * JSON-LD blocks (`startDate` field), which many venue websites embed
- * for SEO. Returns `null` for unparseable input.
+ * Parses the date portion from an ISO 8601 date-time, or a date-only string
+ * ([String.substringBefore] returns the whole string when "T" is absent). The format schema.org
+ * `MusicEvent` JSON-LD uses. Returns `null` for unparseable input.
  */
 fun parseIsoDate(dateTimeStr: String): LocalDate? =
     try {
@@ -71,13 +51,9 @@ fun parseIsoDate(dateTimeStr: String): LocalDate? =
     }
 
 /**
- * Parses the date from a Kulturhäuser-platform `data-realdate` attribute
- * (e.g. "2026-07-08 19:00:00 +0200"), reading only the leading ISO date.
- *
- * Shared by venues on the Kulturhäuser platform (Astra, Lido). Preferred over
- * a human `DD.MM.YY` rendering because it carries a full four-digit year and no
- * two-digit-year pivot ambiguity. Returns `null` when the attribute is absent
- * (e.g. some detail headers) or unparseable, so the caller can fall back.
+ * Parses the date from a Kulturhäuser-platform `data-realdate` attribute, reading only the
+ * leading ISO date of "2026-07-08 19:00:00 +0200"; preferred over a `DD.MM.YY` rendering because
+ * it carries a four-digit year. Shared by Astra and Lido. `null` when absent or unparseable.
  */
 fun parseRealDate(attr: String?): LocalDate? {
     if (attr.isNullOrBlank()) return null
@@ -89,13 +65,8 @@ fun parseRealDate(attr: String?): LocalDate? {
 }
 
 /**
- * Parses a European short date in `DD/MM/YY` format.
- *
- * Two-digit years are resolved to the 2000–2099 range (e.g. "26" → 2026).
- * Single-digit day/month values are also accepted (e.g. "1/9/26").
- *
- * This format is used by some WordPress-based Berlin venue websites
- * (e.g. Madame Claude) for event dates. Returns `null` for unparseable input.
+ * Parses a European short date `DD/MM/YY`; two-digit years resolve to 2000–2099, single-digit
+ * day/month accepted. Used by some WordPress-based venue sites (Madame Claude).
  */
 fun parseShortDate(text: String?): LocalDate? {
     if (text.isNullOrBlank()) return null
@@ -107,68 +78,46 @@ fun parseShortDate(text: String?): LocalDate? {
 }
 
 /**
- * Parses a German dotted date with a four-digit year (`DD.MM.YYYY`).
- *
- * The most common human date rendering on Berlin venue pages (e.g. "10.07.2026",
- * "23.09.2026"). Single-digit day/month values are also accepted (e.g. "1.9.2026").
- * Returns `null` for null, blank, or unparseable input.
+ * Parses a German dotted date with a four-digit year (`DD.MM.YYYY`), the most common rendering on
+ * Berlin venue pages; single-digit day/month accepted. `null` for blank or unparseable input.
  */
 fun parseGermanDate(text: String?): LocalDate? = parseGerman(text, GERMAN_DATE_FORMATTER)
 
 /**
- * Parses a German dotted date with a two-digit year (`DD.MM.YY`).
- *
- * Used where venues render a short human year (e.g. Astra's "11.12.26", Clash's
- * "29.06.26"). Two-digit years resolve to the 2000–2099 range; single-digit
- * day/month values are also accepted. Returns `null` for null, blank, or
- * unparseable input.
+ * Parses a German dotted date with a two-digit year (`DD.MM.YY`, Astra's "11.12.26"); years
+ * resolve to 2000–2099, single-digit day/month accepted.
  */
 fun parseGermanShortDate(text: String?): LocalDate? = parseGerman(text, GERMAN_SHORT_DATE_FORMATTER)
 
 /**
- * Maps a German month abbreviation onto its [Month], case- and punctuation-insensitively.
- *
- * Venues that render a calendar block write the month as a three-letter German abbreviation
- * ("Jul", "Okt", "Dez"). These are spelled out rather than parsed with a
- * [Locale.GERMAN][java.util.Locale.GERMAN] formatter for two reasons: the JDK's CLDR abbreviations
- * carry a trailing dot, and they spell March `Mrz` where some sites write `Mär` (or `Maer` where
- * the page is not UTF-8 clean). Every March spelling is accepted, including the full `März` —
- * German abbreviates each month to three letters *except* March, which venues therefore render
- * unabbreviated in an otherwise abbreviated column (Metropol writes `Aug.` but `März`).
- *
- * Shared by the venues whose listings render this calendar block — Soda, Velomax, Admiralspalast
- * and Metropol.
+ * Maps a German month abbreviation onto its [Month], case- and punctuation-insensitively. Spelled
+ * out rather than parsed with a [Locale.GERMAN][java.util.Locale.GERMAN] formatter: the JDK's
+ * CLDR abbreviations carry a trailing dot, and spell March `Mrz` where sites write `Mär` (or
+ * `Maer`). Every March spelling is accepted including the full `März`, the one month German
+ * does not abbreviate (Metropol writes `Aug.` but `März`). Shared by Soda, Velomax,
+ * Admiralspalast and Metropol.
  */
 fun parseGermanMonthAbbreviation(text: String?): Month? = GERMAN_MONTH_ABBREVIATIONS[text?.trim(',', '.', ' ')?.lowercase()]
 
 /**
- * Maps a German two-letter weekday abbreviation onto its [DayOfWeek], case-insensitively.
- *
- * Venues that render a year-less date write the weekday in front of it ("SA 08.08.", "Fr 03.07."),
- * which is what [inferYearForWeekday] needs to pick the calendar year. Spelled out rather than
- * parsed with a [Locale.GERMAN][java.util.Locale.GERMAN] formatter for the same reason as
- * [parseGermanMonthAbbreviation]: the JDK's CLDR abbreviations carry a trailing dot.
- *
- * Shared by the venues whose listings render this heading — Arcanoa, Club der Visionäre, Duncker,
- * gART.n, Kater and Wild at Heart. Only the two-letter form; a page spelling the weekday out
- * ("Donnerstag") or writing it in English is read by that venue's own map.
+ * Maps a German two-letter weekday abbreviation onto its [DayOfWeek], for [inferYearForWeekday]
+ * on a year-less date ("SA 08.08."). Spelled out for the same reason as
+ * [parseGermanMonthAbbreviation]. Shared by Arcanoa, Club der Visionäre, Duncker, gART.n, Kater
+ * and Wild at Heart; a page spelling the weekday out or in English is read by that venue's own
+ * map.
  */
 fun parseGermanWeekdayAbbreviation(text: String?): DayOfWeek? = GERMAN_WEEKDAY_ABBREVIATIONS[text?.lowercase()]
 
 /**
- * Maps a full German weekday name onto its [DayOfWeek], case-insensitively.
- *
- * The spelled-out counterpart to [parseGermanWeekdayAbbreviation], for the venues that write
- * "Donnerstag" rather than "Do" — Roadrunner's date line and Soda's calendar block.
+ * Maps a full German weekday name onto its [DayOfWeek], for the venues that write "Donnerstag"
+ * (Roadrunner, Soda).
  */
 fun parseGermanWeekday(text: String?): DayOfWeek? = GERMAN_WEEKDAYS[text?.lowercase()]
 
 /**
- * Maps an English three-letter weekday abbreviation onto its [DayOfWeek], case-insensitively.
- *
- * Read by the venues that print their programme in English — Junction Bar's DJ date bars and
- * Monster Ronsons' cards. Renate mixes both spellings on one page and falls back to
- * [parseGermanWeekdayAbbreviation]; the two key spaces are disjoint, so the order does not matter.
+ * Maps an English three-letter weekday abbreviation onto its [DayOfWeek], for Junction Bar and
+ * Monster Ronsons. Renate mixes both spellings and falls back to
+ * [parseGermanWeekdayAbbreviation]; the key spaces are disjoint.
  */
 fun parseEnglishWeekdayAbbreviation(text: String?): DayOfWeek? = ENGLISH_WEEKDAY_ABBREVIATIONS[text?.lowercase()]
 
@@ -239,18 +188,11 @@ private fun parseGerman(
 }
 
 /**
- * Picks the calendar year for a year-less [monthDay], using a known [weekday] as
- * the disambiguator.
- *
- * Retro venue listings render dates without a year (e.g. "Fr 03.07." or
- * "Freitag, 29. Mai") and often leave recently-passed events on the page, so the
- * naive "assume this year, roll to next if already past" rule guesses wrong for a
- * stale event. Instead, among the candidate years in `today ± [yearWindow]`, only
- * those whose date lands on the stated [weekday] qualify, and the one **closest to
- * today** wins — so a just-passed event resolves to this year rather than a distant
- * future repeat. When [weekday] is `null` (unparseable), the nearest occurrence to
- * today across all candidate years is used. Shared by the retro single-page
- * scrapers (Roadrunner, Duncker).
+ * Picks the calendar year for a year-less [monthDay], using [weekday] as the disambiguator.
+ * Retro listings ("Fr 03.07.") leave recently-passed events on the page, so "assume this year,
+ * roll to next if past" guesses wrong for a stale event. Among the years in `today ±
+ * [yearWindow]`, only those whose date lands on [weekday] qualify, and the closest to today
+ * wins; with [weekday] `null`, the nearest occurrence. Shared by Roadrunner and Duncker.
  */
 fun inferYearForWeekday(
     monthDay: MonthDay,
