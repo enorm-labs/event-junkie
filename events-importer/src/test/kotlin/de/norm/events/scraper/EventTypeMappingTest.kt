@@ -117,14 +117,23 @@ class EventTypeMappingTest {
         isScreeningTitle("11FREUNDE WM-QUARTIER") shouldBe true
         isScreeningTitle("World Cup 2026 Live Screening") shouldBe true
         isScreeningTitle("Fußball Weltmeisterschaft") shouldBe true
+        isScreeningTitle("EM Italien - Albanien") shouldBe true
+        isScreeningTitle("Bundesliga live im Biergarten") shouldBe true
+        isScreeningTitle("Übertragung: Deutschland vs Spanien") shouldBe true
         isScreeningTitle("KENNEN SIE KINO?") shouldBe true
         isScreeningTitle("SHORTIES FILMS SCREENING #28") shouldBe true
+        // A German compound ends in the cinema word (#310).
+        isScreeningTitle("Nomadenkino") shouldBe true
+        isScreeningTitle("Freiluftkino Spezial") shouldBe true
     }
 
     @Test
     fun `isScreeningTitle keeps a plain act, including a kino substring`() {
         isScreeningTitle("GREEN LUNG") shouldBe false
         isScreeningTitle("ALKINOOS IOANNIDIS") shouldBe false
+        // A sport word alone is a talk, not a viewing (#311).
+        isScreeningTitle("Der Fussball mein Leben & Ich") shouldBe false
+        isScreeningTitle("Football Nights") shouldBe false
     }
 
     @Test
