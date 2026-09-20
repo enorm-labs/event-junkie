@@ -13,18 +13,15 @@ import de.norm.events.event.EventType.SHOW
 import java.time.LocalTime
 
 /**
- * The start an event is taken to have when the venue published neither a start nor a doors time,
- * by kind of event (#1384).
+ * The start an event is taken to have when the venue published neither a start nor a doors
+ * time, by kind of event (#1384). One event in ten has no start, and a club night with no time
+ * is a night, not the 23:59 `NULLS LAST` made of it. The list sorts by this slot and the page
+ * shows it as a guess (`assumedStartTime`, never `startTime`), both reading this one table.
  *
- * One event in ten has no start; most of those come from venues that never publish one, and a
- * club night with no time is a night, not the 23:59 that `NULLS LAST` made of it. The list sorts
- * by this slot and the page shows it as a guess — `assumedStartTime` on the response, never
- * `startTime` — so the two agree because both read this one table.
- *
- * The values are the medians of the events that do carry a start (3711 events on staging, the
- * measurement is in #1384), with two deliberate exceptions. `PARTY` sits at the top of its p75 rather than the
- * median, because the parties without a time are the clubs, whose real doors are 23:00–00:00.
- * `CLUB_NIGHT` takes the same slot, because 18 rows is not a sample and the name says night.
+ * The medians of the events that carry a start (3711 on staging, measured in #1384), with two
+ * exceptions: `PARTY` sits at the top of its p75, because the parties without a time are the
+ * clubs, whose doors are 23:00–00:00; `CLUB_NIGHT` takes the same slot, because 18 rows is not
+ * a sample and the name says night.
  *
  * | type       | rows | median | p25–p75     |
  * |------------|------|--------|-------------|
@@ -62,8 +59,8 @@ object AssumedStartTime {
         if (entity.startTime == null && entity.doorsTime == null) of(EventType.parseOrDefault(entity.eventType)) else null
 
     /**
-     * The same table as a SQL expression over the `event` row aliased `e`, for `ORDER BY`. The
-     * `ELSE` is [OTHER]'s slot, which is what [EventType.parseOrDefault] gives an unknown value too.
+     * The same table as a SQL expression over the `event` row aliased `e`, for `ORDER BY`; the
+     * `ELSE` is [OTHER]'s slot, as [EventType.parseOrDefault] gives an unknown value.
      */
     val SQL_EFFECTIVE_START: String =
         BY_TYPE.entries.joinToString(

@@ -18,18 +18,11 @@ import java.time.Duration
 const val IMAGES_PATH = "/api/images"
 
 /**
- * Serves our own copy of a venue image, so a visitor's browser never contacts the venue (ADR-019).
- *
- * **The URL is content addressed and therefore immutable**, which is what makes a one-year
- * `Cache-Control` correct rather than optimistic: the hash is of the bytes, so one URL can only ever
- * return one file. A venue replacing its poster produces a different hash and a different URL, and
- * nothing has to be invalidated anywhere.
- *
- * **It is on our own origin rather than on an image host of its own.** ADR-012 removed the CDN and
- * §5 of both privacy notices says that no third party sits in front of the site; a second hostname
- * would need its own DNS record, its own certificate and its own ingress rule to say what this says
- * by construction. It also keeps `Content-Security-Policy: img-src 'self'` reachable, which ADR-019
- * names as one of the things caching makes possible.
+ * Serves our own copy of a venue image, so a visitor's browser never contacts the venue
+ * (ADR-019). The URL is content addressed and therefore immutable, which is what makes a
+ * one-year `Cache-Control` correct: a venue replacing its poster produces a different URL. On
+ * our own origin rather than an image host: ADR-012 removed the CDN and §5 of both privacy
+ * notices says no third party sits in front, and it keeps `img-src 'self'` reachable.
  */
 @RestController
 @RequestMapping(IMAGES_PATH)
@@ -40,11 +33,9 @@ class CachedImageController(
     private val metrics: ImageServingMetrics
 ) {
     /**
-     * Returns one derivative.
-     *
-     * The file name is parsed here rather than split into two path variables, so a name that is not
-     * `<width>.<format>` is refused before anything reaches the database — and so the URL keeps an
-     * extension, which is what makes it look like a file to everything that handles one.
+     * Returns one derivative. The file name is parsed here rather than split into two path
+     * variables, so a name that is not `<width>.<format>` is refused before the database, and the
+     * URL keeps an extension.
      */
     @GetMapping("/{contentHash}/{file}")
     @Operation(summary = "Get a cached venue image at one width and format")
@@ -64,9 +55,9 @@ class CachedImageController(
     }
 
     /**
-     * **The metric is recorded here rather than derived from the status code**, because two of these
-     * three are 404s that mean opposite things: a path nobody ever published, and a row promising an
-     * object the bucket does not have. `http_server_requests` cannot tell them apart.
+     * The metric is recorded here rather than derived from the status code, because two of the
+     * three outcomes are 404s that mean opposite things: a path nobody published, and a row
+     * promising an object the bucket does not have.
      */
     private fun respond(
         image: ImageObject,
@@ -83,8 +74,8 @@ class CachedImageController(
                 notFound()
             }
 
-            // Not a 404. The object exists as far as anything here knows, and telling a browser to
-            // remember an absence caused by our own bucket being unreachable would outlast the fault.
+            // Not a 404: telling a browser to remember an absence caused by our own bucket being
+            // unreachable would outlast the fault.
             ImageObject.Unavailable -> {
                 metrics.record(ImageServingMetrics.Outcome.UNAVAILABLE)
                 ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build()
@@ -99,8 +90,7 @@ class CachedImageController(
             .ok()
             .contentType(MEDIA_TYPES.getValue(format))
             .cacheControl(CacheControl.maxAge(CACHE_LIFETIME).cachePublic().immutable())
-            // The bytes are a venue's file. `nosniff` is set on every response by the ingress, and it
-            // is set again here so the guarantee holds in a deployment with no Traefik in front.
+            // `nosniff` is set by the ingress and again here, so the guarantee holds with no Traefik in front.
             .header(CONTENT_TYPE_OPTIONS, "nosniff")
             .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
             .body(bytes)
@@ -108,11 +98,8 @@ class CachedImageController(
     private fun notFound(): ResponseEntity<ByteArray> = ResponseEntity.notFound().build()
 
     /**
-     * Reads the two path variables, or refuses them.
-     *
-     * The shapes are checked before the query, not to protect it — the key comes from the row and
-     * never from the request — but so that a crawler walking made-up paths costs a regular expression
-     * each time rather than a database round trip.
+     * Reads the two path variables, or refuses them. Checked before the query not to protect it (the
+     * key comes from the row) but so a crawler walking made-up paths costs a regex, not a round trip.
      */
     private fun parse(
         contentHash: String,
@@ -141,9 +128,8 @@ class CachedImageController(
         val CONTENT_HASH = Regex("^[0-9a-f]{64}$")
 
         /**
-         * The formats come from [ImageFormats], which is also what the `<picture>` sources are built
-         * from — so a format cannot be offered to a browser and refused here. Four digits caps the
-         * width at 9999, well above the widest derivative generated.
+         * The formats come from [ImageFormats], which the `<picture>` sources are built from, so a
+         * format cannot be offered and refused here. Four digits caps the width at 9999.
          */
         val FILE_NAME = Regex("^([0-9]{1,4})\\.(${ImageFormats.ORDERED.joinToString("|")})$")
 

@@ -7,25 +7,17 @@ import org.springframework.context.annotation.Configuration
 import reactor.core.publisher.Hooks
 
 /**
- * Makes the per-request log context survive the reactive chain (#380).
- *
- * **This is the half of structured logging that fails silently.** MDC is thread-local; WebFlux runs
- * one request across several threads, so a value put in a filter is simply gone by the time a
- * handler logs. The log line still appears — it just has no context field — and that reads as a
- * configuration problem rather than a threading one, which is the day #380 warns about.
- *
- * Two things are needed and neither works without the other. [ContextRegistry] teaches Reactor how
- * to move the [REQUEST_ID] between a thread-local and the subscriber context, and
- * [Hooks.enableAutomaticContextPropagation] is what makes it do so around every operator rather than
- * only where someone remembered to ask. [RequestLoggingFilter] writes the value; everything
- * downstream, including `suspend` handlers reached through `kotlinx-coroutines-reactor`, reads it.
+ * Makes the per-request log context survive the reactive chain (#380), the half of structured
+ * logging that fails silently: MDC is thread-local and WebFlux runs one request across several
+ * threads, so the line still appears with no context field. [ContextRegistry] teaches Reactor to
+ * move [REQUEST_ID] between a thread-local and the subscriber context, and
+ * [Hooks.enableAutomaticContextPropagation] makes it do so around every operator.
+ * [RequestLoggingFilter] writes the value; `suspend` handlers read it.
  */
 @Configuration
 class LogContextConfiguration {
     /**
-     * Both calls are process-wide and idempotent, which is why a lifecycle callback is the right
-     * place for them: they configure Reactor itself rather than producing a bean, and running twice
-     * costs nothing.
+     * Both calls are process-wide and idempotent: they configure Reactor rather than produce a bean.
      */
     @PostConstruct
     fun enableRequestIdPropagation() {
@@ -37,26 +29,18 @@ class LogContextConfiguration {
 
     companion object {
         /**
-         * One id per HTTP request, so every line a request produced can be read together. The
-         * value is Spring's own exchange id — the one a `ProblemDetail` body carries under the same
-         * name (#1527), so the id a client quotes is the one the column holds.
-         *
-         * Named `requestId` and not `traceId` on purpose: nothing here issues a W3C trace context,
-         * and a field named after a tracing system that is not on the classpath would invite joins
-         * that cannot work.
+         * One id per HTTP request: Spring's own exchange id, the one a `ProblemDetail` body carries
+         * under the same name (#1527). Named `requestId` and not `traceId`, since nothing here issues a
+         * W3C trace context.
          */
         const val REQUEST_ID = "requestId"
 
         /**
-         * The access line's own values, named at the call site rather than carried in MDC (#945).
-         *
-         * [REQUEST_ID] above is per-request context and belongs to every line the request produces.
-         * These three describe one line — [RequestLoggingFilter]'s — and reach the ECS JSON through
-         * `logger.at(…) { payload = … }` instead. Both land at the top level of the same object.
-         *
-         * **Every name here is also written in `transform/parse_structured_logs`, in the shared
-         * `deploy/clusters/base/collector.yaml`, and nothing checks that the two agree.** A name that
-         * drifts produces no error and no row — see `docs/ops/PLATFORM_SETUP.md` §7 for the full set.
+         * The access line's own values, named at the call site rather than carried in MDC (#945): they
+         * describe one line and reach the ECS JSON through `logger.at(…) { payload = … }`. Every name
+         * here is also written in `transform/parse_structured_logs` in
+         * `deploy/clusters/base/collector.yaml`, and nothing checks that the two agree
+         * (`docs/ops/PLATFORM_SETUP.md` §7).
          */
         const val HTTP_METHOD = "httpMethod"
 
@@ -64,20 +48,15 @@ class LogContextConfiguration {
         const val PATH = "path"
 
         /**
-         * The status we returned, as an **Int** — a string here would settle the OpenObserve column
-         * as a string and break every later range query on it.
-         *
-         * **The importer spells this same name**, in `LogFields`, for the status a venue's
-         * server returned to *us*. One name, two directions: `httpstatus = 500` matches both "we are
-         * broken" and "a venue is broken", and `service_name` is what separates them.
+         * The status we returned, as an Int: a string would settle the OpenObserve column as a string.
+         * The importer spells the same name in `LogFields` for the status a venue's server returned to
+         * us; `service_name` separates the two.
          */
         const val HTTP_STATUS = "httpStatus"
 
         /**
-         * The object a storage warning is about, written only when one cannot be read (#980).
-         *
-         * High cardinality by construction, and acceptable only because the lines are rare. They
-         * fire on a missing or unreadable object, never per request.
+         * The object a storage warning is about, written only when one cannot be read (#980). High
+         * cardinality, acceptable because the lines are rare.
          */
         const val STORAGE_KEY = "storageKey"
     }

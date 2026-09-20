@@ -16,10 +16,8 @@ import java.time.ZoneOffset
 
 /**
  * The seeded tiebreak (#1380): rows that tie on date and start time are ordered by
- * `md5(id || today)`, so the order is the same for everyone all day and different tomorrow.
- *
- * The repository is built by hand with a fixed [Clock], which is the only way to hold two
- * different days against the same rows.
+ * `md5(id || today)`. The repository is built by hand with a fixed [Clock], the only way to hold
+ * two different days against the same rows.
  */
 class EventSearchRepositoryTest : BaseControllerTest() {
     private fun repositoryOn(day: LocalDate) = EventSearchRepository(databaseClient, Clock.fixed(day.atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC))
@@ -105,8 +103,7 @@ class EventSearchRepositoryTest : BaseControllerTest() {
 
     /**
      * A timeless event sorts into the slot its kind usually takes (#1384): doors when it has them,
-     * else [AssumedStartTime]'s table. The sort and the shown guess read the same table, so this is
-     * also the test that the SQL rendering of it agrees with the Kotlin one.
+     * else [AssumedStartTime]'s table. Also the test that the SQL rendering agrees with the Kotlin.
      */
     @Test
     fun `a timeless event sorts by its doors, else by the slot its kind usually takes`(): Unit =
@@ -127,9 +124,8 @@ class EventSearchRepositoryTest : BaseControllerTest() {
         }
 
     /**
-     * The window an event is listed in, once it has an end (ADR-029): the default window keeps a
-     * weekender through its last day, an explicit `from` means "starts on or after", and `on` is
-     * the Tonight case — started by that day and not over.
+     * The window an event is listed in once it has an end (ADR-029): the default window keeps a
+     * weekender through its last day, `from` means "starts on or after", `on` is the Tonight case.
      */
     @Test
     fun `a weekender stays in the default window until its end, and is on every day of its span`(): Unit =
@@ -152,8 +148,8 @@ class EventSearchRepositoryTest : BaseControllerTest() {
 
     /**
      * The late-night grace (#299): before 06:00, last night's event with no stated end and a late
-     * effective start is still on — for the default window and for Tonight alike. A 20:00 concert
-     * is over at midnight, a stated end is the venue's word, and at 06:00 the night is over.
+     * effective start is still on, for the default window and Tonight alike. A 20:00 concert is over
+     * at midnight, a stated end is the venue's word, and at 06:00 the night is over.
      */
     @Test
     fun `a late night without an end is still on before six the next morning`(): Unit =
@@ -180,9 +176,8 @@ class EventSearchRepositoryTest : BaseControllerTest() {
         }
 
     /**
-     * A stated end on the clock's own day is over once the clock passes it (ADR-029): a night that
-     * ends at 04:00 leaves the default window and Tonight at 04:00, not at midnight after. A run
-     * that ends today with no time stays all day, and an end later today stays until then.
+     * A stated end on the clock's own day is over once the clock passes it (ADR-029): a night ending
+     * at 04:00 leaves the window at 04:00. A run ending today with no time stays all day.
      */
     @Test
     fun `an event that ended this morning is not listed at noon`(): Unit =

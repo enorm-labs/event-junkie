@@ -21,14 +21,13 @@ data class EventFilter(
     val from: LocalDate? = null,
     val to: LocalDate? = null,
     /**
-     * The first day of a window: rows whose effective end (ADR-029) is on or after it, so a run
-     * that opened earlier is still in. The calendar sets it with [to] (#1405); the list keeps
-     * [from], which is the start date. Wins over [from].
+     * The first day of a window: rows whose effective end (ADR-029) is on or after it, so a run that
+     * opened earlier is still in. The calendar sets it with [to] (#1405). Wins over [from].
      */
     val runningFrom: LocalDate? = null,
     /**
-     * A day the event is on: started by it and not ended before it (ADR-029). Internal — the
-     * Tonight feed sets it, and no query parameter maps to it. Wins over [from] and [to].
+     * A day the event is on: started by it and not ended before it (ADR-029). Internal, set by the
+     * Tonight feed. Wins over [from] and [to].
      */
     val on: LocalDate? = null,
     val eventType: String? = null,
@@ -52,16 +51,13 @@ data class EventIdPage(
 )
 
 /**
- * Dynamic, parameterized event search.
+ * Dynamic, parameterized event search. Derived queries cannot express optional multi-criteria
+ * filters across join tables, so this builds SQL with [DatabaseClient]: conditions only for the
+ * present filters, and join-table filters as `EXISTS` subqueries to avoid row multiplication.
+ * Returns an ordered page of event IDs plus a `COUNT(*)`; the service hydrates the rows.
  *
- * Spring Data R2DBC's derived queries can't express optional multi-criteria filters across
- * join tables, so this builds SQL with [DatabaseClient]: conditions are appended only for the
- * filters that are present, and join-table filters (genre/artist/promoter by slug) use `EXISTS`
- * subqueries to avoid row multiplication. Returns an ordered page of event IDs + a parallel
- * `COUNT(*)`; the service hydrates the rows and batch-loads associations.
- *
- * All values are bound as parameters. Raw SQL must qualify tables with the `events` schema
- * (it bypasses the `NamingStrategy`), consistent with the importer's raw-query convention.
+ * All values are bound. Raw SQL must qualify tables with the `events` schema, since it bypasses
+ * the `NamingStrategy`.
  */
 @Repository
 class EventSearchRepository(
@@ -101,9 +97,8 @@ class EventSearchRepository(
     }
 
     /**
-     * Every matching event ID in default chronological order, unpaged — backs the calendar view,
-     * which renders a whole visible range at once rather than a page of it. Safe to leave unpaged
-     * because the caller has already bounded the range (see `EventService.MAX_CALENDAR_DAYS`).
+     * Every matching event ID in default chronological order, unpaged, for the calendar view. Safe
+     * because the caller bounds the range (`EventService.MAX_CALENDAR_DAYS`).
      */
     suspend fun searchAll(filter: EventFilter): List<Long> {
         val params = mutableMapOf<String, Any>()
@@ -133,14 +128,10 @@ class EventSearchRepository(
     }
 
     /**
-     * Applies the date filter. With no range, every event that has not ended: a weekender stays
-     * listed through its last day (ADR-029). An explicit [EventFilter.from] means "starts on or
-     * after" — that is what a visitor's earliest-date filter and the home page's Upcoming feed
-     * (`from = tomorrow`) ask for, and it keeps a running event out of Upcoming while Tonight
-     * carries it. [EventFilter.on] is the Tonight case: on that day, started and not over.
-     *
-     * "Not over" carries the late-night grace (#299): before 06:00, last night's event without a
-     * stated end is still on when its effective start was 22:00 or later — see [lateNightGrace].
+     * Applies the date filter. With no range, every event that has not ended (ADR-029). An explicit
+     * [EventFilter.from] means "starts on or after", which keeps a running event out of Upcoming
+     * (`from = tomorrow`) while Tonight carries it. [EventFilter.on] is the Tonight case. "Not over"
+     * carries the late-night grace (#299), see [lateNightGrace].
      */
     private fun appendDateRange(
         filter: EventFilter,
@@ -173,17 +164,13 @@ class EventSearchRepository(
 
     /**
      * The rows that are not over on [day], bound as [dayParam]: their effective end is after it, or
-     * on it and not yet passed, or the late-night grace covers them.
+     * on it and not yet passed, or the late-night grace covers them. On the clock's own day a stated
+     * `end_time` (ADR-029) is the venue's word: a night that ends at 04:00 is over at 04:00. Any
+     * other day, or no end time, keeps the row through its whole end date.
      *
-     * On the clock's own day a stated `end_time` (ADR-029) is the venue's word: a night that ends
-     * at 04:00 is over at 04:00, not at midnight after. Any other day, or no end time, keeps the
-     * row through its whole end date.
-     *
-     * The grace is the club night's shape (#299): a `23:00` start with no stated end is not over at
-     * 00:00, it is over at 06:00. So before 06:00 on the clock, and only when [day] is the clock's
-     * own day, yesterday's events with no `end_date` and an effective start of 22:00 or later are
-     * still on. The effective start includes the #1384 slot, so a timeless club night counts. A
-     * stated end gets no grace either way.
+     * The grace is the club night's shape (#299): before 06:00 on the clock, and only when [day] is
+     * the clock's own day, yesterday's events with no `end_date` and an effective start of 22:00 or
+     * later are still on. The effective start includes the #1384 slot. A stated end gets no grace.
      */
     private fun notOverOn(
         dayParam: String,
@@ -231,9 +218,9 @@ class EventSearchRepository(
     }
 
     /**
-     * Applies the many-to-many filters (genre/artist/promoter by slug, genre by family) as `EXISTS` subqueries.
-     * The three share one template, parameterized by [Association]; each subquery correlates on
-     * `event_id = e.id` so it tests membership without multiplying the outer rows.
+     * Applies the many-to-many filters as `EXISTS` subqueries from one template parameterized by
+     * [Association]; each correlates on `event_id = e.id`, so it tests membership without
+     * multiplying the outer rows.
      */
     private fun appendAssociationFilters(
         filter: EventFilter,
@@ -252,8 +239,8 @@ class EventSearchRepository(
                 params[association.param] = it.trim()
             }
         }
-        // The family lives on the tag, so this is the genre EXISTS testing `family` in place of
-        // `slug`. Beside `genre=` it narrows, never widens: a tag in the family must still match.
+        // The family lives on the tag, so this is the genre EXISTS testing `family` in place of `slug`.
+        // Beside `genre=` it narrows, never widens.
         filter.familySlug?.takeIf { it.isNotBlank() }?.let {
             conditions += Association.GENRE.existsClause(column = "family", param = "familySlug")
             params["familySlug"] = it.trim()
@@ -261,12 +248,9 @@ class EventSearchRepository(
     }
 
     /**
-     * Applies the price bounds and the free-text title/subtitle search.
-     *
-     * Price bounds filter on the effective price: presale when known, otherwise the box-office
-     * price (`COALESCE(price_presale, price_box_office)`). A bound still excludes events whose
-     * price is entirely unknown (both `NULL`) — such an event shouldn't claim to satisfy a
-     * "min €X" filter.
+     * Applies the price bounds and the free-text title/subtitle search. Price bounds filter on
+     * `COALESCE(price_presale, price_box_office)`; an event whose price is entirely unknown does
+     * not satisfy a "min €X" filter.
      */
     private fun appendPriceAndQuery(
         filter: EventFilter,
@@ -291,9 +275,8 @@ class EventSearchRepository(
         params.entries.fold(this) { spec, (key, value) -> spec.bind(key, value) }
 
     /**
-     * Builds a safe `ORDER BY` clause by whitelisting sort properties to known columns
-     * (preventing SQL injection via the `sort` query parameter). Falls back to chronological
-     * ordering; every order ends in [TIEBREAK], which keeps pagination deterministic.
+     * Builds a safe `ORDER BY` by whitelisting sort properties to known columns. Falls back to
+     * chronological ordering; every order ends in [TIEBREAK], which keeps pagination deterministic.
      */
     private fun orderBy(pageable: Pageable): String {
         val clauses =
@@ -310,9 +293,8 @@ class EventSearchRepository(
     private fun tiebreakSeed(): String = LocalDate.now(clock).toString()
 
     /**
-     * The three many-to-many associations filterable by slug. Each describes its join table and
-     * the referenced entity table, so [existsClause] can render a correlated `EXISTS` subquery
-     * from a single template.
+     * The three many-to-many associations filterable by slug: join table and referenced entity
+     * table, so [existsClause] renders a correlated `EXISTS` from one template.
      */
     private enum class Association(
         private val joinTable: String,
@@ -348,9 +330,8 @@ class EventSearchRepository(
         private val GRACE_ENDS: LocalTime = LocalTime.of(6, 0)
 
         /**
-         * The time an event sorts by: its start, else its doors, else the slot its kind of event
-         * usually takes ([AssumedStartTime], #1384). Never null, so a timeless club night lands
-         * among the other nights rather than after the last timed event of its day.
+         * The time an event sorts by: its start, else its doors, else the slot its kind of event usually
+         * takes ([AssumedStartTime], #1384). Never null, so a timeless club night lands among the nights.
          */
         private val EFFECTIVE_START = AssumedStartTime.SQL_EFFECTIVE_START
 
@@ -369,18 +350,13 @@ class EventSearchRepository(
         private val SECONDARY_SORT = mapOf("e.event_date" to START_TIME_TIEBREAKER)
 
         /**
-         * How rows that tie on every requested key are ordered: by a hash of the id and the day's
-         * date, then by the id itself (#1380).
-         *
-         * Club nights cluster at 23:00 and 00:00, so on most days the real decider between the
-         * first twelve events was the id — and the lowest id is the event imported first, which
-         * is the venue that announced earliest. The same venues led the home page every day.
-         *
-         * The hash rotates the order inside a tie once a day while keeping it the same for every
-         * visitor and every page all day. `random()` would be fair too, but it hands two visitors
-         * two orders, lets page 2 repeat page 1, and leaves the response cache serving whichever
-         * order it computed first. The trailing `e.id` makes the order total, so two rows never
-         * compare equal.
+         * How rows that tie on every requested key are ordered: by a hash of the id and the day's date,
+         * then the id (#1380). Club nights cluster at 23:00 and 00:00, so the decider was the id, the
+         * venue that announced earliest, and the same venues led the home page every day. The hash
+         * rotates the order inside a tie once a day while keeping it the same for every visitor and
+         * every page; `random()` would hand two visitors two orders, let page 2 repeat page 1, and leave
+         * the response cache serving whichever it computed first. The trailing `e.id` makes the order
+         * total.
          */
         private const val TIEBREAK = "md5(e.id::text || :seed) ASC, e.id ASC"
         private val DEFAULT_ORDER = "ORDER BY e.event_date ASC, $START_TIME_TIEBREAKER, $TIEBREAK"
@@ -388,9 +364,7 @@ class EventSearchRepository(
 }
 
 /**
- * Reads the `e.id` the id projections select, which is the table's primary key and never null.
- *
- * A null means the `SELECT` and this mapping have drifted apart, and the message says so rather
- * than raising the bare `NullPointerException` that `!!` would.
+ * Reads the `e.id` the id projections select, never null. A null means the `SELECT` and this
+ * mapping have drifted, and the message says so rather than a bare `NullPointerException`.
  */
 private fun Readable.requiredEventId(): Long = requireNotNull(get(0, Long::class.javaObjectType)) { "Event id projection returned a null id" }

@@ -30,12 +30,9 @@ import java.time.Duration
 import java.time.LocalDate
 
 /**
- * The serving path end to end, with serving switched on.
- *
- * **A real S3 API rather than a mocked client.** What has to hold is that a key the importer wrote
- * reads back through this application's own configuration — path-style access, the signing region,
- * the endpoint override — and a mock proves none of it. It is the same argument the importer's
- * `ImageStorageIntegrationTest` makes from the writing side.
+ * The serving path end to end, with serving on, over a real S3 API: what has to hold is that a
+ * key the importer wrote reads back through this application's own configuration (path-style
+ * access, signing region, endpoint override), and a mock proves none of it.
  */
 class CachedImageServingTest : BaseControllerTest() {
     @Autowired
@@ -71,8 +68,7 @@ class CachedImageServingTest : BaseControllerTest() {
     fun `a content hash held by more than one row is served`(): Unit =
         runBlocking {
             // What 24 of production's 1118 images looked like: a row is keyed by `source_url`, so
-            // byte-identical files published under two URLs get two live rows on one hash. The
-            // variant key derives from the hash alone, so both rows name the same object.
+            // byte-identical files under two URLs get two rows on one hash naming the same object.
             insertCachedImage(POSTER_URL, DUPLICATE_HASH, listOf(288))
             insertCachedImage(ALTERNATE_URL, DUPLICATE_HASH, listOf(288))
             putObject(derivedKey(DUPLICATE_HASH, 288, "jpg"), POSTER)
@@ -120,9 +116,8 @@ class CachedImageServingTest : BaseControllerTest() {
     @DisplayName("a row pointing at an object that is gone is a 404, not a broken 200")
     fun `a missing object is not found`(): Unit =
         runBlocking {
-            // The shape of a sweep that deleted an object it should have kept. It has to read as
-            // absent rather than as a truncated image, and the warning it logs is what names it. Its
-            // own hash, because the bucket is not truncated between tests and the key derives from it.
+            // A sweep that deleted an object it should have kept: read as absent, not as a truncated image,
+            // and the warning names it. Its own hash, because the bucket is not truncated between tests.
             insertCachedImage(POSTER_URL, ORPHAN_HASH, listOf(288))
 
             webTestClient
@@ -134,19 +129,16 @@ class CachedImageServingTest : BaseControllerTest() {
         }
 
     /**
-     * **Two of these are 404s and they mean opposite things**, which is why the outcome is recorded
-     * in the controller rather than derived from `http_server_requests`: a path nobody published,
-     * and a row promising an object the bucket does not have. Only the second is a defect.
-     *
-     * Counted as deltas, because the registry belongs to the shared context and the other tests in
-     * this class serve images through it too.
+     * Two of these are 404s and mean opposite things, which is why the outcome is recorded in the
+     * controller rather than derived from `http_server_requests`: a path nobody published, and a row
+     * promising an object the bucket lacks. Only the second is a defect. Deltas, because the
+     * registry belongs to the shared context.
      */
     @Test
     fun `each ending is counted under its own outcome`(): Unit =
         runBlocking {
             insertCachedImage(POSTER_URL, HASH, listOf(288))
-            // A second URL, because `cached_image.source_url` is unique — the same property the
-            // repository's counting query relies on to join at most one row per URL.
+            // A second URL, because `cached_image.source_url` is unique.
             insertCachedImage(ALTERNATE_URL, ORPHAN_HASH, listOf(288))
             putObject(derivedKey(HASH, 288, "jpg"), POSTER)
             val before = OUTCOMES.associateWith { served(it) }
@@ -170,8 +162,8 @@ class CachedImageServingTest : BaseControllerTest() {
         runBlocking {
             insertCachedImage(POSTER_URL, HASH, listOf(288))
 
-            // Each of these matches neither the hash nor the `<width>.<format>` shape, so the route
-            // refuses it before the query. A path segment is what an attacker would try first.
+            // Each matches neither the hash nor the `<width>.<format>` shape, so the route refuses it before
+            // the query.
             listOf("/images/$HASH/288.svg", "/images/$HASH/288", "/images/$HASH/-1.jpg", "/images/nothex/288.jpg")
                 .forEach {
                     webTestClient
@@ -203,8 +195,7 @@ class CachedImageServingTest : BaseControllerTest() {
                 // 768 first, because EventDetailView draws the image across a 704 px column.
                 .jsonPath("$.imageUrl")
                 .isEqualTo("/api/images/$HASH/768.jpg")
-                // Best format first, and the widths banded to the slot. The card list gets 192 and
-                // 288 from the same rows; nothing gets all four.
+                // Best format first, widths banded to the slot; the card list gets 192 and 288 from the same rows.
                 .jsonPath("$.imageSources[0].type")
                 .isEqualTo("image/avif")
                 .jsonPath("$.imageSources[0].srcset")
@@ -238,8 +229,8 @@ class CachedImageServingTest : BaseControllerTest() {
     @DisplayName("a venue's own image is served from our origin, not the venue's")
     fun `the venue response carries our url`(): Unit =
         runBlocking {
-            // The three columns #833 was raised about. None is scraped, so no `event_source` licence
-            // reaches them, and nothing offered them to the fetcher until now.
+            // The three columns #833 was raised about: none is scraped, so no `event_source` licence reaches
+            // them.
             insertVenue("Lido", "lido", imageUrl = LOGO_URL)
             insertCachedImage(LOGO_URL, LOGO_HASH, ALL_WIDTHS)
 
@@ -295,9 +286,8 @@ class CachedImageServingTest : BaseControllerTest() {
     @DisplayName("the venue embedded in an event response is rewritten too")
     fun `an embedded venue summary carries our url`(): Unit =
         runBlocking {
-            // The one an earlier draft missed. Rewriting the event's image and leaving the venue
-            // summary's beside it would hand out a venue URL from the endpoint that had just
-            // stopped doing exactly that.
+            // The one an earlier draft missed: rewriting the event's image and leaving the venue summary's
+            // hands out a venue URL from the endpoint that had just stopped doing that.
             val venueId = insertVenue("Lido", "lido", imageUrl = LOGO_URL)
             insertEvent(venueId, "Show", "show", LocalDate.now().plusDays(3), imageUrl = POSTER_URL)
             insertCachedImage(POSTER_URL, HASH, ALL_WIDTHS)
@@ -351,8 +341,7 @@ class CachedImageServingTest : BaseControllerTest() {
                 .expectStatus()
                 .isOk
 
-            // Taking the object away is the assertion. A read-through answers 404 here, so the
-            // test fails loudly. Counting `getObject` calls would only prove a number.
+            // Taking the object away is the assertion: a read-through answers 404 here.
             deleteObject(key)
 
             webTestClient
@@ -365,8 +354,7 @@ class CachedImageServingTest : BaseControllerTest() {
                 .consumeWith { it.responseBody shouldBe POSTER }
         }
 
-    // What reserves the space a lazy image will take. `srcset` is what makes it necessary: without
-    // dimensions the browser cannot know the shape until the bytes land, and the page reflows (#848).
+    // What reserves the space a lazy image will take; without dimensions the page reflows (#848).
     @Test
     fun `the response carries the intrinsic dimensions`(): Unit =
         runBlocking {
@@ -387,8 +375,8 @@ class CachedImageServingTest : BaseControllerTest() {
                 .isEqualTo(630)
         }
 
-    // `BaseDetailView` declares `sizes="(min-width: 768px) 704px, …"` and the width below has to
-    // agree with it. When it did not, every venue hero downloaded 288 px and drew it at 704 (#1280).
+    // `BaseDetailView` declares `sizes="(min-width: 768px) 704px, …"`; when the width disagreed,
+    // every venue hero downloaded 288 px and drew it at 704 (#1280).
     @Test
     @DisplayName("a venue's detail image is banded to the 704 px hero, not to a thumbnail")
     fun `the venue detail response asks for the hero width`(): Unit =
@@ -427,8 +415,7 @@ class CachedImageServingTest : BaseControllerTest() {
                 .isEqualTo("/api/images/$LOGO_HASH/512.avif 512w, /api/images/$LOGO_HASH/768.avif 768w")
         }
 
-    // 16% of staging's images had no dimensions at import, because a stock JVM reads neither WebP
-    // nor AVIF. Reporting one of the pair would reserve nothing and look like it had worked.
+    // 16% of staging's images had no dimensions at import; reporting one of the pair reserves nothing.
     @Test
     @DisplayName("an image measured on only one axis reports neither")
     fun `a half-measured image reports no dimensions`(): Unit =

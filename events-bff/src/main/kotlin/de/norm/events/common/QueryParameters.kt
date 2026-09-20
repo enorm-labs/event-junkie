@@ -4,22 +4,15 @@ import org.springframework.beans.BeanUtils
 import org.springframework.web.server.ServerWebExchange
 
 /**
- * The query parameters one endpoint accepts, and the check that rejects anything else.
+ * The query parameters one endpoint accepts, and the check that rejects anything else. WebFlux
+ * drops unrecognised parameters without a word, so a misspelt filter name returns the
+ * unfiltered collection with a `200`: one misspelt parameter returned 3,283 events where 11
+ * were asked for (#815). So this fails closed; a client appending a tracking parameter gets a
+ * `400`, the better failure for a filter API.
  *
- * WebFlux binds the parameters it recognises and drops the rest without a word, so a caller who
- * misspells a filter name gets the **unfiltered** collection and a `200`. The asymmetry is what
- * makes it dangerous: a wrong *value* (`venue=NONEXISTENT`) correctly returns nothing, while a
- * wrong *name* (`venueSlug=…`) silently widens the result set. Measured on staging, one misspelt
- * parameter returned 3,283 events where 11 were asked for — reported as success (#815).
- *
- * A narrowing that is discarded cannot be noticed by the caller, which is why this fails closed.
- * The cost is real and accepted: a client that appends a tracking parameter now gets a `400`
- * instead of being quietly ignored. For a *filter* API that is the better of the two failures.
- *
- * Names come from [BeanUtils.getPropertyDescriptors], the same source the data binder uses to
- * decide what it can bind, so a filter field added to [de.norm.events.event.EventFilterParams] is
- * accepted here without a second edit. What each endpoint declares is only the surrounding
- * parameters — `page`/`size`/`sort`, and any it takes directly.
+ * Names come from [BeanUtils.getPropertyDescriptors], the data binder's own source, so a field
+ * added to [de.norm.events.event.EventFilterParams] is accepted without a second edit. Each
+ * endpoint declares only the surrounding parameters.
  */
 class QueryParameters private constructor(
     private val accepted: Set<String>
@@ -37,10 +30,8 @@ class QueryParameters private constructor(
 
     companion object {
         /**
-         * `page`, `size` and `sort` — contributed by [org.springframework.data.domain.Pageable] on
-         * every paginated endpoint, and never declared on a filter object. Forgetting these would
-         * break every paging client, which is why they are a named constant rather than three
-         * string literals per call site.
+         * `page`, `size` and `sort`, contributed by [org.springframework.data.domain.Pageable] on every
+         * paginated endpoint and never declared on a filter object; a named constant so none is forgotten.
          */
         val PAGEABLE = setOf("page", "size", "sort")
 
@@ -67,7 +58,7 @@ class QueryParameters private constructor(
 
 /**
  * Raised when a request carries a query parameter its endpoint does not accept. Translated to a
- * `400` naming the offenders and listing what is accepted, so the caller can see the typo.
+ * `400` naming the offenders and listing what is accepted.
  */
 class UnknownQueryParameterException(
     val unknown: List<String>,

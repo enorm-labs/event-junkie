@@ -20,21 +20,15 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 /**
- * Base class for BFF controller integration tests.
+ * Base class for BFF controller integration tests: a running server over a Testcontainers
+ * PostgreSQL provisioned by the importer's Flyway migrations, a [WebTestClient], a [BeforeEach]
+ * that truncates all tables, and raw-SQL seed helpers (the BFF's read entities omit required
+ * write-only columns such as `event.source_id`).
  *
- * Provides a running server backed by a Testcontainers PostgreSQL database (schema provisioned
- * by the importer's Flyway migrations), a pre-configured [WebTestClient], a [BeforeEach] hook
- * that truncates all tables, and raw-SQL seed helpers. Seeding uses SQL rather than the BFF's
- * lean read entities because those intentionally omit required write-only columns (e.g.
- * `event.source_id`).
- *
- * **`@AutoConfigureMetrics` is here rather than on the tests that need it (#965).** Spring Boot
- * disables metrics *export* in tests by default — `management.defaults.metrics.export.enabled` is
- * forced false by the test context customiser, so `PrometheusMetricsExportAutoConfiguration` never
- * applies and no amount of exposure configuration produces the endpoint. A test carrying the
- * annotation itself forks a second cached context, with its own container and its own pool, for one
- * property. On the base it costs nothing measurable: the importer suite got ~6s *faster* when the
- * fork went away. It affects tests only; production is unaffected.
+ * `@AutoConfigureMetrics` is here rather than on the tests that need it (#965): Spring Boot
+ * forces `management.defaults.metrics.export.enabled` false in tests, and a test carrying the
+ * annotation itself forks a second cached context, with its own container and pool. On the base
+ * it costs nothing measurable; production is unaffected.
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMetrics
@@ -51,36 +45,22 @@ abstract class BaseControllerTest {
     protected lateinit var responseCache: ResponseCache
 
     /**
-     * The client every controller test issues requests through.
+     * The client every controller test issues requests through. `responseTimeout` is a crash guard,
+     * not a performance assertion (#504): unset, `WebTestClient` uses 5 seconds, the only bound on a
+     * hung request in this repository. Five is too tight: the first request in a `@SpringBootTest`
+     * class pays for a fresh context and a Testcontainers PostgreSQL, 1.3 s on an idle laptop, and
+     * `ArtistControllerTest` timed out on exactly that path on a loaded runner. Thirty seconds is
+     * 600× the steady state and 20× the cold start; exceeding it means something is broken.
      *
-     * **`responseTimeout` is set deliberately, and 30 seconds is a crash guard rather than a
-     * performance assertion (#504.)** Left unset, `WebTestClient` uses Spring's documented default
-     * of **5 seconds**, and nothing in this repository had chosen that number. It is the only bound
-     * on a hung request — there is no JUnit platform timeout and no timeout on the Gradle `Test`
-     * task — so removing it entirely would turn a deadlock into a stalled build.
-     *
-     * Five seconds is too tight for what it guards. These endpoints answer in about 50 ms once warm,
-     * but the **first** request in a `@SpringBootTest` class pays for a freshly started context and a
-     * Testcontainers PostgreSQL: measured at 1.3 s on an idle laptop, and a loaded CI runner
-     * multiplies that. `ArtistControllerTest` timed out on exactly that path — its own duplicate-name
-     * test runs in 48 ms, one of the fastest in the class, so nothing was slow except the runner.
-     *
-     * Thirty seconds is roughly 600× the steady-state cost and 20× the cold start. Exceeding it means
-     * something is genuinely broken, which is the only thing a test-suite timeout should ever claim.
-     *
-     * **MIRRORED IN THE OTHER MODULE'S `BaseControllerTest` — change both or neither.** The two files
-     * are deliberate twins, like the per-cluster cert-manager manifests: a value that differs between
-     * them would produce a suite that is flaky in one module and not the other, for a reason nobody
-     * would think to compare.
+     * Mirrored in the other module's `BaseControllerTest`: change both or neither, or the suite is
+     * flaky in one module for a reason nobody would think to compare.
      */
     protected val webTestClient: WebTestClient by lazy { clientAt("/api") }
 
     /**
-     * The same client without the API prefix, for the routes that are deliberately not under it.
-     *
-     * The actuator is the whole reason this exists. Deployed it answers on its own management port,
-     * and locally it shares this one — so a health path that moved with the API would be a second
-     * divergence created while closing the first (#857).
+     * The same client without the API prefix, for the actuator: deployed it answers on its own
+     * management port, locally it shares this one, so a health path that moved with the API would
+     * be a second divergence (#857).
      */
     protected val rootClient: WebTestClient by lazy { clientAt("") }
 
@@ -96,12 +76,9 @@ abstract class BaseControllerTest {
     }
 
     /**
-     * Truncates all domain tables before each test to ensure a clean state.
-     *
-     * **The response cache is emptied with them (#269).** It is keyed on the request rather than on
-     * the data, so a row deleted by the TRUNCATE stays visible for the TTL — and the tests run in
-     * far less than one. The alternative, a zero TTL in the test configuration, would leave the
-     * caching path unexercised by every integration test in this module.
+     * Truncates all domain tables before each test. The response cache is emptied with them (#269):
+     * keyed on the request, a row deleted by TRUNCATE stays visible for the TTL. A zero TTL in the
+     * test configuration would leave the caching path unexercised.
      */
     @BeforeEach
     fun cleanUp() =
@@ -242,11 +219,8 @@ abstract class BaseControllerTest {
 
     /**
      * Seeds one cached venue image and one derivative per width and format, as the importer would
-     * have written them (ADR-019).
-     *
-     * Keys come from [derivedKey], so a caller can put the matching object in a bucket. The real
-     * keys carry an environment prefix; nothing on this side builds one, because a served key is
-     * read from the row.
+     * have written them (ADR-019). Keys come from [derivedKey]; no environment prefix, because a
+     * served key is read from the row.
      */
     protected suspend fun insertCachedImage(
         sourceUrl: String,
@@ -254,8 +228,8 @@ abstract class BaseControllerTest {
         widths: List<Int>,
         formats: List<String> = listOf("avif", "webp", "jpg"),
         deleted: Boolean = false,
-        // Null by default because null is the common case worth defaulting to: a stock JVM measures
-        // neither WebP nor AVIF, so 16% of the real rows carry no dimensions (#848).
+        // Null by default: a stock JVM measures neither WebP nor AVIF, so 16% of the real rows carry no
+        // dimensions (#848).
         intrinsicWidth: Int? = null,
         intrinsicHeight: Int? = null
     ): Long {
@@ -337,10 +311,8 @@ abstract class BaseControllerTest {
     private suspend fun DatabaseClient.GenericExecuteSpec.mapId(): Long = map { row: Readable -> row.get(0, Long::class.javaObjectType)!! }.one().awaitSingle()
 
     /**
-     * The credit every image row owes, or nulls where the fixture has no image.
-     *
-     * V020 refuses a row with an `image_url` and no attribution, so a fixture that gives a venue,
-     * artist or promoter an image supplies one here rather than at each call site.
+     * The credit every image row owes, or nulls where the fixture has no image: V020 refuses a row
+     * with an `image_url` and no attribution.
      */
     private fun DatabaseClient.GenericExecuteSpec.bindCredit(imageUrl: String?): DatabaseClient.GenericExecuteSpec =
         bindOrNull("attribution", imageUrl?.let { "Fixture Photographer" })
