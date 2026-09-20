@@ -8,6 +8,7 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stripArtistPrefix
@@ -90,7 +91,8 @@ class TresorOverviewPageScraper {
             eventDate = parseSlugDate(slug) ?: UNRESOLVED_EVENT_DATE,
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.TRESOR.sourceIdPrefix}$slug",
-            artists = parseLineup(item)
+            // `Tresor New Faces hosted by <DJ>` with no line-up bills its host; `hosted by Tresor` is the house itself.
+            artists = parseLineup(item).ifEmpty { hostedActsFromTitle(title, role = "DJ").filterNot { it.name.equals("Tresor", ignoreCase = true) } }
         )
     }
 }

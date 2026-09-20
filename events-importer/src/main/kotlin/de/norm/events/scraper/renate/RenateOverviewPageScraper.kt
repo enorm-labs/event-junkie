@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
@@ -103,7 +104,7 @@ class RenateOverviewPageScraper(
             sourceUrl = baseUrl,
             sourceId = "${EventSource.RENATE.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
             ticketUrl = row.hrefAt(".ticket-link"),
-            artists = parseLineup(row)
+            artists = parseLineup(row).ifEmpty { hostedActsFromTitle(title, role = "DJ") }
         )
     }
 

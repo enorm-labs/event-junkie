@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
@@ -111,7 +112,8 @@ class KaterOverviewPageScraper(
             sourceId = "${EventSource.KATER.sourceIdPrefix}$eventId",
             ticketUrl = article.hrefAt("a.rsvp"),
             free = description?.let { FREE_ENTRY_PHRASE.containsMatchIn(it) } == true,
-            artists = lineup
+            // A night named for its curator and billed without a line-up (#339).
+            artists = lineup.ifEmpty { hostedActsFromTitle(title, role = "DJ") }
         )
     }
 

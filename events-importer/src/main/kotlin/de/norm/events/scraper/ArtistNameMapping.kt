@@ -996,6 +996,36 @@ fun headlinersFromTitle(
         .map { (name, role) -> ScrapedArtist(name = name, role = role, titleDerived = true) } + guests
 }
 
+/**
+ * A night named for the DJ who runs it: `<night> curated by <acts>`, `<night> hosted by <acts>`,
+ * `<night> by <Person Name>` (#339). The acts after the marker are the booking.
+ */
+private val HOSTED_ACTS_MARKER = Regex("""^.+?\s+(?:curated\s+by|hosted\s+by)\s+(.+)$""", RegexOption.IGNORE_CASE)
+
+/** The bare `by` form, accepted only when what follows is shaped like a person's name. */
+private val BY_PERSON_MARKER = Regex("""^.+?\s+by\s+(\p{Lu}[\p{L}'.-]*(?:\s+\p{Lu}[\p{L}'.-]*){1,3})$""")
+
+/**
+ * The acts a `curated by` / `hosted by` / `by <Person>` title names, for a venue that publishes no
+ * line-up for that night (#339). The marker words are a closed set and the acts follow them, which
+ * is what separates this from the `PARTY` guard in [buildArtistsForEventType]: a party title is not
+ * an act, but the DJ a party names as its curator is. A venue that does publish a line-up keeps it
+ * — Tresor's floor host (`hosted by HARD WAX`) is a collective, not a booking, and its scraper drops
+ * it — so callers use this as the fallback for an empty line-up only.
+ */
+fun hostedActsFromTitle(
+    title: String,
+    role: String = "HEADLINER"
+): List<ScrapedArtist> {
+    val acts = HOSTED_ACTS_MARKER.find(title.trim())?.groupValues?.get(1) ?: BY_PERSON_MARKER.find(title.trim())?.groupValues?.get(1)
+    return acts
+        ?.let(::splitSupportActs)
+        .orEmpty()
+        .map { stripArtistSuffix(it) }
+        .filterNot(::isNonArtistName)
+        .map { ScrapedArtist(name = it, role = role, titleDerived = true) }
+}
+
 /** The `feat.` / `featuring` / `ft.` marker between an act and its guest, mid-title. */
 private val FEATURED_GUEST_MARKER = Regex("""\s+(?:feat\.?|featuring|ft\.)\s+""", RegexOption.IGNORE_CASE)
 
@@ -1110,9 +1140,29 @@ fun buildArtistList(
 }
 
 /**
+ * The `"<Performer> – <Show>"` idiom every variety and comedy house bills a solo act with (#315):
+ * a person-shaped head — two to four capitalised words — before a dash or colon, and a show after
+ * it. Cosmic Comedy derives its `Comedy Special` acts the same way; a production title
+ * (`DIE KLIMA-MONOLOGE`) has no such head and yields nothing.
+ */
+private val SOLO_BILL = Regex("""^(\p{Lu}[\p{L}'.-]*(?:\s+\p{Lu}[\p{L}'.-]*){1,3})\s*(?:[-–—]|:)\s+\S.*$""")
+
+/** The solo act a show title bills, or none: a shouted head (`FOTZENSCHLEIMPOWER GEGEN RAUBTIER – …`) is a production's title, not a name. */
+private fun soloBillOf(title: String): List<ScrapedArtist> =
+    SOLO_BILL
+        .find(stripTitleStatusMarker(title).trim())
+        ?.groupValues
+        ?.get(1)
+        ?.trim()
+        ?.takeIf { performer -> performer.any { it.isLowerCase() } && !isNonArtistName(performer) }
+        ?.let { listOf(ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true)) }
+        .orEmpty()
+
+/**
  * Builds an artist list using the source's own event-type classification, for venues that expose a
  * clean `kind`/type label (the Kulturhäuser platform — Astra, Lido). Keys off [eventType]:
  * - **Festivals / parties** — the title is the night's name, not an artist; none are extracted.
+ * - **Shows** with no support line — a `"<Performer> – <Show>"` title bills its solo act ([SOLO_BILL], #315).
  * - **Concerts** — the type confirms the title is the headliner, so it is always added, with any
  *   support acts from the subtitle's `"… + Support: A & B"` pattern.
  * - **Unknown / other** — fall back to [buildArtistList], which treats the title as an artist only
@@ -1133,6 +1183,7 @@ fun buildArtistList(
  * `"<night> curated by / invites / hosted by <act>"` idiom — is #339, and no venue using it routes
  * through this function.
  */
+
 @Suppress("ReturnCount") // Guard clauses for the event-type branches are clearer than nesting
 fun buildArtistsForEventType(
     title: String,
@@ -1142,6 +1193,7 @@ fun buildArtistsForEventType(
     if (eventType == EventType.FESTIVAL.name || eventType == EventType.PARTY.name) return emptyList()
 
     val supportNames = extractSupportFromSubtitle(subtitle)
+    if (eventType == EventType.SHOW.name && supportNames.isEmpty()) return soloBillOf(title)
     if (eventType != EventType.CONCERT.name) return buildArtistList(title, supportNames, subtitle)
 
     // Concert: the title carries the headliner(s) (co-bills split out), then support acts in listing order.

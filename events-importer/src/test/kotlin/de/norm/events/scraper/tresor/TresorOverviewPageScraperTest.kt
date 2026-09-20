@@ -83,7 +83,9 @@ class TresorOverviewPageScraperTest {
     @Test
     fun `bills every act as a DJ`() {
         events.flatMap { it.artists }.all { it.role == "DJ" } shouldBe true
-        events.sumOf { it.artists.size } shouldBe 152
+        // 152 billed on the floors, plus the host of the one New Faces night with no line-up (#339).
+        events.sumOf { it.artists.size } shouldBe 153
+        events.single { it.title == "Tresor New Faces hosted by Secret Keywords" }.artists.map { it.name } shouldBe listOf("Secret Keywords")
     }
 
     @Test

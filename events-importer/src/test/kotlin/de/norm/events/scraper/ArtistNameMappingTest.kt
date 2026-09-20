@@ -1108,6 +1108,31 @@ class ArtistNameMappingTest {
         stripArtistSuffix("Moretti") shouldBe "Moretti"
     }
 
+    // #339 — the DJ a night is named for, when the venue publishes no line-up.
+    @Test
+    fun `hostedActsFromTitle reads the acts after a curated-by, hosted-by or by-person marker`() {
+        hostedActsFromTitle("FOREVER 25 curated by Mila Stern & Esther Silex").map { it.name } shouldBe listOf("Mila Stern", "Esther Silex")
+        hostedActsFromTitle("Tresor New Faces hosted by Secret Keywords", role = "DJ").map { it.name to it.role } shouldBe
+            listOf("Secret Keywords" to "DJ")
+        hostedActsFromTitle("Antina's Spookhouse by Antina Christ").map { it.name } shouldBe listOf("Antina Christ")
+        // A bare `by` needs a person-shaped tail; a night name or a lowercase phrase is not one.
+        hostedActsFromTitle("Stand By Me").shouldBeEmpty()
+        hostedActsFromTitle("Klubnacht by night").shouldBeEmpty()
+        hostedActsFromTitle("FOREVER 25 curated by TBA").shouldBeEmpty()
+    }
+
+    // #315 — a variety or comedy house bills a solo act as `<Performer> – <Show>`.
+    @Test
+    fun `buildArtistsForEventType reads a solo bill off a show title and leaves a production alone`() {
+        buildArtistsForEventType("Bülent Ceylan - \"Diktatürk\"", null, "SHOW").map { it.name } shouldBe listOf("Bülent Ceylan")
+        buildArtistsForEventType("Torsten Sträter: Schnelle Nummer", null, "SHOW").map { it.name } shouldBe listOf("Torsten Sträter")
+        buildArtistsForEventType("DIE KLIMA-MONOLOGE", null, "SHOW").shouldBeEmpty()
+        buildArtistsForEventType("Berlin Burlesque Festival - Gala", null, "SHOW").shouldBeEmpty()
+        buildArtistsForEventType("FOTZENSCHLEIMPOWER GEGEN RAUBTIER – Ein Abend", null, "SHOW").shouldBeEmpty()
+        // A `Support:` line still wins, and a concert keeps its own path.
+        buildArtistsForEventType("Some Act - Summer Tour", "Support: Other Act", "SHOW").map { it.name } shouldBe listOf("Some Act", "Other Act")
+    }
+
     // Provenance for #1145: only what was read off the title carries the flag.
     @Test
     fun `headlinersFromTitle marks every act it reads off the title as title-derived`() {
