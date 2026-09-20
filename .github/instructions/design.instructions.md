@@ -10,13 +10,12 @@ paths:
 
 What the result may look like. [vue](vue.instructions.md) covers how to write the component; this file covers what it is allowed to be.
 
-**Why this file exists at all.** [docs/BRANDING.md](../../docs/BRANDING.md) argues the design decisions well, at length, in prose. Prose is not a
-constraint. "Nightlife, editorial, a little nocturnal" is a vibe, and where a vibe and a rule conflict a model sides with the vibe every time. This tree is
-written by agents, so a decision that is not written as a rule lasts until the next session. BRANDING.md keeps the argument; this file keeps the answer.
+[docs/BRANDING.md](../../docs/BRANDING.md) argues the decisions in prose; prose is a vibe, and where a vibe and a rule conflict a model sides with the vibe.
+BRANDING.md keeps the argument; this file keeps the answer.
 
 ## 1. The forbidden list
 
-The part that does the work. Each line names the issue that decided it, so the argument is one click away.
+Each line names the issue that decided it.
 
 | Forbidden                                                       | Instead                                                                                 | Decided by                                                      |
 | --------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
@@ -36,13 +35,9 @@ its own explanation, and the non-scheduled status pill on an event, which must n
 
 ### How a rule leaves this list
 
-A list written today freezes taste at today, so it has to be possible to remove a line without an argument about authority:
-
-1. Build the thing the rule forbids, on a branch, and look at it against real data. Every rule above was decided that way, and two candidates in this run were
-   built and then rejected on the strength of a screenshot ([#1242](https://github.com/enorm-labs/event-junkie/issues/1242),
-   [#1247](https://github.com/enorm-labs/event-junkie/issues/1247)).
-2. If it is better, delete the row and say in the pull request what changed. A row removed with a picture is a decision; a row removed because it was
-   inconvenient is drift.
+Build the thing the rule forbids on a branch and look at it against real data — every row above was decided that way, and two candidates were rejected on a
+screenshot ([#1242](https://github.com/enorm-labs/event-junkie/issues/1242), [#1247](https://github.com/enorm-labs/event-junkie/issues/1247)). If it is
+better, delete the row and say in the pull request what changed. A row removed with a picture is a decision; one removed because it was inconvenient is drift.
 
 ## 2. Colour
 
@@ -66,8 +61,7 @@ neither flips with the theme.
 **Colour is never the only carrier of meaning.** `Sold out` is the word `Sold out`; the colour is emphasis on top of it. New pairs clear 4.5:1 for text and
 3:1 for a boundary, measured against the ground they sit on rather than against the value they were picked for.
 
-**The `--chart-*` and `--sidebar-*` sets are unused on purpose.** They are shadcn registry defaults kept so a future chart or sidebar themes correctly on
-arrival. Tokens we added ourselves going unused is the opposite case, and they get deleted.
+**The `--chart-*` and `--sidebar-*` sets are unused on purpose** (shadcn registry defaults); a token we added ourselves and stopped using gets deleted.
 
 ## 3. Type
 
@@ -108,16 +102,13 @@ have their own edge, down parts one card's last line of text from the next card'
 - **Chrome is a hairline rule, not a box.** The filter bar is the only chrome on a list page.
 - **An empty state offers a control**, not only a sentence ([#1266](https://github.com/enorm-labs/event-junkie/issues/1266)).
 - **A missing image is a designed poster**, never a grey rectangle. One upcoming event in nine has no flyer.
-- **Below `sm` the poster bleeds to both viewport edges**, through the page shell's `p-4`, with `CARD_POSTER_CLASS`. A phone shows one card per row, and 16 px
-  of ground either side of a picture that _is_ the card buys nothing. A title poster bleeds with it: a card with no flyer is one in nine, so it is a normal
-  card rather than a fallback, and an inset grey box beside a full-width photograph reads as the broken one. The card's text keeps the inset, so the column
-  still reads as a column. From `sm` up the grid has two columns and the shell's margins stand.
-- **A hover effect needs a second trigger for a touch device.** Tailwind 4 compiles every `hover:` variant inside `@media (hover: hover)`, so a `group-hover:`
-  reveal is dead code on a phone. `useViewportFocus` marks the card while it crosses the middle tenth of the viewport, and the same utility is written a second
-  time as `group-data-focus/poster:`. A pointer device is left to `:hover` alone, because two triggers for one effect fight over the same card.
+- **Below `sm` the poster bleeds to both viewport edges** through the shell's `p-4`, with `CARD_POSTER_CLASS` — a phone shows one card per row, and ground
+  either side of a picture that _is_ the card buys nothing. A title poster bleeds with it (a card with no flyer is a normal card, not a fallback); the card's
+  text keeps the inset. From `sm` up the margins stand.
+- **A hover effect needs a second trigger for a touch device.** Tailwind 4 compiles every `hover:` inside `@media (hover: hover)`, so a `group-hover:` reveal
+  is dead code on a phone. `useViewportFocus` marks the card crossing the middle tenth of the viewport, and the same utility is written again as
+  `group-data-focus/poster:`. A pointer device gets `:hover` alone.
 - **A heading level belongs to the page**, not to the component — see [vue](vue.instructions.md), which owns the `as` prop rule and the `heading-order` gate.
-- **The compact view is the one place a list has no posters** ([#1371](https://github.com/enorm-labs/event-junkie/issues/1371)). A reader can switch every
-  event and venue grid to `EventRow` / `VenueRow`: one text row each, in a single column, with `CARD_LIST_CLASS` drawing a hairline between two rows and
-  nothing around them. A row carries what the card carries under its poster and no more, so the meta line stays the meta line. The poster view is the default
-  and stays it; this is a second way to read the same data, at 6.5 times the density on a phone. **The rows render no image element at all** — a hidden `<img>`
-  is still downloaded, and the bytes are half the reason the view exists.
+- **The compact view is the one place a list has no posters** ([#1371](https://github.com/enorm-labs/event-junkie/issues/1371)): `EventRow` / `VenueRow`,
+  one text row each in a single column, `CARD_LIST_CLASS` drawing a hairline between rows and nothing around them, carrying what the card carries under its
+  poster and no more. The poster view stays the default. **The rows render no image element at all** — a hidden `<img>` is still downloaded.
