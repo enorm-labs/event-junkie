@@ -71,5 +71,6 @@ val TRESOR_LIMITATIONS =
             LimitedAspect.DOORS_TIME,
             "the venue states no doors or start time; the night's opening set is the only clock it gives, and that is stored as the start"
         ),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club states no category; every listing is a club night")
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club states no category; every listing is a club night"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the club sells at the door and prints no figure on its programme")
     )

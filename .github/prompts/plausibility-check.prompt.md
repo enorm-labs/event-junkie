@@ -61,7 +61,8 @@ Run every check below over the saved JSON with `jq`, and for each one report the
 (`$ORIGIN/en/events/<slug>`). Break every count down by venue: a problem concentrated at one venue is that venue's scraper.
 
 **Checks are keyed by `LimitedAspect`**, so KNOWN is a lookup: a hit is KNOWN when the table has a row for that venue's source and that aspect. `—` in the
-aspect column has no limitation that can excuse it. The bracketed number is the [`/data-quality-audit`](data-quality-audit.prompt.md) category.
+aspect column has no limitation that can excuse it. The bracketed number is the [`/data-quality-audit`](data-quality-audit.prompt.md) category. One exception: a `PRICE_NOTE` hit is KNOWN when the source declares `PRICE` with a reason that says the tariff lands in the note — a
+`PRICE_NOTE` row would claim the note is absent, which is the opposite of what those sources do (Monster Ronson's, Klunkerkranich).
 
 | Aspect                               | Check                                                                                                                                                                      | What it usually means                                                                                                            |
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |

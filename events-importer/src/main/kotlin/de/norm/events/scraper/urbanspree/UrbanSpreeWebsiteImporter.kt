@@ -1,10 +1,12 @@
 package de.norm.events.scraper.urbanspree
 
 import de.norm.events.event.EventStatus
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.urbanspree.UrbanSpreeWebsiteImporter.Companion.MAX_PAGES
@@ -172,4 +174,8 @@ class UrbanSpreeWebsiteImporter(
 }
 
 /** Nothing this source withholds needs declaring (#715). */
-val URBAN_SPREE_LIMITATIONS = VenueLimitations(EventSource.URBAN_SPREE)
+val URBAN_SPREE_LIMITATIONS =
+    VenueLimitations(
+        EventSource.URBAN_SPREE,
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue credits itself as the organiser on its own nights, so the stored promoter is the venue")
+    )

@@ -113,5 +113,9 @@ val KLUNKERKRANICH_LIMITATIONS =
             "entry is paid at the door; an occasional advance-RSVP link is written into a blurb rather than published as a field"
         ),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "nothing flags a night sold out"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "nothing flags a night cancelled")
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "nothing flags a night cancelled"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "entry is a time-banded range (`5-9€`) the model has no field for, so the wording is kept verbatim as the note and only a lone figure is stored"
+        )
     )
