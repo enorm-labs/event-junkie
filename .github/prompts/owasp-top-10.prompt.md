@@ -1,27 +1,20 @@
 # OWASP Top 10 Review
 
-Walk the [OWASP Top 10:2025](https://top10.owasp.org/2025) category by category against this repository as deployed, and write a report. **Read-only, and it
-files nothing**: the tree, the workflows, the ADRs, the threat model and a handful of read-only API calls are the input, and the report is the whole
-deliverable. A person reads it and decides what becomes an issue.
-
-This is the review a scanner cannot do. `dast.yml` sends hostile requests and reads responses, which covers A02, A05 and half of A01, A04 and A10. The other
-half of the list — design, supply chain, integrity, alerting, exceptional conditions — lives in files and decisions, and this prompt reads those. For each
-category it says what ZAP already covers, so the report carries the gap and not a second copy of the alert list.
+Walk the [OWASP Top 10:2025](https://top10.owasp.org/2025) against this repository as deployed, and write a report. **Read-only, and it files nothing**: the
+tree, the workflows, the ADRs, the threat model and read-only API calls are the input; a person decides what becomes an issue. `dast.yml` covers A02, A05 and
+half of A01, A04 and A10 by sending requests; this reads the design half — supply chain, integrity, alerting, exceptional conditions — and says per category
+what ZAP already covers, so the report carries the gap, not a second alert list.
 
 ## Important
 
-- **Diff-first.** The categories move when a boundary changes, not when a week passes. Step 1 lists the commits of the window that touched a category's
-  evidence, and a category whose evidence did not move gets one line: `unchanged since <last commit date>`. A category whose evidence moved gets the review
-  below. A quiet week is a short report, and that is the report working.
-- **Evidence is a path, a command and its output.** A line reading `admin API unroutable` with nothing behind it is an assertion. Show the `grep`, the
-  `helm template … | yq`, the `gh api` call, and quote what came back. A reader must be able to re-run every claim.
-- **Never write.** Not to the tracker, not to the tree, not to a cluster. Nothing here holds a kubeconfig, and nothing here should ask for one. The
-  `THREAT_MODEL.md` rows are read, never edited by this prompt; a row that has gone wrong is a finding.
-- **A finding names the threat-model row it belongs to** (`B1`–`B10`, or `Cluster-wide`), or says the model has no row for it. That is how A06 gets its
-  answer: a finding with no row is a boundary the model missed.
-- **What ZAP covers is out of scope here, by name.** The rules files under `.zap/` say what fails a scan. Do not re-derive missing headers, reflected input or
-  error-page shape; check instead that the rules file still says `FAIL` for what the chart guarantees.
-- `git` and `gh` non-interactively (`git --no-pager …`); see AGENTS.md.
+- **Diff-first.** Categories move when a boundary changes, not when a week passes: a category whose evidence did not move gets one line,
+  `unchanged since <last commit date>`; one whose evidence moved gets the review. A quiet week is a short report.
+- **Evidence is a path, a command and its output.** `admin API unroutable` with nothing behind it is an assertion; show the `grep`, the `helm template … | yq`,
+  the `gh api` call, and what came back.
+- **Never write** — tracker, tree or cluster; nothing here holds a kubeconfig. `THREAT_MODEL.md` rows are read, never edited; a wrong row is a finding.
+- **A finding names its threat-model row** (`B1`–`B10`, `Cluster-wide`) or says there is none — a finding with no row is a boundary the model missed (A06).
+- **What ZAP covers is out of scope by name.** Check that `.zap/` still says `FAIL` for what the chart guarantees; do not re-derive the headers.
+- `git --no-pager`, `gh` non-interactive.
 
 ## Arguments
 
@@ -207,10 +200,7 @@ Tree `<head short>`, site `<version>` (`<commitShort>`), <count> commits touched
 
 ## Notes
 
-- **The relationship to `/security-report` and `/security-triage`.** Those reconcile two alert feeds about dependencies, nightly. This reads design and
-  reasons about it weekly. Different evidence, different reader, and folding them would give the dependency feed a reader who came for something else.
-- **The relationship to the threat model.** The model is the map; this is the walk over it. A finding that the model has no row for is the strongest kind
-  this prompt produces, because it is the one nothing else would find. The model's `Last reviewed` date moves only after a full read by a person, never
-  from this run.
-- **A category that keeps saying `unchanged` for months is fine.** That is what a stable boundary looks like. The line to worry about is `open:` on the same
-  finding three weeks in a row with no issue number beside it.
+- `/security-report` and `/security-triage` reconcile dependency alert feeds nightly; this reads design weekly. Different evidence, different reader.
+- The threat model is the map; this is the walk. A finding with no row is the strongest kind. The model's `Last reviewed` date moves only after a full read
+  by a person.
+- `unchanged` for months is a stable boundary. The line to worry about is `open:` on the same finding three weeks running with no issue number.

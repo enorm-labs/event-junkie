@@ -1,20 +1,18 @@
 # Compact Comments
 
-Find comments that cost more than they earn and pay them down — by deleting, renaming or extracting first, and only rewriting what genuinely has to stay. The
-burn-down counterpart to the guards in #713: those stop the volume rising, this is what brings it down.
+Find comments that cost more than they earn and pay them down — delete, rename or extract first, rewrite only what has to stay. The burn-down counterpart
+to the guards in #713.
 
 ## Important
 
-- **Deletion is the default; rewriting is the exception.** Most long comments are not badly worded, they are unnecessary. Working through the buckets in order
-  (below) is what keeps the effort on removal rather than on polishing prose that should not exist.
-- **Never lose an accepted limitation.** Venue sub-package KDoc is the designated home for them (#393, #714) — a field the venue never publishes, a trade-off a
-  parser makes deliberately. That prose is what stops the same non-defect being re-reported by every `/data-quality-audit`. **Shorten how it is said; never
-  delete what it says.** If a fact has to leave a comment, it moves somewhere reviewable first — a test name, an issue, an ADR.
-- **Re-wrapping is not compaction.** Re-flowing a comment to a wider column drops its line count without removing a word. The caps count lines, so this passes
-  the lint and changes nothing — it is gaming the metric while claiming to fix it. Cut words, not line breaks.
-- **Never silence a rule to go green.** `# comment-lint: allow <reason>` and `@Suppress("LongComment")` are for a comment that has earned its length, argued in
-  the PR. Reaching for one because the check is red is the move this skill exists to avoid.
-- This skill edits code. Run [`/verify`](verify.prompt.md) before handing back, and never leave the tree red.
+- **Deletion is the default; rewriting is the exception.** Most long comments are unnecessary, not badly worded; the bucket order below keeps the effort on
+  removal.
+- **Never lose an accepted limitation.** Venue sub-package KDoc is their home (#393, #714). **Shorten how it is said; never delete what it says.** A fact that
+  leaves a comment moves somewhere reviewable first — a test name, an issue, an ADR.
+- **Re-wrapping is not compaction** — the caps count lines, so re-flowing passes the lint and changes nothing. Cut words, not line breaks.
+- **Never silence a rule to go green.** `# comment-lint: allow <reason>` and `@Suppress("LongComment")` are for a comment that earned its length, argued in
+  the PR.
+- This skill edits code: [`/verify`](verify.prompt.md) before handing back, never a red tree.
 
 ## Running unattended
 
@@ -40,24 +38,14 @@ changes is which of them an unwatched run is allowed to reach.
 The proof obligation is what makes the workload safe at all: `scripts/comment-lint.sh check` has to pass, `scripts/comment-density.sh report` has to show the
 drop the run claims, and a comment-only change that turns a test red went further than intended.
 
-**Your final message is the report, and there is no second turn.** The run ends the moment you stop calling tools, so a closing line like _"I'll compile the
-report once the checks finish"_ ends it with that sentence as the whole deliverable — and the job still reports success. There is nobody to hand off to and
-nothing to wait for: no reviewer reads the transcript, no follow-up prompt arrives, and any work you plan but do not do in this turn is simply lost. Finish the
-work, then write the Output section below as your last message. This has already happened once, on a `--all` sweep that ended waiting for classification agents
-it had no tool to spawn.
+**Your final message is the report, and there is no second turn.** The run ends the moment you stop calling tools; a closing line like _"I'll compile the
+report once the checks finish"_ is the whole deliverable, and the job still reports success. Finish the work, then write the Output section as your last
+message.
 
-**Every count in the report carries the command that produced it.** A bucket line reading `DELETE 0` with nothing behind it is an assertion, and an assertion is
-exactly what cannot be checked after the fact. Show the command and its output — a `git grep -c`, a script's summary line, a test name — so a reviewer, or the
-next run, can re-run it and get the same number. This is the rule [`/codebase-audit`](codebase-audit.prompt.md) already applies: every claim backed by a
-concrete file, count or command output.
-
-**A zero needs its evidence, and so does every other number.** "Nothing to do here" is the finding nobody checks and the one that ends the run early. But the
-rule is not "prove the zeros" — a run that carried a command for each of its zeros and none for its one non-zero count reported three candidates where the tree
-held fifty-seven, and the count with no command behind it was the only one that was wrong. **A number you did not produce with a command is a guess, whatever
-its size**, and a guess in a section headed _"reported for a human"_ is the one a human acts on.
-
-Two runs of this prompt minutes apart once disagreed about whether a pattern still existed at all. Both reports were confident, well formatted, and one of them
-was wrong. The command output is the only part of a report that cannot be plausible and false at the same time.
+**Every count in the report carries the command that produced it, and a zero needs its evidence like every other number.** A run that proved each of its
+zeros and left its one non-zero count unproved reported three candidates where the tree held fifty-seven; two runs minutes apart once disagreed about whether
+a pattern existed, both confident, one wrong. A number without a command behind it is a guess, and a guess in a section headed _"reported for a human"_ is
+the one a human acts on.
 
 ## Usage
 
@@ -81,11 +69,9 @@ scripts/comment-lint.sh report                 # every rule violation, by type
 Default to the current diff (`git --no-pager diff --stat main...HEAD`). With `--worst N`, rank by comment lines × ratio rather than by ratio alone: a 90% file
 with 20 comment lines is a declaration with its rationale attached, and there is nothing to win there.
 
-**`--worst N` and `--all` do not find the same thing, and the difference is why both exist.** Ranking by comment lines × ratio selects for files that are dense
-_deliberately_ — the venue KDoc, the Gradle traps, the metrics contracts — which is where the least is removable. Boilerplate is the opposite shape: a few lines
-each, spread across many files, ranking nowhere. `--all` walks every tracked file so that population is reachable at all.
-
-**Read the whole comment before touching it.** The single most common mistake is compressing a paragraph that should have been deleted outright.
+**`--worst N` and `--all` find different things**: ranking by lines × ratio selects the files that are dense _deliberately_, where the least is removable;
+boilerplate is a few lines each across many files, and only `--all` reaches it. **Read the whole comment before touching it** — the common mistake is
+compressing a paragraph that should have been deleted.
 
 ### 2. Classify every block into exactly one bucket
 
@@ -101,33 +87,22 @@ each, spread across many files, ranking nowhere. `--all` walks every tracked fil
 
 ### 3. What each bucket looks like here
 
-- **DELETE** — the boilerplate #393 removed from 106 files and that copying a scraper puts straight back: `@param document the parsed Jsoup document`, "performs
-  no I/O" (stated once on `AbstractTwoPageWebsiteImporter`), the fixture-and-mock test setup.
-- **RELOCATE, and check first** — a fenced `Example:` block in KDoc is usually a **second copy of an assertion that already exists**. Grep the example's own
-  strings against the test tree before deciding; if the tests hold them, the block goes and the KDoc says so in a clause. Both `ArtistNameMapping` and
-  `MorphineFieldMapping` carried a dozen such lines each.
-- **KEEP, and compress** — the reasoning that survives is the trade-off, the constraint from outside, the non-obvious failure the shape avoids. Invoke the
-  `asd-ste100` skill for the rewrite: ≤20-word sentences, active voice, present tense, one word per concept, ≤3 sentences, no rhetorical build-up.
+- **DELETE** — the boilerplate #393 removed and copying a scraper puts back: `@param document the parsed Jsoup document`, "performs no I/O", the
+  fixture-and-mock setup.
+- **RELOCATE, and check first** — a fenced `Example:` block in KDoc is usually a second copy of an assertion that exists. Grep its strings against the test
+  tree; if the tests hold them, the block goes.
+- **KEEP, and compress** — the trade-off, the outside constraint, the failure the shape avoids. The `asd-ste100` skill does the rewrite: ≤20-word sentences,
+  active, present, one word per concept, ≤3 sentences.
 
-**The four things that make a comment long here**, and what each one becomes:
-
-1. A **markdown heading** (`## Why this exists`) — the content is a document in the wrong file. Move it to `docs/`, an ADR or the issue; leave a pointer.
-2. A **date or an incident narrative** (`Measured on staging 2026-08-20`, `failed at 11:54 and was next attempted…`) — git blame, the PR and the issue hold it.
-   Keep the conclusion, drop the forensics.
-3. **History** (`This used to ask "does it contain -SNAPSHOT?"`) — rewrite in the present tense. If the old approach is a live trap somebody will re-introduce,
-   name the trap in one sentence rather than telling its story.
-4. An **argument reconstructed from the PR thread** — keep what constrains _this_ code, and reference the rest.
+**What makes a comment long here**: a markdown heading (a document in the wrong file — move it, leave a pointer); a date or incident narrative (keep the
+conclusion, drop the forensics); history (rewrite in the present tense; a live trap gets one sentence, not its story); an argument reconstructed from the PR
+thread (keep what constrains _this_ code).
 
 ### 4. What is not a smell, and must not be "fixed"
 
-The lint already knows these; a human sweep is where they get broken.
-
-- **A date inside backticks, quotes or a fenced block is data.** This tree documents its parsers with `"2026-05-16T20:00"` far more often than it dates a
-  decision — of 57 date-shaped strings in Kotlin main, 4 were changelog entries.
-- **"used to" is nearly always the verb** — "used to resolve the links", not "it used to resolve the links". 78 hits, 1 of them narration.
-- **A pinned clock in a test** ("the clock is pinned to 2026-07-01") is a fact about a fixture, and a **legal date** (when an address became real, when a DPA was
-  concluded) is a compliance record. Both are exempt from `CommentSmell` for that reason.
-- **A long comment recording a deliberate trade-off is not boilerplate**, however long it is. Ask for it in fewer words; the reasoning stays.
+The lint already knows these; a human sweep is where they get broken. **A date inside backticks, quotes or a fenced block is data** (`"2026-05-16T20:00"`).
+**"used to" is nearly always the verb.** **A pinned clock in a test and a legal date are records**, exempt from `CommentSmell`. **A long comment recording a
+trade-off is not boilerplate**; fewer words, reasoning intact.
 
 ### 5. Apply, then prove it
 
@@ -164,13 +139,8 @@ rather than shipping the count.
 
 ### 7. Ship it
 
-**An edit that is not committed is an edit that did not happen.** This skill changes files, and a change left in the working tree is lost the moment the session
-ends — on a runner that is the end of the job, and the run still reports success. Every other acting prompt here ends this way for the same reason.
-
-Then [`/open-pr`](open-pr.prompt.md), with the bucket table from Output below as the body, and the baseline drop named in the subject when there is one.
-
-**If nothing was applied, ship nothing and say so.** A pull request with no diff is worse than no pull request: it costs a review and teaches the reader that
-these are noise. A sweep that found only RELOCATE and KEEP has done its job by reporting them.
+**An edit that is not committed did not happen** — on a runner the job ends and still reports success. [`/open-pr`](open-pr.prompt.md) with the bucket
+table as the body. **If nothing was applied, ship nothing and say so**; a sweep that found only RELOCATE and KEEP has done its job by reporting them.
 
 ## Output
 

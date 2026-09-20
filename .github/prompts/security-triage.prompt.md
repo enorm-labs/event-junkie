@@ -58,18 +58,10 @@ nothing to wait for: no reviewer reads the transcript, no follow-up prompt arriv
 work, then write the Output section below as your last message. This has already happened once, on a `--all` sweep that ended waiting for classification agents
 it had no tool to spawn.
 
-**Every count in the report carries the command that produced it.** A bucket line reading `DELETE 0` with nothing behind it is an assertion, and an assertion is
-exactly what cannot be checked after the fact. Show the command and its output — a `git grep -c`, a script's summary line, a test name — so a reviewer, or the
-next run, can re-run it and get the same number. This is the rule [`/codebase-audit`](codebase-audit.prompt.md) already applies: every claim backed by a
-concrete file, count or command output.
-
-**A zero needs its evidence, and so does every other number.** "Nothing to do here" is the finding nobody checks and the one that ends the run early. But the
-rule is not "prove the zeros" — a run that carried a command for each of its zeros and none for its one non-zero count reported three candidates where the tree
-held fifty-seven, and the count with no command behind it was the only one that was wrong. **A number you did not produce with a command is a guess, whatever
-its size**, and a guess in a section headed _"reported for a human"_ is the one a human acts on.
-
-Two runs of this prompt minutes apart once disagreed about whether a pattern still existed at all. Both reports were confident, well formatted, and one of them
-was wrong. The command output is the only part of a report that cannot be plausible and false at the same time.
+**Every count in the report carries the command that produced it, and a zero needs its evidence like every other number.** A run that proved each of
+its zeros and left its one non-zero count unproved reported three candidates where the tree held fifty-seven; two runs minutes apart once disagreed about
+whether a pattern existed at all, both confident, one wrong. A number without a command behind it is a guess, and a guess in a section headed _"reported for
+a human"_ is the one a human acts on. Command output is the only part of a report that cannot be plausible and false at the same time.
 
 ## Where each finding actually lives
 
@@ -171,137 +163,75 @@ gh api repos/enorm-labs/event-junkie/dependabot/alerts --paginate \
         .dependency.package.name, .dependency.manifest_path,
         (.security_vulnerability.first_patched_version.identifier // "none")] | @tsv'
 
-# Code scanning — open, all tools.
-# `GH_TOKEN` is set here because unattended the ambient one is the Claude App's, which holds no
-# `security_events` permission and answers 403. `ACTIONS_GITHUB_TOKEN` is the Actions token that
-# `agent-security.yml` grants `security-events: read` to; run by hand it is unset and `gh` falls
-# back to your own credentials, which is why the assignment is guarded rather than unconditional.
+# Code scanning — open, all tools. Unattended the ambient token is the Claude App's, which holds no
+# `security_events` permission and answers 403; ACTIONS_GITHUB_TOKEN is the Actions token. By hand it
+# is unset and gh falls back to your own credentials, which is why the assignment is guarded.
 GH_TOKEN="${ACTIONS_GITHUB_TOKEN:-$GH_TOKEN}" \
 gh api "repos/enorm-labs/event-junkie/code-scanning/alerts?state=open&per_page=100" --paginate \
   --jq '.[] | [.number, .tool.name, (.rule.security_severity_level // .rule.severity), .rule.id,
         (.most_recent_instance.location.path // "-")] | @tsv'
 ```
 
-Four things to normalise before deciding anything. Each has misled a reading of this output:
-
-- **Dependency-Check duplicates heavily** — one CVE is attributed to every artifact matching the CPE, so 25 alerts can be one problem. Group by CVE/GHSA.
-- **Dependency-Check paths are not repo paths.** They look like `file:///home/runner/.gradle/caches/modules-2/…/foo.jar/META-INF/…`. Do not apply the
-  test-fixture rule to them — judge them by artifact, not by path.
-- **`manifest_path` does not tell you where a Gradle dependency is declared.** Every Gradle alert reports `settings.gradle.kts`, because that is the root
-  manifest of the graph `dependency-submission.yml` uploads — not the file holding the version. Find the real one from `gradle.properties`,
-  `settings.gradle.kts` or the module build script, per the classes in Step 3.
-- **`first_patched_version` is sometimes a pre-release.** A live example: the `kotlin-gradle-plugin` alert's first patched version is `2.4.20-Beta1`. Bumping to
-  it would violate `/update-dependencies`' stable-only rule, so a finding whose only fix is a beta is **not** a cheap fix — it is an issue, or an accepted risk
-  until the stable lands. Check the shape of the version string before classifying.
+Normalise before deciding: **Dependency-Check duplicates heavily** (one CVE per matching artifact — group by CVE/GHSA) and **its paths are Gradle cache paths,
+not repo paths** (judge by artifact; the fixture rule does not apply); **`manifest_path` is always `settings.gradle.kts`** for a Gradle alert, so find the real
+declaration in `gradle.properties`, `settings.gradle.kts` or the module script; **`first_patched_version` can be a pre-release** (`2.4.20-Beta1` was one), and
+a finding whose only fix is a beta is not a cheap fix — an issue, or an accepted risk until the stable lands.
 
 ## Step 2 — Decide, per finding
 
-Take these in order. The first that matches wins.
-
-1. **Is it already handled?** An open Dependabot PR, an open issue (`gh issue list --label area:security`), an existing suppression. If so, leave it and say so.
-   **This check is not optional** — see the trap in Step 3.
-2. **Can it be fixed cheaply? Then fix it, whether or not it affects us.** Cheap means: a version bump in a file we own, no API change, no migration, and
-   `/verify`'s relevant subset stays green. A five-minute bump on a finding that could never reach production is still cheaper than the paragraph explaining why
-   it was dismissed — and it removes the line permanently instead of leaving a dismissal someone re-reads in six months.
-3. **Is it in the test HTML fixtures?** → dismiss as `used in tests` (Step 4). Path under `events-importer/src/test/resources/scraper/`.
-4. **Have you established it cannot reach us?** → dismiss with the evidence (Step 4). "Established" means an advisory read and a version compared, not an
-   impression.
-5. **Otherwise it is real and not cheap** → file an issue (Step 5). Do not half-fix it.
+In order; the first match wins. **Already handled?** — an open Dependabot PR, an open issue (`gh issue list --label area:security`), an existing suppression:
+leave it and say so. **Cheap to fix?** — a version bump in a file we own, no API change, no migration, the relevant `/verify` subset green: fix it, whether or
+not it affects us; a five-minute bump beats the paragraph explaining a dismissal. **In the test HTML fixtures** (`events-importer/src/test/resources/scraper/`)?
+— dismiss as `used in tests`. **Established it cannot reach us** — an advisory read and a version compared, not an impression? — dismiss with the evidence.
+**Otherwise real and not cheap** — file it; never half-fix.
 
 ## Step 3 — Fixing
 
-**Check for an open Dependabot PR before touching a manifest.** Dependabot has standing PRs here (frontend groups, docker, actions), and hand-bumping a package
-it is already bumping produces a conflict for whichever lands second — plus a duplicated review. If a PR exists, the fix is to merge or rebase _that_.
+**Check for an open Dependabot PR before touching a manifest**; if one exists, merge or rebase _that_. Then by class: **npm** — `npm install <pkg>@<version>`,
+exact pin, commit the lockfile; **Gradle, project-managed** — the `*.version` property or plugin version; **Gradle, BOM-managed** — the BOM's own property name
+in `gradle.properties` under "Spring Boot BOM overrides (CVE remediation)", naming the CVE (temporary; `/update-dependencies` prunes it); **transitive with no
+BOM entry** — bump the direct dependency first, a `constraints` block only if that does not carry the fix; **a webjar** — bump the webjar (`swagger-ui`'s
+bundled JS is the live example); **a GitHub Action** — Dependabot's PR; **a base image** — a path like `usr/lib/libuuid.so.1` is a binary inside the image,
+Dependabot's `docker` PR is the first lever, and when Alpine has the fix and the base has not been rebuilt no PR is coming: [§ A blocked publish](#a-blocked-publish).
 
-Then by class:
-
-- **npm (`events-frontend/`)** — `npm install <pkg>@<version>` and commit the lockfile. Exact versions, no `^`/`~` (see `/update-dependencies`).
-- **Gradle, project-managed** — a `*.version` property in `gradle.properties` or a plugin version in `settings.gradle.kts`. An ordinary bump.
-- **Gradle, BOM-managed** — cannot be bumped as a normal dependency. Set the BOM's own property name in `gradle.properties`, under the
-  "Spring Boot BOM overrides (CVE remediation)" block, and say which CVE justifies it. These are temporary by construction — `/update-dependencies` prunes them
-  once the BOM catches up, and an override kept past its purpose is a silent downgrade.
-- **Transitive with no BOM entry** — check first whether bumping the _direct_ dependency carries the fix. Only pin via a `constraints` block if it does not.
-- **A webjar or other bundled asset** — the vulnerable file is inside a jar (the `swagger-ui` bundled JS is the live example). Bump the webjar; there is nothing
-  to patch in our tree.
-- **GitHub Action** — Dependabot's `github-actions` ecosystem owns the pins; prefer its PR.
-- **Base image** — a Trivy finding in a path like `usr/bin/pebble` or `usr/lib/libuuid.so.1` is a binary _inside the image_, not code we wrote, so there
-  is nothing in this tree to patch. Dependabot's `docker` PR is the first lever when one is open, and it has been the wrong one twice: when Alpine
-  has the fix and the base has not been rebuilt with it, no PR is coming. That case is [§ A blocked publish](#a-blocked-publish), below.
-
-After fixing, **prove the finding is gone** rather than assuming: re-resolve and compare against the advisory's `first_patched_version`.
-
-### Resolve across _all_ configurations, not just `runtimeClasspath`
-
-This is the step that decides whether an alert is real, and the obvious command gets it wrong. `--configuration runtimeClasspath` answers "does this ship",
-which is the right question for a fix — but an alert can be raised against a configuration that never ships, and then `runtimeClasspath` looks clean while the
-alert stays open and inexplicable. Drop the flag to see every configuration, and find the one that holds the old version:
+After fixing, **prove the finding is gone**: re-resolve and compare against `first_patched_version`. **Resolve across _all_ configurations, not just
+`runtimeClasspath`** — an alert can be raised against a configuration that never ships, and then `runtimeClasspath` looks clean while the alert stays open:
 
 ```sh
 ./gradlew -q :events-core:dependencies | awk '/^[a-zA-Z].*- / { cfg=$0 } /<artifact>:<old-version>/ { print cfg " ||| " $0 }'
 ```
 
-On the first real run (2026-08-14) this is what separated five alerts from two. Every runtime classpath was clean, and the old versions lived in exactly two
-non-shipping places: **`logback-core:1.3.16` on the `ktlint` tool classpath** and **`log4j-api:2.25.4` on `testFixturesCompileClasspath`**, both in
-`events-core`. Without naming the configuration, the only honest verdicts available are "stale alert" (wrong) or "still vulnerable" (also wrong).
-
-Note which classpaths a tool plugin drags in: ktlint, detekt and the Dependency-Check plugin each resolve their own tool dependencies, entirely outside the
-Spring BOM's reach, so a `gradle.properties` override does not touch them.
+That is what separated five alerts from two on the first run: `logback-core` on the `ktlint` tool classpath, `log4j-api` on `testFixturesCompileClasspath`.
+ktlint, detekt and Dependency-Check resolve their own tool dependencies outside the BOM's reach, so a `gradle.properties` override does not touch them.
 
 ## Step 4 — Dismissing
-
-Code scanning:
 
 ```sh
 gh api -X PATCH repos/enorm-labs/event-junkie/code-scanning/alerts/<number> \
   -f state=dismissed -f dismissed_reason='used in tests' \
   -f dismissed_comment='Scraped fixture for the <venue> importer. Inert test data, never served.'
-```
-
-`dismissed_reason` is one of `false positive`, `won't fix`, `used in tests`.
-
-Dependabot:
-
-```sh
 gh api -X PATCH repos/enorm-labs/event-junkie/dependabot/alerts/<number> \
-  -f state=dismissed -f dismissed_reason=not_used \
-  -f dismissed_comment='<evidence>'
+  -f state=dismissed -f dismissed_reason=not_used -f dismissed_comment='<evidence>'
 ```
 
-`dismissed_reason` is one of `fix_started`, `inaccurate`, `no_bandwidth`, `not_used`, `tolerable_risk` — a **different vocabulary** from code scanning's, and
-the API rejects the wrong one.
+Code scanning takes `false positive`, `won't fix`, `used in tests`; Dependabot takes `fix_started`, `inaccurate`, `no_bandwidth`, `not_used`,
+`tolerable_risk` — the API rejects the wrong vocabulary. **Dependabot's `dismissed_comment` is capped at 280 characters and a longer one is a 422**, not a
+truncation. **The comment is the whole value of the dismissal**: artifact, version compared, why it cannot reach us, the date. "Not applicable" is not a comment.
 
-**`dismissed_comment` is capped at 280 characters on Dependabot alerts**, and the API rejects the whole request with a 422 rather than truncating. Draft to fit:
-artifact, resolved version, where the vulnerable version does still appear, and the date. Code scanning's comment has no such limit, so do not copy a long one
-across. (Found the hard way on the first real run, 2026-08-14 — four dismissals failed after the first succeeded.)
-
-**The comment is the whole value of the dismissal.** It is the only thing a future reader has when the same alert reappears on a new version. Name the artifact,
-the version compared and the reason it cannot reach us. "Not applicable" is not a comment.
-
-### The test fixtures, and the fix that must not be attempted
-
-Every importer ships captured HTML under `events-importer/src/test/resources/scraper/`, and real venue pages carry real inline scripts. CodeQL reads them as
-JavaScript and raises `js/xss-through-dom`, `js/functionality-from-untrusted-source` and friends. **60 alerts have been dismissed as `used in tests` on this
-basis already**, and `/scaffold-importer` guarantees more with every venue added.
-
-The obvious structural fix — switch CodeQL to advanced setup and add `paths-ignore` — **must not be done casually, because it would block every pull request.**
-Verified 2026-08-14: CodeQL runs as **default setup**, and **`CodeQL` is a required status check on the `main` ruleset**. Advanced setup reports per-language
-`Analyze (…)` contexts instead, so the required `CodeQL` context would never report again and every PR would sit Pending forever — the same failure #443
-documents. If the toil is worth removing, that is an issue with a plan (retire the required context in the same change), not a quick edit during triage.
+**The fixtures, and the fix that must not be attempted.** Captured venue pages carry real inline scripts; CodeQL raises `js/xss-through-dom` and friends on
+them, dozens are dismissed as `used in tests`, and `/scaffold-importer` adds more. Switching CodeQL to advanced setup with `paths-ignore` **would block every
+pull request**: `CodeQL` is a required context produced by default setup, and advanced setup reports `Analyze (…)` contexts instead. That is an issue with a
+plan that retires the required context in the same change, not a triage edit.
 
 ## Step 5 — Filing what cannot be fixed now
 
-Use [`/new-issue`](new-issue.prompt.md) — it owns the forms, the closed label vocabulary and the board fields. For these, `area:security` always, plus the area
-the fix lands in. Put the CVE/GHSA, the resolved version, the fixed version and _why it was not fixed here_ in the body; a security issue without the version
-comparison is one someone has to re-research.
-
-Check for a duplicate first. Cross-cutting CVEs get filed once, not once per affected artifact.
+[`/new-issue`](new-issue.prompt.md), `area:security` plus the area the fix lands in, with the CVE/GHSA, the resolved version, the fixed version and why it was
+not fixed here. Duplicate check first; a cross-cutting CVE is filed once.
 
 ## Step 6 — Verify and ship
 
-Run the relevant subset of [`/verify`](verify.prompt.md) for whatever was touched — a dependency bump that breaks the build is a worse outcome than the
-vulnerability it closed. Then [`/open-pr`](open-pr.prompt.md).
-
-Alert dismissals take effect immediately and are not part of the PR. Say so in the report, because the two halves land at different times.
+The relevant subset of [`/verify`](verify.prompt.md), then [`/open-pr`](open-pr.prompt.md). Dismissals take effect immediately and are not part of the PR —
+say so.
 
 ## Output
 
@@ -314,10 +244,7 @@ Alert dismissals take effect immediately and are not part of the PR. Say so in t
 
 ## Notes
 
-- **A clean Security tab is not evidence of safety.** `/security-report`'s [Why green means nothing here](security-report.prompt.md#why-green-means-nothing-here)
-  applies in full — a Dependency-Check run that scanned zero dependencies produces exactly the same empty list as a healthy one. If the inventory comes back
-  suspiciously quiet, confirm the scans actually ran before reporting good news.
-- **Pure code-quality findings are not here.** CodeQL runs the `default` query suite, which is security-focused. Style, complexity and maintainability belong to
-  detekt, ktlint and [`/code-review`](code-review.prompt.md); breadth-first quality work belongs to [`/codebase-audit`](codebase-audit.prompt.md).
-- **Do not batch-dismiss by rule id.** The fixture rule is a _path_ rule. The same `js/xss-through-dom` on frontend source is a real finding, and a
-  rule-wide dismissal would bury it.
+- **A clean Security tab is not evidence of safety** — [`/security-report` § Why green means nothing here](security-report.prompt.md#why-green-means-nothing-here):
+  a scan of zero dependencies produces the same empty list as a healthy one. A quiet inventory means confirm the scans ran.
+- **Pure code-quality findings are not here**; CodeQL's `default` suite is security-focused. Style belongs to detekt, ktlint, [`/code-review`](code-review.prompt.md).
+- **Do not batch-dismiss by rule id.** The fixture rule is a _path_ rule; the same `js/xss-through-dom` on frontend source is real.

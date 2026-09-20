@@ -1,228 +1,116 @@
 # Scaffold a New Importer
 
-Add a new venue/promoter event importer (scraper) to `events-importer`, end to end: enum value, parser + importer classes, HTML snapshot fixtures, tests, and
-dev-seed wiring — following the patterns in ADR-007 and the existing importers.
+Add a new venue event importer to `events-importer`, end to end: enum value, parser + importer classes, fixtures, tests, dev-seed wiring — following ADR-007
+and the importers already there.
 
-**Arguments**: `$ARGUMENTS` should name the venue and its listing URL (e.g. `SO36 https://so36.com/programm/`). If either is missing, ask for it before
-starting.
+**Arguments**: `$ARGUMENTS` names the venue and its listing URL (`SO36 https://so36.com/programm/`). Ask if either is missing.
 
 ## Important
 
-- Run git commands with the pager disabled (`git --no-pager ...`).
-- Read [ADR-007 Web Scraping Strategy](../../docs/adr/ADR-007_WEB_SCRAPING_STRATEGY.md) in full before writing any code — it is the source of truth for
-  architecture, selector strategy, and scraping ethics. Also check
-  [EVENT_DATA_SOURCES.md](../../docs/EVENT_DATA_SOURCES.md) for the target venue's row — it records the platform and known quirks, but **not** a field mapping:
-  analyse the live site yourself and map its elements onto [DATA_MODEL.md](../../docs/DATA_MODEL.md) before writing code.
-- Use an existing importer as a template. Pick the closest match to the target's data source:
-    - **JSON / API source** (structured feed, no HTML scraping — always prefer this when one exists): `scraper/festsaal/`,
-      `scraper/neuezukunft/`, `scraper/madameclaude/` — implement `EventImporter` directly, fetch via `ApiClient`, and parse the raw JSON body in a single
-      `*ApiScraper.kt`.
-    - **Single listing page** (all data on one HTML page): `scraper/privatclub/` — implements `EventImporter` directly.
-    - **List + detail pages** (summaries on a listing, full data on per-event pages): `scraper/cassiopeia/`,
-      `scraper/astra/`, `scraper/lido/` — extend `AbstractTwoPageWebsiteImporter`.
-- Do **not** reinvent boilerplate. Reuse the shared extension helpers in the `scraper/` package (see step 4). New code should look like the code around it.
+- `git --no-pager`.
+- Read [ADR-007](../../docs/adr/ADR-007_WEB_SCRAPING_STRATEGY.md) in full first — architecture, selector strategy, scraping ethics. Read the venue's row in
+  [EVENT_DATA_SOURCES.md](../../docs/EVENT_DATA_SOURCES.md) for platform and quirks; it is not a field mapping — analyse the live site and map it onto
+  [DATA_MODEL.md](../../docs/DATA_MODEL.md) yourself.
+- Copy the closest existing importer: **JSON / API source** — `scraper/festsaal/`, `scraper/neuezukunft/`, `scraper/madameclaude/` (`EventImporter` directly,
+  `ApiClient`, one `*ApiScraper.kt`); **single listing page** — `scraper/privatclub/` (`EventImporter` directly); **list + detail** — `scraper/cassiopeia/`,
+  `scraper/astra/` (`AbstractTwoPageWebsiteImporter`). New code looks like the code around it; the shared helpers in `scraper/` are used, not reimplemented.
 
----
+## 1. Reconnaissance
 
-## 1. Reconnaissance — understand the target site first
+1. **`robots.txt`**: honour any `Disallow` on the listing and detail paths; disallowed means stop and report.
+2. **Look for a JSON / API source before committing to HTML** (ADR-007 selector priority 1): XHR/`fetch` calls in the Network tab, WordPress
+   `/wp-json/wp/v2/<type>`, an RSS feed, `?format=json`, an embedded calendar widget's boot endpoint (Festsaal is Wagtail REST, Neue Zukunft an Elfsight
+   widget, Madame Claude WordPress `event` with ACF). `<script type="application/ld+json">` `schema.org/MusicEvent` is still an HTML fetch, parsed as JSON-LD
+   (Astra, Privatclub). **A clean JSON source wins.**
+3. **Save the real listing** (and one or two detail pages for list+detail, including an edge case — cancelled, sold out, free, missing date) as the fixture:
+   `curl -sSL -A 'EventJunkie/1.0 (+https://github.com/enorm-labs/event-junkie)' '<url>' -o events-importer/src/test/resources/scraper/<venue>/<venue>-overview.html`.
+4. **Classify**: JSON / API → `ApiClient.fetchJson` + a pure JSON scraper; JSON-LD → `HtmlFetcher`, parse the structured data; server-rendered HTML → Jsoup;
+   **JS-rendered with no API → stop and flag** (Playwright is not in the project, ADR-007 §3, and adding it is a separate decision).
+5. **Page pattern**: single page, list+detail or paginated. **First page only** (ADR-007 § Pagination); a venue that truly needs more loops inside
+   `importEvents()`, never a changed interface.
 
-Before writing anything, learn how the site is built and whether you're allowed to scrape it.
+## 2. The `EventSource` value
 
-1. **Check `robots.txt`** (`<host>/robots.txt`). Honour any `Disallow` on the listing/detail paths. If scraping is disallowed, stop and report back rather than
-   proceeding.
-2. **Look for a JSON / API source _before_ committing to HTML scraping.** A structured feed is the most stable source (ADR-007 §"Selector Strategy" priority 1)
-   and avoids brittle CSS selectors entirely — always check for one first:
-    - Open the site's **Network tab** (or `curl` the page) and look for XHR/`fetch` calls returning JSON — many "JS-rendered" venues are actually a thin SPA
-      over a public REST/GraphQL API or an embedded third-party calendar widget with its own boot endpoint. Precedents:
-      **Festsaal Kreuzberg** (Wagtail headless-CMS REST API), **Neue Zukunft** (Elfsight
-      "Event Calendar" widget boot API), and **Madame Claude** (WordPress `event` REST API,
-      `/wp-json/wp/v2/event` with ACF fields) — all import from JSON, no HTML scraping.
-    - Check common conventions: WordPress `/wp-json/wp/v2/…` (often a custom post type like `event`), a `sitemap.xml`, an RSS/Atom feed (e.g. Supamolly's
-      `rss.php`), or `?format=json` variants.
-    - Check for embedded structured data in the HTML itself: `<script type="application/ld+json">`
-      `schema.org/MusicEvent` (e.g. Astra). This is still an HTML fetch (the JSON-LD lives in the page), but parse the structured data, not the rendered markup.
-    - **If a clean JSON/API source exists, prefer it** and follow the JSON-source path in step 3 (`ApiClient` + a pure JSON parser). Only fall back to HTML
-      scraping when there is no usable structured source.
-3. **Fetch the real listing HTML** (or the JSON payload) and save it — you'll need it as a test fixture anyway:
-    ```bash
-    curl -sSL -A 'EventJunkie/1.0 (+https://github.com/...)' '<listing-url>' \
-      -o events-importer/src/test/resources/scraper/<venue>/<venue>-overview.html
-    ```
-    For list+detail sites, also fetch one or two representative detail pages (`<venue>-detail-<case>.html`), including edge cases you want regression coverage
-    for (cancelled event, sold-out, free entry, missing date).
-4. **Classify the source** and pick a strategy (ADR-007 §Decision), in preference order:
-    - **JSON / API source** (from step 2): fetch the raw body with `ApiClient.fetchJson(url)` and parse it in a pure JSON scraper. Templates:
-      `FestsaalWebsiteImporter` / `NeueZukunftWebsiteImporter`. No Jsoup, no CSS selectors — the most durable option.
-    - **Embedded structured data** (`<script type="application/ld+json">` `schema.org/MusicEvent`, Microdata): still an `HtmlFetcher` fetch, but parse the
-      JSON-LD, not the markup. See
-      `PrivatclubOverviewPageScraper`'s JSON-LD handling and `AstraWebsiteImporter`.
-    - **Server-rendered HTML** (~80%): Jsoup parsing works directly. This is the happy path.
-    - **JS-rendered SPA / cookie wall with no API**: Playwright is **not** in the project yet (ADR-007 §3). If the content isn't in the raw HTML _and_ there's
-      no JSON/API source, stop and flag it — this needs the Playwright dependency added first, which is a separate decision.
-5. **Decide the page pattern**: single-page vs. list+detail vs. paginated. ADR-007 §"Single Entry URL"
-   and §"Pagination — First Page Only" govern this. Import the **first page only**; if the venue truly needs multi-page crawling, loop inside `importEvents()`
-   (do not change the interface).
-
-## 2. Add the `EventSource` enum value
-
-In `scraper/EventSource.kt`, add a value with a **one-line KDoc describing the venue itself** — what kind of place it is, where, what it programmes. Nothing
-about the site's platform, pages or parsing: that belongs in the importer and scraper KDoc (step 3), and duplicating it here only lets the two drift. The name
-becomes the `source_type` key and the `sourceId` prefix (lowercased):
+In `scraper/EventSource.kt`, **one line of KDoc about the venue itself** — nothing about the site or the parsing, which lives on the importer. The name becomes
+`source_type` and the `sourceId` prefix:
 
 ```kotlin
 /** SO36 Berlin – the Oranienstraße club central to Berlin's punk and new-wave history. */
 SO36,
 ```
 
-## 3. Create the venue sub-package
+## 3. The `scraper/<venue>/` package
 
-New importers live in their own sub-package: `scraper/<venue>/`. Create:
+- **`<Venue>OverviewPageScraper.kt`** — pure, no I/O; a Jsoup `Document` + base URL in (or the raw JSON `String`), `List<ScrapedEvent>` out.
+- **`<Venue>DetailPageScraper.kt`** — list+detail only; `ScrapedEvent?` for one page.
+- **`<Venue>WebsiteImporter.kt`** — the `@Component` that fetches and wires. JSON: inject `ApiClient`, `fetchJson(url)`, return
+  `ImportResult.Success(events, null, null)` (most APIs send no validators; idempotent `sourceId` upserts do the work). Single-page HTML:
+  `HtmlFetcher.fetch(url, etag, lastModified)`, `FetchResult.NotModified` → `ImportResult.NotModified`. List+detail: extend `AbstractTwoPageWebsiteImporter`,
+  implement `scrapeOverview`, `scrapeDetail`, `fillGapsFromOverview` (only what the detail page cannot supply). `override val eventSource = EventSource.<VENUE>`.
 
-- **`<Venue>OverviewPageScraper.kt`** — a pure parser (no I/O). For HTML sources it takes a Jsoup
-  `Document` + base URL; for JSON/API sources it takes the raw JSON `String`. Either way it returns
-  `List<ScrapedEvent>` and is where all parsing (CSS selectors or JSON traversal) lives. Keep it I/O-free so it's trivially testable against a saved snapshot.
-- **`<Venue>DetailPageScraper.kt`** — _(list+detail sites only)_ pure parser returning `ScrapedEvent?`
-  for a single detail page.
-- **`<Venue>WebsiteImporter.kt`** — the `@Component` that owns HTTP fetching and wires the scrapers.
-    - **JSON / API source**: implement `EventImporter` directly (templates: `FestsaalWebsiteImporter`,
-      `NeueZukunftWebsiteImporter`). Inject `ApiClient`, fetch the body with `apiClient.fetchJson(url)`, hand the raw JSON to the pure scraper, and return
-      `ImportResult.Success(events, etag, lastModified)`. Most JSON APIs send no ETag/Last-Modified — pass `null` for both and rely on idempotent `sourceId`
-      upserts (there is no `NotModified` path).
-    - **Single-page HTML**: implement `EventImporter` directly (template: `PrivatclubWebsiteImporter`). Fetch via
-      `HtmlFetcher.fetch(url, etag, lastModified)`, handle `FetchResult.NotModified` / `FetchResult.Success`, return `ImportResult.NotModified` /
-      `ImportResult.Success(events, etag, lastModified)`.
-    - **List+detail HTML**: extend `AbstractTwoPageWebsiteImporter` (template: `CassiopeiaWebsiteImporter`) and implement `scrapeOverview`, `scrapeDetail`, and
-      `fillGapsFromOverview` (fill only fields the detail page can't supply, e.g. image URL from the overview). The base class owns fetch orchestration,
-      per-detail-page error fallback, and dropping events with unresolved dates.
+**The importer's and scrapers' KDoc is the one home for the source** — platform, pages read and why, the traps, why a selector was chosen. Under 20 comment
+lines on the importer, under 10 per scraper; **do not copy the boilerplate an existing scraper still carries** (purity, fixture setup, `@param document the
+parsed document` — #393 deleted it from 106 files). A defect we could repair is an issue, not KDoc.
 
-Set `override val eventSource = EventSource.<VENUE>`.
-
-**The importer's and scrapers' KDoc is where the source gets documented** — the platform, which pages or APIs are read and why, the traps the parser handles,
-and why a selector was chosen. Write it once, next to the code it constrains — not in `EventSource.kt` and not in `dev-seed.http`. Only a defect we could
-actually repair goes in the **Bugs** list in an issue.
-
-**What the source _doesn't_ carry goes in a record, not in prose** (#715). Every importer file ends with a `VenueLimitations` declaration, and the build fails
-if a new `EventSource` has none:
+**What the source does not carry is a record** (#715). Every importer file ends with one, and the build fails without it:
 
 ```kotlin
 val <VENUE>_LIMITATIONS =
     VenueLimitations(
         EventSource.<VENUE>,
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes only one time per night"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue names no musical style anywhere"),
     )
 ```
 
-One `AcceptedLimitation` per thing the source withholds; a `reason` that reads as a property of the _site_ ("the venue publishes no prices"), lowercase, no
-full stop, one sentence. A venue that publishes everything the model stores declares `VenueLimitations(EventSource.<VENUE>)` and nothing else — that is a
-statement, not an omission. `/data-quality-audit` reads these to tell an accepted trade-off from a defect, so a limitation left in prose is one the audit will
-re-report every run. What stays in the KDoc is the _reasoning_: which selector, which trap, what the parser does instead.
+One `AcceptedLimitation` per withheld thing, the reason a property of the _site_, lowercase, one sentence, no full stop. A venue that publishes everything
+declares `VenueLimitations(EventSource.<VENUE>)` — a statement, not an omission. `/data-quality-audit` reads these; a limitation left in prose is re-reported
+every run.
 
-**Give it a budget.** Aim for under 20 comment lines on the importer and under 10 on each scraper, and state each limitation in one sentence. The scraper
-package aggregates 43% comments today, which is what #713 exists to bring down; copying an existing scraper is how that number was reached. Check where a
-new venue lands with `scripts/comment-density.sh report --top 20`.
+## 4. Shared helpers, selectors, fields
 
-**Don't restate what every scraper in the package already is.** Purity ("performs no I/O", "operates on a pre-fetched `Document`"), the fixture-and-mock test
-setup, and tags like `@param document the parsed Jsoup document of the detail page` or `@return a list of ScrapedEvent instances extracted from the page` say
-nothing the signature and the package convention do not — that boilerplate was deleted from 106 files in #393, and copying an existing scraper is exactly how it
-comes back. The purity of the parsers is stated once, on `AbstractTwoPageWebsiteImporter`. Keep a `@param` or `@return` only for what the signature cannot say:
-an ordering guarantee, the value a parameter is turned into, an accepted format.
+`ScrapingExtensions.kt` (`textAt`, `attrAt`, `imgSrcAt`, `hrefAt`, `resolveUrl`), `DateParsingExtensions.kt` (`parseTime`, `parseIsoDate`, `parseIsoTime`),
+`EventTypeMapping.kt` (`mapEventType`, `refineConcertVenueType`, `isFestivalTitle`), `ArtistNameMapping.kt` (`isPlaceholderName`, `isNonArtistName`,
+`buildArtistList`, `extractSupportFromSubtitle`), `EventFieldMapping.kt` (`parseEventStatus`, `orderDoorsBeforeStart`, `cleanEventTitle`, `detectFree`). A
+helper two venues need goes into the extension file and ADR-007's utility table, not the venue package.
 
-## 4. Reuse the shared scraper utilities
+Selectors in ADR-007's order: JSON-LD > semantic HTML5 (`article`, `time[datetime]`, headings) > ARIA > `data-*` > meaningful classes > **never** positional
+(`div:nth-child(3)`, `.col-md-4`). Scope to the narrowest container; `:has()` for context.
 
-Do not hand-roll extraction/parsing that already exists in the `scraper/` package (ADR-007 §Shared Scraping Utilities). Use these:
+`ScrapedEvent` (`scraper/ScrapedEvent.kt`): required `title`, `eventDate`, `sourceUrl`, `sourceId` = `"${EventSource.<VENUE>.sourceIdPrefix}$slug"` derived
+from the canonical URL, never from mutable text. **Validate before returning**: skip a blank title or an unparseable date with a warning, and wrap per-event
+parsing in try/catch so one malformed event does not abort the import.
 
-- **`ScrapingExtensions.kt`** — `Element.textAt(css)`, `attrAt(css, attr)`, `imgSrcAt(css)`, `hrefAt(css)`,
-  `hasVisibleWebflowFlag(...)`, and `resolveUrl(baseUrl, href)`. These already null-out blanks and reject non-absolute URLs.
-- **`DateParsingExtensions.kt`** — `parseTime(text)`, `parseIsoDate(str)`, `parseIsoTime(str)`, `HH_MM_FORMATTER`. Add a venue-specific formatter (e.g. German
-  month names) only if the site's date format isn't covered.
-- **`EventTypeMapping.kt`** — `mapEventType(...)`, `refineConcertVenueType(...)`, `isFestivalTitle(...)`.
-- **`ArtistNameMapping.kt`** — `isPlaceholderName(...)` / `isNonArtistName(...)` (drop "TBA"/"N.N."),
-  `buildArtistList(title, supportNames)`, `extractSupportFromSubtitle(...)`.
-- **`EventFieldMapping.kt`** — `parseEventStatus(...)`, `orderDoorsBeforeStart(...)`, `cleanEventTitle(...)`, `detectFree(...)`.
+## 5. Tests
 
-If you find yourself writing a genuinely reusable helper (used by 2+ venues), add it to the appropriate extension file rather than the venue package, and note
-it in ADR-007's utility tables.
+Under `src/test/kotlin/de/norm/events/scraper/<venue>/`: **`<Venue>OverviewPageScraperTest`** (and `DetailPageScraperTest`) parse the fixture
+(`Jsoup.parse(html, baseUrl)`, or the raw string) and assert the count, one fully populated event, and the edge cases. **`<Venue>WebsiteImporterTest`** mocks
+`ApiClient` or `HtmlFetcher` with MockK (`coEvery { … }`) and asserts `ImportResult.Success` with the right events, validators propagated, `NotModified`
+passed through, an empty page handled, `eventSource` matching. Template: `PrivatclubWebsiteImporterTest`. JUnit 5 + Kotest + MockK; a fixed `Clock` where the
+scraper infers the year.
 
-## 5. Selector strategy — build for durability
+## 6. Register the source
 
-Selectors are the most fragile part of the pipeline. Follow ADR-007 §"Selector Strategy" preference order:
-structured data (JSON-LD) > semantic HTML5 (`article`, `time[datetime]`, `h1`–`h6`) > ARIA roles >
-`data-*` attributes > meaningful class names (`.event-title`) > **avoid** positional/presentational (`div:nth-child(3)`, `.col-md-4`). Scope selectors to the
-narrowest semantic container and use `:has()`
-for contextual matching.
+Sources are runtime rows, not Flyway (ADR-007). In `http/importer/dev-seed.http`: a `POST /api/admin/venues` (with `district`) capturing the id, a
+`POST /api/admin/event-sources` with `"sourceType": "<VENUE>"` and the listing `url`, a `POST /api/admin/event-sources/<slug>/import`; the venue in the
+`Sources (alphabetical)` list at the top as `Name — URL`. The only comments in a block are the two naming the wiring. The import slug is derived from the
+source **name** (`Astra Kulturhaus` → `astra-kulturhaus`).
 
-Populate `ScrapedEvent` fields (see `scraper/ScrapedEvent.kt` for the full contract):
-
-- **Required**: `title`, `eventDate`, `sourceUrl`, `sourceId`. Build `sourceId` as
-  `"${EventSource.<VENUE>.sourceIdPrefix}$slug"` — a stable per-event identifier used for idempotent upserts. Derive the slug from the event's canonical
-  URL/path, not from mutable text.
-- **Optional**: subtitle, description, eventType (map to a known type; unclassifiable → let it default to
-  `OTHER`), doors/start times, imageUrl, ticketUrl, genre, prices (`pricePresale`/`priceBoxOffice`/`priceNote`),
-  `soldOut`, `free`, `status` (`SCHEDULED`/`CANCELLED`/`POSTPONED`/`RELOCATED`), `artists`, `promoters`.
-- **Validate before returning** (ADR-007 best-practice #5): skip events with a blank title or unparseable date, logging a warning — never persist garbage. Wrap
-  per-event parsing in a try/catch so one malformed event doesn't abort the whole import (see `PrivatclubOverviewPageScraper.scrape`).
-
-## 6. Tests — snapshot-based regression guards
-
-Every importer needs tests parsing the saved HTML fixtures (ADR-007 best-practice #4). Mirror the existing test layout under
-`src/test/kotlin/de/norm/events/scraper/<venue>/`:
-
-- **`<Venue>OverviewPageScraperTest.kt`** (and `<Venue>DetailPageScraperTest.kt` for list+detail) — for HTML, parse the fixture with
-  `Jsoup.parse(html, baseUrl)`; for a JSON source, pass the raw fixture string to the scraper. Assert extracted fields: event count, a fully-populated
-  representative event (all fields), and edge cases (cancelled/sold-out/free/missing-date, or a malformed/empty payload).
-- **`<Venue>WebsiteImporterTest.kt`** — for JSON sources mock `ApiClient` (`coEvery { apiClient.fetchJson(...) }`); for HTML sources mock `HtmlFetcher` with
-  MockK (`coEvery { htmlFetcher.fetch(...) }`), assert `importEvents` returns `ImportResult.Success` with the right events, propagates ETag/Last-Modified,
-  returns `NotModified` on `FetchResult.NotModified`, handles an empty page, and that `eventSource` matches the enum. Template: `PrivatclubWebsiteImporterTest`.
-  For list+detail, stub both overview and detail fetches.
-
-Conventions: JUnit 5 + Kotest matchers (`shouldBe`, `shouldHaveSize`, `shouldBeInstanceOf`) + MockK. Use a fixed `Clock` if the scraper does year-rollover date
-inference, so tests are deterministic. Write `runTest {}`
-test bodies as block statements (`= runTest { ... }` is fine here since they return `TestResult`), but for plain `runBlocking` helpers remember the `: Unit`
-gotcha in project memory.
-
-## 7. Register the source (dev-seed + http scripts)
-
-Sources are seeded at runtime via the REST API, not Flyway (ADR-007 §"Source registration is runtime").
-
-1. **`http/importer/dev-seed.http`** — add a venue-creation `POST /api/admin/venues` (with `district` — the frontend has a district filter) capturing the venue
-   id, then a `POST /api/admin/event-sources` linking
-   `venueId` + `"sourceType": "<VENUE>"` + the listing `url`, then a `POST /api/admin/event-sources/<slug>/import`
-   to trigger the first import. Copy the numbered block format of an existing venue and add the venue to the `Sources (alphabetical)` list at the top as a bare
-   `Name — URL` line. The only comments in a source block are the two that name the wiring (`# Links the venue to the <Venue>WebsiteImporter.` and
-   `# The sourceType "<VENUE>" matches EventSource.<VENUE>.`) — everything about the site itself belongs in the importer's KDoc, not here. Note the import slug
-   is derived from the source **name** (e.g. "Astra Kulturhaus" → `astra-kulturhaus`).
-2. Optionally add ad-hoc CRUD examples to `http/importer/event-sources.http` and `http/importer/venues.http`.
-
-No Flyway migration is needed — the `event_source` schema already exists (`V001__create_initial_schema.sql`); migrations are DDL-only (ADR-005).
-
-## 8. Verify
-
-Run the checks before declaring done:
+## 7. Verify
 
 ```bash
-./gradlew :events-importer:test --tests '*<Venue>*'   # new tests green
-./gradlew :events-importer:ktlintCheck :events-importer:detekt   # style + static analysis
-./gradlew :events-importer:test --tests '*ModularityTests'       # Modulith boundaries intact
+./gradlew :events-importer:test --tests '*<Venue>*' --tests '*ModularityTests'
+./gradlew :events-importer:ktlintCheck :events-importer:detekt :events-importer:detektMain
 ```
 
-Then run the full pre-PR sequence with `/verify`. The `ModularityTests` check matters: the new package must stay within the `scraper` module — don't import from
-other feature modules' internals.
-
-Optionally smoke-test the live site: start the importer (`./gradlew :events-importer:bootRun`) against a fresh DB and run the new dev-seed block, then check the
-imported events look sane. Be polite — the per-host throttle (200ms) applies automatically; don't hammer the venue.
+Then `/verify`, then [`/importer-smoke`](importer-smoke.prompt.md) against the live site — the per-host throttle applies; do not hammer the venue.
 
 ## Checklist
 
-- [ ] `robots.txt` checked; **checked for a JSON/API source first** — using `ApiClient` if one exists, HTML scraping only as a fallback; not a JS SPA without an
-      API
-- [ ] `EventSource` enum value added with a one-line venue description (no site/parsing detail)
-- [ ] `<venue>/` package: overview scraper (+ detail scraper if list+detail) + `@Component` importer
-- [ ] Shared extension helpers reused; selectors are semantic/structured, not positional
-- [ ] `sourceId` is stable and prefixed via `sourceIdPrefix`; events validated before return
-- [ ] `<VENUE>_LIMITATIONS` declared at the foot of the importer file and registered in `AcceptedLimitations.declarations`; `ACCEPTED_LIMITATIONS.md`
-      regenerated if it changed
-- [ ] Fixtures saved under `src/test/resources/scraper/<venue>/` (`.html` for HTML, `.json` for API)
-- [ ] Scraper + importer tests covering happy path, edge cases, NotModified, empty page
-- [ ] `dev-seed.http` updated (venue + source + trigger); source list at the top refreshed
-- [ ] `ktlintCheck`, `detekt`, `ModularityTests`, and new tests all green; `/verify` clean
+- [ ] `robots.txt` checked; JSON/API source looked for first; not a JS SPA without an API
+- [ ] `EventSource` value with a one-line venue description
+- [ ] `<venue>/` package: scraper(s) + `@Component` importer; shared helpers reused; semantic selectors
+- [ ] `sourceId` stable and prefixed; events validated before return
+- [ ] `<VENUE>_LIMITATIONS` at the foot of the importer, registered in `AcceptedLimitations.declarations`; `ACCEPTED_LIMITATIONS.md` regenerated
+- [ ] Fixtures under `src/test/resources/scraper/<venue>/`; scraper + importer tests cover happy path, edge cases, NotModified, empty page
+- [ ] `dev-seed.http` updated, list at the top refreshed
+- [ ] `ktlintCheck`, detekt, `ModularityTests`, new tests green; `/verify` clean
