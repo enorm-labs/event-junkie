@@ -46,7 +46,7 @@ Each is documented as "these must move together", so each is a place where drift
 - **`HELM_VERSION` and `HELM_UNITTEST_VERSION`** — `validate-chart.yml` and `release.yml`.
 - **`SHELLCHECK_VERSION`** — `validate-scripts.yml` and `validate-infra.yml`.
 - **The required-check list in [ci-cd.instructions.md](../instructions/ci-cd.instructions.md) ↔ the `main` ruleset** — `gh api repos/:owner/:repo/rulesets`.
-- **The skills list in `CLAUDE.md` ↔ `.claude/skills/` ↔ `.claude/commands/`** — `scripts/skill-parity.sh` already checks this, so run it rather than reading.
+- **The skills list in `AGENTS.md` ↔ `.claude/skills/` ↔ `.claude/commands/`** — `scripts/skill-parity.sh` already checks this, so run it rather than reading.
 
 Where a script already checks a pair, run the script. A check that exists and was not run is the reason the pair drifted.
 

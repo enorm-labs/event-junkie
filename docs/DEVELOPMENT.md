@@ -103,7 +103,7 @@ repository. Third-party hook repositories would each need their own pinning.
 | `tofu-fmt`            | any `.tf` / `.tfvars` file. It rewrites in place, so a failure means "re-stage and commit again", not "go and fix something" |
 | `shellcheck-scripts`  | any `.sh` under `infra/` or `scripts/`                                                                                       |
 | `version-consistency` | any of the four files that carry the version; `scripts/version.sh check`                                                     |
-| `skill-parity`        | anything under `.claude/skills/`, `.claude/commands/`, `.github/prompts/`, or `CLAUDE.md`                                    |
+| `skill-parity`        | anything under `.claude/skills/`, `.claude/commands/`, `.github/prompts/`, or `AGENTS.md`                                    |
 | `rules-parity`        | anything under `.claude/rules/`, `.github/instructions/`, or `AGENTS.md`                                                     |
 | `index-parity`        | anything under `scripts/`. The index in `scripts/README.md`, and every script's `--help`                                     |
 | `ruff-check`          | any `.py` file, with the root `ruff.toml`. The `ruff` on your `$PATH`; `validate-python.yml` pins the one that decides       |

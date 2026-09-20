@@ -72,7 +72,7 @@ would object to, which priced deleting a stale paragraph the same as adding a lo
 
 `skill-parity.sh` is a third check riding along here because it is the same shape and the same cost: `.claude/skills/` and `.claude/commands/` are
 parallel trees of `@` pointers with nothing joining them, so a skill added to one and not the other is silently absent from the other. It also asserts
-every pointer resolves and every skill is listed in `CLAUDE.md`. `validate-docs.yml` runs it in CI.
+every pointer resolves and every skill is listed in `AGENTS.md`. `validate-docs.yml` runs it in CI.
 
 `rules-parity.sh` is the same shape one directory over. A path-scoped rule lives once in `.github/instructions/`, carrying an `applyTo` string for Copilot and
 a `paths` list for Claude Code; each agent reads only its own key, so neither can notice the two describing different globs. It also asserts every
