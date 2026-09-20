@@ -8,57 +8,36 @@
 #   cd infra && ./check-capacity.sh --probe      # ORDERS one bare server per type and deletes it
 #   cd infra && ./check-capacity.sh --probe production
 #
-# THE DEFAULT MODE ANSWERS A WEAKER QUESTION THAN IT LOOKS LIKE. It reports what Hetzner
-# *advertises* in the `datacenters` endpoint, which is not what an order will do — and there is no
-# dry-run for a server order. The two have disagreed three times out of four, in both directions:
-# twice advertising something unbuyable, once omitting something that ordered fine. Staging runs
-# cx33 because an order succeeded and not because this script said so, and production is x86 because
-# ARM was refused everywhere in eu-central while still advertised in two locations.
+# The default mode reports what Hetzner advertises in `datacenters`, which is not what an order
+# will do; the two disagreed three times out of four, in both directions. `--probe` answers the
+# question: a real order per type (no IPs, no network, `start_after_create: false`), deleted on
+# success and the deletion verified. A refusal costs nothing and returns in ~0.1 s; a success is
+# billed by the hour and lives for seconds.
 #
-# **`--probe` is the mode that answers the question.** It places a real order per type — no IPs, no
-# network, `start_after_create: false` — and deletes anything that succeeds, verifying the deletion
-# rather than trusting the status code. A refusal costs nothing and returns in about a tenth of a
-# second; a success is billed by the hour and lives for seconds.
-#
-# **A green probe means orderable at that instant, and says nothing about the next one.** One that
-# returned ORDERABLE for cx33 and cx23 in fsn1 was followed thirty minutes later by an apply that
-# got `error during placement (resource_unavailable)` on the cx33, after creating the cx23:
-# production took one of the last 8 GB-class CX machines there and the shortage closed behind it.
-# **Probe immediately before the apply, not the night before**, and re-probe after a failure rather
-# than assuming the earlier answer still holds. That is also the loop to wait on:
+# A green probe means orderable at that instant only: ORDERABLE for cx33 and cx23 in fsn1 was
+# followed thirty minutes later by `error during placement (resource_unavailable)` on the cx33,
+# after the cx23 was created. Probe immediately before the apply, and re-probe after a failure:
 #
 #   until ./check-capacity.sh --probe production; do sleep 1800; done && say "production can go ARM"
 #
-# The two refusal codes do not mean the same thing. `resource_unavailable` means the type is sold
-# here and merely out of stock, so it can come back. `unsupported location` has not been seen to
-# resolve — but it is also the code ARM is refused with across eu-central, so read it as "not yet
-# seen to resolve" rather than a promise that it never will.
-#
-# For the shape of a shortage over time, Server Radar polls every minute and keeps the history:
-# <https://radar.iodev.org/cloud-status?arch=arm>. Community-run, not Hetzner — it is the trend; the
-# default mode here is the current advertisement; only `--probe` is the order path.
+# `resource_unavailable` means sold here and out of stock, so it can come back. `unsupported
+# location` has not been seen to resolve, and it is the code ARM is refused with across eu-central.
+# Server Radar keeps the trend, community-run: <https://radar.iodev.org/cloud-status?arch=arm>.
 
 set -euo pipefail
 
 readonly API=https://api.hetzner.cloud/v1
 
-# What each environment REQUIRES, as `<name>=<location>:<type>[,<type>…]`. These decide the exit
-# code.
-#
-# KEEP IN STEP WITH infra/environments/*/main.tf — the `location` and `*_server_type` values there
-# are the truth and this is a copy. When they drift, this script answers a question nobody is
-# asking, and says nothing about being out of date (#460).
+# What each environment REQUIRES, as `<name>=<location>:<type>[,<type>…]`; these decide the exit
+# code. KEEP IN STEP WITH infra/environments/*/main.tf, which is the truth and this a copy; when
+# they drift this answers a question nobody is asking and says nothing about it (#460).
 export ENVIRONMENTS="staging=nbg1:cx33;production=fsn1:cx33,cx23"
 
-# Types worth being told about but which nothing depends on: what each environment would move to if
-# capacity returned. Reported, never counted — a watch entry that turns the script red makes the
-# `until` loop above permanently false, which is exactly what the old `cx43` entry did.
-#
-#   staging     cx43 is 16 GB for €19.03, supported in nbg1 but out of stock there, so it can
-#               return. It is orderable in fsn1, which does staging no good: the Primary IPs and
-#               the PGDATA volume are location-bound (#460).
-#   production  the ARM pair it would go back to if that were both buyable and still cheaper —
-#               currently neither.
+# Types worth being told about but nothing depends on. Reported, never counted: a watch entry
+# that turns the script red makes the `until` loop above permanently false, as the old `cx43`
+# entry did. staging: cx43 (16 GB, €19.03) is supported in nbg1 and out of stock there, orderable
+# in fsn1 where the location-bound Primary IPs and volume make it useless (#460). production: the
+# ARM pair, if it became buyable and still cheaper.
 export WATCH="staging=nbg1:cx43;production=fsn1:cax21,cax11"
 
 export NETWORK_ZONE=eu-central
@@ -151,8 +130,8 @@ def probe(server_type, location):
             "name": name,
             "server_type": server_type,
             "location": location,
-            # Hetzner resolves the image name against the type's architecture, so one name serves
-            # both. No IPv4: it is billed separately and nothing is going to connect to this.
+            # Hetzner resolves the image name against the type's architecture. No IPv4: billed separately,
+            # and nothing connects to this.
             "image": "debian-12",
             "start_after_create": False,
             "public_net": {"enable_ipv4": False, "enable_ipv6": True},
@@ -257,8 +236,7 @@ for name, location, types in environments:
             print(f"  {wanted:<8} advertised available")
             continue
         blocked.append(f"{name}/{wanted}")
-        # Where else it could go matters: moving an environment is two variables, plus destroying
-        # any Primary IPs already created, which are location-bound.
+        # Moving an environment is two variables plus destroying any location-bound Primary IPs.
         elsewhere = sorted(loc for loc, types_ in available.items() if wanted in types_)
         if elsewhere:
             print(f"  {wanted:<8} NOT in {location} — advertised in: {', '.join(elsewhere)}")

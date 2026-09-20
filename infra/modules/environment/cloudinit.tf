@@ -1,20 +1,16 @@
-# cloud-init is assembled here rather than written as one template per role, so that the shell
-# lives in real `.sh` files that shellcheck can read and a human can run by hand on the node. The
-# templates carry no logic beyond "which scripts, in what order".
+# cloud-init is assembled here so the shell lives in real `.sh` files that shellcheck can read and
+# a human can run by hand; the templates carry no logic beyond "which scripts, in what order".
 #
-# Everything variable is passed through a single sourced env file. Nothing secret goes in it, and
-# that is a hard line rather than a habit — `user_data` is state. The WireGuard *server* key is
-# generated on the node (see wireguard.sh), database credentials belong to #261, and the S3 key
-# wal-g archives with is written by hand into /etc/wal-g/credentials.env (#270). What is here is
-# the bucket, the endpoint and a pinned version: public facts about where backups go, not the
-# authority to write them.
+# Everything variable passes through one sourced env file, and nothing secret goes in it: `user_data`
+# is state. The WireGuard server key is generated on the node, database credentials belong to #261,
+# and the S3 key wal-g archives with is written by hand into /etc/wal-g/credentials.env (#270).
 
 locals {
   cloud_init_dir = "${path.module}/cloud-init"
 
   scripts = {
-    # Runs before everything, on both roles: nothing that follows works without the private
-    # network, and on a first apply cloud-init does not bring it up. See the script.
+    # Runs before everything, on both roles: on a first apply cloud-init does not bring the private
+    # network up. See the script.
     private-net = file("${local.cloud_init_dir}/private-net.sh")
     harden      = file("${local.cloud_init_dir}/harden.sh")
     wireguard   = file("${local.cloud_init_dir}/wireguard.sh")
@@ -23,13 +19,11 @@ locals {
     backups     = file("${local.cloud_init_dir}/backups.sh")
   }
 
-  # Both environments push to one bucket, told apart by this. It is derived rather than a variable
-  # so that the two can never be given the same value by hand — a retention sweep run under
-  # production's prefix from staging would delete real backups (#270).
+  # Derived rather than a variable so the two environments can never share a prefix: a retention
+  # sweep run under production's prefix from staging would delete real backups (#270).
   backup_prefix = var.environment
 
-  # k3s's default `--cluster-cidr`. Not a variable, because k3s.sh does not override the flag —
-  # if it ever does, both have to move together, and a local keeps them in one file.
+  # k3s's default `--cluster-cidr`. Not a variable, because k3s.sh does not override the flag.
   pod_cidr = "10.42.0.0/16"
 
   wireguard_prefix  = split("/", var.wireguard_subnet)[1]
@@ -45,8 +39,7 @@ locals {
     ])
   ])
 
-  # The Kubernetes API certificate has to be valid for every address a kubeconfig might name: the
-  # public IPv4 (break-glass), the tunnel address (daily use), and the private address.
+  # Every address a kubeconfig might name: public IPv4 (break-glass), tunnel address, private address.
   k3s_tls_sans = concat(
     [
       hcloud_primary_ip.k3s_ipv4.ip_address,
@@ -56,8 +49,8 @@ locals {
     var.k3s_extra_tls_sans,
   )
 
-  # Applies to every apt invocation on the box, so cloud-init's own `package_upgrade` and the
-  # unattended-upgrades timer cannot collide with the scripts below and fail the boot.
+  # Every apt invocation on the box, so `package_upgrade` and the unattended-upgrades timer cannot
+  # collide with the scripts below and fail the boot.
   apt_lock_timeout = <<-EOT
     DPkg::Lock::Timeout "600";
     Acquire::Retries "3";
@@ -74,9 +67,8 @@ locals {
 
   base_runcmd = [
     "install -d -m 0750 /opt/event-junkie",
-    # First, and on both roles. k3s registers with `--node-ip`, PostgreSQL binds to the private
-    # address, and neither exists until this has run — see private-net.sh for why cloud-init does
-    # not already have it on a first apply.
+    # First, on both roles: k3s registers with `--node-ip` and PostgreSQL binds the private address,
+    # and neither exists until this has run.
     "/opt/event-junkie/private-net.sh",
     "/opt/event-junkie/harden.sh",
   ]
@@ -117,10 +109,8 @@ locals {
     BACKUP_RETENTION_DAYS=${var.backup_retention_days}
   EOT
 
-  # Only shipped to the k3s node when the database is on it. `user_data` is capped at 32 KiB and
-  # these two are more than half of what this node renders, so sending them to a k3s node that has
-  # a database next door is not merely untidy — it spends most of the headroom on files nothing
-  # runs, and the co-located node is where the cap actually binds.
+  # Only shipped where the database is on the k3s node: `user_data` is capped at 32 KiB, these two
+  # are more than half of what this node renders, and the co-located node is where the cap binds.
   colocated_postgres_files = local.dedicated_postgres ? [] : [
     local.script_file.postgres,
     local.script_file.backups,
@@ -146,11 +136,10 @@ locals {
     ], local.colocated_postgres_files)
     runcmd = concat(
       local.base_runcmd,
-      # WireGuard before k3s, deliberately: it is how you get back in if anything after it fails.
+      # WireGuard before k3s: it is how you get back in if anything after it fails.
       ["/opt/event-junkie/wireguard.sh"],
-      # backups.sh immediately after postgres.sh, and only where PostgreSQL actually runs: it turns
-      # on `archive_mode`, which needs a restart rather than a reload, so it has to come after the
-      # cluster exists and before anything else settles around it.
+      # backups.sh immediately after postgres.sh, only where PostgreSQL runs: it turns on
+      # `archive_mode`, which needs a restart, so the cluster has to exist first.
       local.dedicated_postgres ? [] : ["/opt/event-junkie/postgres.sh", "/opt/event-junkie/backups.sh"],
       ["/opt/event-junkie/k3s.sh"],
     )
@@ -180,8 +169,8 @@ locals {
     BACKUP_RETENTION_DAYS=${var.backup_retention_days}
   EOT
 
-  # No WireGuard here. The node has no public IPv4 to run an endpoint on, and it does not need one:
-  # it is reached over the private network from the k3s node, which is itself behind the tunnel.
+  # No WireGuard: no public IPv4 to run an endpoint on, and it is reached over the private network
+  # from the k3s node, which is behind the tunnel.
   postgres_user_data = templatefile("${local.cloud_init_dir}/node.yaml.tftpl", {
     hostname        = "${var.environment}-postgres"
     ssh_public_keys = var.ssh_public_keys

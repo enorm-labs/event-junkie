@@ -1,17 +1,15 @@
 #!/usr/bin/env bash
 #
 # Baseline host hardening: SSH, unattended security upgrades, and the metric that says a reboot is
-# pending (#419).
-#
-# Runs on every node. Idempotent — safe to re-run by hand after a config change.
+# pending (#419). Every node; idempotent.
 
 set -euo pipefail
 
 readonly OPS_AUTHORIZED_KEYS=/home/ops/.ssh/authorized_keys
 
-# Refuse to disable root login until the unprivileged account can actually be logged into.
-# Hetzner injects the SSH keys into *root*; if cloud-init's `users:` block failed for any reason,
-# hardening now would leave the node reachable only through Hetzner's browser console.
+# Refuse to disable root login until the unprivileged account can be logged into: Hetzner injects
+# the keys into root, and a failed `users:` block would leave the node reachable only through
+# Hetzner's browser console.
 if [[ ! -s "${OPS_AUTHORIZED_KEYS}" ]]; then
     echo "harden: ${OPS_AUTHORIZED_KEYS} is missing or empty - refusing to disable root login" >&2
     exit 1
@@ -43,27 +41,22 @@ APT::Periodic::Unattended-Upgrade "1";
 EOF
 
 # Patches apply automatically; reboots do not. On a single-node cluster an unattended 04:00 reboot
-# is an unannounced outage. Kernel updates therefore need a deliberate reboot — see below.
+# is an outage, so kernel updates need a deliberate reboot (below).
 cat >/etc/apt/apt.conf.d/51-event-junkie-no-auto-reboot <<'EOF'
 Unattended-Upgrade::Automatic-Reboot "false";
 EOF
 
-# Without this, unattended-upgrades achieves almost nothing.
-#
-# needrestart decides whether services running an updated library get restarted, and its default
-# mode is interactive — which, run non-interactively from unattended-upgrades, "will fallback to
-# list only mode" (its own documentation). List-only means a patched libssl lands on disk while
-# every running process keeps the old one mapped. Combined with automatic reboots being off, that
-# is a node reporting itself fully patched while running entirely unpatched code.
+# Without this, unattended-upgrades achieves almost nothing: needrestart's default mode is
+# interactive, which run non-interactively "will fallback to list only mode", so a patched libssl
+# lands on disk while every running process keeps the old one mapped.
 install -d -m 0755 /etc/needrestart/conf.d
 cat >/etc/needrestart/conf.d/50-event-junkie.conf <<'EOF'
 # Restart services automatically when a library they depend on is updated.
 $nrconf{restart} = 'a';
 
-# Except k3s: restarting it disrupts every workload on the node, and it is the one service a
-# deliberate reboot was already going to cover. PostgreSQL is deliberately *not* excluded — the
-# restart costs a second of dropped connections that the pool reconnects through, and the
-# alternative is running a vulnerable library until somebody remembers to reboot.
+# Except k3s: restarting it disrupts every workload, and a deliberate reboot covers it anyway.
+# PostgreSQL is not excluded: a second of dropped connections the pool reconnects through, against
+# running a vulnerable library until somebody remembers to reboot.
 $nrconf{override_rc} = {
     qr(^k3s) => 0,
 };
@@ -71,11 +64,10 @@ EOF
 
 systemctl enable --now unattended-upgrades
 
-# Kernel and k3s updates still need a reboot, and nothing here will do it for you.
-# `/var/run/reboot-required` is the flag, and what follows is what makes it visible (#419): a
-# timer writes its age, and the age of the updater's last run, as node_exporter textfile metrics
-# on the private address, where the collector gateway scrapes them and OpenObserve alerts on them.
-# Textfile only: hostmetrics already covers the k3s node, and nothing here is exposed publicly.
+# Kernel and k3s updates still need a reboot, and nothing here does it. `/var/run/reboot-required`
+# is the flag; a timer writes its age, and the updater's last-run age, as node_exporter textfile
+# metrics on the private address, where the collector gateway scrapes them (#419). Textfile only:
+# hostmetrics already covers the k3s node.
 # shellcheck source=/dev/null
 source /etc/event-junkie/bootstrap.env
 apt-get install -y --no-install-recommends prometheus-node-exporter
@@ -83,8 +75,8 @@ cat >/etc/default/prometheus-node-exporter <<EOF
 ARGS="--web.listen-address=${PRIVATE_IPV4}:9100 --collector.disable-defaults --collector.textfile --collector.textfile.directory=/var/lib/prometheus/node-exporter"
 EOF
 install -d -m 0755 /var/lib/prometheus/node-exporter
-# A missing flag is a node that needs no reboot, so 0. A missing updater stamp is an updater that
-# has never run, so the age is the whole epoch and the alert fires rather than staying quiet.
+# A missing flag is a node that needs no reboot, so 0. A missing updater stamp is the whole epoch,
+# so the alert fires rather than staying quiet.
 cat >/usr/local/sbin/ej-patch-state <<'EOF'
 #!/bin/sh
 d=/var/lib/prometheus/node-exporter; now=$(date +%s)

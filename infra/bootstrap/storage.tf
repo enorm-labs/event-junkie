@@ -1,23 +1,11 @@
-# comment-lint: allow-file every bucket here carries why it exists and why it differs, and the file
-# sat at 54% before the images bucket. A fourth bucket documented like the other three reaches the
-# cap by arithmetic rather than by verbosity, and the alternative is deleting a reason.
+# Object Storage buckets that CAN be declared: `-tfstate` never will be, because a state backend
+# cannot be managed by the state it holds (README.md §"Why the state bucket is hand-made").
 
-# Object Storage buckets that CAN be declared.
-#
-# `-tfstate` is not here and never will be: a state backend cannot be managed by the state it holds
-# (README.md §"Why the state bucket is hand-made"). Both others are, `-o2` per #271 and `-backups`
-# per #586.
-
-# Adopting the bucket that already exists, rather than creating one. `event-junkie-o2` was made by
-# hand alongside `-tfstate` and `-backups`, so an apply without this stops at `bucket already
-# exists!` — the provider refusing to take over a resource it did not create, which is the correct
-# instinct rather than a bug.
-#
-# **An `import` block rather than `tofu import` on the command line.** The CLI form is a state edit
-# that happens immediately and leaves nothing to review; this one shows in `tofu plan` before
-# anything is written and has to be deleted deliberately to stop applying. **Safe to delete once
-# applied** — a block whose target is already in state is a no-op. What must NOT happen is deleting
-# the `resource` block below and leaving this one: a bucket nothing manages and nothing reports.
+# Adopting the bucket that already exists: `event-junkie-o2` was made by hand, so an apply without
+# this stops at `bucket already exists!`. An `import` block rather than `tofu import`: the CLI form
+# is an immediate state edit with nothing to review, this one shows in `tofu plan`. Safe to delete
+# once applied. What must NOT happen is deleting the `resource` block below and leaving this one:
+# a bucket nothing manages and nothing reports.
 import {
   to = minio_s3_bucket.o2
   id = "event-junkie-o2"
@@ -26,36 +14,28 @@ import {
 resource "minio_s3_bucket" "o2" {
   bucket = var.object_storage_bucket_o2
 
-  # Private, and stated rather than defaulted. The bucket holds logs and metrics: request paths,
-  # error strings, and whatever a venue's HTML dragged into a stack trace. LEGAL.md §7.5 treats log
-  # content as capable of carrying personal data, which makes a public bucket a disclosure rather
-  # than an untidiness.
+  # Private, stated rather than defaulted: the bucket holds logs and metrics, which LEGAL.md §7.5
+  # treats as capable of carrying personal data.
   acl = "private"
 
-  # `false` so that `tofu destroy` cannot silently take the observability history with it. Emptying
-  # it first is the deliberate step, and it should be deliberate.
+  # `false` so `tofu destroy` cannot silently take the observability history; emptying it first is
+  # the deliberate step.
   force_destroy = false
 }
 
-# A backstop under OpenObserve's own retention, not the mechanism itself.
+# A backstop under OpenObserve's own retention, not the mechanism. OpenObserve expires its data
+# (`ZO_COMPACT_DATA_RETENTION_DAYS`, 14 days per #271), Parquet and file-list entry together, and
+# that is the control the privacy notice rests on: a lifecycle rule alone deletes objects out from
+# under the file list, corruption rather than expiry. The compactor runs only while OpenObserve
+# does, and a pod that is down expires nothing (#586's failure), so this is the floor that holds.
 #
-# **OpenObserve expires its own data** (`ZO_COMPACT_DATA_RETENTION_DAYS`, 14 days per #271),
-# deleting the Parquet and its file-list entry together. That is the control the privacy notice
-# rests on, deliberately not this rule: a lifecycle rule alone deletes objects out from under
-# OpenObserve's file list, which is corruption rather than expiry. **So why have it?** The compactor
-# runs only while OpenObserve does, and a pod that is down expires nothing — the window quietly
-# becomes "forever", the failure #586 describes for the backup sweep. This is the floor that holds.
+# 90 days, six times the application's 14, and the gap is the point: it must only catch a stalled
+# compactor. Narrowing it toward 14 would delete files OpenObserve still has indexed.
 #
-# **90 days, six times the application's 14**, and the gap is the point: it must never be the thing
-# that expires data in normal operation, only the thing that catches a stalled compactor. Narrowing
-# it toward 14 would start deleting files OpenObserve still has indexed.
-#
-# **The `abort-incomplete-uploads` rule comes first in both lifecycle resources because the server
-# returns it first, not because it matters more.** `rule` is a positional list, and Hetzner's
-# object storage hands the rules back sorted rather than in the order they were written — so a
-# configuration that leads with the expiry rule plans two in-place updates on every run, swapping
-# the two blocks' contents back and forth forever. Applying them changes nothing — the next plan
-# shows the same diff, measured on both buckets either side of an apply.
+# `abort-incomplete-uploads` comes first in both lifecycle resources because the server returns it
+# first: `rule` is a positional list and Hetzner hands the rules back sorted, so a configuration
+# leading with the expiry rule plans two in-place updates on every run, forever, measured on both
+# buckets either side of an apply.
 resource "minio_s3_bucket_lifecycle" "o2" {
   bucket = minio_s3_bucket.o2.bucket
 
@@ -63,8 +43,7 @@ resource "minio_s3_bucket_lifecycle" "o2" {
     id     = "abort-incomplete-uploads"
     status = "Enabled"
 
-    # An interrupted upload leaves parts that are billed and invisible to a plain listing. Nothing
-    # here resumes one, so a week is generous.
+    # An interrupted upload leaves parts that are billed and invisible to a plain listing.
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
     }
@@ -82,8 +61,7 @@ resource "minio_s3_bucket_lifecycle" "o2" {
 
 # --- the wal-g backup bucket, and the rule the privacy notice rests on ---------------------------
 
-# Adopted, not created — same as `-o2`, and the block above has why an `import` block beats
-# `tofu import`, and why deleting the `resource` while leaving the `import` must not happen.
+# Adopted, not created, as `-o2` above; the same rules about the `import` block apply.
 import {
   to = minio_s3_bucket.backups
   id = "event-junkie-backups"
@@ -92,44 +70,35 @@ import {
 resource "minio_s3_bucket" "backups" {
   bucket = var.object_storage_bucket_backups
 
-  # Private, stated rather than defaulted, and here the stakes are higher than for `-o2`: this
-  # bucket holds a physical copy of the entire database. A public backup bucket is not a disclosure
-  # of log fragments but of everything.
+  # Private, and the stakes are higher than `-o2`: a physical copy of the entire database.
   acl = "private"
 
-  # `false` so `tofu destroy` cannot take the backups with it. Losing the backups in the same action
-  # that loses the node is the failure the backups exist for.
+  # `false`: losing the backups in the action that loses the node is the failure they exist for.
   force_destroy = false
 }
 
-# **The control that makes the privacy notice true when nothing of ours is running (#586).**
+# The control that makes the privacy notice true when nothing of ours is running (#586). Whenever
+# the node is down this rule IS the retention: the only other enforcement is the nightly `wal-g
+# delete` sweep on that node, and an outage silently extends the window.
 #
-# Unlike the `-o2` rule above this is not a backstop under an application-level control. **Whenever
-# the node is down, this rule IS the retention**: the only other enforcement is the nightly `wal-g
-# delete` sweep on that node, and a sweep cannot run on a machine that is off. That is the whole of
-# #586 — an outage silently extends the window and nothing reports it.
+# Why 35 and not 30: the sweep runs `wal-g delete before FIND_FULL <30 days ago>`, keeping the last
+# full backup before the cutoff, so the real window is about 31 days. A rule at exactly 30 would
+# delete that base backup while the WAL depending on it survived, an unrestorable gap at the oldest
+# end that a restore drill cannot find. Not 90 as `-o2` affords, because here there is no second
+# control; the notice states 30 ordinarily and 35 as the ceiling.
 #
-# **Why 35 and not 30.** The sweep runs `wal-g delete before FIND_FULL <30 days ago>`, keeping the
-# last *full* backup before the cutoff, so with a daily base backup the real window is about 31 days.
-# A rule at exactly 30 would delete that base backup while the WAL segments depending on it survived
-# — an unrestorable gap at the oldest end, which #270's restore drill cannot find because a drill
-# restores something recent. **Why not 90**, as `-o2` affords: there the compactor is the control the
-# notice rests on, and here there is no second control, so every day of slack is a day the notice has
-# to admit to. Five buys the chain its margin; the notice states 30 ordinarily and 35 as the ceiling.
-#
-# **The number is duplicated across stacks and cannot be otherwise.** The sweep's window is
-# `backup_retention_days` in `modules/environment`; a bootstrap-stack rule cannot read it. Move one,
-# move the other, and re-check both privacy notices — they state both figures.
+# Duplicated across stacks by necessity: the sweep's window is `backup_retention_days` in
+# `modules/environment`, and a bootstrap-stack rule cannot read it. Move one, move the other, and
+# re-check both privacy notices.
 resource "minio_s3_bucket_lifecycle" "backups" {
   bucket = minio_s3_bucket.backups.bucket
 
-  # Ordered to match the server, as `o2` above is.
+  # Ordered to match the server, as `o2` above.
   rule {
     id     = "abort-incomplete-uploads"
     status = "Enabled"
 
-    # A base backup is large and multipart. An interrupted push leaves parts that are billed and
-    # invisible to a plain listing, and nothing here resumes one.
+    # A base backup is large and multipart; an interrupted push leaves billed, invisible parts.
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
     }
@@ -147,54 +116,41 @@ resource "minio_s3_bucket_lifecycle" "backups" {
 
 # --- the cached venue image bucket, and the one that must never expire ----------------------------
 
-# **Created, not adopted.** Its two neighbours above predate this configuration and carry `import`
-# blocks. This bucket has never existed, so there is nothing to take over.
+# Created, not adopted: this bucket has never existed, so there is nothing to take over.
 resource "minio_s3_bucket" "images" {
   bucket = var.object_storage_bucket_images
 
-  # Private, and the reason differs from its neighbours. Theirs is disclosure; this bucket holds
-  # third-party material we serve, so a public bucket would also publish an origin we do not
-  # control the URLs of. The BFF streams from here and is the only reader (ADR-019 §2.2).
+  # Private for a different reason: third-party material we serve, so a public bucket would publish
+  # an origin we do not control the URLs of. The BFF is the only reader (ADR-019 §2.2).
   acl = "private"
 
-  # `false`, as for the other two. Losing these costs a refetch of every venue image rather than
-  # data, but a refetch is thousands of requests to venues that ADR-007 exists to avoid making.
+  # `false`: losing these costs a refetch of every venue image, thousands of requests ADR-007
+  # exists to avoid.
   force_destroy = false
 }
 
-# **There is deliberately no `minio_s3_bucket_lifecycle` here, and that is the point.**
-#
-# `-o2` and `-backups` expire because both hold history. This bucket holds live content, so an
-# expiry rule would delete an object out from under the page serving it (ADR-019 §2.7).
-#
-# An orphan sweep replaces the rule: it asks the database whether anything still points at an
-# object. Without it the bucket grows forever, so the sweep is load-bearing rather than tidy-up.
-#
-# The sweep must run under its own environment prefix. Content-addressed keys mean staging computes
-# the same key as production, so a sweep asking its own database about every key would delete the
-# other environment's objects — #270's shape, one bucket over.
+# Deliberately no `minio_s3_bucket_lifecycle`: this bucket holds live content, and an expiry rule
+# would delete an object out from under the page serving it (ADR-019 §2.7). An orphan sweep
+# replaces the rule, and it must run under its own environment prefix: content-addressed keys mean
+# staging computes the same key as production, so a sweep asking its own database about every key
+# would delete the other environment's objects.
 
 # --- the one public bucket: photographs we took ourselves -----------------------------------------
 
-# **Public, and the only bucket here that is.** ADR-028 declined to open `-images` instead. That
-# bucket is private because it holds third-party material at an origin we advertise, and neither
-# half is true of a photograph we took. A rule that reads "private because third-party" must not be
-# widened to cover material that is ours, so the different rule lives in a different bucket, where a
-# reader meets it.
+# Public, and the only bucket here that is. ADR-028 declined to open `-images` instead: "private
+# because third-party" must not be widened to cover material that is ours, so the different rule
+# lives in a different bucket.
 resource "minio_s3_bucket" "images_own" {
   bucket = var.object_storage_bucket_own_images
 
-  # Anything written here is world-readable the moment it lands, which is the point: the importer
-  # fetches from this URL the way it fetches from Commons, and a credit link has to resolve for a
-  # visitor. It is also the hazard, so nothing but a reviewed photograph belongs in it.
+  # World-readable the moment it lands: the importer fetches from this URL as from Commons, and a
+  # credit link has to resolve for a visitor. Nothing but a reviewed photograph belongs in it.
   acl = "public-read"
 
-  # `false`, for a reason the other three do not have. These files have no upstream to refetch from.
-  # A Commons picture survives losing the bucket; ours is gone.
+  # `false`, and these files have no upstream to refetch from.
   force_destroy = false
 }
 
-# **No lifecycle rule, for `-images`' reason and one more.** An expiry would delete an object out
-# from under the page serving it. The orphan sweep does not reach here either, because it asks the
-# database about cached derivatives rather than about sources, so an object this bucket no longer
-# needs is deleted by a person (ADR-028 § Consequences).
+# No lifecycle rule, for `-images`' reason and one more: the orphan sweep asks the database about
+# cached derivatives, not sources, so an unneeded object here is deleted by a person (ADR-028
+# § Consequences).
