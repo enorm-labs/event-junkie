@@ -52,7 +52,7 @@ class MikropolOverviewPageScraperTest {
         dueja.status shouldBe "SCHEDULED"
         dueja.soldOut shouldBe false
         dueja.sourceUrl shouldBe "https://mikropol-berlin.de/event/2026-07-17-dueja/"
-        dueja.artists shouldContainExactly listOf(ScrapedArtist("DUEJA", "HEADLINER"))
+        dueja.artists shouldContainExactly listOf(ScrapedArtist("DUEJA", "HEADLINER", titleDerived = true))
     }
 
     @Test
@@ -61,7 +61,7 @@ class MikropolOverviewPageScraperTest {
         house.subtitle shouldBe "support: noise of the voiceless"
         house.artists shouldContainExactly
             listOf(
-                ScrapedArtist("HOUSE OF PROTECTION", "HEADLINER"),
+                ScrapedArtist("HOUSE OF PROTECTION", "HEADLINER", titleDerived = true),
                 ScrapedArtist("noise of the voiceless", "SUPPORT")
             )
     }
@@ -87,6 +87,6 @@ class MikropolOverviewPageScraperTest {
         cultureWars.title shouldBe "CULTURE WARS"
         cultureWars.status shouldBe "RELOCATED"
         cultureWars.eventDate shouldBe LocalDate.of(2026, 7, 16)
-        cultureWars.artists shouldContainExactly listOf(ScrapedArtist("CULTURE WARS", "HEADLINER"))
+        cultureWars.artists shouldContainExactly listOf(ScrapedArtist("CULTURE WARS", "HEADLINER", titleDerived = true))
     }
 }

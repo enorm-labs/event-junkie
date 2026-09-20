@@ -132,7 +132,7 @@ class CassiopeiaWebsiteImporterTest {
             concert.genre shouldBe "Noise"
             concert.artists shouldContainExactly
                 listOf(
-                    ScrapedArtist(name = "Pharmakon", role = "HEADLINER"),
+                    ScrapedArtist(name = "Pharmakon", role = "HEADLINER", titleDerived = true),
                     ScrapedArtist(name = "Aska", role = "SUPPORT")
                 )
         }
@@ -248,7 +248,7 @@ class CassiopeiaWebsiteImporterTest {
             // Without a detail page there are no "Support:" lines, but the overview
             // still yields the concert headliner from its title as a fallback.
             val concert = result.events.first { it.title == "Pharmakon" }
-            concert.artists shouldContainExactly listOf(ScrapedArtist(name = "Pharmakon", role = "HEADLINER"))
+            concert.artists shouldContainExactly listOf(ScrapedArtist(name = "Pharmakon", role = "HEADLINER", titleDerived = true))
         }
 
     @Test

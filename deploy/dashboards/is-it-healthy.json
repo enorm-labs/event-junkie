@@ -379,6 +379,72 @@
           }
         },
         {
+          "id": "p_title_derived",
+          "type": "bar",
+          "title": "Nights stored as acts \u2014 title-derived one-event headliners, per source",
+          "description": "Every artist minted from a bare event title carries `title_derived` since #1145. Charted are the ones that also play nothing else and are named exactly like their event (`titleDerivedSingletons`), and beside them the ones MusicBrainz knows no artist for (`titleDerivedUnmatched`, ADR-031). That is the shape of #1110, #1135, #1132 and #1134 before their fixes \u2014 and of a touring act on its first Berlin date, so the bar is a queue to read, not a defect count; `GET /api/admin/data-quality/worklist?issue=titleDerivedSingletons&source=<slug>` lists the rows. The gauge is written by the 03:00 snapshot, so it is empty after a restart until then, and it undercounts until every source has been re-imported once with `?force=true` \u2014 rows stored before the column read as line-up-derived.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "topk(20, sum by (source) (data_quality{metric=\"titleDerivedSingletons\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            },
+            {
+              "query": "topk(20, sum by (source) (data_quality{metric=\"titleDerivedUnmatched\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 40,
+            "w": 192,
+            "h": 12,
+            "i": 9
+          }
+        },
+        {
           "id": "p_pg",
           "type": "line",
           "title": "PostgreSQL \u2014 database size",
@@ -416,10 +482,10 @@
           ],
           "layout": {
             "x": 0,
-            "y": 40,
+            "y": 52,
             "w": 48,
             "h": 16,
-            "i": 9
+            "i": 10
           }
         },
         {
@@ -482,10 +548,10 @@
           ],
           "layout": {
             "x": 48,
-            "y": 40,
+            "y": 52,
             "w": 48,
             "h": 16,
-            "i": 10
+            "i": 11
           }
         },
         {
@@ -526,10 +592,10 @@
           ],
           "layout": {
             "x": 96,
-            "y": 40,
+            "y": 52,
             "w": 48,
             "h": 16,
-            "i": 11
+            "i": 12
           }
         },
         {
@@ -570,10 +636,10 @@
           ],
           "layout": {
             "x": 144,
-            "y": 40,
+            "y": 52,
             "w": 48,
             "h": 16,
-            "i": 12
+            "i": 13
           }
         },
         {
@@ -636,10 +702,10 @@
           ],
           "layout": {
             "x": 0,
-            "y": 56,
+            "y": 68,
             "w": 96,
             "h": 16,
-            "i": 13
+            "i": 14
           }
         },
         {
@@ -680,10 +746,10 @@
           ],
           "layout": {
             "x": 96,
-            "y": 56,
+            "y": 68,
             "w": 96,
             "h": 16,
-            "i": 14
+            "i": 15
           }
         },
         {
@@ -737,10 +803,10 @@
           ],
           "layout": {
             "x": 0,
-            "y": 72,
+            "y": 84,
             "w": 112,
             "h": 16,
-            "i": 15
+            "i": 16
           }
         },
         {
@@ -800,10 +866,10 @@
           ],
           "layout": {
             "x": 112,
-            "y": 72,
+            "y": 84,
             "w": 80,
             "h": 16,
-            "i": 16
+            "i": 17
           }
         }
       ]

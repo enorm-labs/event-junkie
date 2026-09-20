@@ -10,6 +10,7 @@ import de.norm.events.promoter.PromoterRepository
 import de.norm.events.venue.VenueEntity
 import de.norm.events.venue.VenueRepository
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -207,6 +208,29 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
             associations.size shouldBe 1
             associations.first().role shouldBe "HEADLINER"
             associations.first().billingOrder shouldBe 0
+        }
+    }
+
+    // The flag is written on insert and rewritten on resync, which is what backfills rows stored
+    // before the column existed once their source is imported again (#1145).
+    @Test
+    fun `title-derived provenance is stored and updated on resync`() {
+        runBlocking {
+            val sourceId = "title-derived:1"
+            val event = persistEvent(sourceId)
+            val eventId = requireNotNull(event.id)
+
+            associationSyncService.resolveAndSyncAssociations(
+                listOf(event),
+                listOf(scraped(sourceId, artists = listOf(ScrapedArtist(name = "Night Name"))))
+            )
+            eventArtistRepository.findByEventIdIn(listOf(eventId)).first().titleDerived shouldBe false
+
+            associationSyncService.resolveAndSyncAssociations(
+                listOf(event),
+                listOf(scraped(sourceId, artists = listOf(ScrapedArtist(name = "Night Name", titleDerived = true))))
+            )
+            eventArtistRepository.findByEventIdIn(listOf(eventId)).first().titleDerived shouldBe true
         }
     }
 }

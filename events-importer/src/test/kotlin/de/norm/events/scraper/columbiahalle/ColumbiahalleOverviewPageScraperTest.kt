@@ -71,7 +71,7 @@ class ColumbiahalleOverviewPageScraperTest {
         juju.ticketUrl shouldBe "https://store.juju44.net/products/album-2026-releaseshow-berlin-stehplatz-bundle"
         juju.promoters shouldContainExactly listOf("Boldt Berlin Konzertagentur GmbH")
         juju.description.shouldNotBeNull() shouldStartWith "Juju ist eine der prägendsten Stimmen im Deutschrap"
-        juju.artists shouldContainExactly listOf(ScrapedArtist("Juju", "HEADLINER"))
+        juju.artists shouldContainExactly listOf(ScrapedArtist("Juju", "HEADLINER", titleDerived = true))
     }
 
     @Test
@@ -101,7 +101,7 @@ class ColumbiahalleOverviewPageScraperTest {
     fun `extracts the support act from a Support subtitle`() {
         event("9728").artists shouldContainExactly
             listOf(
-                ScrapedArtist("Death Cab For Cutie", "HEADLINER"),
+                ScrapedArtist("Death Cab For Cutie", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Pool Kids", "SUPPORT")
             )
     }
@@ -112,9 +112,9 @@ class ColumbiahalleOverviewPageScraperTest {
         metric.title shouldBe "METRIC / BROKEN SOCIAL SCENE / STARS"
         metric.artists shouldContainExactly
             listOf(
-                ScrapedArtist("METRIC", "HEADLINER"),
-                ScrapedArtist("BROKEN SOCIAL SCENE", "HEADLINER"),
-                ScrapedArtist("STARS", "HEADLINER")
+                ScrapedArtist("METRIC", "HEADLINER", titleDerived = true),
+                ScrapedArtist("BROKEN SOCIAL SCENE", "HEADLINER", titleDerived = true),
+                ScrapedArtist("STARS", "HEADLINER", titleDerived = true)
             )
     }
 

@@ -52,7 +52,8 @@ class DataQualityServiceTest {
         sourceId: Long?,
         total: Long,
         concerts: Long = 0,
-        unreviewed: Long = 0
+        unreviewed: Long = 0,
+        titleDerived: Long = 0
     ) = SourceQualityRow(
         eventSourceId = sourceId,
         totalEvents = total,
@@ -62,7 +63,9 @@ class DataQualityServiceTest {
         missingPromoter = 0,
         missingPrice = 0,
         missingStartTime = 0,
-        unreviewedLicence = unreviewed
+        unreviewedLicence = unreviewed,
+        titleDerivedSingletons = titleDerived,
+        titleDerivedUnmatched = 0
     )
 
     /**
@@ -82,6 +85,22 @@ class DataQualityServiceTest {
 
             overall.unreviewedLicence shouldBe 100
             overall.unreviewedLicencePct shouldBe 71.4
+        }
+
+    /** A queue, not a rate: the sum is what a reader works through, so no percentage is derived. */
+    @Test
+    fun `title-derived singletons roll up as a plain sum`() =
+        runTest {
+            coEvery { repository.aggregatePerSource() } returns
+                listOf(
+                    row(1L, total = 100, titleDerived = 3),
+                    row(2L, total = 40, titleDerived = 1)
+                ).asFlow()
+
+            val report = service.report()
+
+            report.overall.titleDerivedSingletons shouldBe 4
+            report.perSource.map { it.titleDerivedSingletons } shouldBe listOf(3, 1)
         }
 
     @Test

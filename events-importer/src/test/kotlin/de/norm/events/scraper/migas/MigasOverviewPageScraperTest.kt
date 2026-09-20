@@ -65,7 +65,7 @@ class MigasOverviewPageScraperTest {
         session.imageUrl shouldBe
             "https://migas.berlin/wp-content/uploads/2026/07/5.08-live-listening-session-SITAAD-collab-@sitaadstudio-550x395.jpeg"
         session.description!! shouldContain "Somali funk, Ethio-jazz, Sudanese pop"
-        session.artists shouldContainExactly listOf(ScrapedArtist(name = "SITAAD", role = "DJ"))
+        session.artists shouldContainExactly listOf(ScrapedArtist(name = "SITAAD", role = "DJ", titleDerived = true))
     }
 
     @Test
@@ -75,15 +75,15 @@ class MigasOverviewPageScraperTest {
         night.eventType shouldBe EventType.CLUB_NIGHT.name
         night.eventDate shouldBe LocalDate.of(2026, 8, 6)
         night.sourceId shouldBe "migas:vip-client"
-        night.artists shouldContainExactly listOf(ScrapedArtist(name = "vip client", role = "DJ"))
+        night.artists shouldContainExactly listOf(ScrapedArtist(name = "vip client", role = "DJ", titleDerived = true))
     }
 
     @Test
     fun `scrape splits a co-billed selector pair into two DJs`() {
         event("eric.a & llupe").artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "eric.a", role = "DJ"),
-                ScrapedArtist(name = "llupe", role = "DJ")
+                ScrapedArtist(name = "eric.a", role = "DJ", titleDerived = true),
+                ScrapedArtist(name = "llupe", role = "DJ", titleDerived = true)
             )
     }
 

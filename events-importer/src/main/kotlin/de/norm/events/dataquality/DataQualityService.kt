@@ -121,7 +121,9 @@ class DataQualityService(
         missingStartTimePct = pct(row.missingStartTime, row.totalEvents),
         suspectNonArtistTitles = suspectNames,
         unreviewedLicence = row.unreviewedLicence,
-        unreviewedLicencePct = pct(row.unreviewedLicence, row.totalEvents)
+        unreviewedLicencePct = pct(row.unreviewedLicence, row.totalEvents),
+        titleDerivedSingletons = row.titleDerivedSingletons,
+        titleDerivedUnmatched = row.titleDerivedUnmatched
     )
 
     private fun rollUp(perSource: List<SourceQualityMetrics>): SourceQualityMetrics {
@@ -152,7 +154,9 @@ class DataQualityService(
             // per source, and there is no cheaper truth available from the per-source counts alone.
             suspectNonArtistTitles = perSource.sumOf { it.suspectNonArtistTitles },
             unreviewedLicence = unreviewed,
-            unreviewedLicencePct = pct(unreviewed, total)
+            unreviewedLicencePct = pct(unreviewed, total),
+            titleDerivedSingletons = perSource.sumOf { it.titleDerivedSingletons },
+            titleDerivedUnmatched = perSource.sumOf { it.titleDerivedUnmatched }
         )
     }
 

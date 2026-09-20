@@ -59,7 +59,7 @@ class ColumbiaTheaterOverviewPageScraperTest {
         soulfly.imageUrl shouldBe "https://columbia-theater.de/wp-content/uploads/2026/05/image-1024x683.webp"
         soulfly.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Soulfly", "HEADLINER"),
+                ScrapedArtist("Soulfly", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Botulism", "SUPPORT")
             )
     }
@@ -75,9 +75,9 @@ class ColumbiaTheaterOverviewPageScraperTest {
         despisedIcon.title shouldBe "Despised Icon / Carnifex / Suffocation"
         despisedIcon.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Despised Icon", "HEADLINER"),
-                ScrapedArtist("Carnifex", "HEADLINER"),
-                ScrapedArtist("Suffocation", "HEADLINER"),
+                ScrapedArtist("Despised Icon", "HEADLINER", titleDerived = true),
+                ScrapedArtist("Carnifex", "HEADLINER", titleDerived = true),
+                ScrapedArtist("Suffocation", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Gates To Hell", "SUPPORT")
             )
     }
@@ -86,7 +86,7 @@ class ColumbiaTheaterOverviewPageScraperTest {
     fun `types a DJ billing row as a DJ and a support row as a support act`() {
         event("20261017-sixpence-none-the-richer").artists shouldContainExactly
             listOf(
-                ScrapedArtist("Sixpence None The Richer", "HEADLINER"),
+                ScrapedArtist("Sixpence None The Richer", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Robert Post", "SUPPORT"),
                 ScrapedArtist("The 33rd Assassin", "DJ")
             )
@@ -97,8 +97,8 @@ class ColumbiaTheaterOverviewPageScraperTest {
         val johnRobb = event("20260926-john-robb-mark-reeder")
         johnRobb.artists shouldContainExactly
             listOf(
-                ScrapedArtist("John Robb", "HEADLINER"),
-                ScrapedArtist("Mark Reeder", "HEADLINER"),
+                ScrapedArtist("John Robb", "HEADLINER", titleDerived = true),
+                ScrapedArtist("Mark Reeder", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Pauline Murray (PENETRATION)", "SUPPORT"),
                 ScrapedArtist("Colin Newman (WIRE, IMMERSION)", "SUPPORT"),
                 ScrapedArtist("Budgie (SIOUXSIE & THE BANSHEES, THE SLITS)", "SUPPORT"),
@@ -115,7 +115,7 @@ class ColumbiaTheaterOverviewPageScraperTest {
         oreillys.status shouldBe "CANCELLED"
         oreillys.artists shouldContainExactly
             listOf(
-                ScrapedArtist("The O'Reillys and The Paddyhats", "HEADLINER"),
+                ScrapedArtist("The O'Reillys and The Paddyhats", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Harpyie", "SUPPORT")
             )
     }

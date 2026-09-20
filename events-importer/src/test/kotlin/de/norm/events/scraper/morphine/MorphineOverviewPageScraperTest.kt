@@ -49,7 +49,7 @@ class MorphineOverviewPageScraperTest {
         event.eventType shouldBe "CONCERT"
         event.eventDate shouldBe LocalDate.of(2026, 8, 7)
         event.sourceUrl shouldBe "http://www.morphinerecords.com/events/sardy-fardy-live-recording"
-        event.artists shouldBe listOf(ScrapedArtist("Sardy Fardy", "HEADLINER"))
+        event.artists shouldBe listOf(ScrapedArtist("Sardy Fardy", "HEADLINER", titleDerived = true))
     }
 
     @Test
@@ -75,7 +75,7 @@ class MorphineOverviewPageScraperTest {
         val event = event("invisible-weather")
 
         event.title shouldBe "Invisible Weather (Kakaliagou/ Thieke/ Yassin) - Live Recording"
-        event.artists shouldBe listOf(ScrapedArtist("Invisible Weather (Kakaliagou/ Thieke/ Yassin)", "HEADLINER"))
+        event.artists shouldBe listOf(ScrapedArtist("Invisible Weather (Kakaliagou/ Thieke/ Yassin)", "HEADLINER", titleDerived = true))
     }
 
     @Test

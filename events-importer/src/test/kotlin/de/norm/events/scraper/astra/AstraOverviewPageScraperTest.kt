@@ -53,7 +53,7 @@ class AstraOverviewPageScraperTest {
 
     @Test
     fun `adds the headliner for a confirmed concert even without support acts`() {
-        event("Angus").artists shouldContainExactly listOf(ScrapedArtist("ANGUS & JULIA STONE", "HEADLINER"))
+        event("Angus").artists shouldContainExactly listOf(ScrapedArtist("ANGUS & JULIA STONE", "HEADLINER", titleDerived = true))
     }
 
     @Test
@@ -64,7 +64,7 @@ class AstraOverviewPageScraperTest {
         // must not be absorbed into the last support act ("GNOME").
         event("Green Lung").artists shouldContainExactly
             listOf(
-                ScrapedArtist("GREEN LUNG", "HEADLINER"),
+                ScrapedArtist("GREEN LUNG", "HEADLINER", titleDerived = true),
                 ScrapedArtist("HIGH ON FIRE", "SUPPORT"),
                 ScrapedArtist("GNOME", "SUPPORT")
             )

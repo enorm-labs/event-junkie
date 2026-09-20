@@ -873,7 +873,7 @@ fun headlinersFromTitle(
             val role = if (SUPPORT_ROLE_PREFIX.containsMatchIn(segment.trim())) "SUPPORT" else "HEADLINER"
             stripFramingPrefix(stripArtistPrefix(stripArtistSuffix(segment))) to role
         }.filterNot { (name, _) -> isNonArtistName(name) }
-        .map { (name, role) -> ScrapedArtist(name = name, role = role) }
+        .map { (name, role) -> ScrapedArtist(name = name, role = role, titleDerived = true) }
 }
 
 /**
@@ -917,7 +917,7 @@ private fun withFrameActs(title: String): List<ScrapedArtist>? {
         splitSupportActs(tail)
             .map { stripFramingPrefix(stripArtistPrefix(stripArtistSuffix(it))) }
             .filterNot { isNonArtistName(it) }
-            .map { ScrapedArtist(name = it, role = "HEADLINER") }
+            .map { ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true) }
     return acts.ifEmpty { null }
 }
 

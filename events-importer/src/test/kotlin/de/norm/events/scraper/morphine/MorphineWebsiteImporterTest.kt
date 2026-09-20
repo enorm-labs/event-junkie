@@ -122,8 +122,8 @@ class MorphineWebsiteImporterTest {
             birds.pricePresale shouldBe BigDecimal("15")
             birds.artists shouldBe
                 listOf(
-                    ScrapedArtist("ALL ABOUT BIRDS", "HEADLINER"),
-                    ScrapedArtist("JON ROSE: HINTERLAND!", "HEADLINER")
+                    ScrapedArtist("ALL ABOUT BIRDS", "HEADLINER", titleDerived = true),
+                    ScrapedArtist("JON ROSE: HINTERLAND!", "HEADLINER", titleDerived = true)
                 )
         }
 

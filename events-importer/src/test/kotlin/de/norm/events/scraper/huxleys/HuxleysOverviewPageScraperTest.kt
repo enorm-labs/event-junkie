@@ -59,7 +59,7 @@ class HuxleysOverviewPageScraperTest {
         thievery.sourceUrl shouldBe "https://huxleysneuewelt.de/event/2026-08-02-thievery-corporation"
         thievery.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Thievery Corporation", "HEADLINER"),
+                ScrapedArtist("Thievery Corporation", "HEADLINER", titleDerived = true),
                 ScrapedArtist("PECES RAROS", "SUPPORT")
             )
     }

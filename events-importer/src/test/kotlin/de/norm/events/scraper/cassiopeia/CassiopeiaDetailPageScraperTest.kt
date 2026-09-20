@@ -63,7 +63,7 @@ class CassiopeiaDetailPageScraperTest {
         event shouldNotBe null
         event!!.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Pharmakon", role = "HEADLINER"),
+                ScrapedArtist(name = "Pharmakon", role = "HEADLINER", titleDerived = true),
                 ScrapedArtist(name = "Aska", role = "SUPPORT")
             )
     }
@@ -76,7 +76,7 @@ class CassiopeiaDetailPageScraperTest {
 
         event shouldNotBe null
         // CONCERT confirms the title is the headliner, even with no "Support:" line
-        event!!.artists shouldContainExactly listOf(ScrapedArtist(name = "Pharmakon", role = "HEADLINER"))
+        event!!.artists shouldContainExactly listOf(ScrapedArtist(name = "Pharmakon", role = "HEADLINER", titleDerived = true))
     }
 
     @Test
@@ -118,7 +118,7 @@ class CassiopeiaDetailPageScraperTest {
         // but the headliner is still extracted.
         event!!.artists shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Döll", role = "HEADLINER")
+                ScrapedArtist(name = "Döll", role = "HEADLINER", titleDerived = true)
             )
     }
 

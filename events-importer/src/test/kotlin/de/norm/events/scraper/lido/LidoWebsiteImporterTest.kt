@@ -96,7 +96,7 @@ class LidoWebsiteImporterTest {
             sorry.promoters shouldContainExactly listOf("Puschen")
             sorry.artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("SORRY", "HEADLINER"),
+                    ScrapedArtist("SORRY", "HEADLINER", titleDerived = true),
                     ScrapedArtist("SNAKE ORANGE CAKE", "SUPPORT")
                 )
         }

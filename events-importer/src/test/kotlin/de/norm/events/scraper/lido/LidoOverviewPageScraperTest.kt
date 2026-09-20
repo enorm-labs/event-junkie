@@ -57,7 +57,7 @@ class LidoOverviewPageScraperTest {
     fun `extracts the headliner and support act for a concert`() {
         event("Sorry").artists shouldContainExactly
             listOf(
-                ScrapedArtist("SORRY", "HEADLINER"),
+                ScrapedArtist("SORRY", "HEADLINER", titleDerived = true),
                 ScrapedArtist("SNAKE ORANGE CAKE", "SUPPORT")
             )
     }
@@ -83,7 +83,7 @@ class LidoOverviewPageScraperTest {
         pangea.status shouldBe "CANCELLED"
         pangea.artists shouldContainExactly
             listOf(
-                ScrapedArtist("TOGETHER PANGEA", "HEADLINER"),
+                ScrapedArtist("TOGETHER PANGEA", "HEADLINER", titleDerived = true),
                 ScrapedArtist("JEFF CLARKE", "SUPPORT")
             )
     }
@@ -133,7 +133,7 @@ class LidoOverviewPageScraperTest {
         teased.eventDate shouldBe LocalDate.of(2026, 9, 16)
         teased.doorsTime shouldBe LocalTime.of(19, 0)
         teased.sourceUrl shouldBe "https://www.lido-berlin.de/events/2026-09-16-vtoroi-ka-"
-        teased.artists shouldContainExactly listOf(ScrapedArtist("VTOROI KA", "HEADLINER"))
+        teased.artists shouldContainExactly listOf(ScrapedArtist("VTOROI KA", "HEADLINER", titleDerived = true))
     }
 
     @Test

@@ -122,7 +122,7 @@ class PeterEdelOverviewPageScraperTest {
         polica.eventType shouldBe "OTHER"
         polica.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Poliça", "HEADLINER"),
+                ScrapedArtist("Poliça", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Sian Able", "SUPPORT")
             )
     }
@@ -221,7 +221,7 @@ class PeterEdelOverviewPageScraperTest {
         withArtists.map { it.title } shouldContainExactly listOf("Poliça - Dreams Go Tour 2026", "Buffalo Tom")
         withArtists[1].artists shouldContainExactly
             listOf(
-                ScrapedArtist("Buffalo Tom", "HEADLINER"),
+                ScrapedArtist("Buffalo Tom", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Grateful Cat", "SUPPORT")
             )
     }

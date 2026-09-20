@@ -314,7 +314,13 @@ data class ScrapedArtist(
     /** Role in the lineup (e.g. "HEADLINER", "SUPPORT", "DJ"). Defaults to headliner. */
     val role: String = "HEADLINER",
     /** Room / stage the artist plays at this event (e.g. "Panorama Bar"). Null for single-room venues. */
-    val stage: String? = null
+    val stage: String? = null,
+    /**
+     * The name was read off the event title by [headlinersFromTitle], not off a line-up element,
+     * a support field or a structured act list. Provenance, not a verdict: a touring act on its
+     * first Berlin date is title-derived and real (#1145).
+     */
+    val titleDerived: Boolean = false
 ) {
     /**
      * Converts this scraped artist into an [EventArtistEntity] join-table entry.
@@ -336,6 +342,7 @@ data class ScrapedArtist(
             artistId = artistId,
             role = ArtistRole.parseOrDefault(role).name,
             billingOrder = billingOrder,
-            stage = stage
+            stage = stage,
+            titleDerived = titleDerived
         )
 }

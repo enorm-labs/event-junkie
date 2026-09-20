@@ -410,23 +410,23 @@ class ArtistNameMappingTest {
     @Test
     fun `headlinersFromTitle bills the act, not the cancellation glued to it`() {
         headlinersFromTitle("ABSAGE: MY HERO ACADEMIA - In Concert") shouldBe
-            listOf(ScrapedArtist("MY HERO ACADEMIA - In Concert", "HEADLINER"))
-        headlinersFromTitle("Olga Myko - Abgesagt") shouldBe listOf(ScrapedArtist("Olga Myko", "HEADLINER"))
-        headlinersFromTitle("Canceled: Modern English") shouldBe listOf(ScrapedArtist("Modern English", "HEADLINER"))
+            listOf(ScrapedArtist("MY HERO ACADEMIA - In Concert", "HEADLINER", titleDerived = true))
+        headlinersFromTitle("Olga Myko - Abgesagt") shouldBe listOf(ScrapedArtist("Olga Myko", "HEADLINER", titleDerived = true))
+        headlinersFromTitle("Canceled: Modern English") shouldBe listOf(ScrapedArtist("Modern English", "HEADLINER", titleDerived = true))
     }
 
     @Test
     fun `headlinersFromTitle bills a labelled support act as SUPPORT and drops the label`() {
         headlinersFromTitle("Chelsea Wolfe + Support: A.A. Williams") shouldBe
             listOf(
-                ScrapedArtist("Chelsea Wolfe", "HEADLINER"),
-                ScrapedArtist("A.A. Williams", "SUPPORT")
+                ScrapedArtist("Chelsea Wolfe", "HEADLINER", titleDerived = true),
+                ScrapedArtist("A.A. Williams", "SUPPORT", titleDerived = true)
             )
         // An event-format lead-in is stripped without changing the role.
         headlinersFromTitle("RECORD RELEASE: PAIR + WESTHAFEN") shouldBe
             listOf(
-                ScrapedArtist("PAIR", "HEADLINER"),
-                ScrapedArtist("WESTHAFEN", "HEADLINER")
+                ScrapedArtist("PAIR", "HEADLINER", titleDerived = true),
+                ScrapedArtist("WESTHAFEN", "HEADLINER", titleDerived = true)
             )
     }
 
@@ -570,7 +570,7 @@ class ArtistNameMappingTest {
     fun `buildArtistList returns headliner and supports`() {
         val result = buildArtistList("The Adicts", listOf("Maid of Ace", "Kaos"))
         result shouldHaveSize 3
-        result[0] shouldBe ScrapedArtist(name = "The Adicts", role = "HEADLINER")
+        result[0] shouldBe ScrapedArtist(name = "The Adicts", role = "HEADLINER", titleDerived = true)
         result[1] shouldBe ScrapedArtist(name = "Maid of Ace", role = "SUPPORT")
         result[2] shouldBe ScrapedArtist(name = "Kaos", role = "SUPPORT")
     }
@@ -586,7 +586,7 @@ class ArtistNameMappingTest {
     fun `buildArtistList excludes placeholder support names`() {
         val result = buildArtistList("The Adicts", listOf("TBA", "Maid of Ace"))
         result shouldHaveSize 2
-        result[0] shouldBe ScrapedArtist(name = "The Adicts", role = "HEADLINER")
+        result[0] shouldBe ScrapedArtist(name = "The Adicts", role = "HEADLINER", titleDerived = true)
         result[1] shouldBe ScrapedArtist(name = "Maid of Ace", role = "SUPPORT")
     }
 
@@ -594,7 +594,7 @@ class ArtistNameMappingTest {
     fun `buildArtistList with all placeholder supports returns only headliner`() {
         val result = buildArtistList("The Adicts", listOf("TBA", "TBD"))
         result shouldHaveSize 1
-        result[0] shouldBe ScrapedArtist(name = "The Adicts", role = "HEADLINER")
+        result[0] shouldBe ScrapedArtist(name = "The Adicts", role = "HEADLINER", titleDerived = true)
     }
 
     @Test
@@ -602,7 +602,7 @@ class ArtistNameMappingTest {
         // A "Support: Special Guest" line still signals the title-as-headliner
         // convention, but the label itself must not become a support artist.
         val result = buildArtistList("Green Lung", listOf("Special Guest"))
-        result shouldContainExactly listOf(ScrapedArtist(name = "Green Lung", role = "HEADLINER"))
+        result shouldContainExactly listOf(ScrapedArtist(name = "Green Lung", role = "HEADLINER", titleDerived = true))
     }
 
     @Test
@@ -610,8 +610,8 @@ class ArtistNameMappingTest {
         val result = buildArtistList("TOTAL CHAOS + RUMKICKS", listOf("The Dollheads"))
         result shouldContainExactly
             listOf(
-                ScrapedArtist(name = "TOTAL CHAOS", role = "HEADLINER"),
-                ScrapedArtist(name = "RUMKICKS", role = "HEADLINER"),
+                ScrapedArtist(name = "TOTAL CHAOS", role = "HEADLINER", titleDerived = true),
+                ScrapedArtist(name = "RUMKICKS", role = "HEADLINER", titleDerived = true),
                 ScrapedArtist(name = "The Dollheads", role = "SUPPORT")
             )
     }
@@ -621,14 +621,14 @@ class ArtistNameMappingTest {
     @Test
     fun `buildArtistsForEventType treats a concert title as the headliner without a support line`() {
         buildArtistsForEventType("Green Lung", subtitle = null, eventType = "CONCERT") shouldContainExactly
-            listOf(ScrapedArtist(name = "Green Lung", role = "HEADLINER"))
+            listOf(ScrapedArtist(name = "Green Lung", role = "HEADLINER", titleDerived = true))
     }
 
     @Test
     fun `buildArtistsForEventType adds the subtitle's support acts after the headliners`() {
         buildArtistsForEventType("TOTAL CHAOS", subtitle = "+ Support: The Dollheads", eventType = "CONCERT") shouldContainExactly
             listOf(
-                ScrapedArtist(name = "TOTAL CHAOS", role = "HEADLINER"),
+                ScrapedArtist(name = "TOTAL CHAOS", role = "HEADLINER", titleDerived = true),
                 ScrapedArtist(name = "The Dollheads", role = "SUPPORT")
             )
     }
@@ -639,7 +639,7 @@ class ArtistNameMappingTest {
         buildArtistsForEventType("Vinyl Thursdays", subtitle = null, eventType = null).shouldBeEmpty()
         buildArtistsForEventType("Green Lung", subtitle = "Support: Kaos", eventType = "OTHER") shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Green Lung", role = "HEADLINER"),
+                ScrapedArtist(name = "Green Lung", role = "HEADLINER", titleDerived = true),
                 ScrapedArtist(name = "Kaos", role = "SUPPORT")
             )
     }
@@ -727,7 +727,7 @@ class ArtistNameMappingTest {
         // Off by default: `w/` joins collaborators at some venues (Zenner's "David August w/ MFO"),
         // where unpacking would delete the headliner.
         headlinersFromTitle("Analogue Foundation presents: David August w/ MFO") shouldContainExactly
-            listOf(ScrapedArtist(name = "Analogue Foundation presents: David August w/ MFO", role = "HEADLINER"))
+            listOf(ScrapedArtist(name = "Analogue Foundation presents: David August w/ MFO", role = "HEADLINER", titleDerived = true))
     }
 
     @Test
@@ -735,20 +735,23 @@ class ArtistNameMappingTest {
         // The tail is a lineup list, so a comma delimits acts there — unlike in a title.
         headlinersFromTitle("RIOT ON THE ISLAND w/ Them Spirals, Painted Lox's & AK In Control", unpackWithFrame = true) shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Them Spirals", role = "HEADLINER"),
-                ScrapedArtist(name = "Painted Lox's", role = "HEADLINER"),
-                ScrapedArtist(name = "AK In Control", role = "HEADLINER")
+                ScrapedArtist(name = "Them Spirals", role = "HEADLINER", titleDerived = true),
+                ScrapedArtist(name = "Painted Lox's", role = "HEADLINER", titleDerived = true),
+                ScrapedArtist(name = "AK In Control", role = "HEADLINER", titleDerived = true)
             )
         // The night's own name never becomes a performer.
         headlinersFromTitle("RIPPLES W/ AMINE K", unpackWithFrame = true) shouldContainExactly
-            listOf(ScrapedArtist(name = "AMINE K", role = "HEADLINER"))
+            listOf(ScrapedArtist(name = "AMINE K", role = "HEADLINER", titleDerived = true))
     }
 
     @Test
     fun `headlinersFromTitle reads the German mit spelling of the frame when asked`() {
         // SO36's "SADTEMBER mit TAHA, JOHNBOY M.IKARUS": the night on the left, the acts on the right (#1132).
         headlinersFromTitle("SADTEMBER mit TAHA, JOHNBOY M.IKARUS", unpackWithFrame = true) shouldContainExactly
-            listOf(ScrapedArtist(name = "TAHA", role = "HEADLINER"), ScrapedArtist(name = "JOHNBOY M.IKARUS", role = "HEADLINER"))
+            listOf(
+                ScrapedArtist(name = "TAHA", role = "HEADLINER", titleDerived = true),
+                ScrapedArtist(name = "JOHNBOY M.IKARUS", role = "HEADLINER", titleDerived = true)
+            )
         // Off by default, like `w/`.
         headlinersFromTitle("SADTEMBER mit TAHA, JOHNBOY M.IKARUS").map { it.name } shouldContainExactly
             listOf("SADTEMBER mit TAHA, JOHNBOY M.IKARUS")
@@ -939,7 +942,7 @@ class ArtistNameMappingTest {
     @Test
     fun `headlinersFromTitle drops placeholder fragments from a split title`() {
         headlinersFromTitle("TBA + Real Band") shouldContainExactly
-            listOf(ScrapedArtist(name = "Real Band", role = "HEADLINER"))
+            listOf(ScrapedArtist(name = "Real Band", role = "HEADLINER", titleDerived = true))
         headlinersFromTitle("TBA").shouldBeEmpty()
     }
 
@@ -949,35 +952,35 @@ class ArtistNameMappingTest {
         // so it must not be torn into two headliners; the trailing "(DJ-Set)" is still stripped.
         headlinersFromTitle("Morimoto / Wong duo + Forrest Gimp (DJ-Set)", splitOnSlash = false) shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Morimoto / Wong duo", role = "HEADLINER"),
-                ScrapedArtist(name = "Forrest Gimp", role = "HEADLINER")
+                ScrapedArtist(name = "Morimoto / Wong duo", role = "HEADLINER", titleDerived = true),
+                ScrapedArtist(name = "Forrest Gimp", role = "HEADLINER", titleDerived = true)
             )
     }
 
     @Test
     fun `headlinersFromTitle strips tour and live suffixes to recover the act`() {
         headlinersFromTitle("DOMINIUM - NIGHT IS CALLING TOUR 2026") shouldContainExactly
-            listOf(ScrapedArtist(name = "DOMINIUM", role = "HEADLINER"))
+            listOf(ScrapedArtist(name = "DOMINIUM", role = "HEADLINER", titleDerived = true))
         headlinersFromTitle("HGICH.T LIVE") shouldContainExactly
-            listOf(ScrapedArtist(name = "HGICH.T", role = "HEADLINER"))
+            listOf(ScrapedArtist(name = "HGICH.T", role = "HEADLINER", titleDerived = true))
     }
 
     @Test
     fun `headlinersFromTitle strips an event-framing prefix to recover the act`() {
         headlinersFromTitle("A night with GULVØSS II") shouldContainExactly
-            listOf(ScrapedArtist(name = "GULVØSS II", role = "HEADLINER"))
+            listOf(ScrapedArtist(name = "GULVØSS II", role = "HEADLINER", titleDerived = true))
         headlinersFromTitle("An Evening with Nick Cave") shouldContainExactly
-            listOf(ScrapedArtist(name = "Nick Cave", role = "HEADLINER"))
+            listOf(ScrapedArtist(name = "Nick Cave", role = "HEADLINER", titleDerived = true))
         // The framing phrase must be a leading whole prefix — a band with "night" mid-name is untouched.
         headlinersFromTitle("Last Night With You") shouldContainExactly
-            listOf(ScrapedArtist(name = "Last Night With You", role = "HEADLINER"))
+            listOf(ScrapedArtist(name = "Last Night With You", role = "HEADLINER", titleDerived = true))
     }
 
     @Test
     fun `headlinersFromTitle recovers a single act from an anniversary title`() {
         // The comma in the tail keeps the title unsplit; the suffix strip then recovers the band.
         headlinersFromTitle("THE BUTLERS - 40 YEARS, SKA & SOULPOWER -") shouldContainExactly
-            listOf(ScrapedArtist(name = "THE BUTLERS", role = "HEADLINER"))
+            listOf(ScrapedArtist(name = "THE BUTLERS", role = "HEADLINER", titleDerived = true))
     }
 
     @Test
@@ -992,8 +995,8 @@ class ArtistNameMappingTest {
         // The series label ("OFF THE RAILS #5:") is dropped; the acts after the colon remain.
         headlinersFromTitle("OFF THE RAILS #5: Blake Harley & Superior Motive") shouldContainExactly
             listOf(
-                ScrapedArtist(name = "Blake Harley", role = "HEADLINER"),
-                ScrapedArtist(name = "Superior Motive", role = "HEADLINER")
+                ScrapedArtist(name = "Blake Harley", role = "HEADLINER", titleDerived = true),
+                ScrapedArtist(name = "Superior Motive", role = "HEADLINER", titleDerived = true)
             )
     }
 
@@ -1001,7 +1004,7 @@ class ArtistNameMappingTest {
     fun `headlinersFromTitle keeps a name with a colon but no series edition marker`() {
         // No "#<n>:" marker, so nothing is stripped (guards a real "9:3"-style name).
         headlinersFromTitle("Bleech 9:3") shouldContainExactly
-            listOf(ScrapedArtist(name = "Bleech 9:3", role = "HEADLINER"))
+            listOf(ScrapedArtist(name = "Bleech 9:3", role = "HEADLINER", titleDerived = true))
     }
 
     // --- stripSeriesPrefix ---
@@ -1023,5 +1026,19 @@ class ArtistNameMappingTest {
     @Test
     fun `stripSeriesPrefix returns the input when stripping would leave nothing`() {
         stripSeriesPrefix("OFF THE RAILS #5:") shouldBe "OFF THE RAILS #5:"
+    }
+
+    // Provenance for #1145: only what was read off the title carries the flag.
+    @Test
+    fun `headlinersFromTitle marks every act it reads off the title as title-derived`() {
+        headlinersFromTitle("The Adicts + Maid of Ace").map { it.titleDerived } shouldBe listOf(true, true)
+        headlinersFromTitle("House of Rave w/ Maceo Plex", unpackWithFrame = true).map { it.titleDerived } shouldBe listOf(true)
+    }
+
+    @Test
+    fun `buildArtistList flags the title half and leaves the support acts alone`() {
+        val result = buildArtistList("The Adicts", listOf("Maid of Ace", "Kaos"))
+        result.map { it.name to it.titleDerived } shouldBe listOf("The Adicts" to true, "Maid of Ace" to false, "Kaos" to false)
+        ScrapedArtist("Die Nerven").titleDerived shouldBe false
     }
 }

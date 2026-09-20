@@ -117,7 +117,7 @@ class ColumbiaTheaterWebsiteImporterTest {
             soulfly.imageUrl shouldBe "https://columbia-theater.de/wp-content/uploads/2026/05/image-1024x683.webp"
             soulfly.artists shouldContainExactly
                 listOf(
-                    ScrapedArtist("Soulfly", "HEADLINER"),
+                    ScrapedArtist("Soulfly", "HEADLINER", titleDerived = true),
                     ScrapedArtist("Botulism", "SUPPORT")
                 )
         }

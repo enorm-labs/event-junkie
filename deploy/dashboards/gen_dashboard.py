@@ -300,6 +300,29 @@ panels = [
         h=12,
         decimals=0,
     ),
+    panel(
+        "p_title_derived",
+        "Nights stored as acts — title-derived one-event headliners, per source",
+        "Every artist minted from a bare event title carries `title_derived` since #1145. Charted are the ones "
+        "that also play nothing else and are named exactly like their event (`titleDerivedSingletons`), and "
+        "beside them the ones MusicBrainz knows no artist for (`titleDerivedUnmatched`, ADR-031). That is the "
+        "shape of #1110, #1135, #1132 and #1134 before their fixes — and of a touring act on its first Berlin "
+        "date, so the bar is a queue to read, not a defect count; "
+        "`GET /api/admin/data-quality/worklist?issue=titleDerivedSingletons&source=<slug>` lists the rows. The "
+        "gauge is written by the 03:00 snapshot, so it is empty after a restart until then, and it undercounts "
+        "until every source has been re-imported once with `?force=true` — rows stored before the column read "
+        "as line-up-derived.",
+        "bar",
+        [
+            'topk(20, sum by (source) (data_quality{metric="titleDerivedSingletons"}))',
+            'topk(20, sum by (source) (data_quality{metric="titleDerivedUnmatched"}))',
+        ],
+        x=0,
+        y=40,
+        w=192,
+        h=12,
+        decimals=0,
+    ),
     # --- Row 3: the platform underneath -----------------------------------
     panel(
         "p_pg",
@@ -309,7 +332,7 @@ panels = [
         "line",
         "max by (datname) (pg_database_size_bytes)",
         x=0,
-        y=40,
+        y=52,
         w=48,
         h=16,
         unit="bytes",
@@ -322,7 +345,7 @@ panels = [
         "line",
         ["max(system_cpu_load_average_5m)", "max(system_memory_utilization)"],
         x=48,
-        y=40,
+        y=52,
         w=48,
         h=16,
     ),
@@ -334,7 +357,7 @@ panels = [
         "metric",
         "min(k8s_node_memory_available)",
         x=96,
-        y=40,
+        y=52,
         w=48,
         h=16,
         unit="bytes",
@@ -357,7 +380,7 @@ panels = [
         "clamp_max((min by (name) (certmanager_certificate_expiration_timestamp_seconds) - timestamp("
         "min by (name) (certmanager_certificate_expiration_timestamp_seconds))) / 86400, %d)" % CERT_CEILING_DAYS,
         x=144,
-        y=40,
+        y=52,
         w=48,
         h=16,
         decimals=1,
@@ -385,7 +408,7 @@ panels = [
             "sum(rate(otelcol_receiver_refused_metric_points_total[5m]))",
         ],
         x=0,
-        y=56,
+        y=68,
         w=96,
         h=16,
         decimals=2,
@@ -402,7 +425,7 @@ panels = [
         "line",
         "max(zo_ingest_memtable_arrow_bytes)",
         x=96,
-        y=56,
+        y=68,
         w=96,
         h=16,
         unit="bytes",
@@ -427,7 +450,7 @@ panels = [
         "SELECT histogram(_timestamp, '1 hour') AS x_axis_1, sum(CASE WHEN %s THEN 1 ELSE 0 END) AS y_axis_1 "
         "%s GROUP BY x_axis_1 ORDER BY x_axis_1" % (VISITOR_PAGE_LOAD, ACCESS_LINES),
         x=0,
-        y=72,
+        y=84,
         w=112,
         h=16,
         columns=[("Hour", "x_axis_1"), ("Page loads", "y_axis_1")],
@@ -445,7 +468,7 @@ panels = [
         "sum(CASE WHEN %s THEN 1 ELSE 0 END) AS y_axis_2 %s GROUP BY x_axis_1 "
         "ORDER BY y_axis_1 DESC, y_axis_2 DESC LIMIT 15" % (REFERRER, VISITOR_PAGE_LOAD, PAGE_LOAD, ACCESS_LINES),
         x=112,
-        y=72,
+        y=84,
         w=80,
         h=16,
         columns=[("Referrer", "x_axis_1"), ("Visitors", "y_axis_1"), ("All agents", "y_axis_2")],

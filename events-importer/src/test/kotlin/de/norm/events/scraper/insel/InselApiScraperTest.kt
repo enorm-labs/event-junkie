@@ -71,7 +71,7 @@ class InselApiScraperTest {
         polica.soldOut shouldBe false
         polica.status shouldBe "SCHEDULED"
         // The country tag is provenance, not part of the act's name — the title keeps it, the artist does not.
-        polica.artists shouldContainExactly listOf(ScrapedArtist("Internal Bleeding", "HEADLINER"))
+        polica.artists shouldContainExactly listOf(ScrapedArtist("Internal Bleeding", "HEADLINER", titleDerived = true))
         // The venue publishes no prices at all.
         polica.pricePresale.shouldBeNull()
         polica.priceBoxOffice.shouldBeNull()
@@ -147,16 +147,16 @@ class InselApiScraperTest {
         val riot = events.single { it.title.startsWith("RIOT ON THE ISLAND") }
         riot.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Them Spirals", "HEADLINER"),
-                ScrapedArtist("Painted Lox's", "HEADLINER"),
-                ScrapedArtist("AK In Control", "HEADLINER")
+                ScrapedArtist("Them Spirals", "HEADLINER", titleDerived = true),
+                ScrapedArtist("Painted Lox's", "HEADLINER", titleDerived = true),
+                ScrapedArtist("AK In Control", "HEADLINER", titleDerived = true)
             )
     }
 
     @Test
     fun `takes the first bullet segment of a title as the act`() {
         val juneCoco = events.single { it.title.startsWith("June Cocó") }
-        juneCoco.artists shouldContainExactly listOf(ScrapedArtist("June Cocó", "HEADLINER"))
+        juneCoco.artists shouldContainExactly listOf(ScrapedArtist("June Cocó", "HEADLINER", titleDerived = true))
     }
 
     @Test
@@ -165,8 +165,8 @@ class InselApiScraperTest {
         graupause.title shouldBe "Graupause (DE) + Waarz Up (Bln)"
         graupause.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Graupause", "HEADLINER"),
-                ScrapedArtist("Waarz Up", "HEADLINER")
+                ScrapedArtist("Graupause", "HEADLINER", titleDerived = true),
+                ScrapedArtist("Waarz Up", "HEADLINER", titleDerived = true)
             )
         graupause.promoters shouldContainExactly listOf("Punkfilmfestival Berlin")
     }
@@ -177,21 +177,21 @@ class InselApiScraperTest {
         feePenafiel.subtitle shouldBe "+ support: Karwendel"
         feePenafiel.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Fee Penafiel", "HEADLINER"),
+                ScrapedArtist("Fee Penafiel", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Karwendel", "SUPPORT")
             )
 
         val dieWeiteren = events.single { it.title == "Die Weiteren Aussichten" }
         dieWeiteren.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Die Weiteren Aussichten", "HEADLINER"),
+                ScrapedArtist("Die Weiteren Aussichten", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Alles Karo", "SUPPORT")
             )
 
         // Run together with the act's name on one line, which the marker still finds.
         events.single { it.title == "Marlin Beach" }.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Marlin Beach", "HEADLINER"),
+                ScrapedArtist("Marlin Beach", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Mellow Ma", "SUPPORT")
             )
     }
@@ -209,7 +209,7 @@ class InselApiScraperTest {
         // Every shop is a different host; the emoji-wrapped call to action is found the same way.
         val aoxo = events.first { it.title == "AoxoToxoA (CH)" }
         aoxo.ticketUrl shouldBe "https://www.tickettailor.com/events/gratefultrips/2097651"
-        aoxo.artists shouldContainExactly listOf(ScrapedArtist("AoxoToxoA", "HEADLINER"))
+        aoxo.artists shouldContainExactly listOf(ScrapedArtist("AoxoToxoA", "HEADLINER", titleDerived = true))
         events.single { it.title == "Jive Mother Mary" }.ticketUrl!! shouldContain "dice.fm"
     }
 

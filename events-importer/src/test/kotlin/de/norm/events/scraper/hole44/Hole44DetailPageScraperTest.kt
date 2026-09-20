@@ -54,7 +54,7 @@ class Hole44DetailPageScraperTest {
         event.promoters shouldContainExactly listOf("Trinity Music")
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Municipal Waste", "HEADLINER"),
+                ScrapedArtist("Municipal Waste", "HEADLINER", titleDerived = true),
                 ScrapedArtist("Battlecreek", "SUPPORT")
             )
     }
@@ -78,7 +78,7 @@ class Hole44DetailPageScraperTest {
         event.promoters shouldContainExactly listOf("Weird World Booking & Promotion GmbH")
         event.doorsTime shouldBe LocalTime.of(18, 0)
         event.startTime shouldBe LocalTime.of(19, 0)
-        event.artists shouldContainExactly listOf(ScrapedArtist("KANG YUCHAN", "HEADLINER"))
+        event.artists shouldContainExactly listOf(ScrapedArtist("KANG YUCHAN", "HEADLINER", titleDerived = true))
         event.artists.filter { it.role == "SUPPORT" }.shouldBeEmpty()
     }
 

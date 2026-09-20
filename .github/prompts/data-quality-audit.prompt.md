@@ -87,7 +87,9 @@ useful — a problem concentrated at one venue usually points at that importer. 
   whole title parsed as one artist).
 - `ARTISTS` — An artist with exactly one event whose `name` equals that event's `title`, case-insensitively — the series-as-artist signature every
   `NON_ARTIST_NAMES` entry so far has shared (#1110, #1135). A real act with one Berlin date also matches, so this ranks candidates rather than
-  convicting them; the venue's page settles each one.
+  convicting them; the venue's page settles each one. The importer keeps this list itself since #1145: `event_artist.title_derived` says the name was
+  read off the title, and `GET /api/admin/data-quality/worklist?issue=titleDerivedSingletons` (name equals title) and `…=titleDerivedUnmatched` (no
+  MusicBrainz match) are the same query with that flag, per source. Read those first; the SQL below is the fallback for rows imported before the flag.
 
     ```sql
     SELECT a.id, a.name, min(e.title) AS title, min(v.name) AS venue

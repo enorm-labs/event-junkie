@@ -82,7 +82,7 @@ class BadehausOverviewPageScraperTest {
         // Badehaus publishes no roster; for an inferred CONCERT the title is the act.
         val ela = events().first { it.sourceId == "badehaus:ela" }
         ela.eventType shouldBe EventType.CONCERT.name
-        ela.artists shouldContainExactly listOf(ScrapedArtist(name = "ela.", role = "HEADLINER"))
+        ela.artists shouldContainExactly listOf(ScrapedArtist(name = "ela.", role = "HEADLINER", titleDerived = true))
     }
 
     @Test

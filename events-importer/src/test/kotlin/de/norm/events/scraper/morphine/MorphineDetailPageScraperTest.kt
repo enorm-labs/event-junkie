@@ -52,7 +52,7 @@ class MorphineDetailPageScraperTest {
         event.description.shouldNotBeNull() shouldStartWith "After the remarkable success"
         event.status shouldBe "SCHEDULED"
         event.soldOut shouldBe false
-        event.artists shouldBe listOf(ScrapedArtist("Sardy Fardy", "HEADLINER"))
+        event.artists shouldBe listOf(ScrapedArtist("Sardy Fardy", "HEADLINER", titleDerived = true))
     }
 
     @Test
@@ -94,8 +94,8 @@ class MorphineDetailPageScraperTest {
 
         event.artists shouldBe
             listOf(
-                ScrapedArtist("ALL ABOUT BIRDS", "HEADLINER"),
-                ScrapedArtist("JON ROSE: HINTERLAND!", "HEADLINER")
+                ScrapedArtist("ALL ABOUT BIRDS", "HEADLINER", titleDerived = true),
+                ScrapedArtist("JON ROSE: HINTERLAND!", "HEADLINER", titleDerived = true)
             )
         event.doorsTime shouldBe LocalTime.of(19, 30)
         event.startTime shouldBe LocalTime.of(20, 0)
