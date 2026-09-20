@@ -118,15 +118,16 @@ class GartnOverviewPageScraperTest {
     }
 
     @Test
-    fun `drops a lineup line that is only a sup annotation`() {
-        // The Sunday podcast's hosts sit in a standalone `<sup>` annotating the line above it —
-        // a note about that slot, not a billing of its own.
+    fun `reads a sup cast line as the slot's guests, once each`() {
+        // The Sunday podcast's hosts sit in a standalone `<sup>mit … und …</sup>` under the slot:
+        // a cast line, split at its conjunction (#309). Judith is billed again below and kept once.
         event("SONNTAGS IM gART.n").artists.map { it.name } shouldContainExactly
             listOf(
                 "Live Podcast \"Heisse Platten\"",
+                "Judith van Waterkant",
+                "Ruede Hagelstein",
                 "ANNAWAFFEL",
                 "Faustina Fauna",
-                "Judith van Waterkant",
                 "Maria die Ruhe"
             )
     }

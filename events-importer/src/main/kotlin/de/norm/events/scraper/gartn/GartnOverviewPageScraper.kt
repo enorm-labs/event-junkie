@@ -11,6 +11,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textLines
 import de.norm.events.slug.SlugGenerator
@@ -44,8 +45,9 @@ import java.time.MonthDay
  * ticket button is the ticket note, and the rest is the lineup.
  *
  * **`<sup>` is the venue's annotation marker.** Inline it joins or qualifies a slot — `b2b` splits it
- * into two acts, `live` is trimmed by [stripArtistSuffix] — but a line that is *only* an annotation
- * is a note rather than a billing, and is dropped with the guests it names.
+ * into two acts, `live` is trimmed by [stripArtistSuffix]. A line that is *only* an annotation is a
+ * note on the slot above it: dropped, unless it opens with `mit` / `w/`, in which case it names that
+ * slot's cast and is split into acts at its conjunctions (#309).
  *
  * **"pre-sale sold out" does not mean sold out.** The venue pairs that label with a "more tickets at
  * the door" note, so [ScrapedEvent.soldOut] is set only when no such note accompanies it; the note
@@ -171,7 +173,7 @@ class GartnOverviewPageScraper(
     private fun parseLineup(paragraph: Element?): List<ScrapedArtist> {
         if (paragraph == null) return emptyList()
         return billingLines(paragraph)
-            .flatMap { it.split(B2B_SEPARATOR) }
+            .flatMap { line -> if (line.isCast) splitSupportActs(line.text) else line.text.split(B2B_SEPARATOR) }
             .map { stripArtistSuffix(it.trim()) }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
             .distinctBy { it.lowercase() }
@@ -192,23 +194,34 @@ class GartnOverviewPageScraper(
         return lineHost(wrapper)
     }
 
+    /** One `<br>`-separated line of the lineup paragraph; a cast line is a `mit …` / `w/ …` annotation naming a slot's guests. */
+    private data class BillingLine(
+        val text: String,
+        val isCast: Boolean
+    )
+
     /**
      * Splits a lineup paragraph into its `<br>`-separated billing lines, dropping any line built
-     * only from `<sup>` annotations.
+     * only from `<sup>` annotations — except a cast annotation, which is kept without its marker.
      *
      * This cannot use the shared [textLines][de.norm.events.scraper.textLines] helper because the
      * `<sup>` distinction is the whole point: an inline `<sup>` (`Amina <sup>b2b</sup> Luqqi`)
      * belongs to its line, whereas a line that is *nothing but* a `<sup>` annotates the line above
      * it rather than billing an act.
      */
-    private fun billingLines(paragraph: Element): List<String> {
+    private fun billingLines(paragraph: Element): List<BillingLine> {
         val host = lineHost(paragraph)
-        val lines = mutableListOf<String>()
+        val lines = mutableListOf<BillingLine>()
         val current = StringBuilder()
         var isAnnotationOnly = true
 
         fun flush() {
-            if (!isAnnotationOnly) lines.add(current.toString().trim())
+            val text = current.toString().trim()
+            val cast = CAST_PREFIX.find(text)
+            when {
+                !isAnnotationOnly -> lines.add(BillingLine(text, isCast = false))
+                cast != null -> lines.add(BillingLine(text.substring(cast.range.last + 1).trim(), isCast = true))
+            }
             current.clear()
             isAnnotationOnly = true
         }
@@ -231,7 +244,7 @@ class GartnOverviewPageScraper(
             }
         }
         flush()
-        return lines.filter { it.isNotBlank() }
+        return lines.filter { it.text.isNotBlank() }
     }
 
     private companion object {
@@ -252,5 +265,8 @@ class GartnOverviewPageScraper(
 
         /** The back-to-back marker joining two DJs into one slot. */
         val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
+
+        /** The opener of a cast annotation: `mit Judith van Waterkant und Ruede Hagelstein`, `w/ …`. */
+        val CAST_PREFIX = Regex("""^(?:mit|w/)\s+""", RegexOption.IGNORE_CASE)
     }
 }
