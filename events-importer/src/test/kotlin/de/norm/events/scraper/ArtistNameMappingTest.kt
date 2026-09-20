@@ -759,11 +759,12 @@ class ArtistNameMappingTest {
 
     @Test
     fun `headlinersFromTitle keeps an act billed with its own backing whole`() {
-        // "mit Orchester" / "mit Band" is the act's backing, not a guest list; the act stays the headliner.
+        // "mit Orchester" / "mit Band" is the act's backing, not a guest list; the act stays the
+        // headliner, and the backing comes off the name so it lands on the act's own row (#1580).
         headlinersFromTitle("Lacrimosa mit Orchester", unpackWithFrame = true).map { it.name } shouldContainExactly
-            listOf("Lacrimosa mit Orchester")
+            listOf("Lacrimosa")
         headlinersFromTitle("Alexander Eder mit Band", unpackWithFrame = true).map { it.name } shouldContainExactly
-            listOf("Alexander Eder mit Band")
+            listOf("Alexander Eder")
         // The marker needs whitespace on both sides: a name containing the letters is untouched.
         headlinersFromTitle("Mitski", unpackWithFrame = true).map { it.name } shouldContainExactly listOf("Mitski")
     }
@@ -1026,6 +1027,49 @@ class ArtistNameMappingTest {
     @Test
     fun `stripSeriesPrefix returns the input when stripping would leave nothing`() {
         stripSeriesPrefix("OFF THE RAILS #5:") shouldBe "OFF THE RAILS #5:"
+    }
+
+    // #1580 — a superlative clause and two format words are not acts.
+    @Test
+    fun `headlinersFromTitle reads billing prose around a conjunction as one act with a tail`() {
+        headlinersFromTitle("Lacrimosa mit Orchester - Einzige und Exklusive Orchester-Show in Europa!").map { it.name } shouldContainExactly
+            listOf("Lacrimosa")
+        headlinersFromTitle("POETRY & HIP HOP (KONZERT)").shouldBeEmpty()
+        // A real co-bill beside a name that merely ends in `!` still splits — the guard is on the whole segment.
+        splitHeadlinerTitle("Wham! + Culture Club") shouldContainExactly listOf("Wham!", "Culture Club")
+        splitHeadlinerTitle("Panic! At the Disco & Fall Out Boy") shouldContainExactly listOf("Panic! At the Disco", "Fall Out Boy")
+    }
+
+    // #1585 — a work title glued to the act with `:` or ` - ` is not part of the name.
+    @Test
+    fun `stripArtistSuffix drops a work title after a dash or a colon, and a separator left behind`() {
+        stripArtistSuffix("Transllusion - The Opening of the Cerebral Gate") shouldBe "Transllusion"
+        stripArtistSuffix("Jon Rose: Hinterland!") shouldBe "Jon Rose"
+        stripArtistSuffix("Stevie Cox -") shouldBe "Stevie Cox"
+        // Two words after the dash are not enough to call, and an all-caps head is left to the shouted-tail rule.
+        stripArtistSuffix("BAD COMPANY LEGACY - Dave Colwell") shouldBe "BAD COMPANY LEGACY - Dave Colwell"
+        stripArtistSuffix("DZ - DEATHRAY") shouldBe "DZ - DEATHRAY"
+        stripArtistSuffix("Kat Frankie - B O D I E S") shouldBe "Kat Frankie"
+        stripArtistSuffix("Drone Art Show: Harry Potter") shouldBe "Drone Art Show: Harry Potter"
+        // A presenter is not an act, and `9:3` has no boundary.
+        stripArtistSuffix("Analogue Foundation presents: David August With A Band") shouldBe "Analogue Foundation presents: David August With A Band"
+        stripArtistSuffix("Bleech 9:3") shouldBe "Bleech 9:3"
+    }
+
+    // #1581 — `pres:` bills the act on whichever side is not the programme, and a series is not an act.
+    @Test
+    fun `headlinersFromTitle reads a pres marker by the shape of its right side`() {
+        headlinersFromTitle("Burnt Friedman pres: Secret Rhythms").map { it.name } shouldContainExactly listOf("Burnt Friedman")
+        headlinersFromTitle("hub pres. Doorman + Franco Franco").map { it.name } shouldContainExactly listOf("Doorman", "Franco Franco")
+        headlinersFromTitle("Unguarded pres. Jungstötter + Blurrydog").map { it.name } shouldContainExactly listOf("Jungstötter", "Blurrydog")
+    }
+
+    @Test
+    fun `a series billed under its own name yields no artist, whatever its edition marker`() {
+        headlinersFromTitle("Berlin Beat Invasion No 8").shouldBeEmpty()
+        headlinersFromTitle("Berlin Beat Invasion No. 9").shouldBeEmpty()
+        headlinersFromTitle("Urban Spree KLUBNACHT 004").shouldBeEmpty()
+        headlinersFromTitle("Methods of Dance II").shouldBeEmpty()
     }
 
     // Provenance for #1145: only what was read off the title carries the flag.

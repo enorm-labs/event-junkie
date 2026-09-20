@@ -123,7 +123,7 @@ class MorphineWebsiteImporterTest {
             birds.artists shouldBe
                 listOf(
                     ScrapedArtist("ALL ABOUT BIRDS", "HEADLINER", titleDerived = true),
-                    ScrapedArtist("JON ROSE: HINTERLAND!", "HEADLINER", titleDerived = true)
+                    ScrapedArtist("JON ROSE", "HEADLINER", titleDerived = true)
                 )
         }
 
