@@ -1,33 +1,22 @@
 name: Cut release
 
-# Publish a GitHub Release for the number the commits since the last one deserve. This does not
-# build anything: creating the release fires `release.yml`, which is what produces the four
-# artifacts (#868).
+# Publish a GitHub Release for the number the commits since the last one deserve; creating it fires
+# `release.yml`, which builds the artifacts (#868).
 #
-# **The version is never typed, and never chosen either.** No file in the tree carries it (ADR-032).
-# `scripts/version.sh deserved` reads it off the Conventional Commits since the last release: a
-# `feat` earns a minor, a breaking change a major (a minor before 1.0.0), the rest a patch. The tag
-# is that number, and `release.yml` computes the same number from the same commits when it builds
-# the tag, so the two cannot disagree. Nothing moves `main` afterwards: the next commit's snapshot
-# is named after the next patch by the same script, and a `feat` moves it to the minor on its own.
+# **The version is never typed, and never chosen.** No file carries it (ADR-032): `scripts/version.sh
+# deserved` reads the Conventional Commits since the last release — a `feat` a minor, a break a major
+# (a minor before 1.0.0), the rest a patch — and `release.yml` computes the same number from the same
+# commits, so the two cannot disagree. Nothing moves `main` afterwards.
 #
-# **The notes open with a summary, written for a visitor to the site.** Claude, driven by this
-# repository's own `/release-highlights` prompt, reads the commits since the last tag and names the
-# few changes a visitor would notice, in the visitor's words, above the label buckets
-# `.github/release.yml` groups everything into. Three sources, in order: the `highlights` input,
-# which is how the text a dry run printed is shipped unchanged; otherwise the model; otherwise
-# `scripts/release-highlights.sh`, which names the commits' subjects verbatim, so an outage at the
-# model delays no release.
+# **The notes open with a visitor-facing summary**, from `/release-highlights`, above the label
+# buckets `.github/release.yml` groups. Three sources in order: the `highlights` input (a dry run's
+# text shipped unchanged), the model, `scripts/release-highlights.sh`. **The model step cannot be tried
+# from a branch** — the action reports success on a workflow file that differs from `main`'s — so a
+# change to it is proved after merge, by the default dry run.
 #
-# **The model step cannot be tried from a branch.** The action runs only a workflow file that is
-# byte-identical to the copy on `main`, and reports success when it is not (ci-cd.instructions.md
-# § agent workloads). So a change to it is proved after it merges, by a dry run — which is the
-# default, and is where the highlights are read before a real cut anyway.
-#
-# **A release is a rebuild of what `main` already published as a snapshot**, so a red snapshot
-# publish is a red release: v0.3.10 was cut over four failed runs and left a tag with nothing
-# behind it, for a base-image finding no change on `main` had caused (#1117). The cut therefore
-# refuses a commit whose snapshot publish is not green, in dry run too.
+# **A release is a rebuild of what `main` already published as a snapshot**, so a red snapshot is a red
+# release: v0.3.10 was cut over four failed runs and left an empty tag (#1117). The cut refuses a
+# commit whose snapshot publish is not green, in dry run too.
 
 on:
   workflow_dispatch:
@@ -66,7 +55,7 @@ on:
         type: boolean
         default: true
 
-# Two runs would race for one tag, and the loser fails after the winner has already published.
+# Two runs would race for one tag; the loser fails after the winner has published.
 concurrency:
   group: cut-release
   cancel-in-progress: false
@@ -118,27 +107,19 @@ jobs:
             echo "version=$deserved"
           } >>"$GITHUB_OUTPUT"
 
-      # **Not `GITHUB_TOKEN`, and this is the whole design risk.** GitHub suppresses the events its
-      # own token triggers, so a release created with it fires no `release: published` — `release.yml`
-      # would never run, no images and no chart would be published, and every job here would report
-      # green. A GitHub App installation token is a different identity, so the event fires.
-      #
-      # It is minted per run and expires in an hour. The App holds `contents: write` and
-      # `pull-requests: write` on this repository alone (docs/CREDENTIALS.md §2, #25); the token is
-      # narrowed to the one this job uses. Minted on a dry run too, and deliberately: it creates
-      # nothing, and it is the only thing that proves the App can authenticate before a run that
-      # publishes. `generate-notes` below is the cheapest call that exercises it.
+      # **Not `GITHUB_TOKEN`, and this is the whole design risk.** GitHub suppresses the events its own
+      # token triggers: a release created with it fires no `release: published`, nothing is published, and
+      # every job here is green. An App installation token is a different identity. Minted per run, narrowed
+      # to what this job uses, on a dry run too: `generate-notes` is the cheapest call that proves the App
+      # can authenticate before a run that publishes.
       - name: Mint an App installation token
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          # `client-id` is the input's name since the action's v2.1 (`app-id` warns on every run), and
-          # it takes the numeric App id as well: the action reads one input or the other into the
-          # same field, and GitHub mints the JWT from either. The variable keeps the id it holds.
+          # `client-id` takes the numeric App id; `app-id` warns on every run.
           client-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-          # Narrowed to the one the job uses. Without it the token inherits everything the
-          # installation holds — and would silently widen the moment anybody granted the App more.
+          # Narrowed to the one the job uses; without it the token inherits everything the installation holds.
           permission-contents: write
 
       - name: Refuse a tag that already exists
@@ -152,9 +133,9 @@ jobs:
           fi
           echo "v$VERSION is free"
 
-      # The run for this exact commit, not the latest on main: a green run for an older commit says
-      # nothing about a base image that moved since. No run at all is refused too — the publish
-      # takes minutes, and a cut in that window would race it.
+      # The run for this exact commit, not the latest on main: a green run for an older commit says nothing
+      # about a base image that moved since. No run at all is refused too — a cut in that window would race
+      # the publish.
       - name: Refuse a commit whose snapshot publish is not green
         env:
           GH_TOKEN: ${{ github.token }}
@@ -176,15 +157,10 @@ jobs:
           fi
           echo "Snapshot publish for ${sha} is green: ${url}"
 
-      # The few changes worth naming, above the buckets `.github/release.yml` groups everything into,
-      # in the words of a visitor to the site. Skipped when the operator pasted them in. Written
-      # outside the working tree, like the notes below.
-      #
-      # `continue-on-error`, because the release must not wait on the model: the step below falls
-      # back to the script. `--allowedTools` is load-bearing, as in every agent workload — the prompt
-      # carries no frontmatter, so without it the agent has no shell and reads no history. No
-      # `github_token`, for the reason agent-security.yml records. `display_report` puts the agent's
-      # final message in the job summary, which is where its reason for writing nothing would be.
+      # The few changes worth naming, in a visitor's words. Skipped when the operator pasted them in. Written
+      # outside the working tree. `continue-on-error`, because the release must not wait on the model.
+      # `--allowedTools` is load-bearing (no frontmatter, no shell); no `github_token`, for the reason
+      # agent-security.yml records; `display_report` puts the agent's final message in the summary.
       - name: Ask the model for the highlights
         if: ${{ inputs.highlights == '' }}
         id: claude
@@ -200,10 +176,9 @@ jobs:
             --max-turns 40
             --allowedTools "Bash,Read,Glob,Grep"
 
-      # The one place that decides which text the release carries, and says which. The model step
-      # ends `outcome=success` having written nothing when the workflow file differs from `main`'s,
-      # so the file is what is checked, not the outcome: a file that opens with the heading is the
-      # model's answer, anything else is the script's turn.
+      # The one place that decides which text the release carries. The model step ends `outcome=success`
+      # having written nothing when the file differs from `main`'s, so the file is what is checked: a file
+      # that opens with the heading is the model's answer, anything else is the script's turn.
       - name: Settle the highlights
         id: highlights
         env:
@@ -236,12 +211,8 @@ jobs:
             fi
           } >>"$GITHUB_STEP_SUMMARY"
 
-      # `generate-notes` renders what `gh release create --generate-notes` would produce and creates
-      # nothing, so a dry run can show the notes rather than only the number. The categories come
-      # from `.github/release.yml`.
-      #
-      # **It needs the App token, not `github.token`.** The endpoint is a POST and asks for
-      # `contents: write`, which this workflow does not grant its own token and should not.
+      # `generate-notes` renders what `--generate-notes` would produce and creates nothing, so a dry run
+      # shows the notes. **It needs the App token**: the endpoint is a POST asking `contents: write`.
       - name: Preview the release notes
         if: ${{ inputs.dry_run }}
         env:
@@ -258,8 +229,7 @@ jobs:
               -f tag_name="v$VERSION" -f target_commitish=main --jq .body
           } >>"$GITHUB_STEP_SUMMARY"
 
-      # The summary comes first, then the dispatch's own paragraph, then the generated categories —
-      # `--notes-file` is prepended to what `--generate-notes` produces.
+      # Summary, then the dispatch's paragraph, then the generated categories: `--notes-file` is prepended.
       - name: Create the release
         if: ${{ !inputs.dry_run }}
         env:
@@ -267,8 +237,8 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           NOTES: ${{ inputs.notes }}
         run: |
-          # Every part is written without a trailing newline: `gh` joins this file to the generated
-          # section with a blank line of its own, so a newline here reads as a second gap.
+          # No trailing newline on any part: `gh` joins this file to the generated section with a blank line of
+          # its own.
           : >"$RUNNER_TEMP/notes.md"
           if [ -s "$RUNNER_TEMP/highlights.md" ]; then
             printf '%s' "$(cat "$RUNNER_TEMP/highlights.md")" >>"$RUNNER_TEMP/notes.md"

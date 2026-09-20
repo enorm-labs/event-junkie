@@ -8,25 +8,19 @@ on:
       - '.github/workflows/build-frontend.yml'
   pull_request:
     branches: [ main ]
-    # No `paths:` here, deliberately, since #494. `Build & Test (frontend)` is **required** on the
-    # `main` ruleset, and a required check that never runs stays Pending forever, deadlocking every
-    # pull request that happens not to touch these paths. The filtering moved to the `detect-changes`
-    # job below, which is what keeps a documentation-only pull request from paying for a 10-minute
-    # build: the work is skipped, the context still reports. The `push:` filter above keeps its
-    # paths — nothing requires those runs.
-  # Manual trigger, for when the automatic ones cannot be relied on: an Actions incident can drop
-  # most webhooks, and pull requests then merge with no run ever created — `gh run rerun` is no help
-  # when there is no run to re-run. Ignores the path filters above, so it
-  # also serves "build this ref anyway". Pick the branch to run it on from the Actions tab, or
-  # `gh workflow run build-frontend.yml --ref <branch>`.
+    # No `paths:` here (#494): `Build & Test (frontend)` is **required**, and a required check that never
+    # runs stays Pending forever. The filtering lives in `detect-changes` below; the `push:` filter keeps
+    # its paths.
+  # Manual trigger, for an Actions incident that drops webhooks and leaves nothing to re-run. Ignores
+  # the path filters: `gh workflow run build-frontend.yml --ref <branch>`.
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  # Seconds, and no checkout: the pull request's file list comes from the API. This exists so the
-  # required context below can be unconditional while the 10-minute build stays conditional.
+  # Seconds, and no checkout: the file list comes from the API, so the required context below can be
+  # unconditional while the build stays conditional.
   detect-changes:
     name: Detect changes
     runs-on: ubuntu-latest
@@ -37,8 +31,7 @@ jobs:
       - name: Decide whether the frontend is affected
         id: filter
         env:
-          # Read through `env:` rather than interpolated into the script — a `${{ }}` expression
-          # expanded inside `run:` is the template-injection shape zizmor rejects.
+          # Through `env:`, not interpolated: `${{ }}` inside `run:` is the template-injection shape zizmor rejects.
           GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -51,9 +44,8 @@ jobs:
             exit 0
           fi
           FILES="$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[].filename')"
-          # An empty list means the API call went wrong, not that nothing changed. Failing here is
-          # correct: the gate below refuses to report a pass when detection did not succeed, so the
-          # pull request blocks visibly instead of skipping a build that was needed.
+          # An empty list means the API call went wrong, not that nothing changed. The gate refuses to pass
+          # when detection did not succeed.
           if [ -z "$FILES" ]; then
             echo '::error::no changed files returned for this pull request'
             exit 1
@@ -73,27 +65,15 @@ jobs:
     defaults:
       run:
         working-directory: events-frontend
-    # Fail fast instead of hanging for the GitHub default of 6h when the Playwright
-    # system-dependency install stalls on a slow apt mirror.
-    #
     # **30, not 15, because 15 could not fit a cache-miss run — and that made the miss permanent.**
-    # `actions/cache` only writes in its post-job step, so a timeout kills the job before anything is
-    # saved: the miss recreates the conditions for the next miss. A run killed this way reports
-    # `cancelled` rather than `failure`, which is why it does not look like what it is.
-    #
-    # The arithmetic, measured rather than guessed:
-    #
-    #     cache hit    6s cache + 30s install-deps + 507s e2e   ≈ 9 min
-    #     cache miss   519-875s install          + 507s e2e     ≈ 17-23 min
-    #
-    # A miss is a normal event — every Playwright bump changes the cache key — so the budget has to
-    # accommodate one. 30 leaves headroom above the worst observed miss and still fails fast against
-    # the 6h default this comment was originally about.
+    # `actions/cache` writes only in its post-job step, so a timeout kills the job before anything is
+    # saved, and the run reports `cancelled` rather than `failure`. Measured: a hit is ≈9 min, a miss
+    # 17–23 min (a 519–875s Playwright install). A miss is a normal event — every Playwright bump changes
+    # the key — so the budget has to fit one, while still failing fast against the 6h default.
     timeout-minutes: 30
 
     steps:
-      # The whole history and every tag, because the image label below reads the version from them
-      # (ADR-032).
+      # The whole history and every tag: the image label reads the version from them (ADR-032).
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -113,10 +93,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # Audits every production npm dependency against config/allowed-licenses-npm.json. The
-      # backend's `./gradlew checkLicense` only ever sees the JVM tree — the frontend is not a
-      # Gradle subproject — so without this the several hundred npm packages were covered only by
-      # dependency-review, which looks at newly introduced dependencies and never the existing tree.
+      # Every production npm dependency against config/allowed-licenses-npm.json. `./gradlew checkLicense`
+      # sees only the JVM tree, and dependency-review looks only at newly introduced dependencies.
       - name: Check dependency licences
         run: npm run check:licenses
 
@@ -168,10 +146,8 @@ jobs:
       - name: Run e2e tests
         run: npm run test:e2e
 
-      # Without this the report exists only inside the runner. An axe violation is reported as a
-      # rule id plus a CSS selector, which is enough to know something broke and not enough to see
-      # what — the HTML report carries the DOM snapshot and the trace that make it actionable.
-      # Failure only: a green run's report is noise, and these artifacts are not small.
+      # An axe violation is a rule id plus a CSS selector; the HTML report carries the DOM snapshot and the
+      # trace that make it actionable. Failure only: a green run's report is noise, and these are not small.
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -182,18 +158,11 @@ jobs:
             events-frontend/test-results/
           retention-days: 7
 
-      # Build the container image, and deliberately do not push it. This workflow runs on every
-      # pull request, including from forks — publishing here would put an image built from
-      # unreviewed code into GHCR. Pushing belongs to release.yml.
-      #
-      # `npm run build` above has already produced events-frontend/dist, which is what the image
-      # copies: the Dockerfile has no builder stage, so there is no second, uncached build.
-      #
-      # Pull requests only, since #264: release.yml builds and pushes this same image on every push
-      # to `main`, so building it here too would be twice the work for the same answer.
-      #
-      # The version comes from `scripts/version.sh` rather than package.json, so the label matches
-      # the tag release.yml would publish — package.json's number is a `0.0.0` placeholder (ADR-032).
+      # Build the container image and do not push it: this runs on fork pull requests, and pushing belongs
+      # to release.yml, which builds the same image on every push to `main` (#264). `npm run build` above
+      # produced `dist/`, which the Dockerfile copies — no builder stage. The version comes from
+      # `scripts/version.sh`, so the label matches the tag release.yml would publish; package.json holds
+      # `0.0.0` (ADR-032).
       - name: Read the version
         id: version
         if: github.event_name == 'pull_request'
@@ -204,11 +173,9 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003 # v4.4.0
 
-      # Both platforms genuinely build, with no QEMU setup step, because the Dockerfile does no
-      # build work in a `RUN` — `dist/` is identical on amd64 and arm64, and its one `apk upgrade`
-      # runs for arm64 under the runner's own emulation. `type=cacheonly` because a multi-platform image
-      # cannot be loaded into the local daemon, and building one platform would leave arm64
-      # unbuilt — the architecture the Hetzner nodes run (#424).
+      # Both platforms build with no QEMU step: the Dockerfile does no build work in a `RUN`, and its one
+      # `apk upgrade` runs under the runner's emulation. `type=cacheonly` because a multi-platform image
+      # cannot be loaded, and one platform would leave arm64 — the Hetzner nodes' architecture — unbuilt.
       - name: Build the frontend image (amd64 + arm64, no push)
         if: github.event_name == 'pull_request'
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -222,8 +189,7 @@ jobs:
             VERSION=${{ steps.version.outputs.value }}
             REVISION=${{ github.sha }}
 
-      # The meta-injection sidecar (#287), from the same tree: `npm run build` emitted
-      # `dist-injector/` beside `dist/`, and release.yml publishes the two images together.
+      # The meta-injection sidecar (#287): `npm run build` emitted `dist-injector/` beside `dist/`.
       - name: Build the injector image (amd64 + arm64, no push)
         if: github.event_name == 'pull_request'
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -237,13 +203,10 @@ jobs:
             VERSION=${{ steps.version.outputs.value }}
             REVISION=${{ github.sha }}
 
-  # **This is the required context, and it is the only job here that always runs.** The build above
-  # is conditional, and a conditional job cannot be a required check: GitHub leaves an unreported
-  # context Pending forever, which reads as a hung check rather than a misconfiguration (#443, #494).
-  # So the requirement is placed on a job that always reports, and which fails when the build failed.
-  #
-  # Deliberately not relying on "a skipped job counts as success" — GitHub documents that, but
-  # AGENTS.md recorded those semantics as unverified, and this shape does not need them to hold.
+  # **The required context, and the only job here that always runs.** A conditional job cannot be a
+  # required check — GitHub leaves an unreported context Pending forever (#443, #494) — so the
+  # requirement sits on a job that always reports and fails when the build failed, without relying on
+  # "a skipped job counts as success".
   gate:
     name: Build & Test (frontend)
     needs: [ detect-changes, build ]

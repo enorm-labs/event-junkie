@@ -1,65 +1,44 @@
 # ==============================================================================================
 #  NEVER ADD `actions/checkout` — OR ANY STEP THAT RUNS PULL-REQUEST CODE — TO THIS FILE.
 #
-#  This workflow runs on `pull_request_target`, which executes with the BASE repository's token
-#  and full write permissions, against a pull request that may come from anyone. That is safe
-#  here for exactly one reason: nothing in this file ever fetches or runs the contributor's code.
-#  It reads the title from `context.payload` inside `actions/github-script` and calls the REST API.
-#
-#  Adding a checkout would turn this into an arbitrary-code-execution path holding
-#  `pull-requests: write` and `issues: write` — the single worst supply-chain shape a repository
-#  can have, and it would look like a one-line convenience in review. If a future step genuinely
-#  needs the PR's contents, it belongs in a `pull_request` workflow with a read-only token, not
-#  here (#479, #443). Listing the PR's file paths through the REST API is not that: it reads
-#  names and statuses, and executes nothing.
+#  This runs on `pull_request_target`, with the BASE repository's token and write permissions,
+#  against a pull request from anyone. That is safe for exactly one reason: nothing here fetches
+#  or runs the contributor's code — it reads the title from `context.payload` and calls the REST
+#  API. A checkout would turn it into an arbitrary-code-execution path holding `pull-requests:
+#  write` (#479, #443). A step that needs the PR's contents belongs in a `pull_request` workflow.
+#  Listing file paths through the REST API executes nothing.
 # ==============================================================================================
 #
-# Labels each pull request from its Conventional Commits title, so the automatically
-# generated release notes can group it (see .github/release.yml).
+# Labels each pull request from its Conventional Commits title, so `.github/release.yml` can group
+# the release notes: `feat(scraper): add Astra` → `feat`, `importer`; `fix(api)!: …` → `fix`,
+# `breaking-change`. `importer` comes from the files, not the scope — the `scraper` and `importer`
+# scopes carry infrastructure work too (#1162) — and a new venue is a `*Importer.kt` added in its
+# own package under `scraper/`.
 #
-#   feat(scraper): add Astra      -> feat, importer  (it adds an importer class, see below)
-#   fix(api)!: drop the v1 route  -> fix, breaking-change
-#   chore(deps): bump hono        -> chore   (+ `dependencies`, added by the bot itself)
+# **`feat` is reserved for what a visitor can see, and this check goes red on any other.** A `feat`
+# is a minor (`scripts/version.sh deserved`) and opens the release notes; `feat(ci)` once made
+# v0.17.0 a minor for five scanners. A CI capability is `ci`, a chart change `chore(deploy)` or
+# `build`, a skill `chore(agents)`; `fix` and `perf` take any scope. Labels are still applied on a
+# red run, so the notes stay right while the title is corrected.
 #
-# `importer` comes from the files, not the scope. The `scraper` and `importer` scopes both carry
-# infrastructure work as well as venues, so a scope rule filed the dropped-events counter and the
-# force-fetch trigger under "New Event Sources" (#1162, in v0.4.0's notes). A new venue adds a class named
-# `*Importer.kt` in its own package under `scraper/`, and nothing else does.
-#
-# **`feat` is reserved for what a visitor to the site can see, and this check goes red on any
-# other.** Two things read the type as a promise to the visitor: `scripts/version.sh deserved`
-# makes a `feat` a minor (ADR-025), and the release notes open with the features. So `feat(ci)`
-# moved the number and led the Highlights with a scanner — v0.17.0 was a minor for five of them
-# and nothing on the site had changed. A new CI capability is `ci`, a chart or cluster change
-# `chore(deploy)` or `build`, a skill `chore(agents)`; `fix` and `perf` stay open to any scope,
-# because a fixed pipeline is honestly a fix, and both earn a patch. The labels are still applied
-# on a red run, so the notes stay right while the title is being corrected.
-#
-# Conventional Commits Spec: https://www.conventionalcommits.org/en/v1.0.0/
-#
-# Runs on pull_request_target because a `pull_request` run from a fork gets a read-only
-# token and could not apply labels. That trigger is only safe because this workflow never
-# checks out or executes PR code — it reads the title/body from the event payload and
-# calls the REST API, nothing else.
+# `pull_request_target` because a `pull_request` run from a fork gets a read-only token and could
+# not apply labels.
 name: Label Pull Requests
 
 on:
   # comment-lint: allow a dated suppression, per the reason in zizmor.yml
 # zizmor: ignore[dangerous-triggers]
-  # 2026-08-12 — `pull_request_target` is insecure when it checks out or executes pull-request code.
-  # This workflow does neither: it reads the title from `context.payload` inside `actions/github-script`
-  # and calls the REST API. There is no `actions/checkout` step in this file at all, which is the
-  # property that makes the trigger safe and the one to re-check before adding any step here.
-  # `synchronize` as well, because the importer label follows the files and a push can add one.
-  # `labeled` and `unlabeled` because a managed label can be set by hand — `gh pr create --label
-  # importer` put a refactor under "New Event Sources" in v0.19.0 (#1546) — and this workflow is the
-  # one that owns them. Its own label calls fire the same events; those runs find nothing to change.
+  # 2026-08-12 — `pull_request_target` is insecure when it checks out or executes pull-request code;
+  # this workflow does neither, and the absence of a checkout is the property to re-check before adding
+  # any step. `synchronize` because the importer label follows the files; `labeled` and `unlabeled`
+  # because a managed label set by hand (`gh pr create --label importer`, #1546) is this workflow's to
+  # correct. Its own label calls fire the same events and find nothing to change.
   pull_request_target:
     types: [ opened, edited, reopened, synchronize, labeled, unlabeled ]
 
 permissions:
   contents: read
-  # `pull-requests` to set the labels, `issues` to create a managed label that does not exist yet
+  # `pull-requests` to set the labels, `issues` to create a managed label that does not exist yet.
   pull-requests: write
   issues: write
 
@@ -78,8 +57,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            // The labels this workflow owns. Anything not listed here (`dependencies`,
-            // `java`, `javascript` from Dependabot, or hand-applied labels) is left alone.
+            // The labels this workflow owns; anything else (`dependencies`, hand-applied) is left alone.
             const MANAGED = {
               'breaking-change': { color: 'b60205', description: 'Contains a breaking change' },
               importer:          { color: '5319e7', description: 'Adds a venue event importer' },
@@ -96,16 +74,14 @@ jobs:
               revert:            { color: 'e99695', description: 'Reverts a previous change' },
             };
 
-            // The Conventional Commits types that map 1:1 onto a label of the same name.
-            // `breaking-change` and `importer` are derived below instead.
+            // The types that map 1:1 onto a label; `breaking-change` and `importer` are derived below.
             const TYPES = new Set(['feat', 'fix', 'perf', 'refactor', 'docs', 'test', 'build', 'ci', 'style', 'chore', 'revert']);
-            // The scopes a visitor to the site can see, and the only ones `feat` is allowed. Grows
-            // when the site grows a surface; never for a pipeline, a chart, a script or an agent.
+            // The scopes a visitor can see, and the only ones `feat` is allowed. Grows with the site, never for
+            // a pipeline, chart, script or agent.
             const PRODUCT_SCOPES = new Set(['frontend', 'events', 'promoters', 'venues', 'artists', 'importer', 'scraper', 'bff', 'images', 'branding']);
 
-            // A new event source: an importer class added in its own package under `scraper/`.
-            // The package's other files (scrapers, fixtures) and the shared classes at the top of
-            // `scraper/` do not match, and a renamed or modified importer is not a new source.
+            // A new event source: an importer class added in its own package under `scraper/`. A renamed or
+            // modified importer is not a new source.
             const IMPORTER_CLASS = /^events-importer\/src\/main\/kotlin\/de\/norm\/events\/scraper\/[^/]+\/[A-Za-z0-9]+Importer\.kt$/;
 
             const pr = context.payload.pull_request;
@@ -149,12 +125,12 @@ jobs:
             }
 
             const issue = { owner: context.repo.owner, repo: context.repo.repo, issue_number: pr.number };
-            // The live set, not `pr.labels`: the payload is a snapshot from when the event fired, and a
-            // label applied by hand in the seconds before this run started is missing from it (#1546).
+            // The live set, not `pr.labels`: the payload is a snapshot, and a label applied by hand seconds
+            // before this run is missing from it (#1546).
             const labels = await github.paginate(github.rest.issues.listLabelsOnIssue, { ...issue, per_page: 100 });
             const current = new Set(labels.map((label) => label.name));
 
-            // Drop managed labels that no longer apply — the title may have been edited, or one set by hand.
+            // Drop managed labels that no longer apply — an edited title, or one set by hand.
             for (const name of current) {
               if (name in MANAGED && !wanted.has(name)) {
                 await github.rest.issues.removeLabel({ ...issue, name });
@@ -168,8 +144,7 @@ jobs:
               return;
             }
 
-            // Create any managed label the repository does not have yet, so the workflow
-            // works on a fresh clone without a separate label-seeding step.
+            // Create any managed label the repository lacks, so a fresh clone needs no seeding step.
             for (const name of missing) {
               try {
                 await github.rest.issues.getLabel({ owner: issue.owner, repo: issue.repo, name });

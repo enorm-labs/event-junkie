@@ -1,47 +1,23 @@
-# The committed open-source notices, against what the dependencies actually resolve to (#1037).
+# The committed open-source notices against what the dependencies resolve to (#1037).
+# `events-frontend/src/assets/notices.json` is generated, committed and rendered at /legal/notices;
+# nothing joined it to its inputs, and it drifted by 51 components before a pull request happened to
+# regenerate it. **A stale notices file understates what we distribute** (docs/LEGAL.md §9.2).
 #
-# `events-frontend/src/assets/notices.json` is generated, committed, and rendered at /legal/notices.
-# Nothing joined it to its inputs, and it drifted: #1034 regenerated the file while moving two
-# packages out of `dependencies` and picked up 51 components that should already have been listed —
-# 50 JVM and one npm. It was found by a pull request that happened to touch the file, not by anyone
-# checking. **A stale notices file understates what we distribute**, which is the direction that
-# matters (docs/LEGAL.md §9.2).
+# **Its own workflow** because the generator merges two ecosystems and needs a JDK and Node in one
+# job; folding it into `validate-docs.yml` would trigger that workflow's unrelated jobs on
+# `gradle.properties`. **The `paths:` filter names both ecosystems and is the part most likely to
+# rot**: a dependency file missing from it means a change that moves the notices does not run this.
+# `notices.json` itself is listed so a hand-edit is caught.
 #
-# **This is its own workflow, and that is the decision worth explaining.** The generator merges two
-# ecosystems — it reads the Gradle licence report off disk and combines it with npm's — so a full
-# regeneration needs a JDK and Node in the same job, and no other pull-request workflow has both.
-# Folding it into `validate-docs.yml` was the alternative; it would have meant adding every backend
-# dependency file to that workflow's `paths:` filter, which triggers its three unrelated jobs on
-# `gradle.properties`. A fourth `validate-*` workflow keeps the triggers honest, and this repository
-# already has five.
+# **This job is the authority on what the notices contain.** `license-checker` walks `node_modules`,
+# where optional dependencies differ per OS, so the generator drops platform-named binaries and
+# anything whose `os` excludes Linux (#1043); a laptop regeneration otherwise fails here over one
+# component.
 #
-# **The `paths:` filter has to name both ecosystems**, and it is the part most likely to rot. A
-# dependency file missing from it means a change that moves the notices does not run this check, and
-# the drift returns silently — the same failure this exists to end. `notices.json` itself is on the
-# list so that a hand-edit is caught, since the file says at the top that it is generated.
-#
-# **This job is the authority on what the notices should contain.** `license-checker` walks
-# `node_modules`, where optional dependencies are not the same on every operating system, so the
-# generator drops the platform-named binaries and anything whose `os` field excludes Linux (#1043)
-# — without which a file regenerated on a laptop fails here over one component in four thousand
-# lines of JSON. A package restricted to Linux would be missing from a macOS install and is the one
-# asymmetry left unguarded, because nothing in the tree is Linux-only.
-#
-# **This check is required on the `main` ruleset, and therefore carries no `pull_request` filter.**
-# The two are not separable: a required check that never runs stays Pending forever (#443), so a
-# filter here would deadlock every pull request that does not touch a dependency file.
-#
-# **It is required only because `fix-notices-on-bot-prs.yml` exists** (#1084). Blocking on a check
-# that is red for something its author cannot fix teaches people to merge past it, and every bot
-# dependency bump is exactly that case. With the repair in place the check is red only when
-# something is genuinely wrong, which is the state that makes blocking cost nothing. If that
-# workflow is ever removed, this one comes off the required list in the same change.
-#
-# **A failure on a bot's branch is repaired rather than left red**, by `fix-notices-on-bot-prs.yml`,
-# which watches this workflow and regenerates on Dependabot and Renovate branches (#1084). Neither
-# bot can do it: the file merges two ecosystems and needs a JDK and Node in one job. Without that,
-# this check is red on every frontend dependency bump for a reason its author cannot fix, which is
-# how a check becomes something people merge past — and this one guards a licence artifact.
+# **Required on the `main` ruleset, therefore no `pull_request` filter** (#443) — and required only
+# because `fix-notices-on-bot-prs.yml` repairs a bot's branch (#1084): a check red for something its
+# author cannot fix teaches people to merge past it. If that workflow goes, this comes off the
+# required list in the same change.
 name: Validate Notices
 
 on:
@@ -59,17 +35,9 @@ on:
       - '.github/workflows/validate-notices.yml'
   pull_request:
     branches: [ main ]
-    # No `paths:` here, deliberately, and it is the same reason `validate-workflows.yml` gives: this
-    # check is **required** on the `main` ruleset, and a required check that never runs stays Pending
-    # forever — GitHub's own words: "A pull request that requires those checks to be successful will
-    # be blocked from merging." A filter here would deadlock every pull request that happens not to
-    # touch a dependency file (#443).
-    #
-    # **The cost is real and was priced before accepting it**: unlike `validate-workflows.yml`, which
-    # is seconds, this job resolves both dependency graphs — 58s warm, 213-260s cold, measured over
-    # six runs. That now runs on every pull request rather than roughly one in ten.
-    #
-    # The `push:` filter above keeps its paths. Nothing requires those runs.
+    # No `paths:` here: this check is **required**, and a filter would deadlock every pull request that
+    # does not touch a dependency file (#443). **The cost was priced**: both dependency graphs resolve on
+    # every pull request — 58s warm, 213–260s cold. The `push:` filter keeps its paths.
   workflow_dispatch:
 
 permissions:
@@ -79,9 +47,8 @@ jobs:
   notices:
     name: Check the notices against the dependencies
     runs-on: ubuntu-latest
-    # Both dependency graphs get resolved from scratch on a cold cache, which is the whole cost of
-    # this job. Generous rather than tight: a timeout here reads as a broken check, and the thing it
-    # would be protecting against is a registry outage that fails the step anyway.
+    # Both graphs resolve from scratch on a cold cache. Generous: a timeout reads as a broken check, and
+    # the thing it would protect against is a registry outage that fails the step anyway.
     timeout-minutes: 20
 
     steps:
@@ -106,8 +73,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: events-frontend/package-lock.json
 
-      # The generator shells out to `license-checker-rseidelsohn`, which is a devDependency, so the
-      # full install is needed rather than `--omit=dev`.
+      # The generator shells out to a devDependency, so no `--omit=dev`.
       - name: Install frontend dependencies
         run: npm ci
         working-directory: events-frontend
